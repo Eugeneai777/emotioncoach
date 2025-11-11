@@ -9,6 +9,7 @@ import { ArrowLeft, Plus, Loader2, Target, TrendingUp, Calendar as CalendarIcon,
 import { useToast } from "@/hooks/use-toast";
 import CelebrationModal from "@/components/CelebrationModal";
 import AchievementBadge from "@/components/AchievementBadge";
+import StreakDisplay from "@/components/StreakDisplay";
 import {
   Dialog,
   DialogContent,
@@ -389,6 +390,9 @@ const Goals = () => {
       </header>
 
       <main className="container max-w-4xl mx-auto px-4 py-8 space-y-8">
+        {/* Streak Display */}
+        <StreakDisplay />
+
         {/* Achievements Section */}
         {achievements.length > 0 && (
           <div className="space-y-4">
