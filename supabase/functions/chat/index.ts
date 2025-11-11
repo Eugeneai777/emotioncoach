@@ -114,7 +114,7 @@ serve(async (req) => {
             type: "function",
             function: {
               name: "generate_briefing",
-              description: "当用户完成情绪四部曲的四个阶段后，生成结构化的情绪梳理简报",
+              description: "当用户完成情绪四部曲的四个阶段后，生成结构化的情绪梳理简报，并根据对话内容识别情绪标签",
               parameters: {
                 type: "object",
                 properties: {
@@ -149,9 +149,16 @@ serve(async (req) => {
                   growth_story: {
                     type: "string",
                     description: "一句话肯定用户的成长，不含「」引号"
+                  },
+                  emotion_tags: {
+                    type: "array",
+                    description: "根据对话内容识别的情绪标签数组。从以下标签中选择1-3个最匹配的：负面情绪（焦虑、不安、失落、压力、无力、发火、生气、伤心、孤单、难过、紧张、撑不住、不够好、后悔、担心、自卑）、正面情绪（被认可、感谢、温暖、被帮助、轻松、感动、安心、平静、成功、顺利、被理解、感恩、被表扬、放松）、混合情绪（又想又怕、怀念、矛盾、纠结、自责、内疚、惊讶、哇、没想到、过去、想起、愧疚）、反思成长（我明白、我想尝试、我成长了、其实、原来、我懂了、我发现、我变了、我决定、我相信、我要改变）",
+                    items: {
+                      type: "string"
+                    }
                   }
                 },
-                required: ["emotion_theme", "stage_1_content", "stage_2_content", "stage_3_content", "stage_4_content", "insight", "action", "growth_story"],
+                required: ["emotion_theme", "stage_1_content", "stage_2_content", "stage_3_content", "stage_4_content", "insight", "action", "growth_story", "emotion_tags"],
                 additionalProperties: false
               }
             }

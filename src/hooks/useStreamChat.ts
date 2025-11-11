@@ -13,6 +13,7 @@ interface BriefingData {
   insight: string;
   action: string;
   growth_story: string;
+  emotion_tags?: string[];
 }
 
 export const useStreamChat = (conversationId?: string) => {
@@ -129,14 +130,65 @@ ${data.growth_story}
 
   const saveBriefing = async (convId: string, briefingData: BriefingData) => {
     try {
-      const { error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("未登录");
+
+      // 保存简报
+      const { emotion_tags, ...briefingDataWithoutTags } = briefingData;
+      const { data: briefing, error: briefingError } = await supabase
         .from("briefings")
         .insert({
           conversation_id: convId,
-          ...briefingData
-        });
+          ...briefingDataWithoutTags
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (briefingError) throw briefingError;
+
+      // 如果有情绪标签，创建或获取标签，并关联到简报
+      if (emotion_tags && emotion_tags.length > 0 && briefing) {
+        for (const tagName of emotion_tags) {
+          // 查找或创建标签
+          let { data: existingTag } = await supabase
+            .from("tags")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("name", tagName)
+            .single();
+
+          let tagId: string;
+          
+          if (existingTag) {
+            tagId = existingTag.id;
+          } else {
+            // 创建新标签，使用默认颜色
+            const { data: newTag, error: tagError } = await supabase
+              .from("tags")
+              .insert({
+                user_id: user.id,
+                name: tagName,
+                color: "#10b981" // 默认绿色
+              })
+              .select("id")
+              .single();
+
+            if (tagError) {
+              console.error("Error creating tag:", tagError);
+              continue;
+            }
+            tagId = newTag.id;
+          }
+
+          // 关联标签到简报
+          await supabase
+            .from("briefing_tags")
+            .insert({
+              briefing_id: briefing.id,
+              tag_id: tagId
+            });
+        }
+      }
 
       toast({
         title: "简报已保存 🌿",
