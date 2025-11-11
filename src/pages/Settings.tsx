@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CompanionSelector } from "@/components/CompanionSelector";
+import { VoiceSettings } from "@/components/VoiceSettings";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 
@@ -110,9 +111,10 @@ export default function Settings() {
         <h1 className="text-3xl font-bold text-foreground mb-6">设置</h1>
 
         <Tabs defaultValue="reminders" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="reminders">提醒设置</TabsTrigger>
             <TabsTrigger value="companion">情绪伙伴</TabsTrigger>
+            <TabsTrigger value="voice">语音设置</TabsTrigger>
           </TabsList>
 
           <TabsContent value="reminders">
@@ -173,6 +175,10 @@ export default function Settings() {
 
           <TabsContent value="companion">
             <CompanionSelector />
+          </TabsContent>
+
+          <TabsContent value="voice">
+            <VoiceSettings />
           </TabsContent>
         </Tabs>
       </div>

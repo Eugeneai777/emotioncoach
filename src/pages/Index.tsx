@@ -20,10 +20,11 @@ import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target } from "luc
 const Index = () => {
   const [input, setInput] = useState("");
   const [showReminder, setShowReminder] = useState(false);
+  const [voiceConfig, setVoiceConfig] = useState<{ gender: 'male' | 'female', rate: number }>({ gender: 'female', rate: 0.9 });
   const { user, loading: authLoading, signOut } = useAuth();
   const { messages, isLoading, sendMessage, resetConversation } = useStreamChat();
   const { isListening, transcript, startListening, stopListening, isSupported: voiceInputSupported } = useSpeechRecognition();
-  const { speak, stop: stopSpeaking, isSpeaking, isSupported: voiceOutputSupported } = useSpeechSynthesis();
+  const { speak, stop: stopSpeaking, isSpeaking, isSupported: voiceOutputSupported, setVoiceGender, setVoiceRate } = useSpeechSynthesis(voiceConfig);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const lastMessageCountRef = useRef(0);
@@ -57,8 +58,34 @@ const Index = () => {
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
+    } else if (user) {
+      loadVoiceConfig();
     }
   }, [user, authLoading, navigate]);
+
+  const loadVoiceConfig = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("voice_gender, voice_rate")
+        .eq("id", user!.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const config = { 
+          gender: (data.voice_gender as 'male' | 'female') || 'female', 
+          rate: data.voice_rate || 0.9 
+        };
+        setVoiceConfig(config);
+        setVoiceGender(config.gender);
+        setVoiceRate(config.rate);
+      }
+    } catch (error) {
+      console.error("Error loading voice config:", error);
+    }
+  };
 
   useEffect(() => {
     if (user && messages.length === 0) {

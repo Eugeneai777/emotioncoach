@@ -208,6 +208,8 @@ export type Database = {
           reminder_enabled: boolean | null
           reminder_time: string | null
           updated_at: string
+          voice_gender: string | null
+          voice_rate: number | null
         }
         Insert: {
           companion_type?: string | null
@@ -218,6 +220,8 @@ export type Database = {
           reminder_enabled?: boolean | null
           reminder_time?: string | null
           updated_at?: string
+          voice_gender?: string | null
+          voice_rate?: number | null
         }
         Update: {
           companion_type?: string | null
@@ -228,6 +232,8 @@ export type Database = {
           reminder_enabled?: boolean | null
           reminder_time?: string | null
           updated_at?: string
+          voice_gender?: string | null
+          voice_rate?: number | null
         }
         Relationships: []
       }
