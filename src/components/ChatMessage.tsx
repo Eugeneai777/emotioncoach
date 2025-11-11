@@ -10,10 +10,10 @@ export const ChatMessage = ({ role, content }: ChatMessageProps) => {
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500`}>
       <div className={`max-w-[80%] ${isUser ? "order-2" : "order-1"}`}>
         <div
-          className={`rounded-3xl px-6 py-4 ${
+          className={`rounded-3xl px-6 py-4 transition-all duration-300 ${
             isUser
-              ? "bg-primary text-primary-foreground"
-              : "bg-card border border-border"
+              ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+              : "bg-card border border-border shadow-sm hover:shadow-md transition-shadow"
           }`}
         >
           <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
