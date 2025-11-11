@@ -13,6 +13,13 @@ export const EmotionTrendsCombined = ({ briefings }: EmotionTrendsCombinedProps)
     <div className="space-y-6">
       <Card className="p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          🔄 周期分析
+        </h3>
+        <EmotionCycleAnalysis briefings={briefings} />
+      </Card>
+
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           📈 情绪趋势图
         </h3>
         <EmotionTrendChart briefings={briefings} />
@@ -23,13 +30,6 @@ export const EmotionTrendsCombined = ({ briefings }: EmotionTrendsCombinedProps)
           ☁️ 情绪标签云
         </h3>
         <EmotionTagCloud briefings={briefings} />
-      </Card>
-
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-          🔄 周期分析
-        </h3>
-        <EmotionCycleAnalysis briefings={briefings} />
       </Card>
     </div>
   );
