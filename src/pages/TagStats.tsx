@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import TagTrendChart from "@/components/TagTrendChart";
 
 interface TagType {
   id: string;
@@ -210,9 +211,15 @@ const TagStats = () => {
               </div>
             </Card>
 
+            <TagTrendChart
+              briefings={selectedTagData.briefings}
+              tagColor={selectedTagData.tag.color}
+              tagName={selectedTagData.tag.name}
+            />
+
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-foreground">相关简报 ({selectedTagData.briefings.length})</h3>
-              <ScrollArea className="h-[calc(100vh-380px)]">
+              <ScrollArea className="h-[calc(100vh-680px)]">
                 <div className="space-y-3">
                   {selectedTagData.briefings.map((briefing) => (
                     <Card
