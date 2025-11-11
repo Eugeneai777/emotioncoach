@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Calendar, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, Loader2, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import EmotionTrendChart from "@/components/EmotionTrendChart";
 import EmotionTagCloud from "@/components/EmotionTagCloud";
@@ -287,12 +287,25 @@ const History = () => {
             <p className="text-sm text-muted-foreground mt-2">完成一次情绪梳理后会生成简报 🌿</p>
           </div>
         ) : (
-          <Tabs defaultValue="list" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
-              <TabsTrigger value="list">简报列表</TabsTrigger>
-              <TabsTrigger value="trends">情绪趋势</TabsTrigger>
-              <TabsTrigger value="cloud">标签云</TabsTrigger>
-            </TabsList>
+          <div className="space-y-4">
+            <div className="flex items-center justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/tag-stats")}
+                className="gap-2"
+              >
+                <BarChart3 className="w-4 h-4" />
+                标签统计
+              </Button>
+            </div>
+            
+            <Tabs defaultValue="list" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="list">简报列表</TabsTrigger>
+                <TabsTrigger value="trends">情绪趋势</TabsTrigger>
+                <TabsTrigger value="cloud">标签云</TabsTrigger>
+              </TabsList>
             
             <TabsContent value="list">
               <ScrollArea className="h-[calc(100vh-340px)]">
@@ -357,7 +370,8 @@ const History = () => {
                 <EmotionTagCloud briefings={briefings} />
               </ScrollArea>
             </TabsContent>
-          </Tabs>
+            </Tabs>
+          </div>
         )}
       </main>
     </div>

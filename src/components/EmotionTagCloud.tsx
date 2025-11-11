@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface TagType {
   id: string;
@@ -21,6 +22,8 @@ interface TagFrequency {
 }
 
 const EmotionTagCloud = ({ briefings }: EmotionTagCloudProps) => {
+  const navigate = useNavigate();
+  
   const tagFrequencies = useMemo(() => {
     const tagMap = new Map<string, TagFrequency>();
 
@@ -72,14 +75,15 @@ const EmotionTagCloud = ({ briefings }: EmotionTagCloudProps) => {
         {tagFrequencies.map(({ tag, count }) => (
           <div
             key={tag.id}
-            className="transition-transform hover:scale-110 cursor-default"
+            className="transition-transform hover:scale-110 cursor-pointer"
             style={{
               fontSize: `${getFontSize(count)}rem`,
               color: tag.color,
               fontWeight: 600,
               textShadow: `0 2px 8px ${tag.color}30`,
             }}
-            title={`${tag.name}: 出现 ${count} 次`}
+            title={`${tag.name}: 出现 ${count} 次 - 点击查看详情`}
+            onClick={() => navigate(`/tag-stats?tag=${tag.id}`)}
           >
             {tag.name}
           </div>
