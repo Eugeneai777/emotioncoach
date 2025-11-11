@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.compare-emotions]
 verify_jwt = true
+
+[functions.generate-emotion-review]
+verify_jwt = true
