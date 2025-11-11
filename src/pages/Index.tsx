@@ -173,7 +173,7 @@ const Index = () => {
                 className="gap-2"
               >
                 <History className="w-4 h-4" />
-                <span className="hidden sm:inline">情绪日记</span>
+                <span className="hidden sm:inline">我的情绪日记</span>
               </Button>
               <Button
                 variant="ghost"
