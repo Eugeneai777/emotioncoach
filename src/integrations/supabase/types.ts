@@ -200,6 +200,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          companion_type: string | null
+          conversation_style: string | null
           created_at: string
           id: string
           last_reminder_shown: string | null
@@ -208,6 +210,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          companion_type?: string | null
+          conversation_style?: string | null
           created_at?: string
           id: string
           last_reminder_shown?: string | null
@@ -216,6 +220,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          companion_type?: string | null
+          conversation_style?: string | null
           created_at?: string
           id?: string
           last_reminder_shown?: string | null

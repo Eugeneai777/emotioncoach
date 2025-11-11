@@ -6,6 +6,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CompanionSelector } from "@/components/CompanionSelector";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 
@@ -105,59 +107,74 @@ export default function Settings() {
           返回
         </Button>
 
-        <Card className="border-healing-sage/20 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl text-healing-forestGreen">
-              提醒设置
-            </CardTitle>
-            <CardDescription className="text-healing-forestGreen/60">
-              设置你的每日情绪梳理提醒时间 🌿
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="reminder-enabled" className="text-healing-forestGreen">
-                  启用每日提醒
-                </Label>
-                <p className="text-sm text-healing-forestGreen/60">
-                  在设定的时间收到温柔的梳理邀请
-                </p>
-              </div>
-              <Switch
-                id="reminder-enabled"
-                checked={reminderEnabled}
-                onCheckedChange={setReminderEnabled}
-              />
-            </div>
+        <h1 className="text-3xl font-bold text-foreground mb-6">设置</h1>
 
-            {reminderEnabled && (
-              <div className="space-y-2">
-                <Label htmlFor="reminder-time" className="text-healing-forestGreen">
-                  提醒时间
-                </Label>
-                <Input
-                  id="reminder-time"
-                  type="time"
-                  value={reminderTime}
-                  onChange={(e) => setReminderTime(e.target.value)}
-                  className="border-healing-sage/30 focus:border-healing-lightGreen"
-                />
-                <p className="text-sm text-healing-forestGreen/60">
-                  当你打开应用时，如果今天还未进行情绪梳理，劲老师会在这个时间之后温柔地提醒你
-                </p>
-              </div>
-            )}
+        <Tabs defaultValue="reminders" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="reminders">提醒设置</TabsTrigger>
+            <TabsTrigger value="companion">情绪伙伴</TabsTrigger>
+          </TabsList>
 
-            <Button
-              onClick={saveSettings}
-              disabled={saving}
-              className="w-full bg-healing-lightGreen hover:bg-healing-sage text-white"
-            >
-              {saving ? "保存中..." : "保存设置"}
-            </Button>
-          </CardContent>
-        </Card>
+          <TabsContent value="reminders">
+            <Card className="border-border shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl text-foreground">
+                  提醒设置
+                </CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  设置你的每日情绪梳理提醒时间 🌿
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="reminder-enabled" className="text-foreground">
+                      启用每日提醒
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      在设定的时间收到温柔的梳理邀请
+                    </p>
+                  </div>
+                  <Switch
+                    id="reminder-enabled"
+                    checked={reminderEnabled}
+                    onCheckedChange={setReminderEnabled}
+                  />
+                </div>
+
+                {reminderEnabled && (
+                  <div className="space-y-2">
+                    <Label htmlFor="reminder-time" className="text-foreground">
+                      提醒时间
+                    </Label>
+                    <Input
+                      id="reminder-time"
+                      type="time"
+                      value={reminderTime}
+                      onChange={(e) => setReminderTime(e.target.value)}
+                      className="border-border focus:border-primary"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      当你打开应用时，如果今天还未进行情绪梳理，会在这个时间之后温柔地提醒你
+                    </p>
+                  </div>
+                )}
+
+                <Button
+                  onClick={saveSettings}
+                  disabled={saving}
+                  className="w-full"
+                >
+                  {saving ? "保存中..." : "保存设置"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="companion">
+            <CompanionSelector />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
