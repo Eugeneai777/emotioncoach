@@ -150,48 +150,49 @@ const TagStats = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-4xl mx-auto px-4 py-4">
+        <div className="container max-w-4xl mx-auto px-3 md:px-4 py-3 md:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate("/history")}
-                className="gap-2"
+                className="gap-1.5 md:gap-2 text-xs md:text-sm"
               >
-                <ArrowLeft className="w-4 h-4" />
-                返回历史
+                <ArrowLeft className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">返回历史</span>
+                <span className="sm:hidden">返回</span>
               </Button>
-              <h1 className="text-xl font-bold text-foreground">标签统计</h1>
+              <h1 className="text-base md:text-xl font-bold text-foreground">标签统计</h1>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="container max-w-4xl mx-auto px-4 py-8">
+      <main className="container max-w-4xl mx-auto px-3 md:px-4 py-4 md:py-8">
         {tagStats.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">还没有标签统计数据</p>
             <p className="text-sm text-muted-foreground mt-2">完成情绪梳理后会自动生成标签 🌿</p>
           </div>
         ) : selectedTagData ? (
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSelectedTag(null)}
-              className="gap-2"
+              className="gap-1.5 md:gap-2 text-xs md:text-sm"
             >
-              <ArrowLeft className="w-4 h-4" />
-              返回统计概览
+              <ArrowLeft className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              返回概览
             </Button>
 
-            <Card className="p-6 space-y-4">
+            <Card className="p-4 md:p-6 space-y-3 md:space-y-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
                   <Badge
                     variant="secondary"
-                    className="text-lg px-4 py-1"
+                    className="text-sm md:text-lg px-3 md:px-4 py-0.5 md:py-1"
                     style={{
                       backgroundColor: `${selectedTagData.tag.color}20`,
                       color: selectedTagData.tag.color,
@@ -200,12 +201,12 @@ const TagStats = () => {
                   >
                     {selectedTagData.tag.name}
                   </Badge>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-3 md:gap-4 text-xs md:text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <TrendingUp className="w-4 h-4" />
-                      出现 {selectedTagData.count} 次
+                      <TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      {selectedTagData.count} 次
                     </span>
-                    <span>占比 {selectedTagData.percentage.toFixed(1)}%</span>
+                    <span>{selectedTagData.percentage.toFixed(1)}%</span>
                   </div>
                 </div>
               </div>
@@ -218,35 +219,35 @@ const TagStats = () => {
             />
 
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-foreground">相关简报 ({selectedTagData.briefings.length})</h3>
-              <ScrollArea className="h-[calc(100vh-680px)]">
-                <div className="space-y-3">
+              <h3 className="text-base md:text-lg font-semibold text-foreground">相关简报 ({selectedTagData.briefings.length})</h3>
+              <ScrollArea className="h-[calc(100vh-600px)] md:h-[calc(100vh-680px)]">
+                <div className="space-y-2 md:space-y-3">
                   {selectedTagData.briefings.map((briefing) => (
                     <Card
                       key={briefing.id}
-                      className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer"
+                      className="p-3 md:p-4 hover:shadow-md transition-all duration-200 cursor-pointer"
                       onClick={() => navigate(`/history`)}
                     >
                       <div className="space-y-2">
-                        <div className="flex items-start justify-between gap-4">
-                          <h4 className="font-medium text-foreground flex-1">{briefing.emotion_theme}</h4>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+                          <h4 className="font-medium text-sm md:text-base text-foreground flex-1">{briefing.emotion_theme}</h4>
+                          <div className="flex items-center gap-1 text-[10px] md:text-xs text-muted-foreground flex-shrink-0">
                             <Calendar className="w-3 h-3" />
                             {formatDate(briefing.created_at)}
                           </div>
                         </div>
                         {briefing.insight && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">{briefing.insight}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{briefing.insight}</p>
                         )}
                         {briefing.tags && briefing.tags.length > 1 && (
-                          <div className="flex flex-wrap gap-1.5 pt-2">
+                          <div className="flex flex-wrap gap-1 md:gap-1.5 pt-1 md:pt-2">
                             {briefing.tags
                               .filter((t) => t.id !== selectedTagData.tag.id)
                               .map((tag) => (
                                 <Badge
                                   key={tag.id}
                                   variant="outline"
-                                  className="text-xs"
+                                  className="text-[10px] md:text-xs"
                                   style={{
                                     backgroundColor: `${tag.color}10`,
                                     color: tag.color,
@@ -266,49 +267,49 @@ const TagStats = () => {
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
-            <Card className="p-6 space-y-4 bg-gradient-to-br from-card to-card/50">
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <div className="space-y-4 md:space-y-6">
+            <Card className="p-4 md:p-6 space-y-3 md:space-y-4 bg-gradient-to-br from-card to-card/50">
+              <h2 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
                 📊 标签使用概览
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">总标签数</p>
-                  <p className="text-2xl font-bold text-foreground">{tagStats.length}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">总标签数</p>
+                  <p className="text-xl md:text-2xl font-bold text-foreground">{tagStats.length}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">已使用</p>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-xs md:text-sm text-muted-foreground">已使用</p>
+                  <p className="text-xl md:text-2xl font-bold text-foreground">
                     {tagStats.filter((s) => s.count > 0).length}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">最常用</p>
-                  <p className="text-2xl font-bold text-foreground" style={{ color: tagStats[0]?.tag.color }}>
+                  <p className="text-xs md:text-sm text-muted-foreground">最常用</p>
+                  <p className="text-lg md:text-2xl font-bold text-foreground truncate" style={{ color: tagStats[0]?.tag.color }}>
                     {tagStats[0]?.tag.name || "-"}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">使用次数</p>
-                  <p className="text-2xl font-bold text-foreground">{tagStats[0]?.count || 0}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">使用次数</p>
+                  <p className="text-xl md:text-2xl font-bold text-foreground">{tagStats[0]?.count || 0}</p>
                 </div>
               </div>
             </Card>
 
-            <ScrollArea className="h-[calc(100vh-340px)]">
-              <div className="space-y-3">
+            <ScrollArea className="h-[calc(100vh-280px)] md:h-[calc(100vh-340px)]">
+              <div className="space-y-2 md:space-y-3">
                 {tagStats.map((stat) => (
                   <Card
                     key={stat.tag.id}
-                    className="p-5 hover:shadow-md transition-all duration-200 cursor-pointer"
+                    className="p-4 md:p-5 hover:shadow-md transition-all duration-200 cursor-pointer"
                     onClick={() => setSelectedTag(stat.tag.id)}
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-2">
+                    <div className="space-y-2 md:space-y-3">
+                      <div className="flex items-start justify-between gap-3 md:gap-4">
+                        <div className="flex-1 space-y-1.5 md:space-y-2">
                           <Badge
                             variant="secondary"
-                            className="text-sm"
+                            className="text-xs md:text-sm"
                             style={{
                               backgroundColor: `${stat.tag.color}20`,
                               color: stat.tag.color,
@@ -317,19 +318,19 @@ const TagStats = () => {
                           >
                             {stat.tag.name}
                           </Badge>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                            <span>出现 {stat.count} 次</span>
+                          <div className="flex items-center gap-2 md:gap-3 text-xs md:text-sm text-muted-foreground">
+                            <span>{stat.count} 次</span>
                             <span>•</span>
                             <span>{stat.percentage.toFixed(1)}%</span>
                           </div>
                         </div>
-                        <Button variant="ghost" size="sm">
-                          查看详情
+                        <Button variant="ghost" size="sm" className="text-xs md:text-sm">
+                          查看
                         </Button>
                       </div>
                       <Progress
                         value={stat.percentage}
-                        className="h-2"
+                        className="h-1.5 md:h-2"
                         style={{
                           backgroundColor: `${stat.tag.color}20`,
                         }}
