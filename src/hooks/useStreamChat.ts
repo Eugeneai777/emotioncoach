@@ -150,6 +150,19 @@ ${data.growth_story}
   };
 
   const sendMessage = async (input: string) => {
+    const trimmedInput = input.trim();
+    
+    // Validate input
+    if (!trimmedInput) {
+      toast({ title: "消息不能为空", variant: "destructive" });
+      return;
+    }
+    
+    if (trimmedInput.length > 2000) {
+      toast({ title: "消息过长", description: "消息长度不能超过2000字符", variant: "destructive" });
+      return;
+    }
+
     // 如果没有对话ID，创建新对话
     let convId = currentConversationId;
     if (!convId) {
@@ -159,13 +172,13 @@ ${data.growth_story}
       }
     }
 
-    const userMsg: Message = { role: "user", content: input };
+    const userMsg: Message = { role: "user", content: trimmedInput };
     setMessages((prev) => [...prev, userMsg]);
     setIsLoading(true);
 
     // 保存用户消息
     if (convId) {
-      await saveMessage(convId, "user", input);
+      await saveMessage(convId, "user", trimmedInput);
     }
 
     let assistantContent = "";
@@ -304,7 +317,12 @@ ${data.growth_story}
 
       setIsLoading(false);
     } catch (e) {
-      console.error(e);
+      console.error("发送消息失败");
+      toast({
+        title: "发送失败",
+        description: "请稍后重试",
+        variant: "destructive",
+      });
       setIsLoading(false);
       setMessages((prev) => prev.slice(0, -1));
     }

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,7 +10,70 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "未授权访问" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Verify JWT token with Supabase
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "身份验证失败" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { messages } = await req.json();
+    
+    // Validate input
+    if (!Array.isArray(messages)) {
+      return new Response(JSON.stringify({ error: "消息格式无效" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (messages.length === 0 || messages.length > 100) {
+      return new Response(JSON.stringify({ error: "消息数量必须在1-100之间" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate each message
+    for (const msg of messages) {
+      if (!msg.role || !msg.content) {
+        return new Response(JSON.stringify({ error: "消息格式无效" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      
+      if (!['user', 'assistant', 'system'].includes(msg.role)) {
+        return new Response(JSON.stringify({ error: "消息角色无效" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (typeof msg.content !== 'string' || msg.content.length === 0 || msg.content.length > 4000) {
+        return new Response(JSON.stringify({ error: "消息内容长度必须在1-4000字符之间" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -111,8 +175,8 @@ serve(async (req) => {
         });
       }
       const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI 服务出现错误" }), {
+      console.error("AI gateway error:", response.status);
+      return new Response(JSON.stringify({ error: "AI 服务暂时不可用，请稍后再试" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -122,8 +186,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
-    console.error("chat error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "未知错误" }), {
+    console.error("chat error:", e instanceof Error ? e.message : "unknown");
+    return new Response(JSON.stringify({ error: "服务出现错误，请稍后再试" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
