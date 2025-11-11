@@ -169,9 +169,12 @@ ${data.growth_story}
 
       if (briefingError) throw briefingError;
 
-      // 如果有情绪标签，创建或获取标签，并关联到简报
-      if (emotion_tags && emotion_tags.length > 0 && briefing) {
-        for (const tagName of emotion_tags) {
+      // 确保每个简报都有标签：如果AI没有返回标签或标签为空，使用默认标签
+      let tagsToUse = emotion_tags && emotion_tags.length > 0 ? emotion_tags : ["情绪梳理"];
+      
+      // 处理情绪标签
+      if (briefing) {
+        for (const tagName of tagsToUse) {
           // 查找或创建标签
           let { data: existingTag } = await supabase
             .from("tags")
