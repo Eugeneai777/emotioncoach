@@ -1,12 +1,25 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 type Message = { role: "user" | "assistant"; content: string };
+
+interface BriefingData {
+  emotion_theme: string;
+  stage_1_content: string;
+  stage_2_content: string;
+  stage_3_content: string;
+  stage_4_content: string;
+  insight: string;
+  action: string;
+  growth_story: string;
+}
 
 export const useStreamChat = (conversationId?: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(conversationId);
+  const { toast } = useToast();
 
   const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
@@ -74,6 +87,31 @@ export const useStreamChat = (conversationId?: string) => {
     }
   };
 
+  const saveBriefing = async (convId: string, briefingData: BriefingData) => {
+    try {
+      const { error } = await supabase
+        .from("briefings")
+        .insert({
+          conversation_id: convId,
+          ...briefingData
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "简报已保存 🌿",
+        description: "你可以在历史记录中查看",
+      });
+    } catch (error) {
+      console.error("Error saving briefing:", error);
+      toast({
+        title: "简报保存失败",
+        description: "请稍后重试",
+        variant: "destructive",
+      });
+    }
+  };
+
   const sendMessage = async (input: string) => {
     // 如果没有对话ID，创建新对话
     let convId = currentConversationId;
@@ -94,6 +132,9 @@ export const useStreamChat = (conversationId?: string) => {
     }
 
     let assistantContent = "";
+    let toolCallBuffer = "";
+    let inToolCall = false;
+
     const updateAssistant = (chunk: string) => {
       assistantContent += chunk;
       setMessages((prev) => {
@@ -149,8 +190,25 @@ export const useStreamChat = (conversationId?: string) => {
 
           try {
             const parsed = JSON.parse(jsonStr);
+            
+            // 检查是否有tool调用
+            const toolCalls = parsed.choices?.[0]?.delta?.tool_calls;
+            if (toolCalls && toolCalls.length > 0) {
+              const toolCall = toolCalls[0];
+              
+              if (toolCall.function?.name === "generate_briefing") {
+                inToolCall = true;
+                if (toolCall.function?.arguments) {
+                  toolCallBuffer += toolCall.function.arguments;
+                }
+              }
+            }
+            
+            // 正常内容更新
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) updateAssistant(content);
+            if (content) {
+              updateAssistant(content);
+            }
           } catch {
             textBuffer = line + "\n" + textBuffer;
             break;
@@ -158,6 +216,7 @@ export const useStreamChat = (conversationId?: string) => {
         }
       }
 
+      // 处理剩余缓冲区
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split("\n")) {
           if (!raw) continue;
@@ -168,11 +227,30 @@ export const useStreamChat = (conversationId?: string) => {
           if (jsonStr === "[DONE]") continue;
           try {
             const parsed = JSON.parse(jsonStr);
+            
+            const toolCalls = parsed.choices?.[0]?.delta?.tool_calls;
+            if (toolCalls && toolCalls.length > 0) {
+              const toolCall = toolCalls[0];
+              if (toolCall.function?.name === "generate_briefing" && toolCall.function?.arguments) {
+                toolCallBuffer += toolCall.function.arguments;
+              }
+            }
+            
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) updateAssistant(content);
           } catch {
             /* ignore */
           }
+        }
+      }
+
+      // 如果检测到简报生成，保存到数据库
+      if (inToolCall && toolCallBuffer && convId) {
+        try {
+          const briefingData = JSON.parse(toolCallBuffer) as BriefingData;
+          await saveBriefing(convId, briefingData);
+        } catch (e) {
+          console.error("Error parsing briefing data:", e);
         }
       }
 
