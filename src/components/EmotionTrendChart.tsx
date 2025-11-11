@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 interface Briefing {
   id: string;
   emotion_theme: string;
+  emotion_intensity: number | null;
   created_at: string;
 }
 
@@ -14,8 +15,15 @@ interface EmotionTrendChartProps {
 
 const EmotionTrendChart = ({ briefings }: EmotionTrendChartProps) => {
   const chartData = useMemo(() => {
-    // 按日期分组统计情绪记录数
-    const dateMap = new Map<string, { date: string; count: number; emotions: string[] }>();
+    // 按日期分组统计情绪记录数和平均强度
+    const dateMap = new Map<string, { 
+      date: string; 
+      count: number; 
+      emotions: string[];
+      intensitySum: number;
+      intensityCount: number;
+      avgIntensity: number;
+    }>();
     
     briefings.forEach((briefing) => {
       const date = new Date(briefing.created_at);
@@ -25,16 +33,35 @@ const EmotionTrendChart = ({ briefings }: EmotionTrendChartProps) => {
       });
       
       if (!dateMap.has(dateKey)) {
-        dateMap.set(dateKey, { date: dateKey, count: 0, emotions: [] });
+        dateMap.set(dateKey, { 
+          date: dateKey, 
+          count: 0, 
+          emotions: [],
+          intensitySum: 0,
+          intensityCount: 0,
+          avgIntensity: 0
+        });
       }
       
       const entry = dateMap.get(dateKey)!;
       entry.count += 1;
       entry.emotions.push(briefing.emotion_theme);
+      
+      // 累加情绪强度
+      if (briefing.emotion_intensity) {
+        entry.intensitySum += briefing.emotion_intensity;
+        entry.intensityCount += 1;
+      }
     });
     
-    // 转换为数组并按日期排序
+    // 计算平均强度并转换为数组
     return Array.from(dateMap.values())
+      .map(entry => ({
+        ...entry,
+        avgIntensity: entry.intensityCount > 0 
+          ? Math.round((entry.intensitySum / entry.intensityCount) * 10) / 10
+          : 0
+      }))
       .sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
@@ -107,6 +134,73 @@ const EmotionTrendChart = ({ briefings }: EmotionTrendChartProps) => {
             />
           </AreaChart>
         </ResponsiveContainer>
+      </Card>
+
+      <Card className="p-6 bg-card/50 backdrop-blur-sm border-border">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          🌡️ 情绪强度变化
+        </h3>
+        <ResponsiveContainer width="100%" height={250}>
+          <LineChart data={chartData}>
+            <defs>
+              <linearGradient id="colorIntensity" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0.1} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+            <XAxis 
+              dataKey="date" 
+              stroke="hsl(var(--muted-foreground))" 
+              fontSize={12}
+              tickLine={false}
+            />
+            <YAxis 
+              stroke="hsl(var(--muted-foreground))" 
+              fontSize={12}
+              tickLine={false}
+              domain={[0, 10]}
+              ticks={[0, 2, 4, 6, 8, 10]}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: "8px",
+                padding: "8px 12px",
+              }}
+              labelStyle={{ color: "hsl(var(--foreground))" }}
+              formatter={(value: number) => [`${value}/10`, "情绪强度"]}
+            />
+            <Line
+              type="monotone"
+              dataKey="avgIntensity"
+              stroke="hsl(var(--chart-2))"
+              strokeWidth={3}
+              dot={{ fill: "hsl(var(--chart-2))", r: 4 }}
+              activeDot={{ r: 6 }}
+              name="平均强度"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+        <div className="mt-4 flex items-center justify-center gap-6 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-green-500" />
+            <span>1-3分 轻微</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-blue-500" />
+            <span>4-5分 中等</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-orange-500" />
+            <span>6-7分 较强</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500" />
+            <span>8-10分 强烈</span>
+          </div>
+        </div>
       </Card>
 
       <Card className="p-6 bg-card/50 backdrop-blur-sm border-border">

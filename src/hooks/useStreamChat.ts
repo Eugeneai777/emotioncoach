@@ -13,6 +13,7 @@ interface BriefingData {
   insight: string;
   action: string;
   growth_story: string;
+  emotion_intensity?: number;
   emotion_tags?: string[];
 }
 

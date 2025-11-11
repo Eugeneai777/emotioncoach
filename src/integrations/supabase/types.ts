@@ -55,6 +55,7 @@ export type Database = {
           action: string | null
           conversation_id: string
           created_at: string
+          emotion_intensity: number | null
           emotion_theme: string
           growth_story: string | null
           id: string
@@ -68,6 +69,7 @@ export type Database = {
           action?: string | null
           conversation_id: string
           created_at?: string
+          emotion_intensity?: number | null
           emotion_theme: string
           growth_story?: string | null
           id?: string
@@ -81,6 +83,7 @@ export type Database = {
           action?: string | null
           conversation_id?: string
           created_at?: string
+          emotion_intensity?: number | null
           emotion_theme?: string
           growth_story?: string | null
           id?: string

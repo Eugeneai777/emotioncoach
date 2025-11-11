@@ -15,6 +15,7 @@ import { EmotionPatternInsights } from "@/components/EmotionPatternInsights";
 import { BriefingTagSelector } from "@/components/BriefingTagSelector";
 import { Badge } from "@/components/ui/badge";
 import { MusicRecommendation } from "@/components/MusicRecommendation";
+import { EmotionIntensityCard } from "@/components/EmotionIntensityMeter";
 
 interface TagType {
   id: string;
@@ -32,6 +33,7 @@ interface Briefing {
   insight: string | null;
   action: string | null;
   growth_story: string | null;
+  emotion_intensity: number | null;
   created_at: string;
   tags?: TagType[];
 }
@@ -200,6 +202,12 @@ const History = () => {
                 </h3>
                 <p className="text-foreground/80">{selectedBriefing.emotion_theme}</p>
               </div>
+
+              {selectedBriefing.emotion_intensity && (
+                <div>
+                  <EmotionIntensityCard intensity={selectedBriefing.emotion_intensity} />
+                </div>
+              )}
 
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -382,7 +390,22 @@ const History = () => {
                         <div className="space-y-3">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 space-y-2">
-                              <h3 className="font-semibold text-foreground">{briefing.emotion_theme}</h3>
+                              <div className="flex items-center gap-3">
+                                <h3 className="font-semibold text-foreground">{briefing.emotion_theme}</h3>
+                                {briefing.emotion_intensity && (
+                                  <div className="flex items-center gap-1.5 text-xs">
+                                    <span className="text-muted-foreground">强度:</span>
+                                    <span className={`font-semibold ${
+                                      briefing.emotion_intensity <= 3 ? 'text-green-600' :
+                                      briefing.emotion_intensity <= 5 ? 'text-blue-600' :
+                                      briefing.emotion_intensity <= 7 ? 'text-orange-600' :
+                                      'text-red-600'
+                                    }`}>
+                                      {briefing.emotion_intensity}/10
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                               {briefing.insight && (
                                 <p className="text-sm text-muted-foreground line-clamp-2">{briefing.insight}</p>
                               )}
