@@ -2,3 +2,6 @@ project_id = "vlsuzskvykddwrxbmcbu"
 
 [functions.check-streak-achievements]
 verify_jwt = false
+
+[functions.analyze-emotion-patterns]
+verify_jwt = true

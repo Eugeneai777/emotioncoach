@@ -11,6 +11,7 @@ import EmotionCycleAnalysis from "@/components/EmotionCycleAnalysis";
 import ExportDialog from "@/components/ExportDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TagManager } from "@/components/TagManager";
+import { EmotionPatternInsights } from "@/components/EmotionPatternInsights";
 import { BriefingTagSelector } from "@/components/BriefingTagSelector";
 import { Badge } from "@/components/ui/badge";
 
@@ -346,11 +347,12 @@ const History = () => {
             </div>
             
             <Tabs defaultValue="list" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-6">
+              <TabsList className="grid w-full grid-cols-5 mb-6">
                 <TabsTrigger value="list">简报列表</TabsTrigger>
                 <TabsTrigger value="trends">情绪趋势</TabsTrigger>
                 <TabsTrigger value="cloud">标签云</TabsTrigger>
                 <TabsTrigger value="cycle">周期分析</TabsTrigger>
+                <TabsTrigger value="patterns">模式洞察</TabsTrigger>
               </TabsList>
             
             <TabsContent value="list">
@@ -420,6 +422,12 @@ const History = () => {
             <TabsContent value="cycle">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <EmotionCycleAnalysis briefings={briefings} />
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="patterns">
+              <ScrollArea className="h-[calc(100vh-280px)]">
+                <EmotionPatternInsights />
               </ScrollArea>
             </TabsContent>
             </Tabs>
