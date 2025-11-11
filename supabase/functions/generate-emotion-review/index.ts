@@ -52,7 +52,7 @@ serve(async (req) => {
       .eq('conversations.user_id', user.id)
       .gte('conversations.created_at', startDate)
       .lte('conversations.created_at', endDate)
-      .order('conversations.created_at', { ascending: true });
+      .order('created_at', { ascending: true, foreignTable: 'conversations' });
 
     if (briefingsError) {
       console.error('Error fetching briefings:', briefingsError);
