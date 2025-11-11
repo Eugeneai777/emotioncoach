@@ -124,8 +124,8 @@ const EmotionTrendChart = ({ briefings }: EmotionTrendChartProps) => {
         </ResponsiveContainer>
       </Card>
 
-      <Card className="p-6 bg-card/50 backdrop-blur-sm border-border">
-        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+      <Card className="p-4 md:p-6 bg-card/50 backdrop-blur-sm border-border">
+        <h3 className="text-base md:text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           🌡️ 情绪强度变化
         </h3>
         <ResponsiveContainer width="100%" height={250}>
@@ -140,53 +140,56 @@ const EmotionTrendChart = ({ briefings }: EmotionTrendChartProps) => {
             <XAxis 
               dataKey="date" 
               stroke="hsl(var(--muted-foreground))" 
-              fontSize={12}
+              fontSize={10}
               tickLine={false}
+              className="md:text-xs"
             />
             <YAxis 
               stroke="hsl(var(--muted-foreground))" 
-              fontSize={12}
+              fontSize={10}
               tickLine={false}
               domain={[0, 10]}
               ticks={[0, 2, 4, 6, 8, 10]}
+              className="md:text-xs"
             />
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
                 borderRadius: "8px",
-                padding: "8px 12px",
+                padding: "6px 10px",
+                fontSize: "12px",
               }}
-              labelStyle={{ color: "hsl(var(--foreground))" }}
-              formatter={(value: number) => [`${value}/10`, "情绪强度"]}
+              labelStyle={{ color: "hsl(var(--foreground))", fontSize: "12px" }}
+              formatter={(value: number) => [`${value}/10`, "强度"]}
             />
             <Line
               type="monotone"
               dataKey="avgIntensity"
               stroke="hsl(var(--chart-2))"
-              strokeWidth={3}
-              dot={{ fill: "hsl(var(--chart-2))", r: 4 }}
-              activeDot={{ r: 6 }}
+              strokeWidth={2}
+              dot={{ fill: "hsl(var(--chart-2))", r: 3 }}
+              activeDot={{ r: 5 }}
               name="平均强度"
             />
           </LineChart>
         </ResponsiveContainer>
-        <div className="mt-4 flex items-center justify-center gap-6 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span>1-3分 轻微</span>
+        <div className="mt-3 md:mt-4 grid grid-cols-2 md:flex md:items-center md:justify-center gap-3 md:gap-6 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-green-500 flex-shrink-0" />
+            <span className="text-[10px] md:text-xs">1-3 轻微</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span>4-5分 中等</span>
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-blue-500 flex-shrink-0" />
+            <span className="text-[10px] md:text-xs">4-5 中等</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-500" />
-            <span>6-7分 较强</span>
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-orange-500 flex-shrink-0" />
+            <span className="text-[10px] md:text-xs">6-7 较强</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <span>8-10分 强烈</span>
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-red-500 flex-shrink-0" />
+            <span className="text-[10px] md:text-xs">8-10 强烈</span>
           </div>
         </div>
       </Card>
