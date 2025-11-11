@@ -124,6 +124,45 @@ export type Database = {
         }
         Relationships: []
       }
+      emotion_goals: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string
+          goal_type: string
+          id: string
+          is_active: boolean
+          start_date: string
+          target_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date: string
+          goal_type: string
+          id?: string
+          is_active?: boolean
+          start_date: string
+          target_count: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          goal_type?: string
+          id?: string
+          is_active?: boolean
+          start_date?: string
+          target_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string

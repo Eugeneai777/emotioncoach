@@ -7,7 +7,7 @@ import DailyReminder from "@/components/DailyReminder";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Send, RotateCcw, History, LogOut, Loader2, Settings } from "lucide-react";
+import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target } from "lucide-react";
 
 const Index = () => {
   const [input, setInput] = useState("");
@@ -144,6 +144,15 @@ const Index = () => {
               )}
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/goals")}
+                className="gap-2"
+              >
+                <Target className="w-4 h-4" />
+                <span className="hidden sm:inline">目标</span>
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
