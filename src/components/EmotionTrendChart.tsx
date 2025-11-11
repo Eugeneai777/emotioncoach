@@ -77,8 +77,8 @@ const EmotionTrendChart = ({ briefings }: EmotionTrendChartProps) => {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6 bg-card/50 backdrop-blur-sm border-border">
-        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+      <Card className="p-4 md:p-6 bg-card/50 backdrop-blur-sm border-border">
+        <h3 className="text-base md:text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           📊 情绪记录趋势
         </h3>
         <ResponsiveContainer width="100%" height={250}>
@@ -93,24 +93,27 @@ const EmotionTrendChart = ({ briefings }: EmotionTrendChartProps) => {
             <XAxis 
               dataKey="date" 
               stroke="hsl(var(--muted-foreground))" 
-              fontSize={12}
+              fontSize={10}
               tickLine={false}
+              className="md:text-xs"
             />
             <YAxis 
               stroke="hsl(var(--muted-foreground))" 
-              fontSize={12}
+              fontSize={10}
               tickLine={false}
               allowDecimals={false}
+              className="md:text-xs"
             />
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
                 borderRadius: "8px",
-                padding: "8px 12px",
+                padding: "6px 10px",
+                fontSize: "12px",
               }}
-              labelStyle={{ color: "hsl(var(--foreground))" }}
-              itemStyle={{ color: "hsl(var(--primary))" }}
+              labelStyle={{ color: "hsl(var(--foreground))", fontSize: "12px" }}
+              itemStyle={{ color: "hsl(var(--primary))", fontSize: "12px" }}
             />
             <Area
               type="monotone"
@@ -118,7 +121,7 @@ const EmotionTrendChart = ({ briefings }: EmotionTrendChartProps) => {
               stroke="hsl(var(--primary))"
               strokeWidth={2}
               fill="url(#colorCount)"
-              name="情绪记录次数"
+              name="记录次数"
             />
           </AreaChart>
         </ResponsiveContainer>
