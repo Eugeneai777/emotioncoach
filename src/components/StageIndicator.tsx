@@ -6,7 +6,7 @@ export const StageIndicator = ({ currentStage }: StageIndicatorProps) => {
   const stages = [
     { name: "觉察", icon: "🌱" },
     { name: "理解", icon: "💭" },
-    { name: "看见", icon: "👁️" },
+    { name: "反应", icon: "👁️" },
     { name: "转化", icon: "🦋" },
     { name: "简报", icon: "📋" },
   ];
