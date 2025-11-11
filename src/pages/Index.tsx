@@ -67,7 +67,7 @@ const Index = () => {
       <main className="flex-1 container max-w-2xl mx-auto px-4 flex flex-col overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-8 px-4">
-            <div className="text-center space-y-4 w-full animate-in fade-in-50 duration-700">
+            <div className="text-center space-y-6 w-full max-w-xl animate-in fade-in-50 duration-700">
               <div className="space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <h2 className="text-2xl font-semibold text-foreground">
                   情绪梳理教练
@@ -76,46 +76,46 @@ const Index = () => {
                   劲老师会陪你一起走过情绪梳理4部曲的旅程
                 </p>
               </div>
-              <div className="bg-card border border-border rounded-3xl p-8 space-y-5 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
-                <h3 className="font-semibold text-foreground flex items-center gap-2 text-lg pb-2">
+              <div className="bg-card border border-border rounded-3xl p-6 space-y-4 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
+                <h3 className="font-semibold text-foreground flex items-center gap-2 text-base pb-1 border-b border-border/50">
                   <span className="text-primary">🌱</span>
                   情绪四部曲
                 </h3>
-                <div className="space-y-4">
-                  <div className="flex gap-4 items-start group">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                <div className="space-y-3">
+                  <div className="flex gap-3 items-center group hover:bg-accent/20 rounded-xl p-2 -m-2 transition-colors duration-200">
+                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                       1
                     </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="font-semibold text-foreground text-sm">觉察 Feel it</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">停下来感受当前情绪</p>
+                    <div className="flex-1">
+                      <span className="font-semibold text-foreground text-sm">觉察 Feel it</span>
+                      <span className="text-muted-foreground text-xs ml-2">停下来感受当前情绪</span>
                     </div>
                   </div>
-                  <div className="flex gap-4 items-start group">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                  <div className="flex gap-3 items-center group hover:bg-accent/20 rounded-xl p-2 -m-2 transition-colors duration-200">
+                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                       2
                     </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="font-semibold text-foreground text-sm">理解 Name it</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">理解情绪背后的需求</p>
+                    <div className="flex-1">
+                      <span className="font-semibold text-foreground text-sm">理解 Name it</span>
+                      <span className="text-muted-foreground text-xs ml-2">理解情绪背后的需求</span>
                     </div>
                   </div>
-                  <div className="flex gap-4 items-start group">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                  <div className="flex gap-3 items-center group hover:bg-accent/20 rounded-xl p-2 -m-2 transition-colors duration-200">
+                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                       3
                     </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="font-semibold text-foreground text-sm">反应 React it</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">觉察情绪驱动的反应</p>
+                    <div className="flex-1">
+                      <span className="font-semibold text-foreground text-sm">反应 React it</span>
+                      <span className="text-muted-foreground text-xs ml-2">觉察情绪驱动的反应</span>
                     </div>
                   </div>
-                  <div className="flex gap-4 items-start group">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                  <div className="flex gap-3 items-center group hover:bg-accent/20 rounded-xl p-2 -m-2 transition-colors duration-200">
+                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                       4
                     </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="font-semibold text-foreground text-sm">转化 Transform it</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">温柔回应情绪</p>
+                    <div className="flex-1">
+                      <span className="font-semibold text-foreground text-sm">转化 Transform it</span>
+                      <span className="text-muted-foreground text-xs ml-2">温柔回应情绪</span>
                     </div>
                   </div>
                 </div>
@@ -150,24 +150,24 @@ const Index = () => {
       </main>
 
       {/* Input Area */}
-      <div className="border-t border-border bg-card/50 backdrop-blur-sm sticky bottom-0 safe-area-inset-bottom">
-        <div className="container max-w-2xl mx-auto px-4 py-3">
-          <div className="flex gap-2 items-end">
+      <div className="border-t border-border bg-card/80 backdrop-blur-md sticky bottom-0 safe-area-inset-bottom shadow-lg">
+        <div className="container max-w-xl mx-auto px-4 py-4">
+          <div className="flex gap-3 items-end">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="分享你的感受..."
-              className="min-h-[50px] max-h-[120px] resize-none rounded-2xl border-border focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary shadow-sm focus-visible:shadow-md transition-all duration-300 text-sm"
+              className="min-h-[56px] max-h-[120px] resize-none rounded-2xl border-border focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary shadow-sm focus-visible:shadow-md transition-all duration-300 text-base"
               disabled={isLoading}
             />
             <Button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
               size="lg"
-              className="rounded-2xl h-[50px] px-5 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 disabled:hover:scale-100 disabled:shadow-sm"
+              className="rounded-2xl h-[56px] px-6 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 disabled:hover:scale-100 disabled:shadow-sm"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5" />
             </Button>
           </div>
         </div>
