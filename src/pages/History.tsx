@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import EmotionTrendChart from "@/components/EmotionTrendChart";
 import EmotionTagCloud from "@/components/EmotionTagCloud";
 import EmotionCycleAnalysis from "@/components/EmotionCycleAnalysis";
+import { EmotionTrendsCombined } from "@/components/EmotionTrendsCombined";
 import ExportDialog from "@/components/ExportDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TagManager } from "@/components/TagManager";
@@ -25,7 +26,7 @@ interface TagType {
   color: string;
 }
 
-interface Briefing {
+export interface Briefing {
   id: string;
   emotion_theme: string;
   stage_1_content: string | null;
@@ -367,11 +368,9 @@ const History = () => {
             </div>
             
             <Tabs defaultValue="list" className="w-full">
-              <TabsList className="grid w-full grid-cols-7 mb-6">
+              <TabsList className="grid w-full grid-cols-5 mb-6">
                 <TabsTrigger value="list">简报列表</TabsTrigger>
                 <TabsTrigger value="trends">情绪趋势</TabsTrigger>
-                <TabsTrigger value="cloud">标签云</TabsTrigger>
-                <TabsTrigger value="cycle">周期分析</TabsTrigger>
                 <TabsTrigger value="patterns">模式洞察</TabsTrigger>
                 <TabsTrigger value="compare">对比分析</TabsTrigger>
                 <TabsTrigger value="review">情绪复盘</TabsTrigger>
@@ -446,19 +445,7 @@ const History = () => {
             
             <TabsContent value="trends">
               <ScrollArea className="h-[calc(100vh-280px)]">
-                <EmotionTrendChart briefings={briefings} />
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="cloud">
-              <ScrollArea className="h-[calc(100vh-280px)]">
-                <EmotionTagCloud briefings={briefings} />
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="cycle">
-              <ScrollArea className="h-[calc(100vh-280px)]">
-                <EmotionCycleAnalysis briefings={briefings} />
+                <EmotionTrendsCombined briefings={briefings} />
               </ScrollArea>
             </TabsContent>
 
