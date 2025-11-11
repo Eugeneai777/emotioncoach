@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "@/components/ChatMessage";
 import { StageIndicator } from "@/components/StageIndicator";
 import { useStreamChat } from "@/hooks/useStreamChat";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, RotateCcw } from "lucide-react";
 
 const Index = () => {
   const [input, setInput] = useState("");
@@ -38,66 +38,83 @@ const Index = () => {
     }
   };
 
+  const handleRestart = () => {
+    window.location.reload();
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-primary" />
+        <div className="container max-w-2xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold text-foreground">劲老师</h1>
+                <p className="text-xs text-muted-foreground">情绪陪伴教练 🌿</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground">劲老师</h1>
-              <p className="text-sm text-muted-foreground">情绪陪伴教练 🌿</p>
-            </div>
+            {messages.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRestart}
+                className="gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span className="hidden sm:inline">重新开始</span>
+              </Button>
+            )}
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container max-w-4xl mx-auto px-4 flex flex-col">
+      <main className="flex-1 container max-w-2xl mx-auto px-4 flex flex-col overflow-y-auto">
         {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-12">
-            <div className="text-center space-y-6 max-w-2xl">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto">
-                <span className="text-5xl">🌿</span>
+          <div className="flex-1 flex flex-col items-center justify-center py-8 px-4">
+            <div className="text-center space-y-4 w-full">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto">
+                <span className="text-4xl">🌿</span>
               </div>
-              <div className="space-y-3">
-                <h2 className="text-3xl font-semibold text-foreground">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-semibold text-foreground">
                   你好，我是劲老师
                 </h2>
-                <p className="text-lg text-muted-foreground leading-relaxed">
+                <p className="text-base text-muted-foreground leading-relaxed">
                   我会陪伴你走过情绪觉察、理解与转化的旅程
                 </p>
               </div>
-              <div className="bg-card border border-border rounded-3xl p-8 space-y-4 text-left">
-                <h3 className="font-medium text-foreground flex items-center gap-2">
+              <div className="bg-card border border-border rounded-3xl p-6 space-y-3 text-left">
+                <h3 className="font-medium text-foreground flex items-center gap-2 text-sm">
                   <span className="text-primary">🌱</span>
-                  情绪三部曲
+                  情绪四部曲
                 </h3>
-                <div className="space-y-3 text-sm text-muted-foreground">
+                <div className="space-y-2 text-sm text-muted-foreground">
                   <p><span className="font-medium text-foreground">觉察 Feel it</span> - 停下来感受当前情绪</p>
                   <p><span className="font-medium text-foreground">理解 Name it</span> - 理解情绪背后的需求</p>
                   <p><span className="font-medium text-foreground">看见反应</span> - 觉察情绪驱动的反应</p>
                   <p><span className="font-medium text-foreground">转化 Transform it</span> - 温柔回应情绪</p>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground px-4">
                 你愿意先一起看看你现在的感受吗？劲老师在这里陪着你 🌿
               </p>
             </div>
           </div>
         ) : (
-          <div className="flex-1 py-8">
+          <div className="flex-1 py-6">
             <StageIndicator currentStage={currentStage} />
-            <div className="space-y-4 mt-8">
+            <div className="space-y-3 mt-6">
               {messages.map((msg, idx) => (
                 <ChatMessage key={idx} role={msg.role} content={msg.content} />
               ))}
               {isLoading && (
-                <div className="flex justify-start mb-6">
-                  <div className="bg-card border border-border rounded-3xl px-6 py-4">
+                <div className="flex justify-start mb-4">
+                  <div className="bg-card border border-border rounded-3xl px-5 py-3">
                     <div className="flex gap-2">
                       <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
                       <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -113,24 +130,24 @@ const Index = () => {
       </main>
 
       {/* Input Area */}
-      <div className="border-t border-border bg-card/50 backdrop-blur-sm sticky bottom-0">
-        <div className="container max-w-4xl mx-auto px-4 py-4">
-          <div className="flex gap-3 items-end">
+      <div className="border-t border-border bg-card/50 backdrop-blur-sm sticky bottom-0 safe-area-inset-bottom">
+        <div className="container max-w-2xl mx-auto px-4 py-3">
+          <div className="flex gap-2 items-end">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="分享你的感受..."
-              className="min-h-[60px] max-h-[200px] resize-none rounded-2xl border-border focus-visible:ring-primary"
+              className="min-h-[50px] max-h-[120px] resize-none rounded-2xl border-border focus-visible:ring-primary text-sm"
               disabled={isLoading}
             />
             <Button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
               size="lg"
-              className="rounded-2xl h-[60px] px-6"
+              className="rounded-2xl h-[50px] px-5"
             >
-              <Send className="w-5 h-5" />
+              <Send className="w-4 h-4" />
             </Button>
           </div>
         </div>
