@@ -73,7 +73,7 @@ const Index = () => {
                   情绪梳理教练
                 </h2>
                 <p className="text-base text-muted-foreground leading-relaxed">
-                  我会陪伴你走过情绪觉察、理解与转化的旅程
+                  劲老师会陪你一起走过情绪梳理4部曲的旅程
                 </p>
               </div>
               <div className="bg-card border border-border rounded-3xl p-8 space-y-4 text-left shadow-sm">
