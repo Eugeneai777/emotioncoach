@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Calendar, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import EmotionTrendChart from "@/components/EmotionTrendChart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Briefing {
   id: string;
@@ -207,30 +209,45 @@ const History = () => {
             <p className="text-sm text-muted-foreground mt-2">完成一次情绪梳理后会生成简报 🌿</p>
           </div>
         ) : (
-          <ScrollArea className="h-[calc(100vh-200px)]">
-            <div className="space-y-4">
-              {briefings.map((briefing) => (
-                <button
-                  key={briefing.id}
-                  onClick={() => setSelectedBriefing(briefing)}
-                  className="w-full bg-card border border-border rounded-2xl p-6 hover:shadow-md transition-all duration-200 text-left"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-2">
-                      <h3 className="font-semibold text-foreground">{briefing.emotion_theme}</h3>
-                      {briefing.insight && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">{briefing.insight}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0">
-                      <Calendar className="w-3 h-3" />
-                      {formatDate(briefing.created_at)}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </ScrollArea>
+          <Tabs defaultValue="list" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="list">简报列表</TabsTrigger>
+              <TabsTrigger value="trends">情绪趋势</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="list">
+              <ScrollArea className="h-[calc(100vh-280px)]">
+                <div className="space-y-4">
+                  {briefings.map((briefing) => (
+                    <button
+                      key={briefing.id}
+                      onClick={() => setSelectedBriefing(briefing)}
+                      className="w-full bg-card border border-border rounded-2xl p-6 hover:shadow-md transition-all duration-200 text-left"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-2">
+                          <h3 className="font-semibold text-foreground">{briefing.emotion_theme}</h3>
+                          {briefing.insight && (
+                            <p className="text-sm text-muted-foreground line-clamp-2">{briefing.insight}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0">
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(briefing.created_at)}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="trends">
+              <ScrollArea className="h-[calc(100vh-280px)]">
+                <EmotionTrendChart briefings={briefings} />
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         )}
       </main>
     </div>
