@@ -90,37 +90,40 @@ export const useStreamChat = (conversationId?: string) => {
   const formatBriefing = (data: BriefingData): string => {
     return `
 
----
+🌿 《情绪四部曲简报》
 
-🌿 **《情绪四部曲简报》**
 
-**🎭 主题情绪**
+🎭 主题情绪
 ${data.emotion_theme}
 
-**📖 情绪四部曲旅程**
 
-1️⃣ **觉察（Feel it）**
+📖 情绪四部曲旅程
+
+1️⃣ 觉察（Feel it）
 ${data.stage_1_content}
 
-2️⃣ **理解（Name it）**
+2️⃣ 理解（Name it）
 ${data.stage_2_content}
 
-3️⃣ **反应（React it）**
+3️⃣ 反应（React it）
 ${data.stage_3_content}
 
-4️⃣ **转化（Transform it）**
+4️⃣ 转化（Transform it）
 ${data.stage_4_content}
 
-**💫 今日洞察**
+
+💫 今日洞察
 ${data.insight}
 
-**✅ 今日行动**
+
+✅ 今日行动
 ${data.action}
 
-**🌸 今日成长故事**
+
+🌸 今日成长故事
 ${data.growth_story}
 
----
+
 💾 简报已自动保存到你的历史记录中`;
   };
 
