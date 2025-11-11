@@ -84,7 +84,7 @@ const Index = () => {
                 <div className="space-y-3 text-sm text-muted-foreground">
                   <p><span className="font-medium text-foreground">觉察 Feel it</span> - 停下来感受当前情绪</p>
                   <p><span className="font-medium text-foreground">理解 Name it</span> - 理解情绪背后的需求</p>
-                  <p><span className="font-medium text-foreground">看见反应</span> - 觉察情绪驱动的反应</p>
+                  <p><span className="font-medium text-foreground">反应 React it</span> - 觉察情绪驱动的反应</p>
                   <p><span className="font-medium text-foreground">转化 Transform it</span> - 温柔回应情绪</p>
                 </div>
               </div>
