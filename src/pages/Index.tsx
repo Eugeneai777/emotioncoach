@@ -127,8 +127,7 @@ const Index = () => {
           </div>
         ) : (
           <div className="flex-1 py-6">
-            <StageIndicator currentStage={currentStage} />
-            <div className="space-y-3 mt-6">
+            <div className="space-y-3">
               {messages.map((msg, idx) => (
                 <ChatMessage key={idx} role={msg.role} content={msg.content} />
               ))}
