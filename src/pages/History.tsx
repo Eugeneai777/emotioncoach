@@ -178,12 +178,12 @@ const History = () => {
     return (
       <div className="min-h-screen bg-background">
         <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-          <div className="container max-w-2xl mx-auto px-4 py-4">
+          <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSelectedBriefing(null)}
-              className="gap-2"
+              className="gap-1 md:gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
               返回列表
@@ -191,19 +191,19 @@ const History = () => {
           </div>
         </header>
 
-        <main className="container max-w-2xl mx-auto px-4 py-8">
-          <div className="bg-card border border-border rounded-3xl p-8 space-y-6 shadow-lg">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground pb-4 border-b border-border/50">
-              <Calendar className="w-4 h-4" />
+        <main className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
+          <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-4 md:p-8 space-y-4 md:space-y-6 shadow-lg">
+            <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground pb-3 md:pb-4 border-b border-border/50">
+              <Calendar className="w-3 h-3 md:w-4 md:h-4" />
               {formatDate(selectedBriefing.created_at)}
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
                   🌸 今日主题情绪
                 </h3>
-                <p className="text-foreground/80">{selectedBriefing.emotion_theme}</p>
+                <p className="text-sm md:text-base text-foreground/80">{selectedBriefing.emotion_theme}</p>
               </div>
 
               {selectedBriefing.emotion_intensity && (
@@ -213,32 +213,32 @@ const History = () => {
               )}
 
               <div>
-                <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 md:mb-3 flex items-center gap-2">
                   🌿 情绪四部曲旅程
                 </h3>
-                <div className="space-y-3 pl-4">
+                <div className="space-y-3 pl-2 md:pl-4">
                   {selectedBriefing.stage_1_content && (
                     <div>
-                      <p className="font-medium text-foreground">1️⃣ 觉察（Feel it）</p>
-                      <p className="text-foreground/70 text-sm mt-1">{selectedBriefing.stage_1_content}</p>
+                      <p className="font-medium text-foreground text-sm md:text-base">1️⃣ 觉察（Feel it）</p>
+                      <p className="text-foreground/70 text-xs md:text-sm mt-1">{selectedBriefing.stage_1_content}</p>
                     </div>
                   )}
                   {selectedBriefing.stage_2_content && (
                     <div>
-                      <p className="font-medium text-foreground">2️⃣ 理解（Name it）</p>
-                      <p className="text-foreground/70 text-sm mt-1">{selectedBriefing.stage_2_content}</p>
+                      <p className="font-medium text-foreground text-sm md:text-base">2️⃣ 理解（Name it）</p>
+                      <p className="text-foreground/70 text-xs md:text-sm mt-1">{selectedBriefing.stage_2_content}</p>
                     </div>
                   )}
                   {selectedBriefing.stage_3_content && (
                     <div>
-                      <p className="font-medium text-foreground">3️⃣ 看见反应（Recognize）</p>
-                      <p className="text-foreground/70 text-sm mt-1">{selectedBriefing.stage_3_content}</p>
+                      <p className="font-medium text-foreground text-sm md:text-base">3️⃣ 看见反应（Recognize）</p>
+                      <p className="text-foreground/70 text-xs md:text-sm mt-1">{selectedBriefing.stage_3_content}</p>
                     </div>
                   )}
                   {selectedBriefing.stage_4_content && (
                     <div>
-                      <p className="font-medium text-foreground">4️⃣ 转化（Transform it）</p>
-                      <p className="text-foreground/70 text-sm mt-1">{selectedBriefing.stage_4_content}</p>
+                      <p className="font-medium text-foreground text-sm md:text-base">4️⃣ 转化（Transform it）</p>
+                      <p className="text-foreground/70 text-xs md:text-sm mt-1">{selectedBriefing.stage_4_content}</p>
                     </div>
                   )}
                 </div>
@@ -246,32 +246,32 @@ const History = () => {
 
               {selectedBriefing.insight && (
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
                     💡 今日洞察
                   </h3>
-                  <p className="text-foreground/80">{selectedBriefing.insight}</p>
+                  <p className="text-sm md:text-base text-foreground/80">{selectedBriefing.insight}</p>
                 </div>
               )}
 
               {selectedBriefing.action && (
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
                     ✅ 今日行动
                   </h3>
-                  <p className="text-foreground/80">{selectedBriefing.action}</p>
+                  <p className="text-sm md:text-base text-foreground/80">{selectedBriefing.action}</p>
                 </div>
               )}
 
               {selectedBriefing.growth_story && (
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
                     🌸 今日成长故事
                   </h3>
-                  <p className="text-foreground/80 italic">💫「{selectedBriefing.growth_story}」</p>
+                  <p className="text-sm md:text-base text-foreground/80 italic">💫「{selectedBriefing.growth_story}」</p>
                 </div>
               )}
 
-              <div className="pt-4 border-t border-border/50">
+              <div className="pt-3 md:pt-4 border-t border-border/50">
                 <h3 className="text-sm font-medium text-foreground mb-2">标签</h3>
                 <BriefingTagSelector
                   briefingId={selectedBriefing.id}
@@ -280,7 +280,7 @@ const History = () => {
                 />
               </div>
 
-              <div className="pt-4 border-t border-border/50">
+              <div className="pt-3 md:pt-4 border-t border-border/50">
                 <h3 className="text-sm font-medium text-foreground mb-3">情绪音乐推荐</h3>
                 <MusicRecommendation
                   emotionTheme={selectedBriefing.emotion_theme}
