@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Loader2, Target, TrendingUp, Calendar as CalendarIcon } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Target, TrendingUp, Calendar as CalendarIcon, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import CelebrationModal from "@/components/CelebrationModal";
+import AchievementBadge from "@/components/AchievementBadge";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +35,15 @@ interface Goal {
   created_at: string;
 }
 
+interface Achievement {
+  id: string;
+  achievement_type: string;
+  achievement_name: string;
+  achievement_description: string | null;
+  icon: string | null;
+  earned_at: string;
+}
+
 const Goals = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,11 +52,16 @@ const Goals = () => {
   const [targetCount, setTargetCount] = useState("3");
   const [description, setDescription] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [celebrationOpen, setCelebrationOpen] = useState(false);
+  const [currentAchievement, setCurrentAchievement] = useState<string>("");
+  const [currentGoalType, setCurrentGoalType] = useState<"weekly" | "monthly">("weekly");
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     checkAuthAndLoadGoals();
+    loadAchievements();
   }, []);
 
   const checkAuthAndLoadGoals = async () => {
@@ -77,6 +93,21 @@ const Goals = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAchievements = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("user_achievements")
+        .select("*")
+        .order("earned_at", { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setAchievements((data || []) as Achievement[]);
+    } catch (error: any) {
+      console.error("Error loading achievements:", error);
     }
   };
 
@@ -167,12 +198,86 @@ const Goals = () => {
     }
   };
 
-  const handleDeleteGoal = async (goalId: string) => {
+  const awardAchievement = async (goal: Goal) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Determine achievement type
+      let achievementType = "";
+      let achievementName = "";
+      let achievementIcon = "";
+      let achievementDescription = "";
+
+      // Check if this is the first goal
+      const { data: existingAchievements } = await supabase
+        .from("user_achievements")
+        .select("id")
+        .eq("user_id", user.id);
+
+      if (!existingAchievements || existingAchievements.length === 0) {
+        achievementType = "first_goal";
+        achievementName = "初心启程";
+        achievementIcon = "🌱";
+        achievementDescription = "完成第一个情绪管理目标";
+      } else if (goal.goal_type === "weekly") {
+        achievementType = "weekly_warrior";
+        achievementName = "每周践行者";
+        achievementIcon = "⭐";
+        achievementDescription = "完成一个每周目标";
+      } else {
+        achievementType = "monthly_master";
+        achievementName = "月度大师";
+        achievementIcon = "🏆";
+        achievementDescription = "完成一个每月目标";
+      }
+
+      // Check if achievement already exists to avoid duplicates
+      const { data: existingType } = await supabase
+        .from("user_achievements")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("achievement_type", achievementType)
+        .single();
+
+      if (existingType) return; // Achievement already awarded
+
+      // Award the achievement
+      const { error } = await supabase
+        .from("user_achievements")
+        .insert({
+          user_id: user.id,
+          achievement_type: achievementType,
+          achievement_name: achievementName,
+          achievement_description: achievementDescription,
+          icon: achievementIcon,
+          related_goal_id: goal.id,
+        });
+
+      if (error) throw error;
+
+      // Show celebration
+      setCurrentAchievement(achievementName);
+      setCurrentGoalType(goal.goal_type);
+      setCelebrationOpen(true);
+      await loadAchievements();
+    } catch (error: any) {
+      console.error("Error awarding achievement:", error);
+    }
+  };
+
+  const handleCompleteGoal = async (goal: Goal, progress: { current: number; percentage: number }) => {
+    try {
+      // Check if goal is actually completed
+      if (progress.percentage >= 100) {
+        await awardAchievement(goal);
+      }
+
+      // Mark goal as inactive
       const { error } = await supabase
         .from("emotion_goals")
         .update({ is_active: false })
-        .eq("id", goalId);
+        .eq("id", goal.id);
 
       if (error) throw error;
 
@@ -283,7 +388,23 @@ const Goals = () => {
         </div>
       </header>
 
-      <main className="container max-w-4xl mx-auto px-4 py-8">
+      <main className="container max-w-4xl mx-auto px-4 py-8 space-y-8">
+        {/* Achievements Section */}
+        {achievements.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Award className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">我的徽章</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {achievements.map((achievement) => (
+                <AchievementBadge key={achievement.id} achievement={achievement} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Goals Section */}
         {goals.length === 0 ? (
           <Card className="p-12 text-center space-y-4">
             <div className="flex justify-center">
@@ -338,7 +459,7 @@ const Goals = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDeleteGoal(goal.id)}
+                      onClick={() => handleCompleteGoal(goal, progress)}
                     >
                       标记完成
                     </Button>
@@ -373,6 +494,14 @@ const Goals = () => {
           </div>
         )}
       </main>
+
+      {/* Celebration Modal */}
+      <CelebrationModal
+        open={celebrationOpen}
+        onOpenChange={setCelebrationOpen}
+        goalType={currentGoalType}
+        achievementName={currentAchievement}
+      />
     </div>
   );
 };
