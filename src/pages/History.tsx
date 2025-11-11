@@ -298,26 +298,26 @@ const History = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-2xl mx-auto px-4 py-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-foreground">我的情绪日记</h1>
-            <div className="flex items-center gap-2">
+        <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4 space-y-2 md:space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h1 className="text-lg md:text-xl font-bold text-foreground">我的情绪日记</h1>
+            <div className="flex items-center gap-1 md:gap-2">
               <ExportDialog briefings={briefings} />
               <TagManager onTagsChange={loadBriefings} />
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate("/")}
-                className="gap-2"
+                className="gap-1 md:gap-2 px-2 md:px-3"
               >
                 <ArrowLeft className="w-4 h-4" />
-                返回主页
+                <span className="hidden sm:inline">返回主页</span>
               </Button>
             </div>
           </div>
           {allTags.length > 0 && (
-            <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-xs text-muted-foreground">筛选:</span>
+            <div className="flex flex-wrap gap-1.5 md:gap-2 items-center">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">筛选:</span>
               <Button
                 variant={selectedTagFilter === null ? "secondary" : "outline"}
                 size="sm"
@@ -347,7 +347,7 @@ const History = () => {
         </div>
       </header>
 
-      <main className="container max-w-2xl mx-auto px-4 py-8">
+      <main className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
         {briefings.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">还没有简报记录</p>
@@ -368,17 +368,32 @@ const History = () => {
             </div>
             
             <Tabs defaultValue="list" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 mb-6">
-                <TabsTrigger value="list">简报列表</TabsTrigger>
-                <TabsTrigger value="trends">情绪趋势</TabsTrigger>
-                <TabsTrigger value="patterns">模式洞察</TabsTrigger>
-                <TabsTrigger value="compare">对比分析</TabsTrigger>
-                <TabsTrigger value="review">情绪复盘</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-5 mb-4 md:mb-6 h-auto">
+                <TabsTrigger value="list" className="text-xs md:text-sm py-2">
+                  <span className="hidden sm:inline">简报列表</span>
+                  <span className="sm:hidden">列表</span>
+                </TabsTrigger>
+                <TabsTrigger value="trends" className="text-xs md:text-sm py-2">
+                  <span className="hidden sm:inline">情绪趋势</span>
+                  <span className="sm:hidden">趋势</span>
+                </TabsTrigger>
+                <TabsTrigger value="patterns" className="text-xs md:text-sm py-2">
+                  <span className="hidden sm:inline">模式洞察</span>
+                  <span className="sm:hidden">模式</span>
+                </TabsTrigger>
+                <TabsTrigger value="compare" className="text-xs md:text-sm py-2">
+                  <span className="hidden sm:inline">对比分析</span>
+                  <span className="sm:hidden">对比</span>
+                </TabsTrigger>
+                <TabsTrigger value="review" className="text-xs md:text-sm py-2">
+                  <span className="hidden sm:inline">情绪复盘</span>
+                  <span className="sm:hidden">复盘</span>
+                </TabsTrigger>
               </TabsList>
             
             <TabsContent value="list">
               <ScrollArea className="h-[calc(100vh-340px)]">
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   {briefings
                     .filter((briefing) => {
                       if (!selectedTagFilter) return true;
@@ -388,13 +403,13 @@ const History = () => {
                       <button
                         key={briefing.id}
                         onClick={() => setSelectedBriefing(briefing)}
-                        className="w-full bg-card border border-border rounded-2xl p-6 hover:shadow-md transition-all duration-200 text-left"
+                        className="w-full bg-card border border-border rounded-2xl p-4 md:p-6 hover:shadow-md transition-all duration-200 text-left"
                       >
-                        <div className="space-y-3">
-                          <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-2 md:space-y-3">
+                          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">
                             <div className="flex-1 space-y-2">
-                              <div className="flex items-center gap-3">
-                                <h3 className="font-semibold text-foreground">{briefing.emotion_theme}</h3>
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+                                <h3 className="font-semibold text-foreground text-sm md:text-base">{briefing.emotion_theme}</h3>
                                 {briefing.emotion_intensity && (
                                   <div className="flex items-center gap-1.5 text-xs">
                                     <span className="text-muted-foreground">强度:</span>
@@ -410,12 +425,12 @@ const History = () => {
                                 )}
                               </div>
                               {briefing.insight && (
-                                <p className="text-sm text-muted-foreground line-clamp-2">{briefing.insight}</p>
+                                <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{briefing.insight}</p>
                               )}
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-shrink-0">
                               <Calendar className="w-3 h-3" />
-                              {formatDate(briefing.created_at)}
+                              <span className="whitespace-nowrap">{formatDate(briefing.created_at)}</span>
                             </div>
                           </div>
                           {briefing.tags && briefing.tags.length > 0 && (
@@ -424,7 +439,7 @@ const History = () => {
                                 <Badge
                                   key={tag.id}
                                   variant="secondary"
-                                  className="text-xs"
+                                  className="text-xs px-2 py-0.5"
                                   style={{
                                     backgroundColor: `${tag.color}20`,
                                     color: tag.color,
