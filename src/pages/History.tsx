@@ -7,6 +7,15 @@ import { ArrowLeft, Calendar, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import EmotionTrendChart from "@/components/EmotionTrendChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TagManager } from "@/components/TagManager";
+import { BriefingTagSelector } from "@/components/BriefingTagSelector";
+import { Badge } from "@/components/ui/badge";
+
+interface TagType {
+  id: string;
+  name: string;
+  color: string;
+}
 
 interface Briefing {
   id: string;
@@ -19,12 +28,15 @@ interface Briefing {
   action: string | null;
   growth_story: string | null;
   created_at: string;
+  tags?: TagType[];
 }
 
 const History = () => {
   const [briefings, setBriefings] = useState<Briefing[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBriefing, setSelectedBriefing] = useState<Briefing | null>(null);
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null);
+  const [allTags, setAllTags] = useState<TagType[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -55,7 +67,31 @@ const History = () => {
 
       if (error) throw error;
 
-      setBriefings(data || []);
+      // Load tags for each briefing
+      const briefingsWithTags = await Promise.all(
+        (data || []).map(async (briefing) => {
+          const { data: tagData } = await supabase
+            .from("briefing_tags")
+            .select(`
+              tag_id,
+              tags (id, name, color)
+            `)
+            .eq("briefing_id", briefing.id);
+
+          const tags = tagData?.map((t: any) => t.tags).filter(Boolean) || [];
+          return { ...briefing, tags };
+        })
+      );
+
+      setBriefings(briefingsWithTags);
+      
+      // Load all available tags for filtering
+      const { data: tagsData } = await supabase
+        .from("tags")
+        .select("*")
+        .order("created_at", { ascending: true });
+      
+      setAllTags(tagsData || []);
     } catch (error: any) {
       toast({
         title: "加载失败",
@@ -176,6 +212,15 @@ const History = () => {
                   <p className="text-foreground/80 italic">💫「{selectedBriefing.growth_story}」</p>
                 </div>
               )}
+
+              <div className="pt-4 border-t border-border/50">
+                <h3 className="text-sm font-medium text-foreground mb-2">标签</h3>
+                <BriefingTagSelector
+                  briefingId={selectedBriefing.id}
+                  selectedTags={selectedBriefing.tags || []}
+                  onTagsChange={loadBriefings}
+                />
+              </div>
             </div>
           </div>
         </main>
@@ -186,19 +231,51 @@ const History = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-2xl mx-auto px-4 py-4">
+        <div className="container max-w-2xl mx-auto px-4 py-4 space-y-3">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-foreground">历史简报</h1>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/")}
-              className="gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              返回主页
-            </Button>
+            <div className="flex items-center gap-2">
+              <TagManager onTagsChange={loadBriefings} />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/")}
+                className="gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                返回主页
+              </Button>
+            </div>
           </div>
+          {allTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-xs text-muted-foreground">筛选:</span>
+              <Button
+                variant={selectedTagFilter === null ? "secondary" : "outline"}
+                size="sm"
+                className="h-6 text-xs"
+                onClick={() => setSelectedTagFilter(null)}
+              >
+                全部
+              </Button>
+              {allTags.map((tag) => (
+                <Button
+                  key={tag.id}
+                  variant={selectedTagFilter === tag.id ? "secondary" : "outline"}
+                  size="sm"
+                  className="h-6 text-xs"
+                  onClick={() => setSelectedTagFilter(tag.id)}
+                  style={{
+                    backgroundColor: selectedTagFilter === tag.id ? `${tag.color}20` : undefined,
+                    color: selectedTagFilter === tag.id ? tag.color : undefined,
+                    borderColor: selectedTagFilter === tag.id ? tag.color : undefined,
+                  }}
+                >
+                  {tag.name}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
@@ -216,28 +293,53 @@ const History = () => {
             </TabsList>
             
             <TabsContent value="list">
-              <ScrollArea className="h-[calc(100vh-280px)]">
+              <ScrollArea className="h-[calc(100vh-340px)]">
                 <div className="space-y-4">
-                  {briefings.map((briefing) => (
-                    <button
-                      key={briefing.id}
-                      onClick={() => setSelectedBriefing(briefing)}
-                      className="w-full bg-card border border-border rounded-2xl p-6 hover:shadow-md transition-all duration-200 text-left"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-2">
-                          <h3 className="font-semibold text-foreground">{briefing.emotion_theme}</h3>
-                          {briefing.insight && (
-                            <p className="text-sm text-muted-foreground line-clamp-2">{briefing.insight}</p>
+                  {briefings
+                    .filter((briefing) => {
+                      if (!selectedTagFilter) return true;
+                      return briefing.tags?.some((tag) => tag.id === selectedTagFilter);
+                    })
+                    .map((briefing) => (
+                      <button
+                        key={briefing.id}
+                        onClick={() => setSelectedBriefing(briefing)}
+                        className="w-full bg-card border border-border rounded-2xl p-6 hover:shadow-md transition-all duration-200 text-left"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 space-y-2">
+                              <h3 className="font-semibold text-foreground">{briefing.emotion_theme}</h3>
+                              {briefing.insight && (
+                                <p className="text-sm text-muted-foreground line-clamp-2">{briefing.insight}</p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0">
+                              <Calendar className="w-3 h-3" />
+                              {formatDate(briefing.created_at)}
+                            </div>
+                          </div>
+                          {briefing.tags && briefing.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {briefing.tags.map((tag) => (
+                                <Badge
+                                  key={tag.id}
+                                  variant="secondary"
+                                  className="text-xs"
+                                  style={{
+                                    backgroundColor: `${tag.color}20`,
+                                    color: tag.color,
+                                    borderColor: tag.color,
+                                  }}
+                                >
+                                  {tag.name}
+                                </Badge>
+                              ))}
+                            </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0">
-                          <Calendar className="w-3 h-3" />
-                          {formatDate(briefing.created_at)}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
                 </div>
               </ScrollArea>
             </TabsContent>
