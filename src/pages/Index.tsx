@@ -3,12 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "@/components/ChatMessage";
+import DailyReminder from "@/components/DailyReminder";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useAuth } from "@/hooks/useAuth";
-import { Send, RotateCcw, History, LogOut, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Send, RotateCcw, History, LogOut, Loader2, Settings } from "lucide-react";
 
 const Index = () => {
   const [input, setInput] = useState("");
+  const [showReminder, setShowReminder] = useState(false);
   const { user, loading: authLoading, signOut } = useAuth();
   const { messages, isLoading, sendMessage, resetConversation } = useStreamChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -27,6 +30,69 @@ const Index = () => {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (user && messages.length === 0) {
+      checkReminder();
+    }
+  }, [user, messages]);
+
+  const checkReminder = async () => {
+    if (!user) return;
+
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("reminder_enabled, reminder_time, last_reminder_shown")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile || !profile.reminder_enabled) return;
+
+      const now = new Date();
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      const [hours, minutes] = (profile.reminder_time || "20:00").split(":");
+      const reminderTime = parseInt(hours) * 60 + parseInt(minutes);
+
+      if (currentTime < reminderTime) return;
+
+      const lastShown = profile.last_reminder_shown 
+        ? new Date(profile.last_reminder_shown) 
+        : null;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (!lastShown || lastShown < today) {
+        const { data: todayConversations } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("user_id", user.id)
+          .gte("created_at", today.toISOString())
+          .limit(1);
+
+        if (!todayConversations || todayConversations.length === 0) {
+          setShowReminder(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking reminder:", error);
+    }
+  };
+
+  const handleDismissReminder = async () => {
+    setShowReminder(false);
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ last_reminder_shown: new Date().toISOString() })
+        .eq("id", user.id);
+    }
+  };
+
+  const handleStartFromReminder = () => {
+    setShowReminder(false);
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -81,6 +147,15 @@ const Index = () => {
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={() => navigate("/settings")}
+                className="gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                <span className="hidden sm:inline">设置</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => navigate("/history")}
                 className="gap-2"
               >
@@ -105,6 +180,12 @@ const Index = () => {
       <main className="flex-1 container max-w-xl mx-auto px-4 flex flex-col overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-8 px-4">
+            {showReminder && (
+              <DailyReminder
+                onStart={handleStartFromReminder}
+                onDismiss={handleDismissReminder}
+              />
+            )}
             <div className="text-center space-y-6 w-full max-w-xl animate-in fade-in-50 duration-700">
               <div className="space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <h2 className="text-3xl font-bold text-foreground">
