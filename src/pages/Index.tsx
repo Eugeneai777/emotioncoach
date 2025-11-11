@@ -76,16 +76,44 @@ const Index = () => {
                   劲老师会陪你一起走过情绪梳理4部曲的旅程
                 </p>
               </div>
-              <div className="bg-card border border-border rounded-3xl p-8 space-y-4 text-left shadow-sm animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
-                <h3 className="font-medium text-foreground flex items-center gap-2 text-base">
-                  <span className="text-primary">🌱</span>
-                  情绪四部曲
-                </h3>
-                <div className="space-y-3 text-sm text-muted-foreground">
-                  <p><span className="font-medium text-foreground">觉察 Feel it</span> - 停下来感受当前情绪</p>
-                  <p><span className="font-medium text-foreground">理解 Name it</span> - 理解情绪背后的需求</p>
-                  <p><span className="font-medium text-foreground">反应 React it</span> - 觉察情绪驱动的反应</p>
-                  <p><span className="font-medium text-foreground">转化 Transform it</span> - 温柔回应情绪</p>
+              <div className="bg-gradient-to-br from-card to-card/50 border border-border/50 rounded-3xl p-8 space-y-6 text-left shadow-lg backdrop-blur-sm animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
+                <div className="flex items-center gap-3 pb-4 border-b border-border/30">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-xl">🌱</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    情绪四部曲
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-background/50 rounded-2xl p-4 space-y-2 border border-border/30 hover:border-primary/30 transition-colors duration-300">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🌱</span>
+                      <span className="font-semibold text-foreground text-sm">觉察 Feel it</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">停下来感受当前情绪</p>
+                  </div>
+                  <div className="bg-background/50 rounded-2xl p-4 space-y-2 border border-border/30 hover:border-primary/30 transition-colors duration-300">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">💭</span>
+                      <span className="font-semibold text-foreground text-sm">理解 Name it</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">理解情绪背后的需求</p>
+                  </div>
+                  <div className="bg-background/50 rounded-2xl p-4 space-y-2 border border-border/30 hover:border-primary/30 transition-colors duration-300">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">⚡</span>
+                      <span className="font-semibold text-foreground text-sm">反应 React it</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">觉察情绪驱动的反应</p>
+                  </div>
+                  <div className="bg-background/50 rounded-2xl p-4 space-y-2 border border-border/30 hover:border-primary/30 transition-colors duration-300">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🦋</span>
+                      <span className="font-semibold text-foreground text-sm">转化 Transform it</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">温柔回应情绪</p>
+                  </div>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground px-4 animate-in fade-in-50 duration-700 delay-300">
