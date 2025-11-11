@@ -66,7 +66,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-5",
+        model: "gpt-3.5-turbo",
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
