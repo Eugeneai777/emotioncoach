@@ -76,12 +76,12 @@ const Index = () => {
                   我会陪伴你走过情绪觉察、理解与转化的旅程
                 </p>
               </div>
-              <div className="bg-card border border-border rounded-3xl p-6 space-y-3 text-left">
-                <h3 className="font-medium text-foreground flex items-center gap-2 text-sm">
+              <div className="bg-card border border-border rounded-3xl p-8 space-y-4 text-left shadow-sm">
+                <h3 className="font-medium text-foreground flex items-center gap-2 text-base">
                   <span className="text-primary">🌱</span>
                   情绪四部曲
                 </h3>
-                <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="space-y-3 text-sm text-muted-foreground">
                   <p><span className="font-medium text-foreground">觉察 Feel it</span> - 停下来感受当前情绪</p>
                   <p><span className="font-medium text-foreground">理解 Name it</span> - 理解情绪背后的需求</p>
                   <p><span className="font-medium text-foreground">看见反应</span> - 觉察情绪驱动的反应</p>
