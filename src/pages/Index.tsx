@@ -9,7 +9,10 @@ import GoalProgressCard from "@/components/GoalProgressCard";
 import TodayProgress from "@/components/TodayProgress";
 import WeeklyProgress from "@/components/WeeklyProgress";
 import { EmotionAlert } from "@/components/EmotionAlert";
+import { VoiceControls } from "@/components/VoiceControls";
 import { useStreamChat } from "@/hooks/useStreamChat";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target } from "lucide-react";
@@ -19,8 +22,11 @@ const Index = () => {
   const [showReminder, setShowReminder] = useState(false);
   const { user, loading: authLoading, signOut } = useAuth();
   const { messages, isLoading, sendMessage, resetConversation } = useStreamChat();
+  const { isListening, transcript, startListening, stopListening, isSupported: voiceInputSupported } = useSpeechRecognition();
+  const { speak, stop: stopSpeaking, isSpeaking, isSupported: voiceOutputSupported } = useSpeechSynthesis();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const lastMessageCountRef = useRef(0);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -29,6 +35,24 @@ const Index = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // 自动将语音识别结果填入输入框
+  useEffect(() => {
+    if (transcript) {
+      setInput(transcript);
+    }
+  }, [transcript]);
+
+  // 自动朗读助手的新消息
+  useEffect(() => {
+    if (messages.length > lastMessageCountRef.current) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === "assistant" && voiceOutputSupported && !isLoading) {
+        speak(lastMessage.content);
+      }
+      lastMessageCountRef.current = messages.length;
+    }
+  }, [messages, voiceOutputSupported, isLoading, speak]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -101,6 +125,10 @@ const Index = () => {
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
+    stopSpeaking();
+    if (isListening) {
+      stopListening();
+    }
     await sendMessage(input);
     setInput("");
   };
@@ -311,13 +339,22 @@ const Index = () => {
       <div className="border-t border-border bg-card/80 backdrop-blur-md sticky bottom-0 safe-area-inset-bottom shadow-lg">
         <div className="container max-w-xl mx-auto px-4 py-4">
           <div className="flex gap-3 items-end">
+            <VoiceControls
+              isListening={isListening}
+              isSpeaking={isSpeaking}
+              onStartListening={startListening}
+              onStopListening={stopListening}
+              onStopSpeaking={stopSpeaking}
+              disabled={isLoading}
+              voiceSupported={voiceInputSupported || voiceOutputSupported}
+            />
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="分享你的感受..."
+              placeholder={isListening ? "正在聆听..." : "分享你的感受..."}
               className="min-h-[56px] max-h-[120px] resize-none rounded-2xl border-border focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary shadow-sm focus-visible:shadow-md transition-all duration-300 text-base"
-              disabled={isLoading}
+              disabled={isLoading || isListening}
             />
             <Button
               onClick={handleSend}
