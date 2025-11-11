@@ -69,14 +69,14 @@ const StreakDisplay = () => {
   if (loading || streak === 0) return null;
 
   const getStreakColor = () => {
-    if (streak >= 30) return "text-amber-500";
+    if (streak >= 21) return "text-amber-500";
     if (streak >= 7) return "text-primary";
     if (streak >= 3) return "text-orange-500";
     return "text-muted-foreground";
   };
 
   const getStreakMessage = () => {
-    if (streak >= 30) return "你的坚持令人敬佩 ✨";
+    if (streak >= 21) return "你的坚持令人敬佩 ✨";
     if (streak >= 7) return "保持这份美好的习惯 💫";
     if (streak >= 3) return "很棒的开始！继续加油 🌿";
     return "继续保持连续梳理 🔥";
@@ -107,14 +107,14 @@ const StreakDisplay = () => {
       </div>
       
       {/* Progress to next milestone */}
-      {streak < 30 && (
+      {streak < 21 && (
         <div className="mt-3 pt-3 border-t border-border/50">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
             <span>下一个里程碑</span>
             <span className="font-medium">
               {streak < 3 ? `3天 (还需${3 - streak}天)` : 
                streak < 7 ? `7天 (还需${7 - streak}天)` : 
-               `30天 (还需${30 - streak}天)`}
+               `21天 (还需${21 - streak}天)`}
             </span>
           </div>
           <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -123,7 +123,7 @@ const StreakDisplay = () => {
               style={{ 
                 width: `${streak < 3 ? (streak / 3) * 100 : 
                          streak < 7 ? ((streak - 3) / 4) * 100 : 
-                         ((streak - 7) / 23) * 100}%` 
+                         ((streak - 7) / 14) * 100}%` 
               }}
             />
           </div>

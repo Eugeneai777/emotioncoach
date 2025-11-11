@@ -14,7 +14,7 @@ interface StreakMilestone {
 const STREAK_MILESTONES: StreakMilestone[] = [
   { days: 3, type: 'streak_3_days', name: '三日之约', icon: '🔥', description: '连续3天完成情绪梳理' },
   { days: 7, type: 'streak_7_days', name: '一周坚持', icon: '✨', description: '连续7天完成情绪梳理' },
-  { days: 30, type: 'streak_30_days', name: '月圆之旅', icon: '🌟', description: '连续30天完成情绪梳理' },
+  { days: 21, type: 'streak_21_days', name: '习惯养成', icon: '🌟', description: '连续21天完成情绪梳理' },
 ];
 
 Deno.serve(async (req) => {
