@@ -8,6 +8,7 @@ export const StageIndicator = ({ currentStage }: StageIndicatorProps) => {
     { name: "理解", icon: "💭" },
     { name: "看见", icon: "👁️" },
     { name: "转化", icon: "🦋" },
+    { name: "简报", icon: "📋" },
   ];
 
   return (
