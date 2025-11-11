@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.analyze-emotion-patterns]
 verify_jwt = true
+
+[functions.recommend-music]
+verify_jwt = true

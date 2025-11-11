@@ -14,6 +14,7 @@ import { TagManager } from "@/components/TagManager";
 import { EmotionPatternInsights } from "@/components/EmotionPatternInsights";
 import { BriefingTagSelector } from "@/components/BriefingTagSelector";
 import { Badge } from "@/components/ui/badge";
+import { MusicRecommendation } from "@/components/MusicRecommendation";
 
 interface TagType {
   id: string;
@@ -265,6 +266,15 @@ const History = () => {
                   briefingId={selectedBriefing.id}
                   selectedTags={selectedBriefing.tags || []}
                   onTagsChange={loadBriefings}
+                />
+              </div>
+
+              <div className="pt-4 border-t border-border/50">
+                <h3 className="text-sm font-medium text-foreground mb-3">情绪音乐推荐</h3>
+                <MusicRecommendation
+                  emotionTheme={selectedBriefing.emotion_theme}
+                  insight={selectedBriefing.insight || undefined}
+                  briefingContent={`${selectedBriefing.stage_1_content} ${selectedBriefing.stage_2_content}`}
                 />
               </div>
             </div>
