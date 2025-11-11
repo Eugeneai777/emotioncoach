@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "@/components/ChatMessage";
 import DailyReminder from "@/components/DailyReminder";
 import StreakDisplay from "@/components/StreakDisplay";
+import GoalProgressCard from "@/components/GoalProgressCard";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -254,8 +255,13 @@ const Index = () => {
               <div className="animate-in fade-in-50 duration-700 delay-300">
                 <StreakDisplay />
               </div>
+
+              {/* Goal Progress */}
+              <div className="animate-in fade-in-50 duration-700 delay-400">
+                <GoalProgressCard />
+              </div>
               
-              <p className="text-sm text-muted-foreground px-4 animate-in fade-in-50 duration-700 delay-300">
+              <p className="text-sm text-muted-foreground px-4 animate-in fade-in-50 duration-700 delay-500">
                 你愿意先一起看看你现在的感受吗？劲老师在这里陪着你 🌿
               </p>
             </div>
