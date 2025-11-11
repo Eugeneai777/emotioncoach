@@ -57,6 +57,7 @@ const Goals = () => {
   const [celebrationOpen, setCelebrationOpen] = useState(false);
   const [currentAchievement, setCurrentAchievement] = useState<string>("");
   const [currentGoalType, setCurrentGoalType] = useState<"weekly" | "monthly">("weekly");
+  const [goalProgress, setGoalProgress] = useState<Record<string, { current: number; percentage: number }>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -64,6 +65,21 @@ const Goals = () => {
     checkAuthAndLoadGoals();
     loadAchievements();
   }, []);
+
+  useEffect(() => {
+    // Calculate progress for all goals when goals change
+    const loadAllProgress = async () => {
+      const progressMap: Record<string, { current: number; percentage: number }> = {};
+      for (const goal of goals) {
+        progressMap[goal.id] = await calculateProgress(goal);
+      }
+      setGoalProgress(progressMap);
+    };
+
+    if (goals.length > 0) {
+      loadAllProgress();
+    }
+  }, [goals]);
 
   const checkAuthAndLoadGoals = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -428,12 +444,7 @@ const Goals = () => {
         ) : (
           <div className="space-y-4">
             {goals.map((goal) => {
-              const [progress, setProgress] = useState<{ current: number; percentage: number }>({ current: 0, percentage: 0 });
-
-              useEffect(() => {
-                calculateProgress(goal).then(setProgress);
-              }, [goal.id]);
-
+              const progress = goalProgress[goal.id] || { current: 0, percentage: 0 };
               const isCompleted = progress.percentage >= 100;
 
               return (
