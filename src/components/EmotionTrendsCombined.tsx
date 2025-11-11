@@ -10,23 +10,23 @@ interface EmotionTrendsCombinedProps {
 
 export const EmotionTrendsCombined = ({ briefings }: EmotionTrendsCombinedProps) => {
   return (
-    <div className="space-y-6">
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+    <div className="space-y-4 md:space-y-6">
+      <Card className="p-4 md:p-6">
+        <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 md:mb-4 flex items-center gap-2">
           🔄 周期分析
         </h3>
         <EmotionCycleAnalysis briefings={briefings} />
       </Card>
 
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+      <Card className="p-4 md:p-6">
+        <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 md:mb-4 flex items-center gap-2">
           📈 情绪趋势图
         </h3>
         <EmotionTrendChart briefings={briefings} />
       </Card>
 
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+      <Card className="p-4 md:p-6">
+        <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 md:mb-4 flex items-center gap-2">
           ☁️ 情绪标签云
         </h3>
         <EmotionTagCloud briefings={briefings} />
