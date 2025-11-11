@@ -70,7 +70,7 @@ const Index = () => {
             <div className="text-center space-y-4 w-full">
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold text-foreground">
-                  你好，我是劲老师
+                  情绪梳理教练
                 </h2>
                 <p className="text-base text-muted-foreground leading-relaxed">
                   我会陪伴你走过情绪觉察、理解与转化的旅程
