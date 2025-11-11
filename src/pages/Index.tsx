@@ -133,7 +133,7 @@ const Index = () => {
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
               size="lg"
-              className="rounded-2xl h-[50px] px-5"
+              className="rounded-2xl h-[50px] px-5 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 disabled:hover:scale-100 disabled:shadow-sm"
             >
               <Send className="w-4 h-4" />
             </Button>
