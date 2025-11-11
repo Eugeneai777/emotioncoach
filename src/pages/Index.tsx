@@ -8,6 +8,7 @@ import StreakDisplay from "@/components/StreakDisplay";
 import GoalProgressCard from "@/components/GoalProgressCard";
 import TodayProgress from "@/components/TodayProgress";
 import WeeklyProgress from "@/components/WeeklyProgress";
+import { EmotionAlert } from "@/components/EmotionAlert";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -253,6 +254,11 @@ const Index = () => {
                 </div>
               </div>
               
+              {/* Emotion Alert */}
+              <div className="animate-in fade-in-50 duration-700 delay-250">
+                <EmotionAlert />
+              </div>
+
               {/* Today Progress */}
               <div className="animate-in fade-in-50 duration-700 delay-300">
                 <TodayProgress />

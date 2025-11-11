@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.recommend-music]
 verify_jwt = true
+
+[functions.emotion-alert-suggestions]
+verify_jwt = true
