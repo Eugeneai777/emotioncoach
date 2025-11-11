@@ -67,8 +67,8 @@ const Index = () => {
       <main className="flex-1 container max-w-2xl mx-auto px-4 flex flex-col overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-8 px-4">
-            <div className="text-center space-y-4 w-full">
-              <div className="space-y-2">
+            <div className="text-center space-y-4 w-full animate-in fade-in-50 duration-700">
+              <div className="space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <h2 className="text-2xl font-semibold text-foreground">
                   情绪梳理教练
                 </h2>
@@ -76,7 +76,7 @@ const Index = () => {
                   劲老师会陪你一起走过情绪梳理4部曲的旅程
                 </p>
               </div>
-              <div className="bg-card border border-border rounded-3xl p-8 space-y-4 text-left shadow-sm">
+              <div className="bg-card border border-border rounded-3xl p-8 space-y-4 text-left shadow-sm animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
                 <h3 className="font-medium text-foreground flex items-center gap-2 text-base">
                   <span className="text-primary">🌱</span>
                   情绪四部曲
@@ -88,7 +88,7 @@ const Index = () => {
                   <p><span className="font-medium text-foreground">转化 Transform it</span> - 温柔回应情绪</p>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground px-4">
+              <p className="text-sm text-muted-foreground px-4 animate-in fade-in-50 duration-700 delay-300">
                 你愿意先一起看看你现在的感受吗？劲老师在这里陪着你 🌿
               </p>
             </div>
