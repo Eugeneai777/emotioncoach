@@ -128,6 +128,29 @@ ${data.growth_story}
 💾 简报已自动保存到你的历史记录中`;
   };
 
+  // 根据标签名判断情绪类别并返回对应颜色
+  const getTagColor = (tagName: string): string => {
+    const EMOTION_CATEGORIES = {
+      negative: ["焦虑", "不安", "失落", "压力", "无力", "发火", "生气", "伤心", "孤单", "难过", "紧张", "撑不住", "不够好", "后悔", "担心", "自卑"],
+      positive: ["被认可", "感谢", "温暖", "被帮助", "轻松", "感动", "安心", "平静", "成功", "顺利", "被理解", "感恩", "被表扬", "放松"],
+      mixed: ["又想又怕", "怀念", "矛盾", "纠结", "自责", "内疚", "惊讶", "哇", "没想到", "过去", "想起", "愧疚"],
+      growth: ["我明白", "我想尝试", "我成长了", "其实", "原来", "我懂了", "我发现", "我变了", "我决定", "我相信", "我要改变"],
+    };
+
+    if (EMOTION_CATEGORIES.negative.includes(tagName)) {
+      return "#6b7280"; // 灰色 (gray-500)
+    } else if (EMOTION_CATEGORIES.positive.includes(tagName)) {
+      return "#10b981"; // 绿色 (emerald-500)
+    } else if (EMOTION_CATEGORIES.mixed.includes(tagName)) {
+      return "#f97316"; // 橙色 (orange-500)
+    } else if (EMOTION_CATEGORIES.growth.includes(tagName)) {
+      return "#3b82f6"; // 蓝色 (blue-500)
+    }
+    
+    // 默认颜色
+    return "#10b981";
+  };
+
   const saveBriefing = async (convId: string, briefingData: BriefingData) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -162,13 +185,14 @@ ${data.growth_story}
           if (existingTag) {
             tagId = existingTag.id;
           } else {
-            // 创建新标签，使用默认颜色
+            // 创建新标签，使用智能配色
+            const tagColor = getTagColor(tagName);
             const { data: newTag, error: tagError } = await supabase
               .from("tags")
               .insert({
                 user_id: user.id,
                 name: tagName,
-                color: "#10b981" // 默认绿色
+                color: tagColor
               })
               .select("id")
               .single();
