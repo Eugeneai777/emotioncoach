@@ -87,6 +87,43 @@ export const useStreamChat = (conversationId?: string) => {
     }
   };
 
+  const formatBriefing = (data: BriefingData): string => {
+    return `
+
+---
+
+🌿 **《情绪四部曲简报》**
+
+**🎭 主题情绪**
+${data.emotion_theme}
+
+**📖 情绪四部曲旅程**
+
+1️⃣ **觉察（Feel it）**
+${data.stage_1_content}
+
+2️⃣ **理解（Name it）**
+${data.stage_2_content}
+
+3️⃣ **反应（React it）**
+${data.stage_3_content}
+
+4️⃣ **转化（Transform it）**
+${data.stage_4_content}
+
+**💫 今日洞察**
+${data.insight}
+
+**✅ 今日行动**
+${data.action}
+
+**🌸 今日成长故事**
+${data.growth_story}
+
+---
+💾 简报已自动保存到你的历史记录中`;
+  };
+
   const saveBriefing = async (convId: string, briefingData: BriefingData) => {
     try {
       const { error } = await supabase
@@ -244,10 +281,16 @@ export const useStreamChat = (conversationId?: string) => {
         }
       }
 
-      // 如果检测到简报生成，保存到数据库
+      // 如果检测到简报生成，保存到数据库并显示在聊天中
       if (inToolCall && toolCallBuffer && convId) {
         try {
           const briefingData = JSON.parse(toolCallBuffer) as BriefingData;
+          
+          // 格式化并显示简报
+          const briefingText = formatBriefing(briefingData);
+          updateAssistant(briefingText);
+          
+          // 保存到数据库
           await saveBriefing(convId, briefingData);
         } catch (e) {
           console.error("Error parsing briefing data:", e);
