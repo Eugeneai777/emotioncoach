@@ -46,7 +46,7 @@ const Index = () => {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-2xl mx-auto px-4 py-4">
+        <div className="container max-w-xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             {messages.length > 0 && (
               <Button
@@ -64,7 +64,7 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container max-w-2xl mx-auto px-4 flex flex-col overflow-y-auto">
+      <main className="flex-1 container max-w-xl mx-auto px-4 flex flex-col overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-8 px-4">
             <div className="text-center space-y-6 w-full max-w-xl animate-in fade-in-50 duration-700">
