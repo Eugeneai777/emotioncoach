@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import EmotionTrendChart from "@/components/EmotionTrendChart";
 import EmotionTagCloud from "@/components/EmotionTagCloud";
 import EmotionCycleAnalysis from "@/components/EmotionCycleAnalysis";
+import ExportDialog from "@/components/ExportDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TagManager } from "@/components/TagManager";
 import { BriefingTagSelector } from "@/components/BriefingTagSelector";
@@ -237,6 +238,7 @@ const History = () => {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-foreground">历史简报</h1>
             <div className="flex items-center gap-2">
+              <ExportDialog briefings={briefings} />
               <TagManager onTagsChange={loadBriefings} />
               <Button
                 variant="ghost"
