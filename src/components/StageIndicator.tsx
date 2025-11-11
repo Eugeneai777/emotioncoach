@@ -27,7 +27,7 @@ export const StageIndicator = ({ currentStage }: StageIndicatorProps) => {
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all duration-500 ${
                 index === currentStage
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+                  ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/40 animate-pulse"
                   : index < currentStage
                   ? "bg-gentle text-gentle-foreground"
                   : "bg-muted"

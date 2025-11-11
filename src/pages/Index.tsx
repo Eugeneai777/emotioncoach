@@ -126,7 +126,7 @@ const Index = () => {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="分享你的感受..."
-              className="min-h-[50px] max-h-[120px] resize-none rounded-2xl border-border focus-visible:ring-primary text-sm"
+              className="min-h-[50px] max-h-[120px] resize-none rounded-2xl border-border focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary shadow-sm focus-visible:shadow-md transition-all duration-300 text-sm"
               disabled={isLoading}
             />
             <Button
