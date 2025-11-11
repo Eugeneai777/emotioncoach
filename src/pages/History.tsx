@@ -12,6 +12,7 @@ import ExportDialog from "@/components/ExportDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TagManager } from "@/components/TagManager";
 import { EmotionPatternInsights } from "@/components/EmotionPatternInsights";
+import { EmotionComparison } from "@/components/EmotionComparison";
 import { BriefingTagSelector } from "@/components/BriefingTagSelector";
 import { Badge } from "@/components/ui/badge";
 import { MusicRecommendation } from "@/components/MusicRecommendation";
@@ -365,12 +366,13 @@ const History = () => {
             </div>
             
             <Tabs defaultValue="list" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsList className="grid w-full grid-cols-6 mb-6">
                 <TabsTrigger value="list">简报列表</TabsTrigger>
                 <TabsTrigger value="trends">情绪趋势</TabsTrigger>
                 <TabsTrigger value="cloud">标签云</TabsTrigger>
                 <TabsTrigger value="cycle">周期分析</TabsTrigger>
                 <TabsTrigger value="patterns">模式洞察</TabsTrigger>
+                <TabsTrigger value="compare">对比分析</TabsTrigger>
               </TabsList>
             
             <TabsContent value="list">
@@ -461,6 +463,12 @@ const History = () => {
             <TabsContent value="patterns">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <EmotionPatternInsights />
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="compare">
+              <ScrollArea className="h-[calc(100vh-280px)]">
+                <EmotionComparison briefings={briefings} />
               </ScrollArea>
             </TabsContent>
             </Tabs>

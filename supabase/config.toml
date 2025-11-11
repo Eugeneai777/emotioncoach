@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.emotion-alert-suggestions]
 verify_jwt = true
+
+[functions.compare-emotions]
+verify_jwt = true
