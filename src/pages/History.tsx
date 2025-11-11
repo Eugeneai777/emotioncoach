@@ -82,9 +82,51 @@ const History = () => {
             .eq("briefing_id", briefing.id);
 
           const tags = tagData?.map((t: any) => t.tags).filter(Boolean) || [];
-          return { ...briefing, tags };
+          return { ...briefing, tags } as Briefing;
         })
       );
+
+      // Backfill: ensure every briefing has at least one tag
+      const untagged = briefingsWithTags.filter(b => !b.tags || b.tags.length === 0);
+      let didBackfill = false;
+      if (untagged.length > 0) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            // Get or create default tag
+            const defaultTagName = "情绪梳理";
+            let { data: defaultTag } = await supabase
+              .from("tags")
+              .select("id, name, color")
+              .eq("user_id", user.id)
+              .eq("name", defaultTagName)
+              .maybeSingle();
+
+            if (!defaultTag) {
+              const { data: created, error: createErr } = await supabase
+                .from("tags")
+                .insert({ user_id: user.id, name: defaultTagName, color: "#10b981" })
+                .select("id, name, color")
+                .single();
+              if (!createErr) defaultTag = created as any;
+            }
+
+            if (defaultTag) {
+              for (const b of untagged) {
+                await supabase.from("briefing_tags").insert({ briefing_id: b.id, tag_id: (defaultTag as any).id });
+                didBackfill = true;
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Backfill tags error:", e);
+        }
+      }
+
+      if (didBackfill) {
+        // Reload once to reflect new tags
+        return await loadBriefings();
+      }
 
       setBriefings(briefingsWithTags);
       
