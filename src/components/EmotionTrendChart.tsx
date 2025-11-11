@@ -70,18 +70,6 @@ const EmotionTrendChart = ({ briefings }: EmotionTrendChartProps) => {
       .slice(-14); // 只显示最近14天
   }, [briefings]);
 
-  const emotionStats = useMemo(() => {
-    const stats = new Map<string, number>();
-    
-    briefings.forEach((briefing) => {
-      const emotion = briefing.emotion_theme;
-      stats.set(emotion, (stats.get(emotion) || 0) + 1);
-    });
-    
-    return Array.from(stats.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5); // 前5个最常见的情绪
-  }, [briefings]);
 
   if (briefings.length === 0) {
     return null;
@@ -203,32 +191,6 @@ const EmotionTrendChart = ({ briefings }: EmotionTrendChartProps) => {
         </div>
       </Card>
 
-      <Card className="p-6 bg-card/50 backdrop-blur-sm border-border">
-        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-          🎭 最常见的情绪主题
-        </h3>
-        <div className="space-y-3">
-          {emotionStats.map(([emotion, count], index) => (
-            <div key={emotion} className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-semibold flex-shrink-0">
-                {index + 1}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-foreground">{emotion}</span>
-                  <span className="text-xs text-muted-foreground">{count}次</span>
-                </div>
-                <div className="w-full bg-secondary/30 rounded-full h-2">
-                  <div
-                    className="bg-primary h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${(count / briefings.length) * 100}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
     </div>
   );
 };
