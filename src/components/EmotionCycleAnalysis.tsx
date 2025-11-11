@@ -166,65 +166,68 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+    <div className="space-y-4 md:space-y-6">
+      <Card className="p-4 md:p-6 space-y-3 md:space-y-4">
+        <h3 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
           🔍 周期洞察
         </h3>
         <div className="space-y-2">
           {insights.map((insight, index) => (
             <div
               key={index}
-              className="flex items-start gap-3 p-3 rounded-xl bg-background/50"
+              className="flex items-start gap-2 md:gap-3 p-2.5 md:p-3 rounded-xl bg-background/50"
             >
               {insight.type === "peak" ? (
-                <TrendingUp className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-green-500 flex-shrink-0 mt-0.5" />
               ) : insight.type === "valley" ? (
-                <TrendingDown className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                <TrendingDown className="w-4 h-4 md:w-5 md:h-5 text-orange-500 flex-shrink-0 mt-0.5" />
               ) : (
-                <div className="w-5 h-5 rounded-full bg-primary/20 flex-shrink-0 mt-0.5" />
+                <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-primary/20 flex-shrink-0 mt-0.5" />
               )}
-              <p className="text-sm text-foreground/90">{insight.text}</p>
+              <p className="text-xs md:text-sm text-foreground/90">{insight.text}</p>
             </div>
           ))}
         </div>
       </Card>
 
-      <Card className="p-6 space-y-4">
+      <Card className="p-4 md:p-6 space-y-3 md:space-y-4">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <h3 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
             📅 星期分布
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs md:text-sm text-muted-foreground">
             查看你在一周中每天的情绪梳理频率
           </p>
         </div>
-        <div className="w-full h-[300px]">
+        <div className="w-full h-[200px] md:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weekdayData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis
                 dataKey="name"
                 stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
+                fontSize={10}
                 tickLine={false}
                 axisLine={false}
+                className="md:text-xs"
               />
               <YAxis
                 stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
+                fontSize={10}
                 tickLine={false}
                 axisLine={false}
                 allowDecimals={false}
+                className="md:text-xs"
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "hsl(var(--card))",
                   border: "1px solid hsl(var(--border))",
                   borderRadius: "8px",
-                  fontSize: "12px",
+                  fontSize: "11px",
+                  padding: "6px 10px",
                 }}
-                labelStyle={{ color: "hsl(var(--foreground))" }}
+                labelStyle={{ color: "hsl(var(--foreground))", fontSize: "11px" }}
               />
               <Bar dataKey="total" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
             </BarChart>
@@ -232,28 +235,30 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
         </div>
       </Card>
 
-      <Card className="p-6 space-y-4">
+      <Card className="p-4 md:p-6 space-y-3 md:space-y-4">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <h3 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
             ⏰ 时段偏好
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs md:text-sm text-muted-foreground">
             了解你在一天中何时最常梳理情绪
           </p>
         </div>
-        <div className="w-full h-[300px]">
+        <div className="w-full h-[200px] md:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={timePatternData}>
               <PolarGrid stroke="hsl(var(--border))" />
               <PolarAngleAxis
                 dataKey="name"
                 stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
+                fontSize={9}
+                className="md:text-xs"
               />
               <PolarRadiusAxis
                 stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
+                fontSize={10}
                 angle={90}
+                className="md:text-xs"
               />
               <Radar
                 name="次数"
@@ -267,7 +272,8 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
                   backgroundColor: "hsl(var(--card))",
                   border: "1px solid hsl(var(--border))",
                   borderRadius: "8px",
-                  fontSize: "12px",
+                  fontSize: "11px",
+                  padding: "6px 10px",
                 }}
               />
             </RadarChart>
@@ -275,40 +281,40 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
         </div>
       </Card>
 
-      <Card className="p-6 space-y-4">
+      <Card className="p-4 md:p-6 space-y-3 md:space-y-4">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <h3 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
             🎭 情绪类型分布
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs md:text-sm text-muted-foreground">
             查看不同情绪类型在你的简报中的占比
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           {emotionDistribution.map((item) => (
             <div
               key={item.category}
-              className="p-4 rounded-xl bg-background/50 space-y-2"
+              className="p-3 md:p-4 rounded-xl bg-background/50 space-y-2"
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">{item.category}</span>
-                <Badge variant="secondary" className="text-xs">
+                <span className="text-xs md:text-sm font-medium text-foreground">{item.category}</span>
+                <Badge variant="secondary" className="text-[10px] md:text-xs">
                   {item.value.toFixed(0)}%
                 </Badge>
               </div>
-              <div className="w-full bg-border/30 rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-border/30 rounded-full h-1.5 md:h-2 overflow-hidden">
                 <div
                   className="h-full bg-primary transition-all duration-500"
                   style={{ width: `${item.value}%` }}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">{item.count} 次</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground">{item.count} 次</p>
             </div>
           ))}
         </div>
       </Card>
 
-      <div className="flex items-center justify-center text-xs text-muted-foreground pt-4">
+      <div className="flex items-center justify-center text-[10px] md:text-xs text-muted-foreground pt-2 md:pt-4">
         <span>基于 {briefings.length} 条简报的分析结果</span>
       </div>
     </div>
