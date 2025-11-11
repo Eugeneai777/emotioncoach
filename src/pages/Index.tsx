@@ -69,7 +69,7 @@ const Index = () => {
           <div className="flex-1 flex flex-col items-center justify-center py-8 px-4">
             <div className="text-center space-y-6 w-full max-w-xl animate-in fade-in-50 duration-700">
               <div className="space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                <h2 className="text-2xl font-semibold text-foreground">
+                <h2 className="text-3xl font-bold text-foreground">
                   情绪梳理教练
                 </h2>
                 <p className="text-base text-muted-foreground leading-relaxed">
