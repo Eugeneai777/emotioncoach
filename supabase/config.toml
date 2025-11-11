@@ -1,1 +1,4 @@
 project_id = "vlsuzskvykddwrxbmcbu"
+
+[functions.check-streak-achievements]
+verify_jwt = false

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "@/components/ChatMessage";
 import DailyReminder from "@/components/DailyReminder";
+import StreakDisplay from "@/components/StreakDisplay";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -248,6 +249,12 @@ const Index = () => {
                   </div>
                 </div>
               </div>
+              
+              {/* Streak Display */}
+              <div className="animate-in fade-in-50 duration-700 delay-300">
+                <StreakDisplay />
+              </div>
+              
               <p className="text-sm text-muted-foreground px-4 animate-in fade-in-50 duration-700 delay-300">
                 你愿意先一起看看你现在的感受吗？劲老师在这里陪着你 🌿
               </p>
