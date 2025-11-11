@@ -1,17 +1,97 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 type Message = { role: "user" | "assistant"; content: string };
 
-export const useStreamChat = () => {
+export const useStreamChat = (conversationId?: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(conversationId);
 
   const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
+  // 加载现有对话
+  useEffect(() => {
+    if (currentConversationId) {
+      loadConversation(currentConversationId);
+    }
+  }, [currentConversationId]);
+
+  const loadConversation = async (convId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", convId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      if (data) {
+        setMessages(data.map(msg => ({
+          role: msg.role as "user" | "assistant",
+          content: msg.content
+        })));
+      }
+    } catch (error) {
+      console.error("Error loading conversation:", error);
+    }
+  };
+
+  const createConversation = async (): Promise<string | null> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from("conversations")
+        .insert({
+          user_id: user.id,
+          title: "新的情绪梳理"
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data.id;
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      return null;
+    }
+  };
+
+  const saveMessage = async (convId: string, role: "user" | "assistant", content: string) => {
+    try {
+      await supabase
+        .from("messages")
+        .insert({
+          conversation_id: convId,
+          role,
+          content
+        });
+    } catch (error) {
+      console.error("Error saving message:", error);
+    }
+  };
+
   const sendMessage = async (input: string) => {
+    // 如果没有对话ID，创建新对话
+    let convId = currentConversationId;
+    if (!convId) {
+      convId = await createConversation();
+      if (convId) {
+        setCurrentConversationId(convId);
+      }
+    }
+
     const userMsg: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMsg]);
     setIsLoading(true);
+
+    // 保存用户消息
+    if (convId) {
+      await saveMessage(convId, "user", input);
+    }
 
     let assistantContent = "";
     const updateAssistant = (chunk: string) => {
@@ -96,6 +176,11 @@ export const useStreamChat = () => {
         }
       }
 
+      // 保存助手消息
+      if (convId && assistantContent) {
+        await saveMessage(convId, "assistant", assistantContent);
+      }
+
       setIsLoading(false);
     } catch (e) {
       console.error(e);
@@ -104,5 +189,16 @@ export const useStreamChat = () => {
     }
   };
 
-  return { messages, isLoading, sendMessage };
+  const resetConversation = () => {
+    setMessages([]);
+    setCurrentConversationId(undefined);
+  };
+
+  return { 
+    messages, 
+    isLoading, 
+    sendMessage, 
+    resetConversation,
+    conversationId: currentConversationId 
+  };
 };

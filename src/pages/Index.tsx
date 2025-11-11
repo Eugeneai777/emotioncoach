@@ -1,16 +1,18 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "@/components/ChatMessage";
-import { StageIndicator } from "@/components/StageIndicator";
 import { useStreamChat } from "@/hooks/useStreamChat";
-import { Send, Sparkles, RotateCcw } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Send, RotateCcw, History, LogOut, Loader2 } from "lucide-react";
 
 const Index = () => {
   const [input, setInput] = useState("");
-  const [currentStage, setCurrentStage] = useState(0);
-  const { messages, isLoading, sendMessage } = useStreamChat();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { messages, isLoading, sendMessage, resetConversation } = useStreamChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -20,15 +22,16 @@ const Index = () => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
     await sendMessage(input);
     setInput("");
-    
-    // 简单的阶段推进逻辑（可以根据实际对话内容优化）
-    if (messages.length > 0 && messages.length % 4 === 0) {
-      setCurrentStage((prev) => Math.min(prev + 1, 3));
-    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -39,8 +42,21 @@ const Index = () => {
   };
 
   const handleRestart = () => {
-    window.location.reload();
+    resetConversation();
   };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -48,17 +64,39 @@ const Index = () => {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            {messages.length > 0 && (
+            <div className="flex items-center gap-2">
+              {messages.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRestart}
+                  className="gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span className="hidden sm:inline">重新开始</span>
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleRestart}
+                onClick={() => navigate("/history")}
                 className="gap-2"
               >
-                <RotateCcw className="w-4 h-4" />
-                <span className="hidden sm:inline">重新开始</span>
+                <History className="w-4 h-4" />
+                <span className="hidden sm:inline">历史</span>
               </Button>
-            )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">退出</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
