@@ -7,6 +7,7 @@ import { ArrowLeft, Calendar, Loader2, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import EmotionTrendChart from "@/components/EmotionTrendChart";
 import EmotionTagCloud from "@/components/EmotionTagCloud";
+import EmotionCycleAnalysis from "@/components/EmotionCycleAnalysis";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TagManager } from "@/components/TagManager";
 import { BriefingTagSelector } from "@/components/BriefingTagSelector";
@@ -301,10 +302,11 @@ const History = () => {
             </div>
             
             <Tabs defaultValue="list" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsList className="grid w-full grid-cols-4 mb-6">
                 <TabsTrigger value="list">简报列表</TabsTrigger>
                 <TabsTrigger value="trends">情绪趋势</TabsTrigger>
                 <TabsTrigger value="cloud">标签云</TabsTrigger>
+                <TabsTrigger value="cycle">周期分析</TabsTrigger>
               </TabsList>
             
             <TabsContent value="list">
@@ -368,6 +370,12 @@ const History = () => {
             <TabsContent value="cloud">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <EmotionTagCloud briefings={briefings} />
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="cycle">
+              <ScrollArea className="h-[calc(100vh-280px)]">
+                <EmotionCycleAnalysis briefings={briefings} />
               </ScrollArea>
             </TabsContent>
             </Tabs>
