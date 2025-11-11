@@ -7,6 +7,7 @@ import DailyReminder from "@/components/DailyReminder";
 import StreakDisplay from "@/components/StreakDisplay";
 import GoalProgressCard from "@/components/GoalProgressCard";
 import TodayProgress from "@/components/TodayProgress";
+import WeeklyProgress from "@/components/WeeklyProgress";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -257,13 +258,18 @@ const Index = () => {
                 <TodayProgress />
               </div>
 
-              {/* Streak Display */}
+              {/* Weekly Progress */}
               <div className="animate-in fade-in-50 duration-700 delay-350">
+                <WeeklyProgress />
+              </div>
+
+              {/* Streak Display */}
+              <div className="animate-in fade-in-50 duration-700 delay-400">
                 <StreakDisplay />
               </div>
 
               {/* Goal Progress */}
-              <div className="animate-in fade-in-50 duration-700 delay-400">
+              <div className="animate-in fade-in-50 duration-700 delay-450">
                 <GoalProgressCard />
               </div>
               
