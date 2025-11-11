@@ -68,9 +68,6 @@ const Index = () => {
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-8 px-4">
             <div className="text-center space-y-4 w-full">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto">
-                <span className="text-4xl">🌿</span>
-              </div>
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold text-foreground">
                   你好，我是劲老师
