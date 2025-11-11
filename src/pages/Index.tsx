@@ -134,11 +134,11 @@ const Index = () => {
               ))}
               {isLoading && (
                 <div className="flex justify-start mb-4">
-                  <div className="bg-card border border-border rounded-3xl px-5 py-3">
+                  <div className="bg-card border border-border rounded-3xl px-5 py-3 shadow-sm">
                     <div className="flex gap-2">
-                      <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce shadow-md shadow-primary/40" style={{ animationDelay: "0ms" }} />
+                      <div className="w-2 h-2 bg-primary/75 rounded-full animate-bounce shadow-md shadow-primary/30" style={{ animationDelay: "150ms" }} />
+                      <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce shadow-md shadow-primary/20" style={{ animationDelay: "300ms" }} />
                     </div>
                   </div>
                 </div>
