@@ -19,6 +19,7 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const [reminderTime, setReminderTime] = useState("20:00");
+  const [displayName, setDisplayName] = useState("");
 
   useEffect(() => {
     loadSettings();
@@ -34,7 +35,7 @@ export default function Settings() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("reminder_enabled, reminder_time")
+        .select("reminder_enabled, reminder_time, display_name")
         .eq("id", user.id)
         .single();
 
@@ -43,6 +44,7 @@ export default function Settings() {
       if (data) {
         setReminderEnabled(data.reminder_enabled ?? true);
         setReminderTime(data.reminder_time ?? "20:00");
+        setDisplayName(data.display_name ?? "");
       }
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -67,6 +69,7 @@ export default function Settings() {
         .update({
           reminder_enabled: reminderEnabled,
           reminder_time: reminderTime,
+          display_name: displayName.trim() || null,
         })
         .eq("id", user.id);
 
@@ -74,7 +77,7 @@ export default function Settings() {
 
       toast({
         title: "设置已保存",
-        description: "你的提醒偏好已更新 🌿",
+        description: "你的偏好已更新 🌿",
       });
     } catch (error) {
       console.error("Error saving settings:", error);
@@ -111,11 +114,52 @@ export default function Settings() {
         <h1 className="text-3xl font-bold text-foreground mb-6">设置</h1>
 
         <Tabs defaultValue="reminders" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="reminders">提醒设置</TabsTrigger>
-            <TabsTrigger value="companion">情绪伙伴</TabsTrigger>
-            <TabsTrigger value="voice">语音设置</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
+            <TabsTrigger value="profile" className="text-xs md:text-sm">个人资料</TabsTrigger>
+            <TabsTrigger value="reminders" className="text-xs md:text-sm">提醒设置</TabsTrigger>
+            <TabsTrigger value="companion" className="text-xs md:text-sm">情绪伙伴</TabsTrigger>
+            <TabsTrigger value="voice" className="text-xs md:text-sm">语音设置</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="profile">
+            <Card className="border-border shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl text-foreground">
+                  个人资料
+                </CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  设置你的个人信息 🌿
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="display-name" className="text-foreground">
+                    用户名称
+                  </Label>
+                  <Input
+                    id="display-name"
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="请输入你的名称"
+                    maxLength={50}
+                    className="border-border focus:border-primary"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    这个名称将在复盘报告中使用，例如"亲爱的[你的名称]"
+                  </p>
+                </div>
+
+                <Button
+                  onClick={saveSettings}
+                  disabled={saving}
+                  className="w-full"
+                >
+                  {saving ? "保存中..." : "保存设置"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="reminders">
             <Card className="border-border shadow-lg">

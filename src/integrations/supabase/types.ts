@@ -203,6 +203,7 @@ export type Database = {
           companion_type: string | null
           conversation_style: string | null
           created_at: string
+          display_name: string | null
           id: string
           last_reminder_shown: string | null
           reminder_enabled: boolean | null
@@ -215,6 +216,7 @@ export type Database = {
           companion_type?: string | null
           conversation_style?: string | null
           created_at?: string
+          display_name?: string | null
           id: string
           last_reminder_shown?: string | null
           reminder_enabled?: boolean | null
@@ -227,6 +229,7 @@ export type Database = {
           companion_type?: string | null
           conversation_style?: string | null
           created_at?: string
+          display_name?: string | null
           id?: string
           last_reminder_shown?: string | null
           reminder_enabled?: boolean | null

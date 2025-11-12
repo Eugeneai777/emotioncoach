@@ -11,6 +11,7 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -51,15 +52,42 @@ const Auth = () => {
           description: "欢迎回来 🌿",
         });
       } else {
-        const { error } = await supabase.auth.signUp({
+        // 注册时验证用户名称
+        if (!displayName.trim()) {
+          toast({
+            title: "请输入用户名称",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
+            data: {
+              display_name: displayName.trim(),
+            },
           },
         });
         
         if (error) throw error;
+
+        // 创建或更新 profile
+        if (data.user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: data.user.id,
+              display_name: displayName.trim(),
+            });
+
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+          }
+        }
         
         toast({
           title: "注册成功",
@@ -89,6 +117,25 @@ const Auth = () => {
 
         <div className="bg-card border border-border rounded-3xl p-8 shadow-lg space-y-6">
           <form onSubmit={handleAuth} className="space-y-4">
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="displayName">用户名称</Label>
+                <Input
+                  id="displayName"
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="请输入你的名称"
+                  required={!isLogin}
+                  maxLength={50}
+                  className="rounded-xl"
+                />
+                <p className="text-xs text-muted-foreground">
+                  这个名称将在复盘报告中使用
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email">邮箱</Label>
               <Input

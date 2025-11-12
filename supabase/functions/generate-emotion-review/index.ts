@@ -42,6 +42,15 @@ serve(async (req) => {
 
     console.log('Generating review:', { reviewType, startDate, endDate, userId: user.id });
 
+    // 获取用户信息
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .single();
+
+    const userName = profile?.display_name || '朋友';
+
     // 获取时间范围内的所有简报
     const { data: briefings, error: briefingsError } = await supabase
       .from('briefings')
@@ -113,6 +122,11 @@ ${briefingsWithTags.map((b, idx) => `
 
 请生成包含以下部分的复盘报告（使用emoji装饰，语气温暖）：
 
+重要格式要求：
+- 不要使用任何markdown格式符号（**、*、###等）
+- 直接使用文字和emoji来组织内容
+- 称呼用户为"亲爱的${userName}"
+
 1. 📊 整体情绪概览（30-50字）
    - 总结${timeRangeText}的情绪变化趋势和主要特征
 
@@ -131,6 +145,7 @@ ${briefingsWithTags.map((b, idx) => `
 5. 💬 劲老师寄语（1段话）
    - 温暖鼓励的话语
    - 肯定用户的努力和成长
+   - 以"亲爱的${userName}"开头
 
 保持劲老师的温柔、陪伴式风格，强调成长与自我接纳。`;
 
