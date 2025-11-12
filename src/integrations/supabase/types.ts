@@ -166,6 +166,30 @@ export type Database = {
         }
         Relationships: []
       }
+      emotion_quick_logs: {
+        Row: {
+          created_at: string
+          emotion_intensity: number
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emotion_intensity: number
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emotion_intensity?: number
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
