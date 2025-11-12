@@ -204,6 +204,7 @@ export type Database = {
           conversation_style: string | null
           created_at: string
           display_name: string | null
+          has_seen_onboarding: boolean | null
           id: string
           last_reminder_shown: string | null
           reminder_enabled: boolean | null
@@ -217,6 +218,7 @@ export type Database = {
           conversation_style?: string | null
           created_at?: string
           display_name?: string | null
+          has_seen_onboarding?: boolean | null
           id: string
           last_reminder_shown?: string | null
           reminder_enabled?: boolean | null
@@ -230,6 +232,7 @@ export type Database = {
           conversation_style?: string | null
           created_at?: string
           display_name?: string | null
+          has_seen_onboarding?: boolean | null
           id?: string
           last_reminder_shown?: string | null
           reminder_enabled?: boolean | null

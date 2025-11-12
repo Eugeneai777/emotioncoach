@@ -10,6 +10,7 @@ import TodayProgress from "@/components/TodayProgress";
 import WeeklyProgress from "@/components/WeeklyProgress";
 import { EmotionAlert } from "@/components/EmotionAlert";
 import { VoiceControls } from "@/components/VoiceControls";
+import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
@@ -20,6 +21,7 @@ import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target } from "luc
 const Index = () => {
   const [input, setInput] = useState("");
   const [showReminder, setShowReminder] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [voiceConfig, setVoiceConfig] = useState<{ gender: 'male' | 'female', rate: number }>({ gender: 'female', rate: 0.9 });
   const { user, loading: authLoading, signOut } = useAuth();
   const { messages, isLoading, sendMessage, resetConversation } = useStreamChat();
@@ -60,8 +62,42 @@ const Index = () => {
       navigate("/auth");
     } else if (user) {
       loadVoiceConfig();
+      checkOnboarding();
     }
   }, [user, authLoading, navigate]);
+
+  const checkOnboarding = async () => {
+    if (!user) return;
+
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("has_seen_onboarding")
+        .eq("id", user.id)
+        .single();
+
+      if (data && !data.has_seen_onboarding) {
+        setShowOnboarding(true);
+      }
+    } catch (error) {
+      console.error("Error checking onboarding:", error);
+    }
+  };
+
+  const handleOnboardingComplete = async () => {
+    if (!user) return;
+
+    try {
+      await supabase
+        .from("profiles")
+        .update({ has_seen_onboarding: true })
+        .eq("id", user.id);
+
+      setShowOnboarding(false);
+    } catch (error) {
+      console.error("Error updating onboarding status:", error);
+    }
+  };
 
   const loadVoiceConfig = async () => {
     try {
@@ -186,6 +222,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <WelcomeOnboarding 
+        open={showOnboarding} 
+        onComplete={handleOnboardingComplete}
+      />
+      
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
