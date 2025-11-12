@@ -11,7 +11,6 @@ import WeeklyProgress from "@/components/WeeklyProgress";
 import { EmotionAlert } from "@/components/EmotionAlert";
 import { VoiceControls } from "@/components/VoiceControls";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
-import { QuickEmotionLog } from "@/components/QuickEmotionLog";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
@@ -327,11 +326,6 @@ const Index = () => {
                 </div>
               </div>
               
-              {/* Quick Emotion Log */}
-              <div className="animate-in fade-in-50 duration-700 delay-200">
-                <QuickEmotionLog />
-              </div>
-
               {/* Emotion Alert */}
               <div className="animate-in fade-in-50 duration-700 delay-250">
                 <EmotionAlert />
