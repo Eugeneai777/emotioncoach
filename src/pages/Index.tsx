@@ -303,7 +303,7 @@ const Index = () => {
                   情绪梳理教练
                 </h2>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  劲老师会陪你一起走过情绪梳理4部曲的旅程
+                  跟着劲老师，一步步梳理情绪，重新找到情绪里的力量
                 </p>
               </div>
               <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-4 md:p-6 space-y-3 md:space-y-4 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
