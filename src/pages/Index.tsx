@@ -260,61 +260,61 @@ const Index = () => {
                   </h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                  <div className="bg-background/50 rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
-                    <div className="flex items-start gap-3 mb-2">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                         1
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-sm md:text-base">
-                          觉察 <span className="text-primary/70 font-medium text-xs md:text-sm ml-1">Feel it</span>
+                        <h4 className="font-semibold text-foreground text-sm">
+                          觉察 <span className="text-primary/70 font-medium text-xs ml-1">Feel it</span>
                         </h4>
                       </div>
                     </div>
-                    <p className="text-xs md:text-sm text-muted-foreground ml-11">停下来感受当前情绪</p>
+                    <p className="text-xs text-muted-foreground ml-9">停下来感受当前情绪</p>
                   </div>
 
-                  <div className="bg-background/50 rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
-                    <div className="flex items-start gap-3 mb-2">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                         2
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-sm md:text-base">
-                          理解 <span className="text-primary/70 font-medium text-xs md:text-sm ml-1">Name it</span>
+                        <h4 className="font-semibold text-foreground text-sm">
+                          理解 <span className="text-primary/70 font-medium text-xs ml-1">Name it</span>
                         </h4>
                       </div>
                     </div>
-                    <p className="text-xs md:text-sm text-muted-foreground ml-11">理解情绪背后的需求</p>
+                    <p className="text-xs text-muted-foreground ml-9">理解情绪背后的需求</p>
                   </div>
 
-                  <div className="bg-background/50 rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
-                    <div className="flex items-start gap-3 mb-2">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                         3
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-sm md:text-base">
-                          反应 <span className="text-primary/70 font-medium text-xs md:text-sm ml-1">React it</span>
+                        <h4 className="font-semibold text-foreground text-sm">
+                          反应 <span className="text-primary/70 font-medium text-xs ml-1">React it</span>
                         </h4>
                       </div>
                     </div>
-                    <p className="text-xs md:text-sm text-muted-foreground ml-11">觉察情绪驱动的反应</p>
+                    <p className="text-xs text-muted-foreground ml-9">觉察情绪驱动的反应</p>
                   </div>
 
-                  <div className="bg-background/50 rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
-                    <div className="flex items-start gap-3 mb-2">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                         4
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-sm md:text-base">
-                          转化 <span className="text-primary/70 font-medium text-xs md:text-sm ml-1">Transform it</span>
+                        <h4 className="font-semibold text-foreground text-sm">
+                          转化 <span className="text-primary/70 font-medium text-xs ml-1">Transform it</span>
                         </h4>
                       </div>
                     </div>
-                    <p className="text-xs md:text-sm text-muted-foreground ml-11">温柔回应情绪</p>
+                    <p className="text-xs text-muted-foreground ml-9">温柔回应情绪</p>
                   </div>
                 </div>
               </div>
