@@ -254,7 +254,7 @@ const Index = () => {
       <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto">
         {messages.length === 0 ? <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-8 px-3 md:px-4">
             {showReminder && <DailyReminder onStart={handleStartFromReminder} onDismiss={handleDismissReminder} />}
-            <div className="text-center space-y-4 md:space-y-6 w-full max-w-xl animate-in fade-in-50 duration-700">
+            <div className="text-center space-y-3 md:space-y-4 w-full max-w-xl animate-in fade-in-50 duration-700">
               <div className="space-y-1.5 md:space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground">情绪觉醒教练</h2>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">劲老师陪着你，一步步梳理情绪，重新找到情绪里的力量</p>
@@ -351,7 +351,7 @@ const Index = () => {
                 <GoalProgressCard />
               </div>
               
-              <p className="text-xs md:text-sm text-muted-foreground px-3 md:px-4 animate-in fade-in-50 duration-700 delay-500 -mt-2 md:-mt-3">
+              <p className="text-xs md:text-sm text-muted-foreground px-3 md:px-4 animate-in fade-in-50 duration-700 delay-500 pt-1">
                 你愿意先一起看看你现在的感受吗？劲老师在这里陪着你 🌿
               </p>
             </div>
