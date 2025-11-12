@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { format, getDay } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line, Legend } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown } from "lucide-react";
@@ -16,6 +16,7 @@ interface Briefing {
   id: string;
   emotion_theme: string;
   created_at: string;
+  emotion_intensity?: number;
   tags?: TagType[];
 }
 
@@ -102,8 +103,71 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
     ];
   }, [briefings]);
 
+  // 情绪强度趋势分析
+  const intensityTrendData = useMemo(() => {
+    const briefingsWithIntensity = briefings
+      .filter(b => b.emotion_intensity !== null && b.emotion_intensity !== undefined)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .slice(-14); // 最近14条记录
+
+    return briefingsWithIntensity.map((briefing, index) => ({
+      index: index + 1,
+      date: format(new Date(briefing.created_at), "MM/dd", { locale: zhCN }),
+      intensity: briefing.emotion_intensity,
+    }));
+  }, [briefings]);
+
+  const intensityStats = useMemo(() => {
+    const intensities = briefings
+      .filter(b => b.emotion_intensity !== null && b.emotion_intensity !== undefined)
+      .map(b => b.emotion_intensity!);
+
+    if (intensities.length === 0) {
+      return { avg: 0, max: 0, min: 0, trend: "stable" as const };
+    }
+
+    const avg = intensities.reduce((sum, val) => sum + val, 0) / intensities.length;
+    const max = Math.max(...intensities);
+    const min = Math.min(...intensities);
+
+    // 分析趋势：比较最近7条和之前7条的平均值
+    const recent = intensities.slice(-7);
+    const previous = intensities.slice(-14, -7);
+    
+    let trend: "up" | "down" | "stable" = "stable";
+    if (recent.length > 0 && previous.length > 0) {
+      const recentAvg = recent.reduce((sum, val) => sum + val, 0) / recent.length;
+      const previousAvg = previous.reduce((sum, val) => sum + val, 0) / previous.length;
+      
+      if (recentAvg > previousAvg + 0.5) trend = "up";
+      else if (recentAvg < previousAvg - 0.5) trend = "down";
+    }
+
+    return { avg, max, min, trend };
+  }, [briefings]);
+
   const insights = useMemo(() => {
     const insights: { type: "peak" | "valley" | "pattern"; text: string }[] = [];
+
+    // 情绪强度分析
+    if (intensityStats.avg > 0) {
+      if (intensityStats.trend === "up") {
+        insights.push({
+          type: "peak",
+          text: `近期情绪强度呈上升趋势，平均强度${intensityStats.avg.toFixed(1)}分`
+        });
+      } else if (intensityStats.trend === "down") {
+        insights.push({
+          type: "valley",
+          text: `近期情绪强度有所下降，平均强度${intensityStats.avg.toFixed(1)}分`
+        });
+      } else {
+        insights.push({
+          type: "pattern",
+          text: `情绪强度保持相对稳定，平均强度${intensityStats.avg.toFixed(1)}分`
+        });
+      }
+    }
 
     // 分析星期几的高峰
     const maxWeekday = weekdayData.reduce((max, current) => 
@@ -154,7 +218,7 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
     }
 
     return insights;
-  }, [weekdayData, timePatternData, emotionDistribution]);
+  }, [weekdayData, timePatternData, emotionDistribution, intensityStats]);
 
   if (briefings.length === 0) {
     return (
@@ -189,6 +253,87 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
           ))}
         </div>
       </Card>
+
+      {intensityTrendData.length > 0 && (
+        <Card className="p-4 md:p-6 space-y-3 md:space-y-4">
+          <div className="space-y-1">
+            <h3 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
+              📊 情绪强度趋势
+            </h3>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              追踪你的情绪强度变化（1-10分）
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-3 md:gap-4 mb-4">
+            <div className="p-3 rounded-xl bg-background/50 text-center">
+              <p className="text-[10px] md:text-xs text-muted-foreground mb-1">平均强度</p>
+              <p className="text-lg md:text-2xl font-semibold text-foreground">
+                {intensityStats.avg.toFixed(1)}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-background/50 text-center">
+              <p className="text-[10px] md:text-xs text-muted-foreground mb-1">最高强度</p>
+              <p className="text-lg md:text-2xl font-semibold text-foreground">
+                {intensityStats.max}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-background/50 text-center">
+              <p className="text-[10px] md:text-xs text-muted-foreground mb-1">最低强度</p>
+              <p className="text-lg md:text-2xl font-semibold text-foreground">
+                {intensityStats.min}
+              </p>
+            </div>
+          </div>
+
+          <div className="w-full h-[200px] md:h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={intensityTrendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="date"
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  className="md:text-xs"
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  domain={[0, 10]}
+                  className="md:text-xs"
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    fontSize: "11px",
+                    padding: "6px 10px",
+                  }}
+                  labelStyle={{ color: "hsl(var(--foreground))", fontSize: "11px" }}
+                />
+                <Legend
+                  wrapperStyle={{ fontSize: "11px" }}
+                  iconType="line"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="intensity"
+                  name="情绪强度"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--primary))", r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      )}
 
       <Card className="p-4 md:p-6 space-y-3 md:space-y-4">
         <div className="space-y-1">
