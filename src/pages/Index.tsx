@@ -213,17 +213,22 @@ const Index = () => {
         <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1 md:gap-2">
-              {messages.length > 0 && <Button variant="ghost" size="sm" onClick={handleRestart} className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3">
+              {messages.length > 0 && <Button variant="ghost" size="sm" onClick={handleRestart} className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground transition-colors">
                   <RotateCcw className="w-3.5 h-3.5 md:w-4 md:h-4" />
                   <span className="hidden sm:inline">重新开始</span>
                 </Button>}
             </div>
             <div className="flex items-center gap-1 md:gap-2">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/goals")} className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate("/goals")} 
+                className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all"
+              >
                 <Target className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span className="hidden sm:inline">目标</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/settings")} className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/settings")} className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground transition-colors">
                 <Settings className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span className="hidden sm:inline">设置</span>
               </Button>
@@ -236,7 +241,7 @@ const Index = () => {
                 <span className="hidden sm:inline font-medium">我的情绪日记</span>
                 <span className="sm:hidden font-medium">日记</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3">
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground transition-colors">
                 <LogOut className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span className="hidden sm:inline">退出</span>
               </Button>
