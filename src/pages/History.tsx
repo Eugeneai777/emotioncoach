@@ -400,7 +400,7 @@ const History = () => {
                       return briefing.tags?.some((tag) => tag.id === selectedTagFilter);
                     })
                     .map((briefing) => (
-                      <button
+                       <button
                         key={briefing.id}
                         onClick={() => setSelectedBriefing(briefing)}
                         className="w-full bg-card border border-border rounded-2xl p-4 md:p-6 hover:shadow-md transition-all duration-200 text-left"
@@ -411,12 +411,20 @@ const History = () => {
                               <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
                                 <h3 className="font-semibold text-foreground text-sm md:text-base">{briefing.emotion_theme}</h3>
                                 {briefing.emotion_intensity && (
-                                  <div className="flex items-center gap-1.5 text-xs">
-                                    <span className="text-muted-foreground">强度:</span>
+                                  <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
+                                    briefing.emotion_intensity <= 3 ? 'bg-green-500/10' :
+                                    briefing.emotion_intensity <= 6 ? 'bg-orange-500/10' :
+                                    'bg-red-500/10'
+                                  }`}>
+                                    <div className={`w-2 h-2 rounded-full ${
+                                      briefing.emotion_intensity <= 3 ? 'bg-green-500' :
+                                      briefing.emotion_intensity <= 6 ? 'bg-orange-500' :
+                                      'bg-red-500'
+                                    }`} />
+                                    <span className="text-muted-foreground">强度</span>
                                     <span className={`font-semibold ${
                                       briefing.emotion_intensity <= 3 ? 'text-green-600' :
-                                      briefing.emotion_intensity <= 5 ? 'text-blue-600' :
-                                      briefing.emotion_intensity <= 7 ? 'text-orange-600' :
+                                      briefing.emotion_intensity <= 6 ? 'text-orange-600' :
                                       'text-red-600'
                                     }`}>
                                       {briefing.emotion_intensity}/10
