@@ -83,24 +83,24 @@ const StreakDisplay = () => {
   };
 
   return (
-    <Card className="p-4 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <Flame className={`w-8 h-8 ${getStreakColor()}`} />
+    <Card className="p-3 md:p-4 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
+      <div className="flex items-center gap-2 md:gap-3">
+        <div className="relative flex-shrink-0">
+          <Flame className={`w-6 h-6 md:w-8 md:h-8 ${getStreakColor()}`} />
           {streak >= 3 && (
             <div className="absolute -top-1 -right-1">
-              <Badge className="h-5 px-1.5 text-xs">
+              <Badge className="h-4 md:h-5 px-1 md:px-1.5 text-[10px] md:text-xs">
                 {streak}
               </Badge>
             </div>
           )}
         </div>
-        <div className="flex-1">
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-foreground">{streak}</span>
-            <span className="text-sm text-muted-foreground">天连续梳理</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-1.5 md:gap-2">
+            <span className="text-xl md:text-2xl font-bold text-foreground">{streak}</span>
+            <span className="text-xs md:text-sm text-muted-foreground">天连续梳理</span>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 truncate">
             {getStreakMessage()}
           </p>
         </div>
@@ -108,8 +108,8 @@ const StreakDisplay = () => {
       
       {/* Progress to next milestone */}
       {streak < 21 && (
-        <div className="mt-3 pt-3 border-t border-border/50">
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+        <div className="mt-2 md:mt-3 pt-2 md:pt-3 border-t border-border/50">
+          <div className="flex items-center justify-between text-[10px] md:text-xs text-muted-foreground mb-1">
             <span>下一个里程碑</span>
             <span className="font-medium">
               {streak < 3 ? `3天 (还需${3 - streak}天)` : 
@@ -117,7 +117,7 @@ const StreakDisplay = () => {
                `21天 (还需${21 - streak}天)`}
             </span>
           </div>
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div className="h-1 md:h-1.5 bg-muted rounded-full overflow-hidden">
             <div 
               className="h-full bg-primary transition-all duration-500"
               style={{ 
