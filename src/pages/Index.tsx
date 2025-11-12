@@ -268,8 +268,9 @@ const Index = () => {
                         1
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-sm md:text-base mb-0.5">觉察</h4>
-                        <p className="text-[10px] md:text-xs text-primary/70 font-medium">Feel it</p>
+                        <h4 className="font-semibold text-foreground text-sm md:text-base">
+                          觉察 <span className="text-primary/70 font-medium text-xs md:text-sm ml-1">Feel it</span>
+                        </h4>
                       </div>
                     </div>
                     <p className="text-xs md:text-sm text-muted-foreground ml-11">停下来感受当前情绪</p>
@@ -281,8 +282,9 @@ const Index = () => {
                         2
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-sm md:text-base mb-0.5">理解</h4>
-                        <p className="text-[10px] md:text-xs text-primary/70 font-medium">Name it</p>
+                        <h4 className="font-semibold text-foreground text-sm md:text-base">
+                          理解 <span className="text-primary/70 font-medium text-xs md:text-sm ml-1">Name it</span>
+                        </h4>
                       </div>
                     </div>
                     <p className="text-xs md:text-sm text-muted-foreground ml-11">理解情绪背后的需求</p>
@@ -294,8 +296,9 @@ const Index = () => {
                         3
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-sm md:text-base mb-0.5">反应</h4>
-                        <p className="text-[10px] md:text-xs text-primary/70 font-medium">React it</p>
+                        <h4 className="font-semibold text-foreground text-sm md:text-base">
+                          反应 <span className="text-primary/70 font-medium text-xs md:text-sm ml-1">React it</span>
+                        </h4>
                       </div>
                     </div>
                     <p className="text-xs md:text-sm text-muted-foreground ml-11">觉察情绪驱动的反应</p>
@@ -307,8 +310,9 @@ const Index = () => {
                         4
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-sm md:text-base mb-0.5">转化</h4>
-                        <p className="text-[10px] md:text-xs text-primary/70 font-medium">Transform it</p>
+                        <h4 className="font-semibold text-foreground text-sm md:text-base">
+                          转化 <span className="text-primary/70 font-medium text-xs md:text-sm ml-1">Transform it</span>
+                        </h4>
                       </div>
                     </div>
                     <p className="text-xs md:text-sm text-muted-foreground ml-11">温柔回应情绪</p>
