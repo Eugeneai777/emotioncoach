@@ -344,7 +344,7 @@ const Index = () => {
                 <GoalProgressCard />
               </div>
               
-              <p className="text-xs md:text-sm text-muted-foreground px-3 md:px-4 animate-in fade-in-50 duration-700 delay-500">
+              <p className="text-xs md:text-sm text-muted-foreground px-3 md:px-4 animate-in fade-in-50 duration-700 delay-500 -mt-2 md:-mt-3">
                 你愿意先一起看看你现在的感受吗？劲老师在这里陪着你 🌿
               </p>
             </div>
