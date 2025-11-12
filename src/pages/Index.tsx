@@ -252,47 +252,66 @@ const Index = () => {
                 </h2>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">劲老师陪着你，一步步梳理情绪，重新找到情绪里的力量</p>
               </div>
-              <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-4 md:p-6 space-y-3 md:space-y-4 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
-                <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm md:text-base pb-1 border-b border-border/50">
-                  <span className="text-primary">🌱</span>
-                  情绪四部曲
-                </h3>
-                <div className="space-y-2 md:space-y-3">
-                  <div className="flex gap-2 md:gap-3 items-center group hover:bg-accent/20 rounded-xl p-1.5 md:p-2 -m-1.5 md:-m-2 transition-colors duration-200">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                      1
+              <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-5 md:p-8 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
+                <div className="mb-4 md:mb-6">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2 text-base md:text-lg mb-1">
+                    <span className="text-primary">🌱</span>
+                    情绪四部曲
+                  </h3>
+                  <p className="text-xs md:text-sm text-muted-foreground ml-7">四个阶段，陪你温柔地与情绪相处</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                  <div className="bg-background/50 rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-3 mb-2">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        1
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground text-sm md:text-base mb-0.5">觉察</h4>
+                        <p className="text-[10px] md:text-xs text-primary/70 font-medium">Feel it</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="font-semibold text-foreground text-xs md:text-sm">觉察 Feel it</span>
-                      <span className="text-muted-foreground text-[10px] md:text-xs ml-1.5 md:ml-2">停下来感受当前情绪</span>
-                    </div>
+                    <p className="text-xs md:text-sm text-muted-foreground ml-11">停下来感受当前情绪</p>
                   </div>
-                  <div className="flex gap-2 md:gap-3 items-center group hover:bg-accent/20 rounded-xl p-1.5 md:p-2 -m-1.5 md:-m-2 transition-colors duration-200">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                      2
+
+                  <div className="bg-background/50 rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-3 mb-2">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        2
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground text-sm md:text-base mb-0.5">理解</h4>
+                        <p className="text-[10px] md:text-xs text-primary/70 font-medium">Name it</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="font-semibold text-foreground text-xs md:text-sm">理解 Name it</span>
-                      <span className="text-muted-foreground text-[10px] md:text-xs ml-1.5 md:ml-2">理解情绪背后的需求</span>
-                    </div>
+                    <p className="text-xs md:text-sm text-muted-foreground ml-11">理解情绪背后的需求</p>
                   </div>
-                  <div className="flex gap-2 md:gap-3 items-center group hover:bg-accent/20 rounded-xl p-1.5 md:p-2 -m-1.5 md:-m-2 transition-colors duration-200">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                      3
+
+                  <div className="bg-background/50 rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-3 mb-2">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        3
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground text-sm md:text-base mb-0.5">反应</h4>
+                        <p className="text-[10px] md:text-xs text-primary/70 font-medium">React it</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="font-semibold text-foreground text-xs md:text-sm">反应 React it</span>
-                      <span className="text-muted-foreground text-[10px] md:text-xs ml-1.5 md:ml-2">觉察情绪驱动的反应</span>
-                    </div>
+                    <p className="text-xs md:text-sm text-muted-foreground ml-11">觉察情绪驱动的反应</p>
                   </div>
-                  <div className="flex gap-2 md:gap-3 items-center group hover:bg-accent/20 rounded-xl p-1.5 md:p-2 -m-1.5 md:-m-2 transition-colors duration-200">
-                    <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                      4
+
+                  <div className="bg-background/50 rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-3 mb-2">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        4
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground text-sm md:text-base mb-0.5">转化</h4>
+                        <p className="text-[10px] md:text-xs text-primary/70 font-medium">Transform it</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="font-semibold text-foreground text-xs md:text-sm">转化 Transform it</span>
-                      <span className="text-muted-foreground text-[10px] md:text-xs ml-1.5 md:ml-2">温柔回应情绪</span>
-                    </div>
+                    <p className="text-xs md:text-sm text-muted-foreground ml-11">温柔回应情绪</p>
                   </div>
                 </div>
               </div>
