@@ -101,39 +101,40 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-healing-cream via-healing-warmWhite to-healing-lightGreen/10">
-      <div className="container max-w-2xl mx-auto px-4 py-8">
+      <div className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
         <Button
           variant="ghost"
           onClick={() => navigate("/")}
-          className="mb-6 text-healing-forestGreen hover:text-healing-sage"
+          className="mb-4 md:mb-6 text-healing-forestGreen hover:text-healing-sage text-xs md:text-sm"
+          size="sm"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5 md:mr-2" />
           返回
         </Button>
 
-        <h1 className="text-3xl font-bold text-foreground mb-6">设置</h1>
+        <h1 className="text-xl md:text-3xl font-bold text-foreground mb-4 md:mb-6">设置</h1>
 
         <Tabs defaultValue="reminders" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
-            <TabsTrigger value="profile" className="text-xs md:text-sm">个人资料</TabsTrigger>
-            <TabsTrigger value="reminders" className="text-xs md:text-sm">提醒设置</TabsTrigger>
-            <TabsTrigger value="companion" className="text-xs md:text-sm">情绪伙伴</TabsTrigger>
-            <TabsTrigger value="voice" className="text-xs md:text-sm">语音设置</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-4 md:mb-6 h-auto">
+            <TabsTrigger value="profile" className="text-xs md:text-sm py-2">个人资料</TabsTrigger>
+            <TabsTrigger value="reminders" className="text-xs md:text-sm py-2">提醒设置</TabsTrigger>
+            <TabsTrigger value="companion" className="text-xs md:text-sm py-2">情绪伙伴</TabsTrigger>
+            <TabsTrigger value="voice" className="text-xs md:text-sm py-2">语音设置</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile">
             <Card className="border-border shadow-lg">
               <CardHeader>
-                <CardTitle className="text-2xl text-foreground">
+                <CardTitle className="text-lg md:text-2xl text-foreground">
                   个人资料
                 </CardTitle>
-                <CardDescription className="text-muted-foreground">
+                <CardDescription className="text-xs md:text-sm text-muted-foreground">
                   设置你的个人信息 🌿
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 md:space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="display-name" className="text-foreground">
+                  <Label htmlFor="display-name" className="text-xs md:text-sm text-foreground">
                     用户名称
                   </Label>
                   <Input
@@ -143,9 +144,9 @@ export default function Settings() {
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="请输入你的名称"
                     maxLength={50}
-                    className="border-border focus:border-primary"
+                    className="border-border focus:border-primary text-sm"
                   />
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs md:text-sm text-muted-foreground">
                     这个名称将在复盘报告中使用，例如"亲爱的[你的名称]"
                   </p>
                 </div>
@@ -153,7 +154,8 @@ export default function Settings() {
                 <Button
                   onClick={saveSettings}
                   disabled={saving}
-                  className="w-full"
+                  className="w-full text-xs md:text-sm"
+                  size="sm"
                 >
                   {saving ? "保存中..." : "保存设置"}
                 </Button>
@@ -164,20 +166,20 @@ export default function Settings() {
           <TabsContent value="reminders">
             <Card className="border-border shadow-lg">
               <CardHeader>
-                <CardTitle className="text-2xl text-foreground">
+                <CardTitle className="text-lg md:text-2xl text-foreground">
                   提醒设置
                 </CardTitle>
-                <CardDescription className="text-muted-foreground">
+                <CardDescription className="text-xs md:text-sm text-muted-foreground">
                   设置你的每日情绪梳理提醒时间 🌿
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 md:space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="reminder-enabled" className="text-foreground">
+                    <Label htmlFor="reminder-enabled" className="text-xs md:text-sm text-foreground">
                       启用每日提醒
                     </Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs md:text-sm text-muted-foreground">
                       在设定的时间收到温柔的梳理邀请
                     </p>
                   </div>
@@ -190,7 +192,7 @@ export default function Settings() {
 
                 {reminderEnabled && (
                   <div className="space-y-2">
-                    <Label htmlFor="reminder-time" className="text-foreground">
+                    <Label htmlFor="reminder-time" className="text-xs md:text-sm text-foreground">
                       提醒时间
                     </Label>
                     <Input
@@ -198,9 +200,9 @@ export default function Settings() {
                       type="time"
                       value={reminderTime}
                       onChange={(e) => setReminderTime(e.target.value)}
-                      className="border-border focus:border-primary"
+                      className="border-border focus:border-primary text-sm"
                     />
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs md:text-sm text-muted-foreground">
                       当你打开应用时，如果今天还未进行情绪梳理，会在这个时间之后温柔地提醒你
                     </p>
                   </div>
@@ -209,7 +211,8 @@ export default function Settings() {
                 <Button
                   onClick={saveSettings}
                   disabled={saving}
-                  className="w-full"
+                  className="w-full text-xs md:text-sm"
+                  size="sm"
                 >
                   {saving ? "保存中..." : "保存设置"}
                 </Button>
