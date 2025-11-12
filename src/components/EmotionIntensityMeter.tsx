@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { EmotionIntensityGuide } from "./EmotionIntensityGuide";
 
 interface EmotionIntensityMeterProps {
   intensity: number;
@@ -56,6 +57,12 @@ export const EmotionIntensityMeter = ({
         <span>轻微</span>
         <span>强烈</span>
       </div>
+
+      {showLabel && size !== "sm" && (
+        <div className="flex justify-center pt-1">
+          <EmotionIntensityGuide />
+        </div>
+      )}
     </div>
   );
 };

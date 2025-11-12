@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { EmotionIntensityGuide } from "./EmotionIntensityGuide";
 
 interface TagType {
   id: string;
@@ -382,6 +383,10 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
               <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-red-500" />
               <span className="text-[10px] md:text-xs text-muted-foreground">高强度 (7-10)</span>
             </div>
+          </div>
+
+          <div className="flex justify-center pt-3 md:pt-4">
+            <EmotionIntensityGuide />
           </div>
         </Card>
       )}

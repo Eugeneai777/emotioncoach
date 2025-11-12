@@ -3,8 +3,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, Heart, Lightbulb, X, Loader2 } from "lucide-react";
+import { AlertTriangle, Heart, Lightbulb, X, Loader2, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { EmotionIntensityGuide } from "./EmotionIntensityGuide";
 
 interface Briefing {
   id: string;
@@ -236,6 +237,10 @@ export const EmotionAlert = () => {
               <p className="text-sm text-muted-foreground italic leading-relaxed">
                 💫 {suggestions.encouraging_message}
               </p>
+            </div>
+
+            <div className="flex justify-center pt-2">
+              <EmotionIntensityGuide />
             </div>
           </div>
         )}
