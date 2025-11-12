@@ -368,6 +368,21 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
               </LineChart>
             </ResponsiveContainer>
           </div>
+
+          <div className="flex items-center justify-center gap-4 md:gap-6 pt-3 md:pt-4 border-t border-border/50">
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-green-500" />
+              <span className="text-[10px] md:text-xs text-muted-foreground">低强度 (1-3)</span>
+            </div>
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-orange-500" />
+              <span className="text-[10px] md:text-xs text-muted-foreground">中等 (4-6)</span>
+            </div>
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-red-500" />
+              <span className="text-[10px] md:text-xs text-muted-foreground">高强度 (7-10)</span>
+            </div>
+          </div>
         </Card>
       )}
 
