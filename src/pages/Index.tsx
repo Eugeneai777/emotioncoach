@@ -254,11 +254,10 @@ const Index = () => {
               </div>
               <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-5 md:p-8 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
                 <div className="mb-4 md:mb-6">
-                  <h3 className="font-semibold text-foreground flex items-center gap-2 text-base md:text-lg mb-1">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2 text-base md:text-lg">
                     <span className="text-primary">🌱</span>
                     情绪四部曲
                   </h3>
-                  <p className="text-xs md:text-sm text-muted-foreground ml-7">四个阶段，陪你温柔地与情绪相处</p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
