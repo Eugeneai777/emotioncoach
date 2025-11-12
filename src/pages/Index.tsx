@@ -252,8 +252,8 @@ const Index = () => {
                 </h2>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">劲老师陪着你，一步步梳理情绪，重新找到情绪里的力量</p>
               </div>
-              <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-5 md:p-8 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
-                <div className="mb-4 md:mb-6">
+              <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-4 md:p-6 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
+                <div className="mb-3 md:mb-4">
                   <h3 className="font-semibold text-foreground flex items-center gap-2 text-base md:text-lg">
                     <span className="text-primary">🌱</span>
                     情绪四部曲
