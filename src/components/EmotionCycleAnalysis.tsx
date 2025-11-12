@@ -103,6 +103,20 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
     ];
   }, [briefings]);
 
+  // 根据强度返回颜色
+  const getIntensityColor = (intensity: number) => {
+    if (intensity <= 3) return "hsl(142, 76%, 36%)"; // 绿色 - 低强度
+    if (intensity <= 6) return "hsl(38, 92%, 50%)"; // 橙色 - 中等强度
+    return "hsl(0, 84%, 60%)"; // 红色 - 高强度
+  };
+
+  // 根据强度返回背景色
+  const getIntensityBgColor = (intensity: number) => {
+    if (intensity <= 3) return "bg-green-500/10";
+    if (intensity <= 6) return "bg-orange-500/10";
+    return "bg-red-500/10";
+  };
+
   // 情绪强度趋势分析
   const intensityTrendData = useMemo(() => {
     const briefingsWithIntensity = briefings
@@ -266,21 +280,30 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
           </div>
           
           <div className="grid grid-cols-3 gap-3 md:gap-4 mb-4">
-            <div className="p-3 rounded-xl bg-background/50 text-center">
+            <div className={`p-3 rounded-xl text-center transition-colors ${getIntensityBgColor(intensityStats.avg)}`}>
               <p className="text-[10px] md:text-xs text-muted-foreground mb-1">平均强度</p>
-              <p className="text-lg md:text-2xl font-semibold text-foreground">
+              <p 
+                className="text-lg md:text-2xl font-semibold"
+                style={{ color: getIntensityColor(intensityStats.avg) }}
+              >
                 {intensityStats.avg.toFixed(1)}
               </p>
             </div>
-            <div className="p-3 rounded-xl bg-background/50 text-center">
+            <div className={`p-3 rounded-xl text-center transition-colors ${getIntensityBgColor(intensityStats.max)}`}>
               <p className="text-[10px] md:text-xs text-muted-foreground mb-1">最高强度</p>
-              <p className="text-lg md:text-2xl font-semibold text-foreground">
+              <p 
+                className="text-lg md:text-2xl font-semibold"
+                style={{ color: getIntensityColor(intensityStats.max) }}
+              >
                 {intensityStats.max}
               </p>
             </div>
-            <div className="p-3 rounded-xl bg-background/50 text-center">
+            <div className={`p-3 rounded-xl text-center transition-colors ${getIntensityBgColor(intensityStats.min)}`}>
               <p className="text-[10px] md:text-xs text-muted-foreground mb-1">最低强度</p>
-              <p className="text-lg md:text-2xl font-semibold text-foreground">
+              <p 
+                className="text-lg md:text-2xl font-semibold"
+                style={{ color: getIntensityColor(intensityStats.min) }}
+              >
                 {intensityStats.min}
               </p>
             </div>
@@ -326,7 +349,20 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
                   name="情绪强度"
                   stroke="hsl(var(--primary))"
                   strokeWidth={2}
-                  dot={{ fill: "hsl(var(--primary))", r: 4 }}
+                  dot={(props: any) => {
+                    const { cx, cy, payload } = props;
+                    const color = getIntensityColor(payload.intensity);
+                    return (
+                      <circle
+                        cx={cx}
+                        cy={cy}
+                        r={4}
+                        fill={color}
+                        stroke={color}
+                        strokeWidth={2}
+                      />
+                    );
+                  }}
                   activeDot={{ r: 6 }}
                 />
               </LineChart>
