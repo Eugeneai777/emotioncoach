@@ -128,7 +128,7 @@ ${briefingSummaries}
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.0-flash-exp",
         messages: [
           { role: "user", content: analysisPrompt }
         ],
@@ -137,7 +137,8 @@ ${briefingSummaries}
     });
 
     if (!response.ok) {
-      console.error("AI分析失败:", response.status);
+      const errorText = await response.text();
+      console.error("AI分析失败:", response.status, errorText);
       return new Response(JSON.stringify({ error: "分析服务暂时不可用" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
