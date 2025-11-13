@@ -11,6 +11,7 @@ import WeeklyProgress from "@/components/WeeklyProgress";
 import { EmotionAlert } from "@/components/EmotionAlert";
 import { VoiceControls } from "@/components/VoiceControls";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
+import { EmotionIntensitySelector } from "@/components/EmotionIntensitySelector";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
@@ -21,6 +22,8 @@ const Index = () => {
   const [input, setInput] = useState("");
   const [showReminder, setShowReminder] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showIntensitySelector, setShowIntensitySelector] = useState(false);
+  const [selectedIntensity, setSelectedIntensity] = useState<number | null>(null);
   const [voiceConfig, setVoiceConfig] = useState<{
     gender: 'male' | 'female';
     rate: number;
@@ -177,7 +180,18 @@ const Index = () => {
   };
   const handleStartFromReminder = () => {
     setShowReminder(false);
+    setShowIntensitySelector(true);
   };
+  
+  const handleIntensitySelect = (intensity: number) => {
+    setSelectedIntensity(intensity);
+    setShowIntensitySelector(false);
+    // 自动开始对话，告诉AI用户的情绪强度
+    const message = `我现在的情绪强度是 ${intensity}/10`;
+    setInput("");
+    sendMessage(message);
+  };
+  
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
     stopSpeaking();
@@ -253,7 +267,15 @@ const Index = () => {
       {/* Main Content */}
       <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto">
         {messages.length === 0 ? <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-8 px-3 md:px-4">
-            {showReminder && <DailyReminder onStart={handleStartFromReminder} onDismiss={handleDismissReminder} />}
+            {showReminder && !showIntensitySelector && <DailyReminder onStart={handleStartFromReminder} onDismiss={handleDismissReminder} />}
+            {showIntensitySelector ? (
+              <div className="w-full max-w-xl">
+                <EmotionIntensitySelector 
+                  onSelect={handleIntensitySelect}
+                  disabled={isLoading}
+                />
+              </div>
+            ) : (
             <div className="text-center space-y-3 md:space-y-4 w-full max-w-xl animate-in fade-in-50 duration-700">
               <div className="space-y-1.5 md:space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground">情绪觉醒教练</h2>
@@ -355,6 +377,7 @@ const Index = () => {
                 你愿意先一起看看你现在的感受吗？劲老师在这里陪着你 🌿
               </p>
             </div>
+            )}
           </div> : <div className="flex-1 py-4 md:py-6">
             <div className="space-y-2 md:space-y-3">
               {messages.map((msg, idx) => <ChatMessage key={idx} role={msg.role} content={msg.content} />)}
