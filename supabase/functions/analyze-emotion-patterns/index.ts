@@ -128,7 +128,7 @@ ${briefingSummaries}
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-exp",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "user", content: analysisPrompt }
         ],
@@ -139,6 +139,18 @@ ${briefingSummaries}
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI分析失败:", response.status, errorText);
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "请求过于频繁，请稍后再试" }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "额度不足，请在工作区充值后再试" }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       return new Response(JSON.stringify({ error: "分析服务暂时不可用" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
