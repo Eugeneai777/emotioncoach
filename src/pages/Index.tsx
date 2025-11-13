@@ -274,15 +274,6 @@ const Index = () => {
             {showReminder && <DailyReminder onStart={handleStartFromReminder} onDismiss={handleDismissReminder} />}
             
             <div className="text-center space-y-3 md:space-y-4 w-full max-w-xl animate-in fade-in-50 duration-700">
-              {selectedIntensity === null && (
-                <div className="animate-in fade-in-50 duration-700 delay-100">
-                  <EmotionIntensitySelector 
-                    onSelect={handleIntensitySelect}
-                    disabled={isLoading}
-                  />
-                </div>
-              )}
-              
               <div className="space-y-1.5 md:space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground">情绪觉醒教练</h2>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">劲老师陪着你，一步步梳理情绪，重新找到情绪里的力量</p>
@@ -354,8 +345,18 @@ const Index = () => {
                 </div>
               </div>
               
+              {/* Emotion Intensity Selector */}
+              {selectedIntensity === null && (
+                <div className="animate-in fade-in-50 duration-700 delay-250">
+                  <EmotionIntensitySelector 
+                    onSelect={handleIntensitySelect}
+                    disabled={isLoading}
+                  />
+                </div>
+              )}
+              
               {/* Emotion Alert */}
-              <div className="animate-in fade-in-50 duration-700 delay-250">
+              <div className="animate-in fade-in-50 duration-700 delay-300">
                 <EmotionAlert />
               </div>
 
