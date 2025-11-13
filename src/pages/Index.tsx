@@ -347,7 +347,7 @@ const Index = () => {
               
               {/* Emotion Intensity Selector */}
               {selectedIntensity === null && (
-                <div className="animate-in fade-in-50 duration-700 delay-250">
+                <div className="animate-in fade-in-50 duration-700 delay-200">
                   <EmotionIntensitySelector 
                     onSelect={handleIntensitySelect}
                     disabled={isLoading}
@@ -356,7 +356,7 @@ const Index = () => {
               )}
               
               {/* Emotion Alert */}
-              <div className="animate-in fade-in-50 duration-700 delay-300">
+              <div className="animate-in fade-in-50 duration-700 delay-250">
                 <EmotionAlert />
               </div>
 
