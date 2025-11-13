@@ -177,6 +177,10 @@ const Index = () => {
         last_reminder_shown: new Date().toISOString()
       }).eq("id", user.id);
     }
+    // 关闭提醒后，显示情绪强度选择器
+    if (selectedIntensity === null) {
+      setShowIntensitySelector(true);
+    }
   };
   const handleStartFromReminder = () => {
     setShowReminder(false);
@@ -267,8 +271,9 @@ const Index = () => {
       {/* Main Content */}
       <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto">
         {messages.length === 0 ? <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-8 px-3 md:px-4">
-            {showReminder && !showIntensitySelector && <DailyReminder onStart={handleStartFromReminder} onDismiss={handleDismissReminder} />}
-            {showIntensitySelector ? (
+            {showReminder && !showIntensitySelector ? (
+              <DailyReminder onStart={handleStartFromReminder} onDismiss={handleDismissReminder} />
+            ) : selectedIntensity === null ? (
               <div className="w-full max-w-xl">
                 <EmotionIntensitySelector 
                   onSelect={handleIntensitySelect}
