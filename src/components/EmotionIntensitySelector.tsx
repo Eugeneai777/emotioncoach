@@ -42,20 +42,20 @@ export const EmotionIntensitySelector = ({ onSelect, disabled }: EmotionIntensit
   const currentDescription = intensityDescriptions[selectedIntensity - 1];
 
   return (
-    <Card className={`p-6 bg-gradient-to-br ${getIntensityColor(selectedIntensity)} border-primary/10 animate-in fade-in-50 duration-700 transition-colors`}>
-      <div className="space-y-6">
-        <div className="text-center space-y-2">
-          <h3 className="text-lg font-semibold text-foreground">现在的情绪强度如何？</h3>
-          <p className="text-sm text-muted-foreground">
+    <Card className={`p-4 bg-gradient-to-br ${getIntensityColor(selectedIntensity)} border-primary/10 animate-in fade-in-50 duration-700 transition-colors`}>
+      <div className="space-y-3">
+        <div className="text-center space-y-1">
+          <h3 className="text-base font-semibold text-foreground">现在的情绪强度如何？</h3>
+          <p className="text-xs text-muted-foreground">
             拖动滑块选择最符合你现在感受的强度
           </p>
         </div>
 
-        <div className="space-y-4">
-          <div className="text-center py-2">
-            <div className="text-5xl font-bold text-foreground mb-2">{selectedIntensity}</div>
-            <div className="text-lg font-semibold text-foreground">{currentDescription.label}</div>
-            <div className="text-sm text-muted-foreground mt-1">{currentDescription.desc}</div>
+        <div className="space-y-3">
+          <div className="text-center py-1">
+            <div className="text-3xl font-bold text-foreground mb-1">{selectedIntensity}</div>
+            <div className="text-sm font-semibold text-foreground">{currentDescription.label}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{currentDescription.desc}</div>
           </div>
 
           <div className="px-2">
@@ -70,17 +70,17 @@ export const EmotionIntensitySelector = ({ onSelect, disabled }: EmotionIntensit
             />
           </div>
 
-          <div className="flex items-center justify-between text-xs text-muted-foreground px-2">
-            <span>1 - 轻微</span>
-            <span>5 - 中等</span>
-            <span>10 - 强烈</span>
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground px-2">
+            <span>轻微</span>
+            <span>中等</span>
+            <span>强烈</span>
           </div>
         </div>
 
         <Button 
           onClick={handleConfirm}
           disabled={disabled}
-          className="w-full"
+          className="w-full h-9 text-sm"
         >
           确认并开始对话
         </Button>
