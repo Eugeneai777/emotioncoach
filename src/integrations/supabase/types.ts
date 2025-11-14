@@ -60,6 +60,8 @@ export type Database = {
           growth_story: string | null
           id: string
           insight: string | null
+          intensity_keywords: string[] | null
+          intensity_reasoning: string | null
           stage_1_content: string | null
           stage_2_content: string | null
           stage_3_content: string | null
@@ -74,6 +76,8 @@ export type Database = {
           growth_story?: string | null
           id?: string
           insight?: string | null
+          intensity_keywords?: string[] | null
+          intensity_reasoning?: string | null
           stage_1_content?: string | null
           stage_2_content?: string | null
           stage_3_content?: string | null
@@ -88,6 +92,8 @@ export type Database = {
           growth_story?: string | null
           id?: string
           insight?: string | null
+          intensity_keywords?: string[] | null
+          intensity_reasoning?: string | null
           stage_1_content?: string | null
           stage_2_content?: string | null
           stage_3_content?: string | null
