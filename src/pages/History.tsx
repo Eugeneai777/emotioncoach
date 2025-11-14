@@ -37,6 +37,8 @@ export interface Briefing {
   action: string | null;
   growth_story: string | null;
   emotion_intensity: number | null;
+  intensity_reasoning: string | null;
+  intensity_keywords: string[] | null;
   created_at: string;
   tags?: TagType[];
 }
@@ -207,8 +209,42 @@ const History = () => {
               </div>
 
               {selectedBriefing.emotion_intensity && (
-                <div>
-                  <EmotionIntensityCard intensity={selectedBriefing.emotion_intensity} />
+                <div className="space-y-3">
+                  <div>
+                    <EmotionIntensityCard intensity={selectedBriefing.emotion_intensity} />
+                  </div>
+                  
+                  {/* 情绪强度分析 */}
+                  {(selectedBriefing.intensity_reasoning || selectedBriefing.intensity_keywords) && (
+                    <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 md:p-4 space-y-2.5">
+                      <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        📊 情绪强度分析
+                      </h4>
+                      
+                      {selectedBriefing.intensity_reasoning && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1.5">判断依据</p>
+                          <p className="text-sm text-foreground/80 leading-relaxed">{selectedBriefing.intensity_reasoning}</p>
+                        </div>
+                      )}
+                      
+                      {selectedBriefing.intensity_keywords && selectedBriefing.intensity_keywords.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1.5">关键词</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {selectedBriefing.intensity_keywords.map((keyword, index) => (
+                              <span 
+                                key={index}
+                                className="inline-flex items-center px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium"
+                              >
+                                {keyword}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 

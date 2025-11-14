@@ -18,6 +18,8 @@ interface Briefing {
   action: string | null;
   growth_story: string | null;
   emotion_intensity: number | null;
+  intensity_reasoning: string | null;
+  intensity_keywords: string[] | null;
   created_at: string;
   tags?: Array<{ id: string; name: string; color: string }>;
 }
