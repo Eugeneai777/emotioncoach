@@ -91,7 +91,12 @@ const History = () => {
             .eq("briefing_id", briefing.id);
 
           const tags = tagData?.map((t: any) => t.tags).filter(Boolean) || [];
-          return { ...briefing, tags } as Briefing;
+          return { 
+            ...briefing, 
+            intensity_reasoning: (briefing as any).intensity_reasoning || null,
+            intensity_keywords: (briefing as any).intensity_keywords || null,
+            tags 
+          } as Briefing;
         })
       );
 

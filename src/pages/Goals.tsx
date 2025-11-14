@@ -45,6 +45,20 @@ interface Achievement {
   earned_at: string;
 }
 
+interface GoalSuggestion {
+  goal_type: "weekly" | "monthly";
+  target_count: number;
+  description: string;
+  priority: "high" | "medium" | "low";
+  reasoning: string;
+}
+
+interface GoalSuggestionsResponse {
+  suggestions: GoalSuggestion[];
+  summary: string;
+  user_data?: any;
+}
+
 const Goals = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +72,9 @@ const Goals = () => {
   const [currentAchievement, setCurrentAchievement] = useState<string>("");
   const [currentGoalType, setCurrentGoalType] = useState<"weekly" | "monthly">("weekly");
   const [goalProgress, setGoalProgress] = useState<Record<string, { current: number; percentage: number }>>({});
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [goalSuggestions, setGoalSuggestions] = useState<GoalSuggestionsResponse | null>(null);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -313,6 +330,45 @@ const Goals = () => {
     }
   };
 
+  const loadGoalSuggestions = async () => {
+    setLoadingSuggestions(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("未登录");
+
+      const { data, error } = await supabase.functions.invoke('suggest-goals', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setGoalSuggestions(data);
+      setSuggestionsOpen(true);
+    } catch (error: any) {
+      toast({
+        title: "获取建议失败",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const applyGoalSuggestion = (suggestion: GoalSuggestion) => {
+    setGoalType(suggestion.goal_type);
+    setTargetCount(String(suggestion.target_count));
+    setDescription(suggestion.description);
+    setSuggestionsOpen(false);
+    setIsDialogOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -339,7 +395,22 @@ const Goals = () => {
               </Button>
               <h1 className="text-base md:text-xl font-bold text-foreground truncate">情绪目标</h1>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <div className="flex items-center gap-2">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={loadGoalSuggestions}
+                disabled={loadingSuggestions}
+                className="gap-1.5 md:gap-2 text-xs md:text-sm flex-shrink-0"
+              >
+                {loadingSuggestions ? (
+                  <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
+                ) : (
+                  <TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                )}
+                <span className="hidden sm:inline">AI建议</span>
+              </Button>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="gap-1.5 md:gap-2 text-xs md:text-sm flex-shrink-0">
                   <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
@@ -405,6 +476,7 @@ const Goals = () => {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
         </div>
       </header>
@@ -514,6 +586,58 @@ const Goals = () => {
           </div>
         )}
       </main>
+
+      {/* AI Goal Suggestions Dialog */}
+      <Dialog open={suggestionsOpen} onOpenChange={setSuggestionsOpen}>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base md:text-lg">AI目标建议</DialogTitle>
+            <DialogDescription className="text-xs md:text-sm">
+              根据你的情绪数据和标签分析，为你推荐合适的目标
+            </DialogDescription>
+          </DialogHeader>
+          
+          {goalSuggestions && (
+            <div className="space-y-4">
+              {/* Summary */}
+              <div className="bg-primary/5 border border-primary/10 rounded-lg p-3 md:p-4">
+                <p className="text-sm text-foreground/80">{goalSuggestions.summary}</p>
+              </div>
+
+              {/* Suggestions */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-foreground">推荐目标</h3>
+                {goalSuggestions.suggestions.map((suggestion, index) => (
+                  <Card key={index} className="p-3 md:p-4 hover:border-primary/40 transition-colors cursor-pointer" onClick={() => applyGoalSuggestion(suggestion)}>
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Badge variant={suggestion.priority === "high" ? "default" : "secondary"} className="text-xs">
+                              {suggestion.priority === "high" ? "高优先级" : suggestion.priority === "medium" ? "中优先级" : "低优先级"}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {suggestion.goal_type === "weekly" ? "每周" : "每月"} {suggestion.target_count}次
+                            </span>
+                          </div>
+                          <p className="text-sm font-medium text-foreground">{suggestion.description}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{suggestion.reasoning}</p>
+                      <Button size="sm" variant="outline" className="w-full text-xs" onClick={(e) => {
+                        e.stopPropagation();
+                        applyGoalSuggestion(suggestion);
+                      }}>
+                        使用这个建议
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Celebration Modal */}
       <CelebrationModal

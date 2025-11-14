@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.generate-emotion-review]
 verify_jwt = true
+
+[functions.suggest-goals]
+verify_jwt = true
