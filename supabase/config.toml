@@ -20,3 +20,6 @@ verify_jwt = true
 
 [functions.suggest-goals]
 verify_jwt = true
+
+[functions.goal-completion-feedback]
+verify_jwt = true

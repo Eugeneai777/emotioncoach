@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import CelebrationModal from "@/components/CelebrationModal";
 import AchievementBadge from "@/components/AchievementBadge";
 import StreakDisplay from "@/components/StreakDisplay";
+import { GoalCompletionFeedback } from "@/components/GoalCompletionFeedback";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +60,21 @@ interface GoalSuggestionsResponse {
   user_data?: any;
 }
 
+interface CompletionFeedback {
+  encouragement: string;
+  achievement_summary: string;
+  next_steps: Array<{
+    type: "continue" | "elevate" | "adjust";
+    suggestion: string;
+    reasoning: string;
+  }>;
+  celebration_message: string;
+  stats?: {
+    completion_rate: number;
+    consecutive_goals: number;
+  };
+}
+
 const Goals = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +91,9 @@ const Goals = () => {
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [goalSuggestions, setGoalSuggestions] = useState<GoalSuggestionsResponse | null>(null);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [completionFeedback, setCompletionFeedback] = useState<CompletionFeedback | null>(null);
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -302,6 +321,8 @@ const Goals = () => {
 
   const handleCompleteGoal = async (goal: Goal, progress: { current: number; percentage: number }) => {
     try {
+      setLoadingFeedback(true);
+      
       // Check if goal is actually completed
       if (progress.percentage >= 100) {
         await awardAchievement(goal);
@@ -315,10 +336,21 @@ const Goals = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "目标已完成",
-        description: "继续设定新的目标吧！",
-      });
+      // Get completion feedback from AI
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: feedbackData, error: feedbackError } = await supabase.functions.invoke('goal-completion-feedback', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          },
+          body: { goal_id: goal.id }
+        });
+
+        if (!feedbackError && feedbackData && !feedbackData.error) {
+          setCompletionFeedback(feedbackData);
+          setFeedbackOpen(true);
+        }
+      }
 
       await loadGoals();
     } catch (error: any) {
@@ -327,6 +359,8 @@ const Goals = () => {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setLoadingFeedback(false);
     }
   };
 
@@ -638,6 +672,13 @@ const Goals = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Goal Completion Feedback */}
+      <GoalCompletionFeedback
+        open={feedbackOpen}
+        onOpenChange={setFeedbackOpen}
+        feedback={completionFeedback}
+      />
 
       {/* Celebration Modal */}
       <CelebrationModal
