@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 
 interface EmotionIntensitySelectorProps {
   onSelect: (intensity: number) => void;
+  onSkip?: () => void;
   disabled?: boolean;
 }
 
@@ -28,7 +29,7 @@ const getIntensityColor = (level: number) => {
   return "from-red-500/20 to-red-600/20";
 };
 
-export const EmotionIntensitySelector = ({ onSelect, disabled }: EmotionIntensitySelectorProps) => {
+export const EmotionIntensitySelector = ({ onSelect, onSkip, disabled }: EmotionIntensitySelectorProps) => {
   const [selectedIntensity, setSelectedIntensity] = useState<number>(5);
 
   const handleSliderChange = (value: number[]) => {
@@ -74,14 +75,27 @@ export const EmotionIntensitySelector = ({ onSelect, disabled }: EmotionIntensit
             <span>10 强烈</span>
           </div>
           
-          <Button 
-            onClick={handleConfirm}
-            disabled={disabled}
-            size="sm"
-            className="w-full h-8 text-xs"
-          >
-            确认开始对话
-          </Button>
+          <div className="flex gap-2">
+            {onSkip && (
+              <Button 
+                onClick={onSkip}
+                disabled={disabled}
+                variant="outline"
+                size="sm"
+                className="flex-1 h-8 text-xs"
+              >
+                跳过，让AI判断
+              </Button>
+            )}
+            <Button 
+              onClick={handleConfirm}
+              disabled={disabled}
+              size="sm"
+              className={`h-8 text-xs ${onSkip ? 'flex-1' : 'w-full'}`}
+            >
+              确认开始对话
+            </Button>
+          </div>
         </div>
       </div>
     </div>
