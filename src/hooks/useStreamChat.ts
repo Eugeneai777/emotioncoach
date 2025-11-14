@@ -14,6 +14,8 @@ interface BriefingData {
   action: string;
   growth_story: string;
   emotion_intensity?: number;
+  intensity_reasoning?: string;
+  intensity_keywords?: string[];
   emotion_tags?: string[];
 }
 

@@ -228,6 +228,19 @@ serve(async (req) => {
                     minimum: 1,
                     maximum: 10
                   },
+                  intensity_reasoning: {
+                    type: "string",
+                    description: "判断情绪强度的具体依据，简要说明为什么给出这个分数。例如：'用户反复提到焦虑和担心，使用了多个强烈的情绪词汇，表明情绪强度较高'（30-60字）"
+                  },
+                  intensity_keywords: {
+                    type: "array",
+                    description: "从对话中提取的关键情绪词汇，3-5个最能体现情绪强度的词语",
+                    items: {
+                      type: "string"
+                    },
+                    minItems: 3,
+                    maxItems: 5
+                  },
                   emotion_tags: {
                     type: "array",
                     description: "根据对话内容识别的情绪标签数组。必须从以下标签中选择1-3个最匹配的，这是强制要求：负面情绪（焦虑、不安、失落、压力、无力、发火、生气、伤心、孤单、难过、紧张、撑不住、不够好、后悔、担心、自卑）、正面情绪（被认可、感谢、温暖、被帮助、轻松、感动、安心、平静、成功、顺利、被理解、感恩、被表扬、放松）、混合情绪（又想又怕、怀念、矛盾、纠结、自责、内疚、惊讶、哇、没想到、过去、想起、愧疚）、反思成长（我明白、我想尝试、我成长了、其实、原来、我懂了、我发现、我变了、我决定、我相信、我要改变）",
@@ -238,7 +251,7 @@ serve(async (req) => {
                     maxItems: 3
                   }
                 },
-                required: ["emotion_theme", "stage_1_content", "stage_2_content", "stage_3_content", "stage_4_content", "insight", "action", "growth_story", "emotion_intensity", "emotion_tags"],
+                required: ["emotion_theme", "stage_1_content", "stage_2_content", "stage_3_content", "stage_4_content", "insight", "action", "growth_story", "emotion_intensity", "intensity_reasoning", "intensity_keywords", "emotion_tags"],
                 additionalProperties: false
               }
             }
