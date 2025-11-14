@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CompanionSelector } from "@/components/CompanionSelector";
 import { VoiceSettings } from "@/components/VoiceSettings";
+import { SmartReminderSettings } from "@/components/SmartReminderSettings";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 
@@ -164,60 +165,7 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="reminders">
-            <Card className="border-border shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-lg md:text-2xl text-foreground">
-                  提醒设置
-                </CardTitle>
-                <CardDescription className="text-xs md:text-sm text-muted-foreground">
-                  设置你的每日情绪梳理提醒时间 🌿
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 md:space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="reminder-enabled" className="text-xs md:text-sm text-foreground">
-                      启用每日提醒
-                    </Label>
-                    <p className="text-xs md:text-sm text-muted-foreground">
-                      在设定的时间收到温柔的梳理邀请
-                    </p>
-                  </div>
-                  <Switch
-                    id="reminder-enabled"
-                    checked={reminderEnabled}
-                    onCheckedChange={setReminderEnabled}
-                  />
-                </div>
-
-                {reminderEnabled && (
-                  <div className="space-y-2">
-                    <Label htmlFor="reminder-time" className="text-xs md:text-sm text-foreground">
-                      提醒时间
-                    </Label>
-                    <Input
-                      id="reminder-time"
-                      type="time"
-                      value={reminderTime}
-                      onChange={(e) => setReminderTime(e.target.value)}
-                      className="border-border focus:border-primary text-sm"
-                    />
-                    <p className="text-xs md:text-sm text-muted-foreground">
-                      当你打开应用时，如果今天还未进行情绪梳理，会在这个时间之后温柔地提醒你
-                    </p>
-                  </div>
-                )}
-
-                <Button
-                  onClick={saveSettings}
-                  disabled={saving}
-                  className="w-full text-xs md:text-sm"
-                  size="sm"
-                >
-                  {saving ? "保存中..." : "保存设置"}
-                </Button>
-              </CardContent>
-            </Card>
+            <SmartReminderSettings />
           </TabsContent>
 
           <TabsContent value="companion">
