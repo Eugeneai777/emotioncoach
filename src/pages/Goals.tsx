@@ -217,6 +217,25 @@ const Goals = () => {
         endDate = endOfMonth(now);
       }
 
+      // Check for existing active goals in the same period (excluding completed ones)
+      const { data: existingGoals } = await supabase
+        .from("emotion_goals")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("goal_type", goalType)
+        .eq("is_active", true)
+        .gte("end_date", now.toISOString());
+
+      if (existingGoals && existingGoals.length > 0) {
+        toast({
+          title: "已有进行中的目标",
+          description: `你已经有一个${goalType === "weekly" ? "每周" : "每月"}目标正在进行中`,
+          variant: "destructive",
+        });
+        setIsSaving(false);
+        return;
+      }
+
       const { error } = await supabase
         .from("emotion_goals")
         .insert({
@@ -432,7 +451,6 @@ const Goals = () => {
             <div className="flex items-center gap-2">
               <Button 
                 size="sm" 
-                variant="outline"
                 onClick={loadGoalSuggestions}
                 disabled={loadingSuggestions}
                 className="gap-1.5 md:gap-2 text-xs md:text-sm flex-shrink-0"
@@ -442,11 +460,11 @@ const Goals = () => {
                 ) : (
                   <TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 )}
-                <span className="hidden sm:inline">AI建议</span>
+                <span className="hidden sm:inline">目标建议</span>
               </Button>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="gap-1.5 md:gap-2 text-xs md:text-sm flex-shrink-0">
+                <Button size="sm" variant="outline" className="gap-1.5 md:gap-2 text-xs md:text-sm flex-shrink-0">
                   <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
                   <span className="hidden sm:inline">新建目标</span>
                   <span className="sm:hidden">新建</span>
@@ -466,10 +484,6 @@ const Goals = () => {
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="weekly" id="weekly" />
                         <Label htmlFor="weekly" className="cursor-pointer text-xs md:text-sm">每周目标</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="monthly" id="monthly" />
-                        <Label htmlFor="monthly" className="cursor-pointer text-xs md:text-sm">每月目标</Label>
                       </div>
                     </RadioGroup>
                   </div>
