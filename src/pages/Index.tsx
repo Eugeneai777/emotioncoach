@@ -195,6 +195,11 @@ const Index = () => {
     setInput("");
     sendMessage(message);
   };
+
+  const handleSkipIntensity = () => {
+    setShowIntensitySelector(false);
+    setSelectedIntensity(null);
+  };
   
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -346,10 +351,11 @@ const Index = () => {
               </div>
               
               {/* Emotion Intensity Selector */}
-              {selectedIntensity === null && (
+              {showIntensitySelector && (
                 <div className="animate-in fade-in-50 duration-700 delay-200">
                   <EmotionIntensitySelector 
                     onSelect={handleIntensitySelect}
+                    onSkip={handleSkipIntensity}
                     disabled={isLoading}
                   />
                 </div>
