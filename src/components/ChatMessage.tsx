@@ -1,10 +1,44 @@
 interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
+  onOptionClick?: (option: string) => void;
 }
 
-export const ChatMessage = ({ role, content }: ChatMessageProps) => {
+export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) => {
   const isUser = role === "user";
+  
+  // 检测是否包含编号选项（如 "1. 选项" 或 "1、选项"）
+  const optionRegex = /^(\d+)[.、]\s*(.+)$/gm;
+  const matches = Array.from(content.matchAll(optionRegex));
+  const hasOptions = matches.length >= 2 && role === "assistant";
+  
+  // 如果有选项，分离文本和选项
+  let textContent = content;
+  let options: { number: string; text: string }[] = [];
+  
+  if (hasOptions) {
+    const lines = content.split('\n');
+    const optionLines: number[] = [];
+    
+    lines.forEach((line, index) => {
+      const match = line.match(/^(\d+)[.、]\s*(.+)$/);
+      if (match) {
+        options.push({ number: match[1], text: match[2].trim() });
+        optionLines.push(index);
+      }
+    });
+    
+    // 移除选项行，保留其他文本
+    if (optionLines.length >= 2) {
+      textContent = lines
+        .filter((_, index) => !optionLines.includes(index))
+        .join('\n')
+        .trim();
+    } else {
+      // 如果选项少于2个，不视为选项
+      options = [];
+    }
+  }
   
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4 md:mb-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500`}>
@@ -16,7 +50,26 @@ export const ChatMessage = ({ role, content }: ChatMessageProps) => {
               : "bg-card border border-border shadow-sm hover:shadow-md transition-shadow"
           }`}
         >
-          <p className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+          {textContent && (
+            <p className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap mb-3">
+              {textContent}
+            </p>
+          )}
+          
+          {options.length > 0 && onOptionClick && (
+            <div className="flex flex-col gap-2 mt-3">
+              {options.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => onOptionClick(option.text)}
+                  className="w-full text-left px-4 py-2.5 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors border border-border/50 hover:border-border text-xs md:text-sm"
+                >
+                  <span className="font-medium text-primary mr-2">{option.number}.</span>
+                  {option.text}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
