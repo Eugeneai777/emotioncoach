@@ -392,7 +392,14 @@ const Index = () => {
             </div>
           </div> : <div className="flex-1 py-4 md:py-6">
             <div className="space-y-2 md:space-y-3">
-              {messages.map((msg, idx) => <ChatMessage key={idx} role={msg.role} content={msg.content} />)}
+              {messages.map((msg, idx) => <ChatMessage 
+                key={idx} 
+                role={msg.role} 
+                content={msg.content}
+                onOptionClick={(option) => {
+                  sendMessage(option);
+                }}
+              />)}
               {isLoading && <div className="flex justify-start mb-3 md:mb-4">
                   <div className="bg-card border border-border rounded-2xl md:rounded-3xl px-4 md:px-5 py-2.5 md:py-3 shadow-sm">
                     <div className="flex gap-1.5 md:gap-2">
