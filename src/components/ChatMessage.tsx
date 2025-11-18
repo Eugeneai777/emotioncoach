@@ -1,3 +1,5 @@
+import { Sparkles } from "lucide-react";
+
 interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
@@ -57,15 +59,30 @@ export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) 
           )}
           
           {options.length > 0 && onOptionClick && (
-            <div className="flex flex-col gap-2 mt-3">
+            <div className="flex flex-col gap-2.5 mt-4">
               {options.map((option, index) => (
                 <button
                   key={index}
                   onClick={() => onOptionClick(option.text)}
-                  className="w-full text-left px-4 py-2.5 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors border border-border/50 hover:border-border text-xs md:text-sm"
+                  className="group relative w-full text-left px-4 py-3.5 rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 hover:from-primary/20 hover:via-primary/15 hover:to-primary/20 transition-all duration-300 border border-primary/20 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
                 >
-                  <span className="font-medium text-primary mr-2">{option.number}.</span>
-                  {option.text}
+                  {/* 背景光效 */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  
+                  <div className="relative flex items-center gap-3">
+                    {/* 编号图标 */}
+                    <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center font-bold text-sm shadow-md shadow-primary/30 group-hover:shadow-lg group-hover:shadow-primary/40 transition-shadow">
+                      {option.number}
+                    </div>
+                    
+                    {/* 文本 */}
+                    <span className="flex-1 text-xs md:text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                      {option.text}
+                    </span>
+                    
+                    {/* 装饰图标 */}
+                    <Sparkles className="w-4 h-4 text-primary/40 group-hover:text-primary group-hover:scale-110 transition-all opacity-0 group-hover:opacity-100" />
+                  </div>
                 </button>
               ))}
             </div>
