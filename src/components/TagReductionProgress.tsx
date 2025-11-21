@@ -87,13 +87,41 @@ const TagReductionProgress = ({
           </div>
         )}
 
+        {/* 数据积累中警告 */}
+        {progress.status === 'in_progress' && progress.percentage < 50 && (
+          <div className="bg-amber-50 dark:bg-amber-950 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl flex-shrink-0">📊</span>
+              <div className="space-y-1 flex-1">
+                <p className="font-semibold text-amber-900 dark:text-amber-100 text-sm">
+                  数据积累中
+                </p>
+                <p className="text-xs text-amber-800 dark:text-amber-200">
+                  {progress.insights[0] || '继续记录，积累更多数据后可以更准确地评估目标进度'}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Progress value={progress.percentage * 2} className="h-2 flex-1" />
+                  <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">
+                    {Math.round(progress.percentage * 2)}%
+                  </span>
+                </div>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  💡 再坚持几天，数据就足够评估了！
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 进度条 */}
-        <div>
-          <Progress value={progress.percentage} className="h-3" />
-          <p className="text-xs text-muted-foreground mt-1">
-            {progress.percentage}% 完成
-          </p>
-        </div>
+        {progress.status !== 'in_progress' && (
+          <div>
+            <Progress value={progress.percentage} className="h-3" />
+            <p className="text-xs text-muted-foreground mt-1">
+              {progress.percentage}% 完成
+            </p>
+          </div>
+        )}
 
         {/* 4周趋势图 */}
         <div className="border rounded-lg p-4">
