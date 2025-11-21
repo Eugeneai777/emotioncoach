@@ -28,6 +28,7 @@ import WeeklyTagReport from "@/components/WeeklyTagReport";
 import TagGoalHistory from "@/components/TagGoalHistory";
 import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
 import TagGoalReminder from "@/components/TagGoalReminder";
+import { GoalCheckInReminder } from "@/components/GoalCheckInReminder";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -665,6 +666,9 @@ const Goals = (): JSX.Element => {
           </TabsList>
 
           <TabsContent value="active" className="space-y-6 md:space-y-8">
+        {/* Check-in Reminder */}
+        <GoalCheckInReminder />
+        
         {/* Tag Goal Reminders */}
         <TagGoalReminder />
 

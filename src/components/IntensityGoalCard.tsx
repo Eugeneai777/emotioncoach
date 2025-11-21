@@ -76,17 +76,46 @@ export const IntensityGoalCard = ({ goal, progress }: IntensityGoalCardProps) =>
           </p>
         )}
 
-        <div className="space-y-1.5">
-          <Progress value={progress.percentage} className="h-2" />
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">
-              {progress.details}
-            </span>
-            <span className="text-muted-foreground font-medium">
-              {progress.percentage}%
-            </span>
+        {/* 数据积累中警告 */}
+        {progress.status === 'warning' && progress.details.includes('数据积累中') && (
+          <div className="bg-amber-50 dark:bg-amber-950 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-3">
+            <div className="flex items-start gap-2">
+              <span className="text-lg flex-shrink-0">📊</span>
+              <div className="space-y-1 flex-1">
+                <p className="font-semibold text-amber-900 dark:text-amber-100 text-xs">
+                  数据积累中
+                </p>
+                <p className="text-xs text-amber-800 dark:text-amber-200">
+                  {progress.details}
+                </p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Progress value={progress.percentage * 2} className="h-1.5 flex-1" />
+                  <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">
+                    {Math.round(progress.percentage * 2)}%
+                  </span>
+                </div>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  💡 继续记录，即将可以评估目标进度
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* 正常进度条 */}
+        {!(progress.status === 'warning' && progress.details.includes('数据积累中')) && (
+          <div className="space-y-1.5">
+            <Progress value={progress.percentage} className="h-2" />
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">
+                {progress.details}
+              </span>
+              <span className="text-muted-foreground font-medium">
+                {progress.percentage}%
+              </span>
+            </div>
+          </div>
+        )}
 
         {progress.status === 'on_track' && progress.percentage >= 100 && (
           <div className="flex items-center justify-center gap-1 text-xs text-green-600 dark:text-green-400 font-medium">
