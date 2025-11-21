@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      screens: {
+        'landscape': { 'raw': '(orientation: landscape) and (max-width: 1023px)' },
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

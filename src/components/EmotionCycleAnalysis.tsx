@@ -306,29 +306,29 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
             </p>
           </div>
           
-          <div className="grid grid-cols-3 gap-2 md:gap-4 mb-3 md:mb-4">
-            <div className={`p-2.5 md:p-3 rounded-xl text-center transition-colors ${getIntensityBgColor(intensityStats.avg)}`}>
-              <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">平均强度</p>
+          <div className="grid grid-cols-3 gap-2 md:gap-4 mb-3 md:mb-4 landscape:grid-cols-3 landscape:gap-3">
+            <div className={`p-2.5 md:p-3 rounded-xl text-center transition-colors landscape:p-3 ${getIntensityBgColor(intensityStats.avg)}`}>
+              <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1 landscape:text-xs landscape:mb-1">平均强度</p>
               <p 
-                className="text-base md:text-2xl font-bold"
+                className="text-base md:text-2xl font-bold landscape:text-xl"
                 style={{ color: getIntensityColor(intensityStats.avg) }}
               >
                 {intensityStats.avg.toFixed(1)}
               </p>
             </div>
-            <div className={`p-2.5 md:p-3 rounded-xl text-center transition-colors ${getIntensityBgColor(intensityStats.max)}`}>
-              <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">最高强度</p>
+            <div className={`p-2.5 md:p-3 rounded-xl text-center transition-colors landscape:p-3 ${getIntensityBgColor(intensityStats.max)}`}>
+              <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1 landscape:text-xs landscape:mb-1">最高强度</p>
               <p 
-                className="text-base md:text-2xl font-bold"
+                className="text-base md:text-2xl font-bold landscape:text-xl"
                 style={{ color: getIntensityColor(intensityStats.max) }}
               >
                 {intensityStats.max}
               </p>
             </div>
-            <div className={`p-2.5 md:p-3 rounded-xl text-center transition-colors ${getIntensityBgColor(intensityStats.min)}`}>
-              <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">最低强度</p>
+            <div className={`p-2.5 md:p-3 rounded-xl text-center transition-colors landscape:p-3 ${getIntensityBgColor(intensityStats.min)}`}>
+              <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1 landscape:text-xs landscape:mb-1">最低强度</p>
               <p 
-                className="text-base md:text-2xl font-bold"
+                className="text-base md:text-2xl font-bold landscape:text-xl"
                 style={{ color: getIntensityColor(intensityStats.min) }}
               >
                 {intensityStats.min}
@@ -336,7 +336,7 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
             </div>
           </div>
 
-          <div className="w-full h-[250px] md:h-[300px]">
+          <div className="w-full h-[250px] md:h-[300px] landscape:h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={intensityTrendData} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -346,7 +346,7 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
-                  className="md:text-xs"
+                  className="md:text-xs landscape:text-sm"
                 />
                 <YAxis
                   stroke="hsl(var(--muted-foreground))"
@@ -354,7 +354,7 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
                   tickLine={false}
                   axisLine={false}
                   domain={[0, 10]}
-                  className="md:text-xs"
+                  className="md:text-xs landscape:text-sm"
                 />
                 <Tooltip
                   contentStyle={{
@@ -426,7 +426,7 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
             查看你在一周中每天的情绪梳理频率
           </p>
         </div>
-        <div className="w-full h-[250px] md:h-[300px]">
+        <div className="w-full h-[250px] md:h-[300px] landscape:h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weekdayData} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -436,7 +436,7 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
-                className="md:text-xs"
+                className="md:text-xs landscape:text-sm"
               />
               <YAxis
                 stroke="hsl(var(--muted-foreground))"
@@ -444,7 +444,7 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
                 tickLine={false}
                 axisLine={false}
                 allowDecimals={false}
-                className="md:text-xs"
+                className="md:text-xs landscape:text-sm"
               />
               <Tooltip
                 contentStyle={{
@@ -471,7 +471,7 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
             了解你在一天中何时最常梳理情绪
           </p>
         </div>
-        <div className="w-full h-[200px] md:h-[300px]">
+        <div className="w-full h-[200px] md:h-[300px] landscape:h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={timePatternData}>
               <PolarGrid stroke="hsl(var(--border))" />
@@ -479,13 +479,13 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
                 dataKey="name"
                 stroke="hsl(var(--muted-foreground))"
                 fontSize={9}
-                className="md:text-xs"
+                className="md:text-xs landscape:text-sm"
               />
               <PolarRadiusAxis
                 stroke="hsl(var(--muted-foreground))"
                 fontSize={10}
                 angle={90}
-                className="md:text-xs"
+                className="md:text-xs landscape:text-sm"
               />
               <Radar
                 name="次数"
@@ -517,11 +517,11 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
             查看不同情绪类型在你的简报中的占比
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 landscape:grid-cols-4">
           {emotionDistribution.map((item) => (
             <div
               key={item.category}
-              className="p-3 md:p-4 rounded-xl bg-background/50 space-y-2"
+              className="p-3 md:p-4 rounded-xl bg-background/50 space-y-2 landscape:p-3"
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs md:text-sm font-medium text-foreground">{item.category}</span>
