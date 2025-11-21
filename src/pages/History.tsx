@@ -451,18 +451,10 @@ const History = () => {
             <TabsContent value="list">
               <div className="space-y-4 md:space-y-6">
                 {/* 情绪日历概览 */}
-                <Card className="p-4 md:p-6">
-                  <div className="mb-3 md:mb-4">
-                    <h3 className="text-base md:text-lg font-semibold text-foreground">📅 情绪日历</h3>
-                    <p className="text-xs md:text-sm text-muted-foreground mt-1">
-                      点击日期查看当天的详细记录
-                    </p>
-                  </div>
-                  <UnifiedEmotionHeatmap 
-                    briefings={briefings}
-                    quickLogs={quickLogs}
-                  />
-                </Card>
+                <UnifiedEmotionHeatmap 
+                  briefings={briefings}
+                  quickLogs={quickLogs}
+                />
 
                 <Separator className="my-4 md:my-6" />
 
@@ -551,12 +543,7 @@ const History = () => {
                   {/* 宏观视角 */}
                   <div className="space-y-3">
                     <h3 className="text-sm font-medium text-muted-foreground px-1">📊 宏观视角</h3>
-                    <Card className="p-4 md:p-6">
-                      <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 md:mb-4 flex items-center gap-2">
-                        ☁️ 情绪标签云
-                      </h3>
-                      <EmotionTagCloud briefings={briefings} />
-                    </Card>
+                    <EmotionTagCloud briefings={briefings} />
                   </div>
 
                   {/* 深度分析 */}
