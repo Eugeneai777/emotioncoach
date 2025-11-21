@@ -19,6 +19,7 @@ import { BriefingTagSelector } from "@/components/BriefingTagSelector";
 import { Badge } from "@/components/ui/badge";
 import { MusicRecommendation } from "@/components/MusicRecommendation";
 import { EmotionIntensityCard } from "@/components/EmotionIntensityMeter";
+import { QuickLogsChart } from "@/components/QuickLogsChart";
 
 interface TagType {
   id: string;
@@ -509,7 +510,13 @@ const History = () => {
             
             <TabsContent value="trends">
               <ScrollArea className="h-[calc(100vh-280px)]">
-                <EmotionTrendsCombined briefings={briefings} />
+                <div className="space-y-4 md:space-y-6">
+                  {/* 快速记录趋势图 */}
+                  <QuickLogsChart />
+                  
+                  {/* 简报情绪趋势 */}
+                  <EmotionTrendsCombined briefings={briefings} />
+                </div>
               </ScrollArea>
             </TabsContent>
 
