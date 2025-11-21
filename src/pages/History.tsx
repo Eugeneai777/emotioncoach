@@ -549,7 +549,7 @@ const History = () => {
                   {/* 深度分析 */}
                   <div className="space-y-3">
                     <h3 className="text-sm font-medium text-muted-foreground px-1">🔍 深度分析</h3>
-                    <EmotionCycleAnalysis briefings={briefings} />
+                    <EmotionCycleAnalysis briefings={briefings} quickLogs={quickLogs} />
                   </div>
                 </div>
               </ScrollArea>
