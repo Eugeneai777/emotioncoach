@@ -5,22 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Lightbulb, Loader2, ChevronDown, ChevronUp, Target, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { TagGoalProgress } from "@/utils/tagGoalCalculator";
-
-interface CoachingAdvice {
-  status_message: string;
-  encouragement: string;
-  strategies: Array<{
-    title: string;
-    description: string;
-    expected_benefit: string;
-    difficulty: 'easy' | 'medium' | 'hard';
-    category: 'awareness' | 'action' | 'prevention' | 'substitute';
-  }>;
-  pattern_insights: string;
-  next_milestone: string;
-  co_occurring_tags?: Array<{ name: string; count: number }>;
-}
+import type { TagGoalProgress, CoachingAdvice } from "@/types/tagGoals";
 
 interface TagGoalCoachingProps {
   goalId: string;
@@ -28,7 +13,7 @@ interface TagGoalCoachingProps {
   progress: TagGoalProgress;
 }
 
-const TagGoalCoaching = ({ goalId, tagName, progress }: TagGoalCoachingProps) => {
+const TagGoalCoaching = ({ goalId, tagName, progress }: TagGoalCoachingProps): JSX.Element => {
   const [advice, setAdvice] = useState<CoachingAdvice | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);

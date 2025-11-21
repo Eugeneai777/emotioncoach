@@ -3,7 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles } from "lucide-react";
-import { TagGoalProgress } from "@/utils/tagGoalCalculator";
+import type { TagGoalProgress } from "@/types/tagGoals";
 import { toast } from "sonner";
 import TagGoalCoaching from "./TagGoalCoaching";
 
@@ -23,7 +23,7 @@ const TagReductionProgress = ({
   progress,
   onViewDetails,
   onAdjustGoal,
-}: TagReductionProgressProps) => {
+}: TagReductionProgressProps): JSX.Element => {
   const isReduction = goalType === 'tag_reduction';
   const statusConfig = {
     success: { icon: '✅', label: '已达标', color: 'text-green-600' },

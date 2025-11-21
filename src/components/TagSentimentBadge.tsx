@@ -5,7 +5,7 @@ interface TagSentimentBadgeProps {
   size?: 'sm' | 'md';
 }
 
-const TagSentimentBadge = ({ sentiment, size = 'md' }: TagSentimentBadgeProps) => {
+const TagSentimentBadge = ({ sentiment, size = 'md' }: TagSentimentBadgeProps): JSX.Element | null => {
   if (!sentiment) return null;
 
   const config = {

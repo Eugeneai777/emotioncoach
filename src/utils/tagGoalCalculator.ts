@@ -1,24 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { TagGoalProgress, WeeklyTagData } from "@/types/tagGoals";
 
-export interface TagGoalProgress {
-  currentWeeklyCount: number;
-  targetWeeklyCount: number;
-  percentage: number;
-  status: 'success' | 'warning' | 'exceeded' | 'in_progress';
-  weeklyData: WeeklyTagData[];
-  changePercent: number;
-  insights: string[];
-}
-
-export interface WeeklyTagData {
-  weekNumber: number;
-  weekLabel: string;
-  count: number;
-  targetCount: number;
-  status: 'success' | 'warning' | 'exceeded';
-  changePercent: number;
-  dates: string[];
-}
+export type { TagGoalProgress, WeeklyTagData };
 
 export async function calculateTagReductionProgress(
   userId: string,
