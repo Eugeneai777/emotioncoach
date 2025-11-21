@@ -38,6 +38,16 @@ export async function calculateTagReductionProgress(
 
   const currentWeeklyCount = currentWeekBriefings?.length || 0;
 
+  // 验证数据充足性 - 检查本周记录天数
+  const MIN_CHECK_IN_DAYS = 3;
+  const uniqueDays = new Set(
+    currentWeekBriefings?.map((bt: any) => 
+      new Date(bt.briefings.created_at).toLocaleDateString()
+    )
+  ).size;
+  
+  const hasEnoughData = uniqueDays >= MIN_CHECK_IN_DAYS;
+
   // 获取过去4周的数据
   const weeklyData: WeeklyTagData[] = [];
   for (let weekOffset = 0; weekOffset < 4; weekOffset++) {
@@ -105,6 +115,23 @@ export async function calculateTagReductionProgress(
     ? ((currentWeeklyCount - firstWeekCount) / firstWeekCount) * 100
     : 0;
 
+  // 如果数据不足，返回数据积累中状态
+  if (!hasEnoughData) {
+    return {
+      currentWeeklyCount,
+      targetWeeklyCount,
+      percentage: Math.min(50, (uniqueDays / MIN_CHECK_IN_DAYS) * 50),
+      status: 'in_progress',
+      weeklyData,
+      changePercent: 0,
+      insights: [
+        `📊 数据积累中：本周已记录 ${uniqueDays}/${MIN_CHECK_IN_DAYS} 天`,
+        `还需记录 ${MIN_CHECK_IN_DAYS - uniqueDays} 天即可评估目标完成情况`,
+        '继续坚持记录，让我们看到真实的进展！'
+      ],
+    };
+  }
+
   // 计算完成百分比
   let percentage = 0;
   if (currentWeeklyCount <= targetWeeklyCount) {
@@ -155,6 +182,11 @@ export async function calculateTagIncreaseProgress(
     startDate,
     endDate
   );
+
+  // 如果progress已经是in_progress（数据不足），直接返回
+  if (progress.status === 'in_progress' && progress.percentage < 50) {
+    return progress;
+  }
 
   // 反转状态逻辑（增长目标）
   let status: 'success' | 'warning' | 'exceeded' | 'in_progress';
