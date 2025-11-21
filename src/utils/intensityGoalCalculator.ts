@@ -38,6 +38,25 @@ export const calculateAverageIntensityProgress = async (
     };
   }
 
+  // 检查记录天数是否充足
+  const uniqueDays = new Set(
+    data.map(log => log.created_at.split('T')[0])
+  ).size;
+  
+  // 根据日期范围判断是周目标还是月目标
+  const daysDiff = Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+  const MIN_TRACKING_DAYS = daysDiff <= 10 ? 3 : 10; // 周目标3天，月目标10天
+  
+  if (uniqueDays < MIN_TRACKING_DAYS) {
+    return {
+      current: 0,
+      target: (minTarget + maxTarget) / 2,
+      percentage: Math.min(50, (uniqueDays / MIN_TRACKING_DAYS) * 50),
+      status: 'warning',
+      details: `数据积累中：已记录 ${uniqueDays}/${MIN_TRACKING_DAYS} 天`,
+    };
+  }
+
   const avgIntensity = data.reduce((sum, log) => sum + log.emotion_intensity, 0) / data.length;
   const targetCenter = (minTarget + maxTarget) / 2;
 
@@ -87,6 +106,24 @@ export const calculateRangeDaysProgress = async (
       percentage: 0,
       status: 'warning',
       details: '暂无数据',
+    };
+  }
+
+  // 检查记录天数是否充足
+  const uniqueDays = new Set(
+    data.map(log => log.created_at.split('T')[0])
+  ).size;
+  
+  const daysDiff = Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+  const MIN_TRACKING_DAYS = daysDiff <= 10 ? 3 : 10;
+  
+  if (uniqueDays < MIN_TRACKING_DAYS) {
+    return {
+      current: 0,
+      target: targetDays,
+      percentage: Math.min(50, (uniqueDays / MIN_TRACKING_DAYS) * 50),
+      status: 'warning',
+      details: `数据积累中：已记录 ${uniqueDays}/${MIN_TRACKING_DAYS} 天`,
     };
   }
 
@@ -151,6 +188,24 @@ export const calculatePeakControlProgress = async (
       percentage: 100,
       status: 'on_track',
       details: '暂无数据',
+    };
+  }
+
+  // 检查记录天数是否充足
+  const uniqueDays = new Set(
+    data.map(log => log.created_at.split('T')[0])
+  ).size;
+  
+  const daysDiff = Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+  const MIN_TRACKING_DAYS = daysDiff <= 10 ? 3 : 10;
+  
+  if (uniqueDays < MIN_TRACKING_DAYS) {
+    return {
+      current: 0,
+      target: maxPeakDays,
+      percentage: Math.min(50, (uniqueDays / MIN_TRACKING_DAYS) * 50),
+      status: 'warning',
+      details: `数据积累中：已记录 ${uniqueDays}/${MIN_TRACKING_DAYS} 天`,
     };
   }
 
