@@ -138,8 +138,13 @@ export type Database = {
           created_at: string
           description: string | null
           end_date: string
+          goal_category: string | null
           goal_type: string
           id: string
+          intensity_baseline: number | null
+          intensity_max: number | null
+          intensity_min: number | null
+          intensity_target_days: number | null
           is_active: boolean
           start_date: string
           target_count: number
@@ -150,8 +155,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_date: string
+          goal_category?: string | null
           goal_type: string
           id?: string
+          intensity_baseline?: number | null
+          intensity_max?: number | null
+          intensity_min?: number | null
+          intensity_target_days?: number | null
           is_active?: boolean
           start_date: string
           target_count: number
@@ -162,8 +172,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_date?: string
+          goal_category?: string | null
           goal_type?: string
           id?: string
+          intensity_baseline?: number | null
+          intensity_max?: number | null
+          intensity_min?: number | null
+          intensity_target_days?: number | null
           is_active?: boolean
           start_date?: string
           target_count?: number
