@@ -18,6 +18,8 @@ interface ReminderSuggestion {
 export const SmartReminderSettings = () => {
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const [reminderTime, setReminderTime] = useState("20:00");
+  const [intensityReminderEnabled, setIntensityReminderEnabled] = useState(true);
+  const [intensityReminderTime, setIntensityReminderTime] = useState("21:00");
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,7 +39,7 @@ export const SmartReminderSettings = () => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('reminder_enabled, reminder_time')
+        .select('reminder_enabled, reminder_time, intensity_reminder_enabled, intensity_reminder_time')
         .eq('id', user.id)
         .single();
 
@@ -46,6 +48,8 @@ export const SmartReminderSettings = () => {
       if (data) {
         setReminderEnabled(data.reminder_enabled ?? true);
         setReminderTime(data.reminder_time || '20:00');
+        setIntensityReminderEnabled(data.intensity_reminder_enabled ?? true);
+        setIntensityReminderTime(data.intensity_reminder_time || '21:00');
       }
     } catch (error: any) {
       console.error('加载设置失败:', error);
@@ -91,6 +95,8 @@ export const SmartReminderSettings = () => {
         .update({
           reminder_enabled: reminderEnabled,
           reminder_time: reminderTime,
+          intensity_reminder_enabled: intensityReminderEnabled,
+          intensity_reminder_time: intensityReminderTime,
         })
         .eq('id', user.id);
 
@@ -98,11 +104,11 @@ export const SmartReminderSettings = () => {
 
       toast({
         title: "设置已保存",
-        description: reminderEnabled ? `每天${reminderTime}会提醒你进行情绪梳理` : "提醒已关闭",
+        description: "提醒设置已更新",
       });
 
       // 如果启用了提醒和浏览器通知，设置下一次提醒
-      if (reminderEnabled && notificationsEnabled) {
+      if ((reminderEnabled || intensityReminderEnabled) && notificationsEnabled) {
         scheduleNextReminder();
       }
     } catch (error: any) {
@@ -274,6 +280,61 @@ export const SmartReminderSettings = () => {
                     启用
                   </Button>
                 )}
+              </div>
+            </div>
+          )}
+
+          <Button
+            onClick={saveSettings}
+            disabled={saving}
+            className="w-full"
+          >
+            {saving ? "保存中..." : "保存设置"}
+          </Button>
+        </div>
+      </Card>
+
+      {/* 情绪强度记录提醒 */}
+      <Card className="p-4 md:p-6">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-primary" />
+                <Label className="text-base font-semibold">情绪强度记录提醒</Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                每天提醒你记录当下的情绪强度
+              </p>
+            </div>
+            <Switch
+              checked={intensityReminderEnabled}
+              onCheckedChange={setIntensityReminderEnabled}
+            />
+          </div>
+
+          {intensityReminderEnabled && (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <Label className="text-sm">提醒时间</Label>
+              </div>
+              <input
+                type="time"
+                value={intensityReminderTime}
+                onChange={(e) => setIntensityReminderTime(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+              />
+              
+              <div className="p-3 bg-primary/5 rounded-lg border border-primary/10">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  💡 定期记录情绪强度可以帮助你：
+                </p>
+                <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                  <li>• 追踪每日情绪变化规律</li>
+                  <li>• 识别情绪波动周期</li>
+                  <li>• 建立情绪觉察习惯</li>
+                </ul>
               </div>
             </div>
           )}

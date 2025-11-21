@@ -13,6 +13,7 @@ import { VoiceControls } from "@/components/VoiceControls";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { EmotionIntensitySelector } from "@/components/EmotionIntensitySelector";
 import { EmotionIntensitySlider } from "@/components/EmotionIntensitySlider";
+import { IntensityReminderDialog } from "@/components/IntensityReminderDialog";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
@@ -24,6 +25,7 @@ const Index = () => {
   const [showReminder, setShowReminder] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showIntensitySelector, setShowIntensitySelector] = useState(false);
+  const [showIntensityReminder, setShowIntensityReminder] = useState(false);
   const [selectedIntensity, setSelectedIntensity] = useState<number | null>(null);
   const [voiceConfig, setVoiceConfig] = useState<{
     gender: 'male' | 'female';
@@ -142,8 +144,10 @@ const Index = () => {
   useEffect(() => {
     if (user && messages.length === 0) {
       checkReminder();
+      checkIntensityReminder();
     }
   }, [user, messages]);
+  
   const checkReminder = async () => {
     if (!user) return;
     try {
@@ -171,6 +175,48 @@ const Index = () => {
       console.error("Error checking reminder:", error);
     }
   };
+
+  const checkIntensityReminder = async () => {
+    if (!user) return;
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("intensity_reminder_enabled, intensity_reminder_time, last_intensity_reminder_shown")
+        .eq("id", user.id)
+        .single();
+      
+      if (!profile || !profile.intensity_reminder_enabled) return;
+      
+      const now = new Date();
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      const [hours, minutes] = (profile.intensity_reminder_time || "21:00").split(":");
+      const reminderTime = parseInt(hours) * 60 + parseInt(minutes);
+      
+      if (currentTime < reminderTime) return;
+      
+      const lastShown = profile.last_intensity_reminder_shown 
+        ? new Date(profile.last_intensity_reminder_shown) 
+        : null;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (!lastShown || lastShown < today) {
+        // 检查今天是否已经记录过情绪强度
+        const { data: todayLogs } = await supabase
+          .from("emotion_quick_logs")
+          .select("id")
+          .eq("user_id", user.id)
+          .gte("created_at", today.toISOString())
+          .limit(1);
+        
+        if (!todayLogs || todayLogs.length === 0) {
+          setShowIntensityReminder(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking intensity reminder:", error);
+    }
+  };
   const handleDismissReminder = async () => {
     setShowReminder(false);
     if (user) {
@@ -186,6 +232,21 @@ const Index = () => {
   const handleStartFromReminder = () => {
     setShowReminder(false);
     setShowIntensitySelector(true);
+  };
+
+  const handleIntensityReminderRecord = () => {
+    setShowIntensityReminder(false);
+    // 直接打开情绪强度滑块（通过设置一个state让滑块自动展开）
+    // 或者可以在这里添加其他逻辑
+  };
+
+  const handleDismissIntensityReminder = async () => {
+    setShowIntensityReminder(false);
+    if (user) {
+      await supabase.from("profiles").update({
+        last_intensity_reminder_shown: new Date().toISOString()
+      }).eq("id", user.id);
+    }
   };
   
   const handleIntensitySelect = (intensity: number) => {
@@ -231,6 +292,14 @@ const Index = () => {
   }
   return <div className="min-h-screen bg-background flex flex-col">
       <WelcomeOnboarding open={showOnboarding} onComplete={handleOnboardingComplete} />
+      
+      {/* 情绪强度提醒对话框 */}
+      {showIntensityReminder && (
+        <IntensityReminderDialog
+          onRecord={handleIntensityReminderRecord}
+          onDismiss={handleDismissIntensityReminder}
+        />
+      )}
       
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
