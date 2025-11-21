@@ -2,12 +2,13 @@ import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Loader2, Calendar } from "lucide-react";
+import { FileText, Download, Loader2, Calendar, TrendingUp, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import TagSentimentBadge from "./TagSentimentBadge";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface WeeklyReportData {
   period: { startDate: string; endDate: string };
@@ -277,10 +278,87 @@ const WeeklyTagReport = ({ startDate, endDate }: WeeklyTagReportProps): JSX.Elem
           </div>
         </Card>
 
+        {/* 趋势图表 */}
+        {reportData.dailyIntensities.length > 0 && (
+          <div className="space-y-4">
+            <Card className="p-4">
+              <h3 className="font-semibold mb-4">📈 情绪强度趋势</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={reportData.dailyIntensities}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="date" 
+                    className="text-xs" 
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    className="text-xs"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px'
+                    }}
+                  />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="avgIntensity" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    name="平均强度"
+                    dot={{ fill: 'hsl(var(--primary))' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Card>
+
+            <Card className="p-4">
+              <h3 className="font-semibold mb-4">📊 标签使用对比</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={reportData.tagSummaries.slice(0, 10)}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="name" 
+                    className="text-xs"
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    className="text-xs"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px'
+                    }}
+                  />
+                  <Legend />
+                  <Bar 
+                    dataKey="count" 
+                    fill="hsl(var(--primary))"
+                    name="使用次数"
+                    radius={[8, 8, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+        )}
+
         {/* 建议 */}
         {reportData.insights.recommendations.length > 0 && (
           <Card className="p-4">
-            <h3 className="font-semibold mb-3">💡 个性化建议</h3>
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-yellow-500" />
+              个性化建议
+            </h3>
             <div className="space-y-3">
               {reportData.insights.recommendations.map((rec, index) => (
                 <div key={index} className="border-l-2 border-primary pl-3">

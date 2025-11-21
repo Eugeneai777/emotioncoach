@@ -25,6 +25,8 @@ import SmartGoalRecommendations from "@/components/SmartGoalRecommendations";
 import TagReductionProgress from "@/components/TagReductionProgress";
 import TagAssociationAnalysis from "@/components/TagAssociationAnalysis";
 import WeeklyTagReport from "@/components/WeeklyTagReport";
+import TagGoalHistory from "@/components/TagGoalHistory";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -609,17 +611,20 @@ const Goals = (): JSX.Element => {
       </header>
 
       <main className="container max-w-4xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-6 md:space-y-8">
+        <Tabs defaultValue="active" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="active">活跃目标</TabsTrigger>
+            <TabsTrigger value="history">历史成就</TabsTrigger>
+            <TabsTrigger value="reports">数据报告</TabsTrigger>
+            <TabsTrigger value="analysis">关联分析</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active" className="space-y-6 md:space-y-8">
         {/* Streak Display */}
         <StreakDisplay />
 
         {/* Smart Goal Recommendations */}
         <SmartGoalRecommendations onRecommendationAccepted={loadGoals} />
-
-        {/* Weekly Tag Report */}
-        <WeeklyTagReport />
-
-        {/* Tag Association Analysis */}
-        <TagAssociationAnalysis autoLoad={true} />
 
         {/* Achievements Section */}
         {achievements.length > 0 && (
@@ -770,6 +775,20 @@ const Goals = (): JSX.Element => {
             )}
           </>
         )}
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-6 md:space-y-8">
+            <TagGoalHistory />
+          </TabsContent>
+
+          <TabsContent value="reports" className="space-y-6 md:space-y-8">
+            <WeeklyTagReport />
+          </TabsContent>
+
+          <TabsContent value="analysis" className="space-y-6 md:space-y-8">
+            <TagAssociationAnalysis autoLoad={true} />
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* AI Goal Suggestions Dialog */}
