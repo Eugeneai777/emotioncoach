@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Calendar, Loader2, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { EmotionTrendsCombined } from "@/components/EmotionTrendsCombined";
+import EmotionTagCloud from "@/components/EmotionTagCloud";
+import EmotionCycleAnalysis from "@/components/EmotionCycleAnalysis";
+import { Card } from "@/components/ui/card";
 import ExportDialog from "@/components/ExportDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TagManager } from "@/components/TagManager";
@@ -529,14 +531,29 @@ const History = () => {
             <TabsContent value="trends">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <div className="space-y-4 md:space-y-6">
-                  {/* 统一情绪强度趋势图 */}
-                  <UnifiedEmotionIntensityChart briefings={briefings} quickLogs={quickLogs} />
-                  
-                  {/* 统一情绪日历热力图 */}
-                  <UnifiedEmotionHeatmap briefings={briefings} quickLogs={quickLogs} />
-                  
-                  {/* 简报情绪趋势 - 标签云和周期分析 */}
-                  <EmotionTrendsCombined briefings={briefings} />
+                  {/* 宏观视角 */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground px-1">📊 宏观视角</h3>
+                    <UnifiedEmotionHeatmap briefings={briefings} quickLogs={quickLogs} />
+                    <Card className="p-4 md:p-6">
+                      <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 md:mb-4 flex items-center gap-2">
+                        ☁️ 情绪标签云
+                      </h3>
+                      <EmotionTagCloud briefings={briefings} />
+                    </Card>
+                  </div>
+
+                  {/* 深度分析 */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground px-1">🔍 深度分析</h3>
+                    <UnifiedEmotionIntensityChart briefings={briefings} quickLogs={quickLogs} />
+                    <Card className="p-4 md:p-6">
+                      <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 md:mb-4 flex items-center gap-2">
+                        🔄 周期分析
+                      </h3>
+                      <EmotionCycleAnalysis briefings={briefings} />
+                    </Card>
+                  </div>
                 </div>
               </ScrollArea>
             </TabsContent>
