@@ -306,29 +306,29 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
             </p>
           </div>
           
-          <div className="grid grid-cols-3 gap-3 md:gap-4 mb-4">
-            <div className={`p-3 rounded-xl text-center transition-colors ${getIntensityBgColor(intensityStats.avg)}`}>
-              <p className="text-[10px] md:text-xs text-muted-foreground mb-1">平均强度</p>
+          <div className="grid grid-cols-3 gap-2 md:gap-4 mb-3 md:mb-4">
+            <div className={`p-2.5 md:p-3 rounded-xl text-center transition-colors ${getIntensityBgColor(intensityStats.avg)}`}>
+              <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">平均强度</p>
               <p 
-                className="text-lg md:text-2xl font-semibold"
+                className="text-base md:text-2xl font-bold"
                 style={{ color: getIntensityColor(intensityStats.avg) }}
               >
                 {intensityStats.avg.toFixed(1)}
               </p>
             </div>
-            <div className={`p-3 rounded-xl text-center transition-colors ${getIntensityBgColor(intensityStats.max)}`}>
-              <p className="text-[10px] md:text-xs text-muted-foreground mb-1">最高强度</p>
+            <div className={`p-2.5 md:p-3 rounded-xl text-center transition-colors ${getIntensityBgColor(intensityStats.max)}`}>
+              <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">最高强度</p>
               <p 
-                className="text-lg md:text-2xl font-semibold"
+                className="text-base md:text-2xl font-bold"
                 style={{ color: getIntensityColor(intensityStats.max) }}
               >
                 {intensityStats.max}
               </p>
             </div>
-            <div className={`p-3 rounded-xl text-center transition-colors ${getIntensityBgColor(intensityStats.min)}`}>
-              <p className="text-[10px] md:text-xs text-muted-foreground mb-1">最低强度</p>
+            <div className={`p-2.5 md:p-3 rounded-xl text-center transition-colors ${getIntensityBgColor(intensityStats.min)}`}>
+              <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">最低强度</p>
               <p 
-                className="text-lg md:text-2xl font-semibold"
+                className="text-base md:text-2xl font-bold"
                 style={{ color: getIntensityColor(intensityStats.min) }}
               >
                 {intensityStats.min}
@@ -336,21 +336,21 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
             </div>
           </div>
 
-          <div className="w-full h-[200px] md:h-[300px]">
+          <div className="w-full h-[250px] md:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={intensityTrendData}>
+              <LineChart data={intensityTrendData} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis
                   dataKey="date"
                   stroke="hsl(var(--muted-foreground))"
-                  fontSize={10}
+                  fontSize={11}
                   tickLine={false}
                   axisLine={false}
                   className="md:text-xs"
                 />
                 <YAxis
                   stroke="hsl(var(--muted-foreground))"
-                  fontSize={10}
+                  fontSize={11}
                   tickLine={false}
                   axisLine={false}
                   domain={[0, 10]}
@@ -361,13 +361,13 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
-                    fontSize: "11px",
-                    padding: "6px 10px",
+                    fontSize: "12px",
+                    padding: "8px 12px",
                   }}
-                  labelStyle={{ color: "hsl(var(--foreground))", fontSize: "11px" }}
+                  labelStyle={{ color: "hsl(var(--foreground))", fontSize: "12px", fontWeight: 600 }}
                 />
                 <Legend
-                  wrapperStyle={{ fontSize: "11px" }}
+                  wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
                   iconType="line"
                 />
                 <Line
@@ -375,7 +375,7 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
                   dataKey="intensity"
                   name="情绪强度"
                   stroke="hsl(var(--primary))"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   dot={(props: any) => {
                     const { cx, cy, payload } = props;
                     const color = getIntensityColor(payload.intensity);
@@ -383,31 +383,31 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
                       <circle
                         cx={cx}
                         cy={cy}
-                        r={4}
+                        r={5}
                         fill={color}
                         stroke={color}
                         strokeWidth={2}
                       />
                     );
                   }}
-                  activeDot={{ r: 6 }}
+                  activeDot={{ r: 7 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="flex items-center justify-center gap-4 md:gap-6 pt-3 md:pt-4 border-t border-border/50">
-            <div className="flex items-center gap-1.5 md:gap-2">
-              <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-green-500" />
-              <span className="text-[10px] md:text-xs text-muted-foreground">低强度 (1-3)</span>
+          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6 pt-3 md:pt-4 border-t border-border/50">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-green-500 flex-shrink-0" />
+              <span className="text-xs md:text-sm text-muted-foreground">低强度 (1-3)</span>
             </div>
-            <div className="flex items-center gap-1.5 md:gap-2">
-              <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-orange-500" />
-              <span className="text-[10px] md:text-xs text-muted-foreground">中等 (4-6)</span>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-orange-500 flex-shrink-0" />
+              <span className="text-xs md:text-sm text-muted-foreground">中等 (4-6)</span>
             </div>
-            <div className="flex items-center gap-1.5 md:gap-2">
-              <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-red-500" />
-              <span className="text-[10px] md:text-xs text-muted-foreground">高强度 (7-10)</span>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500 flex-shrink-0" />
+              <span className="text-xs md:text-sm text-muted-foreground">高强度 (7-10)</span>
             </div>
           </div>
 
@@ -426,21 +426,21 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
             查看你在一周中每天的情绪梳理频率
           </p>
         </div>
-        <div className="w-full h-[200px] md:h-[300px]">
+        <div className="w-full h-[250px] md:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={weekdayData}>
+            <BarChart data={weekdayData} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis
                 dataKey="name"
                 stroke="hsl(var(--muted-foreground))"
-                fontSize={10}
+                fontSize={11}
                 tickLine={false}
                 axisLine={false}
                 className="md:text-xs"
               />
               <YAxis
                 stroke="hsl(var(--muted-foreground))"
-                fontSize={10}
+                fontSize={11}
                 tickLine={false}
                 axisLine={false}
                 allowDecimals={false}
@@ -451,10 +451,10 @@ const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysi
                   backgroundColor: "hsl(var(--card))",
                   border: "1px solid hsl(var(--border))",
                   borderRadius: "8px",
-                  fontSize: "11px",
-                  padding: "6px 10px",
+                  fontSize: "12px",
+                  padding: "8px 12px",
                 }}
-                labelStyle={{ color: "hsl(var(--foreground))", fontSize: "11px" }}
+                labelStyle={{ color: "hsl(var(--foreground))", fontSize: "12px", fontWeight: 600 }}
               />
               <Bar dataKey="total" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
             </BarChart>
