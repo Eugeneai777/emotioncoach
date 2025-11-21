@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, Heart, Lightbulb, X, Loader2, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { EmotionIntensityGuide } from "./EmotionIntensityGuide";
+import { useSmartNotification } from "@/hooks/useSmartNotification";
 
 interface Briefing {
   id: string;
@@ -32,6 +33,7 @@ export const EmotionAlert = () => {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const { toast } = useToast();
+  const { triggerNotification } = useSmartNotification();
 
   useEffect(() => {
     checkEmotionAlert();
@@ -93,6 +95,37 @@ export const EmotionAlert = () => {
             recentEmotions
           });
           setIsAlertActive(true);
+        }
+      }
+
+      // 检测持续低落情绪（强度 <= 4）
+      const lowMoodBriefings = briefings.filter(
+        b => b.emotion_intensity && b.emotion_intensity <= 4
+      );
+
+      if (lowMoodBriefings.length >= 3) {
+        const dates = lowMoodBriefings.map(b => 
+          new Date(b.created_at).toDateString()
+        );
+        const uniqueDates = new Set(dates);
+        
+        // 如果有至少3天出现低落情绪，触发关怀通知
+        if (uniqueDates.size >= 3) {
+          const avgIntensity = lowMoodBriefings.reduce(
+            (sum, b) => sum + (b.emotion_intensity || 0), 
+            0
+          ) / lowMoodBriefings.length;
+
+          const dominantEmotions = lowMoodBriefings
+            .slice(0, 5)
+            .map(b => b.emotion_theme);
+
+          // 触发关怀通知
+          await triggerNotification('sustained_low_mood', {
+            consecutive_days: uniqueDates.size,
+            avg_intensity: Math.round(avgIntensity * 10) / 10,
+            dominant_emotions: dominantEmotions
+          });
         }
       }
     } catch (error) {
