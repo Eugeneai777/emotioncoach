@@ -12,6 +12,7 @@ import { EmotionAlert } from "@/components/EmotionAlert";
 import { VoiceControls } from "@/components/VoiceControls";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { EmotionIntensitySelector } from "@/components/EmotionIntensitySelector";
+import { EmotionIntensitySlider } from "@/components/EmotionIntensitySlider";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
@@ -432,6 +433,9 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/* 情绪强度滑块 - 浮动组件 */}
+      <EmotionIntensitySlider />
     </div>;
 };
 export default Index;
