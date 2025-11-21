@@ -43,7 +43,7 @@ interface WeeklyTagReportProps {
   endDate?: Date;
 }
 
-const WeeklyTagReport = ({ startDate, endDate }: WeeklyTagReportProps) => {
+const WeeklyTagReport = ({ startDate, endDate }: WeeklyTagReportProps): JSX.Element => {
   const [reportData, setReportData] = useState<WeeklyReportData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);

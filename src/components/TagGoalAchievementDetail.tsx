@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, TrendingDown, TrendingUp, Calendar, Sparkles, Download } from "lucide-react";
 import confetti from "canvas-confetti";
-import { TagGoalProgress } from "@/utils/tagGoalCalculator";
+import type { TagGoalProgress } from "@/types/tagGoals";
 import TagSentimentBadge from "./TagSentimentBadge";
 
 interface TagGoalAchievementDetailProps {
@@ -30,7 +30,7 @@ const TagGoalAchievementDetail = ({
   progress,
   startDate,
   endDate,
-}: TagGoalAchievementDetailProps) => {
+}: TagGoalAchievementDetailProps): JSX.Element => {
   const [showConfetti, setShowConfetti] = useState(false);
   const isReduction = goalType === 'tag_reduction';
 

@@ -5,41 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Network, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { TagAssociation, Pattern } from "@/types/tagGoals";
 import TagSentimentBadge from "./TagSentimentBadge";
-
-interface TagAssociation {
-  tag1: {
-    id: string;
-    name: string;
-    color: string;
-    sentiment: 'positive' | 'negative' | 'neutral';
-  };
-  tag2: {
-    id: string;
-    name: string;
-    color: string;
-    sentiment: 'positive' | 'negative' | 'neutral';
-  };
-  count: number;
-  avgIntensity: number | null;
-  strength: number;
-  lastOccurrence: string;
-}
-
-interface Pattern {
-  type: string;
-  title: string;
-  description: string;
-  associations: TagAssociation[];
-  severity: 'low' | 'medium' | 'high';
-  icon: string;
-}
 
 interface TagAssociationAnalysisProps {
   autoLoad?: boolean;
 }
 
-const TagAssociationAnalysis = ({ autoLoad = false }: TagAssociationAnalysisProps) => {
+const TagAssociationAnalysis = ({ autoLoad = false }: TagAssociationAnalysisProps): JSX.Element => {
   const [associations, setAssociations] = useState<TagAssociation[]>([]);
   const [patterns, setPatterns] = useState<Pattern[]>([]);
   const [isLoading, setIsLoading] = useState(false);

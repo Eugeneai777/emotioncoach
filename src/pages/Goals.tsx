@@ -14,7 +14,8 @@ import {
   calculatePeakControlProgress,
   IntensityGoalProgress 
 } from "@/utils/intensityGoalCalculator";
-import { calculateTagReductionProgress, calculateTagIncreaseProgress, TagGoalProgress } from "@/utils/tagGoalCalculator";
+import { calculateTagReductionProgress, calculateTagIncreaseProgress } from "@/utils/tagGoalCalculator";
+import type { TagGoalProgress } from "@/types/tagGoals";
 import { useToast } from "@/hooks/use-toast";
 import CelebrationModal from "@/components/CelebrationModal";
 import AchievementBadge from "@/components/AchievementBadge";
@@ -96,7 +97,7 @@ interface CompletionFeedback {
   };
 }
 
-const Goals = () => {
+const Goals = (): JSX.Element => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
