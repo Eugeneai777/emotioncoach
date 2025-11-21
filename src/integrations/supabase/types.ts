@@ -236,6 +236,9 @@ export type Database = {
           display_name: string | null
           has_seen_onboarding: boolean | null
           id: string
+          intensity_reminder_enabled: boolean | null
+          intensity_reminder_time: string | null
+          last_intensity_reminder_shown: string | null
           last_reminder_shown: string | null
           reminder_enabled: boolean | null
           reminder_time: string | null
@@ -250,6 +253,9 @@ export type Database = {
           display_name?: string | null
           has_seen_onboarding?: boolean | null
           id: string
+          intensity_reminder_enabled?: boolean | null
+          intensity_reminder_time?: string | null
+          last_intensity_reminder_shown?: string | null
           last_reminder_shown?: string | null
           reminder_enabled?: boolean | null
           reminder_time?: string | null
@@ -264,6 +270,9 @@ export type Database = {
           display_name?: string | null
           has_seen_onboarding?: boolean | null
           id?: string
+          intensity_reminder_enabled?: boolean | null
+          intensity_reminder_time?: string | null
+          last_intensity_reminder_shown?: string | null
           last_reminder_shown?: string | null
           reminder_enabled?: boolean | null
           reminder_time?: string | null

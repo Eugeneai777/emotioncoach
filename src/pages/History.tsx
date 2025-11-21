@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { MusicRecommendation } from "@/components/MusicRecommendation";
 import { EmotionIntensityCard } from "@/components/EmotionIntensityMeter";
 import { QuickLogsChart } from "@/components/QuickLogsChart";
+import { EmotionIntensityHeatmap } from "@/components/EmotionIntensityHeatmap";
 
 interface TagType {
   id: string;
@@ -511,6 +512,9 @@ const History = () => {
             <TabsContent value="trends">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <div className="space-y-4 md:space-y-6">
+                  {/* 情绪强度日历热力图 */}
+                  <EmotionIntensityHeatmap />
+                  
                   {/* 快速记录趋势图 */}
                   <QuickLogsChart />
                   
