@@ -14,11 +14,14 @@ import {
   calculatePeakControlProgress,
   IntensityGoalProgress 
 } from "@/utils/intensityGoalCalculator";
+import { calculateTagReductionProgress, calculateTagIncreaseProgress, TagGoalProgress } from "@/utils/tagGoalCalculator";
 import { useToast } from "@/hooks/use-toast";
 import CelebrationModal from "@/components/CelebrationModal";
 import AchievementBadge from "@/components/AchievementBadge";
 import StreakDisplay from "@/components/StreakDisplay";
 import { GoalCompletionFeedback } from "@/components/GoalCompletionFeedback";
+import SmartGoalRecommendations from "@/components/SmartGoalRecommendations";
+import TagReductionProgress from "@/components/TagReductionProgress";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +39,7 @@ import { zhCN } from "date-fns/locale";
 
 interface Goal {
   id: string;
-  goal_type: "weekly" | "monthly";
+  goal_type: "weekly" | "monthly" | string;
   goal_category?: string;
   target_count: number;
   description: string | null;
@@ -48,6 +51,9 @@ interface Goal {
   intensity_max?: number;
   intensity_target_days?: number;
   intensity_baseline?: number;
+  target_tag_id?: string;
+  baseline_weekly_count?: number;
+  target_reduction_percent?: number;
 }
 
 interface Achievement {
@@ -109,6 +115,7 @@ const Goals = () => {
   const [loadingFeedback, setLoadingFeedback] = useState(false);
   const [intensityDialogOpen, setIntensityDialogOpen] = useState(false);
   const [intensityProgress, setIntensityProgress] = useState<Record<string, IntensityGoalProgress>>({});
+  const [tagProgress, setTagProgress] = useState<Record<string, TagGoalProgress>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -125,10 +132,19 @@ const Goals = () => {
 
       const progressMap: Record<string, { current: number; percentage: number }> = {};
       const intensityProgressMap: Record<string, IntensityGoalProgress> = {};
+      const tagProgressMap: Record<string, TagGoalProgress> = {};
       
       for (const goal of goals) {
         if (goal.goal_category === 'frequency' || !goal.goal_category) {
           progressMap[goal.id] = await calculateProgress(goal);
+        } else if (goal.goal_category === 'tag_reduction' && goal.target_tag_id) {
+          tagProgressMap[goal.id] = await calculateTagReductionProgress(
+            user.id, goal.target_tag_id, goal.target_count, goal.start_date, goal.end_date
+          );
+        } else if (goal.goal_category === 'tag_increase' && goal.target_tag_id) {
+          tagProgressMap[goal.id] = await calculateTagIncreaseProgress(
+            user.id, goal.target_tag_id, goal.target_count, goal.start_date, goal.end_date
+          );
         } else {
           // Calculate intensity goal progress
           const startDate = new Date(goal.start_date).toISOString();
@@ -152,6 +168,7 @@ const Goals = () => {
       
       setGoalProgress(progressMap);
       setIntensityProgress(intensityProgressMap);
+      setTagProgress(tagProgressMap);
     };
 
     if (goals.length > 0) {
@@ -372,7 +389,9 @@ const Goals = () => {
 
       // Show celebration
       setCurrentAchievement(achievementName);
-      setCurrentGoalType(goal.goal_type);
+      if (goal.goal_type === 'weekly' || goal.goal_type === 'monthly') {
+        setCurrentGoalType(goal.goal_type);
+      }
       setCelebrationOpen(true);
       await loadAchievements();
     } catch (error: any) {
@@ -457,7 +476,9 @@ const Goals = () => {
   };
 
   const applyGoalSuggestion = (suggestion: GoalSuggestion) => {
-    setGoalType(suggestion.goal_type);
+    if (suggestion.goal_type === 'weekly' || suggestion.goal_type === 'monthly') {
+      setGoalType(suggestion.goal_type);
+    }
     setTargetCount(String(suggestion.target_count));
     setDescription(suggestion.description);
     setSuggestionsOpen(false);
@@ -531,7 +552,11 @@ const Goals = () => {
                 <div className="space-y-3 md:space-y-4 py-3 md:py-4">
                   <div className="space-y-2">
                     <Label className="text-xs md:text-sm">目标周期</Label>
-                    <RadioGroup value={goalType} onValueChange={(value) => setGoalType(value as "weekly" | "monthly")}>
+                    <RadioGroup value={goalType} onValueChange={(value) => {
+                      if (value === 'weekly' || value === 'monthly') {
+                        setGoalType(value);
+                      }
+                    }}>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="weekly" id="weekly" />
                         <Label htmlFor="weekly" className="cursor-pointer text-xs md:text-sm">每周目标</Label>
@@ -583,6 +608,9 @@ const Goals = () => {
       <main className="container max-w-4xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-6 md:space-y-8">
         {/* Streak Display */}
         <StreakDisplay />
+
+        {/* Smart Goal Recommendations */}
+        <SmartGoalRecommendations onRecommendationAccepted={loadGoals} />
 
         {/* Achievements Section */}
         {achievements.length > 0 && (
@@ -692,6 +720,29 @@ const Goals = () => {
               </div>
             )}
 
+            {/* Tag Goals Section */}
+            {goals.filter(g => g.goal_category === 'tag_reduction' || g.goal_category === 'tag_increase').length > 0 && (
+              <div className="space-y-3 md:space-y-4">
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                  <h2 className="text-base md:text-lg font-semibold text-foreground">标签目标</h2>
+                </div>
+                {goals.filter(g => g.goal_category === 'tag_reduction' || g.goal_category === 'tag_increase').map((goal) => {
+                  const progress = tagProgress[goal.id];
+                  if (!progress) return null;
+
+                  return (
+                    <TagReductionProgress
+                      key={goal.id}
+                      tagName={goal.description || '未命名标签'}
+                      goalType={goal.goal_category as 'tag_reduction' | 'tag_increase'}
+                      progress={progress}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
             {/* Intensity Goals */}
             {goals.filter(g => g.goal_category && g.goal_category !== 'frequency').length > 0 && (
               <div className="space-y-3 md:space-y-4">
@@ -699,11 +750,11 @@ const Goals = () => {
                   <Activity className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                   <h2 className="text-base md:text-lg font-semibold text-foreground">情绪强度目标</h2>
                 </div>
-                {goals.filter(g => g.goal_category && g.goal_category !== 'frequency').map((goal) => {
+                {goals.filter(g => g.goal_category && !['frequency', 'tag_reduction', 'tag_increase'].includes(g.goal_category)).map((goal) => {
                   const progress = intensityProgress[goal.id];
                   if (!progress) return null;
 
-                  return <IntensityGoalCard key={goal.id} goal={goal} progress={progress} />;
+                  return <IntensityGoalCard key={goal.id} goal={goal as any} progress={progress} />;
                 })}
               </div>
             )}
