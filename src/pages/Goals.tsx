@@ -26,6 +26,8 @@ import TagReductionProgress from "@/components/TagReductionProgress";
 import TagAssociationAnalysis from "@/components/TagAssociationAnalysis";
 import WeeklyTagReport from "@/components/WeeklyTagReport";
 import TagGoalHistory from "@/components/TagGoalHistory";
+import EmotionCalendarHeatmap from "@/components/EmotionCalendarHeatmap";
+import TagGoalReminder from "@/components/TagGoalReminder";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -620,6 +622,9 @@ const Goals = (): JSX.Element => {
           </TabsList>
 
           <TabsContent value="active" className="space-y-6 md:space-y-8">
+        {/* Tag Goal Reminders */}
+        <TagGoalReminder />
+
         {/* Streak Display */}
         <StreakDisplay />
 
@@ -782,6 +787,7 @@ const Goals = (): JSX.Element => {
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-6 md:space-y-8">
+            <EmotionCalendarHeatmap />
             <WeeklyTagReport />
           </TabsContent>
 

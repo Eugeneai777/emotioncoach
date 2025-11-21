@@ -10,6 +10,7 @@ import History from "./pages/History";
 import Settings from "./pages/Settings";
 import TagStats from "./pages/TagStats";
 import Goals from "./pages/Goals";
+import Calendar from "./pages/Calendar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/settings" element={<Settings />} />
           <Route path="/tag-stats" element={<TagStats />} />
           <Route path="/goals" element={<Goals />} />
+          <Route path="/calendar" element={<Calendar />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
