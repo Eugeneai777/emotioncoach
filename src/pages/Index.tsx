@@ -14,10 +14,12 @@ import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { EmotionIntensitySelector } from "@/components/EmotionIntensitySelector";
 import { EmotionIntensitySlider } from "@/components/EmotionIntensitySlider";
 import { IntensityReminderDialog } from "@/components/IntensityReminderDialog";
+import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { useAuth } from "@/hooks/useAuth";
+import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { supabase } from "@/integrations/supabase/client";
 import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target } from "lucide-react";
 const Index = () => {
@@ -45,6 +47,7 @@ const Index = () => {
     sendMessage,
     resetConversation
   } = useStreamChat();
+  const { triggerNotification } = useSmartNotification();
   const {
     isListening,
     transcript,
@@ -312,6 +315,7 @@ const Index = () => {
                 </Button>}
             </div>
             <div className="flex items-center gap-1 md:gap-2">
+              <SmartNotificationCenter />
               <Button 
                 variant="outline" 
                 size="sm" 

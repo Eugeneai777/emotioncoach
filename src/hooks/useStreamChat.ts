@@ -224,6 +224,22 @@ ${data.growth_story}
         title: "简报已保存 🌿",
         description: "你可以在历史记录中查看",
       });
+
+      // 触发简报完成后的鼓励通知
+      try {
+        await supabase.functions.invoke('generate-smart-notification', {
+          body: {
+            scenario: 'after_briefing',
+            context: {
+              emotion_theme: briefingData.emotion_theme,
+              emotion_intensity: briefingData.emotion_intensity || 5
+            }
+          }
+        });
+      } catch (notificationError) {
+        console.error("Error triggering notification:", notificationError);
+        // 不影响主流程，仅记录错误
+      }
     } catch (error) {
       console.error("Error saving briefing:", error);
       toast({
