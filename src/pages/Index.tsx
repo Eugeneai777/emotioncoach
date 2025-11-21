@@ -19,7 +19,7 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target, Calendar } from "lucide-react";
+import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target } from "lucide-react";
 const Index = () => {
   const [input, setInput] = useState("");
   const [showReminder, setShowReminder] = useState(false);
@@ -320,15 +320,6 @@ const Index = () => {
               >
                 <Target className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span className="hidden sm:inline">目标</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => navigate("/calendar")} 
-                className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all"
-              >
-                <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline">日历</span>
               </Button>
               <Button variant="ghost" size="sm" onClick={() => navigate("/settings")} className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground transition-colors">
                 <Settings className="w-3.5 h-3.5 md:w-4 md:h-4" />

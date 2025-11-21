@@ -18,6 +18,7 @@ import { BriefingTagSelector } from "@/components/BriefingTagSelector";
 import { Badge } from "@/components/ui/badge";
 import { MusicRecommendation } from "@/components/MusicRecommendation";
 import { EmotionIntensityCard } from "@/components/EmotionIntensityMeter";
+import { Separator } from "@/components/ui/separator";
 import UnifiedEmotionIntensityChart from "@/components/UnifiedEmotionIntensityChart";
 import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
 
@@ -454,10 +455,30 @@ const History = () => {
               </TabsList>
             
             <TabsContent value="list">
-              <ScrollArea className="h-[calc(100vh-340px)]">
-                <div className="space-y-3 md:space-y-4">
-                  {briefings
-                    .filter((briefing) => {
+              <div className="space-y-4 md:space-y-6">
+                {/* 情绪日历概览 */}
+                <Card className="p-4 md:p-6">
+                  <div className="mb-3 md:mb-4">
+                    <h3 className="text-base md:text-lg font-semibold text-foreground">📅 情绪日历</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground mt-1">
+                      点击日期查看当天的详细记录
+                    </p>
+                  </div>
+                  <UnifiedEmotionHeatmap 
+                    briefings={briefings}
+                    quickLogs={quickLogs}
+                  />
+                </Card>
+
+                <Separator className="my-4 md:my-6" />
+
+                {/* 简报列表 */}
+                <div>
+                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 md:mb-4">📝 简报列表</h3>
+                  <ScrollArea className="h-[calc(100vh-480px)]">
+                    <div className="space-y-3 md:space-y-4">
+                      {briefings
+                        .filter((briefing) => {
                       if (!selectedTagFilter) return true;
                       return briefing.tags?.some((tag) => tag.id === selectedTagFilter);
                     })
@@ -523,9 +544,11 @@ const History = () => {
                           )}
                         </div>
                       </button>
-                    ))}
+                     ))}
+                    </div>
+                  </ScrollArea>
                 </div>
-              </ScrollArea>
+              </div>
             </TabsContent>
             
             <TabsContent value="trends">
@@ -534,7 +557,6 @@ const History = () => {
                   {/* 宏观视角 */}
                   <div className="space-y-3">
                     <h3 className="text-sm font-medium text-muted-foreground px-1">📊 宏观视角</h3>
-                    <UnifiedEmotionHeatmap briefings={briefings} quickLogs={quickLogs} />
                     <Card className="p-4 md:p-6">
                       <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 md:mb-4 flex items-center gap-2">
                         ☁️ 情绪标签云
