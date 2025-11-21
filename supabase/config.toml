@@ -35,3 +35,6 @@ verify_jwt = true
 
 [functions.analyze-tag-associations]
 verify_jwt = true
+
+[functions.generate-tag-report]
+verify_jwt = true

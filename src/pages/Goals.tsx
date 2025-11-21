@@ -23,6 +23,7 @@ import { GoalCompletionFeedback } from "@/components/GoalCompletionFeedback";
 import SmartGoalRecommendations from "@/components/SmartGoalRecommendations";
 import TagReductionProgress from "@/components/TagReductionProgress";
 import TagAssociationAnalysis from "@/components/TagAssociationAnalysis";
+import WeeklyTagReport from "@/components/WeeklyTagReport";
 import {
   Dialog,
   DialogContent,
@@ -612,6 +613,9 @@ const Goals = () => {
 
         {/* Smart Goal Recommendations */}
         <SmartGoalRecommendations onRecommendationAccepted={loadGoals} />
+
+        {/* Weekly Tag Report */}
+        <WeeklyTagReport />
 
         {/* Tag Association Analysis */}
         <TagAssociationAnalysis autoLoad={true} />
