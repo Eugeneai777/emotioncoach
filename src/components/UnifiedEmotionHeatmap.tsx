@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -9,6 +10,12 @@ interface Briefing {
   emotion_theme: string;
   emotion_intensity: number | null;
   created_at: string;
+  briefing_tags?: Array<{
+    tags: {
+      name: string;
+      sentiment: string | null;
+    } | null;
+  }>;
 }
 
 interface QuickLog {
@@ -27,7 +34,12 @@ interface DayData {
   date: Date;
   intensity: number | null;
   count: number;
-  records: Array<{ label: string; intensity: number }>;
+  records: Array<{ 
+    label: string; 
+    intensity: number;
+    tags?: Array<{ name: string; sentiment: string | null }>;
+    time: string;
+  }>;
 }
 
 const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapProps) => {
@@ -44,11 +56,15 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
           date: new Date(b.created_at),
           intensity: b.emotion_intensity!,
           label: b.emotion_theme,
+          tags: b.briefing_tags?.map(bt => bt.tags).filter((t): t is { name: string; sentiment: string | null } => t !== null) || [],
+          time: new Date(b.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
         })),
       ...quickLogs.map(q => ({
         date: new Date(q.created_at),
         intensity: q.emotion_intensity,
-        label: q.note || "情绪记录",
+        label: q.note || "快速记录",
+        tags: [],
+        time: new Date(q.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
       }))
     ];
   }, [briefings, quickLogs]);
@@ -85,7 +101,12 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
       date,
       intensity: Math.round(avgIntensity * 10) / 10,
       count: dayRecords.length,
-      records: dayRecords.map(r => ({ label: r.label, intensity: r.intensity }))
+      records: dayRecords.map(r => ({ 
+        label: r.label, 
+        intensity: r.intensity,
+        tags: r.tags,
+        time: r.time,
+      }))
     };
   };
 
@@ -180,10 +201,10 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
             return (
               <div
                 key={day}
-                className={`aspect-square rounded-md flex items-center justify-center text-xs cursor-pointer transition-all relative
+                className={`aspect-square rounded-md flex flex-col items-center justify-center text-xs cursor-pointer transition-all relative
                   ${getIntensityColor(dayData.intensity)} ${getIntensityOpacity(dayData.intensity)}
                   ${isToday ? "ring-2 ring-primary ring-offset-2" : ""}
-                  hover:scale-110 hover:z-10
+                  hover:scale-110 hover:z-10 gap-0.5
                 `}
                 onMouseEnter={() => setHoveredDay(dayData)}
                 onMouseLeave={() => setHoveredDay(null)}
@@ -192,6 +213,11 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
                 <span className={dayData.intensity ? "text-white font-medium" : "text-muted-foreground"}>
                   {day}
                 </span>
+                {dayData.count > 0 && (
+                  <span className="text-[10px] text-white/90 font-medium">
+                    {dayData.count}次
+                  </span>
+                )}
               </div>
             );
           })}
@@ -252,12 +278,41 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
               {selectedDay?.records.map((record, idx) => (
                 <div
                   key={idx}
-                  className="p-3 bg-card border border-border rounded-lg flex justify-between items-center"
+                  className="p-3 bg-card border border-border rounded-lg space-y-2"
                 >
-                  <span className="text-sm text-foreground">{record.label}</span>
-                  <span className="text-sm font-medium text-primary">
-                    {record.intensity}/10
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary" className="text-xs">
+                      {record.label}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {record.time}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">强度:</span>
+                    <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all"
+                        style={{ width: `${record.intensity * 10}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-primary">
+                      {record.intensity}/10
+                    </span>
+                  </div>
+                  {record.tags && record.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {record.tags.map((tag, tagIdx) => (
+                        <Badge
+                          key={tagIdx}
+                          variant="outline"
+                          className="text-xs"
+                        >
+                          {tag.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -26,7 +26,7 @@ import TagReductionProgress from "@/components/TagReductionProgress";
 import TagAssociationAnalysis from "@/components/TagAssociationAnalysis";
 import WeeklyTagReport from "@/components/WeeklyTagReport";
 import TagGoalHistory from "@/components/TagGoalHistory";
-import EmotionCalendarHeatmap from "@/components/EmotionCalendarHeatmap";
+import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
 import TagGoalReminder from "@/components/TagGoalReminder";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -123,12 +123,15 @@ const Goals = (): JSX.Element => {
   const [intensityDialogOpen, setIntensityDialogOpen] = useState(false);
   const [intensityProgress, setIntensityProgress] = useState<Record<string, IntensityGoalProgress>>({});
   const [tagProgress, setTagProgress] = useState<Record<string, TagGoalProgress>>({});
+  const [briefings, setBriefings] = useState<any[]>([]);
+  const [quickLogs, setQuickLogs] = useState<any[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     checkAuthAndLoadGoals();
     loadAchievements();
+    loadCalendarData();
   }, []);
 
   useEffect(() => {
@@ -227,6 +230,46 @@ const Goals = (): JSX.Element => {
       setAchievements((data || []) as Achievement[]);
     } catch (error: any) {
       console.error("Error loading achievements:", error);
+    }
+  };
+
+  const loadCalendarData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // 获取 briefings
+      const { data: briefingsData, error: briefingsError } = await supabase
+        .from('briefings')
+        .select(`
+          id,
+          emotion_theme,
+          emotion_intensity,
+          created_at,
+          conversation_id,
+          conversations!inner(user_id),
+          briefing_tags(
+            tags(name, sentiment)
+          )
+        `)
+        .eq('conversations.user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (briefingsError) throw briefingsError;
+
+      // 获取 quick logs
+      const { data: quickLogsData, error: quickLogsError } = await supabase
+        .from('emotion_quick_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (quickLogsError) throw quickLogsError;
+
+      setBriefings(briefingsData || []);
+      setQuickLogs(quickLogsData || []);
+    } catch (error) {
+      console.error('Error loading calendar data:', error);
     }
   };
 
@@ -787,7 +830,7 @@ const Goals = (): JSX.Element => {
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-6 md:space-y-8">
-            <EmotionCalendarHeatmap />
+            <UnifiedEmotionHeatmap briefings={briefings} quickLogs={quickLogs} />
             <WeeklyTagReport />
           </TabsContent>
 
