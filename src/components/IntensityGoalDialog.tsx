@@ -142,6 +142,33 @@ export const IntensityGoalDialog = ({ open, onOpenChange, onSuccess }: Intensity
             </RadioGroup>
           </div>
 
+          {/* 打卡要求提示 */}
+          <div className="bg-amber-50 dark:bg-amber-950 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-4 space-y-2">
+            <div className="flex items-start gap-2">
+              <span className="text-lg">📅</span>
+              <div className="flex-1 space-y-1">
+                <p className="font-semibold text-amber-900 dark:text-amber-100 text-sm">
+                  目标评估要求
+                </p>
+                <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1 ml-4 list-disc">
+                  <li className={goalType === "weekly" ? "font-bold" : ""}>
+                    <strong>周目标</strong>：每周至少记录 <strong>3 天</strong>
+                  </li>
+                  <li className={goalType === "monthly" ? "font-bold" : ""}>
+                    <strong>月目标</strong>：每月至少记录 <strong>10 天</strong>
+                  </li>
+                  <li>
+                    记录需要<strong>均匀分布</strong>，避免集中打卡
+                  </li>
+                </ul>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1">
+                  <span>💡</span>
+                  <span>满足要求后才能准确计算强度目标进度</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* 根据不同目标类型显示不同的配置 */}
           {goalCategory === "intensity_average" && (
             <div className="space-y-3 p-3 bg-secondary/20 rounded-lg">
