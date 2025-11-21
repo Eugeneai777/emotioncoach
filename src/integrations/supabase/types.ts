@@ -135,6 +135,7 @@ export type Database = {
       }
       emotion_goals: {
         Row: {
+          baseline_weekly_count: number | null
           created_at: string
           description: string | null
           end_date: string
@@ -148,10 +149,13 @@ export type Database = {
           is_active: boolean
           start_date: string
           target_count: number
+          target_reduction_percent: number | null
+          target_tag_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          baseline_weekly_count?: number | null
           created_at?: string
           description?: string | null
           end_date: string
@@ -165,10 +169,13 @@ export type Database = {
           is_active?: boolean
           start_date: string
           target_count: number
+          target_reduction_percent?: number | null
+          target_tag_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          baseline_weekly_count?: number | null
           created_at?: string
           description?: string | null
           end_date?: string
@@ -182,10 +189,20 @@ export type Database = {
           is_active?: boolean
           start_date?: string
           target_count?: number
+          target_reduction_percent?: number | null
+          target_tag_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "emotion_goals_target_tag_id_fkey"
+            columns: ["target_tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       emotion_quick_logs: {
         Row: {
@@ -302,21 +319,30 @@ export type Database = {
           color: string | null
           created_at: string
           id: string
+          last_sentiment_check: string | null
           name: string
+          sentiment: string | null
+          sentiment_confidence: number | null
           user_id: string
         }
         Insert: {
           color?: string | null
           created_at?: string
           id?: string
+          last_sentiment_check?: string | null
           name: string
+          sentiment?: string | null
+          sentiment_confidence?: number | null
           user_id: string
         }
         Update: {
           color?: string | null
           created_at?: string
           id?: string
+          last_sentiment_check?: string | null
           name?: string
+          sentiment?: string | null
+          sentiment_confidence?: number | null
           user_id?: string
         }
         Relationships: []
