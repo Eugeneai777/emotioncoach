@@ -272,8 +272,11 @@ export type Database = {
           intensity_reminder_time: string | null
           last_intensity_reminder_shown: string | null
           last_reminder_shown: string | null
+          notification_frequency: string | null
+          preferred_encouragement_style: string | null
           reminder_enabled: boolean | null
           reminder_time: string | null
+          smart_notification_enabled: boolean | null
           updated_at: string
           voice_gender: string | null
           voice_rate: number | null
@@ -289,8 +292,11 @@ export type Database = {
           intensity_reminder_time?: string | null
           last_intensity_reminder_shown?: string | null
           last_reminder_shown?: string | null
+          notification_frequency?: string | null
+          preferred_encouragement_style?: string | null
           reminder_enabled?: boolean | null
           reminder_time?: string | null
+          smart_notification_enabled?: boolean | null
           updated_at?: string
           voice_gender?: string | null
           voice_rate?: number | null
@@ -306,11 +312,74 @@ export type Database = {
           intensity_reminder_time?: string | null
           last_intensity_reminder_shown?: string | null
           last_reminder_shown?: string | null
+          notification_frequency?: string | null
+          preferred_encouragement_style?: string | null
           reminder_enabled?: boolean | null
           reminder_time?: string | null
+          smart_notification_enabled?: boolean | null
           updated_at?: string
           voice_gender?: string | null
           voice_rate?: number | null
+        }
+        Relationships: []
+      }
+      smart_notifications: {
+        Row: {
+          action_data: Json | null
+          action_text: string | null
+          action_type: string | null
+          context: Json | null
+          created_at: string
+          dismissed_at: string | null
+          icon: string | null
+          id: string
+          is_dismissed: boolean
+          is_read: boolean
+          message: string
+          notification_type: string
+          priority: number
+          read_at: string | null
+          scenario: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          action_data?: Json | null
+          action_text?: string | null
+          action_type?: string | null
+          context?: Json | null
+          created_at?: string
+          dismissed_at?: string | null
+          icon?: string | null
+          id?: string
+          is_dismissed?: boolean
+          is_read?: boolean
+          message: string
+          notification_type: string
+          priority?: number
+          read_at?: string | null
+          scenario: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          action_data?: Json | null
+          action_text?: string | null
+          action_type?: string | null
+          context?: Json | null
+          created_at?: string
+          dismissed_at?: string | null
+          icon?: string | null
+          id?: string
+          is_dismissed?: boolean
+          is_read?: boolean
+          message?: string
+          notification_type?: string
+          priority?: number
+          read_at?: string | null
+          scenario?: string
+          title?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -387,6 +456,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_behavior_analysis: {
+        Row: {
+          active_goals_count: number
+          analysis_date: string
+          avg_emotion_intensity: number | null
+          checkin_count: number
+          created_at: string
+          days_since_last_checkin: number | null
+          dominant_emotions: string[] | null
+          emotion_trend: string | null
+          goals_at_risk: number
+          goals_on_track: number
+          growth_indicators: Json | null
+          id: string
+          last_checkin_at: string | null
+          needs_care: boolean
+          needs_encouragement: boolean
+          needs_reminder: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_goals_count?: number
+          analysis_date?: string
+          avg_emotion_intensity?: number | null
+          checkin_count?: number
+          created_at?: string
+          days_since_last_checkin?: number | null
+          dominant_emotions?: string[] | null
+          emotion_trend?: string | null
+          goals_at_risk?: number
+          goals_on_track?: number
+          growth_indicators?: Json | null
+          id?: string
+          last_checkin_at?: string | null
+          needs_care?: boolean
+          needs_encouragement?: boolean
+          needs_reminder?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_goals_count?: number
+          analysis_date?: string
+          avg_emotion_intensity?: number | null
+          checkin_count?: number
+          created_at?: string
+          days_since_last_checkin?: number | null
+          dominant_emotions?: string[] | null
+          emotion_trend?: string | null
+          goals_at_risk?: number
+          goals_on_track?: number
+          growth_indicators?: Json | null
+          id?: string
+          last_checkin_at?: string | null
+          needs_care?: boolean
+          needs_encouragement?: boolean
+          needs_reminder?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
