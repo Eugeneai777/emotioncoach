@@ -5,9 +5,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Calendar, Loader2, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import EmotionTrendChart from "@/components/EmotionTrendChart";
-import EmotionTagCloud from "@/components/EmotionTagCloud";
-import EmotionCycleAnalysis from "@/components/EmotionCycleAnalysis";
 import { EmotionTrendsCombined } from "@/components/EmotionTrendsCombined";
 import ExportDialog from "@/components/ExportDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,13 +16,20 @@ import { BriefingTagSelector } from "@/components/BriefingTagSelector";
 import { Badge } from "@/components/ui/badge";
 import { MusicRecommendation } from "@/components/MusicRecommendation";
 import { EmotionIntensityCard } from "@/components/EmotionIntensityMeter";
-import { QuickLogsChart } from "@/components/QuickLogsChart";
-import { EmotionIntensityHeatmap } from "@/components/EmotionIntensityHeatmap";
+import UnifiedEmotionIntensityChart from "@/components/UnifiedEmotionIntensityChart";
+import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
 
 interface TagType {
   id: string;
   name: string;
   color: string;
+}
+
+interface QuickLog {
+  id: string;
+  emotion_intensity: number;
+  created_at: string;
+  note: string | null;
 }
 
 export interface Briefing {
@@ -47,6 +51,7 @@ export interface Briefing {
 
 const History = () => {
   const [briefings, setBriefings] = useState<Briefing[]>([]);
+  const [quickLogs, setQuickLogs] = useState<QuickLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBriefing, setSelectedBriefing] = useState<Briefing | null>(null);
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null);
@@ -71,6 +76,10 @@ const History = () => {
 
   const loadBriefings = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Load briefings
       const { data, error } = await supabase
         .from("briefings")
         .select(`
@@ -80,6 +89,15 @@ const History = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+
+      // Load quick logs
+      const { data: quickLogsData } = await supabase
+        .from("emotion_quick_logs")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      setQuickLogs(quickLogsData || []);
 
       // Load tags for each briefing
       const briefingsWithTags = await Promise.all(
@@ -107,7 +125,6 @@ const History = () => {
       let didBackfill = false;
       if (untagged.length > 0) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
           if (user) {
             // Get or create default tag
             const defaultTagName = "情绪梳理";
@@ -512,13 +529,13 @@ const History = () => {
             <TabsContent value="trends">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <div className="space-y-4 md:space-y-6">
-                  {/* 情绪强度日历热力图 */}
-                  <EmotionIntensityHeatmap />
+                  {/* 统一情绪强度趋势图 */}
+                  <UnifiedEmotionIntensityChart briefings={briefings} quickLogs={quickLogs} />
                   
-                  {/* 快速记录趋势图 */}
-                  <QuickLogsChart />
+                  {/* 统一情绪日历热力图 */}
+                  <UnifiedEmotionHeatmap briefings={briefings} quickLogs={quickLogs} />
                   
-                  {/* 简报情绪趋势 */}
+                  {/* 简报情绪趋势 - 标签云和周期分析 */}
                   <EmotionTrendsCombined briefings={briefings} />
                 </div>
               </ScrollArea>
