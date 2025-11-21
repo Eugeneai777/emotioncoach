@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import EmotionTagCloud from "@/components/EmotionTagCloud";
 import EmotionCycleAnalysis from "@/components/EmotionCycleAnalysis";
 import { Card } from "@/components/ui/card";
-import ExportDialog from "@/components/ExportDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TagManager } from "@/components/TagManager";
 import { EmotionPatternInsights } from "@/components/EmotionPatternInsights";
@@ -365,7 +364,15 @@ const History = () => {
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-lg md:text-xl font-bold text-foreground">我的情绪日记</h1>
             <div className="flex items-center gap-1 md:gap-2">
-              <ExportDialog briefings={briefings} />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/tag-stats")}
+                className="gap-1 md:gap-2 px-2 md:px-3"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span className="hidden sm:inline">标签统计</span>
+              </Button>
               <TagManager onTagsChange={loadBriefings} />
               <Button
                 variant="ghost"
@@ -417,20 +424,7 @@ const History = () => {
             <p className="text-sm text-muted-foreground mt-2">完成一次情绪梳理后会生成简报 🌿</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/tag-stats")}
-                className="gap-2"
-              >
-                <BarChart3 className="w-4 h-4" />
-                标签统计
-              </Button>
-            </div>
-            
-            <Tabs defaultValue="list" className="w-full">
+          <Tabs defaultValue="list" className="w-full">
               <TabsList className="grid w-full grid-cols-5 mb-4 md:mb-6 h-auto">
                 <TabsTrigger value="list" className="text-xs md:text-sm py-2">
                   <span className="hidden sm:inline">简报列表</span>
@@ -598,7 +592,6 @@ const History = () => {
               </ScrollArea>
             </TabsContent>
             </Tabs>
-          </div>
         )}
       </main>
     </div>
