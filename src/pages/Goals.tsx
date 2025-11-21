@@ -29,6 +29,7 @@ import TagGoalHistory from "@/components/TagGoalHistory";
 import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
 import TagGoalReminder from "@/components/TagGoalReminder";
 import { GoalCheckInReminder } from "@/components/GoalCheckInReminder";
+import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -128,6 +129,7 @@ const Goals = (): JSX.Element => {
   const [quickLogs, setQuickLogs] = useState<any[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { triggerNotification } = useSmartNotification();
 
   useEffect(() => {
     checkAuthAndLoadGoals();
@@ -457,6 +459,15 @@ const Goals = (): JSX.Element => {
       // Check if goal is actually completed
       if (progress.percentage >= 100) {
         await awardAchievement(goal);
+        
+        // 触发庆祝通知
+        await triggerNotification('goal_milestone', {
+          goal_type: goal.goal_type,
+          goal_category: goal.goal_category || 'frequency',
+          target_count: goal.target_count,
+          actual_count: progress.current,
+          completion_rate: progress.percentage
+        });
       }
 
       // Mark goal as inactive
