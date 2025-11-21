@@ -5,7 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Loader2, Target, TrendingUp, Calendar as CalendarIcon, Award } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Target, TrendingUp, Calendar as CalendarIcon, Award, Activity } from "lucide-react";
+import { IntensityGoalDialog } from "@/components/IntensityGoalDialog";
+import { IntensityGoalCard } from "@/components/IntensityGoalCard";
+import { 
+  calculateAverageIntensityProgress, 
+  calculateRangeDaysProgress, 
+  calculatePeakControlProgress,
+  IntensityGoalProgress 
+} from "@/utils/intensityGoalCalculator";
 import { useToast } from "@/hooks/use-toast";
 import CelebrationModal from "@/components/CelebrationModal";
 import AchievementBadge from "@/components/AchievementBadge";
@@ -29,12 +37,17 @@ import { zhCN } from "date-fns/locale";
 interface Goal {
   id: string;
   goal_type: "weekly" | "monthly";
+  goal_category?: string;
   target_count: number;
   description: string | null;
   start_date: string;
   end_date: string;
   is_active: boolean;
   created_at: string;
+  intensity_min?: number;
+  intensity_max?: number;
+  intensity_target_days?: number;
+  intensity_baseline?: number;
 }
 
 interface Achievement {
@@ -94,6 +107,8 @@ const Goals = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [completionFeedback, setCompletionFeedback] = useState<CompletionFeedback | null>(null);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
+  const [intensityDialogOpen, setIntensityDialogOpen] = useState(false);
+  const [intensityProgress, setIntensityProgress] = useState<Record<string, IntensityGoalProgress>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -105,11 +120,38 @@ const Goals = () => {
   useEffect(() => {
     // Calculate progress for all goals when goals change
     const loadAllProgress = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const progressMap: Record<string, { current: number; percentage: number }> = {};
+      const intensityProgressMap: Record<string, IntensityGoalProgress> = {};
+      
       for (const goal of goals) {
-        progressMap[goal.id] = await calculateProgress(goal);
+        if (goal.goal_category === 'frequency' || !goal.goal_category) {
+          progressMap[goal.id] = await calculateProgress(goal);
+        } else {
+          // Calculate intensity goal progress
+          const startDate = new Date(goal.start_date).toISOString();
+          const endDate = new Date(goal.end_date).toISOString();
+          
+          if (goal.goal_category === 'intensity_average' && goal.intensity_min && goal.intensity_max) {
+            intensityProgressMap[goal.id] = await calculateAverageIntensityProgress(
+              user.id, startDate, endDate, goal.intensity_min, goal.intensity_max
+            );
+          } else if (goal.goal_category === 'intensity_range_days' && goal.intensity_min && goal.intensity_max && goal.intensity_target_days) {
+            intensityProgressMap[goal.id] = await calculateRangeDaysProgress(
+              user.id, startDate, endDate, goal.intensity_min, goal.intensity_max, goal.intensity_target_days
+            );
+          } else if (goal.goal_category === 'intensity_peak_control' && goal.intensity_min && goal.intensity_target_days) {
+            intensityProgressMap[goal.id] = await calculatePeakControlProgress(
+              user.id, startDate, endDate, goal.intensity_min, goal.intensity_target_days
+            );
+          }
+        }
       }
+      
       setGoalProgress(progressMap);
+      setIntensityProgress(intensityProgressMap);
     };
 
     if (goals.length > 0) {
@@ -462,6 +504,15 @@ const Goals = () => {
                 )}
                 <span className="hidden sm:inline">目标建议</span>
               </Button>
+              <Button 
+                size="sm"
+                variant="outline"
+                onClick={() => setIntensityDialogOpen(true)}
+                className="gap-1.5 md:gap-2 text-xs md:text-sm flex-shrink-0"
+              >
+                <Activity className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">强度目标</span>
+              </Button>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline" className="gap-1.5 md:gap-2 text-xs md:text-sm flex-shrink-0">
@@ -548,8 +599,8 @@ const Goals = () => {
           </div>
         )}
 
-        {/* Goals Section */}
-        {goals.length === 0 ? (
+        {/* Frequency Goals Section */}
+        {goals.filter(g => g.goal_category === 'frequency' || !g.goal_category).length === 0 && goals.filter(g => g.goal_category && g.goal_category !== 'frequency').length === 0 ? (
           <Card className="p-8 md:p-12 text-center space-y-3 md:space-y-4">
             <div className="flex justify-center">
               <Target className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground" />
@@ -566,72 +617,97 @@ const Goals = () => {
             </Button>
           </Card>
         ) : (
-          <div className="space-y-3 md:space-y-4">
-            {goals.map((goal) => {
-              const progress = goalProgress[goal.id] || { current: 0, percentage: 0 };
-              const isCompleted = progress.percentage >= 100;
+          <>
+            {/* Frequency Goals */}
+            {goals.filter(g => g.goal_category === 'frequency' || !g.goal_category).length > 0 && (
+              <div className="space-y-3 md:space-y-4">
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                  <h2 className="text-base md:text-lg font-semibold text-foreground">记录次数目标</h2>
+                </div>
+                {goals.filter(g => g.goal_category === 'frequency' || !g.goal_category).map((goal) => {
+                  const progress = goalProgress[goal.id] || { current: 0, percentage: 0 };
+                  const isCompleted = progress.percentage >= 100;
 
-              return (
-                <Card key={goal.id} className="p-4 md:p-6 space-y-3 md:space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                    <div className="space-y-2 flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
-                        <Badge variant={goal.goal_type === "weekly" ? "default" : "secondary"} className="text-xs">
-                          {goal.goal_type === "weekly" ? "每周目标" : "每月目标"}
-                        </Badge>
-                        {isCompleted && (
-                          <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
-                            已完成 ✓
-                          </Badge>
-                        )}
+                  return (
+                    <Card key={goal.id} className="p-4 md:p-6 space-y-3 md:space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div className="space-y-2 flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+                            <Badge variant={goal.goal_type === "weekly" ? "default" : "secondary"} className="text-xs">
+                              {goal.goal_type === "weekly" ? "每周目标" : "每月目标"}
+                            </Badge>
+                            {isCompleted && (
+                              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
+                                已完成 ✓
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-muted-foreground">
+                            <CalendarIcon className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
+                            <span className="truncate">
+                              {format(new Date(goal.start_date), "MM月dd日", { locale: zhCN })} - {format(new Date(goal.end_date), "MM月dd日", { locale: zhCN })}
+                            </span>
+                          </div>
+                          {goal.description && (
+                            <p className="text-xs md:text-sm text-foreground/80 line-clamp-2">{goal.description}</p>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCompleteGoal(goal, progress)}
+                          className="text-xs md:text-sm w-full sm:w-auto"
+                        >
+                          标记完成
+                        </Button>
                       </div>
-                      <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-muted-foreground">
-                        <CalendarIcon className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
-                        <span className="truncate">
-                          {format(new Date(goal.start_date), "MM月dd日", { locale: zhCN })} - {format(new Date(goal.end_date), "MM月dd日", { locale: zhCN })}
-                        </span>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-muted-foreground">进度</span>
+                          <span className="font-medium text-foreground">
+                            {progress.current} / {goal.target_count} 次
+                          </span>
+                        </div>
+                        <Progress value={progress.percentage} className="h-2 md:h-3" />
+                        <p className="text-[10px] md:text-xs text-muted-foreground text-right">
+                          {progress.percentage.toFixed(0)}% 完成
+                        </p>
                       </div>
-                      {goal.description && (
-                        <p className="text-xs md:text-sm text-foreground/80 line-clamp-2">{goal.description}</p>
+
+                      {!isCompleted && (
+                        <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                          <TrendingUp className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                          <p className="text-xs text-foreground/80">
+                            {progress.current === 0
+                              ? "开始你的第一次情绪梳理吧！"
+                              : `还需要完成 ${goal.target_count - progress.current} 次情绪梳理就能达成目标了`}
+                          </p>
+                        </div>
                       )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCompleteGoal(goal, progress)}
-                      className="text-xs md:text-sm w-full sm:w-auto"
-                    >
-                      标记完成
-                    </Button>
-                  </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs md:text-sm">
-                      <span className="text-muted-foreground">进度</span>
-                      <span className="font-medium text-foreground">
-                        {progress.current} / {goal.target_count} 次
-                      </span>
-                    </div>
-                    <Progress value={progress.percentage} className="h-2 md:h-3" />
-                    <p className="text-[10px] md:text-xs text-muted-foreground text-right">
-                      {progress.percentage.toFixed(0)}% 完成
-                    </p>
-                  </div>
+            {/* Intensity Goals */}
+            {goals.filter(g => g.goal_category && g.goal_category !== 'frequency').length > 0 && (
+              <div className="space-y-3 md:space-y-4">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                  <h2 className="text-base md:text-lg font-semibold text-foreground">情绪强度目标</h2>
+                </div>
+                {goals.filter(g => g.goal_category && g.goal_category !== 'frequency').map((goal) => {
+                  const progress = intensityProgress[goal.id];
+                  if (!progress) return null;
 
-                  {!isCompleted && (
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                      <TrendingUp className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-foreground/80">
-                        {progress.current === 0
-                          ? "开始你的第一次情绪梳理吧！"
-                          : `还需要完成 ${goal.target_count - progress.current} 次情绪梳理就能达成目标了`}
-                      </p>
-                    </div>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
+                  return <IntensityGoalCard key={goal.id} goal={goal} progress={progress} />;
+                })}
+              </div>
+            )}
+          </>
         )}
       </main>
 
@@ -692,6 +768,13 @@ const Goals = () => {
         open={feedbackOpen}
         onOpenChange={setFeedbackOpen}
         feedback={completionFeedback}
+      />
+
+      {/* Intensity Goal Dialog */}
+      <IntensityGoalDialog 
+        open={intensityDialogOpen}
+        onOpenChange={setIntensityDialogOpen}
+        onSuccess={loadGoals}
       />
 
       {/* Celebration Modal */}
