@@ -22,6 +22,7 @@ import StreakDisplay from "@/components/StreakDisplay";
 import { GoalCompletionFeedback } from "@/components/GoalCompletionFeedback";
 import SmartGoalRecommendations from "@/components/SmartGoalRecommendations";
 import TagReductionProgress from "@/components/TagReductionProgress";
+import TagAssociationAnalysis from "@/components/TagAssociationAnalysis";
 import {
   Dialog,
   DialogContent,
@@ -612,6 +613,9 @@ const Goals = () => {
         {/* Smart Goal Recommendations */}
         <SmartGoalRecommendations onRecommendationAccepted={loadGoals} />
 
+        {/* Tag Association Analysis */}
+        <TagAssociationAnalysis autoLoad={true} />
+
         {/* Achievements Section */}
         {achievements.length > 0 && (
           <div className="space-y-3 md:space-y-4">
@@ -734,6 +738,7 @@ const Goals = () => {
                   return (
                     <TagReductionProgress
                       key={goal.id}
+                      goalId={goal.id}
                       tagName={goal.description || '未命名标签'}
                       goalType={goal.goal_category as 'tag_reduction' | 'tag_increase'}
                       progress={progress}

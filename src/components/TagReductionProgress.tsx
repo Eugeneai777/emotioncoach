@@ -2,10 +2,13 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingDown, TrendingUp, Minus, Lightbulb } from "lucide-react";
+import { TrendingDown, TrendingUp, Minus, Lightbulb, Sparkles } from "lucide-react";
 import { TagGoalProgress } from "@/utils/tagGoalCalculator";
+import { toast } from "sonner";
+import TagGoalCoaching from "./TagGoalCoaching";
 
 interface TagReductionProgressProps {
+  goalId: string;
   tagName: string;
   goalType: 'tag_reduction' | 'tag_increase';
   progress: TagGoalProgress;
@@ -14,6 +17,7 @@ interface TagReductionProgressProps {
 }
 
 const TagReductionProgress = ({
+  goalId,
   tagName,
   goalType,
   progress,
@@ -29,6 +33,16 @@ const TagReductionProgress = ({
   };
 
   const status = statusConfig[progress.status];
+
+  // 成就通知
+  const showAchievementNotification = () => {
+    if (progress.status === 'success') {
+      toast.success('🎉 目标达成！', {
+        description: `你成功${isReduction ? '减少' : '增加'}了"${tagName}"标签的使用！`,
+        duration: 5000,
+      });
+    }
+  };
 
   return (
     <Card className="p-4 md:p-6">
@@ -146,6 +160,17 @@ const TagReductionProgress = ({
 
         {/* 操作按钮 */}
         <div className="flex gap-2 pt-2">
+          {progress.status === 'success' && (
+            <Button
+              size="sm"
+              onClick={showAchievementNotification}
+              className="flex-1 gap-2"
+              variant="default"
+            >
+              <Sparkles className="w-4 h-4" />
+              查看成就
+            </Button>
+          )}
           {onViewDetails && (
             <Button variant="outline" size="sm" onClick={onViewDetails} className="flex-1">
               查看详细记录
@@ -157,6 +182,11 @@ const TagReductionProgress = ({
             </Button>
           )}
         </div>
+      </div>
+
+      {/* AI教练指导 */}
+      <div className="mt-4">
+        <TagGoalCoaching goalId={goalId} tagName={tagName} progress={progress} />
       </div>
     </Card>
   );
