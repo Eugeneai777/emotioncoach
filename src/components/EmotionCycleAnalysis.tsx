@@ -21,8 +21,16 @@ interface Briefing {
   tags?: TagType[];
 }
 
+interface QuickLog {
+  id: string;
+  emotion_intensity: number;
+  created_at: string;
+  note: string | null;
+}
+
 interface EmotionCycleAnalysisProps {
   briefings: Briefing[];
+  quickLogs?: QuickLog[];
 }
 
 // 定义情绪类别
@@ -33,7 +41,7 @@ const EMOTION_CATEGORIES = {
   growth: ["我明白", "我想尝试", "我成长了", "其实", "原来", "我懂了", "我发现", "我变了", "我决定", "我相信", "我要改变"],
 };
 
-const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
+const EmotionCycleAnalysis = ({ briefings, quickLogs = [] }: EmotionCycleAnalysisProps) => {
   const weekdayData = useMemo(() => {
     const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
     const counts = Array(7).fill(0).map(() => ({ total: 0, negative: 0, positive: 0 }));
@@ -118,27 +126,45 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
     return "bg-red-500/10";
   };
 
-  // 情绪强度趋势分析
+  // 情绪强度趋势分析 - 合并 briefings 和 quickLogs
   const intensityTrendData = useMemo(() => {
-    const briefingsWithIntensity = briefings
-      .filter(b => b.emotion_intensity !== null && b.emotion_intensity !== undefined)
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    // 合并两种数据源
+    const allRecords = [
+      ...briefings
+        .filter(b => b.emotion_intensity !== null && b.emotion_intensity !== undefined)
+        .map(b => ({
+          date: new Date(b.created_at),
+          intensity: b.emotion_intensity!,
+          type: 'briefing' as const
+        })),
+      ...quickLogs.map(q => ({
+        date: new Date(q.created_at),
+        intensity: q.emotion_intensity,
+        type: 'quicklog' as const
+      }))
+    ]
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
       .slice(-14); // 最近14条记录
 
-    return briefingsWithIntensity.map((briefing, index) => ({
+    return allRecords.map((record, index) => ({
       index: index + 1,
-      date: format(new Date(briefing.created_at), "MM/dd", { locale: zhCN }),
-      intensity: briefing.emotion_intensity,
+      date: format(record.date, "MM/dd", { locale: zhCN }),
+      intensity: record.intensity,
+      type: record.type
     }));
-  }, [briefings]);
+  }, [briefings, quickLogs]);
 
   const intensityStats = useMemo(() => {
-    const intensities = briefings
-      .filter(b => b.emotion_intensity !== null && b.emotion_intensity !== undefined)
-      .map(b => b.emotion_intensity!);
+    // 合并 briefings 和 quickLogs 的强度数据
+    const intensities = [
+      ...briefings
+        .filter(b => b.emotion_intensity !== null && b.emotion_intensity !== undefined)
+        .map(b => b.emotion_intensity!),
+      ...quickLogs.map(q => q.emotion_intensity)
+    ];
 
     if (intensities.length === 0) {
-      return { avg: 0, max: 0, min: 0, trend: "stable" as const };
+      return { avg: 0, max: 0, min: 0, trend: "stable" as const, totalCount: 0 };
     }
 
     const avg = intensities.reduce((sum, val) => sum + val, 0) / intensities.length;
@@ -158,8 +184,8 @@ const EmotionCycleAnalysis = ({ briefings }: EmotionCycleAnalysisProps) => {
       else if (recentAvg < previousAvg - 0.5) trend = "down";
     }
 
-    return { avg, max, min, trend };
-  }, [briefings]);
+    return { avg, max, min, trend, totalCount: intensities.length };
+  }, [briefings, quickLogs]);
 
   const insights = useMemo(() => {
     const insights: { type: "peak" | "valley" | "pattern"; text: string }[] = [];
