@@ -152,6 +152,30 @@ const TagReductionGoalDialog = ({
             />
           </div>
 
+          {/* 打卡要求提示 */}
+          <div className="bg-amber-50 dark:bg-amber-950 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-4 space-y-2">
+            <div className="flex items-start gap-2">
+              <span className="text-lg">📅</span>
+              <div className="flex-1 space-y-1">
+                <p className="font-semibold text-amber-900 dark:text-amber-100 text-sm">
+                  目标评估要求
+                </p>
+                <p className="text-xs text-amber-800 dark:text-amber-200">
+                  为了准确评估目标完成情况，需要满足以下条件：
+                </p>
+                <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1 ml-4 list-disc">
+                  <li><strong>每周至少记录 3 天</strong>情绪日志</li>
+                  <li>记录需要<strong>均匀分布</strong>在整周内</li>
+                  <li>保持<strong>持续记录</strong>，避免中断</li>
+                </ul>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1">
+                  <span>💡</span>
+                  <span>数据不足时，目标进度将显示为"数据积累中"</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* AI建议 */}
           <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
             <p className="text-xs text-blue-900 dark:text-blue-100 flex items-start gap-2">
