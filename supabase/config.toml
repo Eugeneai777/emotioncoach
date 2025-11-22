@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.trigger-notifications]
 verify_jwt = false
+
+[functions.send-wecom-notification]
+verify_jwt = false

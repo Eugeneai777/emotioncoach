@@ -280,6 +280,9 @@ export type Database = {
           updated_at: string
           voice_gender: string | null
           voice_rate: number | null
+          wecom_enabled: boolean | null
+          wecom_mention_all: boolean | null
+          wecom_webhook_url: string | null
         }
         Insert: {
           companion_type?: string | null
@@ -300,6 +303,9 @@ export type Database = {
           updated_at?: string
           voice_gender?: string | null
           voice_rate?: number | null
+          wecom_enabled?: boolean | null
+          wecom_mention_all?: boolean | null
+          wecom_webhook_url?: string | null
         }
         Update: {
           companion_type?: string | null
@@ -320,6 +326,9 @@ export type Database = {
           updated_at?: string
           voice_gender?: string | null
           voice_rate?: number | null
+          wecom_enabled?: boolean | null
+          wecom_mention_all?: boolean | null
+          wecom_webhook_url?: string | null
         }
         Relationships: []
       }

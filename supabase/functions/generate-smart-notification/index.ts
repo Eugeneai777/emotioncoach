@@ -37,7 +37,7 @@ serve(async (req) => {
     // 获取用户偏好设置
     const { data: profile } = await supabase
       .from('profiles')
-      .select('preferred_encouragement_style, companion_type, display_name, notification_frequency, smart_notification_enabled')
+      .select('preferred_encouragement_style, companion_type, display_name, notification_frequency, smart_notification_enabled, wecom_enabled, wecom_webhook_url')
       .eq('id', user.id)
       .single();
 
@@ -264,6 +264,26 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
     if (insertError) {
       console.error("保存通知失败:", insertError);
       throw insertError;
+    }
+
+    // 如果用户启用了企业微信推送，同时发送到企业微信
+    if (profile?.wecom_enabled && profile?.wecom_webhook_url) {
+      try {
+        await supabase.functions.invoke('send-wecom-notification', {
+          body: {
+            webhookUrl: profile.wecom_webhook_url,
+            notification: {
+              title: notificationData.title,
+              message: notificationData.message,
+              icon: notificationData.icon,
+            },
+          },
+        });
+        console.log('通知已同步发送到企业微信');
+      } catch (wecomError) {
+        console.error('企业微信推送失败:', wecomError);
+        // 企业微信推送失败不影响主流程，仅记录日志
+      }
     }
 
     return new Response(JSON.stringify({ 

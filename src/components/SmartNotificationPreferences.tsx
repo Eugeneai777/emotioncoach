@@ -3,11 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Bell, Moon, Leaf, Sun, Sparkles, Heart, Zap, Info } from "lucide-react";
+import { Loader2, Bell, Moon, Leaf, Sun, Sparkles, Heart, Zap, Info, MessageSquare } from "lucide-react";
 
 export function SmartNotificationPreferences() {
   const { toast } = useToast();
@@ -17,6 +18,9 @@ export function SmartNotificationPreferences() {
   const [notificationEnabled, setNotificationEnabled] = useState(true);
   const [frequency, setFrequency] = useState<"minimal" | "balanced" | "frequent">("balanced");
   const [style, setStyle] = useState<"gentle" | "cheerful" | "motivational">("gentle");
+  const [wecomEnabled, setWecomEnabled] = useState(false);
+  const [wecomWebhookUrl, setWecomWebhookUrl] = useState("");
+  const [testingWecom, setTestingWecom] = useState(false);
   const [previewData, setPreviewData] = useState<{
     title: string;
     message: string;
@@ -34,7 +38,7 @@ export function SmartNotificationPreferences() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("smart_notification_enabled, notification_frequency, preferred_encouragement_style")
+        .select("smart_notification_enabled, notification_frequency, preferred_encouragement_style, wecom_enabled, wecom_webhook_url")
         .eq("id", user.id)
         .single();
 
@@ -44,6 +48,8 @@ export function SmartNotificationPreferences() {
         setNotificationEnabled(data.smart_notification_enabled ?? true);
         setFrequency((data.notification_frequency as "minimal" | "balanced" | "frequent") ?? "balanced");
         setStyle((data.preferred_encouragement_style as "gentle" | "cheerful" | "motivational") ?? "gentle");
+        setWecomEnabled(data.wecom_enabled ?? false);
+        setWecomWebhookUrl(data.wecom_webhook_url ?? "");
       }
     } catch (error) {
       console.error("Error loading preferences:", error);
@@ -69,6 +75,8 @@ export function SmartNotificationPreferences() {
           smart_notification_enabled: notificationEnabled,
           notification_frequency: frequency,
           preferred_encouragement_style: style,
+          wecom_enabled: wecomEnabled,
+          wecom_webhook_url: wecomWebhookUrl,
         })
         .eq("id", user.id);
 
@@ -123,6 +131,51 @@ export function SmartNotificationPreferences() {
       });
     } finally {
       setPreviewing(false);
+    }
+  };
+
+  const testWecomConnection = async () => {
+    if (!wecomWebhookUrl.trim()) {
+      toast({
+        title: "请输入Webhook URL",
+        description: "请先配置企业微信群机器人的Webhook地址",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTestingWecom(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-wecom-notification", {
+        body: {
+          webhookUrl: wecomWebhookUrl,
+          notification: {
+            title: "连接测试",
+            message: "恭喜！你的情绪日记助手已成功连接到企业微信 🎉\n\n从现在起，重要的情绪提醒和关怀将会推送到这个群聊中。",
+            icon: "✅",
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({
+          title: "连接成功",
+          description: "测试消息已发送到企业微信群，请查收 🎉",
+        });
+      } else {
+        throw new Error(data?.error || "发送失败");
+      }
+    } catch (error) {
+      console.error("Error testing WeChat Work connection:", error);
+      toast({
+        title: "连接失败",
+        description: "请检查Webhook URL是否正确",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingWecom(false);
     }
   };
 
@@ -304,6 +357,90 @@ export function SmartNotificationPreferences() {
                   })}
                 </div>
               </RadioGroup>
+            </CardContent>
+          </Card>
+
+          {/* 企业微信集成 */}
+          <Card className="border-border shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-lg md:text-xl text-foreground flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                企业微信推送
+              </CardTitle>
+              <CardDescription className="text-xs md:text-sm text-muted-foreground">
+                将重要通知实时推送到企业微信群聊 💬
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="wecom-enabled" className="text-sm md:text-base font-medium text-foreground">
+                    启用企业微信推送
+                  </Label>
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    开启后，通知将同步发送到企业微信群
+                  </p>
+                </div>
+                <Switch
+                  id="wecom-enabled"
+                  checked={wecomEnabled}
+                  onCheckedChange={setWecomEnabled}
+                />
+              </div>
+
+              {wecomEnabled && (
+                <div className="space-y-3 pt-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="webhook-url" className="text-sm font-medium text-foreground">
+                      群机器人 Webhook URL
+                    </Label>
+                    <Input
+                      id="webhook-url"
+                      type="url"
+                      placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..."
+                      value={wecomWebhookUrl}
+                      onChange={(e) => setWecomWebhookUrl(e.target.value)}
+                      className="text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      在企业微信群中添加机器人后获取 Webhook 地址
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={testWecomConnection}
+                    disabled={testingWecom || !wecomWebhookUrl.trim()}
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                  >
+                    {testingWecom ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        测试连接中...
+                      </>
+                    ) : (
+                      <>
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        测试连接
+                      </>
+                    )}
+                  </Button>
+
+                  <Alert className="bg-muted/50">
+                    <Info className="w-4 h-4" />
+                    <AlertDescription className="text-xs">
+                      <strong>如何获取 Webhook URL：</strong>
+                      <ol className="list-decimal list-inside mt-1 space-y-1">
+                        <li>打开企业微信群聊</li>
+                        <li>点击右上角 "···" → "群机器人"</li>
+                        <li>添加机器人并复制 Webhook 地址</li>
+                        <li>粘贴到上方输入框中</li>
+                      </ol>
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              )}
             </CardContent>
           </Card>
 
