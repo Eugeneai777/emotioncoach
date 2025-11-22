@@ -21,6 +21,9 @@ export function SmartNotificationPreferences() {
   const [wecomEnabled, setWecomEnabled] = useState(false);
   const [wecomWebhookUrl, setWecomWebhookUrl] = useState("");
   const [testingWecom, setTestingWecom] = useState(false);
+  const [wecomBotEnabled, setWecomBotEnabled] = useState(false);
+  const [wecomBotToken, setWecomBotToken] = useState("");
+  const [wecomBotEncodingAESKey, setWecomBotEncodingAESKey] = useState("");
   const [previewData, setPreviewData] = useState<{
     title: string;
     message: string;
@@ -38,7 +41,7 @@ export function SmartNotificationPreferences() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("smart_notification_enabled, notification_frequency, preferred_encouragement_style, wecom_enabled, wecom_webhook_url")
+        .select("smart_notification_enabled, notification_frequency, preferred_encouragement_style, wecom_enabled, wecom_webhook_url, wecom_bot_enabled, wecom_bot_token, wecom_bot_encoding_aes_key")
         .eq("id", user.id)
         .single();
 
@@ -50,6 +53,9 @@ export function SmartNotificationPreferences() {
         setStyle((data.preferred_encouragement_style as "gentle" | "cheerful" | "motivational") ?? "gentle");
         setWecomEnabled(data.wecom_enabled ?? false);
         setWecomWebhookUrl(data.wecom_webhook_url ?? "");
+        setWecomBotEnabled(data.wecom_bot_enabled ?? false);
+        setWecomBotToken(data.wecom_bot_token ?? "");
+        setWecomBotEncodingAESKey(data.wecom_bot_encoding_aes_key ?? "");
       }
     } catch (error) {
       console.error("Error loading preferences:", error);
@@ -76,7 +82,10 @@ export function SmartNotificationPreferences() {
           notification_frequency: frequency,
           preferred_encouragement_style: style,
           wecom_enabled: wecomEnabled,
-          wecom_webhook_url: wecomWebhookUrl,
+          wecom_webhook_url: wecomWebhookUrl.trim() || null,
+          wecom_bot_enabled: wecomBotEnabled,
+          wecom_bot_token: wecomBotToken.trim() || null,
+          wecom_bot_encoding_aes_key: wecomBotEncodingAESKey.trim() || null,
         })
         .eq("id", user.id);
 
@@ -439,6 +448,164 @@ export function SmartNotificationPreferences() {
                       </ol>
                     </AlertDescription>
                   </Alert>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 企业微信智能机器人配置 */}
+          <Card className="border-border shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-lg md:text-xl text-foreground flex items-center gap-2">
+                🤖 企业微信智能机器人
+              </CardTitle>
+              <CardDescription className="text-xs md:text-sm text-muted-foreground">
+                创建智能机器人应用，实现在企业微信中与AI助手对话
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-3 md:p-4 bg-muted/30 rounded-lg">
+                <div className="flex-1">
+                  <Label className="text-xs md:text-sm font-medium text-foreground">
+                    启用智能机器人
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    在企业微信中与情绪助手实时对话
+                  </p>
+                </div>
+                <Switch
+                  checked={wecomBotEnabled}
+                  onCheckedChange={setWecomBotEnabled}
+                />
+              </div>
+
+              {wecomBotEnabled && (
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="wecom-bot-token" className="text-xs md:text-sm text-foreground">
+                        Token
+                      </Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                          let token = '';
+                          for (let i = 0; i < 32; i++) {
+                            token += chars.charAt(Math.floor(Math.random() * chars.length));
+                          }
+                          setWecomBotToken(token);
+                          toast({
+                            title: "Token已生成",
+                            description: "请保存设置后复制配置到企业微信",
+                          });
+                        }}
+                        className="text-xs"
+                      >
+                        自动生成
+                      </Button>
+                    </div>
+                    <Input
+                      id="wecom-bot-token"
+                      value={wecomBotToken}
+                      onChange={(e) => setWecomBotToken(e.target.value)}
+                      placeholder="请输入或自动生成Token"
+                      className="font-mono text-xs"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      3-32位随机字符串，用于验证消息来源
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="wecom-bot-aes-key" className="text-xs md:text-sm text-foreground">
+                        EncodingAESKey
+                      </Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const array = new Uint8Array(32);
+                          crypto.getRandomValues(array);
+                          const key = btoa(String.fromCharCode(...array));
+                          setWecomBotEncodingAESKey(key);
+                          toast({
+                            title: "EncodingAESKey已生成",
+                            description: "请保存设置后复制配置到企业微信",
+                          });
+                        }}
+                        className="text-xs"
+                      >
+                        自动生成
+                      </Button>
+                    </div>
+                    <Input
+                      id="wecom-bot-aes-key"
+                      value={wecomBotEncodingAESKey}
+                      onChange={(e) => setWecomBotEncodingAESKey(e.target.value)}
+                      placeholder="请输入或自动生成EncodingAESKey"
+                      className="font-mono text-xs"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      43位Base64字符串，用于消息加密解密
+                    </p>
+                  </div>
+
+                  {wecomBotToken && wecomBotEncodingAESKey && (
+                    <div className="space-y-2">
+                      <Label className="text-xs md:text-sm text-foreground">
+                        回调URL（复制到企业微信后台）
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wecom-callback?user_id=${(() => {
+                            const getUserId = async () => {
+                              const { data: { user } } = await supabase.auth.getUser();
+                              return user?.id || '';
+                            };
+                            return 'loading...';
+                          })()}`}
+                          readOnly
+                          className="font-mono text-xs"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            const { data: { user } } = await supabase.auth.getUser();
+                            const callbackUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wecom-callback?user_id=${user?.id}`;
+                            await navigator.clipboard.writeText(callbackUrl);
+                            toast({
+                              title: "已复制",
+                              description: "回调URL已复制到剪贴板",
+                            });
+                          }}
+                          className="shrink-0"
+                        >
+                          复制
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="bg-blue-50 dark:bg-blue-950/30 p-3 md:p-4 rounded-lg space-y-2">
+                    <p className="text-xs font-medium text-blue-900 dark:text-blue-100">
+                      📋 配置步骤：
+                    </p>
+                    <ol className="text-xs text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
+                      <li>点击"自动生成"按钮生成Token和EncodingAESKey</li>
+                      <li>点击下方"保存所有设置"按钮保存配置</li>
+                      <li>在企业微信管理后台创建"智能机器人应用"</li>
+                      <li>复制并粘贴上述三项配置到企业微信后台</li>
+                      <li>企业微信会自动验证URL（约需10秒）</li>
+                      <li>验证成功后即可在企业微信中与机器人对话</li>
+                    </ol>
+                  </div>
                 </div>
               )}
             </CardContent>
