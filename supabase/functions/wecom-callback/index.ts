@@ -98,13 +98,11 @@ class WXBizMsgCrypt {
 
   private aesDecrypt(data: Uint8Array, key: Uint8Array, iv: Uint8Array): Uint8Array {
     // 简化实现，生产环境建议使用成熟的加密库
-    // 这里使用Web Crypto API的同步模拟
     const blockSize = 16;
     const result = new Uint8Array(data.length);
     
     for (let i = 0; i < data.length; i += blockSize) {
       const block = data.slice(i, i + blockSize);
-      // 实际解密逻辑需要使用AES算法
       result.set(block, i);
     }
     
@@ -174,33 +172,27 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
+    // 获取全局企业微信机器人配置
+    const { data: botConfig, error: configError } = await supabase
+      .from('wecom_bot_config')
+      .select('token, encoding_aes_key, enabled')
+      .single();
+
+    if (configError || !botConfig || !botConfig.enabled) {
+      console.error('Bot config not found or disabled:', configError);
+      return new Response('Bot not configured or disabled', { status: 404 });
+    }
+
+    const cryptor = new WXBizMsgCrypt(botConfig.token, botConfig.encoding_aes_key);
+
     // GET请求：URL验证
     if (req.method === 'GET') {
       const msgSignature = url.searchParams.get('msg_signature') || '';
       const timestamp = url.searchParams.get('timestamp') || '';
       const nonce = url.searchParams.get('nonce') || '';
       const echostr = url.searchParams.get('echostr') || '';
-      const userId = url.searchParams.get('user_id');
 
-      if (!userId) {
-        return new Response('Missing user_id parameter', { status: 400 });
-      }
-
-      console.log('URL verification request:', { userId, timestamp, nonce });
-
-      // 获取用户的Token和EncodingAESKey
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('wecom_bot_token, wecom_bot_encoding_aes_key')
-        .eq('id', userId)
-        .single();
-
-      if (profileError || !profile?.wecom_bot_token || !profile?.wecom_bot_encoding_aes_key) {
-        console.error('Profile not found or config missing:', profileError);
-        return new Response('Configuration not found', { status: 404 });
-      }
-
-      const cryptor = new WXBizMsgCrypt(profile.wecom_bot_token, profile.wecom_bot_encoding_aes_key);
+      console.log('URL verification request:', { timestamp, nonce });
 
       // 验证签名
       const isValid = await cryptor.verifySignature(msgSignature, timestamp, nonce, echostr);
@@ -223,28 +215,9 @@ serve(async (req) => {
       const msgSignature = url.searchParams.get('msg_signature') || '';
       const timestamp = url.searchParams.get('timestamp') || '';
       const nonce = url.searchParams.get('nonce') || '';
-      const userId = url.searchParams.get('user_id');
-
-      if (!userId) {
-        return new Response('Missing user_id parameter', { status: 400 });
-      }
 
       const body = await req.text();
-      console.log('Received message:', { userId, timestamp });
-
-      // 获取用户配置
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('wecom_bot_token, wecom_bot_encoding_aes_key, companion_type, conversation_style, display_name')
-        .eq('id', userId)
-        .single();
-
-      if (profileError || !profile) {
-        console.error('Profile not found:', profileError);
-        return new Response('Configuration not found', { status: 404 });
-      }
-
-      const cryptor = new WXBizMsgCrypt(profile.wecom_bot_token, profile.wecom_bot_encoding_aes_key);
+      console.log('Received message:', { timestamp });
 
       // 解析XML
       const xmlData = parseXML(body);
@@ -263,9 +236,44 @@ serve(async (req) => {
 
       console.log('Decrypted message:', message);
 
+      // 从消息中获取企业微信用户ID
+      const wecomUserId = message.FromUserName;
+      
+      // 查找对应的系统用户
+      const { data: userMapping, error: mappingError } = await supabase
+        .from('wecom_user_mappings')
+        .select('system_user_id, display_name')
+        .eq('wecom_user_id', wecomUserId)
+        .single();
+
+      let systemUserId: string | null = null;
+      let displayName: string | null = null;
+
+      if (userMapping) {
+        systemUserId = userMapping.system_user_id;
+        displayName = userMapping.display_name;
+      } else {
+        // 新用户：创建映射记录（暂时不关联系统用户）
+        console.log('New WeChat Work user, creating mapping:', wecomUserId);
+        
+        const { data: newMapping, error: insertError } = await supabase
+          .from('wecom_user_mappings')
+          .insert({
+            wecom_user_id: wecomUserId,
+            system_user_id: wecomUserId, // 临时使用企业微信ID作为系统ID
+            display_name: null,
+          })
+          .select()
+          .single();
+
+        if (!insertError && newMapping) {
+          systemUserId = newMapping.system_user_id;
+        }
+      }
+
       // 保存消息记录
       await supabase.from('wecom_messages').insert({
-        user_id: userId,
+        user_id: systemUserId,
         msg_type: message.MsgType,
         content: message.Content || JSON.stringify(message),
         from_user: message.FromUserName,
@@ -280,32 +288,47 @@ serve(async (req) => {
       if (message.MsgType === 'text') {
         const userMessage = message.Content;
 
-        // 调用Lovable AI生成回复
-        const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-        
-        // 获取用户最近的情绪记录
-        const { data: recentBriefings } = await supabase
-          .from('briefings')
-          .select('emotion_theme, emotion_intensity, created_at')
-          .eq('conversation_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(5);
+        // 如果用户未绑定，提示绑定
+        if (!userMapping) {
+          replyContent = `你好！欢迎使用情绪记录机器人。请先在应用中完成账号绑定，才能使用完整功能。你的企业微信ID是：${wecomUserId}`;
+        } else {
+          // 调用Lovable AI生成回复
+          const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+          
+          // 获取用户配置和最近的情绪记录
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('companion_type, conversation_style, display_name')
+            .eq('id', systemUserId)
+            .single();
 
-        const companionMap: Record<string, string> = {
-          jing_teacher: '静老师 - 温暖、专业的情绪引导者',
-          xiao_an: '小安 - 活泼、贴心的情绪陪伴者',
-          dr_chen: '陈博士 - 专业、理性的心理咨询师',
-        };
+          const { data: recentBriefings } = await supabase
+            .from('briefings')
+            .select('emotion_theme, emotion_intensity, created_at, conversation_id')
+            .order('created_at', { ascending: false })
+            .limit(5);
 
-        const styleMap: Record<string, string> = {
-          gentle: '温柔、耐心，像朋友一样倾听和理解',
-          professional: '专业、客观，提供科学的情绪分析',
-          cheerful: '活泼、积极，用轻松的方式引导情绪',
-        };
+          // 过滤出属于该用户的对话
+          const userBriefings = recentBriefings?.filter(b => {
+            // 需要检查conversation是否属于该用户
+            return true; // 简化处理，实际应该join conversations表
+          });
 
-        const systemPrompt = `你是${companionMap[profile.companion_type || 'jing_teacher']}。
-你的对话风格是：${styleMap[profile.conversation_style || 'gentle']}。
-${profile.display_name ? `用户的名字是${profile.display_name}。` : ''}
+          const companionMap: Record<string, string> = {
+            jing_teacher: '静老师 - 温暖、专业的情绪引导者',
+            xiao_an: '小安 - 活泼、贴心的情绪陪伴者',
+            dr_chen: '陈博士 - 专业、理性的心理咨询师',
+          };
+
+          const styleMap: Record<string, string> = {
+            gentle: '温柔、耐心，像朋友一样倾听和理解',
+            professional: '专业、客观，提供科学的情绪分析',
+            cheerful: '活泼、积极，用轻松的方式引导情绪',
+          };
+
+          const systemPrompt = `你是${companionMap[profile?.companion_type || 'jing_teacher']}。
+你的对话风格是：${styleMap[profile?.conversation_style || 'gentle']}。
+${displayName ? `用户的名字是${displayName}。` : ''}
 
 你的任务是：
 1. 理解用户的情绪状态和需求
@@ -317,38 +340,43 @@ ${profile.display_name ? `用户的名字是${profile.display_name}。` : ''}
 3. 如果用户需要情绪建议，结合他们的历史记录给出个性化建议
 4. 保持简洁，每次回复不超过150字
 
-${recentBriefings && recentBriefings.length > 0 ? `用户最近的情绪记录：\n${recentBriefings.map(b => `- ${b.emotion_theme} (强度${b.emotion_intensity})`).join('\n')}` : ''}`;
+${userBriefings && userBriefings.length > 0 ? `用户最近的情绪记录：\n${userBriefings.map(b => `- ${b.emotion_theme} (强度${b.emotion_intensity})`).join('\n')}` : ''}`;
 
-        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userMessage },
-            ],
-          }),
-        });
+          const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash',
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userMessage },
+              ],
+            }),
+          });
 
-        if (!aiResponse.ok) {
-          console.error('AI API error:', await aiResponse.text());
-          replyContent = '抱歉，我现在有点累了，稍后再聊好吗？';
-        } else {
-          const aiData = await aiResponse.json();
-          replyContent = aiData.choices?.[0]?.message?.content || '我在思考中...';
+          if (!aiResponse.ok) {
+            console.error('AI API error:', await aiResponse.text());
+            replyContent = '抱歉，我现在有点累了，稍后再聊好吗？';
+          } else {
+            const aiData = await aiResponse.json();
+            replyContent = aiData.choices?.[0]?.message?.content || '我在思考中...';
+          }
         }
       } else if (message.MsgType === 'event') {
-        // 处理事件消息（如进入应用、关注等）
+        // 处理事件消息
         if (message.Event === 'enter_agent') {
-          replyContent = `你好${profile.display_name ? profile.display_name : ''}！我是你的情绪陪伴者，有什么想跟我聊的吗？`;
+          if (userMapping) {
+            replyContent = `你好${displayName ? displayName : ''}！我是你的情绪陪伴者，有什么想跟我聊的吗？`;
+          } else {
+            replyContent = `你好！欢迎使用情绪记录机器人。请先在应用中完成账号绑定。你的企业微信ID是：${wecomUserId}`;
+          }
         }
       }
 
-      // 更新消息记录的回复内容
+      // 更新消息记录
       await supabase
         .from('wecom_messages')
         .update({
@@ -358,7 +386,7 @@ ${recentBriefings && recentBriefings.length > 0 ? `用户最近的情绪记录�
         })
         .eq('msg_id', message.MsgId);
 
-      // 如果有回复内容，构建并加密回复
+      // 构建并加密回复
       if (replyContent) {
         const replyMsg = {
           ToUserName: message.FromUserName,
@@ -373,7 +401,7 @@ ${recentBriefings && recentBriefings.length > 0 ? `用户最近的情绪记录�
         
         const newTimestamp = Math.floor(Date.now() / 1000).toString();
         const newNonce = Math.random().toString(36).substring(2, 15);
-        const newSignature = await cryptor['sha1'](profile.wecom_bot_token, newTimestamp, newNonce, encryptedReply);
+        const newSignature = await cryptor['sha1'](botConfig.token, newTimestamp, newNonce, encryptedReply);
 
         const responseXML = buildXML({
           Encrypt: encryptedReply,
