@@ -20,6 +20,9 @@ export function SmartNotificationPreferences() {
   const [style, setStyle] = useState<"gentle" | "cheerful" | "motivational">("gentle");
   const [wecomEnabled, setWecomEnabled] = useState(false);
   const [wecomWebhookUrl, setWecomWebhookUrl] = useState("");
+  const [wecomCorpId, setWecomCorpId] = useState("");
+  const [wecomCorpSecret, setWecomCorpSecret] = useState("");
+  const [wecomAgentId, setWecomAgentId] = useState("");
   const [testingWecom, setTestingWecom] = useState(false);
   const [wecomBotEnabled, setWecomBotEnabled] = useState(false);
   const [wecomBotToken, setWecomBotToken] = useState("");
@@ -54,7 +57,7 @@ export function SmartNotificationPreferences() {
       // 加载用户个人偏好
       const { data, error } = await supabase
         .from("profiles")
-        .select("smart_notification_enabled, notification_frequency, preferred_encouragement_style, wecom_enabled, wecom_webhook_url")
+        .select("smart_notification_enabled, notification_frequency, preferred_encouragement_style, wecom_enabled, wecom_webhook_url, wecom_corp_id, wecom_corp_secret, wecom_agent_id")
         .eq("id", user.id)
         .single();
 
@@ -66,6 +69,9 @@ export function SmartNotificationPreferences() {
         setStyle((data.preferred_encouragement_style as "gentle" | "cheerful" | "motivational") ?? "gentle");
         setWecomEnabled(data.wecom_enabled ?? false);
         setWecomWebhookUrl(data.wecom_webhook_url ?? "");
+        setWecomCorpId(data.wecom_corp_id ?? "");
+        setWecomCorpSecret(data.wecom_corp_secret ?? "");
+        setWecomAgentId(data.wecom_agent_id ?? "");
       }
 
       // 如果是管理员，加载全局机器人配置
@@ -118,6 +124,9 @@ export function SmartNotificationPreferences() {
           preferred_encouragement_style: style,
           wecom_enabled: wecomEnabled,
           wecom_webhook_url: wecomWebhookUrl.trim() || null,
+          wecom_corp_id: wecomCorpId.trim() || null,
+          wecom_corp_secret: wecomCorpSecret.trim() || null,
+          wecom_agent_id: wecomAgentId.trim() || null,
         })
         .eq("id", user.id);
 
@@ -215,10 +224,14 @@ export function SmartNotificationPreferences() {
   };
 
   const testWecomConnection = async () => {
-    if (!wecomWebhookUrl.trim()) {
+    // 检查是否配置了应用消息 API 或 Webhook
+    const hasAppConfig = wecomCorpId.trim() && wecomCorpSecret.trim() && wecomAgentId.trim();
+    const hasWebhook = wecomWebhookUrl.trim();
+
+    if (!hasAppConfig && !hasWebhook) {
       toast({
-        title: "请输入Webhook URL",
-        description: "请先配置企业微信群机器人的Webhook地址",
+        title: "请先配置企业微信",
+        description: "请配置应用消息API或群机器人Webhook",
         variant: "destructive",
       });
       return;
@@ -226,12 +239,17 @@ export function SmartNotificationPreferences() {
 
     setTestingWecom(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("用户未登录");
+
       const { data, error } = await supabase.functions.invoke("send-wecom-notification", {
         body: {
-          webhookUrl: wecomWebhookUrl,
+          userId: user.id,
+          useWebhook: hasWebhook && !hasAppConfig, // 优先使用应用消息API
+          webhookUrl: hasWebhook ? wecomWebhookUrl : undefined,
           notification: {
             title: "连接测试",
-            message: "恭喜！你的情绪日记助手已成功连接到企业微信 🎉\n\n从现在起，重要的情绪提醒和关怀将会推送到这个群聊中。",
+            message: "恭喜！你的情绪日记助手已成功连接到企业微信 🎉\n\n从现在起，重要的情绪提醒和关怀将会推送给你。",
             icon: "✅",
           },
         },
@@ -242,7 +260,7 @@ export function SmartNotificationPreferences() {
       if (data?.success) {
         toast({
           title: "连接成功",
-          description: "测试消息已发送到企业微信群，请查收 🎉",
+          description: `测试消息已通过${data.method === 'webhook' ? '群机器人' : '应用消息'}发送 🎉`,
         });
       } else {
         throw new Error(data?.error || "发送失败");
@@ -251,7 +269,7 @@ export function SmartNotificationPreferences() {
       console.error("Error testing WeChat Work connection:", error);
       toast({
         title: "连接失败",
-        description: "请检查Webhook URL是否正确",
+        description: error instanceof Error ? error.message : "请检查配置是否正确",
         variant: "destructive",
       });
     } finally {
@@ -470,26 +488,94 @@ export function SmartNotificationPreferences() {
 
               {wecomEnabled && (
                 <div className="space-y-3 pt-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="webhook-url" className="text-sm font-medium text-foreground">
-                      群机器人 Webhook URL
-                    </Label>
-                    <Input
-                      id="webhook-url"
-                      type="url"
-                      placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..."
-                      value={wecomWebhookUrl}
-                      onChange={(e) => setWecomWebhookUrl(e.target.value)}
-                      className="text-sm"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      在企业微信群中添加机器人后获取 Webhook 地址
-                    </p>
+                  <Alert className="bg-primary/5 border-primary/20">
+                    <Info className="w-4 h-4" />
+                    <AlertDescription className="text-xs">
+                      <strong>配置说明：</strong>
+                      <ul className="list-disc list-inside mt-1 space-y-1">
+                        <li><strong>应用消息API</strong>（推荐）：可向特定用户发送消息，需配置CorpID、CorpSecret和AgentID</li>
+                        <li><strong>群机器人Webhook</strong>：只能向群聊发送消息，配置更简单</li>
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="space-y-4 p-3 rounded-lg border border-border bg-muted/30">
+                    <h4 className="text-sm font-medium text-foreground">应用消息API配置（推荐）</h4>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="wecom-corp-id" className="text-sm font-medium text-foreground">
+                        企业ID（CorpID）
+                      </Label>
+                      <Input
+                        id="wecom-corp-id"
+                        value={wecomCorpId}
+                        onChange={(e) => setWecomCorpId(e.target.value)}
+                        placeholder="ww1234567890abcdef"
+                        className="text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        在"我的企业"→"企业信息"中查看
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="wecom-corp-secret" className="text-sm font-medium text-foreground">
+                        应用Secret（CorpSecret）
+                      </Label>
+                      <Input
+                        id="wecom-corp-secret"
+                        type="password"
+                        value={wecomCorpSecret}
+                        onChange={(e) => setWecomCorpSecret(e.target.value)}
+                        placeholder="输入应用的Secret"
+                        className="text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        在"应用管理"→选择应用→"查看Secret"
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="wecom-agent-id" className="text-sm font-medium text-foreground">
+                        应用AgentID
+                      </Label>
+                      <Input
+                        id="wecom-agent-id"
+                        value={wecomAgentId}
+                        onChange={(e) => setWecomAgentId(e.target.value)}
+                        placeholder="1000002"
+                        className="text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        在"应用管理"→选择应用中查看
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 p-3 rounded-lg border border-border bg-muted/30">
+                    <h4 className="text-sm font-medium text-foreground">群机器人Webhook（可选）</h4>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="webhook-url" className="text-sm font-medium text-foreground">
+                        Webhook URL
+                      </Label>
+                      <Input
+                        id="webhook-url"
+                        type="url"
+                        placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..."
+                        value={wecomWebhookUrl}
+                        onChange={(e) => setWecomWebhookUrl(e.target.value)}
+                        className="text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        在企业微信群中添加机器人后获取 Webhook 地址
+                      </p>
+                    </div>
                   </div>
 
                   <Button
                     onClick={testWecomConnection}
-                    disabled={testingWecom || !wecomWebhookUrl.trim()}
+                    disabled={testingWecom || (!wecomCorpId.trim() && !wecomWebhookUrl.trim())}
                     variant="outline"
                     size="sm"
                     className="w-full"
@@ -510,12 +596,10 @@ export function SmartNotificationPreferences() {
                   <Alert className="bg-muted/50">
                     <Info className="w-4 h-4" />
                     <AlertDescription className="text-xs">
-                      <strong>如何获取 Webhook URL：</strong>
+                      <strong>如何获取配置信息：</strong>
                       <ol className="list-decimal list-inside mt-1 space-y-1">
-                        <li>打开企业微信群聊</li>
-                        <li>点击右上角 "···" → "群机器人"</li>
-                        <li>添加机器人并复制 Webhook 地址</li>
-                        <li>粘贴到上方输入框中</li>
+                        <li><strong>应用消息API</strong>：登录企业微信管理后台 → 我的企业/应用管理</li>
+                        <li><strong>群机器人</strong>：打开群聊 → 右上角 "···" → "群机器人" → 添加并复制Webhook</li>
                       </ol>
                     </AlertDescription>
                   </Alert>
