@@ -179,8 +179,17 @@ serve(async (req) => {
       .single();
 
     if (configError || !botConfig || !botConfig.enabled) {
-      console.error('Bot config not found or disabled:', configError);
-      return new Response('Bot not configured or disabled', { status: 404 });
+      console.log('WeChat Work callback not configured - this is optional for passive message receiving');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'WeChat Work callback feature is not configured. This is optional and only needed for receiving messages from WeChat Work. For sending notifications, use the send-wecom-notification function instead.' 
+        }),
+        { 
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     const cryptor = new WXBizMsgCrypt(botConfig.token, botConfig.encoding_aes_key);
