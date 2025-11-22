@@ -280,6 +280,9 @@ export type Database = {
           updated_at: string
           voice_gender: string | null
           voice_rate: number | null
+          wecom_bot_enabled: boolean | null
+          wecom_bot_encoding_aes_key: string | null
+          wecom_bot_token: string | null
           wecom_enabled: boolean | null
           wecom_mention_all: boolean | null
           wecom_webhook_url: string | null
@@ -303,6 +306,9 @@ export type Database = {
           updated_at?: string
           voice_gender?: string | null
           voice_rate?: number | null
+          wecom_bot_enabled?: boolean | null
+          wecom_bot_encoding_aes_key?: string | null
+          wecom_bot_token?: string | null
           wecom_enabled?: boolean | null
           wecom_mention_all?: boolean | null
           wecom_webhook_url?: string | null
@@ -326,6 +332,9 @@ export type Database = {
           updated_at?: string
           voice_gender?: string | null
           voice_rate?: number | null
+          wecom_bot_enabled?: boolean | null
+          wecom_bot_encoding_aes_key?: string | null
+          wecom_bot_token?: string | null
           wecom_enabled?: boolean | null
           wecom_mention_all?: boolean | null
           wecom_webhook_url?: string | null
@@ -528,6 +537,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      wecom_messages: {
+        Row: {
+          content: string | null
+          create_time: number | null
+          created_at: string | null
+          from_user: string | null
+          id: string
+          msg_id: string | null
+          msg_type: string
+          processed: boolean | null
+          response_content: string | null
+          response_sent: boolean | null
+          to_user: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          create_time?: number | null
+          created_at?: string | null
+          from_user?: string | null
+          id?: string
+          msg_id?: string | null
+          msg_type: string
+          processed?: boolean | null
+          response_content?: string | null
+          response_sent?: boolean | null
+          to_user?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          create_time?: number | null
+          created_at?: string | null
+          from_user?: string | null
+          id?: string
+          msg_id?: string | null
+          msg_type?: string
+          processed?: boolean | null
+          response_content?: string | null
+          response_sent?: boolean | null
+          to_user?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wecom_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
