@@ -531,7 +531,21 @@ export function SmartNotificationPreferences() {
                         onClick={() => {
                           const array = new Uint8Array(32);
                           crypto.getRandomValues(array);
-                          const key = btoa(String.fromCharCode(...array));
+                          // 转换为Base64并处理为URL安全格式，去除padding
+                          let key = btoa(String.fromCharCode.apply(null, Array.from(array)))
+                            .replace(/\+/g, '-')
+                            .replace(/\//g, '_')
+                            .replace(/=+$/, '');
+                          
+                          // 确保长度正好是43位
+                          if (key.length < 43) {
+                            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+                            while (key.length < 43) {
+                              key += chars.charAt(Math.floor(Math.random() * chars.length));
+                            }
+                          } else if (key.length > 43) {
+                            key = key.substring(0, 43);
+                          }
                           setWecomBotEncodingAESKey(key);
                           toast({
                             title: "EncodingAESKey已生成",
