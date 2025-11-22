@@ -280,9 +280,12 @@ export type Database = {
           updated_at: string
           voice_gender: string | null
           voice_rate: number | null
+          wecom_agent_id: string | null
           wecom_bot_enabled: boolean | null
           wecom_bot_encoding_aes_key: string | null
           wecom_bot_token: string | null
+          wecom_corp_id: string | null
+          wecom_corp_secret: string | null
           wecom_enabled: boolean | null
           wecom_mention_all: boolean | null
           wecom_webhook_url: string | null
@@ -306,9 +309,12 @@ export type Database = {
           updated_at?: string
           voice_gender?: string | null
           voice_rate?: number | null
+          wecom_agent_id?: string | null
           wecom_bot_enabled?: boolean | null
           wecom_bot_encoding_aes_key?: string | null
           wecom_bot_token?: string | null
+          wecom_corp_id?: string | null
+          wecom_corp_secret?: string | null
           wecom_enabled?: boolean | null
           wecom_mention_all?: boolean | null
           wecom_webhook_url?: string | null
@@ -332,9 +338,12 @@ export type Database = {
           updated_at?: string
           voice_gender?: string | null
           voice_rate?: number | null
+          wecom_agent_id?: string | null
           wecom_bot_enabled?: boolean | null
           wecom_bot_encoding_aes_key?: string | null
           wecom_bot_token?: string | null
+          wecom_corp_id?: string | null
+          wecom_corp_secret?: string | null
           wecom_enabled?: boolean | null
           wecom_mention_all?: boolean | null
           wecom_webhook_url?: string | null
