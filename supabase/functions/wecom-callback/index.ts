@@ -253,22 +253,51 @@ serve(async (req) => {
         systemUserId = userMapping.system_user_id;
         displayName = userMapping.display_name;
       } else {
-        // 新用户：创建映射记录（暂时不关联系统用户）
-        console.log('New WeChat Work user, creating mapping:', wecomUserId);
+        // 新用户：自动创建系统账号
+        console.log('New WeChat Work user, creating system account automatically:', wecomUserId);
         
+        // 生成临时凭证
+        const tempEmail = `wecom_${wecomUserId}@temp.internal`;
+        const tempPassword = crypto.randomUUID();
+        
+        // 使用 admin client 创建新用户
+        const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
+          email: tempEmail,
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: {
+            display_name: wecomUserId,
+            source: 'wecom_auto',
+            wecom_user_id: wecomUserId,
+          }
+        });
+
+        if (createUserError || !newUser.user) {
+          console.error('Error creating user:', createUserError);
+          throw createUserError;
+        }
+
+        console.log('Created new system account:', newUser.user.id);
+        systemUserId = newUser.user.id;
+
+        // 创建用户映射
         const { data: newMapping, error: insertError } = await supabase
           .from('wecom_user_mappings')
           .insert({
             wecom_user_id: wecomUserId,
-            system_user_id: wecomUserId, // 临时使用企业微信ID作为系统ID
-            display_name: null,
+            system_user_id: systemUserId,
+            display_name: wecomUserId,
           })
           .select()
           .single();
 
-        if (!insertError && newMapping) {
-          systemUserId = newMapping.system_user_id;
+        if (insertError) {
+          console.error('Error creating mapping:', insertError);
+          throw insertError;
         }
+
+        console.log('Created user mapping:', newMapping.id);
+        displayName = newMapping.display_name;
       }
 
       // 保存消息记录
@@ -288,10 +317,8 @@ serve(async (req) => {
       if (message.MsgType === 'text') {
         const userMessage = message.Content;
 
-        // 如果用户未绑定，提示绑定
-        if (!userMapping) {
-          replyContent = `你好！欢迎使用情绪记录机器人。请先在应用中完成账号绑定，才能使用完整功能。你的企业微信ID是：${wecomUserId}`;
-        } else {
+        // 已自动创建账号，可以直接使用
+        {
           // 调用Lovable AI生成回复
           const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
           
@@ -368,11 +395,7 @@ ${userBriefings && userBriefings.length > 0 ? `用户最近的情绪记录：\n$
       } else if (message.MsgType === 'event') {
         // 处理事件消息
         if (message.Event === 'enter_agent') {
-          if (userMapping) {
-            replyContent = `你好${displayName ? displayName : ''}！我是你的情绪陪伴者，有什么想跟我聊的吗？`;
-          } else {
-            replyContent = `你好！欢迎使用情绪记录机器人。请先在应用中完成账号绑定。你的企业微信ID是：${wecomUserId}`;
-          }
+          replyContent = `你好${displayName ? displayName : ''}！我是你的情绪陪伴者，有什么想跟我聊的吗？`;
         }
       }
 
