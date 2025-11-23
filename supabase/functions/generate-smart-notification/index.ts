@@ -286,6 +286,34 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       }
     }
 
+    // 如果用户启用了微信公众号推送，同时发送模板消息
+    const { data: wechatProfile } = await supabase
+      .from('profiles')
+      .select('wechat_enabled')
+      .eq('id', user.id)
+      .single();
+
+    if (wechatProfile?.wechat_enabled) {
+      try {
+        await supabase.functions.invoke('send-wechat-template-message', {
+          body: {
+            userId: user.id,
+            scenario: scenario,
+            notification: {
+              id: notification.id,
+              title: notificationData.title,
+              message: notificationData.message,
+              scenario: scenario,
+            },
+          },
+        });
+        console.log('通知已同步发送到微信公众号');
+      } catch (wechatError) {
+        console.error('微信公众号推送失败:', wechatError);
+        // 微信公众号推送失败不影响主流程，仅记录日志
+      }
+    }
+
     return new Response(JSON.stringify({ 
       success: true,
       notification

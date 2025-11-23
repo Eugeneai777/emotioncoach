@@ -53,3 +53,12 @@ verify_jwt = false
 
 [functions.wecom-callback]
 verify_jwt = false
+
+[functions.get-wechat-access-token]
+verify_jwt = false
+
+[functions.send-wechat-template-message]
+verify_jwt = false
+
+[functions.wechat-oauth-callback]
+verify_jwt = false
