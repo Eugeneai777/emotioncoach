@@ -280,6 +280,10 @@ export type Database = {
           updated_at: string
           voice_gender: string | null
           voice_rate: number | null
+          wechat_appid: string | null
+          wechat_appsecret: string | null
+          wechat_enabled: boolean | null
+          wechat_template_ids: Json | null
           wecom_agent_id: string | null
           wecom_bot_enabled: boolean | null
           wecom_bot_encoding_aes_key: string | null
@@ -309,6 +313,10 @@ export type Database = {
           updated_at?: string
           voice_gender?: string | null
           voice_rate?: number | null
+          wechat_appid?: string | null
+          wechat_appsecret?: string | null
+          wechat_enabled?: boolean | null
+          wechat_template_ids?: Json | null
           wecom_agent_id?: string | null
           wecom_bot_enabled?: boolean | null
           wecom_bot_encoding_aes_key?: string | null
@@ -338,6 +346,10 @@ export type Database = {
           updated_at?: string
           voice_gender?: string | null
           voice_rate?: number | null
+          wechat_appid?: string | null
+          wechat_appsecret?: string | null
+          wechat_enabled?: boolean | null
+          wechat_template_ids?: Json | null
           wecom_agent_id?: string | null
           wecom_bot_enabled?: boolean | null
           wecom_bot_encoding_aes_key?: string | null
@@ -565,6 +577,87 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      wechat_template_messages: {
+        Row: {
+          data: Json
+          error_message: string | null
+          id: string
+          msgid: string | null
+          openid: string
+          scenario: string
+          sent_at: string | null
+          status: string | null
+          template_id: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          data: Json
+          error_message?: string | null
+          id?: string
+          msgid?: string | null
+          openid: string
+          scenario: string
+          sent_at?: string | null
+          status?: string | null
+          template_id: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          data?: Json
+          error_message?: string | null
+          id?: string
+          msgid?: string | null
+          openid?: string
+          scenario?: string
+          sent_at?: string | null
+          status?: string | null
+          template_id?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wechat_user_mappings: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string
+          nickname: string | null
+          openid: string
+          subscribe_status: boolean | null
+          subscribe_time: string | null
+          system_user_id: string
+          unionid: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          nickname?: string | null
+          openid: string
+          subscribe_status?: boolean | null
+          subscribe_time?: string | null
+          system_user_id: string
+          unionid?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          nickname?: string | null
+          openid?: string
+          subscribe_status?: boolean | null
+          subscribe_time?: string | null
+          system_user_id?: string
+          unionid?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
