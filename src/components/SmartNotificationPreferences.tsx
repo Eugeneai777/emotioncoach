@@ -936,70 +936,34 @@ export function SmartNotificationPreferences() {
                     <Alert>
                       <Info className="h-4 w-4" />
                       <AlertDescription className="text-xs">
-                        每个场景对应一个模板ID。如果某个场景未配置，将使用默认模板。
+                        填写您在微信公众平台获取的模板ID。
+                        <br />
+                        您当前使用的模板："客户跟进提醒"
+                        <br />
+                        <span className="text-muted-foreground">模板字段：客户姓名、任务名称、当前状态、当前进度</span>
                       </AlertDescription>
                     </Alert>
                     
-                    <div className="space-y-2">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">默认模板</Label>
-                        <Input
-                          placeholder="默认模板ID"
-                          value={wechatTemplateIds.default || ""}
-                          onChange={(e) => setWechatTemplateIds({
-                            ...wechatTemplateIds,
-                            default: e.target.value
-                          })}
-                        />
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">每日提醒</Label>
-                        <Input
-                          placeholder="每日提醒模板ID"
-                          value={wechatTemplateIds.daily_reminder || ""}
-                          onChange={(e) => setWechatTemplateIds({
-                            ...wechatTemplateIds,
-                            daily_reminder: e.target.value
-                          })}
-                        />
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">目标达成</Label>
-                        <Input
-                          placeholder="目标达成模板ID"
-                          value={wechatTemplateIds.goal_milestone || ""}
-                          onChange={(e) => setWechatTemplateIds({
-                            ...wechatTemplateIds,
-                            goal_milestone: e.target.value
-                          })}
-                        />
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">情绪关怀</Label>
-                        <Input
-                          placeholder="情绪关怀模板ID"
-                          value={wechatTemplateIds.sustained_low_mood || ""}
-                          onChange={(e) => setWechatTemplateIds({
-                            ...wechatTemplateIds,
-                            sustained_low_mood: e.target.value
-                          })}
-                        />
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">活跃度提醒</Label>
-                        <Input
-                          placeholder="活跃度提醒模板ID"
-                          value={wechatTemplateIds.inactivity || ""}
-                          onChange={(e) => setWechatTemplateIds({
-                            ...wechatTemplateIds,
-                            inactivity: e.target.value
-                          })}
-                        />
-                      </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">模板ID</Label>
+                      <Input
+                        placeholder="T4Q0BLLjd9dvjfTSUny3DUYSNa5_uUgqorYl-lo_A4Q"
+                        value={wechatTemplateIds?.default || ""}
+                        onChange={(e) => {
+                          const templateId = e.target.value;
+                          setWechatTemplateIds({
+                            default: templateId,
+                            // 所有场景都使用同一个模板
+                            daily_reminder: templateId,
+                            goal_milestone: templateId,
+                            sustained_low_mood: templateId,
+                            inactivity: templateId,
+                          });
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        此模板将用于所有通知场景
+                      </p>
                     </div>
                   </div>
 

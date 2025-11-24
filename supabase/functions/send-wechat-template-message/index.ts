@@ -83,12 +83,45 @@ serve(async (req) => {
 
     const accessToken = tokenResponse.data.access_token;
 
-    // 构建模板消息数据
+    // 获取用户显示名称
+    const { data: userProfile } = await supabaseClient
+      .from('profiles')
+      .select('display_name')
+      .eq('id', userId)
+      .single();
+
+    const displayName = userProfile?.display_name || '用户';
+
+    // 场景中文映射
+    const scenarioNames: Record<string, string> = {
+      'daily_reminder': '每日情绪记录',
+      'goal_milestone': '目标达成',
+      'sustained_low_mood': '情绪关怀',
+      'inactivity': '活跃度提醒',
+      'weekly_report': '周报生成',
+      'goal_at_risk': '目标提醒',
+    };
+
+    const scenarioName = scenarioNames[scenario] || '系统通知';
+
+    // 构建适配"客户跟进提醒"模板的数据结构
     const messageData = {
-      first: { value: notification.title, color: "#173177" },
-      keyword1: { value: scenario, color: "#173177" },
-      keyword2: { value: new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" }), color: "#173177" },
-      remark: { value: notification.message, color: "#00C853" },
+      thing1: { 
+        value: displayName.slice(0, 20), // thing类型限制20字
+        color: "#173177" 
+      },
+      const12: { 
+        value: notification.title.slice(0, 20), // 限制长度
+        color: "#173177" 
+      },
+      const9: { 
+        value: scenarioName,
+        color: "#173177" 
+      },
+      const14: { 
+        value: notification.message.slice(0, 20), // 限制长度
+        color: "#00C853" 
+      },
     };
 
     // 发送模板消息
