@@ -26,7 +26,7 @@ serve(async (req) => {
 
     const { data: profile, error } = await supabaseClient
       .from('profiles')
-      .select('wechat_appid, wechat_appsecret')
+      .select('wechat_appid, wechat_appsecret, wechat_proxy_enabled, wechat_proxy_url, wechat_proxy_auth_token')
       .eq('id', userId)
       .single();
 
@@ -36,8 +36,39 @@ serve(async (req) => {
 
     const tokenUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${profile.wechat_appid}&secret=${profile.wechat_appsecret}`;
     
-    const response = await fetch(tokenUrl);
-    const data = await response.json();
+    let response;
+    let data;
+
+    // Check if proxy is enabled
+    if (profile.wechat_proxy_enabled && profile.wechat_proxy_url) {
+      console.log('Using proxy server for WeChat API call');
+      
+      // Call through proxy
+      const proxyUrl = `${profile.wechat_proxy_url}/wechat-proxy`;
+      const proxyHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (profile.wechat_proxy_auth_token) {
+        proxyHeaders['Authorization'] = `Bearer ${profile.wechat_proxy_auth_token}`;
+      }
+      
+      response = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: proxyHeaders,
+        body: JSON.stringify({
+          target_url: tokenUrl,
+          method: 'GET',
+        }),
+      });
+      
+      data = await response.json();
+    } else {
+      // Direct call to WeChat API
+      console.log('Direct call to WeChat API');
+      response = await fetch(tokenUrl);
+      data = await response.json();
+    }
 
     if (data.errcode) {
       throw new Error(`WeChat API error: ${data.errmsg || 'Unknown error'}`);

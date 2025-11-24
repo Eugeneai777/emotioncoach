@@ -284,6 +284,9 @@ export type Database = {
           wechat_appsecret: string | null
           wechat_enabled: boolean | null
           wechat_encoding_aes_key: string | null
+          wechat_proxy_auth_token: string | null
+          wechat_proxy_enabled: boolean | null
+          wechat_proxy_url: string | null
           wechat_template_ids: Json | null
           wechat_token: string | null
           wecom_agent_id: string | null
@@ -319,6 +322,9 @@ export type Database = {
           wechat_appsecret?: string | null
           wechat_enabled?: boolean | null
           wechat_encoding_aes_key?: string | null
+          wechat_proxy_auth_token?: string | null
+          wechat_proxy_enabled?: boolean | null
+          wechat_proxy_url?: string | null
           wechat_template_ids?: Json | null
           wechat_token?: string | null
           wecom_agent_id?: string | null
@@ -354,6 +360,9 @@ export type Database = {
           wechat_appsecret?: string | null
           wechat_enabled?: boolean | null
           wechat_encoding_aes_key?: string | null
+          wechat_proxy_auth_token?: string | null
+          wechat_proxy_enabled?: boolean | null
+          wechat_proxy_url?: string | null
           wechat_template_ids?: Json | null
           wechat_token?: string | null
           wecom_agent_id?: string | null

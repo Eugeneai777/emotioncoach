@@ -50,6 +50,11 @@ export function SmartNotificationPreferences() {
   });
   const [wechatBound, setWechatBound] = useState(false);
   const [testingWechat, setTestingWechat] = useState(false);
+  
+  // 微信代理配置
+  const [wechatProxyEnabled, setWechatProxyEnabled] = useState(false);
+  const [wechatProxyUrl, setWechatProxyUrl] = useState("");
+  const [wechatProxyAuthToken, setWechatProxyAuthToken] = useState("");
 
   useEffect(() => {
     loadPreferences();
@@ -73,7 +78,7 @@ export function SmartNotificationPreferences() {
       // 加载用户个人偏好
       const { data, error } = await supabase
         .from("profiles")
-        .select("smart_notification_enabled, notification_frequency, preferred_encouragement_style, wecom_enabled, wecom_webhook_url, wecom_corp_id, wecom_corp_secret, wecom_agent_id, wechat_enabled, wechat_appid, wechat_appsecret, wechat_token, wechat_encoding_aes_key, wechat_template_ids")
+        .select("smart_notification_enabled, notification_frequency, preferred_encouragement_style, wecom_enabled, wecom_webhook_url, wecom_corp_id, wecom_corp_secret, wecom_agent_id, wechat_enabled, wechat_appid, wechat_appsecret, wechat_token, wechat_encoding_aes_key, wechat_template_ids, wechat_proxy_enabled, wechat_proxy_url, wechat_proxy_auth_token")
         .eq("id", user.id)
         .single();
 
@@ -101,6 +106,9 @@ export function SmartNotificationPreferences() {
           sustained_low_mood: "",
           inactivity: "",
         });
+        setWechatProxyEnabled(data.wechat_proxy_enabled ?? false);
+        setWechatProxyUrl(data.wechat_proxy_url ?? "");
+        setWechatProxyAuthToken(data.wechat_proxy_auth_token ?? "");
       }
 
       // 检查是否已绑定微信
@@ -171,6 +179,9 @@ export function SmartNotificationPreferences() {
           wechat_token: wechatToken.trim() || null,
           wechat_encoding_aes_key: wechatEncodingAESKey.trim() || null,
           wechat_template_ids: wechatTemplateIds,
+          wechat_proxy_enabled: wechatProxyEnabled,
+          wechat_proxy_url: wechatProxyUrl.trim() || null,
+          wechat_proxy_auth_token: wechatProxyAuthToken.trim() || null,
         })
         .eq("id", user.id);
 
@@ -1073,6 +1084,76 @@ export function SmartNotificationPreferences() {
                         此模板将用于所有通知场景
                       </p>
                     </div>
+                  </div>
+
+                  {/* 代理服务器配置 */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <Label htmlFor="wechat-proxy-enabled" className="text-sm font-medium">启用代理服务器</Label>
+                        <p className="text-xs text-muted-foreground">
+                          解决IP白名单限制问题（适用于生产环境）
+                        </p>
+                      </div>
+                      <Switch
+                        id="wechat-proxy-enabled"
+                        checked={wechatProxyEnabled}
+                        onCheckedChange={setWechatProxyEnabled}
+                      />
+                    </div>
+
+                    {wechatProxyEnabled && (
+                      <>
+                        <Alert>
+                          <Info className="h-4 w-4" />
+                          <AlertDescription className="text-xs">
+                            <strong>代理服务器说明：</strong>
+                            <ul className="list-disc list-inside mt-2 space-y-1">
+                              <li>代理服务器需要有固定的公网IP地址</li>
+                              <li>在微信公众平台的IP白名单中添加代理服务器的IP</li>
+                              <li>代理服务器将转发所有对微信API的请求</li>
+                              <li>需要部署专门的代理服务（参考文档）</li>
+                            </ul>
+                          </AlertDescription>
+                        </Alert>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="wechat-proxy-url">代理服务器地址</Label>
+                          <Input
+                            id="wechat-proxy-url"
+                            type="url"
+                            placeholder="https://your-proxy-server.com"
+                            value={wechatProxyUrl}
+                            onChange={(e) => setWechatProxyUrl(e.target.value)}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            代理服务器的完整URL（不含路径）
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="wechat-proxy-auth-token">代理认证令牌（可选）</Label>
+                          <Input
+                            id="wechat-proxy-auth-token"
+                            type="password"
+                            placeholder="如果代理需要认证，请输入令牌"
+                            value={wechatProxyAuthToken}
+                            onChange={(e) => setWechatProxyAuthToken(e.target.value)}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            用于验证对代理服务器的请求（如果代理配置了认证）
+                          </p>
+                        </div>
+
+                        <Alert className="bg-amber-50 border-amber-200">
+                          <Info className="h-4 w-4 text-amber-600" />
+                          <AlertDescription className="text-amber-800 text-xs">
+                            <strong>注意：</strong>代理服务器配置仅影响微信API调用（获取access_token和发送模板消息）。
+                            回调URL（接收微信消息）不受影响，无需代理。
+                          </AlertDescription>
+                        </Alert>
+                      </>
+                    )}
                   </div>
 
                   {wechatBound ? (
