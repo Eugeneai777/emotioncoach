@@ -39,6 +39,8 @@ export function SmartNotificationPreferences() {
   const [wechatEnabled, setWechatEnabled] = useState(false);
   const [wechatAppId, setWechatAppId] = useState("");
   const [wechatAppSecret, setWechatAppSecret] = useState("");
+  const [wechatToken, setWechatToken] = useState("");
+  const [wechatEncodingAESKey, setWechatEncodingAESKey] = useState("");
   const [wechatTemplateIds, setWechatTemplateIds] = useState<Record<string, string>>({
     default: "",
     daily_reminder: "",
@@ -71,7 +73,7 @@ export function SmartNotificationPreferences() {
       // 加载用户个人偏好
       const { data, error } = await supabase
         .from("profiles")
-        .select("smart_notification_enabled, notification_frequency, preferred_encouragement_style, wecom_enabled, wecom_webhook_url, wecom_corp_id, wecom_corp_secret, wecom_agent_id, wechat_enabled, wechat_appid, wechat_appsecret, wechat_template_ids")
+        .select("smart_notification_enabled, notification_frequency, preferred_encouragement_style, wecom_enabled, wecom_webhook_url, wecom_corp_id, wecom_corp_secret, wecom_agent_id, wechat_enabled, wechat_appid, wechat_appsecret, wechat_token, wechat_encoding_aes_key, wechat_template_ids")
         .eq("id", user.id)
         .single();
 
@@ -89,6 +91,8 @@ export function SmartNotificationPreferences() {
         setWechatEnabled(data.wechat_enabled ?? false);
         setWechatAppId(data.wechat_appid ?? "");
         setWechatAppSecret(data.wechat_appsecret ?? "");
+        setWechatToken(data.wechat_token ?? "");
+        setWechatEncodingAESKey(data.wechat_encoding_aes_key ?? "");
         const templateIds = data.wechat_template_ids as Record<string, string> | null;
         setWechatTemplateIds(templateIds || {
           default: "",
@@ -164,6 +168,8 @@ export function SmartNotificationPreferences() {
           wechat_enabled: wechatEnabled,
           wechat_appid: wechatAppId.trim() || null,
           wechat_appsecret: wechatAppSecret.trim() || null,
+          wechat_token: wechatToken.trim() || null,
+          wechat_encoding_aes_key: wechatEncodingAESKey.trim() || null,
           wechat_template_ids: wechatTemplateIds,
         })
         .eq("id", user.id);
@@ -903,6 +909,7 @@ export function SmartNotificationPreferences() {
                       <ol className="list-decimal list-inside mt-2 space-y-1">
                         <li>登录微信公众平台（mp.weixin.qq.com）</li>
                         <li>在"设置与开发 → 基本配置"中获取 AppID 和 AppSecret</li>
+                        <li>配置服务器地址、Token和消息加密密钥</li>
                         <li>在"功能 → 模板消息"中申请并获取模板ID</li>
                         <li>保存配置后，点击"绑定微信账号"进行授权</li>
                       </ol>
@@ -929,6 +936,107 @@ export function SmartNotificationPreferences() {
                       value={wechatAppSecret}
                       onChange={(e) => setWechatAppSecret(e.target.value)}
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>服务器配置</Label>
+                    <div className="p-4 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">服务器地址(URL)</Label>
+                        <code className="block p-2 rounded bg-background/80 text-xs break-all font-mono border border-border">
+                          https://vlsuzskvykddwrxbmcbu.supabase.co/functions/v1/wechat-callback
+                        </code>
+                        <p className="text-xs text-muted-foreground">
+                          请在微信公众平台"设置与开发 → 基本配置"中填入此URL
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="wechat-token" className="text-xs text-muted-foreground">Token（令牌）</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="wechat-token"
+                            value={wechatToken}
+                            onChange={(e) => setWechatToken(e.target.value)}
+                            placeholder="3-32位英文或数字"
+                            maxLength={32}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const token = Math.random().toString(36).substring(2, 15) + 
+                                           Math.random().toString(36).substring(2, 15);
+                              setWechatToken(token.substring(0, 32));
+                              toast({
+                                title: "Token已生成",
+                                description: "随机生成的令牌",
+                              });
+                            }}
+                          >
+                            生成
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          用于验证请求来源
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="wechat-encoding-aes-key" className="text-xs text-muted-foreground">EncodingAESKey（消息加密密钥）</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="wechat-encoding-aes-key"
+                            value={wechatEncodingAESKey}
+                            onChange={(e) => setWechatEncodingAESKey(e.target.value)}
+                            placeholder="43位Base64字符"
+                            maxLength={43}
+                            className="flex-1 font-mono text-xs"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const array = new Uint8Array(32);
+                              crypto.getRandomValues(array);
+                              let key = btoa(String.fromCharCode.apply(null, Array.from(array)))
+                                .replace(/\+/g, '-')
+                                .replace(/\//g, '_')
+                                .replace(/=+$/, '');
+                              
+                              if (key.length < 43) {
+                                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+                                while (key.length < 43) {
+                                  key += chars.charAt(Math.floor(Math.random() * chars.length));
+                                }
+                              } else if (key.length > 43) {
+                                key = key.substring(0, 43);
+                              }
+                              setWechatEncodingAESKey(key);
+                              toast({
+                                title: "EncodingAESKey已生成",
+                                description: "43位加密密钥",
+                              });
+                            }}
+                          >
+                            生成
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          消息加密密钥，必须43位
+                        </p>
+                      </div>
+
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription className="text-xs">
+                          ⚠️ 在微信公众平台配置时，请选择"安全模式"（加密）
+                        </AlertDescription>
+                      </Alert>
+                    </div>
                   </div>
 
                   <div className="space-y-3">
