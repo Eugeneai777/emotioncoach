@@ -422,6 +422,54 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          combo_amount: number | null
+          combo_name: string | null
+          created_at: string
+          end_date: string | null
+          id: string
+          mysql_combo_id: string | null
+          mysql_order_id: string | null
+          start_date: string
+          status: string
+          subscription_type: string
+          total_quota: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          combo_amount?: number | null
+          combo_name?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          mysql_combo_id?: string | null
+          mysql_order_id?: string | null
+          start_date?: string
+          status?: string
+          subscription_type: string
+          total_quota?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          combo_amount?: number | null
+          combo_name?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          mysql_combo_id?: string | null
+          mysql_order_id?: string | null
+          start_date?: string
+          status?: string
+          subscription_type?: string
+          total_quota?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           color: string | null
@@ -451,6 +499,84 @@ export type Database = {
           name?: string
           sentiment?: string | null
           sentiment_confidence?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usage_records: {
+        Row: {
+          amount: number
+          conversation_id: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          record_type: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          record_type: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          record_type?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_accounts: {
+        Row: {
+          created_at: string
+          id: string
+          last_sync_at: string | null
+          mysql_user_id: string | null
+          mysql_uuid: string | null
+          quota_expires_at: string | null
+          remaining_quota: number | null
+          sync_source: string | null
+          total_quota: number
+          updated_at: string
+          used_quota: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          mysql_user_id?: string | null
+          mysql_uuid?: string | null
+          quota_expires_at?: string | null
+          remaining_quota?: number | null
+          sync_source?: string | null
+          total_quota?: number
+          updated_at?: string
+          used_quota?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          mysql_user_id?: string | null
+          mysql_uuid?: string | null
+          quota_expires_at?: string | null
+          remaining_quota?: number | null
+          sync_source?: string | null
+          total_quota?: number
+          updated_at?: string
+          used_quota?: number
           user_id?: string
         }
         Relationships: []
@@ -779,6 +905,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      deduct_user_quota: {
+        Args: { p_amount?: number; p_user_id: string }
+        Returns: {
+          remaining_quota: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

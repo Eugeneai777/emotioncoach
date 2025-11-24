@@ -1,5 +1,14 @@
 project_id = "vlsuzskvykddwrxbmcbu"
 
+[functions.mysql-sync]
+verify_jwt = false
+
+[functions.check-quota]
+verify_jwt = false
+
+[functions.deduct-quota]
+verify_jwt = false
+
 [functions.check-streak-achievements]
 verify_jwt = false
 
