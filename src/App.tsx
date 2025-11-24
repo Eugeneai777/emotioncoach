@@ -11,6 +11,8 @@ import Settings from "./pages/Settings";
 import TagStats from "./pages/TagStats";
 import Goals from "./pages/Goals";
 import Calendar from "./pages/Calendar";
+import Admin from "./pages/Admin";
+import Packages from "./pages/Packages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +31,8 @@ const App = () => (
           <Route path="/tag-stats" element={<TagStats />} />
           <Route path="/goals" element={<Goals />} />
           <Route path="/calendar" element={<Calendar />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/packages" element={<Packages />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

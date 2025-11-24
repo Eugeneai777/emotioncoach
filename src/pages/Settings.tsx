@@ -169,7 +169,25 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="account">
-            <AccountBalance />
+            <Card className="border-border shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-lg md:text-2xl text-foreground">
+                  我的账户
+                </CardTitle>
+                <CardDescription className="text-xs md:text-sm text-muted-foreground">
+                  查看余额并充值 🌿
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <AccountBalance />
+                <Button 
+                  onClick={() => navigate('/packages')}
+                  className="w-full"
+                >
+                  充值套餐
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="reminders">
