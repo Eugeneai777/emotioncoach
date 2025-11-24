@@ -1,5 +1,5 @@
 import { Client } from "https://deno.land/x/mysql@v2.12.1/mod.ts";
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
