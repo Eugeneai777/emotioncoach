@@ -47,10 +47,10 @@ serve(async (req) => {
       );
     }
 
-    // 获取用户配置的模板ID
+    // 获取用户配置的模板ID和代理设置
     const { data: profile } = await supabaseClient
       .from('profiles')
-      .select('wechat_enabled, wechat_template_ids')
+      .select('wechat_enabled, wechat_template_ids, wechat_proxy_enabled, wechat_proxy_url, wechat_proxy_auth_token')
       .eq('id', userId)
       .single();
 
@@ -137,13 +137,46 @@ serve(async (req) => {
       data: messageData,
     };
 
-    const sendResponse = await fetch(sendUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(messageBody),
-    });
+    let sendResponse;
+    let result;
 
-    const result = await sendResponse.json();
+    // Check if proxy is enabled
+    if (profile.wechat_proxy_enabled && profile.wechat_proxy_url) {
+      console.log('Using proxy server for WeChat API call');
+      
+      // Call through proxy
+      const proxyUrl = `${profile.wechat_proxy_url}/wechat-proxy`;
+      const proxyHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (profile.wechat_proxy_auth_token) {
+        proxyHeaders['Authorization'] = `Bearer ${profile.wechat_proxy_auth_token}`;
+      }
+      
+      sendResponse = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: proxyHeaders,
+        body: JSON.stringify({
+          target_url: sendUrl,
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: messageBody,
+        }),
+      });
+      
+      result = await sendResponse.json();
+    } else {
+      // Direct call to WeChat API
+      console.log('Direct call to WeChat API');
+      sendResponse = await fetch(sendUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(messageBody),
+      });
+
+      result = await sendResponse.json();
+    }
 
     if (result.errcode !== 0) {
       throw new Error(`WeChat API error: ${result.errmsg || 'Unknown error'}`);
