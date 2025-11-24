@@ -15,6 +15,7 @@ import { EmotionIntensitySelector } from "@/components/EmotionIntensitySelector"
 import { EmotionIntensitySlider } from "@/components/EmotionIntensitySlider";
 import { IntensityReminderDialog } from "@/components/IntensityReminderDialog";
 import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
+import { AccountBalance } from "@/components/AccountBalance";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
@@ -307,6 +308,9 @@ const Index = () => {
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <AccountBalance />
+          </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1 md:gap-2">
               {messages.length > 0 && <Button variant="ghost" size="sm" onClick={handleRestart} className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground transition-colors">

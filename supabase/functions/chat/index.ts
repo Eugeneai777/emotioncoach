@@ -77,6 +77,56 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    // ✅ 检查用户额度
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    try {
+      const quotaCheckResponse = await fetch(
+        `${supabaseUrl}/functions/v1/check-quota`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            source: 'web'
+          })
+        }
+      );
+
+      const quotaCheck = await quotaCheckResponse.json();
+
+      if (!quotaCheck.allowed) {
+        const errorMsg = quotaCheck.reason === 'quota_expired'
+          ? '您的对话次数已过期，请前往充值页面续费 🌿'
+          : `您的对话次数不足（剩余：${quotaCheck.account?.remaining_quota || 0}次），请前往充值页面充值 🌿`;
+        
+        return new Response(
+          JSON.stringify({ 
+            error: errorMsg,
+            remaining: quotaCheck.account?.remaining_quota || 0,
+            reason: quotaCheck.reason
+          }),
+          { 
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      console.log(`✅ 用户 ${user.id} 额度检查通过，剩余：${quotaCheck.account.remaining_quota}`);
+    } catch (error) {
+      console.error('额度检查失败:', error);
+      return new Response(
+        JSON.stringify({ error: '额度检查失败，请稍后再试' }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+
     // 获取用户的伙伴偏好
     const { data: profile } = await supabase
       .from('profiles')
@@ -289,6 +339,32 @@ serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // ✅ 在返回流式响应前扣费
+    try {
+      await fetch(
+        `${supabaseUrl}/functions/v1/deduct-quota`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            source: 'web',
+            amount: 1,
+            metadata: {
+              message_count: messages.length
+            }
+          })
+        }
+      );
+      console.log(`✅ 用户 ${user.id} 扣费成功`);
+    } catch (error) {
+      console.error('扣费失败:', error);
+      // 扣费失败记录日志但不影响用户体验
     }
 
     return new Response(response.body, {
