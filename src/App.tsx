@@ -13,6 +13,7 @@ import Goals from "./pages/Goals";
 import Calendar from "./pages/Calendar";
 import Admin from "./pages/Admin";
 import Packages from "./pages/Packages";
+import DeploymentPackage from "./pages/DeploymentPackage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/packages" element={<Packages />} />
+          <Route path="/deployment-package" element={<DeploymentPackage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
