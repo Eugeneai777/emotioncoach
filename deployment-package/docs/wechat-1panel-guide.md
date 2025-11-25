@@ -2,16 +2,176 @@
 
 ## 📋 目录
 
-1. [方案概述](#方案概述)
-2. [准备工作](#准备工作)
-3. [部署步骤](#部署步骤)
-4. [代码文件](#代码文件)
-5. [常见问题](#常见问题)
-6. [测试验证](#测试验证)
+1. [🚀 一键部署（推荐）](#一键部署推荐)
+2. [方案概述](#方案概述)
+3. [准备工作](#准备工作)
+4. [手动部署步骤](#手动部署步骤)
+5. [代码文件](#代码文件)
+6. [常见问题](#常见问题)
+7. [测试验证](#测试验证)
 
 ---
 
-## 方案概述
+## 🚀 一键部署（推荐）
+
+### 适用场景
+
+如果您是新手或希望快速部署，强烈推荐使用一键部署脚本。该脚本将自动完成：
+
+- ✅ 自动检测操作系统并安装 Python3
+- ✅ 自动创建项目目录和虚拟环境
+- ✅ 自动安装所有 Python 依赖
+- ✅ 自动配置防火墙规则
+- ✅ 自动创建 systemd 服务（开机自启）
+- ✅ 自动启动服务并验证状态
+
+### 快速开始（5分钟部署）
+
+#### 步骤 1：下载并运行部署脚本
+
+```bash
+# 下载脚本
+curl -O https://你的域名/wechat-bot-oneclick.sh
+
+# 或者直接创建脚本文件
+cat > wechat-bot-oneclick.sh << 'EOF'
+# 在这里粘贴完整的脚本内容...
+# 见下方"完整脚本内容"
+EOF
+
+# 添加执行权限
+chmod +x wechat-bot-oneclick.sh
+
+# 运行部署脚本
+sudo ./wechat-bot-oneclick.sh
+```
+
+#### 步骤 2：配置微信公众号信息
+
+脚本执行完成后，编辑配置文件：
+
+```bash
+sudo nano /opt/wechat-bot/.env
+```
+
+修改以下内容：
+
+```env
+# 微信公众号配置
+WECHAT_TOKEN=你的微信Token
+WECHAT_APPID=你的AppID  
+WECHAT_APPSECRET=你的AppSecret
+
+# 服务端口（默认3000）
+PORT=3000
+```
+
+按 `Ctrl+X`，然后按 `Y`，最后按 `Enter` 保存。
+
+#### 步骤 3：重启服务
+
+```bash
+sudo systemctl restart wechat-bot
+```
+
+#### 步骤 4：验证服务状态
+
+```bash
+# 查看服务状态
+sudo systemctl status wechat-bot
+
+# 查看服务日志
+sudo tail -f /var/log/wechat-bot.log
+
+# 测试健康检查
+curl http://localhost:3000/health
+```
+
+#### 步骤 5：配置微信公众平台
+
+1. 登录 [微信公众平台](https://mp.weixin.qq.com)
+2. 进入"设置与开发" → "基本配置"
+3. 填写服务器配置：
+   - **URL**：`http://你的服务器IP:3000/wechat-callback`
+   - **Token**：与 `.env` 中的 `WECHAT_TOKEN` 一致
+   - **EncodingAESKey**：点击"随机生成"
+   - **消息加解密方式**：明文模式
+4. 点击"提交"，等待验证通过
+
+### 常用服务管理命令
+
+```bash
+# 启动服务
+sudo systemctl start wechat-bot
+
+# 停止服务
+sudo systemctl stop wechat-bot
+
+# 重启服务
+sudo systemctl restart wechat-bot
+
+# 查看服务状态
+sudo systemctl status wechat-bot
+
+# 查看实时日志
+sudo journalctl -u wechat-bot -f
+
+# 查看历史日志
+sudo tail -100 /var/log/wechat-bot.log
+```
+
+### 完整脚本内容
+
+如果无法通过 URL 下载，可以手动创建脚本文件并粘贴以下内容：
+
+> **提示**：完整脚本见项目中的 `deployment-package/scripts/wechat-bot-oneclick.sh` 文件
+
+### 故障排查
+
+**服务启动失败？**
+
+```bash
+# 查看详细错误日志
+sudo journalctl -u wechat-bot -n 50 --no-pager
+
+# 检查 Python 虚拟环境
+source /opt/wechat-bot/venv/bin/activate
+python --version
+pip list
+
+# 手动测试运行
+cd /opt/wechat-bot
+source venv/bin/activate
+python wechat_bot.py
+```
+
+**防火墙问题？**
+
+```bash
+# 检查防火墙状态
+sudo ufw status
+# 或
+sudo firewall-cmd --list-ports
+
+# 手动开放端口
+sudo ufw allow 3000/tcp
+# 或
+sudo firewall-cmd --permanent --add-port=3000/tcp
+sudo firewall-cmd --reload
+```
+
+**微信验证失败？**
+
+```bash
+# 测试服务是否可访问
+curl http://localhost:3000/health
+
+# 测试微信回调端点
+curl http://localhost:3000/wechat-callback
+
+# 确认配置文件
+cat /opt/wechat-bot/.env
+```
 
 ### 架构说明
 
@@ -32,6 +192,35 @@
 ✅ 新用户关注自动欢迎  
 ✅ 完整的错误处理和日志  
 ✅ **无需配置 API Key**（简化部署）
+
+---
+
+## 方案概述
+
+### 1. 服务器要求
+
+- **云服务商**：阿里云、腾讯云、AWS 等
+- **配置**：1核2G 即可（小规模使用）
+- **系统**：Ubuntu 20.04 / CentOS 7+ / Debian 10+
+- **带宽**：1Mbps 起步
+- **费用**：约 50-100 元/月
+
+### 2. 微信公众号要求
+
+- 已认证的微信**服务号**或**订阅号**（需开通开发权限）
+- 获取以下信息：
+  - AppID（应用ID）
+  - AppSecret（应用密钥）
+  - Token（自定义令牌）
+  - EncodingAESKey（消息加密密钥）
+
+### 3. Lovable Edge Function URL
+
+你的 Lovable 项目已创建 `wechat-chat` Edge Function：
+
+```
+https://vlsuzskvykddwrxbmcbu.supabase.co/functions/v1/wechat-chat
+```
 
 ---
 
@@ -64,7 +253,9 @@ https://vlsuzskvykddwrxbmcbu.supabase.co/functions/v1/wechat-chat
 
 ---
 
-## 部署步骤
+## 手动部署步骤
+
+> **提示**：如果您已使用一键部署脚本，可以跳过本章节。
 
 ### 步骤 1：登录服务器
 
