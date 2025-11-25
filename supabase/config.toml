@@ -1,5 +1,8 @@
 project_id = "vlsuzskvykddwrxbmcbu"
 
+[functions.wechat-chat]
+verify_jwt = false
+
 [functions.mysql-sync]
 verify_jwt = false
 
