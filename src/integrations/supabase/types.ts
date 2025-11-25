@@ -315,6 +315,87 @@ export type Database = {
         }
         Relationships: []
       }
+      goal_templates: {
+        Row: {
+          camp_duration_days: number | null
+          created_at: string
+          daily_task_template: Json | null
+          description: string | null
+          goal_category: string | null
+          goal_type: string
+          id: string
+          intensity_max: number | null
+          intensity_min: number | null
+          intensity_target_days: number | null
+          is_training_camp: boolean | null
+          last_used_at: string | null
+          milestone_rewards: Json | null
+          target_count: number
+          target_reduction_percent: number | null
+          target_tag_id: string | null
+          target_tag_name: string | null
+          template_category: string | null
+          template_description: string | null
+          template_icon: string | null
+          template_name: string
+          updated_at: string
+          use_count: number | null
+          user_id: string
+        }
+        Insert: {
+          camp_duration_days?: number | null
+          created_at?: string
+          daily_task_template?: Json | null
+          description?: string | null
+          goal_category?: string | null
+          goal_type: string
+          id?: string
+          intensity_max?: number | null
+          intensity_min?: number | null
+          intensity_target_days?: number | null
+          is_training_camp?: boolean | null
+          last_used_at?: string | null
+          milestone_rewards?: Json | null
+          target_count?: number
+          target_reduction_percent?: number | null
+          target_tag_id?: string | null
+          target_tag_name?: string | null
+          template_category?: string | null
+          template_description?: string | null
+          template_icon?: string | null
+          template_name: string
+          updated_at?: string
+          use_count?: number | null
+          user_id: string
+        }
+        Update: {
+          camp_duration_days?: number | null
+          created_at?: string
+          daily_task_template?: Json | null
+          description?: string | null
+          goal_category?: string | null
+          goal_type?: string
+          id?: string
+          intensity_max?: number | null
+          intensity_min?: number | null
+          intensity_target_days?: number | null
+          is_training_camp?: boolean | null
+          last_used_at?: string | null
+          milestone_rewards?: Json | null
+          target_count?: number
+          target_reduction_percent?: number | null
+          target_tag_id?: string | null
+          target_tag_name?: string | null
+          template_category?: string | null
+          template_description?: string | null
+          template_icon?: string | null
+          template_name?: string
+          updated_at?: string
+          use_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       gratitude_entries: {
         Row: {
           category: string | null
@@ -750,6 +831,66 @@ export type Database = {
           name?: string
           sentiment?: string | null
           sentiment_confidence?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      training_camps: {
+        Row: {
+          camp_name: string
+          camp_type: string
+          check_in_dates: Json | null
+          completed_days: number | null
+          created_at: string
+          current_day: number | null
+          duration_days: number
+          end_date: string
+          id: string
+          milestone_14_reached: boolean | null
+          milestone_21_completed: boolean | null
+          milestone_7_reached: boolean | null
+          start_date: string
+          status: string | null
+          template_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          camp_name?: string
+          camp_type?: string
+          check_in_dates?: Json | null
+          completed_days?: number | null
+          created_at?: string
+          current_day?: number | null
+          duration_days?: number
+          end_date: string
+          id?: string
+          milestone_14_reached?: boolean | null
+          milestone_21_completed?: boolean | null
+          milestone_7_reached?: boolean | null
+          start_date: string
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          camp_name?: string
+          camp_type?: string
+          check_in_dates?: Json | null
+          completed_days?: number | null
+          created_at?: string
+          current_day?: number | null
+          duration_days?: number
+          end_date?: string
+          id?: string
+          milestone_14_reached?: boolean | null
+          milestone_21_completed?: boolean | null
+          milestone_7_reached?: boolean | null
+          start_date?: string
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
