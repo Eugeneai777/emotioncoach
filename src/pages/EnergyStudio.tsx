@@ -19,6 +19,10 @@ import {
   Dumbbell
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { BreathingExercise } from "@/components/tools/BreathingExercise";
+import { MeditationTimer } from "@/components/tools/MeditationTimer";
+import { EmotionFirstAid } from "@/components/tools/EmotionFirstAid";
+import { MindfulnessPractice } from "@/components/tools/MindfulnessPractice";
 
 interface ToolCard {
   id: string;
@@ -34,6 +38,7 @@ const EnergyStudio = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"emotion" | "exploration" | "management">("emotion");
+  const [activeTool, setActiveTool] = useState<string | null>(null);
 
   const tools: ToolCard[] = [
     // 情绪工具
@@ -152,8 +157,22 @@ const EnergyStudio = () => {
   const filteredTools = tools.filter(tool => tool.category === activeTab);
 
   const handleToolClick = (toolId: string) => {
-    // 工具具体实现将在后续阶段添加
-    console.log("Tool clicked:", toolId);
+    setActiveTool(toolId);
+  };
+
+  const renderTool = () => {
+    switch (activeTool) {
+      case "breathing":
+        return <BreathingExercise />;
+      case "meditation":
+        return <MeditationTimer />;
+      case "first-aid":
+        return <EmotionFirstAid />;
+      case "mindfulness":
+        return <MindfulnessPractice />;
+      default:
+        return null;
+    }
   };
 
   const getCategoryTitle = (category: string) => {
@@ -207,6 +226,20 @@ const EnergyStudio = () => {
 
       {/* Main Content */}
       <main className="container max-w-6xl mx-auto px-4 py-8">
+        {activeTool ? (
+          <div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setActiveTool(null)}
+              className="mb-6 gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              返回工具列表
+            </Button>
+            {renderTool()}
+          </div>
+        ) : (
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="emotion" className="gap-2">
@@ -276,6 +309,7 @@ const EnergyStudio = () => {
             </div>
           </TabsContent>
         </Tabs>
+        )}
       </main>
     </div>
   );
