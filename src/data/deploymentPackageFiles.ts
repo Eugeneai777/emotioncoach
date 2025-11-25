@@ -588,6 +588,7 @@ export const fileCategories = {
     { name: 'TROUBLESHOOTING.md', description: '故障排查指南', size: '18.7 KB' },
     { name: 'docs/aliyun-guide.md', description: '阿里云配置指南', size: '11.3 KB' },
     { name: 'docs/wechat-config.md', description: '微信平台配置', size: '13.5 KB' },
+    { name: 'docs/wechat-1panel-guide.md', description: '微信公众号 AI 助手 - 阿里云 1Panel 完整部署指南', size: '25.0 KB' },
     { name: 'docs/security.md', description: '安全最佳实践', size: '16.8 KB' },
   ],
 };
