@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Download, FileText, FolderOpen, Server, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Download, FileText, FolderOpen, Server, CheckCircle2, AlertCircle, Rocket, Zap } from 'lucide-react';
 import { deploymentFiles, fileCategories } from '@/data/deploymentPackageFiles';
 import { toast } from 'sonner';
 import JSZip from 'jszip';
@@ -31,6 +31,7 @@ const DeploymentPackage = () => {
       // 添加脚本文件
       const scriptsFolder = zip.folder('scripts');
       if (scriptsFolder) {
+        scriptsFolder.file('wechat-bot-oneclick.sh', deploymentFiles['scripts/wechat-bot-oneclick.sh']);
         scriptsFolder.file('setup.sh', deploymentFiles['scripts/setup.sh']);
         scriptsFolder.file('deploy.sh', deploymentFiles['scripts/deploy.sh']);
         scriptsFolder.file('generate-token.sh', deploymentFiles['scripts/generate-token.sh']);
@@ -80,6 +81,18 @@ const DeploymentPackage = () => {
     toast.success(`已下载: ${displayName}`);
   };
 
+  const downloadOneClickScript = () => {
+    const content = deploymentFiles['scripts/wechat-bot-oneclick.sh'];
+    if (!content) {
+      toast.error('一键部署脚本不存在');
+      return;
+    }
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    saveAs(blob, 'wechat-bot-oneclick.sh');
+    toast.success('已下载一键部署脚本！');
+  };
+
   const FileList = ({ files, category }: { files: typeof fileCategories.core, category: string }) => (
     <div className="space-y-2">
       {files.map((file) => (
@@ -121,6 +134,113 @@ const DeploymentPackage = () => {
           <h1 className="text-3xl md:text-4xl font-bold mb-3">微信API代理服务器</h1>
           <p className="text-lg text-muted-foreground">阿里云部署包下载</p>
         </div>
+
+        {/* One-Click Deploy Button */}
+        <Card className="mb-8 border-2 border-primary/50 bg-gradient-to-br from-primary/10 via-primary/5 to-background shadow-lg">
+          <CardContent className="py-8">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="flex-shrink-0">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl"></div>
+                  <div className="relative p-4 bg-gradient-to-br from-primary to-primary/80 rounded-full">
+                    <Rocket className="h-10 w-10 text-primary-foreground" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1 text-center md:text-left space-y-2">
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+                  <Badge className="bg-primary/90 hover:bg-primary">
+                    <Zap className="h-3 w-3 mr-1" />
+                    推荐
+                  </Badge>
+                  <Badge variant="outline">最新</Badge>
+                </div>
+                <h2 className="text-2xl font-bold">微信公众号 AI 助手 - 一键部署</h2>
+                <p className="text-muted-foreground">
+                  全自动部署脚本，5分钟快速搭建微信公众号 AI 机器人
+                </p>
+                <div className="flex flex-wrap gap-2 justify-center md:justify-start text-xs text-muted-foreground pt-2">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 text-primary" />
+                    自动安装依赖
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 text-primary" />
+                    systemd 服务
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 text-primary" />
+                    开机自启
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 text-primary" />
+                    无需 API Key
+                  </span>
+                </div>
+              </div>
+              <div className="flex-shrink-0">
+                <Button 
+                  size="lg" 
+                  onClick={downloadOneClickScript}
+                  className="min-w-[180px] h-12 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <Download className="mr-2 h-5 w-5" />
+                  一键部署脚本
+                </Button>
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                  wechat-bot-oneclick.sh · 8.5 KB
+                </p>
+              </div>
+            </div>
+            <Separator className="my-6" />
+            <div className="bg-background/60 rounded-lg p-4 space-y-3">
+              <p className="text-sm font-medium flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-primary" />
+                快速开始指南
+              </p>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="flex gap-2">
+                  <span className="font-mono text-primary flex-shrink-0">1.</span>
+                  <p>SSH 登录到你的阿里云服务器</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-mono text-primary flex-shrink-0">2.</span>
+                  <div className="flex-1">
+                    <p className="mb-1">下载并运行脚本：</p>
+                    <code className="block bg-muted px-3 py-2 rounded text-xs font-mono">
+                      curl -O https://你的域名/wechat-bot-oneclick.sh && chmod +x wechat-bot-oneclick.sh && sudo ./wechat-bot-oneclick.sh
+                    </code>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-mono text-primary flex-shrink-0">3.</span>
+                  <div className="flex-1">
+                    <p className="mb-1">编辑配置文件并重启服务：</p>
+                    <code className="block bg-muted px-3 py-2 rounded text-xs font-mono">
+                      sudo nano /opt/wechat-bot/.env<br />
+                      sudo systemctl restart wechat-bot
+                    </code>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-mono text-primary flex-shrink-0">4.</span>
+                  <p>在微信公众平台配置服务器 URL</p>
+                </div>
+              </div>
+              <div className="pt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => downloadSingleFile('docs/wechat-1panel-guide.md')}
+                  className="text-xs"
+                >
+                  <FileText className="h-3 w-3 mr-1" />
+                  查看完整部署文档
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Quick Info */}
         <Card className="mb-8">
@@ -234,7 +354,7 @@ const DeploymentPackage = () => {
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">脚本文件</Badge>
-                    <span className="text-sm text-muted-foreground">7 个文件</span>
+                    <span className="text-sm text-muted-foreground">{fileCategories.scripts.length} 个文件</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
