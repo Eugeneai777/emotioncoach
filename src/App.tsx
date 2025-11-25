@@ -17,6 +17,7 @@ import DeploymentPackage from "./pages/DeploymentPackage";
 import EnergyStudio from "./pages/EnergyStudio";
 import AICoach from "./pages/AICoach";
 import NotFound from "./pages/NotFound";
+import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/deployment-package" element={<DeploymentPackage />} />
           <Route path="/energy-studio" element={<EnergyStudio />} />
           <Route path="/ai-coach" element={<AICoach />} />
+          <Route path="/camp/:campId" element={<TrainingCampDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
