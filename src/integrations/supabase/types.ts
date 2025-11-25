@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      breathing_sessions: {
+        Row: {
+          created_at: string | null
+          duration: number
+          id: string
+          pattern_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          duration: number
+          id?: string
+          pattern_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          duration?: number
+          id?: string
+          pattern_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       briefing_tags: {
         Row: {
           briefing_id: string
@@ -228,6 +252,185 @@ export type Database = {
         }
         Relationships: []
       }
+      energy_logs: {
+        Row: {
+          emotional_energy: number | null
+          id: string
+          logged_at: string | null
+          mental_energy: number | null
+          notes: string | null
+          physical_energy: number | null
+          user_id: string
+        }
+        Insert: {
+          emotional_energy?: number | null
+          id?: string
+          logged_at?: string | null
+          mental_energy?: number | null
+          notes?: string | null
+          physical_energy?: number | null
+          user_id: string
+        }
+        Update: {
+          emotional_energy?: number | null
+          id?: string
+          logged_at?: string | null
+          mental_energy?: number | null
+          notes?: string | null
+          physical_energy?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      exercise_logs: {
+        Row: {
+          calories: number | null
+          distance: number | null
+          duration: number
+          exercise_type: string
+          id: string
+          logged_at: string | null
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          calories?: number | null
+          distance?: number | null
+          duration: number
+          exercise_type: string
+          id?: string
+          logged_at?: string | null
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          calories?: number | null
+          distance?: number | null
+          duration?: number
+          exercise_type?: string
+          id?: string
+          logged_at?: string | null
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gratitude_entries: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      habit_logs: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          habit_id: string
+          id: string
+          logged_at: string | null
+          notes: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          habit_id: string
+          id?: string
+          logged_at?: string | null
+          notes?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          habit_id?: string
+          id?: string
+          logged_at?: string | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_logs_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          target_frequency: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          target_frequency?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          target_frequency?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meditation_sessions: {
+        Row: {
+          background_sound: string | null
+          created_at: string | null
+          duration: number
+          id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          background_sound?: string | null
+          created_at?: string | null
+          duration: number
+          id?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          background_sound?: string | null
+          created_at?: string | null
+          duration?: number
+          id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -374,6 +577,39 @@ export type Database = {
           wecom_enabled?: boolean | null
           wecom_mention_all?: boolean | null
           wecom_webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      sleep_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          logged_at: string | null
+          notes: string | null
+          quality_score: number | null
+          sleep_time: string
+          user_id: string
+          wake_time: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          logged_at?: string | null
+          notes?: string | null
+          quality_score?: number | null
+          sleep_time: string
+          user_id: string
+          wake_time: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          logged_at?: string | null
+          notes?: string | null
+          quality_score?: number | null
+          sleep_time?: string
+          user_id?: string
+          wake_time?: string
         }
         Relationships: []
       }
@@ -717,6 +953,60 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_values: {
+        Row: {
+          created_at: string | null
+          id: string
+          priority: number | null
+          user_id: string
+          value_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          priority?: number | null
+          user_id: string
+          value_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          priority?: number | null
+          user_id?: string
+          value_name?: string
+        }
+        Relationships: []
+      }
+      vision_items: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          title?: string
           user_id?: string
         }
         Relationships: []
