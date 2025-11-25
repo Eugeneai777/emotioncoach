@@ -100,29 +100,61 @@ serve(async (req) => {
       'inactivity': '活跃度提醒',
       'weekly_report': '周报生成',
       'goal_at_risk': '目标提醒',
+      'checkin_success': '打卡成功',
+      'checkin_streak_milestone': '连续打卡里程碑',
+      'checkin_reminder': '每日打卡提醒',
+      'checkin_streak_break_warning': '打卡即将中断',
     };
 
     const scenarioName = scenarioNames[scenario] || '系统通知';
 
-    // 构建适配"客户跟进提醒"模板的数据结构
-    const messageData = {
-      thing1: { 
-        value: displayName.slice(0, 20), // thing类型限制20字
-        color: "#173177" 
-      },
-      const12: { 
-        value: notification.title.slice(0, 20), // 限制长度
-        color: "#173177" 
-      },
-      const9: { 
-        value: scenarioName,
-        color: "#173177" 
-      },
-      const14: { 
-        value: notification.message.slice(0, 20), // 限制长度
-        color: "#00C853" 
-      },
-    };
+    // 检测打卡相关场景，使用新模板结构
+    const isCheckinScenario = ['checkin_success', 'checkin_streak_milestone', 'checkin_reminder', 'checkin_streak_break_warning'].includes(scenario);
+    
+    // 根据场景选择不同的模板数据结构
+    let messageData;
+    
+    if (isCheckinScenario) {
+      // "上课打卡成功通知"模板结构 (thing1, thing2, thing3, thing4)
+      messageData = {
+        thing1: { 
+          value: displayName.slice(0, 20),
+          color: "#173177" 
+        },
+        thing2: { 
+          value: '情绪记录打卡'.slice(0, 20),
+          color: "#173177" 
+        },
+        thing3: { 
+          value: notification.title.slice(0, 20),
+          color: "#173177" 
+        },
+        thing4: { 
+          value: notification.message.slice(0, 20),
+          color: "#00C853" 
+        },
+      };
+    } else {
+      // "客户跟进提醒"模板结构 (thing1, const12, const9, const14)
+      messageData = {
+        thing1: { 
+          value: displayName.slice(0, 20),
+          color: "#173177" 
+        },
+        const12: { 
+          value: notification.title.slice(0, 20),
+          color: "#173177" 
+        },
+        const9: { 
+          value: scenarioName,
+          color: "#173177" 
+        },
+        const14: { 
+          value: notification.message.slice(0, 20),
+          color: "#00C853" 
+        },
+      };
+    }
 
     // 发送模板消息
     const sendUrl = `https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=${accessToken}`;
