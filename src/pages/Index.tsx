@@ -22,7 +22,7 @@ import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { supabase } from "@/integrations/supabase/client";
-import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target } from "lucide-react";
+import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target, Sparkles } from "lucide-react";
 const Index = () => {
   const [input, setInput] = useState("");
   const [showReminder, setShowReminder] = useState(false);
@@ -425,6 +425,30 @@ const Index = () => {
                     </div>
                     <p className="text-xs text-muted-foreground ml-9">温柔回应情绪</p>
                   </div>
+                </div>
+                
+                {/* AI生活教练入口 */}
+                <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-2xl md:rounded-3xl p-4 md:p-6 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-8 duration-700 delay-300">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground text-base md:text-lg">AI生活教练</h3>
+                      <p className="text-xs text-muted-foreground">全方位健康分析与智能建议</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    整合情绪、生活习惯、身心调节、自我成长四个维度，为你提供个性化的健康指导
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-purple-200 hover:bg-purple-50 hover:border-purple-300"
+                    onClick={() => navigate("/ai-coach")}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    进入教练空间
+                  </Button>
                 </div>
               </div>
               

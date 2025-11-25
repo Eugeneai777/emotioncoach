@@ -16,7 +16,9 @@ import {
   Calendar,
   Battery,
   Moon,
-  Dumbbell
+  Dumbbell,
+  MessageCircle,
+  NotebookPen
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { BreathingExercise } from "@/components/tools/BreathingExercise";
@@ -50,6 +52,24 @@ const EnergyStudio = () => {
 
   const tools: ToolCard[] = [
     // 情绪工具
+    {
+      id: "emotion-coach",
+      title: "情绪教练",
+      description: "AI陪伴式情绪梳理，找到情绪的力量",
+      icon: <MessageCircle className="w-6 h-6" />,
+      category: "emotion",
+      color: "hsl(var(--primary))",
+      available: true
+    },
+    {
+      id: "emotion-diary",
+      title: "我的情绪日记",
+      description: "查看历史记录，回顾成长轨迹",
+      icon: <NotebookPen className="w-6 h-6" />,
+      category: "emotion",
+      color: "hsl(var(--primary))",
+      available: true
+    },
     {
       id: "breathing",
       title: "呼吸练习",
@@ -165,6 +185,16 @@ const EnergyStudio = () => {
   const filteredTools = tools.filter(tool => tool.category === activeTab);
 
   const handleToolClick = (toolId: string) => {
+    // 特殊处理：情绪教练跳转到首页
+    if (toolId === "emotion-coach") {
+      navigate("/");
+      return;
+    }
+    // 特殊处理：情绪日记跳转到历史页面
+    if (toolId === "emotion-diary") {
+      navigate("/history");
+      return;
+    }
     setActiveTool(toolId);
   };
 
@@ -244,6 +274,15 @@ const EnergyStudio = () => {
               <h1 className="text-2xl font-bold text-foreground">有劲生活馆</h1>
               <p className="text-sm text-muted-foreground">发现更好的自己，享受更有劲的生活</p>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/ai-coach")}
+              className="gap-2 border-purple-200 hover:bg-purple-50"
+            >
+              <Sparkles className="w-4 h-4 text-purple-600" />
+              <span className="hidden sm:inline">AI生活教练</span>
+            </Button>
           </div>
         </div>
       </header>
