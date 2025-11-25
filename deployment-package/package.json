@@ -1,0 +1,27 @@
+{
+  "name": "wechat-api-proxy",
+  "version": "1.0.0",
+  "description": "WeChat API Proxy Server for IP Whitelisting",
+  "main": "proxy.js",
+  "scripts": {
+    "start": "node proxy.js",
+    "dev": "node proxy.js",
+    "test": "node test-proxy.js"
+  },
+  "keywords": [
+    "wechat",
+    "proxy",
+    "api",
+    "aliyun"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
