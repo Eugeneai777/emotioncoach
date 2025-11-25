@@ -145,6 +145,116 @@ serve(async (req) => {
         scenario = 'goal_milestone';
         break;
 
+      case 'checkin_success':
+        // 打卡成功确认
+        shouldTrigger = true;
+        scenario = 'checkin_success';
+        notificationContext = {
+          streak_days: context?.streak_days || 0
+        };
+        break;
+
+      case 'checkin_streak_milestone':
+        // 连续打卡里程碑
+        shouldTrigger = true;
+        scenario = 'checkin_streak_milestone';
+        notificationContext = {
+          milestone_days: context?.milestone_days || 0
+        };
+        break;
+
+      case 'checkin_reminder':
+        // 每日打卡提醒
+        const today = new Date().toISOString().split('T')[0];
+        const { data: todayBriefings, count: todayCount } = await supabase
+          .from('briefings')
+          .select('id', { count: 'exact' })
+          .eq('conversation_id', context?.conversation_id || '')
+          .gte('created_at', today);
+
+        if (!todayCount || todayCount === 0) {
+          shouldTrigger = true;
+          scenario = 'checkin_reminder';
+          
+          // 计算连续打卡天数
+          const { data: recentBriefings } = await supabase
+            .from('briefings')
+            .select('created_at')
+            .order('created_at', { ascending: false })
+            .limit(30);
+
+          let streakDays = 0;
+          if (recentBriefings && recentBriefings.length > 0) {
+            const dates = recentBriefings.map(b => new Date(b.created_at).toISOString().split('T')[0]);
+            const uniqueDates = [...new Set(dates)];
+            
+            for (let i = 1; i < uniqueDates.length; i++) {
+              const prevDate = new Date(uniqueDates[i]);
+              const currDate = new Date(uniqueDates[i - 1]);
+              const diffDays = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+              
+              if (diffDays === 1) {
+                streakDays++;
+              } else {
+                break;
+              }
+            }
+          }
+          
+          notificationContext = {
+            streak_days: streakDays
+          };
+        }
+        break;
+
+      case 'checkin_streak_break_warning':
+        // 打卡即将中断警告
+        const currentHour = new Date().getHours();
+        if (currentHour >= 22) { // 晚上10点后
+          const todayDate = new Date().toISOString().split('T')[0];
+          const { count: todayCheckinCount } = await supabase
+            .from('briefings')
+            .select('id', { count: 'exact' })
+            .eq('conversation_id', context?.conversation_id || '')
+            .gte('created_at', todayDate);
+
+          if (!todayCheckinCount || todayCheckinCount === 0) {
+            // 计算连续天数
+            const { data: recentBriefings } = await supabase
+              .from('briefings')
+              .select('created_at')
+              .order('created_at', { ascending: false })
+              .limit(30);
+
+            if (recentBriefings && recentBriefings.length > 0) {
+              const dates = recentBriefings.map(b => new Date(b.created_at).toISOString().split('T')[0]);
+              const uniqueDates = [...new Set(dates)];
+              
+              let streakDays = 0;
+              for (let i = 1; i < uniqueDates.length; i++) {
+                const prevDate = new Date(uniqueDates[i]);
+                const currDate = new Date(uniqueDates[i - 1]);
+                const diffDays = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 1) {
+                  streakDays++;
+                } else {
+                  break;
+                }
+              }
+              
+              if (streakDays >= 3) { // 只有连续3天以上才触发
+                shouldTrigger = true;
+                scenario = 'checkin_streak_break_warning';
+                notificationContext = {
+                  streak_days: streakDays
+                };
+              }
+            }
+          }
+        }
+        break;
+
       default:
         return new Response(JSON.stringify({ 
           error: "未知的触发类型" 

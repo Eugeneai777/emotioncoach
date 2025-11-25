@@ -54,7 +54,7 @@ serve(async (req) => {
     type EncouragementStyle = 'gentle' | 'cheerful' | 'motivational';
     type CompanionType = 'jing_teacher' | 'friend' | 'coach';
     type NotificationFrequency = 'minimal' | 'balanced' | 'frequent';
-    type Scenario = 'after_briefing' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement';
+    type Scenario = 'after_briefing' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement' | 'checkin_success' | 'checkin_streak_milestone' | 'checkin_reminder' | 'checkin_streak_break_warning';
 
     const encouragementStyle = (context?.style || profile?.preferred_encouragement_style || 'gentle') as EncouragementStyle;
     const companionType = (profile?.companion_type || 'jing_teacher') as CompanionType;
@@ -99,7 +99,11 @@ serve(async (req) => {
       consistent_checkin: `用户已经连续${context?.streak_days}天坚持记录情绪。这是很了不起的坚持！请给予认可和鼓励。`,
       inactivity: `用户已经${context?.days_inactive}天没有记录情绪了，但还有${context?.active_goals_count}个活跃目标。请用温柔的方式提醒他们。`,
       sustained_low_mood: `用户最近${context?.consecutive_days}天的情绪强度持续较高（平均${context?.avg_intensity}/10）。请给予关怀和支持建议。`,
-      encouragement: `这是一条常规的鼓励通知，展示你的陪伴风格。用户当前${activeGoals?.length || 0}个活跃目标${activeGoals?.length ? '正在进行中' : ''}。`
+      encouragement: `这是一条常规的鼓励通知，展示你的陪伴风格。用户当前${activeGoals?.length || 0}个活跃目标${activeGoals?.length ? '正在进行中' : ''}。`,
+      checkin_success: `用户刚刚完成今日情绪打卡！${context?.streak_days ? `已连续打卡${context.streak_days}天。` : ''}请给予即时的肯定和鼓励，让他们感受到坚持的价值。`,
+      checkin_streak_milestone: `恭喜！用户达到了连续打卡${context?.milestone_days}天的里程碑！这是非常了不起的成就。请热烈庆祝这个特殊时刻，并鼓励继续坚持。`,
+      checkin_reminder: `今天是新的一天，用户还没有完成情绪打卡。${context?.streak_days ? `当前已连续${context.streak_days}天。` : ''}请用温柔且不带压力的方式提醒他们记录今天的情绪。`,
+      checkin_streak_break_warning: `用户已连续打卡${context?.streak_days}天，但今天还未打卡，连续记录即将中断！请用关心但不施压的语气提醒，强调坚持的不易和价值。`
     };
 
     const styleDescriptions: Record<EncouragementStyle, string> = {
@@ -212,7 +216,11 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       consistent_checkin: { type: 'encouragement', priority: 3 },
       inactivity: { type: 'reminder', priority: 2 },
       sustained_low_mood: { type: 'care', priority: 5 },
-      encouragement: { type: 'encouragement', priority: 1 }
+      encouragement: { type: 'encouragement', priority: 1 },
+      checkin_success: { type: 'celebration', priority: 3 },
+      checkin_streak_milestone: { type: 'celebration', priority: 5 },
+      checkin_reminder: { type: 'reminder', priority: 2 },
+      checkin_streak_break_warning: { type: 'reminder', priority: 4 }
     };
 
     let { type, priority } = baseNotificationTypeMap[scenarioTyped] || { type: 'encouragement', priority: 1 };
