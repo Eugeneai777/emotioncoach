@@ -23,6 +23,10 @@ import { BreathingExercise } from "@/components/tools/BreathingExercise";
 import { MeditationTimer } from "@/components/tools/MeditationTimer";
 import { EmotionFirstAid } from "@/components/tools/EmotionFirstAid";
 import { MindfulnessPractice } from "@/components/tools/MindfulnessPractice";
+import { ValuesExplorer } from "@/components/tools/ValuesExplorer";
+import { StrengthsFinder } from "@/components/tools/StrengthsFinder";
+import { VisionBoard } from "@/components/tools/VisionBoard";
+import { GratitudeJournal } from "@/components/tools/GratitudeJournal";
 
 interface ToolCard {
   id: string;
@@ -170,6 +174,14 @@ const EnergyStudio = () => {
         return <EmotionFirstAid />;
       case "mindfulness":
         return <MindfulnessPractice />;
+      case "values":
+        return <ValuesExplorer />;
+      case "strengths":
+        return <StrengthsFinder />;
+      case "vision":
+        return <VisionBoard />;
+      case "gratitude":
+        return <GratitudeJournal />;
       default:
         return null;
     }
