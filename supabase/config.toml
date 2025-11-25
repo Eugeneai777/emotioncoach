@@ -3,6 +3,9 @@ project_id = "vlsuzskvykddwrxbmcbu"
 [functions.life-coach]
 verify_jwt = true
 
+[functions.suggest-smart-goals]
+verify_jwt = true
+
 [functions.wechat-chat]
 verify_jwt = false
 

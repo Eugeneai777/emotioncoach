@@ -10,6 +10,7 @@ import { HealthOverviewCard } from "@/components/coach/HealthOverviewCard";
 import { DimensionCard } from "@/components/coach/DimensionCard";
 import { RecommendationCard } from "@/components/coach/RecommendationCard";
 import { InsightCard } from "@/components/coach/InsightCard";
+import { SmartGoalSuggestionsPanel } from "@/components/coach/SmartGoalSuggestionsPanel";
 
 interface CoachData {
   overall_score: number;
@@ -231,6 +232,9 @@ const AICoach = () => {
                 </div>
               </div>
             )}
+
+            {/* Smart Goal Suggestions */}
+            <SmartGoalSuggestionsPanel userId={user.id} />
 
             {/* Encouragement */}
             <div className="text-center py-6">
