@@ -27,6 +27,10 @@ import { ValuesExplorer } from "@/components/tools/ValuesExplorer";
 import { StrengthsFinder } from "@/components/tools/StrengthsFinder";
 import { VisionBoard } from "@/components/tools/VisionBoard";
 import { GratitudeJournal } from "@/components/tools/GratitudeJournal";
+import { HabitTracker } from "@/components/tools/HabitTracker";
+import { EnergyManagement } from "@/components/tools/EnergyManagement";
+import { SleepLogger } from "@/components/tools/SleepLogger";
+import { ExerciseLogger } from "@/components/tools/ExerciseLogger";
 
 interface ToolCard {
   id: string;
@@ -182,6 +186,14 @@ const EnergyStudio = () => {
         return <VisionBoard />;
       case "gratitude":
         return <GratitudeJournal />;
+      case "habits":
+        return <HabitTracker />;
+      case "energy":
+        return <EnergyManagement />;
+      case "sleep":
+        return <SleepLogger />;
+      case "exercise":
+        return <ExerciseLogger />;
       default:
         return null;
     }
