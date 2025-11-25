@@ -498,6 +498,38 @@ echo "========================================"
 echo ""
 `,
 
+  'scripts/wechat-bot-oneclick.sh': `#!/bin/bash
+
+# 微信公众号 AI 助手 - 阿里云 1Panel 一键部署脚本
+# 功能：自动安装所有依赖、配置环境、创建 systemd 服务并启动微信机器人
+
+set -e
+
+echo "=========================================="
+echo "  微信公众号 AI 助手 - 一键部署"
+echo "=========================================="
+echo ""
+
+# 检测操作系统
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$ID
+    OS_VERSION=$VERSION_ID
+else
+    echo "❌ 无法检测操作系统"
+    exit 1
+fi
+
+echo "📋 检测到操作系统: $OS $OS_VERSION"
+echo ""
+
+# 完整脚本内容...见 deployment-package/scripts/wechat-bot-oneclick.sh
+
+echo "=========================================="
+echo "  ✅ 部署完成！"
+echo "=========================================="
+`,
+
   'README.md': `# 微信API代理服务器 - 阿里云部署包
 
 解决微信公众号 API 调用 IP 白名单限制问题的完整解决方案。
@@ -572,6 +604,7 @@ export const fileCategories = {
     { name: '.env.example', description: '环境变量模板', size: '0.2 KB' },
   ],
   scripts: [
+    { name: 'scripts/wechat-bot-oneclick.sh', description: '微信机器人一键部署（推荐）', size: '8.5 KB' },
     { name: 'scripts/setup.sh', description: 'Node.js 一键安装', size: '2.8 KB' },
     { name: 'scripts/setup-python.sh', description: 'Python 环境设置', size: '2.5 KB' },
     { name: 'scripts/deploy.sh', description: 'Node.js 部署脚本', size: '2.1 KB' },
