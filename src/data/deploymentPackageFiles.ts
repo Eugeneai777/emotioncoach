@@ -383,13 +383,13 @@ if pgrep -f "gunicorn.*proxy:app" > /dev/null; then
 fi
 
 echo "🚀 启动服务..."
-nohup gunicorn -w 4 -b 0.0.0.0:${PORT:-3000} proxy:app > logs/gunicorn.log 2>&1 &
+nohup gunicorn -w 4 -b 0.0.0.0:\${PORT:-3000} proxy:app > logs/gunicorn.log 2>&1 &
 echo $! > gunicorn.pid
 
 sleep 3
 
 PUBLIC_IP=$(curl -s ifconfig.me || echo "无法获取")
-echo "✅ 部署完成！服务器: http://$PUBLIC_IP:${PORT:-3000}"
+echo "✅ 部署完成！服务器: http://$PUBLIC_IP:\${PORT:-3000}"
 `,
 
   'scripts/setup-python.sh': `#!/bin/bash
@@ -424,7 +424,7 @@ pip3 install -r requirements.txt
 
 mkdir -p logs
 
-PORT=${PORT:-3000}
+PORT=\${PORT:-3000}
 if command -v ufw &> /dev/null; then
     sudo ufw allow $PORT/tcp
 elif command -v firewall-cmd &> /dev/null; then
