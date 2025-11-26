@@ -25,11 +25,13 @@ export const useCampVideoRecommendations = (
   const { toast } = useToast();
   const [recommendations, setRecommendations] = useState<VideoRecommendation[]>([]);
   const [loading, setLoading] = useState(false);
+  const [hasAttemptedGeneration, setHasAttemptedGeneration] = useState(false);
 
   const dateStr = format(date, "yyyy-MM-dd");
 
   useEffect(() => {
     if (campId && user) {
+      setHasAttemptedGeneration(false); // 日期变化时重置标志
       loadRecommendations();
     }
   }, [campId, user, dateStr]);
@@ -80,9 +82,13 @@ export const useCampVideoRecommendations = (
         return;
       }
 
-      // 如果没有推荐且有简报数据，则生成新推荐
-      if (briefingData) {
+      // 如果没有推荐且有简报数据，则生成新推荐（仅尝试一次）
+      if (briefingData && !hasAttemptedGeneration) {
+        setHasAttemptedGeneration(true);
         await generateRecommendations(briefingData);
+      } else {
+        // 没有推荐且不生成时，设置为空数组
+        setRecommendations([]);
       }
     } catch (error) {
       console.error("加载视频推荐失败:", error);
@@ -103,25 +109,51 @@ export const useCampVideoRecommendations = (
 
       if (error) throw error;
 
-      if (data?.recommendations && Array.isArray(data.recommendations)) {
+      if (data?.recommendations && Array.isArray(data.recommendations) && data.recommendations.length > 0) {
         // 保存推荐到数据库，限制前3个
         const topRecommendations = data.recommendations.slice(0, 3);
         
+        const insertedTasks = [];
         for (const rec of topRecommendations) {
-          await supabase.from("camp_video_tasks").insert({
-            camp_id: campId,
-            user_id: user.id,
-            video_id: rec.id,
-            progress_date: dateStr,
-            reason: rec.reason,
-            match_score: rec.match_score,
-          });
+          const { data: insertedTask, error: insertError } = await supabase
+            .from("camp_video_tasks")
+            .insert({
+              camp_id: campId,
+              user_id: user.id,
+              video_id: rec.id,
+              progress_date: dateStr,
+              reason: rec.reason,
+              match_score: rec.match_score,
+            })
+            .select(`
+              id,
+              video_id,
+              reason,
+              match_score,
+              is_completed,
+              watched_at
+            `)
+            .single();
+
+          if (!insertError && insertedTask) {
+            insertedTasks.push({
+              ...insertedTask,
+              title: rec.title,
+              video_url: rec.video_url,
+              description: rec.description,
+            });
+          }
         }
 
-        await loadRecommendations();
+        // 直接更新本地状态，不再调用 loadRecommendations
+        setRecommendations(insertedTasks);
+      } else {
+        // API 返回空结果，直接设置空数组
+        setRecommendations([]);
       }
     } catch (error) {
       console.error("生成视频推荐失败:", error);
+      setRecommendations([]);
     }
   };
 
