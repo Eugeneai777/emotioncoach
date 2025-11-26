@@ -38,21 +38,44 @@ export default function CustomCarouselCard({
 
   return (
     <CarouselCardWrapper background={background} textMode={textColor}>
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-3xl">{emoji}</span>
-              <h3 className="text-lg font-semibold">{title}</h3>
+      {/* Background Image */}
+      {imageUrl && imagePosition === "background" && (
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-20 rounded-2xl"
+          style={{ backgroundImage: `url(${imageUrl})` }}
+        />
+      )}
+
+      <div className="flex flex-col h-full relative z-10">
+        {/* Header Section - Improved spacing and alignment */}
+        <div className="flex items-start justify-between gap-4 mb-4">
+          {/* Image - Left Position */}
+          {imageUrl && imagePosition === "left" && (
+            <img
+              src={imageUrl}
+              alt={title}
+              className="w-24 h-24 object-cover rounded-xl shadow-lg flex-shrink-0 ring-2 ring-white/20"
+            />
+          )}
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2.5 mb-2">
+              <span className="text-3xl leading-none flex-shrink-0">{emoji}</span>
+              <h3
+                className={`text-xl font-bold tracking-tight leading-tight ${
+                  textColor === "light" ? "text-primary-foreground" : "text-foreground"
+                }`}
+              >
+                {title}
+              </h3>
             </div>
             {subtitle && (
               <p
-                className={
+                className={`text-sm font-medium ${
                   textColor === "light"
-                    ? "text-sm text-primary-foreground/80"
-                    : "text-sm text-muted-foreground"
-                }
+                    ? "text-primary-foreground/70"
+                    : "text-muted-foreground"
+                }`}
               >
                 {subtitle}
               </p>
@@ -64,42 +87,45 @@ export default function CustomCarouselCard({
             <img
               src={imageUrl}
               alt={title}
-              className="w-20 h-20 object-cover rounded-lg ml-4 shadow-md"
+              className="w-24 h-24 object-cover rounded-xl shadow-lg flex-shrink-0 ring-2 ring-white/20"
             />
           )}
         </div>
 
         {/* Image - Top Position */}
         {imageUrl && imagePosition === "top" && (
-          <img
-            src={imageUrl}
-            alt={title}
-            className="w-full h-32 object-cover rounded-lg mb-4 shadow-md"
-          />
+          <div className="mb-4 -mx-6 -mt-6">
+            <img
+              src={imageUrl}
+              alt={title}
+              className="w-full h-32 object-cover shadow-md"
+            />
+          </div>
         )}
 
-        {/* Content */}
-        <div className="flex-1">
+        {/* Content Section - Better typography */}
+        <div className="flex-1 mb-4">
           {description && (
             <p
-              className={
+              className={`text-sm leading-relaxed ${
                 textColor === "light"
-                  ? "text-sm leading-relaxed text-primary-foreground/90"
-                  : "text-sm leading-relaxed text-foreground/90"
-              }
+                  ? "text-primary-foreground/85"
+                  : "text-foreground/80"
+              }`}
             >
               {description}
             </p>
           )}
         </div>
 
-        {/* Action Button */}
+        {/* Action Button - Enhanced design */}
         {actionText && onAction && (
-          <div className="mt-4">
+          <div className="mt-auto pt-4">
             <Button
               onClick={onAction}
               variant={textColor === "light" ? "secondary" : "default"}
-              className="w-full group"
+              className="w-full group shadow-md hover:shadow-lg transition-all"
+              size="lg"
             >
               {actionText}
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -107,14 +133,6 @@ export default function CustomCarouselCard({
           </div>
         )}
       </div>
-
-      {/* Background Image */}
-      {imageUrl && imagePosition === "background" && (
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: `url(${imageUrl})` }}
-        />
-      )}
     </CarouselCardWrapper>
   );
 }
