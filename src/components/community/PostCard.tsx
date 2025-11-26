@@ -8,10 +8,11 @@ import LikeButton from "./LikeButton";
 import CommentSection from "./CommentSection";
 import ShareButton from "./ShareButton";
 import { useState, useEffect } from "react";
-import { MessageCircle, UserPlus, UserCheck } from "lucide-react";
+import { MessageCircle, UserPlus, UserCheck, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import PostEditDialog from "./PostEditDialog";
 
 interface PostCardProps {
   post: {
@@ -38,6 +39,7 @@ interface PostCardProps {
 
 const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const [showComments, setShowComments] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likes_count);
   const [commentsCount, setCommentsCount] = useState(post.comments_count);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -225,9 +227,21 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
             </p>
           </div>
         </div>
-        <Badge variant="secondary">
-          {getTypeEmoji(post.post_type)} {getTypeLabel(post.post_type)}
-        </Badge>
+        <div className="flex items-center gap-2">
+          {session?.user?.id === post.user_id && !post.is_anonymous && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowEditDialog(true)}
+              className="h-8 px-2"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          <Badge variant="secondary">
+            {getTypeEmoji(post.post_type)} {getTypeLabel(post.post_type)}
+          </Badge>
+        </div>
       </div>
 
       {/* 副标题：训练营信息（兼容新旧数据） */}
@@ -339,6 +353,14 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
       {showComments && (
         <CommentSection postId={post.id} onUpdate={onUpdate} />
       )}
+
+      {/* 编辑弹窗 */}
+      <PostEditDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        post={post}
+        onUpdate={onUpdate}
+      />
     </Card>
   );
 };
