@@ -18,6 +18,9 @@ import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
 
 import { TrainingCampCard } from "@/components/camp/TrainingCampCard";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
+import { CampMiniCalendar } from "@/components/camp/CampMiniCalendar";
+import { CampRecentReflections } from "@/components/camp/CampRecentReflections";
+import { CampMilestonesBadges } from "@/components/camp/CampMilestonesBadges";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
@@ -742,8 +745,42 @@ const Index = () => {
               )}
 
               {activeCamp && (
-                <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+                <div className="w-full mt-6 space-y-4 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                   <TrainingCampCard camp={activeCamp} onCheckIn={handleCheckIn} />
+                  
+                  {/* Expanded Camp Progress */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {/* Mini Calendar */}
+                    <div className="bg-card border border-border rounded-card-lg p-card shadow-sm">
+                      <CampMiniCalendar 
+                        startDate={activeCamp.start_date}
+                        endDate={activeCamp.end_date}
+                        checkInDates={activeCamp.check_in_dates}
+                        currentDay={activeCamp.current_day}
+                      />
+                    </div>
+                    
+                    {/* Achievement Badges */}
+                    <div className="bg-card border border-border rounded-card-lg p-card shadow-sm">
+                      <CampMilestonesBadges 
+                        completedDays={activeCamp.completed_days}
+                        milestone7Reached={activeCamp.milestone_7_reached}
+                        milestone14Reached={activeCamp.milestone_14_reached}
+                        milestone21Completed={activeCamp.milestone_21_completed}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Recent Reflections */}
+                  {user && (
+                    <div className="bg-card border border-border rounded-card-lg p-card shadow-sm">
+                      <CampRecentReflections 
+                        userId={user.id}
+                        startDate={activeCamp.start_date}
+                        endDate={activeCamp.end_date}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
