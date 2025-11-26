@@ -16,7 +16,7 @@ import { EmotionIntensitySelector } from "@/components/EmotionIntensitySelector"
 import { EmotionIntensitySlider } from "@/components/EmotionIntensitySlider";
 import { IntensityReminderDialog } from "@/components/IntensityReminderDialog";
 import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
-import { AccountBalance } from "@/components/AccountBalance";
+
 import { TrainingCampCard } from "@/components/camp/TrainingCampCard";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { useStreamChat } from "@/hooks/useStreamChat";
@@ -481,9 +481,6 @@ const Index = () => {
 
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <AccountBalance />
-          </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1 md:gap-2">
               {messages.length > 0 && (
