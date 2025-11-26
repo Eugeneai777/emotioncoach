@@ -502,10 +502,6 @@ const Index = () => {
       <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-8 px-3 md:px-4">
-            {showReminder && (
-              <DailyReminder onStart={handleStartFromReminder} onDismiss={handleDismissReminder} />
-            )}
-
             <div className="text-center space-y-3 md:space-y-4 w-full max-w-xl animate-in fade-in-50 duration-700">
               <div className="space-y-1.5 md:space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground">情绪觉醒教练</h2>
@@ -514,71 +510,99 @@ const Index = () => {
                 </p>
               </div>
 
+              {/* 情绪四部曲 / 每日提醒 - 同位置切换展示 */}
               <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-4 md:p-6 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
-                <div className="mb-2.5 md:mb-3">
-                  <h3 className="font-semibold text-foreground flex items-center gap-2 text-base md:text-lg">
-                    <span className="text-primary">🌱</span>
-                    情绪四部曲
-                  </h3>
-                </div>
+                {showReminder ? (
+                  <div className="animate-in fade-in-50 duration-300">
+                    <div className="text-center space-y-3">
+                      <p className="text-2xl">🌿</p>
+                      <h3 className="font-semibold text-foreground text-base md:text-lg">
+                        温柔的提醒
+                      </h3>
+                      <p className="text-muted-foreground leading-relaxed">
+                        今天的情绪，想和劲老师一起梳理吗？
+                      </p>
+                      <p className="text-sm text-muted-foreground/80 leading-relaxed">
+                        无论是什么感受，都值得被看见和理解。劲老师在这里陪着你 💫
+                      </p>
+                    </div>
+                    <div className="flex gap-3 mt-4">
+                      <Button onClick={handleStartFromReminder} className="flex-1">
+                        开始梳理
+                      </Button>
+                      <Button onClick={handleDismissReminder} variant="outline" className="flex-1">
+                        稍后再说
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="animate-in fade-in-50 duration-300">
+                    <div className="mb-2.5 md:mb-3">
+                      <h3 className="font-semibold text-foreground flex items-center gap-2 text-base md:text-lg">
+                        <span className="text-primary">🌱</span>
+                        情绪四部曲
+                      </h3>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
-                    <div className="flex items-start gap-2 mb-1">
-                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                        1
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+                      <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                        <div className="flex items-start gap-2 mb-1">
+                          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                            1
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-foreground text-sm">
+                              觉察 <span className="text-primary/70 font-medium text-xs ml-1">Feel it</span>
+                            </h4>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground ml-9">停下来感受当前情绪</p>
                       </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-sm">
-                          觉察 <span className="text-primary/70 font-medium text-xs ml-1">Feel it</span>
-                        </h4>
+
+                      <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                        <div className="flex items-start gap-2 mb-1">
+                          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                            2
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-foreground text-sm">
+                              理解 <span className="text-primary/70 font-medium text-xs ml-1">Name it</span>
+                            </h4>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground ml-9">理解情绪背后的需求</p>
+                      </div>
+
+                      <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                        <div className="flex items-start gap-2 mb-1">
+                          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                            3
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-foreground text-sm">
+                              反应 <span className="text-primary/70 font-medium text-xs ml-1">React it</span>
+                            </h4>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground ml-9">觉察情绪驱动的反应</p>
+                      </div>
+
+                      <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                        <div className="flex items-start gap-2 mb-1">
+                          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                            4
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-foreground text-sm">
+                              行动 <span className="text-primary/70 font-medium text-xs ml-1">Act it</span>
+                            </h4>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground ml-9">采取建设性的行动</p>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground ml-9">停下来感受当前情绪</p>
                   </div>
-
-                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
-                    <div className="flex items-start gap-2 mb-1">
-                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                        2
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-sm">
-                          理解 <span className="text-primary/70 font-medium text-xs ml-1">Name it</span>
-                        </h4>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground ml-9">理解情绪背后的需求</p>
-                  </div>
-
-                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
-                    <div className="flex items-start gap-2 mb-1">
-                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                        3
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-sm">
-                          反应 <span className="text-primary/70 font-medium text-xs ml-1">React it</span>
-                        </h4>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground ml-9">觉察情绪驱动的反应</p>
-                  </div>
-
-                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
-                    <div className="flex items-start gap-2 mb-1">
-                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                        4
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-sm">
-                          行动 <span className="text-primary/70 font-medium text-xs ml-1">Act it</span>
-                        </h4>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground ml-9">采取建设性的行动</p>
-                  </div>
-                </div>
+                )}
               </div>
 
               {!activeCamp && (
