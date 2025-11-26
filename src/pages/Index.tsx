@@ -18,10 +18,9 @@ import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
 
 import { TrainingCampCard } from "@/components/camp/TrainingCampCard";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
-import { CampMiniCalendar } from "@/components/camp/CampMiniCalendar";
 import { CampRecentReflections } from "@/components/camp/CampRecentReflections";
-import { CampMilestonesBadges } from "@/components/camp/CampMilestonesBadges";
 import CampCheckInSuccessDialog from "@/components/camp/CampCheckInSuccessDialog";
+import { NotificationCard } from "@/components/NotificationCard";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
@@ -29,7 +28,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingCamp } from "@/types/trainingCamp";
-import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target, Sparkles, ChevronDown, ShoppingCart } from "lucide-react";
+import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target, Sparkles, ChevronDown, ShoppingCart, Bell } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -67,7 +66,13 @@ const Index = () => {
     sendMessage,
     resetConversation
   } = useStreamChat();
-  const { triggerNotification } = useSmartNotification();
+  const { 
+    notifications, 
+    loading: notificationsLoading,
+    markAsRead, 
+    markAsDismissed,
+    triggerNotification 
+  } = useSmartNotification();
   const {
     isListening,
     transcript,
@@ -791,27 +796,39 @@ const Index = () => {
                 <div className="w-full mt-6 space-y-4 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                   <TrainingCampCard camp={activeCamp} onCheckIn={handleCheckIn} />
                   
-                  {/* Expanded Camp Progress */}
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {/* Mini Calendar */}
-                    <div className="bg-card border border-border rounded-card-lg p-card shadow-sm">
-                      <CampMiniCalendar 
-                        startDate={activeCamp.start_date}
-                        endDate={activeCamp.end_date}
-                        checkInDates={activeCamp.check_in_dates}
-                        currentDay={activeCamp.current_day}
-                      />
-                    </div>
+                  {/* Smart Notifications Display */}
+                  <div className="bg-card border border-border rounded-card-lg p-card shadow-sm">
+                    <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
+                      <Bell className="h-4 w-4 text-primary" />
+                      智能提醒
+                    </h4>
                     
-                    {/* Achievement Badges */}
-                    <div className="bg-card border border-border rounded-card-lg p-card shadow-sm">
-                      <CampMilestonesBadges 
-                        completedDays={activeCamp.completed_days}
-                        milestone7Reached={activeCamp.milestone_7_reached}
-                        milestone14Reached={activeCamp.milestone_14_reached}
-                        milestone21Completed={activeCamp.milestone_21_completed}
-                      />
-                    </div>
+                    {notificationsLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : notifications.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">
+                        暂无新提醒
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {notifications.slice(0, 3).map((notification) => (
+                          <NotificationCard
+                            key={notification.id}
+                            notification={notification}
+                            onClick={() => markAsRead(notification.id)}
+                            onDismiss={() => markAsDismissed(notification.id)}
+                          />
+                        ))}
+                        
+                        {notifications.length > 3 && (
+                          <div className="w-full text-sm text-muted-foreground text-center py-2 border-t border-border/50">
+                            还有 {notifications.length - 3} 条通知，点击右上角 🔔 查看
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   
                   {/* Recent Reflections */}
