@@ -1,5 +1,6 @@
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, Share2 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface ChatMessageProps {
   role: "user" | "assistant";
@@ -9,6 +10,7 @@ interface ChatMessageProps {
 
 export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) => {
   const isUser = role === "user";
+  const navigate = useNavigate();
   const [clickedOption, setClickedOption] = useState<string | null>(null);
   
   // 检测是否包含编号选项（如 "1. 选项" 或 "1、选项"）
@@ -66,14 +68,20 @@ export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) 
                 const isClicked = clickedOption === option.text;
                 const isDisabled = clickedOption !== null;
                 const isBriefingButton = option.text.includes("生成简报") || option.text.includes("简报");
+                const isShareButton = option.text.includes("去社区分享") || option.text.includes("分享到社区");
                 
                 return (
                   <button
                     key={index}
                     onClick={() => {
                       if (!isDisabled) {
-                        setClickedOption(option.text);
-                        onOptionClick(option.text);
+                        if (isShareButton) {
+                          // 分享按钮直接跳转到社区
+                          navigate("/community");
+                        } else {
+                          setClickedOption(option.text);
+                          onOptionClick(option.text);
+                        }
                       }
                     }}
                     disabled={isDisabled}
@@ -82,6 +90,8 @@ export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) 
                         ? "bg-primary/20 border-primary/60 scale-[0.98]"
                         : isDisabled
                         ? "bg-muted/50 border-muted opacity-50 cursor-not-allowed"
+                        : isShareButton
+                        ? "bg-gradient-to-br from-orange-500/90 via-pink-500/90 to-rose-500/90 hover:from-orange-500 hover:via-pink-500 hover:to-rose-500 border-orange-400/50 text-white shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/50 hover:scale-[1.03] active:scale-[0.98]"
                         : isBriefingButton
                         ? "bg-gradient-to-br from-primary via-primary/90 to-primary/80 hover:from-primary/90 hover:via-primary/80 hover:to-primary/70 border-primary text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:scale-[1.03] active:scale-[0.98] animate-in fade-in-50 slide-in-from-bottom-2 duration-500"
                         : "bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 hover:from-primary/20 hover:via-primary/15 hover:to-primary/20 border-primary/20 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.02] active:scale-[0.98]"
@@ -90,14 +100,14 @@ export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) 
                     {/* 背景光效 */}
                     {!isDisabled && !isClicked && (
                       <div className={`absolute inset-0 bg-gradient-to-r from-transparent ${
-                        isBriefingButton 
+                        isBriefingButton || isShareButton
                           ? "via-white/10 to-transparent" 
                           : "via-primary/5 to-transparent"
                       } translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`} />
                     )}
                     
-                    {/* 动态背景粒子效果（仅简报按钮） */}
-                    {isBriefingButton && !isDisabled && !isClicked && (
+                    {/* 动态背景粒子效果（简报和分享按钮） */}
+                    {(isBriefingButton || isShareButton) && !isDisabled && !isClicked && (
                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                         <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/30 rounded-full animate-ping" style={{ animationDelay: '0ms' }} />
                         <div className="absolute top-1/2 right-1/3 w-1.5 h-1.5 bg-white/20 rounded-full animate-ping" style={{ animationDelay: '200ms' }} />
@@ -110,6 +120,8 @@ export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) 
                       <div className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-bold text-base transition-all ${
                         isClicked
                           ? "bg-primary shadow-lg shadow-primary/50 animate-pulse"
+                          : isShareButton
+                          ? "bg-white/20 backdrop-blur-sm shadow-lg group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300"
                           : isBriefingButton
                           ? "bg-white/20 backdrop-blur-sm shadow-lg group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300"
                           : "bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-md shadow-primary/30 group-hover:shadow-lg group-hover:shadow-primary/40"
@@ -118,6 +130,8 @@ export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) 
                           <div className="flex flex-col items-center">
                             <Loader2 className="w-5 h-5 text-primary-foreground animate-spin" />
                           </div>
+                        ) : isShareButton ? (
+                          <Share2 className="w-5 h-5 text-white" />
                         ) : (
                           <span className={isBriefingButton ? "text-white font-extrabold" : "text-primary-foreground"}>
                             {isBriefingButton ? "📝" : option.number}
@@ -131,7 +145,7 @@ export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) 
                           ? "text-primary"
                           : isDisabled
                           ? "text-muted-foreground"
-                          : isBriefingButton
+                          : isShareButton || isBriefingButton
                           ? "text-white drop-shadow-sm group-hover:scale-105 transition-transform duration-200"
                           : "text-foreground group-hover:text-primary"
                       }`}>
@@ -147,7 +161,7 @@ export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) 
                         </div>
                       ) : (
                         <Sparkles className={`w-5 h-5 transition-all ${
-                          isBriefingButton
+                          isShareButton || isBriefingButton
                             ? "text-white/80 group-hover:text-white group-hover:scale-125 group-hover:rotate-12 opacity-100"
                             : "text-primary/40 group-hover:text-primary group-hover:scale-110 opacity-0 group-hover:opacity-100"
                         }`} />
