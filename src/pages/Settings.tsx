@@ -177,8 +177,8 @@ export default function Settings() {
 
           <TabsContent value="account" className="space-y-6">
             <AccountBalance />
-            <BillingExplanation />
             <PackageSelector />
+            <BillingExplanation />
           </TabsContent>
 
           <TabsContent value="reminders">
