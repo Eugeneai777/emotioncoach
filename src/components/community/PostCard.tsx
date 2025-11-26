@@ -128,7 +128,14 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
         </Badge>
       </div>
 
-      {/* 标题 */}
+      {/* 副标题：训练营信息 */}
+      {post.badges?.campInfo && (
+        <p className="text-sm text-muted-foreground mb-1">
+          {post.badges.campInfo}
+        </p>
+      )}
+
+      {/* 主标题：用户自定义标题 */}
       {post.title && (
         <h3 className="text-xl font-semibold mb-2 text-foreground">
           {post.title}
