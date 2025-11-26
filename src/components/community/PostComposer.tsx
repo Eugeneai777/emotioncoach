@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import ImageUploader from "./ImageUploader";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 
 interface PostComposerProps {
   open: boolean;
@@ -25,6 +25,7 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
   const { toast } = useToast();
   const { session } = useAuth();
 
@@ -82,6 +83,46 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleGenerateImage = async () => {
+    if (!title.trim() && !content.trim()) {
+      toast({
+        title: "需要标题或内容",
+        description: "请先输入标题或内容，AI 将基于内容生成头图",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGeneratingImage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "generate-checkin-image",
+        {
+          body: {
+            title: title.trim() || content.substring(0, 50),
+            emotionTheme: postType === "story" ? "温暖分享" : "成长记录",
+          },
+        }
+      );
+
+      if (error) throw error;
+
+      if (data?.imageUrl) {
+        setImageUrls([...imageUrls, data.imageUrl]);
+        toast({ title: "头图生成成功！", description: "AI 已为您生成精美头图" });
+      }
+    } catch (error) {
+      console.error("生成图片失败:", error);
+      toast({
+        title: "生成失败",
+        description: "请稍后重试",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingImage(false);
     }
   };
 
@@ -144,6 +185,27 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
               onImagesChange={setImageUrls}
               maxImages={9}
             />
+            
+            {/* AI 生成头图按钮 */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={handleGenerateImage}
+              disabled={generatingImage || imageUrls.length >= 9}
+            >
+              {generatingImage ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  AI 生成头图
+                </>
+              )}
+            </Button>
           </div>
 
           {/* 匿名选项 */}
