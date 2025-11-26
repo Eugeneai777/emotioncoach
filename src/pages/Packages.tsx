@@ -8,8 +8,8 @@ import { useNavigate } from "react-router-dom";
 
 const packages = [
   {
-    id: 'free',
-    name: '免费体验',
+    id: 'basic',
+    name: '基础套餐',
     quota: 50,
     price: 0,
     duration: '永久',
@@ -24,40 +24,22 @@ const packages = [
     ]
   },
   {
-    id: 'monthly',
-    name: '月度套餐',
-    quota: 300,
-    price: 29,
-    duration: '30天',
-    icon: Zap,
+    id: 'member365',
+    name: '365会员',
+    quota: 1000,
+    price: 365,
+    duration: '365天',
+    icon: Crown,
     popular: true,
     gradient: 'from-primary/20 to-primary/10',
     features: [
-      '300次AI对话',
-      '高级情绪分析',
-      '完整数据导出',
-      '标签管理系统',
-      '目标设定与追踪',
-      '优先客服支持'
-    ]
-  },
-  {
-    id: 'youjin365',
-    name: '有劲365',
-    quota: 1500,
-    price: 99,
-    duration: '365天',
-    icon: Crown,
-    popular: false,
-    gradient: 'from-amber-400/20 to-orange-500/20',
-    features: [
-      '1500次AI对话',
+      '1000次AI对话',
       '全部高级功能',
       '专属VIP客服',
       '无限数据导出',
       '深度情绪分析',
       '优先新功能体验',
-      '个性化建议'
+      '365天有效期，过期未用完作废'
     ]
   }
 ];
@@ -107,7 +89,7 @@ export default function Packages() {
         </div>
 
         {/* 套餐卡片 */}
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 animate-in fade-in-50 slide-in-from-bottom-4 duration-700 delay-200">
+        <div className="grid md:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto animate-in fade-in-50 slide-in-from-bottom-4 duration-700 delay-200">
           {packages.map((pkg, index) => {
             const Icon = pkg.icon;
             return (
@@ -208,6 +190,7 @@ export default function Packages() {
         {/* 底部说明 */}
         <div className="text-center text-sm text-muted-foreground space-y-2 animate-in fade-in-50 duration-700 delay-400">
           <p>💡 套餐购买后立即生效，对话次数累计计算</p>
+          <p>⏰ 365会员自购买之日起365天有效，过期未使用次数作废</p>
           <p>🔒 我们承诺保护您的隐私数据安全</p>
         </div>
       </div>
