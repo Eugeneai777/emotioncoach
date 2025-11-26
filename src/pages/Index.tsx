@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "@/components/ChatMessage";
+import DailyReminder from "@/components/DailyReminder";
 import StreakDisplay from "@/components/StreakDisplay";
 import GoalProgressCard from "@/components/GoalProgressCard";
 import TodayProgress from "@/components/TodayProgress";
@@ -15,8 +16,8 @@ import { EmotionIntensitySlider } from "@/components/EmotionIntensitySlider";
 import { IntensityReminderDialog } from "@/components/IntensityReminderDialog";
 import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
 import { AccountBalance } from "@/components/AccountBalance";
+import { TrainingCampCard } from "@/components/camp/TrainingCampCard";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
-import HomeCarousel from "@/components/home/HomeCarousel";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
@@ -501,27 +502,12 @@ const Index = () => {
       <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-8 px-3 md:px-4">
-            <div className="w-full animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-              <HomeCarousel
-                context={{
-                  hasReminder: showReminder,
-                  hasActiveCamp: !!activeCamp,
-                  campHasMilestone: activeCamp ? (
-                    activeCamp.milestone_7_reached ||
-                    activeCamp.milestone_14_reached ||
-                    activeCamp.milestone_21_completed
-                  ) : false,
-                  hasGoalUpdate: false,
-                }}
-                activeCamp={activeCamp || undefined}
-                onStartReminder={handleStartFromReminder}
-                onDismissReminder={handleDismissReminder}
-                onCheckIn={handleCheckIn}
-              />
-            </div>
+            {showReminder && (
+              <DailyReminder onStart={handleStartFromReminder} onDismiss={handleDismissReminder} />
+            )}
 
             {!activeCamp && (
-              <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+              <div className="w-full mb-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-6 border border-primary/20">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -538,6 +524,88 @@ const Index = () => {
                 </div>
               </div>
             )}
+
+            {activeCamp && (
+              <div className="w-full mb-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+                <TrainingCampCard camp={activeCamp} onCheckIn={handleCheckIn} />
+              </div>
+            )}
+
+            <div className="text-center space-y-3 md:space-y-4 w-full max-w-xl animate-in fade-in-50 duration-700">
+              <div className="space-y-1.5 md:space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground">情绪觉醒教练</h2>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                  劲老师陪着你，一步步梳理情绪，重新找到情绪里的力量
+                </p>
+              </div>
+
+              <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-4 md:p-6 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
+                <div className="mb-2.5 md:mb-3">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2 text-base md:text-lg">
+                    <span className="text-primary">🌱</span>
+                    情绪四部曲
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        1
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground text-sm">
+                          觉察 <span className="text-primary/70 font-medium text-xs ml-1">Feel it</span>
+                        </h4>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-9">停下来感受当前情绪</p>
+                  </div>
+
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        2
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground text-sm">
+                          理解 <span className="text-primary/70 font-medium text-xs ml-1">Name it</span>
+                        </h4>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-9">理解情绪背后的需求</p>
+                  </div>
+
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        3
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground text-sm">
+                          反应 <span className="text-primary/70 font-medium text-xs ml-1">React it</span>
+                        </h4>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-9">觉察情绪驱动的反应</p>
+                  </div>
+
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        4
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground text-sm">
+                          行动 <span className="text-primary/70 font-medium text-xs ml-1">Act it</span>
+                        </h4>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-9">采取建设性的行动</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="flex-1 py-4 md:py-6 space-y-3 md:space-y-4">

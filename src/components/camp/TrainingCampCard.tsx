@@ -1,10 +1,11 @@
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { TrainingCamp } from "@/types/trainingCamp";
 import { CheckCircle2, Circle, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, differenceInDays } from "date-fns";
-import CarouselCardWrapper from "@/components/home/CarouselCardWrapper";
+import { zhCN } from "date-fns/locale";
 
 interface TrainingCampCardProps {
   camp: TrainingCamp;
@@ -42,86 +43,86 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   ];
 
   return (
-    <CarouselCardWrapper 
-      background="bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5"
-      textMode="dark"
-    >
-      <div className="flex flex-col h-full space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            🏕️ {camp.camp_name}
-          </h3>
-          {camp.status === 'active' && (
-            <span className="text-xs text-muted-foreground font-medium">
-              第 {camp.current_day + 1} / {camp.duration_days} 天
+    <Card className="p-6 bg-gradient-to-br from-primary/5 to-secondary/5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          🏕️ {camp.camp_name}
+        </h3>
+        {camp.status === 'active' && (
+          <span className="text-sm text-muted-foreground">
+            第 {camp.current_day + 1} / {camp.duration_days} 天
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-2xl font-bold text-primary">
+              {camp.completed_days} / {camp.duration_days}
             </span>
-          )}
+            <span className="text-sm font-medium">{Math.round(progressPercent)}%</span>
+          </div>
+          <Progress value={progressPercent} className="h-2" />
         </div>
 
-        <div className="flex-1 space-y-3">
+        <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xl font-bold text-primary">
-                {camp.completed_days} / {camp.duration_days}
-              </span>
-              <span className="text-xs font-medium">{Math.round(progressPercent)}%</span>
-            </div>
-            <Progress value={progressPercent} className="h-2" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="flex items-center gap-2">
+            <div className="text-muted-foreground mb-1">今日状态</div>
+            <div className="font-medium flex items-center gap-1">
               {hasCheckedInToday ? (
                 <>
-                  <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span className="text-green-500 font-medium">已打卡</span>
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span className="text-green-500">已打卡</span>
                 </>
               ) : (
                 <>
-                  <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <span className="text-muted-foreground">未打卡</span>
+                  <Circle className="h-4 w-4 text-muted-foreground" />
+                  <span>未打卡</span>
                 </>
               )}
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-lg">🔥</span>
-              <span className="font-semibold text-primary">{currentStreak} 天连续</span>
-            </div>
           </div>
-
           <div>
-            <div className="flex items-center justify-between gap-1 mb-1.5">
-              {getMilestones().map((milestone, idx) => (
-                <div key={idx} className="flex flex-col items-center flex-1">
-                  <div className={`text-xl transition-all ${
-                    milestone.reached ? 'opacity-100 scale-110' : 'opacity-30'
-                  }`}>
-                    {milestone.icon}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">{milestone.label}</div>
-                </div>
-              ))}
+            <div className="text-muted-foreground mb-1">连续打卡</div>
+            <div className="font-medium text-primary">
+              🔥 {currentStreak} 天
             </div>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div>
+          <div className="text-sm text-muted-foreground mb-2">里程碑进度</div>
+          <div className="flex gap-2">
+            {getMilestones().map((milestone, idx) => (
+              <div key={idx} className="flex flex-col items-center flex-1">
+                <div className={`text-2xl mb-1 transition-all ${
+                  milestone.reached ? 'opacity-100 scale-110' : 'opacity-30'
+                }`}>
+                  {milestone.icon}
+                </div>
+                <div className="text-xs text-muted-foreground">{milestone.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-2 pt-2">
           {!hasCheckedInToday && camp.status === 'active' && (
-            <Button onClick={onCheckIn} size="sm" className="flex-1 h-8 text-xs">
-              <Calendar className="h-3 w-3 mr-1.5" />
+            <Button onClick={onCheckIn} className="flex-1">
+              <Calendar className="h-4 w-4 mr-2" />
               今日打卡
             </Button>
           )}
           <Button 
             variant="outline" 
-            size="sm"
             onClick={() => navigate(`/camp/${camp.id}`)}
-            className="flex-1 h-8 text-xs"
+            className="flex-1"
           >
             查看进度
           </Button>
         </div>
       </div>
-    </CarouselCardWrapper>
+    </Card>
   );
 }
