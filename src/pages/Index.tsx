@@ -25,9 +25,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingCamp } from "@/types/trainingCamp";
-import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target, Sparkles } from "lucide-react";
+import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target, Sparkles, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const Index = () => {
   const [input, setInput] = useState("");
@@ -38,6 +39,8 @@ const Index = () => {
   const [selectedIntensity, setSelectedIntensity] = useState<number | null>(null);
   const [activeCamp, setActiveCamp] = useState<TrainingCamp | null>(null);
   const [showStartCamp, setShowStartCamp] = useState(false);
+  const [expandedStep, setExpandedStep] = useState<number | null>(null);
+  const [autoDismissSeconds, setAutoDismissSeconds] = useState(10);
   const [voiceConfig, setVoiceConfig] = useState<{
     gender: 'male' | 'female';
     rate: number;
@@ -113,6 +116,17 @@ const Index = () => {
       loadActiveCamp();
     }
   }, [user, authLoading, navigate]);
+
+  // Auto dismiss reminder
+  useEffect(() => {
+    if (showReminder && autoDismissSeconds > 0) {
+      const timer = setTimeout(() => {
+        handleDismissReminder();
+      }, autoDismissSeconds * 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showReminder, autoDismissSeconds]);
 
   const loadActiveCamp = async () => {
     if (!user) return;
@@ -273,10 +287,14 @@ const Index = () => {
     try {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("reminder_enabled, reminder_time, last_reminder_shown")
+        .select("reminder_enabled, reminder_time, last_reminder_shown, reminder_auto_dismiss_seconds")
         .eq("id", user.id)
         .single();
       if (!profile || !profile.reminder_enabled) return;
+      
+      // Set auto dismiss seconds
+      setAutoDismissSeconds(profile.reminder_auto_dismiss_seconds ?? 10);
+      
       const now = new Date();
       const currentTime = now.getHours() * 60 + now.getMinutes();
       const [hours, minutes] = (profile.reminder_time || "20:00").split(":");
@@ -544,62 +562,126 @@ const Index = () => {
                       </h3>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-                      <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
-                        <div className="flex items-start gap-2 mb-1">
-                          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                            1
+                    <div className="space-y-2 md:space-y-3">
+                      {/* Step 1: 觉察 */}
+                      <Collapsible open={expandedStep === 1} onOpenChange={() => setExpandedStep(expandedStep === 1 ? null : 1)}>
+                        <CollapsibleTrigger className="w-full">
+                          <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group cursor-pointer">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                                1
+                              </div>
+                              <div className="flex-1 text-left">
+                                <h4 className="font-semibold text-foreground text-sm">
+                                  觉察 <span className="text-primary/70 font-medium text-xs ml-1">Feel it</span>
+                                </h4>
+                                <p className="text-xs text-muted-foreground">停下来感受当前情绪</p>
+                              </div>
+                              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedStep === 1 ? 'rotate-180' : ''}`} />
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-foreground text-sm">
-                              觉察 <span className="text-primary/70 font-medium text-xs ml-1">Feel it</span>
-                            </h4>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-2">
+                          <div className="bg-background/30 rounded-lg p-4 border border-border/30 space-y-2">
+                            <p className="text-sm text-foreground leading-relaxed">
+                              <strong>详细说明：</strong>暂停日常活动，给自己一个空间去真实地感受此刻的情绪。不评判、不压抑，只是单纯地觉察它的存在。
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              <strong>示例：</strong>当你感到胸口发紧时，停下来深呼吸，问自己："我现在感受到了什么？" 可能是焦虑、担忧或不安。
+                            </p>
                           </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground ml-9">停下来感受当前情绪</p>
-                      </div>
+                        </CollapsibleContent>
+                      </Collapsible>
 
-                      <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
-                        <div className="flex items-start gap-2 mb-1">
-                          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                            2
+                      {/* Step 2: 理解 */}
+                      <Collapsible open={expandedStep === 2} onOpenChange={() => setExpandedStep(expandedStep === 2 ? null : 2)}>
+                        <CollapsibleTrigger className="w-full">
+                          <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group cursor-pointer">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                                2
+                              </div>
+                              <div className="flex-1 text-left">
+                                <h4 className="font-semibold text-foreground text-sm">
+                                  理解 <span className="text-primary/70 font-medium text-xs ml-1">Name it</span>
+                                </h4>
+                                <p className="text-xs text-muted-foreground">理解情绪背后的需求</p>
+                              </div>
+                              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedStep === 2 ? 'rotate-180' : ''}`} />
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-foreground text-sm">
-                              理解 <span className="text-primary/70 font-medium text-xs ml-1">Name it</span>
-                            </h4>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-2">
+                          <div className="bg-background/30 rounded-lg p-4 border border-border/30 space-y-2">
+                            <p className="text-sm text-foreground leading-relaxed">
+                              <strong>详细说明：</strong>深入探索这份情绪想要告诉你什么。每一种情绪背后都有未被满足的需求，理解它才能找到应对方法。
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              <strong>示例：</strong>焦虑可能是因为对未来的不确定，背后的需求是"安全感"和"掌控感"。愤怒可能是因为界限被侵犯，需要的是"尊重"。
+                            </p>
                           </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground ml-9">理解情绪背后的需求</p>
-                      </div>
+                        </CollapsibleContent>
+                      </Collapsible>
 
-                      <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
-                        <div className="flex items-start gap-2 mb-1">
-                          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                            3
+                      {/* Step 3: 反应 */}
+                      <Collapsible open={expandedStep === 3} onOpenChange={() => setExpandedStep(expandedStep === 3 ? null : 3)}>
+                        <CollapsibleTrigger className="w-full">
+                          <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group cursor-pointer">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                                3
+                              </div>
+                              <div className="flex-1 text-left">
+                                <h4 className="font-semibold text-foreground text-sm">
+                                  反应 <span className="text-primary/70 font-medium text-xs ml-1">React it</span>
+                                </h4>
+                                <p className="text-xs text-muted-foreground">觉察情绪驱动的反应</p>
+                              </div>
+                              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedStep === 3 ? 'rotate-180' : ''}`} />
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-foreground text-sm">
-                              反应 <span className="text-primary/70 font-medium text-xs ml-1">React it</span>
-                            </h4>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-2">
+                          <div className="bg-background/30 rounded-lg p-4 border border-border/30 space-y-2">
+                            <p className="text-sm text-foreground leading-relaxed">
+                              <strong>详细说明：</strong>观察你在这种情绪驱使下的第一反应是什么。是逃避、攻击还是自责？觉察自己的模式，才能有意识地选择更好的回应方式。
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              <strong>示例：</strong>当感到焦虑时，你是否会不断刷手机来逃避？当愤怒时，是否会说出伤人的话？意识到这些模式是改变的第一步。
+                            </p>
                           </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground ml-9">觉察情绪驱动的反应</p>
-                      </div>
+                        </CollapsibleContent>
+                      </Collapsible>
 
-                      <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
-                        <div className="flex items-start gap-2 mb-1">
-                          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                            4
+                      {/* Step 4: 行动 */}
+                      <Collapsible open={expandedStep === 4} onOpenChange={() => setExpandedStep(expandedStep === 4 ? null : 4)}>
+                        <CollapsibleTrigger className="w-full">
+                          <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group cursor-pointer">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                                4
+                              </div>
+                              <div className="flex-1 text-left">
+                                <h4 className="font-semibold text-foreground text-sm">
+                                  行动 <span className="text-primary/70 font-medium text-xs ml-1">Act it</span>
+                                </h4>
+                                <p className="text-xs text-muted-foreground">采取建设性的行动</p>
+                              </div>
+                              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedStep === 4 ? 'rotate-180' : ''}`} />
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-foreground text-sm">
-                              行动 <span className="text-primary/70 font-medium text-xs ml-1">Act it</span>
-                            </h4>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-2">
+                          <div className="bg-background/30 rounded-lg p-4 border border-border/30 space-y-2">
+                            <p className="text-sm text-foreground leading-relaxed">
+                              <strong>详细说明：</strong>基于对情绪的理解，选择一个有建设性的行动来满足内在需求。这个行动应该是对自己和他人都有益的。
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              <strong>示例：</strong>如果焦虑源于不确定性，可以列出可控的事项并逐一完成。如果愤怒源于界限被侵犯，可以用平静的方式表达你的感受和需要。
+                            </p>
                           </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground ml-9">采取建设性的行动</p>
-                      </div>
+                        </CollapsibleContent>
+                      </Collapsible>
                     </div>
                   </div>
                 )}

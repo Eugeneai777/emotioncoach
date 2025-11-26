@@ -636,6 +636,7 @@ export type Database = {
           last_reminder_shown: string | null
           notification_frequency: string | null
           preferred_encouragement_style: string | null
+          reminder_auto_dismiss_seconds: number | null
           reminder_enabled: boolean | null
           reminder_time: string | null
           smart_notification_enabled: boolean | null
@@ -677,6 +678,7 @@ export type Database = {
           last_reminder_shown?: string | null
           notification_frequency?: string | null
           preferred_encouragement_style?: string | null
+          reminder_auto_dismiss_seconds?: number | null
           reminder_enabled?: boolean | null
           reminder_time?: string | null
           smart_notification_enabled?: boolean | null
@@ -718,6 +720,7 @@ export type Database = {
           last_reminder_shown?: string | null
           notification_frequency?: string | null
           preferred_encouragement_style?: string | null
+          reminder_auto_dismiss_seconds?: number | null
           reminder_enabled?: boolean | null
           reminder_time?: string | null
           smart_notification_enabled?: boolean | null
