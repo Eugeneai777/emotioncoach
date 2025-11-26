@@ -20,6 +20,7 @@ export const SmartReminderSettings = () => {
   const [reminderTime, setReminderTime] = useState("20:00");
   const [intensityReminderEnabled, setIntensityReminderEnabled] = useState(true);
   const [intensityReminderTime, setIntensityReminderTime] = useState("21:00");
+  const [autoDismissSeconds, setAutoDismissSeconds] = useState(10);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,7 +40,7 @@ export const SmartReminderSettings = () => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('reminder_enabled, reminder_time, intensity_reminder_enabled, intensity_reminder_time')
+        .select('reminder_enabled, reminder_time, intensity_reminder_enabled, intensity_reminder_time, reminder_auto_dismiss_seconds')
         .eq('id', user.id)
         .single();
 
@@ -50,6 +51,7 @@ export const SmartReminderSettings = () => {
         setReminderTime(data.reminder_time || '20:00');
         setIntensityReminderEnabled(data.intensity_reminder_enabled ?? true);
         setIntensityReminderTime(data.intensity_reminder_time || '21:00');
+        setAutoDismissSeconds(data.reminder_auto_dismiss_seconds ?? 10);
       }
     } catch (error: any) {
       console.error('加载设置失败:', error);
@@ -97,6 +99,7 @@ export const SmartReminderSettings = () => {
           reminder_time: reminderTime,
           intensity_reminder_enabled: intensityReminderEnabled,
           intensity_reminder_time: intensityReminderTime,
+          reminder_auto_dismiss_seconds: autoDismissSeconds,
         })
         .eq('id', user.id);
 
@@ -259,6 +262,27 @@ export const SmartReminderSettings = () => {
                 onChange={(e) => setReminderTime(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               />
+
+              {/* Auto dismiss setting */}
+              <div className="space-y-2 pt-2">
+                <Label className="text-sm">提醒自动消失时间（秒）</Label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="0"
+                    max="60"
+                    value={autoDismissSeconds}
+                    onChange={(e) => setAutoDismissSeconds(parseInt(e.target.value) || 0)}
+                    className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  />
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    {autoDismissSeconds === 0 ? '不自动消失' : `${autoDismissSeconds}秒后`}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  设置为0表示提醒不会自动消失，需要手动关闭
+                </p>
+              </div>
               
               {/* Browser Notifications */}
               <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">

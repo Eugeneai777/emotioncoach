@@ -23,6 +23,7 @@ export default function Settings() {
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const [reminderTime, setReminderTime] = useState("20:00");
   const [displayName, setDisplayName] = useState("");
+  const [autoDismissSeconds, setAutoDismissSeconds] = useState(10);
 
   useEffect(() => {
     loadSettings();
@@ -38,7 +39,7 @@ export default function Settings() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("reminder_enabled, reminder_time, display_name")
+        .select("reminder_enabled, reminder_time, display_name, reminder_auto_dismiss_seconds")
         .eq("id", user.id)
         .single();
 
@@ -48,6 +49,7 @@ export default function Settings() {
         setReminderEnabled(data.reminder_enabled ?? true);
         setReminderTime(data.reminder_time ?? "20:00");
         setDisplayName(data.display_name ?? "");
+        setAutoDismissSeconds(data.reminder_auto_dismiss_seconds ?? 10);
       }
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -73,6 +75,7 @@ export default function Settings() {
           reminder_enabled: reminderEnabled,
           reminder_time: reminderTime,
           display_name: displayName.trim() || null,
+          reminder_auto_dismiss_seconds: autoDismissSeconds,
         })
         .eq("id", user.id);
 
