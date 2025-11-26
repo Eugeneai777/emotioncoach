@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import WaterfallPostCard from "./WaterfallPostCard";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ const CommunityWaterfall = () => {
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // 加载帖子
-  const loadPosts = async (pageNum: number, filter: string, append = false) => {
+  const loadPosts = useCallback(async (pageNum: number, filter: string, append = false) => {
     try {
       if (pageNum === 0) {
         setLoading(true);
@@ -76,26 +76,27 @@ const CommunityWaterfall = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  };
+  }, []);
 
   // 初始加载
   useEffect(() => {
     loadPosts(0, activeFilter);
     setPage(0);
-  }, [activeFilter]);
+  }, [activeFilter, loadPosts]);
 
-  // 无限滚动
+  // 无限滚动 - 使用 useCallback 优化
+  const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
+    if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+      setPage(prev => {
+        const nextPage = prev + 1;
+        loadPosts(nextPage, activeFilter, true);
+        return nextPage;
+      });
+    }
+  }, [hasMore, loading, loadingMore, activeFilter, loadPosts]);
+
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
-          const nextPage = page + 1;
-          setPage(nextPage);
-          loadPosts(nextPage, activeFilter, true);
-        }
-      },
-      { threshold: 0.1 }
-    );
+    const observer = new IntersectionObserver(handleIntersection, { threshold: 0.1 });
 
     const currentTarget = observerTarget.current;
     if (currentTarget) {
@@ -107,10 +108,10 @@ const CommunityWaterfall = () => {
         observer.unobserve(currentTarget);
       }
     };
-  }, [hasMore, loading, loadingMore, page, activeFilter]);
+  }, [handleIntersection]);
 
-  // 瀑布流布局：将帖子分配到两列
-  const [leftColumn, rightColumn] = useMemo(() => {
+  // 瀑布流布局：将帖子分配到两列 - 使用 memo 优化
+  const columns = useMemo(() => {
     const left: Post[] = [];
     const right: Post[] = [];
     
@@ -122,8 +123,28 @@ const CommunityWaterfall = () => {
       }
     });
     
-    return [left, right];
+    return { left, right };
   }, [posts]);
+
+  // Memoized 列渲染
+  const LeftColumn = memo(() => (
+    <div className="space-y-0">
+      {columns.left.map((post) => (
+        <WaterfallPostCard key={post.id} post={post} />
+      ))}
+    </div>
+  ));
+
+  const RightColumn = memo(() => (
+    <div className="space-y-0">
+      {columns.right.map((post) => (
+        <WaterfallPostCard key={post.id} post={post} />
+      ))}
+    </div>
+  ));
+
+  LeftColumn.displayName = 'LeftColumn';
+  RightColumn.displayName = 'RightColumn';
 
   return (
     <div className="w-full">
@@ -175,18 +196,10 @@ const CommunityWaterfall = () => {
         <>
           <div className="grid grid-cols-2 gap-3">
             {/* 左列 */}
-            <div className="space-y-0">
-              {leftColumn.map((post) => (
-                <WaterfallPostCard key={post.id} post={post} />
-              ))}
-            </div>
+            <LeftColumn />
 
             {/* 右列 */}
-            <div className="space-y-0">
-              {rightColumn.map((post) => (
-                <WaterfallPostCard key={post.id} post={post} />
-              ))}
-            </div>
+            <RightColumn />
           </div>
 
           {/* 加载更多指示器 */}
