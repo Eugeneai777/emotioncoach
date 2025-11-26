@@ -541,7 +541,7 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto">
+      <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto pb-32">
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-8 px-3 md:px-4">
             <div className="text-center space-y-3 md:space-y-4 w-full max-w-xl animate-in fade-in-50 duration-700">
@@ -752,13 +752,15 @@ const Index = () => {
         )}
       </main>
 
-      <footer className="border-t border-border bg-card/50 backdrop-blur-sm">
-        <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur-md z-20">
+        <div className="container max-w-xl mx-auto px-3 py-2">
           {showIntensitySelector && (
-            <EmotionIntensitySelector
-              onSelect={handleIntensitySelect}
-              onSkip={handleSkipIntensity}
-            />
+            <div className="mb-2">
+              <EmotionIntensitySelector
+                onSelect={handleIntensitySelect}
+                onSkip={handleSkipIntensity}
+              />
+            </div>
           )}
           <div className="flex gap-2 items-end">
             <div className="flex-1">
@@ -767,11 +769,11 @@ const Index = () => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={isListening ? "正在聆听..." : "分享你的想法..."}
-                className="min-h-[80px] md:min-h-[100px] resize-none rounded-2xl text-sm md:text-base"
+                className="min-h-[70px] resize-none rounded-xl text-sm border-border/50"
                 disabled={isLoading || isListening}
               />
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               <VoiceControls
                 isListening={isListening}
                 isSpeaking={isSpeaking}
@@ -784,12 +786,12 @@ const Index = () => {
                 onClick={handleSend}
                 disabled={isLoading || !input.trim()}
                 size="icon"
-                className="h-12 w-12 md:h-14 md:w-14 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                className="h-11 w-11 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 {isLoading ? (
-                  <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  <Send className="w-5 h-5 md:w-6 md:h-6" />
+                  <Send className="w-5 h-5" />
                 )}
               </Button>
             </div>

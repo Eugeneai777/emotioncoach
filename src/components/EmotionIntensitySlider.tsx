@@ -101,8 +101,8 @@ export const EmotionIntensitySlider = () => {
   return (
     <Card 
       className={cn(
-        "fixed bottom-20 right-4 z-40 transition-all duration-300 shadow-lg",
-        isExpanded ? "w-80" : "w-14"
+        "fixed bottom-24 right-3 z-40 transition-all duration-300 shadow-xl border-2",
+        isExpanded ? "w-64" : "w-12"
       )}
     >
       {/* 折叠状态 - 只显示图标 */}
@@ -111,12 +111,12 @@ export const EmotionIntensitySlider = () => {
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(true)}
-          className="w-full h-14 p-0 hover:bg-primary/5"
+          className="w-full h-12 p-0 hover:bg-primary/5"
         >
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-0.5">
             <Heart className={cn("w-5 h-5", lastRecordedIntensity ? getIntensityColor(lastRecordedIntensity) : "text-primary")} />
             {lastRecordedIntensity && (
-              <span className="text-[10px] font-medium text-muted-foreground">
+              <span className="text-[9px] font-semibold text-muted-foreground">
                 {lastRecordedIntensity}
               </span>
             )}
@@ -126,44 +126,42 @@ export const EmotionIntensitySlider = () => {
 
       {/* 展开状态 - 显示完整滑块 */}
       {isExpanded && (
-        <div className="p-4 space-y-4">
+        <div className="p-3 space-y-2.5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Heart className={cn("w-5 h-5", getIntensityColor(intensity[0]))} />
-              <h3 className="text-sm font-semibold text-foreground">
-                情绪强度
+            <div className="flex items-center gap-1.5">
+              <Heart className={cn("w-4 h-4", getIntensityColor(intensity[0]))} />
+              <h3 className="text-xs font-semibold text-foreground">
+                快捷记录
               </h3>
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setIsExpanded(false)}
-              className="h-6 w-6"
+              className="h-5 w-5"
             >
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown className="w-3.5 h-3.5" />
             </Button>
           </div>
 
           {/* 强度数值显示 */}
           <div className={cn(
-            "flex items-center justify-center gap-2 rounded-lg p-3 transition-colors",
+            "flex items-center justify-center gap-1.5 rounded-lg p-2 transition-colors",
             getIntensityBgColor(intensity[0])
           )}>
-            <span className={cn("text-3xl font-bold", getIntensityColor(intensity[0]))}>
+            <span className={cn("text-2xl font-bold", getIntensityColor(intensity[0]))}>
               {intensity[0]}
             </span>
-            <span className="text-sm text-muted-foreground">/10</span>
-          </div>
-
-          {/* 强度描述 */}
-          <div className="text-center">
-            <p className="text-sm font-medium text-foreground">
-              {getIntensityLabel(intensity[0])}
-            </p>
+            <div className="flex flex-col items-start">
+              <span className="text-[10px] text-muted-foreground">/10</span>
+              <span className="text-[9px] font-medium text-foreground">
+                {getIntensityLabel(intensity[0])}
+              </span>
+            </div>
           </div>
 
           {/* 滑块 */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Slider
               value={intensity}
               onValueChange={setIntensity}
@@ -172,9 +170,9 @@ export const EmotionIntensitySlider = () => {
               step={1}
               className="w-full"
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>1 轻微</span>
-              <span>10 强烈</span>
+            <div className="flex justify-between text-[9px] text-muted-foreground px-1">
+              <span>轻微</span>
+              <span>强烈</span>
             </div>
           </div>
 
@@ -182,22 +180,22 @@ export const EmotionIntensitySlider = () => {
           <Button
             onClick={handleRecord}
             disabled={isSubmitting}
-            className="w-full gap-2"
+            className="w-full gap-1.5 h-8"
             size="sm"
           >
             {isSubmitting ? (
-              <>记录中...</>
+              <span className="text-xs">记录中...</span>
             ) : (
               <>
-                <Check className="w-4 h-4" />
-                记录此刻情绪
+                <Check className="w-3.5 h-3.5" />
+                <span className="text-xs">记录</span>
               </>
             )}
           </Button>
 
           {lastRecordedIntensity !== null && (
-            <p className="text-xs text-muted-foreground text-center">
-              上次记录: {lastRecordedIntensity}/10
+            <p className="text-[9px] text-muted-foreground text-center">
+              上次: {lastRecordedIntensity}/10
             </p>
           )}
         </div>
