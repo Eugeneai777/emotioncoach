@@ -812,7 +812,7 @@ const Index = () => {
                         暂无新提醒
                       </p>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {notifications.slice(0, 3).map((notification) => (
                           <NotificationCard
                             key={notification.id}

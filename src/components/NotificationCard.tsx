@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Heart, Star, Sparkles, Trophy, Bell, MessageCircle, TrendingUp } from 'lucide-react';
+import { X, Heart, Star, Sparkles, Trophy, Bell, MessageCircle, TrendingUp, Check, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
@@ -83,6 +83,17 @@ export const NotificationCard = ({ notification, onClick, onDismiss }: Notificat
     }
   };
 
+  const handleMarkAsRead = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClick();
+  };
+
+  const handleRemindLater = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // TODO: Implement remind later functionality
+    onDismiss();
+  };
+
   const timeAgo = formatDistanceToNow(new Date(notification.created_at), {
     addSuffix: true,
     locale: zhCN
@@ -90,65 +101,59 @@ export const NotificationCard = ({ notification, onClick, onDismiss }: Notificat
 
   return (
     <Card 
-      className={`relative p-4 cursor-pointer transition-all hover:shadow-md ${style.bg} ${style.border} ${
-        !notification.is_read ? 'border-2' : 'border'
+      className={`relative p-3 transition-all hover:shadow-md ${style.bg} ${style.border} ${
+        !notification.is_read ? 'border-2' : 'border opacity-75'
       }`}
-      onClick={onClick}
     >
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-2 right-2 h-6 w-6 rounded-full opacity-60 hover:opacity-100"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDismiss();
-        }}
-      >
-        <X className="h-4 w-4" />
-      </Button>
-
-      <div className="flex gap-3">
-        <div className="flex-shrink-0 mt-1">
-          <div className="h-10 w-10 rounded-full bg-white dark:bg-gray-900 flex items-center justify-center shadow-sm">
-            <Icon className="h-5 w-5 text-primary" />
-          </div>
+      {/* Title Row */}
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-1.5">
+          <Icon className="h-4 w-4 text-primary flex-shrink-0" />
+          <h4 className="font-semibold text-sm">{notification.title}</h4>
+          {!notification.is_read && (
+            <div className="h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
+          )}
         </div>
+        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">{timeAgo}</span>
+      </div>
 
-        <div className="flex-1 min-w-0 pr-6">
-          <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-semibold text-sm">{notification.title}</h4>
-            {!notification.is_read && (
-              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            )}
-          </div>
+      {/* Message */}
+      <p className="text-sm text-muted-foreground text-left mb-2 leading-relaxed line-clamp-2">
+        {notification.message}
+      </p>
 
-          <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
-            {notification.message}
-          </p>
-
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className={style.badge}>
-                {typeLabels[notification.notification_type] || '通知'}
-              </Badge>
-              <span className="text-xs text-muted-foreground">{timeAgo}</span>
-            </div>
-
-            {notification.action_text && (
-              <Button
-                size="sm"
-                variant="default"
-                className="h-7 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAction();
-                }}
-              >
-                {notification.action_text}
-              </Button>
-            )}
-          </div>
-        </div>
+      {/* Quick Actions */}
+      <div className="flex items-center gap-2 pt-1">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-7 px-2 text-xs"
+          onClick={handleMarkAsRead}
+        >
+          <Check className="h-3 w-3 mr-1" />
+          已读
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-7 px-2 text-xs"
+          onClick={handleRemindLater}
+        >
+          <Clock className="h-3 w-3 mr-1" />
+          稍后
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-7 px-2 text-xs"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDismiss();
+          }}
+        >
+          <X className="h-3 w-3 mr-1" />
+          忽略
+        </Button>
       </div>
     </Card>
   );
