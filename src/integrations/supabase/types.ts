@@ -1046,6 +1046,56 @@ export type Database = {
           },
         ]
       }
+      post_reports: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          post_id: string
+          reason: string
+          reporter_id: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          post_id: string
+          reason: string
+          reporter_id: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          post_id?: string
+          reason?: string
+          reporter_id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           camp_checkin_requirement: string | null

@@ -7,8 +7,10 @@ import { zhCN } from "date-fns/locale";
 import LikeButton from "./LikeButton";
 import ShareButton from "./ShareButton";
 import CommentSection from "./CommentSection";
+import ReportDialog from "./ReportDialog";
 import { useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Flag } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface PostDetailSheetProps {
   open: boolean;
@@ -36,6 +38,7 @@ interface PostDetailSheetProps {
 
 const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => {
   const [showComments, setShowComments] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
 
   if (!post) return null;
 
@@ -177,6 +180,16 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
               </button>
 
               <ShareButton post={post} />
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className="ml-auto"
+                onClick={() => setShowReportDialog(true)}
+              >
+                <Flag className="h-4 w-4 mr-1" />
+                举报
+              </Button>
             </div>
 
             {/* 评论区 */}
@@ -188,6 +201,13 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
             </div>
           </div>
         </ScrollArea>
+
+        {/* 举报对话框 */}
+        <ReportDialog
+          open={showReportDialog}
+          onOpenChange={setShowReportDialog}
+          postId={post.id}
+        />
       </SheetContent>
     </Sheet>
   );
