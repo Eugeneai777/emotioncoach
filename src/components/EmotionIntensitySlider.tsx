@@ -4,12 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Heart, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const EmotionIntensitySlider = () => {
   const [intensity, setIntensity] = useState([5]);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastRecordedIntensity, setLastRecordedIntensity] = useState<number | null>(null);
   const { toast } = useToast();
@@ -81,11 +80,6 @@ export const EmotionIntensitySlider = () => {
         title: "记录成功 ✓",
         description: `情绪强度 ${intensity[0]}/10 已保存`,
       });
-
-      // 收起组件
-      setTimeout(() => {
-        setIsExpanded(false);
-      }, 1000);
     } catch (error) {
       console.error("记录失败:", error);
       toast({
@@ -100,106 +94,73 @@ export const EmotionIntensitySlider = () => {
 
   return (
     <Card 
-      className={cn(
-        "fixed bottom-24 right-3 z-40 transition-all duration-300 shadow-xl border-2",
-        isExpanded ? "w-64" : "w-12"
-      )}
+      className="fixed bottom-24 right-3 z-40 w-64 transition-all duration-300 shadow-xl border-2"
     >
-      {/* 折叠状态 - 只显示图标 */}
-      {!isExpanded && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsExpanded(true)}
-          className="w-full h-12 p-0 hover:bg-primary/5"
-        >
-          <div className="flex flex-col items-center gap-0.5">
-            <Heart className={cn("w-5 h-5", lastRecordedIntensity ? getIntensityColor(lastRecordedIntensity) : "text-primary")} />
-            {lastRecordedIntensity && (
-              <span className="text-[9px] font-semibold text-muted-foreground">
-                {lastRecordedIntensity}
-              </span>
-            )}
+      <div className="p-3 space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Heart className={cn("w-4 h-4", getIntensityColor(intensity[0]))} />
+            <h3 className="text-xs font-semibold text-foreground">
+              快捷记录
+            </h3>
           </div>
-        </Button>
-      )}
-
-      {/* 展开状态 - 显示完整滑块 */}
-      {isExpanded && (
-        <div className="p-3 space-y-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Heart className={cn("w-4 h-4", getIntensityColor(intensity[0]))} />
-              <h3 className="text-xs font-semibold text-foreground">
-                快捷记录
-              </h3>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsExpanded(false)}
-              className="h-5 w-5"
-            >
-              <ChevronDown className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-
-          {/* 强度数值显示 */}
-          <div className={cn(
-            "flex items-center justify-center gap-1.5 rounded-lg p-2 transition-colors",
-            getIntensityBgColor(intensity[0])
-          )}>
-            <span className={cn("text-2xl font-bold", getIntensityColor(intensity[0]))}>
-              {intensity[0]}
-            </span>
-            <div className="flex flex-col items-start">
-              <span className="text-[10px] text-muted-foreground">/10</span>
-              <span className="text-[9px] font-medium text-foreground">
-                {getIntensityLabel(intensity[0])}
-              </span>
-            </div>
-          </div>
-
-          {/* 滑块 */}
-          <div className="space-y-1.5">
-            <Slider
-              value={intensity}
-              onValueChange={setIntensity}
-              max={10}
-              min={1}
-              step={1}
-              className="w-full"
-            />
-            <div className="flex justify-between text-[9px] text-muted-foreground px-1">
-              <span>轻微</span>
-              <span>强烈</span>
-            </div>
-          </div>
-
-          {/* 记录按钮 */}
-          <Button
-            onClick={handleRecord}
-            disabled={isSubmitting}
-            className="w-full gap-1.5 h-8"
-            size="sm"
-          >
-            {isSubmitting ? (
-              <span className="text-xs">记录中...</span>
-            ) : (
-              <>
-                <Check className="w-3.5 h-3.5" />
-                <span className="text-xs">记录</span>
-              </>
-            )}
-          </Button>
-
-          {lastRecordedIntensity !== null && (
-            <p className="text-[9px] text-muted-foreground text-center">
-              上次: {lastRecordedIntensity}/10
-            </p>
-          )}
         </div>
-      )}
+
+        {/* 强度数值显示 */}
+        <div className={cn(
+          "flex items-center justify-center gap-1.5 rounded-lg p-2 transition-colors",
+          getIntensityBgColor(intensity[0])
+        )}>
+          <span className={cn("text-2xl font-bold", getIntensityColor(intensity[0]))}>
+            {intensity[0]}
+          </span>
+          <div className="flex flex-col items-start">
+            <span className="text-[10px] text-muted-foreground">/10</span>
+            <span className="text-[9px] font-medium text-foreground">
+              {getIntensityLabel(intensity[0])}
+            </span>
+          </div>
+        </div>
+
+        {/* 滑块 */}
+        <div className="space-y-1.5">
+          <Slider
+            value={intensity}
+            onValueChange={setIntensity}
+            max={10}
+            min={1}
+            step={1}
+            className="w-full"
+          />
+          <div className="flex justify-between text-[9px] text-muted-foreground px-1">
+            <span>轻微</span>
+            <span>强烈</span>
+          </div>
+        </div>
+
+        {/* 记录按钮 */}
+        <Button
+          onClick={handleRecord}
+          disabled={isSubmitting}
+          className="w-full gap-1.5 h-8"
+          size="sm"
+        >
+          {isSubmitting ? (
+            <span className="text-xs">记录中...</span>
+          ) : (
+            <>
+              <Check className="w-3.5 h-3.5" />
+              <span className="text-xs">记录</span>
+            </>
+          )}
+        </Button>
+
+        {lastRecordedIntensity !== null && (
+          <p className="text-[9px] text-muted-foreground text-center">
+            上次: {lastRecordedIntensity}/10
+          </p>
+        )}
+      </div>
     </Card>
   );
 };
