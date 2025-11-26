@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-type Message = { role: "user" | "assistant"; content: string };
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+  type?: "text" | "intensity_prompt";
+};
 
 interface BriefingData {
   emotion_theme: string;
@@ -343,12 +347,13 @@ ${data.growth_story}
     let assistantContent = "";
     let toolCallBuffer = "";
     let inToolCall = false;
+    let currentToolName = "";
 
     const updateAssistant = (chunk: string) => {
       assistantContent += chunk;
       setMessages((prev) => {
         const last = prev[prev.length - 1];
-        if (last?.role === "assistant") {
+        if (last?.role === "assistant" && !last.type) {
           return prev.map((m, i) =>
             i === prev.length - 1 ? { ...m, content: assistantContent } : m
           );
@@ -412,9 +417,19 @@ ${data.growth_story}
               
               if (toolCall.function?.name === "generate_briefing") {
                 inToolCall = true;
+                currentToolName = "generate_briefing";
                 if (toolCall.function?.arguments) {
                   toolCallBuffer += toolCall.function.arguments;
                 }
+              } else if (toolCall.function?.name === "request_emotion_intensity") {
+                inToolCall = true;
+                currentToolName = "request_emotion_intensity";
+                // Insert intensity prompt immediately
+                setMessages((prev) => [...prev, {
+                  role: "assistant",
+                  content: "",
+                  type: "intensity_prompt"
+                }]);
               }
             }
             
@@ -459,7 +474,7 @@ ${data.growth_story}
       }
 
       // 如果检测到简报生成，保存到数据库并显示在聊天中
-      if (inToolCall && toolCallBuffer && convId) {
+      if (inToolCall && currentToolName === "generate_briefing" && toolCallBuffer && convId) {
         try {
           const briefingData = JSON.parse(toolCallBuffer) as BriefingData;
           

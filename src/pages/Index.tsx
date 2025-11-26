@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "@/components/ChatMessage";
+import { ChatEmotionIntensityPrompt } from "@/components/ChatEmotionIntensityPrompt";
 import DailyReminder from "@/components/DailyReminder";
 import StreakDisplay from "@/components/StreakDisplay";
 import GoalProgressCard from "@/components/GoalProgressCard";
@@ -400,6 +401,29 @@ const Index = () => {
     sendMessage(message);
   };
 
+  const handleChatIntensitySelect = async (intensity: number) => {
+    const message = `我现在的情绪强度是 ${intensity}/10`;
+    await sendMessage(message);
+    
+    // Save to emotion_quick_logs
+    if (user) {
+      try {
+        await supabase.from("emotion_quick_logs").insert({
+          user_id: user.id,
+          emotion_intensity: intensity,
+          note: "从对话中记录"
+        });
+      } catch (error) {
+        console.error("Error saving intensity log:", error);
+      }
+    }
+  };
+
+  const handleDismissChatIntensity = () => {
+    // Just send a message to continue
+    sendMessage("跳过强度记录，继续对话");
+  };
+
   const handleSkipIntensity = () => {
     setShowIntensitySelector(false);
     setSelectedIntensity(null);
@@ -715,9 +739,19 @@ const Index = () => {
           </div>
         ) : (
           <div className="flex-1 py-4 md:py-6 space-y-3 md:space-y-4">
-            {messages.map((message, index) => (
-              <ChatMessage key={index} role={message.role} content={message.content} />
-            ))}
+            {messages.map((message, index) => {
+              // Check if this is an intensity prompt message
+              if (message.type === "intensity_prompt") {
+                return (
+                  <ChatEmotionIntensityPrompt
+                    key={index}
+                    onSelect={handleChatIntensitySelect}
+                    onDismiss={handleDismissChatIntensity}
+                  />
+                );
+              }
+              return <ChatMessage key={index} role={message.role} content={message.content} />;
+            })}
             {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-card rounded-2xl p-3 md:p-4 shadow-sm">
