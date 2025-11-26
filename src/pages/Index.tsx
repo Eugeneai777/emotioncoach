@@ -783,6 +783,31 @@ const Index = () => {
                   )}
                 </div>
               )}
+
+              {/* 社区入口卡片 */}
+              <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+                <div className="bg-gradient-to-br from-primary/5 via-card to-secondary/5 border border-border rounded-card-lg p-card-lg shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer group" onClick={() => navigate("/community")}>
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                      🌸
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                        绽放社区
+                        <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">NEW</span>
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+                        分享你的成长故事，看见彼此的蜕变。点赞、评论，一起见证每个绽放时刻 ✨
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>📷 分享照片</span>
+                        <span>❤️ 互相点赞</span>
+                        <span>💬 温暖评论</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ) : (

@@ -133,6 +133,103 @@ export type Database = {
           },
         ]
       }
+      community_posts: {
+        Row: {
+          achievement_id: string | null
+          action: string | null
+          badges: Json | null
+          briefing_id: string | null
+          camp_day: number | null
+          camp_id: string | null
+          comments_count: number | null
+          content: string | null
+          created_at: string | null
+          emotion_intensity: number | null
+          emotion_theme: string | null
+          id: string
+          image_urls: string[] | null
+          insight: string | null
+          is_anonymous: boolean | null
+          likes_count: number | null
+          post_type: string
+          shares_count: number | null
+          title: string | null
+          updated_at: string | null
+          user_id: string
+          visibility: string | null
+        }
+        Insert: {
+          achievement_id?: string | null
+          action?: string | null
+          badges?: Json | null
+          briefing_id?: string | null
+          camp_day?: number | null
+          camp_id?: string | null
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string | null
+          emotion_intensity?: number | null
+          emotion_theme?: string | null
+          id?: string
+          image_urls?: string[] | null
+          insight?: string | null
+          is_anonymous?: boolean | null
+          likes_count?: number | null
+          post_type: string
+          shares_count?: number | null
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+          visibility?: string | null
+        }
+        Update: {
+          achievement_id?: string | null
+          action?: string | null
+          badges?: Json | null
+          briefing_id?: string | null
+          camp_day?: number | null
+          camp_id?: string | null
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string | null
+          emotion_intensity?: number | null
+          emotion_theme?: string | null
+          id?: string
+          image_urls?: string[] | null
+          insight?: string | null
+          is_anonymous?: boolean | null
+          likes_count?: number | null
+          post_type?: string
+          shares_count?: number | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+          visibility?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "user_achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_posts_briefing_id_fkey"
+            columns: ["briefing_id"]
+            isOneToOne: false
+            referencedRelation: "briefings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_posts_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_logs: {
         Row: {
           contact_id: string
@@ -737,6 +834,83 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_anonymous: boolean | null
+          likes_count: number | null
+          parent_id: string | null
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          likes_count?: number | null
+          parent_id?: string | null
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          likes_count?: number | null
+          parent_id?: string | null
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "post_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
             referencedColumns: ["id"]
           },
         ]
