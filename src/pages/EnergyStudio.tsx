@@ -339,6 +339,39 @@ const EnergyStudio = () => {
 
       {/* Main Content */}
       <main className="container max-w-6xl mx-auto px-4 py-8">
+        {/* Training Camp Banner */}
+        <Card className="mb-8 overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 dark:from-purple-950/20 dark:via-pink-950/20 dark:to-purple-950/20 animate-in fade-in-50 slide-in-from-top-4 duration-500">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="flex-shrink-0 text-6xl">🏕️</div>
+              <div className="flex-1 text-center md:text-left space-y-2">
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  21天情绪日记训练营
+                </h3>
+                <p className="text-muted-foreground">
+                  每天10分钟，让情绪变成你的力量。系统化情绪管理，获得专属成长档案 ✨
+                </p>
+              </div>
+              <div className="flex-shrink-0 flex flex-col sm:flex-row gap-3">
+                <Button 
+                  onClick={() => navigate("/camp-intro")}
+                  variant="outline"
+                  className="gap-2 border-primary/30 hover:border-primary/60 hover:bg-primary/5"
+                >
+                  了解详情
+                </Button>
+                <Button 
+                  onClick={() => navigate("/")}
+                  className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  立即加入
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {activeTool ? (
           <div>
             <Button

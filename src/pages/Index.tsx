@@ -724,10 +724,19 @@ const Index = () => {
                     <p className="text-sm text-muted-foreground mb-card">
                       用21天养成情绪记录习惯，获得专属徽章和成长洞察
                     </p>
-                    <Button onClick={() => setShowStartCamp(true)} className="w-full">
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      开启训练营
-                    </Button>
+                    <div className="flex gap-3">
+                      <Button onClick={() => setShowStartCamp(true)} className="flex-1">
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        开启训练营
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => navigate("/camp-intro")}
+                        className="flex-1"
+                      >
+                        了解详情
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
