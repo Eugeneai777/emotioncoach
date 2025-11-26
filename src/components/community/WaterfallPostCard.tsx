@@ -21,9 +21,10 @@ interface WaterfallPostCardProps {
     likes_count: number;
     created_at: string;
   };
+  onCardClick?: (postId: string) => void;
 }
 
-const WaterfallPostCard = memo(({ post }: WaterfallPostCardProps) => {
+const WaterfallPostCard = memo(({ post, onCardClick }: WaterfallPostCardProps) => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { toast } = useToast();
@@ -130,7 +131,11 @@ const WaterfallPostCard = memo(({ post }: WaterfallPostCardProps) => {
   };
 
   const handleClick = () => {
-    navigate("/community");
+    if (onCardClick) {
+      onCardClick(post.id);
+    } else {
+      navigate("/community");
+    }
   };
 
   return (
