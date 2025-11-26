@@ -17,6 +17,10 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   const navigate = useNavigate();
   
   const today = format(new Date(), 'yyyy-MM-dd');
+  console.log('TrainingCampCard - Today:', today);
+  console.log('TrainingCampCard - Check-in dates:', camp.check_in_dates);
+  console.log('TrainingCampCard - Has checked in today:', camp.check_in_dates.includes(today));
+  
   const hasCheckedInToday = camp.check_in_dates.includes(today);
   const progressPercent = (camp.completed_days / camp.duration_days) * 100;
   
