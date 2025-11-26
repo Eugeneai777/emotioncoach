@@ -128,12 +128,19 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
         </Badge>
       </div>
 
-      {/* 副标题：训练营信息 */}
-      {post.badges?.campInfo && (
-        <p className="text-sm text-muted-foreground mb-1">
-          {post.badges.campInfo}
-        </p>
-      )}
+      {/* 副标题：训练营信息（兼容新旧数据） */}
+      {(() => {
+        const campSubtitle = post.badges?.campInfo || 
+          (post.badges?.campName && post.badges?.day !== undefined 
+            ? `${post.badges.campName} - 第${post.badges.day}天打卡` 
+            : null);
+        
+        return campSubtitle ? (
+          <p className="text-sm text-muted-foreground mb-1">
+            {campSubtitle}
+          </p>
+        ) : null;
+      })()}
 
       {/* 主标题：用户自定义标题 */}
       {post.title && (
