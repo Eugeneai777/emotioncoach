@@ -1,4 +1,5 @@
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface ChatMessageProps {
   role: "user" | "assistant";
@@ -8,6 +9,7 @@ interface ChatMessageProps {
 
 export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) => {
   const isUser = role === "user";
+  const [clickedOption, setClickedOption] = useState<string | null>(null);
   
   // 检测是否包含编号选项（如 "1. 选项" 或 "1、选项"）
   const optionRegex = /^(\d+)[.、]\s*(.+)$/gm;
@@ -60,31 +62,68 @@ export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) 
           
           {options.length > 0 && onOptionClick && (
             <div className="flex flex-col gap-2.5 mt-4">
-              {options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => onOptionClick(option.text)}
-                  className="group relative w-full text-left px-4 py-3.5 rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 hover:from-primary/20 hover:via-primary/15 hover:to-primary/20 transition-all duration-300 border border-primary/20 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
-                >
-                  {/* 背景光效 */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                  
-                  <div className="relative flex items-center gap-3">
-                    {/* 编号图标 */}
-                    <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center font-bold text-sm shadow-md shadow-primary/30 group-hover:shadow-lg group-hover:shadow-primary/40 transition-shadow">
-                      {option.number}
+              {options.map((option, index) => {
+                const isClicked = clickedOption === option.text;
+                const isDisabled = clickedOption !== null;
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      if (!isDisabled) {
+                        setClickedOption(option.text);
+                        onOptionClick(option.text);
+                      }
+                    }}
+                    disabled={isDisabled}
+                    className={`group relative w-full text-left px-4 py-3.5 rounded-xl transition-all duration-300 border overflow-hidden ${
+                      isClicked
+                        ? "bg-primary/20 border-primary/60 scale-[0.98]"
+                        : isDisabled
+                        ? "bg-muted/50 border-muted opacity-50 cursor-not-allowed"
+                        : "bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 hover:from-primary/20 hover:via-primary/15 hover:to-primary/20 border-primary/20 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.02] active:scale-[0.98]"
+                    }`}
+                  >
+                    {/* 背景光效 */}
+                    {!isDisabled && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                    )}
+                    
+                    <div className="relative flex items-center gap-3">
+                      {/* 编号图标或加载动画 */}
+                      <div className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm transition-all ${
+                        isClicked
+                          ? "bg-primary shadow-lg shadow-primary/50 animate-pulse"
+                          : "bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-md shadow-primary/30 group-hover:shadow-lg group-hover:shadow-primary/40"
+                      }`}>
+                        {isClicked ? (
+                          <Loader2 className="w-4 h-4 text-primary-foreground animate-spin" />
+                        ) : (
+                          <span className="text-primary-foreground">{option.number}</span>
+                        )}
+                      </div>
+                      
+                      {/* 文本 */}
+                      <span className={`flex-1 text-xs md:text-sm font-medium transition-colors ${
+                        isClicked
+                          ? "text-primary"
+                          : isDisabled
+                          ? "text-muted-foreground"
+                          : "text-foreground group-hover:text-primary"
+                      }`}>
+                        {option.text}
+                      </span>
+                      
+                      {/* 装饰图标 */}
+                      {isClicked ? (
+                        <div className="w-4 h-4 rounded-full bg-primary/20 animate-ping" />
+                      ) : (
+                        <Sparkles className="w-4 h-4 text-primary/40 group-hover:text-primary group-hover:scale-110 transition-all opacity-0 group-hover:opacity-100" />
+                      )}
                     </div>
-                    
-                    {/* 文本 */}
-                    <span className="flex-1 text-xs md:text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                      {option.text}
-                    </span>
-                    
-                    {/* 装饰图标 */}
-                    <Sparkles className="w-4 h-4 text-primary/40 group-hover:text-primary group-hover:scale-110 transition-all opacity-0 group-hover:opacity-100" />
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
