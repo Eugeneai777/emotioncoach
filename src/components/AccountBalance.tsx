@@ -57,9 +57,16 @@ export const AccountBalance = () => {
     ? new Date(accountData.quota_expires_at) < new Date()
     : false;
 
+  const isExpiringSoon = accountData.quota_expires_at 
+    ? new Date(accountData.quota_expires_at) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    : false;
+
   const getSubscriptionBadge = () => {
-    if (subscription?.subscription_type === 'youjin365') {
-      return <Badge>有劲365</Badge>;
+    if (subscription?.subscription_type === 'member365') {
+      return <Badge className="bg-gradient-to-r from-primary to-primary/80">365会员</Badge>;
+    }
+    if (subscription?.subscription_type === 'basic') {
+      return <Badge variant="secondary">基础套餐</Badge>;
     }
     if (subscription?.subscription_type === 'custom') {
       return <Badge variant="secondary">自定义套餐</Badge>;
@@ -92,9 +99,17 @@ export const AccountBalance = () => {
               <Calendar className="h-4 w-4" />
               有效期至
             </div>
-            <span className={isExpired ? 'text-destructive font-medium' : 'text-foreground'}>
+            <span className={isExpired ? 'text-destructive font-medium' : isExpiringSoon ? 'text-amber-500 font-medium' : 'text-foreground'}>
               {new Date(accountData.quota_expires_at).toLocaleDateString('zh-CN')}
+              {isExpired && <span className="ml-2 text-xs">(已过期)</span>}
+              {!isExpired && isExpiringSoon && <span className="ml-2 text-xs">(即将过期)</span>}
             </span>
+          </div>
+        )}
+        
+        {isExpired && (
+          <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg border border-destructive/20">
+            ⚠️ 您的套餐已过期，未使用次数已作废，请重新购买套餐
           </div>
         )}
 
