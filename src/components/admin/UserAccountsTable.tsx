@@ -3,13 +3,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { format } from "date-fns";
+import { RechargeDialog } from "./RechargeDialog";
+import { Plus } from "lucide-react";
 
 export function UserAccountsTable() {
   const [search, setSearch] = useState("");
+  const [rechargeDialogOpen, setRechargeDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string } | null>(null);
 
-  const { data: accounts, isLoading } = useQuery({
+  const { data: accounts, isLoading, refetch } = useQuery({
     queryKey: ['admin-accounts'],
     queryFn: async () => {
       const { data: accountsData, error } = await supabase
@@ -73,6 +78,7 @@ export function UserAccountsTable() {
             <TableHead>会员类型</TableHead>
             <TableHead>过期时间</TableHead>
             <TableHead>最后同步</TableHead>
+            <TableHead>操作</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -105,10 +111,36 @@ export function UserAccountsTable() {
                   ? format(new Date(account.last_sync_at), 'yyyy-MM-dd HH:mm')
                   : '-'}
               </TableCell>
+              <TableCell>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedUser({
+                      id: account.user_id,
+                      name: account.profile?.display_name || account.user_id.slice(0, 8)
+                    });
+                    setRechargeDialogOpen(true);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  充值
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      {selectedUser && (
+        <RechargeDialog
+          open={rechargeDialogOpen}
+          onOpenChange={setRechargeDialogOpen}
+          userId={selectedUser.id}
+          userName={selectedUser.name}
+          onSuccess={() => refetch()}
+        />
+      )}
     </div>
   );
 }
