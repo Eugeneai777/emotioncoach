@@ -21,6 +21,7 @@ import AICoach from "./pages/AICoach";
 import CampIntro from "./pages/CampIntro";
 import CampCheckIn from "./pages/CampCheckIn";
 import UserProfile from "./pages/UserProfile";
+import Introduction from "./pages/Introduction";
 import NotFound from "./pages/NotFound";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
 
@@ -52,6 +53,7 @@ const App = () => (
           <Route path="/camp-checkin/:campId" element={<CampCheckIn />} />
           <Route path="/user/:userId" element={<UserProfile />} />
           <Route path="/profile" element={<UserProfile />} />
+          <Route path="/introduction" element={<Introduction />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
