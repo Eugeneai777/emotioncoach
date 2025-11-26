@@ -71,7 +71,7 @@ export const AccountBalance = () => {
     if (subscription?.subscription_type === 'custom') {
       return <Badge variant="secondary">自定义套餐</Badge>;
     }
-    return <Badge variant="outline">免费用户</Badge>;
+    return <Badge variant="secondary">基础套餐</Badge>;
   };
 
   return (
