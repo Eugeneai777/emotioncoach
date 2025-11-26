@@ -18,17 +18,15 @@ Deno.serve(async (req) => {
 
     const { userId, source } = await req.json();
 
-    const { data: account, error } = await supabase
+    // Get user account
+    const { data: account, error: accountError } = await supabase
       .from('user_accounts')
-      .select(`
-        *,
-        subscriptions(*)
-      `)
+      .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
-    if (error || !account) {
-      console.log(`❌ 用户 ${userId} 账户不存在`);
+    if (accountError || !account) {
+      console.log(`❌ 用户 ${userId} 账户不存在:`, accountError);
       return new Response(
         JSON.stringify({
           allowed: false,
@@ -38,7 +36,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    const subscription = account.subscriptions;
+    // Get subscription separately
+    const { data: subscriptions } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    const subscription = subscriptions?.[0];
     const hasQuota = account.remaining_quota > 0;
     const isExpired = account.quota_expires_at 
       ? new Date(account.quota_expires_at) < new Date()
