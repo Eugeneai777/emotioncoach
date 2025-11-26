@@ -78,9 +78,20 @@ const CampShareDialog = ({
 
       if (error) throw error;
 
+      // 更新今日进度的分享状态
+      const today = new Date().toISOString().split("T")[0];
+      await supabase
+        .from("camp_daily_progress")
+        .update({
+          has_shared_to_community: true,
+          shared_at: new Date().toISOString(),
+        })
+        .eq("camp_id", campId)
+        .eq("progress_date", today);
+
       toast({
         title: "分享成功",
-        description: "你的打卡内容已分享到社区 🎉",
+        description: "你的每日反思已分享到社区 🎉",
       });
 
       onOpenChange(false);
