@@ -559,7 +559,7 @@ const Index = () => {
               </div>
 
               {/* 情绪四部曲 / 每日提醒 - 同位置切换展示 */}
-              <div className="bg-card border border-border rounded-xl p-3 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
+              <div className="bg-card border border-border rounded-xl p-4 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
                 {showReminder ? (
                   <div className="animate-in fade-in-50 duration-300">
                     <div className="text-center space-y-3">
@@ -586,26 +586,26 @@ const Index = () => {
                 ) : (
                   <div className="animate-in fade-in-50 duration-300">
                     <div className="mb-2">
-                      <h3 className="font-medium text-foreground flex items-center gap-1.5 text-xs">
+                      <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
                         <span className="text-primary text-sm">🌱</span>
                         情绪四部曲
                       </h3>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-1.5">
+                    <div className="grid grid-cols-2 gap-2">
                       {/* Step 1: 觉察 */}
                       <Collapsible open={expandedStep === 1} onOpenChange={() => setExpandedStep(expandedStep === 1 ? null : 1)}>
                         <CollapsibleTrigger className="w-full">
-                          <div className="bg-background/50 rounded-md p-2 border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-background/50 rounded-md p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
                             <div className="flex items-center gap-1.5">
-                              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px] group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                                 1
                               </div>
                               <div className="flex-1 text-left min-w-0">
-                                <h4 className="font-medium text-foreground text-[11px] truncate">
+                                <h4 className="font-medium text-foreground text-sm truncate">
                                   觉察
                                 </h4>
-                                <p className="text-[9px] text-muted-foreground truncate">Feel it</p>
+                                <p className="text-xs text-muted-foreground truncate">Feel it</p>
                               </div>
                               <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === 1 ? 'rotate-180' : ''}`} />
                             </div>
@@ -613,7 +613,7 @@ const Index = () => {
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-1">
                           <div className="bg-background/30 rounded-md p-2 border border-border/30 space-y-1">
-                            <p className="text-[10px] text-foreground leading-snug">
+                            <p className="text-xs text-foreground leading-snug">
                               暂停活动，给自己空间感受此刻情绪
                             </p>
                           </div>
@@ -623,16 +623,16 @@ const Index = () => {
                       {/* Step 2: 理解 */}
                       <Collapsible open={expandedStep === 2} onOpenChange={() => setExpandedStep(expandedStep === 2 ? null : 2)}>
                         <CollapsibleTrigger className="w-full">
-                          <div className="bg-background/50 rounded-md p-2 border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-background/50 rounded-md p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
                             <div className="flex items-center gap-1.5">
-                              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px] group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                                 2
                               </div>
                               <div className="flex-1 text-left min-w-0">
-                                <h4 className="font-medium text-foreground text-[11px] truncate">
+                                <h4 className="font-medium text-foreground text-sm truncate">
                                   理解
                                 </h4>
-                                <p className="text-[9px] text-muted-foreground truncate">Name it</p>
+                                <p className="text-xs text-muted-foreground truncate">Name it</p>
                               </div>
                               <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === 2 ? 'rotate-180' : ''}`} />
                             </div>
@@ -640,7 +640,7 @@ const Index = () => {
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-1">
                           <div className="bg-background/30 rounded-md p-2 border border-border/30 space-y-1">
-                            <p className="text-[10px] text-foreground leading-snug">
+                            <p className="text-xs text-foreground leading-snug">
                               探索情绪背后的需求和意义
                             </p>
                           </div>
@@ -650,16 +650,16 @@ const Index = () => {
                       {/* Step 3: 反应 */}
                       <Collapsible open={expandedStep === 3} onOpenChange={() => setExpandedStep(expandedStep === 3 ? null : 3)}>
                         <CollapsibleTrigger className="w-full">
-                          <div className="bg-background/50 rounded-md p-2 border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-background/50 rounded-md p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
                             <div className="flex items-center gap-1.5">
-                              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px] group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                                 3
                               </div>
                               <div className="flex-1 text-left min-w-0">
-                                <h4 className="font-medium text-foreground text-[11px] truncate">
+                                <h4 className="font-medium text-foreground text-sm truncate">
                                   反应
                                 </h4>
-                                <p className="text-[9px] text-muted-foreground truncate">React it</p>
+                                <p className="text-xs text-muted-foreground truncate">React it</p>
                               </div>
                               <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === 3 ? 'rotate-180' : ''}`} />
                             </div>
@@ -667,7 +667,7 @@ const Index = () => {
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-1">
                           <div className="bg-background/30 rounded-md p-2 border border-border/30 space-y-1">
-                            <p className="text-[10px] text-foreground leading-snug">
+                            <p className="text-xs text-foreground leading-snug">
                               觉察情绪驱动下的第一反应
                             </p>
                           </div>
@@ -677,16 +677,16 @@ const Index = () => {
                       {/* Step 4: 行动 */}
                       <Collapsible open={expandedStep === 4} onOpenChange={() => setExpandedStep(expandedStep === 4 ? null : 4)}>
                         <CollapsibleTrigger className="w-full">
-                          <div className="bg-background/50 rounded-md p-2 border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-background/50 rounded-md p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
                             <div className="flex items-center gap-1.5">
-                              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-[10px] group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                                 4
                               </div>
                               <div className="flex-1 text-left min-w-0">
-                                <h4 className="font-medium text-foreground text-[11px] truncate">
+                                <h4 className="font-medium text-foreground text-sm truncate">
                                   行动
                                 </h4>
-                                <p className="text-[9px] text-muted-foreground truncate">Act it</p>
+                                <p className="text-xs text-muted-foreground truncate">Act it</p>
                               </div>
                               <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === 4 ? 'rotate-180' : ''}`} />
                             </div>
@@ -694,7 +694,7 @@ const Index = () => {
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-1">
                           <div className="bg-background/30 rounded-md p-2 border border-border/30 space-y-1">
-                            <p className="text-[10px] text-foreground leading-snug">
+                            <p className="text-xs text-foreground leading-snug">
                               选择建设性行动满足需求
                             </p>
                           </div>
