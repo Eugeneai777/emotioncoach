@@ -177,6 +177,8 @@ const Index = () => {
 
       if (error) throw error;
       if (data) {
+        console.log('loadActiveCamp - Raw data:', data);
+        console.log('loadActiveCamp - check_in_dates:', data.check_in_dates);
         setActiveCamp({
           ...data,
           check_in_dates: Array.isArray(data.check_in_dates) ? data.check_in_dates : []
