@@ -32,7 +32,7 @@ import {
 import React from "react";
 
 // 导入图片资源
-import heroIntroImage from "@/assets/hero-intro-full.png";
+import heroIntroImage from "@/assets/hero-chat-mockup.png";
 const featureWarmCompanion = "/placeholder.svg";
 const featureSystematicMethod = "/placeholder.svg";
 const featureCommunityResonance = "/placeholder.svg";
