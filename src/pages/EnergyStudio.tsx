@@ -18,7 +18,10 @@ import {
   Moon,
   Dumbbell,
   MessageCircle,
-  NotebookPen
+  NotebookPen,
+  DollarSign,
+  Clock,
+  Heart
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { BreathingExercise } from "@/components/tools/BreathingExercise";
@@ -33,6 +36,9 @@ import { HabitTracker } from "@/components/tools/HabitTracker";
 import { EnergyManagement } from "@/components/tools/EnergyManagement";
 import { SleepLogger } from "@/components/tools/SleepLogger";
 import { ExerciseLogger } from "@/components/tools/ExerciseLogger";
+import { FinanceTracker } from "@/components/tools/FinanceTracker";
+import { TimeManagement } from "@/components/tools/TimeManagement";
+import { RelationshipTracker } from "@/components/tools/RelationshipTracker";
 
 interface ToolCard {
   id: string;
@@ -179,6 +185,33 @@ const EnergyStudio = () => {
       category: "management",
       color: "hsl(var(--primary))",
       available: true
+    },
+    {
+      id: "finance",
+      title: "财务管理",
+      description: "记录收支，掌握财务状况",
+      icon: <DollarSign className="w-6 h-6" />,
+      category: "management",
+      color: "hsl(var(--primary))",
+      available: true
+    },
+    {
+      id: "time",
+      title: "时间管理",
+      description: "高效规划，充分利用每一分钟",
+      icon: <Clock className="w-6 h-6" />,
+      category: "management",
+      color: "hsl(var(--primary))",
+      available: true
+    },
+    {
+      id: "relationship",
+      title: "人际关系",
+      description: "维护关系，珍惜每一份联结",
+      icon: <Heart className="w-6 h-6" />,
+      category: "exploration",
+      color: "hsl(var(--primary))",
+      available: true
     }
   ];
 
@@ -224,6 +257,12 @@ const EnergyStudio = () => {
         return <SleepLogger />;
       case "exercise":
         return <ExerciseLogger />;
+      case "finance":
+        return <FinanceTracker />;
+      case "time":
+        return <TimeManagement />;
+      case "relationship":
+        return <RelationshipTracker />;
       default:
         return null;
     }
