@@ -559,7 +559,7 @@ const Index = () => {
               </div>
 
               {/* 情绪四部曲 / 每日提醒 - 同位置切换展示 */}
-              <div className="bg-card border border-border rounded-xl p-4 text-left shadow-lg animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
+              <div className="bg-card border border-border rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
                 {showReminder ? (
                   <div className="animate-in fade-in-50 duration-300">
                     <div className="text-center space-y-3">
@@ -585,18 +585,18 @@ const Index = () => {
                   </div>
                 ) : (
                   <div className="animate-in fade-in-50 duration-300">
-                    <div className="mb-2">
+                    <div className="mb-card-gap">
                       <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
                         <span className="text-primary text-sm">🌱</span>
                         情绪四部曲
                       </h3>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-card-gap">
                       {/* Step 1: 觉察 */}
                       <Collapsible open={expandedStep === 1} onOpenChange={() => setExpandedStep(expandedStep === 1 ? null : 1)}>
                         <CollapsibleTrigger className="w-full">
-                          <div className="bg-background/50 rounded-md p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
                             <div className="flex items-center gap-1.5">
                               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                                 1
@@ -612,7 +612,7 @@ const Index = () => {
                           </div>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-1">
-                          <div className="bg-background/30 rounded-md p-2 border border-border/30 space-y-1">
+                          <div className="bg-background/30 rounded-card p-card-sm border border-border/30 space-y-1">
                             <p className="text-xs text-foreground leading-snug">
                               暂停活动，给自己空间感受此刻情绪
                             </p>
@@ -623,7 +623,7 @@ const Index = () => {
                       {/* Step 2: 理解 */}
                       <Collapsible open={expandedStep === 2} onOpenChange={() => setExpandedStep(expandedStep === 2 ? null : 2)}>
                         <CollapsibleTrigger className="w-full">
-                          <div className="bg-background/50 rounded-md p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
                             <div className="flex items-center gap-1.5">
                               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                                 2
@@ -639,7 +639,7 @@ const Index = () => {
                           </div>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-1">
-                          <div className="bg-background/30 rounded-md p-2 border border-border/30 space-y-1">
+                          <div className="bg-background/30 rounded-card p-card-sm border border-border/30 space-y-1">
                             <p className="text-xs text-foreground leading-snug">
                               探索情绪背后的需求和意义
                             </p>
@@ -650,7 +650,7 @@ const Index = () => {
                       {/* Step 3: 反应 */}
                       <Collapsible open={expandedStep === 3} onOpenChange={() => setExpandedStep(expandedStep === 3 ? null : 3)}>
                         <CollapsibleTrigger className="w-full">
-                          <div className="bg-background/50 rounded-md p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
                             <div className="flex items-center gap-1.5">
                               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                                 3
@@ -666,7 +666,7 @@ const Index = () => {
                           </div>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-1">
-                          <div className="bg-background/30 rounded-md p-2 border border-border/30 space-y-1">
+                          <div className="bg-background/30 rounded-card p-card-sm border border-border/30 space-y-1">
                             <p className="text-xs text-foreground leading-snug">
                               觉察情绪驱动下的第一反应
                             </p>
@@ -677,7 +677,7 @@ const Index = () => {
                       {/* Step 4: 行动 */}
                       <Collapsible open={expandedStep === 4} onOpenChange={() => setExpandedStep(expandedStep === 4 ? null : 4)}>
                         <CollapsibleTrigger className="w-full">
-                          <div className="bg-background/50 rounded-md p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
+                          <div className="bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
                             <div className="flex items-center gap-1.5">
                               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                                 4
@@ -693,7 +693,7 @@ const Index = () => {
                           </div>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-1">
-                          <div className="bg-background/30 rounded-md p-2 border border-border/30 space-y-1">
+                          <div className="bg-background/30 rounded-card p-card-sm border border-border/30 space-y-1">
                             <p className="text-xs text-foreground leading-snug">
                               选择建设性行动满足需求
                             </p>
@@ -707,13 +707,13 @@ const Index = () => {
 
               {!activeCamp && (
                 <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                  <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-6 border border-primary/20">
-                    <div className="flex items-center justify-between mb-3">
+                  <div className="bg-card border border-border rounded-card-lg p-card-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div className="flex items-center justify-between mb-card-gap">
                       <h3 className="text-lg font-semibold flex items-center gap-2">
                         🏕️ 21天情绪日记训练营
                       </h3>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-4">
+                    <p className="text-sm text-muted-foreground mb-card">
                       用21天养成情绪记录习惯，获得专属徽章和成长洞察
                     </p>
                     <Button onClick={() => setShowStartCamp(true)} className="w-full">
@@ -757,7 +757,7 @@ const Index = () => {
             })}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-card rounded-2xl p-3 md:p-4 shadow-sm">
+                <div className="bg-card rounded-card-lg p-card shadow-sm">
                   <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin text-primary" />
                 </div>
               </div>
@@ -784,7 +784,7 @@ const Index = () => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={isListening ? "正在聆听..." : "分享你的想法..."}
-                className="min-h-[70px] resize-none rounded-xl text-sm border-border/50"
+                className="min-h-[70px] resize-none rounded-card-lg text-sm border-border/50"
                 disabled={isLoading || isListening}
               />
             </div>
@@ -801,7 +801,7 @@ const Index = () => {
                 onClick={handleSend}
                 disabled={isLoading || !input.trim()}
                 size="icon"
-                className="h-11 w-11 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                className="h-11 w-11 rounded-card-lg shadow-md hover:shadow-lg transition-all duration-300"
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
