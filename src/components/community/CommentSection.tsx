@@ -117,7 +117,7 @@ const CommentSection = ({ postId, onUpdate }: CommentSectionProps) => {
   };
 
   return (
-    <div className="mt-4 pt-4 border-t space-y-4">
+    <div className="mt-4 pt-4 border-t space-y-4" data-comment-section>
       {/* 评论列表 */}
       {loading ? (
         <div className="flex justify-center py-4">
