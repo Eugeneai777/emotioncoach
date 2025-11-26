@@ -58,7 +58,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image-preview",
+          model: "google/gemini-3-pro-image-preview",
           messages: [
             {
               role: "user",
@@ -72,16 +72,19 @@ serve(async (req) => {
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("AI 生成失败:", aiResponse.status, errorText);
-      throw new Error(`AI 生成失败: ${aiResponse.status}`);
+      console.error("AI API 错误:", aiResponse.status, errorText);
+      throw new Error(`AI API 返回错误: ${aiResponse.status} - ${errorText}`);
     }
 
     const aiData = await aiResponse.json();
+    console.log("AI 响应结构:", JSON.stringify(aiData, null, 2));
+
     const imageBase64 =
       aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     if (!imageBase64) {
-      throw new Error("未能从 AI 响应中获取图片");
+      console.error("完整 AI 响应:", JSON.stringify(aiData));
+      throw new Error("AI 响应中没有图片数据，请查看日志了解详情");
     }
 
     console.log("图片生成成功，准备上传到存储桶");
