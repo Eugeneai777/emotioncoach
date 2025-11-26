@@ -430,19 +430,21 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
           </button>
           
           {/* 关注 - 星星图标 */}
-          {!post.is_anonymous && session?.user?.id !== post.user_id && (
-            <button 
-              onClick={handleFollowToggle}
-              disabled={isLoadingFollow}
-              className="flex flex-col items-center gap-0.5 min-w-[48px] hover:scale-110 transition-transform disabled:opacity-50"
-            >
-              <Star className={cn(
-                "h-6 w-6 transition-colors",
-                isFollowing ? "fill-yellow-400 text-yellow-400" : "text-foreground"
-              )} />
-              <span className="text-xs text-muted-foreground">{followersCount}</span>
-            </button>
-          )}
+          <button 
+            onClick={handleFollowToggle}
+            disabled={isLoadingFollow || post.is_anonymous || !session || session?.user?.id === post.user_id}
+            className={cn(
+              "flex flex-col items-center gap-0.5 min-w-[48px] transition-transform",
+              !(post.is_anonymous || !session || session?.user?.id === post.user_id) && "hover:scale-110",
+              (isLoadingFollow || post.is_anonymous || !session || session?.user?.id === post.user_id) && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            <Star className={cn(
+              "h-6 w-6 transition-colors",
+              isFollowing ? "fill-yellow-400 text-yellow-400" : "text-foreground"
+            )} />
+            <span className="text-xs text-muted-foreground">{followersCount}</span>
+          </button>
           
           {/* 评论 */}
           <button 
