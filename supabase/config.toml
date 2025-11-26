@@ -83,3 +83,21 @@ verify_jwt = false
 
 [functions.wechat-callback]
 verify_jwt = false
+
+[functions.import-video-courses]
+verify_jwt = false
+
+[functions.recommend-courses]
+verify_jwt = true
+
+[functions.chat]
+verify_jwt = true
+
+[functions.get-wecom-access-token]
+verify_jwt = false
+
+[functions.admin-recharge]
+verify_jwt = false
+
+[functions.recommend-posts]
+verify_jwt = false

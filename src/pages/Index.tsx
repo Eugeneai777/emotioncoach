@@ -65,7 +65,8 @@ const Index = () => {
     messages,
     isLoading,
     sendMessage,
-    resetConversation
+    resetConversation,
+    videoRecommendations
   } = useStreamChat();
   const { 
     notifications, 
@@ -865,6 +866,8 @@ const Index = () => {
                   onOptionClick={(option) => {
                     sendMessage(option);
                   }}
+                  videoRecommendations={videoRecommendations}
+                  isLastMessage={index === messages.length - 1}
                 />
               );
             })}

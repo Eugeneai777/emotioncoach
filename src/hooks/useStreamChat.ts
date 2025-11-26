@@ -27,6 +27,7 @@ export const useStreamChat = (conversationId?: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(conversationId);
+  const [videoRecommendations, setVideoRecommendations] = useState<any[]>([]);
   const { toast } = useToast();
 
   const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
@@ -316,6 +317,27 @@ ${data.growth_story}
         console.error("Error triggering notification:", notificationError);
         // 不影响主流程，仅记录错误
       }
+
+      // 获取视频课程推荐
+      try {
+        const { data: recommendationsData, error: recError } = await supabase.functions.invoke('recommend-courses', {
+          body: {
+            briefing: {
+              emotion_theme: briefingData.emotion_theme,
+              emotion_tags: tagsToUse,
+              insight: briefingData.insight,
+              action: briefingData.action
+            }
+          }
+        });
+
+        if (!recError && recommendationsData?.recommendations) {
+          setVideoRecommendations(recommendationsData.recommendations);
+        }
+      } catch (recommendError) {
+        console.error("Error getting video recommendations:", recommendError);
+        // 不影响主流程，仅记录错误
+      }
     } catch (error) {
       console.error("Error saving briefing:", error);
       toast({
@@ -528,6 +550,7 @@ ${data.growth_story}
   const resetConversation = () => {
     setMessages([]);
     setCurrentConversationId(undefined);
+    setVideoRecommendations([]);
   };
 
   return { 
@@ -535,6 +558,7 @@ ${data.growth_story}
     isLoading, 
     sendMessage, 
     resetConversation,
-    conversationId: currentConversationId 
+    conversationId: currentConversationId,
+    videoRecommendations
   };
 };
