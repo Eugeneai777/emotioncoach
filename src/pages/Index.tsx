@@ -834,11 +834,11 @@ const Index = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
-                        绽放社区
+                        有劲社区
                         <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">NEW</span>
                       </h3>
                       <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
-                        分享你的成长故事，看见彼此的蜕变。点赞、评论，一起见证每个绽放时刻 ✨
+                        分享你的成长故事，看见彼此的蜕变。点赞、评论，一起见证每个有劲时刻 ✨
                       </p>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>📷 分享照片</span>

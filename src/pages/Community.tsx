@@ -130,7 +130,7 @@ const Community = () => {
           </Button>
           <div className="flex-1 text-center">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-2">
-              🌸 绽放社区
+              💪 有劲社区
             </h1>
             <p className="text-muted-foreground">分享成长 · 见证蜕变</p>
           </div>
