@@ -11,16 +11,19 @@ const packages = [
     id: 'basic',
     name: '基础套餐',
     quota: 50,
-    price: 0,
-    duration: '永久',
+    price: 9.9,
+    duration: '365天',
     icon: Sparkles,
     popular: false,
     gradient: 'from-gray-400/10 to-gray-500/10',
+    limitPurchase: true,
     features: [
       '50次AI对话',
       '基础情绪记录',
       '简报生成',
-      '基础数据分析'
+      '基础数据分析',
+      '365天有效期',
+      '⚠️ 限购一次'
     ]
   },
   {
@@ -135,18 +138,17 @@ export default function Packages() {
                   {/* 价格 */}
                   <div className="space-y-1">
                     <div className="flex items-baseline gap-1">
-                      {pkg.price === 0 ? (
-                        <span className="text-4xl font-bold text-foreground">免费</span>
-                      ) : (
-                        <>
-                          <span className="text-2xl font-medium text-muted-foreground">¥</span>
-                          <span className="text-4xl font-bold text-foreground">{pkg.price}</span>
-                        </>
-                      )}
+                      <span className="text-2xl font-medium text-muted-foreground">¥</span>
+                      <span className="text-4xl font-bold text-foreground">{pkg.price}</span>
                     </div>
                     <p className="text-sm text-muted-foreground font-medium">
                       {pkg.quota} 次AI对话
                     </p>
+                    {pkg.limitPurchase && (
+                      <p className="text-xs text-amber-600 dark:text-amber-500 font-semibold flex items-center gap-1">
+                        ⚠️ 限购一次
+                      </p>
+                    )}
                   </div>
 
                   {/* 功能列表 */}
@@ -170,11 +172,10 @@ export default function Packages() {
                         : ''
                     }`}
                     onClick={() => handlePurchase(pkg)}
-                    disabled={pkg.price === 0}
                     variant={pkg.popular ? 'default' : 'outline'}
                     size="lg"
                   >
-                    {pkg.price === 0 ? '当前套餐' : '立即购买'}
+                    立即购买
                   </Button>
                 </CardFooter>
               </Card>
@@ -190,7 +191,8 @@ export default function Packages() {
         {/* 底部说明 */}
         <div className="text-center text-sm text-muted-foreground space-y-2 animate-in fade-in-50 duration-700 delay-400">
           <p>💡 套餐购买后立即生效，对话次数累计计算</p>
-          <p>⏰ 365会员自购买之日起365天有效，过期未使用次数作废</p>
+          <p>⏰ 所有套餐自购买之日起365天有效，过期未使用次数作废</p>
+          <p>⚠️ 基础套餐限购一次，适合初次体验用户</p>
           <p>🔒 我们承诺保护您的隐私数据安全</p>
         </div>
       </div>

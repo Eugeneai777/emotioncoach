@@ -9,10 +9,11 @@ const packages = [
     id: 'basic',
     name: '基础套餐',
     quota: 50,
-    price: 0,
-    duration: '永久',
+    price: 9.9,
+    duration: '365天',
     icon: Sparkles,
-    features: ['50次AI对话', '基础功能', '永久有效']
+    limitPurchase: true,
+    features: ['50次AI对话', '基础功能', '365天有效', '⚠️ 限购一次']
   },
   {
     id: 'member365',
@@ -53,11 +54,16 @@ export const PackageSelector = () => {
                   </div>
                   <div>
                     <div className="text-3xl font-bold">
-                      {pkg.price === 0 ? '免费' : `¥${pkg.price}`}
+                      ¥{pkg.price}
                     </div>
                     <div className="text-sm text-muted-foreground mt-1">
                       {pkg.quota}次 / {pkg.duration}
                     </div>
+                    {pkg.limitPurchase && (
+                      <div className="text-xs text-amber-600 dark:text-amber-500 font-medium mt-1">
+                        ⚠️ 限购一次
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -71,10 +77,10 @@ export const PackageSelector = () => {
                   </ul>
                   <Button 
                     className="w-full" 
-                    variant={pkg.price === 0 ? 'outline' : 'default'}
+                    variant="default"
                     onClick={() => navigate('/packages')}
                   >
-                    {pkg.price === 0 ? '当前套餐' : '立即购买'}
+                    立即购买
                   </Button>
                 </CardContent>
               </Card>
