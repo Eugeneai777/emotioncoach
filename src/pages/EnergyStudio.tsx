@@ -21,7 +21,8 @@ import {
   NotebookPen,
   DollarSign,
   Clock,
-  Heart
+  Heart,
+  Megaphone
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { BreathingExercise } from "@/components/tools/BreathingExercise";
@@ -39,6 +40,7 @@ import { ExerciseLogger } from "@/components/tools/ExerciseLogger";
 import { FinanceTracker } from "@/components/tools/FinanceTracker";
 import { TimeManagement } from "@/components/tools/TimeManagement";
 import { RelationshipTracker } from "@/components/tools/RelationshipTracker";
+import { EnergyDeclaration } from "@/components/tools/EnergyDeclaration";
 
 interface ToolCard {
   id: string;
@@ -108,6 +110,15 @@ const EnergyStudio = () => {
       title: "正念练习",
       description: "AI语音引导，体验正念的力量",
       icon: <Sparkles className="w-6 h-6" />,
+      category: "emotion",
+      color: "hsl(var(--primary))",
+      available: true
+    },
+    {
+      id: "declaration",
+      title: "能量宣言卡",
+      description: "创建个性化能量宣言海报，开启有劲的一天",
+      icon: <Megaphone className="w-6 h-6" />,
       category: "emotion",
       color: "hsl(var(--primary))",
       available: true
@@ -263,6 +274,8 @@ const EnergyStudio = () => {
         return <TimeManagement />;
       case "relationship":
         return <RelationshipTracker />;
+      case "declaration":
+        return <EnergyDeclaration />;
       default:
         return null;
     }
