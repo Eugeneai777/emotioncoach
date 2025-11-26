@@ -649,11 +649,19 @@ const Index = () => {
                   </div>
                 ) : (
                   <div className="animate-in fade-in-50 duration-300">
-                    <div className="mb-card-gap">
+                    <div className="mb-card-gap flex items-center justify-between">
                       <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
                         <span className="text-primary text-sm">🌱</span>
                         情绪四部曲
                       </h3>
+                      <Button 
+                        variant="link" 
+                        size="sm" 
+                        onClick={() => navigate("/introduction")}
+                        className="text-xs text-primary hover:text-primary/80 p-0 h-auto"
+                      >
+                        了解更多 →
+                      </Button>
                     </div>
 
                     <div className="grid grid-cols-2 gap-card-gap">
