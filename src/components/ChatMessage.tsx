@@ -61,10 +61,11 @@ export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) 
           )}
           
           {options.length > 0 && onOptionClick && (
-            <div className="flex flex-col gap-2.5 mt-4">
+            <div className="flex flex-col gap-3 mt-4">
               {options.map((option, index) => {
                 const isClicked = clickedOption === option.text;
                 const isDisabled = clickedOption !== null;
+                const isBriefingButton = option.text.includes("生成简报") || option.text.includes("简报");
                 
                 return (
                   <button
@@ -76,49 +77,80 @@ export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) 
                       }
                     }}
                     disabled={isDisabled}
-                    className={`group relative w-full text-left px-4 py-3.5 rounded-xl transition-all duration-300 border overflow-hidden ${
+                    className={`group relative w-full text-left px-5 py-4 rounded-2xl transition-all duration-300 border overflow-hidden ${
                       isClicked
                         ? "bg-primary/20 border-primary/60 scale-[0.98]"
                         : isDisabled
                         ? "bg-muted/50 border-muted opacity-50 cursor-not-allowed"
+                        : isBriefingButton
+                        ? "bg-gradient-to-br from-primary via-primary/90 to-primary/80 hover:from-primary/90 hover:via-primary/80 hover:to-primary/70 border-primary text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:scale-[1.03] active:scale-[0.98] animate-in fade-in-50 slide-in-from-bottom-2 duration-500"
                         : "bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 hover:from-primary/20 hover:via-primary/15 hover:to-primary/20 border-primary/20 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.02] active:scale-[0.98]"
                     }`}
                   >
                     {/* 背景光效 */}
-                    {!isDisabled && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                    {!isDisabled && !isClicked && (
+                      <div className={`absolute inset-0 bg-gradient-to-r from-transparent ${
+                        isBriefingButton 
+                          ? "via-white/10 to-transparent" 
+                          : "via-primary/5 to-transparent"
+                      } translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`} />
+                    )}
+                    
+                    {/* 动态背景粒子效果（仅简报按钮） */}
+                    {isBriefingButton && !isDisabled && !isClicked && (
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/30 rounded-full animate-ping" style={{ animationDelay: '0ms' }} />
+                        <div className="absolute top-1/2 right-1/3 w-1.5 h-1.5 bg-white/20 rounded-full animate-ping" style={{ animationDelay: '200ms' }} />
+                        <div className="absolute bottom-1/3 left-1/2 w-1 h-1 bg-white/25 rounded-full animate-ping" style={{ animationDelay: '400ms' }} />
+                      </div>
                     )}
                     
                     <div className="relative flex items-center gap-3">
                       {/* 编号图标或加载动画 */}
-                      <div className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm transition-all ${
+                      <div className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-bold text-base transition-all ${
                         isClicked
                           ? "bg-primary shadow-lg shadow-primary/50 animate-pulse"
+                          : isBriefingButton
+                          ? "bg-white/20 backdrop-blur-sm shadow-lg group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300"
                           : "bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-md shadow-primary/30 group-hover:shadow-lg group-hover:shadow-primary/40"
                       }`}>
                         {isClicked ? (
-                          <Loader2 className="w-4 h-4 text-primary-foreground animate-spin" />
+                          <div className="flex flex-col items-center">
+                            <Loader2 className="w-5 h-5 text-primary-foreground animate-spin" />
+                          </div>
                         ) : (
-                          <span className="text-primary-foreground">{option.number}</span>
+                          <span className={isBriefingButton ? "text-white font-extrabold" : "text-primary-foreground"}>
+                            {isBriefingButton ? "📝" : option.number}
+                          </span>
                         )}
                       </div>
                       
                       {/* 文本 */}
-                      <span className={`flex-1 text-xs md:text-sm font-medium transition-colors ${
+                      <span className={`flex-1 text-sm md:text-base font-semibold transition-all ${
                         isClicked
                           ? "text-primary"
                           : isDisabled
                           ? "text-muted-foreground"
+                          : isBriefingButton
+                          ? "text-white drop-shadow-sm group-hover:scale-105 transition-transform duration-200"
                           : "text-foreground group-hover:text-primary"
                       }`}>
-                        {option.text}
+                        {isClicked && isBriefingButton ? "正在生成简报..." : option.text}
                       </span>
                       
                       {/* 装饰图标 */}
                       {isClicked ? (
-                        <div className="w-4 h-4 rounded-full bg-primary/20 animate-ping" />
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
                       ) : (
-                        <Sparkles className="w-4 h-4 text-primary/40 group-hover:text-primary group-hover:scale-110 transition-all opacity-0 group-hover:opacity-100" />
+                        <Sparkles className={`w-5 h-5 transition-all ${
+                          isBriefingButton
+                            ? "text-white/80 group-hover:text-white group-hover:scale-125 group-hover:rotate-12 opacity-100"
+                            : "text-primary/40 group-hover:text-primary group-hover:scale-110 opacity-0 group-hover:opacity-100"
+                        }`} />
                       )}
                     </div>
                   </button>
