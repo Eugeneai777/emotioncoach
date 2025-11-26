@@ -30,7 +30,16 @@ const CampVideoTasks = ({ campId, date = new Date(), briefingData }: CampVideoTa
   }
 
   if (recommendations.length === 0) {
-    return null;
+    return (
+      <div className="p-4 rounded-lg border border-border bg-secondary/10 text-center">
+        <p className="text-sm text-muted-foreground">
+          📚 暂无推荐课程
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          完成今日情绪记录后系统将为你推荐相关课程
+        </p>
+      </div>
+    );
   }
 
   const completedCount = recommendations.filter((r) => r.is_completed).length;
