@@ -6,8 +6,9 @@ import { zhCN } from "date-fns/locale";
 import LikeButton from "./LikeButton";
 import CommentSection from "./CommentSection";
 import ShareButton from "./ShareButton";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PostCardProps {
   post: {
@@ -34,6 +35,41 @@ interface PostCardProps {
 
 const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const [showComments, setShowComments] = useState(false);
+  const [likesCount, setLikesCount] = useState(post.likes_count);
+  const [commentsCount, setCommentsCount] = useState(post.comments_count);
+
+  // 实时监听点赞和评论变化
+  useEffect(() => {
+    console.log(`[PostCard] Setting up realtime for post ${post.id}`);
+
+    const channel = supabase
+      .channel(`post-${post.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "community_posts",
+          filter: `id=eq.${post.id}`,
+        },
+        (payload) => {
+          console.log(`[PostCard] Received update for post ${post.id}:`, payload);
+          if (payload.eventType === "UPDATE" && payload.new) {
+            const newData = payload.new as any;
+            setLikesCount(newData.likes_count);
+            setCommentsCount(newData.comments_count);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log(`[PostCard] Subscription status for post ${post.id}:`, status);
+      });
+
+    return () => {
+      console.log(`[PostCard] Cleaning up realtime for post ${post.id}`);
+      supabase.removeChannel(channel);
+    };
+  }, [post.id]);
 
   const getTypeEmoji = (type: string) => {
     switch (type) {
@@ -170,7 +206,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
       <div className="flex items-center gap-6 pt-3 border-t">
         <LikeButton
           postId={post.id}
-          initialLikesCount={post.likes_count}
+          initialLikesCount={likesCount}
           onUpdate={onUpdate}
         />
         <button
@@ -178,7 +214,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <MessageCircle className="h-5 w-5" />
-          <span className="text-sm">{post.comments_count}</span>
+          <span className="text-sm">{commentsCount}</span>
         </button>
         <ShareButton post={post} />
       </div>
