@@ -244,6 +244,19 @@ serve(async (req) => {
           {
             type: "function",
             function: {
+              name: "request_emotion_intensity",
+              description: "当用户表达情绪但没有明确说明情绪强度时，调用此工具请求用户提供情绪强度（1-10分）",
+              parameters: {
+                type: "object",
+                properties: {},
+                required: [],
+                additionalProperties: false
+              }
+            }
+          },
+          {
+            type: "function",
+            function: {
               name: "generate_briefing",
               description: "当用户完成情绪四部曲的四个阶段后，生成结构化的情绪梳理简报，并根据对话内容识别情绪标签",
               parameters: {
