@@ -6,10 +6,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import GradientPicker, { GRADIENT_PRESETS } from "./GradientPicker";
 import CustomCarouselCard from "./CustomCarouselCard";
+import { CARD_TEMPLATES, TEMPLATE_CATEGORIES, CardTemplate } from "./cardTemplates";
+import { Sparkles } from "lucide-react";
 
 interface CustomCardEditorProps {
   open: boolean;
@@ -48,6 +52,28 @@ export default function CustomCardEditor({
   const [actionText, setActionText] = useState(editingCard?.action_text || "");
   const [actionType, setActionType] = useState(editingCard?.action_type || "chat");
   const [saving, setSaving] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const handleTemplateSelect = (template: CardTemplate) => {
+    setEmoji(template.emoji);
+    setTitle(template.title);
+    setSubtitle(template.subtitle);
+    setDescription(template.description);
+    setBackgroundValue(template.backgroundValue);
+    setTextColor(template.textColor);
+    setImagePosition(template.imagePosition);
+    setHasReminder(template.hasReminder);
+    setReminderTime(template.reminderTime);
+    setReminderMessage(template.reminderMessage);
+    setActionText(template.actionText);
+    setActionType(template.actionType);
+    toast.success(`已应用"${template.name}"模板`);
+  };
+
+  const filteredTemplates =
+    selectedCategory === "all"
+      ? CARD_TEMPLATES
+      : CARD_TEMPLATES.filter((t) => t.category === selectedCategory);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -106,12 +132,75 @@ export default function CustomCardEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>✨ {editingCard ? "编辑" : "创建"}自定义卡片</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            {editingCard ? "编辑" : "创建"}自定义卡片
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Tabs defaultValue="custom" className="flex-1 flex flex-col min-h-0">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="templates">📚 模板库</TabsTrigger>
+            <TabsTrigger value="custom">🎨 自定义</TabsTrigger>
+          </TabsList>
+
+          {/* Templates Tab */}
+          <TabsContent value="templates" className="flex-1 min-h-0 mt-4">
+            <div className="flex flex-col h-full">
+              {/* Category Filter */}
+              <ScrollArea className="w-full pb-4">
+                <div className="flex gap-2">
+                  {TEMPLATE_CATEGORIES.map((cat) => (
+                    <Button
+                      key={cat.id}
+                      variant={selectedCategory === cat.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className="whitespace-nowrap"
+                    >
+                      {cat.icon} {cat.name}
+                    </Button>
+                  ))}
+                </div>
+              </ScrollArea>
+
+              {/* Template Grid */}
+              <ScrollArea className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pr-4">
+                  {filteredTemplates.map((template) => (
+                    <div
+                      key={template.id}
+                      className="group relative border rounded-xl p-4 hover:shadow-lg transition-all cursor-pointer bg-card"
+                      onClick={() => handleTemplateSelect(template)}
+                    >
+                      <div className="flex items-start gap-3 mb-2">
+                        <span className="text-2xl">{template.emoji}</span>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm mb-1">{template.name}</h4>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {template.subtitle}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                          {template.category}
+                        </span>
+                      </div>
+                      <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity" />
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          </TabsContent>
+
+          {/* Custom Tab */}
+          <TabsContent value="custom" className="flex-1 min-h-0 mt-4">
+            <ScrollArea className="h-full">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pr-4">
           {/* Left: Form */}
           <div className="space-y-4">
             {/* Emoji Selector */}
@@ -255,27 +344,30 @@ export default function CustomCardEditor({
             </div>
           </div>
 
-          {/* Right: Preview */}
-          <div className="space-y-2">
-            <Label>实时预览</Label>
-            <div className="sticky top-4">
-              <CustomCarouselCard
-                emoji={emoji}
-                title={title || "卡片标题"}
-                subtitle={subtitle}
-                description={description}
-                backgroundType="gradient"
-                backgroundValue={backgroundValue}
-                textColor={textColor}
-                imageUrl={imageUrl}
-                imagePosition={imagePosition}
-                actionText={actionText}
-              />
-            </div>
-          </div>
-        </div>
+                {/* Right: Preview */}
+                <div className="space-y-2">
+                  <Label>实时预览</Label>
+                  <div className="sticky top-4">
+                    <CustomCarouselCard
+                      emoji={emoji}
+                      title={title || "卡片标题"}
+                      subtitle={subtitle}
+                      description={description}
+                      backgroundType="gradient"
+                      backgroundValue={backgroundValue}
+                      textColor={textColor}
+                      imageUrl={imageUrl}
+                      imagePosition={imagePosition}
+                      actionText={actionText}
+                    />
+                  </div>
+                </div>
+              </div>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        <div className="flex justify-end gap-2 pt-4 border-t mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             取消
           </Button>
