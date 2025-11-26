@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.push-weekly-courses]
 verify_jwt = false
+
+[functions.generate-checkin-image]
+verify_jwt = true

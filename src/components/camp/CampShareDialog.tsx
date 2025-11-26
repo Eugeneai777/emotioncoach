@@ -16,7 +16,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Share2, Loader2 } from "lucide-react";
+import { Share2, Loader2, Sparkles } from "lucide-react";
+import ImageUploader from "@/components/community/ImageUploader";
 
 interface CampShareDialogProps {
   open: boolean;
@@ -50,6 +51,52 @@ const CampShareDialog = ({
   const [customTitle, setCustomTitle] = useState(insight || "");
   const [shareContent, setShareContent] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [generatingImage, setGeneratingImage] = useState(false);
+
+  const handleGenerateImage = async () => {
+    if (!customTitle && !insight) {
+      toast({
+        title: "请先输入打卡标题",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGeneratingImage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "generate-checkin-image",
+        {
+          body: {
+            title: customTitle || insight,
+            emotionTheme: emotionTheme,
+            campName: campName,
+            day: campDay,
+          },
+        }
+      );
+
+      if (error) throw error;
+
+      if (data?.imageUrl) {
+        setImageUrls([data.imageUrl]);
+        toast({
+          title: "头图生成成功！",
+          description: "已为您生成专属打卡头图",
+        });
+      }
+    } catch (error) {
+      console.error("生成头图失败:", error);
+      toast({
+        title: "生成失败",
+        description: error instanceof Error ? error.message : "请稍后重试",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
 
   const handleShare = async () => {
     if (!user) return;
@@ -71,6 +118,7 @@ const CampShareDialog = ({
         action: action,
         is_anonymous: isAnonymous,
         visibility: "public",
+        image_urls: imageUrls.length > 0 ? imageUrls : null,
         badges: {
           type: "camp_checkin",
           day: campDay,
@@ -170,6 +218,37 @@ const CampShareDialog = ({
               onChange={(e) => setCustomTitle(e.target.value)}
               maxLength={100}
             />
+          </div>
+
+          {/* 打卡配图 */}
+          <div className="space-y-2">
+            <Label>打卡配图</Label>
+            <ImageUploader
+              imageUrls={imageUrls}
+              onImagesChange={setImageUrls}
+              maxImages={3}
+            />
+            {imageUrls.length === 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGenerateImage}
+                disabled={generatingImage}
+                className="w-full"
+              >
+                {generatingImage ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    生成中...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    AI 生成头图
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
           {/* 分享内容 */}
