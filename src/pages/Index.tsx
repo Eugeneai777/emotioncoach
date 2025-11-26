@@ -18,7 +18,7 @@ import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
 
 import { TrainingCampCard } from "@/components/camp/TrainingCampCard";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
-import { CampRecentReflections } from "@/components/camp/CampRecentReflections";
+
 import CampCheckInSuccessDialog from "@/components/camp/CampCheckInSuccessDialog";
 import { NotificationCard } from "@/components/NotificationCard";
 import { useStreamChat } from "@/hooks/useStreamChat";
@@ -831,16 +831,6 @@ const Index = () => {
                     )}
                   </div>
                   
-                  {/* Recent Reflections */}
-                  {user && (
-                    <div className="bg-card border border-border rounded-card-lg p-card shadow-sm">
-                      <CampRecentReflections 
-                        userId={user.id}
-                        startDate={activeCamp.start_date}
-                        endDate={activeCamp.end_date}
-                      />
-                    </div>
-                  )}
                 </div>
               )}
 
