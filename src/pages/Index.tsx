@@ -210,102 +210,6 @@ const Index = () => {
     }
   };
 
-  const loadActiveCamp = async () => {
-    if (!user) return;
-    try {
-      const { data, error } = await supabase
-        .from('training_camps')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (data) {
-        setActiveCamp({
-          ...data,
-          check_in_dates: Array.isArray(data.check_in_dates) ? data.check_in_dates : []
-        } as TrainingCamp);
-      }
-    } catch (error) {
-      console.error('Error loading active camp:', error);
-    }
-  };
-
-  const handleCheckIn = async () => {
-    if (!user || !activeCamp) return;
-
-    const today = format(new Date(), 'yyyy-MM-dd');
-    if (activeCamp.check_in_dates.includes(today)) {
-      toast({
-        title: "今天已打卡",
-        description: "每天只能打卡一次哦"
-      });
-      return;
-    }
-
-    try {
-      const newCheckInDates = [...activeCamp.check_in_dates, today];
-      const newCompletedDays = newCheckInDates.length;
-      const newCurrentDay = activeCamp.current_day + 1;
-
-      const updates: any = {
-        check_in_dates: newCheckInDates,
-        completed_days: newCompletedDays,
-        current_day: newCurrentDay
-      };
-
-      // Check milestones
-      if (newCompletedDays >= 7 && !activeCamp.milestone_7_reached) {
-        updates.milestone_7_reached = true;
-        toast({
-          title: "🎉 达成里程碑！",
-          description: "恭喜获得「一周勇士」徽章！",
-          duration: 5000
-        });
-      }
-      if (newCompletedDays >= 14 && !activeCamp.milestone_14_reached) {
-        updates.milestone_14_reached = true;
-        toast({
-          title: "🎉 达成里程碑！",
-          description: "恭喜获得「半程达人」徽章！",
-          duration: 5000
-        });
-      }
-      if (newCompletedDays >= 21) {
-        updates.milestone_21_completed = true;
-        updates.status = 'completed';
-        toast({
-          title: "🏆 训练营毕业！",
-          description: "恭喜完成21天情绪日记训练营！",
-          duration: 5000
-        });
-      }
-
-      const { error } = await supabase
-        .from('training_camps')
-        .update(updates)
-        .eq('id', activeCamp.id);
-
-      if (error) throw error;
-
-      loadActiveCamp();
-      toast({
-        title: "打卡成功！",
-        description: `连续打卡 ${newCompletedDays} 天`
-      });
-    } catch (error) {
-      console.error('Error checking in:', error);
-      toast({
-        title: "打卡失败",
-        description: "请稍后重试",
-        variant: "destructive"
-      });
-    }
-  };
-
   const checkOnboarding = async () => {
     if (!user) return;
     try {
@@ -644,37 +548,69 @@ const Index = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-                <GoalProgressCard
-                  title="觉察"
-                  description="识别情绪，了解情绪从何而来"
-                  icon="compass"
-                  color="blue"
-                />
-                <GoalProgressCard
-                  title="表达"
-                  description="用清晰的语言表达情绪"
-                  icon="message-square"
-                  color="green"
-                />
-                <GoalProgressCard
-                  title="应对"
-                  description="学习健康的情绪应对方法"
-                  icon="activity"
-                  color="orange"
-                />
-                <GoalProgressCard
-                  title="成长"
-                  description="从情绪中学习，不断成长"
-                  icon="flame"
-                  color="red"
-                />
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        1
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground text-sm">
+                          觉察 <span className="text-primary/70 font-medium text-xs ml-1">Feel it</span>
+                        </h4>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-9">停下来感受当前情绪</p>
+                  </div>
+
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        2
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground text-sm">
+                          理解 <span className="text-primary/70 font-medium text-xs ml-1">Name it</span>
+                        </h4>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-9">理解情绪背后的需求</p>
+                  </div>
+
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        3
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground text-sm">
+                          反应 <span className="text-primary/70 font-medium text-xs ml-1">React it</span>
+                        </h4>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-9">觉察情绪驱动的反应</p>
+                  </div>
+
+                  <div className="bg-background/50 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-sm group">
+                    <div className="flex items-start gap-2 mb-1">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                        4
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground text-sm">
+                          行动 <span className="text-primary/70 font-medium text-xs ml-1">Act it</span>
+                        </h4>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-9">采取建设性的行动</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         ) : (
           <div className="flex-1 py-4 md:py-6 space-y-3 md:space-y-4">
             {messages.map((message, index) => (
-              <ChatMessage key={index} message={message} />
+              <ChatMessage key={index} role={message.role} content={message.content} />
             ))}
             {isLoading && (
               <div className="flex justify-start">
@@ -711,8 +647,7 @@ const Index = () => {
               <VoiceControls
                 isListening={isListening}
                 isSpeaking={isSpeaking}
-                voiceInputSupported={voiceInputSupported}
-                voiceOutputSupported={voiceOutputSupported}
+                voiceSupported={voiceInputSupported && voiceOutputSupported}
                 onStartListening={startListening}
                 onStopListening={stopListening}
                 onStopSpeaking={stopSpeaking}
