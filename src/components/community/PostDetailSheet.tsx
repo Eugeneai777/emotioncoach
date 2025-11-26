@@ -46,6 +46,8 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
   const [followersCount, setFollowersCount] = useState(0);
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  const [newComment, setNewComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   // 检查是否已关注
   useEffect(() => {
@@ -191,6 +193,57 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
     }
   };
 
+  // 处理评论提交
+  const handleSubmitComment = async () => {
+    if (!session?.user) {
+      toast.error("请先登录");
+      return;
+    }
+
+    if (!newComment.trim()) {
+      toast.error("评论不能为空");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      const { error } = await supabase.from("post_comments").insert({
+        post_id: post.id,
+        user_id: session.user.id,
+        content: newComment.trim(),
+        is_anonymous: false,
+      });
+
+      if (error) throw error;
+
+      // 更新评论数
+      const { data: postData } = await supabase
+        .from("community_posts")
+        .select("comments_count")
+        .eq("id", post.id)
+        .single();
+
+      if (postData) {
+        await supabase
+          .from("community_posts")
+          .update({ comments_count: postData.comments_count + 1 })
+          .eq("id", post.id);
+      }
+
+      setNewComment("");
+      toast.success("评论成功");
+      
+      // 刷新评论区
+      window.location.reload();
+    } catch (error) {
+      console.error("发表评论失败:", error);
+      toast.error("评论失败，请稍后重试");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const displayName = post.is_anonymous ? "匿名用户" : `用户${post.user_id.slice(0, 6)}`;
 
   const getTypeEmoji = (type: string) => {
@@ -329,16 +382,40 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
         {/* 底部固定互动栏 - 小红书风格 */}
         <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-3 flex items-center gap-3 z-50">
           {/* 评论输入框 */}
-          <div 
-            className="flex-1 flex items-center gap-2 bg-muted/50 rounded-full px-4 py-2.5 cursor-pointer hover:bg-muted/70 transition-colors"
-            onClick={() => {
-              const commentSection = document.querySelector('[data-comment-section]');
-              commentSection?.scrollIntoView({ behavior: 'smooth' });
-            }}
-          >
-            <Pencil className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground text-sm">说点什么...</span>
-          </div>
+          {session ? (
+            <div className="flex-1 flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="说点什么..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmitComment();
+                  }
+                }}
+                className="flex-1 bg-muted/50 rounded-full px-4 py-2.5 text-sm outline-none focus:bg-muted/70 transition-colors"
+              />
+              {newComment.trim() && (
+                <button
+                  onClick={handleSubmitComment}
+                  disabled={submitting}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                >
+                  {submitting ? "发送中..." : "发送"}
+                </button>
+              )}
+            </div>
+          ) : (
+            <div 
+              className="flex-1 flex items-center gap-2 bg-muted/50 rounded-full px-4 py-2.5 cursor-pointer hover:bg-muted/70 transition-colors"
+              onClick={() => toast.error("请先登录")}
+            >
+              <Pencil className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground text-sm">说点什么...</span>
+            </div>
+          )}
           
           {/* 点赞 */}
           <button 
