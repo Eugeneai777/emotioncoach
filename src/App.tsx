@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import History from "./pages/History";
 import Community from "./pages/Community";
+import CommunityDiscover from "./pages/CommunityDiscover";
 import Settings from "./pages/Settings";
 import TagStats from "./pages/TagStats";
 import Goals from "./pages/Goals";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/history" element={<History />} />
+          <Route path="/community/discover" element={<CommunityDiscover />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/tag-stats" element={<TagStats />} />
           <Route path="/goals" element={<Goals />} />

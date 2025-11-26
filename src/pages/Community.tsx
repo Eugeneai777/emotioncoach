@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PostCard from "@/components/community/PostCard";
 import PostComposer from "@/components/community/PostComposer";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface CommunityPost {
   id: string;
@@ -35,6 +36,7 @@ const Community = () => {
   const [showComposer, setShowComposer] = useState(false);
   const { toast } = useToast();
   const { session } = useAuth();
+  const navigate = useNavigate();
 
   const loadPosts = async () => {
     try {
@@ -70,6 +72,44 @@ const Community = () => {
     loadPosts();
   }, [activeFilter]);
 
+  // 实时监听新帖子
+  useEffect(() => {
+    console.log("[Community] Setting up realtime for new posts");
+
+    const channel = supabase
+      .channel("community-posts-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "community_posts",
+          filter: "visibility=eq.public",
+        },
+        (payload) => {
+          console.log("[Community] New post received:", payload);
+          const newPost = payload.new as CommunityPost;
+          
+          // 只在"全部"或匹配的类型筛选器下添加新帖子
+          if (activeFilter === "all" || activeFilter === newPost.post_type) {
+            setPosts((current) => [newPost, ...current]);
+            toast({
+              title: "有新内容",
+              description: "社区有新的分享啦 ✨",
+            });
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log("[Community] Subscription status:", status);
+      });
+
+    return () => {
+      console.log("[Community] Cleaning up realtime");
+      supabase.removeChannel(channel);
+    };
+  }, [activeFilter]);
+
   const handlePostCreated = () => {
     setShowComposer(false);
     loadPosts();
@@ -97,16 +137,27 @@ const Community = () => {
           </TabsList>
         </Tabs>
 
-        {/* 发布按钮 */}
+        {/* 操作按钮 */}
         {session && (
-          <Button
-            onClick={() => setShowComposer(true)}
-            className="w-full mb-6 h-12 text-base"
-            size="lg"
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            分享我的故事
-          </Button>
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <Button
+              onClick={() => setShowComposer(true)}
+              className="h-12 text-base"
+              size="lg"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              分享故事
+            </Button>
+            <Button
+              onClick={() => navigate("/community/discover")}
+              variant="outline"
+              className="h-12 text-base"
+              size="lg"
+            >
+              <Sparkles className="mr-2 h-5 w-5" />
+              发现精彩
+            </Button>
+          </div>
         )}
 
         {/* 帖子列表 */}
