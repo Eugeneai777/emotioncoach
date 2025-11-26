@@ -297,6 +297,33 @@ export type Database = {
         }
         Relationships: []
       }
+      declaration_favorites: {
+        Row: {
+          created_at: string
+          custom_background: string | null
+          declaration: string
+          id: string
+          theme: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_background?: string | null
+          declaration: string
+          id?: string
+          theme?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_background?: string | null
+          declaration?: string
+          id?: string
+          theme?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       emotion_goals: {
         Row: {
           baseline_weekly_count: number | null
