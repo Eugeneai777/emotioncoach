@@ -738,7 +738,16 @@ const Index = () => {
                   />
                 );
               }
-              return <ChatMessage key={index} role={message.role} content={message.content} />;
+              return (
+                <ChatMessage 
+                  key={index} 
+                  role={message.role} 
+                  content={message.content}
+                  onOptionClick={(option) => {
+                    sendMessage(option);
+                  }}
+                />
+              );
             })}
             {isLoading && (
               <div className="flex justify-start">
