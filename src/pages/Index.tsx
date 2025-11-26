@@ -506,31 +506,6 @@ const Index = () => {
               <DailyReminder onStart={handleStartFromReminder} onDismiss={handleDismissReminder} />
             )}
 
-            {!activeCamp && (
-              <div className="w-full mb-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-6 border border-primary/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                      🏕️ 21天情绪日记训练营
-                    </h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    用21天养成情绪记录习惯，获得专属徽章和成长洞察
-                  </p>
-                  <Button onClick={() => setShowStartCamp(true)} className="w-full">
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    开启训练营
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {activeCamp && (
-              <div className="w-full mb-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                <TrainingCampCard camp={activeCamp} onCheckIn={handleCheckIn} />
-              </div>
-            )}
-
             <div className="text-center space-y-3 md:space-y-4 w-full max-w-xl animate-in fade-in-50 duration-700">
               <div className="space-y-1.5 md:space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground">情绪觉醒教练</h2>
@@ -605,6 +580,31 @@ const Index = () => {
                   </div>
                 </div>
               </div>
+
+              {!activeCamp && (
+                <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+                  <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-6 border border-primary/20">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        🏕️ 21天情绪日记训练营
+                      </h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      用21天养成情绪记录习惯，获得专属徽章和成长洞察
+                    </p>
+                    <Button onClick={() => setShowStartCamp(true)} className="w-full">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      开启训练营
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {activeCamp && (
+                <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+                  <TrainingCampCard camp={activeCamp} onCheckIn={handleCheckIn} />
+                </div>
+              )}
             </div>
           </div>
         ) : (
