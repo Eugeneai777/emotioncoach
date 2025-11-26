@@ -26,6 +26,7 @@ const CampCheckIn = () => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [latestBriefing, setLatestBriefing] = useState<any>(null);
   const [todayProgress, setTodayProgress] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("checkin");
 
   useEffect(() => {
     if (user && campId) {
@@ -203,7 +204,7 @@ const CampCheckIn = () => {
         </div>
 
         <div className="space-y-6">
-          <Tabs defaultValue="checkin" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="checkin">今日打卡</TabsTrigger>
               <TabsTrigger value="calendar">打卡日历</TabsTrigger>
@@ -316,10 +317,7 @@ const CampCheckIn = () => {
                       </p>
                       {!todayProgress?.video_learning_completed && (
                         <Button 
-                          onClick={() => {
-                            const tasksTab = document.querySelector('[value="tasks"]') as HTMLElement;
-                            tasksTab?.click();
-                          }}
+                          onClick={() => setActiveTab("tasks")}
                           size="sm"
                           variant="outline"
                           className="mt-3"
