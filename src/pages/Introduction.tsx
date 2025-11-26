@@ -31,8 +31,8 @@ import {
 } from "lucide-react";
 import React from "react";
 
-// 使用占位符图片
-const heroChatMockup = "/placeholder.svg";
+// 导入图片资源
+import heroIntroImage from "@/assets/hero-intro-full.png";
 const featureWarmCompanion = "/placeholder.svg";
 const featureSystematicMethod = "/placeholder.svg";
 const featureCommunityResonance = "/placeholder.svg";
@@ -415,7 +415,7 @@ const Introduction = () => {
           {/* 主视觉图片 */}
           <div className="mt-12 max-w-md mx-auto">
             <img 
-              src={heroChatMockup} 
+              src={heroIntroImage} 
               alt="有劲AI情绪日记对话界面" 
               className="rounded-3xl shadow-2xl w-full hover:scale-105 transition-transform duration-300"
             />
