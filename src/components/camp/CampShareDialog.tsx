@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Share2, Loader2 } from "lucide-react";
 
@@ -46,6 +47,7 @@ const CampShareDialog = ({
   const { user } = useAuth();
   const { toast } = useToast();
   const [sharing, setSharing] = useState(false);
+  const [customTitle, setCustomTitle] = useState(insight || "");
   const [shareContent, setShareContent] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
 
@@ -61,7 +63,7 @@ const CampShareDialog = ({
         camp_id: campId,
         camp_day: campDay,
         briefing_id: briefingId,
-        title: `${campName} - 第${campDay}天打卡`,
+        title: customTitle || insight || `第${campDay}天打卡`,
         content: shareContent || undefined,
         emotion_theme: emotionTheme,
         emotion_intensity: emotionIntensity,
@@ -73,6 +75,7 @@ const CampShareDialog = ({
           type: "camp_checkin",
           day: campDay,
           campName: campName,
+          campInfo: `${campName} - 第${campDay}天打卡`,
         },
       });
 
@@ -155,6 +158,18 @@ const CampShareDialog = ({
                 <p className="mt-1 text-foreground/80">{action}</p>
               </div>
             )}
+          </div>
+
+          {/* 打卡标题 */}
+          <div className="space-y-2">
+            <Label htmlFor="custom-title">打卡标题</Label>
+            <Input
+              id="custom-title"
+              placeholder="输入你的打卡标题..."
+              value={customTitle}
+              onChange={(e) => setCustomTitle(e.target.value)}
+              maxLength={100}
+            />
           </div>
 
           {/* 分享内容 */}
