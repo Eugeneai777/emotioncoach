@@ -1,21 +1,19 @@
-import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useCampDailyProgress } from "@/hooks/useCampDailyProgress";
-import { validateCheckIn, performCheckIn } from "@/utils/campCheckInValidator";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import DailyPracticeCard from "@/components/camp/DailyPracticeCard";
-import CheckInProgress from "@/components/camp/CheckInProgress";
-import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
-import CampShareDialog from "@/components/camp/CampShareDialog";
-import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
-import { ArrowLeft, Loader2, Share2, Calendar } from "lucide-react";
-import { format, parseISO } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, ArrowLeft, Calendar, CheckCircle2, Circle, Share2, MessageSquare, Sparkles } from "lucide-react";
+import { TrainingCamp } from "@/types/trainingCamp";
+import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
+import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
+import CampShareDialog from "@/components/camp/CampShareDialog";
+import { format } from "date-fns";
+import { zhCN } from "date-fns/locale";
 
 const CampCheckIn = () => {
   const { campId } = useParams<{ campId: string }>();
@@ -23,32 +21,17 @@ const CampCheckIn = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [camp, setCamp] = useState<any>(null);
+  const [camp, setCamp] = useState<TrainingCamp | null>(null);
   const [loading, setLoading] = useState(true);
-  const [checkingIn, setCheckingIn] = useState(false);
-  const [validation, setValidation] = useState<any>(null);
-  const [checkinRequirement, setCheckinRequirement] = useState<string>("single_emotion");
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [latestBriefing, setLatestBriefing] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState("today");
-
-  const { progress, loadProgress, updateProgress } = useCampDailyProgress(
-    campId || "",
-    user?.id || ""
-  );
+  const [todayProgress, setTodayProgress] = useState<any>(null);
 
   useEffect(() => {
-    if (campId && user) {
+    if (user && campId) {
       loadCampData();
-      loadUserSettings();
     }
-  }, [campId, user]);
-
-  useEffect(() => {
-    if (campId && user && checkinRequirement) {
-      validateToday();
-    }
-  }, [campId, user, progress, checkinRequirement]);
+  }, [user, campId]);
 
   const loadCampData = async () => {
     if (!campId || !user) return;
@@ -60,113 +43,74 @@ const CampCheckIn = () => {
         .select("*")
         .eq("id", campId)
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      setCamp(data);
+      if (data) {
+        setCamp(data as TrainingCamp);
+        await loadTodayProgress();
+        await loadLatestBriefing();
+      }
     } catch (error) {
-      console.error("加载训练营失败:", error);
+      console.error("Error loading camp:", error);
       toast({
         title: "加载失败",
-        description: "无法加载训练营信息",
+        description: "无法加载训练营数据",
         variant: "destructive",
       });
-      navigate("/");
     } finally {
       setLoading(false);
     }
   };
 
-  const loadUserSettings = async () => {
-    if (!user) return;
-
+  const loadTodayProgress = async () => {
+    if (!user || !campId) return;
+    const today = new Date().toISOString().split("T")[0];
+    
     try {
       const { data } = await supabase
-        .from("profiles")
-        .select("camp_checkin_requirement")
-        .eq("id", user.id)
-        .single();
-
-      if (data?.camp_checkin_requirement) {
-        setCheckinRequirement(data.camp_checkin_requirement);
-      }
+        .from("camp_daily_progress")
+        .select("*")
+        .eq("camp_id", campId)
+        .eq("progress_date", today)
+        .maybeSingle();
+      
+      setTodayProgress(data);
     } catch (error) {
-      console.error("加载用户设置失败:", error);
-    }
-  };
-
-  const validateToday = async () => {
-    if (!user || !campId) return;
-
-    try {
-      const result = await validateCheckIn(user.id, campId, checkinRequirement as any);
-      setValidation(result);
-    } catch (error) {
-      console.error("验证打卡条件失败:", error);
+      console.error("Error loading today's progress:", error);
     }
   };
 
   const loadLatestBriefing = async () => {
     if (!user) return;
-
+    const today = new Date().toISOString().split("T")[0];
+    
     try {
-      const today = format(new Date(), "yyyy-MM-dd");
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("briefings")
-        .select("*, conversations(*)")
+        .select("*, conversations!inner(*)")
         .eq("conversations.user_id", user.id)
-        .gte("created_at", today)
+        .gte("created_at", `${today}T00:00:00`)
         .order("created_at", { ascending: false })
         .limit(1)
-        .single();
-
-      if (error && error.code !== "PGRST116") throw error;
-      setLatestBriefing(data);
+        .maybeSingle();
+      
+      if (data) {
+        setLatestBriefing(data);
+      }
     } catch (error) {
-      console.error("加载最新简报失败:", error);
+      console.error("Error loading latest briefing:", error);
     }
   };
 
-  const handleCheckIn = async () => {
-    if (!user || !campId || !validation?.canCheckIn) return;
-
-    try {
-      setCheckingIn(true);
-      const result = await performCheckIn(user.id, campId, "manual");
-
-      if (result.success) {
-        toast({
-          title: "打卡成功",
-          description: "恭喜你完成今日打卡！继续保持 💪",
-        });
-
-        // 刷新进度
-        await loadProgress();
-        await loadCampData();
-        await loadLatestBriefing();
-
-        // 显示分享对话框
-        setShowShareDialog(true);
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (error) {
-      console.error("打卡失败:", error);
-      toast({
-        title: "打卡失败",
-        description: error instanceof Error ? error.message : "请稍后重试",
-        variant: "destructive",
-      });
-    } finally {
-      setCheckingIn(false);
-    }
+  const handleShare = () => {
+    setShowShareDialog(true);
   };
 
   const handleMakeupCheckIn = async (date: string) => {
     if (!user || !campId) return;
 
     try {
-      // 临时修改 progress_date 以支持补打卡
       const { error: progressError } = await supabase
         .from("camp_daily_progress")
         .upsert({
@@ -183,22 +127,21 @@ const CampCheckIn = () => {
 
       if (progressError) throw progressError;
 
-      // 更新训练营打卡日期
-      const { data: camp, error: campError } = await supabase
+      const { data: campData, error: campError } = await supabase
         .from("training_camps")
         .select("check_in_dates, completed_days")
         .eq("id", campId)
-        .single();
+        .maybeSingle();
 
       if (campError) throw campError;
 
-      const checkInDates = Array.isArray(camp.check_in_dates) ? camp.check_in_dates : [];
+      const checkInDates = Array.isArray(campData?.check_in_dates) ? campData.check_in_dates : [];
       if (!checkInDates.includes(date)) {
         checkInDates.push(date);
         await supabase
           .from("training_camps")
           .update({
-            completed_days: camp.completed_days + 1,
+            completed_days: (campData?.completed_days || 0) + 1,
             check_in_dates: checkInDates,
           })
           .eq("id", campId);
@@ -206,10 +149,9 @@ const CampCheckIn = () => {
 
       toast({
         title: "补打卡成功",
-        description: `已成功补打卡 ${format(parseISO(date), "MM月dd日")}`,
+        description: `已成功补打卡 ${format(new Date(date), "MM月dd日")}`,
       });
 
-      await loadProgress();
       await loadCampData();
     } catch (error) {
       console.error("补打卡失败:", error);
@@ -219,18 +161,6 @@ const CampCheckIn = () => {
         variant: "destructive",
       });
     }
-  };
-
-  const handleStartDeclaration = () => {
-    navigate("/energy-studio");
-  };
-
-  const handleStartEmotionLog = () => {
-    navigate("/");
-  };
-
-  const handleStartReflection = () => {
-    navigate("/");
   };
 
   if (loading) {
@@ -245,14 +175,7 @@ const CampCheckIn = () => {
     return null;
   }
 
-  const completedCount =
-    (progress.declaration_completed ? 1 : 0) +
-    (progress.emotion_logs_count > 0 ? 1 : 0) +
-    (progress.reflection_completed ? 1 : 0);
-
-  const checkInDates = camp?.check_in_dates
-    ? (Array.isArray(camp.check_in_dates) ? camp.check_in_dates : [])
-    : [];
+  const checkInDates = Array.isArray(camp.check_in_dates) ? camp.check_in_dates : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
@@ -262,15 +185,15 @@ const CampCheckIn = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(`/camp/${campId}`)}
+            onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               第 {camp.current_day} 天打卡
-              {progress.is_checked_in && (
-                <Badge className="bg-green-500">已完成</Badge>
+              {todayProgress?.is_checked_in && (
+                <Badge className="bg-green-500">✅ 已完成</Badge>
               )}
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -279,117 +202,175 @@ const CampCheckIn = () => {
           </div>
         </div>
 
-        {/* 标签页 */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="today">今日打卡</TabsTrigger>
-            <TabsTrigger value="calendar">
-              <Calendar className="h-4 w-4 mr-2" />
-              打卡日历
-            </TabsTrigger>
-            <TabsTrigger value="tasks">任务清单</TabsTrigger>
-          </TabsList>
+        <div className="space-y-6">
+          <Tabs defaultValue="checkin" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="checkin">今日打卡</TabsTrigger>
+              <TabsTrigger value="calendar">打卡日历</TabsTrigger>
+              <TabsTrigger value="tasks">任务清单</TabsTrigger>
+            </TabsList>
 
-          {/* 今日打卡 */}
-          <TabsContent value="today" className="space-y-6">
-            {/* 打卡进度 */}
-            <CheckInProgress
-              completedCount={completedCount}
-              totalCount={3}
-              canCheckIn={validation?.canCheckIn || false}
-              reason={validation?.reason}
-              onCheckIn={handleCheckIn}
-              loading={checkingIn}
-            />
+            <TabsContent value="checkin" className="space-y-4 mt-6">
+              {/* 打卡状态卡片 */}
+              <Card className="p-6 bg-gradient-to-br from-primary/5 to-secondary/10">
+                <div className="text-center space-y-3">
+                  {todayProgress?.is_checked_in ? (
+                    <>
+                      <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+                        <CheckCircle2 className="w-8 h-8 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-foreground">✅ 今日已打卡</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          连续打卡 {camp.completed_days || 0} 天
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 mx-auto bg-secondary/30 rounded-full flex items-center justify-center">
+                        <Circle className="w-8 h-8 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-foreground">⏳ 待完成打卡</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          完成一次情绪对话即可自动打卡
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </Card>
 
-            {/* 三步练习 */}
-            <div className="space-y-6">
-              <h2 className="text-lg font-semibold text-foreground">今日练习</h2>
+              {/* 简化的任务列表 */}
+              <div className="space-y-3">
+                {/* 情绪教练对话 */}
+                <Card className="p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      todayProgress?.is_checked_in 
+                        ? "bg-primary/10" 
+                        : "bg-secondary/30"
+                    }`}>
+                      {todayProgress?.is_checked_in ? (
+                        <CheckCircle2 className="w-5 h-5 text-primary" />
+                      ) : (
+                        <MessageSquare className="w-5 h-5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium">📝 情绪教练对话</h4>
+                        {todayProgress?.emotion_logs_count > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            已完成 {todayProgress.emotion_logs_count} 次
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {todayProgress?.is_checked_in 
+                          ? "今日简报已生成，打卡已完成" 
+                          : "开始对话，完成四步曲生成简报即可自动打卡"}
+                      </p>
+                      {!todayProgress?.is_checked_in && (
+                        <Button 
+                          onClick={() => navigate("/")}
+                          size="sm"
+                          className="mt-3"
+                        >
+                          <Sparkles className="w-4 h-4 mr-1" />
+                          开始对话
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
 
-              {/* 早间宣言 */}
-              <DailyPracticeCard
-                emoji="☀️"
-                title="早间练习"
-                subtitle="今日宣言卡"
-                description="用一句话为今天设定积极的意图，给自己注入正能量"
-                duration="1分钟"
-                completed={progress.declaration_completed}
-                onStart={handleStartDeclaration}
-                disabled={progress.is_checked_in}
+                {/* 每日反思分享 */}
+                <Card className="p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      todayProgress?.has_shared_to_community 
+                        ? "bg-primary/10" 
+                        : "bg-secondary/30"
+                    }`}>
+                      {todayProgress?.has_shared_to_community ? (
+                        <CheckCircle2 className="w-5 h-5 text-primary" />
+                      ) : (
+                        <Share2 className="w-5 h-5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium">💬 每日反思分享</h4>
+                        {todayProgress?.has_shared_to_community && (
+                          <Badge variant="secondary" className="text-xs">
+                            已分享
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {todayProgress?.has_shared_to_community 
+                          ? "今日反思已分享到社区" 
+                          : "分享你的成长心得，获得社区支持"}
+                      </p>
+                      {!todayProgress?.has_shared_to_community && latestBriefing && (
+                        <Button 
+                          onClick={handleShare}
+                          size="sm"
+                          variant="outline"
+                          className="mt-3"
+                        >
+                          <Share2 className="w-4 h-4 mr-1" />
+                          立即分享
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* 提示信息 */}
+              <Card className="p-4 bg-secondary/20 border-dashed">
+                <p className="text-sm text-muted-foreground text-center">
+                  💡 打卡已自动完成，分享反思可获得更多社区支持和鼓励
+                </p>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="calendar">
+              <CampProgressCalendar
+                campId={campId!}
+                startDate={camp.start_date}
+                checkInDates={checkInDates}
+                currentDay={camp.current_day}
+                makeupDaysLimit={1}
+                onMakeupCheckIn={handleMakeupCheckIn}
               />
+            </TabsContent>
 
-              {/* 白天记录 */}
-              <DailyPracticeCard
-                emoji="🌤️"
-                title="白天记录"
-                subtitle="记录情绪时刻"
-                description="当情绪出现时，花几分钟和劲老师对话，梳理情绪背后的故事"
-                duration="2-3分钟"
-                completed={progress.emotion_logs_count > 0}
-                count={progress.emotion_logs_count}
-                onStart={handleStartEmotionLog}
-                disabled={progress.is_checked_in}
-              />
-
-              {/* 晚间复盘 */}
-              <DailyPracticeCard
-                emoji="🌙"
-                title="晚间复盘"
-                subtitle="今日情绪梳理"
-                description="睡前回顾今天的情绪旅程，沉淀洞察，规划明天的行动"
-                duration="6分钟"
-                completed={progress.reflection_completed}
-                onStart={handleStartReflection}
-                disabled={progress.is_checked_in}
-              />
-            </div>
-
-            {/* 提示信息 */}
-            <div className="mt-8 p-4 bg-secondary/30 rounded-lg">
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                💡 温馨提示：根据你的打卡设置，
-                {checkinRequirement === "single_emotion" && "完成1次情绪记录即可打卡"}
-                {checkinRequirement === "full_practice" && "需完成全部3步练习才能打卡"}
-                {checkinRequirement === "strict_quality" && "需完成高质量的情绪记录（包含强度、洞察和行动）"}
-                。可以在设置中调整打卡要求。
-              </p>
-            </div>
-          </TabsContent>
-
-          {/* 打卡日历 */}
-          <TabsContent value="calendar">
-            <CampProgressCalendar
-              campId={campId!}
-              startDate={camp.start_date}
-              checkInDates={checkInDates}
-              currentDay={camp.current_day}
-              makeupDaysLimit={
-                (camp as any).camp_makeup_days_limit || 1
-              }
-              onMakeupCheckIn={handleMakeupCheckIn}
-            />
-          </TabsContent>
-
-          {/* 任务清单 */}
-          <TabsContent value="tasks">
-            <CampDailyTaskList campId={campId!} />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="tasks">
+              <CampDailyTaskList campId={campId!} />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
 
-      {/* 分享对话框 */}
-      <CampShareDialog
-        open={showShareDialog}
-        onOpenChange={setShowShareDialog}
-        campId={campId!}
-        campName={camp?.camp_name || ""}
-        campDay={camp?.current_day || 0}
-        briefingId={latestBriefing?.id}
-        emotionTheme={latestBriefing?.emotion_theme}
-        emotionIntensity={latestBriefing?.emotion_intensity}
-        insight={latestBriefing?.insight}
-        action={latestBriefing?.action}
-      />
+      {/* 分享弹窗 */}
+      {camp && latestBriefing && (
+        <CampShareDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          campId={camp.id}
+          campName={camp.camp_name}
+          campDay={camp.current_day}
+          briefingId={latestBriefing.id}
+          emotionTheme={latestBriefing.emotion_theme}
+          emotionIntensity={latestBriefing.emotion_intensity}
+          insight={latestBriefing.insight}
+          action={latestBriefing.action}
+        />
+      )}
     </div>
   );
 };

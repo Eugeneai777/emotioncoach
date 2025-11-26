@@ -21,6 +21,7 @@ import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { CampMiniCalendar } from "@/components/camp/CampMiniCalendar";
 import { CampRecentReflections } from "@/components/camp/CampRecentReflections";
 import { CampMilestonesBadges } from "@/components/camp/CampMilestonesBadges";
+import CampCheckInSuccessDialog from "@/components/camp/CampCheckInSuccessDialog";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
@@ -44,6 +45,8 @@ const Index = () => {
   const [showStartCamp, setShowStartCamp] = useState(false);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [autoDismissSeconds, setAutoDismissSeconds] = useState(10);
+  const [showCheckInSuccess, setShowCheckInSuccess] = useState(false);
+  const [checkInSuccessData, setCheckInSuccessData] = useState<any>(null);
   const [voiceConfig, setVoiceConfig] = useState<{
     gender: 'male' | 'female';
     rate: number;
@@ -119,6 +122,29 @@ const Index = () => {
       loadActiveCamp();
     }
   }, [user, authLoading, navigate]);
+
+  // Listen for check-in success events
+  useEffect(() => {
+    const handleCheckInSuccess = (event: any) => {
+      const { campId, campName, campDay, briefingId, briefingData } = event.detail;
+      setCheckInSuccessData({
+        campId,
+        campName,
+        campDay,
+        briefingId,
+        emotionTheme: briefingData.emotion_theme,
+        emotionIntensity: briefingData.emotion_intensity,
+        insight: briefingData.insight,
+        action: briefingData.action
+      });
+      setShowCheckInSuccess(true);
+    };
+
+    window.addEventListener('camp-checkin-success', handleCheckInSuccess);
+    return () => {
+      window.removeEventListener('camp-checkin-success', handleCheckInSuccess);
+    };
+  }, []);
 
   // Auto dismiss reminder
   useEffect(() => {
@@ -473,6 +499,21 @@ const Index = () => {
         onOpenChange={setShowStartCamp}
         onSuccess={loadActiveCamp}
       />
+      
+      {checkInSuccessData && (
+        <CampCheckInSuccessDialog
+          open={showCheckInSuccess}
+          onOpenChange={setShowCheckInSuccess}
+          campId={checkInSuccessData.campId}
+          campName={checkInSuccessData.campName}
+          campDay={checkInSuccessData.campDay}
+          briefingId={checkInSuccessData.briefingId}
+          emotionTheme={checkInSuccessData.emotionTheme}
+          emotionIntensity={checkInSuccessData.emotionIntensity}
+          insight={checkInSuccessData.insight}
+          action={checkInSuccessData.action}
+        />
+      )}
 
       {showIntensityReminder && (
         <IntensityReminderDialog

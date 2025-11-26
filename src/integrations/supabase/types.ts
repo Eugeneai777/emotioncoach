@@ -142,6 +142,7 @@ export type Database = {
           declaration_completed: boolean | null
           declaration_completed_at: string | null
           emotion_logs_count: number | null
+          has_shared_to_community: boolean | null
           id: string
           is_checked_in: boolean | null
           last_emotion_log_at: string | null
@@ -149,6 +150,7 @@ export type Database = {
           reflection_briefing_id: string | null
           reflection_completed: boolean | null
           reflection_completed_at: string | null
+          shared_at: string | null
           updated_at: string | null
           user_id: string
           validation_passed: boolean | null
@@ -161,6 +163,7 @@ export type Database = {
           declaration_completed?: boolean | null
           declaration_completed_at?: string | null
           emotion_logs_count?: number | null
+          has_shared_to_community?: boolean | null
           id?: string
           is_checked_in?: boolean | null
           last_emotion_log_at?: string | null
@@ -168,6 +171,7 @@ export type Database = {
           reflection_briefing_id?: string | null
           reflection_completed?: boolean | null
           reflection_completed_at?: string | null
+          shared_at?: string | null
           updated_at?: string | null
           user_id: string
           validation_passed?: boolean | null
@@ -180,6 +184,7 @@ export type Database = {
           declaration_completed?: boolean | null
           declaration_completed_at?: string | null
           emotion_logs_count?: number | null
+          has_shared_to_community?: boolean | null
           id?: string
           is_checked_in?: boolean | null
           last_emotion_log_at?: string | null
@@ -187,6 +192,7 @@ export type Database = {
           reflection_briefing_id?: string | null
           reflection_completed?: boolean | null
           reflection_completed_at?: string | null
+          shared_at?: string | null
           updated_at?: string | null
           user_id?: string
           validation_passed?: boolean | null
