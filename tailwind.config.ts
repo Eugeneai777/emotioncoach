@@ -99,10 +99,55 @@ export default {
             height: "0",
           },
         },
+        "rainbow-flow": {
+          "0%, 100%": {
+            "background-position": "0% 50%",
+          },
+          "50%": {
+            "background-position": "100% 50%",
+          },
+        },
+        "rainbow-spin": {
+          "0%, 100%": {
+            transform: "rotate(0deg)",
+          },
+          "25%": {
+            transform: "rotate(5deg)",
+          },
+          "75%": {
+            transform: "rotate(-5deg)",
+          },
+        },
+        "rainbow-border": {
+          "0%, 100%": {
+            "border-color": "hsl(0, 100%, 65%)",
+          },
+          "14%": {
+            "border-color": "hsl(30, 100%, 60%)",
+          },
+          "28%": {
+            "border-color": "hsl(60, 100%, 55%)",
+          },
+          "42%": {
+            "border-color": "hsl(120, 100%, 50%)",
+          },
+          "57%": {
+            "border-color": "hsl(180, 100%, 50%)",
+          },
+          "71%": {
+            "border-color": "hsl(240, 100%, 60%)",
+          },
+          "85%": {
+            "border-color": "hsl(300, 100%, 65%)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "rainbow-flow": "rainbow-flow 3s ease infinite",
+        "rainbow-spin": "rainbow-spin 2s ease-in-out infinite",
+        "rainbow-border": "rainbow-border 3s linear infinite",
       },
     },
   },
