@@ -143,6 +143,7 @@ const Index = () => {
         action: briefingData.action
       });
       setShowCheckInSuccess(true);
+      loadActiveCamp();
     };
 
     window.addEventListener('camp-checkin-success', handleCheckInSuccess);
