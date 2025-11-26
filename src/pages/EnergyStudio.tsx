@@ -20,9 +20,11 @@ import {
   DollarSign,
   Clock,
   Heart,
-  Megaphone
+  Megaphone,
+  Info
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { tools as toolConfigs, categories, getCategoryConfig } from "@/config/energyStudioTools";
 import { BreathingExercise } from "@/components/tools/BreathingExercise";
 import { MeditationTimer } from "@/components/tools/MeditationTimer";
 import { EmotionFirstAid } from "@/components/tools/EmotionFirstAid";
@@ -57,180 +59,36 @@ const EnergyStudio = () => {
   const [activeTool, setActiveTool] = useState<string | null>(null);
 
   // 获取工具的渐变配色
-  const getToolGradient = (toolId: string): string => {
-    const gradientMap: Record<string, string> = {
-      // 情绪工具
-      'declaration': 'from-purple-500 to-pink-500',
-      'breathing': 'from-cyan-500 to-teal-500',
-      'meditation': 'from-indigo-500 to-purple-500',
-      'first-aid': 'from-rose-500 to-pink-500',
-      'mindfulness': 'from-violet-500 to-indigo-500',
-      // 自我探索
-      'values': 'from-teal-500 to-emerald-500',
-      'strengths': 'from-blue-500 to-violet-500',
-      'vision': 'from-orange-500 to-rose-500',
-      'gratitude': 'from-pink-500 to-purple-500',
-      'relationship': 'from-red-500 to-pink-500',
-      // 生活管理
-      'habits': 'from-green-500 to-teal-500',
-      'energy': 'from-yellow-500 to-orange-500',
-      'sleep': 'from-blue-600 to-indigo-600',
-      'exercise': 'from-orange-500 to-red-500',
-      'finance': 'from-emerald-500 to-green-500',
-      'time': 'from-sky-500 to-blue-500',
-    };
-    return gradientMap[toolId] || 'from-primary to-primary';
+  // 图标映射
+  const iconMap: Record<string, React.ReactNode> = {
+    Megaphone: <Megaphone className="w-6 h-6" />,
+    Wind: <Wind className="w-6 h-6" />,
+    Timer: <Timer className="w-6 h-6" />,
+    HeartPulse: <HeartPulse className="w-6 h-6" />,
+    Sparkles: <Sparkles className="w-6 h-6" />,
+    Target: <Target className="w-6 h-6" />,
+    Eye: <Eye className="w-6 h-6" />,
+    ImageIcon: <ImageIcon className="w-6 h-6" />,
+    BookHeart: <BookHeart className="w-6 h-6" />,
+    Heart: <Heart className="w-6 h-6" />,
+    Calendar: <Calendar className="w-6 h-6" />,
+    Battery: <Battery className="w-6 h-6" />,
+    Moon: <Moon className="w-6 h-6" />,
+    Dumbbell: <Dumbbell className="w-6 h-6" />,
+    DollarSign: <DollarSign className="w-6 h-6" />,
+    Clock: <Clock className="w-6 h-6" />,
   };
 
-  const tools: ToolCard[] = [
-    // 情绪工具
-    {
-      id: "declaration",
-      title: "能量宣言卡",
-      description: "创建个性化能量宣言海报，开启有劲的一天",
-      icon: <Megaphone className="w-6 h-6" />,
-      category: "emotion",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "breathing",
-      title: "呼吸练习",
-      description: "多种呼吸模式，帮助你快速平静下来",
-      icon: <Wind className="w-6 h-6" />,
-      category: "emotion",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "meditation",
-      title: "冥想计时器",
-      description: "专注冥想，记录你的静心时光",
-      icon: <Timer className="w-6 h-6" />,
-      category: "emotion",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "first-aid",
-      title: "情绪急救箱",
-      description: "快速识别情绪，获取即时缓解技巧",
-      icon: <HeartPulse className="w-6 h-6" />,
-      category: "emotion",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "mindfulness",
-      title: "正念练习",
-      description: "AI语音引导，体验正念的力量",
-      icon: <Sparkles className="w-6 h-6" />,
-      category: "emotion",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    // 自我探索工具
-    {
-      id: "values",
-      title: "价值观探索",
-      description: "发现你内心真正珍视的东西",
-      icon: <Target className="w-6 h-6" />,
-      category: "exploration",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "strengths",
-      title: "优势发现",
-      description: "认识你的独特优势和天赋",
-      icon: <Eye className="w-6 h-6" />,
-      category: "exploration",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "vision",
-      title: "人生愿景画布",
-      description: "可视化你的梦想和目标",
-      icon: <ImageIcon className="w-6 h-6" />,
-      category: "exploration",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "gratitude",
-      title: "感恩日记",
-      description: "记录生活中的美好瞬间",
-      icon: <BookHeart className="w-6 h-6" />,
-      category: "exploration",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    // 生活管理工具
-    {
-      id: "habits",
-      title: "习惯追踪",
-      description: "养成好习惯，追踪你的进步",
-      icon: <Calendar className="w-6 h-6" />,
-      category: "management",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "energy",
-      title: "能量管理",
-      description: "了解你的能量曲线，优化时间安排",
-      icon: <Battery className="w-6 h-6" />,
-      category: "management",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "sleep",
-      title: "睡眠记录",
-      description: "追踪睡眠质量，改善休息效果",
-      icon: <Moon className="w-6 h-6" />,
-      category: "management",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "exercise",
-      title: "运动打卡",
-      description: "记录运动数据，保持健康活力",
-      icon: <Dumbbell className="w-6 h-6" />,
-      category: "management",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "finance",
-      title: "财务管理",
-      description: "记录收支，掌握财务状况",
-      icon: <DollarSign className="w-6 h-6" />,
-      category: "management",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "time",
-      title: "时间管理",
-      description: "高效规划，充分利用每一分钟",
-      icon: <Clock className="w-6 h-6" />,
-      category: "management",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "relationship",
-      title: "人际关系",
-      description: "维护关系，珍惜每一份联结",
-      icon: <Heart className="w-6 h-6" />,
-      category: "exploration",
-      color: "hsl(var(--primary))",
-      available: true
-    }
-  ];
+  // 转换工具配置为带图标的组件数据
+  const tools: ToolCard[] = toolConfigs.map(tool => ({
+    id: tool.id,
+    title: tool.title,
+    description: tool.description,
+    icon: iconMap[tool.iconName] || <Sparkles className="w-6 h-6" />,
+    category: tool.category,
+    color: "hsl(var(--primary))",
+    available: tool.available
+  }));
 
   const filteredTools = tools.filter(tool => tool.category === activeTab);
 
@@ -278,29 +136,16 @@ const EnergyStudio = () => {
   };
 
   const getCategoryTitle = (category: string) => {
-    switch (category) {
-      case "emotion":
-        return "情绪工具";
-      case "exploration":
-        return "自我探索";
-      case "management":
-        return "生活管理";
-      default:
-        return "";
-    }
+    return getCategoryConfig(category)?.name || "";
   };
 
   const getCategoryDescription = (category: string) => {
-    switch (category) {
-      case "emotion":
-        return "帮助你调节情绪、找回平静";
-      case "exploration":
-        return "深入了解自己，发现内在力量";
-      case "management":
-        return "优化生活习惯，提升生活质量";
-      default:
-        return "";
-    }
+    return getCategoryConfig(category)?.description || "";
+  };
+
+  const getToolGradient = (toolId: string): string => {
+    const tool = toolConfigs.find(t => t.id === toolId);
+    return tool?.gradient || 'from-primary to-primary';
   };
 
   return (
@@ -324,15 +169,26 @@ const EnergyStudio = () => {
               </h1>
               <p className="text-sm text-muted-foreground mt-1">探索更好的自己 · 享受有劲生活</p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/ai-coach")}
-              className="gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span className="hidden sm:inline">AI教练</span>
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/energy-studio-intro")}
+                className="gap-2"
+              >
+                <Info className="w-4 h-4" />
+                <span className="hidden sm:inline">使用指南</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/ai-coach")}
+                className="gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden sm:inline">AI教练</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -388,24 +244,15 @@ const EnergyStudio = () => {
         ) : (
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="w-full">
           <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 mb-8 h-auto p-1.5 bg-card/50 backdrop-blur-sm rounded-full">
-            <TabsTrigger 
-              value="emotion"
-              className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 gap-2"
-            >
-              💜 情绪工具
-            </TabsTrigger>
-            <TabsTrigger 
-              value="exploration"
-              className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 gap-2"
-            >
-              💚 自我探索
-            </TabsTrigger>
-            <TabsTrigger 
-              value="management"
-              className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 gap-2"
-            >
-              🧡 生活管理
-            </TabsTrigger>
+            {categories.map(category => (
+              <TabsTrigger 
+                key={category.id}
+                value={category.id}
+                className={`rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 gap-2`}
+              >
+                {category.emoji} {category.name}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <div className="mb-8 text-center space-y-2">

@@ -17,6 +17,7 @@ import Admin from "./pages/Admin";
 import Packages from "./pages/Packages";
 import DeploymentPackage from "./pages/DeploymentPackage";
 import EnergyStudio from "./pages/EnergyStudio";
+import EnergyStudioIntro from "./pages/EnergyStudioIntro";
 import AICoach from "./pages/AICoach";
 import CampIntro from "./pages/CampIntro";
 import CampCheckIn from "./pages/CampCheckIn";
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/packages" element={<Packages />} />
           <Route path="/deployment-package" element={<DeploymentPackage />} />
           <Route path="/energy-studio" element={<EnergyStudio />} />
+          <Route path="/energy-studio-intro" element={<EnergyStudioIntro />} />
           <Route path="/community" element={<Community />} />
           <Route path="/ai-coach" element={<AICoach />} />
           <Route path="/camp-intro" element={<CampIntro />} />
