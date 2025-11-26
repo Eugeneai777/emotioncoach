@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeft, Calendar, CheckCircle2, Circle, Share2, MessageSquare, Sparkles } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar, CheckCircle2, Circle, Share2, MessageSquare, Sparkles, Play } from "lucide-react";
 import { TrainingCamp } from "@/types/trainingCamp";
 import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
 import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
@@ -286,6 +286,52 @@ const CampCheckIn = () => {
                   </div>
                 </Card>
 
+                {/* 今日成长课程 */}
+                <Card className="p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      todayProgress?.video_learning_completed 
+                        ? "bg-primary/10" 
+                        : "bg-secondary/30"
+                    }`}>
+                      {todayProgress?.video_learning_completed ? (
+                        <CheckCircle2 className="w-5 h-5 text-primary" />
+                      ) : (
+                        <Play className="w-5 h-5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium">🎬 今日成长课程</h4>
+                        {todayProgress?.videos_watched_count > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            已观看 {todayProgress.videos_watched_count} 个
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {todayProgress?.video_learning_completed 
+                          ? "已完成今日课程学习" 
+                          : "观看推荐课程，加速成长"}
+                      </p>
+                      {!todayProgress?.video_learning_completed && (
+                        <Button 
+                          onClick={() => {
+                            const tasksTab = document.querySelector('[value="tasks"]') as HTMLElement;
+                            tasksTab?.click();
+                          }}
+                          size="sm"
+                          variant="outline"
+                          className="mt-3"
+                        >
+                          <Play className="w-4 h-4 mr-1" />
+                          查看推荐
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+
                 {/* 每日反思分享 */}
                 <Card className="p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-start gap-4">
@@ -350,7 +396,10 @@ const CampCheckIn = () => {
             </TabsContent>
 
             <TabsContent value="tasks">
-              <CampDailyTaskList campId={campId!} />
+              <CampDailyTaskList 
+                campId={campId!} 
+                briefingData={latestBriefing}
+              />
             </TabsContent>
           </Tabs>
         </div>
