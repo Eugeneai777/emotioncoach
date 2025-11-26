@@ -56,6 +56,32 @@ const EnergyStudio = () => {
   const [activeTab, setActiveTab] = useState<"emotion" | "exploration" | "management">("emotion");
   const [activeTool, setActiveTool] = useState<string | null>(null);
 
+  // 获取工具的渐变配色
+  const getToolGradient = (toolId: string): string => {
+    const gradientMap: Record<string, string> = {
+      // 情绪工具
+      'declaration': 'from-purple-500 to-pink-500',
+      'breathing': 'from-cyan-500 to-teal-500',
+      'meditation': 'from-indigo-500 to-purple-500',
+      'first-aid': 'from-rose-500 to-pink-500',
+      'mindfulness': 'from-violet-500 to-indigo-500',
+      // 自我探索
+      'values': 'from-teal-500 to-emerald-500',
+      'strengths': 'from-blue-500 to-violet-500',
+      'vision': 'from-orange-500 to-rose-500',
+      'gratitude': 'from-pink-500 to-purple-500',
+      'relationship': 'from-red-500 to-pink-500',
+      // 生活管理
+      'habits': 'from-green-500 to-teal-500',
+      'energy': 'from-yellow-500 to-orange-500',
+      'sleep': 'from-blue-600 to-indigo-600',
+      'exercise': 'from-orange-500 to-red-500',
+      'finance': 'from-emerald-500 to-green-500',
+      'time': 'from-sky-500 to-blue-500',
+    };
+    return gradientMap[toolId] || 'from-primary to-primary';
+  };
+
   const tools: ToolCard[] = [
     // 情绪工具
     {
@@ -278,32 +304,34 @@ const EnergyStudio = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-6xl mx-auto px-4 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+      {/* Header with gradient background */}
+      <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
+        <div className="container max-w-6xl mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate("/")}
-              className="gap-2"
+              className="gap-2 hover:bg-background/80"
             >
               <ArrowLeft className="w-4 h-4" />
               返回
             </Button>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-foreground">有劲生活馆</h1>
-              <p className="text-sm text-muted-foreground">发现更好的自己，享受更有劲的生活</p>
+            <div className="flex-1 text-center">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
+                有劲生活馆
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">探索更好的自己 · 享受有劲生活</p>
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigate("/ai-coach")}
-              className="gap-2 border-purple-200 hover:bg-purple-50"
+              className="gap-2"
             >
-              <Sparkles className="w-4 h-4 text-purple-600" />
-              <span className="hidden sm:inline">AI生活教练</span>
+              <Sparkles className="w-4 h-4" />
+              <span className="hidden sm:inline">AI教练</span>
             </Button>
           </div>
         </div>
@@ -326,71 +354,78 @@ const EnergyStudio = () => {
           </div>
         ) : (
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
-            <TabsTrigger value="emotion" className="gap-2">
-              <HeartPulse className="w-4 h-4" />
-              情绪工具
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 mb-8 h-auto p-1.5 bg-card/50 backdrop-blur-sm rounded-full">
+            <TabsTrigger 
+              value="emotion"
+              className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 gap-2"
+            >
+              💜 情绪工具
             </TabsTrigger>
-            <TabsTrigger value="exploration" className="gap-2">
-              <Eye className="w-4 h-4" />
-              自我探索
+            <TabsTrigger 
+              value="exploration"
+              className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 gap-2"
+            >
+              💚 自我探索
             </TabsTrigger>
-            <TabsTrigger value="management" className="gap-2">
-              <Calendar className="w-4 h-4" />
-              生活管理
+            <TabsTrigger 
+              value="management"
+              className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 gap-2"
+            >
+              🧡 生活管理
             </TabsTrigger>
           </TabsList>
 
-          <div className="mb-6 text-center">
-            <h2 className="text-xl font-semibold mb-2">{getCategoryTitle(activeTab)}</h2>
-            <p className="text-muted-foreground">{getCategoryDescription(activeTab)}</p>
+          <div className="mb-8 text-center space-y-2">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-warm bg-clip-text text-transparent">
+              {getCategoryTitle(activeTab)}
+            </h2>
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-px w-12 bg-gradient-to-r from-transparent to-border"></div>
+              <p className="text-muted-foreground">{getCategoryDescription(activeTab)}</p>
+              <div className="h-px w-12 bg-gradient-to-l from-transparent to-border"></div>
+            </div>
           </div>
 
           <TabsContent value={activeTab} className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTools.map((tool) => (
-                <Card
-                  key={tool.id}
-                  className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2"
-                  style={{
-                    borderColor: `${tool.color}20`
-                  }}
-                  onClick={() => handleToolClick(tool.id)}
-                >
-                  <CardHeader>
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-colors"
-                      style={{
-                        backgroundColor: `${tool.color}20`,
-                        color: tool.color
-                      }}
-                    >
-                      {tool.icon}
-                    </div>
-                    <CardTitle className="text-lg">{tool.title}</CardTitle>
-                    <CardDescription>{tool.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {tool.available ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        style={{
-                          borderColor: tool.color,
-                          color: tool.color
-                        }}
-                      >
-                        开始使用
-                      </Button>
-                    ) : (
-                      <Button variant="outline" size="sm" className="w-full" disabled>
-                        即将推出
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredTools.map((tool, index) => {
+                const gradients = getToolGradient(tool.id);
+                return (
+                  <Card
+                    key={tool.id}
+                    className={`group cursor-pointer bg-card/60 backdrop-blur-sm border-2 hover:border-transparent hover:-translate-y-1 transition-all duration-300 hover:shadow-2xl rounded-2xl overflow-hidden animate-fade-in ${
+                      tool.id === 'declaration' ? 'ring-2 ring-primary/20' : ''
+                    }`}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                    onClick={() => handleToolClick(tool.id)}
+                  >
+                    <div className={`absolute inset-0 bg-gradient-to-br ${gradients} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                    
+                    <CardHeader className="relative pb-3">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-xl bg-gradient-to-br ${gradients} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                          {tool.icon}
+                        </div>
+                        <div className="flex-1">
+                          <CardTitle className="text-xl group-hover:text-primary transition-colors flex items-center gap-2 flex-wrap">
+                            {tool.title}
+                            {tool.id === 'declaration' && (
+                              <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full">
+                                推荐
+                              </span>
+                            )}
+                          </CardTitle>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="relative pt-0">
+                      <CardDescription className="text-sm leading-relaxed">
+                        {tool.description}
+                      </CardDescription>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
         </Tabs>
