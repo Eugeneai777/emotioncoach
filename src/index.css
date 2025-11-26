@@ -157,3 +157,77 @@ All colors MUST be HSL.
   animation: fade-in 0.5s ease-out forwards;
   opacity: 0;
 }
+
+/* Rainbow gradient animation */
+@keyframes rainbow-flow {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.rainbow-gradient {
+  background: linear-gradient(
+    90deg,
+    hsl(0, 100%, 65%),
+    hsl(30, 100%, 60%),
+    hsl(60, 100%, 55%),
+    hsl(120, 100%, 50%),
+    hsl(180, 100%, 50%),
+    hsl(240, 100%, 60%),
+    hsl(300, 100%, 65%),
+    hsl(0, 100%, 65%)
+  );
+  background-size: 200% 200%;
+  animation: rainbow-flow 3s ease infinite;
+}
+
+/* Rainbow icon rotation */
+@keyframes rainbow-spin {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(5deg);
+  }
+  75% {
+    transform: rotate(-5deg);
+  }
+}
+
+.rainbow-icon {
+  display: inline-block;
+  animation: rainbow-spin 2s ease-in-out infinite;
+}
+
+/* Rainbow border animation */
+@keyframes rainbow-border {
+  0%, 100% {
+    border-color: hsl(0, 100%, 65%);
+  }
+  14% {
+    border-color: hsl(30, 100%, 60%);
+  }
+  28% {
+    border-color: hsl(60, 100%, 55%);
+  }
+  42% {
+    border-color: hsl(120, 100%, 50%);
+  }
+  57% {
+    border-color: hsl(180, 100%, 50%);
+  }
+  71% {
+    border-color: hsl(240, 100%, 60%);
+  }
+  85% {
+    border-color: hsl(300, 100%, 65%);
+  }
+}
+
+.rainbow-border {
+  border: 2px solid;
+  animation: rainbow-border 3s linear infinite;
+}

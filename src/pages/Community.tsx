@@ -129,8 +129,11 @@ const Community = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1 text-center">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent mb-2 hover:scale-105 transition-transform duration-300 cursor-default">
-              🌈 有劲社区
+            <h1 className="text-4xl font-bold mb-2 hover:scale-105 transition-transform duration-300 cursor-default flex items-center justify-center gap-2">
+              <span className="inline-block animate-rainbow-spin">🌈</span>
+              <span className="bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 via-indigo-500 to-purple-500 bg-clip-text text-transparent animate-rainbow-flow" style={{ backgroundSize: '200% 200%' }}>
+                有劲社区
+              </span>
             </h1>
             <p className="text-muted-foreground flex items-center justify-center gap-2">
               <span>✨</span>

@@ -104,7 +104,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const displayName = post.is_anonymous ? "匿名用户" : "用户";
 
   return (
-    <Card className="p-4 md:p-6 hover:shadow-lg transition-shadow">
+    <Card className="p-4 md:p-6 hover:shadow-lg transition-all duration-300 border-2 animate-rainbow-border relative overflow-hidden group">
       {/* 头部 */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
