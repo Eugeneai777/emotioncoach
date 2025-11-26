@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { tools as toolConfigs, categories, getCategoryConfig } from "@/config/energyStudioTools";
+import { cn } from "@/lib/utils";
 import { BreathingExercise } from "@/components/tools/BreathingExercise";
 import { MeditationTimer } from "@/components/tools/MeditationTimer";
 import { EmotionFirstAid } from "@/components/tools/EmotionFirstAid";
@@ -248,7 +249,13 @@ const EnergyStudio = () => {
               <TabsTrigger 
                 key={category.id}
                 value={category.id}
-                className={`rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 gap-2`}
+                className={cn(
+                  "rounded-full transition-all duration-300 gap-2 py-2.5 px-4",
+                  "data-[state=active]:text-white data-[state=active]:shadow-lg",
+                  category.id === "emotion" && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500",
+                  category.id === "exploration" && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-emerald-500",
+                  category.id === "management" && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-yellow-500"
+                )}
               >
                 {category.emoji} {category.name}
               </TabsTrigger>
