@@ -38,14 +38,14 @@ interface PostDetailSheetProps {
 }
 
 const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => {
+  if (!post) return null;
+
   const { session } = useAuth();
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoadingFollow, setIsLoadingFollow] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
-
-  if (!post) return null;
 
   // 检查是否已关注
   useEffect(() => {
