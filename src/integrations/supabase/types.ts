@@ -157,6 +157,81 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_carousel_cards: {
+        Row: {
+          action_data: Json | null
+          action_text: string | null
+          action_type: string | null
+          background_type: string | null
+          background_value: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          emoji: string | null
+          has_reminder: boolean | null
+          id: string
+          image_position: string | null
+          image_url: string | null
+          is_active: boolean | null
+          last_reminder_shown: string | null
+          reminder_message: string | null
+          reminder_time: string | null
+          subtitle: string | null
+          text_color: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          action_data?: Json | null
+          action_text?: string | null
+          action_type?: string | null
+          background_type?: string | null
+          background_value?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          emoji?: string | null
+          has_reminder?: boolean | null
+          id?: string
+          image_position?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          last_reminder_shown?: string | null
+          reminder_message?: string | null
+          reminder_time?: string | null
+          subtitle?: string | null
+          text_color?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          action_data?: Json | null
+          action_text?: string | null
+          action_type?: string | null
+          background_type?: string | null
+          background_value?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          emoji?: string | null
+          has_reminder?: boolean | null
+          id?: string
+          image_position?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          last_reminder_shown?: string | null
+          reminder_message?: string | null
+          reminder_time?: string | null
+          subtitle?: string | null
+          text_color?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       emotion_goals: {
         Row: {
           baseline_weekly_count: number | null
@@ -546,6 +621,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          carousel_auto_play: boolean | null
+          carousel_interval: number | null
+          carousel_modules: Json | null
           companion_type: string | null
           conversation_style: string | null
           created_at: string
@@ -584,6 +662,9 @@ export type Database = {
           wecom_webhook_url: string | null
         }
         Insert: {
+          carousel_auto_play?: boolean | null
+          carousel_interval?: number | null
+          carousel_modules?: Json | null
           companion_type?: string | null
           conversation_style?: string | null
           created_at?: string
@@ -622,6 +703,9 @@ export type Database = {
           wecom_webhook_url?: string | null
         }
         Update: {
+          carousel_auto_play?: boolean | null
+          carousel_interval?: number | null
+          carousel_modules?: Json | null
           companion_type?: string | null
           conversation_style?: string | null
           created_at?: string

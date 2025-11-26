@@ -225,6 +225,64 @@ ${data.growth_story}
         description: "你可以在历史记录中查看",
       });
 
+      // 自动打卡训练营
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        
+        // 查询活跃的训练营
+        const { data: activeCamps } = await supabase
+          .from('training_camps')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('status', 'active');
+
+        if (activeCamps && activeCamps.length > 0) {
+          for (const camp of activeCamps) {
+            const checkInDates = (camp.check_in_dates || []) as string[];
+            
+            // 检查今天是否已打卡
+            if (!checkInDates.includes(today)) {
+              const updatedCheckInDates = [...checkInDates, today];
+              const completedDays = updatedCheckInDates.length;
+              
+              // 计算当前天数
+              const startDate = new Date(camp.start_date);
+              const todayDate = new Date(today);
+              const currentDay = Math.floor((todayDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+              
+              // 检查里程碑
+              const milestone7 = completedDays >= 7;
+              const milestone14 = completedDays >= 14;
+              const milestone21 = completedDays >= 21;
+              const isCompleted = completedDays >= camp.duration_days;
+              
+              // 更新训练营
+              await supabase
+                .from('training_camps')
+                .update({
+                  check_in_dates: updatedCheckInDates,
+                  completed_days: completedDays,
+                  current_day: currentDay,
+                  milestone_7_reached: milestone7,
+                  milestone_14_reached: milestone14,
+                  milestone_21_completed: milestone21,
+                  status: isCompleted ? 'completed' : 'active'
+                })
+                .eq('id', camp.id);
+              
+              // 显示打卡成功提示
+              toast({
+                title: "训练营自动打卡成功！🎉",
+                description: `已连续打卡 ${completedDays} 天`,
+              });
+            }
+          }
+        }
+      } catch (campError) {
+        console.error("Error auto check-in training camp:", campError);
+        // 不影响主流程，仅记录错误
+      }
+
       // 触发简报完成后的鼓励通知
       try {
         await supabase.functions.invoke('generate-smart-notification', {
