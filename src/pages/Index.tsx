@@ -766,28 +766,33 @@ const Index = () => {
         )}
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur-md z-20">
-        <div className="container max-w-xl mx-auto px-3 py-2">
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20">
+        <div className="container max-w-xl mx-auto px-4 py-3">
           {showIntensitySelector && (
-            <div className="mb-2">
+            <div className="mb-3 animate-in slide-in-from-bottom-2 duration-300">
               <EmotionIntensitySelector
                 onSelect={handleIntensitySelect}
                 onSkip={handleSkipIntensity}
               />
             </div>
           )}
-          <div className="flex gap-2 items-end">
-            <div className="flex-1">
+          <div className="flex gap-3 items-end">
+            <div className="flex-1 relative group">
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={isListening ? "正在聆听..." : "分享你的想法..."}
-                className="min-h-[70px] resize-none rounded-card-lg text-sm border-border/50"
+                placeholder={isListening ? "正在聆听..." : "分享你的想法... (Enter发送，Shift+Enter换行)"}
+                className="min-h-[80px] max-h-[160px] resize-none rounded-card-lg text-sm md:text-base border-border/50 focus:border-primary/50 transition-all duration-200 pr-16 shadow-sm"
                 disabled={isLoading || isListening}
               />
+              {input.length > 0 && (
+                <div className="absolute bottom-2 right-2 text-xs text-muted-foreground pointer-events-none">
+                  {input.length}/2000
+                </div>
+              )}
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <VoiceControls
                 isListening={isListening}
                 isSpeaking={isSpeaking}
@@ -800,7 +805,7 @@ const Index = () => {
                 onClick={handleSend}
                 disabled={isLoading || !input.trim()}
                 size="icon"
-                className="h-11 w-11 rounded-card-lg shadow-md hover:shadow-lg transition-all duration-300"
+                className="h-12 w-12 rounded-card-lg shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
