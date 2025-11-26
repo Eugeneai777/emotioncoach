@@ -208,6 +208,56 @@ export type Database = {
           },
         ]
       }
+      camp_daily_tasks: {
+        Row: {
+          camp_id: string
+          completed_at: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_completed: boolean | null
+          progress_date: string
+          task_description: string | null
+          task_title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          camp_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_completed?: boolean | null
+          progress_date: string
+          task_description?: string | null
+          task_title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          camp_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_completed?: boolean | null
+          progress_date?: string
+          task_description?: string | null
+          task_title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "camp_daily_tasks_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           achievement_id: string | null

@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft, Trophy, Lightbulb } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingCamp } from "@/types/trainingCamp";
-import { CampProgressCalendar } from "./CampProgressCalendar";
+import CampProgressCalendar from "./CampProgressCalendar";
 import { useToast } from "@/hooks/use-toast";
 import { format, differenceInDays } from "date-fns";
 
@@ -109,10 +109,12 @@ export function TrainingCampDetail() {
         </Card>
 
         <CampProgressCalendar
+          campId={camp.id}
           startDate={camp.start_date}
-          endDate={camp.end_date}
           checkInDates={camp.check_in_dates}
           currentDay={camp.current_day}
+          makeupDaysLimit={1}
+          onMakeupCheckIn={undefined}
         />
 
         {nextMilestone && (
