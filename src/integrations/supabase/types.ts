@@ -133,6 +133,71 @@ export type Database = {
           },
         ]
       }
+      contact_logs: {
+        Row: {
+          contact_id: string
+          content: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          content: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_logs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          created_at: string
+          id: string
+          intimacy_level: number
+          last_contact: string
+          name: string
+          notes: string | null
+          relationship: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intimacy_level: number
+          last_contact?: string
+          name: string
+          notes?: string | null
+          relationship: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intimacy_level?: number
+          last_contact?: string
+          name?: string
+          notes?: string | null
+          relationship?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           created_at: string
@@ -386,6 +451,36 @@ export type Database = {
           id?: string
           logged_at?: string | null
           notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_records: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          id: string
+          note: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          type?: string
           user_id?: string
         }
         Relationships: []
@@ -918,6 +1013,36 @@ export type Database = {
           name?: string
           sentiment?: string | null
           sentiment_confidence?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          completed: boolean | null
+          created_at: string
+          estimated_time: number | null
+          id: string
+          priority: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string
+          estimated_time?: number | null
+          id?: string
+          priority: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string
+          estimated_time?: number | null
+          id?: string
+          priority?: string
+          title?: string
           user_id?: string
         }
         Relationships: []
