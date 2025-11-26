@@ -32,7 +32,7 @@ interface CommunityPost {
 const Community = () => {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [activeFilter, setActiveFilter] = useState<string>("discover");
   const [showComposer, setShowComposer] = useState(false);
   const { toast } = useToast();
   const { session } = useAuth();
@@ -41,6 +41,7 @@ const Community = () => {
   const loadPosts = async () => {
     try {
       setLoading(true);
+      
       let query = supabase
         .from("community_posts")
         .select("*")
@@ -48,9 +49,57 @@ const Community = () => {
         .order("created_at", { ascending: false })
         .limit(20);
 
-      if (activeFilter !== "all") {
-        query = query.eq("post_type", activeFilter);
+      if (activeFilter === "following") {
+        // 关注：获取关注用户的帖子
+        if (!session) {
+          setPosts([]);
+          setLoading(false);
+          return;
+        }
+        
+        const { data: followingData } = await supabase
+          .from("user_follows")
+          .select("following_id")
+          .eq("follower_id", session.user.id);
+
+        const followingIds = followingData?.map(f => f.following_id) || [];
+        
+        if (followingIds.length === 0) {
+          setPosts([]);
+          setLoading(false);
+          return;
+        }
+        
+        query = query.in("user_id", followingIds);
+      } else if (activeFilter === "resonance") {
+        // 同频：找到有相同情绪主题的其他用户的帖子
+        if (!session) {
+          setPosts([]);
+          setLoading(false);
+          return;
+        }
+
+        const { data: userEmotions } = await supabase
+          .from("community_posts")
+          .select("emotion_theme")
+          .eq("user_id", session.user.id)
+          .not("emotion_theme", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        const userThemes = [...new Set(userEmotions?.map(e => e.emotion_theme).filter(Boolean))];
+        
+        if (userThemes.length === 0) {
+          setPosts([]);
+          setLoading(false);
+          return;
+        }
+
+        query = query
+          .in("emotion_theme", userThemes)
+          .neq("user_id", session.user.id);
       }
+      // discover: 显示全部公开帖子（默认逻辑）
 
       const { data, error } = await query;
 
@@ -90,8 +139,8 @@ const Community = () => {
           console.log("[Community] New post received:", payload);
           const newPost = payload.new as CommunityPost;
           
-          // 只在"全部"或匹配的类型筛选器下添加新帖子
-          if (activeFilter === "all" || activeFilter === newPost.post_type) {
+          // 只在"发现"标签下显示新帖子通知
+          if (activeFilter === "discover") {
             setPosts((current) => [newPost, ...current]);
             toast({
               title: "有新内容",
@@ -146,36 +195,23 @@ const Community = () => {
 
         {/* 筛选器 */}
         <Tabs value={activeFilter} onValueChange={setActiveFilter} className="mb-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="all">全部</TabsTrigger>
-            <TabsTrigger value="story">故事🌸</TabsTrigger>
-            <TabsTrigger value="checkin">打卡📅</TabsTrigger>
-            <TabsTrigger value="achievement">成就🏆</TabsTrigger>
-            <TabsTrigger value="reflection">反思💭</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="following">关注</TabsTrigger>
+            <TabsTrigger value="discover">发现</TabsTrigger>
+            <TabsTrigger value="resonance">同频</TabsTrigger>
           </TabsList>
         </Tabs>
 
-        {/* 操作按钮 */}
+        {/* 发布按钮 */}
         {session && (
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <Button
-              onClick={() => setShowComposer(true)}
-              className="h-12 text-base"
-              size="lg"
-            >
-              <Plus className="mr-2 h-5 w-5" />
-              分享故事
-            </Button>
-            <Button
-              onClick={() => navigate("/community/discover")}
-              variant="outline"
-              className="h-12 text-base"
-              size="lg"
-            >
-              <Sparkles className="mr-2 h-5 w-5" />
-              发现精彩
-            </Button>
-          </div>
+          <Button
+            onClick={() => setShowComposer(true)}
+            className="w-full h-12 text-base mb-6"
+            size="lg"
+          >
+            <Plus className="mr-2 h-5 w-5" />
+            分享动态
+          </Button>
         )}
 
         {/* 帖子列表 */}

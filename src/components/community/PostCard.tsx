@@ -1,14 +1,17 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import LikeButton from "./LikeButton";
 import CommentSection from "./CommentSection";
 import ShareButton from "./ShareButton";
 import { useState, useEffect } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, UserPlus, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface PostCardProps {
   post: {
@@ -37,6 +40,28 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const [showComments, setShowComments] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likes_count);
   const [commentsCount, setCommentsCount] = useState(post.comments_count);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isLoadingFollow, setIsLoadingFollow] = useState(false);
+  const { session } = useAuth();
+  const { toast } = useToast();
+
+  // 检查是否已关注
+  useEffect(() => {
+    const checkFollowStatus = async () => {
+      if (!session || session.user.id === post.user_id) return;
+
+      const { data } = await supabase
+        .from("user_follows")
+        .select("id")
+        .eq("follower_id", session.user.id)
+        .eq("following_id", post.user_id)
+        .maybeSingle();
+
+      setIsFollowing(!!data);
+    };
+
+    checkFollowStatus();
+  }, [session, post.user_id]);
 
   // 实时监听点赞和评论变化
   useEffect(() => {
@@ -70,6 +95,60 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
       supabase.removeChannel(channel);
     };
   }, [post.id]);
+
+  const handleFollowToggle = async () => {
+    if (!session) {
+      toast({
+        title: "请先登录",
+        description: "登录后才能关注其他用户",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoadingFollow(true);
+    try {
+      if (isFollowing) {
+        // 取消关注
+        const { error } = await supabase
+          .from("user_follows")
+          .delete()
+          .eq("follower_id", session.user.id)
+          .eq("following_id", post.user_id);
+
+        if (error) throw error;
+
+        setIsFollowing(false);
+        toast({
+          title: "已取消关注",
+        });
+      } else {
+        // 关注
+        const { error } = await supabase
+          .from("user_follows")
+          .insert({
+            follower_id: session.user.id,
+            following_id: post.user_id,
+          });
+
+        if (error) throw error;
+
+        setIsFollowing(true);
+        toast({
+          title: "关注成功",
+        });
+      }
+    } catch (error) {
+      console.error("关注操作失败:", error);
+      toast({
+        title: "操作失败",
+        description: "请稍后重试",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingFollow(false);
+    }
+  };
 
   const getTypeEmoji = (type: string) => {
     switch (type) {
@@ -107,14 +186,37 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
     <Card className="p-4 md:p-6 hover:shadow-lg transition-shadow">
       {/* 头部 */}
       <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-1">
           <Avatar>
             <AvatarFallback className="bg-primary/10 text-primary">
               {post.is_anonymous ? "匿" : displayName.charAt(0)}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <p className="font-medium text-foreground">{displayName}</p>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <p className="font-medium text-foreground">{displayName}</p>
+              {session && session.user.id !== post.user_id && !post.is_anonymous && (
+                <Button
+                  size="sm"
+                  variant={isFollowing ? "outline" : "default"}
+                  onClick={handleFollowToggle}
+                  disabled={isLoadingFollow}
+                  className="h-7 px-3 text-xs"
+                >
+                  {isFollowing ? (
+                    <>
+                      <UserCheck className="h-3 w-3 mr-1" />
+                      已关注
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="h-3 w-3 mr-1" />
+                      关注
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">
               {formatDistanceToNow(new Date(post.created_at), {
                 locale: zhCN,
