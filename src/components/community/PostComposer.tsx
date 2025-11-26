@@ -71,7 +71,6 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
       setContent("");
       setImageUrls([]);
       setIsAnonymous(false);
-      setPostType("story");
 
       onSuccess();
     } catch (error) {
@@ -134,22 +133,6 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* 类型选择 */}
-          <div className="space-y-2">
-            <Label>分享类型</Label>
-            <Select value={postType} onValueChange={setPostType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="story">🌸 今日绽放</SelectItem>
-                <SelectItem value="checkin">📅 打卡记录</SelectItem>
-                <SelectItem value="achievement">🏆 成就解锁</SelectItem>
-                <SelectItem value="reflection">💭 深度反思</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* 标题 */}
           <div className="space-y-2">
             <Label>标题（可选）</Label>
