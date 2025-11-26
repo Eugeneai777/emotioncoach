@@ -1,17 +1,27 @@
 import { Sparkles, Loader2, Share2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { VideoRecommendations } from "./VideoRecommendations";
 
 interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
   onOptionClick?: (option: string) => void;
+  videoRecommendations?: any[];
+  isLastMessage?: boolean;
 }
 
-export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) => {
+export const ChatMessage = ({ role, content, onOptionClick, videoRecommendations, isLastMessage }: ChatMessageProps) => {
   const isUser = role === "user";
   const navigate = useNavigate();
   const [clickedOption, setClickedOption] = useState<string | null>(null);
+  
+  // Show recommendations on the last assistant message if it contains a briefing
+  const showRecommendations = isLastMessage && 
+    role === "assistant" && 
+    videoRecommendations && 
+    videoRecommendations.length > 0 &&
+    (content.includes("情绪主题") || content.includes("简报"));
   
   // 检测是否包含编号选项（如 "1. 选项" 或 "1、选项"）
   const optionRegex = /^(\d+)[.、]\s*(.+)$/gm;
@@ -173,6 +183,11 @@ export const ChatMessage = ({ role, content, onOptionClick }: ChatMessageProps) 
             </div>
           )}
         </div>
+        
+        {/* Video Recommendations */}
+        {showRecommendations && (
+          <VideoRecommendations recommendations={videoRecommendations} />
+        )}
       </div>
     </div>
   );

@@ -1734,6 +1734,42 @@ export type Database = {
         }
         Relationships: []
       }
+      video_courses: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          keywords: string[] | null
+          source: string | null
+          tags: string[] | null
+          title: string
+          video_url: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          keywords?: string[] | null
+          source?: string | null
+          tags?: string[] | null
+          title: string
+          video_url: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          keywords?: string[] | null
+          source?: string | null
+          tags?: string[] | null
+          title?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       vision_items: {
         Row: {
           category: string | null
