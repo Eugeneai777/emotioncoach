@@ -97,14 +97,7 @@ export const useCampVideoRecommendations = (
     try {
       const { data, error } = await supabase.functions.invoke("recommend-courses", {
         body: {
-          emotion_theme: briefingData.emotion_theme,
-          emotion_intensity: briefingData.emotion_intensity,
-          insight: briefingData.insight,
-          action: briefingData.action,
-          stage_1_content: briefingData.stage_1_content,
-          stage_2_content: briefingData.stage_2_content,
-          stage_3_content: briefingData.stage_3_content,
-          stage_4_content: briefingData.stage_4_content,
+          briefing: briefingData,
         },
       });
 
