@@ -5,12 +5,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import LikeButton from "./LikeButton";
-import ShareButton from "./ShareButton";
 import CommentSection from "./CommentSection";
-import ReportDialog from "./ReportDialog";
-import { useState } from "react";
-import { MessageCircle, Flag } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { MessageCircle, Star, Pencil, Heart } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface PostDetailSheetProps {
   open: boolean;
@@ -37,10 +38,158 @@ interface PostDetailSheetProps {
 }
 
 const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => {
-  const [showComments, setShowComments] = useState(false);
-  const [showReportDialog, setShowReportDialog] = useState(false);
+  const { session } = useAuth();
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isLoadingFollow, setIsLoadingFollow] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
 
   if (!post) return null;
+
+  // 检查是否已关注
+  useEffect(() => {
+    const checkFollowStatus = async () => {
+      if (!session || !post || session.user.id === post.user_id || post.is_anonymous) return;
+      
+      const { data } = await supabase
+        .from("user_follows")
+        .select("id")
+        .eq("follower_id", session.user.id)
+        .eq("following_id", post.user_id)
+        .maybeSingle();
+      
+      setIsFollowing(!!data);
+    };
+
+    const fetchFollowersCount = async () => {
+      if (!post || post.is_anonymous) return;
+      
+      const { count } = await supabase
+        .from("user_follows")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", post.user_id);
+      
+      setFollowersCount(count || 0);
+    };
+
+    checkFollowStatus();
+    fetchFollowersCount();
+  }, [session, post?.user_id, post?.is_anonymous]);
+
+  // 检查是否已点赞
+  useEffect(() => {
+    const checkIfLiked = async () => {
+      if (!session?.user || !post) return;
+
+      const { data } = await supabase
+        .from("post_likes")
+        .select("id")
+        .eq("post_id", post.id)
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      setLiked(!!data);
+    };
+
+    checkIfLiked();
+    setLikesCount(post?.likes_count || 0);
+  }, [session, post?.id]);
+
+  // 关注/取消关注
+  const handleFollowToggle = async () => {
+    if (!session) {
+      toast.error("请先登录");
+      return;
+    }
+
+    if (post.is_anonymous) {
+      toast.error("无法关注匿名用户");
+      return;
+    }
+
+    if (session.user.id === post.user_id) {
+      toast.error("不能关注自己");
+      return;
+    }
+
+    setIsLoadingFollow(true);
+
+    try {
+      if (isFollowing) {
+        const { error } = await supabase
+          .from("user_follows")
+          .delete()
+          .eq("follower_id", session.user.id)
+          .eq("following_id", post.user_id);
+
+        if (error) throw error;
+        
+        setIsFollowing(false);
+        setFollowersCount(prev => Math.max(0, prev - 1));
+        toast.success("已取消关注");
+      } else {
+        const { error } = await supabase
+          .from("user_follows")
+          .insert({
+            follower_id: session.user.id,
+            following_id: post.user_id,
+          });
+
+        if (error) throw error;
+        
+        setIsFollowing(true);
+        setFollowersCount(prev => prev + 1);
+        toast.success("关注成功");
+      }
+    } catch (error) {
+      console.error("关注操作失败:", error);
+      toast.error("操作失败，请重试");
+    } finally {
+      setIsLoadingFollow(false);
+    }
+  };
+
+  // 处理点赞
+  const handleLike = async () => {
+    if (!session?.user) {
+      toast.error("请先登录");
+      return;
+    }
+
+    try {
+      if (liked) {
+        await supabase
+          .from("post_likes")
+          .delete()
+          .eq("post_id", post.id)
+          .eq("user_id", session.user.id);
+
+        await supabase
+          .from("community_posts")
+          .update({ likes_count: Math.max(0, likesCount - 1) })
+          .eq("id", post.id);
+        
+        setLiked(false);
+        setLikesCount(prev => Math.max(0, prev - 1));
+      } else {
+        await supabase
+          .from("post_likes")
+          .insert({ post_id: post.id, user_id: session.user.id });
+
+        await supabase
+          .from("community_posts")
+          .update({ likes_count: likesCount + 1 })
+          .eq("id", post.id);
+        
+        setLiked(true);
+        setLikesCount(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error("点赞失败:", error);
+      toast.error("操作失败");
+    }
+  };
 
   const displayName = post.is_anonymous ? "匿名用户" : `用户${post.user_id.slice(0, 6)}`;
 
@@ -167,33 +316,8 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
               </div>
             )}
 
-            {/* 互动按钮 */}
-            <div className="flex items-center gap-4 py-4 border-y border-border">
-              <LikeButton postId={post.id} initialLikesCount={post.likes_count} />
-              
-              <button
-                onClick={() => setShowComments(!showComments)}
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <MessageCircle className="h-5 w-5" />
-                <span className="text-sm">{post.comments_count || 0}</span>
-              </button>
-
-              <ShareButton post={post} />
-
-              <Button
-                size="sm"
-                variant="ghost"
-                className="ml-auto"
-                onClick={() => setShowReportDialog(true)}
-              >
-                <Flag className="h-4 w-4 mr-1" />
-                举报
-              </Button>
-            </div>
-
             {/* 评论区 */}
-            <div className="mt-6">
+            <div className="mt-6 pb-24">
               <CommentSection
                 postId={post.id}
                 onUpdate={() => {}}
@@ -202,12 +326,59 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
           </div>
         </ScrollArea>
 
-        {/* 举报对话框 */}
-        <ReportDialog
-          open={showReportDialog}
-          onOpenChange={setShowReportDialog}
-          postId={post.id}
-        />
+        {/* 底部固定互动栏 - 小红书风格 */}
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-3 flex items-center gap-3 z-50">
+          {/* 评论输入框 */}
+          <div 
+            className="flex-1 flex items-center gap-2 bg-muted/50 rounded-full px-4 py-2.5 cursor-pointer hover:bg-muted/70 transition-colors"
+            onClick={() => {
+              const commentSection = document.querySelector('[data-comment-section]');
+              commentSection?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            <Pencil className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground text-sm">说点什么...</span>
+          </div>
+          
+          {/* 点赞 */}
+          <button 
+            onClick={handleLike}
+            className="flex flex-col items-center gap-0.5 min-w-[48px] hover:scale-110 transition-transform"
+          >
+            <Heart className={cn(
+              "h-6 w-6 transition-colors",
+              liked ? "fill-red-500 text-red-500" : "text-foreground"
+            )} />
+            <span className="text-xs text-muted-foreground">{likesCount}</span>
+          </button>
+          
+          {/* 关注 - 星星图标 */}
+          {!post.is_anonymous && session?.user?.id !== post.user_id && (
+            <button 
+              onClick={handleFollowToggle}
+              disabled={isLoadingFollow}
+              className="flex flex-col items-center gap-0.5 min-w-[48px] hover:scale-110 transition-transform disabled:opacity-50"
+            >
+              <Star className={cn(
+                "h-6 w-6 transition-colors",
+                isFollowing ? "fill-yellow-400 text-yellow-400" : "text-foreground"
+              )} />
+              <span className="text-xs text-muted-foreground">{followersCount}</span>
+            </button>
+          )}
+          
+          {/* 评论 */}
+          <button 
+            className="flex flex-col items-center gap-0.5 min-w-[48px] hover:scale-110 transition-transform"
+            onClick={() => {
+              const commentSection = document.querySelector('[data-comment-section]');
+              commentSection?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            <MessageCircle className="h-6 w-6 text-foreground" />
+            <span className="text-xs text-muted-foreground">{post.comments_count || 0}</span>
+          </button>
+        </div>
       </SheetContent>
     </Sheet>
   );
