@@ -66,12 +66,12 @@ export const AccountBalance = () => {
       return <Badge className="bg-gradient-to-r from-primary to-primary/80">365会员</Badge>;
     }
     if (subscription?.subscription_type === 'basic') {
-      return <Badge variant="secondary">基础套餐</Badge>;
+      return <Badge variant="secondary">尝鲜会员</Badge>;
     }
     if (subscription?.subscription_type === 'custom') {
       return <Badge variant="secondary">自定义套餐</Badge>;
     }
-    return <Badge variant="secondary">基础套餐</Badge>;
+    return <Badge variant="secondary">尝鲜会员</Badge>;
   };
 
   return (

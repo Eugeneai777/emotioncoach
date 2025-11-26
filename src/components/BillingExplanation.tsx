@@ -42,7 +42,7 @@ export const BillingExplanation = () => {
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-1.5 font-medium text-muted-foreground">项目</th>
-                  <th className="text-center py-1.5 font-medium text-muted-foreground">基础套餐</th>
+                  <th className="text-center py-1.5 font-medium text-muted-foreground">尝鲜会员</th>
                   <th className="text-center py-1.5 font-medium text-muted-foreground">365会员</th>
                 </tr>
               </thead>
@@ -84,7 +84,7 @@ export const BillingExplanation = () => {
           </div>
           <div className="flex items-start gap-2 text-xs">
             <Clock className="w-3.5 h-3.5 mt-0.5 text-amber-600 dark:text-amber-500 flex-shrink-0" />
-            <span className="text-muted-foreground font-medium">基础套餐限购一次</span>
+            <span className="text-muted-foreground font-medium">尝鲜会员限购一次</span>
           </div>
           <div className="flex items-start gap-2 text-xs">
             <Shield className="w-3.5 h-3.5 mt-0.5 text-green-500 flex-shrink-0" />

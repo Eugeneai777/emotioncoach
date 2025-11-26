@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 const packages = [
   {
     id: 'basic',
-    name: '基础套餐',
+    name: '尝鲜会员',
     quota: 50,
     price: 9.9,
     duration: '365天',

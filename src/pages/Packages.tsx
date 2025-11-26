@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 const packages = [
   {
     id: 'basic',
-    name: '基础套餐',
+    name: '尝鲜会员',
     quota: 50,
     price: 9.9,
     duration: '365天',
@@ -192,7 +192,7 @@ export default function Packages() {
         <div className="text-center text-sm text-muted-foreground space-y-2 animate-in fade-in-50 duration-700 delay-400">
           <p>💡 套餐购买后立即生效，对话次数累计计算</p>
           <p>⏰ 所有套餐自购买之日起365天有效，过期未使用次数作废</p>
-          <p>⚠️ 基础套餐限购一次，适合初次体验用户</p>
+          <p>⚠️ 尝鲜会员限购一次，适合初次体验用户</p>
           <p>🔒 我们承诺保护您的隐私数据安全</p>
         </div>
       </div>
