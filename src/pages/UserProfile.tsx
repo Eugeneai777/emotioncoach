@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Heart, MessageCircle, Award } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { VideoLearningProfile } from "@/components/VideoLearningProfile";
 
 interface UserPost {
   id: string;
@@ -200,11 +201,12 @@ const UserProfile = () => {
 
         {/* 内容标签页 */}
         <Tabs defaultValue="posts" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="posts">帖子</TabsTrigger>
             <TabsTrigger value="likes">点赞</TabsTrigger>
             <TabsTrigger value="comments">评论</TabsTrigger>
             <TabsTrigger value="achievements">成就</TabsTrigger>
+            <TabsTrigger value="learning">学习档案</TabsTrigger>
           </TabsList>
 
           {/* 帖子列表 */}
@@ -376,6 +378,11 @@ const UserProfile = () => {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          {/* 学习档案 */}
+          <TabsContent value="learning">
+            <VideoLearningProfile />
           </TabsContent>
         </Tabs>
       </div>

@@ -8,6 +8,7 @@ import { OrdersTable } from "@/components/admin/OrdersTable";
 import { UsageRecordsTable } from "@/components/admin/UsageRecordsTable";
 import { SyncStatusDashboard } from "@/components/admin/SyncStatusDashboard";
 import ReportsManagement from "@/components/admin/ReportsManagement";
+import { VideoCoursesManagement } from "@/components/admin/VideoCoursesManagement";
 
 export default function Admin() {
   const { user, loading } = useAuth();
@@ -57,12 +58,13 @@ export default function Admin() {
         <h1 className="text-3xl font-bold mb-6">管理后台</h1>
         
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="users">用户账户</TabsTrigger>
             <TabsTrigger value="orders">订单管理</TabsTrigger>
             <TabsTrigger value="usage">使用记录</TabsTrigger>
             <TabsTrigger value="sync">同步状态</TabsTrigger>
             <TabsTrigger value="reports">举报管理</TabsTrigger>
+            <TabsTrigger value="videos">视频课程</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -83,6 +85,10 @@ export default function Admin() {
 
           <TabsContent value="reports">
             <ReportsManagement />
+          </TabsContent>
+
+          <TabsContent value="videos">
+            <VideoCoursesManagement />
           </TabsContent>
         </Tabs>
       </div>

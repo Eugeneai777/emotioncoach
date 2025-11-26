@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Play, Award } from "lucide-react";
+import { ExternalLink, Play, Award, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface VideoRecommendation {
   id: string;
@@ -19,9 +22,83 @@ interface VideoRecommendationsProps {
 }
 
 export const VideoRecommendations = ({ recommendations }: VideoRecommendationsProps) => {
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
+
   if (!recommendations || recommendations.length === 0) {
     return null;
   }
+
+  const handleWatchClick = async (rec: VideoRecommendation) => {
+    // Record watch history
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("video_watch_history").insert({
+          user_id: user.id,
+          video_id: rec.id,
+          watched_at: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      console.error("Error recording watch history:", error);
+    }
+    
+    window.open(rec.video_url, '_blank');
+  };
+
+  const handleToggleFavorite = async (rec: VideoRecommendation) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "请先登录",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const isFavorited = favoriteIds.has(rec.id);
+
+      if (isFavorited) {
+        // Remove from favorites
+        await supabase
+          .from("video_favorites")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("video_id", rec.id);
+
+        setFavoriteIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(rec.id);
+          return newSet;
+        });
+
+        toast({
+          title: "已取消收藏",
+        });
+      } else {
+        // Add to favorites
+        await supabase.from("video_favorites").insert({
+          user_id: user.id,
+          video_id: rec.id,
+          notes: rec.reason
+        });
+
+        setFavoriteIds(prev => new Set(prev).add(rec.id));
+
+        toast({
+          title: "已添加到收藏",
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      toast({
+        title: "操作失败",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Card className="mt-4 p-4 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
@@ -63,15 +140,26 @@ export const VideoRecommendations = ({ recommendations }: VideoRecommendationsPr
                 )}
               </div>
 
-              <Button
-                variant="default"
-                size="sm"
-                className="flex-shrink-0 gap-2"
-                onClick={() => window.open(rec.video_url, '_blank')}
-              >
-                点击观看
-                <ExternalLink className="w-3 h-3" />
-              </Button>
+              <div className="flex gap-2 flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleToggleFavorite(rec)}
+                >
+                  <Heart 
+                    className={`w-4 h-4 ${favoriteIds.has(rec.id) ? 'fill-pink-500 text-pink-500' : ''}`} 
+                  />
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => handleWatchClick(rec)}
+                >
+                  点击观看
+                  <ExternalLink className="w-3 h-3" />
+                </Button>
+              </div>
             </div>
 
             {rec.match_score && rec.match_score >= 90 && (
