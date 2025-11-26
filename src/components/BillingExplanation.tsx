@@ -56,7 +56,7 @@ export const BillingExplanation = () => {
               <tbody className="divide-y">
                 <tr>
                   <td className="py-2 text-muted-foreground">价格</td>
-                  <td className="py-2 text-center">免费</td>
+                  <td className="py-2 text-center">¥9.9</td>
                   <td className="py-2 text-center font-semibold text-primary">¥365</td>
                 </tr>
                 <tr>
@@ -66,8 +66,13 @@ export const BillingExplanation = () => {
                 </tr>
                 <tr>
                   <td className="py-2 text-muted-foreground">有效期</td>
-                  <td className="py-2 text-center">永久</td>
                   <td className="py-2 text-center">365天</td>
+                  <td className="py-2 text-center">365天</td>
+                </tr>
+                <tr>
+                  <td className="py-2 text-muted-foreground">购买限制</td>
+                  <td className="py-2 text-center text-amber-600 dark:text-amber-500">限购一次</td>
+                  <td className="py-2 text-center">不限次数</td>
                 </tr>
                 <tr>
                   <td className="py-2 text-muted-foreground">功能</td>
@@ -84,11 +89,15 @@ export const BillingExplanation = () => {
           <AlertDescription className="space-y-2 text-sm">
             <div className="flex items-start gap-2">
               <Clock className="w-4 h-4 mt-0.5 text-amber-500" />
-              <span>365会员自购买之日起365天有效，过期未使用次数作废</span>
+              <span>所有套餐自购买之日起365天有效，过期未使用次数作废</span>
             </div>
             <div className="flex items-start gap-2">
               <Zap className="w-4 h-4 mt-0.5 text-primary" />
               <span>套餐购买后立即生效，对话次数累计计算</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <Clock className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-500" />
+              <span className="font-medium">基础套餐限购一次，适合初次体验用户</span>
             </div>
             <div className="flex items-start gap-2">
               <Shield className="w-4 h-4 mt-0.5 text-green-500" />
