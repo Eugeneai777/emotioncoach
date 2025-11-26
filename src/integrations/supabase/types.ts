@@ -546,6 +546,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          carousel_auto_play: boolean | null
+          carousel_interval: number | null
+          carousel_modules: Json | null
           companion_type: string | null
           conversation_style: string | null
           created_at: string
@@ -584,6 +587,9 @@ export type Database = {
           wecom_webhook_url: string | null
         }
         Insert: {
+          carousel_auto_play?: boolean | null
+          carousel_interval?: number | null
+          carousel_modules?: Json | null
           companion_type?: string | null
           conversation_style?: string | null
           created_at?: string
@@ -622,6 +628,9 @@ export type Database = {
           wecom_webhook_url?: string | null
         }
         Update: {
+          carousel_auto_play?: boolean | null
+          carousel_interval?: number | null
+          carousel_modules?: Json | null
           companion_type?: string | null
           conversation_style?: string | null
           created_at?: string
