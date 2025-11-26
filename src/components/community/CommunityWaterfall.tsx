@@ -25,7 +25,9 @@ interface Post {
 const POSTS_PER_PAGE = 10;
 
 const categories = [
-  { value: 'all', label: '全部', emoji: '' },
+  { value: 'all', label: '发现', emoji: '✨' },
+  { value: 'following', label: '关注', emoji: '👥' },
+  { value: 'resonance', label: '同频', emoji: '💫' },
   { value: 'story', label: '故事', emoji: '🌸' },
   { value: 'checkin', label: '打卡', emoji: '📅' },
   { value: 'achievement', label: '成就', emoji: '🏆' },
@@ -84,22 +86,97 @@ const CommunityWaterfall = () => {
         .from('community_posts')
         .select('id, user_id, post_type, title, content, image_urls, emotion_theme, is_anonymous, likes_count, created_at');
 
-      if (filter !== 'all') {
-        query = query.eq('post_type', filter);
-      }
+      // 关注筛选：获取关注用户的帖子
+      if (filter === 'following') {
+        if (!session?.user) {
+          setPosts([]);
+          setHasMore(false);
+          setLoading(false);
+          setLoadingMore(false);
+          return;
+        }
 
-      // 如果使用推荐且是第一页
-      if (useRecommendation && pageNum === 0 && filter === 'all') {
-        const recommendedIds = await loadRecommendedPosts();
-        if (recommendedIds && recommendedIds.length > 0) {
-          query = query.in('id', recommendedIds).limit(POSTS_PER_PAGE);
+        const { data: followingData } = await supabase
+          .from('user_follows')
+          .select('following_id')
+          .eq('follower_id', session.user.id);
+
+        const followingIds = followingData?.map((f) => f.following_id) || [];
+
+        if (followingIds.length === 0) {
+          setPosts([]);
+          setHasMore(false);
+          setLoading(false);
+          setLoadingMore(false);
+          return;
+        }
+
+        query = query
+          .in('user_id', followingIds)
+          .order('created_at', { ascending: false })
+          .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
+      }
+      // 同频筛选：找到有相同情绪主题的帖子
+      else if (filter === 'resonance') {
+        if (!session?.user) {
+          setPosts([]);
+          setHasMore(false);
+          setLoading(false);
+          setLoadingMore(false);
+          return;
+        }
+
+        // 获取用户最近的情绪主题
+        const { data: userEmotions } = await supabase
+          .from('community_posts')
+          .select('emotion_theme')
+          .eq('user_id', session.user.id)
+          .not('emotion_theme', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        const userThemes = [
+          ...new Set(
+            userEmotions?.map((e) => e.emotion_theme).filter(Boolean)
+          ),
+        ];
+
+        if (userThemes.length === 0) {
+          setPosts([]);
+          setHasMore(false);
+          setLoading(false);
+          setLoadingMore(false);
+          return;
+        }
+
+        query = query
+          .in('emotion_theme', userThemes)
+          .neq('user_id', session.user.id)
+          .order('created_at', { ascending: false })
+          .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
+      }
+      // 类型筛选（故事、打卡、成就、反思）
+      else if (filter !== 'all' && filter !== 'following' && filter !== 'resonance') {
+        query = query
+          .eq('post_type', filter)
+          .order('created_at', { ascending: false })
+          .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
+      }
+      // 发现：全部或使用推荐
+      else {
+        // 如果使用推荐且是第一页
+        if (useRecommendation && pageNum === 0 && filter === 'all') {
+          const recommendedIds = await loadRecommendedPosts();
+          if (recommendedIds && recommendedIds.length > 0) {
+            query = query.in('id', recommendedIds).limit(POSTS_PER_PAGE);
+          } else {
+            query = query.order('created_at', { ascending: false })
+              .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
+          }
         } else {
           query = query.order('created_at', { ascending: false })
             .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
         }
-      } else {
-        query = query.order('created_at', { ascending: false })
-          .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
       }
 
       const { data, error } = await query;
@@ -120,7 +197,7 @@ const CommunityWaterfall = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [loadRecommendedPosts]);
+  }, [loadRecommendedPosts, session]);
 
   // 下拉刷新
   const handleRefresh = useCallback(async () => {
@@ -319,7 +396,19 @@ const CommunityWaterfall = () => {
         </div>
       ) : posts.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground text-sm">暂无内容</p>
+          {activeFilter === 'following' ? (
+            <>
+              <p className="text-muted-foreground text-sm">还没有关注任何人</p>
+              <p className="text-xs text-muted-foreground mt-1">去发现页面找到志同道合的朋友吧</p>
+            </>
+          ) : activeFilter === 'resonance' ? (
+            <>
+              <p className="text-muted-foreground text-sm">暂无同频内容</p>
+              <p className="text-xs text-muted-foreground mt-1">先分享你的情绪日记，发现与你同频的伙伴</p>
+            </>
+          ) : (
+            <p className="text-muted-foreground text-sm">暂无内容</p>
+          )}
         </div>
       ) : (
         <>
