@@ -1,0 +1,87 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Check, Sparkles, Crown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+const packages = [
+  {
+    id: 'basic',
+    name: '基础套餐',
+    quota: 50,
+    price: 0,
+    duration: '永久',
+    icon: Sparkles,
+    features: ['50次AI对话', '基础功能', '永久有效']
+  },
+  {
+    id: 'member365',
+    name: '365会员',
+    quota: 1000,
+    price: 365,
+    duration: '365天',
+    icon: Crown,
+    popular: true,
+    features: ['1000次AI对话', '全部高级功能', '365天有效期']
+  }
+];
+
+export const PackageSelector = () => {
+  const navigate = useNavigate();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>套餐选择</CardTitle>
+        <CardDescription>选择适合您的套餐方案</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid md:grid-cols-2 gap-4">
+          {packages.map((pkg) => {
+            const Icon = pkg.icon;
+            return (
+              <Card key={pkg.id} className={pkg.popular ? 'border-primary' : ''}>
+                <CardHeader className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Icon className="w-5 h-5 text-primary" />
+                      <CardTitle className="text-lg">{pkg.name}</CardTitle>
+                    </div>
+                    {pkg.popular && (
+                      <Badge variant="default">推荐</Badge>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold">
+                      {pkg.price === 0 ? '免费' : `¥${pkg.price}`}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {pkg.quota}次 / {pkg.duration}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-2">
+                    {pkg.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-center gap-2 text-sm">
+                        <Check className="w-4 h-4 text-primary" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button 
+                    className="w-full" 
+                    variant={pkg.price === 0 ? 'outline' : 'default'}
+                    onClick={() => navigate('/packages')}
+                  >
+                    {pkg.price === 0 ? '当前套餐' : '立即购买'}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};

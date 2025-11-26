@@ -12,6 +12,8 @@ import { VoiceSettings } from "@/components/VoiceSettings";
 import { SmartReminderSettings } from "@/components/SmartReminderSettings";
 import { SmartNotificationPreferences } from "@/components/SmartNotificationPreferences";
 import { AccountBalance } from "@/components/AccountBalance";
+import { BillingExplanation } from "@/components/BillingExplanation";
+import { PackageSelector } from "@/components/PackageSelector";
 import CampSettings from "@/components/CampSettings";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
@@ -173,26 +175,10 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="account">
-            <Card className="border-border shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-lg md:text-2xl text-foreground">
-                  我的账户
-                </CardTitle>
-                <CardDescription className="text-xs md:text-sm text-muted-foreground">
-                  查看余额并充值 🌿
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <AccountBalance />
-                <Button 
-                  onClick={() => navigate('/packages')}
-                  className="w-full"
-                >
-                  充值套餐
-                </Button>
-              </CardContent>
-            </Card>
+          <TabsContent value="account" className="space-y-6">
+            <AccountBalance />
+            <BillingExplanation />
+            <PackageSelector />
           </TabsContent>
 
           <TabsContent value="reminders">
