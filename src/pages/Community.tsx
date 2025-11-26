@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PostCard from "@/components/community/PostCard";
 import PostComposer from "@/components/community/PostComposer";
-import { Loader2, Plus, Sparkles } from "lucide-react";
+import { Loader2, Plus, Sparkles, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
@@ -119,11 +119,22 @@ const Community = () => {
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* 头部 */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-2">
-            🌸 绽放社区
-          </h1>
-          <p className="text-muted-foreground">分享成长 · 见证蜕变</p>
+        <div className="flex items-start gap-4 mb-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/")}
+            className="mt-2"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex-1 text-center">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-2">
+              🌸 绽放社区
+            </h1>
+            <p className="text-muted-foreground">分享成长 · 见证蜕变</p>
+          </div>
+          <div className="w-10" />
         </div>
 
         {/* 筛选器 */}
