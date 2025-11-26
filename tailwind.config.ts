@@ -73,6 +73,14 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "card": "var(--card-radius)",
+        "card-lg": "var(--card-radius-lg)",
+      },
+      spacing: {
+        "card": "var(--card-padding)",
+        "card-sm": "var(--card-padding-sm)",
+        "card-lg": "var(--card-padding-lg)",
+        "card-gap": "var(--card-gap)",
       },
       keyframes: {
         "accordion-down": {

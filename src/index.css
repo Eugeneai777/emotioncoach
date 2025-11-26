@@ -44,6 +44,14 @@ All colors MUST be HSL.
     --gentle: 150 30% 82%;
     --gentle-foreground: 150 45% 35%;
 
+    /* Unified Card Design System */
+    --card-radius: 0.75rem; /* 12px - standard card radius */
+    --card-radius-lg: 1rem; /* 16px - large card radius */
+    --card-padding: 1rem; /* 16px - standard card padding */
+    --card-padding-sm: 0.75rem; /* 12px - small card padding */
+    --card-padding-lg: 1.5rem; /* 24px - large card padding */
+    --card-gap: 0.5rem; /* 8px - standard gap between card elements */
+
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
