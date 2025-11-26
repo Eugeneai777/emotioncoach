@@ -16,8 +16,10 @@ import CarouselSettingsDialog from "./CarouselSettingsDialog";
 import EmotionStepsCard from "./EmotionStepsCard";
 import DailyReminder from "@/components/DailyReminder";
 import { TrainingCampCard } from "@/components/camp/TrainingCampCard";
-import { CarouselModule, CarouselContext } from "@/types/carousel";
+import { CarouselModule, CarouselContext, CustomCard } from "@/types/carousel";
 import { TrainingCamp } from "@/types/trainingCamp";
+import CustomCarouselCard from "./CustomCarouselCard";
+import { calculatePriority, calculateCustomCardPriority, shouldShowReminder } from "./carouselUtils";
 
 interface HomeCarouselProps {
   context: CarouselContext;
@@ -45,8 +47,9 @@ export default function HomeCarousel({
   ]);
   const [autoPlay, setAutoPlay] = useState(true);
   const [interval, setInterval] = useState(5000);
+  const [customCards, setCustomCards] = useState<CustomCard[]>([]);
 
-  // Load user settings
+  // Load user settings and custom cards
   useEffect(() => {
     if (!user) return;
 
@@ -62,6 +65,18 @@ export default function HomeCarousel({
         if (data.carousel_auto_play !== null) setAutoPlay(data.carousel_auto_play);
         if (data.carousel_interval) setInterval(data.carousel_interval);
       }
+
+      // Load custom cards
+      const { data: cards } = await supabase
+        .from("custom_carousel_cards")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (cards) {
+        setCustomCards(cards as CustomCard[]);
+      }
     };
 
     loadSettings();
@@ -69,39 +84,34 @@ export default function HomeCarousel({
 
   // Calculate priority and sort modules
   const sortedModules = useCallback(() => {
-    return [...modules]
-      .map((module) => {
-        let priority = module.order;
-        let hasUpdate = false;
+    const enabledModules = modules.filter((m) => m.enabled);
+    
+    // Add custom cards as modules
+    const customCardModules = customCards.map((card, index) => ({
+      id: `custom_${card.id}` as any,
+      enabled: card.is_active,
+      order: 100 + index,
+      priority: calculateCustomCardPriority(card, context),
+      hasUpdate: card.has_reminder && shouldShowReminder(card),
+    }));
 
-        switch (module.id) {
-          case "daily_reminder":
-            if (context.hasReminder) {
-              priority = 0;
-              hasUpdate = true;
-            }
-            break;
-          case "training_camp":
-            if (context.campHasMilestone) {
-              priority = 1;
-              hasUpdate = true;
-            } else if (context.hasActiveCamp) {
-              priority = 2;
-            }
-            break;
-          case "goal_progress":
-            if (context.hasGoalUpdate) {
-              priority = 1;
-              hasUpdate = true;
-            }
-            break;
+    const allModules = [...enabledModules, ...customCardModules];
+    
+    return allModules
+      .map((module) => ({
+        ...module,
+        priority:
+          module.priority !== undefined
+            ? module.priority
+            : calculatePriority(module.id as any, context),
+      }))
+      .sort((a, b) => {
+        if (a.priority !== b.priority) {
+          return b.priority - a.priority;
         }
-
-        return { ...module, priority, hasUpdate };
-      })
-      .filter((m) => m.enabled)
-      .sort((a, b) => (a.priority || a.order) - (b.priority || b.order));
-  }, [modules, context]);
+        return a.order - b.order;
+      });
+  }, [modules, customCards, context]);
 
   const activeModules = sortedModules();
 
@@ -132,7 +142,34 @@ export default function HomeCarousel({
   }, [api]);
 
   // Render module content
-  const renderModule = (module: CarouselModule) => {
+  const renderModule = (module: CarouselModule & { priority?: number; hasUpdate?: boolean }) => {
+    // Handle custom cards
+    if (typeof module.id === "string" && module.id.startsWith("custom_")) {
+      const cardId = module.id.replace("custom_", "");
+      const card = customCards.find((c) => c.id === cardId);
+      if (!card) return null;
+
+      return (
+        <CustomCarouselCard
+          title={card.title}
+          subtitle={card.subtitle}
+          description={card.description}
+          emoji={card.emoji}
+          backgroundType={card.background_type}
+          backgroundValue={card.background_value}
+          textColor={card.text_color}
+          imageUrl={card.image_url}
+          imagePosition={card.image_position}
+          actionText={card.action_text}
+          onAction={() => {
+            if (card.action_type === "chat") {
+              window.location.href = "/";
+            }
+          }}
+        />
+      );
+    }
+
     switch (module.id) {
       case "emotion_steps":
         return <EmotionStepsCard />;
@@ -149,7 +186,11 @@ export default function HomeCarousel({
     }
   };
 
-  const handleSettingsSave = async (newModules: CarouselModule[], newAutoPlay: boolean, newInterval: number) => {
+  const handleSettingsSave = async (
+    newModules: CarouselModule[],
+    newAutoPlay: boolean,
+    newInterval: number
+  ) => {
     if (!user) return;
 
     setModules(newModules);
@@ -166,6 +207,21 @@ export default function HomeCarousel({
       .eq("id", user.id);
   };
 
+  const refreshCustomCards = async () => {
+    if (!user) return;
+
+    const { data: cards } = await supabase
+      .from("custom_carousel_cards")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .order("display_order", { ascending: true });
+
+    if (cards) {
+      setCustomCards(cards as CustomCard[]);
+    }
+  };
+
   if (activeModules.length === 0) return null;
 
   return (
@@ -177,7 +233,7 @@ export default function HomeCarousel({
             if (!content) return null;
 
             return (
-              <CarouselItem key={module.id}>
+              <CarouselItem key={typeof module.id === "string" ? module.id : module.id}>
                 {content}
               </CarouselItem>
             );
@@ -205,7 +261,7 @@ export default function HomeCarousel({
           variant="ghost"
           size="sm"
           onClick={() => setSettingsOpen(true)}
-          className="text-healing-forestGreen/60 hover:text-healing-forestGreen"
+          className="text-muted-foreground hover:text-foreground"
         >
           <Settings className="h-4 w-4 mr-2" />
           轮播设置
@@ -219,6 +275,7 @@ export default function HomeCarousel({
         autoPlay={autoPlay}
         interval={interval}
         onSave={handleSettingsSave}
+        onRefreshCustomCards={refreshCustomCards}
       />
     </div>
   );
