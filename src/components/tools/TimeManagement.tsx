@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Clock, CheckCircle2, Circle, Trash2, Timer } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Task {
   id: string;
@@ -19,14 +21,54 @@ interface Task {
 
 export const TimeManagement = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
   const [estimatedTime, setEstimatedTime] = useState("");
-  const [pomodoroActive, setPomodoroActive] = useState(false);
-  const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleAddTask = () => {
+  useEffect(() => {
+    if (user) {
+      loadTasks();
+    }
+  }, [user]);
+
+  const loadTasks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setTasks(
+          data.map((task) => ({
+            id: task.id,
+            title: task.title,
+            priority: task.priority as "high" | "medium" | "low",
+            estimatedTime: task.estimated_time,
+            completed: task.completed,
+            createdAt: new Date(task.created_at),
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Error loading tasks:", error);
+      toast({
+        title: "加载失败",
+        description: "无法加载任务列表",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddTask = async () => {
     if (!title) {
       toast({
         title: "请输入任务标题",
@@ -35,38 +77,95 @@ export const TimeManagement = () => {
       return;
     }
 
-    const newTask: Task = {
-      id: Date.now().toString(),
-      title,
-      priority,
-      estimatedTime: estimatedTime ? parseInt(estimatedTime) : 0,
-      completed: false,
-      createdAt: new Date(),
-    };
+    try {
+      const { data, error } = await supabase
+        .from("tasks")
+        .insert({
+          user_id: user!.id,
+          title,
+          priority,
+          estimated_time: estimatedTime ? parseInt(estimatedTime) : 0,
+        })
+        .select()
+        .single();
 
-    setTasks([newTask, ...tasks]);
-    setTitle("");
-    setEstimatedTime("");
+      if (error) throw error;
 
-    toast({
-      title: "任务已添加",
-      description: `已添加任务: ${title}`,
-    });
+      if (data) {
+        const newTask: Task = {
+          id: data.id,
+          title: data.title,
+          priority: data.priority as "high" | "medium" | "low",
+          estimatedTime: data.estimated_time,
+          completed: data.completed,
+          createdAt: new Date(data.created_at),
+        };
+
+        setTasks([newTask, ...tasks]);
+      }
+
+      setTitle("");
+      setEstimatedTime("");
+
+      toast({
+        title: "任务已添加",
+        description: `已添加任务: ${title}`,
+      });
+    } catch (error) {
+      console.error("Error adding task:", error);
+      toast({
+        title: "添加失败",
+        description: "无法添加任务",
+        variant: "destructive",
+      });
+    }
   };
 
-  const toggleTask = (id: string) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
+  const toggleTask = async (id: string) => {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ completed: !task.completed })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setTasks(
+        tasks.map((t) =>
+          t.id === id ? { ...t, completed: !t.completed } : t
+        )
+      );
+    } catch (error) {
+      console.error("Error toggling task:", error);
+      toast({
+        title: "更新失败",
+        description: "无法更新任务状态",
+        variant: "destructive",
+      });
+    }
   };
 
-  const deleteTask = (id: string) => {
-    setTasks(tasks.filter((task) => task.id !== id));
-    toast({
-      title: "任务已删除",
-    });
+  const deleteTask = async (id: string) => {
+    try {
+      const { error } = await supabase.from("tasks").delete().eq("id", id);
+
+      if (error) throw error;
+
+      setTasks(tasks.filter((task) => task.id !== id));
+      toast({
+        title: "任务已删除",
+      });
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast({
+        title: "删除失败",
+        description: "无法删除任务",
+        variant: "destructive",
+      });
+    }
   };
 
   const getPriorityColor = (priority: string) => {
@@ -194,7 +293,11 @@ export const TimeManagement = () => {
           {/* 任务列表 */}
           <div className="space-y-2">
             <h3 className="font-semibold">任务列表</h3>
-            {tasks.length === 0 ? (
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                加载中...
+              </p>
+            ) : tasks.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
                 暂无任务，开始添加你的第一个任务吧
               </p>

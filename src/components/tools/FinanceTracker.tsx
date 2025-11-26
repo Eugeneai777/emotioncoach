@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { DollarSign, TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface FinanceRecord {
   id: string;
@@ -18,16 +20,58 @@ interface FinanceRecord {
 
 export const FinanceTracker = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [records, setRecords] = useState<FinanceRecord[]>([]);
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [note, setNote] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const expenseCategories = ["餐饮", "交通", "购物", "娱乐", "医疗", "教育", "其他"];
   const incomeCategories = ["工资", "奖金", "投资", "副业", "其他"];
 
-  const handleAddRecord = () => {
+  useEffect(() => {
+    if (user) {
+      loadRecords();
+    }
+  }, [user]);
+
+  const loadRecords = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("finance_records")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setRecords(
+          data.map((record) => ({
+            id: record.id,
+            type: record.type as "income" | "expense",
+            amount: record.amount,
+            category: record.category,
+            note: record.note || "",
+            date: new Date(record.created_at),
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Error loading records:", error);
+      toast({
+        title: "加载失败",
+        description: "无法加载财务记录",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddRecord = async () => {
     if (!amount || !category) {
       toast({
         title: "请填写完整信息",
@@ -37,24 +81,50 @@ export const FinanceTracker = () => {
       return;
     }
 
-    const newRecord: FinanceRecord = {
-      id: Date.now().toString(),
-      type,
-      amount: parseFloat(amount),
-      category,
-      note,
-      date: new Date(),
-    };
+    try {
+      const { data, error } = await supabase
+        .from("finance_records")
+        .insert({
+          user_id: user!.id,
+          type,
+          amount: parseFloat(amount),
+          category,
+          note: note || null,
+        })
+        .select()
+        .single();
 
-    setRecords([newRecord, ...records]);
-    setAmount("");
-    setCategory("");
-    setNote("");
+      if (error) throw error;
 
-    toast({
-      title: "记录成功",
-      description: `已记录${type === "income" ? "收入" : "支出"} ¥${amount}`,
-    });
+      if (data) {
+        const newRecord: FinanceRecord = {
+          id: data.id,
+          type: data.type as "income" | "expense",
+          amount: data.amount,
+          category: data.category,
+          note: data.note || "",
+          date: new Date(data.created_at),
+        };
+
+        setRecords([newRecord, ...records]);
+      }
+
+      setAmount("");
+      setCategory("");
+      setNote("");
+
+      toast({
+        title: "记录成功",
+        description: `已记录${type === "income" ? "收入" : "支出"} ¥${amount}`,
+      });
+    } catch (error) {
+      console.error("Error adding record:", error);
+      toast({
+        title: "添加失败",
+        description: "无法添加财务记录",
+        variant: "destructive",
+      });
+    }
   };
 
   const totalIncome = records
@@ -183,7 +253,11 @@ export const FinanceTracker = () => {
           {/* 记录列表 */}
           <div className="space-y-2">
             <h3 className="font-semibold">最近记录</h3>
-            {records.length === 0 ? (
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                加载中...
+              </p>
+            ) : records.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
                 暂无记录，开始记录你的收支吧
               </p>

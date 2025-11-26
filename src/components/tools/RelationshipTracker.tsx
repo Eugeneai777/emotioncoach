@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, Users, MessageCircle, Star, Calendar } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Contact {
   id: string;
@@ -26,10 +28,12 @@ interface ContactLog {
 
 export const RelationshipTracker = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [logs, setLogs] = useState<ContactLog[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // 表单状态
   const [name, setName] = useState("");
@@ -49,7 +53,73 @@ export const RelationshipTracker = () => {
     "其他",
   ];
 
-  const handleAddContact = () => {
+  useEffect(() => {
+    if (user) {
+      loadContacts();
+      loadLogs();
+    }
+  }, [user]);
+
+  const loadContacts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setContacts(
+          data.map((contact) => ({
+            id: contact.id,
+            name: contact.name,
+            relationship: contact.relationship,
+            intimacyLevel: contact.intimacy_level,
+            lastContact: new Date(contact.last_contact),
+            notes: contact.notes || "",
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Error loading contacts:", error);
+      toast({
+        title: "加载失败",
+        description: "无法加载联系人",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadLogs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("contact_logs")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setLogs(
+          data.map((log) => ({
+            id: log.id,
+            contactId: log.contact_id,
+            content: log.content,
+            date: new Date(log.created_at),
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Error loading logs:", error);
+    }
+  };
+
+  const handleAddContact = async () => {
     if (!name || !relationship) {
       toast({
         title: "请填写完整信息",
@@ -59,29 +129,55 @@ export const RelationshipTracker = () => {
       return;
     }
 
-    const newContact: Contact = {
-      id: Date.now().toString(),
-      name,
-      relationship,
-      intimacyLevel: parseInt(intimacyLevel),
-      lastContact: new Date(),
-      notes,
-    };
+    try {
+      const { data, error } = await supabase
+        .from("contacts")
+        .insert({
+          user_id: user!.id,
+          name,
+          relationship,
+          intimacy_level: parseInt(intimacyLevel),
+          notes: notes || null,
+        })
+        .select()
+        .single();
 
-    setContacts([newContact, ...contacts]);
-    setName("");
-    setRelationship("");
-    setIntimacyLevel("3");
-    setNotes("");
-    setShowAddForm(false);
+      if (error) throw error;
 
-    toast({
-      title: "联系人已添加",
-      description: `已添加 ${name}`,
-    });
+      if (data) {
+        const newContact: Contact = {
+          id: data.id,
+          name: data.name,
+          relationship: data.relationship,
+          intimacyLevel: data.intimacy_level,
+          lastContact: new Date(data.last_contact),
+          notes: data.notes || "",
+        };
+
+        setContacts([newContact, ...contacts]);
+      }
+
+      setName("");
+      setRelationship("");
+      setIntimacyLevel("3");
+      setNotes("");
+      setShowAddForm(false);
+
+      toast({
+        title: "联系人已添加",
+        description: `已添加 ${name}`,
+      });
+    } catch (error) {
+      console.error("Error adding contact:", error);
+      toast({
+        title: "添加失败",
+        description: "无法添加联系人",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleAddLog = () => {
+  const handleAddLog = async () => {
     if (!selectedContact || !logContent) {
       toast({
         title: "请填写互动记录",
@@ -90,26 +186,54 @@ export const RelationshipTracker = () => {
       return;
     }
 
-    const newLog: ContactLog = {
-      id: Date.now().toString(),
-      contactId: selectedContact,
-      content: logContent,
-      date: new Date(),
-    };
+    try {
+      const { data, error } = await supabase
+        .from("contact_logs")
+        .insert({
+          user_id: user!.id,
+          contact_id: selectedContact,
+          content: logContent,
+        })
+        .select()
+        .single();
 
-    setLogs([newLog, ...logs]);
-    
-    // 更新最后联系时间
-    setContacts(
-      contacts.map((c) =>
-        c.id === selectedContact ? { ...c, lastContact: new Date() } : c
-      )
-    );
+      if (error) throw error;
 
-    setLogContent("");
-    toast({
-      title: "记录已添加",
-    });
+      if (data) {
+        const newLog: ContactLog = {
+          id: data.id,
+          contactId: data.contact_id,
+          content: data.content,
+          date: new Date(data.created_at),
+        };
+
+        setLogs([newLog, ...logs]);
+      }
+
+      // 更新最后联系时间
+      await supabase
+        .from("contacts")
+        .update({ last_contact: new Date().toISOString() })
+        .eq("id", selectedContact);
+
+      setContacts(
+        contacts.map((c) =>
+          c.id === selectedContact ? { ...c, lastContact: new Date() } : c
+        )
+      );
+
+      setLogContent("");
+      toast({
+        title: "记录已添加",
+      });
+    } catch (error) {
+      console.error("Error adding log:", error);
+      toast({
+        title: "添加失败",
+        description: "无法添加记录",
+        variant: "destructive",
+      });
+    }
   };
 
   const getContactLogs = (contactId: string) => {
@@ -256,7 +380,11 @@ export const RelationshipTracker = () => {
           {/* 联系人列表 */}
           <div className="space-y-2">
             <h3 className="font-semibold">联系人列表</h3>
-            {contacts.length === 0 ? (
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                加载中...
+              </p>
+            ) : contacts.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
                 暂无联系人，开始添加吧
               </p>
