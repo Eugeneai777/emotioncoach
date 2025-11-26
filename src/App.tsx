@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import History from "./pages/History";
+import Community from "./pages/Community";
 import Settings from "./pages/Settings";
 import TagStats from "./pages/TagStats";
 import Goals from "./pages/Goals";
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/packages" element={<Packages />} />
           <Route path="/deployment-package" element={<DeploymentPackage />} />
           <Route path="/energy-studio" element={<EnergyStudio />} />
+          <Route path="/community" element={<Community />} />
           <Route path="/ai-coach" element={<AICoach />} />
           <Route path="/camp-intro" element={<CampIntro />} />
           <Route path="/camp/:campId" element={<TrainingCampDetail />} />
