@@ -129,10 +129,14 @@ const Community = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1 text-center">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent mb-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent mb-2 hover:scale-105 transition-transform duration-300 cursor-default">
               🌈 有劲社区
             </h1>
-            <p className="text-muted-foreground">分享成长 · 见证蜕变</p>
+            <p className="text-muted-foreground flex items-center justify-center gap-2">
+              <span>✨</span>
+              分享成长 · 见证蜕变
+              <span>✨</span>
+            </p>
           </div>
           <div className="w-10" />
         </div>
