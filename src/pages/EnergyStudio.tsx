@@ -17,8 +17,6 @@ import {
   Battery,
   Moon,
   Dumbbell,
-  MessageCircle,
-  NotebookPen,
   DollarSign,
   Clock,
   Heart,
@@ -61,19 +59,10 @@ const EnergyStudio = () => {
   const tools: ToolCard[] = [
     // 情绪工具
     {
-      id: "emotion-coach",
-      title: "情绪教练",
-      description: "AI陪伴式情绪梳理，找到情绪的力量",
-      icon: <MessageCircle className="w-6 h-6" />,
-      category: "emotion",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "emotion-diary",
-      title: "我的情绪日记",
-      description: "查看历史记录，回顾成长轨迹",
-      icon: <NotebookPen className="w-6 h-6" />,
+      id: "declaration",
+      title: "能量宣言卡",
+      description: "创建个性化能量宣言海报，开启有劲的一天",
+      icon: <Megaphone className="w-6 h-6" />,
       category: "emotion",
       color: "hsl(var(--primary))",
       available: true
@@ -110,15 +99,6 @@ const EnergyStudio = () => {
       title: "正念练习",
       description: "AI语音引导，体验正念的力量",
       icon: <Sparkles className="w-6 h-6" />,
-      category: "emotion",
-      color: "hsl(var(--primary))",
-      available: true
-    },
-    {
-      id: "declaration",
-      title: "能量宣言卡",
-      description: "创建个性化能量宣言海报，开启有劲的一天",
-      icon: <Megaphone className="w-6 h-6" />,
       category: "emotion",
       color: "hsl(var(--primary))",
       available: true
@@ -229,16 +209,6 @@ const EnergyStudio = () => {
   const filteredTools = tools.filter(tool => tool.category === activeTab);
 
   const handleToolClick = (toolId: string) => {
-    // 特殊处理：情绪教练跳转到首页
-    if (toolId === "emotion-coach") {
-      navigate("/");
-      return;
-    }
-    // 特殊处理：情绪日记跳转到历史页面
-    if (toolId === "emotion-diary") {
-      navigate("/history");
-      return;
-    }
     setActiveTool(toolId);
   };
 
