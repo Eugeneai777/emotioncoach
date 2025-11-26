@@ -109,7 +109,10 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
 
         <div className="flex gap-2 pt-2">
           {!hasCheckedInToday && camp.status === 'active' && (
-            <Button onClick={onCheckIn} className="flex-1">
+            <Button 
+              onClick={() => navigate(`/camp-checkin/${camp.id}`)}
+              className="flex-1"
+            >
               <Calendar className="h-4 w-4 mr-2" />
               今日打卡
             </Button>

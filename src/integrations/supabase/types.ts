@@ -133,6 +133,81 @@ export type Database = {
           },
         ]
       }
+      camp_daily_progress: {
+        Row: {
+          camp_id: string
+          checked_in_at: string | null
+          checkin_type: string | null
+          created_at: string | null
+          declaration_completed: boolean | null
+          declaration_completed_at: string | null
+          emotion_logs_count: number | null
+          id: string
+          is_checked_in: boolean | null
+          last_emotion_log_at: string | null
+          progress_date: string
+          reflection_briefing_id: string | null
+          reflection_completed: boolean | null
+          reflection_completed_at: string | null
+          updated_at: string | null
+          user_id: string
+          validation_passed: boolean | null
+        }
+        Insert: {
+          camp_id: string
+          checked_in_at?: string | null
+          checkin_type?: string | null
+          created_at?: string | null
+          declaration_completed?: boolean | null
+          declaration_completed_at?: string | null
+          emotion_logs_count?: number | null
+          id?: string
+          is_checked_in?: boolean | null
+          last_emotion_log_at?: string | null
+          progress_date: string
+          reflection_briefing_id?: string | null
+          reflection_completed?: boolean | null
+          reflection_completed_at?: string | null
+          updated_at?: string | null
+          user_id: string
+          validation_passed?: boolean | null
+        }
+        Update: {
+          camp_id?: string
+          checked_in_at?: string | null
+          checkin_type?: string | null
+          created_at?: string | null
+          declaration_completed?: boolean | null
+          declaration_completed_at?: string | null
+          emotion_logs_count?: number | null
+          id?: string
+          is_checked_in?: boolean | null
+          last_emotion_log_at?: string | null
+          progress_date?: string
+          reflection_briefing_id?: string | null
+          reflection_completed?: boolean | null
+          reflection_completed_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+          validation_passed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "camp_daily_progress_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "camp_daily_progress_reflection_briefing_id_fkey"
+            columns: ["reflection_briefing_id"]
+            isOneToOne: false
+            referencedRelation: "briefings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           achievement_id: string | null
@@ -917,6 +992,12 @@ export type Database = {
       }
       profiles: {
         Row: {
+          camp_checkin_requirement: string | null
+          camp_evening_reminder_time: string | null
+          camp_late_warning_enabled: boolean | null
+          camp_makeup_allowed: boolean | null
+          camp_makeup_days_limit: number | null
+          camp_morning_reminder_time: string | null
           carousel_auto_play: boolean | null
           carousel_interval: number | null
           carousel_modules: Json | null
@@ -959,6 +1040,12 @@ export type Database = {
           wecom_webhook_url: string | null
         }
         Insert: {
+          camp_checkin_requirement?: string | null
+          camp_evening_reminder_time?: string | null
+          camp_late_warning_enabled?: boolean | null
+          camp_makeup_allowed?: boolean | null
+          camp_makeup_days_limit?: number | null
+          camp_morning_reminder_time?: string | null
           carousel_auto_play?: boolean | null
           carousel_interval?: number | null
           carousel_modules?: Json | null
@@ -1001,6 +1088,12 @@ export type Database = {
           wecom_webhook_url?: string | null
         }
         Update: {
+          camp_checkin_requirement?: string | null
+          camp_evening_reminder_time?: string | null
+          camp_late_warning_enabled?: boolean | null
+          camp_makeup_allowed?: boolean | null
+          camp_makeup_days_limit?: number | null
+          camp_morning_reminder_time?: string | null
           carousel_auto_play?: boolean | null
           carousel_interval?: number | null
           carousel_modules?: Json | null

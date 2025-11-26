@@ -12,6 +12,7 @@ import { VoiceSettings } from "@/components/VoiceSettings";
 import { SmartReminderSettings } from "@/components/SmartReminderSettings";
 import { SmartNotificationPreferences } from "@/components/SmartNotificationPreferences";
 import { AccountBalance } from "@/components/AccountBalance";
+import CampSettings from "@/components/CampSettings";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 
@@ -121,11 +122,12 @@ export default function Settings() {
         <h1 className="text-xl md:text-3xl font-bold text-foreground mb-4 md:mb-6">设置</h1>
 
         <Tabs defaultValue="reminders" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-4 md:mb-6 h-auto">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-7 mb-4 md:mb-6 h-auto">
             <TabsTrigger value="profile" className="text-xs md:text-sm py-2">个人资料</TabsTrigger>
             <TabsTrigger value="account" className="text-xs md:text-sm py-2">账户</TabsTrigger>
             <TabsTrigger value="reminders" className="text-xs md:text-sm py-2">提醒设置</TabsTrigger>
             <TabsTrigger value="notifications" className="text-xs md:text-sm py-2">通知偏好</TabsTrigger>
+            <TabsTrigger value="camp" className="text-xs md:text-sm py-2">训练营</TabsTrigger>
             <TabsTrigger value="companion" className="text-xs md:text-sm py-2">情绪伙伴</TabsTrigger>
             <TabsTrigger value="voice" className="text-xs md:text-sm py-2">语音设置</TabsTrigger>
           </TabsList>
@@ -199,6 +201,10 @@ export default function Settings() {
 
           <TabsContent value="notifications">
             <SmartNotificationPreferences />
+          </TabsContent>
+
+          <TabsContent value="camp">
+            <CampSettings />
           </TabsContent>
 
           <TabsContent value="companion">
