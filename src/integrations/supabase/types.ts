@@ -147,6 +147,7 @@ export type Database = {
           is_checked_in: boolean | null
           last_emotion_log_at: string | null
           progress_date: string
+          recommended_videos: Json | null
           reflection_briefing_id: string | null
           reflection_completed: boolean | null
           reflection_completed_at: string | null
@@ -154,6 +155,8 @@ export type Database = {
           updated_at: string | null
           user_id: string
           validation_passed: boolean | null
+          video_learning_completed: boolean | null
+          videos_watched_count: number | null
         }
         Insert: {
           camp_id: string
@@ -168,6 +171,7 @@ export type Database = {
           is_checked_in?: boolean | null
           last_emotion_log_at?: string | null
           progress_date: string
+          recommended_videos?: Json | null
           reflection_briefing_id?: string | null
           reflection_completed?: boolean | null
           reflection_completed_at?: string | null
@@ -175,6 +179,8 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           validation_passed?: boolean | null
+          video_learning_completed?: boolean | null
+          videos_watched_count?: number | null
         }
         Update: {
           camp_id?: string
@@ -189,6 +195,7 @@ export type Database = {
           is_checked_in?: boolean | null
           last_emotion_log_at?: string | null
           progress_date?: string
+          recommended_videos?: Json | null
           reflection_briefing_id?: string | null
           reflection_completed?: boolean | null
           reflection_completed_at?: string | null
@@ -196,6 +203,8 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           validation_passed?: boolean | null
+          video_learning_completed?: boolean | null
+          videos_watched_count?: number | null
         }
         Relationships: [
           {
@@ -260,6 +269,60 @@ export type Database = {
             columns: ["camp_id"]
             isOneToOne: false
             referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      camp_video_tasks: {
+        Row: {
+          camp_id: string
+          created_at: string | null
+          id: string
+          is_completed: boolean | null
+          match_score: number | null
+          progress_date: string
+          reason: string | null
+          user_id: string
+          video_id: string
+          watched_at: string | null
+        }
+        Insert: {
+          camp_id: string
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          match_score?: number | null
+          progress_date: string
+          reason?: string | null
+          user_id: string
+          video_id: string
+          watched_at?: string | null
+        }
+        Update: {
+          camp_id?: string
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          match_score?: number | null
+          progress_date?: string
+          reason?: string | null
+          user_id?: string
+          video_id?: string
+          watched_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "camp_video_tasks_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "camp_video_tasks_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_courses"
             referencedColumns: ["id"]
           },
         ]

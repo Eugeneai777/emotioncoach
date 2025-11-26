@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
+import CampVideoTasks from "./CampVideoTasks";
 
 interface Task {
   id: string;
@@ -20,9 +22,10 @@ interface Task {
 interface CampDailyTaskListProps {
   campId: string;
   date?: Date;
+  briefingData?: any;
 }
 
-const CampDailyTaskList = ({ campId, date = new Date() }: CampDailyTaskListProps) => {
+const CampDailyTaskList = ({ campId, date = new Date(), briefingData }: CampDailyTaskListProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -167,6 +170,15 @@ const CampDailyTaskList = ({ campId, date = new Date() }: CampDailyTaskListProps
           </div>
         ) : (
           <>
+            {/* 推荐视频课程 */}
+            <CampVideoTasks 
+              campId={campId} 
+              date={date}
+              briefingData={briefingData}
+            />
+
+            {tasks.length > 0 && <Separator className="my-4" />}
+
             {/* 任务列表 */}
             {tasks.length > 0 ? (
               <div className="space-y-2">
