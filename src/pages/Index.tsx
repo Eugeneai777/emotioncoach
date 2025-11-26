@@ -13,7 +13,6 @@ import { EmotionAlert } from "@/components/EmotionAlert";
 import { VoiceControls } from "@/components/VoiceControls";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { EmotionIntensitySelector } from "@/components/EmotionIntensitySelector";
-import { EmotionIntensitySlider } from "@/components/EmotionIntensitySlider";
 import { IntensityReminderDialog } from "@/components/IntensityReminderDialog";
 import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
 
@@ -811,7 +810,6 @@ const Index = () => {
               </Button>
             </div>
           </div>
-          <EmotionIntensitySlider />
         </div>
       </footer>
     </div>
