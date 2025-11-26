@@ -21,6 +21,21 @@ import { TrainingCamp } from "@/types/trainingCamp";
 import CustomCarouselCard from "./CustomCarouselCard";
 import { calculatePriority, calculateCustomCardPriority, shouldShowReminder } from "./carouselUtils";
 
+const MODULE_HEADERS = {
+  emotion_steps: {
+    title: "情绪四部曲",
+    subtitle: "认识情绪、接纳情绪、表达情绪、转化情绪"
+  },
+  daily_reminder: {
+    title: "温柔的提醒",
+    subtitle: "每一天的情绪都值得被看见和理解"
+  },
+  training_camp: {
+    title: "情绪教练",
+    subtitle: "情绪教练陪着你，一步步梳理情绪，重新找到情绪里的力量"
+  },
+};
+
 interface HomeCarouselProps {
   context: CarouselContext;
   activeCamp?: TrainingCamp;
@@ -222,10 +237,41 @@ export default function HomeCarousel({
     }
   };
 
+  // Get current module header
+  const getCurrentHeader = () => {
+    const currentModule = activeModules[current];
+    if (!currentModule) return null;
+    
+    // Handle custom cards
+    if (typeof currentModule.id === "string" && currentModule.id.startsWith("custom_")) {
+      const cardId = currentModule.id.replace("custom_", "");
+      const card = customCards.find((c) => c.id === cardId);
+      return card ? { title: card.title, subtitle: card.subtitle } : null;
+    }
+    
+    return MODULE_HEADERS[currentModule.id as keyof typeof MODULE_HEADERS];
+  };
+
   if (activeModules.length === 0) return null;
 
+  const header = getCurrentHeader();
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Dynamic header section */}
+      {header && header.title && (
+        <div className="text-center space-y-2 transition-all duration-300">
+          <h2 className="text-2xl font-bold text-foreground">
+            {header.title}
+          </h2>
+          {header.subtitle && (
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              {header.subtitle}
+            </p>
+          )}
+        </div>
+      )}
+
       <Carousel setApi={setApi} className="w-full">
         <CarouselContent>
           {activeModules.map((module) => {
