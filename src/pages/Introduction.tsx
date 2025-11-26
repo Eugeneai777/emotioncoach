@@ -33,9 +33,9 @@ import React from "react";
 
 // 导入图片资源
 import heroIntroImage from "@/assets/hero-chat-mockup.png";
-const featureWarmCompanion = "/placeholder.svg";
-const featureSystematicMethod = "/placeholder.svg";
-const featureCommunityResonance = "/placeholder.svg";
+import featureWarmCompanion from "@/assets/feature-warm-companion.png";
+import featureSystematicMethod from "@/assets/feature-systematic-method.png";
+import featureCommunityResonance from "@/assets/feature-community-resonance.png";
 
 const Introduction = () => {
   const navigate = useNavigate();
@@ -403,32 +403,37 @@ const Introduction = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* 模块1: Hero Banner */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-        <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-in">
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-            有劲AI · 情绪日记
-          </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground">
-            每天 10 分钟，让情绪变成力量
-          </p>
-          
-          {/* 主视觉图片 */}
-          <div className="mt-12 max-w-md mx-auto">
-            <img 
-              src={heroIntroImage} 
-              alt="有劲AI情绪日记对话界面" 
-              className="rounded-3xl shadow-2xl w-full hover:scale-105 transition-transform duration-300"
-            />
-          </div>
-          
-          {/* CTA按钮 */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={handleGetStarted} className="hover:scale-105 transition-transform">
-              立即体验情绪日记
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => scrollToSection('camp')}>
-              了解 21 天训练营
-            </Button>
+      <section className="relative overflow-hidden">
+        {/* 渐变背景 */}
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100 opacity-60"></div>
+        
+        <div className="container mx-auto px-4 py-20 md:py-28 relative z-10">
+          <div className="max-w-4xl mx-auto text-center space-y-6 animate-fade-in">
+            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+              有劲AI · 情绪日记
+            </h1>
+            <p className="text-xl md:text-2xl text-muted-foreground">
+              每天 10 分钟，让情绪变成力量
+            </p>
+            
+            {/* 主视觉图片 */}
+            <div className="mt-10 max-w-2xl mx-auto">
+              <img 
+                src={heroIntroImage} 
+                alt="有劲AI情绪日记对话界面" 
+                className="rounded-[32px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] w-full hover:scale-[1.02] transition-all duration-500"
+              />
+            </div>
+            
+            {/* CTA按钮 */}
+            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" onClick={handleGetStarted} className="hover:scale-105 transition-transform">
+                立即体验情绪日记
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => scrollToSection('camp')}>
+                了解 21 天训练营
+              </Button>
+            </div>
           </div>
         </div>
       </section>
