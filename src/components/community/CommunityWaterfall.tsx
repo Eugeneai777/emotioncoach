@@ -25,13 +25,9 @@ interface Post {
 const POSTS_PER_PAGE = 10;
 
 const categories = [
-  { value: 'all', label: '发现', emoji: '✨' },
   { value: 'following', label: '关注', emoji: '👥' },
+  { value: 'all', label: '发现', emoji: '✨' },
   { value: 'resonance', label: '同频', emoji: '💫' },
-  { value: 'story', label: '故事', emoji: '🌸' },
-  { value: 'checkin', label: '打卡', emoji: '📅' },
-  { value: 'achievement', label: '成就', emoji: '🏆' },
-  { value: 'reflection', label: '反思', emoji: '💭' },
 ];
 
 const CommunityWaterfall = () => {
@@ -371,23 +367,20 @@ const CommunityWaterfall = () => {
       </div>
 
       {/* 分类标签栏 */}
-      <ScrollArea className="w-full mb-4">
-        <div className="flex gap-2 pb-2">
-          {categories.map((cat) => (
-            <Button
-              key={cat.value}
-              size="sm"
-              variant={activeFilter === cat.value ? "default" : "outline"}
-              className="whitespace-nowrap"
-              onClick={() => setActiveFilter(cat.value)}
-            >
-              {cat.emoji && <span className="mr-1">{cat.emoji}</span>}
-              {cat.label}
-            </Button>
-          ))}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {categories.map((cat) => (
+          <Button
+            key={cat.value}
+            size="default"
+            variant={activeFilter === cat.value ? "default" : "outline"}
+            className="flex-1"
+            onClick={() => setActiveFilter(cat.value)}
+          >
+            <span className="mr-1.5">{cat.emoji}</span>
+            {cat.label}
+          </Button>
+        ))}
+      </div>
 
       {/* 瀑布流内容 */}
       {loading ? (
