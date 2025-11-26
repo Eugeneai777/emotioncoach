@@ -26,7 +26,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingCamp } from "@/types/trainingCamp";
-import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target, Sparkles, ChevronDown } from "lucide-react";
+import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target, Sparkles, ChevronDown, ShoppingCart } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -500,6 +500,15 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-1 md:gap-2">
               <SmartNotificationCenter />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/packages")}
+                className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all"
+              >
+                <ShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">充值</span>
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
