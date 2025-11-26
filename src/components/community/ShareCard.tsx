@@ -29,21 +29,6 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ post }, ref) => 
     }).then(setQrCodeUrl);
   }, []);
 
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case "story":
-        return "🌸 今日绽放";
-      case "checkin":
-        return "📅 打卡记录";
-      case "achievement":
-        return "🏆 成就解锁";
-      case "reflection":
-        return "💭 深度反思";
-      default:
-        return "✨ 分享";
-    }
-  };
-
   return (
     <div
       ref={ref}
@@ -52,12 +37,9 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({ post }, ref) => 
     >
       {/* 头部 */}
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-2">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           有劲生活
         </h1>
-        <p className="text-sm text-muted-foreground">
-          {getTypeLabel(post.post_type)}
-        </p>
       </div>
 
       {/* 打卡天数 */}
