@@ -1770,6 +1770,73 @@ export type Database = {
         }
         Relationships: []
       }
+      video_favorites: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_favorites_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_watch_history: {
+        Row: {
+          completed: boolean | null
+          id: string
+          user_id: string
+          video_id: string
+          watch_duration: number | null
+          watched_at: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          id?: string
+          user_id: string
+          video_id: string
+          watch_duration?: number | null
+          watched_at?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          id?: string
+          user_id?: string
+          video_id?: string
+          watch_duration?: number | null
+          watched_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_watch_history_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vision_items: {
         Row: {
           category: string | null
