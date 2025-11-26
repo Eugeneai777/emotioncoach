@@ -498,6 +498,10 @@ ${data.growth_story}
           
           // 保存到数据库
           await saveBriefing(convId, briefingData);
+          
+          // 添加温馨的分享提示
+          const sharePromptText = `\n\n✨ 记录完成！你今天的情绪旅程很有意义 💪\n\n想把这份感受分享到有劲社区吗？让更多人看到你的成长～\n\n1. 去社区分享`;
+          updateAssistant(sharePromptText);
         } catch (e) {
           console.error("Error parsing briefing data:", e);
         }
