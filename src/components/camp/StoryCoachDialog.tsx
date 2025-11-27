@@ -59,22 +59,63 @@ interface StoryCoachDialogProps {
 
 const STAGE_SEQUENCE: StoryStage[] = ['problem', 'turning', 'growth', 'reflection'];
 
-const COACH_MESSAGES: Record<StoryStage, string> = {
-  welcome: "欢迎来到故事教练！我会通过几个简单问题，帮你把今天的情绪体验变成一个动人的故事。准备好了吗？",
-  problem: "当时发生了什么？或者是什么感受让你印象深刻？（不用写很多，一两句话就好）",
-  turning: "在这个过程中，有没有某个瞬间让你停下来思考？或者是什么让你决定做出改变？",
-  growth: "经历这些之后，你有什么新的发现或理解？对自己、对情绪、或对生活？",
-  reflection: "如果用一句话总结今天的收获，你会怎么说？",
-  generating: "太棒了！让我帮你把这些整理成一个完整的故事...",
-  complete: "故事创作完成！选择一个标题，或者输入你自己的标题。"
+const COACH_MESSAGES: Partial<Record<StoryStage | 'direct', string>> & Record<StoryStage, string> = {
+  welcome: `你好！我是你的故事教练 🎯
+
+我会用"英雄之旅"的方法，帮你把今天的经历和成长整理成一个完整的故事。
+
+我们有三种创作方式，你想怎么开始？`,
+  problem: "让我们从故事的开始说起。当时你遇到了什么挑战或困境？感受是什么？",
+  turning: "很好！那么在这个过程中，有什么关键的转折时刻吗？是什么让你有了不同的思考或选择？",
+  growth: "太棒了！经历这些之后，你对自己有了什么新的认识或发现？",
+  reflection: "最后，如果用一句话总结今天的收获和感悟，你会怎么说？或者想对未来的自己说什么？",
+  generating: "正在用心整理你的故事...",
+  complete: "故事已经准备好了！",
+  direct: "请把你今天的经历和感受写下来，想到什么就写什么，不用担心结构。我会帮你整理成一个完整的故事。"
 };
 
-const PLACEHOLDERS: Record<string, string> = {
+const BRIEFING_COACH_MESSAGES: Partial<Record<StoryStage, string>> = {
+  problem: `我看到你当时的情绪记录了。现在让我们把它变成一个故事的开头。
+
+能告诉我更多吗？
+• 这是在什么场景下发生的？（时间、地点）
+• 当时具体发生了什么事？
+• 有什么画面或对话让你印象深刻？`,
+
+  turning: `很好！现在让我们找到故事的转折点。
+
+在这个过程中：
+• 有没有某个瞬间让你停下来思考？
+• 是什么让你意识到可以换一种方式？
+• 或者是谁/什么触发了你的转变？`,
+
+  growth: `太棒了！现在让我们描述你的成长。
+
+经历这些之后：
+• 你对自己有了什么新的认识？
+• 这个发现对你意味着什么？
+• 你打算怎么用这个洞察？`,
+
+  reflection: `最后，让我们总结这个故事。
+
+如果用一句话总结今天的收获和感悟：
+• 你会对未来的自己说什么？
+• 这个故事的"主题"是什么？`
+};
+
+const PLACEHOLDERS: Partial<Record<StoryStage | 'direct', string>> = {
   problem: "比如：今天早上醒来，感觉特别焦虑...",
   turning: "比如：当我意识到... / 后来我决定...",
   growth: "比如：我发现原来... / 我开始明白...",
   reflection: "比如：今天我学会了...",
   direct: "把你的想法、感受、经历都写下来吧，不用担心结构，我来帮你整理..."
+};
+
+const BRIEFING_PLACEHOLDERS: Partial<Record<StoryStage, string>> = {
+  problem: "那天...(描述场景和发生的事)",
+  turning: "后来，当我...(描述转折的瞬间)",
+  growth: "我发现...(描述你的新认识)",
+  reflection: "今天我学会了...(用一句话总结)"
 };
 
 export default function StoryCoachDialog({
@@ -102,6 +143,12 @@ export default function StoryCoachDialog({
   const [selectedBriefing, setSelectedBriefing] = useState<HistoricalBriefing | null>(null);
   const [loadingBriefings, setLoadingBriefings] = useState(false);
   const [showBriefingList, setShowBriefingList] = useState(false);
+  const [briefingContext, setBriefingContext] = useState<{
+    problem: string;
+    turning: string;
+    growth: string;
+    reflection: string;
+  } | null>(null);
 
   const currentStageIndex = STAGE_SEQUENCE.indexOf(stage as any);
 
@@ -142,27 +189,31 @@ export default function StoryCoachDialog({
   const handleSelectBriefing = (briefing: HistoricalBriefing) => {
     setSelectedBriefing(briefing);
     
-    setAnswers({
+    // 不再填入 answers，而是存储为参考上下文
+    setBriefingContext({
       problem: [
-        briefing.emotion_theme && `今天的情绪主题是「${briefing.emotion_theme}」。`,
+        briefing.emotion_theme && `情绪主题：${briefing.emotion_theme}`,
         briefing.stage_1_content
-      ].filter(Boolean).join('\n\n'),
+      ].filter(Boolean).join('\n'),
       
       turning: [
-        briefing.stage_2_content,
-        briefing.stage_3_content
-      ].filter(Boolean).join('\n\n'),
+        briefing.stage_2_content && `情绪背后的需求：${briefing.stage_2_content}`,
+        briefing.stage_3_content && `原有应对方式：${briefing.stage_3_content}`
+      ].filter(Boolean).join('\n'),
       
       growth: [
-        briefing.stage_4_content,
-        briefing.insight
-      ].filter(Boolean).join('\n\n'),
+        briefing.stage_4_content && `选择的回应：${briefing.stage_4_content}`,
+        briefing.insight && `洞察：${briefing.insight}`
+      ].filter(Boolean).join('\n'),
       
       reflection: [
-        briefing.action,
+        briefing.action && `行动计划：${briefing.action}`,
         briefing.growth_story
-      ].filter(Boolean).join('\n\n')
+      ].filter(Boolean).join('\n')
     });
+    
+    // answers 保持空白，等待用户输入
+    setAnswers({ problem: '', turning: '', growth: '', reflection: '' });
     
     setShowBriefingList(false);
     setStage('problem');
@@ -221,7 +272,8 @@ export default function StoryCoachDialog({
       const { data, error } = await supabase.functions.invoke('generate-story-coach', {
         body: {
           mode,
-          answers: mode === 'guided' ? answers : undefined,
+          answers: mode === 'guided' || mode === 'briefing' ? answers : undefined,
+          briefingContext: mode === 'briefing' ? briefingContext : undefined,
           rawContent: mode === 'direct' ? rawContent : undefined,
           context: {
             emotionTheme,
@@ -306,16 +358,17 @@ ${generatedStory.reflection.content}`;
   };
 
   const getCoachMessage = () => {
-    if (mode === 'briefing') {
-      const briefingMessages: Partial<Record<StoryStage, string>> = {
-        problem: "我已经读到了你的简报内容。你可以在这个基础上补充更多细节：当时具体发生了什么？有什么场景或画面让你印象深刻？",
-        turning: "简报中有提到你情绪背后的需求和原来的应对方式。能再分享一下，是什么让你有了转变的念头？",
-        growth: "你的洞察和选择的回应方式很棒！可以展开说说这个发现对你意味着什么？",
-        reflection: "最后，用一句话总结今天的收获和感悟，或者对未来自己说的话？"
-      };
-      return briefingMessages[stage] || COACH_MESSAGES[stage];
+    if (mode === 'briefing' && BRIEFING_COACH_MESSAGES[stage]) {
+      return BRIEFING_COACH_MESSAGES[stage];
     }
     return COACH_MESSAGES[stage];
+  };
+
+  const getBriefingPlaceholder = (currentStage: StoryStage) => {
+    if (mode === 'briefing' && BRIEFING_PLACEHOLDERS[currentStage]) {
+      return BRIEFING_PLACEHOLDERS[currentStage];
+    }
+    return PLACEHOLDERS[currentStage] || '';
   };
 
   return (
@@ -441,8 +494,21 @@ ${generatedStory.reflection.content}`;
           )}
 
           {/* Conversation stages */}
-          {stage !== 'welcome' && stage !== 'generating' && stage !== 'complete' && (
+          {stage !== 'welcome' && stage !== 'generating' && stage !== 'complete' && !showBriefingList && (
             <div className="space-y-4">
+              {/* 简报参考卡片（仅 briefing 模式显示） */}
+              {mode === 'briefing' && briefingContext && briefingContext[stage as keyof typeof briefingContext] && (
+                <div className="p-3 bg-secondary/30 rounded-lg border border-secondary/50">
+                  <p className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1">
+                    <BookOpen className="h-3 w-3" />
+                    你的简报记录
+                  </p>
+                  <p className="text-sm text-foreground/80 whitespace-pre-line">
+                    {briefingContext[stage as keyof typeof briefingContext]}
+                  </p>
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <Avatar className="h-10 w-10 flex items-center justify-center bg-primary/10">
                   <span className="text-lg">🎯</span>
@@ -454,7 +520,7 @@ ${generatedStory.reflection.content}`;
 
               <div>
                 <Textarea
-                  placeholder={mode === 'direct' ? PLACEHOLDERS.direct : PLACEHOLDERS[stage]}
+                  placeholder={mode === 'direct' ? PLACEHOLDERS.direct : getBriefingPlaceholder(stage)}
                   value={getCurrentInput()}
                   onChange={(e) => {
                     if (mode === 'direct') {
