@@ -3,6 +3,8 @@ import { useNavigate, Routes, Route, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import { UserAccountsTable } from "@/components/admin/UserAccountsTable";
 import { OrdersTable } from "@/components/admin/OrdersTable";
 import { UsageRecordsTable } from "@/components/admin/UsageRecordsTable";
@@ -56,7 +58,14 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">管理后台</h1>
+        <div className="flex items-center gap-4 mb-6">
+          <Link to="/">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold">管理后台</h1>
+        </div>
         
         <Tabs defaultValue="users" className="w-full">
           <TabsList className="grid w-full grid-cols-7">
