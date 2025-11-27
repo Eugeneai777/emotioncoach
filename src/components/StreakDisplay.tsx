@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Flame } from "lucide-react";
 import { format } from "date-fns";
-import { getTodayInBeijing } from "@/utils/dateUtils";
+import { getTodayInBeijing, getTodayStartInBeijing, formatDateInBeijing } from "@/utils/dateUtils";
 
 const StreakDisplay = () => {
   const [streak, setStreak] = useState(0);
@@ -35,14 +35,13 @@ const StreakDisplay = () => {
       // Group briefings by date
       const briefingDates = new Set<string>();
       for (const briefing of briefings) {
-        const date = format(new Date(briefing.created_at), 'yyyy-MM-dd');
+        const date = formatDateInBeijing(briefing.created_at);
         briefingDates.add(date);
       }
 
       // Calculate streak from today backwards
       let currentStreak = 0;
-      let currentDate = new Date();
-      currentDate.setHours(0, 0, 0, 0);
+      let currentDate = getTodayStartInBeijing();
 
       while (true) {
         const dateStr = format(currentDate, 'yyyy-MM-dd');

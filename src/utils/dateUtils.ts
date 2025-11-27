@@ -36,3 +36,25 @@ export const getDaysSinceStart = (startDate: string): number => {
   const start = parseDateInBeijing(startDate);
   return differenceInDays(today, start);
 };
+
+/**
+ * 将 UTC 时间戳转换为北京时间的日期字符串 (yyyy-MM-dd)
+ */
+export const formatDateInBeijing = (utcDate: string | Date): string => {
+  const date = typeof utcDate === 'string' ? new Date(utcDate) : utcDate;
+  const beijingTime = toZonedTime(date, BEIJING_TIMEZONE);
+  return format(beijingTime, "yyyy-MM-dd");
+};
+
+/**
+ * 将 UTC 时间戳转换为北京时间的格式化字符串
+ */
+export const formatInBeijing = (
+  utcDate: string | Date, 
+  formatStr: string,
+  options?: any
+): string => {
+  const date = typeof utcDate === 'string' ? new Date(utcDate) : utcDate;
+  const beijingTime = toZonedTime(date, BEIJING_TIMEZONE);
+  return format(beijingTime, formatStr, options);
+};

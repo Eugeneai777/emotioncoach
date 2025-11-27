@@ -14,7 +14,7 @@ import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
 import CampShareDialog from "@/components/camp/CampShareDialog";
 import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { getTodayInBeijing, getTodayStartInBeijing, parseDateInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
+import { getTodayInBeijing, getTodayStartInBeijing, parseDateInBeijing, getDaysSinceStart, formatInBeijing } from "@/utils/dateUtils";
 
 const CampCheckIn = () => {
   const { campId } = useParams<{ campId: string }>();
@@ -210,7 +210,7 @@ const CampCheckIn = () => {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {format(new Date(), "yyyy年MM月dd日 EEEE", { locale: zhCN })}
+              {formatInBeijing(new Date(), "yyyy年MM月dd日 EEEE", { locale: zhCN })}
             </p>
           </div>
         </div>
