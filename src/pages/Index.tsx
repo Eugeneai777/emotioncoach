@@ -37,7 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { format, differenceInDays, parseISO } from "date-fns";
+import { format, differenceInDays, parseISO, startOfDay } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -207,8 +207,10 @@ const Index = () => {
         console.log('loadActiveCamp - check_in_dates:', data.check_in_dates);
         
         // 动态计算 current_day，基于 start_date 和今天的日期
+        const today = startOfDay(new Date());
+        const campStartDate = startOfDay(parseISO(data.start_date));
         const calculatedCurrentDay = Math.max(1, 
-          differenceInDays(new Date(), parseISO(data.start_date)) + 1
+          differenceInDays(today, campStartDate) + 1
         );
         // 不超过训练营总天数
         const finalCurrentDay = Math.min(calculatedCurrentDay, data.duration_days);

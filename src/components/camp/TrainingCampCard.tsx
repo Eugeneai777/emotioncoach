@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { TrainingCamp } from "@/types/trainingCamp";
 import { CheckCircle2, Circle, Calendar, Flame, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, parseISO, startOfDay } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
 interface TrainingCampCardProps {
@@ -25,18 +25,20 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   const progressPercent = (camp.completed_days / camp.duration_days) * 100;
   
   // 动态计算当前是第几天（从1开始显示）
+  const todayDate = startOfDay(new Date());
+  const campStartDate = startOfDay(parseISO(camp.start_date));
   const calculatedCurrentDay = Math.max(1,
-    differenceInDays(new Date(), new Date(camp.start_date)) + 1
+    differenceInDays(todayDate, campStartDate) + 1
   );
   const displayCurrentDay = Math.min(calculatedCurrentDay, camp.duration_days);
   
   // Calculate streak
   const sortedDates = [...camp.check_in_dates].sort().reverse();
   let currentStreak = 0;
-  let checkDate = new Date();
+  let checkDate = startOfDay(new Date());
   
   for (const dateStr of sortedDates) {
-    const date = new Date(dateStr);
+    const date = startOfDay(parseISO(dateStr));
     const diff = differenceInDays(checkDate, date);
     if (diff <= 1) {
       currentStreak++;

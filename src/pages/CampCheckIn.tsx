@@ -12,7 +12,7 @@ import { TrainingCamp } from "@/types/trainingCamp";
 import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
 import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
 import CampShareDialog from "@/components/camp/CampShareDialog";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, parseISO, startOfDay } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
 const CampCheckIn = () => {
@@ -179,8 +179,10 @@ const CampCheckIn = () => {
   const checkInDates = Array.isArray(camp.check_in_dates) ? camp.check_in_dates : [];
   
   // 动态计算当前是第几天（从1开始）
+  const today = startOfDay(new Date());
+  const campStartDate = startOfDay(parseISO(camp.start_date));
   const calculatedCurrentDay = Math.max(1, 
-    differenceInDays(new Date(), new Date(camp.start_date)) + 1
+    differenceInDays(today, campStartDate) + 1
   );
   const displayCurrentDay = Math.min(calculatedCurrentDay, camp.duration_days);
 
