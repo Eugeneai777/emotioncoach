@@ -306,7 +306,7 @@ const CampCheckIn = () => {
                       : "hover:shadow-md hover:border-primary/30 cursor-pointer active:scale-[0.98]"
                   }`}
                   onClick={() => {
-                    if (!todayProgress?.has_shared_to_community && latestBriefing) {
+                    if (!todayProgress?.has_shared_to_community) {
                       handleShare();
                     }
                   }}
@@ -335,12 +335,10 @@ const CampCheckIn = () => {
                       <p className="text-sm text-muted-foreground">
                         {todayProgress?.has_shared_to_community 
                           ? "今日反思已分享到社区" 
-                          : latestBriefing 
-                            ? "点击分享你的成长心得，获得社区支持" 
-                            : "完成情绪对话后可分享反思"}
+                          : "点击分享你的成长心得，获得社区支持"}
                       </p>
                     </div>
-                    {!todayProgress?.has_shared_to_community && latestBriefing && (
+                    {!todayProgress?.has_shared_to_community && (
                       <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                     )}
                   </div>
@@ -430,18 +428,18 @@ const CampCheckIn = () => {
       </div>
 
       {/* 分享弹窗 */}
-      {camp && latestBriefing && (
+      {camp && (
         <CampShareDialog
           open={showShareDialog}
           onOpenChange={setShowShareDialog}
           campId={camp.id}
           campName={camp.camp_name}
           campDay={camp.current_day}
-          briefingId={latestBriefing.id}
-          emotionTheme={latestBriefing.emotion_theme}
-          emotionIntensity={latestBriefing.emotion_intensity}
-          insight={latestBriefing.insight}
-          action={latestBriefing.action}
+          briefingId={latestBriefing?.id}
+          emotionTheme={latestBriefing?.emotion_theme}
+          emotionIntensity={latestBriefing?.emotion_intensity}
+          insight={latestBriefing?.insight}
+          action={latestBriefing?.action}
         />
       )}
     </div>
