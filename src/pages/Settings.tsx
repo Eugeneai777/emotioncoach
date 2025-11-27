@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -20,6 +20,7 @@ import { ArrowLeft } from "lucide-react";
 
 export default function Settings() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -29,6 +30,8 @@ export default function Settings() {
   const [autoDismissSeconds, setAutoDismissSeconds] = useState(10);
   const [userId, setUserId] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  
+  const defaultTab = searchParams.get("tab") || "reminders";
 
   useEffect(() => {
     loadSettings();
@@ -137,7 +140,7 @@ export default function Settings() {
 
         <h1 className="text-xl md:text-3xl font-bold text-foreground mb-4 md:mb-6">设置</h1>
 
-        <Tabs defaultValue="reminders" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3 md:grid-cols-7 mb-4 md:mb-6 h-auto">
             <TabsTrigger value="profile" className="text-xs md:text-sm py-2">个人资料</TabsTrigger>
             <TabsTrigger value="account" className="text-xs md:text-sm py-2">账户</TabsTrigger>
@@ -251,7 +254,25 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="camp">
-            <CampSettings />
+            {isAdmin ? (
+              <CampSettings />
+            ) : (
+              <Card className="border-border shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg md:text-2xl text-foreground">
+                    训练营设置
+                  </CardTitle>
+                  <CardDescription className="text-xs md:text-sm text-muted-foreground">
+                    仅限管理员访问
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p className="text-sm md:text-base">此功能仅对管理员开放</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="companion">
