@@ -28,6 +28,7 @@ const categories = [
   { value: 'following', label: '关注', emoji: '👥' },
   { value: 'all', label: '发现', emoji: '✨' },
   { value: 'resonance', label: '同频', emoji: '💫' },
+  { value: 'story', label: '故事', emoji: '📖' },
 ];
 
 const CommunityWaterfall = () => {
@@ -45,6 +46,8 @@ const CommunityWaterfall = () => {
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [pullStartY, setPullStartY] = useState(0);
   const [pullDistance, setPullDistance] = useState(0);
+  const [emotionTags, setEmotionTags] = useState<string[]>([]);
+  const [selectedEmotionTag, setSelectedEmotionTag] = useState<string | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -151,7 +154,20 @@ const CommunityWaterfall = () => {
           .order('created_at', { ascending: false })
           .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
       }
-      // 类型筛选（故事、打卡、成就、反思）
+      // 故事筛选：显示所有story类型的帖子
+      else if (filter === 'story') {
+        query = query.eq('post_type', 'story');
+        
+        // 如果选择了情绪标签，进一步筛选
+        if (selectedEmotionTag) {
+          query = query.eq('emotion_theme', selectedEmotionTag);
+        }
+        
+        query = query
+          .order('created_at', { ascending: false })
+          .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
+      }
+      // 其他类型筛选（打卡、成就、反思）
       else if (filter !== 'all' && filter !== 'following' && filter !== 'resonance') {
         query = query
           .eq('post_type', filter)
@@ -193,7 +209,31 @@ const CommunityWaterfall = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [loadRecommendedPosts, session]);
+  }, [loadRecommendedPosts, session, selectedEmotionTag]);
+  
+  // 加载用户的情绪标签（用于故事筛选）
+  const loadEmotionTags = useCallback(async () => {
+    if (!session?.user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('community_posts')
+        .select('emotion_theme')
+        .eq('post_type', 'story')
+        .not('emotion_theme', 'is', null)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      if (data) {
+        // 提取唯一的情绪标签
+        const uniqueTags = [...new Set(data.map(p => p.emotion_theme).filter(Boolean))] as string[];
+        setEmotionTags(uniqueTags);
+      }
+    } catch (error) {
+      console.error('加载情绪标签失败:', error);
+    }
+  }, [session]);
 
   // 下拉刷新
   const handleRefresh = useCallback(async () => {
@@ -263,7 +303,20 @@ const CommunityWaterfall = () => {
   useEffect(() => {
     loadPosts(0, activeFilter, false, true);
     setPage(0);
-  }, [activeFilter, loadPosts]);
+    
+    // 如果切换到故事分类，加载情绪标签
+    if (activeFilter === 'story') {
+      loadEmotionTags();
+    }
+  }, [activeFilter, loadPosts, loadEmotionTags]);
+  
+  // 情绪标签变化时重新加载
+  useEffect(() => {
+    if (activeFilter === 'story') {
+      loadPosts(0, activeFilter, false, false);
+      setPage(0);
+    }
+  }, [selectedEmotionTag]);
 
   // 无限滚动 - 使用 useCallback 优化
   const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
@@ -367,20 +420,49 @@ const CommunityWaterfall = () => {
       </div>
 
       {/* 分类标签栏 */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
+      <div className="grid grid-cols-4 gap-2 mb-4">
         {categories.map((cat) => (
           <Button
             key={cat.value}
             size="default"
             variant={activeFilter === cat.value ? "default" : "outline"}
             className="flex-1"
-            onClick={() => setActiveFilter(cat.value)}
+            onClick={() => {
+              setActiveFilter(cat.value);
+              setSelectedEmotionTag(null); // 切换分类时重置情绪标签
+            }}
           >
             <span className="mr-1.5">{cat.emoji}</span>
             {cat.label}
           </Button>
         ))}
       </div>
+
+      {/* 情绪标签筛选栏（仅故事分类显示） */}
+      {activeFilter === 'story' && emotionTags.length > 0 && (
+        <ScrollArea className="w-full mb-4">
+          <div className="flex gap-2 pb-2">
+            <Button
+              size="sm"
+              variant={selectedEmotionTag === null ? "default" : "outline"}
+              onClick={() => setSelectedEmotionTag(null)}
+            >
+              全部
+            </Button>
+            {emotionTags.map((tag) => (
+              <Button
+                key={tag}
+                size="sm"
+                variant={selectedEmotionTag === tag ? "default" : "outline"}
+                onClick={() => setSelectedEmotionTag(tag)}
+              >
+                {tag}
+              </Button>
+            ))}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      )}
 
       {/* 瀑布流内容 */}
       {loading ? (
@@ -398,6 +480,11 @@ const CommunityWaterfall = () => {
             <>
               <p className="text-muted-foreground text-sm">暂无同频内容</p>
               <p className="text-xs text-muted-foreground mt-1">先分享你的情绪日记，发现与你同频的伙伴</p>
+            </>
+          ) : activeFilter === 'story' ? (
+            <>
+              <p className="text-muted-foreground text-sm">暂无故事</p>
+              <p className="text-xs text-muted-foreground mt-1">去训练营用说好故事教练创建你的第一个故事吧</p>
             </>
           ) : (
             <p className="text-muted-foreground text-sm">暂无内容</p>
