@@ -29,7 +29,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingCamp } from "@/types/trainingCamp";
-import { Send, RotateCcw, History, LogOut, Loader2, Settings, Sparkles, ChevronDown, Bell, Video } from "lucide-react";
+import { Send, RotateCcw, History, LogOut, Loader2, Settings, Sparkles, ChevronDown, Bell, Video, Menu, User, Wallet, Clock, Tent, Users, Volume2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -535,8 +542,56 @@ const Index = () => {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
           <div className="flex items-center justify-between gap-3">
-            {/* Left side - Back to home */}
-            <div className="flex items-center">
+            {/* Left side - Menu & Back to home */}
+            <div className="flex items-center gap-2">
+              {/* Hamburger Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 md:h-9 px-2"
+                  >
+                    <Menu className="w-4 h-4 md:w-5 md:h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 bg-card border shadow-lg z-50">
+                  <DropdownMenuItem onClick={() => navigate("/settings?tab=profile")}>
+                    <User className="w-4 h-4 mr-2" />
+                    个人资料
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/settings?tab=account")}>
+                    <Wallet className="w-4 h-4 mr-2" />
+                    账户
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/settings?tab=reminders")}>
+                    <Clock className="w-4 h-4 mr-2" />
+                    提醒设置
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/settings?tab=notifications")}>
+                    <Bell className="w-4 h-4 mr-2" />
+                    通知偏好
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/settings?tab=camp")}>
+                    <Tent className="w-4 h-4 mr-2" />
+                    训练营
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/settings?tab=companion")}>
+                    <Users className="w-4 h-4 mr-2" />
+                    情绪伙伴
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/settings?tab=voice")}>
+                    <Volume2 className="w-4 h-4 mr-2" />
+                    语音设置
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    退出登录
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               {messages.length > 0 && (
                 <Button
                   variant="ghost"
@@ -584,26 +639,6 @@ const Index = () => {
               </Button>
 
               <SmartNotificationCenter />
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/settings")}
-                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Settings className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden md:inline">设置</span>
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSignOut}
-                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <LogOut className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden md:inline">退出</span>
-              </Button>
             </div>
           </div>
         </div>
