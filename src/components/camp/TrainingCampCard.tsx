@@ -166,7 +166,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
             onClick={() => navigate("/user-manual")}
             className="flex-1"
           >
-            查看详情
+            使用手册
           </Button>
         </div>
       </div>
