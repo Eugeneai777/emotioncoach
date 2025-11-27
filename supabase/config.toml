@@ -107,3 +107,6 @@ verify_jwt = false
 
 [functions.generate-checkin-image]
 verify_jwt = true
+
+[functions.generate-story-coach]
+verify_jwt = true
