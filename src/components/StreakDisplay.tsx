@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Flame } from "lucide-react";
 import { format } from "date-fns";
-import { getTodayInBeijing, getTodayStartInBeijing, formatDateInBeijing } from "@/utils/dateUtils";
+import { getTodayInBeijing, formatDateInBeijing, parseDateInBeijing } from "@/utils/dateUtils";
 
 const StreakDisplay = () => {
   const [streak, setStreak] = useState(0);
@@ -41,18 +41,21 @@ const StreakDisplay = () => {
 
       // Calculate streak from today backwards
       let currentStreak = 0;
-      let currentDate = getTodayStartInBeijing();
+      let checkDate = getTodayInBeijing(); // Start with today's date string
 
       while (true) {
-        const dateStr = format(currentDate, 'yyyy-MM-dd');
-        
-        if (briefingDates.has(dateStr)) {
+        if (briefingDates.has(checkDate)) {
           currentStreak++;
-          currentDate.setDate(currentDate.getDate() - 1);
+          // Move to previous day
+          const prevDate = parseDateInBeijing(checkDate);
+          prevDate.setDate(prevDate.getDate() - 1);
+          checkDate = format(prevDate, 'yyyy-MM-dd');
         } else {
           // If today has no briefing yet, don't break the streak
-          if (currentStreak === 0 && dateStr === getTodayInBeijing()) {
-            currentDate.setDate(currentDate.getDate() - 1);
+          if (currentStreak === 0 && checkDate === getTodayInBeijing()) {
+            const prevDate = parseDateInBeijing(checkDate);
+            prevDate.setDate(prevDate.getDate() - 1);
+            checkDate = format(prevDate, 'yyyy-MM-dd');
             continue;
           }
           break;
