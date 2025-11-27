@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { mode, answers, rawContent, context } = await req.json();
+    const { mode, answers, briefingContext, rawContent, context } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -21,13 +21,42 @@ serve(async (req) => {
 
     // Build user content based on mode
     let userContent = '';
-    if (mode === 'guided') {
-      userContent = `用户通过四个阶段回答了以下问题：
+    if (mode === 'guided' || mode === 'briefing') {
+      // For briefing mode, combine briefing context with user input
+      if (mode === 'briefing' && briefingContext) {
+        userContent = `用户基于历史简报创作故事，以下是简报记录和用户的补充描述：
+
+【简报背景 - 问题】
+${briefingContext.problem}
+
+【用户补充 - 问题】
+${answers.problem}
+
+【简报背景 - 转折】
+${briefingContext.turning}
+
+【用户补充 - 转折】
+${answers.turning}
+
+【简报背景 - 成长】
+${briefingContext.growth}
+
+【用户补充 - 成长】
+${answers.growth}
+
+【简报背景 - 反思】
+${briefingContext.reflection}
+
+【用户补充 - 反思】
+${answers.reflection}`;
+      } else {
+        userContent = `用户通过四个阶段回答了以下问题：
 
 【问题】阶段：${answers.problem}
 【转折】阶段：${answers.turning}
 【成长】阶段：${answers.growth}
 【反思】阶段：${answers.reflection}`;
+      }
     } else {
       userContent = `用户提供了以下原始叙述：
 
@@ -42,8 +71,9 @@ ${rawContent}`;
       userContent += `\n训练营：${context.campName} 第${context.day}天`;
     }
 
-    const systemPrompt = mode === 'guided' 
-      ? `你是一位温柔有洞察力的故事教练。用户刚刚完成了英雄之旅的四个阶段回答，请帮助他们把这些素材整理成一个完整、动人的故事。
+    const systemPrompt = (mode === 'guided' || mode === 'briefing')
+      ? `你是一位温柔有洞察力的故事教练。用户${mode === 'briefing' ? '基于历史简报并' : ''}刚刚完成了英雄之旅的四个阶段回答，请帮助他们把这些素材整理成一个完整、动人的故事。
+${mode === 'briefing' ? '\n注意：用户提供了简报背景和自己的补充描述，请将两者有机结合，以用户的补充描述为主，简报背景为辅助，创作出一个连贯完整的故事。' : ''}
 
 你的任务：
 1. 保留用户的核心表达和真实感受
