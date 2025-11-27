@@ -72,7 +72,7 @@ serve(async (req) => {
     // Update user_accounts (using already created supabaseAdmin)
     const { data: account, error: accountError } = await supabaseAdmin
       .from('user_accounts')
-      .select('total_quota, remaining_quota')
+      .select('total_quota, used_quota')
       .eq('user_id', userId)
       .single();
 
