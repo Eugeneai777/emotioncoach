@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 export interface CheckInValidation {
   isValid: boolean;
@@ -25,7 +26,7 @@ export const validateCheckIn = async (
   campId: string,
   requirement: CheckInRequirement = "single_emotion"
 ): Promise<CheckInValidation> => {
-  const today = new Date().toISOString().split("T")[0];
+  const today = format(new Date(), 'yyyy-MM-dd');
 
   // 1. 检查今日进度
   const { data: progress } = await supabase
@@ -120,7 +121,7 @@ export const performCheckIn = async (
   checkinType: "auto" | "manual" | "makeup" = "manual"
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const today = new Date().toISOString().split("T")[0];
+    const today = format(new Date(), 'yyyy-MM-dd');
 
     // 更新或创建打卡进度
     const { error } = await supabase

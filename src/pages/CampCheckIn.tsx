@@ -66,7 +66,7 @@ const CampCheckIn = () => {
 
   const loadTodayProgress = async () => {
     if (!user || !campId) return;
-    const today = new Date().toISOString().split("T")[0];
+    const today = format(new Date(), 'yyyy-MM-dd');
     
     try {
       const { data } = await supabase
@@ -84,7 +84,7 @@ const CampCheckIn = () => {
 
   const loadLatestBriefing = async () => {
     if (!user) return;
-    const today = new Date().toISOString().split("T")[0];
+    const today = format(new Date(), 'yyyy-MM-dd');
     
     try {
       const { data } = await supabase
