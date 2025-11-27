@@ -163,7 +163,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
           )}
           <Button 
             variant="outline" 
-            onClick={() => navigate(`/camp/${camp.id}`)}
+            onClick={() => navigate("/user-manual")}
             className="flex-1"
           >
             查看详情

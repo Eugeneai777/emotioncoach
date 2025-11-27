@@ -24,6 +24,7 @@ import CampIntro from "./pages/CampIntro";
 import CampCheckIn from "./pages/CampCheckIn";
 import UserProfile from "./pages/UserProfile";
 import Introduction from "./pages/Introduction";
+import UserManual from "./pages/UserManual";
 import NotFound from "./pages/NotFound";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
 
@@ -58,6 +59,7 @@ const App = () => (
           <Route path="/user/:userId" element={<UserProfile />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/introduction" element={<Introduction />} />
+          <Route path="/user-manual" element={<UserManual />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
