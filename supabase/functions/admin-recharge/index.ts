@@ -21,18 +21,15 @@ serve(async (req) => {
       throw new Error('Authentication failed: Auth session missing!');
     }
 
-    const supabaseClient = createClient(
+    // Create service role client for admin operations
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Verify user is authenticated
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    // Verify user is authenticated by extracting JWT
+    const jwt = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(jwt);
     
     if (authError) {
       console.error('Auth error:', authError);
@@ -46,8 +43,8 @@ serve(async (req) => {
 
     console.log('User authenticated:', user.id);
 
-    // Check if user is admin
-    const { data: roleData, error: roleError } = await supabaseClient
+    // Check if user is admin using service role client
+    const { data: roleData, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
@@ -72,13 +69,7 @@ serve(async (req) => {
       throw new Error('Invalid parameters');
     }
 
-    // Use service role client for database operations
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Update user_accounts
+    // Update user_accounts (using already created supabaseAdmin)
     const { data: account, error: accountError } = await supabaseAdmin
       .from('user_accounts')
       .select('total_quota, remaining_quota')
