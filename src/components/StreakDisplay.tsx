@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Flame } from "lucide-react";
+import { format } from "date-fns";
 
 const StreakDisplay = () => {
   const [streak, setStreak] = useState(0);
@@ -33,7 +34,7 @@ const StreakDisplay = () => {
       // Group briefings by date
       const briefingDates = new Set<string>();
       for (const briefing of briefings) {
-        const date = new Date(briefing.created_at).toISOString().split('T')[0];
+        const date = format(new Date(briefing.created_at), 'yyyy-MM-dd');
         briefingDates.add(date);
       }
 
@@ -43,14 +44,14 @@ const StreakDisplay = () => {
       currentDate.setHours(0, 0, 0, 0);
 
       while (true) {
-        const dateStr = currentDate.toISOString().split('T')[0];
+        const dateStr = format(currentDate, 'yyyy-MM-dd');
         
         if (briefingDates.has(dateStr)) {
           currentStreak++;
           currentDate.setDate(currentDate.getDate() - 1);
         } else {
           // If today has no briefing yet, don't break the streak
-          if (currentStreak === 0 && dateStr === new Date().toISOString().split('T')[0]) {
+          if (currentStreak === 0 && dateStr === format(new Date(), 'yyyy-MM-dd')) {
             currentDate.setDate(currentDate.getDate() - 1);
             continue;
           }
