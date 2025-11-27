@@ -6,13 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Sparkles, RefreshCw, ArrowLeft, ArrowRight } from "lucide-react";
+import { Sparkles, RefreshCw, ArrowLeft, ArrowRight, BookOpen, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { zhCN } from "date-fns/locale";
 
 type StoryStage = 'welcome' | 'problem' | 'turning' | 'growth' | 'reflection' | 'generating' | 'complete';
-type StoryMode = 'guided' | 'direct';
+type StoryMode = 'guided' | 'direct' | 'briefing';
 
 interface StoryAnswers {
   problem: string;
@@ -26,6 +30,20 @@ interface GeneratedStory {
   turning: { title: string; subtitle: string; content: string };
   growth: { title: string; subtitle: string; content: string };
   reflection: { title: string; subtitle: string; content: string };
+}
+
+interface HistoricalBriefing {
+  id: string;
+  created_at: string;
+  emotion_theme: string;
+  emotion_intensity: number | null;
+  stage_1_content: string | null;
+  stage_2_content: string | null;
+  stage_3_content: string | null;
+  stage_4_content: string | null;
+  insight: string | null;
+  action: string | null;
+  growth_story: string | null;
 }
 
 interface StoryCoachDialogProps {
@@ -80,15 +98,85 @@ export default function StoryCoachDialog({
   const [selectedTitle, setSelectedTitle] = useState('');
   const [customTitleInput, setCustomTitleInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [historicalBriefings, setHistoricalBriefings] = useState<HistoricalBriefing[]>([]);
+  const [selectedBriefing, setSelectedBriefing] = useState<HistoricalBriefing | null>(null);
+  const [loadingBriefings, setLoadingBriefings] = useState(false);
+  const [showBriefingList, setShowBriefingList] = useState(false);
 
   const currentStageIndex = STAGE_SEQUENCE.indexOf(stage as any);
 
+  const loadHistoricalBriefings = async () => {
+    setLoadingBriefings(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: conversations } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('user_id', user.id);
+
+      if (!conversations?.length) return;
+
+      const { data, error } = await supabase
+        .from('briefings')
+        .select(`
+          id, created_at, emotion_theme, emotion_intensity,
+          stage_1_content, stage_2_content, stage_3_content, stage_4_content,
+          insight, action, growth_story
+        `)
+        .in('conversation_id', conversations.map(c => c.id))
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setHistoricalBriefings(data || []);
+    } catch (error) {
+      console.error('Error loading briefings:', error);
+      toast.error("加载简报失败");
+    } finally {
+      setLoadingBriefings(false);
+    }
+  };
+
+  const handleSelectBriefing = (briefing: HistoricalBriefing) => {
+    setSelectedBriefing(briefing);
+    
+    setAnswers({
+      problem: [
+        briefing.emotion_theme && `今天的情绪主题是「${briefing.emotion_theme}」。`,
+        briefing.stage_1_content
+      ].filter(Boolean).join('\n\n'),
+      
+      turning: [
+        briefing.stage_2_content,
+        briefing.stage_3_content
+      ].filter(Boolean).join('\n\n'),
+      
+      growth: [
+        briefing.stage_4_content,
+        briefing.insight
+      ].filter(Boolean).join('\n\n'),
+      
+      reflection: [
+        briefing.action,
+        briefing.growth_story
+      ].filter(Boolean).join('\n\n')
+    });
+    
+    setShowBriefingList(false);
+    setStage('problem');
+  };
+
   const handleModeSelect = (selectedMode: StoryMode) => {
     setMode(selectedMode);
-    if (selectedMode === 'guided') {
+    if (selectedMode === 'briefing') {
+      setShowBriefingList(true);
+      loadHistoricalBriefings();
+    } else if (selectedMode === 'guided') {
       setStage('problem');
     } else {
-      setStage('direct' as any); // Will use the same UI as problem but different logic
+      setStage('direct' as any);
     }
   };
 
@@ -217,6 +305,19 @@ ${generatedStory.reflection.content}`;
     return answers[stage as keyof StoryAnswers]?.trim().length > 0;
   };
 
+  const getCoachMessage = () => {
+    if (mode === 'briefing') {
+      const briefingMessages: Partial<Record<StoryStage, string>> = {
+        problem: "我已经读到了你的简报内容。你可以在这个基础上补充更多细节：当时具体发生了什么？有什么场景或画面让你印象深刻？",
+        turning: "简报中有提到你情绪背后的需求和原来的应对方式。能再分享一下，是什么让你有了转变的念头？",
+        growth: "你的洞察和选择的回应方式很棒！可以展开说说这个发现对你意味着什么？",
+        reflection: "最后，用一句话总结今天的收获和感悟，或者对未来自己说的话？"
+      };
+      return briefingMessages[stage] || COACH_MESSAGES[stage];
+    }
+    return COACH_MESSAGES[stage];
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
@@ -244,7 +345,7 @@ ${generatedStory.reflection.content}`;
           )}
 
           {/* Welcome stage */}
-          {stage === 'welcome' && (
+          {stage === 'welcome' && !showBriefingList && (
             <div className="space-y-4">
               <div className="flex gap-3">
                 <Avatar className="h-10 w-10 flex items-center justify-center bg-primary/10">
@@ -255,18 +356,87 @@ ${generatedStory.reflection.content}`;
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <Button onClick={() => handleModeSelect('guided')} className="h-auto flex-col gap-2 py-4">
-                  <span className="text-2xl">💬</span>
-                  <span className="font-medium">教练引导我</span>
-                  <span className="text-xs opacity-70">通过问答创作</span>
+              <div className="space-y-3">
+                <Button 
+                  onClick={() => handleModeSelect('briefing')} 
+                  className="w-full h-auto flex-col gap-1.5 py-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">📋</span>
+                    <span className="font-medium">从简报开始</span>
+                    <Badge variant="secondary" className="text-xs">推荐</Badge>
+                  </div>
+                  <span className="text-xs opacity-70">选择一个历史简报，基于完整内容创作</span>
                 </Button>
-                <Button variant="outline" onClick={() => handleModeSelect('direct')} className="h-auto flex-col gap-2 py-4">
-                  <span className="text-2xl">📝</span>
-                  <span className="font-medium">帮我整理</span>
-                  <span className="text-xs opacity-70">输入完整内容</span>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <Button variant="outline" onClick={() => handleModeSelect('guided')} className="h-auto flex-col gap-2 py-4">
+                    <span className="text-2xl">💬</span>
+                    <span className="font-medium">教练引导我</span>
+                    <span className="text-xs opacity-70">从头开始问答</span>
+                  </Button>
+                  <Button variant="outline" onClick={() => handleModeSelect('direct')} className="h-auto flex-col gap-2 py-4">
+                    <span className="text-2xl">📝</span>
+                    <span className="font-medium">帮我整理</span>
+                    <span className="text-xs opacity-70">输入完整内容</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Briefing list */}
+          {showBriefingList && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  选择一个简报
+                </h3>
+                <Button variant="ghost" size="sm" onClick={() => { setShowBriefingList(false); setStage('welcome'); }}>
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  返回
                 </Button>
               </div>
+              
+              {loadingBriefings ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : historicalBriefings.length === 0 ? (
+                <div className="text-center py-8 text-sm text-muted-foreground">
+                  暂无历史简报
+                </div>
+              ) : (
+                <ScrollArea className="h-[300px]">
+                  <div className="space-y-2 pr-4">
+                    {historicalBriefings.map((briefing) => (
+                      <Card 
+                        key={briefing.id}
+                        className="p-3 cursor-pointer hover:bg-accent/50 transition-colors"
+                        onClick={() => handleSelectBriefing(briefing)}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <span className="font-medium text-sm">{briefing.emotion_theme}</span>
+                          {briefing.emotion_intensity && (
+                            <Badge variant="outline" className="text-xs">
+                              {briefing.emotion_intensity}/10
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground mb-2">
+                          {format(new Date(briefing.created_at), 'yyyy年MM月dd日 HH:mm', { locale: zhCN })}
+                        </div>
+                        {briefing.insight && (
+                          <p className="text-xs text-foreground/70 line-clamp-2">
+                            💡 {briefing.insight}
+                          </p>
+                        )}
+                      </Card>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
             </div>
           )}
 
@@ -278,7 +448,7 @@ ${generatedStory.reflection.content}`;
                   <span className="text-lg">🎯</span>
                 </Avatar>
                 <div className="flex-1 bg-primary/5 rounded-lg p-4 text-sm">
-                  {COACH_MESSAGES[stage]}
+                  {getCoachMessage()}
                 </div>
               </div>
 
