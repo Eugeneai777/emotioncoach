@@ -26,7 +26,14 @@ export const ChatMessage = ({ role, content, onOptionClick, videoRecommendations
   // 检测是否包含编号选项（如 "1. 选项" 或 "1、选项"）
   const optionRegex = /^(\d+)[.、]\s*(.+)$/gm;
   const matches = Array.from(content.matchAll(optionRegex));
-  const hasOptions = matches.length >= 2 && role === "assistant";
+  
+  // 检测单个"生成简报"或"分享"选项的特殊情况
+  const isBriefingOnlyOption = matches.length === 1 && 
+    (matches[0]?.[2]?.includes("生成简报") || matches[0]?.[2]?.includes("简报"));
+  const isShareOnlyOption = matches.length === 1 && 
+    (matches[0]?.[2]?.includes("分享") || matches[0]?.[2]?.includes("社区"));
+  
+  const hasOptions = (matches.length >= 2 || isBriefingOnlyOption || isShareOnlyOption) && role === "assistant";
   
   // 如果有选项，分离文本和选项
   let textContent = content;
@@ -45,13 +52,20 @@ export const ChatMessage = ({ role, content, onOptionClick, videoRecommendations
     });
     
     // 移除选项行，保留其他文本
-    if (optionLines.length >= 2) {
+    // 如果有至少1个选项且是特殊按钮（简报/分享），或者有2个以上选项，则显示按钮
+    const shouldShowOptions = optionLines.length >= 2 || 
+      (optionLines.length >= 1 && options.some(opt => 
+        opt.text.includes("生成简报") || opt.text.includes("简报") || 
+        opt.text.includes("分享") || opt.text.includes("社区")
+      ));
+    
+    if (shouldShowOptions) {
       textContent = lines
         .filter((_, index) => !optionLines.includes(index))
         .join('\n')
         .trim();
     } else {
-      // 如果选项少于2个，不视为选项
+      // 如果选项不符合显示条件，不视为选项
       options = [];
     }
   }
