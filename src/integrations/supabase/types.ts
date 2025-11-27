@@ -1399,6 +1399,36 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_verification_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          phone_number: string
+          purpose: string
+          verified_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          phone_number: string
+          purpose?: string
+          verified_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          phone_number?: string
+          purpose?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           combo_amount: number | null
@@ -1998,8 +2028,11 @@ export type Database = {
           avatar_url: string | null
           created_at: string | null
           id: string
+          is_registered: boolean | null
           nickname: string | null
           openid: string
+          phone_number: string | null
+          registered_at: string | null
           subscribe_status: boolean | null
           subscribe_time: string | null
           system_user_id: string
@@ -2010,8 +2043,11 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           id?: string
+          is_registered?: boolean | null
           nickname?: string | null
           openid: string
+          phone_number?: string | null
+          registered_at?: string | null
           subscribe_status?: boolean | null
           subscribe_time?: string | null
           system_user_id: string
@@ -2022,8 +2058,11 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           id?: string
+          is_registered?: boolean | null
           nickname?: string | null
           openid?: string
+          phone_number?: string | null
+          registered_at?: string | null
           subscribe_status?: boolean | null
           subscribe_time?: string | null
           system_user_id?: string
