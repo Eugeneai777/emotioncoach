@@ -54,7 +54,7 @@ interface StoryCoachDialogProps {
   action?: string;
   campName: string;
   campDay: number;
-  onComplete: (data: { title: string; story: string }) => void;
+  onComplete: (data: { title: string; story: string; emotionTag?: string }) => void;
 }
 
 const STAGE_SEQUENCE: StoryStage[] = ['problem', 'turning', 'growth', 'reflection'];
@@ -139,6 +139,7 @@ export default function StoryCoachDialog({
   const [selectedTitle, setSelectedTitle] = useState('');
   const [customTitleInput, setCustomTitleInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [extractedEmotionTag, setExtractedEmotionTag] = useState<string | undefined>(undefined);
   const [historicalBriefings, setHistoricalBriefings] = useState<HistoricalBriefing[]>([]);
   const [selectedBriefing, setSelectedBriefing] = useState<HistoricalBriefing | null>(null);
   const [loadingBriefings, setLoadingBriefings] = useState(false);
@@ -290,6 +291,7 @@ export default function StoryCoachDialog({
       setGeneratedStory(data.story);
       setSuggestedTitles(data.suggestedTitles);
       setSelectedTitle(data.suggestedTitles[0]); // Auto-select first
+      setExtractedEmotionTag(data.emotionTag); // Store extracted emotion tag
       setStage('complete');
     } catch (error) {
       console.error('Story generation error:', error);
@@ -328,7 +330,8 @@ ${generatedStory.reflection.content}`;
     
     onComplete({
       title: finalTitle,
-      story: formattedStory
+      story: formattedStory,
+      emotionTag: extractedEmotionTag
     });
     
     // Reset state
@@ -340,6 +343,7 @@ ${generatedStory.reflection.content}`;
     setSuggestedTitles([]);
     setSelectedTitle('');
     setCustomTitleInput('');
+    setExtractedEmotionTag(undefined);
   };
 
   const handleRegenerate = () => {

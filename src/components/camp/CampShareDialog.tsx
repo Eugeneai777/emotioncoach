@@ -56,6 +56,7 @@ const CampShareDialog = ({
   const [generatingImage, setGeneratingImage] = useState(false);
   const [storyCoachOpen, setStoryCoachOpen] = useState(false);
   const [hasStoryContent, setHasStoryContent] = useState(false);
+  const [extractedEmotionTag, setExtractedEmotionTag] = useState<string | undefined>(undefined);
 
   const handleGenerateImage = async () => {
     if (!customTitle && !insight) {
@@ -162,7 +163,7 @@ const CampShareDialog = ({
         briefing_id: briefingId,
         title: customTitle || insight || `第${campDay}天${badgeInfo}`,
         content: shareContent || undefined,
-        emotion_theme: emotionTheme,
+        emotion_theme: extractedEmotionTag || emotionTheme,
         emotion_intensity: emotionIntensity,
         insight: insight,
         action: action,
@@ -415,9 +416,10 @@ const CampShareDialog = ({
         action={action}
         campName={campName}
         campDay={campDay}
-        onComplete={({ title, story }) => {
+        onComplete={({ title, story, emotionTag }) => {
           setCustomTitle(title);
           setShareContent(story);
+          setExtractedEmotionTag(emotionTag);
           setHasStoryContent(true);
           setStoryCoachOpen(false);
           toast({
