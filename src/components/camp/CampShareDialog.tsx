@@ -278,20 +278,23 @@ const CampShareDialog = ({
               <div className="flex gap-2">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
+                  size="sm"
                   onClick={handleSaveOrShareImage}
-                  className="flex-1"
+                  className="text-muted-foreground"
                 >
-                  <Download className="mr-2 h-4 w-4" />
-                  保存/分享到微信
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  保存图片
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   onClick={() => setImageUrls([])}
+                  className="text-muted-foreground"
                 >
-                  <RefreshCw className="h-4 w-4" />
+                  <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                  重新生成
                 </Button>
               </div>
             )}
@@ -348,22 +351,27 @@ const CampShareDialog = ({
           </div>
 
           {/* 操作按钮 */}
-          <div className="flex gap-2 pt-2">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1"
-              disabled={sharing}
-            >
-              取消
-            </Button>
+          <div className="space-y-2 pt-2">
             <Button
               onClick={handleShare}
               disabled={sharing}
-              className="flex-1"
+              className="w-full bg-primary hover:bg-primary/90"
+              size="lg"
             >
               {sharing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {sharing ? "分享中..." : "立即分享"}
+              <Share2 className="mr-2 h-4 w-4" />
+              {sharing ? "分享中..." : "分享到有劲社区"}
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              点击上方按钮将打卡内容发布到社区
+            </p>
+            <Button
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              className="w-full"
+              disabled={sharing}
+            >
+              暂不分享
             </Button>
           </div>
         </div>
