@@ -55,6 +55,7 @@ const CampShareDialog = ({
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [storyCoachOpen, setStoryCoachOpen] = useState(false);
+  const [hasStoryContent, setHasStoryContent] = useState(false);
 
   const handleGenerateImage = async () => {
     if (!customTitle && !insight) {
@@ -150,13 +151,16 @@ const CampShareDialog = ({
     try {
       setSharing(true);
 
+      const postType = hasStoryContent ? "story" : "camp_checkin";
+      const badgeInfo = hasStoryContent ? "故事" : "打卡";
+      
       const { error } = await supabase.from("community_posts").insert({
         user_id: user.id,
-        post_type: "camp_checkin",
+        post_type: postType,
         camp_id: campId,
         camp_day: campDay,
         briefing_id: briefingId,
-        title: customTitle || insight || `第${campDay}天打卡`,
+        title: customTitle || insight || `第${campDay}天${badgeInfo}`,
         content: shareContent || undefined,
         emotion_theme: emotionTheme,
         emotion_intensity: emotionIntensity,
@@ -166,10 +170,10 @@ const CampShareDialog = ({
         visibility: "public",
         image_urls: imageUrls.length > 0 ? imageUrls : null,
         badges: {
-          type: "camp_checkin",
+          type: postType,
           day: campDay,
           campName: campName,
-          campInfo: `${campName} - 第${campDay}天打卡`,
+          campInfo: `${campName} - 第${campDay}天${badgeInfo}`,
         },
       });
 
@@ -414,6 +418,7 @@ const CampShareDialog = ({
         onComplete={({ title, story }) => {
           setCustomTitle(title);
           setShareContent(story);
+          setHasStoryContent(true);
           setStoryCoachOpen(false);
           toast({
             title: "故事创作完成",
