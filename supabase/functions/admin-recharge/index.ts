@@ -79,11 +79,10 @@ serve(async (req) => {
     if (accountError) throw accountError;
 
     const newTotalQuota = account.total_quota + quantity;
-    const newRemainingQuota = (account.remaining_quota || 0) + quantity;
+    // remaining_quota is a generated column (total_quota - used_quota), don't update it directly
 
     const updateData: any = {
       total_quota: newTotalQuota,
-      remaining_quota: newRemainingQuota,
       updated_at: new Date().toISOString()
     };
 
@@ -126,6 +125,9 @@ serve(async (req) => {
     }
 
     console.log(`Admin ${user.id} recharged ${quantity} for user ${userId}. Notes: ${notes || 'none'}`);
+
+    // Calculate remaining quota (generated column formula: total_quota - used_quota)
+    const newRemainingQuota = newTotalQuota - account.used_quota;
 
     return new Response(
       JSON.stringify({ 
