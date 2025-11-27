@@ -19,7 +19,7 @@ interface PostComposerProps {
 }
 
 const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
-  const [postType, setPostType] = useState<string>("story");
+  const [postType, setPostType] = useState<string>("share");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
