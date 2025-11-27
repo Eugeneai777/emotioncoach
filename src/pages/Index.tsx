@@ -37,8 +37,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { format, differenceInDays, parseISO, startOfDay } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { getTodayInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const Index = () => {
@@ -207,10 +208,8 @@ const Index = () => {
         console.log('loadActiveCamp - check_in_dates:', data.check_in_dates);
         
         // 动态计算 current_day，基于 start_date 和今天的日期
-        const today = startOfDay(new Date());
-        const campStartDate = startOfDay(parseISO(data.start_date));
         const calculatedCurrentDay = Math.max(1, 
-          differenceInDays(today, campStartDate) + 1
+          getDaysSinceStart(data.start_date) + 1
         );
         // 不超过训练营总天数
         const finalCurrentDay = Math.min(calculatedCurrentDay, data.duration_days);
@@ -232,7 +231,7 @@ const Index = () => {
   const handleCheckIn = async () => {
     if (!user || !activeCamp) return;
 
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const today = getTodayInBeijing();
     if (activeCamp.check_in_dates.includes(today)) {
       toast({
         title: "今天已打卡",

@@ -11,6 +11,7 @@ import { Plus, Check, Flame } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfWeek, addDays, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { getTodayInBeijing } from "@/utils/dateUtils";
 
 interface Habit {
   id: string;
@@ -166,7 +167,7 @@ export const HabitTracker = () => {
   };
 
   const isCheckedToday = (habitId: string) => {
-    const today = format(new Date(), "yyyy-MM-dd");
+    const today = getTodayInBeijing();
     return habitLogs.some(
       log => log.habit_id === habitId && log.logged_at === today && log.completed
     );

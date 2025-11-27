@@ -12,8 +12,9 @@ import { TrainingCamp } from "@/types/trainingCamp";
 import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
 import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
 import CampShareDialog from "@/components/camp/CampShareDialog";
-import { format, differenceInDays, parseISO, startOfDay } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { getTodayInBeijing, getTodayStartInBeijing, parseDateInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
 
 const CampCheckIn = () => {
   const { campId } = useParams<{ campId: string }>();
@@ -66,7 +67,7 @@ const CampCheckIn = () => {
 
   const loadTodayProgress = async () => {
     if (!user || !campId) return;
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const today = getTodayInBeijing();
     
     try {
       const { data } = await supabase
@@ -84,7 +85,7 @@ const CampCheckIn = () => {
 
   const loadLatestBriefing = async () => {
     if (!user) return;
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const today = getTodayInBeijing();
     
     try {
       const { data } = await supabase
@@ -179,10 +180,8 @@ const CampCheckIn = () => {
   const checkInDates = Array.isArray(camp.check_in_dates) ? camp.check_in_dates : [];
   
   // 动态计算当前是第几天（从1开始）
-  const today = startOfDay(new Date());
-  const campStartDate = startOfDay(parseISO(camp.start_date));
   const calculatedCurrentDay = Math.max(1, 
-    differenceInDays(today, campStartDate) + 1
+    getDaysSinceStart(camp.start_date) + 1
   );
   const displayCurrentDay = Math.min(calculatedCurrentDay, camp.duration_days);
 

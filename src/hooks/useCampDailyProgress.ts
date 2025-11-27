@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { getTodayInBeijing } from "@/utils/dateUtils";
 
 interface DailyProgress {
   declaration_completed: boolean;
@@ -23,7 +23,7 @@ export const useCampDailyProgress = (campId: string, userId: string) => {
   const loadProgress = async () => {
     try {
       setLoading(true);
-      const today = format(new Date(), 'yyyy-MM-dd');
+      const today = getTodayInBeijing();
 
       const { data, error } = await supabase
         .from("camp_daily_progress")
@@ -62,7 +62,7 @@ export const useCampDailyProgress = (campId: string, userId: string) => {
 
   const updateProgress = async (updates: Partial<DailyProgress>) => {
     try {
-      const today = format(new Date(), 'yyyy-MM-dd');
+      const today = getTodayInBeijing();
 
       const { error } = await supabase
         .from("camp_daily_progress")

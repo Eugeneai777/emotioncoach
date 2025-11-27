@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Flame } from "lucide-react";
 import { format } from "date-fns";
+import { getTodayInBeijing } from "@/utils/dateUtils";
 
 const StreakDisplay = () => {
   const [streak, setStreak] = useState(0);
@@ -51,7 +52,7 @@ const StreakDisplay = () => {
           currentDate.setDate(currentDate.getDate() - 1);
         } else {
           // If today has no briefing yet, don't break the streak
-          if (currentStreak === 0 && dateStr === format(new Date(), 'yyyy-MM-dd')) {
+          if (currentStreak === 0 && dateStr === getTodayInBeijing()) {
             currentDate.setDate(currentDate.getDate() - 1);
             continue;
           }

@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TrainingCamp } from "@/types/trainingCamp";
 import CampProgressCalendar from "./CampProgressCalendar";
 import { useToast } from "@/hooks/use-toast";
-import { format, differenceInDays, parseISO, startOfDay } from "date-fns";
+import { getDaysSinceStart } from "@/utils/dateUtils";
 
 export function TrainingCampDetail() {
   const { campId } = useParams();
@@ -17,10 +17,8 @@ export function TrainingCampDetail() {
   const [loading, setLoading] = useState(true);
   
   // 动态计算当前是第几天（从1开始显示）
-  const today = startOfDay(new Date());
-  const campStartDate = camp ? startOfDay(parseISO(camp.start_date)) : today;
   const calculatedCurrentDay = camp ? Math.max(1,
-    differenceInDays(today, campStartDate) + 1
+    getDaysSinceStart(camp.start_date) + 1
   ) : 1;
   const displayCurrentDay = camp ? Math.min(calculatedCurrentDay, camp.duration_days) : 1;
 

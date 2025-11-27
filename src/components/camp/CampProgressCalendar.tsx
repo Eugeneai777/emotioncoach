@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, differenceInDays, startOfDay } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, differenceInDays } from "date-fns";
+import { getTodayStartInBeijing, parseDateInBeijing } from "@/utils/dateUtils";
 
 interface CheckInRecord {
   date: string;
@@ -26,8 +27,8 @@ const CampProgressCalendar = ({
   makeupDaysLimit,
   onMakeupCheckIn,
 }: CampProgressCalendarProps) => {
-  const campStartDate = startOfDay(parseISO(startDate));
-  const today = startOfDay(new Date());
+  const campStartDate = parseDateInBeijing(startDate);
+  const today = getTodayStartInBeijing();
   const monthStart = startOfMonth(today);
   const monthEnd = endOfMonth(today);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
