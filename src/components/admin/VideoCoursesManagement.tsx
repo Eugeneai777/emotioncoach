@@ -253,8 +253,11 @@ export const VideoCoursesManagement = () => {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       
-      // New course starts with ## followed by number and title
-      if (line.match(/^##\s*\d+\.\s*.+/)) {
+      // Support two title formats:
+      // 1. ## 1. 标题
+      // 2. 1. 标题 (without ##)
+      const titleMatch = line.match(/^(?:##\s*)?\d+\.\s*(.+)$/);
+      if (titleMatch && !line.includes("链接") && !line.includes("核心内容") && !line.includes("建议标签")) {
         // Save previous course
         if (currentCourse) {
           const isValid = !!(currentCourse.title && currentCourse.video_url);
@@ -266,15 +269,17 @@ export const VideoCoursesManagement = () => {
         }
         
         // Start new course
-        const title = line.replace(/^##\s*\d+\.\s*/, "").trim();
         currentCourse = {
-          title,
+          title: titleMatch[1].trim(),
           tags: [],
           keywords: [],
         };
       }
-      // Extract video link
-      else if (line.startsWith("- 视频链接:") || line.startsWith("- **视频链接**:")) {
+      // Support multiple link formats:
+      // - 视频链接: URL
+      // - 链接：URL
+      // - **视频链接**: URL
+      else if (line.match(/^-\s*\*?\*?(?:视频)?链接\*?\*?[：:]\s*/)) {
         if (currentCourse) {
           const urlMatch = line.match(/https?:\/\/[^\s)]+/);
           if (urlMatch) {
@@ -283,19 +288,32 @@ export const VideoCoursesManagement = () => {
         }
       }
       // Extract description
-      else if (line.startsWith("- 视频介绍:") || line.startsWith("- **视频介绍**:")) {
+      else if (line.match(/^-\s*\*?\*?视频介绍\*?\*?[：:]\s*/)) {
         if (currentCourse) {
-          currentCourse.description = line.replace(/^- \*?\*?视频介绍\*?\*?:\s*/, "").trim();
+          currentCourse.description = line.replace(/^-\s*\*?\*?视频介绍\*?\*?[：:]\s*/, "").trim();
         }
       }
-      // Extract tags
-      else if (line.startsWith("- 建议标签:") || line.startsWith("- **建议标签**:")) {
+      // Support multiple tag formats:
+      // - 核心内容：tag1 tag2 tag3 (space-separated)
+      // - 建议标签: #tag1 #tag2
+      else if (line.match(/^-\s*\*?\*?(?:核心内容|建议标签)\*?\*?[：:]\s*/)) {
         if (currentCourse) {
-          const tagsText = line.replace(/^- \*?\*?建议标签\*?\*?:\s*/, "");
-          const tags = tagsText.match(/#[^\s#]+/g)?.map(t => t.replace("#", "")) || [];
+          const tagsText = line.replace(/^-\s*\*?\*?(?:核心内容|建议标签)\*?\*?[：:]\s*/, "");
+          // Support both space-separated and #-prefixed tags
+          const tags = tagsText.includes("#") 
+            ? tagsText.match(/#[^\s#]+/g)?.map(t => t.replace("#", "")) || []
+            : tagsText.split(/[,，\s]+/).filter(t => t.length > 0);
           currentCourse.tags = tags;
           currentCourse.keywords = tags;
           currentCourse.category = inferCategory(tags);
+        }
+      }
+      // Support plain text description (long paragraph starting with -)
+      else if (line.startsWith("-") && currentCourse && !currentCourse.description) {
+        const descText = line.replace(/^-\s*/, "").trim();
+        // If text is long and doesn't look like metadata, treat as description
+        if (descText.length > 30 && !descText.includes("：") && !descText.includes(":")) {
+          currentCourse.description = descText;
         }
       }
     }
