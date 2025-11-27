@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Share2, Loader2, Sparkles, Download, RefreshCw, BookOpen } from "lucide-react";
 import ImageUploader from "@/components/community/ImageUploader";
 import StoryCoachDialog from "./StoryCoachDialog";
-import { format } from "date-fns";
+import { getTodayInBeijing } from "@/utils/dateUtils";
 
 interface CampShareDialogProps {
   open: boolean;
@@ -182,7 +182,7 @@ const CampShareDialog = ({
       if (error) throw error;
 
       // 更新今日进度的分享状态
-      const today = format(new Date(), 'yyyy-MM-dd');
+      const today = getTodayInBeijing();
       await supabase
         .from("camp_daily_progress")
         .update({

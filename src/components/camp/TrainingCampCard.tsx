@@ -5,8 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { TrainingCamp } from "@/types/trainingCamp";
 import { CheckCircle2, Circle, Calendar, Flame, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { format, differenceInDays, parseISO, startOfDay } from "date-fns";
+import { format, parseISO, differenceInDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { getTodayStartInBeijing, parseDateInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
 
 interface TrainingCampCardProps {
   camp: TrainingCamp;
@@ -16,7 +17,8 @@ interface TrainingCampCardProps {
 export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   const navigate = useNavigate();
   
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const todayDate = getTodayStartInBeijing();
+  const today = format(todayDate, 'yyyy-MM-dd');
   console.log('TrainingCampCard - Today:', today);
   console.log('TrainingCampCard - Check-in dates:', camp.check_in_dates);
   console.log('TrainingCampCard - Has checked in today:', camp.check_in_dates.includes(today));
@@ -25,20 +27,18 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   const progressPercent = (camp.completed_days / camp.duration_days) * 100;
   
   // 动态计算当前是第几天（从1开始显示）
-  const todayDate = startOfDay(new Date());
-  const campStartDate = startOfDay(parseISO(camp.start_date));
   const calculatedCurrentDay = Math.max(1,
-    differenceInDays(todayDate, campStartDate) + 1
+    getDaysSinceStart(camp.start_date) + 1
   );
   const displayCurrentDay = Math.min(calculatedCurrentDay, camp.duration_days);
   
   // Calculate streak
   const sortedDates = [...camp.check_in_dates].sort().reverse();
   let currentStreak = 0;
-  let checkDate = startOfDay(new Date());
+  let checkDate = getTodayStartInBeijing();
   
   for (const dateStr of sortedDates) {
-    const date = startOfDay(parseISO(dateStr));
+    const date = parseDateInBeijing(dateStr);
     const diff = differenceInDays(checkDate, date);
     if (diff <= 1) {
       currentStreak++;

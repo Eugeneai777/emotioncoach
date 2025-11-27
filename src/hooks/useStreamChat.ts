@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { getTodayInBeijing } from "@/utils/dateUtils";
 
 type Message = {
   role: "user" | "assistant";
@@ -239,7 +240,7 @@ ${data.growth_story}
         .eq('status', 'active');
 
       if (activeCamps && activeCamps.length > 0) {
-        const today = format(new Date(), 'yyyy-MM-dd');
+        const today = getTodayInBeijing();
         
         for (const camp of activeCamps) {
           // Check if already checked in today
