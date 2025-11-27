@@ -21,7 +21,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, ExternalLink, Search, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, Upload, FileText, CheckCircle, XCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
 interface VideoCourse {
@@ -34,6 +35,17 @@ interface VideoCourse {
   source: string;
   category?: string;
   created_at: string;
+}
+
+interface ParsedCourse {
+  title: string;
+  video_url: string;
+  description?: string;
+  tags: string[];
+  keywords: string[];
+  category?: string;
+  isValid: boolean;
+  error?: string;
 }
 
 export const VideoCoursesManagement = () => {
@@ -51,6 +63,14 @@ export const VideoCoursesManagement = () => {
     category: "",
     source: "manual"
   });
+  
+  // Batch import state
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [parsedCourses, setParsedCourses] = useState<ParsedCourse[]>([]);
+  const [selectedCourses, setSelectedCourses] = useState<Set<number>>(new Set());
+  const [importSource, setImportSource] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  
   const { toast } = useToast();
 
   useEffect(() => {
@@ -183,6 +203,228 @@ export const VideoCoursesManagement = () => {
     });
   };
 
+  // Infer category from tags
+  const inferCategory = (tags: string[]): string => {
+    const tagText = tags.join(" ").toLowerCase();
+    if (tagText.includes("领导") || tagText.includes("管理") || tagText.includes("团队")) {
+      return "领导力";
+    }
+    if (tagText.includes("情绪") || tagText.includes("焦虑") || tagText.includes("压力")) {
+      return "情绪管理";
+    }
+    if (tagText.includes("人际") || tagText.includes("关系") || tagText.includes("沟通")) {
+      return "人际关系";
+    }
+    return "个人成长";
+  };
+
+  // Parse markdown file
+  const parseMarkdownFile = (content: string): ParsedCourse[] => {
+    const courses: ParsedCourse[] = [];
+    const lines = content.split("\n");
+    let currentCourse: Partial<ParsedCourse> | null = null;
+    
+    // Extract source from first line if it contains title
+    if (lines[0]?.startsWith("#")) {
+      const sourceMatch = lines[0].match(/(?:视频知识库|课程列表)[_\s]*(.+)/i);
+      if (sourceMatch) {
+        setImportSource(sourceMatch[1].trim());
+      }
+    }
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // New course starts with ## followed by number and title
+      if (line.match(/^##\s*\d+\.\s*.+/)) {
+        // Save previous course
+        if (currentCourse) {
+          const isValid = !!(currentCourse.title && currentCourse.video_url);
+          courses.push({
+            ...currentCourse as ParsedCourse,
+            isValid,
+            error: isValid ? undefined : "缺少标题或视频链接",
+          });
+        }
+        
+        // Start new course
+        const title = line.replace(/^##\s*\d+\.\s*/, "").trim();
+        currentCourse = {
+          title,
+          tags: [],
+          keywords: [],
+        };
+      }
+      // Extract video link
+      else if (line.startsWith("- 视频链接:") || line.startsWith("- **视频链接**:")) {
+        if (currentCourse) {
+          const urlMatch = line.match(/https?:\/\/[^\s)]+/);
+          if (urlMatch) {
+            currentCourse.video_url = urlMatch[0];
+          }
+        }
+      }
+      // Extract description
+      else if (line.startsWith("- 视频介绍:") || line.startsWith("- **视频介绍**:")) {
+        if (currentCourse) {
+          currentCourse.description = line.replace(/^- \*?\*?视频介绍\*?\*?:\s*/, "").trim();
+        }
+      }
+      // Extract tags
+      else if (line.startsWith("- 建议标签:") || line.startsWith("- **建议标签**:")) {
+        if (currentCourse) {
+          const tagsText = line.replace(/^- \*?\*?建议标签\*?\*?:\s*/, "");
+          const tags = tagsText.match(/#[^\s#]+/g)?.map(t => t.replace("#", "")) || [];
+          currentCourse.tags = tags;
+          currentCourse.keywords = tags;
+          currentCourse.category = inferCategory(tags);
+        }
+      }
+    }
+    
+    // Save last course
+    if (currentCourse) {
+      const isValid = !!(currentCourse.title && currentCourse.video_url);
+      courses.push({
+        ...currentCourse as ParsedCourse,
+        isValid,
+        error: isValid ? undefined : "缺少标题或视频链接",
+      });
+    }
+    
+    return courses;
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.name.endsWith(".md")) {
+      toast({
+        title: "文件格式错误",
+        description: "请上传 .md 格式的文件",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const content = await file.text();
+      const parsed = parseMarkdownFile(content);
+      setParsedCourses(parsed);
+      
+      // Auto-select all valid courses
+      const validIndices = parsed
+        .map((_, index) => index)
+        .filter(index => parsed[index].isValid);
+      setSelectedCourses(new Set(validIndices));
+      
+      toast({
+        title: "解析成功",
+        description: `成功解析 ${parsed.length} 个课程，其中 ${validIndices.length} 个有效`,
+      });
+    } catch (error) {
+      console.error("Error parsing file:", error);
+      toast({
+        title: "解析失败",
+        description: "无法解析文件内容",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle batch import
+  const handleBatchImport = async () => {
+    const selectedParsed = parsedCourses
+      .filter((_, index) => selectedCourses.has(index) && parsedCourses[index].isValid);
+    
+    if (selectedParsed.length === 0) {
+      toast({
+        title: "没有选中课程",
+        description: "请至少选择一个有效的课程",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsImporting(true);
+    
+    try {
+      const coursesToInsert = selectedParsed.map(course => ({
+        title: course.title,
+        video_url: course.video_url,
+        description: course.description || null,
+        keywords: course.keywords,
+        tags: course.tags,
+        category: course.category || null,
+        source: importSource || "批量导入",
+      }));
+      
+      // Batch insert in chunks of 50 to avoid timeouts
+      const chunkSize = 50;
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (let i = 0; i < coursesToInsert.length; i += chunkSize) {
+        const chunk = coursesToInsert.slice(i, i + chunkSize);
+        const { error } = await supabase
+          .from("video_courses")
+          .insert(chunk);
+        
+        if (error) {
+          console.error("Error inserting chunk:", error);
+          errorCount += chunk.length;
+        } else {
+          successCount += chunk.length;
+        }
+      }
+      
+      toast({
+        title: "导入完成",
+        description: `成功导入 ${successCount} 个课程${errorCount > 0 ? `，失败 ${errorCount} 个` : ""}`,
+      });
+      
+      setIsImportDialogOpen(false);
+      setParsedCourses([]);
+      setSelectedCourses(new Set());
+      setImportSource("");
+      loadCourses();
+    } catch (error) {
+      console.error("Error batch importing:", error);
+      toast({
+        title: "导入失败",
+        description: "批量导入过程中发生错误",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // Toggle course selection
+  const toggleCourseSelection = (index: number) => {
+    const newSelected = new Set(selectedCourses);
+    if (newSelected.has(index)) {
+      newSelected.delete(index);
+    } else {
+      newSelected.add(index);
+    }
+    setSelectedCourses(newSelected);
+  };
+
+  // Toggle all courses
+  const toggleAllCourses = () => {
+    if (selectedCourses.size === parsedCourses.filter(c => c.isValid).length) {
+      setSelectedCourses(new Set());
+    } else {
+      const allValid = parsedCourses
+        .map((_, index) => index)
+        .filter(index => parsedCourses[index].isValid);
+      setSelectedCourses(new Set(allValid));
+    }
+  };
+
   const filteredCourses = courses.filter(course =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     course.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -208,17 +450,171 @@ export const VideoCoursesManagement = () => {
             </p>
           </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                添加课程
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <div className="flex gap-2">
+            <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Upload className="w-4 h-4" />
+                  批量导入
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>批量导入视频课程</DialogTitle>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  {/* File upload area */}
+                  <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary transition-colors">
+                    <input
+                      type="file"
+                      accept=".md"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <label htmlFor="file-upload" className="cursor-pointer">
+                      <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-foreground font-medium mb-2">
+                        拖拽 .md 文件到这里
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        或点击选择文件
+                      </p>
+                    </label>
+                  </div>
+                  
+                  {/* Source name input */}
+                  {parsedCourses.length > 0 && (
+                    <div>
+                      <Label htmlFor="import-source">来源名称</Label>
+                      <Input
+                        id="import-source"
+                        value={importSource}
+                        onChange={(e) => setImportSource(e.target.value)}
+                        placeholder="自动提取或手动输入"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Parsed courses preview */}
+                  {parsedCourses.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium">
+                          解析预览（共 {parsedCourses.length} 个课程）
+                        </h3>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={toggleAllCourses}
+                        >
+                          {selectedCourses.size === parsedCourses.filter(c => c.isValid).length
+                            ? "取消全选"
+                            : "全选"}
+                        </Button>
+                      </div>
+                      
+                      <div className="border rounded-lg max-h-96 overflow-y-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-12">
+                                <Checkbox
+                                  checked={selectedCourses.size === parsedCourses.filter(c => c.isValid).length && selectedCourses.size > 0}
+                                  onCheckedChange={toggleAllCourses}
+                                />
+                              </TableHead>
+                              <TableHead className="w-12">状态</TableHead>
+                              <TableHead>标题</TableHead>
+                              <TableHead>分类</TableHead>
+                              <TableHead className="text-right">标签数</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {parsedCourses.map((course, index) => (
+                              <TableRow key={index}>
+                                <TableCell>
+                                  <Checkbox
+                                    checked={selectedCourses.has(index)}
+                                    onCheckedChange={() => toggleCourseSelection(index)}
+                                    disabled={!course.isValid}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  {course.isValid ? (
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                  ) : (
+                                    <div title={course.error}>
+                                      <XCircle className="w-4 h-4 text-destructive" />
+                                    </div>
+                                  )}
+                                </TableCell>
+                                <TableCell className="max-w-md truncate">
+                                  {course.title}
+                                </TableCell>
+                                <TableCell>
+                                  {course.category && (
+                                    <Badge variant="secondary">{course.category}</Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {course.tags.length}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-2">
+                        <p className="text-sm text-muted-foreground">
+                          已选择: {selectedCourses.size} 个课程
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setIsImportDialogOpen(false);
+                              setParsedCourses([]);
+                              setSelectedCourses(new Set());
+                              setImportSource("");
+                            }}
+                          >
+                            取消
+                          </Button>
+                          <Button
+                            onClick={handleBatchImport}
+                            disabled={selectedCourses.size === 0 || isImporting}
+                          >
+                            {isImporting ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                导入中...
+                              </>
+                            ) : (
+                              "导入选中的课程"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  添加课程
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
                   {editingCourse ? "编辑视频课程" : "添加新视频课程"}
@@ -307,6 +703,7 @@ export const VideoCoursesManagement = () => {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <div className="mb-4">
