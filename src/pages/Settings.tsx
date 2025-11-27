@@ -27,6 +27,7 @@ export default function Settings() {
   const [reminderTime, setReminderTime] = useState("20:00");
   const [displayName, setDisplayName] = useState("");
   const [autoDismissSeconds, setAutoDismissSeconds] = useState(10);
+  const [userId, setUserId] = useState("");
 
   useEffect(() => {
     loadSettings();
@@ -39,6 +40,8 @@ export default function Settings() {
         navigate("/auth");
         return;
       }
+
+      setUserId(user.id);
 
       const { data, error } = await supabase
         .from("profiles")
@@ -145,6 +148,37 @@ export default function Settings() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 md:space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-xs md:text-sm text-foreground">
+                    用户 ID
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="text"
+                      value={userId}
+                      readOnly
+                      className="border-border bg-muted/50 text-sm font-mono text-xs"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(userId);
+                        toast({
+                          title: "已复制",
+                          description: "用户 ID 已复制到剪贴板",
+                        });
+                      }}
+                      className="text-xs"
+                    >
+                      复制
+                    </Button>
+                  </div>
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    你的唯一用户标识符
+                  </p>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="display-name" className="text-xs md:text-sm text-foreground">
                     用户名称
