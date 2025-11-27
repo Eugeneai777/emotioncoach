@@ -29,7 +29,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingCamp } from "@/types/trainingCamp";
-import { Send, RotateCcw, History, LogOut, Loader2, Settings, Sparkles, ChevronDown, Bell } from "lucide-react";
+import { Send, RotateCcw, History, LogOut, Loader2, Settings, Sparkles, ChevronDown, Bell, Video } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -560,6 +560,17 @@ const Index = () => {
                 <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span className="hidden sm:inline font-medium">生活馆</span>
                 <span className="sm:hidden font-medium">馆</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/courses")}
+                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 hover:bg-accent hover:text-accent-foreground transition-all duration-300"
+              >
+                <Video className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="hidden sm:inline font-medium">线上课程</span>
+                <span className="sm:hidden font-medium">课程</span>
               </Button>
 
               <Button

@@ -228,6 +228,32 @@ const EnergyStudio = () => {
           </CardContent>
         </Card>
 
+        {/* Online Courses Entry */}
+        <Card className="mb-8 overflow-hidden border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-50 dark:from-blue-950/20 dark:via-cyan-950/20 dark:to-blue-950/20 animate-in fade-in-50 slide-in-from-top-4 duration-500">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="flex-shrink-0 text-6xl">📚</div>
+              <div className="flex-1 text-center md:text-left space-y-2">
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                  线上课程中心
+                </h3>
+                <p className="text-muted-foreground">
+                  358门精选课程，涵盖领导力、个人成长、情绪管理、人际关系。系统化学习，持续成长 📖
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <Button 
+                  onClick={() => navigate("/courses")}
+                  className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg"
+                >
+                  <BookHeart className="w-4 h-4" />
+                  浏览全部课程
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {activeTool ? (
           <div>
             <Button
