@@ -159,14 +159,14 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
               立即打卡
             </Button>
           ) : (
-            <Button 
-              onClick={() => navigate(`/camp-checkin/${camp.id}`)}
-              variant="outline"
-              className="flex-1"
-            >
-              <Calendar className="h-4 w-4 mr-2" />
-              记录今日
-            </Button>
+          <Button 
+            onClick={() => navigate(`/camp-checkin/${camp.id}`)}
+            variant="outline"
+            className="flex-1"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            今日打卡
+          </Button>
           )}
           <Button 
             variant="outline" 
