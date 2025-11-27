@@ -154,9 +154,10 @@ const CommunityWaterfall = () => {
           .order('created_at', { ascending: false })
           .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
       }
-      // 故事筛选：显示所有story类型的帖子
+      // 故事筛选：显示所有story类型的帖子（兼容新旧数据）
       else if (filter === 'story') {
-        query = query.eq('post_type', 'story');
+        // 匹配 post_type='story' 或 badges.type='story'
+        query = query.or('post_type.eq.story,badges->>type.eq.story');
         
         // 如果选择了情绪标签，进一步筛选
         if (selectedEmotionTag) {
