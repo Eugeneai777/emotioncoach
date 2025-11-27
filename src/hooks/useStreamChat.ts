@@ -281,7 +281,6 @@ ${data.growth_story}
                 .from('training_camps')
                 .update({
                   completed_days: camp.completed_days + 1,
-                  current_day: camp.current_day + 1,
                   check_in_dates: checkInDates,
                   updated_at: new Date().toISOString()
                 })
