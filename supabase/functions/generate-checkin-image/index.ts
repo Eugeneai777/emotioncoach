@@ -31,20 +31,24 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // 构建生成提示词
-    const prompt = `生成一张温暖治愈风格的情绪日记打卡头图，内容要求：
-主题：${title}
-情绪基调：${emotionTheme || "积极向上"}
-训练营：${campName || "情绪日记"}第${day || "1"}天
+    // 构建生成提示词（使用英文避免乱码）
+    const prompt = `Generate a warm, healing-style illustration for an emotional diary check-in card.
 
-风格要求：
-- 简约温暖的插画风格
-- 柔和的色彩搭配
-- 适合社交媒体分享
-- 体现成长和正能量
-- 横向构图，比例 16:9
+Theme: ${title}
+Emotional tone: ${emotionTheme || "positive and uplifting"}
+Context: Day ${day || "1"} of ${campName || "Emotional Diary"} training camp
 
-请生成一张符合上述要求的精美头图。`;
+Style requirements:
+- Simple and warm illustration style
+- Soft, harmonious color palette
+- Suitable for social media sharing
+- Conveys growth and positive energy
+- Horizontal composition, 16:9 ratio
+- CRITICAL: Do NOT include any text, words, letters, numbers, or characters in the image
+- Create a pure background/illustration without any text overlay
+- The image should serve as a decorative background only
+
+Generate a beautiful header image following these requirements.`;
 
     console.log("正在生成打卡头图，提示词:", prompt);
 
