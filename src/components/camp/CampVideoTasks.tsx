@@ -89,12 +89,25 @@ const CampVideoTasks = ({ campId, date = new Date(), briefingData }: CampVideoTa
                   }`}>
                     {rec.title}
                   </h4>
-                  {rec.match_score >= 90 && (
-                    <Badge variant="secondary" className="text-xs shrink-0">
-                      高匹配
-                    </Badge>
-                  )}
+                  <div className="flex gap-1 shrink-0">
+                    {rec.category && (
+                      <Badge variant="outline" className="text-xs">
+                        {rec.category}
+                      </Badge>
+                    )}
+                    {rec.match_score >= 90 && (
+                      <Badge variant="secondary" className="text-xs">
+                        高匹配
+                      </Badge>
+                    )}
+                  </div>
                 </div>
+
+                {rec.source && (
+                  <p className="text-xs text-muted-foreground mb-1">
+                    📁 来源：{rec.source}
+                  </p>
+                )}
 
                 <p className="text-xs text-muted-foreground mb-2">
                   💡 {rec.reason}

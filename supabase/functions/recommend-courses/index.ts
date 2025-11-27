@@ -44,6 +44,22 @@ serve(async (req) => {
       );
     }
 
+    // Helper function to group courses by category
+    const groupCoursesByCategory = (courses: any[]): string => {
+      const groups: Record<string, any[]> = {};
+      courses.forEach((c, i) => {
+        const cat = c.category || "其他";
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push({ ...c, index: i });
+      });
+      
+      return Object.entries(groups)
+        .map(([cat, items]) => 
+          `【${cat}】\n${items.map(c => `${c.index}. ${c.title} - ${c.description?.substring(0, 80) || ''}`).join('\n')}`
+        )
+        .join('\n\n');
+    };
+
     // Use Lovable AI to match courses with briefing
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -59,23 +75,23 @@ serve(async (req) => {
 - 洞察：${briefing.insight || ''}
 - 行动计划：${briefing.action || ''}
 
-可用课程（共${courses.length}个）：
-${courses.map((c, i) => `${i + 1}. ${c.title} - ${c.description?.substring(0, 100) || ''}`).join('\n')}
+可用课程（按分类整理，共${courses.length}个）：
+${groupCoursesByCategory(courses)}
 
-请分析用户的情绪状态和成长需求，选择2-3个最匹配的课程。返回JSON格式：
+请分析用户的情绪状态和成长需求，从最相关的分类中选择2-3个最匹配的课程。返回JSON格式：
 {
   "recommendations": [
     {
       "course_index": 课程编号(0-based),
-      "reason": "为什么推荐这个课程（30字以内）",
+      "reason": "推荐理由，需明确提及课程分类，如'这是一门【情绪管理】课程，帮助你...'",
       "match_score": 匹配度(0-100)
     }
   ]
 }
 
 要求：
-1. 选择与用户情绪主题和标签最相关的课程
-2. 推荐理由要具体且有帮助性
+1. 从与用户需求最相关的分类中选择课程
+2. 推荐理由要具体且有帮助性，必须包含课程分类名称
 3. 按匹配度从高到低排序
 4. 只返回JSON，不要其他文字
 `;
@@ -134,6 +150,7 @@ ${courses.map((c, i) => `${i + 1}. ${c.title} - ${c.description?.substring(0, 10
           reason: rec.reason,
           match_score: rec.match_score,
           category: course.category,
+          source: course.source,
           tags: course.tags
         };
       })

@@ -21,6 +21,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, Upload, FileText, CheckCircle, XCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -43,10 +50,20 @@ interface ParsedCourse {
   description?: string;
   tags: string[];
   keywords: string[];
-  category?: string;
+  category: string;
+  customCategory?: string;
   isValid: boolean;
   error?: string;
 }
+
+const COURSE_CATEGORIES = [
+  { value: "领导力", label: "领导力", keywords: ["领导", "管理", "团队", "决策"] },
+  { value: "情绪管理", label: "情绪管理", keywords: ["情绪", "焦虑", "压力", "心理"] },
+  { value: "人际关系", label: "人际关系", keywords: ["人际", "关系", "沟通", "社交"] },
+  { value: "个人成长", label: "个人成长", keywords: ["成长", "目标", "习惯", "效率"] },
+  { value: "健康生活", label: "健康生活", keywords: ["健康", "运动", "睡眠", "饮食"] },
+  { value: "财务管理", label: "财务管理", keywords: ["财务", "理财", "投资", "金钱"] },
+];
 
 export const VideoCoursesManagement = () => {
   const [courses, setCourses] = useState<VideoCourse[]>([]);
@@ -70,6 +87,7 @@ export const VideoCoursesManagement = () => {
   const [selectedCourses, setSelectedCourses] = useState<Set<number>>(new Set());
   const [importSource, setImportSource] = useState("");
   const [isImporting, setIsImporting] = useState(false);
+  const [globalCategory, setGlobalCategory] = useState<string>("");
   
   const { toast } = useToast();
 
@@ -357,7 +375,7 @@ export const VideoCoursesManagement = () => {
         description: course.description || null,
         keywords: course.keywords,
         tags: course.tags,
-        category: course.category || null,
+        category: course.customCategory || course.category,
         source: importSource || "批量导入",
       }));
       
@@ -389,6 +407,7 @@ export const VideoCoursesManagement = () => {
       setParsedCourses([]);
       setSelectedCourses(new Set());
       setImportSource("");
+      setGlobalCategory("");
       loadCourses();
     } catch (error) {
       console.error("Error batch importing:", error);
@@ -423,6 +442,22 @@ export const VideoCoursesManagement = () => {
         .filter(index => parsedCourses[index].isValid);
       setSelectedCourses(new Set(allValid));
     }
+  };
+
+  // Update course category
+  const updateCourseCategory = (index: number, category: string) => {
+    const updated = [...parsedCourses];
+    updated[index].customCategory = category;
+    setParsedCourses(updated);
+  };
+
+  // Batch set category for selected courses
+  const batchSetCategory = (category: string) => {
+    const updated = [...parsedCourses];
+    selectedCourses.forEach(index => {
+      updated[index].customCategory = category;
+    });
+    setParsedCourses(updated);
   };
 
   const filteredCourses = courses.filter(course =>
@@ -486,15 +521,46 @@ export const VideoCoursesManagement = () => {
                   
                   {/* Source name input */}
                   {parsedCourses.length > 0 && (
-                    <div>
-                      <Label htmlFor="import-source">来源名称</Label>
-                      <Input
-                        id="import-source"
-                        value={importSource}
-                        onChange={(e) => setImportSource(e.target.value)}
-                        placeholder="自动提取或手动输入"
-                      />
-                    </div>
+                    <>
+                      <div>
+                        <Label htmlFor="import-source">来源名称</Label>
+                        <Input
+                          id="import-source"
+                          value={importSource}
+                          onChange={(e) => setImportSource(e.target.value)}
+                          placeholder="自动提取或手动输入"
+                        />
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <Label htmlFor="global-category">批量覆盖分类（可选）</Label>
+                          <Select value={globalCategory} onValueChange={setGlobalCategory}>
+                            <SelectTrigger id="global-category">
+                              <SelectValue placeholder="使用自动推断" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">使用自动推断</SelectItem>
+                              {COURSE_CATEGORIES.map(cat => (
+                                <SelectItem key={cat.value} value={cat.value}>
+                                  {cat.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {selectedCourses.size > 0 && (
+                          <Button
+                            variant="outline"
+                            onClick={() => batchSetCategory(globalCategory || "")}
+                            disabled={!globalCategory}
+                            className="mt-6"
+                          >
+                            应用到已选
+                          </Button>
+                        )}
+                      </div>
+                    </>
                   )}
                   
                   {/* Parsed courses preview */}
@@ -516,7 +582,7 @@ export const VideoCoursesManagement = () => {
                       </div>
                       
                       <div className="border rounded-lg max-h-96 overflow-y-auto">
-                        <Table>
+                          <Table>
                           <TableHeader>
                             <TableRow>
                               <TableHead className="w-12">
@@ -527,7 +593,7 @@ export const VideoCoursesManagement = () => {
                               </TableHead>
                               <TableHead className="w-12">状态</TableHead>
                               <TableHead>标题</TableHead>
-                              <TableHead>分类</TableHead>
+                              <TableHead className="w-48">分类</TableHead>
                               <TableHead className="text-right">标签数</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -554,9 +620,21 @@ export const VideoCoursesManagement = () => {
                                   {course.title}
                                 </TableCell>
                                 <TableCell>
-                                  {course.category && (
-                                    <Badge variant="secondary">{course.category}</Badge>
-                                  )}
+                                  <Select
+                                    value={course.customCategory || course.category}
+                                    onValueChange={(value) => updateCourseCategory(index, value)}
+                                  >
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {COURSE_CATEGORIES.map(cat => (
+                                        <SelectItem key={cat.value} value={cat.value}>
+                                          {cat.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                 </TableCell>
                                 <TableCell className="text-right">
                                   {course.tags.length}
@@ -579,6 +657,7 @@ export const VideoCoursesManagement = () => {
                               setParsedCourses([]);
                               setSelectedCourses(new Set());
                               setImportSource("");
+                              setGlobalCategory("");
                             }}
                           >
                             取消

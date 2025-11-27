@@ -14,6 +14,8 @@ interface VideoRecommendation {
   match_score: number;
   is_completed: boolean;
   watched_at?: string;
+  category?: string;
+  source?: string;
 }
 
 export const useCampVideoRecommendations = (
@@ -56,7 +58,9 @@ export const useCampVideoRecommendations = (
             id,
             title,
             video_url,
-            description
+            description,
+            category,
+            source
           )
         `)
         .eq("camp_id", campId)
@@ -77,6 +81,8 @@ export const useCampVideoRecommendations = (
           match_score: task.match_score || 0,
           is_completed: task.is_completed || false,
           watched_at: task.watched_at,
+          category: task.video_courses?.category,
+          source: task.video_courses?.source,
         }));
         setRecommendations(formatted);
         return;
@@ -141,6 +147,8 @@ export const useCampVideoRecommendations = (
               title: rec.title,
               video_url: rec.video_url,
               description: rec.description,
+              category: rec.category,
+              source: rec.source,
             });
           }
         }
