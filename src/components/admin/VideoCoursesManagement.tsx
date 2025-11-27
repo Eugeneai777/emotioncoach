@@ -695,6 +695,7 @@ export const VideoCoursesManagement = () => {
             </DialogContent>
             </Dialog>
           </div>
+        </div>
 
         <div className="mb-4">
           <div className="relative">
