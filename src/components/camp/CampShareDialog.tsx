@@ -16,8 +16,9 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Share2, Loader2, Sparkles, Download, RefreshCw } from "lucide-react";
+import { Share2, Loader2, Sparkles, Download, RefreshCw, BookOpen } from "lucide-react";
 import ImageUploader from "@/components/community/ImageUploader";
+import StoryCoachDialog from "./StoryCoachDialog";
 
 interface CampShareDialogProps {
   open: boolean;
@@ -53,6 +54,7 @@ const CampShareDialog = ({
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [storyCoachOpen, setStoryCoachOpen] = useState(false);
 
   const handleGenerateImage = async () => {
     if (!customTitle && !insight) {
@@ -264,6 +266,29 @@ const CampShareDialog = ({
             />
           </div>
 
+          {/* 说好故事教练入口 */}
+          <div className="p-4 bg-gradient-to-br from-primary/5 to-secondary/10 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-primary" />
+                <span className="font-medium text-sm">说好故事教练</span>
+              </div>
+              <Badge variant="outline" className="text-xs">新功能</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              通过简单对话，把你的情绪体验变成打动人心的故事
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setStoryCoachOpen(true)}
+              className="w-full"
+              size="sm"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              开始创作我的故事
+            </Button>
+          </div>
+
           {/* 打卡配图 */}
           <div className="space-y-2">
             <Label>打卡配图</Label>
@@ -376,6 +401,26 @@ const CampShareDialog = ({
           </div>
         </div>
       </DialogContent>
+
+      {/* Story Coach Dialog */}
+      <StoryCoachDialog
+        open={storyCoachOpen}
+        onOpenChange={setStoryCoachOpen}
+        emotionTheme={emotionTheme}
+        insight={insight}
+        action={action}
+        campName={campName}
+        campDay={campDay}
+        onComplete={({ title, story }) => {
+          setCustomTitle(title);
+          setShareContent(story);
+          setStoryCoachOpen(false);
+          toast({
+            title: "故事创作完成",
+            description: "标题和内容已填入，可继续编辑或直接分享",
+          });
+        }}
+      />
     </Dialog>
   );
 };
