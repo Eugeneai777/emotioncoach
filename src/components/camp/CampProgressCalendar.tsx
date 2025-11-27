@@ -26,7 +26,7 @@ const CampProgressCalendar = ({
   makeupDaysLimit,
   onMakeupCheckIn,
 }: CampProgressCalendarProps) => {
-  const campStartDate = parseISO(startDate);
+  const campStartDate = startOfDay(parseISO(startDate));
   const today = startOfDay(new Date());
   const monthStart = startOfMonth(today);
   const monthEnd = endOfMonth(today);
