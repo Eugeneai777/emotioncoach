@@ -159,6 +159,7 @@ const UserManual = () => {
     {
       emoji: "🟣",
       title: "主入口：情绪日记",
+      items: ["一句话记录心情", "AI 情绪分析", "成长建议", "打卡追踪"],
       color: "purple"
     },
     {
