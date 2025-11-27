@@ -87,7 +87,7 @@ export const VideoCoursesManagement = () => {
   const [selectedCourses, setSelectedCourses] = useState<Set<number>>(new Set());
   const [importSource, setImportSource] = useState("");
   const [isImporting, setIsImporting] = useState(false);
-  const [globalCategory, setGlobalCategory] = useState<string>("");
+  const [globalCategory, setGlobalCategory] = useState<string>("auto");
   
   const { toast } = useToast();
 
@@ -407,7 +407,7 @@ export const VideoCoursesManagement = () => {
       setParsedCourses([]);
       setSelectedCourses(new Set());
       setImportSource("");
-      setGlobalCategory("");
+      setGlobalCategory("auto");
       loadCourses();
     } catch (error) {
       console.error("Error batch importing:", error);
@@ -453,6 +453,8 @@ export const VideoCoursesManagement = () => {
 
   // Batch set category for selected courses
   const batchSetCategory = (category: string) => {
+    if (!category || category === "auto") return;
+    
     const updated = [...parsedCourses];
     selectedCourses.forEach(index => {
       updated[index].customCategory = category;
@@ -540,7 +542,7 @@ export const VideoCoursesManagement = () => {
                               <SelectValue placeholder="使用自动推断" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">使用自动推断</SelectItem>
+                              <SelectItem value="auto">使用自动推断</SelectItem>
                               {COURSE_CATEGORIES.map(cat => (
                                 <SelectItem key={cat.value} value={cat.value}>
                                   {cat.label}
@@ -552,8 +554,8 @@ export const VideoCoursesManagement = () => {
                         {selectedCourses.size > 0 && (
                           <Button
                             variant="outline"
-                            onClick={() => batchSetCategory(globalCategory || "")}
-                            disabled={!globalCategory}
+                            onClick={() => batchSetCategory(globalCategory)}
+                            disabled={!globalCategory || globalCategory === "auto"}
                             className="mt-6"
                           >
                             应用到已选
@@ -657,7 +659,7 @@ export const VideoCoursesManagement = () => {
                               setParsedCourses([]);
                               setSelectedCourses(new Set());
                               setImportSource("");
-                              setGlobalCategory("");
+                              setGlobalCategory("auto");
                             }}
                           >
                             取消
