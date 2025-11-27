@@ -342,10 +342,21 @@ const CampCheckIn = () => {
                           ? "今日反思已分享到社区" 
                           : "分享成长心得，获得社区支持"}
                       </p>
+                      {!todayProgress?.has_shared_to_community && (
+                        <Button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShare();
+                          }}
+                          size="sm"
+                          variant="outline"
+                          className="mt-2.5 h-7 text-xs"
+                        >
+                          <Share2 className="w-3 h-3 mr-1" />
+                          开始分享
+                        </Button>
+                      )}
                     </div>
-                    {!todayProgress?.has_shared_to_community && (
-                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                    )}
                   </div>
                 </Card>
 
