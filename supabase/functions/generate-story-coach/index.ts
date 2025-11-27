@@ -190,9 +190,13 @@ ${mode === 'briefing' ? '\n注意：用户提供了简报背景和自己的补�
                     description: "3个小红书爆款标题，15-25字，含emoji",
                     minItems: 3,
                     maxItems: 3
+                  },
+                  emotionTag: {
+                    type: "string",
+                    description: "从故事内容中提取的核心情绪标签，如：焦虑、愤怒、委屈、喜悦、悲伤、恐惧、孤独、感动等，必须是2-4个字的标准情绪词"
                   }
                 },
-                required: ["story", "suggestedTitles"]
+                required: ["story", "suggestedTitles", "emotionTag"]
               }
             }
           }
