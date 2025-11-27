@@ -255,19 +255,6 @@ const UserManual = () => {
     { icon: Award, title: "绽放故事（社群共振）", gradient: "from-amber-500 to-orange-500" }
   ];
 
-  // 快捷指令
-  const quickCommands = [
-    "开始情绪日记",
-    "生成今日能量宣言",
-    "生成宣言卡",
-    "开始高能量测评",
-    "财富测评",
-    "生成今日有劲日报",
-    "生成本周周报",
-    "给我建议",
-    "我想问一个问题"
-  ];
-
   // FAQ
   const faqs = [
     {
@@ -696,30 +683,10 @@ const UserManual = () => {
           </div>
         </section>
 
-        {/* 八、快捷指令 */}
+        {/* 八、FAQ */}
         <section className="space-y-8">
           <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">八、快捷指令（Quick Commands）</h3>
-          </div>
-
-          <Card className="overflow-hidden border-2 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-            <CardContent className="p-6">
-              <div className="space-y-2 font-mono text-sm">
-                {quickCommands.map((command, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 rounded bg-slate-800/50 hover:bg-slate-700/50 transition-colors">
-                    <span className="text-green-400">$</span>
-                    <span>{command}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* 九、FAQ */}
-        <section className="space-y-8">
-          <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">九、常见问题 FAQ</h3>
+            <h3 className="text-3xl font-bold">八、常见问题 FAQ</h3>
           </div>
 
           <Card className="overflow-hidden border-2">
