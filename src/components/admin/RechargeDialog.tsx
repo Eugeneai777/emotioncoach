@@ -42,6 +42,9 @@ export function RechargeDialog({ open, onOpenChange, userId, userName, onSuccess
       console.log('Calling admin-recharge with user:', session.user.id);
 
       const { data, error } = await supabase.functions.invoke('admin-recharge', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        },
         body: {
           userId,
           quantity: amount,
