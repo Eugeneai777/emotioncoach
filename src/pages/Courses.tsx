@@ -100,7 +100,21 @@ const Courses = () => {
       return;
     }
 
-    // 记录观看历史
+    // 先打开视频（同步操作，避免被弹窗拦截）
+    const newWindow = window.open(course.video_url, '_blank');
+    
+    if (newWindow) {
+      toast.success("视频已在新标签页打开");
+    } else {
+      toast.error("弹窗被拦截，请允许浏览器弹窗", {
+        action: {
+          label: "点击打开",
+          onClick: () => window.open(course.video_url, '_blank'),
+        },
+      });
+    }
+
+    // 异步记录观看历史（不阻塞视频打开）
     try {
       await supabase
         .from('video_watch_history')
@@ -113,10 +127,6 @@ const Courses = () => {
     } catch (error) {
       console.error('记录观看历史失败:', error);
     }
-
-    // 打开视频
-    window.open(course.video_url, '_blank');
-    toast.success("视频已在新标签页打开");
   };
 
   // 处理收藏
