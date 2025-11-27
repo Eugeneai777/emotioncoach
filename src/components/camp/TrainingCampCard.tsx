@@ -7,7 +7,7 @@ import { CheckCircle2, Circle, Calendar, Flame, TrendingUp } from "lucide-react"
 import { useNavigate } from "react-router-dom";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { getTodayStartInBeijing, parseDateInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
+import { getTodayInBeijing, parseDateInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
 
 interface TrainingCampCardProps {
   camp: TrainingCamp;
@@ -17,8 +17,7 @@ interface TrainingCampCardProps {
 export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   const navigate = useNavigate();
   
-  const todayDate = getTodayStartInBeijing();
-  const today = format(todayDate, 'yyyy-MM-dd');
+  const today = getTodayInBeijing();
   console.log('TrainingCampCard - Today:', today);
   console.log('TrainingCampCard - Check-in dates:', camp.check_in_dates);
   console.log('TrainingCampCard - Has checked in today:', camp.check_in_dates.includes(today));
@@ -35,7 +34,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   // Calculate streak
   const sortedDates = [...camp.check_in_dates].sort().reverse();
   let currentStreak = 0;
-  let checkDate = getTodayStartInBeijing();
+  let checkDate = parseDateInBeijing(today);
   
   for (const dateStr of sortedDates) {
     const date = parseDateInBeijing(dateStr);
