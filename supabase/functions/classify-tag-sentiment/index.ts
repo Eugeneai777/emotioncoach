@@ -22,7 +22,17 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { tagIds } = await req.json();
+    // Parse request body with error handling
+    let tagIds: string[] | undefined;
+    try {
+      const body = await req.text();
+      if (body && body.trim().length > 0) {
+        const parsed = JSON.parse(body);
+        tagIds = parsed.tagIds;
+      }
+    } catch (parseError) {
+      console.log('No valid JSON body provided, will process all unclassified tags');
+    }
 
     console.log(`Classifying sentiment for ${tagIds?.length || 0} tags`);
 
