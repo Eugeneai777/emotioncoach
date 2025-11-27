@@ -222,6 +222,7 @@ const CommunityWaterfall = () => {
         .from('community_posts')
         .select('emotion_theme')
         .eq('post_type', 'story')
+        .not('camp_id', 'is', null)
         .not('emotion_theme', 'is', null)
         .order('created_at', { ascending: false });
       
