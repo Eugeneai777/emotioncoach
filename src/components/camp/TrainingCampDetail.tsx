@@ -15,6 +15,12 @@ export function TrainingCampDetail() {
   const { toast } = useToast();
   const [camp, setCamp] = useState<TrainingCamp | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // 动态计算当前是第几天（从1开始显示）
+  const calculatedCurrentDay = camp ? Math.max(1,
+    differenceInDays(new Date(), new Date(camp.start_date)) + 1
+  ) : 1;
+  const displayCurrentDay = camp ? Math.min(calculatedCurrentDay, camp.duration_days) : 1;
 
   useEffect(() => {
     loadCamp();
@@ -94,7 +100,7 @@ export function TrainingCampDetail() {
         <Card className="p-6 bg-gradient-to-br from-primary/5 to-secondary/5">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-3xl font-bold text-primary">{camp.current_day + 1}</div>
+              <div className="text-3xl font-bold text-primary">{displayCurrentDay}</div>
               <div className="text-sm text-muted-foreground">当前天数</div>
             </div>
             <div>
@@ -112,7 +118,7 @@ export function TrainingCampDetail() {
           campId={camp.id}
           startDate={camp.start_date}
           checkInDates={camp.check_in_dates}
-          currentDay={camp.current_day}
+          currentDay={calculatedCurrentDay}
           makeupDaysLimit={1}
           onMakeupCheckIn={undefined}
         />

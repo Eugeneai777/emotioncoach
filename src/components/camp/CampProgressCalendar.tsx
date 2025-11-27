@@ -22,7 +22,7 @@ interface CampProgressCalendarProps {
 const CampProgressCalendar = ({
   startDate,
   checkInDates,
-  currentDay,
+  currentDay: propCurrentDay,
   makeupDaysLimit,
   onMakeupCheckIn,
 }: CampProgressCalendarProps) => {
@@ -32,17 +32,19 @@ const CampProgressCalendar = ({
   const monthEnd = endOfMonth(today);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
+  // 动态计算当前是第几天（从1开始）
+  const calculatedCurrentDay = Math.max(1, differenceInDays(today, campStartDate) + 1);
+
   const getDateStatus = (date: Date): CheckInRecord => {
     const dateStr = format(date, "yyyy-MM-dd");
-    const daysSinceStart = differenceInDays(date, campStartDate);
     
     // 未到训练营开始日期
     if (date < campStartDate) {
       return { date: dateStr, completed: false, canMakeup: false };
     }
 
-    // 超过当前天数
-    if (daysSinceStart >= currentDay) {
+    // 未来的日期
+    if (date > today) {
       return { date: dateStr, completed: false, canMakeup: false };
     }
 
@@ -52,9 +54,14 @@ const CampProgressCalendar = ({
       return { date: dateStr, completed: true, canMakeup: false };
     }
 
-    // 可补打卡（未来的日期不能补卡，今天也不能补卡，只能当天打卡）
+    // 今天还未打卡 - 显示空状态（不是补卡）
+    if (isSameDay(date, today)) {
+      return { date: dateStr, completed: false, canMakeup: false };
+    }
+
+    // 过去未打卡的日期 - 检查是否可补卡
     const daysDiff = differenceInDays(today, date);
-    const canMakeup = daysDiff > 0 && daysDiff <= makeupDaysLimit && date >= campStartDate;
+    const canMakeup = daysDiff > 0 && daysDiff <= makeupDaysLimit;
 
     return { date: dateStr, completed: false, canMakeup };
   };
@@ -106,7 +113,7 @@ const CampProgressCalendar = ({
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">打卡日历</CardTitle>
           <Badge variant="secondary">
-            已打卡 {checkInDates.length}/{currentDay} 天
+            已打卡 {checkInDates.length}/{calculatedCurrentDay} 天
           </Badge>
         </div>
       </CardHeader>

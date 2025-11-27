@@ -24,6 +24,12 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   const hasCheckedInToday = camp.check_in_dates.includes(today);
   const progressPercent = (camp.completed_days / camp.duration_days) * 100;
   
+  // 动态计算当前是第几天（从1开始显示）
+  const calculatedCurrentDay = Math.max(1,
+    differenceInDays(new Date(), new Date(camp.start_date)) + 1
+  );
+  const displayCurrentDay = Math.min(calculatedCurrentDay, camp.duration_days);
+  
   // Calculate streak
   const sortedDates = [...camp.check_in_dates].sort().reverse();
   let currentStreak = 0;
@@ -58,7 +64,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
           <div className="flex items-center gap-3 text-sm">
             {camp.status === 'active' && (
               <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                第 {camp.current_day + 1} / {camp.duration_days} 天
+                第 {displayCurrentDay} / {camp.duration_days} 天
               </Badge>
             )}
             {hasCheckedInToday ? (
