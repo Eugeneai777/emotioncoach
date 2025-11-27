@@ -28,6 +28,7 @@ export default function Settings() {
   const [displayName, setDisplayName] = useState("");
   const [autoDismissSeconds, setAutoDismissSeconds] = useState(10);
   const [userId, setUserId] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -42,6 +43,16 @@ export default function Settings() {
       }
 
       setUserId(user.id);
+
+      // 检查用户是否为管理员
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      
+      setIsAdmin(!!roleData);
 
       const { data, error } = await supabase
         .from("profiles")
@@ -178,6 +189,22 @@ export default function Settings() {
                     你的唯一用户标识符
                   </p>
                 </div>
+
+                {isAdmin && (
+                  <div className="space-y-2">
+                    <Button
+                      onClick={() => navigate("/admin")}
+                      className="w-full"
+                      variant="default"
+                    >
+                      <span className="mr-2">🔐</span>
+                      进入管理后台
+                    </Button>
+                    <p className="text-xs md:text-sm text-muted-foreground">
+                      管理员专属功能
+                    </p>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="display-name" className="text-xs md:text-sm text-foreground">
