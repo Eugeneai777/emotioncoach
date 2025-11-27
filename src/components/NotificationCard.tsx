@@ -18,6 +18,7 @@ interface NotificationCardProps {
     action_data?: any;
     priority: number;
     is_read: boolean;
+    is_dismissed: boolean;
     created_at: string;
   };
   onClick: () => void;
@@ -103,7 +104,7 @@ export const NotificationCard = ({ notification, onClick, onDismiss }: Notificat
     <Card 
       className={`relative p-3 transition-all hover:shadow-md ${style.bg} ${style.border} ${
         !notification.is_read ? 'border-2' : 'border opacity-75'
-      }`}
+      } ${notification.is_dismissed ? 'opacity-40' : ''}`}
     >
       {/* Title Row */}
       <div className="flex items-center justify-between mb-1">
@@ -123,38 +124,40 @@ export const NotificationCard = ({ notification, onClick, onDismiss }: Notificat
       </p>
 
       {/* Quick Actions */}
-      <div className="flex items-center gap-2 pt-1">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="h-7 px-2 text-xs"
-          onClick={handleMarkAsRead}
-        >
-          <Check className="h-3 w-3 mr-1" />
-          已读
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="h-7 px-2 text-xs"
-          onClick={handleRemindLater}
-        >
-          <Clock className="h-3 w-3 mr-1" />
-          稍后
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="h-7 px-2 text-xs"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDismiss();
-          }}
-        >
-          <X className="h-3 w-3 mr-1" />
-          忽略
-        </Button>
-      </div>
+      {!notification.is_dismissed && (
+        <div className="flex items-center gap-2 pt-1">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 px-2 text-xs"
+            onClick={handleMarkAsRead}
+          >
+            <Check className="h-3 w-3 mr-1" />
+            已读
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 px-2 text-xs"
+            onClick={handleRemindLater}
+          >
+            <Clock className="h-3 w-3 mr-1" />
+            稍后
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 px-2 text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDismiss();
+            }}
+          >
+            <X className="h-3 w-3 mr-1" />
+            忽略
+          </Button>
+        </div>
+      )}
     </Card>
   );
 };

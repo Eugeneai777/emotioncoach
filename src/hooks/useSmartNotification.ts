@@ -34,10 +34,8 @@ export const useSmartNotification = () => {
         .from('smart_notifications')
         .select('*')
         .eq('user_id', user.id)
-        .eq('is_dismissed', false)
-        .order('priority', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(100);
 
       if (error) throw error;
 
@@ -85,7 +83,9 @@ export const useSmartNotification = () => {
 
       if (error) throw error;
 
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? { ...n, is_dismissed: true } : n)
+      );
       const wasUnread = notifications.find(n => n.id === notificationId && !n.is_read);
       if (wasUnread) {
         setUnreadCount(prev => Math.max(0, prev - 1));
