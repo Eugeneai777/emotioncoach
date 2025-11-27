@@ -25,9 +25,18 @@ serve(async (req) => {
 
     // Verify user is authenticated
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      throw new Error('Unauthorized');
+    
+    if (authError) {
+      console.error('Auth error:', authError);
+      throw new Error(`Authentication failed: ${authError.message}`);
     }
+    
+    if (!user) {
+      console.error('No user found in request');
+      throw new Error('User not authenticated');
+    }
+
+    console.log('User authenticated:', user.id);
 
     // Check if user is admin
     const { data: roleData, error: roleError } = await supabaseClient
@@ -37,9 +46,17 @@ serve(async (req) => {
       .eq('role', 'admin')
       .maybeSingle();
 
-    if (roleError || !roleData) {
+    if (roleError) {
+      console.error('Role check error:', roleError);
+      throw new Error(`Failed to verify admin role: ${roleError.message}`);
+    }
+    
+    if (!roleData) {
+      console.error('User is not an admin:', user.id);
       throw new Error('Admin access required');
     }
+
+    console.log('Admin verified:', user.id);
 
     const { userId, quantity, packageType, notes, expiryDays } = await req.json();
 
@@ -122,10 +139,15 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('Recharge error:', error);
+    const errorMessage = error.message || 'Unknown error occurred';
+    const isAuthError = errorMessage.includes('Authentication failed') || 
+                       errorMessage.includes('User not authenticated') ||
+                       errorMessage.includes('Admin access required');
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { 
-        status: error.message === 'Unauthorized' || error.message === 'Admin access required' ? 403 : 400,
+        status: isAuthError ? 403 : 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );

@@ -43,6 +43,10 @@ export function RechargeDialog({ open, onOpenChange, userId, userName, onSuccess
       });
 
       if (error) throw error;
+      
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
       toast.success(`成功为 ${userName} 充值 ${amount} 额度`);
       onSuccess();
@@ -53,7 +57,16 @@ export function RechargeDialog({ open, onOpenChange, userId, userName, onSuccess
       setExpiryDays("");
     } catch (error: any) {
       console.error('Recharge error:', error);
-      toast.error(error.message || "充值失败");
+      const errorMessage = error.message || error.error || "充值失败";
+      
+      if (errorMessage.includes('Authentication failed') || 
+          errorMessage.includes('User not authenticated')) {
+        toast.error("认证失败，请刷新页面后重试");
+      } else if (errorMessage.includes('Admin access required')) {
+        toast.error("需要管理员权限");
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
