@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import WeChatAuth from "./pages/WeChatAuth";
 import History from "./pages/History";
 import Community from "./pages/Community";
 import CommunityDiscover from "./pages/CommunityDiscover";
@@ -37,6 +38,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/wechat-auth" element={<WeChatAuth />} />
           <Route path="/history" element={<History />} />
           <Route path="/community/discover" element={<CommunityDiscover />} />
           <Route path="/settings" element={<Settings />} />
