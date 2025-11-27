@@ -32,6 +32,15 @@ export function RechargeDialog({ open, onOpenChange, userId, userName, onSuccess
 
     setLoading(true);
     try {
+      // 确保有有效的 session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("认证已过期，请刷新页面");
+        return;
+      }
+
+      console.log('Calling admin-recharge with user:', session.user.id);
+
       const { data, error } = await supabase.functions.invoke('admin-recharge', {
         body: {
           userId,
@@ -42,7 +51,10 @@ export function RechargeDialog({ open, onOpenChange, userId, userName, onSuccess
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Function invocation error:', error);
+        throw error;
+      }
       
       if (data?.error) {
         throw new Error(data.error);
