@@ -83,7 +83,7 @@ ${groupCoursesByCategory(courses)}
   "recommendations": [
     {
       "course_index": 课程编号(0-based),
-      "reason": "推荐理由，以'💡 来源：有劲365课程。'开头，然后说明为什么推荐这门课程",
+      "reason": "推荐理由，说明为什么推荐这门课程（来源会自动添加）",
       "match_score": 匹配度(0-100)
     }
   ]
@@ -91,7 +91,7 @@ ${groupCoursesByCategory(courses)}
 
 要求：
 1. 从与用户需求最相关的分类中选择课程
-2. 推荐理由要具体且有帮助性，必须以"💡 来源：有劲365课程。"开头
+2. 推荐理由要具体且有帮助性，专注于说明课程如何帮助用户
 3. 按匹配度从高到低排序
 4. 只返回JSON，不要其他文字
 `;
@@ -142,12 +142,22 @@ ${groupCoursesByCategory(courses)}
         const course = courses[rec.course_index];
         if (!course) return null;
         
+        // 根据实际课程来源动态生成来源文字
+        const sourceText = course.source === '绽放公开课' ? '绽放公开课' : '有劲365课程';
+        let reason = rec.reason;
+        // 替换可能错误的来源文字
+        reason = reason.replace(/来源：[^。]+。/, `来源：${sourceText}。`);
+        // 如果 AI 没有生成来源前缀，则添加
+        if (!reason.includes('来源：')) {
+          reason = `💡 来源：${sourceText}。${reason}`;
+        }
+        
         return {
           id: course.id,
           title: course.title,
           video_url: course.video_url,
           description: course.description,
-          reason: rec.reason,
+          reason: reason,
           match_score: rec.match_score,
           category: course.category,
           source: course.source,
