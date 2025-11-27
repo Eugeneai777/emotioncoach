@@ -404,13 +404,16 @@ ${data.growth_story}
         throw new Error("未登录");
       }
 
+      // Filter out UI-only messages (like intensity_prompt) before sending to backend
+      const conversationMessages = messages.filter(msg => !msg.type || msg.type === "text");
+      
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ messages: [...messages, userMsg] }),
+        body: JSON.stringify({ messages: [...conversationMessages, userMsg] }),
       });
 
       if (!resp.ok || !resp.body) {
