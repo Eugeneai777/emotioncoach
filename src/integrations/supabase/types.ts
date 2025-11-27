@@ -740,6 +740,57 @@ export type Database = {
         }
         Relationships: []
       }
+      energy_studio_tools: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string
+          detailed_description: string | null
+          display_order: number | null
+          gradient: string | null
+          icon_name: string
+          id: string
+          is_available: boolean | null
+          is_system: boolean | null
+          title: string
+          tool_id: string
+          updated_at: string | null
+          usage_scenarios: Json | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description: string
+          detailed_description?: string | null
+          display_order?: number | null
+          gradient?: string | null
+          icon_name?: string
+          id?: string
+          is_available?: boolean | null
+          is_system?: boolean | null
+          title: string
+          tool_id: string
+          updated_at?: string | null
+          usage_scenarios?: Json | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
+          detailed_description?: string | null
+          display_order?: number | null
+          gradient?: string | null
+          icon_name?: string
+          id?: string
+          is_available?: boolean | null
+          is_system?: boolean | null
+          title?: string
+          tool_id?: string
+          updated_at?: string | null
+          usage_scenarios?: Json | null
+        }
+        Relationships: []
+      }
       exercise_logs: {
         Row: {
           calories: number | null

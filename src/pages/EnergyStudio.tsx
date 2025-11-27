@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,8 +25,9 @@ import {
   Megaphone,
   Info
 } from "lucide-react";
+import * as Icons from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { tools as toolConfigs, categories, getCategoryConfig } from "@/config/energyStudioTools";
+import { categories, getCategoryConfig } from "@/config/energyStudioTools";
 import { cn } from "@/lib/utils";
 import { BreathingExercise } from "@/components/tools/BreathingExercise";
 import { MeditationTimer } from "@/components/tools/MeditationTimer";
@@ -45,12 +48,13 @@ import { EnergyDeclaration } from "@/components/tools/EnergyDeclaration";
 
 interface ToolCard {
   id: string;
+  tool_id: string;
   title: string;
   description: string;
-  icon: React.ReactNode;
+  icon_name: string;
   category: "emotion" | "exploration" | "management";
-  color: string;
-  available: boolean;
+  gradient: string;
+  is_available: boolean;
 }
 
 const EnergyStudio = () => {
@@ -59,43 +63,43 @@ const EnergyStudio = () => {
   const [activeTab, setActiveTab] = useState<"emotion" | "exploration" | "management">("emotion");
   const [activeTool, setActiveTool] = useState<string | null>(null);
 
-  // 获取工具的渐变配色
-  // 图标映射
-  const iconMap: Record<string, React.ReactNode> = {
-    Megaphone: <Megaphone className="w-6 h-6" />,
-    Wind: <Wind className="w-6 h-6" />,
-    Timer: <Timer className="w-6 h-6" />,
-    HeartPulse: <HeartPulse className="w-6 h-6" />,
-    Sparkles: <Sparkles className="w-6 h-6" />,
-    Target: <Target className="w-6 h-6" />,
-    Eye: <Eye className="w-6 h-6" />,
-    ImageIcon: <ImageIcon className="w-6 h-6" />,
-    BookHeart: <BookHeart className="w-6 h-6" />,
-    Heart: <Heart className="w-6 h-6" />,
-    Calendar: <Calendar className="w-6 h-6" />,
-    Battery: <Battery className="w-6 h-6" />,
-    Moon: <Moon className="w-6 h-6" />,
-    Dumbbell: <Dumbbell className="w-6 h-6" />,
-    DollarSign: <DollarSign className="w-6 h-6" />,
-    Clock: <Clock className="w-6 h-6" />,
-  };
-
-  // 转换工具配置为带图标的组件数据
-  const tools: ToolCard[] = toolConfigs.map(tool => ({
-    id: tool.id,
-    title: tool.title,
-    description: tool.description,
-    icon: iconMap[tool.iconName] || <Sparkles className="w-6 h-6" />,
-    category: tool.category,
-    color: "hsl(var(--primary))",
-    available: tool.available
-  }));
+  // 从数据库查询工具数据
+  const { data: tools = [], isLoading } = useQuery({
+    queryKey: ['energy-studio-tools'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('energy_studio_tools')
+        .select('*')
+        .eq('is_available', true)
+        .order('display_order');
+      
+      if (error) throw error;
+      return data as ToolCard[];
+    }
+  });
 
   const filteredTools = tools.filter(tool => tool.category === activeTab);
+
+  // 获取图标组件
+  const getIcon = (iconName: string) => {
+    const Icon = (Icons as any)[iconName] || Icons.Sparkles;
+    return <Icon className="w-6 h-6" />;
+  };
 
   const handleToolClick = (toolId: string) => {
     setActiveTool(toolId);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
+        <div className="text-center">
+          <Sparkles className="w-8 h-8 animate-pulse mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">加载中...</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderTool = () => {
     switch (activeTool) {
@@ -142,11 +146,6 @@ const EnergyStudio = () => {
 
   const getCategoryDescription = (category: string) => {
     return getCategoryConfig(category)?.description || "";
-  };
-
-  const getToolGradient = (toolId: string): string => {
-    const tool = toolConfigs.find(t => t.id === toolId);
-    return tool?.gradient || 'from-primary to-primary';
   };
 
   return (
@@ -276,27 +275,26 @@ const EnergyStudio = () => {
           <TabsContent value={activeTab} className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredTools.map((tool, index) => {
-                const gradients = getToolGradient(tool.id);
                 return (
                   <Card
                     key={tool.id}
                     className={`group cursor-pointer bg-card/60 backdrop-blur-sm border-2 hover:border-transparent hover:-translate-y-1 transition-all duration-300 hover:shadow-2xl rounded-2xl overflow-hidden animate-fade-in ${
-                      tool.id === 'declaration' ? 'ring-2 ring-primary/20' : ''
+                      tool.tool_id === 'declaration' ? 'ring-2 ring-primary/20' : ''
                     }`}
                     style={{ animationDelay: `${index * 50}ms` }}
-                    onClick={() => handleToolClick(tool.id)}
+                    onClick={() => handleToolClick(tool.tool_id)}
                   >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${gradients} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                    <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
                     
                     <CardHeader className="relative pb-3">
                       <div className="flex items-start gap-4">
-                        <div className={`p-3 rounded-xl bg-gradient-to-br ${gradients} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                          {tool.icon}
+                        <div className={`p-3 rounded-xl bg-gradient-to-br ${tool.gradient} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                          {getIcon(tool.icon_name)}
                         </div>
                         <div className="flex-1">
                           <CardTitle className="text-xl group-hover:text-primary transition-colors flex items-center gap-2 flex-wrap">
                             {tool.title}
-                            {tool.id === 'declaration' && (
+                            {tool.tool_id === 'declaration' && (
                               <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full">
                                 推荐
                               </span>
