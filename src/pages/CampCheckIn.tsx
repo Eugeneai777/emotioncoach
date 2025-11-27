@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeft, Calendar, CheckCircle2, Circle, Share2, MessageSquare, Sparkles, Play } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar, CheckCircle2, Circle, Share2, MessageSquare, Sparkles, Play, ChevronRight } from "lucide-react";
 import { TrainingCamp } from "@/types/trainingCamp";
 import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
 import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
@@ -243,25 +243,33 @@ const CampCheckIn = () => {
                 </div>
               </Card>
 
-              {/* 简化的任务列表 */}
-              <div className="space-y-3">
-                {/* 情绪教练对话 */}
-                <Card className="p-4 hover:shadow-md transition-shadow">
+              {/* 任务卡片 */}
+              <div className="space-y-4">
+                {/* 1. 情绪教练对话 - 核心任务 */}
+                <Card 
+                  className={`p-5 border-2 transition-all duration-300 ${
+                    todayProgress?.is_checked_in 
+                      ? "border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20" 
+                      : "border-primary/30 bg-primary/5 hover:border-primary/50 hover:shadow-lg cursor-pointer"
+                  }`}
+                  onClick={() => !todayProgress?.is_checked_in && navigate("/")}
+                >
                   <div className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       todayProgress?.is_checked_in 
-                        ? "bg-primary/10" 
-                        : "bg-secondary/30"
+                        ? "bg-gradient-to-br from-green-400 to-green-500" 
+                        : "bg-gradient-to-br from-primary to-primary/80"
                     }`}>
                       {todayProgress?.is_checked_in ? (
-                        <CheckCircle2 className="w-5 h-5 text-primary" />
+                        <CheckCircle2 className="w-6 h-6 text-white" />
                       ) : (
-                        <MessageSquare className="w-5 h-5 text-muted-foreground" />
+                        <MessageSquare className="w-6 h-6 text-white" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-medium">📝 情绪教练对话</h4>
+                        <Badge className="bg-primary/10 text-primary border-primary/20">核心任务</Badge>
                         {todayProgress?.emotion_logs_count > 0 && (
                           <Badge variant="secondary" className="text-xs">
                             已完成 {todayProgress.emotion_logs_count} 次
@@ -275,7 +283,10 @@ const CampCheckIn = () => {
                       </p>
                       {!todayProgress?.is_checked_in && (
                         <Button 
-                          onClick={() => navigate("/")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate("/");
+                          }}
                           size="sm"
                           className="mt-3"
                         >
@@ -287,18 +298,73 @@ const CampCheckIn = () => {
                   </div>
                 </Card>
 
-                {/* 今日成长课程 */}
-                <Card className="p-4 hover:shadow-md transition-shadow">
+                {/* 2. 每日反思分享 */}
+                <Card 
+                  className={`p-5 transition-all duration-300 ${
+                    todayProgress?.has_shared_to_community 
+                      ? "bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-800" 
+                      : "hover:shadow-md hover:border-primary/30 cursor-pointer active:scale-[0.98]"
+                  }`}
+                  onClick={() => {
+                    if (!todayProgress?.has_shared_to_community && latestBriefing) {
+                      handleShare();
+                    }
+                  }}
+                >
                   <div className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      todayProgress?.has_shared_to_community 
+                        ? "bg-gradient-to-br from-green-400 to-green-500" 
+                        : "bg-secondary/30"
+                    }`}>
+                      {todayProgress?.has_shared_to_community ? (
+                        <CheckCircle2 className="w-6 h-6 text-white" />
+                      ) : (
+                        <Share2 className="w-6 h-6 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium">💬 每日反思分享</h4>
+                        {todayProgress?.has_shared_to_community && (
+                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                            已分享
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {todayProgress?.has_shared_to_community 
+                          ? "今日反思已分享到社区" 
+                          : latestBriefing 
+                            ? "点击分享你的成长心得，获得社区支持" 
+                            : "完成情绪对话后可分享反思"}
+                      </p>
+                    </div>
+                    {!todayProgress?.has_shared_to_community && latestBriefing && (
+                      <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
+                </Card>
+
+                {/* 3. 今日成长课程 */}
+                <Card 
+                  className={`p-5 transition-all duration-300 ${
+                    todayProgress?.video_learning_completed 
+                      ? "bg-green-50/50 dark:bg-green-950/20" 
+                      : "hover:shadow-md cursor-pointer"
+                  }`}
+                  onClick={() => !todayProgress?.video_learning_completed && setActiveTab("tasks")}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       todayProgress?.video_learning_completed 
-                        ? "bg-primary/10" 
+                        ? "bg-gradient-to-br from-green-400 to-green-500" 
                         : "bg-secondary/30"
                     }`}>
                       {todayProgress?.video_learning_completed ? (
-                        <CheckCircle2 className="w-5 h-5 text-primary" />
+                        <CheckCircle2 className="w-6 h-6 text-white" />
                       ) : (
-                        <Play className="w-5 h-5 text-muted-foreground" />
+                        <Play className="w-6 h-6 text-muted-foreground" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -317,56 +383,16 @@ const CampCheckIn = () => {
                       </p>
                       {!todayProgress?.video_learning_completed && (
                         <Button 
-                          onClick={() => setActiveTab("tasks")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveTab("tasks");
+                          }}
                           size="sm"
                           variant="outline"
                           className="mt-3"
                         >
                           <Play className="w-4 h-4 mr-1" />
                           查看推荐
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-
-                {/* 每日反思分享 */}
-                <Card className="p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      todayProgress?.has_shared_to_community 
-                        ? "bg-primary/10" 
-                        : "bg-secondary/30"
-                    }`}>
-                      {todayProgress?.has_shared_to_community ? (
-                        <CheckCircle2 className="w-5 h-5 text-primary" />
-                      ) : (
-                        <Share2 className="w-5 h-5 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium">💬 每日反思分享</h4>
-                        {todayProgress?.has_shared_to_community && (
-                          <Badge variant="secondary" className="text-xs">
-                            已分享
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {todayProgress?.has_shared_to_community 
-                          ? "今日反思已分享到社区" 
-                          : "分享你的成长心得，获得社区支持"}
-                      </p>
-                      {!todayProgress?.has_shared_to_community && latestBriefing && (
-                        <Button 
-                          onClick={handleShare}
-                          size="sm"
-                          variant="outline"
-                          className="mt-3"
-                        >
-                          <Share2 className="w-4 h-4 mr-1" />
-                          立即分享
                         </Button>
                       )}
                     </div>
