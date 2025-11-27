@@ -552,8 +552,16 @@ const Index = () => {
 
             {/* Right side - Main navigation */}
             <div className="flex items-center gap-1.5 md:gap-2">
-              <SmartNotificationCenter />
-              
+              <Button
+                size="sm"
+                onClick={() => navigate("/energy-studio")}
+                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+              >
+                <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="hidden sm:inline font-medium">生活馆</span>
+                <span className="sm:hidden font-medium">馆</span>
+              </Button>
+
               <Button
                 size="sm"
                 onClick={() => navigate("/history")}
@@ -564,15 +572,7 @@ const Index = () => {
                 <span className="sm:hidden font-medium">日记</span>
               </Button>
 
-              <Button
-                size="sm"
-                onClick={() => navigate("/energy-studio")}
-                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 border-0"
-              >
-                <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline font-medium">生活馆</span>
-                <span className="sm:hidden font-medium">馆</span>
-              </Button>
+              <SmartNotificationCenter />
 
               <Button
                 variant="ghost"
