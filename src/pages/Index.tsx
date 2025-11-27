@@ -172,6 +172,21 @@ const Index = () => {
     }
   }, [showReminder, autoDismissSeconds]);
 
+  // Auto refresh when page becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user) {
+        loadActiveCamp();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user]);
+
   const loadActiveCamp = async () => {
     if (!user) return;
     try {
