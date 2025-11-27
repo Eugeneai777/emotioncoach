@@ -29,7 +29,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingCamp } from "@/types/trainingCamp";
-import { Send, RotateCcw, History, LogOut, Loader2, Settings, Target, Sparkles, ChevronDown, ShoppingCart, Bell } from "lucide-react";
+import { Send, RotateCcw, History, LogOut, Loader2, Settings, Sparkles, ChevronDown, Bell } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -534,77 +534,64 @@ const Index = () => {
 
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1 md:gap-2">
+          <div className="flex items-center justify-between gap-3">
+            {/* Left side - Back to home */}
+            <div className="flex items-center">
               {messages.length > 0 && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRestart}
-                    className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-primary hover:text-primary hover:bg-primary/10 transition-colors font-medium"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                    <span>返回主页</span>
-                  </Button>
-                </>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRestart}
+                  className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-primary hover:text-primary hover:bg-primary/10 transition-colors font-medium"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  <span>返回主页</span>
+                </Button>
               )}
             </div>
-            <div className="flex items-center gap-1 md:gap-2">
+
+            {/* Right side - Main navigation */}
+            <div className="flex items-center gap-1.5 md:gap-2">
               <SmartNotificationCenter />
+              
               <Button
-                variant="outline"
                 size="sm"
-                onClick={() => navigate("/packages")}
-                className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all"
+                onClick={() => navigate("/history")}
+                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-300"
               >
-                <ShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline">充值</span>
+                <History className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="hidden sm:inline font-medium">情绪日记</span>
+                <span className="sm:hidden font-medium">日记</span>
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/goals")}
-                className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all"
-              >
-                <Target className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline">目标</span>
-              </Button>
+
               <Button
                 size="sm"
                 onClick={() => navigate("/energy-studio")}
-                className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 border-0"
               >
                 <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline font-medium">有劲生活馆</span>
-                <span className="sm:hidden font-medium">生活馆</span>
+                <span className="hidden sm:inline font-medium">生活馆</span>
+                <span className="sm:hidden font-medium">馆</span>
               </Button>
+
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate("/settings")}
-                className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground transition-colors"
+                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Settings className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline">设置</span>
+                <span className="hidden md:inline">设置</span>
               </Button>
-              <Button
-                size="sm"
-                onClick={() => navigate("/history")}
-                className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                <History className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline font-medium">我的情绪日记</span>
-                <span className="sm:hidden font-medium">日记</span>
-              </Button>
+
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleSignOut}
-                className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground transition-colors"
+                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <LogOut className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline">退出</span>
+                <span className="hidden md:inline">退出</span>
               </Button>
             </div>
           </div>
