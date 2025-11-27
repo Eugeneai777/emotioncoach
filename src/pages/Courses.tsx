@@ -191,7 +191,7 @@ const Courses = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/")}
               className="gap-2 hover:bg-background/80"
             >
               <ArrowLeft className="w-4 h-4" />
