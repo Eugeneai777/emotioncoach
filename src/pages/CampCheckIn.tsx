@@ -12,7 +12,7 @@ import { TrainingCamp } from "@/types/trainingCamp";
 import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
 import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
 import CampShareDialog from "@/components/camp/CampShareDialog";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
 const CampCheckIn = () => {
@@ -177,6 +177,12 @@ const CampCheckIn = () => {
   }
 
   const checkInDates = Array.isArray(camp.check_in_dates) ? camp.check_in_dates : [];
+  
+  // 动态计算当前是第几天（从1开始）
+  const calculatedCurrentDay = Math.max(1, 
+    differenceInDays(new Date(), new Date(camp.start_date)) + 1
+  );
+  const displayCurrentDay = Math.min(calculatedCurrentDay, camp.duration_days);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -194,7 +200,7 @@ const CampCheckIn = () => {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-0.5">
               <h1 className="text-xl font-bold text-foreground">
-                第 {camp.current_day} 天打卡
+                第 {displayCurrentDay} 天打卡
               </h1>
               {todayProgress?.is_checked_in && (
                 <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 h-5 px-2 text-xs">
@@ -427,7 +433,7 @@ const CampCheckIn = () => {
                 campId={campId!}
                 startDate={camp.start_date}
                 checkInDates={checkInDates}
-                currentDay={camp.current_day}
+                currentDay={calculatedCurrentDay}
                 makeupDaysLimit={1}
                 onMakeupCheckIn={handleMakeupCheckIn}
               />

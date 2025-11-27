@@ -207,11 +207,11 @@ const Index = () => {
         console.log('loadActiveCamp - check_in_dates:', data.check_in_dates);
         
         // 动态计算 current_day，基于 start_date 和今天的日期
-        const calculatedCurrentDay = Math.max(0, 
-          differenceInDays(new Date(), parseISO(data.start_date))
+        const calculatedCurrentDay = Math.max(1, 
+          differenceInDays(new Date(), parseISO(data.start_date)) + 1
         );
         // 不超过训练营总天数
-        const finalCurrentDay = Math.min(calculatedCurrentDay, data.duration_days - 1);
+        const finalCurrentDay = Math.min(calculatedCurrentDay, data.duration_days);
         
         setActiveCamp({
           ...data,
