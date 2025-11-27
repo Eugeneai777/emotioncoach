@@ -53,17 +53,79 @@ serve(async (req) => {
     const userInfoResponse = await fetch(userInfoUrl);
     const userInfo = await userInfoResponse.json();
 
+    // 检查是否已存在该 openid 的映射
+    const { data: existingMapping } = await supabaseClient
+      .from('wechat_user_mappings')
+      .select('system_user_id')
+      .eq('openid', tokenData.openid)
+      .single();
+
+    let finalUserId = userId;
+    let isNewUser = false;
+
+    // 如果 state 是 'register'，表示是注册流程
+    if (state === 'register') {
+      if (existingMapping?.system_user_id) {
+        // 该微信已绑定账号，提示用户
+        const redirectUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || '';
+        return new Response(null, {
+          status: 302,
+          headers: {
+            ...corsHeaders,
+            'Location': `${redirectUrl}/auth?wechat_error=already_bound`
+          }
+        });
+      }
+
+      // 创建新用户（使用微信昵称作为邮箱前缀）
+      const email = `wechat_${tokenData.openid}@temp.youjin365.com`;
+      const password = crypto.randomUUID();
+      
+      const { data: newUser, error: signUpError } = await supabaseClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          nickname: userInfo.nickname,
+          avatar_url: userInfo.headimgurl,
+          wechat_openid: tokenData.openid
+        }
+      });
+
+      if (signUpError) throw signUpError;
+      if (!newUser.user) throw new Error('Failed to create user');
+
+      finalUserId = newUser.user.id;
+      isNewUser = true;
+      console.log('创建新用户成功:', finalUserId);
+    } else if (existingMapping) {
+      // 登录流程且已有映射，使用已有用户
+      finalUserId = existingMapping.system_user_id;
+    } else {
+      // 登录流程但没有映射，引导去注册
+      const redirectUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || '';
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': `${redirectUrl}/auth?wechat_error=not_registered`
+        }
+      });
+    }
+
     // 保存或更新用户映射
     const { error: upsertError } = await supabaseClient
       .from('wechat_user_mappings')
       .upsert({
-        system_user_id: userId,
+        system_user_id: finalUserId,
         openid: tokenData.openid,
         unionid: tokenData.unionid,
         nickname: userInfo.nickname,
         avatar_url: userInfo.headimgurl,
         subscribe_status: true,
         subscribe_time: new Date().toISOString(),
+        is_registered: true,
+        registered_at: isNewUser ? new Date().toISOString() : undefined,
         updated_at: new Date().toISOString(),
       }, {
         onConflict: 'openid'
@@ -71,7 +133,15 @@ serve(async (req) => {
 
     if (upsertError) throw upsertError;
 
-    console.log('用户微信绑定成功:', tokenData.openid);
+    console.log('用户微信映射成功:', tokenData.openid);
+
+    // 生成登录令牌
+    const { data: session, error: sessionError } = await supabaseClient.auth.admin.generateLink({
+      type: 'magiclink',
+      email: `wechat_${tokenData.openid}@temp.youjin365.com`
+    });
+
+    if (sessionError) throw sessionError;
 
     const redirectUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || '';
     
@@ -79,7 +149,7 @@ serve(async (req) => {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': `${redirectUrl}/settings?wechat_bind=success`
+        'Location': `${redirectUrl}/auth/callback?token_hash=${session.properties.hashed_token}&type=magiclink&next=${state === 'register' ? '/settings?wechat_bind=success' : '/'}`
       }
     });
   } catch (error) {
