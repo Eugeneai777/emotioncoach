@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Share2, Loader2, Sparkles } from "lucide-react";
+import { Share2, Loader2, Sparkles, Download, RefreshCw } from "lucide-react";
 import ImageUploader from "@/components/community/ImageUploader";
 
 interface CampShareDialogProps {
@@ -95,6 +95,50 @@ const CampShareDialog = ({
       });
     } finally {
       setGeneratingImage(false);
+    }
+  };
+
+  const handleSaveOrShareImage = async () => {
+    if (imageUrls.length === 0) return;
+    
+    try {
+      const imageUrl = imageUrls[0];
+      
+      // 获取图片数据
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const file = new File([blob], "打卡头图.png", { type: "image/png" });
+      
+      // 尝试使用系统分享（移动端）
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: customTitle || insight || `第${campDay}天打卡`,
+          text: `${campName} - 第${campDay}天情绪打卡`,
+        });
+      } else {
+        // 降级：下载图片（桌面端）
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `打卡头图-第${campDay}天.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        toast({
+          title: "图片已保存",
+          description: "请打开微信手动分享",
+        });
+      }
+    } catch (error) {
+      console.error("保存图片失败:", error);
+      toast({
+        title: "保存失败",
+        description: "请稍后重试",
+        variant: "destructive",
+      });
     }
   };
 
@@ -228,6 +272,30 @@ const CampShareDialog = ({
               onImagesChange={setImageUrls}
               maxImages={3}
             />
+            
+            {/* 图片操作按钮 */}
+            {imageUrls.length > 0 && (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSaveOrShareImage}
+                  className="flex-1"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  保存/分享到微信
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setImageUrls([])}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            
             {imageUrls.length === 0 && (
               <Button
                 type="button"
