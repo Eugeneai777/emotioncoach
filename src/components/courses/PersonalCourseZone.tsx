@@ -2,20 +2,18 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import { RecentBriefingCard } from "./RecentBriefingCard";
-import { RecommendedCourseCard } from "./RecommendedCourseCard";
+import { Loader2, Sparkles } from "lucide-react";
+import { EmotionCourseUnit } from "./EmotionCourseUnit";
 import { toast } from "sonner";
 
-interface Course {
+interface Briefing {
   id: string;
-  title: string;
-  description: string | null;
-  category: string | null;
-  tags: string[] | null;
-  keywords: string[] | null;
-  video_url: string;
-  source: string | null;
+  created_at: string;
+  emotion_theme: string;
+  emotion_intensity: number | null;
+  insight: string | null;
+  action: string | null;
+  conversation_id: string;
 }
 
 interface CourseRecommendation {
@@ -35,8 +33,8 @@ interface PersonalCourseZoneProps {
 
 export const PersonalCourseZone = ({ onWatchCourse }: PersonalCourseZoneProps) => {
   const { user } = useAuth();
-  const [recommendations, setRecommendations] = useState<CourseRecommendation[]>([]);
-  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [recommendationsMap, setRecommendationsMap] = useState<Map<string, CourseRecommendation[]>>(new Map());
+  const [loadingMap, setLoadingMap] = useState<Map<string, boolean>>(new Map());
 
   // 获取用户最近的情绪简报（最近7天，最多3条）
   const { data: recentBriefings, isLoading: loadingBriefings } = useQuery({
@@ -80,35 +78,42 @@ export const PersonalCourseZone = ({ onWatchCourse }: PersonalCourseZoneProps) =
     enabled: !!user?.id,
   });
 
-  // 获取最新的简报（用于生成推荐）
-  const latestBriefing = recentBriefings?.[0];
-
-  // 当有简报时，生成课程推荐
+  // 为每条简报获取推荐课程
   useEffect(() => {
-    const fetchRecommendations = async () => {
-      if (!latestBriefing || !user?.id) return;
+    const fetchRecommendationsForBriefing = async (briefing: Briefing) => {
+      // 标记为加载中
+      setLoadingMap(prev => new Map(prev).set(briefing.id, true));
 
-      setLoadingRecommendations(true);
       try {
         const { data, error } = await supabase.functions.invoke("recommend-courses", {
-          body: { briefing: latestBriefing },
+          body: { briefing },
         });
 
         if (error) throw error;
         
         if (data?.recommendations) {
-          setRecommendations(data.recommendations);
+          setRecommendationsMap(prev => 
+            new Map(prev).set(briefing.id, data.recommendations)
+          );
         }
       } catch (error) {
-        console.error("Error fetching recommendations:", error);
-        toast.error("获取推荐课程失败");
+        console.error(`Error fetching recommendations for briefing ${briefing.id}:`, error);
+        // 不显示 toast，静默失败
       } finally {
-        setLoadingRecommendations(false);
+        setLoadingMap(prev => new Map(prev).set(briefing.id, false));
       }
     };
 
-    fetchRecommendations();
-  }, [latestBriefing, user?.id]);
+    if (recentBriefings && recentBriefings.length > 0) {
+      // 为每条简报获取推荐
+      recentBriefings.forEach(briefing => {
+        // 如果还没有获取过推荐，则获取
+        if (!recommendationsMap.has(briefing.id) && !loadingMap.get(briefing.id)) {
+          fetchRecommendationsForBriefing(briefing);
+        }
+      });
+    }
+  }, [recentBriefings]);
 
   if (!user) {
     return (
@@ -139,48 +144,31 @@ export const PersonalCourseZone = ({ onWatchCourse }: PersonalCourseZoneProps) =
   }
 
   return (
-    <div className="space-y-8">
-      {/* 最近情绪简报区 */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="text-2xl">📝</div>
-          <h2 className="text-xl font-semibold">最近情绪状态</h2>
+    <div className="space-y-6">
+      {/* 页面标题 */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-primary/10">
+          <Sparkles className="w-5 h-5 text-primary" />
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {recentBriefings.map((briefing) => (
-            <RecentBriefingCard key={briefing.id} briefing={briefing} />
-          ))}
+        <div>
+          <h2 className="text-xl font-semibold">个人专区</h2>
+          <p className="text-sm text-muted-foreground">基于你的情绪状态智能推荐</p>
         </div>
-      </section>
+      </div>
 
-      {/* 每日推荐课程区 */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="text-2xl">🎯</div>
-          <h2 className="text-xl font-semibold">基于你的情绪状态推荐</h2>
-        </div>
-        
-        {loadingRecommendations ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            <span className="ml-2 text-muted-foreground">正在生成推荐...</span>
-          </div>
-        ) : recommendations.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {recommendations.map((recommendation) => (
-              <RecommendedCourseCard
-                key={recommendation.id}
-                recommendation={recommendation}
-                onWatch={() => onWatchCourse(recommendation.video_url, recommendation.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            暂无推荐课程
-          </div>
-        )}
-      </section>
+      {/* 情绪-课程单元列表 */}
+      <div className="space-y-4">
+        {recentBriefings.map((briefing, index) => (
+          <EmotionCourseUnit
+            key={briefing.id}
+            briefing={briefing}
+            recommendations={recommendationsMap.get(briefing.id) || []}
+            loading={loadingMap.get(briefing.id) || false}
+            isLatest={index === 0}
+            onWatchCourse={onWatchCourse}
+          />
+        ))}
+      </div>
     </div>
   );
 };
