@@ -74,11 +74,13 @@ export default function ParentCoach() {
   const campId = searchParams.get('campId');
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const initRef = useRef(false);
   
   const {
     session,
     messages,
     isLoading,
+    isCreating,
     createSession,
     sendMessage
   } = useParentCoach();
@@ -156,14 +158,20 @@ export default function ParentCoach() {
 
   useEffect(() => {
     const initSession = async () => {
-      if (!session && user && !isLoading) {
+      // Prevent duplicate calls
+      if (initRef.current || session || isCreating) {
+        return;
+      }
+      
+      if (user) {
+        initRef.current = true;
         await createSession(campId || undefined);
       }
     };
     
     initSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, session, isLoading]);
+  }, [user, session, isCreating]);
 
   const loadVoiceConfig = async () => {
     try {
@@ -216,6 +224,7 @@ export default function ParentCoach() {
   const handleRestart = () => {
     setShowSummary(false);
     setBriefing(null);
+    initRef.current = false;
     createSession(campId || undefined);
   };
 
