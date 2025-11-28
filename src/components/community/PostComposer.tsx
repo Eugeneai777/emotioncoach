@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import ImageUploader from "./ImageUploader";
+import { ImageStyleSelector } from "./ImageStyleSelector";
 import { Loader2, Sparkles } from "lucide-react";
 
 interface PostComposerProps {
@@ -26,6 +27,7 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [imageStyle, setImageStyle] = useState("warm");
   const { toast } = useToast();
   const { session } = useAuth();
 
@@ -103,6 +105,7 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
           body: {
             title: title.trim() || content.substring(0, 50),
             emotionTheme: postType === "story" ? "温暖分享" : "成长记录",
+            style: imageStyle,
           },
         }
       );
@@ -168,6 +171,9 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
               onImagesChange={setImageUrls}
               maxImages={9}
             />
+            
+            {/* 风格选择器 */}
+            <ImageStyleSelector value={imageStyle} onChange={setImageStyle} />
             
             {/* AI 生成头图按钮 */}
             <Button

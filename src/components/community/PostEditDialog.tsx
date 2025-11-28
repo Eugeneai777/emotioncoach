@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import ImageUploader from "./ImageUploader";
+import { ImageStyleSelector } from "./ImageStyleSelector";
 
 interface PostEditDialogProps {
   open: boolean;
@@ -35,6 +36,7 @@ const PostEditDialog = ({
   const [imageUrls, setImageUrls] = useState<string[]>(post.image_urls || []);
   const [saving, setSaving] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [imageStyle, setImageStyle] = useState("warm");
   const { session } = useAuth();
   const { toast } = useToast();
 
@@ -58,6 +60,7 @@ const PostEditDialog = ({
             emotionTheme: post.emotion_theme,
             campName: post.badges?.campName,
             day: post.camp_day,
+            style: imageStyle,
           },
         }
       );
@@ -153,6 +156,9 @@ const PostEditDialog = ({
               onImagesChange={setImageUrls}
               maxImages={9}
             />
+            
+            {/* 风格选择器 */}
+            <ImageStyleSelector value={imageStyle} onChange={setImageStyle} />
             
             {/* AI 生成头图按钮 */}
             <Button
