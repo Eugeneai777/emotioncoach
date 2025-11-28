@@ -30,7 +30,7 @@ export const ModuleGridCard = ({
       <div 
         className="w-16 h-16 mx-auto rounded-xl mb-4 flex items-center justify-center"
         style={{
-          background: `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`
+          background: `linear-gradient(135deg, hsl(${gradientStart}), hsl(${gradientEnd}))`
         }}
       >
         <Icon className="w-8 h-8 text-white" />
@@ -40,7 +40,7 @@ export const ModuleGridCard = ({
       <h3 
         className="text-lg font-bold mb-2"
         style={{
-          background: `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`,
+          background: `linear-gradient(135deg, hsl(${gradientStart}), hsl(${gradientEnd}))`,
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundClip: "text"
