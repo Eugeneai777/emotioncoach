@@ -29,12 +29,12 @@ export default function ParentCoach() {
   useEffect(() => {
     const initSession = async () => {
       if (!session) {
-        await createSession(campId || undefined);
+        const newSession = await createSession(campId || undefined);
         
-        // Send welcome message
-        setTimeout(() => {
-          sendMessage("开始");
-        }, 500);
+        // Display welcome message without sending to backend
+        if (newSession) {
+          // The AI will provide the welcome message on first user input
+        }
       }
     };
     
@@ -134,12 +134,11 @@ export default function ParentCoach() {
                 </Button>
                 <Button 
                   className="flex-1"
-                  onClick={() => {
-                    setShowSummary(false);
-                    setBriefing(null);
-                    createSession(campId || undefined);
-                    setTimeout(() => sendMessage("开始"), 500);
-                  }}
+                onClick={() => {
+                  setShowSummary(false);
+                  setBriefing(null);
+                  createSession(campId || undefined);
+                }}
                 >
                   开始新的对话
                 </Button>

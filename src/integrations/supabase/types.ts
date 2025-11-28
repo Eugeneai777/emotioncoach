@@ -1169,6 +1169,7 @@ export type Database = {
           event_description: string | null
           feel_it: Json | null
           id: string
+          messages: Json | null
           micro_action: string | null
           see_it: Json | null
           sense_it: Json | null
@@ -1189,6 +1190,7 @@ export type Database = {
           event_description?: string | null
           feel_it?: Json | null
           id?: string
+          messages?: Json | null
           micro_action?: string | null
           see_it?: Json | null
           sense_it?: Json | null
@@ -1209,6 +1211,7 @@ export type Database = {
           event_description?: string | null
           feel_it?: Json | null
           id?: string
+          messages?: Json | null
           micro_action?: string | null
           see_it?: Json | null
           sense_it?: Json | null
