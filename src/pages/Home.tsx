@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { ModuleCard } from "@/components/home/ModuleCard";
-import { TodayQuickActions } from "@/components/home/TodayQuickActions";
 import { Settings, LogOut, Sparkles } from "lucide-react";
 import {
   DropdownMenu,
@@ -112,13 +111,13 @@ const Home = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       {/* Header */}
       <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
-        <div className="container max-w-6xl mx-auto px-4 py-6">
+        <div className="container max-w-5xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
                 有劲生活馆
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 AI 教练驱动的成长操作系统
               </p>
             </div>
@@ -151,34 +150,24 @@ const Home = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container max-w-6xl mx-auto px-4 py-8">
+      <main className="container max-w-5xl mx-auto px-4 py-6">
         {/* Hero Section */}
-        <section className="text-center mb-12 space-y-4 animate-fade-in">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            <Sparkles className="w-4 h-4" />
+        <section className="text-center mb-8 space-y-3 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+            <Sparkles className="w-3.5 h-3.5" />
             Growth Operating System
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent leading-tight">
+          <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent leading-tight">
             欢迎回来，开启今日成长之旅
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            四大模块协同工作，AI 教练全程陪伴，助你实现持续成长
+          <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+            四大模块协同工作，AI 教练全程陪伴
           </p>
-        </section>
-
-        {/* Today Quick Actions */}
-        <section className="mb-12">
-          <TodayQuickActions />
         </section>
 
         {/* Module Cards */}
         <section>
-          <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold mb-2">探索四大成长模块</h3>
-            <p className="text-muted-foreground">点击卡片进入对应模块</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {modules.map((module, index) => (
               <ModuleCard
                 key={index}
@@ -187,21 +176,6 @@ const Home = () => {
               />
             ))}
           </div>
-        </section>
-
-        {/* System Introduction */}
-        <section className="mt-12 text-center space-y-4">
-          <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="h-px w-12 bg-gradient-to-r from-transparent to-border"></div>
-            <span>Growth OS 系统说明</span>
-            <div className="h-px w-12 bg-gradient-to-l from-transparent to-border"></div>
-          </div>
-          
-          <p className="text-sm text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            AI教练层贯穿所有模块，提供智能指导；成长工具层提供日常实践支持；
-            课程学习层提供系统化知识；行动训练层通过训练营和目标管理，
-            帮助你将知识转化为持续的行动习惯。
-          </p>
         </section>
       </main>
     </div>
