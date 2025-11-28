@@ -545,6 +545,12 @@ const Index = () => {
       <StartCampDialog
         open={showStartCamp}
         onOpenChange={setShowStartCamp}
+        campTemplate={{
+          camp_type: 'emotion_journal_21',
+          camp_name: '21天情绪日记训练营',
+          duration_days: 21,
+          icon: '📝'
+        }}
         onSuccess={loadActiveCamp}
       />
       
