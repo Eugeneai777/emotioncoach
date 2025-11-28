@@ -279,6 +279,7 @@ export type Database = {
           camp_name: string
           camp_subtitle: string | null
           camp_type: string
+          category: string | null
           created_at: string | null
           daily_practice: Json | null
           description: string | null
@@ -302,6 +303,7 @@ export type Database = {
           camp_name: string
           camp_subtitle?: string | null
           camp_type: string
+          category?: string | null
           created_at?: string | null
           daily_practice?: Json | null
           description?: string | null
@@ -325,6 +327,7 @@ export type Database = {
           camp_name?: string
           camp_subtitle?: string | null
           camp_type?: string
+          category?: string | null
           created_at?: string | null
           daily_practice?: Json | null
           description?: string | null
