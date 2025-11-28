@@ -11,6 +11,8 @@ const stages = [
   { id: 4, name: "转化", subtitle: "Transform it" }
 ];
 
+// Stage 0 (event capture) doesn't show in progress bar
+
 export const ParentStageProgress = ({ currentStage }: ParentStageProgressProps) => {
   return (
     <div className="w-full py-6">
@@ -20,14 +22,14 @@ export const ParentStageProgress = ({ currentStage }: ParentStageProgressProps) 
             <div className="flex flex-col items-center flex-1">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
-                  stage.id < currentStage
+                  stage.id < currentStage && currentStage > 0
                     ? "bg-primary text-primary-foreground"
-                    : stage.id === currentStage
+                    : stage.id === currentStage && currentStage > 0
                     ? "bg-primary/20 text-primary ring-2 ring-primary"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
-                {stage.id < currentStage ? (
+                {stage.id < currentStage && currentStage > 0 ? (
                   <Check className="w-5 h-5" />
                 ) : (
                   stage.id
@@ -41,7 +43,7 @@ export const ParentStageProgress = ({ currentStage }: ParentStageProgressProps) 
             {index < stages.length - 1 && (
               <div
                 className={`h-[2px] flex-1 mx-2 transition-all ${
-                  stage.id < currentStage ? "bg-primary" : "bg-border"
+                  stage.id < currentStage && currentStage > 0 ? "bg-primary" : "bg-border"
                 }`}
               />
             )}

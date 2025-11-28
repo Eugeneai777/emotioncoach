@@ -33,7 +33,7 @@ serve(async (req) => {
       });
     }
 
-    // Get or create session
+    // Get session
     let session;
     if (sessionId) {
       const { data } = await supabaseClient
@@ -44,33 +44,54 @@ serve(async (req) => {
       session = data;
     }
 
+    if (!session) {
+      return new Response(JSON.stringify({ error: 'Session not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
+    // Load conversation history
+    const conversationHistory = session.messages || [];
+
     const getStagePrompt = (stage: number) => {
       switch (stage) {
+        case 0:
+          return `【第0阶段：事件采集】
+这是对话的开始。如果这是第一条消息，用温柔的开场白邀请父母分享：
+"我是劲老师🌿，今天有什么事让你想来聊聊？可以是和孩子相处时的一个小瞬间。"
+
+如果父母已经描述了事件，确认理解并调用 capture_event 工具记录事件，然后自然过渡到阶段1。`;
         case 1:
           return `【第1阶段：Feel it - 觉察】
-帮助父母觉察自己的情绪。提供3个情绪选项，用数字编号。
-每个选项聚焦父母自己的感受，用"有点...""有些...""感觉..."开头。
-引导语温柔、接纳，不超过50字。`;
+基于父母描述的事件，帮助他们觉察自己的情绪。
+引导语要联系具体事件，如："在[事件]发生时，你有什么感受？"
+提供3个情绪选项，用数字编号，每个选项聚焦父母自己的感受。
+用"有点...""有些...""感觉..."开头。
+父母选择后，调用 complete_stage 记录选择并进入阶段2。`;
         case 2:
           return `【第2阶段：See it - 看见】
 帮助父母看见孩子行为背后的情绪信号。提供3个理解视角。
 不推断动机，只描述可能的情绪状态。
-用"孩子可能在...""他可能感觉...""他在表达..."的句式。`;
+用"孩子可能在...""他可能感觉...""他在表达..."的句式。
+父母选择后，调用 complete_stage 进入阶段3。`;
         case 3:
           return `【第3阶段：Sense it - 感受】
 帮助父母觉察亲子互动循环。提供3个循环模式。
 用"你...→孩子...→你更..."的箭头格式。
-不责备任何一方，中性呈现。`;
+不责备任何一方，中性呈现。
+父母选择后，调用 complete_stage 进入阶段4。`;
         case 4:
           return `【第4阶段：Transform it - 转化】
 提供微行动建议。给出3个温柔的替代回应。
 每个都是一句话，10秒内能说出口的。
-用引号包裹具体话语，如："我知道很难，我们慢慢来。"`;
+用引号包裹具体话语，如："我知道很难，我们慢慢来。"
+父母选择后，调用 complete_stage，然后调用 generate_parent_briefing 生成简报。`;
         default:
           return '';
       }
@@ -90,8 +111,22 @@ serve(async (req) => {
 每次回应不超过100字。
 像一杯温热的茶，缓慢而有节奏。
 
-【当前阶段：${session?.current_stage || 1}/4】
-${getStagePrompt(session?.current_stage || 1)}
+【对话流程】
+阶段0（事件采集）→ 阶段1（觉察）→ 阶段2（看见）→ 阶段3（感受）→ 阶段4（转化）
+
+【当前阶段：${session?.current_stage || 0}/4】
+${getStagePrompt(session?.current_stage || 0)}
+
+【工具调用规则】
+1. 阶段0：父母描述事件后，调用 capture_event 记录事件
+2. 每个阶段开始：调用 generate_parent_options 生成3个选项
+3. 父母选择后（数字或自己的话）：调用 complete_stage 记录并推进阶段
+4. 完成阶段4后：调用 generate_parent_briefing 生成简报
+
+【判断父母是否做出选择】
+- 回复数字（1/2/3）= 选择对应选项
+- 用自己的话描述 = 自定义选择
+- 说"不确定"/"都不是" = 继续引导觉察
 
 【输出规则】
 1. 提供3个选项时，必须使用数字编号：1. 2. 3.
@@ -111,10 +146,27 @@ ${getStagePrompt(session?.current_stage || 1)}
 5. stage_3_content：互动循环，用箭头格式，20-30字
 6. stage_4_content：微行动建议，具体可执行，30-40字
 7. insight：温暖有力的洞察，让父母感到被理解，15-25字
-8. action：具体的微行动，10秒内能做到，如"练习自我肯定句：每天一次，对自己说'我已经够努力了'"
+8. action：具体的微行动，10秒内能做到
 9. growth_story：用「我发现...」或「我知道...」开头的温柔感悟，15-25字`;
 
     const tools = [
+      {
+        type: "function",
+        function: {
+          name: "capture_event",
+          description: "记录父母描述的事件，准备进入情绪觉察",
+          parameters: {
+            type: "object",
+            properties: {
+              event_summary: {
+                type: "string",
+                description: "事件简要描述，20-30字"
+              }
+            },
+            required: ["event_summary"]
+          }
+        }
+      },
       {
         type: "function",
         function: {
@@ -145,13 +197,13 @@ ${getStagePrompt(session?.current_stage || 1)}
         type: "function",
         function: {
           name: "complete_stage",
-          description: "完成当前阶段，记录用户选择",
+          description: "完成当前阶段，记录用户选择，推进到下一阶段",
           parameters: {
             type: "object",
             properties: {
               stage: {
                 type: "number",
-                description: "完成的阶段"
+                description: "完成的阶段 1-4"
               },
               selection: {
                 type: "string",
@@ -159,7 +211,7 @@ ${getStagePrompt(session?.current_stage || 1)}
               },
               reflection: {
                 type: "string",
-                description: "劲老师的温柔回应"
+                description: "劲老师的温柔回应，20-30字"
               }
             },
             required: ["stage", "selection", "reflection"]
@@ -218,10 +270,16 @@ ${getStagePrompt(session?.current_stage || 1)}
       }
     ];
 
+    // Add user message to history
+    conversationHistory.push({ role: "user", content: message });
+
+    // Build messages array with full history
     const messages = [
       { role: "system", content: systemPrompt },
-      { role: "user", content: message }
+      ...conversationHistory
     ];
+
+    console.log('Sending to AI with history:', conversationHistory.length, 'messages');
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -246,11 +304,40 @@ ${getStagePrompt(session?.current_stage || 1)}
     const data = await response.json();
     const assistantMessage = data.choices[0].message;
 
+    // Add assistant message to history
+    conversationHistory.push({
+      role: "assistant",
+      content: assistantMessage.content || ""
+    });
+
+    // Save conversation history
+    await supabaseClient
+      .from('parent_coaching_sessions')
+      .update({
+        messages: conversationHistory,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', sessionId);
+
     // Handle tool calls
     if (assistantMessage.tool_calls) {
       const toolCall = assistantMessage.tool_calls[0];
       const functionName = toolCall.function.name;
       const args = JSON.parse(toolCall.function.arguments);
+
+      console.log('Tool call:', functionName, args);
+
+      if (functionName === 'capture_event') {
+        // Save event and move to stage 1
+        await supabaseClient
+          .from('parent_coaching_sessions')
+          .update({
+            event_description: args.event_summary,
+            current_stage: 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', sessionId);
+      }
 
       if (functionName === 'complete_stage') {
         // Update session
