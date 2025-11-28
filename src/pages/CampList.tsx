@@ -42,6 +42,23 @@ const CampList = () => {
       return data as unknown as CampTemplate[];
     }
   });
+
+  // 查询报名人数
+  const { data: enrollmentStats } = useQuery({
+    queryKey: ['camp-enrollment-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('training_camps')
+        .select('camp_type');
+      if (error) throw error;
+      
+      const stats: Record<string, number> = {};
+      data.forEach((camp: any) => {
+        stats[camp.camp_type] = (stats[camp.camp_type] || 0) + 1;
+      });
+      return stats;
+    }
+  });
   const filteredCamps = campTemplates?.filter(camp => (camp.category || 'youjin') === activeCategory) || [];
   const currentCategory = campCategories.find(cat => cat.id === activeCategory)!;
   if (isLoading) {
@@ -70,7 +87,50 @@ const CampList = () => {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent leading-tight">
               选择你的成长之旅
             </h1>
-            
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              专业导师陪伴，社群共同成长，科学系统的学习路径
+            </p>
+          </div>
+        </section>
+
+        {/* 特色亮点展示 */}
+        <section className="mb-12 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-150">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: '👨‍🏫',
+                title: '专业导师陪伴',
+                description: '资深心理学导师全程指导，提供专业建议与反馈',
+                gradient: 'from-blue-500 to-cyan-500'
+              },
+              {
+                icon: '🤝',
+                title: '社群共同成长',
+                description: '加入志同道合的社群，互相支持与鼓励',
+                gradient: 'from-purple-500 to-pink-500'
+              },
+              {
+                icon: '📚',
+                title: '系统学习资料',
+                description: '精心设计的课程体系，配套视频与练习材料',
+                gradient: 'from-orange-500 to-amber-500'
+              }
+            ].map((feature, index) => (
+              <div
+                key={index}
+                className="group relative bg-card rounded-2xl p-6 border hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity duration-300`} />
+                <div className="relative z-10 space-y-3">
+                  <div className="text-4xl">{feature.icon}</div>
+                  <h3 className="text-lg font-semibold">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -95,7 +155,7 @@ const CampList = () => {
           {/* Training Camps Grid */}
           <TabsContent value={activeCategory} className="mt-0">
             {filteredCamps.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredCamps.map((camp, index) => <CampTemplateCard key={camp.id} camp={camp} index={index} onClick={() => setSelectedCamp(camp)} />)}
+                {filteredCamps.map((camp, index) => <CampTemplateCard key={camp.id} camp={camp} index={index} enrolledCount={enrollmentStats?.[camp.camp_type] || 0} onClick={() => setSelectedCamp(camp)} />)}
               </div> : <div className="text-center py-12">
                 <p className="text-muted-foreground">该分类下暂无训练营</p>
               </div>}
