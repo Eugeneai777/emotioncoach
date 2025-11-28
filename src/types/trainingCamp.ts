@@ -50,3 +50,30 @@ export interface GoalTemplate {
   created_at: string;
   updated_at: string;
 }
+
+export interface CampTemplate {
+  id: string;
+  camp_type: string;
+  camp_name: string;
+  camp_subtitle?: string;
+  description?: string;
+  duration_days: number;
+  theme_color: string;
+  gradient: string;
+  icon: string;
+  stages?: any[];
+  learning_formats?: string[];
+  prerequisites?: {
+    required_camp?: string;
+    message?: string;
+  };
+  target_audience?: string[];
+  benefits?: string[];
+  daily_practice?: any[];
+  weekly_activities?: any[];
+  research_stats?: any[];
+  is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}

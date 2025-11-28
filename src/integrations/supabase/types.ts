@@ -273,6 +273,78 @@ export type Database = {
           },
         ]
       }
+      camp_templates: {
+        Row: {
+          benefits: Json | null
+          camp_name: string
+          camp_subtitle: string | null
+          camp_type: string
+          created_at: string | null
+          daily_practice: Json | null
+          description: string | null
+          display_order: number | null
+          duration_days: number
+          gradient: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          learning_formats: Json | null
+          prerequisites: Json | null
+          research_stats: Json | null
+          stages: Json | null
+          target_audience: Json | null
+          theme_color: string | null
+          updated_at: string | null
+          weekly_activities: Json | null
+        }
+        Insert: {
+          benefits?: Json | null
+          camp_name: string
+          camp_subtitle?: string | null
+          camp_type: string
+          created_at?: string | null
+          daily_practice?: Json | null
+          description?: string | null
+          display_order?: number | null
+          duration_days: number
+          gradient?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          learning_formats?: Json | null
+          prerequisites?: Json | null
+          research_stats?: Json | null
+          stages?: Json | null
+          target_audience?: Json | null
+          theme_color?: string | null
+          updated_at?: string | null
+          weekly_activities?: Json | null
+        }
+        Update: {
+          benefits?: Json | null
+          camp_name?: string
+          camp_subtitle?: string | null
+          camp_type?: string
+          created_at?: string | null
+          daily_practice?: Json | null
+          description?: string | null
+          display_order?: number | null
+          duration_days?: number
+          gradient?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          learning_formats?: Json | null
+          prerequisites?: Json | null
+          research_stats?: Json | null
+          stages?: Json | null
+          target_audience?: Json | null
+          theme_color?: string | null
+          updated_at?: string | null
+          weekly_activities?: Json | null
+        }
+        Relationships: []
+      }
       camp_video_tasks: {
         Row: {
           camp_id: string

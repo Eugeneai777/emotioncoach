@@ -14,10 +14,16 @@ import { useToast } from "@/hooks/use-toast";
 interface StartCampDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  campTemplate: {
+    camp_type: string;
+    camp_name: string;
+    duration_days: number;
+    icon?: string;
+  };
   onSuccess?: () => void;
 }
 
-export function StartCampDialog({ open, onOpenChange, onSuccess }: StartCampDialogProps) {
+export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }: StartCampDialogProps) {
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -36,15 +42,15 @@ export function StartCampDialog({ open, onOpenChange, onSuccess }: StartCampDial
         return;
       }
 
-      const endDate = addDays(startDate, 20); // 21 days total (including start date)
+      const endDate = addDays(startDate, campTemplate.duration_days - 1);
 
       const { error } = await supabase
         .from('training_camps')
         .insert({
           user_id: user.id,
-          camp_name: '21天情绪日记训练营',
-          camp_type: 'emotion_journal_21',
-          duration_days: 21,
+          camp_name: campTemplate.camp_name,
+          camp_type: campTemplate.camp_type,
+          duration_days: campTemplate.duration_days,
           start_date: format(startDate, 'yyyy-MM-dd'),
           end_date: format(endDate, 'yyyy-MM-dd'),
           current_day: 0,
@@ -78,20 +84,17 @@ export function StartCampDialog({ open, onOpenChange, onSuccess }: StartCampDial
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl">🏕️ 开启21天训练营</DialogTitle>
+          <DialogTitle className="text-xl">
+            {campTemplate.icon || '🏕️'} 开启{campTemplate.duration_days}天训练营
+          </DialogTitle>
           <DialogDescription className="text-left space-y-3 pt-2">
-            <p>21天情绪日记训练营将帮助你：</p>
-            <ul className="space-y-2 list-disc list-inside">
-              <li>建立规律的情绪记录习惯</li>
-              <li>提升情绪觉察能力</li>
-              <li>获得个性化成长洞察</li>
-            </ul>
+            <p>{campTemplate.camp_name}将帮助你开启深度成长之旅</p>
             <div className="bg-primary/5 p-3 rounded-lg mt-4">
               <p className="text-sm font-medium mb-2">训练营规则：</p>
               <ul className="text-sm space-y-1 list-disc list-inside">
-                <li>每天完成1次情绪日记即为打卡</li>
+                <li>每天完成相应练习即为打卡</li>
                 <li>达成里程碑可获得专属徽章</li>
-                <li>完成21天获得毕业证书</li>
+                <li>完成{campTemplate.duration_days}天获得毕业证书</li>
               </ul>
             </div>
           </DialogDescription>
@@ -125,7 +128,7 @@ export function StartCampDialog({ open, onOpenChange, onSuccess }: StartCampDial
               </PopoverContent>
             </Popover>
             <p className="text-xs text-muted-foreground">
-              结束日期：{format(addDays(startDate, 20), 'PPP', { locale: zhCN })}
+              结束日期：{format(addDays(startDate, campTemplate.duration_days - 1), 'PPP', { locale: zhCN })}
             </p>
           </div>
         </div>

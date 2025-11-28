@@ -21,6 +21,7 @@ import EnergyStudio from "./pages/EnergyStudio";
 import EnergyStudioIntro from "./pages/EnergyStudioIntro";
 import AICoach from "./pages/AICoach";
 import CampIntro from "./pages/CampIntro";
+import CampList from "./pages/CampList";
 import CampCheckIn from "./pages/CampCheckIn";
 import UserProfile from "./pages/UserProfile";
 import Introduction from "./pages/Introduction";
@@ -54,7 +55,8 @@ const App = () => (
           <Route path="/energy-studio-intro" element={<EnergyStudioIntro />} />
           <Route path="/community" element={<Community />} />
           <Route path="/ai-coach" element={<AICoach />} />
-          <Route path="/camp-intro" element={<CampIntro />} />
+          <Route path="/camps" element={<CampList />} />
+          <Route path="/camp-intro/:campType" element={<CampIntro />} />
           <Route path="/camp/:campId" element={<TrainingCampDetail />} />
           <Route path="/camp-checkin/:campId" element={<CampCheckIn />} />
           <Route path="/user/:userId" element={<UserProfile />} />
