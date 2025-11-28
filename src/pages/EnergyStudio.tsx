@@ -179,26 +179,15 @@ const EnergyStudio = () => {
               </h1>
               <p className="text-sm text-muted-foreground mt-1">探索更好的自己 · 享受有劲生活</p>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/energy-studio-intro")}
-                className="gap-2"
-              >
-                <Info className="w-4 h-4" />
-                <span className="hidden sm:inline">使用指南</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/ai-coach")}
-                className="gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span className="hidden sm:inline">AI教练</span>
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/energy-studio-intro")}
+              className="gap-2"
+            >
+              <Info className="w-4 h-4" />
+              <span className="hidden sm:inline">使用指南</span>
+            </Button>
           </div>
         </div>
       </header>
