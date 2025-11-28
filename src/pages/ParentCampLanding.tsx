@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ArrowLeft, CheckCircle2, Heart, TrendingUp, Users, Zap } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Heart, TrendingUp, Users, Zap, BookOpen } from "lucide-react";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
+import { FloatingCTA } from "@/components/camp/FloatingCTA";
+import { ScrollToTop } from "@/components/camp/ScrollToTop";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 const childTypes = [
   { emoji: '🌧️', label: '抑郁 / 情绪低落', value: 'depression' },
@@ -56,17 +59,22 @@ export default function ParentCampLanding() {
       </nav>
 
       {/* 英雄区 */}
-      <section className="container mx-auto px-4 py-16 text-center">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200 text-lg px-4 py-2">
+      <section className="relative container mx-auto px-4 py-20 md:py-28 text-center overflow-hidden">
+        {/* 装饰性背景 */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(16,185,129,0.15),transparent_50%)] pointer-events-none" />
+        <div className="absolute top-20 left-10 w-32 h-32 bg-emerald-200/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-40 h-40 bg-teal-200/20 rounded-full blur-3xl" />
+        
+        <div className="relative max-w-4xl mx-auto space-y-8 animate-fade-in">
+          <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200 text-lg px-6 py-2 hover:scale-105 transition-transform duration-300">
             👨‍👩‍👧 亲子专题训练营
           </Badge>
           
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent leading-tight">
-            21天青少年问题家庭训练营
+          <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent leading-tight animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            21天青少年问题<br className="md:hidden" />家庭训练营
           </h1>
           
-          <p className="text-xl md:text-2xl text-muted-foreground font-medium">
+          <p className="text-2xl md:text-3xl text-muted-foreground font-medium animate-fade-in" style={{ animationDelay: '0.2s' }}>
             教你看懂孩子的情绪，让孩子愿意重新靠近你
           </p>
 
@@ -155,19 +163,21 @@ export default function ParentCampLanding() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {childTypes.map((type) => (
+            {childTypes.map((type, index) => (
               <Card
                 key={type.value}
-                className={`cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 ${
-                  selectedType === type.value
-                    ? 'ring-2 ring-emerald-500 bg-emerald-50/50'
-                    : ''
-                }`}
+                className={cn(
+                  "cursor-pointer transition-all duration-300",
+                  "hover:shadow-xl hover:-translate-y-2 hover:scale-105",
+                  "animate-fade-in",
+                  selectedType === type.value && "ring-4 ring-emerald-500 bg-emerald-50 scale-105 shadow-xl"
+                )}
+                style={{ animationDelay: `${index * 0.05}s` }}
                 onClick={() => setSelectedType(type.value)}
               >
                 <CardHeader className="text-center pb-3">
-                  <div className="text-4xl mb-2">{type.emoji}</div>
-                  <CardTitle className="text-base">{type.label}</CardTitle>
+                  <div className="text-4xl mb-2 transition-transform duration-300 hover:scale-125">{type.emoji}</div>
+                  <CardTitle className="text-base leading-snug">{type.label}</CardTitle>
                 </CardHeader>
               </Card>
             ))}
@@ -221,6 +231,20 @@ export default function ParentCampLanding() {
                       <span>让孩子重新感到"家是安全的地方"</span>
                     </li>
                   </ul>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <Card className="text-center p-4 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+                      <div className="text-3xl font-bold text-amber-600">40-55%</div>
+                      <div className="text-sm text-muted-foreground mt-1">情绪爆炸减少</div>
+                    </Card>
+                    <Card className="text-center p-4 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+                      <div className="text-3xl font-bold text-amber-600">3-5天</div>
+                      <div className="text-sm text-muted-foreground mt-1">孩子感受到变化</div>
+                    </Card>
+                    <Card className="text-center p-4 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+                      <div className="text-3xl font-bold text-amber-600">安全感</div>
+                      <div className="text-sm text-muted-foreground mt-1">家庭氛围回归</div>
+                    </Card>
+                  </div>
                   <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
                     <p className="text-sm font-semibold text-amber-900 mb-2">🌍 数据来源：</p>
                     <p className="text-sm text-amber-800 leading-relaxed">
@@ -256,6 +280,16 @@ export default function ParentCampLanding() {
                       <span>避免误解、避免错误回应、避免情绪对撞</span>
                     </li>
                   </ul>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <Card className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
+                      <div className="text-3xl font-bold text-blue-600">25-38%</div>
+                      <div className="text-sm text-muted-foreground mt-1">情绪反应强度下降</div>
+                    </Card>
+                    <Card className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
+                      <div className="text-3xl font-bold text-blue-600">误解减少</div>
+                      <div className="text-sm text-muted-foreground mt-1">错误回应避免</div>
+                    </Card>
+                  </div>
                   <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                     <p className="text-sm font-semibold text-blue-900 mb-2">🌍 数据来源：</p>
                     <p className="text-sm text-blue-800 leading-relaxed">
@@ -291,6 +325,16 @@ export default function ParentCampLanding() {
                       <span>用"关系"取代"冲突"</span>
                     </li>
                   </ul>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <Card className="text-center p-4 bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200">
+                      <div className="text-3xl font-bold text-emerald-600">53%</div>
+                      <div className="text-sm text-muted-foreground mt-1">合作意愿提高</div>
+                    </Card>
+                    <Card className="text-center p-4 bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200">
+                      <div className="text-3xl font-bold text-emerald-600">21天</div>
+                      <div className="text-sm text-muted-foreground mt-1">关系温度回升</div>
+                    </Card>
+                  </div>
                   <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
                     <p className="text-sm font-semibold text-emerald-900 mb-2">🌍 数据来源：</p>
                     <p className="text-sm text-emerald-800 leading-relaxed">
@@ -792,7 +836,7 @@ export default function ParentCampLanding() {
 
       {/* CTA */}
       <section className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto space-y-8">
           <Card className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white border-0 overflow-hidden relative">
             <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.3),transparent)]" />
             <CardContent className="relative z-10 py-12 text-center space-y-6">
@@ -806,7 +850,7 @@ export default function ParentCampLanding() {
                 <Button
                   size="lg"
                   onClick={() => setShowStartDialog(true)}
-                  className="bg-white text-emerald-600 hover:bg-white/90 text-lg px-8 py-6 h-auto font-semibold shadow-xl"
+                  className="bg-white text-emerald-600 hover:bg-white/90 text-lg px-8 py-6 h-auto font-semibold shadow-xl hover:scale-105 transition-transform duration-300"
                 >
                   立即加入《21天青少年问题家庭训练营》
                 </Button>
@@ -818,8 +862,28 @@ export default function ParentCampLanding() {
               </div>
             </CardContent>
           </Card>
+
+          {/* 链接到详细使用手册 */}
+          <div className="text-center">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => navigate('/parent-camp-manual')}
+              className="gap-2 text-lg px-6 py-6 h-auto hover:scale-105 transition-transform duration-300"
+            >
+              <BookOpen className="w-5 h-5" />
+              查看完整使用手册
+            </Button>
+            <p className="text-sm text-muted-foreground mt-3">
+              了解更多训练营的详细设计理念和科学依据
+            </p>
+          </div>
         </div>
       </section>
+
+      {/* 浮动组件 */}
+      <FloatingCTA onClick={() => setShowStartDialog(true)} />
+      <ScrollToTop />
 
       {/* 开始训练营对话框 */}
       {campTemplate && (
