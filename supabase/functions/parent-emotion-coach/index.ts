@@ -405,6 +405,137 @@ ${getStagePrompt(session?.current_stage || 0)}
           .eq('id', sessionId);
       }
 
+      // 🔧 For capture_event and complete_stage, continue conversation to get follow-up response
+      if (functionName === 'capture_event' || functionName === 'complete_stage') {
+        console.log('Tool call processed, continuing conversation...');
+        
+        // Add tool call to history
+        conversationHistory.push({
+          role: "assistant",
+          content: assistantMessage.content || "",
+          tool_calls: assistantMessage.tool_calls
+        });
+        
+        // Add tool result to history
+        conversationHistory.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: JSON.stringify({ success: true, ...args })
+        });
+
+        // Reload session to get updated stage
+        const { data: updatedSession } = await supabaseClient
+          .from('parent_coaching_sessions')
+          .select('*')
+          .eq('id', sessionId)
+          .single();
+
+        // Build new messages with updated system prompt
+        const continueSystemPrompt = `你是「劲老师」🌿，家长版情绪教练。
+
+【角色设定】
+你擅长帮助青少年的父母：
+- 觉察自己的情绪
+- 看懂孩子行为背后的情绪
+- 看清亲子互动循环
+- 找到下一次更好的回应方式
+
+【语气要求】
+温柔、稳定、共情、清晰、不废话、不专业术语、不医疗化、不说教。
+每次回应不超过100字。
+像一杯温热的茶，缓慢而有节奏。
+
+【对话流程】
+阶段0（事件采集）→ 阶段1（觉察）→ 阶段2（看见）→ 阶段3（卡点）→ 阶段4（转化）
+
+【当前阶段：${updatedSession?.current_stage || 0}/4】
+${getStagePrompt(updatedSession?.current_stage || 0)}
+
+【工具调用规则】
+1. 阶段0：父母描述事件后，调用 capture_event 记录事件
+2. 每个阶段开始：调用 generate_parent_options 生成3个选项
+3. 父母选择后（数字或自己的话）：调用 complete_stage 记录并推进阶段
+4. 完成阶段4后：调用 generate_parent_briefing 生成简报
+
+【判断父母是否做出选择】
+- 回复数字（1/2/3）= 选择对应选项
+- 用自己的话描述 = 自定义选择
+- 说"不确定"/"都不是" = 继续引导觉察
+
+【输出规则】
+1. 提供3个选项时，必须使用数字编号：1. 2. 3.
+2. 严禁使用字母编号（A/B/C）
+3. 每个选项单独成行，简洁有力
+4. 引导语在选项前，温柔提问
+5. 选项后提示："哪一个更接近你现在的心情？（也可以用自己的话说）"
+
+【简报生成规则】
+完成四个阶段后，必须调用 generate_parent_briefing 工具生成简报。
+
+简报内容要求：
+1. emotion_theme：用 · 分隔多个情绪词，如"烦躁 · 不安 · \"还不够好\""
+2. emotion_tags：提取3-5个情绪标签数组
+3. stage_1_content：父母的情绪觉察，用"你"开头，20-30字
+4. stage_2_content：孩子的情绪信号，用"孩子"开头，30-40字
+5. stage_3_content：互动循环，用箭头格式，20-30字
+6. stage_4_content：微行动建议，具体可执行，30-40字
+7. insight：温暖有力的洞察，让父母感到被理解，15-25字
+8. action：具体的微行动，10秒内能做到
+9. growth_story：用「我发现...」或「我知道...」开头的温柔感悟，15-25字`;
+
+        // Continue conversation with AI
+        const continueResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [
+              { role: "system", content: continueSystemPrompt },
+              ...conversationHistory
+            ],
+            tools,
+            temperature: 0.7,
+          }),
+        });
+
+        if (!continueResponse.ok) {
+          const error = await continueResponse.text();
+          console.error('AI API continue error:', error);
+          throw new Error(`AI API continue error: ${continueResponse.status}`);
+        }
+
+        const continueData = await continueResponse.json();
+        const followUpMessage = continueData.choices[0].message;
+
+        console.log('Follow-up message:', followUpMessage);
+
+        // Add follow-up message to history
+        conversationHistory.push({
+          role: "assistant",
+          content: followUpMessage.content || ""
+        });
+
+        // Save updated conversation history
+        await supabaseClient
+          .from('parent_coaching_sessions')
+          .update({
+            messages: conversationHistory,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', sessionId);
+
+        // Return follow-up response
+        return new Response(JSON.stringify({
+          content: followUpMessage.content,
+          toolCall: { name: functionName, args }
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       if (functionName === 'generate_parent_briefing') {
         // Create briefing
         const { data: conversationData } = await supabaseClient
