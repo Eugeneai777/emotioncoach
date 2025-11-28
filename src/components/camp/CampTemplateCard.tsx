@@ -64,9 +64,11 @@ export function CampTemplateCard({ camp, index, onClick }: CampTemplateCardProps
         <p className="text-muted-foreground leading-relaxed">{camp.description}</p>
         
         <div className="flex gap-2">
-          <Badge className={`bg-gradient-to-r ${camp.gradient} text-white border-0`}>
-            {camp.duration_days}天
-          </Badge>
+          {!['emotion_bloom', 'identity_bloom'].includes(camp.camp_type) && (
+            <Badge className={`bg-gradient-to-r ${camp.gradient} text-white border-0`}>
+              {camp.duration_days}天
+            </Badge>
+          )}
           {camp.stages && camp.stages.length > 0 && (
             <Badge variant="outline">
               {camp.stages.length}阶课程

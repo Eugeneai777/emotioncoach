@@ -93,11 +93,13 @@ const CampIntro = () => {
       <main className="container max-w-6xl mx-auto px-4 py-12 space-y-16">
         {/* Hero Section */}
         <section className="text-center space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
-          <div className="inline-block">
-            <Badge className={`bg-gradient-to-r ${campTemplate.gradient} text-white border-0 px-4 py-1 text-sm`}>
-              {campTemplate.icon} {campTemplate.duration_days}天养成计划
-            </Badge>
-          </div>
+          {!['emotion_bloom', 'identity_bloom'].includes(campTemplate.camp_type) && (
+            <div className="inline-block">
+              <Badge className={`bg-gradient-to-r ${campTemplate.gradient} text-white border-0 px-4 py-1 text-sm`}>
+                {campTemplate.icon} {campTemplate.duration_days}天养成计划
+              </Badge>
+            </div>
+          )}
           <div className="space-y-4">
             <h1 className={`text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r ${campTemplate.gradient} bg-clip-text text-transparent leading-tight`}>
               {campTemplate.camp_name}
@@ -233,7 +235,10 @@ const CampIntro = () => {
             <div className="text-center space-y-3">
               <h2 className="text-3xl md:text-4xl font-bold">你将获得</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                {campTemplate.duration_days}天后，实实在在的成长
+                {['emotion_bloom', 'identity_bloom'].includes(campTemplate.camp_type) 
+                  ? '实实在在的成长' 
+                  : `${campTemplate.duration_days}天后，实实在在的成长`
+                }
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -306,7 +311,10 @@ const CampIntro = () => {
           <div className="absolute inset-0 bg-grid-white/10" />
           <div className="relative z-10 space-y-6">
             <h2 className="text-3xl md:text-4xl font-bold">
-              开始你的{campTemplate.duration_days}天{campTemplate.camp_name}
+              开始你的{['emotion_bloom', 'identity_bloom'].includes(campTemplate.camp_type) 
+                ? '' 
+                : `${campTemplate.duration_days}天`
+              }{campTemplate.camp_name}
             </h2>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
               {campTemplate.description}
