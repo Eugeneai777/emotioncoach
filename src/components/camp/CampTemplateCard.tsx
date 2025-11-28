@@ -47,7 +47,7 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
 
   return (
     <Card 
-      className={`group relative overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl animate-in fade-in-50 slide-in-from-bottom-4 ${
+      className={`group relative overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl animate-in fade-in-50 slide-in-from-bottom-4 flex flex-col h-full ${
         isLocked ? 'opacity-60' : 'cursor-pointer'
       } ${
         isBloomCamp 
@@ -60,7 +60,7 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
       onClick={!isLocked ? onClick : undefined}
     >
       {/* 封面背景 */}
-      <div className={`relative ${isBloomCamp || isParentCamp ? 'h-40' : 'h-32'} bg-gradient-to-br ${camp.gradient} overflow-hidden`}>
+      <div className={`relative h-36 bg-gradient-to-br ${camp.gradient} overflow-hidden`}>
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.3),transparent)]" />
         
         {/* 绽放系列装饰图案 */}
@@ -71,21 +71,17 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
           </div>
         )}
         
-        {/* 绽放系列徽章 */}
-        {isBloomCamp && (
-          <div className="absolute top-3 left-3 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-purple-600 shadow-sm">
-            ✨ 绽放系列
-          </div>
-        )}
-        
-        {/* 亲子专题徽章 */}
-        {isParentCamp && (
-          <div className="absolute top-3 left-3 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-emerald-700 shadow-sm">
-            👨‍👩‍👧 亲子专题
-          </div>
-        )}
-        
-        <div className="absolute top-3 right-3 flex gap-2">
+        <div className="absolute top-3 right-3 flex flex-wrap gap-2 justify-end">
+          {isBloomCamp && (
+            <div className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-purple-600 shadow-sm">
+              ✨ 绽放系列
+            </div>
+          )}
+          {isParentCamp && (
+            <div className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-emerald-700 shadow-sm">
+              👨‍👩‍👧 亲子专题
+            </div>
+          )}
           {isBloomCamp && (
             <div className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-purple-600 shadow-sm">
               🎯 深度转化
@@ -114,19 +110,14 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
       </div>
       
       <CardHeader className="relative z-10 pt-4">
-        <CardTitle className="text-2xl">{camp.camp_name}</CardTitle>
-        <CardDescription className="text-base">
+        <CardTitle className="text-xl line-clamp-1">{camp.camp_name}</CardTitle>
+        <CardDescription className="text-sm line-clamp-2 min-h-[2.5rem]">
           {camp.camp_subtitle}
-          {isParentCamp && (
-            <span className="block text-emerald-600 font-medium mt-1">
-              专为青春期父母设计
-            </span>
-          )}
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="relative z-10 space-y-4">
-        <p className="text-muted-foreground leading-relaxed">{camp.description}</p>
+      <CardContent className="relative z-10 space-y-4 flex-1">
+        <p className="text-muted-foreground leading-relaxed line-clamp-2 min-h-[3rem]">{camp.description}</p>
         
         <div className="flex flex-wrap gap-2">
           <Badge className={`bg-gradient-to-r ${camp.gradient} text-white border-0`}>
@@ -155,8 +146,8 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
         )}
       </CardContent>
 
-      <CardFooter className="relative z-10">
-        <Button 
+      <CardFooter className="relative z-10 mt-auto">
+        <Button
           disabled={isLocked}
           className={`w-full gap-2 pointer-events-none ${
             !isLocked 
