@@ -1246,6 +1246,66 @@ export type Database = {
           },
         ]
       }
+      parent_session_tags: {
+        Row: {
+          created_at: string | null
+          id: string
+          session_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          session_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          session_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_session_tags_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "parent_coaching_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_session_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "parent_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parent_tags: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string
