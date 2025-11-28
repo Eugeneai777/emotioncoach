@@ -10,14 +10,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const childTypes = [
-  { emoji: '🌧️', label: '抑郁/情绪低落', value: 'depression' },
-  { emoji: '📚', label: '不愿上学/学业拒绝', value: 'school_refusal' },
-  { emoji: '📱', label: '网瘾/手机沉迷', value: 'addiction' },
-  { emoji: '💢', label: '脾气暴躁/叛逆冲突', value: 'rebellion' },
-  { emoji: '🙈', label: '自卑/内向不愿社交', value: 'introvert' },
-  { emoji: '📖', label: '学习焦虑/完美主义', value: 'anxiety' },
-  { emoji: '👥', label: '社交冲突/被排挤', value: 'social' },
-  { emoji: '🏠', label: '家庭情绪失控', value: 'family' }
+  { emoji: '🌧️', label: '抑郁 / 情绪低落', value: 'depression' },
+  { emoji: '📚', label: '不愿上学 / 学业拒绝', value: 'school_refusal' },
+  { emoji: '📱', label: '网瘾 / 手机沉迷', value: 'addiction' },
+  { emoji: '💢', label: '脾气暴躁 / 叛逆冲突', value: 'rebellion' },
+  { emoji: '🙈', label: '自卑 / 内向不愿社交', value: 'introvert' },
+  { emoji: '📖', label: '学习焦虑 / 完美主义', value: 'anxiety' },
+  { emoji: '👥', label: '社交冲突 / 被排挤', value: 'social' },
+  { emoji: '🏠', label: '家庭情绪失控（父母容易爆炸）', value: 'family' }
 ];
 
 export default function ParentCampLanding() {
@@ -106,6 +106,39 @@ export default function ParentCampLanding() {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* 这个训练营专为青少年父母而设计 */}
+      <section className="container mx-auto px-4 py-16 bg-gradient-to-b from-background to-amber-50/20">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+              💛 这个训练营专为「青少年父母」而设计
+            </h2>
+          </div>
+          
+          <Card className="bg-card/80 backdrop-blur-sm">
+            <CardContent className="pt-8 space-y-6 text-center">
+              <p className="text-xl text-muted-foreground leading-relaxed">
+                孩子的问题看似不同，但本质只有一件事：
+              </p>
+              <p className="text-2xl font-semibold text-foreground leading-relaxed">
+                孩子正在情绪风暴里，用行为向你"求助"。
+              </p>
+              <p className="text-xl text-muted-foreground leading-relaxed">
+                我们会教你一种全新的方式：
+              </p>
+              <p className="text-lg text-muted-foreground">
+                不是说教、不是逼迫、不是争吵，而是：
+              </p>
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-200">
+                <p className="text-2xl font-bold text-amber-800">
+                  ⭐ 「父母先稳，孩子才愿意走向你。」
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
@@ -661,59 +694,50 @@ export default function ParentCampLanding() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              你将获得
+              你将获得：
             </h2>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* 核心内容 */}
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">📅</span>
-                  <span className="text-lg font-medium">21天 × AI陪伴</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">📝</span>
-                  <span className="text-lg">每天一次情绪梳理（四部曲＋微行动）</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">🧘</span>
-                  <span className="text-lg">每天一次父母稳定练习</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">💚</span>
-                  <span className="text-lg">每天一次关系修复行动</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">🤖</span>
-                  <span className="text-lg font-medium">四大智能AI教练</span>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* 专属服务 */}
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">🎯</span>
-                  <span className="text-lg">针对孩子八大类型的专属路径</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">⏱️</span>
-                  <span className="text-lg font-semibold text-emerald-600">每天仅需10分钟</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">📋</span>
-                  <span className="text-lg">一套可复制的亲子沟通脚本</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">🔄</span>
-                  <span className="text-lg">一套可持续使用的家庭情绪系统</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardContent className="pt-8 space-y-4">
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-500 text-xl">•</span>
+                <span className="text-lg">21天 × AI陪伴</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-500 text-xl">•</span>
+                <span className="text-lg">每天一次情绪梳理（四部曲＋微行动）</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-500 text-xl">•</span>
+                <span className="text-lg">每天一次父母稳定练习</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-500 text-xl">•</span>
+                <span className="text-lg">每天一次关系修复行动</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-500 text-xl">•</span>
+                <span className="text-lg">四大智能AI教练</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-500 text-xl">•</span>
+                <span className="text-lg">针对孩子八大类型的专属路径</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-500 text-xl">•</span>
+                <span className="text-lg font-semibold text-emerald-600">每天仅需10分钟</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-500 text-xl">•</span>
+                <span className="text-lg">一套可复制的亲子沟通脚本</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-emerald-500 text-xl">•</span>
+                <span className="text-lg">一套可持续使用的家庭情绪系统</span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
@@ -722,11 +746,8 @@ export default function ParentCampLanding() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              ❓ 常见问题
+              ❓ 常见问题（父母最关心的）
             </h2>
-            <p className="text-lg text-muted-foreground">
-              父母最关心的
-            </p>
           </div>
 
           <Accordion type="single" collapsible className="w-full space-y-4">
