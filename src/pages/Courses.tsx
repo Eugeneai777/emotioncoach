@@ -6,16 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, 
   Search,
   Video,
   Heart,
   ExternalLink,
-  BookOpen
+  BookOpen,
+  User
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { PersonalCourseZone } from "@/components/courses/PersonalCourseZone";
 
 interface Course {
   id: string;
@@ -33,6 +36,7 @@ const Courses = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<"personal" | "all">("personal");
 
   // 获取课程列表
   const { data: courses = [], isLoading } = useQuery({
@@ -93,15 +97,30 @@ const Courses = () => {
   });
 
   // 处理观看
-  const handleWatch = async (course: Course) => {
+  const handleWatch = async (videoUrlOrCourse: string | Course, courseId?: string) => {
     if (!user) {
       toast.error("请先登录");
       navigate("/auth");
       return;
     }
 
+    // 判断是传入的 Course 对象还是 URL + ID
+    let videoUrl: string;
+    let videoId: string;
+    
+    if (typeof videoUrlOrCourse === 'string') {
+      // 新的调用方式：handleWatch(videoUrl, courseId)
+      videoUrl = videoUrlOrCourse;
+      videoId = courseId!;
+    } else {
+      // 旧的调用方式：handleWatch(course)
+      const course = videoUrlOrCourse;
+      videoUrl = course.video_url;
+      videoId = course.id;
+    }
+
     // 先打开视频（同步操作，避免被弹窗拦截）
-    const newWindow = window.open(course.video_url, '_blank');
+    const newWindow = window.open(videoUrl, '_blank');
     
     if (newWindow) {
       toast.success("视频已在新标签页打开");
@@ -109,7 +128,7 @@ const Courses = () => {
       toast.error("弹窗被拦截，请允许浏览器弹窗", {
         action: {
           label: "点击打开",
-          onClick: () => window.open(course.video_url, '_blank'),
+          onClick: () => window.open(videoUrl, '_blank'),
         },
       });
     }
@@ -120,7 +139,7 @@ const Courses = () => {
         .from('video_watch_history')
         .insert({
           user_id: user.id,
-          video_id: course.id,
+          video_id: videoId,
           watched_at: new Date().toISOString(),
           completed: false
         });
@@ -223,114 +242,133 @@ const Courses = () => {
 
       {/* Main Content */}
       <main className="container max-w-7xl mx-auto px-4 py-8">
-        {/* 类别筛选 */}
-        <div className="flex flex-wrap gap-2 mb-8 justify-center">
-          {categories.map(category => (
-            <Button
-              key={category.id}
-              variant={activeCategory === category.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveCategory(category.id)}
-              className="gap-2"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              {category.name}
-              <Badge variant="secondary" className="ml-1 text-xs">
-                {category.count}
-              </Badge>
-            </Button>
-          ))}
-        </div>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "personal" | "all")} className="w-full">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+            <TabsTrigger value="personal" className="gap-2">
+              <User className="w-4 h-4" />
+              个人专区
+            </TabsTrigger>
+            <TabsTrigger value="all" className="gap-2">
+              <BookOpen className="w-4 h-4" />
+              全部课程
+            </TabsTrigger>
+          </TabsList>
 
-        {/* 课程网格 */}
-        {filteredCourses.length === 0 ? (
-          <div className="text-center py-16">
-            <Video className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-            <p className="text-muted-foreground">暂无符合条件的课程</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCourses.map((course, index) => {
-              const isFavorited = favorites.includes(course.id);
-              
-              return (
-                <Card
-                  key={course.id}
-                  className="group cursor-pointer bg-card/60 backdrop-blur-sm border-2 hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 hover:shadow-xl rounded-2xl overflow-hidden animate-fade-in"
-                  style={{ animationDelay: `${index * 30}ms` }}
+          <TabsContent value="personal">
+            <PersonalCourseZone onWatchCourse={handleWatch} />
+          </TabsContent>
+
+          <TabsContent value="all">
+            {/* 类别筛选 */}
+            <div className="flex flex-wrap gap-2 mb-8 justify-center">
+              {categories.map(category => (
+                <Button
+                  key={category.id}
+                  variant={activeCategory === category.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setActiveCategory(category.id)}
+                  className="gap-2"
                 >
-                  <CardHeader className="relative pb-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-2">
-                          {course.title}
-                        </CardTitle>
-                        {course.category && (
-                          <Badge variant="secondary" className="mt-2 text-xs">
-                            {course.category}
-                          </Badge>
-                        )}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="flex-shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleFavorite(course.id);
-                        }}
-                      >
-                        <Heart
-                          className={`w-5 h-5 transition-colors ${
-                            isFavorited ? 'fill-red-500 text-red-500' : 'text-muted-foreground'
-                          }`}
-                        />
-                      </Button>
-                    </div>
-                  </CardHeader>
+                  <BookOpen className="w-3.5 h-3.5" />
+                  {category.name}
+                  <Badge variant="secondary" className="ml-1 text-xs">
+                    {category.count}
+                  </Badge>
+                </Button>
+              ))}
+            </div>
+
+            {/* 课程网格 */}
+            {filteredCourses.length === 0 ? (
+              <div className="text-center py-16">
+                <Video className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+                <p className="text-muted-foreground">暂无符合条件的课程</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCourses.map((course, index) => {
+                  const isFavorited = favorites.includes(course.id);
                   
-                  <CardContent className="space-y-4">
-                    {course.description && (
-                      <CardDescription className="text-sm leading-relaxed line-clamp-3">
-                        {course.description}
-                      </CardDescription>
-                    )}
-
-                    {course.tags && course.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {course.tags.slice(0, 4).map(tag => (
-                          <Badge key={tag} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {course.tags.length > 4 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{course.tags.length - 4}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-
-                    <Button
-                      onClick={() => handleWatch(course)}
-                      className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg"
+                  return (
+                    <Card
+                      key={course.id}
+                      className="group cursor-pointer bg-card/60 backdrop-blur-sm border-2 hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 hover:shadow-xl rounded-2xl overflow-hidden animate-fade-in"
+                      style={{ animationDelay: `${index * 30}ms` }}
                     >
-                      <Video className="w-4 h-4" />
-                      观看课程
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </Button>
+                      <CardHeader className="relative pb-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-2">
+                              {course.title}
+                            </CardTitle>
+                            {course.category && (
+                              <Badge variant="secondary" className="mt-2 text-xs">
+                                {course.category}
+                              </Badge>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="flex-shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleFavorite(course.id);
+                            }}
+                          >
+                            <Heart
+                              className={`w-5 h-5 transition-colors ${
+                                isFavorited ? 'fill-red-500 text-red-500' : 'text-muted-foreground'
+                              }`}
+                            />
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      
+                      <CardContent className="space-y-4">
+                        {course.description && (
+                          <CardDescription className="text-sm leading-relaxed line-clamp-3">
+                            {course.description}
+                          </CardDescription>
+                        )}
 
-                    {course.source && (
-                      <p className="text-xs text-muted-foreground text-center">
-                        来源：{course.source}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+                        {course.tags && course.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {course.tags.slice(0, 4).map(tag => (
+                              <Badge key={tag} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                            {course.tags.length > 4 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{course.tags.length - 4}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+
+                        <Button
+                          onClick={() => handleWatch(course)}
+                          className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg"
+                        >
+                          <Video className="w-4 h-4" />
+                          观看课程
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </Button>
+
+                        {course.source && (
+                          <p className="text-xs text-muted-foreground text-center">
+                            来源：{course.source}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
