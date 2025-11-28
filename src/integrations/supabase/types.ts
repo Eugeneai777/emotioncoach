@@ -1158,6 +1158,91 @@ export type Database = {
           },
         ]
       }
+      parent_coaching_sessions: {
+        Row: {
+          briefing_id: string | null
+          camp_id: string | null
+          child_type: string | null
+          conversation_id: string | null
+          created_at: string | null
+          current_stage: number | null
+          event_description: string | null
+          feel_it: Json | null
+          id: string
+          micro_action: string | null
+          see_it: Json | null
+          sense_it: Json | null
+          stage_selections: Json | null
+          status: string | null
+          summary: string | null
+          transform_it: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          briefing_id?: string | null
+          camp_id?: string | null
+          child_type?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          current_stage?: number | null
+          event_description?: string | null
+          feel_it?: Json | null
+          id?: string
+          micro_action?: string | null
+          see_it?: Json | null
+          sense_it?: Json | null
+          stage_selections?: Json | null
+          status?: string | null
+          summary?: string | null
+          transform_it?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          briefing_id?: string | null
+          camp_id?: string | null
+          child_type?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          current_stage?: number | null
+          event_description?: string | null
+          feel_it?: Json | null
+          id?: string
+          micro_action?: string | null
+          see_it?: Json | null
+          sense_it?: Json | null
+          stage_selections?: Json | null
+          status?: string | null
+          summary?: string | null
+          transform_it?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_coaching_sessions_briefing_id_fkey"
+            columns: ["briefing_id"]
+            isOneToOne: false
+            referencedRelation: "briefings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_coaching_sessions_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_coaching_sessions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_comments: {
         Row: {
           content: string
