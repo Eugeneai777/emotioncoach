@@ -47,20 +47,41 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
     <Card 
       className={`group relative overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl animate-in fade-in-50 slide-in-from-bottom-4 ${
         isLocked ? 'opacity-60' : 'cursor-pointer'
-      }`}
+      } ${isBloomCamp ? 'ring-2 ring-purple-200/50 shadow-[0_0_30px_rgba(168,85,247,0.1)]' : ''}`}
       style={{ animationDelay: `${index * 150}ms` }}
       onClick={!isLocked ? onClick : undefined}
     >
       {/* 封面背景 */}
-      <div className={`relative h-32 bg-gradient-to-br ${camp.gradient} overflow-hidden`}>
+      <div className={`relative ${isBloomCamp ? 'h-40' : 'h-32'} bg-gradient-to-br ${camp.gradient} overflow-hidden`}>
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.3),transparent)]" />
+        
+        {/* 绽放系列装饰图案 */}
+        {isBloomCamp && (
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-1/2 right-4 w-24 h-24 border-2 border-white/30 rounded-full" />
+            <div className="absolute top-1/2 right-8 w-16 h-16 border border-white/20 rounded-full" />
+          </div>
+        )}
+        
+        {/* 绽放系列徽章 */}
+        {isBloomCamp && (
+          <div className="absolute top-3 left-3 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-purple-600 shadow-sm">
+            ✨ 绽放系列
+          </div>
+        )}
+        
         <div className="absolute top-3 right-3 flex gap-2">
-          {isPopular && (
+          {isBloomCamp && (
+            <div className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-purple-600 shadow-sm">
+              🎯 深度转化
+            </div>
+          )}
+          {!isBloomCamp && isPopular && (
             <div className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-orange-600 shadow-sm">
               🔥 热门
             </div>
           )}
-          {isRecommended && (
+          {!isBloomCamp && isRecommended && (
             <div className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-purple-600 shadow-sm">
               ⭐ 推荐
             </div>
@@ -86,11 +107,9 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
         <p className="text-muted-foreground leading-relaxed">{camp.description}</p>
         
         <div className="flex flex-wrap gap-2">
-          {!['emotion_bloom', 'identity_bloom'].includes(camp.camp_type) && (
-            <Badge className={`bg-gradient-to-r ${camp.gradient} text-white border-0`}>
-              {camp.duration_days}天
-            </Badge>
-          )}
+          <Badge className={`bg-gradient-to-r ${camp.gradient} text-white border-0`}>
+            {camp.duration_days}天
+          </Badge>
           {camp.stages && camp.stages.length > 0 && (
             <Badge variant="outline">
               {camp.stages.length}阶课程
@@ -117,9 +136,15 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
       <CardFooter className="relative z-10">
         <Button 
           disabled={isLocked}
-          className={`w-full gap-2 pointer-events-none ${!isLocked ? `bg-gradient-to-r ${camp.gradient} hover:opacity-90 text-white` : ''}`}
+          className={`w-full gap-2 pointer-events-none ${
+            !isLocked 
+              ? isBloomCamp
+                ? 'bg-gradient-to-r from-purple-500 via-purple-600 to-purple-500 bg-[length:200%_100%] animate-shimmer text-white hover:opacity-90'
+                : `bg-gradient-to-r ${camp.gradient} hover:opacity-90 text-white`
+              : ''
+          }`}
         >
-          {isLocked ? '暂未解锁' : '了解详情'}
+          {isLocked ? '暂未解锁' : isBloomCamp ? '✨ 开启绽放之旅' : '了解详情'}
           {!isLocked && <ArrowRight className="w-4 h-4" />}
         </Button>
       </CardFooter>

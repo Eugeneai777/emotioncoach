@@ -141,6 +141,14 @@ export default {
             "border-color": "hsl(300, 100%, 65%)",
           },
         },
+        "shimmer": {
+          "0%": {
+            "background-position": "200% 0",
+          },
+          "100%": {
+            "background-position": "-200% 0",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -148,6 +156,7 @@ export default {
         "rainbow-flow": "rainbow-flow 3s ease infinite",
         "rainbow-spin": "rainbow-spin 2s ease-in-out infinite",
         "rainbow-border": "rainbow-border 3s linear infinite",
+        "shimmer": "shimmer 3s ease-in-out infinite",
       },
     },
   },
