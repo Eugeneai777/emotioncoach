@@ -182,14 +182,14 @@ const CommunityWaterfall = () => {
         if (useRecommendation && pageNum === 0 && filter === 'all') {
           const recommendedIds = await loadRecommendedPosts();
           if (recommendedIds && recommendedIds.length > 0) {
-            query = query.in('id', recommendedIds).limit(POSTS_PER_PAGE);
+            query = query
+              .in('id', recommendedIds)
+              .order('created_at', { ascending: false })
+              .limit(POSTS_PER_PAGE);
           } else {
             query = query.order('created_at', { ascending: false })
               .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
           }
-        } else {
-          query = query.order('created_at', { ascending: false })
-            .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
         }
       }
 
