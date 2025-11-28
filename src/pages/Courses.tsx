@@ -226,17 +226,6 @@ const Courses = () => {
             </div>
             <div className="w-[80px]"></div>
           </div>
-
-          {/* 搜索框 */}
-          <div className="relative max-w-xl mx-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="搜索课程标题、描述或标签..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-background/80 backdrop-blur-sm"
-            />
-          </div>
         </div>
       </header>
 
@@ -259,6 +248,17 @@ const Courses = () => {
           </TabsContent>
 
           <TabsContent value="all">
+            {/* 搜索框 */}
+            <div className="relative max-w-xl mx-auto mb-6">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="搜索课程标题、描述或标签..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-background/80 backdrop-blur-sm"
+              />
+            </div>
+
             {/* 类别筛选 */}
             <div className="flex flex-wrap gap-2 mb-8 justify-center">
               {categories.map(category => (
