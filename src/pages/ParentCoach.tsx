@@ -155,13 +155,14 @@ export default function ParentCoach() {
 
   useEffect(() => {
     const initSession = async () => {
-      if (!session && user) {
+      if (!session && user && !isLoading) {
         await createSession(campId || undefined);
       }
     };
     
     initSession();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, session, isLoading]);
 
   const loadVoiceConfig = async () => {
     try {
