@@ -117,19 +117,18 @@ const CampVideoTasks = ({ campId, date = new Date(), briefingData }: CampVideoTa
                   <span className="text-xs text-muted-foreground">
                     匹配度 {rec.match_score}%
                   </span>
-                  {rec.is_completed ? (
+                  {rec.is_completed && (
                     <span className="text-xs text-primary">✓ 已观看</span>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 text-xs"
-                      onClick={() => handleWatch(rec.id, rec.video_id, rec.video_url)}
-                    >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      点击观看
-                    </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs"
+                    onClick={() => handleWatch(rec.id, rec.video_id, rec.video_url)}
+                  >
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    {rec.is_completed ? "再次观看" : "点击观看"}
+                  </Button>
                 </div>
               </div>
             </div>
