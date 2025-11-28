@@ -55,6 +55,7 @@ const Index = () => {
   const [autoDismissSeconds, setAutoDismissSeconds] = useState(10);
   const [showCheckInSuccess, setShowCheckInSuccess] = useState(false);
   const [checkInSuccessData, setCheckInSuccessData] = useState<any>(null);
+  const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [voiceConfig, setVoiceConfig] = useState<{
     gender: 'male' | 'female';
     rate: number;
@@ -80,7 +81,7 @@ const Index = () => {
     notifications, 
     loading: notificationsLoading,
     markAsRead, 
-    markAsDismissed,
+    deleteNotification,
     triggerNotification 
   } = useSmartNotification();
   const {
@@ -887,19 +888,32 @@ const Index = () => {
                         暂无新提醒
                       </p>
                     ) : (
-                      <div className="space-y-2">
-                        {notifications.slice(0, 3).map((notification) => (
-                          <NotificationCard
-                            key={notification.id}
-                            notification={notification}
-                            onClick={() => markAsRead(notification.id)}
-                            onDismiss={() => markAsDismissed(notification.id)}
-                          />
-                        ))}
+                      <div className="space-y-3">
+                        <NotificationCard
+                          key={notifications[currentNotificationIndex].id}
+                          notification={notifications[currentNotificationIndex]}
+                          onClick={() => markAsRead(notifications[currentNotificationIndex].id)}
+                          onDelete={() => {
+                            deleteNotification(notifications[currentNotificationIndex].id);
+                            if (currentNotificationIndex >= notifications.length - 1) {
+                              setCurrentNotificationIndex(0);
+                            }
+                          }}
+                        />
                         
-                        {notifications.length > 3 && (
-                          <div className="w-full text-sm text-muted-foreground text-center py-2 border-t border-border/50">
-                            还有 {notifications.length - 3} 条通知，点击右上角 🔔 查看
+                        {notifications.length > 1 && (
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="text-xs text-muted-foreground">
+                              {currentNotificationIndex + 1} / {notifications.length}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentNotificationIndex((prev) => (prev + 1) % notifications.length)}
+                              className="h-7 text-xs"
+                            >
+                              下一条
+                            </Button>
                           </div>
                         )}
                       </div>

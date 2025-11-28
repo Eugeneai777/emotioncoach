@@ -70,28 +70,23 @@ export const useSmartNotification = () => {
     }
   }, []);
 
-  // 标记为已忽略
-  const markAsDismissed = useCallback(async (notificationId: string) => {
+  // 删除通知
+  const deleteNotification = useCallback(async (notificationId: string) => {
     try {
       const { error } = await supabase
         .from('smart_notifications')
-        .update({ 
-          is_dismissed: true,
-          dismissed_at: new Date().toISOString()
-        })
+        .delete()
         .eq('id', notificationId);
 
       if (error) throw error;
 
-      setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, is_dismissed: true } : n)
-      );
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
       const wasUnread = notifications.find(n => n.id === notificationId && !n.is_read);
       if (wasUnread) {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
     } catch (error) {
-      console.error('忽略通知失败:', error);
+      console.error('删除通知失败:', error);
     }
   }, [notifications]);
 
@@ -160,7 +155,7 @@ export const useSmartNotification = () => {
     unreadCount,
     loading,
     markAsRead,
-    markAsDismissed,
+    deleteNotification,
     triggerNotification,
     refresh: loadNotifications
   };

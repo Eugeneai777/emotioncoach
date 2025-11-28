@@ -9,14 +9,14 @@ import { NotificationCard } from './NotificationCard';
 
 export const SmartNotificationCenter = () => {
   const [open, setOpen] = useState(false);
-  const { notifications, unreadCount, loading, markAsRead, markAsDismissed } = useSmartNotification();
+  const { notifications, unreadCount, loading, markAsRead, deleteNotification } = useSmartNotification();
 
   const handleNotificationClick = (notificationId: string) => {
     markAsRead(notificationId);
   };
 
-  const handleDismiss = (notificationId: string) => {
-    markAsDismissed(notificationId);
+  const handleDelete = (notificationId: string) => {
+    deleteNotification(notificationId);
   };
 
   return (
@@ -64,7 +64,7 @@ export const SmartNotificationCenter = () => {
                   key={notification.id}
                   notification={notification}
                   onClick={() => handleNotificationClick(notification.id)}
-                  onDismiss={() => handleDismiss(notification.id)}
+                  onDelete={() => handleDelete(notification.id)}
                 />
               ))}
             </div>
