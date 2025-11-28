@@ -40,9 +40,10 @@ export function CampTemplateCard({ camp, index, onClick }: CampTemplateCardProps
   return (
     <Card 
       className={`group relative overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl animate-in fade-in-50 slide-in-from-bottom-4 ${
-        isLocked ? 'opacity-60' : ''
+        isLocked ? 'opacity-60' : 'cursor-pointer'
       }`}
       style={{ animationDelay: `${index * 150}ms` }}
+      onClick={!isLocked ? onClick : undefined}
     >
       <div className={`absolute inset-0 bg-gradient-to-br ${camp.gradient} opacity-10 group-hover:opacity-20 transition-opacity duration-300`} />
       
@@ -85,9 +86,8 @@ export function CampTemplateCard({ camp, index, onClick }: CampTemplateCardProps
 
       <CardFooter className="relative z-10">
         <Button 
-          onClick={onClick}
           disabled={isLocked}
-          className={`w-full gap-2 ${!isLocked ? `bg-gradient-to-r ${camp.gradient} hover:opacity-90 text-white` : ''}`}
+          className={`w-full gap-2 pointer-events-none ${!isLocked ? `bg-gradient-to-r ${camp.gradient} hover:opacity-90 text-white` : ''}`}
         >
           {isLocked ? '暂未解锁' : '了解详情'}
           {!isLocked && <ArrowRight className="w-4 h-4" />}
