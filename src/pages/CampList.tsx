@@ -136,12 +136,12 @@ const CampList = () => {
 
         {/* Tabs */}
         <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8 h-auto p-1.5 bg-card/50 backdrop-blur-sm rounded-full">
-            {campCategories.map(category => <TabsTrigger key={category.id} value={category.id} className={cn("rounded-full transition-all duration-300 gap-2 py-3 px-6", "data-[state=active]:text-white data-[state=active]:shadow-lg", category.id === 'youjin' && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-500", category.id === 'bloom' && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500")}>
-                <span className="text-lg">{category.emoji}</span>
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2 mb-10 h-auto p-2 bg-card/50 backdrop-blur-sm rounded-2xl">
+            {campCategories.map(category => <TabsTrigger key={category.id} value={category.id} className={cn("rounded-xl transition-all duration-300 gap-3 py-5 px-8", "data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105", category.id === 'youjin' && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-500", category.id === 'bloom' && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500")}>
+                <span className="text-3xl">{category.emoji}</span>
                 <div className="flex flex-col items-start">
-                  <span className="font-semibold text-sm">{category.name}</span>
-                  <span className="text-xs opacity-90">{category.subtitle}</span>
+                  <span className="font-bold text-base">{category.name}</span>
+                  <span className="text-sm opacity-90">{category.subtitle}</span>
                 </div>
               </TabsTrigger>)}
           </TabsList>
