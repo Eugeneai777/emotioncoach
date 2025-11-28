@@ -23,6 +23,7 @@ import AICoach from "./pages/AICoach";
 import CampIntro from "./pages/CampIntro";
 import CampList from "./pages/CampList";
 import CampCheckIn from "./pages/CampCheckIn";
+import ParentCampLanding from "./pages/ParentCampLanding";
 import UserProfile from "./pages/UserProfile";
 import Introduction from "./pages/Introduction";
 import UserManual from "./pages/UserManual";
@@ -56,6 +57,7 @@ const App = () => (
           <Route path="/community" element={<Community />} />
           <Route path="/ai-coach" element={<AICoach />} />
           <Route path="/camps" element={<CampList />} />
+          <Route path="/parent-camp" element={<ParentCampLanding />} />
           <Route path="/camp-intro/:campType" element={<CampIntro />} />
           <Route path="/camp/:campId" element={<TrainingCampDetail />} />
           <Route path="/camp-checkin/:campId" element={<CampCheckIn />} />
