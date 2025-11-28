@@ -67,25 +67,6 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
-
-    /* Module colors */
-    --chart-1: 263 70% 58%;   /* 紫色 - 教练空间 */
-    --chart-2: 168 65% 45%;   /* 青绿 - 成长工具 */
-    --chart-3: 210 80% 55%;   /* 蓝色 - 课程学习 */
-    --chart-4: 28 85% 55%;    /* 橙色 - 训练营 */
-
-    /* Gradient colors for module banners */
-    --gradient-purple-start: 262 83% 58%;
-    --gradient-purple-end: 330 81% 60%;
-    --gradient-green-start: 142 76% 36%;
-    --gradient-green-end: 142 71% 45%;
-    --gradient-blue-start: 217 91% 60%;
-    --gradient-blue-end: 213 94% 68%;
-    --gradient-orange-start: 38 92% 50%;
-    --gradient-orange-end: 43 96% 56%;
-    
-    /* Warm background */
-    --warm-bg: 30 40% 97%;
   }
 
   .dark {
@@ -131,25 +112,6 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 45 35% 90%;
     --sidebar-border: 150 12% 26%;
     --sidebar-ring: 150 45% 52%;
-
-    /* Module colors - dark mode */
-    --chart-1: 263 65% 65%;   /* 紫色 */
-    --chart-2: 168 60% 50%;   /* 青绿 */
-    --chart-3: 210 75% 60%;   /* 蓝色 */
-    --chart-4: 28 80% 60%;    /* 橙色 */
-
-    /* Gradient colors for module banners - dark mode */
-    --gradient-purple-start: 262 80% 65%;
-    --gradient-purple-end: 330 75% 65%;
-    --gradient-green-start: 142 70% 45%;
-    --gradient-green-end: 142 65% 55%;
-    --gradient-blue-start: 217 85% 65%;
-    --gradient-blue-end: 213 90% 72%;
-    --gradient-orange-start: 38 88% 58%;
-    --gradient-orange-end: 43 92% 62%;
-    
-    /* Warm background - dark mode */
-    --warm-bg: 30 15% 18%;
   }
 }
 
