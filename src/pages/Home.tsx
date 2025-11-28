@@ -97,9 +97,14 @@ const Home = () => {
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-foreground">
-              有劲生活馆
-            </h1>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">
+                有劲生活馆
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                个人成长操作系统（Growth OS）
+              </p>
+            </div>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
