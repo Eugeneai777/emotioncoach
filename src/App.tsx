@@ -25,6 +25,7 @@ import CampList from "./pages/CampList";
 import CampTemplateDetail from "./pages/CampTemplateDetail";
 import CampCheckIn from "./pages/CampCheckIn";
 import ParentCampLanding from "./pages/ParentCampLanding";
+import ParentCampManual from "./pages/ParentCampManual";
 import UserProfile from "./pages/UserProfile";
 import Introduction from "./pages/Introduction";
 import UserManual from "./pages/UserManual";
@@ -60,6 +61,7 @@ const App = () => (
           <Route path="/camps" element={<CampList />} />
           <Route path="/camp-template/:templateId" element={<CampTemplateDetail />} />
           <Route path="/parent-camp" element={<ParentCampLanding />} />
+          <Route path="/parent-camp-manual" element={<ParentCampManual />} />
           <Route path="/camp-intro/:campType" element={<CampIntro />} />
           <Route path="/camp/:campId" element={<TrainingCampDetail />} />
           <Route path="/camp-checkin/:campId" element={<CampCheckIn />} />
