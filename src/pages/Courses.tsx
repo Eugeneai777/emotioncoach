@@ -36,7 +36,7 @@ const Courses = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState<"personal" | "all">("personal");
+  const [activeTab, setActiveTab] = useState<"personal" | "all">("all");
 
   // 获取课程列表
   const { data: courses = [], isLoading } = useQuery({
@@ -244,13 +244,13 @@ const Courses = () => {
       <main className="container max-w-7xl mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "personal" | "all")} className="w-full">
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
-            <TabsTrigger value="personal" className="gap-2">
-              <User className="w-4 h-4" />
-              个人专区
-            </TabsTrigger>
             <TabsTrigger value="all" className="gap-2">
               <BookOpen className="w-4 h-4" />
               全部课程
+            </TabsTrigger>
+            <TabsTrigger value="personal" className="gap-2">
+              <User className="w-4 h-4" />
+              个人专区
             </TabsTrigger>
           </TabsList>
 
