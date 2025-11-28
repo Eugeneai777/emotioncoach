@@ -19,7 +19,7 @@ const CampList = () => {
         .order('display_order');
       
       if (error) throw error;
-      return data as CampTemplate[];
+      return data as unknown as CampTemplate[];
     }
   });
 

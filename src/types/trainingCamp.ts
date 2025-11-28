@@ -51,6 +51,19 @@ export interface GoalTemplate {
   updated_at: string;
 }
 
+export interface CampStage {
+  stage: number;
+  title: string;
+  lessons: string[];
+}
+
+export interface LearningFormat {
+  type: string;
+  title: string;
+  description: string;
+  icon: string;
+}
+
 export interface CampTemplate {
   id: string;
   camp_type: string;
@@ -61,8 +74,8 @@ export interface CampTemplate {
   theme_color: string;
   gradient: string;
   icon: string;
-  stages?: any[];
-  learning_formats?: string[];
+  stages?: CampStage[];
+  learning_formats?: LearningFormat[];
   prerequisites?: {
     required_camp?: string;
     message?: string;
