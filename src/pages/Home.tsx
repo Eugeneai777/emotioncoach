@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { ModuleCard } from "@/components/home/ModuleCard";
-import { Settings, LogOut, Sparkles } from "lucide-react";
+import { Settings, LogOut, User, Brain, Wrench, BookOpen, Target } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,80 +62,74 @@ const Home = () => {
 
   const modules = [
     {
-      icon: "🤖",
-      title: "AI 教练层",
-      description: "个性化指导，智能分析，陪伴你的每一次成长",
+      icon: Brain,
+      title: "教练空间",
+      description: "AI 教练陪伴，个性化指导与智能分析",
       route: "/ai-coach",
-      gradient: "from-purple-500 to-blue-500",
+      color: "chart-1",
       stats: stats ? {
         label: "次对话",
-        value: `${stats.conversations}+`
+        value: `${stats.conversations}`
       } : undefined
     },
     {
-      icon: "🛠️",
-      title: "成长工具层",
-      description: "16种实用工具，支持日常情绪管理和自我成长",
+      icon: Wrench,
+      title: "成长工具",
+      description: "16 种实用工具，支持日常情绪管理",
       route: "/energy-studio",
-      gradient: "from-teal-500 to-emerald-500",
+      color: "chart-2",
       stats: {
         label: "个工具",
         value: "16"
       }
     },
     {
-      icon: "📚",
-      title: "课程学习层",
-      description: "系统化学习，基于情绪状态的个性化推荐",
+      icon: BookOpen,
+      title: "课程学习",
+      description: "系统化课程，基于情绪状态智能推荐",
       route: "/courses",
-      gradient: "from-blue-500 to-cyan-500",
+      color: "chart-3",
       stats: stats ? {
         label: "门课程",
         value: `${stats.courses}`
       } : undefined
     },
     {
-      icon: "🎯",
-      title: "行动训练层",
-      description: "训练营与目标挑战，将知识转化为行动",
+      icon: Target,
+      title: "训练营",
+      description: "21 天情绪日记训练营，知识转化行动",
       route: "/camp-intro",
-      gradient: "from-orange-500 to-red-500",
+      color: "chart-4",
       stats: stats ? {
         label: "天打卡",
-        value: `${stats.campDays}+`
+        value: `${stats.campDays}`
       } : undefined
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
-        <div className="container max-w-5xl mx-auto px-4 py-4">
+      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="container max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
-                有劲生活馆
-              </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                AI 教练驱动的成长操作系统
-              </p>
-            </div>
+            <h1 className="text-2xl font-bold text-foreground">
+              有劲生活馆
+            </h1>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Settings className="w-4 h-4" />
-                  <span className="hidden sm:inline">设置</span>
+                <Button variant="ghost" size="icon">
+                  <User className="w-5 h-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-popover/95 backdrop-blur-sm border-2 z-50">
+              <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => navigate("/settings")}>
                   <Settings className="w-4 h-4 mr-2" />
                   个人设置
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/user-profile")}>
-                  <Sparkles className="w-4 h-4 mr-2" />
+                  <User className="w-4 h-4 mr-2" />
                   我的资料
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -150,24 +144,20 @@ const Home = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container max-w-5xl mx-auto px-4 py-6">
+      <main className="container max-w-6xl mx-auto px-6 py-12">
         {/* Hero Section */}
-        <section className="text-center mb-8 space-y-3 animate-fade-in">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-            <Sparkles className="w-3.5 h-3.5" />
-            Growth Operating System
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent leading-tight">
-            欢迎回来，开启今日成长之旅
+        <section className="text-center mb-12 space-y-2 animate-fade-in">
+          <h2 className="text-4xl font-bold text-foreground">
+            欢迎回来
           </h2>
-          <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-            四大模块协同工作，AI 教练全程陪伴
+          <p className="text-muted-foreground">
+            选择一个模块开始今日成长
           </p>
         </section>
 
         {/* Module Cards */}
         <section>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             {modules.map((module, index) => (
               <ModuleCard
                 key={index}
