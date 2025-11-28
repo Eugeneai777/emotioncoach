@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { title, emotionTheme, campName, day } = await req.json();
+    const { title, emotionTheme, campName, day, style } = await req.json();
 
     if (!title) {
       return new Response(
@@ -31,22 +31,56 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // 风格映射对象
+    const stylePrompts: Record<string, string> = {
+      // 基础风格
+      warm: "Warm, healing illustration style with soft, harmonious pastel colors. Gentle and comforting atmosphere.",
+      minimal: "Minimalist, clean design with fresh pastel tones. Simple shapes, lots of white space, modern aesthetic.",
+      anime: "Japanese anime/manga illustration style. Kawaii aesthetic with soft lighting and cute elements.",
+      watercolor: "Artistic watercolor painting style with soft brushstrokes. Flowing colors and dreamy textures.",
+      
+      // 自然风光
+      nature: "Beautiful nature scenery in photography style. Landscapes, flowers, or peaceful outdoor scenes.",
+      sunset: "Golden sunset scenery with warm orange, pink and purple hues. Silhouettes against a glowing sky, romantic atmosphere.",
+      ocean: "Peaceful ocean and beach scene. Calm turquoise blue waters, gentle waves, white sand, serene coastal atmosphere.",
+      forest: "Mystical forest scene with sunlight filtering through tall trees. Lush green foliage, peaceful and enchanting.",
+      countryside: "Idyllic countryside landscape. Rolling green hills, farms, wildflowers, peaceful rural life under blue sky.",
+      
+      // 艺术风格
+      geometric: "Modern geometric shapes with beautiful gradient colors. Abstract, contemporary design with clean lines.",
+      vintage: "Vintage film photography style. Nostalgic warm tones, film grain texture, retro 70s-80s feel.",
+      oilpainting: "Classical oil painting style. Rich textures, impressionist brush strokes, artistic masterpiece feel.",
+      chinese: "Traditional Chinese ink wash painting (水墨画) style. Elegant brushwork, mountains, bamboo, minimalist oriental aesthetic.",
+      popart: "Vibrant pop art style inspired by Andy Warhol. Bold contrasting colors, graphic shapes, energetic design.",
+      
+      // 氛围主题
+      cosmic: "Dreamy cosmic/galaxy theme. Deep blues and purples with sparkles, stars, nebulas. Ethereal space atmosphere.",
+      moonlight: "Serene moonlit night scene. Silver moonlight illuminating landscape, peaceful darkness, romantic silhouettes.",
+      city: "Urban cityscape with modern skyline silhouette. City lights at dusk/night, architectural beauty, metropolitan vibe.",
+      cafe: "Cozy cafe atmosphere with warm golden lighting. Coffee cups, books, plants, comfortable hygge ambiance.",
+      floral: "Beautiful floral arrangement or garden scene. Elegant blooming flowers, soft romantic colors, botanical beauty.",
+      rainbow: "Bright rainbow colors with candy-like cheerfulness. Playful, cute, happy vibes, suitable for celebration.",
+    };
+
+    // 获取风格描述，默认使用温暖风格
+    const styleDescription = stylePrompts[style] || stylePrompts.warm;
+
     // 构建生成提示词（使用英文避免乱码）
-    const prompt = `Generate a warm, healing-style illustration for an emotional diary check-in card.
+    const prompt = `Generate an illustration for an emotional diary check-in card.
 
 Theme: ${title}
 Emotional tone: ${emotionTheme || "positive and uplifting"}
 Context: Day ${day || "1"} of ${campName || "Emotional Diary"} training camp
 
-Style requirements:
-- Simple and warm illustration style
-- Soft, harmonious color palette
-- Suitable for social media sharing
-- Conveys growth and positive energy
+Art Style Requirements:
+${styleDescription}
+
+Technical Requirements:
 - Horizontal composition, 16:9 ratio
+- Suitable for social media sharing
 - CRITICAL: Do NOT include any text, words, letters, numbers, or characters in the image
 - Create a pure background/illustration without any text overlay
-- The image should serve as a decorative background only
+- High quality, visually appealing
 
 Generate a beautiful header image following these requirements.`;
 
