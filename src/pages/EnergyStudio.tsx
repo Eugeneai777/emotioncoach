@@ -45,6 +45,7 @@ import { FinanceTracker } from "@/components/tools/FinanceTracker";
 import { TimeManagement } from "@/components/tools/TimeManagement";
 import { RelationshipTracker } from "@/components/tools/RelationshipTracker";
 import { EnergyDeclaration } from "@/components/tools/EnergyDeclaration";
+import { CoachSpaceContent } from "@/components/coach/CoachSpaceContent";
 
 interface ToolCard {
   id: string;
@@ -60,8 +61,17 @@ interface ToolCard {
 const EnergyStudio = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [primaryTab, setPrimaryTab] = useState<"coach" | "tools" | "courses" | "camp">("tools");
   const [activeTab, setActiveTab] = useState<"emotion" | "exploration" | "management">("emotion");
   const [activeTool, setActiveTool] = useState<string | null>(null);
+
+  // 一级菜单配置
+  const primaryMenuItems = [
+    { id: "coach" as const, label: "教练空间", emoji: "🎯", route: null },
+    { id: "tools" as const, label: "成长工具", emoji: "🛠️", route: null },
+    { id: "courses" as const, label: "学习课程", emoji: "📚", route: "/courses" },
+    { id: "camp" as const, label: "训练营", emoji: "🏕️", route: "/camp-intro" }
+  ];
 
   // 从数据库查询工具数据
   const { data: tools = [], isLoading } = useQuery({
@@ -195,66 +205,41 @@ const EnergyStudio = () => {
 
       {/* Main Content */}
       <main className="container max-w-6xl mx-auto px-4 py-8">
-        {/* Training Camp Banner */}
-        <Card className="mb-8 overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 dark:from-purple-950/20 dark:via-pink-950/20 dark:to-purple-950/20 animate-in fade-in-50 slide-in-from-top-4 duration-500">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="flex-shrink-0 text-6xl">🏕️</div>
-              <div className="flex-1 text-center md:text-left space-y-2">
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  21天情绪日记训练营
-                </h3>
-                <p className="text-muted-foreground">
-                  每天10分钟，让情绪变成你的力量。系统化情绪管理，获得专属成长档案 ✨
-                </p>
-              </div>
-              <div className="flex-shrink-0 flex flex-col sm:flex-row gap-3">
-                <Button 
-                  onClick={() => navigate("/camp-intro")}
-                  variant="outline"
-                  className="gap-2 border-primary/30 hover:border-primary/60 hover:bg-primary/5"
-                >
-                  了解详情
-                </Button>
-                <Button 
-                  onClick={() => navigate("/")}
-                  className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  立即加入
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* 一级导航菜单 */}
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex bg-card/50 backdrop-blur-sm rounded-2xl p-1.5 border shadow-sm">
+            {primaryMenuItems.map(item => (
+              <Button
+                key={item.id}
+                variant={primaryTab === item.id ? "default" : "ghost"}
+                onClick={() => {
+                  if (item.route) {
+                    navigate(item.route);
+                  } else {
+                    setPrimaryTab(item.id);
+                    setActiveTool(null);
+                  }
+                }}
+                className={cn(
+                  "rounded-xl px-6 py-2.5 gap-2 transition-all duration-300",
+                  primaryTab === item.id && "bg-gradient-to-r from-primary to-warm text-white shadow-lg"
+                )}
+              >
+                <span>{item.emoji}</span>
+                <span>{item.label}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
 
-        {/* Online Courses Entry */}
-        <Card className="mb-8 overflow-hidden border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-50 dark:from-blue-950/20 dark:via-cyan-950/20 dark:to-blue-950/20 animate-in fade-in-50 slide-in-from-top-4 duration-500">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="flex-shrink-0 text-6xl">📚</div>
-              <div className="flex-1 text-center md:text-left space-y-2">
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                  线上课程中心
-                </h3>
-                <p className="text-muted-foreground">
-                  358门精选课程，涵盖领导力、个人成长、情绪管理、人际关系。系统化学习，持续成长 📖
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <Button 
-                  onClick={() => navigate("/courses")}
-                  className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg"
-                >
-                  <BookHeart className="w-4 h-4" />
-                  浏览全部课程
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* 根据一级菜单显示内容 */}
+        {primaryTab === "coach" && (
+          <CoachSpaceContent />
+        )}
 
-        {activeTool ? (
+        {primaryTab === "tools" && (
+          <>
+            {activeTool ? (
           <div>
             <Button
               variant="ghost"
@@ -340,6 +325,8 @@ const EnergyStudio = () => {
             </div>
           </TabsContent>
         </Tabs>
+            )}
+          </>
         )}
       </main>
     </div>
