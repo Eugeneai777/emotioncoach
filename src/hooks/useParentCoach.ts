@@ -14,9 +14,17 @@ export const useParentCoach = () => {
   const [session, setSession] = useState<ParentCoachSession | null>(null);
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
 
   const createSession = async (campId?: string, eventDescription?: string) => {
+    // Prevent duplicate creation
+    if (isCreating || session) {
+      console.log('Session creation skipped - already creating or session exists');
+      return session;
+    }
+
+    setIsCreating(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -48,6 +56,8 @@ export const useParentCoach = () => {
         variant: 'destructive'
       });
       return null;
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -157,6 +167,7 @@ export const useParentCoach = () => {
     session,
     messages,
     isLoading,
+    isCreating,
     createSession,
     loadSession,
     sendMessage,
