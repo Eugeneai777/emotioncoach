@@ -128,12 +128,6 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
               {camp.stages.length}阶课程
             </Badge>
           )}
-          {enrolledCount > 0 && (
-            <Badge variant="secondary" className="gap-1">
-              <span className="text-xs">👥</span>
-              {enrolledCount}人已加入
-            </Badge>
-          )}
         </div>
 
         {isLocked && camp.prerequisites?.message && (

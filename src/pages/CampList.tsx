@@ -206,14 +206,10 @@ const CampList = () => {
           </div>
 
           {/* Global Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+          <div className="grid grid-cols-3 gap-4 max-w-3xl mx-auto">
             <Card className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
               <div className="text-3xl font-bold text-purple-600">{stats.total.camps}</div>
               <div className="text-sm text-muted-foreground mt-1">训练营总数</div>
-            </Card>
-            <Card className="p-4 bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200">
-              <div className="text-3xl font-bold text-orange-600">{stats.total.enrolled}+</div>
-              <div className="text-sm text-muted-foreground mt-1">参与人数</div>
             </Card>
             <Card className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
               <div className="text-3xl font-bold text-blue-600">21天</div>
@@ -255,14 +251,9 @@ const CampList = () => {
                       <span className="text-xs opacity-90">{category.subtitle}</span>
                     </div>
                   </div>
-                  <div className="flex gap-2 text-xs mt-2">
-                    <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                      {categoryStats.camps}个
-                    </Badge>
-                    <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                      {categoryStats.enrolled}人
-                    </Badge>
-                  </div>
+                  <Badge variant="secondary" className="bg-white/20 text-white border-0 mt-2 text-xs">
+                    {categoryStats.camps}个训练营
+                  </Badge>
                 </TabsTrigger>
               );
             })}
@@ -278,7 +269,7 @@ const CampList = () => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <TrendingUp className="w-4 h-4" />
-                <span>共 {stats.category.camps} 个训练营，{stats.category.enrolled} 人参与</span>
+                <span>共 {stats.category.camps} 个训练营</span>
               </div>
 
               <div className="flex items-center gap-2">
