@@ -46,7 +46,7 @@ const CampIntro = () => {
       
       if (error) throw error;
       if (!data) throw new Error('训练营不存在');
-      return data as CampTemplate;
+      return data as unknown as CampTemplate;
     },
     enabled: !!campType
   });
@@ -138,15 +138,55 @@ const CampIntro = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {campTemplate.stages.map((stage: any, index: number) => (
-                <Card key={index} className="group hover:shadow-xl transition-all duration-300">
+                <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-2">
                   <CardHeader>
-                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r ${campTemplate.gradient} text-white text-sm font-medium mb-2 w-fit`}>
-                      第{stage.stage}阶 · {stage.duration}
+                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${campTemplate.gradient} text-white text-sm font-medium mb-3 w-fit`}>
+                      第{stage.stage}阶
                     </div>
-                    <CardTitle className="text-xl">{stage.title}</CardTitle>
+                    <CardTitle className="text-2xl mb-4">{stage.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-base">{stage.description}</CardDescription>
+                    {stage.lessons && stage.lessons.length > 0 ? (
+                      <ul className="space-y-3">
+                        {stage.lessons.map((lesson: string, lessonIndex: number) => (
+                          <li key={lessonIndex} className="flex items-start gap-3">
+                            <div className={`w-6 h-6 rounded-full bg-gradient-to-r ${campTemplate.gradient} flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5`}>
+                              {lessonIndex + 1}
+                            </div>
+                            <span className="text-sm leading-relaxed">{lesson}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <CardDescription className="text-base">{stage.description}</CardDescription>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Learning Formats */}
+        {campTemplate.learning_formats && campTemplate.learning_formats.length > 0 && (
+          <section className="space-y-8 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
+            <div className="text-center space-y-3">
+              <h2 className="text-3xl md:text-4xl font-bold">上课形式</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                多样化学习体验，全方位成长支持
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {campTemplate.learning_formats.map((format: any, index: number) => (
+                <Card key={index} className="group hover:shadow-xl transition-all duration-300">
+                  <CardHeader>
+                    <div className="space-y-3">
+                      <div className="text-4xl">{format.icon}</div>
+                      <CardTitle className="text-xl">{format.title}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">{format.description}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -224,18 +264,40 @@ const CampIntro = () => {
                 如果你有以下困扰或期待，这个训练营就是为你设计的
               </p>
             </div>
-            <div className="flex flex-wrap gap-3 justify-center max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
               {campTemplate.target_audience.map((audience: string, index: number) => (
-                <Badge 
+                <Card 
                   key={index}
-                  variant="outline" 
-                  className="px-4 py-2 text-sm border-2 hover:border-primary hover:bg-primary/5 transition-all duration-300 cursor-default"
+                  className="group hover:shadow-lg transition-all duration-300"
                 >
-                  <Check className="w-4 h-4 mr-2 text-primary" />
-                  {audience}
-                </Badge>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start gap-3">
+                      <Check className={`w-5 h-5 text-primary flex-shrink-0 mt-0.5`} />
+                      <p className="text-sm leading-relaxed">{audience}</p>
+                    </div>
+                  </CardHeader>
+                </Card>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* Prerequisites */}
+        {campTemplate.prerequisites && campTemplate.prerequisites.required_camp && (
+          <section className="space-y-8 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
+            <Card className="border-2 border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20 max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                  <Users className="w-5 h-5" />
+                  <span>报名条件</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-amber-800 dark:text-amber-300 text-base">
+                  {campTemplate.prerequisites.message}
+                </p>
+              </CardContent>
+            </Card>
           </section>
         )}
 
