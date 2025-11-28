@@ -74,6 +74,7 @@ export interface CampTemplate {
   theme_color: string;
   gradient: string;
   icon: string;
+  category?: string;
   stages?: CampStage[];
   learning_formats?: LearningFormat[];
   prerequisites?: {
