@@ -264,7 +264,15 @@ const CampCheckIn = () => {
                       ? "border-green-200 bg-gradient-to-br from-green-50/80 to-green-50/30 dark:border-green-800 dark:bg-green-950/10" 
                       : "border-primary/20 bg-gradient-to-br from-primary/5 to-transparent hover:border-primary/40 hover:shadow-md cursor-pointer active:scale-[0.99]"
                   }`}
-                  onClick={() => !todayProgress?.is_checked_in && navigate("/")}
+                  onClick={() => {
+                    if (!todayProgress?.is_checked_in) {
+                      if (camp.camp_type === 'parent_emotion_21') {
+                        navigate(`/parent-coach?campId=${campId}`);
+                      } else {
+                        navigate("/");
+                      }
+                    }
+                  }}
                 >
                   <div className="flex items-start gap-3">
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
@@ -275,12 +283,18 @@ const CampCheckIn = () => {
                       {todayProgress?.is_checked_in ? (
                         <CheckCircle2 className="w-5 h-5 text-white" />
                       ) : (
-                        <MessageSquare className="w-5 h-5 text-white" />
+                        camp.camp_type === 'parent_emotion_21' ? (
+                          <Sparkles className="w-5 h-5 text-white" />
+                        ) : (
+                          <MessageSquare className="w-5 h-5 text-white" />
+                        )
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <h4 className="text-sm font-semibold">情绪教练对话</h4>
+                        <h4 className="text-sm font-semibold">
+                          {camp.camp_type === 'parent_emotion_21' ? '家长情绪教练' : '情绪教练对话'}
+                        </h4>
                         <Badge className="bg-primary/10 text-primary border-0 h-4 px-1.5 text-[10px]">核心</Badge>
                         {todayProgress?.emotion_logs_count > 0 && (
                           <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
@@ -291,13 +305,19 @@ const CampCheckIn = () => {
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         {todayProgress?.is_checked_in 
                           ? "今日简报已生成" 
-                          : "完成四步曲生成简报即可打卡"}
+                          : camp.camp_type === 'parent_emotion_21' 
+                            ? "和劲老师完成四部曲觉察旅程" 
+                            : "完成四步曲生成简报即可打卡"}
                       </p>
                       {!todayProgress?.is_checked_in && (
                         <Button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate("/");
+                            if (camp.camp_type === 'parent_emotion_21') {
+                              navigate(`/parent-coach?campId=${campId}`);
+                            } else {
+                              navigate("/");
+                            }
                           }}
                           size="sm"
                           className="mt-2.5 h-7 text-xs"

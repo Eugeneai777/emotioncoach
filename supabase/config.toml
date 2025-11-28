@@ -110,3 +110,6 @@ verify_jwt = true
 
 [functions.generate-story-coach]
 verify_jwt = true
+
+[functions.parent-emotion-coach]
+verify_jwt = true
