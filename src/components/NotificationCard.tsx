@@ -113,7 +113,7 @@ export const NotificationCard = ({ notification, onClick, onDelete }: Notificati
       </div>
 
       {/* Message */}
-      <p className="text-sm text-muted-foreground text-left mb-2 leading-relaxed line-clamp-2">
+      <p className="text-sm text-muted-foreground text-left mb-2 leading-relaxed">
         {notification.message}
       </p>
 
