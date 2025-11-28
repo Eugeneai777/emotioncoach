@@ -102,13 +102,10 @@ const CampList = () => {
                 value={category.id}
                 className={cn(
                   "rounded-full transition-all duration-300 gap-2 py-3 px-6",
-                  "data-[state=active]:text-white data-[state=active]:shadow-lg"
+                  "data-[state=active]:text-white data-[state=active]:shadow-lg",
+                  category.id === 'youjin' && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-500",
+                  category.id === 'bloom' && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500"
                 )}
-                style={{
-                  background: activeCategory === category.id 
-                    ? `linear-gradient(to right, var(--${category.gradient.split('-')[1]}-500), var(--${category.gradient.split('-')[3]}-500))`
-                    : 'transparent'
-                }}
               >
                 <span className="text-lg">{category.emoji}</span>
                 <div className="flex flex-col items-start">
