@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CalendarIcon } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -26,6 +27,7 @@ interface StartCampDialogProps {
 export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }: StartCampDialogProps) {
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
+  const [bundleWithIdentity, setBundleWithIdentity] = useState(false);
   const { toast } = useToast();
 
   const handleStart = async () => {
@@ -44,26 +46,57 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
 
       const endDate = addDays(startDate, campTemplate.duration_days - 1);
 
+      // 准备要创建的训练营记录
+      const campsToCreate = [{
+        user_id: user.id,
+        camp_name: campTemplate.camp_name,
+        camp_type: campTemplate.camp_type,
+        duration_days: campTemplate.duration_days,
+        start_date: format(startDate, 'yyyy-MM-dd'),
+        end_date: format(endDate, 'yyyy-MM-dd'),
+        current_day: 0,
+        completed_days: 0,
+        check_in_dates: [],
+        status: 'active'
+      }];
+
+      // 如果是情感绽放训练营且选择了联合报名，添加身份绽放训练营
+      if (campTemplate.camp_type === 'emotion_bloom' && bundleWithIdentity) {
+        // 获取身份绽放训练营模板
+        const { data: identityTemplate } = await supabase
+          .from('camp_templates')
+          .select('*')
+          .eq('camp_type', 'identity_bloom')
+          .single();
+
+        if (identityTemplate) {
+          const identityEndDate = addDays(startDate, identityTemplate.duration_days - 1);
+          campsToCreate.push({
+            user_id: user.id,
+            camp_name: identityTemplate.camp_name,
+            camp_type: identityTemplate.camp_type,
+            duration_days: identityTemplate.duration_days,
+            start_date: format(startDate, 'yyyy-MM-dd'),
+            end_date: format(identityEndDate, 'yyyy-MM-dd'),
+            current_day: 0,
+            completed_days: 0,
+            check_in_dates: [],
+            status: 'active'
+          });
+        }
+      }
+
       const { error } = await supabase
         .from('training_camps')
-        .insert({
-          user_id: user.id,
-          camp_name: campTemplate.camp_name,
-          camp_type: campTemplate.camp_type,
-          duration_days: campTemplate.duration_days,
-          start_date: format(startDate, 'yyyy-MM-dd'),
-          end_date: format(endDate, 'yyyy-MM-dd'),
-          current_day: 0,
-          completed_days: 0,
-          check_in_dates: [],
-          status: 'active'
-        });
+        .insert(campsToCreate);
 
       if (error) throw error;
 
       toast({
         title: "训练营已开启！",
-        description: "开始你的21天情绪日记之旅吧！"
+        description: bundleWithIdentity && campTemplate.camp_type === 'emotion_bloom' 
+          ? "已同时开启情感绽放和身份绽放训练营！" 
+          : "开始你的成长之旅吧！"
       });
 
       onOpenChange(false);
@@ -131,6 +164,22 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
               结束日期：{format(addDays(startDate, campTemplate.duration_days - 1), 'PPP', { locale: zhCN })}
             </p>
           </div>
+
+          {campTemplate.camp_type === 'emotion_bloom' && (
+            <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <Checkbox 
+                id="bundle-camps"
+                checked={bundleWithIdentity} 
+                onCheckedChange={(checked) => setBundleWithIdentity(checked as boolean)}
+              />
+              <Label 
+                htmlFor="bundle-camps"
+                className="text-sm font-medium leading-relaxed cursor-pointer"
+              >
+                同时开启身份绽放训练营（推荐）
+              </Label>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2">

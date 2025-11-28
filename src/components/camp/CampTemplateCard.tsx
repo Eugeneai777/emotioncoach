@@ -13,6 +13,9 @@ interface CampTemplateCardProps {
 }
 
 export function CampTemplateCard({ camp, index, onClick }: CampTemplateCardProps) {
+  // 绽放训练营不检查前置条件锁定
+  const isBloomCamp = ['emotion_bloom', 'identity_bloom'].includes(camp.camp_type);
+  
   // Check if user has completed prerequisite camp
   const { data: hasPrerequisite } = useQuery({
     queryKey: ['prerequisite-check', camp.camp_type],
@@ -32,10 +35,10 @@ export function CampTemplateCard({ camp, index, onClick }: CampTemplateCardProps
       
       return !!data;
     },
-    enabled: !!camp.prerequisites?.required_camp
+    enabled: !isBloomCamp && !!camp.prerequisites?.required_camp
   });
 
-  const isLocked = camp.prerequisites?.required_camp && !hasPrerequisite;
+  const isLocked = !isBloomCamp && camp.prerequisites?.required_camp && !hasPrerequisite;
 
   return (
     <Card 
