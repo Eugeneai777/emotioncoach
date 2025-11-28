@@ -598,6 +598,125 @@ export default function ParentCampLanding() {
         </div>
       </section>
 
+      {/* 适合加入的家长 */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="max-w-4xl mx-auto">
+          <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200">
+            <CardHeader className="text-center">
+              <CardTitle className="text-3xl mb-4">
+                适合加入的家长
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <p className="text-lg font-medium">如果你正经历：</p>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-500">→</span>
+                  <span>孩子情绪波动大</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-500">→</span>
+                  <span>不愿上学</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-500">→</span>
+                  <span>情绪低落、封闭、不沟通</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-500">→</span>
+                  <span>沉迷手机</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-500">→</span>
+                  <span>容易崩溃或爆炸</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-500">→</span>
+                  <span>社交困难</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-500">→</span>
+                  <span>早晨像战争</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-500">→</span>
+                  <span>家里冲突不断</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-500">→</span>
+                  <span>父母常焦虑、无力、愧疚</span>
+                </li>
+              </ul>
+              <div className="bg-emerald-100 rounded-xl p-6 text-center">
+                <p className="text-xl font-semibold text-emerald-800">你不是孤单的，</p>
+                <p className="text-xl font-bold text-emerald-900 mt-2">这个训练营就是为你而做。</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* 你将获得 */}
+      <section className="container mx-auto px-4 py-16 bg-gradient-to-b from-background to-emerald-50/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              你将获得
+            </h2>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* 核心内容 */}
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">📅</span>
+                  <span className="text-lg font-medium">21天 × AI陪伴</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">📝</span>
+                  <span className="text-lg">每天一次情绪梳理（四部曲＋微行动）</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">🧘</span>
+                  <span className="text-lg">每天一次父母稳定练习</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">💚</span>
+                  <span className="text-lg">每天一次关系修复行动</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">🤖</span>
+                  <span className="text-lg font-medium">四大智能AI教练</span>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* 专属服务 */}
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">🎯</span>
+                  <span className="text-lg">针对孩子八大类型的专属路径</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">⏱️</span>
+                  <span className="text-lg font-semibold text-emerald-600">每天仅需10分钟</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">📋</span>
+                  <span className="text-lg">一套可复制的亲子沟通脚本</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">🔄</span>
+                  <span className="text-lg">一套可持续使用的家庭情绪系统</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="container mx-auto px-4 py-16 bg-gradient-to-b from-emerald-50/30 to-background">
         <div className="max-w-4xl mx-auto">
