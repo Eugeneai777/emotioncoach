@@ -64,46 +64,30 @@ const Home = () => {
     {
       icon: Brain,
       title: "教练空间",
-      description: "AI 教练陪伴，个性化指导与智能分析",
+      description: "随时有人带你看清问题",
       route: "/ai-coach",
-      color: "chart-1",
-      stats: stats ? {
-        label: "次对话",
-        value: `${stats.conversations}`
-      } : undefined
+      color: "chart-1"
     },
     {
       icon: Wrench,
       title: "成长工具",
-      description: "16 种实用工具，支持日常情绪管理",
+      description: "让成长变得\"做得到\"",
       route: "/energy-studio",
-      color: "chart-2",
-      stats: {
-        label: "个工具",
-        value: "16"
-      }
+      color: "chart-2"
     },
     {
       icon: BookOpen,
       title: "课程学习",
-      description: "系统化课程，基于情绪状态智能推荐",
+      description: "只学当下最有用的",
       route: "/courses",
-      color: "chart-3",
-      stats: stats ? {
-        label: "门课程",
-        value: `${stats.courses}`
-      } : undefined
+      color: "chart-3"
     },
     {
       icon: Target,
       title: "训练营",
-      description: "21 天情绪日记训练营，知识转化行动",
+      description: "从习惯到突破，让改变真的发生",
       route: "/camp-intro",
-      color: "chart-4",
-      stats: stats ? {
-        label: "天打卡",
-        value: `${stats.campDays}`
-      } : undefined
+      color: "chart-4"
     }
   ];
 

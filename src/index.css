@@ -67,6 +67,12 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Module colors */
+    --chart-1: 263 70% 58%;   /* 紫色 - 教练空间 */
+    --chart-2: 168 65% 45%;   /* 青绿 - 成长工具 */
+    --chart-3: 210 80% 55%;   /* 蓝色 - 课程学习 */
+    --chart-4: 28 85% 55%;    /* 橙色 - 训练营 */
   }
 
   .dark {
@@ -112,6 +118,12 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 45 35% 90%;
     --sidebar-border: 150 12% 26%;
     --sidebar-ring: 150 45% 52%;
+
+    /* Module colors - dark mode */
+    --chart-1: 263 65% 65%;   /* 紫色 */
+    --chart-2: 168 60% 50%;   /* 青绿 */
+    --chart-3: 210 75% 60%;   /* 蓝色 */
+    --chart-4: 28 80% 60%;    /* 橙色 */
   }
 }
 

@@ -9,10 +9,6 @@ interface ModuleCardProps {
   description: string;
   route: string;
   color: string;
-  stats?: {
-    label: string;
-    value: string;
-  };
   index?: number;
 }
 
@@ -22,7 +18,6 @@ export const ModuleCard = ({
   description, 
   route, 
   color,
-  stats,
   index = 0 
 }: ModuleCardProps) => {
   const navigate = useNavigate();
@@ -38,7 +33,7 @@ export const ModuleCard = ({
       onClick={() => navigate(route)}
     >
       <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start mb-4">
           {/* Icon */}
           <div 
             className="w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
@@ -46,18 +41,6 @@ export const ModuleCard = ({
           >
             <Icon className="w-6 h-6 text-white" />
           </div>
-
-          {/* Stats */}
-          {stats && (
-            <div className="text-right">
-              <div className="text-2xl font-bold text-foreground">
-                {stats.value}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {stats.label}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Title */}
