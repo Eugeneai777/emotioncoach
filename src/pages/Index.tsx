@@ -29,7 +29,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingCamp } from "@/types/trainingCamp";
-import { Send, RotateCcw, History, LogOut, Loader2, Settings, Sparkles, ChevronDown, Bell, Video, Menu, User, Wallet, Clock, Tent, Users, Volume2 } from "lucide-react";
+import { Send, RotateCcw, History, LogOut, Loader2, Settings, Sparkles, ChevronDown, Bell, Video, Menu, User, Wallet, Clock, Tent, Users, Volume2, Target } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -644,6 +644,61 @@ const Index = () => {
 
             {/* Right side - Main navigation */}
             <div className="flex items-center gap-1.5 md:gap-2">
+              {/* 教练空间快速切换 */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 border-primary/30 hover:bg-primary/10 hover:border-primary/50"
+                  >
+                    <Target className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" />
+                    <span className="hidden sm:inline">教练空间</span>
+                    <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52 bg-card border shadow-lg z-50">
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/")}
+                    className="gap-2"
+                  >
+                    <span className="text-green-500">💚</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium">情绪觉醒教练</span>
+                      <span className="text-xs text-muted-foreground">日常情绪觉察与记录</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/parent-coach")}
+                    className="gap-2"
+                  >
+                    <span className="text-purple-500">💜</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium">家长情绪教练</span>
+                      <span className="text-xs text-muted-foreground">亲子情绪四部曲</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/ai-coach")}
+                    className="gap-2"
+                  >
+                    <span className="text-indigo-500">✨</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium">AI 生活教练</span>
+                      <span className="text-xs text-muted-foreground">四维健康分析</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/energy-studio")}
+                    className="gap-2 text-primary"
+                  >
+                    <Target className="w-4 h-4" />
+                    <span className="font-medium">查看全部教练</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
                 size="sm"
                 onClick={() => navigate("/energy-studio")}
