@@ -93,47 +93,6 @@ const CampList = () => {
           </div>
         </section>
 
-        {/* 特色亮点展示 */}
-        <section className="mb-8 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-150">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              {
-                icon: '👨‍🏫',
-                title: '专业导师陪伴',
-                description: '资深心理学导师全程指导，提供专业建议与反馈',
-                gradient: 'from-blue-500 to-cyan-500'
-              },
-              {
-                icon: '🤝',
-                title: '社群共同成长',
-                description: '加入志同道合的社群，互相支持与鼓励',
-                gradient: 'from-purple-500 to-pink-500'
-              },
-              {
-                icon: '📚',
-                title: '系统学习资料',
-                description: '精心设计的课程体系，配套视频与练习材料',
-                gradient: 'from-orange-500 to-amber-500'
-              }
-            ].map((feature, index) => (
-              <div
-                key={index}
-                className="group relative bg-card rounded-xl p-4 border hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-300`} />
-                <div className="relative z-10 space-y-2">
-                  <div className="text-2xl">{feature.icon}</div>
-                  <h3 className="text-base font-semibold">{feature.title}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* Tabs */}
         <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
           <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2 mb-10 h-auto p-2 bg-card/50 backdrop-blur-sm rounded-2xl">
