@@ -29,7 +29,7 @@ export const useParentCoach = () => {
           user_id: user.id,
           camp_id: campId,
           event_description: eventDescription,
-          current_stage: 1,
+          current_stage: 0,  // 🔧 Start from stage 0 for event capture
           status: 'in_progress'
         })
         .select()
@@ -115,10 +115,13 @@ export const useParentCoach = () => {
       const data = await response.json();
       console.log('Response data:', data);
       
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: data.content 
-      }]);
+      // 🔧 Only add message if content is not empty
+      if (data.content && data.content.trim()) {
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: data.content 
+        }]);
+      }
 
       if (data.toolCall?.name === 'complete_stage') {
         // Reload session to get updated stage
