@@ -6,23 +6,13 @@ import { CoachCard } from "./CoachCard";
 const coaches = [
   {
     id: "emotion-coach",
-    title: "情绪梳理教练",
+    title: "情绪觉醒教练",
     subtitle: "日常情绪觉察与记录",
     description: "通过对话梳理情绪，生成情绪简报",
     icon: "Heart",
     gradient: "from-green-500 to-emerald-500",
     route: "/",
     badge: "推荐",
-  },
-  {
-    id: "life-coach",
-    title: "AI 生活教练",
-    subtitle: "四维健康分析",
-    description: "情绪、生活、身心、成长全面评估",
-    icon: "Sparkles",
-    gradient: "from-purple-500 to-indigo-500",
-    route: "/ai-coach",
-    badge: null,
   },
   {
     id: "parent-coach",
@@ -33,6 +23,16 @@ const coaches = [
     gradient: "from-orange-500 to-amber-500",
     route: "/parent-coach",
     badge: "新",
+  },
+  {
+    id: "life-coach",
+    title: "AI 生活教练",
+    subtitle: "四维健康分析",
+    description: "情绪、生活、身心、成长全面评估",
+    icon: "Sparkles",
+    gradient: "from-purple-500 to-indigo-500",
+    route: "/ai-coach",
+    badge: null,
   },
   {
     id: "coming-soon",
