@@ -70,9 +70,7 @@ const CampList = () => {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent leading-tight">
               选择你的成长之旅
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              每个训练营都是一次深度的自我探索，开启属于你的绽放之路
-            </p>
+            
           </div>
         </section>
 
@@ -113,11 +111,7 @@ const CampList = () => {
       </footer>
 
       {/* Camp Detail Sheet */}
-      <CampDetailSheet
-        open={!!selectedCamp}
-        onOpenChange={(open) => !open && setSelectedCamp(null)}
-        camp={selectedCamp}
-      />
+      <CampDetailSheet open={!!selectedCamp} onOpenChange={open => !open && setSelectedCamp(null)} camp={selectedCamp} />
     </div>;
 };
 export default CampList;
