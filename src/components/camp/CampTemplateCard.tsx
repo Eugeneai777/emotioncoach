@@ -9,10 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 interface CampTemplateCardProps {
   camp: CampTemplate;
   index: number;
+  enrolledCount?: number;
   onClick: () => void;
 }
 
-export function CampTemplateCard({ camp, index, onClick }: CampTemplateCardProps) {
+export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: CampTemplateCardProps) {
   // 绽放训练营不检查前置条件锁定
   const isBloomCamp = ['emotion_bloom', 'identity_bloom'].includes(camp.camp_type);
   
@@ -39,6 +40,8 @@ export function CampTemplateCard({ camp, index, onClick }: CampTemplateCardProps
   });
 
   const isLocked = !isBloomCamp && camp.prerequisites?.required_camp && !hasPrerequisite;
+  const isPopular = enrolledCount >= 5;
+  const isRecommended = camp.camp_type === 'emotion_journal_21';
 
   return (
     <Card 
@@ -48,17 +51,33 @@ export function CampTemplateCard({ camp, index, onClick }: CampTemplateCardProps
       style={{ animationDelay: `${index * 150}ms` }}
       onClick={!isLocked ? onClick : undefined}
     >
-      <div className={`absolute inset-0 bg-gradient-to-br ${camp.gradient} opacity-10 group-hover:opacity-20 transition-opacity duration-300`} />
-      
-      <CardHeader className="relative z-10">
-        <div className="flex items-start justify-between mb-3">
-          <span className="text-5xl">{camp.icon}</span>
+      {/* 封面背景 */}
+      <div className={`relative h-32 bg-gradient-to-br ${camp.gradient} overflow-hidden`}>
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.3),transparent)]" />
+        <div className="absolute top-3 right-3 flex gap-2">
+          {isPopular && (
+            <div className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-orange-600 shadow-sm">
+              🔥 热门
+            </div>
+          )}
+          {isRecommended && (
+            <div className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-purple-600 shadow-sm">
+              ⭐ 推荐
+            </div>
+          )}
           {isLocked && (
-            <div className="p-2 rounded-full bg-muted">
-              <Lock className="w-4 h-4 text-muted-foreground" />
+            <div className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-muted-foreground shadow-sm flex items-center gap-1">
+              <Lock className="w-3 h-3" />
+              未解锁
             </div>
           )}
         </div>
+        <div className="absolute bottom-3 left-3 text-6xl filter drop-shadow-lg">
+          {camp.icon}
+        </div>
+      </div>
+      
+      <CardHeader className="relative z-10 pt-4">
         <CardTitle className="text-2xl">{camp.camp_name}</CardTitle>
         <CardDescription className="text-base">{camp.camp_subtitle}</CardDescription>
       </CardHeader>
@@ -66,7 +85,7 @@ export function CampTemplateCard({ camp, index, onClick }: CampTemplateCardProps
       <CardContent className="relative z-10 space-y-4">
         <p className="text-muted-foreground leading-relaxed">{camp.description}</p>
         
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {!['emotion_bloom', 'identity_bloom'].includes(camp.camp_type) && (
             <Badge className={`bg-gradient-to-r ${camp.gradient} text-white border-0`}>
               {camp.duration_days}天
@@ -75,6 +94,12 @@ export function CampTemplateCard({ camp, index, onClick }: CampTemplateCardProps
           {camp.stages && camp.stages.length > 0 && (
             <Badge variant="outline">
               {camp.stages.length}阶课程
+            </Badge>
+          )}
+          {enrolledCount > 0 && (
+            <Badge variant="secondary" className="gap-1">
+              <span className="text-xs">👥</span>
+              {enrolledCount}人已加入
             </Badge>
           )}
         </div>
