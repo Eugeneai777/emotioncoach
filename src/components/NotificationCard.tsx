@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Heart, Star, Sparkles, Trophy, Bell, MessageCircle, TrendingUp, Check, Clock } from 'lucide-react';
+import { Trash2, Heart, Star, Sparkles, Trophy, Bell, MessageCircle, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
@@ -22,7 +22,7 @@ interface NotificationCardProps {
     created_at: string;
   };
   onClick: () => void;
-  onDismiss: () => void;
+  onDelete: () => void;
 }
 
 const iconMap: Record<string, any> = {
@@ -71,7 +71,7 @@ const typeLabels: Record<string, string> = {
   reminder: '提醒'
 };
 
-export const NotificationCard = ({ notification, onClick, onDismiss }: NotificationCardProps) => {
+export const NotificationCard = ({ notification, onClick, onDelete }: NotificationCardProps) => {
   const navigate = useNavigate();
   const Icon = notification.icon ? iconMap[notification.icon] || Heart : Heart;
   const style = typeStyles[notification.notification_type] || typeStyles.encouragement;
@@ -84,15 +84,9 @@ export const NotificationCard = ({ notification, onClick, onDismiss }: Notificat
     }
   };
 
-  const handleMarkAsRead = (e: React.MouseEvent) => {
+  const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onClick();
-  };
-
-  const handleRemindLater = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // TODO: Implement remind later functionality
-    onDismiss();
+    onDelete();
   };
 
   const timeAgo = formatDistanceToNow(new Date(notification.created_at), {
@@ -103,8 +97,8 @@ export const NotificationCard = ({ notification, onClick, onDismiss }: Notificat
   return (
     <Card 
       className={`relative p-3 transition-all hover:shadow-md ${style.bg} ${style.border} ${
-        !notification.is_read ? 'border-2' : 'border opacity-75'
-      } ${notification.is_dismissed ? 'opacity-40' : ''}`}
+        !notification.is_read ? 'border-2' : 'border'
+      }`}
     >
       {/* Title Row */}
       <div className="flex items-center justify-between mb-1">
@@ -124,40 +118,17 @@ export const NotificationCard = ({ notification, onClick, onDismiss }: Notificat
       </p>
 
       {/* Quick Actions */}
-      {!notification.is_dismissed && (
-        <div className="flex items-center gap-2 pt-1">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-7 px-2 text-xs"
-            onClick={handleMarkAsRead}
-          >
-            <Check className="h-3 w-3 mr-1" />
-            已读
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-7 px-2 text-xs"
-            onClick={handleRemindLater}
-          >
-            <Clock className="h-3 w-3 mr-1" />
-            稍后
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-7 px-2 text-xs"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDismiss();
-            }}
-          >
-            <X className="h-3 w-3 mr-1" />
-            忽略
-          </Button>
-        </div>
-      )}
+      <div className="flex items-center gap-2 pt-1">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-7 px-2 text-xs"
+          onClick={handleDelete}
+        >
+          <Trash2 className="h-3 w-3 mr-1" />
+          删除
+        </Button>
+      </div>
     </Card>
   );
 };
