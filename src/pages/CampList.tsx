@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import { CampTemplateCard } from "@/components/camp/CampTemplateCard";
-import { CampDetailSheet } from "@/components/camp/CampDetailSheet";
 import type { CampTemplate } from "@/types/trainingCamp";
 import { cn } from "@/lib/utils";
 const campCategories = [{
@@ -27,7 +26,6 @@ const campCategories = [{
 const CampList = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('youjin');
-  const [selectedCamp, setSelectedCamp] = useState<CampTemplate | null>(null);
   const {
     data: campTemplates,
     isLoading
@@ -114,7 +112,21 @@ const CampList = () => {
           {/* Training Camps Grid */}
           <TabsContent value={activeCategory} className="mt-0">
             {filteredCamps.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredCamps.map((camp, index) => <CampTemplateCard key={camp.id} camp={camp} index={index} enrolledCount={enrollmentStats?.[camp.camp_type] || 0} onClick={() => setSelectedCamp(camp)} />)}
+                {filteredCamps.map((camp, index) => <CampTemplateCard 
+                  key={camp.id} 
+                  camp={camp} 
+                  index={index} 
+                  enrolledCount={enrollmentStats?.[camp.camp_type] || 0} 
+                  onClick={() => {
+                    // 对于「21天青少年问题家庭训练营」，导航到专属页面
+                    if (camp.camp_type === 'parent_emotion_21') {
+                      navigate('/parent-camp');
+                    } else {
+                      // 其他训练营导航到通用详情页
+                      navigate(`/camp-template/${camp.id}`);
+                    }
+                  }} 
+                />)}
               </div> : <div className="text-center py-12">
                 <p className="text-muted-foreground">该分类下暂无训练营</p>
               </div>}
@@ -129,8 +141,6 @@ const CampList = () => {
         </div>
       </footer>
 
-      {/* Camp Detail Sheet */}
-      <CampDetailSheet open={!!selectedCamp} onOpenChange={open => !open && setSelectedCamp(null)} camp={selectedCamp} />
     </div>;
 };
 export default CampList;

@@ -22,6 +22,7 @@ import EnergyStudioIntro from "./pages/EnergyStudioIntro";
 import AICoach from "./pages/AICoach";
 import CampIntro from "./pages/CampIntro";
 import CampList from "./pages/CampList";
+import CampTemplateDetail from "./pages/CampTemplateDetail";
 import CampCheckIn from "./pages/CampCheckIn";
 import ParentCampLanding from "./pages/ParentCampLanding";
 import UserProfile from "./pages/UserProfile";
@@ -57,6 +58,7 @@ const App = () => (
           <Route path="/community" element={<Community />} />
           <Route path="/ai-coach" element={<AICoach />} />
           <Route path="/camps" element={<CampList />} />
+          <Route path="/camp-template/:templateId" element={<CampTemplateDetail />} />
           <Route path="/parent-camp" element={<ParentCampLanding />} />
           <Route path="/camp-intro/:campType" element={<CampIntro />} />
           <Route path="/camp/:campId" element={<TrainingCampDetail />} />
