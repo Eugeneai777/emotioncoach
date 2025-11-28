@@ -31,7 +31,7 @@ export const ModuleCard = ({
     <Card
       className={cn(
         "group cursor-pointer bg-card/60 backdrop-blur-sm border-2 hover:border-transparent",
-        "hover:-translate-y-2 transition-all duration-300 hover:shadow-2xl rounded-2xl overflow-hidden",
+        "hover:-translate-y-1 transition-all duration-300 hover:shadow-xl rounded-xl overflow-hidden",
         "animate-fade-in"
       )}
       style={{ animationDelay: `${index * 100}ms` }}
@@ -42,31 +42,31 @@ export const ModuleCard = ({
         gradient
       )} />
       
-      <CardContent className="relative p-6">
+      <CardContent className="relative p-5">
         {/* Icon */}
         <div className={cn(
-          "w-16 h-16 rounded-2xl mb-4 flex items-center justify-center text-4xl",
-          "bg-gradient-to-br shadow-lg group-hover:scale-110 transition-transform duration-300",
+          "w-12 h-12 rounded-xl mb-3 flex items-center justify-center text-3xl",
+          "bg-gradient-to-br shadow-md group-hover:scale-110 transition-transform duration-300",
           gradient
         )}>
           {icon}
         </div>
 
         {/* Title */}
-        <h3 className="text-2xl font-bold mb-2 group-hover:text-primary transition-colors">
+        <h3 className="text-xl font-bold mb-1.5 group-hover:text-primary transition-colors">
           {title}
         </h3>
 
         {/* Description */}
-        <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+        <p className="text-xs text-muted-foreground leading-relaxed mb-3">
           {description}
         </p>
 
         {/* Stats (optional) */}
         {stats && (
-          <div className="flex items-center gap-2 mb-4 text-sm">
+          <div className="flex items-center gap-2 mb-3 text-xs">
             <div className={cn(
-              "px-3 py-1.5 rounded-full bg-gradient-to-r text-white font-medium",
+              "px-2.5 py-1 rounded-full bg-gradient-to-r text-white font-medium",
               gradient
             )}>
               {stats.value}
@@ -76,9 +76,9 @@ export const ModuleCard = ({
         )}
 
         {/* Arrow */}
-        <div className="flex items-center gap-2 text-sm font-medium text-primary">
+        <div className="flex items-center gap-2 text-xs font-medium text-primary">
           <span>进入模块</span>
-          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
         </div>
       </CardContent>
     </Card>
