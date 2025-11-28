@@ -94,8 +94,8 @@ const CampList = () => {
         </section>
 
         {/* 特色亮点展示 */}
-        <section className="mb-12 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-150">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <section className="mb-8 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-150">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               {
                 icon: '👨‍🏫',
@@ -118,14 +118,14 @@ const CampList = () => {
             ].map((feature, index) => (
               <div
                 key={index}
-                className="group relative bg-card rounded-2xl p-6 border hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                className="group relative bg-card rounded-xl p-4 border hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity duration-300`} />
-                <div className="relative z-10 space-y-3">
-                  <div className="text-4xl">{feature.icon}</div>
-                  <h3 className="text-lg font-semibold">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-300`} />
+                <div className="relative z-10 space-y-2">
+                  <div className="text-2xl">{feature.icon}</div>
+                  <h3 className="text-base font-semibold">{feature.title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
