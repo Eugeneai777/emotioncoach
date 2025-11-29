@@ -35,6 +35,8 @@ export interface CoachTemplate {
   enable_scenarios: boolean;
   edge_function_name: string | null;
   briefing_table_name: string | null;
+  system_prompt?: string;
+  briefing_tool_config?: any;
   is_active: boolean;
   is_system: boolean;
   display_order: number;

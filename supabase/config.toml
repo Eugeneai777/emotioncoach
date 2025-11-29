@@ -125,3 +125,6 @@ verify_jwt = false
 
 [functions.partner-withdrawal]
 verify_jwt = true
+
+[functions.generate-coach-template]
+verify_jwt = true

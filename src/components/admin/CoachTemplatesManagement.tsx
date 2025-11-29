@@ -7,8 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, BookOpen } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, BookOpen, Sparkles } from "lucide-react";
 import { CoachStepsEditor } from "./CoachStepsEditor";
+import { AICoachCreator } from "./AICoachCreator";
 import {
   useCoachTemplates,
   useCreateCoachTemplate,
@@ -42,6 +43,7 @@ export function CoachTemplatesManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isStepsEditorOpen, setIsStepsEditorOpen] = useState(false);
   const [currentSteps, setCurrentSteps] = useState<CoachStep[]>([]);
+  const [isAICreatorOpen, setIsAICreatorOpen] = useState(false);
 
   const handleCreate = () => {
     setEditingTemplate({
@@ -132,6 +134,39 @@ export function CoachTemplatesManagement() {
     }
   };
 
+  const handleAITemplateCreated = (template: any) => {
+    setEditingTemplate({
+      coach_key: template.coach_key || '',
+      emoji: template.emoji || '💚',
+      title: template.title || '',
+      subtitle: template.subtitle || '',
+      description: template.description || '',
+      primary_color: template.primary_color || 'green',
+      gradient: template.gradient || gradientOptions[0].value,
+      placeholder: template.placeholder || '分享你的想法...',
+      history_label: template.history_label || '我的日记',
+      history_route: `/coach/${template.coach_key}/history` || '/history',
+      page_route: `/coach/${template.coach_key}` || '/',
+      more_info_route: '',
+      steps_emoji: template.steps?.[0]?.icon || '🌱',
+      steps_title: '四部曲',
+      steps: template.steps || [],
+      edge_function_name: `${template.coach_key}-coach` || '',
+      briefing_table_name: `${template.coach_key}_briefings` || '',
+      enable_scenarios: false,
+      enable_community: false,
+      enable_notifications: false,
+      enable_training_camp: false,
+      enable_voice_control: true,
+      is_active: true,
+      is_system: false,
+      display_order: (templates?.length || 0) + 1,
+      system_prompt: template.system_prompt || '',
+      briefing_tool_config: template.briefing_tool_config || {},
+    });
+    setIsDialogOpen(true);
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center p-8">加载中...</div>;
   }
@@ -140,10 +175,16 @@ export function CoachTemplatesManagement() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">教练模板管理</h2>
-        <Button onClick={handleCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          新建教练
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsAICreatorOpen(true)}>
+            <Sparkles className="h-4 w-4 mr-2" />
+            AI智能创建
+          </Button>
+          <Button onClick={handleCreate}>
+            <Plus className="h-4 w-4 mr-2" />
+            手动创建
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4">
@@ -450,6 +491,12 @@ export function CoachTemplatesManagement() {
         onOpenChange={setIsStepsEditorOpen}
         steps={currentSteps}
         onSave={handleSaveSteps}
+      />
+
+      <AICoachCreator
+        open={isAICreatorOpen}
+        onOpenChange={setIsAICreatorOpen}
+        onTemplateCreated={handleAITemplateCreated}
       />
     </div>
   );
