@@ -505,7 +505,7 @@ ${briefing.growth_story || '暂无记录'}
                   <Button 
                     variant="link" 
                     size="sm" 
-                    onClick={() => navigate("/parent-camp-landing")}
+                    onClick={() => navigate("/parent-camp")}
                     className="text-xs text-purple-600 hover:text-purple-700 p-0 h-auto"
                   >
                     了解更多 →
@@ -568,7 +568,7 @@ ${briefing.growth_story || '暂无记录'}
                     </Button>
                     <Button 
                       variant="outline" 
-                      onClick={() => navigate("/parent-camp-landing")}
+                      onClick={() => navigate("/parent-camp")}
                       className="flex-1 border-purple-300 text-purple-600 hover:bg-purple-50"
                     >
                       了解详情
@@ -666,7 +666,7 @@ ${briefing.growth_story || '暂无记录'}
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={() => navigate("/parent-camp-landing")}
+                        onClick={() => navigate("/parent-camp")}
                         size="sm"
                         className="border-purple-300 text-purple-600"
                       >
