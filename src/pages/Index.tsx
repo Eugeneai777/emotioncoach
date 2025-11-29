@@ -15,6 +15,7 @@ import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { EmotionIntensitySelector } from "@/components/EmotionIntensitySelector";
 import { IntensityReminderDialog } from "@/components/IntensityReminderDialog";
 import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
+import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 
 import { TrainingCampCard } from "@/components/camp/TrainingCampCard";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
@@ -64,6 +65,9 @@ const Index = () => {
     rate: 0.9
   });
   const { toast } = useToast();
+  
+  // 从数据库加载教练配置
+  const { data: coachConfig } = useCoachTemplate('emotion');
 
   const {
     user,
@@ -760,9 +764,11 @@ const Index = () => {
           <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-8 px-3 md:px-4">
             <div className="text-center space-y-3 md:space-y-4 w-full max-w-xl animate-in fade-in-50 duration-700">
               <div className="space-y-1.5 md:space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground">情绪觉醒教练</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+                  {coachConfig?.title || '情绪觉醒教练'}
+                </h2>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  劲老师陪着你，一步步梳理情绪，重新找到情绪里的力量
+                  {coachConfig?.description || '劲老师陪着你，一步步梳理情绪，重新找到情绪里的力量'}
                 </p>
               </div>
 
@@ -795,8 +801,8 @@ const Index = () => {
                   <div className="animate-in fade-in-50 duration-300">
                     <div className="mb-card-gap flex items-center justify-between">
                       <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
-                        <span className="text-primary text-sm">🌱</span>
-                        情绪四部曲
+                        <span className="text-primary text-sm">{coachConfig?.steps_emoji || '🌱'}</span>
+                        {coachConfig?.steps_title || '情绪四部曲'}
                       </h3>
                       <Button 
                         variant="link" 
@@ -809,113 +815,42 @@ const Index = () => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-card-gap">
-                      {/* Step 1: 觉察 */}
-                      <Collapsible open={expandedStep === 1} onOpenChange={() => setExpandedStep(expandedStep === 1 ? null : 1)}>
-                        <CollapsibleTrigger className="w-full">
-                          <div className="bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
-                            <div className="flex items-center gap-1.5">
-                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                                1
+                      {(coachConfig?.steps || []).map((step, index) => (
+                        <Collapsible 
+                          key={step.id} 
+                          open={expandedStep === step.id} 
+                          onOpenChange={() => setExpandedStep(expandedStep === step.id ? null : step.id)}
+                        >
+                          <CollapsibleTrigger className="w-full">
+                            <div className="bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
+                              <div className="flex items-center gap-1.5">
+                                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                                  {step.emoji || step.id}
+                                </div>
+                                <div className="flex-1 text-left min-w-0">
+                                  <h4 className="font-medium text-foreground text-sm truncate">
+                                    {step.name}
+                                  </h4>
+                                  <p className="text-xs text-muted-foreground truncate">{step.subtitle}</p>
+                                </div>
+                                <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === step.id ? 'rotate-180' : ''}`} />
                               </div>
-                              <div className="flex-1 text-left min-w-0">
-                                <h4 className="font-medium text-foreground text-sm truncate">
-                                  觉察
-                                </h4>
-                                <p className="text-xs text-muted-foreground truncate">Feel it</p>
-                              </div>
-                              <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === 1 ? 'rotate-180' : ''}`} />
                             </div>
-                          </div>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-1">
-                          <div className="bg-background/30 rounded-card p-card-sm border border-border/30 space-y-1">
-                            <p className="text-xs text-foreground leading-snug">
-                              暂停活动，给自己空间感受此刻情绪
-                            </p>
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
-
-                      {/* Step 2: 理解 */}
-                      <Collapsible open={expandedStep === 2} onOpenChange={() => setExpandedStep(expandedStep === 2 ? null : 2)}>
-                        <CollapsibleTrigger className="w-full">
-                          <div className="bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
-                            <div className="flex items-center gap-1.5">
-                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                                2
-                              </div>
-                              <div className="flex-1 text-left min-w-0">
-                                <h4 className="font-medium text-foreground text-sm truncate">
-                                  理解
-                                </h4>
-                                <p className="text-xs text-muted-foreground truncate">Name it</p>
-                              </div>
-                              <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === 2 ? 'rotate-180' : ''}`} />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-1">
+                            <div className="bg-background/30 rounded-card p-card-sm border border-border/30 space-y-1">
+                              <p className="text-xs text-foreground leading-snug">
+                                {step.description}
+                              </p>
+                              {step.details && (
+                                <p className="text-xs text-muted-foreground leading-snug whitespace-pre-line">
+                                  {step.details}
+                                </p>
+                              )}
                             </div>
-                          </div>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-1">
-                          <div className="bg-background/30 rounded-card p-card-sm border border-border/30 space-y-1">
-                            <p className="text-xs text-foreground leading-snug">
-                              探索情绪背后的需求和意义
-                            </p>
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
-
-                      {/* Step 3: 反应 */}
-                      <Collapsible open={expandedStep === 3} onOpenChange={() => setExpandedStep(expandedStep === 3 ? null : 3)}>
-                        <CollapsibleTrigger className="w-full">
-                          <div className="bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
-                            <div className="flex items-center gap-1.5">
-                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                                3
-                              </div>
-                              <div className="flex-1 text-left min-w-0">
-                                <h4 className="font-medium text-foreground text-sm truncate">
-                                  反应
-                                </h4>
-                                <p className="text-xs text-muted-foreground truncate">React it</p>
-                              </div>
-                              <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === 3 ? 'rotate-180' : ''}`} />
-                            </div>
-                          </div>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-1">
-                          <div className="bg-background/30 rounded-card p-card-sm border border-border/30 space-y-1">
-                            <p className="text-xs text-foreground leading-snug">
-                              觉察情绪驱动下的第一反应
-                            </p>
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
-
-                      {/* Step 4: 行动 */}
-                      <Collapsible open={expandedStep === 4} onOpenChange={() => setExpandedStep(expandedStep === 4 ? null : 4)}>
-                        <CollapsibleTrigger className="w-full">
-                          <div className="bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
-                            <div className="flex items-center gap-1.5">
-                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                                4
-                              </div>
-                              <div className="flex-1 text-left min-w-0">
-                                <h4 className="font-medium text-foreground text-sm truncate">
-                                  行动
-                                </h4>
-                                <p className="text-xs text-muted-foreground truncate">Act it</p>
-                              </div>
-                              <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === 4 ? 'rotate-180' : ''}`} />
-                            </div>
-                          </div>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-1">
-                          <div className="bg-background/30 rounded-card p-card-sm border border-border/30 space-y-1">
-                            <p className="text-xs text-foreground leading-snug">
-                              选择建设性行动满足需求
-                            </p>
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      ))}
                     </div>
                   </div>
                 )}
