@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, Zap, Crown, ArrowLeft, Users, Tent } from "lucide-react";
+import { Check, Sparkles, Zap, Crown, ArrowLeft, Users, Tent, BarChart3, ChevronDown } from "lucide-react";
 import { PurchaseHistory } from "@/components/PurchaseHistory";
 import { AccountBalance } from "@/components/AccountBalance";
 import { toast } from "sonner";
@@ -8,7 +8,9 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { productCategories } from "@/config/productCategories";
+import { ProductComparisonTable } from "@/components/ProductComparisonTable";
 import { useState } from "react";
 
 const basePackages = [
@@ -242,6 +244,25 @@ export default function Packages() {
                 </h2>
                 <p className="text-muted-foreground">{currentCategory?.description}</p>
                 <p className="text-sm text-primary font-medium">{currentCategory?.tagline}</p>
+              </div>
+
+              {/* 📊 产品权益对比表 */}
+              <div className="flex justify-center">
+                <Collapsible defaultOpen={false}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" className="gap-2 hover:bg-muted">
+                      <BarChart3 className="w-4 h-4" />
+                      📊 查看权益对比表
+                      <ChevronDown className="w-4 h-4 transition-transform duration-200" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-6 animate-in slide-in-from-top-2 duration-300">
+                    <ProductComparisonTable 
+                      category={activeTab} 
+                      onPurchase={handlePurchase}
+                    />
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
 
               {/* 套餐卡片 */}
