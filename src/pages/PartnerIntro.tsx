@@ -237,7 +237,7 @@ const PartnerIntro = () => {
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
                           <div className="font-semibold">{benefit.benefit_name}</div>
-                          {benefit.benefit_value && (
+                          {benefit.benefit_value && benefit.benefit_value > 0 && (
                             <Badge variant="outline">¥{Number(benefit.benefit_value).toLocaleString()}</Badge>
                           )}
                         </div>
