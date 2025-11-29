@@ -290,7 +290,10 @@ export type Database = {
           id: string
           is_active: boolean | null
           learning_formats: Json | null
+          original_price: number | null
           prerequisites: Json | null
+          price: number | null
+          price_note: string | null
           research_stats: Json | null
           stages: Json | null
           target_audience: Json | null
@@ -314,7 +317,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           learning_formats?: Json | null
+          original_price?: number | null
           prerequisites?: Json | null
+          price?: number | null
+          price_note?: string | null
           research_stats?: Json | null
           stages?: Json | null
           target_audience?: Json | null
@@ -338,7 +344,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           learning_formats?: Json | null
+          original_price?: number | null
           prerequisites?: Json | null
+          price?: number | null
+          price_note?: string | null
           research_stats?: Json | null
           stages?: Json | null
           target_audience?: Json | null
