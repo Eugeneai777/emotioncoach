@@ -11,8 +11,9 @@ export interface YoujinFeature extends ComparisonFeature {
 }
 
 export interface BloomFeature extends ComparisonFeature {
-  bloomCamp: boolean | string;  // 绽放训练营
-  partner: boolean | string;    // 绽放合伙人
+  identityCamp: boolean | string;  // 身份绽放训练营
+  emotionCamp: boolean | string;   // 情感绽放训练营
+  partner: boolean | string;       // 绽放合伙人
 }
 
 // 有劲产品对比数据
@@ -52,39 +53,40 @@ export const youjinFeatures: YoujinFeature[] = [
 // 绽放产品对比数据
 export const bloomFeatures: BloomFeature[] = [
   // 基础信息
-  { name: "价格", category: "基础信息", bloomCamp: "¥3,980", partner: "¥19,800" },
-  { name: "有效期", category: "基础信息", bloomCamp: "28天+永久复训", partner: "永久" },
-  { name: "AI对话次数", category: "基础信息", bloomCamp: "包含", partner: "无限次" },
+  { name: "价格", category: "基础信息", identityCamp: "¥2,980", emotionCamp: "¥3,980", partner: "¥19,800" },
+  { name: "有效期", category: "基础信息", identityCamp: "21天+永久复训", emotionCamp: "28天+永久复训", partner: "永久" },
+  { name: "AI对话次数", category: "基础信息", identityCamp: "包含", emotionCamp: "包含", partner: "无限次" },
+  { name: "训练营主题", category: "基础信息", identityCamp: "认识真实自我", emotionCamp: "体验内在情绪", partner: "全部主题" },
   
   // 教练空间
-  { name: "情绪觉醒教练", category: "教练空间", bloomCamp: true, partner: true, tooltip: "全功能情绪觉醒教练" },
-  { name: "家长情绪教练", category: "教练空间", bloomCamp: true, partner: true, tooltip: "家庭关系情绪教练" },
-  { name: "AI生活教练", category: "教练空间", bloomCamp: true, partner: true, tooltip: "生活全方位指导" },
-  { name: "AI健康教练", category: "教练空间", bloomCamp: true, partner: true, tooltip: "健康管理教练" },
-  { name: "1对1真人教练", category: "教练空间", bloomCamp: false, partner: true, tooltip: "专业教练1对1指导" },
+  { name: "情绪觉醒教练", category: "教练空间", identityCamp: true, emotionCamp: true, partner: true, tooltip: "全功能情绪觉醒教练" },
+  { name: "家长情绪教练", category: "教练空间", identityCamp: false, emotionCamp: true, partner: true, tooltip: "家庭关系情绪教练" },
+  { name: "AI生活教练", category: "教练空间", identityCamp: true, emotionCamp: true, partner: true, tooltip: "生活全方位指导" },
+  { name: "AI健康教练", category: "教练空间", identityCamp: true, emotionCamp: true, partner: true, tooltip: "健康管理教练" },
+  { name: "1对1真人教练", category: "教练空间", identityCamp: false, emotionCamp: false, partner: true, tooltip: "专业教练1对1指导" },
   
   // 成长工具
-  { name: "全部情绪工具 (5个)", category: "成长工具", bloomCamp: true, partner: true, tooltip: "全套情绪管理工具" },
-  { name: "全部自我探索 (5个)", category: "成长工具", bloomCamp: true, partner: true, tooltip: "完整自我探索工具集" },
-  { name: "全部生活管理 (6个)", category: "成长工具", bloomCamp: true, partner: true, tooltip: "完整生活管理工具集" },
+  { name: "全部情绪工具 (5个)", category: "成长工具", identityCamp: true, emotionCamp: true, partner: true, tooltip: "全套情绪管理工具" },
+  { name: "全部自我探索 (5个)", category: "成长工具", identityCamp: true, emotionCamp: true, partner: true, tooltip: "完整自我探索工具集" },
+  { name: "全部生活管理 (6个)", category: "成长工具", identityCamp: true, emotionCamp: true, partner: true, tooltip: "完整生活管理工具集" },
   
   // 学习课程
-  { name: "公开课程", category: "学习课程", bloomCamp: true, partner: true, tooltip: "全部公开课程" },
-  { name: "28节专属音频课", category: "学习课程", bloomCamp: true, partner: true, tooltip: "系统化音频课程体系" },
-  { name: "教练直播课", category: "学习课程", bloomCamp: true, partner: true, tooltip: "定期教练直播互动" },
-  { name: "全部高级课程", category: "学习课程", bloomCamp: false, partner: true, tooltip: "所有高级进阶课程" },
+  { name: "公开课程", category: "学习课程", identityCamp: true, emotionCamp: true, partner: true, tooltip: "全部公开课程" },
+  { name: "专属音频课", category: "学习课程", identityCamp: "21节", emotionCamp: "28节", partner: "全部", tooltip: "系统化音频课程体系" },
+  { name: "教练直播课", category: "学习课程", identityCamp: true, emotionCamp: true, partner: true, tooltip: "定期教练直播互动" },
+  { name: "全部高级课程", category: "学习课程", identityCamp: false, emotionCamp: false, partner: true, tooltip: "所有高级进阶课程" },
   
   // 专属服务
-  { name: "每日打卡陪伴", category: "专属服务", bloomCamp: true, partner: true, tooltip: "28天深度陪伴" },
-  { name: "社群支持", category: "专属服务", bloomCamp: true, partner: "VIP专属", tooltip: "专属成长社群" },
-  { name: "VIP客服", category: "专属服务", bloomCamp: true, partner: "专属管家", tooltip: "专属客服支持" },
-  { name: "数据导出", category: "专属服务", bloomCamp: "无限", partner: "无限", tooltip: "无限制数据导出" },
-  { name: "深度分析", category: "专属服务", bloomCamp: true, partner: true, tooltip: "专业深度分析报告" },
+  { name: "每日打卡陪伴", category: "专属服务", identityCamp: true, emotionCamp: true, partner: true, tooltip: "深度陪伴" },
+  { name: "社群支持", category: "专属服务", identityCamp: true, emotionCamp: true, partner: "VIP专属", tooltip: "专属成长社群" },
+  { name: "VIP客服", category: "专属服务", identityCamp: true, emotionCamp: true, partner: "专属管家", tooltip: "专属客服支持" },
+  { name: "数据导出", category: "专属服务", identityCamp: "无限", emotionCamp: "无限", partner: "无限", tooltip: "无限制数据导出" },
+  { name: "深度分析", category: "专属服务", identityCamp: true, emotionCamp: true, partner: true, tooltip: "专业深度分析报告" },
   
   // 合伙人权益
-  { name: "分销佣金", category: "合伙人权益", bloomCamp: false, partner: "30%+10%", tooltip: "一级30%、二级10%佣金" },
-  { name: "推广二维码", category: "合伙人权益", bloomCamp: false, partner: true, tooltip: "专属推广二维码" },
-  { name: "团队管理权限", category: "合伙人权益", bloomCamp: false, partner: true, tooltip: "查看和管理推广团队" },
-  { name: "专属培训", category: "合伙人权益", bloomCamp: false, partner: true, tooltip: "合伙人专属培训课程" },
-  { name: "优先活动权", category: "合伙人权益", bloomCamp: false, partner: true, tooltip: "优先参与品牌活动" },
+  { name: "分销佣金", category: "合伙人权益", identityCamp: false, emotionCamp: false, partner: "30%+10%", tooltip: "一级30%、二级10%佣金" },
+  { name: "推广二维码", category: "合伙人权益", identityCamp: false, emotionCamp: false, partner: true, tooltip: "专属推广二维码" },
+  { name: "团队管理权限", category: "合伙人权益", identityCamp: false, emotionCamp: false, partner: true, tooltip: "查看和管理推广团队" },
+  { name: "专属培训", category: "合伙人权益", identityCamp: false, emotionCamp: false, partner: true, tooltip: "合伙人专属培训课程" },
+  { name: "优先活动权", category: "合伙人权益", identityCamp: false, emotionCamp: false, partner: true, tooltip: "优先参与品牌活动" },
 ];
