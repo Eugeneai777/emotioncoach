@@ -13,6 +13,7 @@ import ReportsManagement from "@/components/admin/ReportsManagement";
 import { VideoCoursesManagement } from "@/components/admin/VideoCoursesManagement";
 import { EnergyStudioToolsManagement } from "@/components/admin/EnergyStudioToolsManagement";
 import { PartnerManagement } from "@/components/admin/PartnerManagement";
+import { PackagesManagement } from "@/components/admin/PackagesManagement";
 
 export default function Admin() {
   const { user, loading } = useAuth();
@@ -69,7 +70,7 @@ export default function Admin() {
         </div>
         
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="users">用户账户</TabsTrigger>
             <TabsTrigger value="orders">订单管理</TabsTrigger>
             <TabsTrigger value="usage">使用记录</TabsTrigger>
@@ -78,6 +79,7 @@ export default function Admin() {
             <TabsTrigger value="videos">视频课程</TabsTrigger>
             <TabsTrigger value="tools">生活馆工具</TabsTrigger>
             <TabsTrigger value="partners">合伙人管理</TabsTrigger>
+            <TabsTrigger value="packages">套餐权益</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -110,6 +112,10 @@ export default function Admin() {
 
           <TabsContent value="partners">
             <PartnerManagement />
+          </TabsContent>
+
+          <TabsContent value="packages">
+            <PackagesManagement />
           </TabsContent>
         </Tabs>
       </div>
