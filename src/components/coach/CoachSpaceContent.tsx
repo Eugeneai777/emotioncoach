@@ -19,6 +19,15 @@ const coaches = [{
   icon: "Users",
   gradient: "from-orange-500 to-amber-500",
   route: "/parent-coach",
+  badge: null
+}, {
+  id: "communication-coach",
+  title: "卡内基沟通教练",
+  subtitle: "Dale Carnegie",
+  description: "See · Understand · Influence · Act",
+  icon: "MessageSquare",
+  gradient: "from-blue-500 to-indigo-500",
+  route: "/communication-coach",
   badge: "新"
 }, {
   id: "life-coach",
@@ -29,16 +38,6 @@ const coaches = [{
   gradient: "from-purple-500 to-indigo-500",
   route: "/ai-coach",
   badge: null
-}, {
-  id: "coming-soon",
-  title: "更多教练",
-  subtitle: "敬请期待",
-  description: "职场教练、情侣教练等即将上线",
-  icon: "Plus",
-  gradient: "from-gray-400 to-gray-500",
-  route: null,
-  badge: null,
-  disabled: true
 }];
 export const CoachSpaceContent = () => {
   const navigate = useNavigate();

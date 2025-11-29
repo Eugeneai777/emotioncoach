@@ -411,6 +411,68 @@ export type Database = {
           },
         ]
       }
+      communication_briefings: {
+        Row: {
+          act_content: string | null
+          avoid_script: string | null
+          communication_theme: string
+          conversation_id: string | null
+          created_at: string | null
+          growth_insight: string | null
+          id: string
+          influence_content: string | null
+          micro_action: string | null
+          perspective_shift: string | null
+          recommended_script: string | null
+          scenario_analysis: string | null
+          see_content: string | null
+          strategy: string | null
+          understand_content: string | null
+        }
+        Insert: {
+          act_content?: string | null
+          avoid_script?: string | null
+          communication_theme: string
+          conversation_id?: string | null
+          created_at?: string | null
+          growth_insight?: string | null
+          id?: string
+          influence_content?: string | null
+          micro_action?: string | null
+          perspective_shift?: string | null
+          recommended_script?: string | null
+          scenario_analysis?: string | null
+          see_content?: string | null
+          strategy?: string | null
+          understand_content?: string | null
+        }
+        Update: {
+          act_content?: string | null
+          avoid_script?: string | null
+          communication_theme?: string
+          conversation_id?: string | null
+          created_at?: string | null
+          growth_insight?: string | null
+          id?: string
+          influence_content?: string | null
+          micro_action?: string | null
+          perspective_shift?: string | null
+          recommended_script?: string | null
+          scenario_analysis?: string | null
+          see_content?: string | null
+          strategy?: string | null
+          understand_content?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_briefings_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           achievement_id: string | null
