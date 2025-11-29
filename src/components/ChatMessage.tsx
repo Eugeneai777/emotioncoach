@@ -7,14 +7,16 @@ interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
   onOptionClick?: (option: string) => void;
+  onOptionSelect?: (option: string) => void;
   videoRecommendations?: any[];
   isLastMessage?: boolean;
 }
 
-export const ChatMessage = ({ role, content, onOptionClick, videoRecommendations, isLastMessage }: ChatMessageProps) => {
+export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, videoRecommendations, isLastMessage }: ChatMessageProps) => {
   const isUser = role === "user";
   const navigate = useNavigate();
   const [clickedOption, setClickedOption] = useState<string | null>(null);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
   
   // Show recommendations on the last assistant message if it contains a briefing
   const showRecommendations = isLastMessage && 
@@ -86,10 +88,11 @@ export const ChatMessage = ({ role, content, onOptionClick, videoRecommendations
             </p>
           )}
           
-          {options.length > 0 && onOptionClick && (
+          {options.length > 0 && (onOptionClick || onOptionSelect) && (
             <div className="flex flex-col gap-3 mt-4">
               {options.map((option, index) => {
                 const isClicked = clickedOption === option.text;
+                const isSelected = selectedOption === option.text;
                 const isDisabled = clickedOption !== null;
                 const isBriefingButton = option.text.includes("生成简报") || option.text.includes("简报");
                 const isShareButton = option.text.includes("去社区分享") || option.text.includes("分享到社区");
@@ -98,20 +101,27 @@ export const ChatMessage = ({ role, content, onOptionClick, videoRecommendations
                   <button
                     key={index}
                     onClick={() => {
-                      if (!isDisabled) {
-                        if (isShareButton) {
-                          // 分享按钮直接跳转到社区
-                          navigate("/community");
-                        } else {
+                      if (isShareButton) {
+                        // 分享按钮直接跳转到社区
+                        navigate("/community");
+                      } else if (isBriefingButton) {
+                        // 简报按钮：禁用其他按钮，立即发送
+                        if (!isDisabled) {
                           setClickedOption(option.text);
-                          onOptionClick(option.text);
+                          onOptionClick?.(option.text);
                         }
+                      } else {
+                        // 普通选项：填入输入框，不禁用按钮
+                        setSelectedOption(option.text);
+                        onOptionSelect?.(option.text);
                       }
                     }}
-                    disabled={isDisabled}
+                    disabled={isDisabled && !isSelected}
                     className={`group relative w-full text-left px-5 py-4 rounded-2xl transition-all duration-300 border overflow-hidden ${
                       isClicked
                         ? "bg-primary/20 border-primary/60 scale-[0.98]"
+                        : isSelected
+                        ? "bg-primary/15 border-primary/50 scale-[1.01]"
                         : isDisabled
                         ? "bg-muted/50 border-muted opacity-50 cursor-not-allowed"
                         : isShareButton
