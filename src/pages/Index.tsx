@@ -688,17 +688,7 @@ const Index = () => {
                       <span className="text-xs text-muted-foreground">亲子情绪四部曲</span>
                     </div>
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => navigate("/parent-diary")}
-                    className="gap-2"
-                  >
-                    <span className="text-pink-500">📖</span>
-                    <div className="flex flex-col">
-                      <span className="font-medium">亲子日记</span>
-                      <span className="text-xs text-muted-foreground">查看亲子教练记录</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => navigate("/ai-coach")}
                     className="gap-2"
                   >
