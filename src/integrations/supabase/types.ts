@@ -510,56 +510,113 @@ export type Database = {
         }
         Relationships: []
       }
+      communication_briefing_tags: {
+        Row: {
+          communication_briefing_id: string
+          created_at: string | null
+          id: string
+          tag_id: string
+        }
+        Insert: {
+          communication_briefing_id: string
+          created_at?: string | null
+          id?: string
+          tag_id: string
+        }
+        Update: {
+          communication_briefing_id?: string
+          created_at?: string | null
+          id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_briefing_tags_communication_briefing_id_fkey"
+            columns: ["communication_briefing_id"]
+            isOneToOne: false
+            referencedRelation: "communication_briefings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_briefing_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "communication_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       communication_briefings: {
         Row: {
           act_content: string | null
+          action_completed: boolean | null
           avoid_script: string | null
+          communication_difficulty: number | null
           communication_theme: string
           conversation_id: string | null
           created_at: string | null
+          difficulty_keywords: string[] | null
           growth_insight: string | null
           id: string
           influence_content: string | null
           micro_action: string | null
+          outcome_feedback_at: string | null
+          outcome_rating: number | null
           perspective_shift: string | null
           recommended_script: string | null
           scenario_analysis: string | null
+          scenario_type: string | null
           see_content: string | null
           strategy: string | null
+          target_type: string | null
           understand_content: string | null
         }
         Insert: {
           act_content?: string | null
+          action_completed?: boolean | null
           avoid_script?: string | null
+          communication_difficulty?: number | null
           communication_theme: string
           conversation_id?: string | null
           created_at?: string | null
+          difficulty_keywords?: string[] | null
           growth_insight?: string | null
           id?: string
           influence_content?: string | null
           micro_action?: string | null
+          outcome_feedback_at?: string | null
+          outcome_rating?: number | null
           perspective_shift?: string | null
           recommended_script?: string | null
           scenario_analysis?: string | null
+          scenario_type?: string | null
           see_content?: string | null
           strategy?: string | null
+          target_type?: string | null
           understand_content?: string | null
         }
         Update: {
           act_content?: string | null
+          action_completed?: boolean | null
           avoid_script?: string | null
+          communication_difficulty?: number | null
           communication_theme?: string
           conversation_id?: string | null
           created_at?: string | null
+          difficulty_keywords?: string[] | null
           growth_insight?: string | null
           id?: string
           influence_content?: string | null
           micro_action?: string | null
+          outcome_feedback_at?: string | null
+          outcome_rating?: number | null
           perspective_shift?: string | null
           recommended_script?: string | null
           scenario_analysis?: string | null
+          scenario_type?: string | null
           see_content?: string | null
           strategy?: string | null
+          target_type?: string | null
           understand_content?: string | null
         }
         Relationships: [
@@ -571,6 +628,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      communication_tags: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       community_posts: {
         Row: {
