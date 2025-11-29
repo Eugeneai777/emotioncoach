@@ -71,7 +71,7 @@ const EnergyStudio = () => {
     { id: "tools" as const, label: "成长工具", emoji: "🛠️", route: null },
     { id: "courses" as const, label: "学习课程", emoji: "📚", route: "/courses" },
     { id: "camp" as const, label: "训练营", emoji: "🏕️", route: "/camps" },
-    { id: "partner" as const, label: "合伙人", emoji: "🤝", route: "/partner-intro" }
+    { id: "partner" as const, label: "合伙人", emoji: "🤝", route: "/partner" }
   ];
 
   // 从数据库查询工具数据
