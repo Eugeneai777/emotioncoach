@@ -197,7 +197,7 @@ const EnergyStudio = () => {
       <main className="container max-w-6xl mx-auto px-4 py-8">
         {/* 一级导航菜单 */}
         <div className="flex justify-center mb-6">
-          <div className="grid w-full max-w-3xl grid-cols-5 bg-card/50 backdrop-blur-sm rounded-full p-1.5 border shadow-sm">
+          <div className="grid w-full max-w-4xl grid-cols-5 bg-card/50 backdrop-blur-sm rounded-full p-1.5 border shadow-sm">
             {primaryMenuItems.map(item => (
               <Button
                 key={item.id}
@@ -211,7 +211,7 @@ const EnergyStudio = () => {
                   }
                 }}
                 className={cn(
-                  "rounded-full py-2.5 px-4 gap-2 transition-all duration-300 text-sm",
+                  "rounded-full py-2.5 px-3 gap-1.5 transition-all duration-300 text-xs md:text-sm",
                   primaryTab === item.id && "bg-gradient-to-r from-primary to-warm text-white shadow-lg"
                 )}
               >
