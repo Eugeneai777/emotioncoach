@@ -153,7 +153,7 @@ export default function ParentCoach() {
     loading: notificationsLoading,
     markAsRead, 
     deleteNotification 
-  } = useSmartNotification();
+  } = useSmartNotification('parent_coach');
 
   const {
     isListening,

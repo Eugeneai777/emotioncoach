@@ -1618,6 +1618,7 @@ export type Database = {
           action_data: Json | null
           action_text: string | null
           action_type: string | null
+          coach_type: string | null
           context: Json | null
           created_at: string
           dismissed_at: string | null
@@ -1637,6 +1638,7 @@ export type Database = {
           action_data?: Json | null
           action_text?: string | null
           action_type?: string | null
+          coach_type?: string | null
           context?: Json | null
           created_at?: string
           dismissed_at?: string | null
@@ -1656,6 +1658,7 @@ export type Database = {
           action_data?: Json | null
           action_text?: string | null
           action_type?: string | null
+          coach_type?: string | null
           context?: Json | null
           created_at?: string
           dismissed_at?: string | null

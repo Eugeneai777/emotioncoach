@@ -3,13 +3,21 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bell } from 'lucide-react';
+import { Bell, Filter } from 'lucide-react';
 import { useSmartNotification } from '@/hooks/useSmartNotification';
 import { NotificationCard } from './NotificationCard';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export const SmartNotificationCenter = () => {
   const [open, setOpen] = useState(false);
-  const { notifications, unreadCount, loading, markAsRead, deleteNotification } = useSmartNotification();
+  const [coachFilter, setCoachFilter] = useState<string | null>(null);
+  const { notifications, unreadCount, loading, markAsRead, deleteNotification } = useSmartNotification(coachFilter);
 
   const handleNotificationClick = (notificationId: string) => {
     markAsRead(notificationId);
@@ -44,7 +52,48 @@ export const SmartNotificationCenter = () => {
             )}
           </SheetTitle>
         </SheetHeader>
-        <ScrollArea className="h-[calc(100vh-8rem)] mt-6">
+        
+        {/* 教练筛选器 */}
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">筛选教练</span>
+          </div>
+          <Select value={coachFilter || 'all'} onValueChange={(value) => setCoachFilter(value === 'all' ? null : value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="所有教练" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">所有教练</SelectItem>
+              <SelectItem value="emotion_coach">
+                <div className="flex items-center gap-2">
+                  <span className="text-green-500">💚</span>
+                  情绪觉醒教练
+                </div>
+              </SelectItem>
+              <SelectItem value="parent_coach">
+                <div className="flex items-center gap-2">
+                  <span className="text-purple-500">💜</span>
+                  家长情绪教练
+                </div>
+              </SelectItem>
+              <SelectItem value="life_coach">
+                <div className="flex items-center gap-2">
+                  <span className="text-indigo-500">✨</span>
+                  AI生活教练
+                </div>
+              </SelectItem>
+              <SelectItem value="general">
+                <div className="flex items-center gap-2">
+                  <span>📢</span>
+                  通用提醒
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <ScrollArea className="h-[calc(100vh-14rem)] mt-4">
           {loading ? (
             <div className="flex items-center justify-center py-8 text-muted-foreground">
               加载中...
