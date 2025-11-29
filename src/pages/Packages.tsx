@@ -170,9 +170,7 @@ export default function Packages() {
         </div>
 
         {/* 账户余额 */}
-        <div className="flex justify-center animate-in fade-in-50 slide-in-from-bottom-4 duration-700 delay-100">
-          <AccountBalance />
-        </div>
+        
 
         {/* 产品分类 Tabs */}
         <div className="animate-in fade-in-50 slide-in-from-bottom-4 duration-700 delay-200">
