@@ -560,7 +560,11 @@ ${briefing.growth_story || '暂无记录'}
                   </p>
                   <div className="flex gap-3">
                     <Button 
-                      onClick={() => setShowStartDialog(true)} 
+                      onClick={() => {
+                        console.log('加入训练营按钮被点击');
+                        console.log('parentCampTemplate:', parentCampTemplate);
+                        setShowStartDialog(true);
+                      }} 
                       className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                     >
                       <Heart className="h-4 w-4 mr-2" />
@@ -678,18 +682,18 @@ ${briefing.growth_story || '暂无记录'}
               </div>
             )}
             
-            {/* 训练营加入对话框 */}
-            {parentCampTemplate && (
-              <StartCampDialog 
-                open={showStartDialog}
-                onOpenChange={setShowStartDialog}
-                campTemplate={parentCampTemplate}
-                onSuccess={() => navigate('/camp-list')}
-              />
-            )}
-            
             <div ref={messagesEndRef} />
           </div>
+        )}
+        
+        {/* 训练营加入对话框 - 放在外面确保始终可用 */}
+        {parentCampTemplate && (
+          <StartCampDialog 
+            open={showStartDialog}
+            onOpenChange={setShowStartDialog}
+            campTemplate={parentCampTemplate}
+            onSuccess={() => navigate('/camp-list')}
+          />
         )}
       </main>
 
