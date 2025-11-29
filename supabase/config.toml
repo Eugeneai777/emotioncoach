@@ -1,5 +1,14 @@
 project_id = "vlsuzskvykddwrxbmcbu"
 
+[functions.carnegie-coach]
+verify_jwt = true
+
+[functions.generate-redemption-codes]
+verify_jwt = true
+
+[functions.redeem-code]
+verify_jwt = false
+
 [functions.life-coach]
 verify_jwt = true
 
