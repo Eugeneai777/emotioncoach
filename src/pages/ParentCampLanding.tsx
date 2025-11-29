@@ -896,7 +896,7 @@ export default function ParentCampLanding() {
             duration_days: campTemplate.duration_days,
             icon: campTemplate.icon
           }}
-          onSuccess={() => navigate('/camps')}
+          onSuccess={(campId) => navigate(`/camp/${campId}`)}
         />
       )}
     </div>
