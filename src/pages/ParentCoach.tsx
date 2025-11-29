@@ -476,7 +476,7 @@ ${briefing.growth_story || '暂无记录'}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
-                    onClick={() => navigate("/energy-studio")}
+                    onClick={() => navigate("/energy-studio#coach")}
                     className="gap-2 text-primary"
                   >
                     <Target className="w-4 h-4" />

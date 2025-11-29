@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -60,10 +60,18 @@ interface ToolCard {
 
 const EnergyStudio = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [primaryTab, setPrimaryTab] = useState<"coach" | "tools" | "courses" | "camp" | "partner">("tools");
   const [activeTab, setActiveTab] = useState<"emotion" | "exploration" | "management">("emotion");
   const [activeTool, setActiveTool] = useState<string | null>(null);
+
+  // 根据 URL hash 设置初始 tab
+  useEffect(() => {
+    if (location.hash === "#coach") {
+      setPrimaryTab("coach");
+    }
+  }, [location.hash]);
 
   // 一级菜单配置
   const primaryMenuItems = [
