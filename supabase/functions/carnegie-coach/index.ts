@@ -192,6 +192,7 @@ D. 正在用他的方式保护自己或你们的关系
         tools: tools,
         tool_choice: 'auto',
         stream: true,
+        max_tokens: 2000,
       }),
     });
 
