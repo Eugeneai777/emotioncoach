@@ -84,7 +84,6 @@ export function useActiveCoachTemplates() {
   });
 }
 
-// 获取单个教练配置
 export function useCoachTemplate(coachKey: string) {
   return useQuery({
     queryKey: ['coach-template', coachKey],
@@ -94,15 +93,22 @@ export function useCoachTemplate(coachKey: string) {
         .select('*')
         .eq('coach_key', coachKey)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error loading coach template:', error);
+        return null;
+      }
       
-      if (error) throw error;
+      if (!data) return null;
+      
       return {
         ...data,
         steps: (data.steps || []) as unknown as CoachStep[]
       } as CoachTemplate;
     },
     staleTime: 5 * 60 * 1000,
+    retry: 2,
   });
 }
 
