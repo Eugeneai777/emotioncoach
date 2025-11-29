@@ -53,6 +53,9 @@ interface CoachLayoutProps {
   // Optional features
   scenarios?: ReactNode;
   extraContent?: ReactNode;
+  trainingCamp?: ReactNode;
+  notifications?: ReactNode;
+  community?: ReactNode;
   voiceControls?: {
     isListening: boolean;
     isSpeaking: boolean;
@@ -86,6 +89,9 @@ export const CoachLayout = ({
   placeholder,
   scenarios,
   extraContent,
+  trainingCamp,
+  notifications,
+  community,
   voiceControls,
   showNotificationCenter = true
 }: CoachLayoutProps) => {
@@ -157,6 +163,9 @@ export const CoachLayout = ({
               moreInfoRoute={moreInfoRoute}
               scenarios={scenarios}
               extraContent={extraContent}
+              trainingCamp={trainingCamp}
+              notifications={notifications}
+              community={community}
             />
           ) : (
             <div className="space-y-4">

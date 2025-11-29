@@ -23,6 +23,9 @@ interface CoachEmptyStateProps {
   moreInfoRoute?: string;
   scenarios?: ReactNode;
   extraContent?: ReactNode;
+  trainingCamp?: ReactNode;
+  notifications?: ReactNode;
+  community?: ReactNode;
 }
 
 export const CoachEmptyState = ({
@@ -37,7 +40,10 @@ export const CoachEmptyState = ({
   primaryColor = "primary",
   moreInfoRoute,
   scenarios,
-  extraContent
+  extraContent,
+  trainingCamp,
+  notifications,
+  community
 }: CoachEmptyStateProps) => {
   return (
     <div className="space-y-6 md:space-y-8">
@@ -69,7 +75,16 @@ export const CoachEmptyState = ({
       {/* Optional Scenarios */}
       {scenarios}
 
-      {/* Extra Content (Training Camps, Notifications, etc.) */}
+      {/* Training Camp */}
+      {trainingCamp}
+
+      {/* Notifications */}
+      {notifications}
+
+      {/* Community Waterfall */}
+      {community}
+
+      {/* Extra Content */}
       {extraContent}
     </div>
   );
