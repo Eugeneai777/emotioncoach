@@ -16,9 +16,10 @@ interface SmartNotification {
   is_read: boolean;
   is_dismissed: boolean;
   created_at: string;
+  coach_type?: string;
 }
 
-export const useSmartNotification = () => {
+export const useSmartNotification = (coachTypeFilter?: string | null) => {
   const [notifications, setNotifications] = useState<SmartNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -30,10 +31,17 @@ export const useSmartNotification = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('smart_notifications')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', user.id);
+
+      // 如果提供了 coachTypeFilter，则按教练类型筛选
+      if (coachTypeFilter) {
+        query = query.eq('coach_type', coachTypeFilter);
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -46,7 +54,7 @@ export const useSmartNotification = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [coachTypeFilter]);
 
   // 标记为已读
   const markAsRead = useCallback(async (notificationId: string) => {

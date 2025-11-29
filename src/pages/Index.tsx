@@ -83,7 +83,7 @@ const Index = () => {
     markAsRead, 
     deleteNotification,
     triggerNotification 
-  } = useSmartNotification();
+  } = useSmartNotification('emotion_coach');
   const {
     isListening,
     transcript,
