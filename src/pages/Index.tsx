@@ -198,6 +198,7 @@ const Index = () => {
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'active')
+        .eq('camp_type', 'emotion_journal_21')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
