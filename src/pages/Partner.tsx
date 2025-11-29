@@ -6,7 +6,7 @@ import { usePartner } from "@/hooks/usePartner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Copy, Share2, Users, TrendingUp, Wallet, Clock } from "lucide-react";
+import { ArrowLeft, Copy, Share2, Users, TrendingUp, Wallet, Clock, Gift, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { PartnerStats } from "@/components/partner/PartnerStats";
 import { ReferralList } from "@/components/partner/ReferralList";
@@ -87,77 +87,121 @@ export default function Partner() {
           )}
         </div>
 
-        {/* Non-Partner View */}
+        {/* Non-Partner View - 双合伙人介绍 */}
         {!isPartner && (
-          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                您还不是合伙人
-              </CardTitle>
-              <CardDescription>
-                加入合伙人计划，享受丰厚佣金和专属权益
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-primary">
-                    <TrendingUp className="w-5 h-5" />
-                    <span className="font-semibold">直推佣金 30%</span>
+          <div className="space-y-8">
+            {/* 标题区域 */}
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold">选择适合您的合伙人计划</h2>
+              <p className="text-muted-foreground">两种模式，各有优势，根据您的需求选择</p>
+            </div>
+
+            {/* 双卡片对比 */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* 有劲合伙人卡片 */}
+              <Card className="border-2 hover:border-orange-500/50 transition-all cursor-pointer"
+                    onClick={() => navigate("/partner/youjin-intro")}>
+                <CardHeader className="bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-t-lg">
+                  <div className="text-4xl mb-2">💪</div>
+                  <CardTitle className="text-xl">有劲合伙人</CardTitle>
+                  <CardDescription className="text-white/90">预购体验包，长期分成</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-orange-500" />
+                    <span className="text-sm">预购100-1000份体验包</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    推荐好友购买任何套餐，立即获得30%佣金
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-primary">
-                    <Users className="w-5 h-5" />
-                    <span className="font-semibold">二级佣金 10%</span>
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-orange-500" />
+                    <span className="text-sm">全产品20%-50%佣金</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    您推荐的用户再推荐，您也能获得10%佣金
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-primary">
-                    <Wallet className="w-5 h-5" />
-                    <span className="font-semibold">快速提现</span>
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-orange-500" />
+                    <span className="text-sm">用户终身绑定，持续收益</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    佣金确认后即可申请提现，支持多种支付方式
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-primary">
-                    <Clock className="w-5 h-5" />
-                    <span className="font-semibold">长期收益</span>
+                  <Button className="w-full gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600">
+                    <Sparkles className="w-4 h-4" />
+                    了解有劲合伙人
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* 绽放合伙人卡片 */}
+              <Card className="border-2 hover:border-purple-500/50 transition-all cursor-pointer"
+                    onClick={() => navigate("/partner-intro")}>
+                <CardHeader className="bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-t-lg">
+                  <div className="text-4xl mb-2">🦋</div>
+                  <CardTitle className="text-xl">绽放合伙人</CardTitle>
+                  <CardDescription className="text-white/90">无需预购，直接推广</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Share2 className="w-4 h-4 text-purple-500" />
+                    <span className="text-sm">分享推广码即可</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    推荐关系永久有效，持续获得被动收入
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-purple-500" />
+                    <span className="text-sm">直推30% + 二级10%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-purple-500" />
+                    <span className="text-sm">绽放产品专属分成</span>
+                  </div>
+                  <Button className="w-full gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
+                    <Users className="w-4 h-4" />
+                    了解绽放合伙人
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* 对比表格 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>两种合伙人有什么区别？</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2">对比项</th>
+                        <th className="text-center py-2">💪 有劲合伙人</th>
+                        <th className="text-center py-2">🦋 绽放合伙人</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b">
+                        <td className="py-2">加入方式</td>
+                        <td className="text-center">预购体验包</td>
+                        <td className="text-center">购买合伙人套餐</td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-2">佣金比例</td>
+                        <td className="text-center">20%-50%（按预购量）</td>
+                        <td className="text-center">固定30%+10%</td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-2">可分成产品</td>
+                        <td className="text-center">所有有劲产品</td>
+                        <td className="text-center">绽放产品</td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-2">推广方式</td>
+                        <td className="text-center">兑换码/二维码</td>
+                        <td className="text-center">推广码/链接</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2">适合人群</td>
+                        <td className="text-center">长期经营，建立私域</td>
+                        <td className="text-center">快速变现，无需囤货</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => navigate("/partner/benefits")}
-                  className="flex-1 gap-2"
-                  size="lg"
-                >
-                  <Users className="w-4 h-4" />
-                  查看完整权益
-                </Button>
-                <Button
-                  onClick={() => navigate("/packages")}
-                  variant="outline"
-                  className="flex-1 gap-2"
-                  size="lg"
-                >
-                  立即加入
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {/* Partner View */}
