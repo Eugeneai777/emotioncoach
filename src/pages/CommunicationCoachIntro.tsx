@@ -47,7 +47,7 @@ const CommunicationCoachIntro = () => {
     {
       icon: Eye,
       title: "看清沟通问题，不再糊里糊涂",
-      description: "用 AI 帮你拆解：谁在意什么？误会从哪来？为什么讲不通？"
+      description: "卡内基沟通教练帮你拆解：谁在意什么？误会从哪来？为什么讲不通？"
     },
     {
       icon: MessageCircle,
@@ -57,7 +57,7 @@ const CommunicationCoachIntro = () => {
     {
       icon: Sparkles,
       title: "每天一个 30 秒练习，让关系每天好一点",
-      description: "沟通不是天赋，是习惯。AI 陪你每天练一点、变一点"
+      description: "沟通不是天赋，是习惯。卡内基沟通教练陪你每天练一点、变一点"
     }
   ];
 
@@ -132,35 +132,35 @@ const CommunicationCoachIntro = () => {
   const faqItems = [
     {
       question: "卡内基沟通教练和普通沟通课有什么不同？",
-      answer: "普通课程教理论，我们教你一句能立刻用的话。我们用 AI 实时分析你的真实场景，给你个性化的表达建议，而不是让你背模板。"
+      answer: "普通课程教理论，我们教你一句能立刻用的话。卡内基沟通教练实时分析你的真实场景，给你个性化的表达建议，而不是让你背模板。"
     },
     {
-      question: "我不擅长表达，AI 能帮我吗？",
-      answer: "能。AI 会先帮你看清对方的需求和你的真实想法，然后给你一句最安全、最容易被接受的表达方式。你只需要照着说就行。"
+      question: "我不擅长表达，卡内基沟通教练能帮我吗？",
+      answer: "能。卡内基沟通教练会先帮你看清对方的需求和你的真实想法，然后给你一句最安全、最容易被接受的表达方式。你只需要照着说就行。"
     },
     {
       question: "需要每天都使用吗？",
       answer: "不强制，但建议每周至少 2-3 次。越频繁练习，沟通习惯形成得越快。每次只需要 5-10 分钟。"
     },
     {
-      question: "AI 给的建议真的有用吗？",
-      answer: "AI 的建议基于你描述的具体场景、对方的性格特点和你们的关系状态，是定制化的。很多用户反馈说「这句话真的好用」「对方真的听进去了」。"
+      question: "卡内基沟通教练给的建议真的有用吗？",
+      answer: "建议基于你描述的具体场景、对方的性格特点和你们的关系状态，是定制化的。很多用户反馈说「这句话真的好用」「对方真的听进去了」。"
     },
     {
       question: "如果对方根本不想听怎么办？",
-      answer: "AI 会帮你分析对方为什么不想听，是时机不对、方式不对，还是需求没对齐。然后告诉你什么时候、用什么方式说，对方更容易打开心门。"
+      answer: "卡内基沟通教练会帮你分析对方为什么不想听，是时机不对、方式不对，还是需求没对齐。然后告诉你什么时候、用什么方式说，对方更容易打开心门。"
     },
     {
       question: "我可以用在工作场景吗？",
-      answer: "可以。无论是和老板、同事、客户沟通，还是和家人、伴侣、孩子沟通，都适用。AI 会根据关系类型给出不同的建议。"
+      answer: "可以。无论是和老板、同事、客户沟通，还是和家人、伴侣、孩子沟通，都适用。卡内基沟通教练会根据关系类型给出不同的建议。"
     },
     {
       question: "会不会让我说话变得很功利？",
       answer: "不会。我们教的不是「话术」，而是帮你找到既真诚、又能被接受的表达方式。目标是让关系更好，不是操控对方。"
     },
     {
-      question: "如果我说了 AI 建议的话，对方还是不听呢？",
-      answer: "沟通不是一次就能解决的。AI 会教你如何一步步建立信任、调整策略，而不是指望一句话就改变一切。"
+      question: "如果我说了建议的话，对方还是不听呢？",
+      answer: "沟通不是一次就能解决的。卡内基沟通教练会教你如何一步步建立信任、调整策略，而不是指望一句话就改变一切。"
     },
     {
       question: "我可以把对话记录分享给朋友吗？",
@@ -168,7 +168,7 @@ const CommunicationCoachIntro = () => {
     },
     {
       question: "如果我连问题都说不清楚怎么办？",
-      answer: "没关系。AI 会通过提问帮你一步步理清：发生了什么、你想要什么、对方在意什么。你只需要把模糊的感觉说出来就行。"
+      answer: "没关系。卡内基沟通教练会通过提问帮你一步步理清：发生了什么、你想要什么、对方在意什么。你只需要把模糊的感觉说出来就行。"
     }
   ];
 
@@ -284,7 +284,7 @@ const CommunicationCoachIntro = () => {
       <section id="four-steps" className="container mx-auto px-4 py-16">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
-            AI 的核心能力：四步沟通模型
+            卡内基沟通教练的核心能力：四步沟通模型
           </h2>
           <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
             通过 See → Understand → Influence → Act 帮助你解决每个真实场景
@@ -409,7 +409,7 @@ const CommunicationCoachIntro = () => {
             开始用卡内基沟通教练，让关系更顺畅
           </h2>
           <p className="text-lg text-muted-foreground">
-            只需要说出你的困境，AI 就会陪你找到更好的表达方式
+            只需要说出你的困境，卡内基沟通教练就会陪你找到更好的表达方式
           </p>
           <Button size="lg" onClick={handleGetStarted} className="mt-6 hover:scale-105 transition-transform">
             立即开始
