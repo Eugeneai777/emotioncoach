@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface Scenario {
   id: string;
@@ -57,22 +56,19 @@ export const CommunicationScenarioChips = ({ onSelectScenario }: CommunicationSc
       <p className="text-xs text-muted-foreground px-1">
         💡 快速选择沟通场景
       </p>
-      <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-2 pb-2">
-          {scenarios.map((scenario) => (
-            <Badge
-              key={scenario.id}
-              variant="outline"
-              className="cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-all px-3 py-1.5 text-sm"
-              onClick={() => onSelectScenario(scenario.prompt)}
-            >
-              <span className="mr-1">{scenario.emoji}</span>
-              {scenario.title}
-            </Badge>
-          ))}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      <div className="flex flex-wrap gap-2">
+        {scenarios.map((scenario) => (
+          <Badge
+            key={scenario.id}
+            variant="outline"
+            className="cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-all px-3 py-1.5 text-sm"
+            onClick={() => onSelectScenario(scenario.prompt)}
+          >
+            <span className="mr-1">{scenario.emoji}</span>
+            {scenario.title}
+          </Badge>
+        ))}
+      </div>
     </div>
   );
 };
