@@ -163,6 +163,10 @@ export const useParentCoach = () => {
     setMessages([]);
   };
 
+  const addAssistantMessage = (content: string) => {
+    setMessages(prev => [...prev, { role: 'assistant', content }]);
+  };
+
   return {
     session,
     messages,
@@ -171,6 +175,7 @@ export const useParentCoach = () => {
     createSession,
     loadSession,
     sendMessage,
-    resetSession
+    resetSession,
+    addAssistantMessage
   };
 };
