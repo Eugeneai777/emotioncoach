@@ -159,13 +159,21 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
               <th className="text-left p-4 font-semibold text-sm text-muted-foreground min-w-[140px] sticky left-0 bg-muted/50 z-10">
                 权益项目
               </th>
-              <th className="text-center p-4 min-w-[180px]">
+              <th className="text-center p-4 min-w-[160px]">
                 <div className="space-y-1">
-                  <div className="font-bold text-base text-foreground">绽放训练营</div>
-                  <div className="text-xs text-muted-foreground">¥3,980</div>
+                  <div className="font-bold text-base text-foreground">身份绽放训练营</div>
+                  <div className="text-xs text-muted-foreground">认识真实自我</div>
+                  <div className="text-xs text-muted-foreground font-semibold mt-1">¥2,980</div>
                 </div>
               </th>
-              <th className="text-center p-4 min-w-[180px] bg-gradient-to-br from-amber-500/10 to-orange-500/10">
+              <th className="text-center p-4 min-w-[160px]">
+                <div className="space-y-1">
+                  <div className="font-bold text-base text-foreground">情感绽放训练营</div>
+                  <div className="text-xs text-muted-foreground">体验内在情绪</div>
+                  <div className="text-xs text-muted-foreground font-semibold mt-1">¥3,980</div>
+                </div>
+              </th>
+              <th className="text-center p-4 min-w-[160px] bg-gradient-to-br from-amber-500/10 to-orange-500/10">
                 <div className="space-y-1">
                   <div className="flex items-center justify-center gap-2">
                     <div className="font-bold text-base bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
@@ -175,7 +183,8 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                       推荐
                     </span>
                   </div>
-                  <div className="text-xs text-muted-foreground">¥19,800</div>
+                  <div className="text-xs text-muted-foreground">共享事业成就</div>
+                  <div className="text-xs text-muted-foreground font-semibold mt-1">¥19,800</div>
                 </div>
               </th>
             </tr>
@@ -186,7 +195,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
               return (
                 <TooltipProvider key={cat}>
                   <tr className="border-b bg-muted/30">
-                    <td colSpan={3} className="p-3">
+                    <td colSpan={4} className="p-3">
                       <div className="font-semibold text-sm text-primary flex items-center gap-2">
                         {cat}
                       </div>
@@ -212,7 +221,8 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                           )}
                         </div>
                       </td>
-                      <td className="p-3 text-center">{renderValue(feature.bloomCamp)}</td>
+                      <td className="p-3 text-center">{renderValue(feature.identityCamp)}</td>
+                      <td className="p-3 text-center">{renderValue(feature.emotionCamp)}</td>
                       <td className="p-3 text-center bg-gradient-to-br from-amber-500/5 to-orange-500/5">
                         {renderValue(feature.partner)}
                       </td>
@@ -228,7 +238,17 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   variant="outline" 
                   size="sm" 
                   className="w-full"
-                  onClick={() => handlePurchase('bloom-camp')}
+                  onClick={() => handlePurchase('camp-fdbf32e0-61c5-464e-817a-45661dfc8105')}
+                >
+                  了解详情
+                </Button>
+              </td>
+              <td className="p-4 text-center">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => handlePurchase('camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5')}
                 >
                   了解详情
                 </Button>
