@@ -722,21 +722,21 @@ const Index = () => {
 
               <Button
                 size="sm"
-                variant="ghost"
-                onClick={() => navigate("/packages")}
-                className="h-8 md:h-9 w-8 md:w-9 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
-              >
-                <ShoppingBag className="w-4 h-4" />
-              </Button>
-
-              <Button
-                size="sm"
                 onClick={() => navigate("/history")}
                 className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-gradient-to-r from-primary via-emerald-500 to-teal-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 font-semibold border-0"
               >
                 <History className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span className="hidden sm:inline font-medium">我的情绪日记</span>
                 <span className="sm:hidden font-medium">日记</span>
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => navigate("/packages")}
+                className="h-8 md:h-9 w-8 md:w-9 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
+              >
+                <ShoppingBag className="w-4 h-4" />
               </Button>
 
               <SmartNotificationCenter />
