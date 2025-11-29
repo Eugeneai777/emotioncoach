@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface Post {
   id: string;
@@ -20,6 +21,10 @@ interface Post {
   is_anonymous: boolean;
   likes_count: number;
   created_at: string;
+  camp_id?: string;
+  camp_type?: string;
+  camp_name?: string;
+  template_id?: string;
 }
 
 const POSTS_PER_PAGE = 10;
@@ -83,7 +88,15 @@ const CommunityWaterfall = () => {
 
       let query = supabase
         .from('community_posts')
-        .select('id, user_id, post_type, title, content, image_urls, emotion_theme, is_anonymous, likes_count, created_at');
+        .select(`
+          id, user_id, post_type, title, content, image_urls, emotion_theme, 
+          is_anonymous, likes_count, created_at, camp_id,
+          training_camps!camp_id (
+            camp_type,
+            camp_name,
+            template_id
+          )
+        `);
 
       // 关注筛选：获取关注用户的帖子
       if (filter === 'following') {
@@ -198,10 +211,22 @@ const CommunityWaterfall = () => {
       if (error) throw error;
 
       if (data) {
+        // 展平 training_camps 数据到 post 对象
+        const processedData = data.map((post: any) => {
+          const campData = post.training_camps;
+          return {
+            ...post,
+            camp_type: campData?.camp_type,
+            camp_name: campData?.camp_name,
+            template_id: campData?.template_id,
+            training_camps: undefined
+          };
+        });
+        
         if (append) {
-          setPosts(prev => [...prev, ...data]);
+          setPosts(prev => [...prev, ...processedData]);
         } else {
-          setPosts(data);
+          setPosts(processedData);
         }
         setHasMore(data.length === POSTS_PER_PAGE);
       }
@@ -398,7 +423,7 @@ const CommunityWaterfall = () => {
           style={{ transform: `translateY(${pullDistance}px)` }}
         >
           <RefreshCw 
-            className={`w-5 h-5 text-primary ${refreshing || pullDistance > 60 ? 'animate-spin' : ''}`} 
+            className={`w-5 h-5 text-foreground/60 ${refreshing || pullDistance > 60 ? 'animate-spin' : ''}`} 
           />
           <span className="ml-2 text-sm text-muted-foreground">
             {refreshing ? '正在刷新...' : pullDistance > 60 ? '释放刷新' : '下拉刷新'}
@@ -410,14 +435,19 @@ const CommunityWaterfall = () => {
       <div className="flex items-center justify-between mb-4 px-1">
         <div className="flex items-center gap-2">
           <h2 className="text-xl font-bold text-foreground">🌈 有劲社区</h2>
-          <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">NEW</span>
+          <span className="text-xs px-2 py-0.5 bg-gradient-to-r from-red-100 via-yellow-100 via-green-100 via-blue-100 to-purple-100 text-foreground/70 rounded-full border border-border/30">NEW</span>
         </div>
         <Button 
           size="sm" 
-          className="gap-1"
+          variant="outline"
+          className="gap-1 bg-white/80 dark:bg-background/80 border-2 border-transparent bg-clip-padding 
+             hover:bg-white dark:hover:bg-background transition-all duration-200
+             [background-image:linear-gradient(white,white),linear-gradient(to_right,#ef4444,#eab308,#22c55e,#3b82f6,#8b5cf6)]
+             dark:[background-image:linear-gradient(hsl(var(--background)),hsl(var(--background))),linear-gradient(to_right,#ef4444,#eab308,#22c55e,#3b82f6,#8b5cf6)]
+             [background-origin:border-box] [background-clip:padding-box,border-box]"
           onClick={() => navigate("/community")}
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 text-foreground/70" />
           发布
         </Button>
       </div>
@@ -428,8 +458,13 @@ const CommunityWaterfall = () => {
           <Button
             key={cat.value}
             size="default"
-            variant={activeFilter === cat.value ? "default" : "outline"}
-            className="flex-1"
+            variant="outline"
+            className={cn(
+              "flex-1 transition-all duration-200",
+              activeFilter === cat.value 
+                ? "bg-gradient-to-r from-red-500/10 via-green-500/10 to-purple-500/10 border-primary/50 text-foreground font-medium" 
+                : "bg-white/60 dark:bg-background/60 border-border/50 hover:bg-white dark:hover:bg-background text-foreground/80"
+            )}
             onClick={() => {
               setActiveFilter(cat.value);
               setSelectedEmotionTag(null); // 切换分类时重置情绪标签
@@ -447,7 +482,13 @@ const CommunityWaterfall = () => {
           <div className="flex gap-2 pb-2">
             <Button
               size="sm"
-              variant={selectedEmotionTag === null ? "default" : "outline"}
+              variant="outline"
+              className={cn(
+                "transition-all duration-200",
+                selectedEmotionTag === null 
+                  ? "bg-gradient-to-r from-red-500/10 via-green-500/10 to-purple-500/10 border-primary/50 text-foreground font-medium" 
+                  : "bg-white/60 dark:bg-background/60 border-border/50 hover:bg-white dark:hover:bg-background text-foreground/80"
+              )}
               onClick={() => setSelectedEmotionTag(null)}
             >
               全部
@@ -456,7 +497,13 @@ const CommunityWaterfall = () => {
               <Button
                 key={tag}
                 size="sm"
-                variant={selectedEmotionTag === tag ? "default" : "outline"}
+                variant="outline"
+                className={cn(
+                  "transition-all duration-200",
+                  selectedEmotionTag === tag 
+                    ? "bg-gradient-to-r from-red-500/10 via-green-500/10 to-purple-500/10 border-primary/50 text-foreground font-medium" 
+                    : "bg-white/60 dark:bg-background/60 border-border/50 hover:bg-white dark:hover:bg-background text-foreground/80"
+                )}
                 onClick={() => setSelectedEmotionTag(tag)}
               >
                 {tag}
@@ -470,7 +517,7 @@ const CommunityWaterfall = () => {
       {/* 瀑布流内容 */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <Loader2 className="w-6 h-6 animate-spin text-foreground/60" />
         </div>
       ) : posts.length === 0 ? (
         <div className="text-center py-12">
@@ -506,7 +553,7 @@ const CommunityWaterfall = () => {
           {/* 加载更多指示器 */}
           <div ref={observerTarget} className="py-4 text-center">
             {loadingMore ? (
-              <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+              <Loader2 className="w-5 h-5 animate-spin text-foreground/60 mx-auto" />
             ) : !hasMore ? (
               <p className="text-xs text-muted-foreground">没有更多内容了</p>
             ) : null}

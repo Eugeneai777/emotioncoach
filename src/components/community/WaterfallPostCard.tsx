@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { getCoachSpaceInfo } from "@/utils/coachSpaceUtils";
 
 interface WaterfallPostCardProps {
   post: {
@@ -20,6 +21,10 @@ interface WaterfallPostCardProps {
     is_anonymous: boolean;
     likes_count: number;
     created_at: string;
+    camp_id?: string;
+    camp_type?: string;
+    camp_name?: string;
+    template_id?: string;
   };
   onCardClick?: (postId: string) => void;
 }
@@ -43,6 +48,13 @@ const WaterfallPostCard = memo(({ post, onCardClick }: WaterfallPostCardProps) =
   
   // 显示用户名或匿名
   const displayName = post.is_anonymous ? "匿名用户" : `用户${post.user_id.slice(0, 6)}`;
+  
+  // 获取教练空间信息
+  const coachSpace = getCoachSpaceInfo(
+    post.camp_type,
+    post.camp_name,
+    post.template_id
+  );
 
   // 检查是否已点赞
   useEffect(() => {
@@ -159,6 +171,17 @@ const WaterfallPostCard = memo(({ post, onCardClick }: WaterfallPostCardProps) =
             loading="lazy"
             onLoad={() => setImageLoaded(true)}
           />
+          {/* 教练空间标签 */}
+          {coachSpace && (
+            <div className={cn(
+              "absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-medium",
+              "flex items-center gap-1 backdrop-blur-sm shadow-sm",
+              coachSpace.bgClass, coachSpace.colorClass
+            )}>
+              <span>{coachSpace.emoji}</span>
+              <span>{coachSpace.shortName}</span>
+            </div>
+          )}
         </div>
       ) : (
         <div className="relative w-full h-40 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center">
