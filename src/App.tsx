@@ -34,6 +34,7 @@ import Courses from "./pages/Courses";
 import ParentChildDiary from "./pages/ParentChildDiary";
 import Partner from "./pages/Partner";
 import PartnerBenefits from "./pages/PartnerBenefits";
+import PartnerIntro from "./pages/PartnerIntro";
 import NotFound from "./pages/NotFound";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
 
@@ -78,6 +79,7 @@ const App = () => (
           <Route path="/courses" element={<Courses />} />
           <Route path="/partner" element={<Partner />} />
           <Route path="/partner/benefits" element={<PartnerBenefits />} />
+          <Route path="/partner-intro" element={<PartnerIntro />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
