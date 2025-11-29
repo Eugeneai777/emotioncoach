@@ -51,25 +51,25 @@ const parentStages = [
     id: 1, 
     name: "觉察", 
     subtitle: "Feel it", 
-    description: "暂停，觉察自己的第一反应是什么" 
+    description: "从情绪被动 → 情绪被看见" 
   },
   { 
     id: 2, 
     name: "看见", 
     subtitle: "See it", 
-    description: "观察孩子当下的反应和可能的需求" 
+    description: "从怪孩子 → 看见我和孩子都在卡点里" 
   },
   { 
     id: 3, 
-    name: "卡点", 
+    name: "反应", 
     subtitle: "Sense it", 
-    description: "发现自己反复被卡住的模式" 
+    description: "从自动反应 → 有选择的反应" 
   },
   { 
     id: 4, 
     name: "转化", 
     subtitle: "Transform it", 
-    description: "选择一个不带压力的小行动" 
+    description: "从情绪拉扯 → 关系松动，开始出现新的可能" 
   }
 ];
 
