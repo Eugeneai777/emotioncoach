@@ -2990,6 +2990,17 @@ export type Database = {
           remaining_quota: number
         }[]
       }
+      get_user_permissions: {
+        Args: { p_user_id: string }
+        Returns: {
+          access_level: string
+          access_value: string
+          category: string
+          feature_key: string
+          feature_name: string
+          package_name: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
