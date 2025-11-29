@@ -21,32 +21,45 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // 获取用户的点赞历史
-    const { data: likes } = await supabase
+    // 获取用户的点赞历史 - 优化查询速度
+    const { data: likes, error: likesError } = await supabase
       .from("post_likes")
-      .select("post_id, community_posts(post_type, emotion_theme, title, content)")
+      .select("post_id")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(20);
 
-    // 获取用户的评论历史
-    const { data: comments } = await supabase
+    if (likesError) {
+      console.error("获取点赞历史失败:", likesError);
+    }
+
+    // 获取用户的评论历史 - 优化查询速度
+    const { data: comments, error: commentsError } = await supabase
       .from("post_comments")
-      .select("post_id, community_posts(post_type, emotion_theme, title, content)")
+      .select("post_id")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(20);
 
-    console.log("用户历史数据 - 点赞:", likes?.length, "评论:", comments?.length);
+    if (commentsError) {
+      console.error("获取评论历史失败:", commentsError);
+    }
+
+    console.log("用户历史数据 - 点赞:", likes?.length || 0, "评论:", comments?.length || 0);
 
     // 如果没有足够的历史数据，返回热门帖子
     if ((!likes || likes.length < 3) && (!comments || comments.length < 3)) {
       console.log("历史数据不足，返回热门帖子");
-      const { data: popularPosts } = await supabase
+      const { data: popularPosts, error: popularError } = await supabase
         .from("community_posts")
         .select("id")
         .order("likes_count", { ascending: false })
         .limit(10);
+
+      if (popularError) {
+        console.error("获取热门帖子失败:", popularError);
+        throw new Error("获取热门帖子失败");
+      }
 
       return new Response(
         JSON.stringify({
@@ -57,6 +70,20 @@ serve(async (req) => {
       );
     }
 
+    // 获取点赞和评论的帖子详情
+    const likedPostIds = likes?.map(l => l.post_id) || [];
+    const commentedPostIds = comments?.map(c => c.post_id) || [];
+    const allInteractedPostIds = [...new Set([...likedPostIds, ...commentedPostIds])];
+
+    let interactedPosts: any[] = [];
+    if (allInteractedPostIds.length > 0) {
+      const { data: posts } = await supabase
+        .from("community_posts")
+        .select("id, post_type, emotion_theme, title")
+        .in("id", allInteractedPostIds);
+      interactedPosts = posts || [];
+    }
+
     // 如果没有配置 Lovable AI，使用简单推荐策略
     if (!lovableApiKey) {
       console.log("未配置AI，使用简单推荐策略");
@@ -64,22 +91,11 @@ serve(async (req) => {
       const likedTypes = new Map<string, number>();
       const likedThemes = new Map<string, number>();
 
-      likes?.forEach((like: any) => {
-        if (like.community_posts) {
-          const type = like.community_posts.post_type;
-          const theme = like.community_posts.emotion_theme;
-          likedTypes.set(type, (likedTypes.get(type) || 0) + 1);
-          if (theme) likedThemes.set(theme, (likedThemes.get(theme) || 0) + 1);
-        }
-      });
-
-      comments?.forEach((comment: any) => {
-        if (comment.community_posts) {
-          const type = comment.community_posts.post_type;
-          const theme = comment.community_posts.emotion_theme;
-          likedTypes.set(type, (likedTypes.get(type) || 0) + 1);
-          if (theme) likedThemes.set(theme, (likedThemes.get(theme) || 0) + 1);
-        }
+      interactedPosts.forEach((post: any) => {
+        const type = post.post_type;
+        const theme = post.emotion_theme;
+        likedTypes.set(type, (likedTypes.get(type) || 0) + 1);
+        if (theme) likedThemes.set(theme, (likedThemes.get(theme) || 0) + 1);
       });
 
       // 获取最喜欢的类型
@@ -111,16 +127,11 @@ serve(async (req) => {
     // 使用 Lovable AI 进行智能推荐
     console.log("使用AI推荐");
     const userBehavior = {
-      likedPosts: likes?.map((like: any) => ({
-        type: like.community_posts?.post_type,
-        theme: like.community_posts?.emotion_theme,
-        title: like.community_posts?.title,
-      })) || [],
-      commentedPosts: comments?.map((comment: any) => ({
-        type: comment.community_posts?.post_type,
-        theme: comment.community_posts?.emotion_theme,
-        title: comment.community_posts?.title,
-      })) || [],
+      interactedPosts: interactedPosts.map((post: any) => ({
+        type: post.post_type,
+        theme: post.emotion_theme,
+        title: post.title,
+      })),
     };
 
     // 获取候选帖子（减少数量和字段以提高速度）
@@ -134,7 +145,10 @@ serve(async (req) => {
 
     // 添加超时控制的 AI 调用
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒超时
+    const timeoutId = setTimeout(() => {
+      console.log("AI调用超时，中止请求");
+      controller.abort();
+    }, 8000); // 8秒超时
 
     try {
       const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -208,7 +222,13 @@ serve(async (req) => {
       );
     } catch (aiError) {
       clearTimeout(timeoutId);
-      console.error("AI调用失败，使用回退策略:", aiError);
+      
+      // 区分不同类型的错误
+      if (aiError instanceof Error && aiError.name === 'AbortError') {
+        console.error("AI调用超时，使用回退策略");
+      } else {
+        console.error("AI调用失败，使用回退策略:", aiError);
+      }
       
       // AI失败时回退到基于like_count的推荐
       const fallbackIds = candidatePosts?.slice(0, 10).map(p => p.id) || [];
