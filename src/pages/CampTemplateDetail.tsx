@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,7 @@ const CampTemplateDetail = () => {
   const { templateId } = useParams();
   const navigate = useNavigate();
   const [showStartDialog, setShowStartDialog] = useState(false);
+  const { user } = useAuth();
 
   const { data: camp, isLoading } = useQuery({
     queryKey: ['camp-template', templateId],
@@ -35,6 +37,27 @@ const CampTemplateDetail = () => {
     },
     enabled: !!templateId
   });
+
+  // 查询用户是否已有该类型的活跃训练营
+  const { data: existingCamp } = useQuery({
+    queryKey: ['existing-camp', camp?.camp_type, user?.id],
+    queryFn: async () => {
+      if (!user || !camp?.camp_type) return null;
+      const { data } = await supabase
+        .from('training_camps')
+        .select('id, camp_name, current_day')
+        .eq('user_id', user.id)
+        .eq('camp_type', camp.camp_type)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user && !!camp?.camp_type
+  });
+
+  const hasJoinedCamp = !!existingCamp;
 
   if (isLoading) {
     return (
@@ -100,10 +123,16 @@ const CampTemplateDetail = () => {
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
               <Button 
                 size="lg" 
-                onClick={() => setShowStartDialog(true)}
+                onClick={() => {
+                  if (hasJoinedCamp && existingCamp) {
+                    navigate(`/camp/${existingCamp.id}`);
+                  } else {
+                    setShowStartDialog(true);
+                  }
+                }}
                 className={`gap-2 bg-gradient-to-r ${camp.gradient} hover:opacity-90 text-white shadow-lg hover:shadow-xl transition-all duration-300`}
               >
-                立即加入
+                {hasJoinedCamp ? '继续训练' : '立即加入'}
                 <ArrowRight className="w-5 h-5" />
               </Button>
               <Button 
@@ -307,10 +336,16 @@ const CampTemplateDetail = () => {
               </p>
               <Button 
                 size="lg" 
-                onClick={() => setShowStartDialog(true)}
+                onClick={() => {
+                  if (hasJoinedCamp && existingCamp) {
+                    navigate(`/camp/${existingCamp.id}`);
+                  } else {
+                    setShowStartDialog(true);
+                  }
+                }}
                 className="gap-2 bg-white text-purple-600 hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                立即开始
+                {hasJoinedCamp ? '继续训练' : '立即开始'}
                 <Sparkles className="w-5 h-5" />
               </Button>
             </div>
