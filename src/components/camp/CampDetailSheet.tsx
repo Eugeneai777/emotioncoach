@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -29,6 +32,28 @@ interface CampDetailSheetProps {
 export const CampDetailSheet = ({ open, onOpenChange, camp }: CampDetailSheetProps) => {
   const navigate = useNavigate();
   const [showStartDialog, setShowStartDialog] = useState(false);
+  const { user } = useAuth();
+
+  // 查询用户是否已有该类型的活跃训练营
+  const { data: existingCamp } = useQuery({
+    queryKey: ['existing-camp', camp?.camp_type, user?.id],
+    queryFn: async () => {
+      if (!user || !camp?.camp_type) return null;
+      const { data } = await supabase
+        .from('training_camps')
+        .select('id, camp_name, current_day')
+        .eq('user_id', user.id)
+        .eq('camp_type', camp.camp_type)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user && !!camp?.camp_type
+  });
+
+  const hasJoinedCamp = !!existingCamp;
 
   if (!camp) return null;
 
@@ -70,10 +95,16 @@ export const CampDetailSheet = ({ open, onOpenChange, camp }: CampDetailSheetPro
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
                 <Button 
                   size="lg" 
-                  onClick={() => setShowStartDialog(true)}
+                  onClick={() => {
+                    if (hasJoinedCamp && existingCamp) {
+                      navigate(`/camp/${existingCamp.id}`);
+                    } else {
+                      setShowStartDialog(true);
+                    }
+                  }}
                   className={`gap-2 bg-gradient-to-r ${camp.gradient} hover:opacity-90 text-white shadow-lg hover:shadow-xl transition-all duration-300`}
                 >
-                  立即加入
+                  {hasJoinedCamp ? '继续训练' : '立即加入'}
                   <ArrowRight className="w-5 h-5" />
                 </Button>
                 <Button 
@@ -280,10 +311,16 @@ export const CampDetailSheet = ({ open, onOpenChange, camp }: CampDetailSheetPro
                 </p>
                 <Button 
                   size="lg" 
-                  onClick={() => setShowStartDialog(true)}
+                  onClick={() => {
+                    if (hasJoinedCamp && existingCamp) {
+                      navigate(`/camp/${existingCamp.id}`);
+                    } else {
+                      setShowStartDialog(true);
+                    }
+                  }}
                   className="gap-2 bg-white text-purple-600 hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  立即开始
+                  {hasJoinedCamp ? '继续训练' : '立即开始'}
                   <Sparkles className="w-5 h-5" />
                 </Button>
               </div>
@@ -296,9 +333,10 @@ export const CampDetailSheet = ({ open, onOpenChange, camp }: CampDetailSheetPro
         open={showStartDialog}
         onOpenChange={setShowStartDialog}
         campTemplate={camp}
-        onSuccess={() => {
+        onSuccess={(campId) => {
           setShowStartDialog(false);
           onOpenChange(false);
+          navigate(`/camp/${campId}`);
         }}
       />
     </>

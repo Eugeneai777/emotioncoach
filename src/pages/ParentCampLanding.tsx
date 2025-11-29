@@ -11,6 +11,7 @@ import { ScrollToTop } from "@/components/camp/ScrollToTop";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const childTypes = [
   { emoji: '🌧️', label: '抑郁 / 情绪低落', value: 'depression' },
@@ -27,6 +28,7 @@ export default function ParentCampLanding() {
   const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [showStartDialog, setShowStartDialog] = useState(false);
+  const { user } = useAuth();
 
   const { data: campTemplate } = useQuery({
     queryKey: ['camp-template', 'parent_emotion_21'],
@@ -40,6 +42,27 @@ export default function ParentCampLanding() {
     }
   });
 
+  // 查询用户是否已有活跃的训练营
+  const { data: existingCamp } = useQuery({
+    queryKey: ['existing-parent-camp', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('training_camps')
+        .select('id, camp_name, current_day')
+        .eq('user_id', user.id)
+        .eq('camp_type', 'parent_emotion_21')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user
+  });
+
+  const hasJoinedCamp = !!existingCamp;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-emerald-50/20 to-background">
       {/* 导航栏 */}
@@ -50,10 +73,16 @@ export default function ParentCampLanding() {
             返回
           </Button>
           <Button 
-            onClick={() => setShowStartDialog(true)}
+            onClick={() => {
+              if (hasJoinedCamp && existingCamp) {
+                navigate(`/camp/${existingCamp.id}`);
+              } else {
+                setShowStartDialog(true);
+              }
+            }}
             className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:opacity-90"
           >
-            立即加入
+            {hasJoinedCamp ? '继续训练' : '立即加入'}
           </Button>
         </div>
       </nav>
@@ -849,10 +878,16 @@ export default function ParentCampLanding() {
               <div className="pt-4">
                 <Button
                   size="lg"
-                  onClick={() => setShowStartDialog(true)}
+                  onClick={() => {
+                    if (hasJoinedCamp && existingCamp) {
+                      navigate(`/camp/${existingCamp.id}`);
+                    } else {
+                      setShowStartDialog(true);
+                    }
+                  }}
                   className="bg-white text-emerald-600 hover:bg-white/90 text-lg px-8 py-6 h-auto font-semibold shadow-xl hover:scale-105 transition-transform duration-300"
                 >
-                  立即加入《21天青少年问题家庭训练营》
+                  {hasJoinedCamp ? '继续训练营' : '立即加入《21天青少年问题家庭训练营》'}
                 </Button>
               </div>
               <div className="pt-4 space-y-2 text-white/90">
@@ -882,7 +917,16 @@ export default function ParentCampLanding() {
       </section>
 
       {/* 浮动组件 */}
-      <FloatingCTA onClick={() => setShowStartDialog(true)} />
+      <FloatingCTA 
+        onClick={() => {
+          if (hasJoinedCamp && existingCamp) {
+            navigate(`/camp/${existingCamp.id}`);
+          } else {
+            setShowStartDialog(true);
+          }
+        }}
+        text={hasJoinedCamp ? '继续训练' : '立即加入训练营'}
+      />
       <ScrollToTop />
 
       {/* 开始训练营对话框 */}

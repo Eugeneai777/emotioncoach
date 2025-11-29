@@ -123,6 +123,27 @@ export default function ParentCoach() {
     }
   });
 
+  // 查询用户是否已有家长训练营
+  const { data: existingParentCamp } = useQuery({
+    queryKey: ['existing-parent-camp', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('training_camps')
+        .select('id, camp_name, current_day')
+        .eq('user_id', user.id)
+        .eq('camp_type', 'parent_emotion_21')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user
+  });
+
+  const hasJoinedParentCamp = !!existingParentCamp;
+
   const {
     isListening,
     transcript,
@@ -561,14 +582,16 @@ ${briefing.growth_story || '暂无记录'}
                   <div className="flex gap-3">
                     <Button 
                       onClick={() => {
-                        console.log('加入训练营按钮被点击');
-                        console.log('parentCampTemplate:', parentCampTemplate);
-                        setShowStartDialog(true);
+                        if (hasJoinedParentCamp && existingParentCamp) {
+                          navigate(`/camp/${existingParentCamp.id}`);
+                        } else {
+                          setShowStartDialog(true);
+                        }
                       }} 
                       className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                     >
                       <Heart className="h-4 w-4 mr-2" />
-                      加入训练营
+                      {hasJoinedParentCamp ? '进入训练营' : '加入训练营'}
                     </Button>
                     <Button 
                       variant="outline" 
@@ -661,12 +684,18 @@ ${briefing.growth_story || '暂无记录'}
                     </p>
                     <div className="flex gap-2">
                       <Button
-                        onClick={() => setShowStartDialog(true)}
+                        onClick={() => {
+                          if (hasJoinedParentCamp && existingParentCamp) {
+                            navigate(`/camp/${existingParentCamp.id}`);
+                          } else {
+                            setShowStartDialog(true);
+                          }
+                        }}
                         className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                         size="sm"
                       >
                         <Heart className="w-4 h-4 mr-1" />
-                        加入训练营
+                        {hasJoinedParentCamp ? '进入训练营' : '加入训练营'}
                       </Button>
                       <Button
                         variant="outline"
