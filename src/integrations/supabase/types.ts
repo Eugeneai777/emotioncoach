@@ -1306,6 +1306,247 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_benefits: {
+        Row: {
+          benefit_description: string | null
+          benefit_icon: string | null
+          benefit_name: string
+          benefit_value: number | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+        }
+        Insert: {
+          benefit_description?: string | null
+          benefit_icon?: string | null
+          benefit_name: string
+          benefit_value?: number | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+        }
+        Update: {
+          benefit_description?: string | null
+          benefit_icon?: string | null
+          benefit_name?: string
+          benefit_value?: number | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+        }
+        Relationships: []
+      }
+      partner_commissions: {
+        Row: {
+          commission_amount: number
+          commission_level: number
+          commission_rate: number
+          confirm_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          order_amount: number
+          order_id: string
+          order_type: string
+          partner_id: string
+          source_user_id: string
+          status: string
+        }
+        Insert: {
+          commission_amount: number
+          commission_level: number
+          commission_rate: number
+          confirm_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          order_amount: number
+          order_id: string
+          order_type: string
+          partner_id: string
+          source_user_id: string
+          status?: string
+        }
+        Update: {
+          commission_amount?: number
+          commission_level?: number
+          commission_rate?: number
+          confirm_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          order_amount?: number
+          order_id?: string
+          order_type?: string
+          partner_id?: string
+          source_user_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_commissions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_referrals: {
+        Row: {
+          created_at: string
+          id: string
+          level: number
+          parent_referral_id: string | null
+          partner_id: string
+          referred_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level?: number
+          parent_referral_id?: string | null
+          partner_id: string
+          referred_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: number
+          parent_referral_id?: string | null
+          partner_id?: string
+          referred_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_referrals_parent_referral_id_fkey"
+            columns: ["parent_referral_id"]
+            isOneToOne: false
+            referencedRelation: "partner_referrals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_referrals_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_withdrawals: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          created_at: string
+          id: string
+          partner_id: string
+          payment_info: Json
+          payment_method: string
+          processed_at: string | null
+          processed_by: string | null
+          status: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          partner_id: string
+          payment_info: Json
+          payment_method: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          partner_id?: string
+          payment_info?: Json
+          payment_method?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_withdrawals_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partners: {
+        Row: {
+          available_balance: number
+          commission_rate_l1: number
+          commission_rate_l2: number
+          created_at: string
+          id: string
+          partner_code: string
+          pending_balance: number
+          source: string
+          source_admin_id: string | null
+          source_note: string | null
+          source_order_id: string | null
+          status: string
+          total_earnings: number
+          total_l2_referrals: number
+          total_referrals: number
+          updated_at: string
+          user_id: string
+          withdrawn_amount: number
+        }
+        Insert: {
+          available_balance?: number
+          commission_rate_l1?: number
+          commission_rate_l2?: number
+          created_at?: string
+          id?: string
+          partner_code: string
+          pending_balance?: number
+          source?: string
+          source_admin_id?: string | null
+          source_note?: string | null
+          source_order_id?: string | null
+          status?: string
+          total_earnings?: number
+          total_l2_referrals?: number
+          total_referrals?: number
+          updated_at?: string
+          user_id: string
+          withdrawn_amount?: number
+        }
+        Update: {
+          available_balance?: number
+          commission_rate_l1?: number
+          commission_rate_l2?: number
+          created_at?: string
+          id?: string
+          partner_code?: string
+          pending_balance?: number
+          source?: string
+          source_admin_id?: string | null
+          source_note?: string | null
+          source_order_id?: string | null
+          status?: string
+          total_earnings?: number
+          total_l2_referrals?: number
+          total_referrals?: number
+          updated_at?: string
+          user_id?: string
+          withdrawn_amount?: number
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string

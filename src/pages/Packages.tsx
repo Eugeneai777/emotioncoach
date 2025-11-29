@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, Zap, Crown, ArrowLeft } from "lucide-react";
+import { Check, Sparkles, Zap, Crown, ArrowLeft, Users } from "lucide-react";
 import { PurchaseHistory } from "@/components/PurchaseHistory";
 import { AccountBalance } from "@/components/AccountBalance";
 import { toast } from "sonner";
@@ -43,6 +43,29 @@ const packages = [
       '深度情绪分析',
       '优先新功能体验',
       '365天有效期，过期未用完作废'
+    ]
+  },
+  {
+    id: 'partner',
+    name: '绽放合伙人',
+    price: 19800,
+    duration: '永久',
+    icon: Users,
+    popular: false,
+    isPartner: true,
+    gradient: 'from-amber-500/20 to-orange-500/20',
+    totalValue: 76759,
+    features: [
+      'VIP会员所有课程权益（价值¥299）',
+      '《身份绽放特训营》4周线上特训（价值¥2,980）',
+      '《情感绽放特训营》4周线上特训（价值¥3,980）',
+      '《生命绽放特训营》4周线上特训（价值¥12,800）',
+      '专属"英雄之旅"绽放线下课（价值¥10,000）',
+      '《绽放教练》国际认证（价值¥16,800）',
+      '💰 推广分成：直推30%，二级10%',
+      '🎨 专属推广码和推广海报',
+      '👥 合伙人专属社群',
+      '⭐ 新功能优先体验权'
     ]
   }
 ];
@@ -92,7 +115,7 @@ export default function Packages() {
         </div>
 
         {/* 套餐卡片 */}
-        <div className="grid md:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto animate-in fade-in-50 slide-in-from-bottom-4 duration-700 delay-200">
+        <div className="grid md:grid-cols-3 gap-6 max-w-7xl mx-auto animate-in fade-in-50 slide-in-from-bottom-4 duration-700 delay-200">
           {packages.map((pkg, index) => {
             const Icon = pkg.icon;
             return (
@@ -141,9 +164,16 @@ export default function Packages() {
                       <span className="text-2xl font-medium text-muted-foreground">¥</span>
                       <span className="text-4xl font-bold text-foreground">{pkg.price}</span>
                     </div>
-                    <p className="text-sm text-muted-foreground font-medium">
-                      {pkg.quota} 次AI对话
-                    </p>
+                    {'quota' in pkg && (
+                      <p className="text-sm text-muted-foreground font-medium">
+                        {pkg.quota} 次AI对话
+                      </p>
+                    )}
+                    {'totalValue' in pkg && (
+                      <p className="text-xs text-amber-600 dark:text-amber-500 font-semibold">
+                        🎁 总价值 ¥{pkg.totalValue}
+                      </p>
+                    )}
                     {pkg.limitPurchase && (
                       <p className="text-xs text-amber-600 dark:text-amber-500 font-semibold flex items-center gap-1">
                         ⚠️ 限购一次

@@ -18,6 +18,13 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // 处理推荐参数
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+      localStorage.setItem('referral_code', refCode);
+    }
+
     // 检查用户是否已登录
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
@@ -26,8 +33,23 @@ const Auth = () => {
     });
 
     // 监听认证状态变化
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session && event === 'SIGNED_IN') {
+        // 如果有推荐码，处理推荐关系
+        const savedRefCode = localStorage.getItem('referral_code');
+        if (savedRefCode) {
+          try {
+            await supabase.functions.invoke('process-referral', {
+              body: {
+                referred_user_id: session.user.id,
+                partner_code: savedRefCode
+              }
+            });
+            localStorage.removeItem('referral_code');
+          } catch (error) {
+            console.error('Error processing referral:', error);
+          }
+        }
         navigate("/");
       }
     });
