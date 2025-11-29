@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CommunicationScenarios } from "@/components/communication/CommunicationScenarios";
 
 const CommunicationCoach = () => {
   const [input, setInput] = useState("");
@@ -51,6 +52,11 @@ const CommunicationCoach = () => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleSelectScenario = (prompt: string) => {
+    setInput(prompt);
+    textareaRef.current?.focus();
   };
 
   const handleSignOut = async () => {
@@ -278,11 +284,7 @@ const CommunicationCoach = () => {
                 </div>
               </div>
 
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">
-                  分享你的沟通困境，让我们一起找到解决方案 💬
-                </p>
-              </div>
+              <CommunicationScenarios onSelectScenario={handleSelectScenario} />
             </div>
           ) : (
             <div className="space-y-4">
