@@ -13,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import PostEditDialog from "./PostEditDialog";
+import { getCoachSpaceInfo } from "@/utils/coachSpaceUtils";
+import { useNavigate } from "react-router-dom";
 
 interface PostCardProps {
   post: {
@@ -33,11 +35,16 @@ interface PostCardProps {
     comments_count: number;
     shares_count: number;
     created_at: string;
+    camp_id?: string;
+    camp_type?: string;
+    camp_name?: string;
+    template_id?: string;
   };
   onUpdate: () => void;
 }
 
 const PostCard = ({ post, onUpdate }: PostCardProps) => {
+  const navigate = useNavigate();
   const [showComments, setShowComments] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likes_count);
@@ -46,6 +53,13 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const [isLoadingFollow, setIsLoadingFollow] = useState(false);
   const { session } = useAuth();
   const { toast } = useToast();
+  
+  // 获取教练空间信息
+  const coachSpace = getCoachSpaceInfo(
+    post.camp_type,
+    post.camp_name,
+    post.template_id
+  );
 
   // 检查是否已关注
   useEffect(() => {
@@ -241,6 +255,16 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
           <Badge variant="secondary">
             {getTypeEmoji(post.post_type)} {getTypeLabel(post.post_type)}
           </Badge>
+          {/* 教练空间标注 */}
+          {coachSpace && (
+            <Badge 
+              variant="outline" 
+              className={`text-xs cursor-pointer hover:opacity-80 transition-opacity ${coachSpace.bgClass} ${coachSpace.colorClass} border-0`}
+              onClick={() => navigate(coachSpace.routePath)}
+            >
+              {coachSpace.emoji} {coachSpace.name}
+            </Badge>
+          )}
         </div>
       </div>
 

@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getCoachSpaceInfo } from "@/utils/coachSpaceUtils";
+import { useNavigate } from "react-router-dom";
 
 interface PostDetailSheetProps {
   open: boolean;
@@ -34,12 +36,17 @@ interface PostDetailSheetProps {
     comments_count: number;
     shares_count: number;
     created_at: string;
+    camp_id?: string;
+    camp_type?: string;
+    camp_name?: string;
+    template_id?: string;
   } | null;
 }
 
 const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => {
   if (!post) return null;
 
+  const navigate = useNavigate();
   const { session } = useAuth();
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoadingFollow, setIsLoadingFollow] = useState(false);
@@ -48,6 +55,13 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
   const [likesCount, setLikesCount] = useState(0);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  
+  // 获取教练空间信息
+  const coachSpace = getCoachSpaceInfo(
+    post.camp_type,
+    post.camp_name,
+    post.template_id
+  );
 
   // 检查是否已关注
   useEffect(() => {
@@ -289,10 +303,25 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
                     })}
                   </div>
                 </div>
-                <Badge variant="outline" className="gap-1">
-                  <span>{getTypeEmoji(post.post_type)}</span>
-                  {getTypeLabel(post.post_type)}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="gap-1">
+                    <span>{getTypeEmoji(post.post_type)}</span>
+                    {getTypeLabel(post.post_type)}
+                  </Badge>
+                  {/* 教练空间标注（可点击跳转） */}
+                  {coachSpace && (
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs cursor-pointer hover:opacity-80 transition-opacity ${coachSpace.bgClass} ${coachSpace.colorClass} border-0`}
+                      onClick={() => {
+                        navigate(coachSpace.routePath);
+                        onOpenChange(false);
+                      }}
+                    >
+                      {coachSpace.emoji} {coachSpace.name}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </SheetHeader>
 
