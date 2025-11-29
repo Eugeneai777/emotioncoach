@@ -77,9 +77,9 @@ const App = () => (
           <Route path="/introduction" element={<Introduction />} />
           <Route path="/user-manual" element={<UserManual />} />
           <Route path="/courses" element={<Courses />} />
+          <Route path="/partner-intro" element={<PartnerIntro />} />
           <Route path="/partner" element={<Partner />} />
           <Route path="/partner/benefits" element={<PartnerBenefits />} />
-          <Route path="/partner-intro" element={<PartnerIntro />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
