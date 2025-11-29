@@ -652,7 +652,7 @@ const Index = () => {
             </div>
 
             {/* Right side - Main navigation */}
-            <div className="flex items-center gap-1.5 md:gap-2">
+            <div className="flex items-center gap-2 md:gap-3">
               {/* 教练空间快速切换 */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -721,7 +721,7 @@ const Index = () => {
               <Button
                 size="sm"
                 onClick={() => navigate("/energy-studio")}
-                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-primary text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 font-semibold border-0"
               >
                 <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span className="hidden sm:inline font-medium">有劲生活馆</span>
@@ -730,8 +730,9 @@ const Index = () => {
 
               <Button
                 size="sm"
+                variant="outline"
                 onClick={() => navigate("/packages")}
-                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md hover:shadow-lg transition-all duration-300"
+                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 border-amber-500/40 text-amber-700 hover:bg-amber-50 hover:border-amber-500/60 dark:text-amber-400 dark:hover:bg-amber-900/20 transition-all duration-300"
               >
                 <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span className="hidden sm:inline font-medium">全部产品</span>
@@ -740,8 +741,9 @@ const Index = () => {
 
               <Button
                 size="sm"
+                variant="ghost"
                 onClick={() => navigate("/history")}
-                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-300"
+                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all duration-300"
               >
                 <History className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span className="hidden sm:inline font-medium">我的情绪日记</span>
