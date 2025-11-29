@@ -207,11 +207,7 @@ const Community = () => {
           <Button
             onClick={() => setShowComposer(true)}
             variant="outline"
-            className="w-full h-12 text-base mb-6 bg-white/80 dark:bg-background/80 border-2 border-transparent bg-clip-padding 
-                       hover:bg-white dark:hover:bg-background transition-all duration-200
-                       [background-image:linear-gradient(white,white),linear-gradient(to_right,#ef4444,#eab308,#22c55e,#3b82f6,#8b5cf6)]
-                       dark:[background-image:linear-gradient(hsl(var(--background)),hsl(var(--background))),linear-gradient(to_right,#ef4444,#eab308,#22c55e,#3b82f6,#8b5cf6)]
-                       [background-origin:border-box] [background-clip:padding-box,border-box]"
+            className="w-full h-12 text-base mb-6 bg-card border-border/60 hover:bg-muted hover:border-border transition-all duration-200 text-foreground/90"
             size="lg"
           >
             <Plus className="mr-2 h-5 w-5 text-foreground/70" />

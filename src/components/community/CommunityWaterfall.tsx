@@ -435,21 +435,17 @@ const CommunityWaterfall = () => {
       <div className="flex items-center justify-between mb-4 px-1">
         <div className="flex items-center gap-2">
           <h2 className="text-xl font-bold text-foreground">🌈 有劲社区</h2>
-          <span className="text-xs px-2 py-0.5 bg-gradient-to-r from-red-100 via-yellow-100 via-green-100 via-blue-100 to-purple-100 text-foreground/70 rounded-full border border-border/30">NEW</span>
+          <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full border border-border/50">NEW</span>
         </div>
-        <Button 
-          size="sm" 
-          variant="outline"
-          className="gap-1 bg-white/80 dark:bg-background/80 border-2 border-transparent bg-clip-padding 
-             hover:bg-white dark:hover:bg-background transition-all duration-200
-             [background-image:linear-gradient(white,white),linear-gradient(to_right,#ef4444,#eab308,#22c55e,#3b82f6,#8b5cf6)]
-             dark:[background-image:linear-gradient(hsl(var(--background)),hsl(var(--background))),linear-gradient(to_right,#ef4444,#eab308,#22c55e,#3b82f6,#8b5cf6)]
-             [background-origin:border-box] [background-clip:padding-box,border-box]"
-          onClick={() => navigate("/community")}
-        >
-          <Plus className="w-4 h-4 text-foreground/70" />
-          发布
-        </Button>
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="gap-1 bg-card border-border/60 hover:bg-muted hover:border-border transition-all duration-200 text-foreground/90"
+            onClick={() => navigate("/community")}
+          >
+            <Plus className="w-4 h-4 text-foreground/70" />
+            发布
+          </Button>
       </div>
 
       {/* 分类标签栏 */}
@@ -462,8 +458,8 @@ const CommunityWaterfall = () => {
             className={cn(
               "flex-1 transition-all duration-200",
               activeFilter === cat.value 
-                ? "bg-gradient-to-r from-red-500/10 via-green-500/10 to-purple-500/10 border-primary/50 text-foreground font-medium" 
-                : "bg-white/60 dark:bg-background/60 border-border/50 hover:bg-white dark:hover:bg-background text-foreground/80"
+                ? "bg-foreground text-background hover:bg-foreground/90 border-foreground" 
+                : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"
             )}
             onClick={() => {
               setActiveFilter(cat.value);
@@ -486,8 +482,8 @@ const CommunityWaterfall = () => {
               className={cn(
                 "transition-all duration-200",
                 selectedEmotionTag === null 
-                  ? "bg-gradient-to-r from-red-500/10 via-green-500/10 to-purple-500/10 border-primary/50 text-foreground font-medium" 
-                  : "bg-white/60 dark:bg-background/60 border-border/50 hover:bg-white dark:hover:bg-background text-foreground/80"
+                  ? "bg-foreground text-background hover:bg-foreground/90 border-foreground" 
+                  : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"
               )}
               onClick={() => setSelectedEmotionTag(null)}
             >
@@ -501,8 +497,8 @@ const CommunityWaterfall = () => {
                 className={cn(
                   "transition-all duration-200",
                   selectedEmotionTag === tag 
-                    ? "bg-gradient-to-r from-red-500/10 via-green-500/10 to-purple-500/10 border-primary/50 text-foreground font-medium" 
-                    : "bg-white/60 dark:bg-background/60 border-border/50 hover:bg-white dark:hover:bg-background text-foreground/80"
+                    ? "bg-foreground text-background hover:bg-foreground/90 border-foreground" 
+                    : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"
                 )}
                 onClick={() => setSelectedEmotionTag(tag)}
               >
