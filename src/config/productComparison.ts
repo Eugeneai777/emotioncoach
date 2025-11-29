@@ -5,9 +5,10 @@ export interface ComparisonFeature {
 }
 
 export interface YoujinFeature extends ComparisonFeature {
-  basic: boolean | string;      // 尝鲜会员
-  premium: boolean | string;    // 365会员
-  camp: boolean | string;       // 有劲训练营
+  basic: boolean | string;              // 尝鲜会员
+  premium: boolean | string;            // 365会员
+  emotionJournalCamp: boolean | string; // 21天情绪日记训练营
+  parentEmotionCamp: boolean | string;  // 21天青少年问题家庭训练营
 }
 
 export interface BloomFeature extends ComparisonFeature {
@@ -19,35 +20,35 @@ export interface BloomFeature extends ComparisonFeature {
 // 有劲产品对比数据
 export const youjinFeatures: YoujinFeature[] = [
   // 基础信息
-  { name: "价格", category: "基础信息", basic: "¥9.9", premium: "¥365", camp: "免费" },
-  { name: "AI对话次数", category: "基础信息", basic: "50次", premium: "1000次", camp: "—" },
-  { name: "有效期", category: "基础信息", basic: "365天", premium: "365天", camp: "永久" },
-  { name: "购买限制", category: "基础信息", basic: "限购1次", premium: "无限制", camp: "无限制" },
+  { name: "价格", category: "基础信息", basic: "¥9.9", premium: "¥365", emotionJournalCamp: "免费", parentEmotionCamp: "免费" },
+  { name: "AI对话次数", category: "基础信息", basic: "50次", premium: "1000次", emotionJournalCamp: "—", parentEmotionCamp: "—" },
+  { name: "有效期", category: "基础信息", basic: "365天", premium: "365天", emotionJournalCamp: "永久", parentEmotionCamp: "永久" },
+  { name: "购买限制", category: "基础信息", basic: "限购1次", premium: "无限制", emotionJournalCamp: "无限制", parentEmotionCamp: "无限制" },
   
   // 教练空间
-  { name: "情绪觉醒教练", category: "教练空间", basic: true, premium: true, camp: true, tooltip: "基础情绪觉醒和陪伴功能" },
-  { name: "家长情绪教练", category: "教练空间", basic: false, premium: true, camp: true, tooltip: "针对家长的亲子关系情绪教练" },
-  { name: "AI生活教练", category: "教练空间", basic: false, premium: true, camp: false, tooltip: "全方位生活指导和规划" },
-  { name: "AI健康教练", category: "教练空间", basic: false, premium: true, camp: false, tooltip: "身心健康管理和建议" },
+  { name: "情绪觉醒教练", category: "教练空间", basic: true, premium: true, emotionJournalCamp: true, parentEmotionCamp: true, tooltip: "基础情绪觉醒和陪伴功能" },
+  { name: "家长情绪教练", category: "教练空间", basic: false, premium: true, emotionJournalCamp: false, parentEmotionCamp: true, tooltip: "针对家长的亲子关系情绪教练" },
+  { name: "AI生活教练", category: "教练空间", basic: false, premium: true, emotionJournalCamp: false, parentEmotionCamp: false, tooltip: "全方位生活指导和规划" },
+  { name: "AI健康教练", category: "教练空间", basic: false, premium: true, emotionJournalCamp: false, parentEmotionCamp: false, tooltip: "身心健康管理和建议" },
   
   // 成长工具
-  { name: "情绪工具 (5个)", category: "成长工具", basic: "3个", premium: "全部", camp: "2个", tooltip: "能量宣言卡、呼吸练习、冥想计时器、情绪急救箱、正念练习" },
-  { name: "自我探索 (5个)", category: "成长工具", basic: "2个", premium: "全部", camp: "—", tooltip: "价值观探索、优势发现、人生愿景画布、感恩日记、人际关系" },
-  { name: "生活管理 (6个)", category: "成长工具", basic: "3个", premium: "全部", camp: "—", tooltip: "习惯追踪、能量管理、睡眠记录、运动打卡、财务管理、时间管理" },
+  { name: "情绪工具 (5个)", category: "成长工具", basic: "3个", premium: "全部", emotionJournalCamp: "2个", parentEmotionCamp: "2个", tooltip: "能量宣言卡、呼吸练习、冥想计时器、情绪急救箱、正念练习" },
+  { name: "自我探索 (5个)", category: "成长工具", basic: "2个", premium: "全部", emotionJournalCamp: "—", parentEmotionCamp: "—", tooltip: "价值观探索、优势发现、人生愿景画布、感恩日记、人际关系" },
+  { name: "生活管理 (6个)", category: "成长工具", basic: "3个", premium: "全部", emotionJournalCamp: "—", parentEmotionCamp: "—", tooltip: "习惯追踪、能量管理、睡眠记录、运动打卡、财务管理、时间管理" },
   
   // 学习课程
-  { name: "公开课程", category: "学习课程", basic: true, premium: true, camp: true, tooltip: "免费公开的情绪管理课程" },
-  { name: "训练营专属课程", category: "学习课程", basic: false, premium: false, camp: true, tooltip: "21天系统化训练营课程" },
-  { name: "进阶音频课", category: "学习课程", basic: false, premium: true, camp: false, tooltip: "深度情绪管理音频课程" },
-  { name: "直播互动课", category: "学习课程", basic: false, premium: "部分", camp: false, tooltip: "与教练实时互动的直播课程" },
+  { name: "公开课程", category: "学习课程", basic: true, premium: true, emotionJournalCamp: true, parentEmotionCamp: true, tooltip: "免费公开的情绪管理课程" },
+  { name: "训练营专属课程", category: "学习课程", basic: false, premium: false, emotionJournalCamp: true, parentEmotionCamp: true, tooltip: "21天系统化训练营课程" },
+  { name: "进阶音频课", category: "学习课程", basic: false, premium: true, emotionJournalCamp: false, parentEmotionCamp: false, tooltip: "深度情绪管理音频课程" },
+  { name: "直播互动课", category: "学习课程", basic: false, premium: "部分", emotionJournalCamp: false, parentEmotionCamp: false, tooltip: "与教练实时互动的直播课程" },
   
   // 专属服务
-  { name: "每日打卡陪伴", category: "专属服务", basic: false, premium: false, camp: true, tooltip: "每天的情绪记录引导和陪伴" },
-  { name: "社群支持", category: "专属服务", basic: false, premium: true, camp: true, tooltip: "加入专属成长社群" },
-  { name: "VIP客服", category: "专属服务", basic: false, premium: true, camp: false, tooltip: "专属客服1对1支持" },
-  { name: "数据导出", category: "专属服务", basic: "有限", premium: "无限", camp: "—", tooltip: "导出情绪记录和分析数据" },
-  { name: "简报生成", category: "专属服务", basic: true, premium: true, camp: false, tooltip: "AI自动生成情绪简报" },
-  { name: "深度分析", category: "专属服务", basic: false, premium: true, camp: false, tooltip: "情绪模式深度分析报告" },
+  { name: "每日打卡陪伴", category: "专属服务", basic: false, premium: false, emotionJournalCamp: true, parentEmotionCamp: true, tooltip: "每天的情绪记录引导和陪伴" },
+  { name: "社群支持", category: "专属服务", basic: false, premium: true, emotionJournalCamp: true, parentEmotionCamp: true, tooltip: "加入专属成长社群" },
+  { name: "VIP客服", category: "专属服务", basic: false, premium: true, emotionJournalCamp: false, parentEmotionCamp: false, tooltip: "专属客服1对1支持" },
+  { name: "数据导出", category: "专属服务", basic: "有限", premium: "无限", emotionJournalCamp: "—", parentEmotionCamp: "—", tooltip: "导出情绪记录和分析数据" },
+  { name: "简报生成", category: "专属服务", basic: true, premium: true, emotionJournalCamp: false, parentEmotionCamp: false, tooltip: "AI自动生成情绪简报" },
+  { name: "深度分析", category: "专属服务", basic: false, premium: true, emotionJournalCamp: false, parentEmotionCamp: false, tooltip: "情绪模式深度分析报告" },
 ];
 
 // 绽放产品对比数据
