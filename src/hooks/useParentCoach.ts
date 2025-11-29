@@ -15,6 +15,7 @@ export const useParentCoach = () => {
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [videoRecommendations, setVideoRecommendations] = useState<any[]>([]);
   const { toast } = useToast();
 
   const createSession = async (campId?: string, eventDescription?: string) => {
@@ -167,15 +168,43 @@ export const useParentCoach = () => {
     setMessages(prev => [...prev, { role: 'assistant', content }]);
   };
 
+  const fetchRecommendations = async (briefingData: any) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('recommend-courses', {
+        body: {
+          briefing: {
+            emotion_theme: briefingData.emotion_theme,
+            emotion_tags: ['亲子关系', '家长情绪'],
+            insight: briefingData.insight,
+            action: briefingData.action
+          }
+        }
+      });
+
+      if (!error && data?.recommendations) {
+        setVideoRecommendations(data.recommendations);
+      }
+    } catch (error) {
+      console.error("Error getting video recommendations:", error);
+    }
+  };
+
+  const resetRecommendations = () => {
+    setVideoRecommendations([]);
+  };
+
   return {
     session,
     messages,
     isLoading,
     isCreating,
+    videoRecommendations,
     createSession,
     loadSession,
     sendMessage,
     resetSession,
-    addAssistantMessage
+    addAssistantMessage,
+    fetchRecommendations,
+    resetRecommendations
   };
 };
