@@ -1,0 +1,76 @@
+import { ReactNode } from "react";
+import { CoachStepsCard } from "./CoachStepsCard";
+
+interface Step {
+  id: number;
+  emoji?: string;
+  name: string;
+  subtitle: string;
+  description: string;
+  details?: string;
+}
+
+interface CoachEmptyStateProps {
+  emoji: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  gradient: string;
+  steps: Step[];
+  stepsTitle: string;
+  stepsEmoji: string;
+  primaryColor?: string;
+  moreInfoRoute?: string;
+  scenarios?: ReactNode;
+  extraContent?: ReactNode;
+}
+
+export const CoachEmptyState = ({
+  emoji,
+  title,
+  subtitle,
+  description,
+  gradient,
+  steps,
+  stepsTitle,
+  stepsEmoji,
+  primaryColor = "primary",
+  moreInfoRoute,
+  scenarios,
+  extraContent
+}: CoachEmptyStateProps) => {
+  return (
+    <div className="space-y-6 md:space-y-8">
+      {/* Title Section */}
+      <div className="text-center space-y-3 md:space-y-4 py-8 md:py-12">
+        <div className={`w-16 h-16 mx-auto bg-gradient-to-br ${gradient} rounded-2xl flex items-center justify-center`}>
+          <span className="text-3xl">{emoji}</span>
+        </div>
+        <h1 className={`text-2xl md:text-3xl font-bold bg-gradient-to-r ${gradient} text-transparent bg-clip-text`}>
+          {title}
+        </h1>
+        <p className="text-base md:text-lg text-muted-foreground">
+          {subtitle}
+        </p>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto">
+          {description}
+        </p>
+      </div>
+
+      {/* Steps Card */}
+      <CoachStepsCard
+        title={stepsTitle}
+        titleEmoji={stepsEmoji}
+        steps={steps}
+        moreInfoRoute={moreInfoRoute}
+        primaryColor={primaryColor}
+      />
+
+      {/* Optional Scenarios */}
+      {scenarios}
+
+      {/* Extra Content (Training Camps, Notifications, etc.) */}
+      {extraContent}
+    </div>
+  );
+};
