@@ -189,10 +189,7 @@ export default function Packages() {
         </div>
 
         {/* 购买历史 */}
-        <div className="border-t pt-6">
-          <h3 className="text-xl font-semibold mb-4 text-center">📜 购买历史</h3>
-          <PurchaseHistory />
-        </div>
+        
 
         {/* 底部说明 */}
         <div className="border-t pt-4">
