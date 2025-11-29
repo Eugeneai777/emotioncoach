@@ -48,6 +48,8 @@ interface CoachLayoutProps {
   onInputChange: (value: string) => void;
   onSend: () => void;
   onNewConversation: () => void;
+  onOptionClick?: (option: string) => void;
+  onOptionSelect?: (option: string) => void;
   placeholder: string;
   
   // Optional features
@@ -87,6 +89,8 @@ export const CoachLayout = ({
   onInputChange,
   onSend,
   onNewConversation,
+  onOptionClick,
+  onOptionSelect,
   placeholder,
   scenarios,
   scenarioChips,
@@ -176,6 +180,8 @@ export const CoachLayout = ({
                   key={index} 
                   role={message.role}
                   content={message.content}
+                  onOptionClick={onOptionClick}
+                  onOptionSelect={onOptionSelect}
                 />
               ))}
               {isLoading && (

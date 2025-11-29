@@ -48,6 +48,15 @@ const CommunicationCoach = () => {
     });
   };
 
+  const handleOptionClick = async (option: string) => {
+    setInput("");
+    await sendMessage(option);
+  };
+
+  const handleOptionSelect = (option: string) => {
+    setInput(option);
+  };
+
   return (
     <CoachLayout
       emoji={template.emoji}
@@ -68,6 +77,8 @@ const CommunicationCoach = () => {
       onInputChange={setInput}
       onSend={handleSend}
       onNewConversation={handleNewConversation}
+      onOptionClick={handleOptionClick}
+      onOptionSelect={handleOptionSelect}
       placeholder={template.placeholder || '分享你的想法...'}
       scenarioChips={<CommunicationScenarioChips onSelectScenario={handleSelectScenario} />}
       showNotificationCenter={false}
