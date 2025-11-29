@@ -908,6 +908,39 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_definitions: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          feature_key: string
+          feature_name: string
+          id: string
+          is_active: boolean | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          feature_key: string
+          feature_name: string
+          id?: string
+          is_active?: boolean | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          feature_key?: string
+          feature_name?: string
+          id?: string
+          is_active?: boolean | null
+        }
+        Relationships: []
+      }
       finance_records: {
         Row: {
           amount: number
@@ -1166,6 +1199,96 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      package_features: {
+        Row: {
+          access_level: string | null
+          access_value: string | null
+          created_at: string | null
+          feature_id: string | null
+          id: string
+          package_id: string | null
+        }
+        Insert: {
+          access_level?: string | null
+          access_value?: string | null
+          created_at?: string | null
+          feature_id?: string | null
+          id?: string
+          package_id?: string | null
+        }
+        Update: {
+          access_level?: string | null
+          access_value?: string | null
+          created_at?: string | null
+          feature_id?: string | null
+          id?: string
+          package_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_features_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "feature_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_features_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      packages: {
+        Row: {
+          ai_quota: number | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          duration_days: number | null
+          id: string
+          is_active: boolean | null
+          original_price: number | null
+          package_key: string
+          package_name: string
+          price: number | null
+          product_line: string
+          updated_at: string | null
+        }
+        Insert: {
+          ai_quota?: number | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_days?: number | null
+          id?: string
+          is_active?: boolean | null
+          original_price?: number | null
+          package_key: string
+          package_name: string
+          price?: number | null
+          product_line: string
+          updated_at?: string | null
+        }
+        Update: {
+          ai_quota?: number | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_days?: number | null
+          id?: string
+          is_active?: boolean | null
+          original_price?: number | null
+          package_key?: string
+          package_name?: string
+          price?: number | null
+          product_line?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       parent_coaching_sessions: {
         Row: {
@@ -2057,6 +2180,7 @@ export type Database = {
           id: string
           mysql_combo_id: string | null
           mysql_order_id: string | null
+          package_id: string | null
           start_date: string
           status: string
           subscription_type: string
@@ -2072,6 +2196,7 @@ export type Database = {
           id?: string
           mysql_combo_id?: string | null
           mysql_order_id?: string | null
+          package_id?: string | null
           start_date?: string
           status?: string
           subscription_type: string
@@ -2087,6 +2212,7 @@ export type Database = {
           id?: string
           mysql_combo_id?: string | null
           mysql_order_id?: string | null
+          package_id?: string | null
           start_date?: string
           status?: string
           subscription_type?: string
@@ -2094,7 +2220,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tags: {
         Row: {
