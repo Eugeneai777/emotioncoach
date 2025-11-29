@@ -51,7 +51,7 @@ const CommunicationCoachIntro = () => {
     },
     {
       icon: MessageCircle,
-      title: "教你一句"对方愿意听"的表达",
+      title: "教你一句「对方愿意听」的表达",
       description: "不是大道理，不是沟通术，而是立刻能用的一句话"
     },
     {
@@ -87,7 +87,7 @@ const CommunicationCoachIntro = () => {
     {
       step: "3️⃣",
       title: "影响（Influence）",
-      description: "告诉你一句"对方愿意听"的表达方式",
+      description: "告诉你一句「对方愿意听」的表达方式",
       color: "from-orange-500 to-red-500"
     },
     {
@@ -109,7 +109,7 @@ const CommunicationCoachIntro = () => {
   // 适用人群
   const targetAudience = [
     "想让关系更顺畅的人",
-    "想学会"怎么说对方才听得进去"的人",
+    "想学会「怎么说对方才听得进去」的人",
     "被误会、被冷淡、被拒绝时容易焦虑的人",
     "与老板／伴侣／孩子沟通困难的人",
     "不会拒绝、不会表达需求的人",
@@ -144,7 +144,7 @@ const CommunicationCoachIntro = () => {
     },
     {
       question: "AI 给的建议真的有用吗？",
-      answer: "AI 的建议基于你描述的具体场景、对方的性格特点和你们的关系状态，是定制化的。很多用户反馈说"这句话真的好用""对方真的听进去了"。"
+      answer: "AI 的建议基于你描述的具体场景、对方的性格特点和你们的关系状态，是定制化的。很多用户反馈说「这句话真的好用」「对方真的听进去了」。"
     },
     {
       question: "如果对方根本不想听怎么办？",
@@ -156,7 +156,7 @@ const CommunicationCoachIntro = () => {
     },
     {
       question: "会不会让我说话变得很功利？",
-      answer: "不会。我们教的不是"话术"，而是帮你找到既真诚、又能被接受的表达方式。目标是让关系更好，不是操控对方。"
+      answer: "不会。我们教的不是「话术」，而是帮你找到既真诚、又能被接受的表达方式。目标是让关系更好，不是操控对方。"
     },
     {
       question: "如果我说了 AI 建议的话，对方还是不听呢？",
