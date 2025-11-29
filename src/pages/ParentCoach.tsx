@@ -81,9 +81,12 @@ export default function ParentCoach() {
     messages,
     isLoading,
     isCreating,
+    videoRecommendations,
     createSession,
     sendMessage,
-    addAssistantMessage
+    addAssistantMessage,
+    fetchRecommendations,
+    resetRecommendations
   } = useParentCoach();
 
   const [input, setInput] = useState("");
@@ -227,11 +230,15 @@ ${briefing.growth_story || '暂无记录'}
     }
   };
 
-  const handleGenerateBriefing = () => {
+  const handleGenerateBriefing = async () => {
     if (pendingBriefing) {
       const briefingMessage = formatBriefingMessage(pendingBriefing);
       addAssistantMessage(briefingMessage);
       setBriefing(pendingBriefing);
+      
+      // 获取课程推荐
+      await fetchRecommendations(pendingBriefing);
+      
       setPendingBriefing(null);
       toast({
         title: "简报已生成",
@@ -268,6 +275,7 @@ ${briefing.growth_story || '暂无记录'}
   const handleRestart = () => {
     setBriefing(null);
     setPendingBriefing(null);
+    resetRecommendations();
     initRef.current = false;
     createSession(campId || undefined);
   };
@@ -564,6 +572,8 @@ ${briefing.growth_story || '暂无记录'}
                 onOptionClick={(option) => {
                   handleSendMessage(option);
                 }}
+                videoRecommendations={videoRecommendations}
+                isLastMessage={index === messages.length - 1}
               />
             ))}
             {isLoading && (
@@ -610,6 +620,41 @@ ${briefing.growth_story || '暂无记录'}
                         className="flex-1 border-purple-300 text-purple-600 hover:bg-purple-50"
                       >
                         下次再说
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 训练营推广卡片 - 在简报生成后显示 */}
+            {briefing && !pendingBriefing && videoRecommendations.length > 0 && (
+              <div className="flex justify-start animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-4">
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-card-lg p-card shadow-lg max-w-[85%]">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">🏕️</span>
+                      <h4 className="font-semibold text-purple-700">推荐：21天家长情绪训练营</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      通过父母三力模型（稳定力、洞察力、修复力），21天系统提升亲子关系
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => navigate("/camps")}
+                        className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                        size="sm"
+                      >
+                        <Heart className="w-4 h-4 mr-1" />
+                        立即加入
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => navigate("/parent-camp-landing")}
+                        size="sm"
+                        className="border-purple-300 text-purple-600"
+                      >
+                        了解详情
                       </Button>
                     </div>
                   </div>
