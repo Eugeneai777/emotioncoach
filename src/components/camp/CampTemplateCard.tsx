@@ -130,6 +130,31 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
           )}
         </div>
 
+        {/* 价格信息 */}
+        {camp.price !== undefined && camp.price !== null && (
+          <div className="flex items-end gap-2">
+            {camp.original_price && camp.original_price > camp.price && (
+              <span className="text-muted-foreground line-through text-sm">
+                ¥{camp.original_price.toLocaleString()}
+              </span>
+            )}
+            <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              ¥{camp.price.toLocaleString()}
+            </span>
+            {camp.price_note && (
+              <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 text-xs">
+                {camp.price_note}
+              </Badge>
+            )}
+          </div>
+        )}
+        
+        {camp.price === 0 && (
+          <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0">
+            免费
+          </Badge>
+        )}
+
         {isLocked && camp.prerequisites?.message && (
           <div className="bg-muted/50 p-3 rounded-lg border border-border">
             <p className="text-sm text-muted-foreground flex items-center gap-2">
@@ -151,7 +176,16 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
               : ''
           }`}
         >
-          {isLocked ? '暂未解锁' : isBloomCamp ? '✨ 开启绽放之旅' : '了解详情'}
+          {isLocked 
+            ? '暂未解锁' 
+            : camp.price && camp.price > 0
+            ? `立即购买 ¥${camp.price.toLocaleString()}`
+            : camp.price === 0
+            ? '免费开启'
+            : isBloomCamp 
+            ? '✨ 开启绽放之旅' 
+            : '了解详情'
+          }
           {!isLocked && <ArrowRight className="w-4 h-4" />}
         </Button>
       </CardFooter>

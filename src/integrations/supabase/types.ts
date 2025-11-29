@@ -2309,6 +2309,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_camp_purchases: {
+        Row: {
+          camp_name: string
+          camp_type: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          payment_method: string | null
+          payment_status: string | null
+          purchase_price: number
+          purchased_at: string | null
+          transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          camp_name: string
+          camp_type: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          payment_method?: string | null
+          payment_status?: string | null
+          purchase_price: number
+          purchased_at?: string | null
+          transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          camp_name?: string
+          camp_type?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          payment_method?: string | null
+          payment_status?: string | null
+          purchase_price?: number
+          purchased_at?: string | null
+          transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_follows: {
         Row: {
           created_at: string
