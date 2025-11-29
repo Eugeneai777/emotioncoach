@@ -622,6 +622,11 @@ const Index = () => {
                     语音设置
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/partner")}>
+                    <Users className="w-4 h-4 mr-2" />
+                    合伙人中心
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />
                     退出登录

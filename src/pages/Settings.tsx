@@ -16,6 +16,7 @@ import { BillingExplanation } from "@/components/BillingExplanation";
 import { PackageSelector } from "@/components/PackageSelector";
 import CampSettings from "@/components/CampSettings";
 import { useToast } from "@/hooks/use-toast";
+import { usePartner } from "@/hooks/usePartner";
 import { ArrowLeft } from "lucide-react";
 
 export default function Settings() {
@@ -30,6 +31,7 @@ export default function Settings() {
   const [autoDismissSeconds, setAutoDismissSeconds] = useState(10);
   const [userId, setUserId] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const { partner, isPartner, loading: partnerLoading } = usePartner();
   
   const defaultTab = searchParams.get("tab") || "reminders";
 
@@ -206,6 +208,47 @@ export default function Settings() {
                     <p className="text-xs md:text-sm text-muted-foreground">
                       管理员专属功能
                     </p>
+                  </div>
+                )}
+
+                {isPartner && partner && (
+                  <div className="space-y-2">
+                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-foreground">合伙人身份</span>
+                        <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                          ✨ 已激活
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        推广码：{partner.partner_code}
+                      </p>
+                      <Button
+                        onClick={() => navigate("/partner")}
+                        className="w-full"
+                        variant="default"
+                      >
+                        进入合伙人中心
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {!isPartner && !partnerLoading && (
+                  <div className="space-y-2">
+                    <div className="p-4 bg-muted/30 border rounded-lg">
+                      <p className="text-sm text-foreground mb-2">成为合伙人</p>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        加入合伙人计划，获得丰厚佣金和专属权益
+                      </p>
+                      <Button
+                        onClick={() => navigate("/partner/benefits")}
+                        className="w-full"
+                        variant="outline"
+                      >
+                        了解合伙人权益
+                      </Button>
+                    </div>
                   </div>
                 )}
 
