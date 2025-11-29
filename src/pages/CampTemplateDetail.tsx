@@ -329,9 +329,9 @@ const CampTemplateDetail = () => {
         open={showStartDialog}
         onOpenChange={setShowStartDialog}
         campTemplate={camp}
-        onSuccess={() => {
+        onSuccess={(campId) => {
           setShowStartDialog(false);
-          navigate('/camps');
+          navigate(`/camp/${campId}`);
         }}
       />
     </>
