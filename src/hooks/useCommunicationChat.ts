@@ -233,6 +233,7 @@ ${data.growth_insight}
 
       const processChunk = async () => {
         let buffer = "";
+        const toolCallsMap = new Map<number, any>();
         
         while (true) {
           const { done, value } = await reader.read();
@@ -274,41 +275,74 @@ ${data.growth_insight}
 
               if (delta?.tool_calls) {
                 for (const toolCall of delta.tool_calls) {
-                  if (toolCall.function?.name === "generate_communication_briefing") {
-                    if (toolCall.function.arguments) {
-                      toolCallBuffer += toolCall.function.arguments;
+                  const index = toolCall.index ?? 0;
+                  if (!toolCallsMap.has(index)) {
+                    toolCallsMap.set(index, {
+                      id: toolCall.id || "",
+                      type: toolCall.type || "function",
+                      function: {
+                        name: toolCall.function?.name || "",
+                        arguments: toolCall.function?.arguments || "",
+                      },
+                    });
+                  } else {
+                    const existing = toolCallsMap.get(index);
+                    if (toolCall.function?.arguments) {
+                      existing.function.arguments += toolCall.function.arguments;
                     }
-                    currentToolCall = toolCall;
+                    if (toolCall.function?.name && !existing.function.name) {
+                      existing.function.name = toolCall.function.name;
+                    }
                   }
                 }
               }
             } catch (e) {
+              if (e instanceof SyntaxError) {
+                buffer = line + "\n" + buffer;
+                break;
+              }
               console.warn("解析SSE数据失败:", line.slice(0, 100), e);
             }
           }
         }
 
-        if (currentToolCall && toolCallBuffer) {
-          try {
-            const briefingData = JSON.parse(toolCallBuffer) as CommunicationBriefingData;
-            const formattedBriefing = formatCommunicationBriefing(briefingData);
-            
-            assistantMessage += formattedBriefing;
-            setMessages(prev => {
-              const lastMsg = prev[prev.length - 1];
-              if (lastMsg?.role === "assistant") {
-                return [...prev.slice(0, -1), { role: "assistant", content: assistantMessage }];
-              }
-              return [...prev, { role: "assistant", content: assistantMessage }];
-            });
+        if (toolCallsMap.size > 0) {
+          const completedToolCalls = Array.from(toolCallsMap.values());
+          console.log("完整的工具调用:", completedToolCalls);
+          
+          for (const toolCall of completedToolCalls) {
+            if (toolCall.function.name === "generate_communication_briefing") {
+              try {
+                const briefingData = JSON.parse(toolCall.function.arguments) as CommunicationBriefingData;
+                const formattedBriefing = formatCommunicationBriefing(briefingData);
+                
+                assistantMessage += formattedBriefing;
+                setMessages(prev => {
+                  const lastMsg = prev[prev.length - 1];
+                  if (lastMsg?.role === "assistant") {
+                    return [...prev.slice(0, -1), { role: "assistant", content: assistantMessage }];
+                  }
+                  return [...prev, { role: "assistant", content: assistantMessage }];
+                });
 
-            await saveCommunicationBriefing(convId!, briefingData);
-          } catch (e) {
-            console.error("处理简报失败:", e);
+                await saveCommunicationBriefing(convId!, briefingData);
+              } catch (e) {
+                console.error("处理简报失败:", e);
+              }
+            }
           }
         }
 
-        await saveMessage(convId!, "assistant", assistantMessage);
+        if (assistantMessage.trim().length > 0) {
+          await saveMessage(convId!, "assistant", assistantMessage);
+        } else {
+          console.error("助手回复为空，不保存到数据库");
+          toast({
+            title: "回复异常",
+            description: "AI 回复为空，请重试",
+            variant: "destructive",
+          });
+        }
       };
 
       await processChunk();
