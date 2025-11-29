@@ -414,6 +414,7 @@ export type Database = {
       coach_templates: {
         Row: {
           briefing_table_name: string | null
+          briefing_tool_config: Json | null
           coach_key: string
           created_at: string | null
           description: string | null
@@ -439,11 +440,13 @@ export type Database = {
           steps_emoji: string | null
           steps_title: string | null
           subtitle: string | null
+          system_prompt: string | null
           title: string
           updated_at: string | null
         }
         Insert: {
           briefing_table_name?: string | null
+          briefing_tool_config?: Json | null
           coach_key: string
           created_at?: string | null
           description?: string | null
@@ -469,11 +472,13 @@ export type Database = {
           steps_emoji?: string | null
           steps_title?: string | null
           subtitle?: string | null
+          system_prompt?: string | null
           title: string
           updated_at?: string | null
         }
         Update: {
           briefing_table_name?: string | null
+          briefing_tool_config?: Json | null
           coach_key?: string
           created_at?: string | null
           description?: string | null
@@ -499,6 +504,7 @@ export type Database = {
           steps_emoji?: string | null
           steps_title?: string | null
           subtitle?: string | null
+          system_prompt?: string | null
           title?: string
           updated_at?: string | null
         }
