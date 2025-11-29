@@ -464,6 +464,16 @@ ${briefing.growth_story || '暂无记录'}
                       <span className="text-xs text-muted-foreground">亲子情绪四部曲</span>
                     </div>
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => navigate("/communication-coach")}
+                    className="gap-2"
+                  >
+                    <span className="text-blue-500">💙</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium">卡内基沟通教练</span>
+                      <span className="text-xs text-muted-foreground">See · Understand · Influence · Act</span>
+                    </div>
+                  </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => navigate("/ai-coach")}
                     className="gap-2"
