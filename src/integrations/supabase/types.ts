@@ -1361,6 +1361,7 @@ export type Database = {
           order_id: string
           order_type: string
           partner_id: string
+          product_line: string | null
           source_user_id: string
           status: string
         }
@@ -1376,6 +1377,7 @@ export type Database = {
           order_id: string
           order_type: string
           partner_id: string
+          product_line?: string | null
           source_user_id: string
           status?: string
         }
@@ -1391,12 +1393,90 @@ export type Database = {
           order_id?: string
           order_type?: string
           partner_id?: string
+          product_line?: string | null
           source_user_id?: string
           status?: string
         }
         Relationships: [
           {
             foreignKeyName: "partner_commissions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_level_rules: {
+        Row: {
+          commission_rate_l1: number
+          commission_rate_l2: number
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          level_name: string
+          min_prepurchase: number
+          partner_type: string
+        }
+        Insert: {
+          commission_rate_l1: number
+          commission_rate_l2?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level_name: string
+          min_prepurchase: number
+          partner_type: string
+        }
+        Update: {
+          commission_rate_l1?: number
+          commission_rate_l2?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level_name?: string
+          min_prepurchase?: number
+          partner_type?: string
+        }
+        Relationships: []
+      }
+      partner_redemption_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          partner_id: string
+          redeemed_at: string | null
+          redeemed_by: string | null
+          status: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          partner_id: string
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          status?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          partner_id?: string
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_redemption_codes_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
@@ -1501,7 +1581,11 @@ export type Database = {
           created_at: string
           id: string
           partner_code: string
+          partner_level: string | null
+          partner_type: string | null
           pending_balance: number
+          prepurchase_count: number | null
+          prepurchase_expires_at: string | null
           source: string
           source_admin_id: string | null
           source_note: string | null
@@ -1521,7 +1605,11 @@ export type Database = {
           created_at?: string
           id?: string
           partner_code: string
+          partner_level?: string | null
+          partner_type?: string | null
           pending_balance?: number
+          prepurchase_count?: number | null
+          prepurchase_expires_at?: string | null
           source?: string
           source_admin_id?: string | null
           source_note?: string | null
@@ -1541,7 +1629,11 @@ export type Database = {
           created_at?: string
           id?: string
           partner_code?: string
+          partner_level?: string | null
+          partner_type?: string | null
           pending_balance?: number
+          prepurchase_count?: number | null
+          prepurchase_expires_at?: string | null
           source?: string
           source_admin_id?: string | null
           source_note?: string | null

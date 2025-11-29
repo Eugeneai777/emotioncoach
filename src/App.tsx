@@ -35,6 +35,9 @@ import ParentChildDiary from "./pages/ParentChildDiary";
 import Partner from "./pages/Partner";
 import PartnerBenefits from "./pages/PartnerBenefits";
 import PartnerIntro from "./pages/PartnerIntro";
+import PartnerTypeSelector from "./pages/PartnerTypeSelector";
+import YoujinPartnerIntro from "./pages/YoujinPartnerIntro";
+import RedeemCode from "./pages/RedeemCode";
 import NotFound from "./pages/NotFound";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
 
@@ -77,9 +80,12 @@ const App = () => (
           <Route path="/introduction" element={<Introduction />} />
           <Route path="/user-manual" element={<UserManual />} />
           <Route path="/courses" element={<Courses />} />
+          <Route path="/partner/type" element={<PartnerTypeSelector />} />
+          <Route path="/partner/youjin-intro" element={<YoujinPartnerIntro />} />
           <Route path="/partner-intro" element={<PartnerIntro />} />
           <Route path="/partner" element={<Partner />} />
           <Route path="/partner/benefits" element={<PartnerBenefits />} />
+          <Route path="/redeem" element={<RedeemCode />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
