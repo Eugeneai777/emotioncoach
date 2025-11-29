@@ -59,6 +59,7 @@ const CommunicationCoach = () => {
       steps={template.steps || []}
       stepsTitle={template.steps_title || '四部曲'}
       stepsEmoji={template.steps_emoji || '🎯'}
+      moreInfoRoute={template.more_info_route || undefined}
       historyRoute={template.history_route}
       historyLabel={template.history_label || '我的日记'}
       messages={messages}
