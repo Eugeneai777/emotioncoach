@@ -934,10 +934,11 @@ const Index = () => {
                   <TrainingCampCard camp={activeCamp} onCheckIn={handleCheckIn} />
                   
                   {/* Smart Notifications Display */}
-                  <div className="bg-card border border-border rounded-card-lg p-card shadow-sm">
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200/50 rounded-card-lg p-card shadow-md">
                     <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
-                      <Bell className="h-4 w-4 text-primary" />
-                      智能提醒
+                      <Bell className="h-4 w-4 text-green-600" />
+                      <span className="text-green-700">智能提醒</span>
+                      <span className="text-xs px-2 py-0.5 bg-green-100 text-green-600 rounded-full">情绪教练</span>
                     </h4>
                     
                     {notificationsLoading ? (
@@ -960,18 +961,19 @@ const Index = () => {
                               setCurrentNotificationIndex(0);
                             }
                           }}
+                          colorTheme="green"
                         />
                         
                         {notifications.length > 1 && (
                           <div className="flex items-center justify-center gap-2">
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-green-600/70">
                               {currentNotificationIndex + 1} / {notifications.length}
                             </span>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => setCurrentNotificationIndex((prev) => (prev + 1) % notifications.length)}
-                              className="h-7 text-xs"
+                              className="h-7 text-xs border-green-300 text-green-600 hover:bg-green-50"
                             >
                               下一条
                             </Button>

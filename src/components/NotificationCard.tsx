@@ -23,6 +23,7 @@ interface NotificationCardProps {
   };
   onClick: () => void;
   onDelete: () => void;
+  colorTheme?: 'default' | 'purple' | 'green';
 }
 
 const iconMap: Record<string, any> = {
@@ -71,10 +72,23 @@ const typeLabels: Record<string, string> = {
   reminder: '提醒'
 };
 
-export const NotificationCard = ({ notification, onClick, onDelete }: NotificationCardProps) => {
+const themeStyles: Record<string, { iconColor: string }> = {
+  default: {
+    iconColor: 'text-primary'
+  },
+  purple: {
+    iconColor: 'text-purple-600'
+  },
+  green: {
+    iconColor: 'text-green-600'
+  }
+};
+
+export const NotificationCard = ({ notification, onClick, onDelete, colorTheme = 'default' }: NotificationCardProps) => {
   const navigate = useNavigate();
   const Icon = notification.icon ? iconMap[notification.icon] || Heart : Heart;
   const style = typeStyles[notification.notification_type] || typeStyles.encouragement;
+  const theme = themeStyles[colorTheme];
 
   const handleAction = () => {
     onClick();
@@ -103,10 +117,10 @@ export const NotificationCard = ({ notification, onClick, onDelete }: Notificati
       {/* Title Row */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
-          <Icon className="h-4 w-4 text-primary flex-shrink-0" />
+          <Icon className={`h-4 w-4 ${theme.iconColor} flex-shrink-0`} />
           <h4 className="font-semibold text-sm">{notification.title}</h4>
           {!notification.is_read && (
-            <div className="h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
+            <div className={`h-1.5 w-1.5 rounded-full ${theme.iconColor} flex-shrink-0`} />
           )}
         </div>
         <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">{timeAgo}</span>
