@@ -52,6 +52,7 @@ interface CoachLayoutProps {
   
   // Optional features
   scenarios?: ReactNode;
+  scenarioChips?: ReactNode;
   extraContent?: ReactNode;
   trainingCamp?: ReactNode;
   notifications?: ReactNode;
@@ -88,6 +89,7 @@ export const CoachLayout = ({
   onNewConversation,
   placeholder,
   scenarios,
+  scenarioChips,
   extraContent,
   trainingCamp,
   notifications,
@@ -201,6 +203,7 @@ export const CoachLayout = ({
         hasMessages={messages.length > 0}
         gradient={gradient}
         voiceControls={voiceControls}
+        scenarioChips={scenarioChips}
       />
     </div>
   );

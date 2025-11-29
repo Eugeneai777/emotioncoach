@@ -23,6 +23,8 @@ interface CoachInputFooterProps {
     onStopSpeaking: () => void;
     isSupported: boolean;
   };
+  // Scenario chips (optional)
+  scenarioChips?: React.ReactNode;
 }
 
 export const CoachInputFooter = forwardRef<HTMLTextAreaElement, CoachInputFooterProps>(({
@@ -35,11 +37,19 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement, CoachInputFooter
   isLoading,
   hasMessages,
   gradient,
-  voiceControls
+  voiceControls,
+  scenarioChips
 }, ref) => {
   return (
     <footer className="border-t border-border bg-card/50 backdrop-blur-sm">
       <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
+        {/* Scenario Chips */}
+        {scenarioChips && !hasMessages && (
+          <div className="mb-3">
+            {scenarioChips}
+          </div>
+        )}
+        
         <div className="flex gap-2 items-end">
           {/* Voice Controls (optional) */}
           {voiceControls && voiceControls.isSupported && (
