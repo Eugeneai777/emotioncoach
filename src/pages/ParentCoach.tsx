@@ -446,16 +446,6 @@ ${briefing.growth_story || '暂无记录'}
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => navigate("/parent-diary")}
-                    className="gap-2"
-                  >
-                    <span className="text-pink-500">📖</span>
-                    <div className="flex flex-col">
-                      <span className="font-medium">亲子日记</span>
-                      <span className="text-xs text-muted-foreground">查看亲子教练记录</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
                     onClick={() => navigate("/ai-coach")}
                     className="gap-2"
                   >
@@ -499,16 +489,6 @@ ${briefing.growth_story || '暂无记录'}
                 <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span className="hidden sm:inline font-medium">有劲生活馆</span>
                 <span className="sm:hidden font-medium">生活馆</span>
-              </Button>
-
-              <Button
-                size="sm"
-                onClick={() => navigate("/parent-diary")}
-                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                <Heart className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline font-medium">我的亲子日记</span>
-                <span className="sm:hidden font-medium">日记</span>
               </Button>
             </div>
           </div>
