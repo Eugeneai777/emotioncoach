@@ -1,23 +1,19 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Check, TrendingUp, Users, Gift, Clock } from "lucide-react";
 import { youjinPartnerLevels } from "@/config/partnerLevels";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 export default function YoujinPartnerIntro() {
   const navigate = useNavigate();
-  const [selectedLevel, setSelectedLevel] = useState<string>('L1');
 
-  const handlePurchase = () => {
-    const level = youjinPartnerLevels.find(l => l.level === selectedLevel);
+  const handlePurchase = (levelId: string) => {
+    const level = youjinPartnerLevels.find(l => l.level === levelId);
     if (!level) return;
 
     const totalAmount = level.minPrepurchase * 9.9;
-    toast.success(`即将支付 ¥${totalAmount.toFixed(2)}`);
+    toast.success(`即将支付 ¥${totalAmount.toFixed(2)}，成为${level.name}`);
     
     // TODO: 集成支付接口
     // navigate to payment page or trigger payment modal
@@ -101,77 +97,69 @@ export default function YoujinPartnerIntro() {
         </Card>
 
         {/* 等级选择 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>选择您的合伙人等级</CardTitle>
-            <CardDescription>预购数量越多，等级越高，佣金比例越高</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup value={selectedLevel} onValueChange={setSelectedLevel}>
-              <div className="space-y-4">
-                {youjinPartnerLevels.map((level) => (
-                  <div key={level.level} className="relative">
-                    <RadioGroupItem
-                      value={level.level}
-                      id={level.level}
-                      className="peer sr-only"
-                    />
-                    <Label
-                      htmlFor={level.level}
-                      className="flex cursor-pointer rounded-lg border-2 border-muted bg-card p-6 hover:bg-accent peer-data-[state=checked]:border-orange-500 peer-data-[state=checked]:bg-orange-50/50"
-                    >
-                      <div className="flex-1 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="text-3xl">{level.icon}</span>
-                            <div>
-                              <p className="text-lg font-semibold">{level.name}</p>
-                              <p className="text-sm text-muted-foreground">{level.description}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-2xl font-bold text-orange-600">¥{getPrice(level)}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {level.minPrepurchase}份 × ¥9.9
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 text-sm">
-                          <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-medium">
-                            全产品 {(level.commissionRateL1 * 100).toFixed(0)}% 佣金
-                          </span>
-                          {level.commissionRateL2 > 0 && (
-                            <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-medium">
-                              二级 {(level.commissionRateL2 * 100).toFixed(0)}% 佣金
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          {level.benefits.map((benefit, idx) => (
-                            <div key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Check className="w-4 h-4 text-orange-500" />
-                              <span>{benefit}</span>
-                            </div>
-                          ))}
-                        </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold">选择您的合伙人等级</h2>
+            <p className="text-muted-foreground">点击任意等级直接购买</p>
+          </div>
+          
+          <div className="grid gap-6">
+            {youjinPartnerLevels.map((level) => (
+              <Card 
+                key={level.level}
+                className="cursor-pointer hover:border-orange-500 hover:shadow-lg transition-all"
+                onClick={() => handlePurchase(level.level)}
+              >
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-4xl">{level.icon}</span>
+                      <div>
+                        <p className="text-xl font-bold">{level.name}</p>
+                        <p className="text-muted-foreground">{level.description}</p>
                       </div>
-                    </Label>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-bold text-orange-600">¥{getPrice(level)}</p>
+                      <p className="text-sm text-muted-foreground">{level.minPrepurchase}份 × ¥9.9</p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </RadioGroup>
 
-            <Button 
-              onClick={handlePurchase}
-              className="w-full mt-6 gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
-              size="lg"
-            >
-              立即成为有劲合伙人
-            </Button>
-          </CardContent>
-        </Card>
+                  <div className="flex gap-3">
+                    <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full font-medium">
+                      全产品 {(level.commissionRateL1 * 100).toFixed(0)}% 佣金
+                    </span>
+                    {level.commissionRateL2 > 0 && (
+                      <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-medium">
+                        二级 {(level.commissionRateL2 * 100).toFixed(0)}% 佣金
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {level.benefits.map((benefit, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm">
+                        <Check className="w-4 h-4 text-orange-500" />
+                        <span>{benefit}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button 
+                    className={`w-full gap-2 bg-gradient-to-r ${level.gradient} hover:opacity-90 text-white`}
+                    size="lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePurchase(level.level);
+                    }}
+                  >
+                    立即购买 {level.name}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
 
         {/* 常见问题 */}
         <Card>
