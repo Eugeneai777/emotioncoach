@@ -457,9 +457,9 @@ const CommunityWaterfall = () => {
             variant="outline"
             className={cn(
               "flex-1 transition-all duration-200",
-              activeFilter === cat.value 
-                ? "bg-foreground text-background hover:bg-foreground/90 border-foreground" 
-                : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"
+                activeFilter === cat.value 
+                  ? "bg-card border-foreground text-foreground font-medium" 
+                  : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"
             )}
             onClick={() => {
               setActiveFilter(cat.value);
@@ -481,9 +481,9 @@ const CommunityWaterfall = () => {
               variant="outline"
               className={cn(
                 "transition-all duration-200",
-                selectedEmotionTag === null 
-                  ? "bg-foreground text-background hover:bg-foreground/90 border-foreground" 
-                  : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"
+                  selectedEmotionTag === null 
+                    ? "bg-card border-foreground text-foreground font-medium" 
+                    : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"
               )}
               onClick={() => setSelectedEmotionTag(null)}
             >
@@ -497,7 +497,7 @@ const CommunityWaterfall = () => {
                 className={cn(
                   "transition-all duration-200",
                   selectedEmotionTag === tag 
-                    ? "bg-foreground text-background hover:bg-foreground/90 border-foreground" 
+                    ? "bg-card border-foreground text-foreground font-medium" 
                     : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"
                 )}
                 onClick={() => setSelectedEmotionTag(tag)}
