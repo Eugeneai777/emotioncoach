@@ -552,15 +552,15 @@ ${briefing.growth_story || '暂无记录'}
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50 rounded-card-lg p-card-lg shadow-md hover:shadow-lg transition-shadow duration-300">
                   <div className="flex items-center justify-between mb-card-gap">
                     <h3 className="text-lg font-semibold flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                      🏕️ 家长情绪训练营
+                      🏕️ 21天青少年问题家庭训练营
                     </h3>
                   </div>
                   <p className="text-sm text-muted-foreground mb-card">
-                    用21天养成亲子情绪觉察习惯，建立更和谐的亲子关系
+                    通过父母三力模型（稳定力、洞察力、修复力），21天系统提升亲子关系
                   </p>
                   <div className="flex gap-3">
                     <Button 
-                      onClick={() => navigate("/camps")} 
+                      onClick={() => navigate("/camp-list")} 
                       className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                     >
                       <Heart className="h-4 w-4 mr-2" />
