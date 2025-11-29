@@ -61,7 +61,7 @@ interface ToolCard {
 const EnergyStudio = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [primaryTab, setPrimaryTab] = useState<"coach" | "tools" | "courses" | "camp">("tools");
+  const [primaryTab, setPrimaryTab] = useState<"coach" | "tools" | "courses" | "camp" | "partner">("tools");
   const [activeTab, setActiveTab] = useState<"emotion" | "exploration" | "management">("emotion");
   const [activeTool, setActiveTool] = useState<string | null>(null);
 
@@ -70,7 +70,8 @@ const EnergyStudio = () => {
     { id: "coach" as const, label: "教练空间", emoji: "🎯", route: null },
     { id: "tools" as const, label: "成长工具", emoji: "🛠️", route: null },
     { id: "courses" as const, label: "学习课程", emoji: "📚", route: "/courses" },
-    { id: "camp" as const, label: "训练营", emoji: "🏕️", route: "/camps" }
+    { id: "camp" as const, label: "训练营", emoji: "🏕️", route: "/camps" },
+    { id: "partner" as const, label: "合伙人", emoji: "🤝", route: "/partner-intro" }
   ];
 
   // 从数据库查询工具数据
@@ -196,7 +197,7 @@ const EnergyStudio = () => {
       <main className="container max-w-6xl mx-auto px-4 py-8">
         {/* 一级导航菜单 */}
         <div className="flex justify-center mb-6">
-          <div className="grid w-full max-w-2xl grid-cols-4 bg-card/50 backdrop-blur-sm rounded-full p-1.5 border shadow-sm">
+          <div className="grid w-full max-w-3xl grid-cols-5 bg-card/50 backdrop-blur-sm rounded-full p-1.5 border shadow-sm">
             {primaryMenuItems.map(item => (
               <Button
                 key={item.id}
