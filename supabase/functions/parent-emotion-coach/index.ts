@@ -512,7 +512,123 @@ ${getStagePrompt(updatedSession?.current_stage || 0)}
 
         console.log('Follow-up message:', followUpMessage);
 
-        // Add follow-up message to history
+        // Check if follow-up message contains a tool call
+        if (followUpMessage.tool_calls && followUpMessage.tool_calls.length > 0) {
+          const followUpToolCall = followUpMessage.tool_calls[0];
+          const followUpFunctionName = followUpToolCall.function.name;
+          const followUpArgs = JSON.parse(followUpToolCall.function.arguments);
+
+          console.log('Follow-up tool call detected:', followUpFunctionName, followUpArgs);
+
+          // Handle generate_parent_briefing in follow-up
+          if (followUpFunctionName === 'generate_parent_briefing') {
+            // Add assistant message with tool call to history
+            conversationHistory.push({
+              role: "assistant",
+              content: followUpMessage.content || "",
+              tool_calls: followUpMessage.tool_calls
+            });
+
+            // Create conversation record
+            const { data: conversationData } = await supabaseClient
+              .from('conversations')
+              .insert({ user_id: user.id })
+              .select()
+              .single();
+
+            // Create briefing
+            const { data: briefingData } = await supabaseClient
+              .from('briefings')
+              .insert({
+                conversation_id: conversationData.id,
+                emotion_theme: followUpArgs.emotion_theme,
+                stage_1_content: followUpArgs.stage_1_content,
+                stage_2_content: followUpArgs.stage_2_content,
+                stage_3_content: followUpArgs.stage_3_content,
+                stage_4_content: followUpArgs.stage_4_content,
+                insight: followUpArgs.insight,
+                action: followUpArgs.action,
+                growth_story: followUpArgs.growth_story
+              })
+              .select()
+              .single();
+
+            // Create and associate tags
+            for (const tagName of followUpArgs.emotion_tags) {
+              const { data: tagData } = await supabaseClient
+                .from('parent_tags')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('name', tagName)
+                .single();
+
+              let tagId = tagData?.id;
+              if (!tagId) {
+                const { data: newTag } = await supabaseClient
+                  .from('parent_tags')
+                  .insert({ user_id: user.id, name: tagName })
+                  .select()
+                  .single();
+                tagId = newTag?.id;
+              }
+
+              if (tagId) {
+                await supabaseClient
+                  .from('parent_session_tags')
+                  .insert({
+                    session_id: sessionId,
+                    tag_id: tagId
+                  });
+              }
+            }
+
+            // Update session as completed
+            await supabaseClient
+              .from('parent_coaching_sessions')
+              .update({
+                status: 'completed',
+                briefing_id: briefingData.id,
+                conversation_id: conversationData.id,
+                summary: followUpArgs.growth_story,
+                micro_action: followUpArgs.action,
+                messages: conversationHistory,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', sessionId);
+
+            // Update camp progress if applicable
+            if (session?.camp_id) {
+              const today = new Date().toISOString().split('T')[0];
+              await supabaseClient
+                .from('camp_daily_progress')
+                .upsert({
+                  user_id: user.id,
+                  camp_id: session.camp_id,
+                  progress_date: today,
+                  reflection_completed: true,
+                  reflection_briefing_id: briefingData.id,
+                  reflection_completed_at: new Date().toISOString(),
+                  is_checked_in: true,
+                  checked_in_at: new Date().toISOString()
+                });
+            }
+
+            console.log('Briefing created successfully:', briefingData.id);
+
+            // Return completion response
+            return new Response(JSON.stringify({
+              content: followUpMessage.content || "简报已生成",
+              toolCall: { name: followUpFunctionName, args: followUpArgs },
+              briefingId: briefingData.id,
+              briefing: followUpArgs,
+              completed: true
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
+
+        // Add follow-up message to history (if no tool call)
         conversationHistory.push({
           role: "assistant",
           content: followUpMessage.content || ""
