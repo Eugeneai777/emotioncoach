@@ -692,7 +692,7 @@ ${briefing.growth_story || '暂无记录'}
             open={showStartDialog}
             onOpenChange={setShowStartDialog}
             campTemplate={parentCampTemplate}
-            onSuccess={() => navigate('/camp-list')}
+            onSuccess={() => navigate('/camps')}
           />
         )}
       </main>
