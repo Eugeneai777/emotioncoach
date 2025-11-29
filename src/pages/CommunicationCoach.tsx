@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CoachLayout } from "@/components/coach/CoachLayout";
-import { CommunicationScenarios } from "@/components/communication/CommunicationScenarios";
+import { CommunicationScenarioChips } from "@/components/communication/CommunicationScenarioChips";
 import { useCommunicationChat } from "@/hooks/useCommunicationChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useToast } from "@/hooks/use-toast";
@@ -35,8 +35,9 @@ const CommunicationCoach = () => {
     await sendMessage(messageToSend);
   };
 
-  const handleSelectScenario = (prompt: string) => {
-    setInput(prompt);
+  const handleSelectScenario = async (prompt: string) => {
+    setInput("");
+    await sendMessage(prompt);
   };
 
   const handleNewConversation = () => {
@@ -67,7 +68,7 @@ const CommunicationCoach = () => {
       onSend={handleSend}
       onNewConversation={handleNewConversation}
       placeholder={template.placeholder || '分享你的想法...'}
-      scenarios={<CommunicationScenarios onSelectScenario={handleSelectScenario} />}
+      scenarioChips={<CommunicationScenarioChips onSelectScenario={handleSelectScenario} />}
       showNotificationCenter={false}
     />
   );
