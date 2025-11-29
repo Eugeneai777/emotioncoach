@@ -232,19 +232,30 @@ ${data.growth_insight}
       let toolCallBuffer = "";
 
       const processChunk = async () => {
+        let buffer = "";
+        
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            console.log("Stream完成，最终消息长度:", assistantMessage.length);
+            break;
+          }
 
           const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
+          buffer += chunk;
+          
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
 
           for (const line of lines) {
             if (!line.trim() || line.startsWith(":")) continue;
             if (!line.startsWith("data: ")) continue;
 
             const data = line.slice(6).trim();
-            if (data === "[DONE]") continue;
+            if (data === "[DONE]") {
+              console.log("收到[DONE]信号");
+              continue;
+            }
 
             try {
               const parsed = JSON.parse(data);
@@ -272,7 +283,7 @@ ${data.growth_insight}
                 }
               }
             } catch (e) {
-              // Ignore parse errors for incomplete JSON
+              console.warn("解析SSE数据失败:", line.slice(0, 100), e);
             }
           }
         }
