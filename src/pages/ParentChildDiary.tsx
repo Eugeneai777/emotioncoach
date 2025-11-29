@@ -197,7 +197,7 @@ const ParentChildDiary = () => {
                   )}
                   {selectedSession.sense_it && (
                     <div>
-                      <p className="font-medium text-foreground text-sm md:text-base">3️⃣ 觉察反应（Sense it）</p>
+                      <p className="font-medium text-foreground text-sm md:text-base">3️⃣ 反应（Sense it）</p>
                       <p className="text-foreground/70 text-xs md:text-sm mt-1">
                         {typeof selectedSession.sense_it === 'string' 
                           ? selectedSession.sense_it 

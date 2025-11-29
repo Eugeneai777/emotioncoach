@@ -41,7 +41,7 @@ export const FourStepsProgress = ({ sessions }: FourStepsProgressProps) => {
     },
     {
       id: 3,
-      name: "觉察反应 (Sense it)",
+      name: "反应 (Sense it)",
       emoji: "3️⃣",
       count: sessions.filter(s => s.sense_it).length,
       color: "bg-blue-500"
@@ -113,7 +113,7 @@ export const FourStepsProgress = ({ sessions }: FourStepsProgressProps) => {
         <p className="text-sm text-foreground font-medium mb-2">💡 成长提示</p>
         <p className="text-xs text-muted-foreground leading-relaxed">
           亲子情绪四部曲是一个循序渐进的过程。不要着急，每一次练习都是在为更好的亲子关系打基础。
-          记住：觉察、看见、识别、转化——每一步都很重要！
+          记住：觉察、看见、反应、转化——每一步都很重要！
         </p>
       </Card>
     </div>

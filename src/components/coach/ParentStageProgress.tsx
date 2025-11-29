@@ -7,7 +7,7 @@ interface ParentStageProgressProps {
 const stages = [
   { id: 1, name: "觉察", subtitle: "Feel it" },
   { id: 2, name: "看见", subtitle: "See it" },
-  { id: 3, name: "卡点", subtitle: "Sense it" },
+  { id: 3, name: "反应", subtitle: "Sense it" },
   { id: 4, name: "转化", subtitle: "Transform it" }
 ];
 
