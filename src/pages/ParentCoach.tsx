@@ -88,6 +88,7 @@ export default function ParentCoach() {
   const [input, setInput] = useState("");
   const [showSummary, setShowSummary] = useState(false);
   const [briefing, setBriefing] = useState<any>(null);
+  const [pendingBriefing, setPendingBriefing] = useState<any>(null);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [voiceConfig, setVoiceConfig] = useState<{
     gender: 'male' | 'female';
@@ -137,16 +138,6 @@ export default function ParentCoach() {
       setInput(transcript);
     }
   }, [transcript]);
-
-  useEffect(() => {
-    if (messages.length > lastMessageCountRef.current) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === "assistant" && voiceOutputSupported && !isLoading) {
-        speak(lastMessage.content);
-      }
-      lastMessageCountRef.current = messages.length;
-    }
-  }, [messages, voiceOutputSupported, isLoading, speak]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -199,9 +190,22 @@ export default function ParentCoach() {
     const response = await sendMessage(message);
     
     if (response?.completed && response?.briefingId) {
-      setShowSummary(true);
-      setBriefing(response.toolCall?.args);
+      // Don't show summary immediately, store the briefing data
+      setPendingBriefing(response.toolCall?.args);
     }
+  };
+
+  const handleGenerateBriefing = () => {
+    if (pendingBriefing) {
+      setBriefing(pendingBriefing);
+      setShowSummary(true);
+      setPendingBriefing(null);
+    }
+  };
+
+  const handleSkipBriefing = () => {
+    setPendingBriefing(null);
+    handleRestart();
   };
 
   const handleSend = async () => {
@@ -224,6 +228,7 @@ export default function ParentCoach() {
   const handleRestart = () => {
     setShowSummary(false);
     setBriefing(null);
+    setPendingBriefing(null);
     initRef.current = false;
     createSession(campId || undefined);
   };
@@ -547,7 +552,7 @@ export default function ParentCoach() {
           <div className="flex-1 py-4 md:py-6 space-y-3 md:space-y-4">
             {messages.map((message, index) => (
               <ChatMessage 
-                key={index} 
+                key={index}
                 role={message.role as "user" | "assistant"} 
                 content={message.content}
                 onOptionClick={(option) => {
@@ -562,6 +567,47 @@ export default function ParentCoach() {
                 </div>
               </div>
             )}
+            
+            {/* Briefing confirmation prompt */}
+            {pendingBriefing && !isLoading && (
+              <div className="flex justify-start animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-card-lg p-card shadow-lg max-w-[85%]">
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground mb-2">
+                          🎉 恭喜完成情绪四部曲！
+                        </p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          你已经走完了觉察→看见→卡点→转化的完整旅程。是否需要生成今日简报，记录这次宝贵的成长？
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={handleGenerateBriefing}
+                        className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-md hover:shadow-lg transition-all"
+                      >
+                        <Heart className="w-4 h-4 mr-2" />
+                        生成简报
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={handleSkipBriefing}
+                        className="flex-1 border-purple-300 text-purple-600 hover:bg-purple-50"
+                      >
+                        跳过
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div ref={messagesEndRef} />
           </div>
         )}
