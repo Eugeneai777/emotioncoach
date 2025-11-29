@@ -28,7 +28,7 @@ export const coachConfigs: Record<string, CoachConfig> = {
   emotion: {
     id: "emotion",
     emoji: "💚",
-    title: "情绪觉醒教练",
+    title: "情绪觉醒教练 - 情绪日记",
     subtitle: "日常情绪觉察与记录",
     description: "劲老师陪着你，一步步梳理情绪，重新找到情绪里的力量",
     gradient: "from-primary via-emerald-500 to-teal-500",
@@ -74,7 +74,7 @@ export const coachConfigs: Record<string, CoachConfig> = {
   communication: {
     id: "communication",
     emoji: "💙",
-    title: "卡内基沟通教练",
+    title: "卡内基沟通教练 - 沟通日记",
     subtitle: "温暖表达，有效影响",
     description: "让每一个人都能更轻松地说出想说的话，并让对方愿意听 🎯",
     gradient: "from-blue-500 via-indigo-500 to-violet-500",
