@@ -9,8 +9,10 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { VoiceControls } from "@/components/VoiceControls";
 import { ParentJourneySummary } from "@/components/coach/ParentJourneySummary";
+import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Send, 
   RotateCcw, 
@@ -93,6 +95,7 @@ export default function ParentCoach() {
   const [briefing, setBriefing] = useState<any>(null);
   const [pendingBriefing, setPendingBriefing] = useState<any>(null);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
+  const [showStartDialog, setShowStartDialog] = useState(false);
   const [voiceConfig, setVoiceConfig] = useState<{
     gender: 'male' | 'female';
     rate: number;
@@ -106,6 +109,19 @@ export default function ParentCoach() {
     loading: authLoading,
     signOut
   } = useAuth();
+
+  // 获取家长训练营模板
+  const { data: parentCampTemplate } = useQuery({
+    queryKey: ['camp-template', 'parent_emotion_21'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('camp_templates')
+        .select('*')
+        .eq('camp_type', 'parent_emotion_21')
+        .single();
+      return data;
+    }
+  });
 
   const {
     isListening,
@@ -634,19 +650,19 @@ ${briefing.growth_story || '暂无记录'}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">🏕️</span>
-                      <h4 className="font-semibold text-purple-700">推荐：21天家长情绪训练营</h4>
+                      <h4 className="font-semibold text-purple-700">推荐：21天青少年问题家庭训练营</h4>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       通过父母三力模型（稳定力、洞察力、修复力），21天系统提升亲子关系
                     </p>
                     <div className="flex gap-2">
                       <Button
-                        onClick={() => navigate("/camps")}
+                        onClick={() => setShowStartDialog(true)}
                         className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                         size="sm"
                       >
                         <Heart className="w-4 h-4 mr-1" />
-                        立即加入
+                        加入训练营
                       </Button>
                       <Button
                         variant="outline"
@@ -660,6 +676,16 @@ ${briefing.growth_story || '暂无记录'}
                   </div>
                 </div>
               </div>
+            )}
+            
+            {/* 训练营加入对话框 */}
+            {parentCampTemplate && (
+              <StartCampDialog 
+                open={showStartDialog}
+                onOpenChange={setShowStartDialog}
+                campTemplate={parentCampTemplate}
+                onSuccess={() => navigate('/camp-list')}
+              />
             )}
             
             <div ref={messagesEndRef} />
