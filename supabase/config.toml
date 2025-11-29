@@ -113,3 +113,15 @@ verify_jwt = true
 
 [functions.parent-emotion-coach]
 verify_jwt = true
+
+[functions.process-referral]
+verify_jwt = false
+
+[functions.calculate-commission]
+verify_jwt = false
+
+[functions.confirm-commissions]
+verify_jwt = false
+
+[functions.partner-withdrawal]
+verify_jwt = true

@@ -32,6 +32,8 @@ import Introduction from "./pages/Introduction";
 import UserManual from "./pages/UserManual";
 import Courses from "./pages/Courses";
 import ParentChildDiary from "./pages/ParentChildDiary";
+import Partner from "./pages/Partner";
+import PartnerBenefits from "./pages/PartnerBenefits";
 import NotFound from "./pages/NotFound";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
 
@@ -74,6 +76,8 @@ const App = () => (
           <Route path="/introduction" element={<Introduction />} />
           <Route path="/user-manual" element={<UserManual />} />
           <Route path="/courses" element={<Courses />} />
+          <Route path="/partner" element={<Partner />} />
+          <Route path="/partner/benefits" element={<PartnerBenefits />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
