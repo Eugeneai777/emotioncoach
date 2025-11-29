@@ -82,11 +82,11 @@ export default function ParentCoach() {
     isLoading,
     isCreating,
     createSession,
-    sendMessage
+    sendMessage,
+    addAssistantMessage
   } = useParentCoach();
 
   const [input, setInput] = useState("");
-  const [showSummary, setShowSummary] = useState(false);
   const [briefing, setBriefing] = useState<any>(null);
   const [pendingBriefing, setPendingBriefing] = useState<any>(null);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
@@ -186,6 +186,38 @@ export default function ParentCoach() {
     }
   };
 
+  const formatBriefingMessage = (briefing: any): string => {
+    return `🌿 《亲子情绪四部曲简报》
+
+🎭 今日主题情绪
+${briefing.emotion_theme}
+
+📖 情绪四部曲旅程
+
+1️⃣ 觉察（Feel it）
+${briefing.stage_1_content || '暂无记录'}
+
+2️⃣ 看见（See it）
+${briefing.stage_2_content || '暂无记录'}
+
+3️⃣ 反应（Sense it）
+${briefing.stage_3_content || '暂无记录'}
+
+4️⃣ 转化（Transform it）
+${briefing.stage_4_content || '暂无记录'}
+
+💡 今日洞察
+${briefing.insight || '暂无记录'}
+
+✅ 今日行动
+${briefing.action || '暂无记录'}
+
+🌸 1mm的松动
+${briefing.growth_story || '暂无记录'}
+
+💾 简报已自动保存到你的亲子日记中`;
+  };
+
   const handleSendMessage = async (message: string) => {
     const response = await sendMessage(message);
     
@@ -197,15 +229,23 @@ export default function ParentCoach() {
 
   const handleGenerateBriefing = () => {
     if (pendingBriefing) {
+      const briefingMessage = formatBriefingMessage(pendingBriefing);
+      addAssistantMessage(briefingMessage);
       setBriefing(pendingBriefing);
-      setShowSummary(true);
       setPendingBriefing(null);
+      toast({
+        title: "简报已生成",
+        description: "已保存到你的亲子日记中"
+      });
     }
   };
 
   const handleSkipBriefing = () => {
     setPendingBriefing(null);
-    handleRestart();
+    toast({
+      title: "已跳过简报生成",
+      description: "你可以开始新的对话了"
+    });
   };
 
   const handleSend = async () => {
@@ -226,7 +266,6 @@ export default function ParentCoach() {
   };
 
   const handleRestart = () => {
-    setShowSummary(false);
     setBriefing(null);
     setPendingBriefing(null);
     initRef.current = false;
@@ -381,7 +420,7 @@ export default function ParentCoach() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {messages.length > 0 && !showSummary && (
+              {messages.length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -422,7 +461,7 @@ export default function ParentCoach() {
 
       {/* Main Content */}
       <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto pb-32">
-        {messages.length === 0 && !showSummary ? (
+        {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-8 px-3 md:px-4">
             <div className="text-center space-y-3 md:space-y-4 w-full max-w-xl animate-in fade-in-50 duration-700">
               <div className="space-y-1.5 md:space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
@@ -515,39 +554,6 @@ export default function ParentCoach() {
               </div>
             </div>
           </div>
-        ) : showSummary ? (
-          <div className="flex-1 py-6 space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">🎉 完成四部曲旅程</h2>
-              <p className="text-muted-foreground">
-                恭喜你完成了今天的情绪觉察之旅
-              </p>
-            </div>
-            
-            {briefing && (
-              <ParentJourneySummary
-                briefing={briefing}
-                onShare={handleShare}
-                onDownload={handleDownload}
-              />
-            )}
-
-            <div className="flex gap-3">
-              <Button 
-                variant="outline" 
-                className="flex-1 border-purple-300 text-purple-600 hover:bg-purple-50"
-                onClick={() => navigate('/camps')}
-              >
-                返回训练营
-              </Button>
-              <Button 
-                className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-                onClick={handleRestart}
-              >
-                开始新的对话
-              </Button>
-            </div>
-          </div>
         ) : (
           <div className="flex-1 py-4 md:py-6 space-y-3 md:space-y-4">
             {messages.map((message, index) => (
@@ -579,10 +585,13 @@ export default function ParentCoach() {
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-foreground mb-2">
-                          🎉 恭喜完成情绪四部曲！
+                          你今天太棒了！🎉
                         </p>
                         <p className="text-sm text-muted-foreground leading-relaxed">
-                          你已经走完了觉察→看见→卡点→转化的完整旅程。是否需要生成今日简报，记录这次宝贵的成长？
+                          完成了一次完整的情绪觉察之旅，亲子关系又松动了1mm。要不要生成简报，记录今天的成长？
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2 opacity-75">
+                          简报将直接显示在对话中
                         </p>
                       </div>
                     </div>
@@ -600,7 +609,7 @@ export default function ParentCoach() {
                         onClick={handleSkipBriefing}
                         className="flex-1 border-purple-300 text-purple-600 hover:bg-purple-50"
                       >
-                        跳过
+                        下次再说
                       </Button>
                     </div>
                   </div>
@@ -614,9 +623,8 @@ export default function ParentCoach() {
       </main>
 
       {/* Footer - Fixed bottom input */}
-      {!showSummary && (
-        <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20">
-          <div className="container max-w-xl mx-auto px-4 py-3">
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20">
+        <div className="container max-w-xl mx-auto px-4 py-3">
             <div className="flex gap-3 items-end">
               <div className="flex-1 relative group">
                 <Textarea
@@ -658,7 +666,6 @@ export default function ParentCoach() {
             </div>
           </div>
         </footer>
-      )}
     </div>
   );
 }
