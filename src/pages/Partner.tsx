@@ -12,6 +12,7 @@ import { PartnerStats } from "@/components/partner/PartnerStats";
 import { ReferralList } from "@/components/partner/ReferralList";
 import { CommissionHistory } from "@/components/partner/CommissionHistory";
 import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
+import { YoujinPartnerDashboard } from "@/components/partner/YoujinPartnerDashboard";
 
 export default function Partner() {
   const navigate = useNavigate();
@@ -162,8 +163,13 @@ export default function Partner() {
         {/* Partner View */}
         {isPartner && partner && (
           <>
-            {/* Stats Overview */}
-            <PartnerStats partner={partner} />
+            {/* 根据合伙人类型显示不同面板 */}
+            {partner.partner_type === 'youjin' ? (
+              <YoujinPartnerDashboard partner={partner} />
+            ) : (
+              <>
+                {/* 绽放合伙人面板（原有内容） */}
+                <PartnerStats partner={partner} />
 
             {/* 推广码区域 */}
             <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
@@ -218,10 +224,12 @@ export default function Partner() {
             <CommissionHistory partnerId={partner.id} />
           </TabsContent>
 
-              <TabsContent value="withdrawal">
-                <WithdrawalForm partner={partner} />
-              </TabsContent>
-            </Tabs>
+                <TabsContent value="withdrawal">
+                  <WithdrawalForm partner={partner} />
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
           </>
         )}
       </div>

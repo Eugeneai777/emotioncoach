@@ -17,6 +17,10 @@ export interface Partner {
   total_referrals: number;
   total_l2_referrals: number;
   created_at: string;
+  partner_type: string;
+  partner_level: string;
+  prepurchase_count: number;
+  prepurchase_expires_at: string | null;
 }
 
 export function usePartner() {
