@@ -53,9 +53,9 @@ export const CoachEmptyState = ({
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-2 md:space-y-3">
       {/* Title Section */}
-      <div className="text-center space-y-2 md:space-y-3 py-4 md:py-6">
+      <div className="text-center space-y-2 md:space-y-3 pt-4 md:pt-6 pb-0">
         <h1 className="text-2xl md:text-3xl font-bold text-foreground">
           {title}
         </h1>
