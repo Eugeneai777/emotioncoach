@@ -411,6 +411,99 @@ export type Database = {
           },
         ]
       }
+      coach_templates: {
+        Row: {
+          briefing_table_name: string | null
+          coach_key: string
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          edge_function_name: string | null
+          emoji: string
+          enable_community: boolean | null
+          enable_notifications: boolean | null
+          enable_scenarios: boolean | null
+          enable_training_camp: boolean | null
+          enable_voice_control: boolean | null
+          gradient: string | null
+          history_label: string | null
+          history_route: string
+          id: string
+          is_active: boolean | null
+          is_system: boolean | null
+          more_info_route: string | null
+          page_route: string
+          placeholder: string | null
+          primary_color: string | null
+          steps: Json | null
+          steps_emoji: string | null
+          steps_title: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          briefing_table_name?: string | null
+          coach_key: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          edge_function_name?: string | null
+          emoji?: string
+          enable_community?: boolean | null
+          enable_notifications?: boolean | null
+          enable_scenarios?: boolean | null
+          enable_training_camp?: boolean | null
+          enable_voice_control?: boolean | null
+          gradient?: string | null
+          history_label?: string | null
+          history_route: string
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          more_info_route?: string | null
+          page_route: string
+          placeholder?: string | null
+          primary_color?: string | null
+          steps?: Json | null
+          steps_emoji?: string | null
+          steps_title?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          briefing_table_name?: string | null
+          coach_key?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          edge_function_name?: string | null
+          emoji?: string
+          enable_community?: boolean | null
+          enable_notifications?: boolean | null
+          enable_scenarios?: boolean | null
+          enable_training_camp?: boolean | null
+          enable_voice_control?: boolean | null
+          gradient?: string | null
+          history_label?: string | null
+          history_route?: string
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          more_info_route?: string | null
+          page_route?: string
+          placeholder?: string | null
+          primary_color?: string | null
+          steps?: Json | null
+          steps_emoji?: string | null
+          steps_title?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       communication_briefings: {
         Row: {
           act_content: string | null
