@@ -56,15 +56,15 @@ export const CommunicationScenarioChips = ({ onSelectScenario }: CommunicationSc
       <p className="text-xs text-muted-foreground px-1">
         💡 快速选择沟通场景
       </p>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
         {scenarios.map((scenario) => (
           <Badge
             key={scenario.id}
             variant="outline"
-            className="cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-all px-3 py-1.5 text-sm"
+            className="cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-all px-2 py-1 text-xs whitespace-nowrap flex-shrink-0"
             onClick={() => onSelectScenario(scenario.prompt)}
           >
-            <span className="mr-1">{scenario.emoji}</span>
+            <span className="mr-0.5">{scenario.emoji}</span>
             {scenario.title}
           </Badge>
         ))}
