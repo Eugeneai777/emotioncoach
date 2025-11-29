@@ -45,7 +45,7 @@ export default function ParentCampLanding() {
       {/* 导航栏 */}
       <nav className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
+          <Button variant="ghost" onClick={() => navigate('/camps')} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
             返回
           </Button>
