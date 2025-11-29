@@ -21,7 +21,7 @@ interface StartCampDialogProps {
     duration_days: number;
     icon?: string;
   };
-  onSuccess?: () => void;
+  onSuccess?: (campId: string) => void;
 }
 
 export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }: StartCampDialogProps) {
@@ -86,9 +86,10 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
         }
       }
 
-      const { error } = await supabase
+      const { data: insertedCamps, error } = await supabase
         .from('training_camps')
-        .insert(campsToCreate);
+        .insert(campsToCreate)
+        .select('id');
 
       if (error) throw error;
 
@@ -100,7 +101,7 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
       });
 
       onOpenChange(false);
-      onSuccess?.();
+      onSuccess?.(insertedCamps[0].id);
     } catch (error) {
       console.error('Error starting camp:', error);
       toast({
