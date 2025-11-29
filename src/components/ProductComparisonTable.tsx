@@ -62,9 +62,15 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                     <div className="text-xs text-muted-foreground">¥365</div>
                   </div>
                 </th>
-                <th className="text-center p-4 min-w-[140px]">
+                <th className="text-center p-4 min-w-[160px]">
                   <div className="space-y-1">
-                    <div className="font-bold text-base text-foreground">有劲训练营</div>
+                    <div className="font-bold text-base text-foreground">21天情绪日记训练营</div>
+                    <div className="text-xs text-green-600 dark:text-green-500 font-semibold">免费</div>
+                  </div>
+                </th>
+                <th className="text-center p-4 min-w-[180px]">
+                  <div className="space-y-1">
+                    <div className="font-bold text-base text-foreground">21天青少年问题家庭训练营</div>
                     <div className="text-xs text-green-600 dark:text-green-500 font-semibold">免费</div>
                   </div>
                 </th>
@@ -76,7 +82,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                 return (
                   <TooltipProvider key={cat}>
                     <tr className="border-b bg-muted/30">
-                      <td colSpan={4} className="p-3">
+                      <td colSpan={5} className="p-3">
                         <div className="font-semibold text-sm text-primary flex items-center gap-2">
                           {cat}
                         </div>
@@ -104,7 +110,8 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                         </td>
                         <td className="p-3 text-center">{renderValue(feature.basic)}</td>
                         <td className="p-3 text-center bg-primary/5">{renderValue(feature.premium)}</td>
-                        <td className="p-3 text-center">{renderValue(feature.camp)}</td>
+                        <td className="p-3 text-center">{renderValue(feature.emotionJournalCamp)}</td>
+                        <td className="p-3 text-center">{renderValue(feature.parentEmotionCamp)}</td>
                       </tr>
                     ))}
                   </TooltipProvider>
@@ -136,9 +143,19 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                     variant="outline" 
                     size="sm" 
                     className="w-full"
-                    onClick={() => handlePurchase('youjin-camps')}
+                    onClick={() => handlePurchase('945444e5-f341-4ba2-a77f-1641b54f47f1')}
                   >
-                    查看详情
+                    立即加入
+                  </Button>
+                </td>
+                <td className="p-4 text-center">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => handlePurchase('7cbbfd5d-b73c-4e51-9791-ad9dc61384b1')}
+                  >
+                    立即加入
                   </Button>
                 </td>
               </tr>
