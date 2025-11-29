@@ -5,8 +5,10 @@ import { PurchaseHistory } from "@/components/PurchaseHistory";
 import { AccountBalance } from "@/components/AccountBalance";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const packages = [
+const basePackages = [
   {
     id: 'basic',
     name: '尝鲜会员',
@@ -44,34 +46,56 @@ const packages = [
       '优先新功能体验',
       '365天有效期，过期未用完作废'
     ]
-  },
-  {
-    id: 'partner',
-    name: '绽放合伙人',
-    price: 19800,
-    duration: '永久',
-    icon: Users,
-    popular: false,
-    isPartner: true,
-    gradient: 'from-amber-500/20 to-orange-500/20',
-    totalValue: 76759,
-    features: [
-      'VIP会员所有课程权益（价值¥299）',
-      '《身份绽放特训营》4周线上特训（价值¥2,980）',
-      '《情感绽放特训营》4周线上特训（价值¥3,980）',
-      '《生命绽放特训营》4周线上特训（价值¥12,800）',
-      '专属"英雄之旅"绽放线下课（价值¥10,000）',
-      '《绽放教练》国际认证（价值¥16,800）',
-      '💰 推广分成：直推30%，二级10%',
-      '🎨 专属推广码和推广海报',
-      '👥 合伙人专属社群',
-      '⭐ 新功能优先体验权'
-    ]
   }
 ];
 
 export default function Packages() {
   const navigate = useNavigate();
+
+  // 查询合伙人权益
+  const { data: benefits = [] } = useQuery({
+    queryKey: ['partner-benefits'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('partner_benefits')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  // 计算合伙人权益总价值
+  const totalBenefitValue = benefits.reduce((sum, benefit) => {
+    return sum + (benefit.benefit_value || 0);
+  }, 0);
+
+  // 构建合伙人套餐的features
+  const partnerFeatures = benefits.map(benefit => {
+    if (benefit.benefit_value && benefit.benefit_value > 0) {
+      return `${benefit.benefit_name}（价值¥${benefit.benefit_value.toLocaleString()}）`;
+    }
+    return benefit.benefit_name;
+  });
+
+  // 完整的套餐列表，包含动态加载的合伙人套餐
+  const packages = [
+    ...basePackages,
+    {
+      id: 'partner',
+      name: '绽放合伙人',
+      price: 19800,
+      duration: '永久',
+      icon: Users,
+      popular: false,
+      isPartner: true,
+      gradient: 'from-amber-500/20 to-orange-500/20',
+      totalValue: totalBenefitValue,
+      features: partnerFeatures
+    }
+  ];
 
   const handlePurchase = (pkg: typeof packages[0]) => {
     toast.info("支付功能开发中", {
@@ -174,7 +198,7 @@ export default function Packages() {
                         🎁 总价值 ¥{pkg.totalValue}
                       </p>
                     )}
-                    {pkg.limitPurchase && (
+                    {'limitPurchase' in pkg && pkg.limitPurchase && (
                       <p className="text-xs text-amber-600 dark:text-amber-500 font-semibold flex items-center gap-1">
                         ⚠️ 限购一次
                       </p>
