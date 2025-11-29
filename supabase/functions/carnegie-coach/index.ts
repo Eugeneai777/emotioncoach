@@ -115,7 +115,7 @@ D. 正在用他的方式保护自己或你们的关系
         type: "function",
         function: {
           name: "generate_communication_briefing",
-          description: "当用户完成沟通四步曲后，生成结构化的沟通简报",
+          description: "当用户完成沟通四步曲后，生成结构化的沟通简报。AI会自动评估沟通难度、场景类型、对象类型和难点关键词。",
           parameters: {
             type: "object",
             properties: {
@@ -166,6 +166,27 @@ D. 正在用他的方式保护自己或你们的关系
               growth_insight: {
                 type: "string",
                 description: "沟通成长洞察"
+              },
+              communication_difficulty: {
+                type: "integer",
+                description: "沟通难度评分（1-10）。AI自动评估：1=简单问候, 3=日常交流, 5=表达不同意见, 7=化解矛盾, 10=重大冲突",
+                minimum: 1,
+                maximum: 10
+              },
+              scenario_type: {
+                type: "string",
+                enum: ["family", "work", "social", "romantic", "other"],
+                description: "场景类型。AI自动识别：family(家庭), work(职场), social(社交), romantic(恋爱), other(其他)"
+              },
+              target_type: {
+                type: "string",
+                enum: ["parent", "child", "spouse", "colleague", "friend", "boss", "other"],
+                description: "沟通对象类型。AI自动识别"
+              },
+              difficulty_keywords: {
+                type: "array",
+                items: { type: "string" },
+                description: "难点关键词（3-5个），如：'表达需求'、'建立边界'、'情绪管理'等"
               }
             },
             required: [
@@ -180,7 +201,11 @@ D. 正在用他的方式保护自己或你们的关系
               "avoid_script",
               "strategy",
               "micro_action",
-              "growth_insight"
+              "growth_insight",
+              "communication_difficulty",
+              "scenario_type",
+              "target_type",
+              "difficulty_keywords"
             ]
           }
         }
