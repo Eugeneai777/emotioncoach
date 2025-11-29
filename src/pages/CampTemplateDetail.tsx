@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useCampPurchase } from "@/hooks/useCampPurchase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,15 +13,18 @@ import {
   Check,
   Users,
   Clock,
-  ArrowLeft
+  ArrowLeft,
+  ShoppingCart
 } from "lucide-react";
 import type { CampTemplate } from "@/types/trainingCamp";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
+import { CampPurchaseDialog } from "@/components/camp/CampPurchaseDialog";
 
 const CampTemplateDetail = () => {
   const { templateId } = useParams();
   const navigate = useNavigate();
   const [showStartDialog, setShowStartDialog] = useState(false);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const { user } = useAuth();
 
   const { data: camp, isLoading } = useQuery({
@@ -57,7 +61,30 @@ const CampTemplateDetail = () => {
     enabled: !!user && !!camp?.camp_type
   });
 
+  // 查询用户购买记录
+  const { data: purchaseRecord } = useCampPurchase(camp?.camp_type || '');
+
   const hasJoinedCamp = !!existingCamp;
+  const hasPurchased = !!purchaseRecord;
+  const isFree = camp?.price === 0 || camp?.price === undefined || camp?.price === null;
+  const needsPurchase = !isFree && !hasPurchased;
+
+  const handleCTAClick = () => {
+    if (hasJoinedCamp && existingCamp) {
+      navigate(`/camp/${existingCamp.id}`);
+    } else if (needsPurchase) {
+      setShowPurchaseDialog(true);
+    } else {
+      setShowStartDialog(true);
+    }
+  };
+
+  const getButtonText = () => {
+    if (hasJoinedCamp) return '继续训练';
+    if (needsPurchase && camp?.price) return `立即购买 ¥${camp.price.toLocaleString()}`;
+    if (isFree) return '免费开启';
+    return '立即加入';
+  };
 
   if (isLoading) {
     return (
@@ -120,20 +147,47 @@ const CampTemplateDetail = () => {
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               {camp.description}
             </p>
+
+            {/* 价格信息 */}
+            {camp.price !== undefined && camp.price !== null && camp.price > 0 && (
+              <div className="inline-flex flex-col items-center gap-2 px-8 py-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl border-2 border-purple-200/50 dark:border-purple-800/50">
+                <div className="flex items-end gap-3">
+                  {camp.original_price && camp.original_price > camp.price && (
+                    <span className="text-muted-foreground line-through text-lg">
+                      ¥{camp.original_price.toLocaleString()}
+                    </span>
+                  )}
+                  <span className="text-4xl font-bold text-purple-600 dark:text-purple-400">
+                    ¥{camp.price.toLocaleString()}
+                  </span>
+                </div>
+                {camp.price_note && (
+                  <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                    {camp.price_note}
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {camp.price === 0 && (
+              <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 text-lg px-6 py-2">
+                ✨ 完全免费
+              </Badge>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
               <Button 
                 size="lg" 
-                onClick={() => {
-                  if (hasJoinedCamp && existingCamp) {
-                    navigate(`/camp/${existingCamp.id}`);
-                  } else {
-                    setShowStartDialog(true);
-                  }
-                }}
-                className={`gap-2 bg-gradient-to-r ${camp.gradient} hover:opacity-90 text-white shadow-lg hover:shadow-xl transition-all duration-300`}
+                onClick={handleCTAClick}
+                className={`gap-2 ${
+                  needsPurchase 
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white' 
+                    : `bg-gradient-to-r ${camp.gradient} hover:opacity-90 text-white`
+                } shadow-lg hover:shadow-xl transition-all duration-300`}
               >
-                {hasJoinedCamp ? '继续训练' : '立即加入'}
-                <ArrowRight className="w-5 h-5" />
+                {needsPurchase && <ShoppingCart className="w-5 h-5" />}
+                {getButtonText()}
+                {!needsPurchase && <ArrowRight className="w-5 h-5" />}
               </Button>
               <Button 
                 size="lg" 
@@ -336,17 +390,14 @@ const CampTemplateDetail = () => {
               </p>
               <Button 
                 size="lg" 
-                onClick={() => {
-                  if (hasJoinedCamp && existingCamp) {
-                    navigate(`/camp/${existingCamp.id}`);
-                  } else {
-                    setShowStartDialog(true);
-                  }
-                }}
-                className="gap-2 bg-white text-purple-600 hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300"
+                onClick={handleCTAClick}
+                className={`gap-2 bg-white ${
+                  needsPurchase ? 'text-purple-600' : 'text-purple-600'
+                } hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300`}
               >
-                {hasJoinedCamp ? '继续训练' : '立即开始'}
-                <Sparkles className="w-5 h-5" />
+                {needsPurchase && <ShoppingCart className="w-5 h-5" />}
+                {getButtonText()}
+                {!needsPurchase && <Sparkles className="w-5 h-5" />}
               </Button>
             </div>
           </section>
@@ -368,6 +419,12 @@ const CampTemplateDetail = () => {
           setShowStartDialog(false);
           navigate(`/camp/${campId}`);
         }}
+      />
+
+      <CampPurchaseDialog
+        open={showPurchaseDialog}
+        onOpenChange={setShowPurchaseDialog}
+        camp={camp}
       />
     </>
   );

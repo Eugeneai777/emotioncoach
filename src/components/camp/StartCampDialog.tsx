@@ -5,12 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Lock } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCampPurchase } from "@/hooks/useCampPurchase";
 
 interface StartCampDialogProps {
   open: boolean;
@@ -20,6 +21,9 @@ interface StartCampDialogProps {
     camp_name: string;
     duration_days: number;
     icon?: string;
+    price?: number;
+    original_price?: number;
+    price_note?: string;
   };
   onSuccess?: (campId: string) => void;
 }
@@ -29,6 +33,60 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
   const [loading, setLoading] = useState(false);
   const [bundleWithIdentity, setBundleWithIdentity] = useState(false);
   const { toast } = useToast();
+  
+  // 检查用户购买状态
+  const { data: purchaseRecord } = useCampPurchase(campTemplate.camp_type);
+  const isFree = campTemplate.price === 0 || campTemplate.price === undefined || campTemplate.price === null;
+  const hasPurchased = !!purchaseRecord;
+  const needsPurchase = !isFree && !hasPurchased;
+
+  // 如果需要购买但未购买，不允许开启
+  if (needsPurchase && open) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <Lock className="w-5 h-5 text-amber-600" />
+              需要购买此训练营
+            </DialogTitle>
+            <DialogDescription className="text-left space-y-3 pt-2">
+              <p>该训练营需要购买后才能开启。</p>
+              <div className="bg-purple-50 dark:bg-purple-950/20 p-4 rounded-lg space-y-2">
+                <div className="flex items-end gap-2">
+                  {campTemplate.original_price && campTemplate.original_price > (campTemplate.price || 0) && (
+                    <span className="text-muted-foreground line-through">
+                      ¥{campTemplate.original_price.toLocaleString()}
+                    </span>
+                  )}
+                  <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    ¥{campTemplate.price?.toLocaleString() || '0'}
+                  </span>
+                </div>
+                {campTemplate.price_note && (
+                  <p className="text-sm text-purple-700 dark:text-purple-300">{campTemplate.price_note}</p>
+                )}
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+              取消
+            </Button>
+            <Button 
+              onClick={() => {
+                onOpenChange(false);
+                window.open('https://work.weixin.qq.com/kfid/kfcf2ea5c20b7e50e1d', '_blank');
+              }} 
+              className="flex-1"
+            >
+              联系购买
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const handleStart = async () => {
     try {

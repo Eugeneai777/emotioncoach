@@ -88,6 +88,9 @@ export interface CampTemplate {
   research_stats?: any[];
   is_active: boolean;
   display_order: number;
+  price?: number;
+  original_price?: number;
+  price_note?: string;
   created_at: string;
   updated_at: string;
 }
