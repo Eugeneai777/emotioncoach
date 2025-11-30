@@ -56,8 +56,8 @@ export const useStreamChat = (conversationId?: string) => {
       if (sessionData) {
         setCurrentSession(sessionData);
         setCurrentStage(sessionData.current_stage || 0);
-        // Load messages from session
-        if (sessionData.messages && Array.isArray(sessionData.messages)) {
+        // ✅ 只有当数据库中有消息时才覆盖 UI 消息，避免新建对话时清空刚输入的消息
+        if (sessionData.messages && Array.isArray(sessionData.messages) && sessionData.messages.length > 0) {
           setMessages(sessionData.messages.map((msg: any) => ({
             role: msg.role as "user" | "assistant",
             content: msg.content
