@@ -2,12 +2,15 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import LikeButton from "./LikeButton";
 import CommentSection from "./CommentSection";
+import PostEditDialog from "./PostEditDialog";
 import { useState, useEffect } from "react";
-import { MessageCircle, Star, Pencil, Heart } from "lucide-react";
+import { MessageCircle, Star, Pencil, Heart, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -55,6 +58,8 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
   const [likesCount, setLikesCount] = useState(0);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   
   // 获取教练空间信息
   const coachSpace = getCoachSpaceInfo(
@@ -207,6 +212,35 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
     }
   };
 
+  // 处理删除帖子
+  const handleDeletePost = async () => {
+    if (!session?.user || session.user.id !== post.user_id) return;
+    
+    setDeleting(true);
+    try {
+      // 1. 删除关联的点赞记录
+      await supabase.from("post_likes").delete().eq("post_id", post.id);
+      
+      // 2. 删除关联的评论
+      await supabase.from("post_comments").delete().eq("post_id", post.id);
+      
+      // 3. 删除帖子本身
+      const { error } = await supabase.from("community_posts").delete().eq("id", post.id);
+      
+      if (error) throw error;
+      
+      toast.success("帖子已删除");
+      onOpenChange(false);
+      // 触发刷新
+      window.location.reload();
+    } catch (error) {
+      console.error("删除帖子失败:", error);
+      toast.error("删除失败，请稍后重试");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // 处理评论提交
   const handleSubmitComment = async () => {
     if (!session?.user) {
@@ -320,6 +354,48 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
                     >
                       {coachSpace.emoji} {coachSpace.name}
                     </Badge>
+                  )}
+                  {/* 编辑/删除按钮（只有作者能看到，且不是匿名帖子） */}
+                  {session?.user?.id === post.user_id && !post.is_anonymous && (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setShowEditDialog(true)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>确认删除？</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              此操作无法撤销，该帖子及所有评论、点赞将被永久删除。
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>取消</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleDeletePost}
+                              disabled={deleting}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {deleting ? "删除中..." : "确认删除"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   )}
                 </div>
               </div>
@@ -488,6 +564,17 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
           </button>
         </div>
       </SheetContent>
+
+      {/* 编辑对话框 */}
+      <PostEditDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        post={post}
+        onUpdate={() => {
+          onOpenChange(false);
+          window.location.reload();
+        }}
+      />
     </Sheet>
   );
 };
