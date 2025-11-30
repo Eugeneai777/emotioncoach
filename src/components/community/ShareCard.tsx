@@ -250,7 +250,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
 
       {/* 标题 */}
       {post.title && <h2 className={cn("font-bold text-foreground text-center", isPreview ? "text-lg mb-3" : "text-2xl mb-4")}>
-          {post.title}
+          {post.title.replace(/^[^\w\s\u4e00-\u9fa5]+/, '').trim()}
         </h2>}
 
       {/* 内容 - 智能格式化 */}
