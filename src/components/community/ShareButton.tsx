@@ -4,6 +4,7 @@ import { Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
 import ShareCard from "./ShareCard";
+import { usePartner } from "@/hooks/usePartner";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,8 @@ interface ShareButtonProps {
     action: string | null;
     camp_day: number | null;
     badges: any;
+    camp_type?: string;
+    template_id?: string;
   };
 }
 
@@ -33,6 +36,12 @@ const ShareButton = ({ post }: ShareButtonProps) => {
   const [sharing, setSharing] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { partner, isPartner } = usePartner();
+  
+  const partnerInfo = {
+    isPartner,
+    partnerId: partner?.id
+  };
 
   const handleShare = async () => {
     setShowShareDialog(true);
@@ -115,12 +124,12 @@ const ShareButton = ({ post }: ShareButtonProps) => {
           <div className="space-y-4">
             {/* 预览卡片 - 响应式显示 */}
             <div className="bg-secondary/20 p-3 rounded-lg max-h-[50vh] overflow-auto">
-              <ShareCard post={post} isPreview />
+              <ShareCard post={post} partnerInfo={partnerInfo} isPreview />
             </div>
 
             {/* 导出用卡片 - 隐藏但保持固定尺寸 */}
             <div className="fixed -left-[9999px] top-0">
-              <ShareCard ref={cardRef} post={post} />
+              <ShareCard ref={cardRef} post={post} partnerInfo={partnerInfo} />
             </div>
 
             <Button

@@ -14,8 +14,14 @@ interface ShareCardProps {
     action: string | null;
     camp_day: number | null;
     badges: any;
+    camp_type?: string;
+    template_id?: string;
   };
   isPreview?: boolean;
+  partnerInfo?: {
+    isPartner: boolean;
+    partnerId?: string;
+  };
 }
 
 // 情绪emoji映射
@@ -72,20 +78,55 @@ const getPhaseInfo = (campDay: number | null) => {
     nextPhase: '完成'
   };
 };
+
+// 根据合伙人状态和帖子来源生成二维码URL
+const getQRCodeUrl = (
+  partnerInfo: ShareCardProps['partnerInfo'],
+  post: ShareCardProps['post']
+): string => {
+  const baseUrl = window.location.origin;
+  
+  // 合伙人：生成推广二维码
+  if (partnerInfo?.isPartner && partnerInfo?.partnerId) {
+    return `${baseUrl}/redeem?partner=${partnerInfo.partnerId}`;
+  }
+  
+  // 非合伙人：根据帖子来源跳转到对应教练详情页
+  if (post.camp_type) {
+    const campTypeMap: Record<string, string> = {
+      'parent_emotion_21': '/parent-camp',
+      'emotion_journal_21': '/camp-intro/emotion_journal_21',
+      'emotion_bloom': '/camp-intro/emotion_bloom',
+      'identity_bloom': '/camp-intro/identity_bloom',
+    };
+    if (campTypeMap[post.camp_type]) {
+      return `${baseUrl}${campTypeMap[post.camp_type]}`;
+    }
+  }
+  
+  // 有自定义模板
+  if (post.template_id) {
+    return `${baseUrl}/camp-template/${post.template_id}`;
+  }
+  
+  // 默认（普通情绪日记/无来源）→ 情绪教练详情页
+  return `${baseUrl}/introduction`;
+};
 const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
   post,
-  isPreview = false
+  isPreview = false,
+  partnerInfo
 }, ref) => {
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const phaseInfo = getPhaseInfo(post.camp_day);
   const emotionEmoji = getEmotionEmoji(post.emotion_theme);
   useEffect(() => {
-    const appUrl = window.location.origin;
-    QRCode.toDataURL(appUrl, {
+    const qrUrl = getQRCodeUrl(partnerInfo, post);
+    QRCode.toDataURL(qrUrl, {
       width: 120,
       margin: 1
     }).then(setQrCodeUrl);
-  }, []);
+  }, [partnerInfo, post]);
   return <div ref={ref} className={cn("relative overflow-hidden rounded-2xl", isPreview ? "w-full p-4" : "w-[600px] p-8")} style={{
     minHeight: isPreview ? "auto" : "800px",
     background: "linear-gradient(135deg, hsl(330, 80%, 95%), hsl(270, 70%, 95%), hsl(200, 80%, 95%))"
@@ -220,7 +261,10 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
         {/* 最终CTA - 移到最后 */}
         <div className={cn("text-center bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg", isPreview ? "py-2 px-3" : "py-3 px-4")}>
           <p className={cn("font-bold text-primary", isPreview ? "text-sm" : "text-base")}>
-            🎁 扫码加入，开启你的情绪成长之旅
+            {partnerInfo?.isPartner 
+              ? "🎁 扫码领取专属福利，立享预购优惠"
+              : "🎁 扫码了解详情，开启你的成长之旅"
+            }
           </p>
         </div>
       </div>

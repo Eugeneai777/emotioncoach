@@ -15,6 +15,7 @@ import { useState, useEffect, useRef } from "react";
 import { MessageCircle, Star, Pencil, Heart, Trash2, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePartner } from "@/hooks/usePartner";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getCoachSpaceInfo } from "@/utils/coachSpaceUtils";
@@ -54,6 +55,7 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
 
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { partner, isPartner } = usePartner();
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoadingFollow, setIsLoadingFollow] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
@@ -66,6 +68,11 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [sharing, setSharing] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  
+  const partnerInfo = {
+    isPartner,
+    partnerId: partner?.id
+  };
   
   // 获取教练空间信息
   const coachSpace = getCoachSpaceInfo(
@@ -650,12 +657,12 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
           <div className="space-y-4">
             {/* 预览卡片 - 响应式显示 */}
             <div className="bg-secondary/20 p-3 rounded-lg max-h-[50vh] overflow-auto">
-              <ShareCard post={post} isPreview />
+              <ShareCard post={post} partnerInfo={partnerInfo} isPreview />
             </div>
             
             {/* 导出用卡片 - 隐藏但保持固定尺寸 */}
             <div className="fixed -left-[9999px] top-0">
-              <ShareCard ref={cardRef} post={post} />
+              <ShareCard ref={cardRef} post={post} partnerInfo={partnerInfo} />
             </div>
             
             <Button 
