@@ -389,6 +389,11 @@ ${data.growth_story}
       return;
     }
 
+    // ✅ 立即添加用户消息，避免页面闪烁
+    const userMsg: Message = { role: "user", content: trimmedInput };
+    setMessages((prev) => [...prev, userMsg]);
+    setIsLoading(true);
+
     // 如果没有对话ID，创建新对话和会话
     let convId = currentConversationId;
     let emotionSession = currentSession;
@@ -405,12 +410,10 @@ ${data.growth_story}
     // Ensure we have a session
     if (!emotionSession) {
       toast({ title: "会话创建失败", variant: "destructive" });
+      setIsLoading(false);
+      setMessages((prev) => prev.slice(0, -1)); // 回滚消息
       return;
     }
-
-    const userMsg: Message = { role: "user", content: trimmedInput };
-    setMessages((prev) => [...prev, userMsg]);
-    setIsLoading(true);
 
     let assistantContent = "";
 
