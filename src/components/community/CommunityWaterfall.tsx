@@ -572,11 +572,22 @@ const CommunityWaterfall = () => {
       {/* 帖子详情弹窗 */}
       <PostDetailSheet
         open={!!selectedPostId}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedPostId(null);
-            setSelectedPost(null);
+        onOpenChange={async (open) => {
+          if (!open && selectedPostId) {
+            // 检查帖子是否被删除
+            const { data } = await supabase
+              .from('community_posts')
+              .select('id')
+              .eq('id', selectedPostId)
+              .maybeSingle();
+            
+            if (!data) {
+              // 帖子已被删除，从列表中移除
+              setPosts(prev => prev.filter(p => p.id !== selectedPostId));
+            }
           }
+          setSelectedPostId(null);
+          setSelectedPost(null);
         }}
         post={selectedPost}
       />
