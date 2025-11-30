@@ -453,7 +453,7 @@ ${data.growth_story}
           const { data: updatedSession } = await supabase
             .from('emotion_coaching_sessions')
             .select('*')
-            .eq('id', currentSession.id)
+            .eq('id', emotionSession.id)
             .single();
           
           if (updatedSession) {
@@ -482,10 +482,10 @@ ${data.growth_story}
 
       setIsLoading(false);
     } catch (e) {
-      console.error("发送消息失败");
+      console.error("发送消息失败:", e);
       toast({
         title: "发送失败",
-        description: "请稍后重试",
+        description: e instanceof Error ? e.message : "请稍后重试",
         variant: "destructive",
       });
       setIsLoading(false);
