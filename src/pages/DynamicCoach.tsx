@@ -18,6 +18,7 @@ const DynamicCoach = () => {
     messages,
     isLoading,
     lastBriefingId,
+    coachRecommendation,
     sendMessage,
     resetConversation,
   } = useDynamicCoachChat(
@@ -110,6 +111,7 @@ const DynamicCoach = () => {
       onOptionSelect={optionSelectHandler}
       placeholder={template.placeholder || '分享你的想法...'}
       communicationBriefingId={lastBriefingId}
+      coachRecommendation={coachRecommendation}
       scenarioChips={
         template.enable_scenarios && template.scenarios ? (
           <CoachScenarioChips

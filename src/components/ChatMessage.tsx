@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { VideoRecommendations } from "./VideoRecommendations";
 import { CommunicationCourseRecommendations } from "./communication/CommunicationCourseRecommendations";
+import { CoachRecommendationCard } from "./coach/CoachRecommendationCard";
 import { useCommunicationCourseRecommendations } from "@/hooks/useCommunicationCourseRecommendations";
 
 interface ChatMessageProps {
@@ -13,6 +14,11 @@ interface ChatMessageProps {
   videoRecommendations?: any[];
   isLastMessage?: boolean;
   communicationBriefingId?: string | null;
+  coachRecommendation?: {
+    coachKey: string;
+    userIssueSummary: string;
+    reasoning: string;
+  } | null;
 }
 
 // 清理 Markdown 格式符号
@@ -26,7 +32,7 @@ const cleanMarkdown = (text: string): string => {
     .replace(/\*/g, '');
 };
 
-export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, videoRecommendations, isLastMessage, communicationBriefingId }: ChatMessageProps) => {
+export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, videoRecommendations, isLastMessage, communicationBriefingId, coachRecommendation }: ChatMessageProps) => {
   const isUser = role === "user";
   const navigate = useNavigate();
   const [clickedOption, setClickedOption] = useState<string | null>(null);
@@ -262,6 +268,15 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
             campRecommendations={campRecommendations}
             loading={commRecsLoading}
             onWatchCourse={handleWatchCourse}
+          />
+        )}
+
+        {/* Coach Recommendation Card */}
+        {isLastMessage && coachRecommendation && (
+          <CoachRecommendationCard
+            coachKey={coachRecommendation.coachKey}
+            userIssueSummary={coachRecommendation.userIssueSummary}
+            reasoning={coachRecommendation.reasoning}
           />
         )}
       </div>
