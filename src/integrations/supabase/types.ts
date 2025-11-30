@@ -2944,6 +2944,44 @@ export type Database = {
         }
         Relationships: []
       }
+      vibrant_life_sage_briefings: {
+        Row: {
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          reasoning: string | null
+          recommended_coach_type: string | null
+          user_id: string
+          user_issue_summary: string | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          reasoning?: string | null
+          recommended_coach_type?: string | null
+          user_id: string
+          user_issue_summary?: string | null
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          reasoning?: string | null
+          recommended_coach_type?: string | null
+          user_id?: string
+          user_issue_summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vibrant_life_sage_briefings_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_courses: {
         Row: {
           category: string | null
