@@ -6,11 +6,8 @@ import { ChatMessage } from "@/components/ChatMessage";
 import { useParentCoach } from "@/hooks/useParentCoach";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { useAuth } from "@/hooks/useAuth";
-import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
-import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
-import { VoiceControls } from "@/components/VoiceControls";
 import { ParentJourneySummary } from "@/components/coach/ParentJourneySummary";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { NotificationCard } from "@/components/NotificationCard";
@@ -105,13 +102,6 @@ export default function ParentCoach() {
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
-  const [voiceConfig, setVoiceConfig] = useState<{
-    gender: 'male' | 'female';
-    rate: number;
-  }>({
-    gender: 'female',
-    rate: 0.9
-  });
 
   const {
     user,
@@ -163,25 +153,6 @@ export default function ParentCoach() {
     deleteNotification 
   } = useSmartNotification('parent_coach');
 
-  const {
-    isListening,
-    transcript,
-    startListening,
-    stopListening,
-    isSupported: voiceInputSupported
-  } = useSpeechRecognition();
-
-  const {
-    speak,
-    stop: stopSpeaking,
-    isSpeaking,
-    isSupported: voiceOutputSupported,
-    setVoiceGender,
-    setVoiceRate
-  } = useSpeechSynthesis(voiceConfig);
-
-  const lastMessageCountRef = useRef(0);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth"
@@ -193,16 +164,8 @@ export default function ParentCoach() {
   }, [messages]);
 
   useEffect(() => {
-    if (transcript) {
-      setInput(transcript);
-    }
-  }, [transcript]);
-
-  useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
-    } else if (user) {
-      loadVoiceConfig();
     }
   }, [user, authLoading, navigate]);
 
@@ -223,27 +186,6 @@ export default function ParentCoach() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, session, isCreating]);
 
-  const loadVoiceConfig = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("voice_gender, voice_rate")
-        .eq("id", user!.id)
-        .single();
-      if (error) throw error;
-      if (data) {
-        const config = {
-          gender: data.voice_gender as 'male' | 'female' || 'female',
-          rate: data.voice_rate || 0.9
-        };
-        setVoiceConfig(config);
-        setVoiceGender(config.gender);
-        setVoiceRate(config.rate);
-      }
-    } catch (error) {
-      console.error("Error loading voice config:", error);
-    }
-  };
 
   const formatBriefingMessage = (briefing: any): string => {
     return `🌿 《亲子情绪四部曲简报》
@@ -313,10 +255,6 @@ ${briefing.growth_story || '暂无记录'}
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
-    stopSpeaking();
-    if (isListening) {
-      stopListening();
-    }
     await handleSendMessage(input);
     setInput("");
   };
@@ -406,10 +344,6 @@ ${briefing.growth_story || '暂无记录'}
                   <DropdownMenuItem onClick={() => navigate("/settings?tab=companion")}>
                     <Users className="w-4 h-4 mr-2" />
                     情绪伙伴
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/settings?tab=voice")}>
-                    <Volume2 className="w-4 h-4 mr-2" />
-                    语音设置
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
@@ -835,23 +769,14 @@ ${briefing.growth_story || '暂无记录'}
               </div>
             )}
             <div className="flex gap-2 items-end">
-                <VoiceControls
-                  isListening={isListening}
-                  isSpeaking={isSpeaking}
-                  voiceSupported={voiceInputSupported && voiceOutputSupported}
-                  onStartListening={startListening}
-                  onStopListening={stopListening}
-                  onStopSpeaking={stopSpeaking}
-                  disabled={isLoading}
-                />
               <div className="flex-1 relative group">
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={isListening ? "正在聆听..." : "分享一件亲子互动中的小事... (Enter发送，Shift+Enter换行)"}
+                  placeholder="分享一件亲子互动中的小事... (Enter发送，Shift+Enter换行)"
                   className="min-h-[60px] max-h-[160px] resize-none rounded-xl text-sm md:text-base border-purple-200 focus:border-purple-400 transition-all duration-200 pr-16 shadow-sm"
-                  disabled={isLoading || isListening}
+                  disabled={isLoading}
                 />
                 {input.length > 0 && (
                   <div className="absolute bottom-2 right-2 text-xs text-muted-foreground pointer-events-none">

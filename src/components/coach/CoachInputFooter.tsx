@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, RotateCcw } from "lucide-react";
-import { VoiceControls } from "@/components/VoiceControls";
 import { forwardRef } from "react";
 
 interface CoachInputFooterProps {
@@ -14,15 +13,6 @@ interface CoachInputFooterProps {
   isLoading: boolean;
   hasMessages: boolean;
   gradient: string;
-  // Voice control props (optional)
-  voiceControls?: {
-    isListening: boolean;
-    isSpeaking: boolean;
-    onStartListening: () => void;
-    onStopListening: () => void;
-    onStopSpeaking: () => void;
-    isSupported: boolean;
-  };
   // Scenario chips (optional)
   scenarioChips?: React.ReactNode;
   messagesCount?: number;
@@ -38,7 +28,6 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement, CoachInputFooter
   isLoading,
   hasMessages,
   gradient,
-  voiceControls,
   scenarioChips,
   messagesCount
 }, ref) => {
@@ -53,19 +42,6 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement, CoachInputFooter
         )}
         
         <div className="flex gap-2 items-end">
-          {/* Voice Controls (optional) */}
-          {voiceControls && voiceControls.isSupported && (
-            <VoiceControls
-              isListening={voiceControls.isListening}
-              isSpeaking={voiceControls.isSpeaking}
-              onStartListening={voiceControls.onStartListening}
-              onStopListening={voiceControls.onStopListening}
-              onStopSpeaking={voiceControls.onStopSpeaking}
-              disabled={isLoading}
-              voiceSupported={voiceControls.isSupported}
-            />
-          )}
-
           {/* Text Input */}
           <div className="flex-1 relative">
             <Textarea

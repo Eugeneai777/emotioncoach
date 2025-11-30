@@ -10,7 +10,6 @@ import GoalProgressCard from "@/components/GoalProgressCard";
 import TodayProgress from "@/components/TodayProgress";
 import WeeklyProgress from "@/components/WeeklyProgress";
 import { EmotionAlert } from "@/components/EmotionAlert";
-import { VoiceControls } from "@/components/VoiceControls";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { EmotionIntensitySelector } from "@/components/EmotionIntensitySelector";
 import { IntensityReminderDialog } from "@/components/IntensityReminderDialog";
@@ -25,8 +24,6 @@ import CampCheckInSuccessDialog from "@/components/camp/CampCheckInSuccessDialog
 import CommunityWaterfall from "@/components/community/CommunityWaterfall";
 import { NotificationCard } from "@/components/NotificationCard";
 import { useStreamChat } from "@/hooks/useStreamChat";
-import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
-import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,13 +55,6 @@ const Index = () => {
   const [showCheckInSuccess, setShowCheckInSuccess] = useState(false);
   const [checkInSuccessData, setCheckInSuccessData] = useState<any>(null);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
-  const [voiceConfig, setVoiceConfig] = useState<{
-    gender: 'male' | 'female';
-    rate: number;
-  }>({
-    gender: 'female',
-    rate: 0.9
-  });
   const { toast } = useToast();
   
   // 从数据库加载教练配置
@@ -89,24 +79,8 @@ const Index = () => {
     deleteNotification,
     triggerNotification 
   } = useSmartNotification('emotion_coach');
-  const {
-    isListening,
-    transcript,
-    startListening,
-    stopListening,
-    isSupported: voiceInputSupported
-  } = useSpeechRecognition();
-  const {
-    speak,
-    stop: stopSpeaking,
-    isSpeaking,
-    isSupported: voiceOutputSupported,
-    setVoiceGender,
-    setVoiceRate
-  } = useSpeechSynthesis(voiceConfig);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const lastMessageCountRef = useRef(0);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
@@ -119,26 +93,9 @@ const Index = () => {
   }, [messages]);
 
   useEffect(() => {
-    if (transcript) {
-      setInput(transcript);
-    }
-  }, [transcript]);
-
-  useEffect(() => {
-    if (messages.length > lastMessageCountRef.current) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === "assistant" && voiceOutputSupported && !isLoading) {
-        speak(lastMessage.content);
-      }
-      lastMessageCountRef.current = messages.length;
-    }
-  }, [messages, voiceOutputSupported, isLoading, speak]);
-
-  useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
     } else if (user) {
-      loadVoiceConfig();
       checkOnboarding();
       loadActiveCamp();
     }
@@ -336,28 +293,6 @@ const Index = () => {
     }
   };
 
-  const loadVoiceConfig = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("voice_gender, voice_rate")
-        .eq("id", user!.id)
-        .single();
-      if (error) throw error;
-      if (data) {
-        const config = {
-          gender: data.voice_gender as 'male' | 'female' || 'female',
-          rate: data.voice_rate || 0.9
-        };
-        setVoiceConfig(config);
-        setVoiceGender(config.gender);
-        setVoiceRate(config.rate);
-      }
-    } catch (error) {
-      console.error("Error loading voice config:", error);
-    }
-  };
-
   useEffect(() => {
     if (user && messages.length === 0) {
       checkReminder();
@@ -513,10 +448,6 @@ const Index = () => {
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
-    stopSpeaking();
-    if (isListening) {
-      stopListening();
-    }
     await sendMessage(input);
     setInput("");
   };
@@ -622,10 +553,6 @@ const Index = () => {
                   <DropdownMenuItem onClick={() => navigate("/settings?tab=companion")}>
                     <Users className="w-4 h-4 mr-2" />
                     情绪伙伴
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/settings?tab=voice")}>
-                    <Volume2 className="w-4 h-4 mr-2" />
-                    语音设置
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate("/packages")}>
@@ -1009,23 +936,14 @@ const Index = () => {
             </div>
           )}
           <div className="flex gap-2 items-end">
-                <VoiceControls
-                  isListening={isListening}
-                  isSpeaking={isSpeaking}
-                  voiceSupported={voiceInputSupported && voiceOutputSupported}
-                  onStartListening={startListening}
-                  onStopListening={stopListening}
-                  onStopSpeaking={stopSpeaking}
-                  disabled={isLoading}
-                />
             <div className="flex-1 relative group">
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={isListening ? "正在聆听..." : "分享你的想法... (Enter发送，Shift+Enter换行)"}
+                placeholder="分享你的想法... (Enter发送，Shift+Enter换行)"
                 className="min-h-[60px] max-h-[160px] resize-none rounded-xl text-sm md:text-base border-border/50 focus:border-primary/50 transition-all duration-200 pr-16 shadow-sm"
-                disabled={isLoading || isListening}
+                disabled={isLoading}
               />
               {input.length > 0 && (
                 <div className="absolute bottom-2 right-2 text-xs text-muted-foreground pointer-events-none">
