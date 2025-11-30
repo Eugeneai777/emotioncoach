@@ -25,6 +25,8 @@ const DynamicCoach = () => {
     toolRecommendation,
     sendMessage,
     resetConversation,
+    setVideoRecommendation,
+    setToolRecommendation,
   } = useDynamicCoachChat(
     template?.coach_key || '',
     template?.edge_function_name || '',
@@ -130,6 +132,10 @@ const DynamicCoach = () => {
           topicSummary={videoRecommendation.topicSummary}
           category={videoRecommendation.category}
           learningGoal={videoRecommendation.learningGoal}
+          videoId={videoRecommendation.videoId}
+          videoTitle={videoRecommendation.videoTitle}
+          videoUrl={videoRecommendation.videoUrl}
+          onDismiss={() => setVideoRecommendation(null)}
         />
       ) : undefined}
       toolRecommendation={toolRecommendation ? (
@@ -137,6 +143,7 @@ const DynamicCoach = () => {
           userNeed={toolRecommendation.userNeed}
           toolId={toolRecommendation.toolId}
           usageReason={toolRecommendation.usageReason}
+          onDismiss={() => setToolRecommendation(null)}
         />
       ) : undefined}
       community={template.enable_community ? <CoachCommunity /> : undefined}

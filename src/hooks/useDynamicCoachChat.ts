@@ -23,6 +23,9 @@ interface VideoRecommendation {
   topicSummary: string;
   category: string;
   learningGoal: string;
+  videoId?: string;
+  videoTitle?: string;
+  videoUrl?: string;
 }
 
 interface ToolRecommendation {
@@ -138,6 +141,10 @@ export const useDynamicCoachChat = (
 
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim()) return;
+
+    // 用户发送新消息时清除旧推荐
+    setVideoRecommendation(null);
+    setToolRecommendation(null);
 
     let convId = currentConversationId;
     if (!convId) {
@@ -266,10 +273,22 @@ export const useDynamicCoachChat = (
           // 处理视频课程推荐工具
           if (toolCall?.function?.name === "video_course_recommendation") {
             const videoData = JSON.parse(toolCall.function.arguments);
+            
+            // 查询真实视频
+            const { data: video } = await supabase
+              .from("video_courses")
+              .select("id, title, video_url")
+              .eq("category", videoData.recommended_category)
+              .limit(1)
+              .single();
+            
             setVideoRecommendation({
               topicSummary: videoData.topic_summary,
               category: videoData.recommended_category,
               learningGoal: videoData.learning_goal,
+              videoId: video?.id,
+              videoTitle: video?.title,
+              videoUrl: video?.video_url,
             });
           }
           
@@ -317,5 +336,7 @@ export const useDynamicCoachChat = (
     toolRecommendation,
     sendMessage,
     resetConversation,
+    setVideoRecommendation,
+    setToolRecommendation,
   };
 };

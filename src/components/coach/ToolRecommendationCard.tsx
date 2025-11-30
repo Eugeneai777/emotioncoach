@@ -8,12 +8,14 @@ interface ToolRecommendationCardProps {
   userNeed: string;
   toolId: string;
   usageReason: string;
+  onDismiss?: () => void;
 }
 
 export const ToolRecommendationCard = ({
   userNeed,
   toolId,
   usageReason,
+  onDismiss,
 }: ToolRecommendationCardProps) => {
   const navigate = useNavigate();
   const tool = getToolById(toolId);
@@ -21,7 +23,7 @@ export const ToolRecommendationCard = ({
   if (!tool) return null;
 
   return (
-    <Card className="mt-4 p-4 border-2 bg-gradient-to-br from-background to-muted/30 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <Card className="mt-4 p-4 border-2 bg-gradient-to-br from-background to-muted/30 animate-in fade-in slide-in-from-bottom-2 duration-500 relative">
       <div className="flex items-start gap-4">
         <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center shadow-lg`}>
           <Wrench className="w-6 h-6 text-white" />
@@ -52,6 +54,17 @@ export const ToolRecommendationCard = ({
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
+      
+      {onDismiss && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="absolute top-2 right-2 h-6 w-6 p-0"
+          onClick={onDismiss}
+        >
+          ×
+        </Button>
+      )}
     </Card>
   );
 };
