@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Menu, RotateCcw, Target, ChevronDown, Sparkles, 
   History, ShoppingBag, LogOut, User, Wallet, Clock, 
-  Bell, Tent, Users, Volume2 
+  Bell, Users, Volume2 
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -67,7 +67,7 @@ export const CoachHeader = ({
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/settings?tab=account")}>
                   <Wallet className="w-4 h-4 mr-2" />
-                  账户
+                  我的账户
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/settings?tab=reminders")}>
                   <Clock className="w-4 h-4 mr-2" />
@@ -76,10 +76,6 @@ export const CoachHeader = ({
                 <DropdownMenuItem onClick={() => navigate("/settings?tab=notifications")}>
                   <Bell className="w-4 h-4 mr-2" />
                   通知偏好
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/settings?tab=camp")}>
-                  <Tent className="w-4 h-4 mr-2" />
-                  训练营
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/settings?tab=companion")}>
                   <Users className="w-4 h-4 mr-2" />
