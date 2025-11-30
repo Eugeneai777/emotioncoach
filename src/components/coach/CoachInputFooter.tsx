@@ -67,18 +67,20 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement, CoachInputFooter
           )}
 
           {/* Text Input */}
-          <Textarea
-            ref={ref}
-            value={input}
-            onChange={(e) => onInputChange(e.target.value)}
-            onKeyPress={onKeyPress}
-            placeholder={placeholder}
-            className="resize-none min-h-[60px] max-h-[200px] flex-1"
-            disabled={isLoading}
-          />
+          <div className="flex-1 relative">
+            <Textarea
+              ref={ref}
+              value={input}
+              onChange={(e) => onInputChange(e.target.value)}
+              onKeyPress={onKeyPress}
+              placeholder={placeholder}
+              className="resize-none min-h-[60px] max-h-[160px] w-full"
+              disabled={isLoading}
+            />
+          </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             {hasMessages && onNewConversation && (
               <Button
                 variant="outline"
@@ -86,15 +88,16 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement, CoachInputFooter
                 onClick={onNewConversation}
                 disabled={isLoading}
                 title="开始新对话"
+                className="h-8 w-8"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-3.5 h-3.5" />
               </Button>
             )}
             <Button
               onClick={onSend}
               disabled={isLoading || !input.trim()}
               size="icon"
-              className={`bg-gradient-to-r ${gradient} text-white`}
+              className={`h-10 w-10 bg-gradient-to-r ${gradient} text-white`}
             >
               <Send className="w-4 h-4" />
             </Button>

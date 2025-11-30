@@ -26,34 +26,21 @@ export const VoiceControls = ({
   }
 
   return (
-    <div className="flex gap-2">
-      <Button
-        variant="outline"
-        size="lg"
-        onClick={isListening ? onStopListening : onStartListening}
-        disabled={disabled || isSpeaking}
-        className={cn(
-          "rounded-2xl h-[56px] px-4 transition-all duration-200",
-          isListening && "bg-primary text-primary-foreground animate-pulse"
-        )}
-      >
-        {isListening ? (
-          <MicOff className="w-5 h-5" />
-        ) : (
-          <Mic className="w-5 h-5" />
-        )}
-      </Button>
-
-      {isSpeaking && (
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={onStopSpeaking}
-          className="rounded-2xl h-[56px] px-4 bg-primary/10 animate-pulse"
-        >
-          <VolumeX className="w-5 h-5" />
-        </Button>
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={isListening ? onStopListening : onStartListening}
+      disabled={disabled || isSpeaking}
+      className={cn(
+        "h-10 w-10 rounded-xl transition-all duration-200 flex-shrink-0",
+        isListening && "bg-primary text-primary-foreground animate-pulse"
       )}
-    </div>
+    >
+      {isListening ? (
+        <MicOff className="w-4 h-4" />
+      ) : (
+        <Mic className="w-4 h-4" />
+      )}
+    </Button>
   );
 };

@@ -1008,14 +1008,22 @@ const Index = () => {
                 />
             </div>
           )}
-          <div className="flex gap-3 items-end">
+          <div className="flex gap-2 items-end">
+            <VoiceControls
+              isListening={isListening}
+              isSpeaking={isSpeaking}
+              voiceSupported={voiceInputSupported && voiceOutputSupported}
+              onStartListening={startListening}
+              onStopListening={stopListening}
+              onStopSpeaking={stopSpeaking}
+            />
             <div className="flex-1 relative group">
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={isListening ? "正在聆听..." : "分享你的想法... (Enter发送，Shift+Enter换行)"}
-                className="min-h-[80px] max-h-[160px] resize-none rounded-card-lg text-sm md:text-base border-border/50 focus:border-primary/50 transition-all duration-200 pr-16 shadow-sm"
+                className="min-h-[60px] max-h-[160px] resize-none rounded-xl text-sm md:text-base border-border/50 focus:border-primary/50 transition-all duration-200 pr-16 shadow-sm"
                 disabled={isLoading || isListening}
               />
               {input.length > 0 && (
@@ -1024,28 +1032,18 @@ const Index = () => {
                 </div>
               )}
             </div>
-            <div className="flex flex-col gap-2">
-              <VoiceControls
-                isListening={isListening}
-                isSpeaking={isSpeaking}
-                voiceSupported={voiceInputSupported && voiceOutputSupported}
-                onStartListening={startListening}
-                onStopListening={stopListening}
-                onStopSpeaking={stopSpeaking}
-              />
-              <Button
-                onClick={handleSend}
-                disabled={isLoading || !input.trim()}
-                size="icon"
-                className="h-12 w-12 rounded-card-lg shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Send className="w-5 h-5" />
-                )}
-              </Button>
-            </div>
+            <Button
+              onClick={handleSend}
+              disabled={isLoading || !input.trim()}
+              size="icon"
+              className="h-10 w-10 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </Button>
           </div>
         </div>
       </footer>
