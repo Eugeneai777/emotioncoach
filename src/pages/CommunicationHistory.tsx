@@ -332,12 +332,21 @@ export default function CommunicationHistory() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-3xl font-bold">沟通日记</h1>
-          <Button onClick={() => navigate("/communication-coach")}>
-            <MessageSquare className="mr-2 h-4 w-4" />
-            开始新对话
+        <div className="flex items-center gap-4 mb-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/communication-coach")}
+            className="shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4" />
           </Button>
+          <div className="flex items-center justify-between flex-1">
+            <h1 className="text-3xl font-bold">沟通日记</h1>
+            <Button onClick={() => navigate("/communication-coach")}>
+              <MessageSquare className="mr-2 h-4 w-4" />
+              开始新对话
+            </Button>
+          </div>
         </div>
 
         {allTags.length > 0 && (
