@@ -58,6 +58,13 @@ serve(async (req) => {
    - description: 工具描述
    - parameters: JSON Schema格式的参数定义
 
+6. **场景快速选择（scenarios数组，6个场景）：**
+每个场景包含：
+   - id: 英文小写+下划线格式的唯一标识
+   - emoji: 合适的emoji表情
+   - title: 简短标题（2-4字）
+   - prompt: 用户可能说的话（15-30字）
+
 **重要：必须返回严格的JSON格式，不要包含任何markdown标记或额外说明文字。**`;
 
     console.log('Calling AI with prompt:', prompt);

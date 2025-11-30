@@ -33,6 +33,12 @@ export interface CoachTemplate {
   enable_notifications: boolean;
   enable_community: boolean;
   enable_scenarios: boolean;
+  scenarios?: Array<{
+    id: string;
+    emoji: string;
+    title: string;
+    prompt: string;
+  }>;
   edge_function_name: string | null;
   briefing_table_name: string | null;
   system_prompt?: string;

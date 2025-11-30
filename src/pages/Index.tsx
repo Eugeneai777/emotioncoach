@@ -15,6 +15,7 @@ import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { EmotionIntensitySelector } from "@/components/EmotionIntensitySelector";
 import { IntensityReminderDialog } from "@/components/IntensityReminderDialog";
 import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
+import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 
 import { TrainingCampCard } from "@/components/camp/TrainingCampCard";
@@ -992,6 +993,17 @@ const Index = () => {
               <EmotionIntensitySelector
                 onSelect={handleIntensitySelect}
                 onSkip={handleSkipIntensity}
+              />
+            </div>
+          )}
+          {messages.length === 0 && coachConfig?.enable_scenarios && coachConfig?.scenarios && (
+            <div className="mb-3 animate-in slide-in-from-bottom-2 duration-300">
+              <CoachScenarioChips
+                scenarios={coachConfig.scenarios as any[]}
+                onSelectScenario={(prompt) => {
+                  setInput(prompt);
+                }}
+                primaryColor={coachConfig.primary_color}
               />
             </div>
           )}
