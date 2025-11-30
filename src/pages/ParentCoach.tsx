@@ -450,8 +450,8 @@ ${briefing.growth_story || '暂无记录'}
                   >
                     <span className="text-green-500">💚</span>
                     <div className="flex flex-col">
-                      <span className="font-medium">情绪觉醒教练</span>
-                      <span className="text-xs text-muted-foreground">日常情绪觉察与记录</span>
+                      <span className="font-medium">情绪教练</span>
+                      <span className="text-xs text-muted-foreground">日常情绪觉察</span>
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
@@ -460,8 +460,8 @@ ${briefing.growth_story || '暂无记录'}
                   >
                     <span className="text-purple-500">💜</span>
                     <div className="flex flex-col">
-                      <span className="font-medium">家长情绪教练</span>
-                      <span className="text-xs text-muted-foreground">亲子情绪四部曲</span>
+                      <span className="font-medium">亲子教练</span>
+                      <span className="text-xs text-muted-foreground">亲子情绪沟通</span>
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -470,8 +470,8 @@ ${briefing.growth_story || '暂无记录'}
                   >
                     <span className="text-blue-500">💙</span>
                     <div className="flex flex-col">
-                      <span className="font-medium">卡内基沟通教练</span>
-                      <span className="text-xs text-muted-foreground">See · Understand · Influence · Act</span>
+                      <span className="font-medium">沟通教练</span>
+                      <span className="text-xs text-muted-foreground">温暖表达影响</span>
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
@@ -480,7 +480,7 @@ ${briefing.growth_story || '暂无记录'}
                   >
                     <span className="text-indigo-500">✨</span>
                     <div className="flex flex-col">
-                      <span className="font-medium">AI 生活教练</span>
+                      <span className="font-medium">生活教练</span>
                       <span className="text-xs text-muted-foreground">四维健康分析</span>
                     </div>
                   </DropdownMenuItem>
