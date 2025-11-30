@@ -248,7 +248,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
       {post.content && <div className={cn("bg-background/60 backdrop-blur-sm rounded-xl shadow-sm border border-primary/10", isPreview ? "p-3 mb-3" : "p-4 mb-4")}>
           {/* 来源标签 - 放在内容框内部顶部 */}
           {sourceLabel && (
-            <div className={cn("text-center", isPreview ? "mb-3" : "mb-4")}>
+            <div className={cn("text-left", isPreview ? "mb-3" : "mb-4")}>
               <span className={cn(
                 "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full",
                 "bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30",
