@@ -160,7 +160,7 @@ export const coachConfigs: Record<string, CoachConfig> = {
     ],
     stepsTitle: "亲子情绪四部曲",
     stepsEmoji: "💜",
-    historyRoute: "/parent-child-diary",
+    historyRoute: "/parent-diary",
     historyLabel: "我的亲子日记",
     placeholder: "分享你的亲子困境..."
   }
