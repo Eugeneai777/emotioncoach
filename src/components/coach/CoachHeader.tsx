@@ -135,6 +135,13 @@ export const CoachHeader = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 bg-card border shadow-lg z-50">
+                <DropdownMenuItem onClick={() => navigate("/coach/vibrant_life_sage")} className="gap-2">
+                  <span className="text-rose-500">❤️</span>
+                  <div className="flex flex-col">
+                    <span className="font-medium">有劲生活教练</span>
+                    <span className="text-xs text-muted-foreground">温暖陪伴点亮心灯</span>
+                  </div>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/")} className="gap-2">
                   <span className="text-green-500">💚</span>
                   <div className="flex flex-col">
