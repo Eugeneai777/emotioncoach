@@ -887,7 +887,7 @@ export default function ParentCampLanding() {
                   }}
                   className="bg-white text-emerald-600 hover:bg-white/90 text-lg px-8 py-6 h-auto font-semibold shadow-xl hover:scale-105 transition-transform duration-300"
                 >
-                  {hasJoinedCamp ? '继续训练营' : '立即加入《21天青少年问题家庭训练营》'}
+                  {hasJoinedCamp ? '继续训练营' : '立即加入《21天青少年困境突破营》'}
                 </Button>
               </div>
               <div className="pt-4 space-y-2 text-white/90">

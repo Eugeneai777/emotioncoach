@@ -299,7 +299,7 @@ const CampList = () => {
                     index={index}
                     enrolledCount={enrollmentStats?.[camp.camp_type] || 0}
                     onClick={() => {
-                      // 对于「21天青少年问题家庭训练营」，导航到专属页面
+                      // 对于「21天青少年困境突破营」，导航到专属页面
                       if (camp.camp_type === 'parent_emotion_21') {
                         navigate('/parent-camp');
                       } else {

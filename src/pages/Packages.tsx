@@ -112,7 +112,7 @@ export default function Packages() {
     gradient: 'from-green-400/10 to-emerald-500/10',
     isCampEntry: true,
     campCount: campTemplates.filter(t => t.category === 'youjin').length,
-    features: ['21天情绪日记训练营', '21天青少年问题家庭训练营', '每日打卡陪伴', '情绪记录引导', '完全免费参与']
+    features: ['21天情绪日记训练营', '21天青少年困境突破营', '每日打卡陪伴', '情绪记录引导', '完全免费参与']
   }];
 
   // 构建绽放产品（训练营 + 合伙人）

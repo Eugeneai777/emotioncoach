@@ -70,7 +70,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                 </th>
                 <th className="text-center p-4 min-w-[180px]">
                   <div className="space-y-1">
-                    <div className="font-bold text-base text-foreground">21天青少年问题家庭训练营</div>
+                    <div className="font-bold text-base text-foreground">21天青少年困境突破营</div>
                     <div className="text-xs text-green-600 dark:text-green-500 font-semibold">免费</div>
                   </div>
                 </th>

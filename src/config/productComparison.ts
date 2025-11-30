@@ -8,7 +8,7 @@ export interface YoujinFeature extends ComparisonFeature {
   basic: boolean | string;              // 尝鲜会员
   premium: boolean | string;            // 365会员
   emotionJournalCamp: boolean | string; // 21天情绪日记训练营
-  parentEmotionCamp: boolean | string;  // 21天青少年问题家庭训练营
+  parentEmotionCamp: boolean | string;  // 21天青少年困境突破营
 }
 
 export interface BloomFeature extends ComparisonFeature {
