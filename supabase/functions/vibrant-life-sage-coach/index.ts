@@ -67,7 +67,7 @@ serve(async (req) => {
                 description: "推荐该类型教练的简要理由，说明其如何帮助用户解决问题。"
               }
             },
-            required: ["user_issue_summary", "recommended_coach_type", "reasoning"]
+            required: ["user_issue_summary", "recommended_coach_key", "reasoning"]
           }
         }
       }
