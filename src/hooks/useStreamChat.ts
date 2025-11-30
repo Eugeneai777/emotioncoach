@@ -69,7 +69,7 @@ export const useStreamChat = (conversationId?: string) => {
     }
   };
 
-  const createConversation = async (): Promise<string | null> => {
+  const createConversation = async (): Promise<{ convId: string; session: any } | null> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
@@ -103,7 +103,7 @@ export const useStreamChat = (conversationId?: string) => {
       setCurrentSession(sessionData);
       setCurrentStage(0);
       
-      return convData.id;
+      return { convId: convData.id, session: sessionData };
     } catch (error) {
       console.error("Error creating conversation:", error);
       return null;
@@ -391,15 +391,19 @@ ${data.growth_story}
 
     // 如果没有对话ID，创建新对话和会话
     let convId = currentConversationId;
+    let emotionSession = currentSession;
+
     if (!convId) {
-      convId = await createConversation();
-      if (convId) {
+      const result = await createConversation();
+      if (result) {
+        convId = result.convId;
+        emotionSession = result.session;
         setCurrentConversationId(convId);
       }
     }
 
     // Ensure we have a session
-    if (!currentSession) {
+    if (!emotionSession) {
       toast({ title: "会话创建失败", variant: "destructive" });
       return;
     }
@@ -424,7 +428,7 @@ ${data.growth_story}
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ 
-          sessionId: currentSession.id,
+          sessionId: emotionSession.id,
           message: trimmedInput
         }),
       });
