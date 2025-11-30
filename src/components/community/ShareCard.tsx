@@ -127,11 +127,12 @@ const getSourceLabel = (postType: string, campName?: string, badges?: any): {
   label: string;
   emoji: string;
 } | null => {
-  // 只有 story 类型（AI 故事智能体生成）才显示来源标签
-  if (postType !== 'story') return null;
+  // 更健壮的类型检查：trim 和 toLowerCase
+  const normalizedType = String(postType || '').trim().toLowerCase();
+  if (normalizedType !== 'story') return null;
 
   // 优先使用 camp_name，其次从 badges 中获取
-  const displayCampName = campName || badges?.campName;
+  const displayCampName = campName || badges?.campName || badges?.camp_name;
   if (displayCampName) {
     return {
       label: `${displayCampName}·今日成长故事`,
@@ -212,7 +213,14 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const phaseInfo = getPhaseInfo(post.camp_day);
   const emotionEmoji = getEmotionEmoji(post.emotion_theme);
+  
+  // 调试日志
+  console.log('ShareCard post_type:', post.post_type);
+  console.log('ShareCard badges:', post.badges);
+  console.log('ShareCard camp_name:', post.camp_name);
+  
   const sourceLabel = getSourceLabel(post.post_type, post.camp_name, post.badges);
+  console.log('ShareCard sourceLabel:', sourceLabel);
   useEffect(() => {
     const qrUrl = getQRCodeUrl(partnerInfo, post);
     QRCode.toDataURL(qrUrl, {

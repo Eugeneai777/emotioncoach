@@ -305,12 +305,31 @@ const CommunityWaterfall = () => {
     try {
       const { data, error } = await supabase
         .from('community_posts')
-        .select('*')
+        .select(`
+          *,
+          training_camps!camp_id (
+            camp_type,
+            camp_name,
+            template_id
+          )
+        `)
         .eq('id', postId)
         .single();
 
       if (error) throw error;
-      setSelectedPost(data);
+      
+      // 展平 training_camps 数据
+      if (data) {
+        const campData = data.training_camps;
+        const processedData = {
+          ...data,
+          camp_type: campData?.camp_type,
+          camp_name: campData?.camp_name,
+          template_id: campData?.template_id,
+          training_camps: undefined
+        };
+        setSelectedPost(processedData);
+      }
     } catch (error) {
       console.error('加载帖子详情失败:', error);
       toast({
