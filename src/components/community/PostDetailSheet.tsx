@@ -11,6 +11,7 @@ import LikeButton from "./LikeButton";
 import CommentSection from "./CommentSection";
 import PostEditDialog from "./PostEditDialog";
 import ShareCard from "./ShareCard";
+import ShareCardExport from "./ShareCardExport";
 import { useState, useEffect, useRef } from "react";
 import { MessageCircle, Star, Pencil, Heart, Trash2, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -226,53 +227,14 @@ const PostDetailSheet = ({
     setShowShareDialog(true);
   };
 
-  // 生成分享图片 - 使用临时可见元素确保正确渲染
+  // 生成分享图片 - 使用专用导出组件确保完美渲染
   const handleGenerateImage = async () => {
     if (!cardRef.current) return;
     setSharing(true);
     
     try {
-      // 1. 创建临时容器 - 在视口内但不可见
-      const tempContainer = document.createElement('div');
-      tempContainer.style.cssText = `
-        position: fixed;
-        left: 0;
-        top: 0;
-        z-index: 99999;
-        background: white;
-        pointer-events: none;
-      `;
-      document.body.appendChild(tempContainer);
-      
-      // 2. 深度克隆卡片元素
-      const clone = cardRef.current.cloneNode(true) as HTMLElement;
-      clone.style.position = 'relative';
-      clone.style.left = '0';
-      tempContainer.appendChild(clone);
-      
-      // 3. 强制设置所有元素的颜色为计算值（关键步骤）
-      clone.querySelectorAll('*').forEach((el) => {
-        const htmlEl = el as HTMLElement;
-        const computed = window.getComputedStyle(htmlEl);
-        
-        // 强制内联颜色
-        if (computed.color) {
-          htmlEl.style.color = computed.color;
-        }
-        // 强制内联背景
-        if (computed.backgroundColor && computed.backgroundColor !== 'rgba(0, 0, 0, 0)') {
-          htmlEl.style.backgroundColor = computed.backgroundColor;
-        }
-        if (computed.background && computed.background !== 'none') {
-          htmlEl.style.background = computed.background;
-        }
-      });
-      
-      // 4. 等待一帧确保 DOM 完全渲染
-      await new Promise(resolve => requestAnimationFrame(resolve));
-      
-      // 5. 使用 html2canvas 捕获临时元素
-      const canvas = await html2canvas(clone, {
+      // 直接捕获 ShareCardExport 组件（已全部使用内联样式）
+      const canvas = await html2canvas(cardRef.current, {
         backgroundColor: "#ffffff",
         scale: 2,
         logging: false,
@@ -281,10 +243,7 @@ const PostDetailSheet = ({
         imageTimeout: 15000
       });
       
-      // 6. 清理临时元素
-      document.body.removeChild(tempContainer);
-      
-      // 7. 导出图片
+      // 导出图片
       canvas.toBlob(blob => {
         if (!blob) {
           toast.error("生成图片失败");
@@ -595,9 +554,9 @@ const PostDetailSheet = ({
               <ShareCard post={post} partnerInfo={partnerInfo} isPreview />
             </div>
             
-            {/* 导出用卡片 - 隐藏但保持固定尺寸 */}
+            {/* 导出用卡片 - 使用纯内联样式版本 */}
             <div className="fixed -left-[9999px] top-0">
-              <ShareCard ref={cardRef} post={post} partnerInfo={partnerInfo} />
+              <ShareCardExport ref={cardRef} post={post} partnerInfo={partnerInfo} />
             </div>
             
             <Button onClick={handleGenerateImage} disabled={sharing} className="w-full">
