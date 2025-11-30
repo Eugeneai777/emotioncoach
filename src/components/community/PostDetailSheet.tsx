@@ -250,6 +250,17 @@ const PostDetailSheet = ({
             images.forEach((img) => {
               (img as HTMLImageElement).crossOrigin = 'anonymous';
             });
+            
+            // 确保所有 span 文字有明确颜色（防止透明）
+            const spans = clonedElement.querySelectorAll('span');
+            spans.forEach((span) => {
+              const computedStyle = window.getComputedStyle(span);
+              const color = computedStyle.color;
+              // 如果颜色是透明或未定义，设置默认颜色
+              if (!color || color === 'transparent' || color === 'rgba(0, 0, 0, 0)') {
+                (span as HTMLElement).style.color = '#1f2937';
+              }
+            });
           }
         }
       });
