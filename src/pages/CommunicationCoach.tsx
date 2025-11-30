@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CommunicationScenarioChips } from "@/components/communication/CommunicationScenarioChips";
+import { CommunicationDifficultySelector } from "@/components/communication/CommunicationDifficultySelector";
 import { useCommunicationChat } from "@/hooks/useCommunicationChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +9,7 @@ import { Loader2 } from "lucide-react";
 
 const CommunicationCoach = () => {
   const [input, setInput] = useState("");
+  const [difficulty, setDifficulty] = useState(5);
   const { toast } = useToast();
   const { messages, isLoading, sendMessage, resetConversation } = useCommunicationChat();
   const { data: template, isLoading: templateLoading } = useCoachTemplate('communication');
@@ -32,12 +34,12 @@ const CommunicationCoach = () => {
     if (!input.trim() || isLoading) return;
     const messageToSend = input.trim();
     setInput("");
-    await sendMessage(messageToSend);
+    await sendMessage(messageToSend, difficulty);
   };
 
   const handleSelectScenario = async (prompt: string) => {
     setInput("");
-    await sendMessage(prompt);
+    await sendMessage(prompt, difficulty);
   };
 
   const handleNewConversation = () => {
@@ -50,7 +52,7 @@ const CommunicationCoach = () => {
 
   const handleOptionClick = async (option: string) => {
     setInput("");
-    await sendMessage(option);
+    await sendMessage(option, difficulty);
   };
 
   const handleOptionSelect = (option: string) => {
@@ -80,7 +82,15 @@ const CommunicationCoach = () => {
       onOptionClick={handleOptionClick}
       onOptionSelect={handleOptionSelect}
       placeholder={template.placeholder || '分享你的想法...'}
-      scenarioChips={<CommunicationScenarioChips onSelectScenario={handleSelectScenario} />}
+      scenarioChips={
+        <div className="space-y-3">
+          <CommunicationDifficultySelector 
+            difficulty={difficulty} 
+            onDifficultyChange={setDifficulty}
+          />
+          <CommunicationScenarioChips onSelectScenario={handleSelectScenario} />
+        </div>
+      }
       showNotificationCenter={false}
     />
   );
