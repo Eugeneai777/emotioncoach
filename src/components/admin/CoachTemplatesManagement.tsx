@@ -223,6 +223,17 @@ export function CoachTemplatesManagement() {
                   >
                     <ArrowDown className="h-4 w-4" />
                   </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => {
+                      setCurrentSteps(template.steps as CoachStep[] || []);
+                      setIsStepsEditorOpen(true);
+                      setEditingTemplate(template);
+                    }}
+                  >
+                    <BookOpen className="h-4 w-4" />
+                  </Button>
                   <Button variant="ghost" size="icon" onClick={() => handleEdit(template)}>
                     <Edit className="h-4 w-4" />
                   </Button>

@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "@/components/ChatMessage";
 import { useParentCoach } from "@/hooks/useParentCoach";
+import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { useAuth } from "@/hooks/useAuth";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
+import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { VoiceControls } from "@/components/VoiceControls";
 import { ParentJourneySummary } from "@/components/coach/ParentJourneySummary";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
@@ -116,6 +118,9 @@ export default function ParentCoach() {
     loading: authLoading,
     signOut
   } = useAuth();
+
+  // 从数据库加载教练配置
+  const { data: coachConfig } = useCoachTemplate('parent');
 
   // 获取家长训练营模板
   const { data: parentCampTemplate } = useQuery({
@@ -817,6 +822,17 @@ ${briefing.growth_story || '暂无记录'}
       {/* Footer - Fixed bottom input */}
       <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20">
         <div className="container max-w-xl mx-auto px-4 py-3">
+            {messages.length === 0 && coachConfig?.enable_scenarios && coachConfig?.scenarios && (
+              <div className="mb-3 animate-in slide-in-from-bottom-2 duration-300">
+                <CoachScenarioChips
+                  scenarios={coachConfig.scenarios as any[]}
+                  onSelectScenario={(prompt) => {
+                    setInput(prompt);
+                  }}
+                  primaryColor={coachConfig.primary_color}
+                />
+              </div>
+            )}
             <div className="flex gap-3 items-end">
               <div className="flex-1 relative group">
                 <Textarea
