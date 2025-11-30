@@ -86,11 +86,15 @@ serve(async (req) => {
           ...messages
         ],
         tools,
+        tool_choice: 'auto',
         stream: true,
       }),
     });
 
     if (!aiResponse.ok) {
+      const errorBody = await aiResponse.text();
+      console.error(`AI gateway error ${aiResponse.status}:`, errorBody);
+      
       if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "请求过于频繁，请稍后再试。" }), {
           status: 429,
@@ -103,7 +107,7 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      throw new Error(`AI gateway error: ${aiResponse.status}`);
+      throw new Error(`AI gateway error: ${aiResponse.status} - ${errorBody}`);
     }
 
     return new Response(aiResponse.body, {
