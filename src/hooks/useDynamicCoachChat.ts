@@ -13,6 +13,12 @@ interface BriefingToolConfig {
   parameters: any;
 }
 
+interface CoachRecommendation {
+  coachKey: string;
+  userIssueSummary: string;
+  reasoning: string;
+}
+
 export const useDynamicCoachChat = (
   coachKey: string,
   edgeFunctionName: string,
@@ -24,6 +30,7 @@ export const useDynamicCoachChat = (
   const [isLoading, setIsLoading] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(conversationId || null);
   const [lastBriefingId, setLastBriefingId] = useState<string | null>(null);
+  const [coachRecommendation, setCoachRecommendation] = useState<CoachRecommendation | null>(null);
 
   useEffect(() => {
     if (conversationId) {
@@ -221,13 +228,25 @@ export const useDynamicCoachChat = (
       }
 
       // 处理工具调用
-      if (inToolCall && briefingToolConfig && convId) {
+      if (inToolCall && convId) {
         try {
           const toolCalls = JSON.parse(toolCallBuffer);
           const toolCall = toolCalls[0];
-          if (toolCall?.function?.name === briefingToolConfig.tool_name) {
+          
+          // 处理简报工具
+          if (briefingToolConfig && toolCall?.function?.name === briefingToolConfig.tool_name) {
             const briefingData = JSON.parse(toolCall.function.arguments);
             await saveBriefing(convId, briefingData);
+          }
+          
+          // 处理教练推荐工具
+          if (toolCall?.function?.name === "coach_recommendation") {
+            const recommendationData = JSON.parse(toolCall.function.arguments);
+            setCoachRecommendation({
+              coachKey: recommendationData.recommended_coach_key,
+              userIssueSummary: recommendationData.user_issue_summary,
+              reasoning: recommendationData.reasoning,
+            });
           }
         } catch (e) {
           console.error("处理工具调用失败:", e);
@@ -250,12 +269,14 @@ export const useDynamicCoachChat = (
     setMessages([]);
     setCurrentConversationId(null);
     setLastBriefingId(null);
+    setCoachRecommendation(null);
   };
 
   return {
     messages,
     isLoading,
     lastBriefingId,
+    coachRecommendation,
     sendMessage,
     resetConversation,
   };

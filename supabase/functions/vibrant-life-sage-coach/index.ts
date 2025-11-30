@@ -57,10 +57,10 @@ serve(async (req) => {
                 type: "string",
                 description: "用户当前遇到的主要问题或困扰的简要总结。"
               },
-              recommended_coach_type: {
+              recommended_coach_key: {
                 type: "string",
-                enum: ["情绪教练", "人生方向教练", "健康饮食教练", "沟通教练", "家长情绪教练", "商业教练", "其他"],
-                description: "根据用户问题推荐的专业教练类型。"
+                enum: ["emotion", "parent", "communication"],
+                description: "推荐的专业教练标识：emotion=情绪觉醒教练, parent=家长情绪教练, communication=卡内基沟通教练"
               },
               reasoning: {
                 type: "string",

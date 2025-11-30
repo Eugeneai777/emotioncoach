@@ -52,6 +52,11 @@ interface CoachLayoutProps {
   onOptionSelect?: (option: string) => void;
   placeholder: string;
   communicationBriefingId?: string | null;
+  coachRecommendation?: {
+    coachKey: string;
+    userIssueSummary: string;
+    reasoning: string;
+  } | null;
   
   // Optional features
   scenarios?: ReactNode;
@@ -86,6 +91,7 @@ export const CoachLayout = ({
   onOptionSelect,
   placeholder,
   communicationBriefingId,
+  coachRecommendation,
   scenarios,
   scenarioChips,
   extraContent,
@@ -177,6 +183,7 @@ export const CoachLayout = ({
                   onOptionSelect={onOptionSelect}
                   isLastMessage={index === messages.length - 1}
                   communicationBriefingId={communicationBriefingId}
+                  coachRecommendation={index === messages.length - 1 ? coachRecommendation : null}
                 />
               ))}
               {isLoading && (
