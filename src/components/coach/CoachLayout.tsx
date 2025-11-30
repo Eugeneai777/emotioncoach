@@ -155,7 +155,7 @@ export const CoachLayout = ({
       />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pb-32">
         <div className="container max-w-xl mx-auto px-3 md:px-4 py-4 md:py-8">
           {messages.length === 0 ? (
             <CoachEmptyState
