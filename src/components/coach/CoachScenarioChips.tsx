@@ -21,23 +21,18 @@ export const CoachScenarioChips = ({
   if (!scenarios || scenarios.length === 0) return null;
 
   return (
-    <div className="space-y-2">
-      <p className="text-xs text-muted-foreground px-1">
-        💡 快速选择场景
-      </p>
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
-        {scenarios.map((scenario) => (
-          <Badge
-            key={scenario.id}
-            variant="outline"
-            className="cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-all px-2 py-1 text-xs whitespace-nowrap flex-shrink-0"
-            onClick={() => onSelectScenario(scenario.prompt)}
-          >
-            <span className="mr-0.5">{scenario.emoji}</span>
-            {scenario.title}
-          </Badge>
-        ))}
-      </div>
+    <div className="flex gap-1.5 overflow-x-auto pb-2">
+      {scenarios.map((scenario) => (
+        <Badge
+          key={scenario.id}
+          variant="outline"
+          className="cursor-pointer hover:bg-primary/10 hover:border-primary/50 transition-all px-2 py-1 text-xs whitespace-nowrap flex-shrink-0"
+          onClick={() => onSelectScenario(scenario.prompt)}
+        >
+          <span className="mr-0.5">{scenario.emoji}</span>
+          {scenario.title}
+        </Badge>
+      ))}
     </div>
   );
 };
