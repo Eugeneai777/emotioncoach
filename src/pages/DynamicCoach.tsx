@@ -72,6 +72,16 @@ const DynamicCoach = () => {
     setInput(option);
   };
 
+  // Transform steps to match CoachEmptyState interface
+  const transformedSteps = (template.steps || []).map((step: any, index: number) => ({
+    id: Number(step.step || step.id || index),
+    emoji: step.icon || step.emoji || '',
+    name: step.title || step.name || '',
+    subtitle: step.description ? step.description.substring(0, 50) + (step.description.length > 50 ? '...' : '') : (step.subtitle || ''),
+    description: step.description || '',
+    details: step.questions ? step.questions.join('\n') : (step.details || '')
+  }));
+
   return (
     <CoachLayout
       emoji={template.emoji}
@@ -80,7 +90,7 @@ const DynamicCoach = () => {
       description={template.description || ''}
       gradient={template.gradient || 'from-rose-500 to-red-500'}
       primaryColor={template.primary_color || 'red'}
-      steps={template.steps || []}
+      steps={transformedSteps}
       stepsTitle={template.steps_title || '四部曲'}
       stepsEmoji={template.steps_emoji || '✨'}
       moreInfoRoute={template.more_info_route || undefined}
