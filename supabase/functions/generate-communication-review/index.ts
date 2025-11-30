@@ -26,12 +26,15 @@ serve(async (req) => {
       throw new Error('Missing authorization header');
     }
 
-    // Extract JWT token from Authorization header
-    const token = authHeader.replace('Bearer ', '');
-    
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: authHeader
+        }
+      }
+    });
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       throw new Error('Unauthorized');
     }
