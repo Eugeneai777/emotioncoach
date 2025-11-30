@@ -33,6 +33,7 @@ export interface CoachTemplate {
   enable_notifications: boolean;
   enable_community: boolean;
   enable_scenarios: boolean;
+  disable_option_buttons: boolean;
   scenarios?: Array<{
     id: string;
     emoji: string;

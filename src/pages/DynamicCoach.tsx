@@ -82,6 +82,10 @@ const DynamicCoach = () => {
     details: step.questions ? step.questions.join('\n') : (step.details || '')
   }));
 
+  // 如果禁用选项按钮，则不传递回调函数
+  const optionClickHandler = template.disable_option_buttons ? undefined : handleOptionClick;
+  const optionSelectHandler = template.disable_option_buttons ? undefined : handleOptionSelect;
+
   return (
     <CoachLayout
       emoji={template.emoji}
@@ -102,8 +106,8 @@ const DynamicCoach = () => {
       onInputChange={setInput}
       onSend={handleSend}
       onNewConversation={handleNewConversation}
-      onOptionClick={handleOptionClick}
-      onOptionSelect={handleOptionSelect}
+      onOptionClick={optionClickHandler}
+      onOptionSelect={optionSelectHandler}
       placeholder={template.placeholder || '分享你的想法...'}
       communicationBriefingId={lastBriefingId}
       scenarioChips={
