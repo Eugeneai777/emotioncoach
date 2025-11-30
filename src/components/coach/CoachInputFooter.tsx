@@ -43,7 +43,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement, CoachInputFooter
   messagesCount
 }, ref) => {
   return (
-    <footer className="border-t border-border bg-card/50 backdrop-blur-sm">
+    <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20">
       <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
         {/* Scenario Chips */}
         {scenarioChips && (messagesCount === undefined || messagesCount <= 1) && (
