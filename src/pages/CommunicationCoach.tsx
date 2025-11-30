@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CommunicationScenarioChips } from "@/components/communication/CommunicationScenarioChips";
 import { CommunicationDifficultyDialog } from "@/components/communication/CommunicationDifficultyDialog";
+import { CommunicationNotificationsModule } from "@/components/communication/CommunicationNotificationsModule";
+import { CommunicationTrainingCampModule } from "@/components/communication/CommunicationTrainingCampModule";
+import { CoachCommunity } from "@/components/coach/CoachCommunity";
 import { useCommunicationChat } from "@/hooks/useCommunicationChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useToast } from "@/hooks/use-toast";
@@ -103,7 +106,10 @@ const CommunicationCoach = () => {
         scenarioChips={
           <CommunicationScenarioChips onSelectScenario={handleSelectScenario} />
         }
-        showNotificationCenter={false}
+        notifications={<CommunicationNotificationsModule />}
+        trainingCamp={<CommunicationTrainingCampModule />}
+        community={<CoachCommunity />}
+        showNotificationCenter={true}
       />
       
       <CommunicationDifficultyDialog
