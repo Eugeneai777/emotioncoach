@@ -12,6 +12,9 @@ import { CommunicationBriefingTagSelector } from "@/components/communication/Com
 import { CommunicationHeatmap } from "@/components/communication/CommunicationHeatmap";
 import { CommunicationPatternInsights } from "@/components/communication/CommunicationPatternInsights";
 import { CommunicationTrendAnalysis } from "@/components/communication/CommunicationTrendAnalysis";
+import { CommunicationComparison } from "@/components/communication/CommunicationComparison";
+import { CommunicationReview } from "@/components/communication/CommunicationReview";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CommunicationTag {
   id: string;
@@ -330,24 +333,25 @@ export default function CommunicationHistory() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <div className="flex items-center gap-4 mb-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/communication-coach")}
-            className="shrink-0"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex items-center justify-between flex-1">
-            <h1 className="text-3xl font-bold">沟通日记</h1>
-            <Button onClick={() => navigate("/communication-coach")}>
-              <MessageSquare className="mr-2 h-4 w-4" />
-              开始新对话
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-indigo-50/50 to-white">
+      <div className="container mx-auto p-6">
+        <div className="mb-6">
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/communication-coach")}
+              className="shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
             </Button>
+            <div className="flex items-center justify-between flex-1">
+              <h1 className="text-3xl font-bold">沟通日记</h1>
+              <Button onClick={() => navigate("/communication-coach")}>
+                <MessageSquare className="mr-2 h-4 w-4" />
+                开始新对话
+              </Button>
+            </div>
           </div>
-        </div>
 
         {allTags.length > 0 && (
           <div className="flex flex-wrap gap-2">
@@ -377,29 +381,36 @@ export default function CommunicationHistory() {
         )}
       </div>
 
-      <Tabs defaultValue="list" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="list">
-            <MessageSquare className="h-4 w-4 mr-2" />
-            简报列表
-          </TabsTrigger>
-          <TabsTrigger value="trends">
-            <TrendingUp className="h-4 w-4 mr-2" />
-            沟通趋势
-          </TabsTrigger>
-          <TabsTrigger value="insights">
-            <Brain className="h-4 w-4 mr-2" />
-            模式洞察
-          </TabsTrigger>
-          <TabsTrigger value="comparison">
-            <GitCompare className="h-4 w-4 mr-2" />
-            对比分析
-          </TabsTrigger>
-          <TabsTrigger value="review">
-            <FileText className="h-4 w-4 mr-2" />
-            沟通复盘
-          </TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="list" className="space-y-6">
+          <ScrollArea className="w-full">
+            <TabsList className="inline-flex w-full min-w-max">
+              <TabsTrigger value="list" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">简报列表</span>
+                <span className="sm:hidden">列表</span>
+              </TabsTrigger>
+              <TabsTrigger value="trends" className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                <span className="hidden sm:inline">沟通趋势</span>
+                <span className="sm:hidden">趋势</span>
+              </TabsTrigger>
+              <TabsTrigger value="insights" className="flex items-center gap-2">
+                <Brain className="h-4 w-4" />
+                <span className="hidden sm:inline">模式洞察</span>
+                <span className="sm:hidden">洞察</span>
+              </TabsTrigger>
+              <TabsTrigger value="comparison" className="flex items-center gap-2">
+                <GitCompare className="h-4 w-4" />
+                <span className="hidden sm:inline">对比分析</span>
+                <span className="sm:hidden">对比</span>
+              </TabsTrigger>
+              <TabsTrigger value="review" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">沟通复盘</span>
+                <span className="sm:hidden">复盘</span>
+              </TabsTrigger>
+            </TabsList>
+          </ScrollArea>
 
         <TabsContent value="list" className="space-y-6">
           <CommunicationHeatmap onDateSelect={handleDateSelect} />
@@ -464,32 +475,39 @@ export default function CommunicationHistory() {
           )}
         </TabsContent>
 
-        <TabsContent value="trends">
-          <CommunicationTrendAnalysis />
-        </TabsContent>
+          <TabsContent value="trends">
+            <div className="space-y-2 mb-4">
+              <h2 className="text-xl font-semibold text-foreground">📈 宏观视角</h2>
+              <p className="text-sm text-muted-foreground">从时间维度看沟通全貌</p>
+            </div>
+            <CommunicationTrendAnalysis />
+          </TabsContent>
 
-        <TabsContent value="insights">
-          <CommunicationPatternInsights />
-        </TabsContent>
+          <TabsContent value="insights">
+            <div className="space-y-2 mb-4">
+              <h2 className="text-xl font-semibold text-foreground">🧠 深度分析</h2>
+              <p className="text-sm text-muted-foreground">识别沟通规律与成长模式</p>
+            </div>
+            <CommunicationPatternInsights />
+          </TabsContent>
 
-        <TabsContent value="comparison">
-          <Card>
-            <CardContent className="py-12 text-center">
-              <GitCompare className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">对比分析功能开发中...</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          <TabsContent value="comparison">
+            <div className="space-y-2 mb-4">
+              <h2 className="text-xl font-semibold text-foreground">⚖️ 深度分析</h2>
+              <p className="text-sm text-muted-foreground">对比不同时期的沟通表现</p>
+            </div>
+            <CommunicationComparison briefings={briefings as any} />
+          </TabsContent>
 
-        <TabsContent value="review">
-          <Card>
-            <CardContent className="py-12 text-center">
-              <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">沟通复盘功能开发中...</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="review">
+            <div className="space-y-2 mb-4">
+              <h2 className="text-xl font-semibold text-foreground">📝 深度分析</h2>
+              <p className="text-sm text-muted-foreground">全面回顾沟通旅程</p>
+            </div>
+            <CommunicationReview />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
