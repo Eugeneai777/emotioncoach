@@ -272,16 +272,16 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
       {post.content && <div className={cn("bg-background/60 backdrop-blur-sm rounded-xl shadow-sm border border-primary/10", isPreview ? "p-3 mb-3" : "p-4 mb-4")}>
           {/* 来源标签 - 放在内容框内部顶部 */}
           {sourceLabel && <div className={cn("text-left", isPreview ? "mb-3" : "mb-4")}>
-              <span 
-                className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium shadow-sm", isPreview ? "text-xs" : "text-sm")}
-                style={{
-                  background: "linear-gradient(to right, rgb(252, 231, 243), rgb(243, 232, 255))",
-                  color: "#be185d"
-                }}
-              >
-                <span>{sourceLabel.emoji}</span>
-                <span>{sourceLabel.label}</span>
-              </span>
+      <span 
+        className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium shadow-sm", isPreview ? "text-xs" : "text-sm")}
+        style={{
+          background: "linear-gradient(to right, rgb(252, 231, 243), rgb(243, 232, 255))",
+          color: "#be185d"
+        }}
+      >
+        <span style={{ color: "#be185d" }}>{sourceLabel.emoji}</span>
+        <span style={{ color: "#be185d" }}>{sourceLabel.label}</span>
+      </span>
             </div>}
           
           {formatContent(post.content, isPreview)}
