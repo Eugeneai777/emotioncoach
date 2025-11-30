@@ -7,6 +7,7 @@ import ShareCard from "./ShareCard";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -105,13 +106,20 @@ const ShareButton = ({ post }: ShareButtonProps) => {
       </button>
 
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-sm sm:max-w-md">
           <DialogHeader>
             <DialogTitle>分享到微信</DialogTitle>
+            <DialogDescription>预览并生成分享图片</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="bg-secondary/20 p-4 rounded-lg">
+            {/* 预览卡片 - 响应式显示 */}
+            <div className="bg-secondary/20 p-3 rounded-lg max-h-[50vh] overflow-auto">
+              <ShareCard post={post} isPreview />
+            </div>
+
+            {/* 导出用卡片 - 隐藏但保持固定尺寸 */}
+            <div className="fixed -left-[9999px] top-0">
               <ShareCard ref={cardRef} post={post} />
             </div>
 
@@ -122,6 +130,9 @@ const ShareButton = ({ post }: ShareButtonProps) => {
             >
               {sharing ? "生成中..." : "生成分享图片"}
             </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              生成图片后可保存并分享至微信朋友圈
+            </p>
           </div>
         </DialogContent>
       </Dialog>
