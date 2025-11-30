@@ -21,6 +21,10 @@ interface CommunicationBriefingData {
   strategy: string;
   micro_action: string;
   growth_insight: string;
+  communication_difficulty?: number;
+  scenario_type?: string;
+  target_type?: string;
+  difficulty_keywords?: string[];
 }
 
 export const useCommunicationChat = (conversationId?: string) => {
@@ -163,6 +167,10 @@ ${data.growth_insight}
           strategy: briefingData.strategy,
           micro_action: briefingData.micro_action,
           growth_insight: briefingData.growth_insight,
+          communication_difficulty: briefingData.communication_difficulty,
+          scenario_type: briefingData.scenario_type,
+          target_type: briefingData.target_type,
+          difficulty_keywords: briefingData.difficulty_keywords,
         });
 
       if (error) throw error;
@@ -181,7 +189,7 @@ ${data.growth_insight}
     }
   };
 
-  const sendMessage = async (input: string) => {
+  const sendMessage = async (input: string, userDifficulty?: number) => {
     if (!input.trim() || isLoading) return;
 
     setIsLoading(true);
@@ -214,6 +222,7 @@ ${data.growth_insight}
               role: m.role,
               content: m.content
             })),
+            userDifficulty,
           }),
         }
       );
@@ -314,7 +323,14 @@ ${data.growth_insight}
             if (toolCall.function.name === "generate_communication_briefing") {
               try {
                 const briefingData = JSON.parse(toolCall.function.arguments) as CommunicationBriefingData;
-                const formattedBriefing = formatCommunicationBriefing(briefingData);
+                
+                // 如果用户提供了难度，使用用户的难度；否则使用AI评估的难度
+                const finalBriefingData = {
+                  ...briefingData,
+                  communication_difficulty: userDifficulty || briefingData.communication_difficulty
+                };
+                
+                const formattedBriefing = formatCommunicationBriefing(finalBriefingData);
                 
                 assistantMessage += formattedBriefing;
                 setMessages(prev => {
@@ -325,7 +341,7 @@ ${data.growth_insight}
                   return [...prev, { role: "assistant", content: assistantMessage }];
                 });
 
-                await saveCommunicationBriefing(convId!, briefingData);
+                await saveCommunicationBriefing(convId!, finalBriefingData);
               } catch (e) {
                 console.error("处理简报失败:", e);
               }

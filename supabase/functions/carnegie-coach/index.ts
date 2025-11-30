@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, userDifficulty } = await req.json();
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -108,7 +108,9 @@ D. 正在用他的方式保护自己或你们的关系
 - 肯定他的觉察和勇气
 - 温柔鼓励下一步
 
-最后问："要不要我帮你整理成一份小简报，随时可以回看？"`;
+最后问："要不要我帮你整理成一份小简报，随时可以回看？"
+
+${userDifficulty ? `【用户主观难度】用户评价这次沟通的难度为：${userDifficulty}/10。在生成简报时，使用用户提供的难度评分，不要重新评估。` : ''}`;
 
     const tools = [
       {
@@ -169,7 +171,9 @@ D. 正在用他的方式保护自己或你们的关系
               },
               communication_difficulty: {
                 type: "integer",
-                description: "沟通难度评分（1-10）。AI自动评估：1=简单问候, 3=日常交流, 5=表达不同意见, 7=化解矛盾, 10=重大冲突",
+                description: userDifficulty 
+                  ? `沟通难度评分（固定值：${userDifficulty}）。用户已评价此次沟通难度为${userDifficulty}/10，请直接使用此评分。` 
+                  : "沟通难度评分（1-10）。AI自动评估：1=简单问候, 3=日常交流, 5=表达不同意见, 7=化解矛盾, 10=重大冲突",
                 minimum: 1,
                 maximum: 10
               },
