@@ -23,6 +23,7 @@ import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import CampCheckInSuccessDialog from "@/components/camp/CampCheckInSuccessDialog";
 import CommunityWaterfall from "@/components/community/CommunityWaterfall";
 import { NotificationCard } from "@/components/NotificationCard";
+import { StageProgress } from "@/components/coach/StageProgress";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
@@ -70,7 +71,8 @@ const Index = () => {
     isLoading,
     sendMessage,
     resetConversation,
-    videoRecommendations
+    videoRecommendations,
+    currentStage
   } = useStreamChat();
   const { 
     notifications, 
@@ -877,6 +879,12 @@ const Index = () => {
           </div>
         ) : (
           <div className="flex-1 py-4 md:py-6 space-y-3 md:space-y-4">
+            {currentStage > 0 && messages.length > 0 && (
+              <StageProgress 
+                currentStage={currentStage} 
+                stages={["觉察", "理解", "反应", "转化"]} 
+              />
+            )}
             {messages.map((message, index) => {
               // Check if this is an intensity prompt message
               if (message.type === "intensity_prompt") {

@@ -944,6 +944,62 @@ export type Database = {
         }
         Relationships: []
       }
+      emotion_coaching_sessions: {
+        Row: {
+          conversation_id: string | null
+          created_at: string | null
+          current_stage: number | null
+          event_summary: string | null
+          id: string
+          messages: Json | null
+          stage_1_insight: string | null
+          stage_2_insight: string | null
+          stage_3_insight: string | null
+          stage_4_insight: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string | null
+          current_stage?: number | null
+          event_summary?: string | null
+          id?: string
+          messages?: Json | null
+          stage_1_insight?: string | null
+          stage_2_insight?: string | null
+          stage_3_insight?: string | null
+          stage_4_insight?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string | null
+          current_stage?: number | null
+          event_summary?: string | null
+          id?: string
+          messages?: Json | null
+          stage_1_insight?: string | null
+          stage_2_insight?: string | null
+          stage_3_insight?: string | null
+          stage_4_insight?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emotion_coaching_sessions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emotion_goals: {
         Row: {
           baseline_weekly_count: number | null
