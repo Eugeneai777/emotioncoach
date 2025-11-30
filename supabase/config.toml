@@ -152,3 +152,6 @@ verify_jwt = true
 
 [functions.generate-coach-template]
 verify_jwt = true
+
+[functions.vibrant-life-sage-coach]
+verify_jwt = true
