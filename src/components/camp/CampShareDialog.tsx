@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Share2, Loader2, Sparkles, Download, RefreshCw, BookOpen } from "lucide-react";
 import ImageUploader from "@/components/community/ImageUploader";
+import { ImageStyleSelector } from "@/components/community/ImageStyleSelector";
 import StoryCoachDialog from "./StoryCoachDialog";
 import { getTodayInBeijing } from "@/utils/dateUtils";
 
@@ -55,6 +56,7 @@ const CampShareDialog = ({
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [imageStyle, setImageStyle] = useState("warm");
   const [storyCoachOpen, setStoryCoachOpen] = useState(false);
   const [hasStoryContent, setHasStoryContent] = useState(false);
   const [extractedEmotionTag, setExtractedEmotionTag] = useState<string | undefined>(undefined);
@@ -78,6 +80,7 @@ const CampShareDialog = ({
             emotionTheme: emotionTheme,
             campName: campName,
             day: campDay,
+            style: imageStyle,
           },
         }
       );
@@ -303,6 +306,11 @@ const CampShareDialog = ({
               onImagesChange={setImageUrls}
               maxImages={3}
             />
+            
+            {/* 风格选择器 - 仅在没有图片时显示 */}
+            {imageUrls.length === 0 && (
+              <ImageStyleSelector value={imageStyle} onChange={setImageStyle} />
+            )}
             
             {/* 图片操作按钮 */}
             {imageUrls.length > 0 && (
