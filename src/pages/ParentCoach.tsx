@@ -500,7 +500,7 @@ ${briefing.growth_story || '暂无记录'}
                 size="sm"
                 variant="ghost"
                 onClick={() => navigate("/energy-studio")}
-                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 text-purple-600 hover:text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-950/20"
+                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 text-muted-foreground hover:text-foreground hover:bg-accent"
               >
                 <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span className="hidden sm:inline font-medium">有劲生活馆</span>
