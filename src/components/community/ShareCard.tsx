@@ -43,7 +43,17 @@ const getEmotionEmoji = (theme: string | null): string => {
     '失落': '😔',
     '紧张': '😬',
     '温暖': '🥰',
-    '孤独': '😞'
+    '孤独': '😞',
+    '委屈': '😢',
+    '不屑': '😒',
+    '释然': '😌',
+    '期待': '🤗',
+    '烦躁': '😤',
+    '无奈': '😮‍💨',
+    '自豪': '😊',
+    '羞愧': '😳',
+    '后悔': '😔',
+    '嫉妒': '😠'
   };
   return emojiMap[theme] || "💭";
 };
@@ -183,24 +193,29 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
         </div>}
 
       {/* 内容 */}
-      {post.content && <div className={cn("bg-background/60 backdrop-blur-sm rounded-xl shadow-sm border border-primary/10", isPreview ? "p-3 mb-3" : "p-6 mb-6")}>
-          <p className={cn("text-foreground/90 leading-relaxed line-clamp-6", isPreview ? "text-sm" : "text-base")}>
+      {post.content && <div className={cn("bg-background/60 backdrop-blur-sm rounded-xl shadow-sm border border-primary/10", isPreview ? "p-3 mb-3" : "p-4 mb-4")}>
+          <p className={cn("text-foreground/90 leading-relaxed", isPreview ? "text-sm" : "text-base")}>
             {post.content}
           </p>
         </div>}
 
       {/* 图片 */}
-      {post.image_urls && post.image_urls.length > 0 && <div className={cn(isPreview ? "mb-3" : "mb-6")}>
-          <img src={post.image_urls[0]} alt="分享图片" className={cn("w-full object-cover rounded-xl shadow-md", isPreview ? "h-40" : "h-64")} />
+      {post.image_urls && post.image_urls.length > 0 && <div className={cn(isPreview ? "mb-3" : "mb-4")}>
+          <img 
+            src={post.image_urls[0]} 
+            alt="分享图片" 
+            crossOrigin="anonymous"
+            className={cn("w-full object-cover rounded-xl shadow-md", isPreview ? "h-40" : "h-64")} 
+          />
         </div>}
 
       {/* 洞察与行动 */}
-      {(post.insight || post.action) && <div className={cn("space-y-2 bg-secondary/30 backdrop-blur-sm rounded-xl border border-primary/10", isPreview ? "mb-3 p-3" : "mb-6 p-4")}>
+      {(post.insight || post.action) && <div className={cn("space-y-2 bg-secondary/30 backdrop-blur-sm rounded-xl border border-primary/10", isPreview ? "mb-3 p-3" : "mb-4 p-4")}>
           {post.insight && <div>
               <p className={cn("font-medium text-primary mb-1", isPreview ? "text-xs" : "text-sm")}>
                 💡 今日洞察
               </p>
-              <p className={cn("text-foreground/80 line-clamp-2", isPreview ? "text-xs" : "text-sm")}>
+              <p className={cn("text-foreground/80", isPreview ? "text-xs" : "text-sm")}>
                 {post.insight}
               </p>
             </div>}
@@ -208,22 +223,27 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
               <p className={cn("font-medium text-primary mb-1", isPreview ? "text-xs" : "text-sm")}>
                 🎯 行动计划
               </p>
-              <p className={cn("text-foreground/80 line-clamp-2", isPreview ? "text-xs" : "text-sm")}>
+              <p className={cn("text-foreground/80", isPreview ? "text-xs" : "text-sm")}>
                 {post.action}
               </p>
             </div>}
         </div>}
 
       {/* 勋章展示 - 精美卡片样式 */}
-      {post.badges && Object.keys(post.badges).length > 0 && <div className={cn("flex flex-wrap gap-2 justify-center", isPreview ? "mb-3" : "mb-6")}>
-          {Object.entries(post.badges).slice(0, 3).map(([key, badge]: [string, any]) => <div key={key} className={cn("bg-gradient-to-br from-primary/20 to-primary/10 backdrop-blur-sm rounded-xl shadow-sm border border-primary/20", isPreview ? "px-3 py-2" : "px-4 py-3")}>
+      {post.badges && Object.keys(post.badges).length > 0 && <div className={cn("flex flex-wrap gap-2 justify-center", isPreview ? "mb-3" : "mb-4")}>
+          {Object.entries(post.badges)
+            .filter(([_, badge]: [string, any]) => badge?.icon && badge?.name)
+            .slice(0, 3)
+            .map(([key, badge]: [string, any]) => (
+              <div key={key} className={cn("bg-gradient-to-br from-primary/20 to-primary/10 backdrop-blur-sm rounded-xl shadow-sm border border-primary/20", isPreview ? "px-3 py-2" : "px-4 py-3")}>
                 <div className="flex items-center gap-2">
                   <span className={cn(isPreview ? "text-lg" : "text-xl")}>{badge.icon}</span>
                   <span className={cn("font-medium text-foreground", isPreview ? "text-xs" : "text-sm")}>
                     {badge.name}
                   </span>
                 </div>
-              </div>)}
+              </div>
+            ))}
         </div>}
 
       {/* 分隔线 */}
