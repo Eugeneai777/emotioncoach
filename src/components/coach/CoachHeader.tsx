@@ -110,7 +110,7 @@ export const CoachHeader = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onRestart}
+                onClick={() => navigate("/")}
                 className={`gap-1.5 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-${primaryColor}-500 hover:text-${primaryColor}-500 hover:bg-${primaryColor}-500/10 transition-colors font-medium`}
               >
                 <RotateCcw className="w-3.5 h-3.5 md:w-4 md:h-4" />
