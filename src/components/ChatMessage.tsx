@@ -2,6 +2,8 @@ import { Sparkles, Loader2, Share2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { VideoRecommendations } from "./VideoRecommendations";
+import { CommunicationCourseRecommendations } from "./communication/CommunicationCourseRecommendations";
+import { useCommunicationCourseRecommendations } from "@/hooks/useCommunicationCourseRecommendations";
 
 interface ChatMessageProps {
   role: "user" | "assistant";
@@ -10,20 +12,48 @@ interface ChatMessageProps {
   onOptionSelect?: (option: string) => void;
   videoRecommendations?: any[];
   isLastMessage?: boolean;
+  communicationBriefingId?: string | null;
 }
 
-export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, videoRecommendations, isLastMessage }: ChatMessageProps) => {
+export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, videoRecommendations, isLastMessage, communicationBriefingId }: ChatMessageProps) => {
   const isUser = role === "user";
   const navigate = useNavigate();
   const [clickedOption, setClickedOption] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   
-  // Show recommendations on the last assistant message if it contains a briefing
+  // Show emotion recommendations on the last assistant message if it contains a briefing
   const showRecommendations = isLastMessage && 
     role === "assistant" && 
     videoRecommendations && 
     videoRecommendations.length > 0 &&
     (content.includes("情绪主题") || content.includes("简报"));
+
+  // Communication course recommendations
+  const { courseRecommendations, campRecommendations, loading: commRecsLoading } = useCommunicationCourseRecommendations(
+    isLastMessage && content.includes("《卡内基沟通简报》") ? communicationBriefingId || undefined : undefined
+  );
+  
+  const showCommunicationRecommendations = isLastMessage && 
+    role === "assistant" && 
+    content.includes("《卡内基沟通简报》") &&
+    (courseRecommendations.length > 0 || campRecommendations.length > 0);
+
+  // Extract communication theme and difficulty from briefing content
+  const extractBriefingData = () => {
+    if (!content.includes("《卡内基沟通简报》")) return null;
+    
+    const themeMatch = content.match(/💬 沟通主题\n(.+)/);
+    const difficultyMatch = content.match(/沟通难度[：:]\s*(\d+)/);
+    
+    return {
+      communication_theme: themeMatch?.[1]?.trim() || "沟通练习",
+      communication_difficulty: difficultyMatch ? parseInt(difficultyMatch[1]) : undefined,
+    };
+  };
+
+  const handleWatchCourse = (videoUrl: string, courseId: string) => {
+    window.open(videoUrl, '_blank');
+  };
   
   // 检测是否包含编号选项（如 "1. 选项"、"1、选项" 或 "A. 选项"）
   const optionRegex = /^([A-Da-d]|\d+)[.、]\s*(.+)$/gm;
@@ -208,9 +238,20 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
           )}
         </div>
         
-        {/* Video Recommendations */}
+        {/* Emotion Video Recommendations */}
         {showRecommendations && (
           <VideoRecommendations recommendations={videoRecommendations} />
+        )}
+        
+        {/* Communication Course Recommendations */}
+        {showCommunicationRecommendations && extractBriefingData() && (
+          <CommunicationCourseRecommendations
+            briefing={extractBriefingData()!}
+            courseRecommendations={courseRecommendations}
+            campRecommendations={campRecommendations}
+            loading={commRecsLoading}
+            onWatchCourse={handleWatchCourse}
+          />
         )}
       </div>
     </div>

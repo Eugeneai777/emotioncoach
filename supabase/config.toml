@@ -108,6 +108,9 @@ verify_jwt = false
 [functions.recommend-courses]
 verify_jwt = true
 
+[functions.recommend-communication-courses]
+verify_jwt = true
+
 [functions.chat]
 verify_jwt = true
 
