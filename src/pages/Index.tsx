@@ -82,6 +82,7 @@ const Index = () => {
     triggerNotification 
   } = useSmartNotification('emotion_coach');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
 
   const scrollToBottom = () => {
@@ -935,9 +936,9 @@ const Index = () => {
             <div className="mb-3 animate-in slide-in-from-bottom-2 duration-300">
                 <CoachScenarioChips
                   scenarios={coachConfig.scenarios as any[]}
-                  onSelectScenario={async (prompt) => {
-                    setInput("");
-                    await sendMessage(prompt);
+                  onSelectScenario={(prompt) => {
+                    setInput(prompt);
+                    setTimeout(() => inputRef.current?.focus(), 100);
                   }}
                   primaryColor={coachConfig.primary_color}
                 />
@@ -946,6 +947,7 @@ const Index = () => {
           <div className="flex gap-2 items-end">
             <div className="flex-1 relative group">
               <Textarea
+                ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
