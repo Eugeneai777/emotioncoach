@@ -38,15 +38,6 @@ const coaches = [{
   gradient: "from-rose-500 to-red-500",
   route: "/coach/vibrant_life_sage",
   badge: "新"
-}, {
-  id: "life-coach",
-  title: "AI 生活教练",
-  subtitle: "四维健康分析",
-  description: "情绪、生活、身心、成长全面评估",
-  icon: "Sparkles",
-  gradient: "from-purple-500 to-indigo-500",
-  route: "/ai-coach",
-  badge: null
 }];
 export const CoachSpaceContent = () => {
   const navigate = useNavigate();
