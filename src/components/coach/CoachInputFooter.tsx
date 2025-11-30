@@ -25,6 +25,7 @@ interface CoachInputFooterProps {
   };
   // Scenario chips (optional)
   scenarioChips?: React.ReactNode;
+  messagesCount?: number;
 }
 
 export const CoachInputFooter = forwardRef<HTMLTextAreaElement, CoachInputFooterProps>(({
@@ -38,13 +39,14 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement, CoachInputFooter
   hasMessages,
   gradient,
   voiceControls,
-  scenarioChips
+  scenarioChips,
+  messagesCount
 }, ref) => {
   return (
     <footer className="border-t border-border bg-card/50 backdrop-blur-sm">
       <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
         {/* Scenario Chips */}
-        {scenarioChips && !hasMessages && (
+        {scenarioChips && (messagesCount === undefined || messagesCount <= 1) && (
           <div className="mb-3">
             {scenarioChips}
           </div>
