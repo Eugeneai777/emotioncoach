@@ -15,6 +15,17 @@ interface ChatMessageProps {
   communicationBriefingId?: string | null;
 }
 
+// 清理 Markdown 格式符号
+const cleanMarkdown = (text: string): string => {
+  return text
+    // 移除粗体 **text** → text
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    // 移除斜体 *text* → text
+    .replace(/\*([^*]+)\*/g, '$1')
+    // 移除剩余的单独 * 符号
+    .replace(/\*/g, '');
+};
+
 export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, videoRecommendations, isLastMessage, communicationBriefingId }: ChatMessageProps) => {
   const isUser = role === "user";
   const navigate = useNavigate();
@@ -114,7 +125,7 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
         >
           {textContent && (
             <p className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap mb-3">
-              {textContent}
+              {cleanMarkdown(textContent)}
             </p>
           )}
           
