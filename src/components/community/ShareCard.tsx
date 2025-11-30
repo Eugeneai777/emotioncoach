@@ -230,9 +230,11 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
       <div className="absolute top-20 left-4 text-xl opacity-20">💫</div>
       <div className="absolute bottom-40 right-8 text-xl opacity-20">🌟</div>
 
+      {/* 顶部留白 */}
+      <div className={cn(isPreview ? "pt-2" : "pt-4")} />
 
       {/* 打卡进度区 */}
-      {post.camp_day && <div className={cn("mb-4", isPreview ? "mb-3" : "mb-6")}>
+      {post.camp_day && <div className={cn(isPreview ? "mb-4" : "mb-8")}>
           <div className={cn("text-center mb-2", isPreview ? "text-base" : "text-xl")}>
             <span className="font-bold text-primary">
               🔥 我的第 {post.camp_day} 天 · {phaseInfo.phase} {phaseInfo.emoji}
@@ -249,9 +251,14 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
         </div>}
 
       {/* 标题 */}
-      {post.title && <h2 className={cn("font-bold text-foreground text-center", isPreview ? "text-lg mb-3" : "text-2xl mb-4")}>
+      {post.title && <h2 className={cn("font-bold text-foreground text-center", isPreview ? "text-lg mb-4" : "text-2xl mb-6")}>
           {post.title.replace(/^[^\w\s\u4e00-\u9fa5]+/, '').trim()}
         </h2>}
+
+      {/* 图片 - 移到标题和内容之间 */}
+      {post.image_urls && post.image_urls.length > 0 && <div className={cn(isPreview ? "mb-4" : "mb-6")}>
+          <img src={post.image_urls[0]} alt="分享图片" crossOrigin="anonymous" className={cn("w-full object-cover rounded-xl shadow-md", isPreview ? "h-40" : "h-64")} />
+        </div>}
 
       {/* 内容 - 智能格式化 */}
       {post.content && <div className={cn("bg-background/60 backdrop-blur-sm rounded-xl shadow-sm border border-primary/10", isPreview ? "p-3 mb-3" : "p-4 mb-4")}>
@@ -264,11 +271,6 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
             </div>}
           
           {formatContent(post.content, isPreview)}
-        </div>}
-
-      {/* 图片 */}
-      {post.image_urls && post.image_urls.length > 0 && <div className={cn(isPreview ? "mb-3" : "mb-4")}>
-          <img src={post.image_urls[0]} alt="分享图片" crossOrigin="anonymous" className={cn("w-full object-cover rounded-xl shadow-md", isPreview ? "h-40" : "h-64")} />
         </div>}
 
       {/* 洞察与行动 - 优化间距和分隔 */}
