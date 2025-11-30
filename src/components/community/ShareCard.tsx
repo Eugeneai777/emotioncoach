@@ -156,42 +156,42 @@ const formatContent = (content: string, isPreview: boolean): React.ReactNode[] =
     const match = part.match(/\【([^】]+)\】\s*(.*)/s);
     if (match) {
       const [, title, text] = match;
-      // 根据标题类型选择不同颜色和图标
+      // 根据标题类型选择不同颜色和图标 - 使用内联样式
       const titleStyles: Record<string, {
         emoji: string;
         color: string;
       }> = {
         '问题': {
           emoji: '❓',
-          color: 'text-orange-600'
+          color: '#ea580c'
         },
         '转折': {
           emoji: '🔄',
-          color: 'text-blue-600'
+          color: '#2563eb'
         },
         '成长': {
           emoji: '🌱',
-          color: 'text-green-600'
+          color: '#16a34a'
         },
         '反思': {
           emoji: '💭',
-          color: 'text-purple-600'
+          color: '#9333ea'
         },
         '洞察': {
           emoji: '💡',
-          color: 'text-yellow-600'
+          color: '#ca8a04'
         },
         '行动': {
           emoji: '🎯',
-          color: 'text-red-600'
+          color: '#dc2626'
         }
       };
       const style = titleStyles[title] || {
         emoji: '📌',
-        color: 'text-primary'
+        color: '#be185d'
       };
       return <div key={index} className={cn("last:mb-0", isPreview ? "mb-3" : "mb-4")}>
-          <div className={cn("font-bold mb-1.5 flex items-center gap-1.5", style.color, isPreview ? "text-sm" : "text-base")}>
+          <div className={cn("font-bold mb-1.5 flex items-center gap-1.5", isPreview ? "text-sm" : "text-base")} style={{ color: style.color }}>
             
             <span>【{title}】</span>
           </div>
@@ -244,7 +244,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
       {/* 打卡进度区 */}
       {post.camp_day && <div className={cn(isPreview ? "mb-6" : "mb-10")}>
           <div className={cn("text-center mb-2", isPreview ? "text-base" : "text-xl")}>
-            <span className="font-bold text-primary">
+            <span className="font-bold" style={{ color: '#be185d' }}>
               🔥 我的第 {post.camp_day} 天 · {phaseInfo.phase} {phaseInfo.emoji}
             </span>
           </div>
@@ -330,20 +330,20 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
         <div className={cn("flex gap-4 items-start", isPreview && "gap-3")}>
           {/* 价值清单 */}
           <div className="flex-1 space-y-2">
-            <p className={cn("font-bold text-primary mb-2", isPreview ? "text-sm" : "text-base")}>
+            <p className={cn("font-bold mb-2", isPreview ? "text-sm" : "text-base")} style={{ color: '#be185d' }}>
               有劲AI · 情绪日记
             </p>
             <div className={cn("flex items-start gap-2", isPreview ? "text-xs" : "text-sm")}>
-              <span className="text-primary mt-0.5">✅</span>
-              <span className="text-foreground/90">温暖AI陪伴</span>
+              <span className="mt-0.5" style={{ color: '#be185d' }}>✅</span>
+              <span style={{ color: '#1f2937' }}>温暖AI陪伴</span>
             </div>
             <div className={cn("flex items-start gap-2", isPreview ? "text-xs" : "text-sm")}>
-              <span className="text-primary mt-0.5">✅</span>
-              <span className="text-foreground/90">系统成长方法</span>
+              <span className="mt-0.5" style={{ color: '#be185d' }}>✅</span>
+              <span style={{ color: '#1f2937' }}>系统成长方法</span>
             </div>
             <div className={cn("flex items-start gap-2", isPreview ? "text-xs" : "text-sm")}>
-              <span className="text-primary mt-0.5">✅</span>
-              <span className="text-foreground/90">社群共振支持</span>
+              <span className="mt-0.5" style={{ color: '#be185d' }}>✅</span>
+              <span style={{ color: '#1f2937' }}>社群共振支持</span>
             </div>
           </div>
 
@@ -355,14 +355,14 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
 
         {/* 科学数据背书 */}
         <div className={cn("text-center bg-background/50 backdrop-blur-sm rounded-lg border border-primary/10", isPreview ? "py-2 px-3" : "py-3 px-4")}>
-          <p className={cn("text-foreground/80 font-medium", isPreview ? "text-xs" : "text-sm")}>
+          <p className={cn("font-medium", isPreview ? "text-xs" : "text-sm")} style={{ color: '#1f2937' }}>
             📊 21天科学验证：焦虑↓31% · 睡眠↑28% · 执行力×2.4
           </p>
         </div>
 
         {/* 最终CTA - 移到最后 */}
         <div className={cn("text-center bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg", isPreview ? "py-2 px-3" : "py-3 px-4")}>
-          <p className={cn("font-bold text-primary", isPreview ? "text-sm" : "text-base")}>
+          <p className={cn("font-bold", isPreview ? "text-sm" : "text-base")} style={{ color: '#be185d' }}>
             {partnerInfo?.isPartner ? "🎁 扫码领取专属福利，立享预购优惠" : "🎁 扫码了解详情，开启你的成长之旅"}
           </p>
         </div>
