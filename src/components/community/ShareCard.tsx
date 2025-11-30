@@ -220,7 +220,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
       margin: 1
     }).then(setQrCodeUrl);
   }, [partnerInfo, post]);
-  return <div ref={ref} data-share-card className={cn("relative overflow-hidden rounded-2xl", isPreview ? "w-full p-4" : "w-[600px] p-8")} style={{
+  return <div ref={ref} data-share-card className={cn("relative overflow-hidden rounded-2xl", isPreview ? "w-full p-4 pb-6" : "w-[600px] p-8 pb-10")} style={{
     minHeight: "auto",
     background: "linear-gradient(135deg, hsl(330, 80%, 95%), hsl(270, 70%, 95%), hsl(200, 80%, 95%))",
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif'
@@ -264,7 +264,13 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
       {post.content && <div className={cn("bg-background/60 backdrop-blur-sm rounded-xl shadow-sm border border-primary/10", isPreview ? "p-3 mb-3" : "p-4 mb-4")}>
           {/* 来源标签 - 放在内容框内部顶部 */}
           {sourceLabel && <div className={cn("text-left", isPreview ? "mb-3" : "mb-4")}>
-              <span className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full", "bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30", "text-pink-700 dark:text-pink-300 font-medium shadow-sm", isPreview ? "text-xs" : "text-sm")}>
+              <span 
+                className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium shadow-sm", isPreview ? "text-xs" : "text-sm")}
+                style={{
+                  background: "linear-gradient(to right, rgb(252, 231, 243), rgb(243, 232, 255))",
+                  color: "#be185d"
+                }}
+              >
                 <span>{sourceLabel.emoji}</span>
                 <span>{sourceLabel.label}</span>
               </span>
