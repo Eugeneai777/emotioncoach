@@ -239,21 +239,6 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
           </p>
         </div>}
 
-      {/* 来源标签 - 仅 AI 故事智能体内容显示 */}
-      {sourceLabel && (
-        <div className={cn("text-center", isPreview ? "mb-2" : "mb-3")}>
-          <span className={cn(
-            "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full",
-            "bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30",
-            "text-pink-700 dark:text-pink-300 font-medium shadow-sm",
-            isPreview ? "text-xs" : "text-sm"
-          )}>
-            <span>{sourceLabel.emoji}</span>
-            <span>{sourceLabel.label}</span>
-          </span>
-        </div>
-      )}
-
       {/* 标题 */}
       {post.title && <h2 className={cn("font-bold text-foreground text-center", isPreview ? "text-lg mb-3" : "text-2xl mb-4")}>
           {post.title}
@@ -261,6 +246,21 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
 
       {/* 内容 - 智能格式化 */}
       {post.content && <div className={cn("bg-background/60 backdrop-blur-sm rounded-xl shadow-sm border border-primary/10", isPreview ? "p-3 mb-3" : "p-4 mb-4")}>
+          {/* 来源标签 - 放在内容框内部顶部 */}
+          {sourceLabel && (
+            <div className={cn("text-center", isPreview ? "mb-3" : "mb-4")}>
+              <span className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full",
+                "bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30",
+                "text-pink-700 dark:text-pink-300 font-medium shadow-sm",
+                isPreview ? "text-xs" : "text-sm"
+              )}>
+                <span>{sourceLabel.emoji}</span>
+                <span>{sourceLabel.label}</span>
+              </span>
+            </div>
+          )}
+          
           {formatContent(post.content, isPreview)}
         </div>}
 
