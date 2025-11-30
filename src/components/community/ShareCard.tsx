@@ -123,6 +123,46 @@ const getQRCodeUrl = (
   // 默认（普通情绪日记/无来源）→ 情绪教练详情页
   return `${baseUrl}/introduction`;
 };
+
+// 智能格式化内容，识别段落标记
+const formatContent = (content: string, isPreview: boolean): React.ReactNode[] => {
+  // 按段落标记拆分
+  const parts = content.split(/(\【[^】]+\】[^\【]*)/g).filter(Boolean);
+  
+  return parts.map((part, index) => {
+    // 匹配【标题】后面的内容
+    const match = part.match(/\【([^】]+)\】\s*(.*)/s);
+    
+    if (match) {
+      const [, title, text] = match;
+      // 根据标题类型选择不同颜色和图标
+      const titleStyles: Record<string, { emoji: string; color: string }> = {
+        '问题': { emoji: '❓', color: 'text-orange-600' },
+        '转折': { emoji: '🔄', color: 'text-blue-600' },
+        '成长': { emoji: '🌱', color: 'text-green-600' },
+        '反思': { emoji: '💭', color: 'text-purple-600' },
+        '洞察': { emoji: '💡', color: 'text-yellow-600' },
+        '行动': { emoji: '🎯', color: 'text-red-600' },
+      };
+      const style = titleStyles[title] || { emoji: '📌', color: 'text-primary' };
+      
+      return (
+        <div key={index} className={cn("last:mb-0", isPreview ? "mb-3" : "mb-4")}>
+          <div className={cn("font-bold mb-1.5 flex items-center gap-1.5", style.color, isPreview ? "text-sm" : "text-base")}>
+            <span>{style.emoji}</span>
+            <span>【{title}】</span>
+          </div>
+          <p className={cn("text-foreground/85 leading-relaxed", isPreview ? "text-xs pl-4" : "text-sm pl-5")}>
+            {text.trim()}
+          </p>
+        </div>
+      );
+    }
+    
+    // 普通段落
+    return <p key={index} className={cn("text-foreground/85 leading-relaxed last:mb-0", isPreview ? "text-xs mb-2" : "text-sm mb-3")}>{part}</p>;
+  });
+};
 const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
   post,
   isPreview = false,
@@ -172,31 +212,13 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
         </div>}
 
       {/* 标题 */}
-      {post.title && <h2 className={cn("font-bold text-foreground text-center mb-2", isPreview ? "text-lg" : "text-2xl")}>
+      {post.title && <h2 className={cn("font-bold text-foreground text-center", isPreview ? "text-lg mb-3" : "text-2xl mb-4")}>
           {post.title}
         </h2>}
 
-      {/* 情绪主题显示 */}
-      {post.emotion_theme && <div className={cn("text-center mb-3", isPreview ? "mb-2" : "mb-4")}>
-          <div className="inline-flex items-center gap-2 bg-background/60 rounded-full px-4 py-2">
-            <span className={cn(isPreview ? "text-xl" : "text-2xl")}>{emotionEmoji}</span>
-            <span className={cn("font-medium text-foreground", isPreview ? "text-sm" : "text-base")}>
-              {post.emotion_theme}
-            </span>
-            {post.emotion_intensity && <>
-                <span className="text-muted-foreground">·</span>
-                <span className={cn("text-primary font-medium", isPreview ? "text-xs" : "text-sm")}>
-                  强度 {post.emotion_intensity}/10
-                </span>
-              </>}
-          </div>
-        </div>}
-
-      {/* 内容 */}
+      {/* 内容 - 智能格式化 */}
       {post.content && <div className={cn("bg-background/60 backdrop-blur-sm rounded-xl shadow-sm border border-primary/10", isPreview ? "p-3 mb-3" : "p-4 mb-4")}>
-          <p className={cn("text-foreground/90 leading-relaxed", isPreview ? "text-sm" : "text-base")}>
-            {post.content}
-          </p>
+          {formatContent(post.content, isPreview)}
         </div>}
 
       {/* 图片 */}
@@ -209,21 +231,23 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
           />
         </div>}
 
-      {/* 洞察与行动 */}
-      {(post.insight || post.action) && <div className={cn("space-y-2 bg-secondary/30 backdrop-blur-sm rounded-xl border border-primary/10", isPreview ? "mb-3 p-3" : "mb-4 p-4")}>
-          {post.insight && <div>
-              <p className={cn("font-medium text-primary mb-1", isPreview ? "text-xs" : "text-sm")}>
-                💡 今日洞察
+      {/* 洞察与行动 - 优化间距和分隔 */}
+      {(post.insight || post.action) && <div className={cn("bg-secondary/30 backdrop-blur-sm rounded-xl border border-primary/10", isPreview ? "mb-3 p-3" : "mb-4 p-4")}>
+          {post.insight && <div className={cn(post.action && (isPreview ? "pb-2.5 mb-2.5" : "pb-3 mb-3"), post.action && "border-b border-primary/10")}>
+              <p className={cn("font-bold text-primary mb-2 flex items-center gap-1.5", isPreview ? "text-xs" : "text-sm")}>
+                <span>💡</span>
+                <span>今日洞察</span>
               </p>
-              <p className={cn("text-foreground/80", isPreview ? "text-xs" : "text-sm")}>
+              <p className={cn("text-foreground/80 leading-relaxed", isPreview ? "text-xs" : "text-sm")}>
                 {post.insight}
               </p>
             </div>}
           {post.action && <div>
-              <p className={cn("font-medium text-primary mb-1", isPreview ? "text-xs" : "text-sm")}>
-                🎯 行动计划
+              <p className={cn("font-bold text-primary mb-2 flex items-center gap-1.5", isPreview ? "text-xs" : "text-sm")}>
+                <span>🎯</span>
+                <span>行动计划</span>
               </p>
-              <p className={cn("text-foreground/80", isPreview ? "text-xs" : "text-sm")}>
+              <p className={cn("text-foreground/80 leading-relaxed", isPreview ? "text-xs" : "text-sm")}>
                 {post.action}
               </p>
             </div>}
