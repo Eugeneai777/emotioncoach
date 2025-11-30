@@ -632,16 +632,6 @@ const Index = () => {
                       <span className="text-xs text-muted-foreground">温暖表达影响</span>
                     </div>
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => navigate("/ai-coach")}
-                    className="gap-2"
-                  >
-                    <span className="text-indigo-500">✨</span>
-                    <div className="flex flex-col">
-                      <span className="font-medium">生活教练</span>
-                      <span className="text-xs text-muted-foreground">四维健康分析</span>
-                    </div>
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={() => navigate("/energy-studio#coach")}
