@@ -31,6 +31,7 @@ export const useCommunicationChat = (conversationId?: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(conversationId || null);
+  const [userMessageCount, setUserMessageCount] = useState(0);
 
   useEffect(() => {
     if (conversationId) {
@@ -205,6 +206,7 @@ ${data.growth_insight}
       const userMessage: Message = { role: "user", content: input };
       setMessages(prev => [...prev, userMessage]);
       await saveMessage(convId, "user", input);
+      setUserMessageCount(prev => prev + 1);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("未登录");
@@ -377,12 +379,14 @@ ${data.growth_insight}
   const resetConversation = () => {
     setMessages([]);
     setCurrentConversationId(null);
+    setUserMessageCount(0);
   };
 
   return {
     messages,
     isLoading,
     currentConversationId,
+    userMessageCount,
     sendMessage,
     resetConversation,
   };
