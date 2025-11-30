@@ -355,48 +355,6 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
                       {coachSpace.emoji} {coachSpace.name}
                     </Badge>
                   )}
-                  {/* 编辑/删除按钮（只有作者能看到，且不是匿名帖子） */}
-                  {session?.user?.id === post.user_id && !post.is_anonymous && (
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setShowEditDialog(true)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>确认删除？</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              此操作无法撤销，该帖子及所有评论、点赞将被永久删除。
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>取消</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={handleDeletePost}
-                              disabled={deleting}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              {deleting ? "删除中..." : "确认删除"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  )}
                 </div>
               </div>
             </SheetHeader>
@@ -471,6 +429,51 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
                       {badge.icon} {badge.name}
                     </Badge>
                   ))}
+              </div>
+            )}
+
+            {/* 编辑/删除按钮区域 - 移到内容底部 */}
+            {session?.user?.id === post.user_id && !post.is_anonymous && (
+              <div className="flex items-center gap-2 pt-4 pb-4 mt-4 border-t border-border">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowEditDialog(true)}
+                  className="flex items-center gap-1"
+                >
+                  <Pencil className="h-4 w-4" />
+                  编辑
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-1 text-destructive hover:text-destructive border-destructive/50 hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      删除
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>确认删除？</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        此操作无法撤销，该帖子及所有评论、点赞将被永久删除。
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>取消</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeletePost}
+                        disabled={deleting}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {deleting ? "删除中..." : "确认删除"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             )}
 
