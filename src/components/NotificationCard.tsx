@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trash2, Heart, Star, Sparkles, Trophy, Bell, MessageCircle, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
@@ -133,15 +134,35 @@ export const NotificationCard = ({ notification, onClick, onDelete, colorTheme =
 
       {/* Quick Actions */}
       <div className="flex items-center gap-2 pt-1">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="h-7 px-2 text-xs"
-          onClick={handleDelete}
-        >
-          <Trash2 className="h-3 w-3 mr-1" />
-          删除
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              删除
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>确认删除通知？</AlertDialogTitle>
+              <AlertDialogDescription>
+                删除后无法恢复，确定要删除这条通知吗？
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>取消</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                确认删除
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Card>
   );
