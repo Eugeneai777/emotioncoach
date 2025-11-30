@@ -28,6 +28,7 @@ interface ShareButtonProps {
     badges: any;
     camp_type?: string;
     template_id?: string;
+    camp_name?: string;
   };
 }
 

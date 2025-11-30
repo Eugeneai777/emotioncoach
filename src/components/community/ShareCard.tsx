@@ -16,6 +16,7 @@ interface ShareCardProps {
     badges: any;
     camp_type?: string;
     template_id?: string;
+    camp_name?: string;
   };
   isPreview?: boolean;
   partnerInfo?: {
@@ -124,6 +125,32 @@ const getQRCodeUrl = (
   return `${baseUrl}/introduction`;
 };
 
+// 生成来源标签（仅 AI 故事智能体内容显示）
+const getSourceLabel = (
+  postType: string,
+  campName?: string,
+  badges?: any
+): { label: string; emoji: string } | null => {
+  // 只有 story 类型（AI 故事智能体生成）才显示来源标签
+  if (postType !== 'story') return null;
+  
+  // 优先使用 camp_name，其次从 badges 中获取
+  const displayCampName = campName || badges?.campName;
+  
+  if (displayCampName) {
+    return {
+      label: `${displayCampName}·今日成长故事`,
+      emoji: '🌸'
+    };
+  }
+  
+  // 没有训练营信息时的默认标签
+  return {
+    label: '今日成长故事',
+    emoji: '🌸'
+  };
+};
+
 // 智能格式化内容，识别段落标记
 const formatContent = (content: string, isPreview: boolean): React.ReactNode[] => {
   // 按段落标记拆分
@@ -171,6 +198,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const phaseInfo = getPhaseInfo(post.camp_day);
   const emotionEmoji = getEmotionEmoji(post.emotion_theme);
+  const sourceLabel = getSourceLabel(post.post_type, post.camp_name, post.badges);
   useEffect(() => {
     const qrUrl = getQRCodeUrl(partnerInfo, post);
     QRCode.toDataURL(qrUrl, {
@@ -210,6 +238,21 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
             {phaseInfo.nextPhase !== '完成' ? `${phaseInfo.nextPhase}在望` : '即将完成21天旅程'}
           </p>
         </div>}
+
+      {/* 来源标签 - 仅 AI 故事智能体内容显示 */}
+      {sourceLabel && (
+        <div className={cn("text-center", isPreview ? "mb-2" : "mb-3")}>
+          <span className={cn(
+            "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full",
+            "bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30",
+            "text-pink-700 dark:text-pink-300 font-medium shadow-sm",
+            isPreview ? "text-xs" : "text-sm"
+          )}>
+            <span>{sourceLabel.emoji}</span>
+            <span>{sourceLabel.label}</span>
+          </span>
+        </div>
+      )}
 
       {/* 标题 */}
       {post.title && <h2 className={cn("font-bold text-foreground text-center", isPreview ? "text-lg mb-3" : "text-2xl mb-4")}>
