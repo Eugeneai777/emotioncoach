@@ -326,6 +326,30 @@ const PostDetailSheet = ({
     };
     return labelMap[type] || "分享";
   };
+
+  // 生成来源标签（仅 AI 故事智能体内容显示）
+  const getSourceLabel = (postType: string, campName?: string, badges?: any): {
+    label: string;
+    emoji: string;
+  } | null => {
+    // 只有 story 类型（AI 故事智能体生成）才显示来源标签
+    if (postType !== 'story') return null;
+
+    // 优先使用 camp_name，其次从 badges 中获取
+    const displayCampName = campName || badges?.campName;
+    if (displayCampName) {
+      return {
+        label: `${displayCampName}·今日成长故事`,
+        emoji: '🌸'
+      };
+    }
+
+    // 没有训练营信息时的默认标签
+    return {
+      label: '今日成长故事',
+      emoji: '🌸'
+    };
+  };
   return <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-[90vh] p-0">
         <ScrollArea className="h-full">
@@ -368,6 +392,19 @@ const PostDetailSheet = ({
             {post.image_urls && post.image_urls.length > 0 && <div className="grid grid-cols-2 gap-2 mb-4">
                 {post.image_urls.map((url, index) => <img key={index} src={url} alt={`图片 ${index + 1}`} className="w-full rounded-lg object-cover" loading="lazy" />)}
               </div>}
+
+            {/* 来源标签 - 左对齐，仅 AI 故事显示 */}
+            {(() => {
+              const sourceLabel = getSourceLabel(post.post_type, post.camp_name, post.badges);
+              return sourceLabel ? (
+                <div className="mb-4">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30 text-pink-700 dark:text-pink-300 font-medium text-sm shadow-sm">
+                    <span>{sourceLabel.emoji}</span>
+                    <span>{sourceLabel.label}</span>
+                  </span>
+                </div>
+              ) : null;
+            })()}
 
             {/* 内容 */}
             {post.content && <div className="text-foreground leading-relaxed mb-4 whitespace-pre-wrap">
