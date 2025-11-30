@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { CoachCommunity } from "@/components/coach/CoachCommunity";
+import { VideoRecommendationCard } from "@/components/coach/VideoRecommendationCard";
+import { ToolRecommendationCard } from "@/components/coach/ToolRecommendationCard";
 import { useDynamicCoachChat } from "@/hooks/useDynamicCoachChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +21,8 @@ const DynamicCoach = () => {
     isLoading,
     lastBriefingId,
     coachRecommendation,
+    videoRecommendation,
+    toolRecommendation,
     sendMessage,
     resetConversation,
   } = useDynamicCoachChat(
@@ -121,6 +125,20 @@ const DynamicCoach = () => {
           />
         ) : undefined
       }
+      videoRecommendation={videoRecommendation ? (
+        <VideoRecommendationCard
+          topicSummary={videoRecommendation.topicSummary}
+          category={videoRecommendation.category}
+          learningGoal={videoRecommendation.learningGoal}
+        />
+      ) : undefined}
+      toolRecommendation={toolRecommendation ? (
+        <ToolRecommendationCard
+          userNeed={toolRecommendation.userNeed}
+          toolId={toolRecommendation.toolId}
+          usageReason={toolRecommendation.usageReason}
+        />
+      ) : undefined}
       community={template.enable_community ? <CoachCommunity /> : undefined}
       showNotificationCenter={template.enable_notifications || false}
     />

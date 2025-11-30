@@ -19,6 +19,18 @@ interface CoachRecommendation {
   reasoning: string;
 }
 
+interface VideoRecommendation {
+  topicSummary: string;
+  category: string;
+  learningGoal: string;
+}
+
+interface ToolRecommendation {
+  userNeed: string;
+  toolId: string;
+  usageReason: string;
+}
+
 export const useDynamicCoachChat = (
   coachKey: string,
   edgeFunctionName: string,
@@ -31,6 +43,8 @@ export const useDynamicCoachChat = (
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(conversationId || null);
   const [lastBriefingId, setLastBriefingId] = useState<string | null>(null);
   const [coachRecommendation, setCoachRecommendation] = useState<CoachRecommendation | null>(null);
+  const [videoRecommendation, setVideoRecommendation] = useState<VideoRecommendation | null>(null);
+  const [toolRecommendation, setToolRecommendation] = useState<ToolRecommendation | null>(null);
 
   useEffect(() => {
     if (conversationId) {
@@ -248,6 +262,26 @@ export const useDynamicCoachChat = (
               reasoning: recommendationData.reasoning,
             });
           }
+          
+          // 处理视频课程推荐工具
+          if (toolCall?.function?.name === "video_course_recommendation") {
+            const videoData = JSON.parse(toolCall.function.arguments);
+            setVideoRecommendation({
+              topicSummary: videoData.topic_summary,
+              category: videoData.recommended_category,
+              learningGoal: videoData.learning_goal,
+            });
+          }
+          
+          // 处理工具推荐
+          if (toolCall?.function?.name === "tool_recommendation") {
+            const toolData = JSON.parse(toolCall.function.arguments);
+            setToolRecommendation({
+              userNeed: toolData.user_need,
+              toolId: toolData.recommended_tool_id,
+              usageReason: toolData.usage_reason,
+            });
+          }
         } catch (e) {
           console.error("处理工具调用失败:", e);
         }
@@ -270,6 +304,8 @@ export const useDynamicCoachChat = (
     setCurrentConversationId(null);
     setLastBriefingId(null);
     setCoachRecommendation(null);
+    setVideoRecommendation(null);
+    setToolRecommendation(null);
   };
 
   return {
@@ -277,6 +313,8 @@ export const useDynamicCoachChat = (
     isLoading,
     lastBriefingId,
     coachRecommendation,
+    videoRecommendation,
+    toolRecommendation,
     sendMessage,
     resetConversation,
   };

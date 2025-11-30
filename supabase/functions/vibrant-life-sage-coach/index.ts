@@ -43,7 +43,7 @@ serve(async (req) => {
 
     const systemPrompt = templateData?.system_prompt || `你是劲老师，一位温暖的生活教练。帮助用户探索问题、找到方向。`;
 
-    // 定义推荐教练工具
+    // 定义推荐工具
     const tools = [
       {
         type: "function",
@@ -68,6 +68,58 @@ serve(async (req) => {
               }
             },
             required: ["user_issue_summary", "recommended_coach_key", "reasoning"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "video_course_recommendation",
+          description: "根据用户当前的话题，推荐相关的视频课程深入学习。",
+          parameters: {
+            type: "object",
+            properties: {
+              topic_summary: {
+                type: "string",
+                description: "用户关心的主题总结"
+              },
+              recommended_category: {
+                type: "string",
+                enum: ["领导力", "情绪管理", "沟通技巧", "亲子关系", "自我成长"],
+                description: "推荐的视频类别"
+              },
+              learning_goal: {
+                type: "string",
+                description: "观看视频能达成的学习目标"
+              }
+            },
+            required: ["topic_summary", "recommended_category", "learning_goal"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "tool_recommendation",
+          description: "根据用户需求，推荐有劲生活馆能量工作室的实用工具。",
+          parameters: {
+            type: "object",
+            properties: {
+              user_need: {
+                type: "string",
+                description: "用户当前的需求或状态"
+              },
+              recommended_tool_id: {
+                type: "string",
+                enum: ["breathing", "meditation", "first-aid", "mindfulness", "gratitude", "values", "strengths", "vision", "habits", "energy", "sleep", "declaration"],
+                description: "推荐的工具ID"
+              },
+              usage_reason: {
+                type: "string",
+                description: "为什么这个工具适合当前情况"
+              }
+            },
+            required: ["user_need", "recommended_tool_id", "usage_reason"]
           }
         }
       }
