@@ -65,6 +65,9 @@ interface CoachLayoutProps {
   trainingCamp?: ReactNode;
   notifications?: ReactNode;
   community?: ReactNode;
+  videoRecommendation?: ReactNode;
+  toolRecommendation?: ReactNode;
+  bottomContent?: ReactNode;
   showNotificationCenter?: boolean;
 }
 
@@ -98,6 +101,9 @@ export const CoachLayout = ({
   trainingCamp,
   notifications,
   community,
+  videoRecommendation,
+  toolRecommendation,
+  bottomContent,
   showNotificationCenter = true
 }: CoachLayoutProps) => {
   const navigate = useNavigate();
@@ -195,6 +201,16 @@ export const CoachLayout = ({
               <div ref={messagesEndRef} />
             </div>
           )}
+          
+          {/* Recommendations section */}
+          {(videoRecommendation || toolRecommendation) && messages.length > 0 && (
+            <div className="space-y-2 mt-4">
+              {videoRecommendation}
+              {toolRecommendation}
+            </div>
+          )}
+          
+          {bottomContent}
         </div>
       </main>
 
