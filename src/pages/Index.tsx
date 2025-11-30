@@ -998,13 +998,14 @@ const Index = () => {
           )}
           {messages.length === 0 && coachConfig?.enable_scenarios && coachConfig?.scenarios && (
             <div className="mb-3 animate-in slide-in-from-bottom-2 duration-300">
-              <CoachScenarioChips
-                scenarios={coachConfig.scenarios as any[]}
-                onSelectScenario={(prompt) => {
-                  setInput(prompt);
-                }}
-                primaryColor={coachConfig.primary_color}
-              />
+                <CoachScenarioChips
+                  scenarios={coachConfig.scenarios as any[]}
+                  onSelectScenario={async (prompt) => {
+                    setInput("");
+                    await sendMessage(prompt);
+                  }}
+                  primaryColor={coachConfig.primary_color}
+                />
             </div>
           )}
           <div className="flex gap-3 items-end">

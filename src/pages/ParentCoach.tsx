@@ -826,8 +826,9 @@ ${briefing.growth_story || '暂无记录'}
               <div className="mb-3 animate-in slide-in-from-bottom-2 duration-300">
                 <CoachScenarioChips
                   scenarios={coachConfig.scenarios as any[]}
-                  onSelectScenario={(prompt) => {
-                    setInput(prompt);
+                  onSelectScenario={async (prompt) => {
+                    setInput("");
+                    await handleSendMessage(prompt);
                   }}
                   primaryColor={coachConfig.primary_color}
                 />

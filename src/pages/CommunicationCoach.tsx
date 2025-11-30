@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { CoachLayout } from "@/components/coach/CoachLayout";
-import { CommunicationScenarioChips } from "@/components/communication/CommunicationScenarioChips";
+import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { CommunicationDifficultyDialog } from "@/components/communication/CommunicationDifficultyDialog";
 import { CommunicationNotificationsModule } from "@/components/communication/CommunicationNotificationsModule";
 import { CommunicationTrainingCampModule } from "@/components/communication/CommunicationTrainingCampModule";
@@ -104,7 +104,13 @@ const CommunicationCoach = () => {
         placeholder={template.placeholder || '分享你的想法...'}
         communicationBriefingId={lastBriefingId}
         scenarioChips={
-          <CommunicationScenarioChips onSelectScenario={handleSelectScenario} />
+          template.enable_scenarios && template.scenarios ? (
+            <CoachScenarioChips
+              scenarios={template.scenarios as any[]}
+              onSelectScenario={handleSelectScenario}
+              primaryColor={template.primary_color}
+            />
+          ) : undefined
         }
         notifications={<CommunicationNotificationsModule />}
         trainingCamp={<CommunicationTrainingCampModule />}
