@@ -233,7 +233,25 @@ const PostDetailSheet = ({
     try {
       const canvas = await html2canvas(cardRef.current, {
         backgroundColor: "#ffffff",
-        scale: 2
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.body.querySelector('[data-share-card]');
+          if (clonedElement) {
+            // 设置安全的系统字体
+            (clonedElement as HTMLElement).style.fontFamily = 
+              '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif';
+            
+            // 确保所有图片都加载完成
+            const images = clonedElement.querySelectorAll('img');
+            images.forEach((img) => {
+              (img as HTMLImageElement).crossOrigin = 'anonymous';
+            });
+          }
+        }
       });
       canvas.toBlob(blob => {
         if (!blob) {

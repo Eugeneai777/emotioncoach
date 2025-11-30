@@ -231,10 +231,10 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
       <div className="absolute bottom-40 right-8 text-xl opacity-20">🌟</div>
 
       {/* 顶部留白 */}
-      <div className={cn(isPreview ? "pt-2" : "pt-4")} />
+      <div className={cn(isPreview ? "pt-4" : "pt-8")} />
 
       {/* 打卡进度区 */}
-      {post.camp_day && <div className={cn(isPreview ? "mb-4" : "mb-8")}>
+      {post.camp_day && <div className={cn(isPreview ? "mb-6" : "mb-10")}>
           <div className={cn("text-center mb-2", isPreview ? "text-base" : "text-xl")}>
             <span className="font-bold text-primary">
               🔥 我的第 {post.camp_day} 天 · {phaseInfo.phase} {phaseInfo.emoji}
@@ -251,7 +251,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
         </div>}
 
       {/* 标题 */}
-      {post.title && <h2 className={cn("font-bold text-foreground text-center", isPreview ? "text-lg mb-4" : "text-2xl mb-6")}>
+      {post.title && <h2 className={cn("font-bold text-foreground text-center", isPreview ? "text-lg mb-5" : "text-2xl mb-8")}>
           {post.title.replace(/^[^\w\s\u4e00-\u9fa5]+/, '').trim()}
         </h2>}
 
