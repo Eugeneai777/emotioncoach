@@ -95,17 +95,6 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
       <div className="absolute top-20 left-4 text-xl opacity-20">💫</div>
       <div className="absolute bottom-40 right-8 text-xl opacity-20">🌟</div>
 
-      {/* 品牌头部 */}
-      <div className={cn("text-center", isPreview ? "mb-3" : "mb-6")}>
-        <div className="flex items-center justify-center gap-2 mb-2">
-          
-          <h1 className={cn("font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent", isPreview ? "text-xl" : "text-3xl")}>
-            有劲AI · 情绪日记
-          </h1>
-        </div>
-        
-        
-      </div>
 
       {/* 打卡进度区 */}
       {post.camp_day && <div className={cn("mb-4", isPreview ? "mb-3" : "mb-6")}>
@@ -194,16 +183,13 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
 
       {/* 底部CTA区域 */}
       <div className={cn("space-y-3", isPreview ? "space-y-2" : "space-y-4")}>
-        {/* 限时福利提示 */}
-        <div className={cn("text-center bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg", isPreview ? "py-2 px-3" : "py-3 px-4")}>
-          <p className={cn("font-bold text-primary", isPreview ? "text-sm" : "text-base")}>
-            🎁 扫码加入，开启你的情绪成长之旅
-          </p>
-        </div>
-
+        {/* 品牌水印 + 价值清单 + 二维码 */}
         <div className={cn("flex gap-4 items-start", isPreview && "gap-3")}>
           {/* 价值清单 */}
           <div className="flex-1 space-y-2">
+            <p className={cn("font-medium text-primary/80 mb-2", isPreview ? "text-xs" : "text-sm")}>
+              有劲AI · 情绪日记
+            </p>
             <div className={cn("flex items-start gap-2", isPreview ? "text-xs" : "text-sm")}>
               <span className="text-primary mt-0.5">✅</span>
               <span className="text-foreground/90">温暖AI陪伴</span>
@@ -231,8 +217,12 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
           </p>
         </div>
 
-        {/* 社会认同 */}
-        
+        {/* 最终CTA - 移到最后 */}
+        <div className={cn("text-center bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg", isPreview ? "py-2 px-3" : "py-3 px-4")}>
+          <p className={cn("font-bold text-primary", isPreview ? "text-sm" : "text-base")}>
+            🎁 扫码加入，开启你的情绪成长之旅
+          </p>
+        </div>
       </div>
     </div>;
 });
