@@ -413,19 +413,24 @@ const ParentChildDiary = () => {
           <Tabs defaultValue="list" className="w-full">
             <TabsList className="grid w-full grid-cols-5 mb-4 md:mb-6 h-auto">
               <TabsTrigger value="list" className="text-xs md:text-sm py-2">
-                列表
+                <span className="hidden sm:inline">记录列表</span>
+                <span className="sm:hidden">列表</span>
               </TabsTrigger>
               <TabsTrigger value="trends" className="text-xs md:text-sm py-2">
-                趋势
+                <span className="hidden sm:inline">情绪趋势</span>
+                <span className="sm:hidden">趋势</span>
               </TabsTrigger>
               <TabsTrigger value="patterns" className="text-xs md:text-sm py-2">
-                洞察
+                <span className="hidden sm:inline">模式洞察</span>
+                <span className="sm:hidden">洞察</span>
               </TabsTrigger>
               <TabsTrigger value="compare" className="text-xs md:text-sm py-2">
-                对比
+                <span className="hidden sm:inline">记录对比</span>
+                <span className="sm:hidden">对比</span>
               </TabsTrigger>
               <TabsTrigger value="review" className="text-xs md:text-sm py-2">
-                复盘
+                <span className="hidden sm:inline">情绪复盘</span>
+                <span className="sm:hidden">复盘</span>
               </TabsTrigger>
             </TabsList>
 
@@ -507,14 +512,27 @@ const ParentChildDiary = () => {
             </TabsContent>
 
             <TabsContent value="trends">
-              <div className="space-y-6">
-                <ParentEmotionTagCloud sessions={sessions} />
-                <ParentCycleAnalysis sessions={sessions} />
-              </div>
+              <ScrollArea className="h-[calc(100vh-280px)]">
+                <div className="space-y-4 md:space-y-6">
+                  {/* 宏观视角 */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground px-1">📊 宏观视角</h3>
+                    <ParentEmotionTagCloud sessions={sessions} />
+                  </div>
+
+                  {/* 深度分析 */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground px-1">🔍 深度分析</h3>
+                    <ParentCycleAnalysis sessions={sessions} />
+                  </div>
+                </div>
+              </ScrollArea>
             </TabsContent>
 
             <TabsContent value="patterns">
-              <ParentPatternInsights sessions={sessions} />
+              <ScrollArea className="h-[calc(100vh-280px)]">
+                <ParentPatternInsights />
+              </ScrollArea>
             </TabsContent>
 
             <TabsContent value="compare">

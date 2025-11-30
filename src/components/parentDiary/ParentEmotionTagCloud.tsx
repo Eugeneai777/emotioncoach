@@ -1,5 +1,5 @@
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface ParentTag {
   id: string;
@@ -20,97 +20,165 @@ interface ParentEmotionTagCloudProps {
   sessions: ParentSession[];
 }
 
-export const ParentEmotionTagCloud = ({ sessions }: ParentEmotionTagCloudProps) => {
-  // 统计标签出现频率
-  const tagStats = sessions.reduce((acc, session) => {
-    session.tags?.forEach(tag => {
-      if (!acc[tag.name]) {
-        acc[tag.name] = { count: 0, color: tag.color, name: tag.name };
-      }
-      acc[tag.name].count++;
-    });
-    return acc;
-  }, {} as Record<string, { count: number; color: string; name: string }>);
+interface TagFrequency {
+  tag: ParentTag;
+  count: number;
+}
 
-  const sortedTags = Object.values(tagStats).sort((a, b) => b.count - a.count);
+export const ParentEmotionTagCloud = ({ sessions }: ParentEmotionTagCloudProps) => {
+  const navigate = useNavigate();
+  
+  const tagFrequencies = useMemo(() => {
+    const tagMap = new Map<string, TagFrequency>();
+
+    sessions.forEach((session) => {
+      session.tags?.forEach((tag) => {
+        const existing = tagMap.get(tag.id);
+        if (existing) {
+          existing.count += 1;
+        } else {
+          tagMap.set(tag.id, { tag, count: 1 });
+        }
+      });
+    });
+
+    return Array.from(tagMap.values()).sort((a, b) => b.count - a.count);
+  }, [sessions]);
 
   // 统计情绪主题
-  const emotionThemes = sessions
-    .filter(s => s.briefing?.emotion_theme)
-    .reduce((acc, session) => {
-      const theme = session.briefing!.emotion_theme;
-      acc[theme] = (acc[theme] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+  const emotionThemes = useMemo(() => {
+    const themes = sessions
+      .filter(s => s.briefing?.emotion_theme)
+      .reduce((acc, session) => {
+        const theme = session.briefing!.emotion_theme;
+        acc[theme] = (acc[theme] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
 
-  const sortedThemes = Object.entries(emotionThemes)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10);
+    return Object.entries(themes)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+  }, [sessions]);
 
-  const maxCount = Math.max(...sortedTags.map(t => t.count));
-  const maxThemeCount = Math.max(...sortedThemes.map(t => t[1]));
+  if (tagFrequencies.length === 0 && emotionThemes.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">还没有情绪标签记录</p>
+        <p className="text-sm text-muted-foreground mt-2">完成情绪梳理后会自动生成标签 🌿</p>
+      </div>
+    );
+  }
 
-  const getFontSize = (count: number, max: number) => {
-    const ratio = count / max;
-    if (ratio > 0.8) return "text-2xl md:text-3xl";
-    if (ratio > 0.6) return "text-xl md:text-2xl";
-    if (ratio > 0.4) return "text-lg md:text-xl";
-    return "text-base md:text-lg";
+  const maxCount = tagFrequencies.length > 0 ? tagFrequencies[0].count : 1;
+  const minCount = tagFrequencies.length > 0 ? tagFrequencies[tagFrequencies.length - 1].count : 1;
+  const maxThemeCount = emotionThemes.length > 0 ? Math.max(...emotionThemes.map(t => t[1])) : 1;
+
+  const getFontSize = (count: number, max: number, min: number, isMobile: boolean = false) => {
+    const ratio = max === min ? 1 : (count - min) / (max - min);
+    if (isMobile) {
+      const minSize = 0.75; // 12px
+      const maxSize = 1.5; // 24px
+      return minSize + ratio * (maxSize - minSize);
+    }
+    const minSize = 0.875; // 14px (text-sm)
+    const maxSize = 2.5; // 40px (text-4xl)
+    return minSize + ratio * (maxSize - minSize);
   };
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          🏷️ 亲子标签词云
-        </h3>
-        {sortedTags.length > 0 ? (
-          <div className="flex flex-wrap gap-3 justify-center items-center p-4">
-            {sortedTags.map((tag) => (
-              <Badge
-                key={tag.name}
-                variant="outline"
-                className={`${getFontSize(tag.count, maxCount)} px-3 py-1.5 cursor-pointer hover:scale-110 transition-transform`}
-                style={{
-                  backgroundColor: `${tag.color}15`,
-                  color: tag.color,
-                  borderColor: tag.color,
-                }}
-              >
-                {tag.name} ({tag.count})
-              </Badge>
-            ))}
+      {tagFrequencies.length > 0 && (
+        <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-4 md:p-8 space-y-4 md:space-y-6">
+          <div className="space-y-1 md:space-y-2">
+            <h3 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
+              ☁️ 亲子标签词云
+            </h3>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              展示你最常出现的亲子标签，帮助你了解自己的模式
+            </p>
           </div>
-        ) : (
-          <p className="text-center text-muted-foreground py-8">暂无标签数据</p>
-        )}
-      </Card>
 
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          💜 情绪主题分布
-        </h3>
-        {sortedThemes.length > 0 ? (
-          <div className="flex flex-wrap gap-3 justify-center items-center p-4">
-            {sortedThemes.map(([theme, count]) => (
-              <Badge
-                key={theme}
-                variant="outline"
-                className={`${getFontSize(count, maxThemeCount)} px-3 py-1.5`}
+          <div className="flex flex-wrap gap-2 md:gap-4 items-center justify-center p-4 md:p-6 bg-background/50 rounded-xl md:rounded-2xl min-h-[200px] md:min-h-[300px]">
+            {tagFrequencies.map(({ tag, count }) => (
+              <div
+                key={tag.id}
+                className="transition-transform hover:scale-110 cursor-pointer md:hidden"
                 style={{
-                  backgroundColor: "hsl(var(--primary) / 0.1)",
-                  color: "hsl(var(--primary))",
-                  borderColor: "hsl(var(--primary))",
+                  fontSize: `${getFontSize(count, maxCount, minCount, true)}rem`,
+                  color: tag.color,
+                  fontWeight: 600,
+                  textShadow: `0 1px 4px ${tag.color}30`,
                 }}
+                title={`${tag.name}: 出现 ${count} 次`}
               >
-                {theme} ({count})
-              </Badge>
+                {tag.name}
+              </div>
+            ))}
+            {tagFrequencies.map(({ tag, count }) => (
+              <div
+                key={`desktop-${tag.id}`}
+                className="transition-transform hover:scale-110 cursor-pointer hidden md:block"
+                style={{
+                  fontSize: `${getFontSize(count, maxCount, minCount, false)}rem`,
+                  color: tag.color,
+                  fontWeight: 600,
+                  textShadow: `0 2px 8px ${tag.color}30`,
+                }}
+                title={`${tag.name}: 出现 ${count} 次`}
+              >
+                {tag.name}
+              </div>
             ))}
           </div>
-        ) : (
-          <p className="text-center text-muted-foreground py-8">暂无情绪主题数据</p>
-        )}
-      </Card>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[10px] md:text-xs text-muted-foreground pt-3 md:pt-4 border-t border-border/50">
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <div className="text-xs md:text-sm font-medium">💫</div>
+              <span>字体越大，出现频率越高</span>
+            </div>
+            <div>共 {tagFrequencies.length} 个标签</div>
+          </div>
+        </div>
+      )}
+
+      {emotionThemes.length > 0 && (
+        <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-4 md:p-8 space-y-4 md:space-y-6">
+          <div className="space-y-1 md:space-y-2">
+            <h3 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
+              💜 情绪主题分布
+            </h3>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              最常出现的情绪主题
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2 md:gap-4 items-center justify-center p-4 md:p-6 bg-background/50 rounded-xl md:rounded-2xl min-h-[150px] md:min-h-[200px]">
+            {emotionThemes.map(([theme, count]) => {
+              const ratio = count / maxThemeCount;
+              const fontSize = 0.875 + ratio * 1.625; // 0.875rem to 2.5rem
+              return (
+                <div
+                  key={theme}
+                  className="transition-transform hover:scale-110"
+                  style={{
+                    fontSize: `${fontSize}rem`,
+                    color: "hsl(var(--primary))",
+                    fontWeight: 600,
+                    textShadow: "0 2px 8px hsl(var(--primary) / 0.3)",
+                  }}
+                  title={`${theme}: 出现 ${count} 次`}
+                >
+                  {theme}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center justify-end gap-2 text-[10px] md:text-xs text-muted-foreground pt-3 md:pt-4 border-t border-border/50">
+            <div>共 {emotionThemes.length} 个主题</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
