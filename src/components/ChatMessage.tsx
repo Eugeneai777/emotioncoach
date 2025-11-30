@@ -56,7 +56,7 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
   };
   
   // 检测是否包含编号选项（如 "1. 选项"、"1、选项" 或 "A. 选项"）
-  const optionRegex = /^([A-Da-d]|\d+)[.、]\s*(.+)$/gm;
+  const optionRegex = /^\s*([A-Da-d]|\d+)[.、]\s*(.+)$/gm;
   const matches = Array.from(content.matchAll(optionRegex));
   
   // 检测单个"生成简报"或"分享"选项的特殊情况
@@ -76,7 +76,7 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
     const optionLines: number[] = [];
     
     lines.forEach((line, index) => {
-      const match = line.match(/^([A-Da-d]|\d+)[.、]\s*(.+)$/);
+      const match = line.match(/^\s*([A-Da-d]|\d+)[.、]\s*(.+)$/);
       if (match) {
         options.push({ number: match[1], text: match[2].trim() });
         optionLines.push(index);
