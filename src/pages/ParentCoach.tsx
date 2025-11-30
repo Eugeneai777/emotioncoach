@@ -449,7 +449,7 @@ ${briefing.growth_story || '暂无记录'}
               {/* 我的亲子日记 - 主CTA */}
               <Button
                 size="sm"
-                onClick={() => navigate("/parent-child-diary")}
+                onClick={() => navigate("/parent-diary")}
                 className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 font-semibold border-0"
               >
                 <BookHeart className="w-3.5 h-3.5 md:w-4 md:h-4" />
