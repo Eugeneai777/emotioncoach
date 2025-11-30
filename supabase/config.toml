@@ -1,5 +1,8 @@
 project_id = "vlsuzskvykddwrxbmcbu"
 
+[functions.emotion-coach]
+verify_jwt = true
+
 [functions.carnegie-coach]
 verify_jwt = true
 

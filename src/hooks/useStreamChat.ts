@@ -30,11 +30,13 @@ export const useStreamChat = (conversationId?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(conversationId);
   const [videoRecommendations, setVideoRecommendations] = useState<any[]>([]);
+  const [currentSession, setCurrentSession] = useState<any>(null);
+  const [currentStage, setCurrentStage] = useState(0);
   const { toast } = useToast();
 
-  const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+  const EMOTION_COACH_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/emotion-coach`;
 
-  // 加载现有对话
+  // 加载现有对话和会话
   useEffect(() => {
     if (currentConversationId) {
       loadConversation(currentConversationId);
@@ -43,19 +45,24 @@ export const useStreamChat = (conversationId?: string) => {
 
   const loadConversation = async (convId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("messages")
+      // Load emotion coaching session
+      const { data: sessionData } = await supabase
+        .from("emotion_coaching_sessions")
         .select("*")
         .eq("conversation_id", convId)
-        .order("created_at", { ascending: true });
+        .eq("status", "active")
+        .maybeSingle();
 
-      if (error) throw error;
-
-      if (data) {
-        setMessages(data.map(msg => ({
-          role: msg.role as "user" | "assistant",
-          content: msg.content
-        })));
+      if (sessionData) {
+        setCurrentSession(sessionData);
+        setCurrentStage(sessionData.current_stage || 0);
+        // Load messages from session
+        if (sessionData.messages && Array.isArray(sessionData.messages)) {
+          setMessages(sessionData.messages.map((msg: any) => ({
+            role: msg.role as "user" | "assistant",
+            content: msg.content
+          })));
+        }
       }
     } catch (error) {
       console.error("Error loading conversation:", error);
@@ -67,7 +74,8 @@ export const useStreamChat = (conversationId?: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      const { data, error } = await supabase
+      // Create conversation
+      const { data: convData, error: convError } = await supabase
         .from("conversations")
         .insert({
           user_id: user.id,
@@ -76,8 +84,26 @@ export const useStreamChat = (conversationId?: string) => {
         .select()
         .single();
 
-      if (error) throw error;
-      return data.id;
+      if (convError) throw convError;
+
+      // Create emotion coaching session
+      const { data: sessionData, error: sessionError } = await supabase
+        .from("emotion_coaching_sessions")
+        .insert({
+          user_id: user.id,
+          conversation_id: convData.id,
+          current_stage: 0,
+          status: "active"
+        })
+        .select()
+        .single();
+
+      if (sessionError) throw sessionError;
+
+      setCurrentSession(sessionData);
+      setCurrentStage(0);
+      
+      return convData.id;
     } catch (error) {
       console.error("Error creating conversation:", error);
       return null;
@@ -363,7 +389,7 @@ ${data.growth_story}
       return;
     }
 
-    // 如果没有对话ID，创建新对话
+    // 如果没有对话ID，创建新对话和会话
     let convId = currentConversationId;
     if (!convId) {
       convId = await createConversation();
@@ -372,32 +398,17 @@ ${data.growth_story}
       }
     }
 
+    // Ensure we have a session
+    if (!currentSession) {
+      toast({ title: "会话创建失败", variant: "destructive" });
+      return;
+    }
+
     const userMsg: Message = { role: "user", content: trimmedInput };
     setMessages((prev) => [...prev, userMsg]);
     setIsLoading(true);
 
-    // 保存用户消息
-    if (convId) {
-      await saveMessage(convId, "user", trimmedInput);
-    }
-
     let assistantContent = "";
-    let toolCallBuffer = "";
-    let inToolCall = false;
-    let currentToolName = "";
-
-    const updateAssistant = (chunk: string) => {
-      assistantContent += chunk;
-      setMessages((prev) => {
-        const last = prev[prev.length - 1];
-        if (last?.role === "assistant" && !last.type) {
-          return prev.map((m, i) =>
-            i === prev.length - 1 ? { ...m, content: assistantContent } : m
-          );
-        }
-        return [...prev, { role: "assistant", content: assistantContent }];
-      });
-    };
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -405,137 +416,64 @@ ${data.growth_story}
         throw new Error("未登录");
       }
 
-      // Filter out UI-only messages (like intensity_prompt) before sending to backend
-      const conversationMessages = messages.filter(msg => !msg.type || msg.type === "text");
-      
-      const resp = await fetch(CHAT_URL, {
+      // Call emotion-coach function
+      const resp = await fetch(EMOTION_COACH_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ messages: [...conversationMessages, userMsg] }),
+        body: JSON.stringify({ 
+          sessionId: currentSession.id,
+          message: trimmedInput
+        }),
       });
 
-      if (!resp.ok || !resp.body) {
+      if (!resp.ok) {
         const errorData = await resp.json();
-        throw new Error(errorData.error || "Failed to start stream");
+        throw new Error(errorData.error || "Failed to send message");
       }
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = "";
-      let streamDone = false;
+      const responseData = await resp.json();
+      
+      // Update assistant message
+      assistantContent = responseData.content || "";
+      setMessages((prev) => [...prev, { role: "assistant", content: assistantContent }]);
 
-      while (!streamDone) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") {
-            streamDone = true;
-            break;
-          }
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            
-            // 检查是否有tool调用
-            const toolCalls = parsed.choices?.[0]?.delta?.tool_calls;
-            if (toolCalls && toolCalls.length > 0) {
-              const toolCall = toolCalls[0];
-              
-              if (toolCall.function?.name === "generate_briefing") {
-                inToolCall = true;
-                currentToolName = "generate_briefing";
-                if (toolCall.function?.arguments) {
-                  toolCallBuffer += toolCall.function.arguments;
-                }
-              } else if (toolCall.function?.name === "request_emotion_intensity") {
-                inToolCall = true;
-                currentToolName = "request_emotion_intensity";
-                // Insert intensity prompt immediately
-                setMessages((prev) => [...prev, {
-                  role: "assistant",
-                  content: "",
-                  type: "intensity_prompt"
-                }]);
-              }
-            }
-            
-            // 正常内容更新
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              updateAssistant(content);
-            }
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
-            break;
+      // Handle tool calls
+      if (responseData.tool_call) {
+        const { function: functionName, args } = responseData.tool_call;
+        
+        if (functionName === 'capture_emotion' || functionName === 'complete_stage') {
+          // Reload session to get updated stage
+          const { data: updatedSession } = await supabase
+            .from('emotion_coaching_sessions')
+            .select('*')
+            .eq('id', currentSession.id)
+            .single();
+          
+          if (updatedSession) {
+            setCurrentSession(updatedSession);
+            setCurrentStage(updatedSession.current_stage || 0);
           }
         }
-      }
 
-      // 处理剩余缓冲区
-      if (textBuffer.trim()) {
-        for (let raw of textBuffer.split("\n")) {
-          if (!raw) continue;
-          if (raw.endsWith("\r")) raw = raw.slice(0, -1);
-          if (raw.startsWith(":") || raw.trim() === "") continue;
-          if (!raw.startsWith("data: ")) continue;
-          const jsonStr = raw.slice(6).trim();
-          if (jsonStr === "[DONE]") continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            
-            const toolCalls = parsed.choices?.[0]?.delta?.tool_calls;
-            if (toolCalls && toolCalls.length > 0) {
-              const toolCall = toolCalls[0];
-              if (toolCall.function?.name === "generate_briefing" && toolCall.function?.arguments) {
-                toolCallBuffer += toolCall.function.arguments;
-              }
+        if (functionName === 'generate_briefing' && convId) {
+          // Format and display briefing
+          const briefingText = formatBriefing(args);
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant") {
+              return prev.map((m, i) =>
+                i === prev.length - 1 ? { ...m, content: assistantContent + briefingText } : m
+              );
             }
-            
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) updateAssistant(content);
-          } catch {
-            /* ignore */
-          }
+            return prev;
+          });
+          
+          // Save briefing
+          await saveBriefing(convId, args);
         }
-      }
-
-      // 如果检测到简报生成，保存到数据库并显示在聊天中
-      if (inToolCall && currentToolName === "generate_briefing" && toolCallBuffer && convId) {
-        try {
-          const briefingData = JSON.parse(toolCallBuffer) as BriefingData;
-          
-          // 格式化并显示简报
-          const briefingText = formatBriefing(briefingData);
-          updateAssistant(briefingText);
-          
-          // 保存到数据库
-          await saveBriefing(convId, briefingData);
-          
-          // 添加温馨的分享提示
-          const sharePromptText = `\n\n✨ 记录完成！你今天的情绪旅程很有意义 🌈\n\n想把这份感受分享到有劲社区吗？让更多人看到你的成长～\n\n1. 去社区分享`;
-          updateAssistant(sharePromptText);
-        } catch (e) {
-          console.error("Error parsing briefing data:", e);
-        }
-      }
-
-      // 保存助手消息
-      if (convId && assistantContent) {
-        await saveMessage(convId, "assistant", assistantContent);
       }
 
       setIsLoading(false);
@@ -555,6 +493,8 @@ ${data.growth_story}
     setMessages([]);
     setCurrentConversationId(undefined);
     setVideoRecommendations([]);
+    setCurrentSession(null);
+    setCurrentStage(0);
   };
 
   return { 
@@ -563,6 +503,7 @@ ${data.growth_story}
     sendMessage, 
     resetConversation,
     conversationId: currentConversationId,
-    videoRecommendations
+    videoRecommendations,
+    currentStage
   };
 };
