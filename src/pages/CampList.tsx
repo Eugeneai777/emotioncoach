@@ -162,7 +162,7 @@ const CampList = () => {
               <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
                 <Home className="w-4 h-4" />
                 <ChevronRight className="w-4 h-4" />
-                <span>能量工作室</span>
+                <span>训练营</span>
                 <ChevronRight className="w-4 h-4" />
                 <span className="text-foreground font-medium">训练营列表</span>
               </div>
