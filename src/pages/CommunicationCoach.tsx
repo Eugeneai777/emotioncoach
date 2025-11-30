@@ -13,7 +13,7 @@ const CommunicationCoach = () => {
   const [showDifficultyDialog, setShowDifficultyDialog] = useState(false);
   const [difficultyConfirmed, setDifficultyConfirmed] = useState(false);
   const { toast } = useToast();
-  const { messages, isLoading, userMessageCount, sendMessage, resetConversation } = useCommunicationChat();
+  const { messages, isLoading, userMessageCount, lastBriefingId, sendMessage, resetConversation } = useCommunicationChat();
   const { data: template, isLoading: templateLoading } = useCoachTemplate('communication');
   
   // 在对话进行2轮后自动弹出难度选择
@@ -99,6 +99,7 @@ const CommunicationCoach = () => {
         onOptionClick={handleOptionClick}
         onOptionSelect={handleOptionSelect}
         placeholder={template.placeholder || '分享你的想法...'}
+        communicationBriefingId={lastBriefingId}
         scenarioChips={
           <CommunicationScenarioChips onSelectScenario={handleSelectScenario} />
         }

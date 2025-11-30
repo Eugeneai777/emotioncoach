@@ -44,6 +44,7 @@ export const useCommunicationChat = (conversationId?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(conversationId || null);
   const [userMessageCount, setUserMessageCount] = useState(0);
+  const [lastBriefingId, setLastBriefingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (conversationId) {
@@ -165,9 +166,9 @@ ${data.growth_insight}
 💾 简报已自动保存到你的历史记录中`;
   };
 
-  const saveCommunicationBriefing = async (convId: string, briefingData: CommunicationBriefingData) => {
+  const saveCommunicationBriefing = async (convId: string, briefingData: CommunicationBriefingData): Promise<string | null> => {
     try {
-      const { error } = await supabase
+      const { data: briefing, error } = await supabase
         .from("communication_briefings")
         .insert({
           conversation_id: convId,
@@ -187,7 +188,9 @@ ${data.growth_insight}
           scenario_type: briefingData.scenario_type,
           target_type: briefingData.target_type,
           difficulty_keywords: briefingData.difficulty_keywords,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -195,6 +198,8 @@ ${data.growth_insight}
         title: "简报已保存",
         description: "你的沟通简报已保存到历史记录",
       });
+
+      return briefing?.id || null;
     } catch (error: any) {
       console.error("保存简报失败:", error);
       toast({
@@ -202,6 +207,7 @@ ${data.growth_insight}
         description: error.message,
         variant: "destructive",
       });
+      return null;
     }
   };
 
@@ -358,7 +364,10 @@ ${data.growth_insight}
                   return [...prev, { role: "assistant", content: assistantMessage }];
                 });
 
-                await saveCommunicationBriefing(convId!, finalBriefingData);
+                const savedBriefingId = await saveCommunicationBriefing(convId!, finalBriefingData);
+                if (savedBriefingId) {
+                  setLastBriefingId(savedBriefingId);
+                }
               } catch (e) {
                 console.error("处理简报失败:", e);
               }
@@ -403,6 +412,7 @@ ${data.growth_insight}
     isLoading,
     currentConversationId,
     userMessageCount,
+    lastBriefingId,
     sendMessage,
     resetConversation,
   };
