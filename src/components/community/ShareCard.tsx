@@ -91,59 +91,54 @@ const getPhaseInfo = (campDay: number | null) => {
 };
 
 // 根据合伙人状态和帖子来源生成二维码URL
-const getQRCodeUrl = (
-  partnerInfo: ShareCardProps['partnerInfo'],
-  post: ShareCardProps['post']
-): string => {
+const getQRCodeUrl = (partnerInfo: ShareCardProps['partnerInfo'], post: ShareCardProps['post']): string => {
   // 优先使用生产域名环境变量，确保二维码指向正式发布的地址
   const baseUrl = import.meta.env.VITE_PRODUCTION_URL || window.location.origin;
-  
+
   // 合伙人：生成推广二维码
   if (partnerInfo?.isPartner && partnerInfo?.partnerId) {
     return `${baseUrl}/redeem?partner=${partnerInfo.partnerId}`;
   }
-  
+
   // 非合伙人：根据帖子来源跳转到对应教练详情页
   if (post.camp_type) {
     const campTypeMap: Record<string, string> = {
       'parent_emotion_21': '/parent-camp',
       'emotion_journal_21': '/camp-intro/emotion_journal_21',
       'emotion_bloom': '/camp-intro/emotion_bloom',
-      'identity_bloom': '/camp-intro/identity_bloom',
+      'identity_bloom': '/camp-intro/identity_bloom'
     };
     if (campTypeMap[post.camp_type]) {
       return `${baseUrl}${campTypeMap[post.camp_type]}`;
     }
   }
-  
+
   // 有自定义模板
   if (post.template_id) {
     return `${baseUrl}/camp-template/${post.template_id}`;
   }
-  
+
   // 默认（普通情绪日记/无来源）→ 情绪教练详情页
   return `${baseUrl}/introduction`;
 };
 
 // 生成来源标签（仅 AI 故事智能体内容显示）
-const getSourceLabel = (
-  postType: string,
-  campName?: string,
-  badges?: any
-): { label: string; emoji: string } | null => {
+const getSourceLabel = (postType: string, campName?: string, badges?: any): {
+  label: string;
+  emoji: string;
+} | null => {
   // 只有 story 类型（AI 故事智能体生成）才显示来源标签
   if (postType !== 'story') return null;
-  
+
   // 优先使用 camp_name，其次从 badges 中获取
   const displayCampName = campName || badges?.campName;
-  
   if (displayCampName) {
     return {
       label: `${displayCampName}·今日成长故事`,
       emoji: '🌸'
     };
   }
-  
+
   // 没有训练营信息时的默认标签
   return {
     label: '今日成长故事',
@@ -155,37 +150,56 @@ const getSourceLabel = (
 const formatContent = (content: string, isPreview: boolean): React.ReactNode[] => {
   // 按段落标记拆分
   const parts = content.split(/(\【[^】]+\】[^\【]*)/g).filter(Boolean);
-  
   return parts.map((part, index) => {
     // 匹配【标题】后面的内容
     const match = part.match(/\【([^】]+)\】\s*(.*)/s);
-    
     if (match) {
       const [, title, text] = match;
       // 根据标题类型选择不同颜色和图标
-      const titleStyles: Record<string, { emoji: string; color: string }> = {
-        '问题': { emoji: '❓', color: 'text-orange-600' },
-        '转折': { emoji: '🔄', color: 'text-blue-600' },
-        '成长': { emoji: '🌱', color: 'text-green-600' },
-        '反思': { emoji: '💭', color: 'text-purple-600' },
-        '洞察': { emoji: '💡', color: 'text-yellow-600' },
-        '行动': { emoji: '🎯', color: 'text-red-600' },
+      const titleStyles: Record<string, {
+        emoji: string;
+        color: string;
+      }> = {
+        '问题': {
+          emoji: '❓',
+          color: 'text-orange-600'
+        },
+        '转折': {
+          emoji: '🔄',
+          color: 'text-blue-600'
+        },
+        '成长': {
+          emoji: '🌱',
+          color: 'text-green-600'
+        },
+        '反思': {
+          emoji: '💭',
+          color: 'text-purple-600'
+        },
+        '洞察': {
+          emoji: '💡',
+          color: 'text-yellow-600'
+        },
+        '行动': {
+          emoji: '🎯',
+          color: 'text-red-600'
+        }
       };
-      const style = titleStyles[title] || { emoji: '📌', color: 'text-primary' };
-      
-      return (
-        <div key={index} className={cn("last:mb-0", isPreview ? "mb-3" : "mb-4")}>
+      const style = titleStyles[title] || {
+        emoji: '📌',
+        color: 'text-primary'
+      };
+      return <div key={index} className={cn("last:mb-0", isPreview ? "mb-3" : "mb-4")}>
           <div className={cn("font-bold mb-1.5 flex items-center gap-1.5", style.color, isPreview ? "text-sm" : "text-base")}>
-            <span>{style.emoji}</span>
+            
             <span>【{title}】</span>
           </div>
           <p className={cn("text-foreground/85 leading-relaxed", isPreview ? "text-xs pl-4" : "text-sm pl-5")}>
             {text.trim()}
           </p>
-        </div>
-      );
+        </div>;
     }
-    
+
     // 普通段落
     return <p key={index} className={cn("text-foreground/85 leading-relaxed last:mb-0", isPreview ? "text-xs mb-2" : "text-sm mb-3")}>{part}</p>;
   });
@@ -206,16 +220,11 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
       margin: 1
     }).then(setQrCodeUrl);
   }, [partnerInfo, post]);
-  return <div 
-    ref={ref} 
-    data-share-card
-    className={cn("relative overflow-hidden rounded-2xl", isPreview ? "w-full p-4" : "w-[600px] p-8")} 
-    style={{
-      minHeight: "auto",
-      background: "linear-gradient(135deg, hsl(330, 80%, 95%), hsl(270, 70%, 95%), hsl(200, 80%, 95%))",
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif'
-    }}
-  >
+  return <div ref={ref} data-share-card className={cn("relative overflow-hidden rounded-2xl", isPreview ? "w-full p-4" : "w-[600px] p-8")} style={{
+    minHeight: "auto",
+    background: "linear-gradient(135deg, hsl(330, 80%, 95%), hsl(270, 70%, 95%), hsl(200, 80%, 95%))",
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif'
+  }}>
       {/* 装饰性元素 */}
       <div className="absolute top-4 right-4 text-2xl opacity-20">✨</div>
       <div className="absolute top-20 left-4 text-xl opacity-20">💫</div>
@@ -247,31 +256,19 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
       {/* 内容 - 智能格式化 */}
       {post.content && <div className={cn("bg-background/60 backdrop-blur-sm rounded-xl shadow-sm border border-primary/10", isPreview ? "p-3 mb-3" : "p-4 mb-4")}>
           {/* 来源标签 - 放在内容框内部顶部 */}
-          {sourceLabel && (
-            <div className={cn("text-left", isPreview ? "mb-3" : "mb-4")}>
-              <span className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full",
-                "bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30",
-                "text-pink-700 dark:text-pink-300 font-medium shadow-sm",
-                isPreview ? "text-xs" : "text-sm"
-              )}>
+          {sourceLabel && <div className={cn("text-left", isPreview ? "mb-3" : "mb-4")}>
+              <span className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full", "bg-gradient-to-r from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30", "text-pink-700 dark:text-pink-300 font-medium shadow-sm", isPreview ? "text-xs" : "text-sm")}>
                 <span>{sourceLabel.emoji}</span>
                 <span>{sourceLabel.label}</span>
               </span>
-            </div>
-          )}
+            </div>}
           
           {formatContent(post.content, isPreview)}
         </div>}
 
       {/* 图片 */}
       {post.image_urls && post.image_urls.length > 0 && <div className={cn(isPreview ? "mb-3" : "mb-4")}>
-          <img 
-            src={post.image_urls[0]} 
-            alt="分享图片" 
-            crossOrigin="anonymous"
-            className={cn("w-full object-cover rounded-xl shadow-md", isPreview ? "h-40" : "h-64")} 
-          />
+          <img src={post.image_urls[0]} alt="分享图片" crossOrigin="anonymous" className={cn("w-full object-cover rounded-xl shadow-md", isPreview ? "h-40" : "h-64")} />
         </div>}
 
       {/* 洞察与行动 - 优化间距和分隔 */}
@@ -298,19 +295,14 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
 
       {/* 勋章展示 - 精美卡片样式 */}
       {post.badges && Object.keys(post.badges).length > 0 && <div className={cn("flex flex-wrap gap-2 justify-center", isPreview ? "mb-3" : "mb-4")}>
-          {Object.entries(post.badges)
-            .filter(([_, badge]: [string, any]) => badge?.icon && badge?.name)
-            .slice(0, 3)
-            .map(([key, badge]: [string, any]) => (
-              <div key={key} className={cn("bg-gradient-to-br from-primary/20 to-primary/10 backdrop-blur-sm rounded-xl shadow-sm border border-primary/20", isPreview ? "px-3 py-2" : "px-4 py-3")}>
+          {Object.entries(post.badges).filter(([_, badge]: [string, any]) => badge?.icon && badge?.name).slice(0, 3).map(([key, badge]: [string, any]) => <div key={key} className={cn("bg-gradient-to-br from-primary/20 to-primary/10 backdrop-blur-sm rounded-xl shadow-sm border border-primary/20", isPreview ? "px-3 py-2" : "px-4 py-3")}>
                 <div className="flex items-center gap-2">
                   <span className={cn(isPreview ? "text-lg" : "text-xl")}>{badge.icon}</span>
                   <span className={cn("font-medium text-foreground", isPreview ? "text-xs" : "text-sm")}>
                     {badge.name}
                   </span>
                 </div>
-              </div>
-            ))}
+              </div>)}
         </div>}
 
       {/* 分隔线 */}
@@ -355,10 +347,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
         {/* 最终CTA - 移到最后 */}
         <div className={cn("text-center bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg", isPreview ? "py-2 px-3" : "py-3 px-4")}>
           <p className={cn("font-bold text-primary", isPreview ? "text-sm" : "text-base")}>
-            {partnerInfo?.isPartner 
-              ? "🎁 扫码领取专属福利，立享预购优惠"
-              : "🎁 扫码了解详情，开启你的成长之旅"
-            }
+            {partnerInfo?.isPartner ? "🎁 扫码领取专属福利，立享预购优惠" : "🎁 扫码了解详情，开启你的成长之旅"}
           </p>
         </div>
       </div>
