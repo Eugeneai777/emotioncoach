@@ -15,6 +15,13 @@ import { FourStepsProgress } from "@/components/parentDiary/FourStepsProgress";
 import { ParentSessionHeatmap } from "@/components/parentDiary/ParentSessionHeatmap";
 import { ParentSessionTagSelector } from "@/components/parentDiary/ParentSessionTagSelector";
 import { ParentTagManager } from "@/components/parentDiary/ParentTagManager";
+import { ParentEmotionTagCloud } from "@/components/parentDiary/ParentEmotionTagCloud";
+import { ParentCycleAnalysis } from "@/components/parentDiary/ParentCycleAnalysis";
+import { ParentSessionComparison } from "@/components/parentDiary/ParentSessionComparison";
+import { ParentEmotionReview } from "@/components/parentDiary/ParentEmotionReview";
+import { MusicRecommendation } from "@/components/MusicRecommendation";
+import { EmotionIntensityCard } from "@/components/EmotionIntensityMeter";
+import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
 
 interface ParentTag {
   id: string;
@@ -33,6 +40,15 @@ interface ParentSession {
   summary: string | null;
   created_at: string;
   tags?: ParentTag[];
+  briefing?: {
+    emotion_theme: string;
+    emotion_intensity: number | null;
+    insight: string | null;
+    action: string | null;
+    growth_story: string | null;
+    intensity_reasoning: string | null;
+    intensity_keywords: string[] | null;
+  };
 }
 
 const ParentChildDiary = () => {
@@ -64,10 +80,21 @@ const ParentChildDiary = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Load completed parent coaching sessions
+      // Load completed parent coaching sessions with briefings
       const { data, error } = await supabase
         .from("parent_coaching_sessions")
-        .select("*")
+        .select(`
+          *,
+          briefings:briefing_id (
+            emotion_theme,
+            emotion_intensity,
+            insight,
+            action,
+            growth_story,
+            intensity_reasoning,
+            intensity_keywords
+          )
+        `)
         .eq("user_id", user.id)
         .eq("status", "completed")
         .order("created_at", { ascending: false });
@@ -86,7 +113,7 @@ const ParentChildDiary = () => {
             .eq("session_id", session.id);
 
           const tags = tagData?.map((t: any) => t.parent_tags).filter(Boolean) || [];
-          return { ...session, tags } as ParentSession;
+          return { ...session, tags, briefing: session.briefings } as ParentSession;
         })
       );
 
@@ -161,6 +188,40 @@ const ParentChildDiary = () => {
             </div>
 
             <div className="space-y-4 md:space-y-6">
+              {selectedSession.briefing?.emotion_theme && (
+                <div>
+                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                    💜 情绪主题
+                  </h3>
+                  <p className="text-sm md:text-base text-foreground/80">{selectedSession.briefing.emotion_theme}</p>
+                </div>
+              )}
+
+              {selectedSession.briefing?.emotion_intensity !== null && selectedSession.briefing?.emotion_intensity !== undefined && (
+                <div>
+                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                    📊 情绪强度
+                  </h3>
+                  <EmotionIntensityCard intensity={selectedSession.briefing.emotion_intensity} />
+                  {selectedSession.briefing.intensity_reasoning && (
+                    <div className="mt-3 p-3 rounded-lg bg-muted/50">
+                      <p className="text-sm text-foreground/70 leading-relaxed">
+                        <span className="font-medium">分析：</span>{selectedSession.briefing.intensity_reasoning}
+                      </p>
+                      {selectedSession.briefing.intensity_keywords && selectedSession.briefing.intensity_keywords.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {selectedSession.briefing.intensity_keywords.map((keyword, idx) => (
+                            <Badge key={idx} variant="secondary" className="text-xs">
+                              {keyword}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {selectedSession.event_description && (
                 <div>
                   <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
@@ -218,6 +279,33 @@ const ParentChildDiary = () => {
                 </div>
               </div>
 
+              {selectedSession.briefing?.insight && (
+                <div>
+                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                    💡 今日洞察
+                  </h3>
+                  <p className="text-sm md:text-base text-foreground/80">{selectedSession.briefing.insight}</p>
+                </div>
+              )}
+
+              {selectedSession.briefing?.action && (
+                <div>
+                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                    🎯 今日行动
+                  </h3>
+                  <p className="text-sm md:text-base text-foreground/80">{selectedSession.briefing.action}</p>
+                </div>
+              )}
+
+              {selectedSession.briefing?.growth_story && (
+                <div>
+                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
+                    🌱 今日成长故事
+                  </h3>
+                  <p className="text-sm md:text-base text-foreground/80">{selectedSession.briefing.growth_story}</p>
+                </div>
+              )}
+
               {selectedSession.micro_action && (
                 <div>
                   <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
@@ -244,6 +332,19 @@ const ParentChildDiary = () => {
                   onTagsChange={loadSessions}
                 />
               </div>
+
+              {selectedSession.briefing?.emotion_theme && (
+                <div className="pt-3 md:pt-4 border-t border-border/50">
+                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                    🎵 音乐推荐
+                  </h3>
+                  <MusicRecommendation 
+                    emotionTheme={selectedSession.briefing.emotion_theme}
+                    insight={selectedSession.briefing.insight || undefined}
+                    briefingContent={selectedSession.summary || undefined}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </main>
@@ -312,29 +413,44 @@ const ParentChildDiary = () => {
           <Tabs defaultValue="list" className="w-full">
             <TabsList className="grid w-full grid-cols-5 mb-4 md:mb-6 h-auto">
               <TabsTrigger value="list" className="text-xs md:text-sm py-2">
-                <span className="hidden sm:inline">对话列表</span>
-                <span className="sm:hidden">列表</span>
+                列表
               </TabsTrigger>
-              <TabsTrigger value="events" className="text-xs md:text-sm py-2">
-                <span className="hidden sm:inline">事件分析</span>
-                <span className="sm:hidden">事件</span>
+              <TabsTrigger value="trends" className="text-xs md:text-sm py-2">
+                趋势
               </TabsTrigger>
               <TabsTrigger value="patterns" className="text-xs md:text-sm py-2">
-                <span className="hidden sm:inline">成长洞察</span>
-                <span className="sm:hidden">洞察</span>
+                洞察
               </TabsTrigger>
-              <TabsTrigger value="steps" className="text-xs md:text-sm py-2">
-                <span className="hidden sm:inline">四部曲</span>
-                <span className="sm:hidden">进度</span>
+              <TabsTrigger value="compare" className="text-xs md:text-sm py-2">
+                对比
               </TabsTrigger>
-              <TabsTrigger value="calendar" className="text-xs md:text-sm py-2">
-                <span className="hidden sm:inline">日历</span>
-                <span className="sm:hidden">日历</span>
+              <TabsTrigger value="review" className="text-xs md:text-sm py-2">
+                复盘
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="list" className="space-y-3 md:space-y-4">
-              <ScrollArea className="h-[calc(100vh-300px)]">
+              <UnifiedEmotionHeatmap 
+                briefings={sessions.map(s => ({
+                  id: s.id,
+                  emotion_theme: s.briefing?.emotion_theme || "亲子对话",
+                  emotion_intensity: s.briefing?.emotion_intensity || 5,
+                  created_at: s.created_at,
+                  stage_1_content: null,
+                  stage_2_content: null,
+                  stage_3_content: null,
+                  stage_4_content: null,
+                  insight: s.briefing?.insight || null,
+                  action: s.briefing?.action || null,
+                  growth_story: s.briefing?.growth_story || null,
+                  intensity_reasoning: s.briefing?.intensity_reasoning || null,
+                  intensity_keywords: s.briefing?.intensity_keywords || null,
+                  tags: s.tags
+                }))}
+                quickLogs={[]}
+              />
+              <Separator className="my-4" />
+              <ScrollArea className="h-[calc(100vh-400px)]">
                 <div className="space-y-3">
                   {filteredSessions.map((session) => (
                     <Card
@@ -343,8 +459,14 @@ const ParentChildDiary = () => {
                       onClick={() => setSelectedSession(session)}
                     >
                       <div className="space-y-2">
+                        {session.briefing?.emotion_theme && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">💜</span>
+                            <span className="font-semibold text-foreground">{session.briefing.emotion_theme}</span>
+                          </div>
+                        )}
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-medium text-foreground line-clamp-2">
+                          <p className="text-sm text-muted-foreground line-clamp-2">
                             {session.event_description || "亲子教练对话"}
                           </p>
                           <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -354,6 +476,11 @@ const ParentChildDiary = () => {
                             })}
                           </span>
                         </div>
+                        {session.briefing?.emotion_intensity !== null && session.briefing?.emotion_intensity !== undefined && (
+                          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs bg-primary/10 text-primary">
+                            强度 {session.briefing.emotion_intensity}/10
+                          </div>
+                        )}
                         {session.tags && session.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1">
                             {session.tags.map(tag => (
@@ -379,20 +506,23 @@ const ParentChildDiary = () => {
               </ScrollArea>
             </TabsContent>
 
-            <TabsContent value="events">
-              <ParentEventAnalysis sessions={sessions} />
+            <TabsContent value="trends">
+              <div className="space-y-6">
+                <ParentEmotionTagCloud sessions={sessions} />
+                <ParentCycleAnalysis sessions={sessions} />
+              </div>
             </TabsContent>
 
             <TabsContent value="patterns">
               <ParentPatternInsights sessions={sessions} />
             </TabsContent>
 
-            <TabsContent value="steps">
-              <FourStepsProgress sessions={sessions} />
+            <TabsContent value="compare">
+              <ParentSessionComparison sessions={sessions} />
             </TabsContent>
 
-            <TabsContent value="calendar">
-              <ParentSessionHeatmap sessions={sessions} />
+            <TabsContent value="review">
+              <ParentEmotionReview />
             </TabsContent>
           </Tabs>
         )}
