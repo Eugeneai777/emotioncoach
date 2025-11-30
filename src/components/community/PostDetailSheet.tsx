@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import LikeButton from "./LikeButton";
@@ -642,14 +642,22 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
 
       {/* 分享对话框 */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-sm sm:max-w-md">
           <DialogHeader>
             <DialogTitle>分享到微信</DialogTitle>
+            <DialogDescription>预览并生成分享图片</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="bg-secondary/20 p-4 rounded-lg overflow-auto max-h-[60vh]">
+            {/* 预览卡片 - 响应式显示 */}
+            <div className="bg-secondary/20 p-3 rounded-lg max-h-[50vh] overflow-auto">
+              <ShareCard post={post} isPreview />
+            </div>
+            
+            {/* 导出用卡片 - 隐藏但保持固定尺寸 */}
+            <div className="fixed -left-[9999px] top-0">
               <ShareCard ref={cardRef} post={post} />
             </div>
+            
             <Button 
               onClick={handleGenerateImage} 
               disabled={sharing} 
