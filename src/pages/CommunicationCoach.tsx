@@ -73,10 +73,6 @@ const CommunicationCoach = () => {
   const handleDifficultyConfirm = () => {
     setDifficultyConfirmed(true);
     setShowDifficultyDialog(false);
-    toast({
-      title: "难度已设置",
-      description: `当前沟通难度：${difficulty}`,
-    });
   };
 
   return (
