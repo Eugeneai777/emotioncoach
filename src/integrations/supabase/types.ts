@@ -418,6 +418,7 @@ export type Database = {
           coach_key: string
           created_at: string | null
           description: string | null
+          disable_option_buttons: boolean | null
           display_order: number | null
           edge_function_name: string | null
           emoji: string
@@ -451,6 +452,7 @@ export type Database = {
           coach_key: string
           created_at?: string | null
           description?: string | null
+          disable_option_buttons?: boolean | null
           display_order?: number | null
           edge_function_name?: string | null
           emoji?: string
@@ -484,6 +486,7 @@ export type Database = {
           coach_key?: string
           created_at?: string | null
           description?: string | null
+          disable_option_buttons?: boolean | null
           display_order?: number | null
           edge_function_name?: string | null
           emoji?: string
