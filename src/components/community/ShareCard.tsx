@@ -128,10 +128,16 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
       margin: 1
     }).then(setQrCodeUrl);
   }, [partnerInfo, post]);
-  return <div ref={ref} className={cn("relative overflow-hidden rounded-2xl", isPreview ? "w-full p-4" : "w-[600px] p-8")} style={{
-    minHeight: isPreview ? "auto" : "800px",
-    background: "linear-gradient(135deg, hsl(330, 80%, 95%), hsl(270, 70%, 95%), hsl(200, 80%, 95%))"
-  }}>
+  return <div 
+    ref={ref} 
+    data-share-card
+    className={cn("relative overflow-hidden rounded-2xl", isPreview ? "w-full p-4" : "w-[600px] p-8")} 
+    style={{
+      minHeight: "auto",
+      background: "linear-gradient(135deg, hsl(330, 80%, 95%), hsl(270, 70%, 95%), hsl(200, 80%, 95%))",
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif'
+    }}
+  >
       {/* 装饰性元素 */}
       <div className="absolute top-4 right-4 text-2xl opacity-20">✨</div>
       <div className="absolute top-20 left-4 text-xl opacity-20">💫</div>

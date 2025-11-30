@@ -58,6 +58,17 @@ const ShareButton = ({ post }: ShareButtonProps) => {
         backgroundColor: "#ffffff",
         scale: 2,
         logging: false,
+        useCORS: true,
+        allowTaint: true,
+        // 强制使用系统字体，避免渲染异常
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.body.querySelector('[data-share-card]');
+          if (clonedElement) {
+            // 设置安全的系统字体
+            (clonedElement as HTMLElement).style.fontFamily = 
+              '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif';
+          }
+        }
       });
 
       // 转换为 Blob
