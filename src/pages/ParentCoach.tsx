@@ -543,7 +543,7 @@ ${briefing.growth_story || '暂无记录'}
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50 rounded-card-lg p-card-lg shadow-md hover:shadow-lg transition-shadow duration-300">
                   <div className="flex items-center justify-between mb-card-gap">
                     <h3 className="text-lg font-semibold flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                      🏕️ 21天青少年问题家庭训练营
+                      🏕️ 21天青少年困境突破营
                     </h3>
                   </div>
                   <p className="text-sm text-muted-foreground mb-card">
@@ -704,7 +704,7 @@ ${briefing.growth_story || '暂无记录'}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">🏕️</span>
-                      <h4 className="font-semibold text-purple-700">推荐：21天青少年问题家庭训练营</h4>
+                      <h4 className="font-semibold text-purple-700">推荐：21天青少年困境突破营</h4>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       通过父母三力模型（稳定力、洞察力、修复力），21天系统提升亲子关系

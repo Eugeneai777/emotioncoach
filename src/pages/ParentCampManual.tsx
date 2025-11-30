@@ -184,7 +184,7 @@ const ParentCampManual = () => {
             <ArrowLeft className="h-4 w-4" />
             返回首页
           </Button>
-          <h1 className="text-lg font-semibold">21天青少年问题家庭训练营 使用手册</h1>
+          <h1 className="text-lg font-semibold">21天青少年困境突破营 使用手册</h1>
           <Button
             onClick={() => navigate("/parent-camp")}
             className="gap-2"
@@ -202,7 +202,7 @@ const ParentCampManual = () => {
             <span className="text-sm font-medium text-primary">专为青少年父母设计</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            21天青少年问题家庭训练营
+            21天青少年困境突破营
           </h1>
           <div className="max-w-3xl mx-auto space-y-4 text-lg text-muted-foreground leading-relaxed">
             <p>孩子的情绪越来越看不懂了……</p>
