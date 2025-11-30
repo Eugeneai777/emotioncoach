@@ -84,7 +84,8 @@ const getQRCodeUrl = (
   partnerInfo: ShareCardProps['partnerInfo'],
   post: ShareCardProps['post']
 ): string => {
-  const baseUrl = window.location.origin;
+  // 优先使用生产域名环境变量，确保二维码指向正式发布的地址
+  const baseUrl = import.meta.env.VITE_PRODUCTION_URL || window.location.origin;
   
   // 合伙人：生成推广二维码
   if (partnerInfo?.isPartner && partnerInfo?.partnerId) {
