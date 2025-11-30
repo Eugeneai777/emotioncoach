@@ -27,6 +27,18 @@ interface CommunicationBriefingData {
   difficulty_keywords?: string[];
 }
 
+const welcomeMessages = [
+  "嗨，我是劲老师 👋 最近有没有什么沟通上的困扰想聊聊？不管是和家人、同事还是朋友，我都在这里陪你。说说看，是什么事让你有点卡住了？",
+  "你好呀 😊 我是劲老师，专门陪你聊沟通的问题。最近有没有哪段对话让你觉得不太顺？可以从任何一个小困惑开始。",
+  "欢迎来找我聊聊 💬 我是劲老师。最近和谁的沟通让你有点头疼？说出来，我们一起看看能怎么理顺。",
+  "嗨～我是劲老师 🌟 今天想聊点什么呢？不管是工作上的汇报、家里的矛盾，还是朋友间的小摩擦，都可以和我说说。最近有什么沟通场景让你觉得难开口？",
+  "你好，我是劲老师 🤝 每个人都会遇到不知道怎么开口的时刻。最近有没有一段对话，让你想说却不知道怎么说？和我聊聊吧。"
+];
+
+const getRandomWelcomeMessage = () => {
+  return welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
+};
+
 export const useCommunicationChat = (conversationId?: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +48,13 @@ export const useCommunicationChat = (conversationId?: string) => {
   useEffect(() => {
     if (conversationId) {
       loadConversation(conversationId);
+    } else {
+      // 初次加载且没有历史对话时，显示随机欢迎消息
+      const welcomeMsg: Message = {
+        role: "assistant",
+        content: getRandomWelcomeMessage()
+      };
+      setMessages([welcomeMsg]);
     }
   }, [conversationId]);
 
@@ -377,7 +396,11 @@ ${data.growth_insight}
   };
 
   const resetConversation = () => {
-    setMessages([]);
+    const welcomeMsg: Message = {
+      role: "assistant",
+      content: getRandomWelcomeMessage()
+    };
+    setMessages([welcomeMsg]);
     setCurrentConversationId(null);
     setUserMessageCount(0);
   };
