@@ -60,6 +60,7 @@ const ShareButton = ({ post }: ShareButtonProps) => {
         logging: false,
         useCORS: true,
         allowTaint: true,
+        imageTimeout: 15000,
         // 强制使用系统字体，避免渲染异常
         onclone: (clonedDoc) => {
           const clonedElement = clonedDoc.body.querySelector('[data-share-card]');
@@ -67,6 +68,12 @@ const ShareButton = ({ post }: ShareButtonProps) => {
             // 设置安全的系统字体
             (clonedElement as HTMLElement).style.fontFamily = 
               '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif';
+            
+            // 确保所有图片都加载完成
+            const images = clonedElement.querySelectorAll('img');
+            images.forEach((img) => {
+              (img as HTMLImageElement).crossOrigin = 'anonymous';
+            });
           }
         }
       });
