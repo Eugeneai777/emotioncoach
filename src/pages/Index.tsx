@@ -1009,14 +1009,15 @@ const Index = () => {
             </div>
           )}
           <div className="flex gap-2 items-end">
-            <VoiceControls
-              isListening={isListening}
-              isSpeaking={isSpeaking}
-              voiceSupported={voiceInputSupported && voiceOutputSupported}
-              onStartListening={startListening}
-              onStopListening={stopListening}
-              onStopSpeaking={stopSpeaking}
-            />
+                <VoiceControls
+                  isListening={isListening}
+                  isSpeaking={isSpeaking}
+                  voiceSupported={voiceInputSupported && voiceOutputSupported}
+                  onStartListening={startListening}
+                  onStopListening={stopListening}
+                  onStopSpeaking={stopSpeaking}
+                  disabled={isLoading}
+                />
             <div className="flex-1 relative group">
               <Textarea
                 value={input}
