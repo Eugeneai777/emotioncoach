@@ -123,7 +123,7 @@ const EnergyStudioIntro = () => {
             <Button 
               size="lg" 
               variant="outline"
-              onClick={() => navigate("/camp-intro")}
+              onClick={() => navigate("/camps")}
             >
               了解21天训练营
             </Button>
