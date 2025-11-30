@@ -60,14 +60,6 @@ interface CoachLayoutProps {
   trainingCamp?: ReactNode;
   notifications?: ReactNode;
   community?: ReactNode;
-  voiceControls?: {
-    isListening: boolean;
-    isSpeaking: boolean;
-    onStartListening: () => void;
-    onStopListening: () => void;
-    onStopSpeaking: () => void;
-    isSupported: boolean;
-  };
   showNotificationCenter?: boolean;
 }
 
@@ -100,7 +92,6 @@ export const CoachLayout = ({
   trainingCamp,
   notifications,
   community,
-  voiceControls,
   showNotificationCenter = true
 }: CoachLayoutProps) => {
   const navigate = useNavigate();
@@ -212,7 +203,6 @@ export const CoachLayout = ({
         isLoading={isLoading}
         hasMessages={messages.length > 0}
         gradient={gradient}
-        voiceControls={voiceControls}
         scenarioChips={scenarioChips}
         messagesCount={messages.length}
       />
