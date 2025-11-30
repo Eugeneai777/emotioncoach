@@ -155,7 +155,7 @@ const EnergyStudio = () => {
         return <FinanceTracker />;
       case "time":
         return <TimeManagement />;
-      case "relationship":
+      case "relationships":
         return <RelationshipTracker />;
       case "declaration":
         return <EnergyDeclaration />;
