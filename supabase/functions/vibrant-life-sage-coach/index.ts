@@ -75,7 +75,7 @@ serve(async (req) => {
         type: "function",
         function: {
           name: "video_course_recommendation",
-          description: "根据用户当前的话题，推荐相关的视频课程深入学习。",
+          description: "根据用户当前的话题，推荐相关的视频课程深入学习。查询真实视频并返回可直接观看的链接。",
           parameters: {
             type: "object",
             properties: {
@@ -93,7 +93,8 @@ serve(async (req) => {
                 description: "观看视频能达成的学习目标"
               }
             },
-            required: ["topic_summary", "recommended_category", "learning_goal"]
+            required: ["topic_summary", "recommended_category", "learning_goal"],
+            additionalProperties: false
           }
         }
       },
@@ -125,6 +126,29 @@ serve(async (req) => {
       }
     ];
 
+    // 准备发送给 AI 的消息，可能包含视频查询结果
+    const aiMessages = [...messages];
+    
+    // 如果最后一条消息是关于视频推荐的，先查询视频
+    let videoQueryResult = null;
+    const lastUserMessage = messages[messages.length - 1];
+    if (lastUserMessage?.role === 'user') {
+      const keywords = ['视频', '课程', '学习', '看看', '推荐'];
+      const needsVideo = keywords.some(kw => lastUserMessage.content.includes(kw));
+      
+      if (needsVideo) {
+        // 预查询视频以便 AI 可以更好地推荐
+        const { data: sampleVideos } = await supabase
+          .from('video_courses')
+          .select('id, title, category, video_url, description')
+          .limit(5);
+        
+        if (sampleVideos && sampleVideos.length > 0) {
+          videoQueryResult = sampleVideos;
+        }
+      }
+    }
+
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -135,7 +159,7 @@ serve(async (req) => {
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          ...messages
+          ...aiMessages
         ],
         tools,
         tool_choice: 'auto',
