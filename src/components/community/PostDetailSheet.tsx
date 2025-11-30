@@ -4,19 +4,22 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import LikeButton from "./LikeButton";
 import CommentSection from "./CommentSection";
 import PostEditDialog from "./PostEditDialog";
-import { useState, useEffect } from "react";
-import { MessageCircle, Star, Pencil, Heart, Trash2 } from "lucide-react";
+import ShareCard from "./ShareCard";
+import { useState, useEffect, useRef } from "react";
+import { MessageCircle, Star, Pencil, Heart, Trash2, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getCoachSpaceInfo } from "@/utils/coachSpaceUtils";
 import { useNavigate } from "react-router-dom";
+import html2canvas from "html2canvas";
 
 interface PostDetailSheetProps {
   open: boolean;
@@ -60,6 +63,9 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
   const [submitting, setSubmitting] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   
   // 获取教练空间信息
   const coachSpace = getCoachSpaceInfo(
@@ -238,6 +244,52 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
       toast.error("删除失败，请稍后重试");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  // 处理分享
+  const handleShare = () => {
+    setShowShareDialog(true);
+  };
+
+  // 生成分享图片
+  const handleGenerateImage = async () => {
+    if (!cardRef.current) return;
+    
+    setSharing(true);
+    try {
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+      });
+      
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast.error("生成图片失败");
+          return;
+        }
+        
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `有劲生活-分享-${new Date().getTime()}.png`;
+        link.click();
+        URL.revokeObjectURL(url);
+        
+        toast.success("图片已保存，可分享至微信");
+        setShowShareDialog(false);
+        
+        // 更新分享数
+        supabase
+          .from("community_posts")
+          .update({ shares_count: (post.shares_count || 0) + 1 })
+          .eq("id", post.id);
+      });
+    } catch (error) {
+      console.error("生成图片失败:", error);
+      toast.error("生成图片失败");
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -565,6 +617,15 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
             <MessageCircle className="h-6 w-6 text-foreground" />
             <span className="text-xs text-muted-foreground">{post.comments_count || 0}</span>
           </button>
+          
+          {/* 分享 */}
+          <button 
+            onClick={handleShare}
+            className="flex flex-col items-center gap-0.5 min-w-[48px] hover:scale-110 transition-transform"
+          >
+            <Share2 className="h-6 w-6 text-foreground" />
+            <span className="text-xs text-muted-foreground">{post.shares_count || 0}</span>
+          </button>
         </div>
       </SheetContent>
 
@@ -578,6 +639,30 @@ const PostDetailSheet = ({ open, onOpenChange, post }: PostDetailSheetProps) => 
           window.location.reload();
         }}
       />
+
+      {/* 分享对话框 */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>分享到微信</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-secondary/20 p-4 rounded-lg overflow-auto max-h-[60vh]">
+              <ShareCard ref={cardRef} post={post} />
+            </div>
+            <Button 
+              onClick={handleGenerateImage} 
+              disabled={sharing} 
+              className="w-full"
+            >
+              {sharing ? "生成中..." : "生成分享图片"}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              生成图片后可保存并分享至微信朋友圈
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Sheet>
   );
 };
