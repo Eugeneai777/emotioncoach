@@ -187,7 +187,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
         <div className={cn("flex gap-4 items-start", isPreview && "gap-3")}>
           {/* 价值清单 */}
           <div className="flex-1 space-y-2">
-            <p className={cn("font-medium text-primary/80 mb-2", isPreview ? "text-xs" : "text-sm")}>
+            <p className={cn("font-bold text-primary mb-2", isPreview ? "text-sm" : "text-base")}>
               有劲AI · 情绪日记
             </p>
             <div className={cn("flex items-start gap-2", isPreview ? "text-xs" : "text-sm")}>
