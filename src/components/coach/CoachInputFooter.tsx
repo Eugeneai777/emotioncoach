@@ -47,7 +47,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement, CoachInputFooter
       <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
         {/* Scenario Chips */}
         {scenarioChips && (messagesCount === undefined || messagesCount <= 1) && (
-          <div className="mb-2">
+          <div className="mb-1.5">
             {scenarioChips}
           </div>
         )}
