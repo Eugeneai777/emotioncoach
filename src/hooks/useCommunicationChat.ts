@@ -49,12 +49,8 @@ export const useCommunicationChat = (conversationId?: string) => {
     if (conversationId) {
       loadConversation(conversationId);
     } else {
-      // 初次加载且没有历史对话时，显示随机欢迎消息
-      const welcomeMsg: Message = {
-        role: "assistant",
-        content: getRandomWelcomeMessage()
-      };
-      setMessages([welcomeMsg]);
+      // 初始化时不设置欢迎消息，让四步曲介绍显示
+      setMessages([]);
     }
   }, [conversationId]);
 
@@ -396,11 +392,8 @@ ${data.growth_insight}
   };
 
   const resetConversation = () => {
-    const welcomeMsg: Message = {
-      role: "assistant",
-      content: getRandomWelcomeMessage()
-    };
-    setMessages([welcomeMsg]);
+    // 重置时清空消息，回到四步曲介绍页面
+    setMessages([]);
     setCurrentConversationId(null);
     setUserMessageCount(0);
   };
