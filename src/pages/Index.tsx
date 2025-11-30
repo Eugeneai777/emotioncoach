@@ -905,6 +905,9 @@ const Index = () => {
                   onOptionClick={(option) => {
                     sendMessage(option);
                   }}
+                  onOptionSelect={(option) => {
+                    setInput(option);
+                  }}
                   videoRecommendations={videoRecommendations}
                   isLastMessage={index === messages.length - 1}
                 />
