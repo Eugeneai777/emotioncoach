@@ -163,7 +163,21 @@ const History = () => {
         return await loadBriefings();
       }
 
-      setBriefings(briefingsWithTags);
+      // 过滤掉家长教练的简报，确保只显示情绪日记的简报
+      const { data: parentBriefingLinks } = await supabase
+        .from('parent_coaching_sessions')
+        .select('briefing_id')
+        .not('briefing_id', 'is', null);
+
+      const parentBriefingIds = new Set(
+        parentBriefingLinks?.map(p => p.briefing_id).filter(Boolean) || []
+      );
+
+      const emotionDiaryBriefings = briefingsWithTags.filter(
+        b => !parentBriefingIds.has(b.id)
+      );
+
+      setBriefings(emotionDiaryBriefings);
       
       // Load all available tags for filtering
       const { data: tagsData } = await supabase
