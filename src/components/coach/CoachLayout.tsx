@@ -38,8 +38,8 @@ interface CoachLayoutProps {
   moreInfoRoute?: string;
   
   // Routes configuration
-  historyRoute: string;
-  historyLabel: string;
+  historyRoute?: string;
+  historyLabel?: string;
   
   // Chat configuration
   messages: Message[];
