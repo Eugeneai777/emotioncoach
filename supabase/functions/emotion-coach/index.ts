@@ -490,7 +490,18 @@ ${getStagePrompt(updatedSession?.current_stage || 0)}
           }),
         });
 
+        if (!continueResponse.ok) {
+          console.error('AI API error:', continueResponse.status, await continueResponse.text());
+          throw new Error(`AI API request failed: ${continueResponse.status}`);
+        }
+
         const continueData = await continueResponse.json();
+        
+        if (!continueData.choices || continueData.choices.length === 0) {
+          console.error('Invalid AI response:', continueData);
+          throw new Error('AI returned invalid response structure');
+        }
+        
         const followUpMessage = continueData.choices[0].message;
 
         conversationHistory.push({
