@@ -106,6 +106,11 @@ const EnergyStudio = () => {
   };
 
   const handleToolClick = (toolId: string) => {
+    // 目标设定有独立页面，直接跳转
+    if (toolId === 'goals') {
+      navigate('/goals');
+      return;
+    }
     setActiveTool(toolId);
   };
 
