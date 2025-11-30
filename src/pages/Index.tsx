@@ -804,7 +804,7 @@ const Index = () => {
                       </Button>
                       <Button 
                         variant="outline" 
-                        onClick={() => navigate("/camp-intro")}
+                        onClick={() => navigate("/camps")}
                         className="flex-1"
                       >
                         了解详情

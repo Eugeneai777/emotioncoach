@@ -307,7 +307,7 @@ const UserManual = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate("/camp-intro")}
+              onClick={() => navigate("/camps")}
               className="gap-2"
             >
               开始训练营
@@ -720,7 +720,7 @@ const UserManual = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button 
                   size="lg" 
-                  onClick={() => navigate("/camp-intro")}
+                  onClick={() => navigate("/camps")}
                   className="gap-2 bg-gradient-to-r from-primary to-warm hover:opacity-90"
                 >
                   开始 21 天训练营

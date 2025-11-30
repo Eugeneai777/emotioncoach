@@ -721,7 +721,7 @@ const Introduction = () => {
                   navigate('/auth');
                   return;
                 }
-                navigate('/camp-intro');
+                navigate('/camps');
               }} 
               className="hover:scale-105 transition-transform"
             >
