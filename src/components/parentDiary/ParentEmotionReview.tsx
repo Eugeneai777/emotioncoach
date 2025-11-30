@@ -107,7 +107,7 @@ export const ParentEmotionReview = () => {
           <Button
             onClick={generateReview}
             disabled={loading || !reviewPeriod.trim()}
-            className="w-full gap-2"
+            className="w-full gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
           >
             {loading ? (
               <>
@@ -123,9 +123,9 @@ export const ParentEmotionReview = () => {
           </Button>
 
           {reviewContent && (
-            <div className="mt-6 p-6 bg-gradient-to-br from-primary/5 to-background rounded-xl border border-primary/20 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
+            <div className="mt-6 p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
               <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
+                <Sparkles className="w-5 h-5 text-purple-500" />
                 劲老师的复盘洞察
               </h4>
               <div className="prose prose-sm max-w-none text-foreground/90 leading-relaxed whitespace-pre-wrap">

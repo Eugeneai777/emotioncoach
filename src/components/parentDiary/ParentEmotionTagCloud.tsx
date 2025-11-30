@@ -162,9 +162,9 @@ export const ParentEmotionTagCloud = ({ sessions }: ParentEmotionTagCloudProps) 
                   className="transition-transform hover:scale-110"
                   style={{
                     fontSize: `${fontSize}rem`,
-                    color: "hsl(var(--primary))",
+                    color: "#a855f7",
                     fontWeight: 600,
-                    textShadow: "0 2px 8px hsl(var(--primary) / 0.3)",
+                    textShadow: "0 2px 8px rgba(168, 85, 247, 0.3)",
                   }}
                   title={`${theme}: 出现 ${count} 次`}
                 >

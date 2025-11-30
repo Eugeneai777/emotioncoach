@@ -157,16 +157,16 @@ const ParentChildDiary = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
       </div>
     );
   }
 
   if (selectedSession) {
     return (
-      <div className="min-h-screen bg-background">
-        <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+      <div className="min-h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white">
+        <header className="border-b border-purple-200/50 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
           <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4">
             <Button
               variant="ghost"
@@ -181,7 +181,7 @@ const ParentChildDiary = () => {
         </header>
 
         <main className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
-          <div className="bg-card border border-border rounded-2xl md:rounded-3xl p-4 md:p-8 space-y-4 md:space-y-6 shadow-lg">
+          <div className="bg-white border border-purple-100 rounded-2xl md:rounded-3xl p-4 md:p-8 space-y-4 md:space-y-6 shadow-lg">
             <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground pb-3 md:pb-4 border-b border-border/50">
               <Calendar className="w-3 h-3 md:w-4 md:h-4" />
               {formatDate(selectedSession.created_at)}
@@ -353,8 +353,8 @@ const ParentChildDiary = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white">
+      <header className="border-b border-purple-200/50 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4 space-y-2 md:space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-lg md:text-xl font-bold text-foreground">我的亲子日记</h1>

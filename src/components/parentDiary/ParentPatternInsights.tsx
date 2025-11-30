@@ -43,10 +43,10 @@ export const ParentPatternInsights = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold flex items-center gap-2"><Brain className="w-6 h-6 text-primary" />亲子互动模式洞察</h2>
+          <h2 className="text-2xl font-semibold flex items-center gap-2"><Brain className="w-6 h-6 text-purple-500" />亲子互动模式洞察</h2>
           <p className="text-sm text-muted-foreground mt-1">AI 智能分析你在亲子互动中的情绪规律与成长轨迹</p>
         </div>
-        <Button onClick={analyzePatterns} disabled={loading} className="gap-2">
+        <Button onClick={analyzePatterns} disabled={loading} className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600">
           {loading ? <><Loader2 className="w-4 h-4 animate-spin" />分析中...</> : <><Brain className="w-4 h-4" />开始分析</>}
         </Button>
       </div>

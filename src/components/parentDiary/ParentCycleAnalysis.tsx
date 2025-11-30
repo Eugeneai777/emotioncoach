@@ -238,7 +238,7 @@ export const ParentCycleAnalysis = ({ sessions }: ParentCycleAnalysisProps) => {
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} domain={[0, 10]} />
                 <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} />
                 <Legend wrapperStyle={{ fontSize: "12px" }} />
-                <Line type="monotone" dataKey="intensity" name="情绪强度" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={(props: any) => {
+                <Line type="monotone" dataKey="intensity" name="情绪强度" stroke="#a855f7" strokeWidth={2.5} dot={(props: any) => {
                   const { cx, cy, payload } = props;
                   return <circle cx={cx} cy={cy} r={5} fill={getIntensityColor(payload.intensity)} stroke={getIntensityColor(payload.intensity)} strokeWidth={2} />;
                 }} />
@@ -253,14 +253,14 @@ export const ParentCycleAnalysis = ({ sessions }: ParentCycleAnalysisProps) => {
       <Card className="p-4 md:p-6 space-y-3 md:space-y-4">
         <h3 className="text-base md:text-lg font-semibold">📅 星期分布</h3>
         <div className="w-full h-[250px] md:h-[300px]">
-          <ResponsiveContainer><BarChart data={weekdayData}><CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" /><XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} /><YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} /><Tooltip /><Bar dataKey="total" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer>
+          <ResponsiveContainer><BarChart data={weekdayData}><CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" /><XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} /><YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} /><Tooltip /><Bar dataKey="total" fill="#a855f7" radius={[8, 8, 0, 0]} /></BarChart></ResponsiveContainer>
         </div>
       </Card>
 
       <Card className="p-4 md:p-6 space-y-3 md:space-y-4">
         <h3 className="text-base md:text-lg font-semibold">⏰ 时段偏好</h3>
         <div className="w-full h-[200px] md:h-[300px]">
-          <ResponsiveContainer><RadarChart data={timePatternData}><PolarGrid /><PolarAngleAxis dataKey="name" /><PolarRadiusAxis /><Radar name="次数" dataKey="count" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} /></RadarChart></ResponsiveContainer>
+          <ResponsiveContainer><RadarChart data={timePatternData}><PolarGrid /><PolarAngleAxis dataKey="name" /><PolarRadiusAxis /><Radar name="次数" dataKey="count" stroke="#a855f7" fill="#a855f7" fillOpacity={0.3} /></RadarChart></ResponsiveContainer>
         </div>
       </Card>
 
@@ -274,7 +274,7 @@ export const ParentCycleAnalysis = ({ sessions }: ParentCycleAnalysisProps) => {
                 <Badge variant="secondary" className="text-[10px] md:text-xs">{item.value.toFixed(0)}%</Badge>
               </div>
               <div className="w-full bg-border/30 rounded-full h-1.5 md:h-2">
-                <div className="h-full bg-primary transition-all" style={{ width: `${item.value}%` }} />
+                <div className="h-full bg-purple-500 transition-all" style={{ width: `${item.value}%` }} />
               </div>
               <p className="text-[10px] md:text-xs text-muted-foreground">{item.count} 次</p>
             </div>

@@ -87,7 +87,7 @@ export const ParentSessionComparison = ({ sessions }: ParentSessionComparisonPro
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 对话 1 */}
             <div className="space-y-4">
-              <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                   <Calendar className="w-4 h-4" />
                   {formatDate(session1.created_at)}
@@ -107,7 +107,7 @@ export const ParentSessionComparison = ({ sessions }: ParentSessionComparisonPro
                 {session1.briefing?.emotion_intensity !== null && session1.briefing?.emotion_intensity !== undefined && (
                   <div className="mb-3">
                     <span className="text-sm font-medium">情绪强度: </span>
-                    <span className="text-sm font-bold text-primary">{session1.briefing.emotion_intensity}/10</span>
+                    <span className="text-sm font-bold text-purple-600">{session1.briefing.emotion_intensity}/10</span>
                   </div>
                 )}
 
@@ -141,7 +141,7 @@ export const ParentSessionComparison = ({ sessions }: ParentSessionComparisonPro
 
             {/* 对话 2 */}
             <div className="space-y-4">
-              <div className="p-4 bg-secondary/5 rounded-lg border border-secondary/20">
+              <div className="p-4 bg-pink-50 rounded-lg border border-pink-200">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                   <Calendar className="w-4 h-4" />
                   {formatDate(session2.created_at)}
@@ -161,7 +161,7 @@ export const ParentSessionComparison = ({ sessions }: ParentSessionComparisonPro
                 {session2.briefing?.emotion_intensity !== null && session2.briefing?.emotion_intensity !== undefined && (
                   <div className="mb-3">
                     <span className="text-sm font-medium">情绪强度: </span>
-                    <span className="text-sm font-bold text-primary">{session2.briefing.emotion_intensity}/10</span>
+                    <span className="text-sm font-bold text-purple-600">{session2.briefing.emotion_intensity}/10</span>
                   </div>
                 )}
 
