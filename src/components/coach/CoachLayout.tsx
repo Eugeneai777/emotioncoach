@@ -210,6 +210,7 @@ export const CoachLayout = ({
         gradient={gradient}
         voiceControls={voiceControls}
         scenarioChips={scenarioChips}
+        messagesCount={messages.length}
       />
     </div>
   );
