@@ -140,8 +140,8 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
 
 请生成一条温暖、个性化的通知消息，以JSON格式返回：
 {
-  "title": "通知标题（8-15字，吸引注意但不夸张）",
-  "message": "通知正文（根据风格调整长度：gentle 50-80字，cheerful 40-60字，motivational 35-55字）",
+  "title": "通知标题（8-15字，吸引注意但不夸张，**不要包含用户名称**）",
+  "message": "通知正文（以温暖的称呼开头，根据风格调整长度：gentle 50-80字，cheerful 40-60字，motivational 35-55字）",
   "icon": "emoji图标（如🌸、✨、💪、🎉、🌿等，根据风格选择合适的）",
   "action_text": "行动按钮文字（4-8字，可选）",
   "action_type": "行动类型（navigate/open_dialog/dismiss）"
@@ -149,7 +149,15 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
 
 风格要求：
 - **${encouragementStyle}风格**：${styleDescriptions[encouragementStyle]}
-- 称呼用户为"${displayName}"（如果不是"朋友"的话）
+- **标题中不要包含用户名称**，保持标题简洁通用
+- 正文开头使用温暖的称呼，从以下方式中随机选择一种（用户名称为"${displayName}"）：
+  * "亲爱的${displayName}"
+  * "${displayName}，亲爱的"
+  * "嗨，${displayName}"
+  * "最亲爱的${displayName}"
+  * "${displayName}宝贝"（仅限cheerful风格）
+  * "亲爱的${displayName}朋友"
+- 称呼后加逗号或句号，然后开始正文内容
 - 结合用户的实际情况，给出具体的肯定或建议
 - 避免空洞的赞美，要真诚和有温度
 - 保持积极但不过度乐观
