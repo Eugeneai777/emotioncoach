@@ -71,6 +71,7 @@ const Index = () => {
     isLoading,
     sendMessage,
     resetConversation,
+    removeIntensityPrompt,
     videoRecommendations,
     currentStage
   } = useStreamChat();
@@ -422,6 +423,9 @@ const Index = () => {
   };
 
   const handleChatIntensitySelect = async (intensity: number) => {
+    // Remove intensity prompt card from UI first
+    removeIntensityPrompt();
+    
     const message = `我现在的情绪强度是 ${intensity}/10`;
     await sendMessage(message);
     
@@ -440,7 +444,9 @@ const Index = () => {
   };
 
   const handleDismissChatIntensity = () => {
-    // Just send a message to continue
+    // Remove intensity prompt card from UI first
+    removeIntensityPrompt();
+    // Continue conversation
     sendMessage("跳过强度记录，继续对话");
   };
 
