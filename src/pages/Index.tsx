@@ -829,6 +829,11 @@ const Index = () => {
                 <div className="w-full mt-6 space-y-4 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                   <TrainingCampCard camp={activeCamp} onCheckIn={handleCheckIn} />
                   
+                  {/* 情绪关注提醒 - 当检测到连续高强度情绪时显示 */}
+                  <div className="w-full animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+                    <EmotionAlert />
+                  </div>
+                  
                   {/* Smart Notifications Display */}
                   <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200/50 rounded-card-lg p-card shadow-md">
                     <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
