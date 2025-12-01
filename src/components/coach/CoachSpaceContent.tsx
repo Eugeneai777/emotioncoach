@@ -3,6 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { Target, TrendingUp, Calendar, MessageSquare } from "lucide-react";
 import { CoachCard } from "./CoachCard";
 const coaches = [{
+  id: "vibrant-life-coach",
+  title: "有劲生活教练",
+  subtitle: "劲老师带你活出光彩",
+  description: "温暖陪伴，点亮心灯",
+  icon: "Sparkles",
+  gradient: "from-rose-500 to-red-500",
+  route: "/coach/vibrant_life_sage",
+  badge: "推荐"
+}, {
   id: "emotion-coach",
   title: "情绪觉醒教练",
   subtitle: "日常情绪觉察与记录",
