@@ -31,7 +31,7 @@ const coaches = [{
   badge: "新"
 }, {
   id: "story-coach",
-  title: "好故事教练",
+  title: "故事教练",
   subtitle: "英雄之旅四部曲",
   description: "把经历变成动人的成长故事",
   icon: "BookOpen",

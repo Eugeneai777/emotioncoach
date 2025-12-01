@@ -109,7 +109,7 @@ export default function StoryCoach() {
               </div>
               <div>
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-                  好故事教练
+                  故事教练
                 </h1>
                 <p className="text-muted-foreground mt-2">
                   用英雄之旅的方法，把你的经历变成动人的成长故事
