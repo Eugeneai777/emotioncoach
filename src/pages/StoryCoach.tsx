@@ -278,12 +278,12 @@ export default function StoryCoach() {
 
               <Button
                 size="sm"
-                onClick={() => navigate("/community")}
+                onClick={() => navigate("/my-stories")}
                 className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 font-semibold border-0"
               >
                 <BookOpen className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline font-medium">故事广场</span>
-                <span className="sm:hidden font-medium">广场</span>
+                <span className="hidden sm:inline font-medium">我的故事</span>
+                <span className="sm:hidden font-medium">故事</span>
               </Button>
 
               <Button
@@ -367,7 +367,7 @@ export default function StoryCoach() {
                     ✨ 开始创作你的故事
                   </h3>
                   <p className="text-sm text-muted-foreground mb-card">
-                    把你的经历变成动人的成长故事，分享到故事广场
+                    把你的经历变成动人的成长故事
                   </p>
                   <div className="flex gap-3">
                     <Button 
@@ -379,10 +379,10 @@ export default function StoryCoach() {
                     </Button>
                     <Button 
                       variant="outline" 
-                      onClick={() => navigate("/community")}
+                      onClick={() => navigate("/my-stories")}
                       className="flex-1"
                     >
-                      浏览故事广场
+                      我的故事广场
                     </Button>
                   </div>
                 </div>
