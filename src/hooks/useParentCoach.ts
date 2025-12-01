@@ -79,6 +79,23 @@ export const useParentCoach = () => {
     }
   };
 
+  const handleBriefingRequest = async () => {
+    if (!session) return;
+
+    try {
+      const { error } = await supabase
+        .from('parent_coaching_sessions')
+        .update({ briefing_requested: true })
+        .eq('id', session.id);
+
+      if (error) throw error;
+
+      setSession(prev => prev ? { ...prev, briefing_requested: true } : null);
+    } catch (error) {
+      console.error('Failed to update briefing request:', error);
+    }
+  };
+
   const sendMessage = async (message: string) => {
     console.log('sendMessage called, session:', session, 'message:', message);
     
@@ -89,6 +106,14 @@ export const useParentCoach = () => {
         variant: 'destructive'
       });
       return;
+    }
+
+    // Check if user is requesting briefing
+    const briefingKeywords = ['生成简报', '看简报', '要简报', '简报', '总结'];
+    const isBriefingRequest = briefingKeywords.some(kw => message.includes(kw));
+    
+    if (isBriefingRequest && session.current_stage === 4) {
+      await handleBriefingRequest();
     }
 
     setIsLoading(true);

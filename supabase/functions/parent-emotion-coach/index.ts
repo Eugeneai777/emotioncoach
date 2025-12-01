@@ -59,6 +59,124 @@ serve(async (req) => {
     // Load conversation history
     const conversationHistory = session.messages || [];
 
+    // 🔧 Tool restriction based on stage and briefing confirmation
+    const getAvailableTools = (currentStage: number, briefingRequested: boolean) => {
+      const allTools = [
+        {
+          type: "function",
+          function: {
+            name: "capture_event",
+            description: "记录父母描述的事件,准备进入情绪觉察",
+            parameters: {
+              type: "object",
+              properties: {
+                event_summary: {
+                  type: "string",
+                  description: "事件简要描述,20-30字"
+                }
+              },
+              required: ["event_summary"]
+            }
+          }
+        },
+        {
+          type: "function",
+          function: {
+            name: "complete_stage",
+            description: "完成当前阶段,记录用户的洞察,推进到下一阶段",
+            parameters: {
+              type: "object",
+              properties: {
+                stage: {
+                  type: "number",
+                  description: "完成的阶段 1-4"
+                },
+                insight: {
+                  type: "string",
+                  description: "本阶段的核心洞察内容"
+                },
+                reflection: {
+                  type: "string",
+                  description: "劲老师的温柔回应,20-30字"
+                }
+              },
+              required: ["stage", "insight", "reflection"]
+            }
+          }
+        },
+        {
+          type: "function",
+          function: {
+            name: "generate_parent_briefing",
+            description: "完成四阶段后生成家长版情绪简报",
+            parameters: {
+              type: "object",
+              properties: {
+                emotion_theme: {
+                  type: "string",
+                  description: "主题情绪,如:烦躁 · 不安 · \"还不够好\""
+                },
+                emotion_tags: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "情绪标签数组,如:[\"烦躁\", \"不安\", \"还不够好\"]"
+                },
+                stage_1_content: {
+                  type: "string",
+                  description: "觉察:父母说出的情绪名称和身体感受,20-30字"
+                },
+                stage_2_content: {
+                  type: "string",
+                  description: "看见:父母的恐惧 + 孩子的可观察行为 + 洞察句,40-50字"
+                },
+                stage_3_content: {
+                  type: "string",
+                  description: "反应:父母愿意尝试的暂停方式或新反应,30-40字"
+                },
+                stage_4_content: {
+                  type: "string",
+                  description: "转化:具体可执行的小行动和可能带来的正向变化,40-50字"
+                },
+                insight: {
+                  type: "string",
+                  description: "今日洞察:父母讲出的核心洞察句,如'原来我们都被困在...',20-30字"
+                },
+                action: {
+                  type: "string",
+                  description: "今日行动:10秒内能做到的微行动"
+                },
+                growth_story: {
+                  type: "string",
+                  description: "1mm的松动:从今天对话中看到的亲子关系变化可能,20-30字"
+                }
+              },
+              required: ["emotion_theme", "emotion_tags", "stage_1_content", "stage_2_content", "stage_3_content", "stage_4_content", "insight", "action", "growth_story"]
+            }
+          }
+        }
+      ];
+
+      // Stage 0: Only capture_event
+      if (currentStage === 0) {
+        return [allTools[0]];
+      }
+
+      // Stages 1-3: capture_event and complete_stage
+      if (currentStage >= 1 && currentStage <= 3) {
+        return [allTools[0], allTools[1]];
+      }
+
+      // Stage 4: complete_stage available, but generate_parent_briefing ONLY if user confirmed
+      if (currentStage === 4) {
+        if (briefingRequested) {
+          return [allTools[2]]; // Only briefing tool
+        }
+        return [allTools[1]]; // Only complete_stage
+      }
+
+      return [];
+    };
+
     const getStagePrompt = (stage: number) => {
       switch (stage) {
         case 0:
@@ -182,10 +300,14 @@ ${getStagePrompt(session?.current_stage || 0)}
 【工具调用规则】
 1. 阶段0:父母描述事件后,调用 capture_event 记录事件
 2. 当观察到成功指标时:调用 complete_stage 记录洞察
-3. 完成阶段4后:立即调用 generate_parent_briefing 生成简报
+3. 完成阶段4后:先给出鼓励性总结和温柔回应,然后询问父母是否想要生成简报
+4. 只有在父母明确表示"生成简报"或类似意愿时,才调用 generate_parent_briefing
 
-【简报生成规则】
-完成四个阶段后,必须调用 generate_parent_briefing 工具生成简报。
+【严格规则 - 必须遵守】
+❌ 禁止在用户未确认前调用 generate_parent_briefing 工具
+❌ 禁止跳过任何阶段
+❌ 禁止在阶段4完成后立即调用 generate_parent_briefing
+✅ 必须等待用户明确表达想要简报后,再调用工具
 
 简报内容要求:
 1. emotion_theme:用 · 分隔多个情绪词,如"烦躁 · 不安 · \"还不够好\""
@@ -198,100 +320,11 @@ ${getStagePrompt(session?.current_stage || 0)}
 8. action:10秒内能做到的微行动
 9. growth_story:从今天对话中看到的亲子关系变化可能,20-30字`;
 
-    const tools = [
-      {
-        type: "function",
-        function: {
-          name: "capture_event",
-          description: "记录父母描述的事件,准备进入情绪觉察",
-          parameters: {
-            type: "object",
-            properties: {
-              event_summary: {
-                type: "string",
-                description: "事件简要描述,20-30字"
-              }
-            },
-            required: ["event_summary"]
-          }
-        }
-      },
-      {
-        type: "function",
-        function: {
-          name: "complete_stage",
-          description: "完成当前阶段,记录用户的洞察,推进到下一阶段",
-          parameters: {
-            type: "object",
-            properties: {
-              stage: {
-                type: "number",
-                description: "完成的阶段 1-4"
-              },
-              insight: {
-                type: "string",
-                description: "本阶段的核心洞察内容"
-              },
-              reflection: {
-                type: "string",
-                description: "劲老师的温柔回应,20-30字"
-              }
-            },
-            required: ["stage", "insight", "reflection"]
-          }
-        }
-      },
-      {
-        type: "function",
-        function: {
-          name: "generate_parent_briefing",
-          description: "完成四阶段后生成家长版情绪简报",
-          parameters: {
-            type: "object",
-            properties: {
-              emotion_theme: {
-                type: "string",
-                description: "主题情绪,如:烦躁 · 不安 · \"还不够好\""
-              },
-              emotion_tags: {
-                type: "array",
-                items: { type: "string" },
-                description: "情绪标签数组,如:[\"烦躁\", \"不安\", \"还不够好\"]"
-              },
-              stage_1_content: {
-                type: "string",
-                description: "觉察:父母说出的情绪名称和身体感受,20-30字"
-              },
-              stage_2_content: {
-                type: "string",
-                description: "看见:父母的恐惧 + 孩子的可观察行为 + 洞察句,40-50字"
-              },
-              stage_3_content: {
-                type: "string",
-                description: "反应:父母愿意尝试的暂停方式或新反应,30-40字"
-              },
-              stage_4_content: {
-                type: "string",
-                description: "转化:具体可执行的小行动和可能带来的正向变化,40-50字"
-              },
-              insight: {
-                type: "string",
-                description: "今日洞察:父母讲出的核心洞察句,如'原来我们都被困在...',20-30字"
-              },
-              action: {
-                type: "string",
-                description: "今日行动:10秒内能做到的微行动"
-              },
-              growth_story: {
-                type: "string",
-                description: "1mm的松动:从今天对话中看到的亲子关系变化可能,20-30字"
-              }
-            },
-            required: ["emotion_theme", "emotion_tags", "stage_1_content", "stage_2_content", "stage_3_content", "stage_4_content", "insight", "action", "growth_story"]
-          }
-        }
-      }
-    ];
+    // Get available tools based on current stage and briefing request status
+    const availableTools = getAvailableTools(
+      session.current_stage || 0,
+      session.briefing_requested || false
+    );
 
     // Add user message to history
     conversationHistory.push({ role: "user", content: message });
@@ -309,12 +342,13 @@ ${getStagePrompt(session?.current_stage || 0)}
       headers: {
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
+        'X-Session-Id': sessionId,
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages,
-        tools,
-        temperature: 0.7,
+        tools: availableTools,
+        temperature: 0.6,
       }),
     });
 
@@ -483,6 +517,12 @@ ${getStagePrompt(updatedSession?.current_stage || 0)}
 9. growth_story:从今天对话中看到的亲子关系变化可能,20-30字`;
 
         // Continue conversation with AI
+        // Get updated tools after stage progression
+        const updatedTools = getAvailableTools(
+          updatedSession?.current_stage || 0,
+          updatedSession?.briefing_requested || false
+        );
+
         const continueResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -495,8 +535,8 @@ ${getStagePrompt(updatedSession?.current_stage || 0)}
               { role: "system", content: continueSystemPrompt },
               ...conversationHistory
             ],
-            tools,
-            temperature: 0.7,
+            tools: updatedTools,
+            temperature: 0.6,
           }),
         });
 

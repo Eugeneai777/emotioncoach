@@ -1659,6 +1659,7 @@ export type Database = {
       parent_coaching_sessions: {
         Row: {
           briefing_id: string | null
+          briefing_requested: boolean | null
           camp_id: string | null
           child_type: string | null
           conversation_id: string | null
@@ -1680,6 +1681,7 @@ export type Database = {
         }
         Insert: {
           briefing_id?: string | null
+          briefing_requested?: boolean | null
           camp_id?: string | null
           child_type?: string | null
           conversation_id?: string | null
@@ -1701,6 +1703,7 @@ export type Database = {
         }
         Update: {
           briefing_id?: string | null
+          briefing_requested?: boolean | null
           camp_id?: string | null
           child_type?: string | null
           conversation_id?: string | null
