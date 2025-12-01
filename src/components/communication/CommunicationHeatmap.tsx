@@ -113,41 +113,43 @@ export function CommunicationHeatmap({ onDateSelect }: Props) {
   // Generate calendar grid
   const monthStart = startOfMonth(selectedMonth);
   const monthEnd = endOfMonth(selectedMonth);
-  const calendarStart = startOfWeek(monthStart, { locale: zhCN });
-  const calendarEnd = endOfWeek(monthEnd, { locale: zhCN });
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-  const weekDays = ["一", "二", "三", "四", "五", "六", "日"];
+  const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
 
   return (
     <>
-      <Card className="p-4 bg-card/50">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold">📅 沟通日历</h3>
+      <Card className="p-4 md:p-6 bg-card/50 backdrop-blur-sm border-border">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
+            📅 沟通日历
+          </h3>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handlePrevMonth}>
+            <Button variant="outline" size="sm" onClick={handlePrevMonth} className="h-8 w-8 p-0">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium min-w-[80px] text-center">
+            <span className="text-sm font-medium min-w-[100px] text-center">
               {format(selectedMonth, "yyyy年M月", { locale: zhCN })}
             </span>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleNextMonth}>
+            <Button variant="outline" size="sm" onClick={handleNextMonth} className="h-8 w-8 p-0">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
         {/* Week header */}
-        <div className="grid grid-cols-7 gap-1 mb-1">
+        <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2">
           {weekDays.map((day) => (
-            <div key={day} className="text-center text-xs text-muted-foreground py-1">
+            <div key={day} className="text-center text-xs text-muted-foreground font-medium py-1">
               {day}
             </div>
           ))}
         </div>
 
         {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1 md:gap-2">
           {calendarDays.map((date) => {
             const dateStr = format(date, "yyyy-MM-dd");
             const dayData = data.find((d) => d.date === dateStr);
@@ -188,21 +190,21 @@ export function CommunicationHeatmap({ onDateSelect }: Props) {
         </div>
 
         {/* Compact legend */}
-        <div className="mt-3 flex items-center justify-center gap-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <div className="w-2.5 h-2.5 rounded bg-green-500/80" />
+        <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded bg-green-500/80" />
             <span>简单</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2.5 h-2.5 rounded bg-yellow-500/80" />
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded bg-yellow-500/80" />
             <span>中等</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2.5 h-2.5 rounded bg-orange-500/80" />
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded bg-orange-500/80" />
             <span>困难</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2.5 h-2.5 rounded bg-red-500/80" />
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded bg-red-500/80" />
             <span>极难</span>
           </div>
         </div>
