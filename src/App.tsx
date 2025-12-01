@@ -42,6 +42,7 @@ import YoujinPartnerIntro from "./pages/YoujinPartnerIntro";
 import RedeemCode from "./pages/RedeemCode";
 import NotFound from "./pages/NotFound";
 import DynamicCoach from "./pages/DynamicCoach";
+import StoryCoach from "./pages/StoryCoach";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
 
 const queryClient = new QueryClient();
@@ -91,6 +92,7 @@ const App = () => (
           <Route path="/partner" element={<Partner />} />
           <Route path="/partner/benefits" element={<PartnerBenefits />} />
           <Route path="/redeem" element={<RedeemCode />} />
+          <Route path="/story-coach" element={<StoryCoach />} />
           <Route path="/coach/:coachKey" element={<DynamicCoach />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
