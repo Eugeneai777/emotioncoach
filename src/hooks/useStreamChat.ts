@@ -465,6 +465,15 @@ ${data.growth_story}
           }
         }
 
+        if (functionName === 'request_emotion_intensity') {
+          // Add intensity prompt message to conversation
+          setMessages((prev) => [...prev, { 
+            role: "assistant", 
+            content: "", 
+            type: "intensity_prompt" 
+          }]);
+        }
+
         if (functionName === 'generate_briefing' && convId) {
           // Format and display briefing
           const briefingText = formatBriefing(args);
