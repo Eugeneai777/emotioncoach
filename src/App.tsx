@@ -98,7 +98,6 @@ const App = () => (
           <Route path="/story-coach" element={<StoryCoach />} />
           <Route path="/story-coach-intro" element={<StoryCoachIntro />} />
           <Route path="/my-stories" element={<MyStories />} />
-          <Route path="/coach/vibrant_life_sage" element={<Navigate to="/story-coach" replace />} />
           <Route path="/coach/:coachKey" element={<DynamicCoach />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
