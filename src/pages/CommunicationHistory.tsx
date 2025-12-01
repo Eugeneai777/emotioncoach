@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, MessageSquare, TrendingUp, Brain, GitCompare, FileText } from "lucide-react";
+import { Loader2, ArrowLeft, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { CommunicationBriefingTagSelector } from "@/components/communication/CommunicationBriefingTagSelector";
@@ -14,7 +14,6 @@ import { CommunicationPatternInsights } from "@/components/communication/Communi
 import { CommunicationTrendAnalysis } from "@/components/communication/CommunicationTrendAnalysis";
 import { CommunicationComparison } from "@/components/communication/CommunicationComparison";
 import { CommunicationReview } from "@/components/communication/CommunicationReview";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CommunicationTag {
   id: string;
@@ -333,133 +332,123 @@ export default function CommunicationHistory() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-indigo-50/50 to-white">
-      <div className="container mx-auto p-6">
-        <div className="mb-6">
-          <div className="flex items-center gap-4 mb-4">
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/communication-coach")}
-              className="shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div className="flex items-center justify-between flex-1">
-              <h1 className="text-3xl font-bold">沟通日记</h1>
-              <Button onClick={() => navigate("/communication-coach")}>
-                <MessageSquare className="mr-2 h-4 w-4" />
-                开始新对话
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4 space-y-2 md:space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h1 className="text-lg md:text-xl font-bold text-foreground">沟通日记</h1>
+            <div className="flex items-center gap-1 md:gap-2">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/communication-coach")}>
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline ml-1">返回</span>
               </Button>
             </div>
           </div>
 
-        {allTags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant={filterTag === null ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilterTag(null)}
-            >
-              全部
-            </Button>
-            {allTags.map((tag) => (
+          {allTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 md:gap-2 items-center">
               <Button
-                key={tag.id}
-                variant={filterTag === tag.name ? "default" : "outline"}
+                variant={filterTag === null ? "default" : "outline"}
                 size="sm"
-                onClick={() => setFilterTag(tag.name)}
-                style={
-                  filterTag === tag.name
-                    ? { backgroundColor: tag.color, borderColor: tag.color }
-                    : { borderColor: tag.color, color: tag.color }
-                }
+                onClick={() => setFilterTag(null)}
+                className="h-7 text-xs"
               >
-                {tag.name}
+                全部
               </Button>
-            ))}
-          </div>
-        )}
-      </div>
-
-        <Tabs defaultValue="list" className="space-y-6">
-          <ScrollArea className="w-full">
-            <TabsList className="inline-flex w-full min-w-max">
-              <TabsTrigger value="list" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">简报列表</span>
-                <span className="sm:hidden">列表</span>
-              </TabsTrigger>
-              <TabsTrigger value="trends" className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                <span className="hidden sm:inline">沟通趋势</span>
-                <span className="sm:hidden">趋势</span>
-              </TabsTrigger>
-              <TabsTrigger value="insights" className="flex items-center gap-2">
-                <Brain className="h-4 w-4" />
-                <span className="hidden sm:inline">模式洞察</span>
-                <span className="sm:hidden">洞察</span>
-              </TabsTrigger>
-              <TabsTrigger value="comparison" className="flex items-center gap-2">
-                <GitCompare className="h-4 w-4" />
-                <span className="hidden sm:inline">对比分析</span>
-                <span className="sm:hidden">对比</span>
-              </TabsTrigger>
-              <TabsTrigger value="review" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                <span className="hidden sm:inline">沟通复盘</span>
-                <span className="sm:hidden">复盘</span>
-              </TabsTrigger>
-            </TabsList>
-          </ScrollArea>
-
-        <TabsContent value="list" className="space-y-6">
-          <CommunicationHeatmap onDateSelect={handleDateSelect} />
-
-          {briefings.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground mb-4">还没有沟通记录</p>
-                <Button onClick={() => navigate("/communication-coach")}>
-                  开始第一次对话
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {briefings.map((briefing) => (
-                <Card
-                  key={briefing.id}
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => handleBriefingClick(briefing)}
+              {allTags.map((tag) => (
+                <Button
+                  key={tag.id}
+                  variant={filterTag === tag.name ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterTag(tag.name)}
+                  className="h-7 text-xs"
+                  style={
+                    filterTag === tag.name
+                      ? { backgroundColor: tag.color, borderColor: tag.color }
+                      : { borderColor: tag.color, color: tag.color }
+                  }
                 >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg mb-2">
-                          {briefing.communication_theme}
-                        </CardTitle>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {briefing.scenario_type && (
-                            <Badge variant="secondary">
-                              {getScenarioLabel(briefing.scenario_type)}
-                            </Badge>
-                          )}
-                          {briefing.communication_difficulty && (
-                            <Badge className={getDifficultyColor(briefing.communication_difficulty)}>
-                              难度 {briefing.communication_difficulty}/10
-                            </Badge>
-                          )}
-                          {briefing.difficulty_keywords?.slice(0, 3).map((keyword, idx) => (
-                            <Badge key={idx} variant="outline">
-                              {keyword}
-                            </Badge>
-                          ))}
+                  {tag.name}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+      </header>
+
+      <main className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
+        <Tabs defaultValue="list" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 mb-4 md:mb-6 h-auto">
+            <TabsTrigger value="list" className="text-xs md:text-sm py-2">
+              <span className="hidden sm:inline">记录列表</span>
+              <span className="sm:hidden">列表</span>
+            </TabsTrigger>
+            <TabsTrigger value="trends" className="text-xs md:text-sm py-2">
+              <span className="hidden sm:inline">沟通趋势</span>
+              <span className="sm:hidden">趋势</span>
+            </TabsTrigger>
+            <TabsTrigger value="insights" className="text-xs md:text-sm py-2">
+              <span className="hidden sm:inline">模式洞察</span>
+              <span className="sm:hidden">洞察</span>
+            </TabsTrigger>
+            <TabsTrigger value="comparison" className="text-xs md:text-sm py-2">
+              <span className="hidden sm:inline">记录对比</span>
+              <span className="sm:hidden">对比</span>
+            </TabsTrigger>
+            <TabsTrigger value="review" className="text-xs md:text-sm py-2">
+              <span className="hidden sm:inline">沟通复盘</span>
+              <span className="sm:hidden">复盘</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="list" className="space-y-4 md:space-y-6">
+            <CommunicationHeatmap onDateSelect={handleDateSelect} />
+
+            {briefings.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground mb-4">还没有沟通记录</p>
+                  <Button onClick={() => navigate("/communication-coach")}>
+                    开始第一次对话
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-3 md:gap-4">
+                {briefings.map((briefing) => (
+                  <Card
+                    key={briefing.id}
+                    className="cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => handleBriefingClick(briefing)}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-base md:text-lg mb-2">
+                            {briefing.communication_theme}
+                          </CardTitle>
+                          <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
+                            {briefing.scenario_type && (
+                              <Badge variant="secondary" className="text-xs">
+                                {getScenarioLabel(briefing.scenario_type)}
+                              </Badge>
+                            )}
+                            {briefing.communication_difficulty && (
+                              <Badge className={`${getDifficultyColor(briefing.communication_difficulty)} text-xs`}>
+                                难度 {briefing.communication_difficulty}/10
+                              </Badge>
+                            )}
+                            {briefing.difficulty_keywords?.slice(0, 3).map((keyword, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {keyword}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
+                    </CardHeader>
+                    <CardContent className="pt-0">
                     {briefing.scenario_analysis && (
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {briefing.scenario_analysis}
@@ -473,41 +462,25 @@ export default function CommunicationHistory() {
               ))}
             </div>
           )}
-        </TabsContent>
+          </TabsContent>
 
           <TabsContent value="trends">
-            <div className="space-y-2 mb-4">
-              <h2 className="text-xl font-semibold text-foreground">📈 宏观视角</h2>
-              <p className="text-sm text-muted-foreground">从时间维度看沟通全貌</p>
-            </div>
             <CommunicationTrendAnalysis />
           </TabsContent>
 
           <TabsContent value="insights">
-            <div className="space-y-2 mb-4">
-              <h2 className="text-xl font-semibold text-foreground">🧠 深度分析</h2>
-              <p className="text-sm text-muted-foreground">识别沟通规律与成长模式</p>
-            </div>
             <CommunicationPatternInsights />
           </TabsContent>
 
           <TabsContent value="comparison">
-            <div className="space-y-2 mb-4">
-              <h2 className="text-xl font-semibold text-foreground">⚖️ 深度分析</h2>
-              <p className="text-sm text-muted-foreground">对比不同时期的沟通表现</p>
-            </div>
             <CommunicationComparison briefings={briefings as any} />
           </TabsContent>
 
           <TabsContent value="review">
-            <div className="space-y-2 mb-4">
-              <h2 className="text-xl font-semibold text-foreground">📝 深度分析</h2>
-              <p className="text-sm text-muted-foreground">全面回顾沟通旅程</p>
-            </div>
             <CommunicationReview />
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 }
