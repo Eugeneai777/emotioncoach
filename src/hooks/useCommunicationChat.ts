@@ -27,6 +27,18 @@ interface CommunicationBriefingData {
   difficulty_keywords?: string[];
 }
 
+interface CommunicationSession {
+  id: string;
+  current_stage: number;
+  scenario_description?: string;
+  see_content?: any;
+  understand_content?: any;
+  influence_content?: any;
+  act_content?: any;
+  briefing_requested: boolean;
+  status: string;
+}
+
 const welcomeMessages = [
   "嗨，我是劲老师 👋 最近有没有什么沟通上的困扰想聊聊？不管是和家人、同事还是朋友，我都在这里陪你。说说看，是什么事让你有点卡住了？",
   "你好呀 😊 我是劲老师，专门陪你聊沟通的问题。最近有没有哪段对话让你觉得不太顺？可以从任何一个小困惑开始。",
@@ -45,12 +57,13 @@ export const useCommunicationChat = (conversationId?: string) => {
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(conversationId || null);
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [lastBriefingId, setLastBriefingId] = useState<string | null>(null);
+  const [currentSession, setCurrentSession] = useState<CommunicationSession | null>(null);
+  const [currentStage, setCurrentStage] = useState(0);
 
   useEffect(() => {
     if (conversationId) {
       loadConversation(conversationId);
     } else {
-      // 初始化时不设置欢迎消息，让四步曲介绍显示
       setMessages([]);
     }
   }, [conversationId]);
@@ -211,6 +224,67 @@ ${data.growth_insight}
     }
   };
 
+  const updateSessionStage = async (sessionId: string, toolName: string, toolArgs: any) => {
+    try {
+      if (toolName === "capture_scenario") {
+        await supabase
+          .from("communication_coaching_sessions")
+          .update({
+            current_stage: 1,
+            scenario_description: toolArgs.scenario_description,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", sessionId);
+        setCurrentStage(1);
+      } else if (toolName === "complete_stage" && currentSession) {
+        const nextStage = currentSession.current_stage + 1;
+        const updateData: any = {
+          current_stage: nextStage,
+          updated_at: new Date().toISOString(),
+        };
+
+        // 根据当前阶段保存内容
+        const stageKey = `stage_${currentSession.current_stage}_content`;
+        if (currentSession.current_stage === 1) {
+          updateData.see_content = { content: toolArgs.stage_content };
+        } else if (currentSession.current_stage === 2) {
+          updateData.understand_content = { content: toolArgs.stage_content };
+        } else if (currentSession.current_stage === 3) {
+          updateData.influence_content = { content: toolArgs.stage_content };
+        } else if (currentSession.current_stage === 4) {
+          updateData.act_content = { content: toolArgs.stage_content };
+        }
+
+        await supabase
+          .from("communication_coaching_sessions")
+          .update(updateData)
+          .eq("id", sessionId);
+        
+        setCurrentStage(nextStage);
+      }
+    } catch (error) {
+      console.error("更新会话阶段失败:", error);
+    }
+  };
+
+  const handleBriefingRequest = async (sessionId: string) => {
+    try {
+      await supabase
+        .from("communication_coaching_sessions")
+        .update({
+          briefing_requested: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", sessionId);
+      
+      if (currentSession) {
+        setCurrentSession({ ...currentSession, briefing_requested: true });
+      }
+    } catch (error) {
+      console.error("更新简报请求状态失败:", error);
+    }
+  };
+
   const sendMessage = async (input: string, userDifficulty?: number) => {
     if (!input.trim() || isLoading) return;
 
@@ -222,6 +296,14 @@ ${data.growth_insight}
         convId = await createConversation();
         if (!convId) throw new Error("创建对话失败");
         setCurrentConversationId(convId);
+      }
+
+      // 检查用户是否请求生成简报
+      const briefingKeywords = ["生成简报", "生成报告", "1"];
+      const isBriefingRequest = briefingKeywords.some(keyword => input.includes(keyword));
+      
+      if (isBriefingRequest && currentSession && currentSession.current_stage === 5) {
+        await handleBriefingRequest(currentSession.id);
       }
 
       const userMessage: Message = { role: "user", content: input };
@@ -246,6 +328,7 @@ ${data.growth_insight}
               content: m.content
             })),
             userDifficulty,
+            sessionId: currentSession?.id,
           }),
         }
       );
@@ -255,24 +338,34 @@ ${data.growth_insight}
         throw new Error(errorData.error || "AI 请求失败");
       }
 
+      // 从响应头获取 session_id
+      const sessionIdFromHeader = response.headers.get('X-Session-Id');
+      if (sessionIdFromHeader && !currentSession) {
+        const { data: sessionData } = await supabase
+          .from("communication_coaching_sessions")
+          .select("*")
+          .eq("id", sessionIdFromHeader)
+          .single();
+        
+        if (sessionData) {
+          setCurrentSession(sessionData);
+          setCurrentStage(sessionData.current_stage);
+        }
+      }
+
       const reader = response.body?.getReader();
       if (!reader) throw new Error("无法读取响应");
 
       const decoder = new TextDecoder();
       let assistantMessage = "";
-      let currentToolCall: any = null;
-      let toolCallBuffer = "";
+      const toolCallsMap = new Map<number, any>();
 
       const processChunk = async () => {
         let buffer = "";
-        const toolCallsMap = new Map<number, any>();
         
         while (true) {
           const { done, value } = await reader.read();
-          if (done) {
-            console.log("Stream完成，最终消息长度:", assistantMessage.length);
-            break;
-          }
+          if (done) break;
 
           const chunk = decoder.decode(value, { stream: true });
           buffer += chunk;
@@ -285,10 +378,7 @@ ${data.growth_insight}
             if (!line.startsWith("data: ")) continue;
 
             const data = line.slice(6).trim();
-            if (data === "[DONE]") {
-              console.log("收到[DONE]信号");
-              continue;
-            }
+            if (data === "[DONE]") continue;
 
             try {
               const parsed = JSON.parse(data);
@@ -333,29 +423,33 @@ ${data.growth_insight}
                 buffer = line + "\n" + buffer;
                 break;
               }
-              console.warn("解析SSE数据失败:", line.slice(0, 100), e);
+              console.warn("解析SSE数据失败:", e);
             }
           }
         }
 
+        // 处理工具调用
         if (toolCallsMap.size > 0) {
           const completedToolCalls = Array.from(toolCallsMap.values());
-          console.log("完整的工具调用:", completedToolCalls);
           
           for (const toolCall of completedToolCalls) {
-            if (toolCall.function.name === "generate_communication_briefing") {
-              try {
-                const briefingData = JSON.parse(toolCall.function.arguments) as CommunicationBriefingData;
-                
-                // 如果用户提供了难度，使用用户的难度；否则使用AI评估的难度
+            try {
+              const toolArgs = JSON.parse(toolCall.function.arguments);
+              
+              if (currentSession) {
+                await updateSessionStage(currentSession.id, toolCall.function.name, toolArgs);
+              }
+
+              if (toolCall.function.name === "generate_communication_briefing") {
+                const briefingData = toolArgs as CommunicationBriefingData;
                 const finalBriefingData = {
                   ...briefingData,
                   communication_difficulty: userDifficulty || briefingData.communication_difficulty
                 };
                 
                 const formattedBriefing = formatCommunicationBriefing(finalBriefingData);
-                
                 assistantMessage += formattedBriefing;
+                
                 setMessages(prev => {
                   const lastMsg = prev[prev.length - 1];
                   if (lastMsg?.role === "assistant") {
@@ -368,22 +462,23 @@ ${data.growth_insight}
                 if (savedBriefingId) {
                   setLastBriefingId(savedBriefingId);
                 }
-              } catch (e) {
-                console.error("处理简报失败:", e);
+                
+                // 标记会话完成
+                if (currentSession) {
+                  await supabase
+                    .from("communication_coaching_sessions")
+                    .update({ status: 'completed' })
+                    .eq("id", currentSession.id);
+                }
               }
+            } catch (e) {
+              console.error("处理工具调用失败:", e);
             }
           }
         }
 
         if (assistantMessage.trim().length > 0) {
           await saveMessage(convId!, "assistant", assistantMessage);
-        } else {
-          console.error("助手回复为空，不保存到数据库");
-          toast({
-            title: "回复异常",
-            description: "AI 回复为空，请重试",
-            variant: "destructive",
-          });
         }
       };
 
@@ -401,10 +496,11 @@ ${data.growth_insight}
   };
 
   const resetConversation = () => {
-    // 重置时清空消息，回到四步曲介绍页面
     setMessages([]);
     setCurrentConversationId(null);
     setUserMessageCount(0);
+    setCurrentSession(null);
+    setCurrentStage(0);
   };
 
   return {
@@ -413,6 +509,7 @@ ${data.growth_insight}
     currentConversationId,
     userMessageCount,
     lastBriefingId,
+    currentStage,
     sendMessage,
     resetConversation,
   };

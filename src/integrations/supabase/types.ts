@@ -635,6 +635,68 @@ export type Database = {
           },
         ]
       }
+      communication_coaching_sessions: {
+        Row: {
+          act_content: Json | null
+          briefing_requested: boolean | null
+          conversation_id: string | null
+          created_at: string | null
+          current_stage: number | null
+          id: string
+          influence_content: Json | null
+          messages: Json | null
+          scenario_description: string | null
+          see_content: Json | null
+          stage_selections: Json | null
+          status: string | null
+          understand_content: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          act_content?: Json | null
+          briefing_requested?: boolean | null
+          conversation_id?: string | null
+          created_at?: string | null
+          current_stage?: number | null
+          id?: string
+          influence_content?: Json | null
+          messages?: Json | null
+          scenario_description?: string | null
+          see_content?: Json | null
+          stage_selections?: Json | null
+          status?: string | null
+          understand_content?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          act_content?: Json | null
+          briefing_requested?: boolean | null
+          conversation_id?: string | null
+          created_at?: string | null
+          current_stage?: number | null
+          id?: string
+          influence_content?: Json | null
+          messages?: Json | null
+          scenario_description?: string | null
+          see_content?: Json | null
+          stage_selections?: Json | null
+          status?: string | null
+          understand_content?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_coaching_sessions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       communication_tags: {
         Row: {
           color: string | null

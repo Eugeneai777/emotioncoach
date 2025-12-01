@@ -5,6 +5,7 @@ import { CommunicationDifficultyDialog } from "@/components/communication/Commun
 import { CommunicationNotificationsModule } from "@/components/communication/CommunicationNotificationsModule";
 import { CommunicationTrainingCampModule } from "@/components/communication/CommunicationTrainingCampModule";
 import { CoachCommunity } from "@/components/coach/CoachCommunity";
+import { CommunicationStageProgress } from "@/components/coach/CommunicationStageProgress";
 import { useCommunicationChat } from "@/hooks/useCommunicationChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +17,7 @@ const CommunicationCoach = () => {
   const [showDifficultyDialog, setShowDifficultyDialog] = useState(false);
   const [difficultyConfirmed, setDifficultyConfirmed] = useState(false);
   const { toast } = useToast();
-  const { messages, isLoading, userMessageCount, lastBriefingId, sendMessage, resetConversation } = useCommunicationChat();
+  const { messages, isLoading, userMessageCount, lastBriefingId, currentStage, sendMessage, resetConversation } = useCommunicationChat();
   const { data: template, isLoading: templateLoading } = useCoachTemplate('communication');
   
   // 在对话进行2轮后自动弹出难度选择
@@ -110,6 +111,11 @@ const CommunicationCoach = () => {
               onSelectScenario={handleSelectScenario}
               primaryColor={template.primary_color}
             />
+          ) : undefined
+        }
+        stageProgress={
+          messages.length > 0 ? (
+            <CommunicationStageProgress currentStage={currentStage} />
           ) : undefined
         }
         notifications={<CommunicationNotificationsModule />}
