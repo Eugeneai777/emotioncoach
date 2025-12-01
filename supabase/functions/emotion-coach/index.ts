@@ -88,7 +88,9 @@ serve(async (req) => {
 4. 其他感受（请描述）
 
 判断成功:
-当用户从"发生了一件事"变成"我感觉到了某种情绪"时，记录洞察并调用complete_stage。`;
+当用户从"发生了一件事"变成"我感觉到了某种情绪"时，记录洞察并调用complete_stage。
+
+重要：完成本阶段（调用complete_stage）后，必须立即调用request_emotion_intensity邀请用户评估当前情绪强度。`;
         case 2:
           return `【理解（Name it）：从情绪混乱 → 看见情绪背后的需求】
 
@@ -299,6 +301,18 @@ ${getStagePrompt(session?.current_stage || 0)}
               }
             },
             required: ["stage", "insight", "reflection"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "request_emotion_intensity",
+          description: "在完成阶段1（觉察）后，温柔地邀请用户评估当前情绪强度（1-10分）。必须在调用complete_stage(stage=1)之后立即调用。",
+          parameters: {
+            type: "object",
+            properties: {},
+            required: []
           }
         }
       },
@@ -520,6 +534,40 @@ ${getStagePrompt(updatedSession?.current_stage || 0)}
         return new Response(JSON.stringify({
           content: followUpMessage.content,
           tool_call: { function: functionName, args }
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // For request_emotion_intensity, return a signal to show intensity prompt
+      if (functionName === 'request_emotion_intensity') {
+        console.log('Requesting emotion intensity from user...');
+        
+        // Add tool call to history
+        conversationHistory.push({
+          role: "assistant",
+          content: assistantMessage.content || "",
+          tool_calls: assistantMessage.tool_calls
+        });
+        
+        // Add tool result to history
+        conversationHistory.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: JSON.stringify({ success: true, action: "show_intensity_prompt" })
+        });
+
+        await supabaseClient
+          .from('emotion_coaching_sessions')
+          .update({
+            messages: conversationHistory,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', sessionId);
+
+        return new Response(JSON.stringify({
+          content: assistantMessage.content,
+          tool_call: { function: 'request_emotion_intensity', args: {} }
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
