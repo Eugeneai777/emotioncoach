@@ -3,19 +3,21 @@ import { Card } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { getTodayRangeUTC } from "@/utils/dateUtils";
+import { getTodayRangeUTCForTimezone } from "@/utils/dateUtils";
+import { useUserTimezone } from "@/hooks/useUserTimezone";
 
 const TodayProgress = () => {
   const [todayCount, setTodayCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const { timezone } = useUserTimezone();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !timezone) return;
     
     const fetchTodayCount = async () => {
       try {
-        const { start, end } = getTodayRangeUTC();
+        const { start, end } = getTodayRangeUTCForTimezone(timezone);
         
         const { data: conversations } = await supabase
           .from("conversations")
@@ -45,7 +47,7 @@ const TodayProgress = () => {
     };
 
     fetchTodayCount();
-  }, [user]);
+  }, [user, timezone]);
 
   if (isLoading) {
     return (

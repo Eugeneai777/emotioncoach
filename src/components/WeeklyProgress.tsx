@@ -4,7 +4,8 @@ import { TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { BarChart, Bar, XAxis, ResponsiveContainer } from "recharts";
-import { getCSTWeekStartUTC, formatDateCST } from "@/utils/dateUtils";
+import { getWeekStartUTCForTimezone, formatDateCST } from "@/utils/dateUtils";
+import { useUserTimezone } from "@/hooks/useUserTimezone";
 
 interface DayData {
   day: string;
@@ -16,13 +17,14 @@ const WeeklyProgress = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const { timezone } = useUserTimezone();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !timezone) return;
     
     const fetchWeeklyData = async () => {
       try {
-        const weekStartUTC = getCSTWeekStartUTC();
+        const weekStartUTC = getWeekStartUTCForTimezone(timezone);
 
         // Create array for 7 days
         const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
@@ -69,7 +71,7 @@ const WeeklyProgress = () => {
     };
 
     fetchWeeklyData();
-  }, [user]);
+  }, [user, timezone]);
 
   if (isLoading) {
     return (

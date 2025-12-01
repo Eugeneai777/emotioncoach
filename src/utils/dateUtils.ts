@@ -6,12 +6,20 @@ const CST_TIMEZONE = "Asia/Shanghai"; // 中国标准时间 UTC+8
 // ========== 基础时间工具函数 ==========
 
 /**
+ * 获取指定时区的当前日期字符串 (yyyy-MM-dd)
+ * @param timezone - 时区，默认为中国标准时间
+ */
+export const getTodayInTimezone = (timezone: string = CST_TIMEZONE): string => {
+  const now = new Date();
+  const zonedTime = toZonedTime(now, timezone);
+  return format(zonedTime, "yyyy-MM-dd");
+};
+
+/**
  * 获取中国标准时间（CST）的当前日期字符串 (yyyy-MM-dd)
  */
 export const getTodayCST = (): string => {
-  const now = new Date();
-  const cstTime = toZonedTime(now, CST_TIMEZONE);
-  return format(cstTime, "yyyy-MM-dd");
+  return getTodayInTimezone(CST_TIMEZONE);
 };
 
 /**
@@ -64,6 +72,15 @@ export const formatInCST = (
 // ========== 数据库查询专用工具函数 ==========
 
 /**
+ * 获取指定时区"今天"的 UTC 时间范围（用于数据库查询）
+ * @param timezone - 时区，默认为中国标准时间
+ */
+export const getTodayRangeUTCForTimezone = (timezone: string = CST_TIMEZONE): { start: string; end: string } => {
+  const today = getTodayInTimezone(timezone);
+  return getDateRangeUTC(today);
+};
+
+/**
  * 获取中国标准时间"今天"的 UTC 时间范围（用于数据库查询）
  * 返回 { start: ISO字符串, end: ISO字符串 }
  * 
@@ -71,8 +88,7 @@ export const formatInCST = (
  * => { start: "2025-12-01T16:00:00.000Z", end: "2025-12-02T15:59:59.999Z" }
  */
 export const getTodayRangeUTC = (): { start: string; end: string } => {
-  const today = getTodayCST();
-  return getDateRangeUTC(today);
+  return getTodayRangeUTCForTimezone(CST_TIMEZONE);
 };
 
 /**
@@ -122,16 +138,26 @@ export const getCSTDaysAgoUTC = (days: number): string => {
 };
 
 /**
- * 获取中国标准时间本周一 00:00 对应的 UTC ISO 字符串
+ * 获取指定时区本周一 00:00 对应的 UTC ISO 字符串
+ * @param timezone - 时区，默认为中国标准时间
  */
-export const getCSTWeekStartUTC = (): string => {
-  const today = getTodayStartCST();
+export const getWeekStartUTCForTimezone = (timezone: string = CST_TIMEZONE): string => {
+  const now = new Date();
+  const zonedTime = toZonedTime(now, timezone);
+  const today = startOfDay(zonedTime);
   const dayOfWeek = today.getDay();
   const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // 周日特殊处理
   const monday = new Date(today);
   monday.setDate(today.getDate() + diff);
   const mondayStr = format(monday, "yyyy-MM-dd");
   return new Date(`${mondayStr}T00:00:00+08:00`).toISOString();
+};
+
+/**
+ * 获取中国标准时间本周一 00:00 对应的 UTC ISO 字符串
+ */
+export const getCSTWeekStartUTC = (): string => {
+  return getWeekStartUTCForTimezone(CST_TIMEZONE);
 };
 
 // ========== 向后兼容的别名（保留旧函数名） ==========

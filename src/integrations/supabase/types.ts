@@ -2229,6 +2229,7 @@ export type Database = {
           reminder_enabled: boolean | null
           reminder_time: string | null
           smart_notification_enabled: boolean | null
+          timezone: string | null
           updated_at: string
           voice_gender: string | null
           voice_rate: number | null
@@ -2277,6 +2278,7 @@ export type Database = {
           reminder_enabled?: boolean | null
           reminder_time?: string | null
           smart_notification_enabled?: boolean | null
+          timezone?: string | null
           updated_at?: string
           voice_gender?: string | null
           voice_rate?: number | null
@@ -2325,6 +2327,7 @@ export type Database = {
           reminder_enabled?: boolean | null
           reminder_time?: string | null
           smart_notification_enabled?: boolean | null
+          timezone?: string | null
           updated_at?: string
           voice_gender?: string | null
           voice_rate?: number | null
