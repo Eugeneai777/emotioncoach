@@ -14,6 +14,7 @@ import { AccountBalance } from "@/components/AccountBalance";
 import { BillingExplanation } from "@/components/BillingExplanation";
 import { PackageSelector } from "@/components/PackageSelector";
 import CampSettings from "@/components/CampSettings";
+import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { useToast } from "@/hooks/use-toast";
 import { usePartner } from "@/hooks/usePartner";
 import { ArrowLeft } from "lucide-react";
@@ -28,6 +29,7 @@ export default function Settings() {
   const [reminderTime, setReminderTime] = useState("20:00");
   const [displayName, setDisplayName] = useState("");
   const [autoDismissSeconds, setAutoDismissSeconds] = useState(10);
+  const [timezone, setTimezone] = useState("Asia/Shanghai");
   const [userId, setUserId] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const { partner, isPartner, loading: partnerLoading } = usePartner();
@@ -60,7 +62,7 @@ export default function Settings() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("reminder_enabled, reminder_time, display_name, reminder_auto_dismiss_seconds")
+        .select("reminder_enabled, reminder_time, display_name, reminder_auto_dismiss_seconds, timezone")
         .eq("id", user.id)
         .single();
 
@@ -71,6 +73,7 @@ export default function Settings() {
         setReminderTime(data.reminder_time ?? "20:00");
         setDisplayName(data.display_name ?? "");
         setAutoDismissSeconds(data.reminder_auto_dismiss_seconds ?? 10);
+        setTimezone(data.timezone ?? "Asia/Shanghai");
       }
     } catch (error) {
       console.error("Error loading settings:", error);
@@ -97,6 +100,7 @@ export default function Settings() {
           reminder_time: reminderTime,
           display_name: displayName.trim() || null,
           reminder_auto_dismiss_seconds: autoDismissSeconds,
+          timezone: timezone,
         })
         .eq("id", user.id);
 
@@ -267,6 +271,8 @@ export default function Settings() {
                     这个名称将在复盘报告中使用，例如"亲爱的[你的名称]"
                   </p>
                 </div>
+
+                <TimezoneSelector value={timezone} onChange={setTimezone} />
 
                 <Button
                   onClick={saveSettings}
