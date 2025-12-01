@@ -139,17 +139,30 @@ export const CoachHeader = ({
                 <ChevronDown className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56 bg-background/95 backdrop-blur-sm border-border/50">
+            <DropdownMenuContent align="start" className="w-52 bg-card border shadow-lg z-50">
               {coachesQuery.data?.map((coach) => (
                 <DropdownMenuItem
                   key={coach.id}
                   onClick={() => navigate(coach.page_route)}
-                  className="cursor-pointer hover:bg-accent"
+                  className="gap-2 cursor-pointer hover:bg-accent"
                 >
-                  <span className="mr-2">{coach.emoji}</span>
-                  <span>{coach.title}</span>
+                  <span>{coach.emoji}</span>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{coach.title}</span>
+                    {coach.subtitle && (
+                      <span className="text-xs text-muted-foreground">{coach.subtitle}</span>
+                    )}
+                  </div>
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuSeparator className="bg-border/50" />
+              <DropdownMenuItem 
+                onClick={() => navigate("/energy-studio#coach")}
+                className="gap-2 text-primary cursor-pointer hover:bg-accent"
+              >
+                <Target className="w-4 h-4" />
+                <span className="font-medium">查看全部教练</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
