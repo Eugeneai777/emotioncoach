@@ -159,6 +159,13 @@ export const CoachHeader = ({
                     <span className="text-xs text-muted-foreground">温暖表达影响</span>
                   </div>
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/story-coach")} className="gap-2">
+                  <span className="text-orange-500">📖</span>
+                  <div className="flex flex-col">
+                    <span className="font-medium">好故事教练</span>
+                    <span className="text-xs text-muted-foreground">英雄之旅创作</span>
+                  </div>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/energy-studio#coach")} className="gap-2 text-primary">
                   <Target className="w-4 h-4" />

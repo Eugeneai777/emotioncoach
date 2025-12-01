@@ -17,7 +17,7 @@ const coaches = [{
   subtitle: "亲子情绪四部曲",
   description: "Feel · See · Sense · Transform",
   icon: "Users",
-  gradient: "from-orange-500 to-amber-500",
+  gradient: "from-pink-500 to-rose-500",
   route: "/parent-coach",
   badge: null
 }, {
@@ -30,6 +30,15 @@ const coaches = [{
   route: "/communication-coach",
   badge: "新"
 }, {
+  id: "story-coach",
+  title: "好故事教练",
+  subtitle: "英雄之旅四部曲",
+  description: "把经历变成动人的成长故事",
+  icon: "BookOpen",
+  gradient: "from-orange-500 to-amber-500",
+  route: "/story-coach",
+  badge: "新"
+}, {
   id: "vibrant-life-coach",
   title: "有劲生活教练",
   subtitle: "劲老师带你活出光彩",
@@ -37,7 +46,7 @@ const coaches = [{
   icon: "Sparkles",
   gradient: "from-rose-500 to-red-500",
   route: "/coach/vibrant_life_sage",
-  badge: "新"
+  badge: null
 }];
 export const CoachSpaceContent = () => {
   const navigate = useNavigate();
