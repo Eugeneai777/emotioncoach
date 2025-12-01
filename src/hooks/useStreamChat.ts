@@ -466,12 +466,14 @@ ${data.growth_story}
         }
 
         if (functionName === 'request_emotion_intensity') {
-          // Add intensity prompt message to conversation
+          // Add intensity prompt message, but skip adding AI text response to avoid duplication
           setMessages((prev) => [...prev, { 
             role: "assistant", 
             content: "", 
             type: "intensity_prompt" 
           }]);
+          setIsLoading(false);
+          return; // Exit early to prevent adding duplicate text message
         }
 
         if (functionName === 'generate_briefing' && convId) {
@@ -513,11 +515,16 @@ ${data.growth_story}
     setCurrentStage(0);
   };
 
+  const removeIntensityPrompt = () => {
+    setMessages((prev) => prev.filter(msg => msg.type !== 'intensity_prompt'));
+  };
+
   return { 
     messages, 
     isLoading, 
     sendMessage, 
     resetConversation,
+    removeIntensityPrompt,
     conversationId: currentConversationId,
     videoRecommendations,
     currentStage
