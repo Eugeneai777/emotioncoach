@@ -6,7 +6,6 @@ import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import LikeButton from "./LikeButton";
 import CommentSection from "./CommentSection";
-import ShareButton from "./ShareButton";
 import { useState, useEffect } from "react";
 import { MessageCircle, UserPlus, UserCheck, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -370,7 +369,6 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
           <MessageCircle className="h-5 w-5" />
           <span className="text-sm">{commentsCount}</span>
         </button>
-        <ShareButton post={post} />
       </div>
 
       {/* 评论区 */}
