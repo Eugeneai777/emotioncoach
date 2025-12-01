@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { getTodayCST } from "@/utils/dateUtils";
 
 interface VideoRecommendation {
   id: string;
@@ -21,7 +22,7 @@ interface VideoRecommendation {
 export const useCampVideoRecommendations = (
   campId: string,
   briefingData?: any,
-  date: Date = new Date()
+  date?: string
 ) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -29,14 +30,14 @@ export const useCampVideoRecommendations = (
   const [loading, setLoading] = useState(false);
   const [hasAttemptedGeneration, setHasAttemptedGeneration] = useState(false);
 
-  const dateStr = format(date, "yyyy-MM-dd");
+  const dateStr = date || getTodayCST();
 
   useEffect(() => {
     if (campId && user) {
       setHasAttemptedGeneration(false); // 日期变化时重置标志
       loadRecommendations();
     }
-  }, [campId, user, dateStr]);
+  }, [campId, user, dateStr, briefingData?.id]);
 
   const loadRecommendations = async () => {
     if (!user) return;

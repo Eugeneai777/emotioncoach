@@ -2,6 +2,7 @@ import { Play, CheckCircle2, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCampVideoRecommendations } from "@/hooks/useCampVideoRecommendations";
+import { formatDateCST } from "@/utils/dateUtils";
 
 interface CampVideoTasksProps {
   campId: string;
@@ -10,10 +11,11 @@ interface CampVideoTasksProps {
 }
 
 const CampVideoTasks = ({ campId, date = new Date(), briefingData }: CampVideoTasksProps) => {
+  const dateStr = formatDateCST(date);
   const { recommendations, loading, markAsWatched } = useCampVideoRecommendations(
     campId,
     briefingData,
-    date
+    dateStr
   );
 
   const handleWatch = (taskId: string, videoId: string, videoUrl: string) => {
