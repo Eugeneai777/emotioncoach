@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getTodayRangeUTC } from "@/utils/dateUtils";
 
 const TodayProgress = () => {
   const [todayCount, setTodayCount] = useState<number>(0);
@@ -14,8 +15,7 @@ const TodayProgress = () => {
     
     const fetchTodayCount = async () => {
       try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const { start, end } = getTodayRangeUTC();
         
         const { data: conversations } = await supabase
           .from("conversations")
@@ -26,12 +26,14 @@ const TodayProgress = () => {
               created_at
             )
           `)
-          .eq("user_id", user.id)
-          .gte("created_at", today.toISOString());
+          .eq("user_id", user.id);
 
         if (conversations) {
           const count = conversations.reduce((total, conv) => {
-            return total + (conv.briefings?.length || 0);
+            const todayBriefings = conv.briefings?.filter((b: any) => 
+              b.created_at >= start && b.created_at < end
+            ) || [];
+            return total + todayBriefings.length;
           }, 0);
           setTodayCount(count);
         }

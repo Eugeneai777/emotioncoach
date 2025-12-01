@@ -14,7 +14,7 @@ import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
 import CampShareDialog from "@/components/camp/CampShareDialog";
 import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { getTodayInBeijing, getTodayStartInBeijing, parseDateInBeijing, getDaysSinceStart, formatInBeijing } from "@/utils/dateUtils";
+import { getTodayCST, getCSTStartUTC, formatDateCST, formatInCST, getDaysSinceStart } from "@/utils/dateUtils";
 
 const CampCheckIn = () => {
   const { campId } = useParams<{ campId: string }>();
@@ -67,7 +67,7 @@ const CampCheckIn = () => {
 
   const loadTodayProgress = async () => {
     if (!user || !campId) return;
-    const today = getTodayInBeijing();
+    const today = getTodayCST();
     
     try {
       const { data } = await supabase
@@ -85,14 +85,14 @@ const CampCheckIn = () => {
 
   const loadLatestBriefing = async () => {
     if (!user) return;
-    const today = getTodayInBeijing();
+    const todayStartUTC = getCSTStartUTC();
     
     try {
       const { data } = await supabase
         .from("briefings")
         .select("*, conversations!inner(*)")
         .eq("conversations.user_id", user.id)
-        .gte("created_at", `${today}T00:00:00`)
+        .gte("created_at", todayStartUTC)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -210,7 +210,7 @@ const CampCheckIn = () => {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {formatInBeijing(new Date(), "yyyy年MM月dd日 EEEE", { locale: zhCN })}
+              {formatInCST(new Date(), "yyyy年MM月dd日 EEEE", { locale: zhCN })}
             </p>
           </div>
         </div>

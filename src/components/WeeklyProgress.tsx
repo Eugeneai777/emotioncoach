@@ -4,6 +4,7 @@ import { TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { BarChart, Bar, XAxis, ResponsiveContainer } from "recharts";
+import { getCSTWeekStartUTC, formatDateCST } from "@/utils/dateUtils";
 
 interface DayData {
   day: string;
@@ -21,17 +22,11 @@ const WeeklyProgress = () => {
     
     const fetchWeeklyData = async () => {
       try {
-        // Get start of week (Monday)
-        const now = new Date();
-        const dayOfWeek = now.getDay();
-        const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Adjust for Monday start
-        const monday = new Date(now);
-        monday.setDate(now.getDate() + diff);
-        monday.setHours(0, 0, 0, 0);
+        const weekStartUTC = getCSTWeekStartUTC();
 
         // Create array for 7 days
         const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
-        const dailyData: DayData[] = weekDays.map((day, index) => ({
+        const dailyData: DayData[] = weekDays.map((day) => ({
           day,
           count: 0
         }));
@@ -41,24 +36,23 @@ const WeeklyProgress = () => {
           .from("conversations")
           .select(`
             id,
-            created_at,
             briefings (
               id,
               created_at
             )
           `)
-          .eq("user_id", user.id)
-          .gte("created_at", monday.toISOString());
+          .eq("user_id", user.id);
 
         if (conversations) {
           let total = 0;
           conversations.forEach(conv => {
             conv.briefings?.forEach((briefing: any) => {
-              const briefingDate = new Date(briefing.created_at);
-              const daysSinceMonday = Math.floor((briefingDate.getTime() - monday.getTime()) / (1000 * 60 * 60 * 24));
-              
-              if (daysSinceMonday >= 0 && daysSinceMonday < 7) {
-                dailyData[daysSinceMonday].count++;
+              if (briefing.created_at >= weekStartUTC) {
+                // Convert UTC to CST date to get correct day of week
+                const cstDateStr = formatDateCST(briefing.created_at);
+                const cstDate = new Date(`${cstDateStr}T12:00:00+08:00`);
+                const dayIndex = (cstDate.getDay() + 6) % 7; // Convert to Monday = 0
+                dailyData[dayIndex].count++;
                 total++;
               }
             });

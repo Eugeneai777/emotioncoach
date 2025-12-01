@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { X, Calendar, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getCSTDaysAgoUTC } from "@/utils/dateUtils";
 
 export const GoalCheckInReminder = () => {
   const [showReminder, setShowReminder] = useState(false);
@@ -36,21 +37,20 @@ export const GoalCheckInReminder = () => {
       if (goalsCount === 0) return;
 
       // 检查最近的记录时间（briefings 和 quick_logs）
-      const twoDaysAgo = new Date();
-      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      const twoDaysAgoUTC = getCSTDaysAgoUTC(2);
 
       const { data: recentBriefings } = await supabase
         .from('briefings')
         .select('created_at, conversations!inner(user_id)')
         .eq('conversations.user_id', user.id)
-        .gte('created_at', twoDaysAgo.toISOString())
+        .gte('created_at', twoDaysAgoUTC)
         .limit(1);
 
       const { data: recentQuickLogs } = await supabase
         .from('emotion_quick_logs')
         .select('created_at')
         .eq('user_id', user.id)
-        .gte('created_at', twoDaysAgo.toISOString())
+        .gte('created_at', twoDaysAgoUTC)
         .limit(1);
 
       // 如果2天内没有任何记录，显示提醒

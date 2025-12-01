@@ -7,6 +7,7 @@ import { AlertTriangle, Heart, Lightbulb, X, Loader2, Info } from "lucide-react"
 import { useToast } from "@/hooks/use-toast";
 import { EmotionIntensityGuide } from "./EmotionIntensityGuide";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
+import { getCSTDaysAgoUTC } from "@/utils/dateUtils";
 
 interface Briefing {
   id: string;
@@ -55,14 +56,13 @@ export const EmotionAlert = () => {
       const conversationIds = conversations.map(c => c.id);
 
       // 获取最近7天的简报
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const sevenDaysAgoUTC = getCSTDaysAgoUTC(7);
 
       const { data: briefings, error } = await supabase
         .from('briefings')
         .select('id, emotion_theme, emotion_intensity, created_at')
         .in('conversation_id', conversationIds)
-        .gte('created_at', sevenDaysAgo.toISOString())
+        .gte('created_at', sevenDaysAgoUTC)
         .order('created_at', { ascending: false });
 
       if (error || !briefings) return;
