@@ -6,13 +6,214 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// 根据当前阶段生成阶段提示
+const getStagePrompt = (stage: number) => {
+  const stagePrompts = {
+    0: `【开场：倾听困境】
+用温暖的开场白邀请用户分享沟通困境。
+认真倾听，不要急着推进。
+当用户描述了具体的沟通场景（谁、在哪、想说什么）后，调用 capture_scenario 进入阶段1。`,
+    
+    1: `【阶段1：看见（See）- 澄清内心】
+目标：帮助用户看清自己真正想要什么。
+成功标准（观察到以下任意2项即可调用 complete_stage）:
+✔ 能说出想要的沟通目标
+✔ 能描述当前的卡点
+✔ 能表达自己真正想让对方明白的是什么
+引导方式：用开放问题，如"在这件事里，你最希望对方能明白的是什么？"`,
+    
+    2: `【阶段2：读懂（Understand）- 理解对方】
+目标：帮助用户从对方角度看问题。
+成功标准（观察到以下任意2项即可调用 complete_stage）:
+✔ 能从对方角度看问题
+✔ 能理解对方的担心/需求
+✔ 能说出"原来对方可能是..."这样的洞察
+引导方式：给4个理解对方的角度选项，帮用户看见盲点。`,
+    
+    3: `【阶段3：影响（Influence）- 找到新的表达】
+目标：帮助用户找到对方愿意听的表达方式。
+成功标准（观察到以下任意1项即可调用 complete_stage）:
+✔ 能想出一句对方愿意听的开场白
+✔ 能用"我..."句式表达需求
+✔ 选择了一种更好的表达方式
+引导方式：给3-4个表达方式的选项。`,
+    
+    4: `【阶段4：行动（Act）- 一个小小的开始】
+目标：给出具体可执行的微行动。
+成功标准（观察到以下任意1项即可调用 complete_stage）:
+✔ 能提出具体可执行的微行动
+✔ 表达出"我今天/明天可以试试..."的意愿
+完成后：温柔总结收获（150-200字），然后询问用户是否生成简报。`,
+    
+    5: `【阶段5：等待用户确认】
+你已完成四步曲，现在等待用户确认是否生成简报。
+只有当用户明确选择"生成简报"或说"生成简报"时，才能调用 generate_communication_briefing。`
+  };
+  
+  return stagePrompts[stage as keyof typeof stagePrompts] || stagePrompts[0];
+};
+
+// 根据当前阶段返回允许的工具
+const getAvailableTools = (currentStage: number, briefingRequested: boolean) => {
+  const captureScenarioTool = {
+    type: "function",
+    function: {
+      name: "capture_scenario",
+      description: "记录用户的沟通场景，进入阶段1",
+      parameters: {
+        type: "object",
+        properties: {
+          scenario_description: {
+            type: "string",
+            description: "沟通场景的简要描述"
+          }
+        },
+        required: ["scenario_description"]
+      }
+    }
+  };
+
+  const completeStageTool = {
+    type: "function",
+    function: {
+      name: "complete_stage",
+      description: "完成当前阶段，推进到下一阶段。只有当用户达到本阶段的成功标准时才能调用。",
+      parameters: {
+        type: "object",
+        properties: {
+          stage_content: {
+            type: "string",
+            description: "本阶段的核心内容总结"
+          }
+        },
+        required: ["stage_content"]
+      }
+    }
+  };
+
+  const generateBriefingTool = {
+    type: "function",
+    function: {
+      name: "generate_communication_briefing",
+      description: "生成结构化的沟通简报。只有在完成四步曲并获得用户确认后才能调用。",
+      parameters: {
+        type: "object",
+        properties: {
+          communication_theme: {
+            type: "string",
+            description: "沟通主题"
+          },
+          see_content: {
+            type: "string",
+            description: "看见阶段内容"
+          },
+          understand_content: {
+            type: "string",
+            description: "读懂阶段内容"
+          },
+          influence_content: {
+            type: "string",
+            description: "影响阶段内容"
+          },
+          act_content: {
+            type: "string",
+            description: "行动阶段内容"
+          },
+          scenario_analysis: {
+            type: "string",
+            description: "场景分析"
+          },
+          perspective_shift: {
+            type: "string",
+            description: "视角转换"
+          },
+          recommended_script: {
+            type: "string",
+            description: "推荐话术"
+          },
+          avoid_script: {
+            type: "string",
+            description: "避免说的话"
+          },
+          strategy: {
+            type: "string",
+            description: "最佳沟通策略"
+          },
+          micro_action: {
+            type: "string",
+            description: "今日微行动"
+          },
+          growth_insight: {
+            type: "string",
+            description: "沟通成长洞察"
+          },
+          communication_difficulty: {
+            type: "integer",
+            description: "沟通难度评分（1-10）",
+            minimum: 1,
+            maximum: 10
+          },
+          scenario_type: {
+            type: "string",
+            enum: ["family", "work", "social", "romantic", "other"],
+            description: "场景类型"
+          },
+          target_type: {
+            type: "string",
+            enum: ["parent", "child", "spouse", "colleague", "friend", "boss", "other"],
+            description: "沟通对象类型"
+          },
+          difficulty_keywords: {
+            type: "array",
+            items: { type: "string" },
+            description: "难点关键词（3-5个）"
+          }
+        },
+        required: [
+          "communication_theme",
+          "see_content",
+          "understand_content",
+          "influence_content",
+          "act_content",
+          "scenario_analysis",
+          "perspective_shift",
+          "recommended_script",
+          "avoid_script",
+          "strategy",
+          "micro_action",
+          "growth_insight",
+          "communication_difficulty",
+          "scenario_type",
+          "target_type",
+          "difficulty_keywords"
+        ]
+      }
+    }
+  };
+
+  // 根据阶段返回允许的工具
+  switch (currentStage) {
+    case 0:
+      return [captureScenarioTool];
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+      return [completeStageTool];
+    case 5:
+      return briefingRequested ? [generateBriefingTool] : [];
+    default:
+      return [];
+  }
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, userDifficulty } = await req.json();
+    const { messages, userDifficulty, sessionId } = await req.json();
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -32,14 +233,44 @@ serve(async (req) => {
       throw new Error('用户认证失败');
     }
 
-    // 检查是否是首次对话
+    // 获取或创建会话
+    let session: any;
+    if (sessionId) {
+      const { data } = await supabase
+        .from('communication_coaching_sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .single();
+      session = data;
+    }
+
+    if (!session) {
+      // 创建新会话
+      const { data: newSession, error: sessionError } = await supabase
+        .from('communication_coaching_sessions')
+        .insert({
+          user_id: user.id,
+          current_stage: 0,
+        })
+        .select()
+        .single();
+
+      if (sessionError) throw sessionError;
+      session = newSession;
+    }
+
+    const currentStage = session.current_stage;
     const isFirstMessage = messages.length <= 1;
-    
+
+    // 构建系统提示
     const systemPrompt = `你是劲老师，一位温柔的沟通陪伴者。
 
-【你的本质】
-你是一位善于倾听的朋友，不是给答案的专家。
-你相信每个人心里都有答案，只需要被温柔地引出来。
+【⚠️ 严格规则 - 必须遵守】
+1. 你当前在【阶段${currentStage}/4】
+2. 你【只能】使用系统允许的工具
+3. 【禁止】跳过任何阶段
+4. 【禁止】在用户明确说"生成简报"之前调用 generate_communication_briefing
+5. 每次回应必须以开放性问题结尾
 
 【你的声音】
 - 始终用"我"说话，像朋友聊天
@@ -47,210 +278,15 @@ serve(async (req) => {
 - 每次回应80-150字，有呼吸感
 - 多用"嗯""我听到了""我能感受到"开头
 
-【⭐ 核心规则：每次回复必须以开放性问题结尾】
-这是最重要的规则！你的每一次回复都必须以一个开放性问题结尾，引发用户更多的思考和表达。
+${isFirstMessage ? `【⭐ 首次对话】
+用温暖友好的方式开场，比如："嗨，我是劲老师 👋"
+` : ''}
+【当前阶段任务】
+${getStagePrompt(currentStage)}
 
-开放性问题示例：
-- "在这件事里，什么是你最放不下的？"
-- "如果可以重来，你最想改变的是什么？"
-- "当时那个瞬间，你心里真正想说的是什么？"
-- "在你理想中，这件事最好的结果是什么样的？"
-- "是什么让你一直没有说出口？"
+${userDifficulty ? `【用户难度评分】用户评价此次沟通难度为：${userDifficulty}/10。生成简报时使用此评分。` : ''}`;
 
-避免封闭性问题：
-- ❌ "你觉得对吗？" 
-- ❌ "是这样吗？"
-- ❌ "你同意吗？"
-- ✅ 改为："这让你有什么新的想法？"
-
-${isFirstMessage ? `【⭐ 首次对话指引】
-这是用户发来的第一条消息。请用温暖友好的方式开场，比如：
-- "嗨，我是劲老师 👋"
-- "你好呀 😊 我是劲老师"
-- "欢迎来找我聊聊 💬 我是劲老师"
-然后自然地回应用户的问题或场景。不要机械地复制这些话，用你自己的风格自然表达。
-
-` : ''}【对话的节奏】
-
-🌱 开场：倾听困境
-当用户开始说话时，你应该：
-- 认真倾听用户分享的沟通困境
-- 用温柔的语气回应："嗯，听起来这件事让你挺困扰的..."
-- 以一个开放性问题引导用户继续说更多
-
-如果用户说的内容不够具体，可以温柔追问：
-- "能具体说说，是和谁之间的沟通呢？"
-- "在那个场景里，你最想表达但没说出口的是什么？"
-不要急着给选项。先温柔地问：
-"我是劲老师，很高兴陪你聊聊。最近是什么事让你想找人说说？慢慢讲，我在听。"
-让用户自由表达，你认真倾听，用一两句话回应他的情绪：
-"嗯，听起来你承受了不少..."
-"我能感受到，那个时刻你一定很难受..."
-
-🔍 看见：澄清内心
-在用户讲完困境后，帮他看清自己真正想要什么。
-先共情总结，再轻轻问一句开放问题：
-"在这件事里，你最希望对方能明白的是什么？"
-如果用户不确定，可以追问：
-"如果对方真的听懂了你，你最想听到他说什么？"
-
-💡 读懂：理解对方（关键选择时刻）
-当需要帮用户理解"对方为什么会有这样的反应"时，这是给选项的时机。
-先铺垫：
-"我们来换个角度想想。对方那样做，可能背后有他的担心或需求。"
-然后给4个选择帮用户看见盲点：
-"你觉得对方可能是——
-A. 担心失去掌控感或面子
-B. 害怕关系会因此变糟
-C. 其实也不知道该怎么回应你
-D. 正在用他的方式保护自己或你们的关系
-
-哪一个让你有点'啊，好像是这样'的感觉？"
-
-🌸 影响：找到新的表达
-帮用户找到一句对方愿意听的话。
-先问："如果可以重新说一次，你想怎么开口？"
-如果用户没头绪，给出3-4个表达方式的选项：
-"我们来一起找找，哪种开场方式更适合你：
-1. 先表达理解：'我知道你也不容易...'
-2. 先说自己的感受：'我最近有些累...'
-3. 用问句开始：'你有没有想过...'
-4. 其他方式（你来说说看）
-
-你觉得哪种更像你会说的话？还是你有更好的想法？"
-
-🎯 行动：一个小小的开始
-给出2-3个微行动选项：
-"今天或明天，你愿意做一件小事吗？
-1. 今天发一条问候消息
-2. 用新的方式重新说那句话
-3. 先在心里演练一遍
-
-你想从哪一个开始？或者你有其他想法？"
-
-【关键原则】
-- 不是每次都要给选项，只在"读懂对方"这个关键时刻给4选项
-- 其他时候用开放问题引导，让用户自己说出答案
-- 每次回应都要有共情的部分："我听到了...""我能感受到..."
-- 用"我们一起"而不是"你应该"
-- 如果用户的回答超出预期，温柔接纳："嗯，你说的也很有道理"
-
-【完成旅程后】
-温柔总结用户的收获（150-200字）：
-- "今天我们一起走过了这段对话..."
-- 指出他从混乱到清晰的变化
-- 肯定他的觉察和勇气
-- 温柔鼓励下一步
-
-最后用选项格式询问，让用户可以点击按钮：
-"1. 生成简报，随时回看
-2. 去社区分享这次收获"
-
-${userDifficulty ? `【用户主观难度】用户评价这次沟通的难度为：${userDifficulty}/10。在生成简报时，使用用户提供的难度评分，不要重新评估。` : ''}`;
-
-    const tools = [
-      {
-        type: "function",
-        function: {
-          name: "generate_communication_briefing",
-          description: "当用户完成沟通四步曲后，生成结构化的沟通简报。AI会自动评估沟通难度、场景类型、对象类型和难点关键词。",
-          parameters: {
-            type: "object",
-            properties: {
-              communication_theme: {
-                type: "string",
-                description: "沟通主题，如：职场汇报·寻求认可·表达分歧"
-              },
-              see_content: {
-                type: "string",
-                description: "看见阶段：场景、对象、目标、卡点的总结"
-              },
-              understand_content: {
-                type: "string",
-                description: "读懂阶段：对方的感受、担心、需求的分析"
-              },
-              influence_content: {
-                type: "string",
-                description: "影响阶段：开场话术和表达需求的方式"
-              },
-              act_content: {
-                type: "string",
-                description: "行动阶段：今日微行动的描述"
-              },
-              scenario_analysis: {
-                type: "string",
-                description: "场景分析：对话在哪、对方是谁、核心诉求"
-              },
-              perspective_shift: {
-                type: "string",
-                description: "视角转换：对方在意什么、为什么防御"
-              },
-              recommended_script: {
-                type: "string",
-                description: "推荐话术：完整的可复制话术"
-              },
-              avoid_script: {
-                type: "string",
-                description: "避免说的话：错误示范"
-              },
-              strategy: {
-                type: "string",
-                description: "最佳沟通策略"
-              },
-              micro_action: {
-                type: "string",
-                description: "今日微行动：30秒能做的具体行动"
-              },
-              growth_insight: {
-                type: "string",
-                description: "沟通成长洞察"
-              },
-              communication_difficulty: {
-                type: "integer",
-                description: userDifficulty 
-                  ? `沟通难度评分（固定值：${userDifficulty}）。用户已评价此次沟通难度为${userDifficulty}/10，请直接使用此评分。` 
-                  : "沟通难度评分（1-10）。AI自动评估：1=简单问候, 3=日常交流, 5=表达不同意见, 7=化解矛盾, 10=重大冲突",
-                minimum: 1,
-                maximum: 10
-              },
-              scenario_type: {
-                type: "string",
-                enum: ["family", "work", "social", "romantic", "other"],
-                description: "场景类型。AI自动识别：family(家庭), work(职场), social(社交), romantic(恋爱), other(其他)"
-              },
-              target_type: {
-                type: "string",
-                enum: ["parent", "child", "spouse", "colleague", "friend", "boss", "other"],
-                description: "沟通对象类型。AI自动识别"
-              },
-              difficulty_keywords: {
-                type: "array",
-                items: { type: "string" },
-                description: "难点关键词（3-5个），如：'表达需求'、'建立边界'、'情绪管理'等"
-              }
-            },
-            required: [
-              "communication_theme",
-              "see_content",
-              "understand_content",
-              "influence_content",
-              "act_content",
-              "scenario_analysis",
-              "perspective_shift",
-              "recommended_script",
-              "avoid_script",
-              "strategy",
-              "micro_action",
-              "growth_insight",
-              "communication_difficulty",
-              "scenario_type",
-              "target_type",
-              "difficulty_keywords"
-            ]
-          }
-        }
-      }
-    ];
+    const availableTools = getAvailableTools(currentStage, session.briefing_requested);
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -264,8 +300,8 @@ ${userDifficulty ? `【用户主观难度】用户评价这次沟通的难度为
           { role: 'system', content: systemPrompt },
           ...messages
         ],
-        tools: tools,
-        tool_choice: 'auto',
+        tools: availableTools,
+        temperature: 0.6,
         stream: true,
         max_tokens: 2000,
       }),
@@ -289,10 +325,12 @@ ${userDifficulty ? `【用户主观难度】用户评价这次沟通的难度为
       throw new Error('AI Gateway 请求失败');
     }
 
+    // 在返回响应头中包含 session_id
     return new Response(response.body, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
+        'X-Session-Id': session.id,
       },
     });
 

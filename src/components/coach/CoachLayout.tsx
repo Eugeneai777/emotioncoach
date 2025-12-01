@@ -61,6 +61,7 @@ interface CoachLayoutProps {
   // Optional features
   scenarios?: ReactNode;
   scenarioChips?: ReactNode;
+  stageProgress?: ReactNode;
   extraContent?: ReactNode;
   trainingCamp?: ReactNode;
   notifications?: ReactNode;
@@ -97,6 +98,7 @@ export const CoachLayout = ({
   coachRecommendation,
   scenarios,
   scenarioChips,
+  stageProgress,
   extraContent,
   trainingCamp,
   notifications,
@@ -180,6 +182,7 @@ export const CoachLayout = ({
             />
           ) : (
             <div className="space-y-4">
+              {stageProgress}
               {messages.map((message, index) => (
                 <ChatMessage 
                   key={index} 
