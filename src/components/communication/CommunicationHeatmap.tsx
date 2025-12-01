@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, startOfWeek, endOfWeek } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 
 interface CommunicationDay {
   date: string;
@@ -30,6 +31,7 @@ export function CommunicationHeatmap({ onDateSelect }: Props) {
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<CommunicationDay | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -119,95 +121,130 @@ export function CommunicationHeatmap({ onDateSelect }: Props) {
 
   const weekDays = ["日", "一", "二", "三", "四", "五", "六"];
 
+  // Calculate monthly statistics for collapsed view
+  const monthStats = useMemo(() => {
+    const count = data.reduce((sum, d) => sum + d.count, 0);
+    const days = data.length;
+    const avgDifficulty = count > 0 
+      ? data.reduce((sum, d) => sum + d.avgDifficulty * d.count, 0) / count 
+      : 0;
+    return { count, days, avgDifficulty };
+  }, [data]);
+
   return (
     <>
-      <Card className="p-4 md:p-6 bg-card/50 backdrop-blur-sm border-border">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
-            📅 沟通日历
-          </h3>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handlePrevMonth} className="h-8 w-8 p-0">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm font-medium min-w-[100px] text-center">
-              {format(selectedMonth, "yyyy年M月", { locale: zhCN })}
-            </span>
-            <Button variant="outline" size="sm" onClick={handleNextMonth} className="h-8 w-8 p-0">
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Week header */}
-        <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2">
-          {weekDays.map((day) => (
-            <div key={day} className="text-center text-xs text-muted-foreground font-medium py-1">
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1 md:gap-2">
-          {calendarDays.map((date) => {
-            const dateStr = format(date, "yyyy-MM-dd");
-            const dayData = data.find((d) => d.date === dateStr);
-            const isCurrentMonth = isSameMonth(date, selectedMonth);
-
-            return (
-              <div
-                key={dateStr}
-                onClick={() => handleDayClick(dayData, date)}
-                className={`
-                  aspect-square rounded-md flex flex-col items-center justify-center text-xs
-                  transition-all duration-200 relative group
-                  ${!isCurrentMonth ? "opacity-30" : ""}
-                  ${dayData ? "cursor-pointer hover:ring-2 hover:ring-primary/50 hover:scale-105" : ""}
-                  ${dayData ? getDifficultyColor(dayData.avgDifficulty) : "bg-muted/30"}
-                `}
-              >
-                <span className={`text-xs ${dayData ? "text-white font-semibold" : "text-muted-foreground"}`}>
-                  {format(date, "d")}
-                </span>
-                {dayData && (
-                  <span className="text-[10px] text-white/90 font-medium">{dayData.count}次</span>
+      <Card className={`bg-card/50 backdrop-blur-sm border-border ${isExpanded ? 'p-3 md:p-4' : 'p-3'}`}>
+        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+          {/* Collapsible header - always visible */}
+          <CollapsibleTrigger asChild>
+            <div className="flex items-center justify-between cursor-pointer hover:bg-muted/50 -m-2 p-2 rounded-md transition-colors">
+              <span className="text-sm font-semibold text-foreground flex items-center gap-2">
+                📅 沟通日历
+              </span>
+              <div className="flex items-center gap-3">
+                {!isExpanded && monthStats.count > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    本月 <strong className="text-foreground">{monthStats.days}</strong> 天 · 
+                    <strong className="text-foreground"> {monthStats.count}</strong> 次
+                  </span>
                 )}
-                
-                {/* Hover tooltip */}
-                {dayData && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                    <div className="bg-popover text-popover-foreground px-2 py-1.5 rounded-md shadow-lg text-xs whitespace-nowrap border">
-                      <div className="font-medium">{format(date, "M月d日", { locale: zhCN })}</div>
-                      <div>沟通 {dayData.count} 次</div>
-                      <div>难度: {getDifficultyLabel(dayData.avgDifficulty)} ({dayData.avgDifficulty.toFixed(1)})</div>
-                    </div>
-                  </div>
+                {isExpanded ? (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 )}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          </CollapsibleTrigger>
 
-        {/* Compact legend */}
-        <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-green-500/80" />
-            <span>简单</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-yellow-500/80" />
-            <span>中等</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-orange-500/80" />
-            <span>困难</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-red-500/80" />
-            <span>极难</span>
-          </div>
-        </div>
+          {/* Collapsible content - calendar view */}
+          <CollapsibleContent className="mt-3">
+            {/* Month navigation */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handlePrevMonth} className="h-7 w-7 p-0">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-xs font-medium min-w-[80px] text-center">
+                  {format(selectedMonth, "yyyy年M月", { locale: zhCN })}
+                </span>
+                <Button variant="outline" size="sm" onClick={handleNextMonth} className="h-7 w-7 p-0">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Week header */}
+            <div className="grid grid-cols-7 gap-0.5 md:gap-1 mb-1">
+              {weekDays.map((day) => (
+                <div key={day} className="text-center text-[10px] text-muted-foreground font-medium py-1">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7 gap-0.5 md:gap-1">
+              {calendarDays.map((date) => {
+                const dateStr = format(date, "yyyy-MM-dd");
+                const dayData = data.find((d) => d.date === dateStr);
+                const isCurrentMonth = isSameMonth(date, selectedMonth);
+
+                return (
+                  <div
+                    key={dateStr}
+                    onClick={() => handleDayClick(dayData, date)}
+                    className={`
+                      h-7 md:h-8 rounded flex flex-col items-center justify-center text-xs
+                      transition-all duration-200 relative group
+                      ${!isCurrentMonth ? "opacity-30" : ""}
+                      ${dayData ? "cursor-pointer hover:ring-2 hover:ring-primary/50 hover:scale-105" : ""}
+                      ${dayData ? getDifficultyColor(dayData.avgDifficulty) : "bg-muted/30"}
+                    `}
+                  >
+                    <span className={`text-[10px] ${dayData ? "text-white font-semibold" : "text-muted-foreground"}`}>
+                      {format(date, "d")}
+                    </span>
+                    {dayData && dayData.count > 1 && (
+                      <span className="text-[8px] text-white/90 font-medium">{dayData.count}</span>
+                    )}
+                    
+                    {/* Hover tooltip */}
+                    {dayData && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
+                        <div className="bg-popover text-popover-foreground px-2 py-1.5 rounded-md shadow-lg text-xs whitespace-nowrap border">
+                          <div className="font-medium">{format(date, "M月d日", { locale: zhCN })}</div>
+                          <div>沟通 {dayData.count} 次</div>
+                          <div>难度: {getDifficultyLabel(dayData.avgDifficulty)} ({dayData.avgDifficulty.toFixed(1)})</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Compact legend */}
+            <div className="mt-2 flex items-center justify-center gap-3 text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <div className="w-2.5 h-2.5 rounded bg-green-500/80" />
+                <span>简单</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2.5 h-2.5 rounded bg-yellow-500/80" />
+                <span>中等</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2.5 h-2.5 rounded bg-orange-500/80" />
+                <span>困难</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2.5 h-2.5 rounded bg-red-500/80" />
+                <span>极难</span>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
 
       {/* Day details dialog */}
