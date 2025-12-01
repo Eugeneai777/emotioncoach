@@ -246,13 +246,6 @@ ${briefing.growth_story || '暂无记录'}
     }
   };
 
-  const handleSkipBriefing = () => {
-    setPendingBriefing(null);
-    toast({
-      title: "已跳过简报生成",
-      description: "你可以开始新的对话了"
-    });
-  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -697,17 +690,10 @@ ${briefing.growth_story || '暂无记录'}
                     <div className="flex gap-3">
                       <Button
                         onClick={handleGenerateBriefing}
-                        className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-md hover:shadow-lg transition-all"
+                        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-md hover:shadow-lg transition-all"
                       >
                         <Heart className="w-4 h-4 mr-2" />
                         生成简报
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handleSkipBriefing}
-                        className="flex-1 border-purple-300 text-purple-600 hover:bg-purple-50"
-                      >
-                        下次再说
                       </Button>
                     </div>
                   </div>
