@@ -323,6 +323,14 @@ export default function StoryCoach() {
                     <span className="text-orange-500 text-sm">📖</span>
                     英雄之旅四部曲
                   </h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate("/story-coach-intro")}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    了解详情 →
+                  </Button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-card-gap">

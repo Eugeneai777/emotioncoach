@@ -43,6 +43,7 @@ import RedeemCode from "./pages/RedeemCode";
 import NotFound from "./pages/NotFound";
 import DynamicCoach from "./pages/DynamicCoach";
 import StoryCoach from "./pages/StoryCoach";
+import StoryCoachIntro from "./pages/StoryCoachIntro";
 import MyStories from "./pages/MyStories";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
 
@@ -94,6 +95,7 @@ const App = () => (
           <Route path="/partner/benefits" element={<PartnerBenefits />} />
           <Route path="/redeem" element={<RedeemCode />} />
           <Route path="/story-coach" element={<StoryCoach />} />
+          <Route path="/story-coach-intro" element={<StoryCoachIntro />} />
           <Route path="/my-stories" element={<MyStories />} />
           <Route path="/coach/:coachKey" element={<DynamicCoach />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
