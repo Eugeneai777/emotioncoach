@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "@/components/ChatMessage";
 import { useParentCoach } from "@/hooks/useParentCoach";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
+import { ParentStageProgress } from "@/components/coach/ParentStageProgress";
 import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
@@ -486,6 +487,13 @@ ${briefing.growth_story || '暂无记录'}
 
       {/* Main Content */}
       <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto pb-32">
+        {/* Stage Progress - Show when there are messages */}
+        {messages.length > 0 && session && (
+          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm py-3 -mx-3 px-3 md:-mx-4 md:px-4 mb-4">
+            <ParentStageProgress currentStage={session.current_stage || 0} />
+          </div>
+        )}
+
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-8 px-3 md:px-4">
             <div className="text-center space-y-3 md:space-y-4 w-full max-w-xl animate-in fade-in-50 duration-700">
