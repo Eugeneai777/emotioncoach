@@ -309,7 +309,7 @@ export default function StoryCoach() {
               {/* Title Section */}
               <div className="space-y-1.5 md:space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                  故事教练
+                  说好故事教练
                 </h2>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                   用英雄之旅的方法，把你的经历变成动人的成长故事
