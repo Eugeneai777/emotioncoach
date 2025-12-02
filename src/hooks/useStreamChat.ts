@@ -483,14 +483,18 @@ ${data.growth_story}
         if (functionName === 'generate_briefing' && convId) {
           // Format and display briefing
           const briefingText = formatBriefing(args);
+          const introText = assistantContent || "太棒了！你已经完成了今天的情绪四部曲 🌿\n\n";
+          
           setMessages((prev) => {
             const last = prev[prev.length - 1];
-            if (last?.role === "assistant") {
+            // If last message is assistant, append briefing to it
+            if (last?.role === "assistant" && last.content) {
               return prev.map((m, i) =>
-                i === prev.length - 1 ? { ...m, content: assistantContent + briefingText } : m
+                i === prev.length - 1 ? { ...m, content: m.content + briefingText } : m
               );
             }
-            return prev;
+            // Otherwise, create a new assistant message with briefing
+            return [...prev, { role: "assistant", content: introText + briefingText }];
           });
           
           // Save briefing
