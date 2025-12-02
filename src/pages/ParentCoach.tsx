@@ -16,6 +16,7 @@ import CommunityWaterfall from "@/components/community/CommunityWaterfall";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
 import { 
   Send, 
   RotateCcw, 
@@ -103,6 +104,7 @@ export default function ParentCoach() {
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const {
     user,
@@ -274,10 +276,14 @@ ${briefing.growth_story || '暂无记录'}
   };
 
   const handleShare = () => {
-    toast({
-      title: "分享功能开发中",
-      description: "即将上线社区分享功能"
-    });
+    if (briefing) {
+      setShareDialogOpen(true);
+    } else {
+      toast({
+        title: "暂无简报",
+        description: "请先完成对话生成简报后再分享"
+      });
+    }
   };
 
   const handleDownload = () => {
@@ -753,6 +759,20 @@ ${briefing.growth_story || '暂无记录'}
             onOpenChange={setShowStartDialog}
             campTemplate={parentCampTemplate}
             onSuccess={(campId) => navigate(`/camp/${campId}`)}
+          />
+        )}
+
+        {/* 简报分享对话框 */}
+        {briefing && (
+          <BriefingShareDialog
+            open={shareDialogOpen}
+            onOpenChange={setShareDialogOpen}
+            coachType="parent"
+            briefingId={briefing.id || session?.id || ''}
+            emotionTheme={briefing.theme}
+            insight={briefing.insight}
+            action={briefing.action}
+            growthStory={briefing.growthStory}
           />
         )}
       </main>

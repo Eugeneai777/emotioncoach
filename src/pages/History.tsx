@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Calendar, Loader2, BarChart3 } from "lucide-react";
+import { ArrowLeft, Calendar, Loader2, BarChart3, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import EmotionTagCloud from "@/components/EmotionTagCloud";
 import EmotionCycleAnalysis from "@/components/EmotionCycleAnalysis";
@@ -20,6 +20,7 @@ import { EmotionIntensityCard } from "@/components/EmotionIntensityMeter";
 import { Separator } from "@/components/ui/separator";
 import UnifiedEmotionIntensityChart from "@/components/UnifiedEmotionIntensityChart";
 import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
+import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
 
 interface TagType {
   id: string;
@@ -58,6 +59,7 @@ const History = () => {
   const [selectedBriefing, setSelectedBriefing] = useState<Briefing | null>(null);
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null);
   const [allTags, setAllTags] = useState<TagType[]>([]);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -364,9 +366,34 @@ const History = () => {
                   briefingContent={`${selectedBriefing.stage_1_content} ${selectedBriefing.stage_2_content}`}
                 />
               </div>
+
+              {/* 分享按钮 */}
+              <div className="pt-3 md:pt-4 border-t border-border/50">
+                <Button
+                  onClick={() => setShareDialogOpen(true)}
+                  className="w-full gap-2"
+                  variant="outline"
+                >
+                  <Share2 className="h-4 w-4" />
+                  分享到社区
+                </Button>
+              </div>
             </div>
           </div>
         </main>
+
+        {/* 分享对话框 */}
+        <BriefingShareDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          coachType="emotion"
+          briefingId={selectedBriefing.id}
+          emotionTheme={selectedBriefing.emotion_theme}
+          emotionIntensity={selectedBriefing.emotion_intensity || undefined}
+          insight={selectedBriefing.insight || undefined}
+          action={selectedBriefing.action || undefined}
+          growthStory={selectedBriefing.growth_story || undefined}
+        />
       </div>
     );
   }
