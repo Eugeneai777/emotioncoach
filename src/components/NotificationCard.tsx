@@ -6,6 +6,7 @@ import { Trash2, Heart, Star, Sparkles, Trophy, Bell, MessageCircle, TrendingUp 
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { coachConfig, type CoachType } from '@/types/briefings';
 
 interface NotificationCardProps {
   notification: {
@@ -21,11 +22,20 @@ interface NotificationCardProps {
     is_read: boolean;
     is_dismissed: boolean;
     created_at: string;
+    coach_type?: string;
   };
   onClick: () => void;
   onDelete: () => void;
   colorTheme?: 'default' | 'purple' | 'green';
 }
+
+// 教练类型映射：数据库中的 coach_type -> CoachType
+const coachTypeMap: Record<string, CoachType> = {
+  'emotion_coach': 'emotion',
+  'communication_coach': 'communication',
+  'parent_coach': 'parent',
+  'vibrant_life_coach': 'vibrant_life'
+};
 
 const iconMap: Record<string, any> = {
   Heart,
@@ -90,6 +100,10 @@ export const NotificationCard = ({ notification, onClick, onDelete, colorTheme =
   const Icon = notification.icon ? iconMap[notification.icon] || Heart : Heart;
   const style = typeStyles[notification.notification_type] || typeStyles.encouragement;
   const theme = themeStyles[colorTheme];
+  
+  // 获取教练配置
+  const coachType = notification.coach_type ? coachTypeMap[notification.coach_type] : null;
+  const coach = coachType ? coachConfig[coachType] : null;
 
   const handleAction = () => {
     onClick();
@@ -118,14 +132,25 @@ export const NotificationCard = ({ notification, onClick, onDelete, colorTheme =
       {/* Title Row */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
-          <Icon className={`h-4 w-4 ${theme.iconColor} flex-shrink-0`} />
+          {coach ? (
+            <span className="text-base flex-shrink-0">{coach.icon}</span>
+          ) : (
+            <Icon className={`h-4 w-4 ${theme.iconColor} flex-shrink-0`} />
+          )}
           <h4 className="font-semibold text-sm">{notification.title}</h4>
           {!notification.is_read && (
-            <div className={`h-1.5 w-1.5 rounded-full ${theme.iconColor} flex-shrink-0`} />
+            <div className={`h-1.5 w-1.5 rounded-full ${coach ? coach.color.replace('text-', 'bg-') : theme.iconColor} flex-shrink-0`} />
           )}
         </div>
         <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">{timeAgo}</span>
       </div>
+      
+      {/* Coach Badge */}
+      {coach && (
+        <Badge variant="outline" className={`mb-2 text-xs ${coach.color} border-current/20`}>
+          {coach.label}
+        </Badge>
+      )}
 
       {/* Message */}
       <p className="text-sm text-muted-foreground text-left mb-2 leading-relaxed">
