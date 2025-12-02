@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, MessageSquare } from "lucide-react";
+import { Loader2, ArrowLeft, MessageSquare, Share2 } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { CommunicationBriefingTagSelector } from "@/components/communication/CommunicationBriefingTagSelector";
@@ -14,6 +14,7 @@ import { CommunicationPatternInsights } from "@/components/communication/Communi
 import { CommunicationTrendAnalysis } from "@/components/communication/CommunicationTrendAnalysis";
 import { CommunicationComparison } from "@/components/communication/CommunicationComparison";
 import { CommunicationReview } from "@/components/communication/CommunicationReview";
+import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
 
 interface CommunicationTag {
   id: string;
@@ -50,6 +51,7 @@ export default function CommunicationHistory() {
   const [loading, setLoading] = useState(true);
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [allTags, setAllTags] = useState<CommunicationTag[]>([]);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   useEffect(() => {
     checkAuthAndLoadBriefings();
@@ -325,8 +327,32 @@ export default function CommunicationHistory() {
                 onTagsChange={setSelectedTags}
               />
             </div>
+
+            {/* 分享按钮 */}
+            <div className="pt-4">
+              <Button
+                onClick={() => setShareDialogOpen(true)}
+                className="w-full gap-2"
+                variant="outline"
+              >
+                <Share2 className="h-4 w-4" />
+                分享到社区
+              </Button>
+            </div>
           </CardContent>
         </Card>
+
+        {/* 分享对话框 */}
+        <BriefingShareDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          coachType="communication"
+          briefingId={selectedBriefing.id}
+          emotionTheme={selectedBriefing.communication_theme}
+          emotionIntensity={selectedBriefing.communication_difficulty || undefined}
+          insight={selectedBriefing.growth_insight || undefined}
+          action={selectedBriefing.micro_action || undefined}
+        />
       </div>
     );
   }
