@@ -12,11 +12,13 @@ serve(async (req) => {
   }
 
   try {
-    const { briefing } = await req.json();
+    const { briefing, coachType = 'emotion' } = await req.json();
     
     if (!briefing) {
       throw new Error('Briefing data is required');
     }
+
+    console.log('Processing recommendation for coach type:', coachType);
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -66,19 +68,50 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    const prompt = `
-你是一个课程推荐专家。根据用户的情绪简报，从视频课程库中推荐2-3个最相关的课程。
-
+    // Build prompt based on coach type
+    const buildPromptForCoachType = (type: string) => {
+      const basePrompt = `你是一个课程推荐专家。根据用户的${getCoachLabel(type)}简报，从视频课程库中推荐2-3个最相关的课程。`;
+      
+      let briefingInfo = '';
+      switch(type) {
+        case 'emotion':
+          briefingInfo = `
 用户简报：
 - 情绪主题：${briefing.emotion_theme || ''}
-- 情绪标签：${briefing.emotion_tags?.join('、') || ''}
+- 情绪强度：${briefing.emotion_intensity || ''}
 - 洞察：${briefing.insight || ''}
-- 行动计划：${briefing.action || ''}
+- 行动计划：${briefing.action || ''}`;
+          break;
+        case 'communication':
+          briefingInfo = `
+用户简报：
+- 沟通主题：${briefing.emotion_theme || ''}
+- 沟通难度：${briefing.emotion_intensity || ''}
+- 成长洞察：${briefing.insight || ''}
+- 微行动：${briefing.action || ''}`;
+          break;
+        case 'parent':
+          briefingInfo = `
+用户简报：
+- 亲子主题：${briefing.emotion_theme || ''}
+- 微行动：${briefing.action || ''}`;
+          break;
+        case 'vibrant_life':
+          briefingInfo = `
+用户简报：
+- 问题摘要：${briefing.emotion_theme || ''}
+- 分析推理：${briefing.insight || ''}`;
+          break;
+      }
+
+      return `${basePrompt}
+
+${briefingInfo}
 
 可用课程（按分类整理，共${courses.length}个）：
 ${groupCoursesByCategory(courses)}
 
-请分析用户的情绪状态和成长需求，从最相关的分类中选择2-3个最匹配的课程。返回JSON格式：
+请分析用户的情况和成长需求，从最相关的分类中选择2-3个最匹配的课程。返回JSON格式：
 {
   "recommendations": [
     {
@@ -95,6 +128,19 @@ ${groupCoursesByCategory(courses)}
 3. 按匹配度从高到低排序
 4. 只返回JSON，不要其他文字
 `;
+    };
+
+    const getCoachLabel = (type: string): string => {
+      const labels: Record<string, string> = {
+        emotion: '情绪教练',
+        communication: '沟通教练',
+        parent: '亲子教练',
+        vibrant_life: '有劲生活教练'
+      };
+      return labels[type] || '教练';
+    };
+
+    const prompt = buildPromptForCoachType(coachType);
 
     console.log('Calling Lovable AI for recommendations...');
 

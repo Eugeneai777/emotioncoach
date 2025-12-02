@@ -3,18 +3,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Sparkles } from "lucide-react";
-import { EmotionCourseUnit } from "./EmotionCourseUnit";
+import { UnifiedCourseUnit } from "./UnifiedCourseUnit";
 import { toast } from "sonner";
-
-interface Briefing {
-  id: string;
-  created_at: string;
-  emotion_theme: string;
-  emotion_intensity: number | null;
-  insight: string | null;
-  action: string | null;
-  conversation_id: string;
-}
+import { 
+  UnifiedBriefing, 
+  mapEmotionBriefing, 
+  mapCommunicationBriefing, 
+  mapParentBriefing, 
+  mapVibrantLifeBriefing 
+} from "@/types/briefings";
 
 interface CourseRecommendation {
   id: string;
@@ -36,9 +33,9 @@ export const PersonalCourseZone = ({ onWatchCourse }: PersonalCourseZoneProps) =
   const [recommendationsMap, setRecommendationsMap] = useState<Map<string, CourseRecommendation[]>>(new Map());
   const [loadingMap, setLoadingMap] = useState<Map<string, boolean>>(new Map());
 
-  // 获取用户最近的情绪简报（最近7天，最多3条）
+  // 获取用户最近的所有教练简报（最近7天，最多5条）
   const { data: recentBriefings, isLoading: loadingBriefings } = useQuery({
-    queryKey: ["recentBriefings", user?.id],
+    queryKey: ["allRecentBriefings", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       
@@ -55,38 +52,82 @@ export const PersonalCourseZone = ({ onWatchCourse }: PersonalCourseZoneProps) =
       
       const conversationIds = conversations.map(c => c.id);
       
-      // 获取这些对话的简报
-      const { data, error } = await supabase
-        .from("briefings")
-        .select(`
-          id,
-          created_at,
-          emotion_theme,
-          emotion_intensity,
-          insight,
-          action,
-          conversation_id
-        `)
-        .in("conversation_id", conversationIds)
-        .gte("created_at", sevenDaysAgo.toISOString())
-        .order("created_at", { ascending: false })
-        .limit(3);
+      // 并行获取四种教练的简报
+      const [emotionData, communicationData, parentData, vibrantLifeData] = await Promise.all([
+        // 1. 情绪教练简报
+        supabase
+          .from("briefings")
+          .select("id, created_at, emotion_theme, emotion_intensity, insight, action, conversation_id")
+          .in("conversation_id", conversationIds)
+          .gte("created_at", sevenDaysAgo.toISOString())
+          .order("created_at", { ascending: false })
+          .limit(5),
+        
+        // 2. 沟通教练简报
+        supabase
+          .from("communication_briefings")
+          .select("id, created_at, communication_theme, communication_difficulty, growth_insight, micro_action, conversation_id")
+          .in("conversation_id", conversationIds)
+          .gte("created_at", sevenDaysAgo.toISOString())
+          .order("created_at", { ascending: false })
+          .limit(5),
+        
+        // 3. 亲子教练简报
+        supabase
+          .from("parent_coaching_sessions")
+          .select("id, created_at, summary, micro_action, conversation_id, briefing_id")
+          .eq("user_id", user.id)
+          .not("briefing_id", "is", null)
+          .gte("created_at", sevenDaysAgo.toISOString())
+          .order("created_at", { ascending: false })
+          .limit(5),
+        
+        // 4. 有劲生活教练简报
+        supabase
+          .from("vibrant_life_sage_briefings")
+          .select("id, created_at, user_issue_summary, reasoning, conversation_id")
+          .in("conversation_id", conversationIds)
+          .gte("created_at", sevenDaysAgo.toISOString())
+          .order("created_at", { ascending: false })
+          .limit(5)
+      ]);
 
-      if (error) throw error;
-      return data || [];
+      // 映射并合并所有简报
+      const allBriefings: UnifiedBriefing[] = [
+        ...(emotionData.data || []).map(mapEmotionBriefing),
+        ...(communicationData.data || []).map(mapCommunicationBriefing),
+        ...(parentData.data || []).map(mapParentBriefing),
+        ...(vibrantLifeData.data || []).map(mapVibrantLifeBriefing),
+      ];
+
+      // 按时间排序，取最近5条
+      return allBriefings
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5);
     },
     enabled: !!user?.id,
   });
 
   // 为每条简报获取推荐课程
   useEffect(() => {
-    const fetchRecommendationsForBriefing = async (briefing: Briefing) => {
+    const fetchRecommendationsForBriefing = async (briefing: UnifiedBriefing) => {
       // 标记为加载中
       setLoadingMap(prev => new Map(prev).set(briefing.id, true));
 
       try {
         const { data, error } = await supabase.functions.invoke("recommend-courses", {
-          body: { briefing },
+          body: { 
+            briefing: {
+              id: briefing.id,
+              created_at: briefing.created_at,
+              conversation_id: briefing.conversation_id,
+              emotion_theme: briefing.theme,
+              emotion_intensity: briefing.intensity,
+              insight: briefing.insight,
+              action: briefing.action,
+            },
+            coachType: briefing.coachType
+          },
         });
 
         if (error) throw error;
@@ -156,10 +197,10 @@ export const PersonalCourseZone = ({ onWatchCourse }: PersonalCourseZoneProps) =
         </div>
       </div>
 
-      {/* 情绪-课程单元列表 */}
+      {/* 多教练课程单元列表 */}
       <div className="space-y-4">
         {recentBriefings.map((briefing, index) => (
-          <EmotionCourseUnit
+          <UnifiedCourseUnit
             key={briefing.id}
             briefing={briefing}
             recommendations={recommendationsMap.get(briefing.id) || []}
