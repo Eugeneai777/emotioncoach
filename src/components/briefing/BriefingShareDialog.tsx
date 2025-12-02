@@ -16,9 +16,10 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Share2, Loader2, Sparkles, Download, RefreshCw } from "lucide-react";
+import { Share2, Loader2, Sparkles, Download, RefreshCw, BookOpen } from "lucide-react";
 import ImageUploader from "@/components/community/ImageUploader";
 import { ImageStyleSelector } from "@/components/community/ImageStyleSelector";
+import StoryCoachDialog from "@/components/camp/StoryCoachDialog";
 
 export type CoachType = 'emotion' | 'communication' | 'parent' | 'vibrant_life';
 
@@ -82,6 +83,9 @@ const BriefingShareDialog = ({
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [imageStyle, setImageStyle] = useState("warm");
+  const [storyCoachOpen, setStoryCoachOpen] = useState(false);
+  const [hasStoryContent, setHasStoryContent] = useState(false);
+  const [extractedEmotionTag, setExtractedEmotionTag] = useState<string | undefined>(undefined);
 
   const config = coachConfig[coachType];
 
@@ -178,11 +182,11 @@ const BriefingShareDialog = ({
 
       const { error } = await supabase.from("community_posts").insert({
         user_id: user.id,
-        post_type: "briefing_share",
+        post_type: hasStoryContent ? "story" : "briefing_share",
         briefing_id: briefingId,
         title: customTitle || insight || emotionTheme || `${config.label}简报`,
         content: shareContent || undefined,
-        emotion_theme: emotionTheme,
+        emotion_theme: extractedEmotionTag || emotionTheme,
         emotion_intensity: emotionIntensity,
         insight: insight,
         action: action,
@@ -190,7 +194,7 @@ const BriefingShareDialog = ({
         visibility: "public",
         image_urls: imageUrls.length > 0 ? imageUrls : null,
         badges: {
-          type: "briefing_share",
+          type: hasStoryContent ? "story" : "briefing_share",
           coachType: coachType,
           coachLabel: config.label,
           coachEmoji: config.emoji,
@@ -264,6 +268,35 @@ const BriefingShareDialog = ({
                 <span className="text-muted-foreground">行动：</span>
                 <p className="mt-1 text-foreground/80">{action}</p>
               </div>
+            )}
+          </div>
+
+          {/* 说好故事教练入口 */}
+          <div className="p-4 bg-gradient-to-br from-primary/5 to-secondary/10 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-primary" />
+                <span className="font-medium text-sm">说好故事教练</span>
+              </div>
+              <Badge variant="outline" className="text-xs">新功能</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              通过简单对话，把你的情绪体验变成打动人心的故事
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setStoryCoachOpen(true)}
+              className="w-full"
+              size="sm"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              开始创作我的故事
+            </Button>
+            {hasStoryContent && (
+              <p className="text-xs text-primary mt-2 flex items-center gap-1">
+                <Sparkles className="h-3 w-3" />
+                已通过故事教练创作内容
+              </p>
             )}
           </div>
 
@@ -394,6 +427,27 @@ const BriefingShareDialog = ({
           </div>
         </div>
       </DialogContent>
+
+      {/* Story Coach Dialog */}
+      <StoryCoachDialog
+        open={storyCoachOpen}
+        onOpenChange={setStoryCoachOpen}
+        emotionTheme={emotionTheme}
+        insight={insight}
+        action={action}
+        campName={config.label}
+        onComplete={({ title, story, emotionTag }) => {
+          setCustomTitle(title);
+          setShareContent(story);
+          setExtractedEmotionTag(emotionTag);
+          setHasStoryContent(true);
+          setStoryCoachOpen(false);
+          toast({
+            title: "故事创作完成",
+            description: "标题和内容已填入，可继续编辑或直接分享",
+          });
+        }}
+      />
     </Dialog>
   );
 };
