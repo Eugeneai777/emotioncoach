@@ -52,8 +52,8 @@ interface StoryCoachDialogProps {
   emotionTheme?: string;
   insight?: string;
   action?: string;
-  campName: string;
-  campDay: number;
+  campName?: string;
+  campDay?: number;
   onComplete: (data: { title: string; story: string; emotionTag?: string }) => void;
 }
 
