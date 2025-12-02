@@ -379,24 +379,58 @@ ${getStagePrompt(session?.current_stage || 0)}
 
     console.log('Sending to AI with history:', conversationHistory.length, 'messages');
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages,
-        tools,
-        temperature: 0.7,
-      }),
-    });
+    // Retry logic for transient errors
+    const MAX_RETRIES = 3;
+    let response: Response | null = null;
+    let lastError: string = '';
+    
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages,
+            tools,
+            temperature: 0.7,
+          }),
+        });
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('AI API error:', error);
-      throw new Error(`AI API error: ${response.status}`);
+        if (response.ok) {
+          break; // Success, exit retry loop
+        }
+
+        lastError = await response.text();
+        console.error(`AI API error (attempt ${attempt + 1}/${MAX_RETRIES}):`, response.status, lastError);
+        
+        // Only retry on 503 (service unavailable) or 429 (rate limit)
+        if (response.status !== 503 && response.status !== 429) {
+          throw new Error(`AI API error: ${response.status}`);
+        }
+        
+        // Wait before retry (exponential backoff)
+        if (attempt < MAX_RETRIES - 1) {
+          const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+          console.log(`Retrying in ${delay}ms...`);
+          await new Promise(r => setTimeout(r, delay));
+        }
+      } catch (fetchError) {
+        console.error(`Fetch error (attempt ${attempt + 1}/${MAX_RETRIES}):`, fetchError);
+        lastError = fetchError instanceof Error ? fetchError.message : 'Network error';
+        
+        if (attempt < MAX_RETRIES - 1) {
+          const delay = Math.pow(2, attempt) * 1000;
+          await new Promise(r => setTimeout(r, delay));
+        }
+      }
+    }
+
+    if (!response || !response.ok) {
+      throw new Error(`AI API error after ${MAX_RETRIES} retries: ${lastError}`);
     }
 
     const data = await response.json();
