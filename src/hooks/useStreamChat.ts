@@ -443,9 +443,13 @@ ${data.growth_story}
 
       const responseData = await resp.json();
       
-      // Update assistant message
+      // Update assistant message - only add if content is not empty
       assistantContent = responseData.content || "";
-      setMessages((prev) => [...prev, { role: "assistant", content: assistantContent }]);
+      if (assistantContent) {
+        setMessages((prev) => [...prev, { role: "assistant", content: assistantContent }]);
+      } else {
+        console.warn('Received empty assistant content from API');
+      }
 
       // Handle tool calls
       if (responseData.tool_call) {
