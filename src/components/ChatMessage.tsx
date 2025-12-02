@@ -230,7 +230,7 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
                           ? "text-white drop-shadow-sm group-hover:scale-105 transition-transform duration-200"
                           : "text-foreground group-hover:text-primary"
                       }`}>
-                        {isClicked && isBriefingButton ? "正在生成简报..." : option.text}
+                        {isClicked && isBriefingButton ? "正在生成简报..." : cleanMarkdown(option.text)}
                       </span>
                       
                       {/* 装饰图标 */}
