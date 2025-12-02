@@ -738,8 +738,12 @@ ${getStagePrompt(updatedSession?.current_stage || 0)}
 
       // For generate_briefing, return the briefing data
       if (functionName === 'generate_briefing') {
+        // Ensure content is not empty - provide default transition text
+        const briefingContent = assistantMessage.content || 
+          "太棒了！你已经完成了今天的情绪四部曲 🌿\n\n这是为你生成的情绪简报：";
+        
         return new Response(JSON.stringify({
-          content: assistantMessage.content,
+          content: briefingContent,
           tool_call: { function: 'generate_briefing', args }
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
