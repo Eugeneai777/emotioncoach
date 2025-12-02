@@ -359,8 +359,10 @@ const PostDetailSheet = ({
       emoji: '🌸'
     };
   };
-  return <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[90vh] p-0">
+  return (
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="bottom" className="h-[90vh] p-0">
         <ScrollArea className="h-full">
           <div className="p-6 pb-20">
             <SheetHeader className="mb-6">
@@ -533,15 +535,21 @@ const PostDetailSheet = ({
             <span className="text-xs text-muted-foreground">{post.shares_count || 0}</span>
           </button>
         </div>
-      </SheetContent>
+        </SheetContent>
+      </Sheet>
 
-      {/* 编辑对话框 */}
-      <PostEditDialog open={showEditDialog} onOpenChange={setShowEditDialog} post={post} onUpdate={() => {
-      onOpenChange(false);
-      window.location.reload();
-    }} />
+      {/* 编辑对话框 - 移到 Sheet 外部解决层叠冲突 */}
+      <PostEditDialog 
+        open={showEditDialog} 
+        onOpenChange={setShowEditDialog} 
+        post={post} 
+        onUpdate={() => {
+          onOpenChange(false);
+          window.location.reload();
+        }} 
+      />
 
-      {/* 分享对话框 */}
+      {/* 分享对话框 - 移到 Sheet 外部解决层叠冲突 */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent className="max-w-sm sm:max-w-md">
           <DialogHeader>
@@ -568,6 +576,7 @@ const PostDetailSheet = ({
           </div>
         </DialogContent>
       </Dialog>
-    </Sheet>;
+    </>
+  );
 };
 export default PostDetailSheet;
