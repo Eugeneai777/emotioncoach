@@ -550,11 +550,80 @@ ${getStagePrompt(updatedSession?.current_stage || 0)}
           throw new Error('AI returned invalid response structure');
         }
         
-        const followUpMessage = continueData.choices[0].message;
+        let followUpMessage = continueData.choices[0].message;
+        console.log('Continue response:', JSON.stringify(followUpMessage));
+
+        // Handle nested tool calls - loop until we get actual content
+        let finalContent = followUpMessage.content || "";
+        let loopCount = 0;
+        const MAX_LOOPS = 3;
+
+        while (!finalContent && followUpMessage.tool_calls && loopCount < MAX_LOOPS) {
+          console.log(`Nested tool call detected (loop ${loopCount + 1}), processing...`);
+          
+          const nestedToolCall = followUpMessage.tool_calls[0];
+          const nestedFunctionName = nestedToolCall.function.name;
+          const nestedArgs = JSON.parse(nestedToolCall.function.arguments);
+          
+          console.log('Nested tool call:', nestedFunctionName, nestedArgs);
+          
+          // Add nested tool call to history
+          conversationHistory.push({
+            role: "assistant",
+            content: "",
+            tool_calls: followUpMessage.tool_calls
+          });
+          
+          conversationHistory.push({
+            role: "tool",
+            tool_call_id: nestedToolCall.id,
+            content: JSON.stringify({ success: true, ...nestedArgs })
+          });
+          
+          // Request AI again for text response
+          const nextResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash',
+              messages: [
+                { role: "system", content: continueSystemPrompt },
+                ...conversationHistory
+              ],
+              tools,
+              temperature: 0.7,
+            }),
+          });
+          
+          if (!nextResponse.ok) {
+            console.error('Nested AI API error:', nextResponse.status);
+            break;
+          }
+          
+          const nextData = await nextResponse.json();
+          if (!nextData.choices || nextData.choices.length === 0) {
+            console.error('Invalid nested AI response');
+            break;
+          }
+          
+          followUpMessage = nextData.choices[0].message;
+          console.log('Next response:', JSON.stringify(followUpMessage));
+          finalContent = followUpMessage.content || "";
+          loopCount++;
+        }
+
+        // Fallback if still no content after retries
+        if (!finalContent) {
+          console.log('No content after loops, using fallback message');
+          finalContent = "让我们继续探索你的感受吧 🌿";
+        }
 
         conversationHistory.push({
           role: "assistant",
-          content: followUpMessage.content || ""
+          content: finalContent
         });
 
         await supabaseClient
@@ -566,7 +635,7 @@ ${getStagePrompt(updatedSession?.current_stage || 0)}
           .eq('id', sessionId);
 
         return new Response(JSON.stringify({
-          content: followUpMessage.content,
+          content: finalContent,
           tool_call: { function: functionName, args }
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
