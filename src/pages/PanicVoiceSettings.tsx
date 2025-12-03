@@ -98,7 +98,7 @@ const PanicVoiceSettings = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/energy-studio')}
+            onClick={() => navigate('/')}
             className="text-teal-600"
           >
             <ArrowLeft className="h-5 w-5" />
