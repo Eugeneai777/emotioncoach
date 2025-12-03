@@ -32,21 +32,20 @@ export default function WeChatAuth() {
   const generateQRCode = async () => {
     setLoading(true);
     try {
-      // 获取当前用户的微信配置
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("wechat_appid")
-        .eq("id", user?.id || "00000000-0000-0000-0000-000000000000")
-        .single();
+      // 调用 edge function 获取系统级微信配置
+      const { data, error } = await supabase.functions.invoke('get-wechat-config');
 
-      if (!profile?.wechat_appid) {
-        toast.error("管理员未配置微信登录");
+      if (error || !data?.appId) {
+        console.error("获取微信配置失败:", error);
+        toast.error("微信登录未配置，请联系管理员");
         return;
       }
 
-      const appid = profile.wechat_appid;
+      const appid = data.appId;
+      // 使用 edge function URL 作为回调地址
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const redirectUri = encodeURIComponent(
-        `${window.location.origin}/api/wechat-oauth-callback`
+        `${supabaseUrl}/functions/v1/wechat-oauth-callback`
       );
       const state = mode; // 使用 mode 作为 state
 

@@ -26,20 +26,16 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const userId = state;
+    // 使用系统级微信配置
+    const appId = Deno.env.get('WECHAT_APP_ID');
+    const appSecret = Deno.env.get('WECHAT_APP_SECRET');
 
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('wechat_appid, wechat_appsecret')
-      .eq('id', userId)
-      .single();
-
-    if (!profile?.wechat_appid) {
-      throw new Error('WeChat not configured');
+    if (!appId || !appSecret) {
+      throw new Error('WeChat not configured - missing WECHAT_APP_ID or WECHAT_APP_SECRET');
     }
 
     // 通过 code 换取 access_token 和 openid
-    const tokenUrl = `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${profile.wechat_appid}&secret=${profile.wechat_appsecret}&code=${code}&grant_type=authorization_code`;
+    const tokenUrl = `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${appId}&secret=${appSecret}&code=${code}&grant_type=authorization_code`;
     
     const tokenResponse = await fetch(tokenUrl);
     const tokenData = await tokenResponse.json();
@@ -60,7 +56,7 @@ serve(async (req) => {
       .eq('openid', tokenData.openid)
       .single();
 
-    let finalUserId = userId;
+    let finalUserId: string | null = null;
     let isNewUser = false;
 
     // 如果 state 是 'register'，表示是注册流程
