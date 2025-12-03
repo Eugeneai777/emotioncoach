@@ -2317,6 +2317,7 @@ export type Database = {
           carousel_auto_play: boolean | null
           carousel_interval: number | null
           carousel_modules: Json | null
+          cloned_voice_id: string | null
           companion_type: string | null
           conversation_style: string | null
           created_at: string
@@ -2335,6 +2336,7 @@ export type Database = {
           smart_notification_enabled: boolean | null
           timezone: string | null
           updated_at: string
+          voice_clone_status: string | null
           voice_gender: string | null
           voice_rate: number | null
           wechat_appid: string | null
@@ -2366,6 +2368,7 @@ export type Database = {
           carousel_auto_play?: boolean | null
           carousel_interval?: number | null
           carousel_modules?: Json | null
+          cloned_voice_id?: string | null
           companion_type?: string | null
           conversation_style?: string | null
           created_at?: string
@@ -2384,6 +2387,7 @@ export type Database = {
           smart_notification_enabled?: boolean | null
           timezone?: string | null
           updated_at?: string
+          voice_clone_status?: string | null
           voice_gender?: string | null
           voice_rate?: number | null
           wechat_appid?: string | null
@@ -2415,6 +2419,7 @@ export type Database = {
           carousel_auto_play?: boolean | null
           carousel_interval?: number | null
           carousel_modules?: Json | null
+          cloned_voice_id?: string | null
           companion_type?: string | null
           conversation_style?: string | null
           created_at?: string
@@ -2433,6 +2438,7 @@ export type Database = {
           smart_notification_enabled?: boolean | null
           timezone?: string | null
           updated_at?: string
+          voice_clone_status?: string | null
           voice_gender?: string | null
           voice_rate?: number | null
           wechat_appid?: string | null

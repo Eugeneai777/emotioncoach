@@ -161,3 +161,9 @@ verify_jwt = false
 
 [functions.text-to-speech]
 verify_jwt = true
+
+[functions.clone-voice]
+verify_jwt = true
+
+[functions.generate-all-reminders]
+verify_jwt = true

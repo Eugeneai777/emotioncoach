@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Wind, Mic, Bot, ChevronRight } from "lucide-react";
+import { Wind, Mic, Bot, ChevronRight, Sparkles } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 type StartMode = 'cognitive' | 'breathing';
-type VoiceSource = 'ai' | 'user';
+type VoiceSource = 'ai' | 'user' | 'cloned';
 
 interface ModeSelectorProps {
   onSelectMode: (mode: StartMode, voiceSource: VoiceSource) => void;
@@ -16,12 +16,14 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [hasUserRecordings, setHasUserRecordings] = useState(false);
+  const [hasClonedVoice, setHasClonedVoice] = useState(false);
   const [recordingCount, setRecordingCount] = useState(0);
   const [selectedVoiceSource, setSelectedVoiceSource] = useState<VoiceSource>('ai');
 
   useEffect(() => {
     if (user) {
       checkUserRecordings();
+      checkClonedVoice();
     }
   }, [user]);
 
@@ -40,6 +42,24 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode }) => {
     }
   };
 
+  const checkClonedVoice = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('voice_clone_status, cloned_voice_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!error && data?.voice_clone_status === 'ready' && data?.cloned_voice_id) {
+      setHasClonedVoice(true);
+      // If cloned voice is available and user has recordings generated with it, prefer cloned
+      if (!hasUserRecordings) {
+        setSelectedVoiceSource('cloned');
+      }
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
       {/* 头部标题 */}
@@ -52,31 +72,46 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode }) => {
       </p>
 
       {/* 声音选择 */}
-      {hasUserRecordings && (
+      {(hasUserRecordings || hasClonedVoice) && (
         <div className="w-full max-w-[280px] mb-8">
           <p className="text-xs text-teal-600/60 text-center mb-3">选择声音来源</p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setSelectedVoiceSource('user')}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all ${
-                selectedVoiceSource === 'user'
-                  ? 'bg-gradient-to-r from-teal-400 to-cyan-500 text-white shadow-lg'
-                  : 'bg-white/60 text-teal-700 hover:bg-white/80'
-              }`}
-            >
-              <Mic className="w-4 h-4" />
-              <span className="text-sm">我的声音</span>
-            </button>
+          <div className="flex gap-2 flex-wrap">
+            {hasUserRecordings && (
+              <button
+                onClick={() => setSelectedVoiceSource('user')}
+                className={`flex-1 min-w-[80px] flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl transition-all ${
+                  selectedVoiceSource === 'user'
+                    ? 'bg-gradient-to-r from-teal-400 to-cyan-500 text-white shadow-lg'
+                    : 'bg-white/60 text-teal-700 hover:bg-white/80'
+                }`}
+              >
+                <Mic className="w-3.5 h-3.5" />
+                <span className="text-xs">我的录音</span>
+              </button>
+            )}
+            {hasClonedVoice && (
+              <button
+                onClick={() => setSelectedVoiceSource('cloned')}
+                className={`flex-1 min-w-[80px] flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl transition-all ${
+                  selectedVoiceSource === 'cloned'
+                    ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg'
+                    : 'bg-white/60 text-teal-700 hover:bg-white/80'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span className="text-xs">克隆声音</span>
+              </button>
+            )}
             <button
               onClick={() => setSelectedVoiceSource('ai')}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all ${
+              className={`flex-1 min-w-[80px] flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl transition-all ${
                 selectedVoiceSource === 'ai'
                   ? 'bg-gradient-to-r from-teal-400 to-cyan-500 text-white shadow-lg'
                   : 'bg-white/60 text-teal-700 hover:bg-white/80'
               }`}
             >
-              <Bot className="w-4 h-4" />
-              <span className="text-sm">AI 声音</span>
+              <Bot className="w-3.5 h-3.5" />
+              <span className="text-xs">AI 声音</span>
             </button>
           </div>
           {selectedVoiceSource === 'user' && recordingCount < 32 && (
