@@ -154,8 +154,16 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
   // 用户选择继续
   const handleContinue = () => {
     setStep('cognitive');
-    if (currentReminderIndex >= cognitiveReminders.length - 1) {
+    // 计算下一轮的起始索引
+    const nextIndex = currentReminderIndex + 1;
+    
+    if (nextIndex >= cognitiveReminders.length) {
+      // 已超出32条，从头循环
       setCurrentReminderIndex(0);
+      setCycleCount(c => c + 1);
+    } else {
+      // 继续到下一条
+      setCurrentReminderIndex(nextIndex);
     }
   };
 
