@@ -287,7 +287,15 @@ const VoiceCloneSetup = () => {
                   </p>
 
                   <div className="flex items-center gap-2">
-                    {recordedSamples[index] ? (
+                    {recordingIndex === index ? (
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-red-500 hover:bg-red-600"
+                        onClick={stopRecording}
+                      >
+                        <MicOff className="w-4 h-4 mr-1" /> 停止录制
+                      </Button>
+                    ) : recordedSamples[index] ? (
                       <>
                         <Button
                           size="sm"
