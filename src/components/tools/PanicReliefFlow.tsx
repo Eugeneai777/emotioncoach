@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Volume2, VolumeX, ChevronRight, Phone, MessageCircle, RotateCcw, Heart, History, Wind, Loader2 } from "lucide-react";
+import { X, Volume2, VolumeX, ChevronRight, Phone, MessageCircle, RotateCcw, Heart, History, Wind, Loader2, Mic, Bot } from "lucide-react";
 import { cognitiveReminders, REMINDERS_PER_CYCLE, getStageConfig, TOTAL_REMINDERS } from "@/config/cognitiveReminders";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -458,6 +458,32 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
               <p className="text-xl md:text-2xl font-medium text-teal-800 text-center leading-relaxed">
                 {cognitiveReminders[currentReminderIndex]}
               </p>
+              
+              {/* 录音状态指示 */}
+              <div className="mt-4 flex items-center justify-center">
+                {voiceSource === 'user' && userRecordings.has(currentReminderIndex) ? (
+                  <span className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full">
+                    <Mic className="w-3 h-3" />
+                    已录制 · 我的声音
+                  </span>
+                ) : voiceSource === 'user' ? (
+                  <button
+                    className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors"
+                    onClick={() => {
+                      handleClose();
+                      navigate('/panic-voice-settings');
+                    }}
+                  >
+                    <Mic className="w-3 h-3" />
+                    未录制 · 点击录制
+                  </button>
+                ) : (
+                  <span className="flex items-center gap-1.5 text-xs text-teal-500/60">
+                    <Bot className="w-3 h-3" />
+                    AI 声音
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           
@@ -552,7 +578,7 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
               className="flex-1 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-lg shadow-lg shadow-emerald-200/50"
               onClick={handleFeelBetter}
             >
-              我好一些了
+              我好多了
             </Button>
           </div>
         </div>
