@@ -1,27 +1,34 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Volume2, VolumeX, ChevronRight, Phone, MessageCircle, RotateCcw, Heart, History } from "lucide-react";
-import { cognitiveReminders, REMINDERS_PER_CYCLE } from "@/config/cognitiveReminders";
+import { X, Volume2, VolumeX, ChevronRight, Phone, MessageCircle, RotateCcw, Heart, History, Wind } from "lucide-react";
+import { cognitiveReminders, REMINDERS_PER_CYCLE, getStageConfig, TOTAL_REMINDERS } from "@/config/cognitiveReminders";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import confetti from "canvas-confetti";
+import ProgressRing from "./panic/ProgressRing";
+import AmbientSoundPlayer from "./panic/AmbientSoundPlayer";
+import ModeSelector from "./panic/ModeSelector";
+import SessionSummaryCard from "./panic/SessionSummaryCard";
 
 interface PanicReliefFlowProps {
   onClose: () => void;
 }
 
-type FlowStep = 'breathing' | 'cognitive' | 'checkin' | 'complete';
+type FlowStep = 'mode-select' | 'breathing' | 'cognitive' | 'checkin' | 'complete';
+type StartMode = 'cognitive' | 'breathing';
 
 const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [step, setStep] = useState<FlowStep>('cognitive');
+  const [step, setStep] = useState<FlowStep>('mode-select');
   const [breathPhase, setBreathPhase] = useState<'inhale' | 'hold' | 'exhale'>('inhale');
   const [breathCount, setBreathCount] = useState(0);
   const [breathTimer, setBreathTimer] = useState(4);
   const [currentReminderIndex, setCurrentReminderIndex] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [cycleCount, setCycleCount] = useState(1);
+  const [showReminderAnimation, setShowReminderAnimation] = useState(false);
   
   // 会话追踪
   const sessionIdRef = useRef<string | null>(null);
@@ -29,6 +36,9 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
   const remindersViewedRef = useRef(0);
   const breathingCompletedRef = useRef(false);
   const breathingFromCompleteRef = useRef(false);
+
+  // 获取当前阶段配置
+  const stageConfig = getStageConfig(currentReminderIndex);
 
   // 创建会话记录
   const createSession = useCallback(async () => {
@@ -70,10 +80,16 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
       .eq('id', sessionIdRef.current);
   }, [user?.id, cycleCount]);
 
-  // 开始会话 - 组件挂载时立即创建
-  useEffect(() => {
-    createSession();
-  }, [createSession]);
+  // 撒花动画
+  const triggerConfetti = useCallback(() => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#14b8a6', '#06b6d4', '#3b82f6', '#22c55e'],
+      disableForReducedMotion: true,
+    });
+  }, []);
 
   // 呼吸引导逻辑
   useEffect(() => {
@@ -113,6 +129,13 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
     return () => clearInterval(timer);
   }, [step, breathPhase, breathCount]);
 
+  // 提醒切换时的动画
+  useEffect(() => {
+    setShowReminderAnimation(true);
+    const timer = setTimeout(() => setShowReminderAnimation(false), 400);
+    return () => clearTimeout(timer);
+  }, [currentReminderIndex]);
+
   // 语音朗读
   const speakText = useCallback((text: string) => {
     if ('speechSynthesis' in window) {
@@ -134,6 +157,16 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
       setIsSpeaking(false);
     }
   }, []);
+
+  // 选择模式
+  const handleSelectMode = async (mode: StartMode) => {
+    await createSession();
+    if (mode === 'breathing') {
+      setStep('breathing');
+    } else {
+      setStep('cognitive');
+    }
+  };
 
   // 下一条提醒
   const handleNextReminder = () => {
@@ -171,6 +204,7 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
   const handleFeelBetter = async () => {
     stopSpeaking();
     await updateSession('feel_better');
+    triggerConfetti();
     setStep('complete');
   };
 
@@ -181,6 +215,14 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
       await updateSession('exited');
     }
     onClose();
+  };
+
+  // 快捷切换到呼吸
+  const handleQuickBreathing = () => {
+    setStep('breathing');
+    setBreathCount(0);
+    setBreathPhase('inhale');
+    setBreathTimer(4);
   };
 
   const getBreathInstruction = () => {
@@ -199,6 +241,11 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
     }
   };
 
+  // 计算会话数据
+  const getSessionDuration = () => {
+    return Math.round((new Date().getTime() - startTimeRef.current.getTime()) / 1000);
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 flex flex-col">
       {/* 背景装饰 */}
@@ -208,29 +255,42 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
         <div className="absolute top-1/2 right-10 w-40 h-40 bg-blue-200/15 rounded-full blur-3xl" />
       </div>
 
-      {/* 关闭按钮 */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-4 left-4 z-10 text-teal-700 hover:bg-teal-100/50"
-        onClick={handleClose}
-      >
-        <X className="w-6 h-6" />
-      </Button>
-
-      {/* 历史记录按钮 */}
-      {user && (
+      {/* 顶部栏 */}
+      <div className="flex items-center justify-between p-4 relative z-10">
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-4 right-4 z-10 text-teal-700 hover:bg-teal-100/50"
-          onClick={() => {
-            handleClose();
-            navigate('/panic-history');
-          }}
+          className="text-teal-700 hover:bg-teal-100/50"
+          onClick={handleClose}
         >
-          <History className="w-6 h-6" />
+          <X className="w-6 h-6" />
         </Button>
+        
+        {/* 氛围音控制 - 仅在认知和呼吸阶段显示 */}
+        {(step === 'cognitive' || step === 'breathing') && (
+          <AmbientSoundPlayer isActive={step === 'cognitive' || step === 'breathing'} />
+        )}
+        
+        {user && step !== 'mode-select' && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-teal-700 hover:bg-teal-100/50"
+            onClick={() => {
+              handleClose();
+              navigate('/panic-history');
+            }}
+          >
+            <History className="w-6 h-6" />
+          </Button>
+        )}
+        
+        {(!user || step === 'mode-select') && <div className="w-10" />}
+      </div>
+
+      {/* 模式选择 */}
+      {step === 'mode-select' && (
+        <ModeSelector onSelectMode={handleSelectMode} />
       )}
 
       {/* 呼吸引导 */}
@@ -261,46 +321,94 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
       {/* 认知提醒 */}
       {step === 'cognitive' && (
         <div className="flex-1 flex flex-col items-center p-6 relative z-10">
-          <div className="flex-1 flex items-center justify-center px-4">
-            <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-8 shadow-sm border border-teal-100/50 max-w-md">
+          {/* 顶部进度区域 */}
+          <div className="flex items-center justify-between w-full max-w-md mb-4">
+            <ProgressRing 
+              current={currentReminderIndex + 1} 
+              total={TOTAL_REMINDERS}
+              colorClass={stageConfig.colorClass}
+            />
+            <div className="text-right">
+              <div className={`text-sm font-medium ${stageConfig.textClass}`}>
+                {stageConfig.name}
+              </div>
+              <div className="text-xs text-teal-500/60">
+                {stageConfig.englishName}
+              </div>
+            </div>
+          </div>
+
+          {/* 提醒卡片 */}
+          <div className="flex-1 flex items-center justify-center px-4 w-full">
+            <div 
+              className={`bg-white/60 backdrop-blur-sm rounded-3xl p-8 shadow-sm border-2 max-w-md w-full transition-all duration-300 ${stageConfig.borderClass} ${
+                showReminderAnimation ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
+              }`}
+            >
               <p className="text-xl md:text-2xl font-medium text-teal-800 text-center leading-relaxed">
                 {cognitiveReminders[currentReminderIndex]}
               </p>
             </div>
           </div>
           
-          <Button
-            variant="ghost"
-            size="icon"
-            className="mb-8 w-16 h-16 hover:bg-teal-100/50"
-            onClick={() => {
-              if (isSpeaking) {
-                stopSpeaking();
-              } else {
-                speakText(cognitiveReminders[currentReminderIndex]);
-              }
-            }}
-          >
-            {isSpeaking ? (
-              <VolumeX className="w-10 h-10 text-teal-600" />
-            ) : (
-              <Volume2 className="w-10 h-10 text-teal-600" />
-            )}
-          </Button>
-          
-          <div className="flex items-center gap-4 w-full max-w-md mb-8">
-            <div className="text-teal-400 text-2xl">∞</div>
-            <Button
-              className="flex-1 h-14 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white rounded-full shadow-lg shadow-teal-200/50"
-              onClick={handleNextReminder}
-            >
-              <ChevronRight className="w-6 h-6" />
-            </Button>
+          {/* 底部操作区 */}
+          <div className="w-full max-w-md space-y-4">
+            {/* 快捷工具栏 */}
+            <div className="flex items-center justify-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-12 h-12 rounded-full hover:bg-teal-100/50"
+                onClick={handleQuickBreathing}
+                title="切换到呼吸"
+              >
+                <Wind className="w-6 h-6 text-teal-600" />
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-16 h-16 hover:bg-teal-100/50"
+                onClick={() => {
+                  if (isSpeaking) {
+                    stopSpeaking();
+                  } else {
+                    speakText(cognitiveReminders[currentReminderIndex]);
+                  }
+                }}
+              >
+                {isSpeaking ? (
+                  <VolumeX className="w-10 h-10 text-teal-600" />
+                ) : (
+                  <Volume2 className="w-10 h-10 text-teal-600" />
+                )}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-full text-teal-500/60 hover:bg-teal-100/50"
+                onClick={() => setStep('checkin')}
+              >
+                跳过询问
+              </Button>
+            </div>
+            
+            {/* 下一条按钮 */}
+            <div className="flex items-center gap-4">
+              <div className="text-teal-400 text-2xl">∞</div>
+              <Button
+                className="flex-1 h-14 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white rounded-full shadow-lg shadow-teal-200/50"
+                onClick={handleNextReminder}
+              >
+                <ChevronRight className="w-6 h-6" />
+              </Button>
+            </div>
+            
+            <p className="text-teal-500/60 text-sm text-center">
+              本轮 {(currentReminderIndex % REMINDERS_PER_CYCLE) + 1} / {REMINDERS_PER_CYCLE}
+            </p>
           </div>
-          
-          <p className="text-teal-500/60 text-sm">
-            {(currentReminderIndex % REMINDERS_PER_CYCLE) + 1} / {REMINDERS_PER_CYCLE}
-          </p>
         </div>
       )}
 
@@ -309,45 +417,56 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
         <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
           <div className="text-5xl mb-8">🌿</div>
           <h2 className="text-2xl font-medium text-teal-800 text-center mb-4">
-            你现在感觉如何？
+            你现在感觉怎么样？
           </h2>
           <p className="text-teal-600/70 text-center mb-12">
-            恐慌结束了吗？
+            恐慌离开你了吗？
           </p>
+          
+          {/* 轮次徽章 */}
+          {cycleCount > 0 && (
+            <div className="mb-6 px-4 py-2 bg-teal-100/50 rounded-full">
+              <span className="text-teal-600 text-sm">
+                🏆 已坚持 {cycleCount} 轮
+              </span>
+            </div>
+          )}
           
           <div className="flex gap-4 w-full max-w-md">
             <Button
               className="flex-1 h-14 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white rounded-full text-lg shadow-lg shadow-teal-200/50"
               onClick={handleContinue}
             >
-              没有
+              还需要陪伴
             </Button>
             <Button
               className="flex-1 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-lg shadow-lg shadow-emerald-200/50"
               onClick={handleFeelBetter}
             >
-              是的
+              我好一些了
             </Button>
           </div>
-          
-          {cycleCount > 1 && (
-            <p className="mt-6 text-teal-500/60 text-sm">
-              已完成 {cycleCount - 1} 轮提醒
-            </p>
-          )}
         </div>
       )}
 
       {/* 完成界面 */}
       {step === 'complete' && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
-          <div className="text-5xl mb-6">🌊</div>
-          <h2 className="text-2xl font-medium text-teal-800 text-center mb-4">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10 overflow-y-auto">
+          <div className="text-5xl mb-4">🌊</div>
+          <h2 className="text-2xl font-medium text-teal-800 text-center mb-2">
             你做得很好
           </h2>
-          <p className="text-teal-600/70 text-center mb-12 max-w-xs">
+          <p className="text-teal-600/70 text-center mb-6 max-w-xs">
             恐慌会离开你，而你会留下来。你已经证明了自己的力量。
           </p>
+          
+          {/* 数据卡片 */}
+          <SessionSummaryCard
+            durationSeconds={getSessionDuration()}
+            remindersViewed={remindersViewedRef.current}
+            cyclesCompleted={cycleCount}
+            breathingCompleted={breathingCompletedRef.current}
+          />
           
           <div className="w-full max-w-sm space-y-3">
             <Button

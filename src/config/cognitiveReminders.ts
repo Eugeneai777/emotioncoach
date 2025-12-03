@@ -1,6 +1,53 @@
 // 32条认知提醒内容库
 // 按4个心理阶段组织，每阶段8条，但界面不显示阶段名称
 
+// 阶段配置 - 用于颜色映射和视觉反馈
+export const STAGE_CONFIG = [
+  { 
+    name: "稳定", 
+    englishName: "Stabilize",
+    colorClass: "stroke-teal-500",
+    borderClass: "border-teal-300",
+    bgClass: "bg-teal-50",
+    textClass: "text-teal-700"
+  },
+  { 
+    name: "去灾难化", 
+    englishName: "De-catastrophize",
+    colorClass: "stroke-cyan-500",
+    borderClass: "border-cyan-300",
+    bgClass: "bg-cyan-50",
+    textClass: "text-cyan-700"
+  },
+  { 
+    name: "恢复掌控", 
+    englishName: "Regain Control",
+    colorClass: "stroke-blue-500",
+    borderClass: "border-blue-300",
+    bgClass: "bg-blue-50",
+    textClass: "text-blue-700"
+  },
+  { 
+    name: "重建信念", 
+    englishName: "Rebuild Inner Safety",
+    colorClass: "stroke-indigo-500",
+    borderClass: "border-indigo-300",
+    bgClass: "bg-indigo-50",
+    textClass: "text-indigo-700"
+  },
+];
+
+// 获取当前提醒所属的阶段索引 (0-3)
+export const getStageIndex = (reminderIndex: number): number => {
+  return Math.floor(reminderIndex / 8);
+};
+
+// 获取当前阶段的配置
+export const getStageConfig = (reminderIndex: number) => {
+  const stageIndex = getStageIndex(reminderIndex);
+  return STAGE_CONFIG[stageIndex] || STAGE_CONFIG[0];
+};
+
 export const cognitiveReminders = [
   // 阶段 1（1–8）— 稳定生理反应 Stabilize
   "你的身体在误报危险，但你现在是安全的。",
