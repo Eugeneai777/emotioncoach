@@ -1,14 +1,45 @@
-import React from "react";
-import { Wind } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Wind, Mic, Bot, Settings } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 type StartMode = 'cognitive' | 'breathing';
+type VoiceSource = 'ai' | 'user';
 
 interface ModeSelectorProps {
-  onSelectMode: (mode: StartMode) => void;
+  onSelectMode: (mode: StartMode, voiceSource: VoiceSource) => void;
 }
 
 const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [hasUserRecordings, setHasUserRecordings] = useState(false);
+  const [recordingCount, setRecordingCount] = useState(0);
+  const [selectedVoiceSource, setSelectedVoiceSource] = useState<VoiceSource>('ai');
+
+  useEffect(() => {
+    if (user) {
+      checkUserRecordings();
+    }
+  }, [user]);
+
+  const checkUserRecordings = async () => {
+    if (!user) return;
+    
+    const { count, error } = await supabase
+      .from('user_voice_recordings')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    if (!error && count && count > 0) {
+      setHasUserRecordings(true);
+      setRecordingCount(count);
+      setSelectedVoiceSource('user'); // Default to user voice if available
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
       {/* 头部标题 */}
@@ -16,9 +47,45 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode }) => {
       <h2 className="text-2xl font-medium text-teal-800 text-center mb-2">
         你很安全
       </h2>
-      <p className="text-teal-600/70 text-center mb-12 max-w-xs">
+      <p className="text-teal-600/70 text-center mb-8 max-w-xs">
         我在这里陪着你
       </p>
+
+      {/* 声音选择 */}
+      {hasUserRecordings && (
+        <div className="w-full max-w-[280px] mb-8">
+          <p className="text-xs text-teal-600/60 text-center mb-3">选择声音来源</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSelectedVoiceSource('user')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all ${
+                selectedVoiceSource === 'user'
+                  ? 'bg-gradient-to-r from-teal-400 to-cyan-500 text-white shadow-lg'
+                  : 'bg-white/60 text-teal-700 hover:bg-white/80'
+              }`}
+            >
+              <Mic className="w-4 h-4" />
+              <span className="text-sm">我的声音</span>
+            </button>
+            <button
+              onClick={() => setSelectedVoiceSource('ai')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all ${
+                selectedVoiceSource === 'ai'
+                  ? 'bg-gradient-to-r from-teal-400 to-cyan-500 text-white shadow-lg'
+                  : 'bg-white/60 text-teal-700 hover:bg-white/80'
+              }`}
+            >
+              <Bot className="w-4 h-4" />
+              <span className="text-sm">AI 声音</span>
+            </button>
+          </div>
+          {selectedVoiceSource === 'user' && recordingCount < 32 && (
+            <p className="text-xs text-amber-600 text-center mt-2">
+              已录制 {recordingCount}/32 条，未录制的将使用 AI 声音
+            </p>
+          )}
+        </div>
+      )}
       
       {/* 马上帮我 - 圆形按钮 */}
       <div className="relative mb-12">
@@ -32,7 +99,7 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode }) => {
           style={{
             boxShadow: '0 8px 32px rgba(20,184,166,0.4), 0 4px 16px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.1)'
           }}
-          onClick={() => onSelectMode('cognitive')}
+          onClick={() => onSelectMode('cognitive', selectedVoiceSource)}
         >
           <span className="text-white font-semibold text-base tracking-wide">马上帮我</span>
         </button>
@@ -47,11 +114,20 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode }) => {
       
       {/* 先做呼吸引导 - 文字链接 */}
       <button
-        className="flex items-center gap-2 text-cyan-600 hover:text-cyan-700 transition-colors"
-        onClick={() => onSelectMode('breathing')}
+        className="flex items-center gap-2 text-cyan-600 hover:text-cyan-700 transition-colors mb-6"
+        onClick={() => onSelectMode('breathing', selectedVoiceSource)}
       >
         <Wind className="w-4 h-4" />
         <span className="text-sm">先做呼吸引导</span>
+      </button>
+
+      {/* 录制我的声音入口 */}
+      <button
+        className="flex items-center gap-2 text-teal-500/70 hover:text-teal-600 transition-colors"
+        onClick={() => navigate('/panic-voice-settings')}
+      >
+        <Settings className="w-4 h-4" />
+        <span className="text-sm">{hasUserRecordings ? '管理我的录音' : '录制我的声音'}</span>
       </button>
     </div>
   );
