@@ -457,14 +457,6 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
             恐慌离开你了吗？
           </p>
           
-          {/* 轮次徽章 */}
-          {cycleCount > 0 && (
-            <div className="mb-6 px-4 py-2 bg-teal-100/50 rounded-full">
-              <span className="text-teal-600 text-sm">
-                🏆 已坚持 {cycleCount} 轮
-              </span>
-            </div>
-          )}
           
           <div className="flex gap-4 w-full max-w-md">
             <Button
