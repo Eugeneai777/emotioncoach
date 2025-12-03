@@ -158,3 +158,6 @@ verify_jwt = true
 
 [functions.get-wechat-config]
 verify_jwt = false
+
+[functions.text-to-speech]
+verify_jwt = true
