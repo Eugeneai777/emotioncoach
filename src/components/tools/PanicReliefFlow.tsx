@@ -10,12 +10,12 @@ interface PanicReliefFlowProps {
   onClose: () => void;
 }
 
-type FlowStep = 'initial' | 'breathing' | 'cognitive' | 'checkin' | 'complete';
+type FlowStep = 'breathing' | 'cognitive' | 'checkin' | 'complete';
 
 const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [step, setStep] = useState<FlowStep>('initial');
+  const [step, setStep] = useState<FlowStep>('cognitive');
   const [breathPhase, setBreathPhase] = useState<'inhale' | 'hold' | 'exhale'>('inhale');
   const [breathCount, setBreathCount] = useState(0);
   const [breathTimer, setBreathTimer] = useState(4);
@@ -70,12 +70,10 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
       .eq('id', sessionIdRef.current);
   }, [user?.id, cycleCount]);
 
-  // 开始会话 - 进入认知提醒时创建
+  // 开始会话 - 组件挂载时立即创建
   useEffect(() => {
-    if (step === 'cognitive' && !sessionIdRef.current) {
-      createSession();
-    }
-  }, [step, createSession]);
+    createSession();
+  }, [createSession]);
 
   // 呼吸引导逻辑
   useEffect(() => {
@@ -171,23 +169,10 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
   // 处理关闭
   const handleClose = async () => {
     stopSpeaking();
-    if (sessionIdRef.current && step !== 'complete' && step !== 'initial') {
+    if (sessionIdRef.current && step !== 'complete') {
       await updateSession('exited');
     }
     onClose();
-  };
-
-  // 直接进入认知提醒
-  const handleDirectStart = () => {
-    setStep('cognitive');
-  };
-
-  // 用户选择有信心
-  const handleConfident = async () => {
-    if (sessionIdRef.current) {
-      await updateSession('feel_better');
-    }
-    setStep('complete');
   };
 
   const getBreathInstruction = () => {
@@ -238,35 +223,6 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
         >
           <History className="w-6 h-6" />
         </Button>
-      )}
-
-      {/* 初始界面 */}
-      {step === 'initial' && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
-          <div className="text-6xl mb-6">🌊</div>
-          <h1 className="text-2xl font-medium text-teal-800 text-center mb-4">
-            你很安全，我在这里
-          </h1>
-          <p className="text-teal-600/70 text-center mb-12">
-            让我们一起度过这个时刻
-          </p>
-          
-          <div className="w-full max-w-sm space-y-4">
-            <Button
-              className="w-full h-14 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white rounded-full text-lg shadow-lg shadow-teal-200/50"
-              onClick={handleDirectStart}
-            >
-              帮帮我
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-14 rounded-full text-lg border-2 border-teal-200 text-teal-700 hover:bg-teal-50"
-              onClick={handleConfident}
-            >
-              我有信心自己可以
-            </Button>
-          </div>
-        </div>
       )}
 
       {/* 呼吸引导 */}
