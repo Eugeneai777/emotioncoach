@@ -159,8 +159,15 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
         throw new Error(response.error.message);
       }
 
-      // 将返回的音频数据转换为 Blob
-      const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+      // 解码 base64 音频数据
+      const { audioContent } = response.data;
+      const byteCharacters = atob(audioContent);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const audioBlob = new Blob([byteArray], { type: 'audio/mpeg' });
       const audioUrl = URL.createObjectURL(audioBlob);
       
       const audio = new Audio(audioUrl);
@@ -520,7 +527,7 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
               }}
             >
               <MessageCircle className="w-4 h-4" />
-              和劲老师聊聊
+              和情绪觉醒教练聊聊
             </Button>
             
             <Button
