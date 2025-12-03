@@ -42,6 +42,9 @@ const cognitiveReminders = [
   "深呼吸，你已经做得很好了。"
 ];
 
+// Preset warm female voice (Sarah from ElevenLabs)
+const PRESET_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL';
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -74,19 +77,7 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Get user's cloned voice ID
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('cloned_voice_id')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !profile?.cloned_voice_id) {
-      throw new Error('No cloned voice found. Please create a voice clone first.');
-    }
-
-    const voiceId = profile.cloned_voice_id;
-    console.log(`Generating all reminders for user ${user.id} with voice ${voiceId}`);
+    console.log(`Generating all reminders for user ${user.id} with preset voice ${PRESET_VOICE_ID}`);
 
     const results = [];
     const errors = [];
@@ -98,7 +89,7 @@ serve(async (req) => {
         
         // Call ElevenLabs TTS API
         const ttsResponse = await fetch(
-          `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+          `https://api.elevenlabs.io/v1/text-to-speech/${PRESET_VOICE_ID}`,
           {
             method: 'POST',
             headers: {
@@ -151,7 +142,7 @@ serve(async (req) => {
             user_id: user.id,
             reminder_index: i,
             storage_path: storagePath,
-            duration_seconds: null, // Will be calculated client-side
+            duration_seconds: null,
             is_ai_generated: true
           }, {
             onConflict: 'user_id,reminder_index'
