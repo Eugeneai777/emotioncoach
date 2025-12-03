@@ -17,6 +17,12 @@ interface PanicReliefFlowProps {
 
 type FlowStep = 'mode-select' | 'breathing' | 'cognitive' | 'checkin' | 'complete';
 type StartMode = 'cognitive' | 'breathing';
+type VoiceSource = 'ai' | 'user';
+
+interface UserRecording {
+  reminder_index: number;
+  storage_path: string;
+}
 
 const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
   const navigate = useNavigate();
@@ -29,6 +35,8 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [cycleCount, setCycleCount] = useState(1);
   const [showReminderAnimation, setShowReminderAnimation] = useState(false);
+  const [voiceSource, setVoiceSource] = useState<VoiceSource>('ai');
+  const [userRecordings, setUserRecordings] = useState<Map<number, string>>(new Map());
   
   // 会话追踪
   const sessionIdRef = useRef<string | null>(null);
@@ -206,8 +214,79 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
     setIsLoadingAudio(false);
   }, []);
 
+  // 加载用户录音
+  const loadUserRecordings = useCallback(async () => {
+    if (!user?.id) return;
+    
+    const { data, error } = await supabase
+      .from('user_voice_recordings')
+      .select('reminder_index, storage_path')
+      .eq('user_id', user.id);
+
+    if (!error && data) {
+      const recordingsMap = new Map<number, string>();
+      data.forEach((r: UserRecording) => {
+        recordingsMap.set(r.reminder_index, r.storage_path);
+      });
+      setUserRecordings(recordingsMap);
+    }
+  }, [user?.id]);
+
+  // 播放用户录音
+  const playUserRecording = useCallback(async (reminderIndex: number) => {
+    const storagePath = userRecordings.get(reminderIndex);
+    if (!storagePath) {
+      // Fallback to AI voice
+      speakText(cognitiveReminders[reminderIndex]);
+      return;
+    }
+
+    try {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+
+      setIsLoadingAudio(true);
+      setIsSpeaking(true);
+
+      const { data, error } = await supabase.storage
+        .from('voice-recordings')
+        .download(storagePath);
+
+      if (error) throw error;
+
+      const audioUrl = URL.createObjectURL(data);
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      setIsLoadingAudio(false);
+      await audio.play();
+    } catch (error) {
+      console.error('Error playing user recording:', error);
+      setIsLoadingAudio(false);
+      setIsSpeaking(false);
+      // Fallback to AI voice
+      speakText(cognitiveReminders[reminderIndex]);
+    }
+  }, [userRecordings, speakText]);
+
   // 选择模式
-  const handleSelectMode = async (mode: StartMode) => {
+  const handleSelectMode = async (mode: StartMode, selectedVoiceSource: VoiceSource) => {
+    setVoiceSource(selectedVoiceSource);
+    if (selectedVoiceSource === 'user') {
+      await loadUserRecordings();
+    }
     await createSession();
     if (mode === 'breathing') {
       setStep('breathing');
@@ -404,7 +483,11 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
                   if (isSpeaking || isLoadingAudio) {
                     stopSpeaking();
                   } else {
-                    speakText(cognitiveReminders[currentReminderIndex]);
+                    if (voiceSource === 'user' && userRecordings.has(currentReminderIndex)) {
+                      playUserRecording(currentReminderIndex);
+                    } else {
+                      speakText(cognitiveReminders[currentReminderIndex]);
+                    }
                   }
                 }}
                 disabled={isLoadingAudio}

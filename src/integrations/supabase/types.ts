@@ -3054,6 +3054,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_voice_recordings: {
+        Row: {
+          created_at: string | null
+          duration_seconds: number | null
+          id: string
+          reminder_index: number
+          storage_path: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          reminder_index: number
+          storage_path: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          reminder_index?: number
+          storage_path?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vibrant_life_sage_briefings: {
         Row: {
           conversation_id: string | null
