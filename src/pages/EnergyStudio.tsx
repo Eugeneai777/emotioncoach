@@ -46,6 +46,7 @@ import { TimeManagement } from "@/components/tools/TimeManagement";
 import { RelationshipTracker } from "@/components/tools/RelationshipTracker";
 import { EnergyDeclaration } from "@/components/tools/EnergyDeclaration";
 import { CoachSpaceContent } from "@/components/coach/CoachSpaceContent";
+import PanicButton from "@/components/tools/PanicButton";
 
 interface ToolCard {
   id: string;
@@ -159,6 +160,8 @@ const EnergyStudio = () => {
         return <RelationshipTracker />;
       case "declaration":
         return <EnergyDeclaration />;
+      case "panic":
+        return <PanicButton />;
       default:
         return null;
     }
