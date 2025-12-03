@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { X, Volume2, VolumeX, ChevronRight, Phone, MessageCircle, RotateCcw, Heart } from "lucide-react";
+import { X, Volume2, VolumeX, ChevronRight, Phone, MessageCircle, RotateCcw, Heart, History } from "lucide-react";
 import { cognitiveReminders, REMINDERS_PER_CYCLE } from "@/config/cognitiveReminders";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PanicReliefFlowProps {
   onClose: () => void;
@@ -13,6 +14,7 @@ type FlowStep = 'initial' | 'breathing' | 'cognitive' | 'checkin' | 'complete';
 
 const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState<FlowStep>('initial');
   const [breathPhase, setBreathPhase] = useState<'inhale' | 'hold' | 'exhale'>('inhale');
   const [breathCount, setBreathCount] = useState(0);
@@ -20,6 +22,59 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
   const [currentReminderIndex, setCurrentReminderIndex] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [cycleCount, setCycleCount] = useState(1);
+  
+  // 会话追踪
+  const sessionIdRef = useRef<string | null>(null);
+  const startTimeRef = useRef<Date>(new Date());
+  const remindersViewedRef = useRef(0);
+  const breathingCompletedRef = useRef(false);
+
+  // 创建会话记录
+  const createSession = useCallback(async () => {
+    if (!user?.id) return;
+    
+    startTimeRef.current = new Date();
+    
+    const { data, error } = await supabase
+      .from('panic_sessions')
+      .insert({
+        user_id: user.id,
+        started_at: startTimeRef.current.toISOString(),
+      })
+      .select('id')
+      .single();
+    
+    if (!error && data) {
+      sessionIdRef.current = data.id;
+    }
+  }, [user?.id]);
+
+  // 更新会话记录
+  const updateSession = useCallback(async (outcome: string) => {
+    if (!sessionIdRef.current || !user?.id) return;
+    
+    const endTime = new Date();
+    const durationSeconds = Math.round((endTime.getTime() - startTimeRef.current.getTime()) / 1000);
+    
+    await supabase
+      .from('panic_sessions')
+      .update({
+        ended_at: endTime.toISOString(),
+        duration_seconds: durationSeconds,
+        reminders_viewed: remindersViewedRef.current,
+        cycles_completed: cycleCount,
+        breathing_completed: breathingCompletedRef.current,
+        outcome
+      })
+      .eq('id', sessionIdRef.current);
+  }, [user?.id, cycleCount]);
+
+  // 开始会话
+  useEffect(() => {
+    if (step === 'breathing' && !sessionIdRef.current) {
+      createSession();
+    }
+  }, [step, createSession]);
 
   // 呼吸引导逻辑
   useEffect(() => {
@@ -28,7 +83,6 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
     const timer = setInterval(() => {
       setBreathTimer((prev) => {
         if (prev <= 1) {
-          // 切换呼吸阶段
           if (breathPhase === 'inhale') {
             setBreathPhase('hold');
             return 7;
@@ -36,11 +90,10 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
             setBreathPhase('exhale');
             return 8;
           } else {
-            // 完成一个循环
             const newCount = breathCount + 1;
             setBreathCount(newCount);
             if (newCount >= 3) {
-              // 完成3个循环，进入认知提醒
+              breathingCompletedRef.current = true;
               setStep('cognitive');
               return 0;
             }
@@ -79,15 +132,14 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
 
   // 下一条提醒
   const handleNextReminder = () => {
+    remindersViewedRef.current += 1;
     const nextIndex = currentReminderIndex + 1;
     
-    // 每8条后显示询问
     if (nextIndex % REMINDERS_PER_CYCLE === 0) {
       setStep('checkin');
     } else if (nextIndex < cognitiveReminders.length) {
       setCurrentReminderIndex(nextIndex);
     } else {
-      // 完成所有32条，循环回第1条
       setCurrentReminderIndex(0);
       setCycleCount(c => c + 1);
       setStep('checkin');
@@ -97,15 +149,37 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
   // 用户选择继续
   const handleContinue = () => {
     setStep('cognitive');
-    // 如果已经完成所有提醒，从头开始
     if (currentReminderIndex >= cognitiveReminders.length - 1) {
       setCurrentReminderIndex(0);
     }
   };
 
   // 用户选择好了
-  const handleFeelBetter = () => {
+  const handleFeelBetter = async () => {
     stopSpeaking();
+    await updateSession('feel_better');
+    setStep('complete');
+  };
+
+  // 处理关闭
+  const handleClose = async () => {
+    stopSpeaking();
+    if (sessionIdRef.current && step !== 'complete' && step !== 'initial') {
+      await updateSession('exited');
+    }
+    onClose();
+  };
+
+  // 直接进入时创建会话
+  const handleDirectStart = () => {
+    setStep('breathing');
+  };
+
+  // 用户选择有信心
+  const handleConfident = async () => {
+    if (sessionIdRef.current) {
+      await updateSession('feel_better');
+    }
     setStep('complete');
   };
 
@@ -132,10 +206,25 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
         variant="ghost"
         size="icon"
         className="absolute top-4 left-4 z-10 text-slate-600"
-        onClick={onClose}
+        onClick={handleClose}
       >
         <X className="w-6 h-6" />
       </Button>
+
+      {/* 历史记录按钮 */}
+      {user && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4 z-10 text-slate-600"
+          onClick={() => {
+            handleClose();
+            navigate('/panic-history');
+          }}
+        >
+          <History className="w-6 h-6" />
+        </Button>
+      )}
 
       {/* 初始界面 */}
       {step === 'initial' && (
@@ -151,14 +240,14 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
           <div className="w-full max-w-sm space-y-4">
             <Button
               className="w-full h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full text-lg"
-              onClick={() => setStep('breathing')}
+              onClick={handleDirectStart}
             >
               帮帮我
             </Button>
             <Button
               variant="outline"
               className="w-full h-14 rounded-full text-lg border-slate-300"
-              onClick={handleFeelBetter}
+              onClick={handleConfident}
             >
               我有信心自己可以
             </Button>
@@ -171,7 +260,6 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
         <div className="flex-1 flex flex-col items-center justify-center p-6">
           <p className="text-slate-500 mb-8">跟着节奏呼吸</p>
           
-          {/* 呼吸圆圈 */}
           <div 
             className={`w-48 h-48 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 
               flex items-center justify-center transition-transform duration-1000 ease-in-out ${getBreathScale()}`}
@@ -201,7 +289,6 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
             </p>
           </div>
           
-          {/* 语音播放按钮 */}
           <Button
             variant="ghost"
             size="icon"
@@ -221,7 +308,6 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
             )}
           </Button>
           
-          {/* 继续按钮 */}
           <div className="flex items-center gap-4 w-full max-w-md mb-8">
             <div className="text-slate-400 text-2xl">∞</div>
             <Button
@@ -232,7 +318,6 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
             </Button>
           </div>
           
-          {/* 进度指示 */}
           <p className="text-slate-400 text-sm">
             {(currentReminderIndex % REMINDERS_PER_CYCLE) + 1} / {REMINDERS_PER_CYCLE}
           </p>
@@ -293,6 +378,9 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
                 setBreathCount(0);
                 setBreathPhase('inhale');
                 setBreathTimer(4);
+                breathingCompletedRef.current = false;
+                sessionIdRef.current = null;
+                createSession();
               }}
             >
               <RotateCcw className="w-4 h-4" />
@@ -319,6 +407,20 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
               <Phone className="w-4 h-4" />
               24小时心理援助热线
             </Button>
+
+            {user && (
+              <Button
+                variant="outline"
+                className="w-full h-12 rounded-full border-slate-300 gap-2"
+                onClick={() => {
+                  onClose();
+                  navigate('/panic-history');
+                }}
+              >
+                <History className="w-4 h-4" />
+                查看历史记录
+              </Button>
+            )}
             
             <Button
               className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-full gap-2"

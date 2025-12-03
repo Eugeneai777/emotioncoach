@@ -45,6 +45,7 @@ import DynamicCoach from "./pages/DynamicCoach";
 import StoryCoach from "./pages/StoryCoach";
 import StoryCoachIntro from "./pages/StoryCoachIntro";
 import MyStories from "./pages/MyStories";
+import PanicHistory from "./pages/PanicHistory";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
 import { Navigate } from "react-router-dom";
 
@@ -98,6 +99,7 @@ const App = () => (
           <Route path="/story-coach" element={<StoryCoach />} />
           <Route path="/story-coach-intro" element={<StoryCoachIntro />} />
           <Route path="/my-stories" element={<MyStories />} />
+          <Route path="/panic-history" element={<PanicHistory />} />
           <Route path="/coach/:coachKey" element={<DynamicCoach />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

@@ -1,10 +1,14 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Heart } from "lucide-react";
+import { AlertCircle, Heart, History } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import PanicReliefFlow from "./PanicReliefFlow";
 
 const PanicButton: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [showFlow, setShowFlow] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
@@ -14,11 +18,10 @@ const PanicButton: React.FC = () => {
     setIsPressed(true);
     setPressProgress(0);
     
-    // 长按计时器
     const startTime = Date.now();
     const timer = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      const progress = Math.min((elapsed / 1500) * 100, 100); // 1.5秒激活
+      const progress = Math.min((elapsed / 1500) * 100, 100);
       setPressProgress(progress);
       
       if (elapsed >= 1500) {
@@ -59,7 +62,6 @@ const PanicButton: React.FC = () => {
       <CardContent className="flex flex-col items-center pb-8">
         {/* 恐慌按钮 */}
         <div className="relative mb-6">
-          {/* 进度环 */}
           <svg 
             className="absolute inset-0 w-full h-full -rotate-90"
             viewBox="0 0 100 100"
@@ -86,7 +88,6 @@ const PanicButton: React.FC = () => {
             />
           </svg>
           
-          {/* 按钮主体 */}
           <button
             className={`relative w-32 h-32 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 
               shadow-lg flex items-center justify-center transition-all duration-200
@@ -119,6 +120,17 @@ const PanicButton: React.FC = () => {
           >
             直接进入（跳过长按）
           </Button>
+          
+          {user && (
+            <Button
+              variant="ghost"
+              className="w-full text-slate-600 hover:bg-rose-100 gap-2"
+              onClick={() => navigate('/panic-history')}
+            >
+              <History className="w-4 h-4" />
+              查看历史记录
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
