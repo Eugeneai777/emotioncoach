@@ -28,6 +28,7 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
   const startTimeRef = useRef<Date>(new Date());
   const remindersViewedRef = useRef(0);
   const breathingCompletedRef = useRef(false);
+  const breathingFromCompleteRef = useRef(false);
 
   // 创建会话记录
   const createSession = useCallback(async () => {
@@ -69,9 +70,9 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
       .eq('id', sessionIdRef.current);
   }, [user?.id, cycleCount]);
 
-  // 开始会话
+  // 开始会话 - 进入认知提醒时创建
   useEffect(() => {
-    if (step === 'breathing' && !sessionIdRef.current) {
+    if (step === 'cognitive' && !sessionIdRef.current) {
       createSession();
     }
   }, [step, createSession]);
@@ -94,7 +95,13 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
             setBreathCount(newCount);
             if (newCount >= 3) {
               breathingCompletedRef.current = true;
-              setStep('cognitive');
+              // 如果从完成界面进入，返回完成界面
+              if (breathingFromCompleteRef.current) {
+                breathingFromCompleteRef.current = false;
+                setStep('complete');
+              } else {
+                setStep('cognitive');
+              }
               return 0;
             }
             setBreathPhase('inhale');
@@ -170,9 +177,9 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
     onClose();
   };
 
-  // 直接进入时创建会话
+  // 直接进入认知提醒
   const handleDirectStart = () => {
-    setStep('breathing');
+    setStep('cognitive');
   };
 
   // 用户选择有信心
@@ -374,17 +381,15 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
               variant="outline"
               className="w-full h-12 rounded-full border-slate-300 gap-2"
               onClick={() => {
+                breathingFromCompleteRef.current = true;
                 setStep('breathing');
                 setBreathCount(0);
                 setBreathPhase('inhale');
                 setBreathTimer(4);
-                breathingCompletedRef.current = false;
-                sessionIdRef.current = null;
-                createSession();
               }}
             >
               <RotateCcw className="w-4 h-4" />
-              再来一轮呼吸
+              做呼吸练习
             </Button>
             
             <Button
