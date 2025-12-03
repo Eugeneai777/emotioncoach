@@ -234,7 +234,7 @@ const VoiceCloneSetup = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/panic-voice-settings')}
             className="text-teal-600"
           >
             <ArrowLeft className="h-5 w-5" />
