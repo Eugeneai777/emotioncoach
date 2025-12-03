@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Volume2, VolumeX, ChevronRight, Phone, MessageCircle, RotateCcw, Heart, History, Wind } from "lucide-react";
+import { X, Volume2, VolumeX, ChevronRight, Phone, MessageCircle, RotateCcw, Heart, History, Wind, Loader2 } from "lucide-react";
 import { cognitiveReminders, REMINDERS_PER_CYCLE, getStageConfig, TOTAL_REMINDERS } from "@/config/cognitiveReminders";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import confetti from "canvas-confetti";
-import ProgressRing from "./panic/ProgressRing";
 import AmbientSoundPlayer from "./panic/AmbientSoundPlayer";
 import ModeSelector from "./panic/ModeSelector";
 import SessionSummaryCard from "./panic/SessionSummaryCard";
+import { toast } from "@/hooks/use-toast";
 
 interface PanicReliefFlowProps {
   onClose: () => void;
@@ -136,26 +136,67 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
     return () => clearTimeout(timer);
   }, [currentReminderIndex]);
 
-  // 语音朗读
-  const speakText = useCallback((text: string) => {
-    if ('speechSynthesis' in window) {
-      speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'zh-CN';
-      utterance.rate = 0.85;
-      utterance.pitch = 1;
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      speechSynthesis.speak(utterance);
+  // ElevenLabs 语音朗读
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+
+  const speakText = useCallback(async (text: string) => {
+    try {
+      // 停止当前播放
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      
+      setIsLoadingAudio(true);
+      setIsSpeaking(true);
+
+      const response = await supabase.functions.invoke('text-to-speech', {
+        body: { text }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      // 将返回的音频数据转换为 Blob
+      const audioBlob = new Blob([response.data], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      
+      audio.onended = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      setIsLoadingAudio(false);
+      await audio.play();
+    } catch (error) {
+      console.error('TTS error:', error);
+      setIsLoadingAudio(false);
+      setIsSpeaking(false);
+      toast({
+        title: "语音播放失败",
+        description: "请稍后重试",
+        variant: "destructive"
+      });
     }
   }, []);
 
   const stopSpeaking = useCallback(() => {
-    if ('speechSynthesis' in window) {
-      speechSynthesis.cancel();
-      setIsSpeaking(false);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
     }
+    setIsSpeaking(false);
+    setIsLoadingAudio(false);
   }, []);
 
   // 选择模式
@@ -321,23 +362,6 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
       {/* 认知提醒 */}
       {step === 'cognitive' && (
         <div className="flex-1 flex flex-col items-center p-6 relative z-10">
-          {/* 顶部进度区域 */}
-          <div className="flex items-center justify-between w-full max-w-md mb-4">
-            <ProgressRing 
-              current={currentReminderIndex + 1} 
-              total={TOTAL_REMINDERS}
-              colorClass={stageConfig.colorClass}
-            />
-            <div className="text-right">
-              <div className={`text-sm font-medium ${stageConfig.textClass}`}>
-                {stageConfig.name}
-              </div>
-              <div className="text-xs text-teal-500/60">
-                {stageConfig.englishName}
-              </div>
-            </div>
-          </div>
-
           {/* 提醒卡片 */}
           <div className="flex-1 flex items-center justify-center px-4 w-full">
             <div 
@@ -370,14 +394,17 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
                 size="icon"
                 className="w-16 h-16 hover:bg-teal-100/50"
                 onClick={() => {
-                  if (isSpeaking) {
+                  if (isSpeaking || isLoadingAudio) {
                     stopSpeaking();
                   } else {
                     speakText(cognitiveReminders[currentReminderIndex]);
                   }
                 }}
+                disabled={isLoadingAudio}
               >
-                {isSpeaking ? (
+                {isLoadingAudio ? (
+                  <Loader2 className="w-10 h-10 text-teal-600 animate-spin" />
+                ) : isSpeaking ? (
                   <VolumeX className="w-10 h-10 text-teal-600" />
                 ) : (
                   <Volume2 className="w-10 h-10 text-teal-600" />
