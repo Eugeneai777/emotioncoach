@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Mic, Trash2 } from "lucide-react";
+import { ArrowLeft, Mic, Trash2, Sparkles, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -27,12 +27,28 @@ const PanicVoiceSettings = () => {
   const { user } = useAuth();
   const [recordingStatus, setRecordingStatus] = useState<RecordingStatus>({});
   const [loading, setLoading] = useState(true);
+  const [voiceCloneStatus, setVoiceCloneStatus] = useState<string>('none');
 
   useEffect(() => {
     if (user) {
       fetchRecordings();
+      checkVoiceCloneStatus();
     }
   }, [user]);
+
+  const checkVoiceCloneStatus = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('voice_clone_status')
+      .eq('id', user.id)
+      .single();
+
+    if (!error && data) {
+      setVoiceCloneStatus(data.voice_clone_status || 'none');
+    }
+  };
 
   const fetchRecordings = async () => {
     if (!user) return;
@@ -127,11 +143,38 @@ const PanicVoiceSettings = () => {
         </div>
       </div>
 
+      {/* AI Clone Banner */}
+      <div className="p-4 pb-0">
+        <button
+          className="w-full bg-gradient-to-r from-amber-50 to-orange-50 backdrop-blur rounded-2xl p-4 border border-amber-200/50 hover:border-amber-300 transition-all text-left"
+          onClick={() => navigate('/voice-clone-setup')}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-100 to-orange-200 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-amber-800">
+                  {voiceCloneStatus === 'ready' ? 'AI 声音克隆已就绪' : 'AI 一键生成全部语音'}
+                </p>
+                <p className="text-xs text-amber-600/70">
+                  {voiceCloneStatus === 'ready' 
+                    ? '点击重新生成或管理克隆声音' 
+                    : '录制 3 个样本，AI 生成全部 32 条'}
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-amber-400" />
+          </div>
+        </button>
+      </div>
+
       {/* Progress */}
       <div className="p-4">
         <div className="bg-white/60 backdrop-blur rounded-2xl p-4 mb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-teal-700 font-medium">录制进度</span>
+            <span className="text-teal-700 font-medium">手动录制进度</span>
             <span className="text-teal-600">{recordedCount}/32</span>
           </div>
           <div className="h-2 bg-teal-100 rounded-full overflow-hidden">
@@ -141,7 +184,7 @@ const PanicVoiceSettings = () => {
             />
           </div>
           <p className="text-sm text-teal-600/70 mt-2">
-            录制自己的声音，在恐慌时听到熟悉的声音会更安心
+            或者手动逐条录制，打造专属提醒
           </p>
         </div>
 
