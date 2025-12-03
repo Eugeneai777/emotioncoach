@@ -207,12 +207,19 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-b from-sky-100 to-sky-200 flex flex-col">
+    <div className="fixed inset-0 z-50 bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 flex flex-col">
+      {/* 背景装饰 */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 -right-20 w-60 h-60 bg-teal-200/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-40 -left-20 w-80 h-80 bg-cyan-200/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 right-10 w-40 h-40 bg-blue-200/15 rounded-full blur-3xl" />
+      </div>
+
       {/* 关闭按钮 */}
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-4 left-4 z-10 text-slate-600"
+        className="absolute top-4 left-4 z-10 text-teal-700 hover:bg-teal-100/50"
         onClick={handleClose}
       >
         <X className="w-6 h-6" />
@@ -223,7 +230,7 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-4 right-4 z-10 text-slate-600"
+          className="absolute top-4 right-4 z-10 text-teal-700 hover:bg-teal-100/50"
           onClick={() => {
             handleClose();
             navigate('/panic-history');
@@ -235,25 +242,25 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
 
       {/* 初始界面 */}
       {step === 'initial' && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="text-6xl mb-6">💚</div>
-          <h1 className="text-2xl font-medium text-slate-700 text-center mb-4">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+          <div className="text-6xl mb-6">🌊</div>
+          <h1 className="text-2xl font-medium text-teal-800 text-center mb-4">
             你很安全，我在这里
           </h1>
-          <p className="text-slate-500 text-center mb-12">
+          <p className="text-teal-600/70 text-center mb-12">
             让我们一起度过这个时刻
           </p>
           
           <div className="w-full max-w-sm space-y-4">
             <Button
-              className="w-full h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full text-lg"
+              className="w-full h-14 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white rounded-full text-lg shadow-lg shadow-teal-200/50"
               onClick={handleDirectStart}
             >
               帮帮我
             </Button>
             <Button
               variant="outline"
-              className="w-full h-14 rounded-full text-lg border-slate-300"
+              className="w-full h-14 rounded-full text-lg border-2 border-teal-200 text-teal-700 hover:bg-teal-50"
               onClick={handleConfident}
             >
               我有信心自己可以
@@ -264,12 +271,12 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
 
       {/* 呼吸引导 */}
       {step === 'breathing' && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <p className="text-slate-500 mb-8">跟着节奏呼吸</p>
+        <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+          <p className="text-teal-600/70 mb-8">跟着节奏呼吸</p>
           
           <div 
-            className={`w-48 h-48 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 
-              flex items-center justify-center transition-transform duration-1000 ease-in-out ${getBreathScale()}`}
+            className={`w-48 h-48 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 
+              flex items-center justify-center transition-transform duration-1000 ease-in-out shadow-lg shadow-teal-200/50 ${getBreathScale()}`}
           >
             <div className="text-center text-white">
               <div className="text-3xl font-medium">{getBreathInstruction()}</div>
@@ -277,11 +284,11 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
             </div>
           </div>
           
-          <div className="mt-8 text-slate-500">
+          <div className="mt-8 text-teal-600/70">
             第 {breathCount + 1} / 3 次
           </div>
           
-          <p className="mt-8 text-slate-600 text-center max-w-xs">
+          <p className="mt-8 text-teal-700/60 text-center max-w-xs">
             4秒吸气 - 7秒屏住 - 8秒呼气
           </p>
         </div>
@@ -289,17 +296,19 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
 
       {/* 认知提醒 */}
       {step === 'cognitive' && (
-        <div className="flex-1 flex flex-col items-center p-6">
+        <div className="flex-1 flex flex-col items-center p-6 relative z-10">
           <div className="flex-1 flex items-center justify-center px-4">
-            <p className="text-xl md:text-2xl font-medium text-slate-700 text-center leading-relaxed">
-              {cognitiveReminders[currentReminderIndex]}
-            </p>
+            <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-8 shadow-sm border border-teal-100/50 max-w-md">
+              <p className="text-xl md:text-2xl font-medium text-teal-800 text-center leading-relaxed">
+                {cognitiveReminders[currentReminderIndex]}
+              </p>
+            </div>
           </div>
           
           <Button
             variant="ghost"
             size="icon"
-            className="mb-8 w-16 h-16"
+            className="mb-8 w-16 h-16 hover:bg-teal-100/50"
             onClick={() => {
               if (isSpeaking) {
                 stopSpeaking();
@@ -309,23 +318,23 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
             }}
           >
             {isSpeaking ? (
-              <VolumeX className="w-10 h-10 text-slate-600" />
+              <VolumeX className="w-10 h-10 text-teal-600" />
             ) : (
-              <Volume2 className="w-10 h-10 text-slate-600" />
+              <Volume2 className="w-10 h-10 text-teal-600" />
             )}
           </Button>
           
           <div className="flex items-center gap-4 w-full max-w-md mb-8">
-            <div className="text-slate-400 text-2xl">∞</div>
+            <div className="text-teal-400 text-2xl">∞</div>
             <Button
-              className="flex-1 h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full"
+              className="flex-1 h-14 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white rounded-full shadow-lg shadow-teal-200/50"
               onClick={handleNextReminder}
             >
               <ChevronRight className="w-6 h-6" />
             </Button>
           </div>
           
-          <p className="text-slate-400 text-sm">
+          <p className="text-teal-500/60 text-sm">
             {(currentReminderIndex % REMINDERS_PER_CYCLE) + 1} / {REMINDERS_PER_CYCLE}
           </p>
         </div>
@@ -333,24 +342,24 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
 
       {/* 询问界面 */}
       {step === 'checkin' && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
           <div className="text-5xl mb-8">🌿</div>
-          <h2 className="text-2xl font-medium text-slate-700 text-center mb-4">
+          <h2 className="text-2xl font-medium text-teal-800 text-center mb-4">
             你现在感觉如何？
           </h2>
-          <p className="text-slate-500 text-center mb-12">
+          <p className="text-teal-600/70 text-center mb-12">
             恐慌结束了吗？
           </p>
           
           <div className="flex gap-4 w-full max-w-md">
             <Button
-              className="flex-1 h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full text-lg"
+              className="flex-1 h-14 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white rounded-full text-lg shadow-lg shadow-teal-200/50"
               onClick={handleContinue}
             >
               没有
             </Button>
             <Button
-              className="flex-1 h-14 bg-amber-400 hover:bg-amber-500 text-white rounded-full text-lg"
+              className="flex-1 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-lg shadow-lg shadow-emerald-200/50"
               onClick={handleFeelBetter}
             >
               是的
@@ -358,7 +367,7 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
           </div>
           
           {cycleCount > 1 && (
-            <p className="mt-6 text-slate-400 text-sm">
+            <p className="mt-6 text-teal-500/60 text-sm">
               已完成 {cycleCount - 1} 轮提醒
             </p>
           )}
@@ -367,19 +376,19 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
 
       {/* 完成界面 */}
       {step === 'complete' && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="text-5xl mb-6">💚</div>
-          <h2 className="text-2xl font-medium text-slate-700 text-center mb-4">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+          <div className="text-5xl mb-6">🌊</div>
+          <h2 className="text-2xl font-medium text-teal-800 text-center mb-4">
             你做得很好
           </h2>
-          <p className="text-slate-500 text-center mb-12 max-w-xs">
+          <p className="text-teal-600/70 text-center mb-12 max-w-xs">
             恐慌会离开你，而你会留下来。你已经证明了自己的力量。
           </p>
           
           <div className="w-full max-w-sm space-y-3">
             <Button
               variant="outline"
-              className="w-full h-12 rounded-full border-slate-300 gap-2"
+              className="w-full h-12 rounded-full border-2 border-teal-200 text-teal-700 hover:bg-teal-50 gap-2"
               onClick={() => {
                 breathingFromCompleteRef.current = true;
                 setStep('breathing');
@@ -394,7 +403,7 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
             
             <Button
               variant="outline"
-              className="w-full h-12 rounded-full border-slate-300 gap-2"
+              className="w-full h-12 rounded-full border-2 border-teal-200 text-teal-700 hover:bg-teal-50 gap-2"
               onClick={() => {
                 onClose();
                 navigate('/');
@@ -406,7 +415,7 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
             
             <Button
               variant="outline"
-              className="w-full h-12 rounded-full border-slate-300 gap-2"
+              className="w-full h-12 rounded-full border-2 border-teal-200 text-teal-700 hover:bg-teal-50 gap-2"
               onClick={() => window.open('tel:400-161-9995')}
             >
               <Phone className="w-4 h-4" />
@@ -416,7 +425,7 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
             {user && (
               <Button
                 variant="outline"
-                className="w-full h-12 rounded-full border-slate-300 gap-2"
+                className="w-full h-12 rounded-full border-2 border-teal-200 text-teal-700 hover:bg-teal-50 gap-2"
                 onClick={() => {
                   onClose();
                   navigate('/panic-history');
@@ -428,7 +437,7 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
             )}
             
             <Button
-              className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-full gap-2"
+              className="w-full h-12 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white rounded-full gap-2 shadow-lg shadow-teal-200/50"
               onClick={onClose}
             >
               <Heart className="w-4 h-4" />

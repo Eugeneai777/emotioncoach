@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, AlertCircle, Clock, MessageCircle, TrendingDown, Calendar } from "lucide-react";
+import { ArrowLeft, Shield, Clock, MessageCircle, TrendingDown, Calendar } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
@@ -116,7 +116,7 @@ const PanicHistory: React.FC = () => {
   const getOutcomeColor = (outcome: string | null) => {
     switch (outcome) {
       case 'feel_better': return 'text-emerald-600 bg-emerald-100';
-      case 'continued': return 'text-blue-600 bg-blue-100';
+      case 'continued': return 'text-teal-600 bg-teal-100';
       case 'exited': return 'text-amber-600 bg-amber-100';
       default: return 'text-slate-600 bg-slate-100';
     }
@@ -132,11 +132,11 @@ const PanicHistory: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-rose-50 to-orange-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
-            <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
-            <p className="text-slate-600 mb-4">请先登录查看恐慌历史记录</p>
+            <Shield className="w-12 h-12 text-teal-500 mx-auto mb-4" />
+            <p className="text-slate-600 mb-4">请先登录查看历史记录</p>
             <Button onClick={() => navigate('/auth')}>去登录</Button>
           </CardContent>
         </Card>
@@ -145,7 +145,7 @@ const PanicHistory: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-10">
         <div className="container max-w-4xl mx-auto px-4 py-4">
@@ -155,8 +155,8 @@ const PanicHistory: React.FC = () => {
               返回
             </Button>
             <div>
-              <h1 className="text-xl font-bold text-slate-800">恐慌历史分析</h1>
-              <p className="text-sm text-slate-500">追踪你的恐慌缓解进展</p>
+              <h1 className="text-xl font-bold text-slate-800">历史分析</h1>
+              <p className="text-sm text-slate-500">追踪你的缓解进展 🌊</p>
             </div>
           </div>
         </div>
@@ -165,17 +165,17 @@ const PanicHistory: React.FC = () => {
       <main className="container max-w-4xl mx-auto px-4 py-6 space-y-6">
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-2 border-rose-500 border-t-transparent rounded-full mx-auto mb-4" />
+            <div className="animate-spin w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full mx-auto mb-4" />
             <p className="text-slate-500">加载中...</p>
           </div>
         ) : sessions.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
-              <AlertCircle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-600 mb-2">暂无恐慌记录</h3>
-              <p className="text-slate-500 mb-6">使用恐慌急救功能后，这里会显示你的记录和分析</p>
-              <Button onClick={() => navigate('/energy-studio')} variant="outline">
-                前往恐慌急救
+              <Shield className="w-16 h-16 text-teal-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-600 mb-2">暂无记录</h3>
+              <p className="text-slate-500 mb-6">使用恐慌按钮后，这里会显示你的记录和分析</p>
+              <Button onClick={() => navigate('/energy-studio')} variant="outline" className="border-teal-200 text-teal-700 hover:bg-teal-50">
+                前往恐慌按钮
               </Button>
             </CardContent>
           </Card>
@@ -186,7 +186,7 @@ const PanicHistory: React.FC = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Card className="bg-white/80">
                   <CardContent className="pt-4 text-center">
-                    <div className="text-3xl font-bold text-rose-600">{stats.totalSessions}</div>
+                    <div className="text-3xl font-bold text-teal-600">{stats.totalSessions}</div>
                     <div className="text-sm text-slate-500">总使用次数</div>
                   </CardContent>
                 </Card>
@@ -198,13 +198,13 @@ const PanicHistory: React.FC = () => {
                 </Card>
                 <Card className="bg-white/80">
                   <CardContent className="pt-4 text-center">
-                    <div className="text-3xl font-bold text-blue-600">{formatDuration(stats.avgDuration)}</div>
+                    <div className="text-3xl font-bold text-cyan-600">{formatDuration(stats.avgDuration)}</div>
                     <div className="text-sm text-slate-500">平均时长</div>
                   </CardContent>
                 </Card>
                 <Card className="bg-white/80">
                   <CardContent className="pt-4 text-center">
-                    <div className="text-3xl font-bold text-purple-600">{stats.avgReminders}</div>
+                    <div className="text-3xl font-bold text-blue-600">{stats.avgReminders}</div>
                     <div className="text-sm text-slate-500">平均提醒数</div>
                   </CardContent>
                 </Card>
@@ -215,10 +215,10 @@ const PanicHistory: React.FC = () => {
             <Card className="bg-white/80">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <TrendingDown className="w-5 h-5 text-rose-500" />
-                  过去14天恐慌频率
+                  <TrendingDown className="w-5 h-5 text-teal-500" />
+                  过去14天频率
                 </CardTitle>
-                <CardDescription>追踪恐慌发生的频率变化</CardDescription>
+                <CardDescription>追踪发生频率的变化</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
@@ -233,7 +233,7 @@ const PanicHistory: React.FC = () => {
                             return (
                               <div className="bg-white p-2 rounded shadow-lg border">
                                 <p className="text-sm font-medium">{payload[0].payload.fullDate}</p>
-                                <p className="text-sm text-rose-600">{payload[0].value} 次恐慌</p>
+                                <p className="text-sm text-teal-600">{payload[0].value} 次</p>
                               </div>
                             );
                           }
@@ -243,9 +243,9 @@ const PanicHistory: React.FC = () => {
                       <Line 
                         type="monotone" 
                         dataKey="count" 
-                        stroke="#f43f5e" 
+                        stroke="#14b8a6" 
                         strokeWidth={2}
-                        dot={{ fill: '#f43f5e', strokeWidth: 2 }}
+                        dot={{ fill: '#14b8a6', strokeWidth: 2 }}
                         activeDot={{ r: 6 }}
                       />
                     </LineChart>
@@ -258,10 +258,10 @@ const PanicHistory: React.FC = () => {
             <Card className="bg-white/80">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-blue-500" />
-                  恐慌发生时段分布
+                  <Clock className="w-5 h-5 text-cyan-500" />
+                  发生时段分布
                 </CardTitle>
-                <CardDescription>了解恐慌易发时段</CardDescription>
+                <CardDescription>了解易发时段</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-48">
@@ -271,7 +271,7 @@ const PanicHistory: React.FC = () => {
                       <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
                       <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={80} />
                       <Tooltip />
-                      <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="value" fill="#06b6d4" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -282,17 +282,17 @@ const PanicHistory: React.FC = () => {
             <Card className="bg-white/80">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-purple-500" />
+                  <Calendar className="w-5 h-5 text-teal-500" />
                   历史记录
                 </CardTitle>
-                <CardDescription>查看每次恐慌缓解的详情</CardDescription>
+                <CardDescription>查看每次缓解的详情</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {sessions.slice(0, 20).map((session) => (
                     <div 
                       key={session.id} 
-                      className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-teal-50/50 rounded-lg"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
