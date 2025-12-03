@@ -155,3 +155,6 @@ verify_jwt = true
 
 [functions.vibrant-life-sage-coach]
 verify_jwt = true
+
+[functions.get-wechat-config]
+verify_jwt = false
