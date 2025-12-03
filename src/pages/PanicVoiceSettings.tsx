@@ -27,28 +27,12 @@ const PanicVoiceSettings = () => {
   const { user } = useAuth();
   const [recordingStatus, setRecordingStatus] = useState<RecordingStatus>({});
   const [loading, setLoading] = useState(true);
-  const [voiceCloneStatus, setVoiceCloneStatus] = useState<string>('none');
 
   useEffect(() => {
     if (user) {
       fetchRecordings();
-      checkVoiceCloneStatus();
     }
   }, [user]);
-
-  const checkVoiceCloneStatus = async () => {
-    if (!user) return;
-    
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('voice_clone_status')
-      .eq('id', user.id)
-      .single();
-
-    if (!error && data) {
-      setVoiceCloneStatus(data.voice_clone_status || 'none');
-    }
-  };
 
   const fetchRecordings = async () => {
     if (!user) return;
@@ -155,14 +139,8 @@ const PanicVoiceSettings = () => {
                 <Sparkles className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-amber-800">
-                  {voiceCloneStatus === 'ready' ? 'AI 声音克隆已就绪' : 'AI 一键生成全部语音'}
-                </p>
-                <p className="text-xs text-amber-600/70">
-                  {voiceCloneStatus === 'ready' 
-                    ? '点击重新生成或管理克隆声音' 
-                    : '录制 3 个样本，AI 生成全部 32 条'}
-                </p>
+                <p className="text-sm font-medium text-amber-800">AI 一键生成全部语音</p>
+                <p className="text-xs text-amber-600/70">使用温柔 AI 声音，一键生成全部 32 条</p>
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-amber-400" />
