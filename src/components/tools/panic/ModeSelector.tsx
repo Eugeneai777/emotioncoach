@@ -22,22 +22,23 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode }) => {
       
       {/* 模式选择卡片 */}
       <div className="w-full max-w-sm space-y-4">
+        {/* 马上帮我 - 实心按钮样式 */}
         <Button
-          variant="outline"
-          className="w-full h-auto py-6 px-6 rounded-2xl border-2 border-teal-200 hover:border-teal-400 hover:bg-teal-50/50 flex flex-col items-start gap-2 transition-all"
+          className="w-full h-auto py-6 px-6 rounded-2xl bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white shadow-lg shadow-teal-500/25 flex flex-col items-start gap-2 transition-all"
           onClick={() => onSelectMode('cognitive')}
         >
           <div className="flex items-center gap-3 w-full">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
               <Brain className="w-6 h-6 text-white" />
             </div>
             <div className="text-left flex-1">
-              <div className="text-lg font-medium text-teal-800">认知疏解</div>
-              <div className="text-sm text-teal-600/70">用温暖的话语陪伴你</div>
+              <div className="text-lg font-medium text-white">马上帮我</div>
+              <div className="text-sm text-white/80">用温暖的话语陪伴你</div>
             </div>
           </div>
         </Button>
         
+        {/* 先做呼吸引导 - outline样式 */}
         <Button
           variant="outline"
           className="w-full h-auto py-6 px-6 rounded-2xl border-2 border-cyan-200 hover:border-cyan-400 hover:bg-cyan-50/50 flex flex-col items-start gap-2 transition-all"
@@ -48,8 +49,8 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode }) => {
               <Wind className="w-6 h-6 text-white" />
             </div>
             <div className="text-left flex-1">
-              <div className="text-lg font-medium text-teal-800">呼吸引导</div>
-              <div className="text-sm text-teal-600/70">先做3轮呼吸再继续</div>
+              <div className="text-lg font-medium text-teal-800">先做呼吸引导</div>
+              <div className="text-sm text-teal-600/70">3轮呼吸后再继续</div>
             </div>
           </div>
         </Button>
