@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Wind, Mic, Bot, Settings } from "lucide-react";
+import { Wind, Mic, Bot, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -121,13 +121,29 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode }) => {
         <span className="text-sm">先做呼吸引导</span>
       </button>
 
-      {/* 录制我的声音入口 */}
+      {/* 录制我的声音入口 - 卡片样式 */}
       <button
-        className="flex items-center gap-2 text-teal-500/70 hover:text-teal-600 transition-colors"
+        className="w-full max-w-[280px] mt-4 bg-white/70 backdrop-blur rounded-2xl p-4 border border-teal-200/50 hover:bg-white/90 hover:border-teal-300 transition-all text-left"
         onClick={() => navigate('/panic-voice-settings')}
       >
-        <Settings className="w-4 h-4" />
-        <span className="text-sm">{hasUserRecordings ? '管理我的录音' : '录制我的声音'}</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+              <Mic className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-teal-800">
+                {hasUserRecordings ? '管理我的录音' : '录制我的声音'}
+              </p>
+              <p className="text-xs text-teal-500/70">
+                {hasUserRecordings 
+                  ? `已录制 ${recordingCount}/32 条` 
+                  : '用自己的声音陪伴自己'}
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-teal-400" />
+        </div>
       </button>
     </div>
   );
