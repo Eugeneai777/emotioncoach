@@ -129,29 +129,18 @@ const VoiceCloneSetup = () => {
           </div>
         )}
 
-        {/* Action buttons */}
-        <div className="space-y-3">
-          <Button
-            className="w-full bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 h-12 text-base"
-            disabled={isGenerating}
-            onClick={handleGenerateAllReminders}
-          >
-            {isGenerating ? (
-              <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> 正在生成...</>
-            ) : (
-              <><Sparkles className="w-5 h-5 mr-2" /> 一键生成全部 32 条语音</>
-            )}
-          </Button>
-
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => navigate('/panic-voice-settings')}
-            disabled={isGenerating}
-          >
-            跳过，手动录制
-          </Button>
-        </div>
+        {/* Action button */}
+        <Button
+          className="w-full bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 h-12 text-base"
+          disabled={isGenerating}
+          onClick={handleGenerateAllReminders}
+        >
+          {isGenerating ? (
+            <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> 正在生成...</>
+          ) : (
+            <><Sparkles className="w-5 h-5 mr-2" /> 一键生成全部 32 条语音</>
+          )}
+        </Button>
       </div>
     </div>
   );
