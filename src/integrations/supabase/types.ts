@@ -1656,6 +1656,45 @@ export type Database = {
         }
         Relationships: []
       }
+      panic_sessions: {
+        Row: {
+          breathing_completed: boolean | null
+          created_at: string | null
+          cycles_completed: number | null
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          outcome: string | null
+          reminders_viewed: number | null
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          breathing_completed?: boolean | null
+          created_at?: string | null
+          cycles_completed?: number | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          outcome?: string | null
+          reminders_viewed?: number | null
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          breathing_completed?: boolean | null
+          created_at?: string | null
+          cycles_completed?: number | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          outcome?: string | null
+          reminders_viewed?: number | null
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       parent_coaching_sessions: {
         Row: {
           briefing_id: string | null
