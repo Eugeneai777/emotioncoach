@@ -1,5 +1,5 @@
 import React from "react";
-import { Brain, Wind } from "lucide-react";
+import { Wind } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 type StartMode = 'cognitive' | 'breathing';
@@ -21,18 +21,20 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode }) => {
       </p>
       
       {/* 马上帮我 - 圆形按钮 */}
-      <div className="relative mb-10">
+      <div className="relative mb-12">
         {/* 双层呼吸光晕 */}
-        <div className="absolute inset-0 w-28 h-28 rounded-full bg-teal-300/20 blur-xl animate-breathe" />
-        <div className="absolute inset-0 w-28 h-28 rounded-full bg-cyan-300/25 blur-lg animate-breathe-delayed" />
+        <div className="absolute inset-0 w-40 h-40 rounded-full bg-teal-300/30 blur-2xl animate-breathe" />
+        <div className="absolute inset-0 w-40 h-40 rounded-full bg-cyan-300/25 blur-xl animate-breathe-delayed" />
         
-        {/* 主按钮 */}
+        {/* 主按钮 - 160px 立体效果 */}
         <button
-          className="relative w-28 h-28 rounded-full bg-gradient-to-br from-teal-400 via-cyan-500 to-blue-500 shadow-2xl shadow-teal-500/30 flex flex-col items-center justify-center gap-1 transition-all hover:scale-105 active:scale-95"
+          className="relative w-40 h-40 rounded-full bg-gradient-to-b from-teal-400 via-cyan-500 to-teal-600 flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 active:translate-y-1 ring-2 ring-white/20"
+          style={{
+            boxShadow: '0 8px 32px rgba(20,184,166,0.4), 0 4px 16px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.1)'
+          }}
           onClick={() => onSelectMode('cognitive')}
         >
-          <Brain className="w-8 h-8 text-white" />
-          <span className="text-white font-medium text-sm">马上帮我</span>
+          <span className="text-white font-semibold text-base tracking-wide">马上帮我</span>
         </button>
       </div>
       
