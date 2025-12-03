@@ -101,6 +101,17 @@ export const tools: ToolConfig[] = [
     usageScenarios: ["提升当下觉察力", "减压放松", "培养感恩心态"],
     available: true
   },
+  {
+    id: "panic",
+    title: "恐慌急救",
+    description: "当恐慌来袭时，获得即时帮助和安抚",
+    detailedDescription: "长按恐慌按钮激活，进入全屏沉浸式缓解流程：4-7-8呼吸引导帮助稳定生理反应，32条认知提醒帮助去灾难化、恢复掌控感、建立内在安全。每8条后询问状态，可无限循环直到好转。",
+    iconName: "AlertCircle",
+    category: "emotion",
+    gradient: "from-rose-500 to-orange-500",
+    usageScenarios: ["恐慌发作时", "焦虑难以控制时", "需要即时安抚时"],
+    available: true
+  },
   // 自我探索工具
   {
     id: "values",
