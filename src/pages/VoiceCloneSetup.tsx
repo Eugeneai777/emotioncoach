@@ -41,7 +41,7 @@ const VoiceCloneSetup = () => {
       toast.success(`成功生成 ${data.generated} 条语音提醒！`);
       
       setTimeout(() => {
-        navigate('/panic-voice-settings');
+        navigate('/panic-voice-settings', { replace: true });
       }, 1500);
     } catch (error: any) {
       console.error('Error generating reminders:', error);
@@ -60,7 +60,7 @@ const VoiceCloneSetup = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/panic-voice-settings')}
+            onClick={() => navigate(-1)}
             className="text-teal-600"
           >
             <ArrowLeft className="h-5 w-5" />
