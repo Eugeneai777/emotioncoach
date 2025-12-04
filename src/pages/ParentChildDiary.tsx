@@ -20,6 +20,7 @@ import { ParentCycleAnalysis } from "@/components/parentDiary/ParentCycleAnalysi
 import { ParentSessionComparison } from "@/components/parentDiary/ParentSessionComparison";
 import { ParentEmotionReview } from "@/components/parentDiary/ParentEmotionReview";
 import { MusicRecommendation } from "@/components/MusicRecommendation";
+import { FrequencyMusicPlayer } from "@/components/FrequencyMusicPlayer";
 import { EmotionIntensityCard } from "@/components/EmotionIntensityMeter";
 import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
 
@@ -334,16 +335,22 @@ const ParentChildDiary = () => {
               </div>
 
               {selectedSession.briefing?.emotion_theme && (
-                <div className="pt-3 md:pt-4 border-t border-border/50">
-                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-                    🎵 音乐推荐
-                  </h3>
-                  <MusicRecommendation 
-                    emotionTheme={selectedSession.briefing.emotion_theme}
-                    insight={selectedSession.briefing.insight || undefined}
-                    briefingContent={selectedSession.summary || undefined}
-                  />
-                </div>
+                <>
+                  <div className="pt-3 md:pt-4 border-t border-border/50">
+                    <FrequencyMusicPlayer emotionTheme={selectedSession.briefing.emotion_theme} />
+                  </div>
+
+                  <div className="pt-3 md:pt-4 border-t border-border/50">
+                    <h3 className="text-base md:text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                      🎵 音乐推荐
+                    </h3>
+                    <MusicRecommendation 
+                      emotionTheme={selectedSession.briefing.emotion_theme}
+                      insight={selectedSession.briefing.insight || undefined}
+                      briefingContent={selectedSession.summary || undefined}
+                    />
+                  </div>
+                </>
               )}
             </div>
           </div>
