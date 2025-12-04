@@ -58,13 +58,13 @@ const createStages = (colors: { primary: string; secondary: string; tertiary: st
 ];
 
 export const emotionTypes: EmotionType[] = [
-  // 1. 恐慌
+  // 1. 恐慌 - 青绿色系，代表镇定
   {
     id: "panic",
     title: "恐慌",
     subtitle: "心跳快了，但你依然安全",
     emoji: "😰",
-    gradient: "from-teal-400 to-cyan-500",
+    gradient: "from-teal-500 to-emerald-600",
     bgGradient: "from-teal-50 via-cyan-50 to-blue-50",
     stages: createStages({ primary: "teal", secondary: "cyan", tertiary: "blue", quaternary: "indigo" }),
     reminders: [
@@ -106,13 +106,13 @@ export const emotionTypes: EmotionType[] = [
       "恐慌每次来，我都能处理，我已经做到了。"
     ]
   },
-  // 2. 担心
+  // 2. 担心 - 琥珀黄色系，代表警觉但温暖
   {
     id: "worry",
     title: "担心",
     subtitle: "脑子转很快，但你不需要马上解决",
     emoji: "🤔",
-    gradient: "from-amber-400 to-yellow-500",
+    gradient: "from-amber-500 to-orange-500",
     bgGradient: "from-amber-50 via-yellow-50 to-orange-50",
     stages: createStages({ primary: "amber", secondary: "yellow", tertiary: "orange", quaternary: "rose" }),
     reminders: [
@@ -154,13 +154,13 @@ export const emotionTypes: EmotionType[] = [
       "我值得更轻松的生活，而我正在走向那里。"
     ]
   },
-  // 3. 负面
+  // 3. 负面 - 蓝灰色系，代表沉静
   {
     id: "negative",
     title: "负面",
     subtitle: "你不是负面，你只是累了",
     emoji: "😔",
-    gradient: "from-slate-400 to-gray-500",
+    gradient: "from-slate-500 to-blue-600",
     bgGradient: "from-slate-50 via-gray-50 to-zinc-50",
     stages: createStages({ primary: "slate", secondary: "gray", tertiary: "zinc", quaternary: "stone" }),
     reminders: [
@@ -202,13 +202,13 @@ export const emotionTypes: EmotionType[] = [
       "即使现在这样，我依然值得被爱。"
     ]
   },
-  // 4. 恐惧
+  // 4. 恐惧 - 紫罗兰色系，代表神秘与勇气
   {
     id: "fear",
     title: "恐惧",
     subtitle: "害怕很正常，你仍然可以往前一点点",
     emoji: "😨",
-    gradient: "from-purple-400 to-violet-500",
+    gradient: "from-violet-500 to-purple-600",
     bgGradient: "from-purple-50 via-violet-50 to-indigo-50",
     stages: createStages({ primary: "purple", secondary: "violet", tertiary: "indigo", quaternary: "fuchsia" }),
     reminders: [
@@ -250,13 +250,13 @@ export const emotionTypes: EmotionType[] = [
       "我已经不是以前那个人，我正在成长。"
     ]
   },
-  // 5. 烦躁
+  // 5. 烦躁 - 橙红色系，代表热量释放
   {
     id: "irritable",
     title: "烦躁",
     subtitle: "不是你不好，是你装太多了",
     emoji: "😤",
-    gradient: "from-orange-400 to-red-500",
+    gradient: "from-orange-500 to-red-500",
     bgGradient: "from-orange-50 via-red-50 to-rose-50",
     stages: createStages({ primary: "orange", secondary: "red", tertiary: "rose", quaternary: "pink" }),
     reminders: [
@@ -298,13 +298,13 @@ export const emotionTypes: EmotionType[] = [
       "我值得被理解，也值得被放过。"
     ]
   },
-  // 6. 压力
+  // 6. 压力 - 玫瑰粉色系，代表温柔承载
   {
     id: "stress",
     title: "压力",
     subtitle: "你不是弱，你是承担太多太久",
     emoji: "😩",
-    gradient: "from-rose-400 to-pink-500",
+    gradient: "from-pink-500 to-rose-600",
     bgGradient: "from-rose-50 via-pink-50 to-fuchsia-50",
     stages: createStages({ primary: "rose", secondary: "pink", tertiary: "fuchsia", quaternary: "purple" }),
     reminders: [
@@ -346,13 +346,13 @@ export const emotionTypes: EmotionType[] = [
       "我配得上一个更平衡的生活。"
     ]
   },
-  // 7. 无力
+  // 7. 无力 - 灰棕色系，代表沉淀与休憩
   {
     id: "powerless",
     title: "无力",
     subtitle: "你不是没用，你只是耗尽了",
     emoji: "😶",
-    gradient: "from-gray-400 to-slate-500",
+    gradient: "from-stone-500 to-neutral-600",
     bgGradient: "from-gray-50 via-slate-50 to-zinc-50",
     stages: createStages({ primary: "gray", secondary: "slate", tertiary: "zinc", quaternary: "neutral" }),
     reminders: [
@@ -394,13 +394,13 @@ export const emotionTypes: EmotionType[] = [
       "我会再次有力量，而且会更稳。"
     ]
   },
-  // 8. 崩溃
+  // 8. 崩溃 - 深红色系，代表情绪宣泄
   {
     id: "collapse",
     title: "崩溃",
     subtitle: "你到了极限，但这不是终点",
     emoji: "😭",
-    gradient: "from-red-400 to-rose-500",
+    gradient: "from-red-500 to-rose-600",
     bgGradient: "from-red-50 via-rose-50 to-pink-50",
     stages: createStages({ primary: "red", secondary: "rose", tertiary: "pink", quaternary: "fuchsia" }),
     reminders: [
@@ -442,13 +442,13 @@ export const emotionTypes: EmotionType[] = [
       "我值得被抱住、被理解、被支持。"
     ]
   },
-  // 9. 失落
+  // 9. 失落 - 靛蓝色系，代表沉思与重生
   {
     id: "loss",
     title: "失落",
     subtitle: "心凉一下正常，你依然值得被看见",
     emoji: "💔",
-    gradient: "from-blue-400 to-indigo-500",
+    gradient: "from-indigo-500 to-blue-600",
     bgGradient: "from-blue-50 via-indigo-50 to-violet-50",
     stages: createStages({ primary: "blue", secondary: "indigo", tertiary: "violet", quaternary: "purple" }),
     reminders: [
