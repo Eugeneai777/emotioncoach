@@ -141,11 +141,14 @@ serve(async (req) => {
 
     const redirectUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || '';
     
+    // 注册成功后跳转到关注公众号引导页，登录成功后直接进入首页
+    const nextPath = isNewUser ? '/wechat-auth?mode=follow' : '/';
+    
     return new Response(null, {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': `${redirectUrl}/auth/callback?token_hash=${session.properties.hashed_token}&type=magiclink&next=${state === 'register' ? '/settings?wechat_bind=success' : '/'}`
+        'Location': `${redirectUrl}/auth/callback?token_hash=${session.properties.hashed_token}&type=magiclink&next=${encodeURIComponent(nextPath)}`
       }
     });
   } catch (error) {
