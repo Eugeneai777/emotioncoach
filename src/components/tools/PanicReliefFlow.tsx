@@ -417,7 +417,13 @@ const PanicReliefFlow: React.FC<PanicReliefFlowProps> = ({ onClose }) => {
 
       {/* 模式选择 */}
       {step === 'mode-select' && (
-        <ModeSelector onSelectMode={handleSelectMode} />
+        <ModeSelector 
+          onSelectMode={handleSelectMode} 
+          onNavigate={(path) => {
+            handleClose();
+            navigate(path);
+          }}
+        />
       )}
 
       {/* 呼吸引导 */}
