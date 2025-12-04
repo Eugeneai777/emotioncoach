@@ -24,7 +24,7 @@ const PanicButton: React.FC = () => {
       <CardHeader className="text-center pb-2 relative z-10">
         <CardTitle className="text-xl text-slate-700 flex items-center justify-center gap-2">
           <Shield className="w-5 h-5 text-teal-500" />
-          恐慌按钮
+          平安按钮
         </CardTitle>
         <CardDescription className="text-slate-500">
           感到不安时，这里是你的安全港湾 🌊
