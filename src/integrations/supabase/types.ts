@@ -1566,6 +1566,54 @@ export type Database = {
           },
         ]
       }
+      orders: {
+        Row: {
+          amount: number
+          created_at: string | null
+          expired_at: string | null
+          id: string
+          order_no: string
+          package_key: string
+          package_name: string
+          paid_at: string | null
+          qr_code_url: string | null
+          status: string | null
+          trade_no: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          expired_at?: string | null
+          id?: string
+          order_no: string
+          package_key: string
+          package_name: string
+          paid_at?: string | null
+          qr_code_url?: string | null
+          status?: string | null
+          trade_no?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          expired_at?: string | null
+          id?: string
+          order_no?: string
+          package_key?: string
+          package_name?: string
+          paid_at?: string | null
+          qr_code_url?: string | null
+          status?: string | null
+          trade_no?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       package_features: {
         Row: {
           access_level: string | null

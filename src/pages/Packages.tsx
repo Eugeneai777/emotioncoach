@@ -8,7 +8,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { productCategories } from "@/config/productCategories";
 import { ProductComparisonTable } from "@/components/ProductComparisonTable";
+import { WechatPayDialog } from "@/components/WechatPayDialog";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+
+interface PackageInfo {
+  key: string;
+  name: string;
+  price: number;
+  quota?: number;
+}
 const basePackages = [{
   id: 'basic',
   name: '尝鲜会员',
@@ -35,7 +44,10 @@ const basePackages = [{
 }];
 export default function Packages() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'youjin' | 'bloom'>('youjin');
+  const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<PackageInfo | null>(null);
 
   // 查询合伙人权益
   const {
@@ -132,18 +144,36 @@ export default function Packages() {
     features: camp.description ? camp.description.split('；') : []
   }));
   const bloomPackages = [...bloomCamps, partnerPackage];
-  const handlePurchase = (pkg: any) => {
-    if (pkg.isCampEntry) {
+  
+  const handlePurchase = (packageInfo: PackageInfo) => {
+    // 免费训练营入口
+    if (packageInfo.key === 'youjin-camps') {
       navigate('/camp-list');
       return;
     }
-    if (pkg.isCamp) {
-      navigate(`/camp-templates/${pkg.campId}`);
+    // 训练营详情页
+    if (packageInfo.key.startsWith('camp-')) {
+      const campId = packageInfo.key.replace('camp-', '');
+      navigate(`/camp-templates/${campId}`);
       return;
     }
-    toast.info("支付功能开发中", {
-      description: "请联系管理员进行充值操作 🌿"
-    });
+    // 需要登录
+    if (!user) {
+      toast.error("请先登录", {
+        description: "登录后即可购买套餐"
+      });
+      navigate('/auth');
+      return;
+    }
+    // 打开支付对话框
+    setSelectedPackage(packageInfo);
+    setPayDialogOpen(true);
+  };
+  
+  const handlePaymentSuccess = () => {
+    toast.success("购买成功！配额已到账 🎉");
+    // 刷新页面数据
+    window.location.reload();
   };
   const currentCategory = productCategories.find(c => c.id === activeTab);
   const currentPackages = activeTab === 'youjin' ? youjinPackages : bloomPackages;
@@ -198,5 +228,13 @@ export default function Packages() {
           </p>
         </div>
       </div>
+      
+      {/* 微信支付对话框 */}
+      <WechatPayDialog
+        open={payDialogOpen}
+        onOpenChange={setPayDialogOpen}
+        packageInfo={selectedPackage}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>;
 }
