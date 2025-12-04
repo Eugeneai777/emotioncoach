@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,11 +9,13 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from "@/components/ui/accordion";
-import { ArrowLeft, ArrowRight, Brain, Heart, Sparkles, Target, Shield, Phone } from "lucide-react";
+import { ArrowLeft, ArrowRight, Brain, Heart, Sparkles, Target, Shield, Phone, Share2 } from "lucide-react";
 import { emotionTypes } from "@/config/emotionReliefConfig";
+import EmotionButtonShareDialog from "@/components/tools/EmotionButtonShareDialog";
 
 const EmotionButtonIntro = () => {
   const navigate = useNavigate();
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   // 5步稳定流程
   const stabilizationSteps = [
@@ -184,14 +187,25 @@ const EmotionButtonIntro = () => {
               <ArrowLeft className="w-4 h-4" />
               返回
             </Button>
-            <Button
-              size="sm"
-              onClick={() => navigate("/")}
-              className="gap-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-white hover:opacity-90"
-            >
-              开始使用
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShareDialogOpen(true)}
+                className="gap-1.5 border-teal-200 text-teal-700 hover:bg-teal-50"
+              >
+                <Share2 className="w-4 h-4" />
+                分享
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => navigate("/")}
+                className="gap-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-white hover:opacity-90"
+              >
+                开始使用
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -750,6 +764,12 @@ const EmotionButtonIntro = () => {
           情绪按钮 · 当下情绪急救系统
         </div>
       </footer>
+
+      {/* 分享弹窗 */}
+      <EmotionButtonShareDialog 
+        open={shareDialogOpen} 
+        onOpenChange={setShareDialogOpen} 
+      />
     </div>
   );
 };
