@@ -7,22 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, 
-  Wind, 
-  Timer, 
-  HeartPulse, 
   Sparkles,
-  Target,
-  Eye,
-  ImageIcon,
-  BookHeart,
-  Calendar,
-  Battery,
-  Moon,
-  Dumbbell,
-  DollarSign,
-  Clock,
-  Heart,
-  Megaphone,
   Info
 } from "lucide-react";
 import * as Icons from "lucide-react";
@@ -30,8 +15,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { categories, getCategoryConfig } from "@/config/energyStudioTools";
 import { cn } from "@/lib/utils";
 import { BreathingExercise } from "@/components/tools/BreathingExercise";
-import { MeditationTimer } from "@/components/tools/MeditationTimer";
-import { EmotionFirstAid } from "@/components/tools/EmotionFirstAid";
 import { MindfulnessPractice } from "@/components/tools/MindfulnessPractice";
 import { ValuesExplorer } from "@/components/tools/ValuesExplorer";
 import { StrengthsFinder } from "@/components/tools/StrengthsFinder";
@@ -130,10 +113,6 @@ const EnergyStudio = () => {
     switch (activeTool) {
       case "breathing":
         return <BreathingExercise />;
-      case "meditation":
-        return <MeditationTimer />;
-      case "first-aid":
-        return <EmotionFirstAid />;
       case "mindfulness":
         return <MindfulnessPractice />;
       case "values":
@@ -288,30 +267,46 @@ const EnergyStudio = () => {
             </div>
           </div>
 
+          {/* 情绪按钮作为核心工具置顶显示 */}
+          {activeTab === "emotion" && (
+            <div className="mb-8">
+              <SafetyButtonsGrid />
+            </div>
+          )}
+
           <TabsContent value={activeTab} className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* 更多工具分隔标题 - 仅在情绪tab且有其他工具时显示 */}
+            {activeTab === "emotion" && filteredTools.length > 0 && (
+              <div className="flex items-center gap-4 mb-6">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+                <span className="text-sm text-muted-foreground font-medium">更多情绪工具</span>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredTools.map((tool, index) => {
                 return (
                   <Card
                     key={tool.id}
-                    className={`group cursor-pointer bg-card/60 backdrop-blur-sm border-2 hover:border-transparent hover:-translate-y-1 transition-all duration-300 hover:shadow-2xl rounded-2xl overflow-hidden animate-fade-in ${
+                    className={`group cursor-pointer bg-white/70 backdrop-blur-sm border hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 hover:shadow-xl rounded-2xl overflow-hidden animate-fade-in ${
                       tool.tool_id === 'declaration' ? 'ring-2 ring-primary/20' : ''
                     }`}
                     style={{ animationDelay: `${index * 50}ms` }}
                     onClick={() => handleToolClick(tool.tool_id)}
                   >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                    <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
                     
                     <CardHeader className="relative pb-3">
                       <div className="flex items-start gap-4">
-                        <div className={`p-3 rounded-xl bg-gradient-to-br ${tool.gradient} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                        <div className={`p-3.5 rounded-xl bg-gradient-to-br ${tool.gradient} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                           {getIcon(tool.icon_name)}
                         </div>
                         <div className="flex-1">
-                          <CardTitle className="text-xl group-hover:text-primary transition-colors flex items-center gap-2 flex-wrap">
+                          <CardTitle className="text-lg group-hover:text-primary transition-colors flex items-center gap-2 flex-wrap">
                             {tool.title}
                             {tool.tool_id === 'declaration' && (
-                              <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full">
+                              <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full">
                                 推荐
                               </span>
                             )}
@@ -320,7 +315,7 @@ const EnergyStudio = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="relative pt-0">
-                      <CardDescription className="text-sm leading-relaxed">
+                      <CardDescription className="text-sm leading-relaxed line-clamp-2">
                         {tool.description}
                       </CardDescription>
                     </CardContent>
@@ -329,13 +324,6 @@ const EnergyStudio = () => {
               })}
             </div>
           </TabsContent>
-
-          {/* 情绪按钮仅在情绪工具tab显示，放在工具卡片下方 */}
-          {activeTab === "emotion" && (
-            <div className="mt-6">
-              <SafetyButtonsGrid />
-            </div>
-          )}
         </Tabs>
           </>
             )}
