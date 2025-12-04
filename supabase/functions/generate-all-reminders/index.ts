@@ -77,7 +77,17 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    console.log(`Generating all reminders for user ${user.id} with preset voice ${PRESET_VOICE_ID}`);
+    // Check if user has a cloned voice
+    const { data: voiceClone } = await supabase
+      .from('user_voice_clones')
+      .select('elevenlabs_voice_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const voiceIdToUse = voiceClone?.elevenlabs_voice_id || PRESET_VOICE_ID;
+    const isClonedVoice = !!voiceClone?.elevenlabs_voice_id;
+
+    console.log(`Generating all reminders for user ${user.id} with ${isClonedVoice ? 'cloned' : 'preset'} voice ${voiceIdToUse}`);
 
     const results = [];
     const errors = [];
@@ -89,7 +99,7 @@ serve(async (req) => {
         
         // Call ElevenLabs TTS API
         const ttsResponse = await fetch(
-          `https://api.elevenlabs.io/v1/text-to-speech/${PRESET_VOICE_ID}`,
+          `https://api.elevenlabs.io/v1/text-to-speech/${voiceIdToUse}`,
           {
             method: 'POST',
             headers: {
