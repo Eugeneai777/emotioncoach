@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Shield, History, Info } from "lucide-react";
+import { Shield, History, Info, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { emotionTypes, EmotionType } from "@/config/emotionReliefConfig";
 import EmotionReliefButton from "./EmotionReliefButton";
@@ -63,17 +63,41 @@ const SafetyButtonsGrid: React.FC = () => {
           </div>
         </TooltipProvider>
         
-        {/* 历史记录入口 */}
-        {user && (
+        {/* 引导文案 */}
+        <p className="text-center text-xs text-slate-500 py-2 border-t border-teal-100/50">
+          🌿 按钮是即时的陪伴，教练是深入的梳理
+        </p>
+        
+        {/* 底部双按钮 */}
+        {user ? (
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              className="h-10 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 
+                text-white shadow-sm hover:shadow-md transition-all gap-1.5 text-sm"
+              onClick={() => navigate('/')}
+            >
+              <Heart className="w-4 h-4" />
+              情绪教练
+            </Button>
+            <Button
+              variant="outline"
+              className="h-10 rounded-xl border-2 border-teal-200 
+                bg-white/70 backdrop-blur-sm hover:bg-teal-50 
+                text-teal-700 shadow-sm gap-1.5 text-sm"
+              onClick={() => navigate('/panic-history')}
+            >
+              <History className="w-4 h-4" />
+              历史记录
+            </Button>
+          </div>
+        ) : (
           <Button
-            variant="outline"
-            className="w-full h-10 rounded-xl border-2 border-teal-200 
-              bg-white/70 backdrop-blur-sm hover:bg-teal-50 
-              text-teal-700 shadow-sm gap-2 text-sm"
-            onClick={() => navigate('/panic-history')}
+            className="w-full h-10 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 
+              text-white shadow-sm hover:shadow-md transition-all gap-1.5 text-sm"
+            onClick={() => navigate('/')}
           >
-            <History className="w-4 h-4" />
-            查看历史记录
+            <Heart className="w-4 h-4" />
+            开始情绪梳理
           </Button>
         )}
       </CardContent>
