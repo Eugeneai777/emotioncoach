@@ -259,6 +259,11 @@ const EnergyStudio = () => {
             {renderTool()}
           </div>
         ) : (
+          <>
+            {/* 平安按钮置顶 */}
+            <div className="mb-8">
+              <PanicButton />
+            </div>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="w-full">
           <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 mb-8 h-auto p-1.5 bg-card/50 backdrop-blur-sm rounded-full">
             {categories.map(category => (
@@ -331,6 +336,7 @@ const EnergyStudio = () => {
             </div>
           </TabsContent>
         </Tabs>
+          </>
             )}
           </>
         )}
