@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Mic, Square, Play, Pause, Upload, Sparkles, Volume2, Trash2 } from "lucide-react";
+import { ArrowLeft, Mic, Square, Play, Pause, Upload, Sparkles, Volume2, Trash2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -14,6 +14,20 @@ const SAMPLE_TEXT = `我很安全，这只是暂时的感觉。我可以慢慢�
 
 const MIN_RECORDING_SECONDS = 15;
 const MAX_RECORDING_SECONDS = 60;
+
+const EMOTION_TYPES = [
+  { id: 'panic', title: '恐慌', emoji: '😰' },
+  { id: 'worry', title: '担心', emoji: '😟' },
+  { id: 'negative', title: '负面', emoji: '😔' },
+  { id: 'fear', title: '恐惧', emoji: '😨' },
+  { id: 'irritable', title: '烦躁', emoji: '😤' },
+  { id: 'stress', title: '压力', emoji: '😫' },
+  { id: 'powerless', title: '无力', emoji: '😞' },
+  { id: 'collapse', title: '崩溃', emoji: '😭' },
+  { id: 'loss', title: '失落', emoji: '💔' },
+];
+
+const TOTAL_REMINDERS = 288; // 9 emotions × 32 reminders
 
 export default function VoiceCloneSetup() {
   const navigate = useNavigate();
@@ -31,8 +45,9 @@ export default function VoiceCloneSetup() {
   const [cloneProgress, setCloneProgress] = useState(0);
   
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
   const [generatedCount, setGeneratedCount] = useState(0);
+  const [currentEmotion, setCurrentEmotion] = useState<string | null>(null);
+  const [emotionProgress, setEmotionProgress] = useState<Record<string, number>>({});
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -58,11 +73,25 @@ export default function VoiceCloneSetup() {
 
   const checkGeneratedVoices = async () => {
     if (!user) return;
-    const { count } = await supabase
-      .from('user_voice_recordings')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id);
-    setGeneratedCount(count || 0);
+    
+    const progressMap: Record<string, number> = {};
+    let total = 0;
+
+    for (const emotion of EMOTION_TYPES) {
+      const { count } = await supabase
+        .from('user_voice_recordings')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('emotion_type', emotion.id)
+        .eq('is_ai_generated', true);
+      
+      const emotionCount = count || 0;
+      progressMap[emotion.id] = emotionCount;
+      total += emotionCount;
+    }
+    
+    setEmotionProgress(progressMap);
+    setGeneratedCount(total);
   };
 
   const startRecording = async () => {
@@ -172,33 +201,55 @@ export default function VoiceCloneSetup() {
     }
   };
 
-  const TOTAL_REMINDERS = 288; // 9 emotions × 32 reminders
-
   const generateAllReminders = async () => {
     if (!user) return;
     setIsGenerating(true);
-    setGenerationProgress(0);
-
+    
     try {
-      const progressInterval = setInterval(() => {
-        setGenerationProgress(prev => Math.min(prev + 0.3, 95));
-      }, 1000);
+      let completed = generatedCount;
+      
+      // Loop through emotions until all complete
+      while (completed < TOTAL_REMINDERS) {
+        const { data, error } = await supabase.functions.invoke('generate-all-reminders', {
+          body: {} // Let backend auto-detect next emotion
+        });
 
-      const { data, error } = await supabase.functions.invoke('generate-all-reminders');
-      clearInterval(progressInterval);
+        if (error) throw error;
 
-      if (error) throw error;
+        if (data.allComplete) {
+          break;
+        }
 
-      setGenerationProgress(100);
-      setGeneratedCount(data.generated || TOTAL_REMINDERS);
-      toast({ title: "语音生成完成！", description: `成功生成 ${data.generated}/${TOTAL_REMINDERS} 条语音提醒` });
+        // Update progress
+        completed = data.totalGenerated || completed;
+        setGeneratedCount(completed);
+        setCurrentEmotion(data.emotionTitle || null);
+        
+        // Update emotion progress map
+        if (data.emotionType) {
+          setEmotionProgress(prev => ({
+            ...prev,
+            [data.emotionType]: data.generated
+          }));
+        }
 
+        // If emotion not complete due to errors, still move on
+        if (!data.isEmotionComplete && data.errors?.length > 0) {
+          console.warn('Some errors occurred:', data.errors);
+        }
+      }
+
+      await checkGeneratedVoices();
+      toast({ title: "语音生成完成！", description: `成功生成 ${completed}/${TOTAL_REMINDERS} 条语音提醒` });
       setTimeout(() => navigate('/panic-voice-settings'), 1500);
     } catch (error: unknown) {
       console.error('Generation error:', error);
       toast({ title: "生成失败", description: error instanceof Error ? error.message : '生成失败', variant: "destructive" });
+      // Refresh progress on error
+      await checkGeneratedVoices();
     } finally {
       setIsGenerating(false);
+      setCurrentEmotion(null);
     }
   };
 
@@ -209,6 +260,10 @@ export default function VoiceCloneSetup() {
       setHasVoiceClone(false);
       toast({ title: "已删除声音克隆", description: "你可以重新录制声音样本" });
     }
+  };
+
+  const getCompletedEmotionsCount = () => {
+    return EMOTION_TYPES.filter(e => (emotionProgress[e.id] || 0) >= 32).length;
   };
 
   return (
@@ -223,17 +278,61 @@ export default function VoiceCloneSetup() {
       </div>
 
       <div className="p-4 space-y-6 max-w-md mx-auto">
+        {/* Progress Overview */}
+        <Card className="p-4 bg-white/70 backdrop-blur border-teal-200/50">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="font-medium text-teal-800">生成进度</span>
+            <span className="ml-auto text-sm text-muted-foreground">
+              {getCompletedEmotionsCount()}/9 种情绪 · {generatedCount}/{TOTAL_REMINDERS} 条
+            </span>
+          </div>
+          <Progress value={(generatedCount / TOTAL_REMINDERS) * 100} className="h-2 mb-3" />
+          
+          {/* Emotion Grid */}
+          <div className="grid grid-cols-3 gap-2">
+            {EMOTION_TYPES.map(emotion => {
+              const count = emotionProgress[emotion.id] || 0;
+              const isComplete = count >= 32;
+              const isCurrent = currentEmotion === emotion.title;
+              
+              return (
+                <div
+                  key={emotion.id}
+                  className={`p-2 rounded-lg text-center text-xs transition-all ${
+                    isComplete 
+                      ? 'bg-emerald-100 text-emerald-700' 
+                      : isCurrent
+                      ? 'bg-primary/20 text-primary animate-pulse'
+                      : 'bg-muted/50 text-muted-foreground'
+                  }`}
+                >
+                  <div className="text-base">{emotion.emoji}</div>
+                  <div className="font-medium text-[10px]">{emotion.title}</div>
+                  <div className="text-[9px] opacity-70">
+                    {isComplete ? (
+                      <CheckCircle2 className="w-3 h-3 mx-auto text-emerald-600" />
+                    ) : (
+                      `${count}/32`
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
         {/* Step 1: Record Voice Sample */}
         <Card className="p-5 bg-white/70 backdrop-blur border-teal-200/50">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white font-bold text-sm">1</div>
-            <h2 className="font-semibold text-teal-800">录制声音样本</h2>
+            <h2 className="font-semibold text-teal-800">录制声音样本（可选）</h2>
             {hasVoiceClone && <span className="ml-auto text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full">✓ 已完成</span>}
           </div>
 
           {!hasVoiceClone ? (
             <>
-              <p className="text-sm text-muted-foreground mb-4">请朗读以下文字（约15-60秒），AI将学习你的声音：</p>
+              <p className="text-sm text-muted-foreground mb-4">录制15-60秒语音，AI将学习你的声音：</p>
               <div className="bg-teal-50/50 rounded-xl p-4 mb-4 border border-teal-100">
                 <p className="text-sm text-teal-700 leading-relaxed whitespace-pre-line">{SAMPLE_TEXT}</p>
               </div>
@@ -292,36 +391,52 @@ export default function VoiceCloneSetup() {
         {/* Step 2: Generate Reminders */}
         <Card className="p-5 bg-white/70 backdrop-blur border-teal-200/50">
           <div className="flex items-center gap-2 mb-4">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${hasVoiceClone ? 'bg-gradient-to-br from-teal-400 to-cyan-500' : 'bg-gray-300'}`}>2</div>
-            <h2 className={`font-semibold ${hasVoiceClone ? 'text-teal-800' : 'text-gray-400'}`}>生成288条语音提醒</h2>
-            {generatedCount >= 288 && <span className="ml-auto text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full">✓ 已生成</span>}
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white font-bold text-sm">2</div>
+            <h2 className="font-semibold text-teal-800">生成语音提醒</h2>
+            {generatedCount >= TOTAL_REMINDERS && <span className="ml-auto text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full">✓ 已完成</span>}
           </div>
 
-          {hasVoiceClone ? (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">使用你的声音克隆，一键生成全部9种情绪×32条语音提醒。</p>
-              {isGenerating && (
-                <div className="space-y-2">
-                  <Progress value={generationProgress} className="h-2" />
-                  <p className="text-xs text-center text-muted-foreground">正在生成语音... {Math.round(generationProgress)}%（约需5-10分钟）</p>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {hasVoiceClone ? '使用你的声音克隆' : '使用预设AI温柔女声'}，生成9种情绪×32条语音提醒。
+            </p>
+            
+            {isGenerating && (
+              <div className="space-y-2 p-3 bg-teal-50/50 rounded-lg">
+                <div className="flex justify-between text-sm">
+                  <span className="text-teal-700">
+                    {currentEmotion ? `正在生成: ${currentEmotion}` : '准备中...'}
+                  </span>
+                  <span className="font-mono text-teal-600">{generatedCount}/{TOTAL_REMINDERS}</span>
                 </div>
-              )}
-              <Button onClick={generateAllReminders} disabled={isGenerating} className="w-full bg-gradient-to-r from-teal-500 to-cyan-500">
-                {isGenerating ? '生成中...' : <><Sparkles className="w-4 h-4 mr-2" />用我的声音生成288条语音</>}
-              </Button>
-              {generatedCount > 0 && !isGenerating && <p className="text-xs text-center text-muted-foreground">已生成 {generatedCount}/288 条语音</p>}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400 text-center py-4">请先完成步骤1，录制你的声音样本</p>
-          )}
-        </Card>
+                <Progress value={(generatedCount / TOTAL_REMINDERS) * 100} className="h-2" />
+                <p className="text-xs text-muted-foreground text-center">每种情绪约需2分钟</p>
+              </div>
+            )}
 
-        {/* Quick Generate without Clone */}
-        <Card className="p-4 bg-white/50 backdrop-blur border-teal-200/30">
-          <p className="text-sm text-muted-foreground text-center mb-3">或者使用预设AI温柔女声快速生成全部288条语音</p>
-          <Button variant="outline" onClick={generateAllReminders} disabled={isGenerating || isCreatingClone} className="w-full">
-            <Volume2 className="w-4 h-4 mr-2" />使用预设女声生成288条语音
-          </Button>
+            {generatedCount >= TOTAL_REMINDERS ? (
+              <div className="text-center py-4">
+                <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-2" />
+                <p className="text-emerald-600 font-medium">全部 {TOTAL_REMINDERS} 条语音已生成</p>
+                <Button variant="outline" className="mt-3" onClick={() => navigate('/panic-voice-settings')}>
+                  查看语音设置
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                onClick={generateAllReminders} 
+                disabled={isGenerating || isCreatingClone} 
+                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500"
+              >
+                {isGenerating ? '生成中...' : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    {generatedCount > 0 ? '继续生成' : '开始生成语音'}
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </Card>
       </div>
     </div>
