@@ -258,10 +258,6 @@ const EnergyStudio = () => {
           </div>
         ) : (
           <>
-            {/* 平安按钮网格置顶 */}
-            <div className="mb-8">
-              <SafetyButtonsGrid />
-            </div>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="w-full">
           <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 mb-8 h-auto p-1.5 bg-card/50 backdrop-blur-sm rounded-full">
             {categories.map(category => (
@@ -291,6 +287,13 @@ const EnergyStudio = () => {
               <div className="h-px w-12 bg-gradient-to-l from-transparent to-border"></div>
             </div>
           </div>
+
+          {/* 平安按钮仅在情绪工具tab显示 */}
+          {activeTab === "emotion" && (
+            <div className="mb-6">
+              <SafetyButtonsGrid />
+            </div>
+          )}
 
           <TabsContent value={activeTab} className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
