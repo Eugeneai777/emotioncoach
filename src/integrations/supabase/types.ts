@@ -3060,6 +3060,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_voice_clones: {
+        Row: {
+          created_at: string | null
+          elevenlabs_voice_id: string
+          id: string
+          sample_storage_path: string | null
+          updated_at: string | null
+          user_id: string
+          voice_name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          elevenlabs_voice_id: string
+          id?: string
+          sample_storage_path?: string | null
+          updated_at?: string | null
+          user_id: string
+          voice_name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          elevenlabs_voice_id?: string
+          id?: string
+          sample_storage_path?: string | null
+          updated_at?: string | null
+          user_id?: string
+          voice_name?: string | null
+        }
+        Relationships: []
+      }
       user_voice_recordings: {
         Row: {
           created_at: string | null
