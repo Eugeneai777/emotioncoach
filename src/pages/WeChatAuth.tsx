@@ -47,10 +47,9 @@ export default function WeChatAuth() {
       }
 
       const appid = data.appId;
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const redirectUri = encodeURIComponent(
-        `${supabaseUrl}/functions/v1/wechat-oauth-callback`
-      );
+      // 使用应用域名作为回调地址，需要在微信后台配置此域名
+      const appDomain = window.location.origin;
+      const redirectUri = encodeURIComponent(`${appDomain}/wechat-oauth-callback`);
       const state = mode;
 
       const authUrl = `https://open.weixin.qq.com/connect/qrconnect?appid=${appid}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_login&state=${state}#wechat_redirect`;
