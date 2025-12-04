@@ -68,6 +68,8 @@ interface CoachLayoutProps {
   community?: ReactNode;
   videoRecommendation?: ReactNode;
   toolRecommendation?: ReactNode;
+  emotionButtonRecommendation?: ReactNode;
+  campRecommendation?: ReactNode;
   bottomContent?: ReactNode;
   showNotificationCenter?: boolean;
 }
@@ -105,6 +107,8 @@ export const CoachLayout = ({
   community,
   videoRecommendation,
   toolRecommendation,
+  emotionButtonRecommendation,
+  campRecommendation,
   bottomContent,
   showNotificationCenter = true
 }: CoachLayoutProps) => {
@@ -206,8 +210,10 @@ export const CoachLayout = ({
           )}
           
           {/* Recommendations section */}
-          {(videoRecommendation || toolRecommendation) && messages.length > 0 && (
+          {(videoRecommendation || toolRecommendation || emotionButtonRecommendation || campRecommendation) && messages.length > 0 && (
             <div className="space-y-2 mt-4">
+              {emotionButtonRecommendation}
+              {campRecommendation}
               {videoRecommendation}
               {toolRecommendation}
             </div>

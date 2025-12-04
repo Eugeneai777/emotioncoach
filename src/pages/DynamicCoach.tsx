@@ -5,6 +5,8 @@ import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { CoachCommunity } from "@/components/coach/CoachCommunity";
 import { VideoRecommendationCard } from "@/components/coach/VideoRecommendationCard";
 import { ToolRecommendationCard } from "@/components/coach/ToolRecommendationCard";
+import { EmotionButtonRecommendationCard } from "@/components/coach/EmotionButtonRecommendationCard";
+import { CampRecommendationCard } from "@/components/coach/CampRecommendationCard";
 import { useDynamicCoachChat } from "@/hooks/useDynamicCoachChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useToast } from "@/hooks/use-toast";
@@ -23,10 +25,14 @@ const DynamicCoach = () => {
     coachRecommendation,
     videoRecommendation,
     toolRecommendation,
+    emotionButtonRecommendation,
+    campRecommendation,
     sendMessage,
     resetConversation,
     setVideoRecommendation,
     setToolRecommendation,
+    setEmotionButtonRecommendation,
+    setCampRecommendation,
   } = useDynamicCoachChat(
     template?.coach_key || '',
     template?.edge_function_name || '',
@@ -144,6 +150,18 @@ const DynamicCoach = () => {
           toolId={toolRecommendation.toolId}
           usageReason={toolRecommendation.usageReason}
           onDismiss={() => setToolRecommendation(null)}
+        />
+      ) : undefined}
+      emotionButtonRecommendation={emotionButtonRecommendation ? (
+        <EmotionButtonRecommendationCard
+          recommendation={emotionButtonRecommendation}
+          onDismiss={() => setEmotionButtonRecommendation(null)}
+        />
+      ) : undefined}
+      campRecommendation={campRecommendation ? (
+        <CampRecommendationCard
+          recommendation={campRecommendation}
+          onDismiss={() => setCampRecommendation(null)}
         />
       ) : undefined}
       community={template.enable_community ? <CoachCommunity /> : undefined}

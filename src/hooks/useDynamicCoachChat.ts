@@ -34,6 +34,21 @@ interface ToolRecommendation {
   usageReason: string;
 }
 
+interface EmotionButtonRecommendation {
+  detectedEmotion: string;
+  emotionChinese: string;
+  whySuitable: string;
+  howItHelps: string;
+  quickTipGiven: string;
+}
+
+interface CampRecommendation {
+  userGoal: string;
+  recommendedCamp: string;
+  whySuitable: string;
+  howToStart: string;
+}
+
 export const useDynamicCoachChat = (
   coachKey: string,
   edgeFunctionName: string,
@@ -48,6 +63,8 @@ export const useDynamicCoachChat = (
   const [coachRecommendation, setCoachRecommendation] = useState<CoachRecommendation | null>(null);
   const [videoRecommendation, setVideoRecommendation] = useState<VideoRecommendation | null>(null);
   const [toolRecommendation, setToolRecommendation] = useState<ToolRecommendation | null>(null);
+  const [emotionButtonRecommendation, setEmotionButtonRecommendation] = useState<EmotionButtonRecommendation | null>(null);
+  const [campRecommendation, setCampRecommendation] = useState<CampRecommendation | null>(null);
 
   useEffect(() => {
     if (conversationId) {
@@ -145,6 +162,8 @@ export const useDynamicCoachChat = (
     // 用户发送新消息时清除旧推荐
     setVideoRecommendation(null);
     setToolRecommendation(null);
+    setEmotionButtonRecommendation(null);
+    setCampRecommendation(null);
 
     let convId = currentConversationId;
     if (!convId) {
@@ -301,6 +320,29 @@ export const useDynamicCoachChat = (
               usageReason: toolData.usage_reason,
             });
           }
+          
+          // 处理情绪按钮推荐（最重要）
+          if (toolCall?.function?.name === "emotion_button_recommendation") {
+            const emotionData = JSON.parse(toolCall.function.arguments);
+            setEmotionButtonRecommendation({
+              detectedEmotion: emotionData.detected_emotion,
+              emotionChinese: emotionData.emotion_chinese,
+              whySuitable: emotionData.why_suitable,
+              howItHelps: emotionData.how_it_helps,
+              quickTipGiven: emotionData.quick_tip_given,
+            });
+          }
+          
+          // 处理训练营推荐
+          if (toolCall?.function?.name === "camp_recommendation") {
+            const campData = JSON.parse(toolCall.function.arguments);
+            setCampRecommendation({
+              userGoal: campData.user_goal,
+              recommendedCamp: campData.recommended_camp,
+              whySuitable: campData.why_suitable,
+              howToStart: campData.how_to_start,
+            });
+          }
         } catch (e) {
           console.error("处理工具调用失败:", e);
         }
@@ -325,6 +367,8 @@ export const useDynamicCoachChat = (
     setCoachRecommendation(null);
     setVideoRecommendation(null);
     setToolRecommendation(null);
+    setEmotionButtonRecommendation(null);
+    setCampRecommendation(null);
   };
 
   return {
@@ -334,9 +378,13 @@ export const useDynamicCoachChat = (
     coachRecommendation,
     videoRecommendation,
     toolRecommendation,
+    emotionButtonRecommendation,
+    campRecommendation,
     sendMessage,
     resetConversation,
     setVideoRecommendation,
     setToolRecommendation,
+    setEmotionButtonRecommendation,
+    setCampRecommendation,
   };
 };
