@@ -160,8 +160,6 @@ const EnergyStudio = () => {
         return <RelationshipTracker />;
       case "declaration":
         return <EnergyDeclaration />;
-      case "panic":
-        return <PanicButton />;
       default:
         return null;
     }
