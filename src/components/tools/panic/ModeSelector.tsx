@@ -10,9 +10,10 @@ type VoiceSource = 'ai';
 
 interface ModeSelectorProps {
   onSelectMode: (mode: StartMode, voiceSource: VoiceSource) => void;
+  onNavigate?: (path: string) => void;
 }
 
-const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode }) => {
+const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, onNavigate }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [hasVoices, setHasVoices] = useState(false);
@@ -86,7 +87,7 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode }) => {
       {/* 语音设置入口 */}
       <button
         className="w-full max-w-[280px] mt-4 bg-white/70 backdrop-blur rounded-2xl p-4 border border-teal-200/50 hover:bg-white/90 hover:border-teal-300 transition-all text-left"
-        onClick={() => navigate('/panic-voice-settings')}
+        onClick={() => onNavigate ? onNavigate('/panic-voice-settings') : navigate('/panic-voice-settings')}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
