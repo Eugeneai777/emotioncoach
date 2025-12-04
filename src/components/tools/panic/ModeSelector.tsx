@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { EmotionType } from "@/config/emotionReliefConfig";
 
 type StartMode = 'cognitive' | 'breathing';
 type VoiceSource = 'ai';
@@ -11,9 +12,10 @@ type VoiceSource = 'ai';
 interface ModeSelectorProps {
   onSelectMode: (mode: StartMode, voiceSource: VoiceSource) => void;
   onNavigate?: (path: string) => void;
+  emotionType?: EmotionType;
 }
 
-const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, onNavigate }) => {
+const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, onNavigate, emotionType }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [hasVoices, setHasVoices] = useState(false);
@@ -39,15 +41,20 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, onNavigate })
     }
   };
 
+  // 使用传入的情绪类型或默认值
+  const title = emotionType?.title || "你很安全";
+  const subtitle = emotionType?.subtitle || "我在这里陪着你";
+  const emoji = emotionType?.emoji || "🌿";
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10 overflow-y-auto">
       {/* 头部标题 */}
-      <div className="text-5xl mb-6">🌿</div>
+      <div className="text-5xl mb-6">{emoji}</div>
       <h2 className="text-2xl font-medium text-teal-800 text-center mb-2">
-        你很安全
+        {title}
       </h2>
       <p className="text-teal-600/70 text-center mb-8 max-w-xs">
-        我在这里陪着你
+        {subtitle}
       </p>
       
       {/* 马上帮我 - 圆形按钮 */}
