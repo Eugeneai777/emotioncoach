@@ -17,11 +17,18 @@ class WXBizMsgCrypt {
     this.appId = appId;
   }
 
-  // SHA1 签名验证
-  async verifySignature(signature: string, timestamp: string, nonce: string, echostr?: string): Promise<boolean> {
+  // SHA1 签名验证 (仅使用 token, timestamp, nonce)
+  async verifySignature(signature: string, timestamp: string, nonce: string): Promise<boolean> {
     const arr = [this.token, timestamp, nonce];
-    if (echostr) arr.push(echostr);
-    
+    const sortedStr = arr.sort().join('');
+    const hash = await this.sha1(sortedStr);
+    console.log('Signature verification:', { expected: signature, calculated: hash, token: this.token.substring(0, 4) + '...' });
+    return hash === signature;
+  }
+
+  // 消息签名验证 (包含加密消息)
+  async verifyMsgSignature(signature: string, timestamp: string, nonce: string, encrypt: string): Promise<boolean> {
+    const arr = [this.token, timestamp, nonce, encrypt];
     const sortedStr = arr.sort().join('');
     const hash = await this.sha1(sortedStr);
     return hash === signature;
@@ -212,9 +219,9 @@ Deno.serve(async (req) => {
       const nonce = url.searchParams.get('nonce') || '';
       const echostr = url.searchParams.get('echostr') || '';
 
-      console.log('URL verification request:', { signature, timestamp, nonce, echostr: echostr.substring(0, 20) });
+      console.log('URL verification request:', { signature, timestamp, nonce, echostr });
 
-      const isValid = await cryptor.verifySignature(signature, timestamp, nonce, echostr);
+      const isValid = await cryptor.verifySignature(signature, timestamp, nonce);
       
       if (isValid) {
         console.log('URL verification successful');
@@ -229,7 +236,7 @@ Deno.serve(async (req) => {
 
     // POST 请求：接收消息
     if (req.method === 'POST') {
-      const signature = url.searchParams.get('msg_signature') || url.searchParams.get('signature') || '';
+      const msgSignature = url.searchParams.get('msg_signature') || '';
       const timestamp = url.searchParams.get('timestamp') || '';
       const nonce = url.searchParams.get('nonce') || '';
 
@@ -245,8 +252,8 @@ Deno.serve(async (req) => {
         return new Response('success', { headers: { 'Content-Type': 'text/plain' } });
       }
 
-      // 验证签名
-      const isValid = await cryptor.verifySignature(signature, timestamp, nonce, encryptedMsg);
+      // 验证消息签名
+      const isValid = await cryptor.verifyMsgSignature(msgSignature, timestamp, nonce, encryptedMsg);
       if (!isValid) {
         console.error('Message signature verification failed');
         return new Response('Invalid signature', { status: 403 });
@@ -323,19 +330,23 @@ Deno.serve(async (req) => {
 
               // 加密回复
               const encryptedReply = await cryptor.encrypt(replyMsg);
-              const replySignature = await cryptor.verifySignature(
-                signature,
-                timestamp,
-                nonce,
-                encryptedReply
-              );
+              const replyTimestamp = String(Math.floor(Date.now() / 1000));
+              const replyNonce = Math.random().toString(36).substring(2, 15);
+              
+              // 计算新签名
+              const signArr = [token, replyTimestamp, replyNonce, encryptedReply].sort();
+              const signStr = signArr.join('');
+              const encoder = new TextEncoder();
+              const hashBuffer = await crypto.subtle.digest('SHA-1', encoder.encode(signStr));
+              const hashArray = Array.from(new Uint8Array(hashBuffer));
+              const replySignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-              const responseXml = buildXML({
-                Encrypt: encryptedReply,
-                MsgSignature: signature,
-                TimeStamp: timestamp,
-                Nonce: nonce
-              });
+              const responseXml = `<xml>
+<Encrypt><![CDATA[${encryptedReply}]]></Encrypt>
+<MsgSignature><![CDATA[${replySignature}]]></MsgSignature>
+<TimeStamp>${replyTimestamp}</TimeStamp>
+<Nonce><![CDATA[${replyNonce}]]></Nonce>
+</xml>`;
 
               console.log('Sending encrypted reply');
               return new Response(responseXml, {
