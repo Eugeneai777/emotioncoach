@@ -46,7 +46,7 @@ import { TimeManagement } from "@/components/tools/TimeManagement";
 import { RelationshipTracker } from "@/components/tools/RelationshipTracker";
 import { EnergyDeclaration } from "@/components/tools/EnergyDeclaration";
 import { CoachSpaceContent } from "@/components/coach/CoachSpaceContent";
-import PanicButton from "@/components/tools/PanicButton";
+import SafetyButtonsGrid from "@/components/tools/SafetyButtonsGrid";
 
 interface ToolCard {
   id: string;
@@ -260,9 +260,9 @@ const EnergyStudio = () => {
           </div>
         ) : (
           <>
-            {/* 平安按钮置顶 */}
+            {/* 平安按钮网格置顶 */}
             <div className="mb-8">
-              <PanicButton />
+              <SafetyButtonsGrid />
             </div>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="w-full">
           <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 mb-8 h-auto p-1.5 bg-card/50 backdrop-blur-sm rounded-full">
