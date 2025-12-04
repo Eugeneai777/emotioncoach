@@ -193,21 +193,10 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 获取全局配置（从第一个有配置的管理员账户）
-    const { data: config, error: configError } = await supabase
-      .from('profiles')
-      .select('id, wechat_appid, wechat_token, wechat_encoding_aes_key')
-      .not('wechat_token', 'is', null)
-      .not('wechat_encoding_aes_key', 'is', null)
-      .limit(1)
-      .single();
-
-    if (configError || !config) {
-      console.error('Failed to load WeChat config:', configError);
-      return new Response('WeChat callback not configured', { status: 503 });
-    }
-
-    const { wechat_appid: appId, wechat_token: token, wechat_encoding_aes_key: encodingAESKey } = config;
+    // 从环境变量获取微信配置
+    const appId = Deno.env.get('WECHAT_APP_ID');
+    const token = Deno.env.get('WECHAT_TOKEN');
+    const encodingAESKey = Deno.env.get('WECHAT_ENCODING_AES_KEY');
 
     if (!appId || !token || !encodingAESKey) {
       console.error('Incomplete WeChat configuration');
@@ -270,17 +259,14 @@ Deno.serve(async (req) => {
       const message = parseXML(decryptedXml);
       const { ToUserName, FromUserName, CreateTime, MsgType, Content, MsgId } = message;
 
-      // 查找或创建用户映射
-      let userId = config.id;
+      // 查找用户映射
       const { data: mapping } = await supabase
         .from('wechat_user_mappings')
         .select('system_user_id')
         .eq('openid', FromUserName)
         .single();
 
-      if (mapping) {
-        userId = mapping.system_user_id;
-      }
+      const userId = mapping?.system_user_id || null;
 
       // 保存消息记录
       await supabase.from('wechat_template_messages').insert({
