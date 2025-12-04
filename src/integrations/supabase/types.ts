@@ -3094,7 +3094,9 @@ export type Database = {
         Row: {
           created_at: string | null
           duration_seconds: number | null
+          emotion_type: string | null
           id: string
+          is_ai_generated: boolean | null
           reminder_index: number
           storage_path: string
           updated_at: string | null
@@ -3103,7 +3105,9 @@ export type Database = {
         Insert: {
           created_at?: string | null
           duration_seconds?: number | null
+          emotion_type?: string | null
           id?: string
+          is_ai_generated?: boolean | null
           reminder_index: number
           storage_path: string
           updated_at?: string | null
@@ -3112,7 +3116,9 @@ export type Database = {
         Update: {
           created_at?: string | null
           duration_seconds?: number | null
+          emotion_type?: string | null
           id?: string
+          is_ai_generated?: boolean | null
           reminder_index?: number
           storage_path?: string
           updated_at?: string | null
