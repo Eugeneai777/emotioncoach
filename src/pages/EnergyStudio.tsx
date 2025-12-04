@@ -288,13 +288,6 @@ const EnergyStudio = () => {
             </div>
           </div>
 
-          {/* 平安按钮仅在情绪工具tab显示 */}
-          {activeTab === "emotion" && (
-            <div className="mb-6">
-              <SafetyButtonsGrid />
-            </div>
-          )}
-
           <TabsContent value={activeTab} className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredTools.map((tool, index) => {
@@ -336,6 +329,13 @@ const EnergyStudio = () => {
               })}
             </div>
           </TabsContent>
+
+          {/* 情绪按钮仅在情绪工具tab显示，放在工具卡片下方 */}
+          {activeTab === "emotion" && (
+            <div className="mt-6">
+              <SafetyButtonsGrid />
+            </div>
+          )}
         </Tabs>
           </>
             )}
