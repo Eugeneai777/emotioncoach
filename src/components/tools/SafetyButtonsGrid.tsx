@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Shield, History } from "lucide-react";
+import { Shield, History, Info } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { emotionTypes, EmotionType } from "@/config/emotionReliefConfig";
 import EmotionReliefButton from "./EmotionReliefButton";
@@ -34,6 +34,15 @@ const SafetyButtonsGrid: React.FC = () => {
         <CardTitle className="text-lg text-slate-700 flex items-center justify-center gap-2">
           <Shield className="w-5 h-5 text-teal-500" />
           情绪按钮
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs text-teal-600 hover:text-teal-700 h-6 px-2"
+            onClick={() => navigate('/emotion-button-intro')}
+          >
+            <Info className="w-3 h-3 mr-1" />
+            了解更多
+          </Button>
         </CardTitle>
         <CardDescription className="text-slate-500 text-sm">
           感到不安时，选择你最需要的陪伴 🌊
