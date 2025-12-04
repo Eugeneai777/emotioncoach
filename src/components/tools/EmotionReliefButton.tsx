@@ -1,5 +1,11 @@
 import React from "react";
 import { EmotionType } from "@/config/emotionReliefConfig";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface EmotionReliefButtonProps {
   emotion: EmotionType;
@@ -8,33 +14,29 @@ interface EmotionReliefButtonProps {
 
 const EmotionReliefButton: React.FC<EmotionReliefButtonProps> = ({ emotion, onClick }) => {
   return (
-    <button
-      onClick={onClick}
-      className={`
-        relative p-4 rounded-2xl bg-white/60 backdrop-blur-sm border-2 border-transparent
-        hover:border-white hover:shadow-lg hover:scale-[1.02] 
-        active:scale-[0.98] transition-all duration-200
-        flex flex-col items-center text-center group overflow-hidden
-      `}
-    >
-      {/* 背景渐变 hover 效果 */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${emotion.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-      
-      {/* Emoji */}
-      <div className="text-3xl mb-2 group-hover:scale-110 transition-transform duration-200">
-        {emotion.emoji}
-      </div>
-      
-      {/* 标题 */}
-      <h3 className="font-semibold text-slate-700 mb-1">
-        {emotion.title}
-      </h3>
-      
-      {/* 副标题 - 截断显示 */}
-      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-        {emotion.subtitle}
-      </p>
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          onClick={onClick}
+          variant="ghost"
+          className={`
+            h-14 px-4 rounded-xl w-full
+            bg-gradient-to-br ${emotion.gradient}
+            text-white border-0 shadow-md
+            hover:shadow-xl hover:scale-105 hover:brightness-110
+            active:scale-95
+            transition-all duration-200
+            flex items-center justify-center gap-2
+          `}
+        >
+          <span className="text-xl">{emotion.emoji}</span>
+          <span className="font-medium text-sm">{emotion.title}</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="max-w-[200px] text-center">
+        <p className="text-xs">{emotion.subtitle}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 
