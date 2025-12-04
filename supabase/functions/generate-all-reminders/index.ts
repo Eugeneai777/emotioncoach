@@ -345,7 +345,6 @@ const emotionReminders: Record<string, { title: string; reminders: string[] }> =
 
 const EMOTION_TYPES = Object.keys(emotionReminders);
 const REMINDERS_PER_EMOTION = 32;
-const TOTAL_REMINDERS = EMOTION_TYPES.length * REMINDERS_PER_EMOTION; // 288
 
 // Preset warm female voice (Sarah from ElevenLabs)
 const PRESET_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL';
@@ -382,6 +381,10 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
+    // Parse request body - support single emotion type generation
+    const body = await req.json().catch(() => ({}));
+    const targetEmotionType = body.emotionType as string | undefined;
+
     // Check if user has a cloned voice
     const { data: voiceClone } = await supabase
       .from('user_voice_clones')
@@ -390,125 +393,209 @@ serve(async (req) => {
       .maybeSingle();
 
     const voiceIdToUse = voiceClone?.elevenlabs_voice_id || PRESET_VOICE_ID;
-    const isClonedVoice = !!voiceClone?.elevenlabs_voice_id;
 
-    console.log(`Generating all ${TOTAL_REMINDERS} reminders for user ${user.id} with ${isClonedVoice ? 'cloned' : 'preset'} voice ${voiceIdToUse}`);
+    // Determine which emotion to generate
+    let emotionToGenerate: string | null = null;
 
-    const results = [];
-    const errors = [];
-    let totalGenerated = 0;
-
-    // Generate reminders for each emotion type
-    for (const emotionType of EMOTION_TYPES) {
-      const emotionConfig = emotionReminders[emotionType];
-      console.log(`Generating ${emotionType} (${emotionConfig.title}) reminders...`);
-
-      for (let i = 0; i < emotionConfig.reminders.length; i++) {
-        try {
-          const reminderText = emotionConfig.reminders[i];
-          console.log(`Generating ${emotionType} reminder ${i + 1}/${REMINDERS_PER_EMOTION}...`);
-          
-          // Call ElevenLabs TTS API
-          const ttsResponse = await fetch(
-            `https://api.elevenlabs.io/v1/text-to-speech/${voiceIdToUse}`,
-            {
-              method: 'POST',
-              headers: {
-                'xi-api-key': ELEVENLABS_API_KEY,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                text: reminderText,
-                model_id: 'eleven_multilingual_v2',
-                voice_settings: {
-                  stability: 0.5,
-                  similarity_boost: 0.75,
-                  style: 0.3,
-                  use_speaker_boost: true
-                }
-              }),
-            }
-          );
-
-          if (!ttsResponse.ok) {
-            const errorText = await ttsResponse.text();
-            console.error(`TTS error for ${emotionType} reminder ${i}:`, errorText);
-            errors.push({ emotionType, index: i, error: errorText });
-            continue;
-          }
-
-          // Get audio data
-          const audioBuffer = await ttsResponse.arrayBuffer();
-          const audioData = new Uint8Array(audioBuffer);
-
-          // Upload to storage with emotion_type in path
-          const storagePath = `${user.id}/${emotionType}/reminder_${i}.mp3`;
-          const { error: uploadError } = await serviceSupabase.storage
-            .from('voice-recordings')
-            .upload(storagePath, audioData, {
-              contentType: 'audio/mpeg',
-              upsert: true
-            });
-
-          if (uploadError) {
-            console.error(`Upload error for ${emotionType} reminder ${i}:`, uploadError);
-            errors.push({ emotionType, index: i, error: uploadError.message });
-            continue;
-          }
-
-          // Save to database with emotion_type
-          const { error: dbError } = await serviceSupabase
-            .from('user_voice_recordings')
-            .upsert({
-              user_id: user.id,
-              emotion_type: emotionType,
-              reminder_index: i,
-              storage_path: storagePath,
-              duration_seconds: null,
-              is_ai_generated: true
-            }, {
-              onConflict: 'user_id,emotion_type,reminder_index'
-            });
-
-          if (dbError) {
-            console.error(`Database error for ${emotionType} reminder ${i}:`, dbError);
-            errors.push({ emotionType, index: i, error: dbError.message });
-            continue;
-          }
-
-          totalGenerated++;
-          results.push({ emotionType, index: i, success: true });
-          
-          // Small delay to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 150));
-
-        } catch (error: unknown) {
-          console.error(`Error generating ${emotionType} reminder ${i}:`, error);
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          errors.push({ emotionType, index: i, error: errorMessage });
+    if (targetEmotionType) {
+      // Specific emotion requested
+      if (!EMOTION_TYPES.includes(targetEmotionType)) {
+        throw new Error(`Invalid emotion type: ${targetEmotionType}`);
+      }
+      emotionToGenerate = targetEmotionType;
+    } else {
+      // Auto-detect next incomplete emotion
+      for (const emotionType of EMOTION_TYPES) {
+        const { count } = await serviceSupabase
+          .from('user_voice_recordings')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('emotion_type', emotionType)
+          .eq('is_ai_generated', true);
+        
+        if ((count || 0) < REMINDERS_PER_EMOTION) {
+          emotionToGenerate = emotionType;
+          console.log(`Found incomplete emotion: ${emotionType} (${count || 0}/${REMINDERS_PER_EMOTION})`);
+          break;
         }
       }
     }
 
-    console.log(`Completed: ${totalGenerated}/${TOTAL_REMINDERS} success, ${errors.length} errors`);
-
-    return new Response(
-      JSON.stringify({ 
+    if (!emotionToGenerate) {
+      // All emotions complete - calculate total
+      let totalGenerated = 0;
+      for (const et of EMOTION_TYPES) {
+        const { count } = await serviceSupabase
+          .from('user_voice_recordings')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('emotion_type', et)
+          .eq('is_ai_generated', true);
+        totalGenerated += (count || 0);
+      }
+      
+      return new Response(JSON.stringify({
         success: true,
-        generated: totalGenerated,
-        total: TOTAL_REMINDERS,
-        errors: errors.length,
-        errorDetails: errors.length > 0 ? errors.slice(0, 10) : undefined
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+        message: 'All emotions already generated',
+        allComplete: true,
+        emotionType: null,
+        generated: 0,
+        total: REMINDERS_PER_EMOTION,
+        totalGenerated,
+        totalReminders: EMOTION_TYPES.length * REMINDERS_PER_EMOTION
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const emotionConfig = emotionReminders[emotionToGenerate];
+    const reminders = emotionConfig.reminders;
+
+    console.log(`Generating ${emotionToGenerate} (${emotionConfig.title}) for user ${user.id}`);
+
+    // Check which reminders already exist for this emotion
+    const { data: existingRecordings } = await serviceSupabase
+      .from('user_voice_recordings')
+      .select('reminder_index')
+      .eq('user_id', user.id)
+      .eq('emotion_type', emotionToGenerate)
+      .eq('is_ai_generated', true);
+
+    const existingIndices = new Set((existingRecordings || []).map(r => r.reminder_index));
+    
+    let successCount = existingIndices.size;
+    const errors: string[] = [];
+
+    console.log(`${emotionToGenerate}: ${existingIndices.size}/${REMINDERS_PER_EMOTION} already exist`);
+
+    // Generate remaining reminders for this emotion
+    for (let i = 0; i < reminders.length; i++) {
+      if (existingIndices.has(i)) {
+        continue; // Skip already generated
+      }
+
+      const reminderText = reminders[i];
+
+      try {
+        // Call ElevenLabs TTS API
+        const ttsResponse = await fetch(
+          `https://api.elevenlabs.io/v1/text-to-speech/${voiceIdToUse}`,
+          {
+            method: 'POST',
+            headers: {
+              'Accept': 'audio/mpeg',
+              'Content-Type': 'application/json',
+              'xi-api-key': ELEVENLABS_API_KEY,
+            },
+            body: JSON.stringify({
+              text: reminderText,
+              model_id: 'eleven_multilingual_v2',
+              voice_settings: {
+                stability: 0.75,
+                similarity_boost: 0.75,
+                style: 0.0,
+                use_speaker_boost: true
+              }
+            }),
+          }
+        );
+
+        if (!ttsResponse.ok) {
+          const errorText = await ttsResponse.text();
+          throw new Error(`ElevenLabs API error: ${ttsResponse.status} - ${errorText}`);
+        }
+
+        const audioBuffer = await ttsResponse.arrayBuffer();
+        const audioData = new Uint8Array(audioBuffer);
+
+        // Upload to Supabase Storage with emotion type in path
+        const filePath = `${user.id}/${emotionToGenerate}/reminder_${i}.mp3`;
+        
+        const { error: uploadError } = await serviceSupabase.storage
+          .from('voice-recordings')
+          .upload(filePath, audioData, {
+            contentType: 'audio/mpeg',
+            upsert: true
+          });
+
+        if (uploadError) {
+          throw new Error(`Storage upload error: ${uploadError.message}`);
+        }
+
+        // Get public URL
+        const { data: urlData } = serviceSupabase.storage
+          .from('voice-recordings')
+          .getPublicUrl(filePath);
+
+        // Save to database with emotion_type
+        const { error: dbError } = await serviceSupabase
+          .from('user_voice_recordings')
+          .upsert({
+            user_id: user.id,
+            reminder_index: i,
+            reminder_text: reminderText,
+            audio_url: urlData.publicUrl,
+            is_ai_generated: true,
+            emotion_type: emotionToGenerate
+          }, {
+            onConflict: 'user_id,emotion_type,reminder_index'
+          });
+
+        if (dbError) {
+          throw new Error(`Database error: ${dbError.message}`);
+        }
+
+        successCount++;
+        console.log(`Generated ${emotionToGenerate} reminder ${i + 1}/${REMINDERS_PER_EMOTION}`);
+
+      } catch (error: unknown) {
+        const errorMsg = `Error generating ${emotionToGenerate} reminder ${i}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        console.error(errorMsg);
+        errors.push(errorMsg);
+        // Continue with next reminder instead of failing completely
+      }
+    }
+
+    // Check if this emotion is now complete
+    const isEmotionComplete = successCount >= REMINDERS_PER_EMOTION;
+    
+    // Check overall progress
+    let totalGenerated = 0;
+    for (const et of EMOTION_TYPES) {
+      const { count } = await serviceSupabase
+        .from('user_voice_recordings')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('emotion_type', et)
+        .eq('is_ai_generated', true);
+      totalGenerated += (count || 0);
+    }
+
+    const allComplete = totalGenerated >= EMOTION_TYPES.length * REMINDERS_PER_EMOTION;
+
+    return new Response(JSON.stringify({
+      success: true,
+      emotionType: emotionToGenerate,
+      emotionTitle: emotionConfig.title,
+      generated: successCount,
+      total: REMINDERS_PER_EMOTION,
+      isEmotionComplete,
+      totalGenerated,
+      totalReminders: EMOTION_TYPES.length * REMINDERS_PER_EMOTION,
+      allComplete,
+      errors: errors.length > 0 ? errors : undefined
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
 
   } catch (error: unknown) {
     console.error('Error in generate-all-reminders:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      success: false
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 });
