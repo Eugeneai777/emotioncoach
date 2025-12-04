@@ -33,7 +33,7 @@ const SafetyButtonsGrid: React.FC = () => {
       <CardHeader className="text-center pb-3 relative z-10">
         <CardTitle className="text-lg text-slate-700 flex items-center justify-center gap-2">
           <Shield className="w-5 h-5 text-teal-500" />
-          平安按钮
+          情绪按钮
         </CardTitle>
         <CardDescription className="text-slate-500 text-sm">
           感到不安时，选择你最需要的陪伴 🌊
