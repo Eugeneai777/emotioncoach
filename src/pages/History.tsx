@@ -16,6 +16,7 @@ import { EmotionReview } from "@/components/EmotionReview";
 import { BriefingTagSelector } from "@/components/BriefingTagSelector";
 import { Badge } from "@/components/ui/badge";
 import { MusicRecommendation } from "@/components/MusicRecommendation";
+import { FrequencyMusicPlayer } from "@/components/FrequencyMusicPlayer";
 import { EmotionIntensityCard } from "@/components/EmotionIntensityMeter";
 import { Separator } from "@/components/ui/separator";
 import UnifiedEmotionIntensityChart from "@/components/UnifiedEmotionIntensityChart";
@@ -356,6 +357,11 @@ const History = () => {
                   selectedTags={selectedBriefing.tags || []}
                   onTagsChange={loadBriefings}
                 />
+              </div>
+
+              {/* 频率疗愈推荐 */}
+              <div className="pt-3 md:pt-4 border-t border-border/50">
+                <FrequencyMusicPlayer emotionTheme={selectedBriefing.emotion_theme} />
               </div>
 
               <div className="pt-3 md:pt-4 border-t border-border/50">

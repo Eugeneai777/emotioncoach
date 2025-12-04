@@ -15,6 +15,7 @@ import { CommunicationTrendAnalysis } from "@/components/communication/Communica
 import { CommunicationComparison } from "@/components/communication/CommunicationComparison";
 import { CommunicationReview } from "@/components/communication/CommunicationReview";
 import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
+import { FrequencyMusicPlayer } from "@/components/FrequencyMusicPlayer";
 
 interface CommunicationTag {
   id: string;
@@ -325,6 +326,13 @@ export default function CommunicationHistory() {
                 briefingId={selectedBriefing.id}
                 selectedTags={selectedTags}
                 onTagsChange={setSelectedTags}
+              />
+            </div>
+
+            {/* 频率疗愈推荐 */}
+            <div className="pt-4">
+              <FrequencyMusicPlayer 
+                emotionTheme={selectedBriefing.communication_theme} 
               />
             </div>
 
