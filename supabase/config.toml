@@ -102,6 +102,9 @@ verify_jwt = false
 [functions.wechat-oauth-callback]
 verify_jwt = false
 
+[functions.wechat-oauth-process]
+verify_jwt = false
+
 [functions.wechat-callback]
 verify_jwt = false
 
