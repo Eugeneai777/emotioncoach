@@ -45,11 +45,47 @@ serve(async (req) => {
 
     // 定义推荐工具
     const tools = [
+      // 🔥 最重要：情绪按钮推荐工具
+      {
+        type: "function",
+        function: {
+          name: "emotion_button_recommendation",
+          description: "推荐情绪按钮工具。当用户表达任何情绪困扰时（恐慌、担心、负面、恐惧、烦躁、压力、无力、崩溃、失落），应优先使用此工具。这是我们最核心的情绪疗愈工具。",
+          parameters: {
+            type: "object",
+            properties: {
+              detected_emotion: {
+                type: "string",
+                enum: ["panic", "worry", "negative", "fear", "irritable", "stress", "powerless", "collapse", "lost"],
+                description: "识别到的主要情绪类型"
+              },
+              emotion_chinese: {
+                type: "string",
+                description: "情绪的中文名称，如'恐慌'、'担心'、'压力'等"
+              },
+              why_suitable: {
+                type: "string",
+                description: "为什么情绪按钮适合用户当前的状态（温暖的解释，不要像广告）"
+              },
+              how_it_helps: {
+                type: "string",
+                description: "情绪按钮如何帮助用户（简要说明流程：觉察→理解→稳定→转化）"
+              },
+              quick_tip_given: {
+                type: "string",
+                description: "在推荐前已经给用户的即时小方法（确保先给了小方法再推荐）"
+              }
+            },
+            required: ["detected_emotion", "emotion_chinese", "why_suitable", "how_it_helps", "quick_tip_given"]
+          }
+        }
+      },
+      // 教练推荐工具
       {
         type: "function",
         function: {
           name: "coach_recommendation",
-          description: "根据用户当前的主题和需求，推荐最适合的有劲生活馆专业教练。",
+          description: "根据用户当前的主题和需求，推荐最适合的有劲生活馆专业教练。适用于需要深度对话梳理的场景。",
           parameters: {
             type: "object",
             properties: {
@@ -71,11 +107,43 @@ serve(async (req) => {
           }
         }
       },
+      // 训练营推荐工具
+      {
+        type: "function",
+        function: {
+          name: "camp_recommendation",
+          description: "推荐系统性训练营，适合需要长期深度学习成长的用户。",
+          parameters: {
+            type: "object",
+            properties: {
+              user_goal: {
+                type: "string",
+                description: "用户的成长目标"
+              },
+              recommended_camp: {
+                type: "string",
+                enum: ["parent_emotion_21", "emotion_bloom"],
+                description: "推荐的训练营：parent_emotion_21=21天青少年困境突破营, emotion_bloom=情感绽放训练营"
+              },
+              why_suitable: {
+                type: "string",
+                description: "为什么这个训练营适合用户"
+              },
+              how_to_start: {
+                type: "string",
+                description: "如何开始参加训练营"
+              }
+            },
+            required: ["user_goal", "recommended_camp", "why_suitable", "how_to_start"]
+          }
+        }
+      },
+      // 视频课程推荐工具
       {
         type: "function",
         function: {
           name: "video_course_recommendation",
-          description: "根据用户当前的话题，推荐相关的视频课程深入学习。查询真实视频并返回可直接观看的链接。",
+          description: "根据用户当前的话题，推荐相关的视频课程深入学习。",
           parameters: {
             type: "object",
             properties: {
@@ -93,11 +161,11 @@ serve(async (req) => {
                 description: "观看视频能达成的学习目标"
               }
             },
-            required: ["topic_summary", "recommended_category", "learning_goal"],
-            additionalProperties: false
+            required: ["topic_summary", "recommended_category", "learning_goal"]
           }
         }
       },
+      // 能量工具推荐
       {
         type: "function",
         function: {
