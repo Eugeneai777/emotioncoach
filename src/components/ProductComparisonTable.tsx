@@ -4,9 +4,16 @@ import { Check, X, Minus, Info } from "lucide-react";
 import { youjinFeatures, bloomFeatures, type YoujinFeature, type BloomFeature } from "@/config/productComparison";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+interface PackageInfo {
+  key: string;
+  name: string;
+  price: number;
+  quota?: number;
+}
+
 interface ProductComparisonTableProps {
   category: 'youjin' | 'bloom';
-  onPurchase?: (productId: string) => void;
+  onPurchase?: (packageInfo: PackageInfo) => void;
 }
 
 export function ProductComparisonTable({ category, onPurchase }: ProductComparisonTableProps) {
@@ -29,9 +36,9 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
     return <span className="text-sm font-medium text-foreground">{value}</span>;
   };
 
-  const handlePurchase = (productId: string) => {
+  const handlePurchase = (packageInfo: PackageInfo) => {
     if (onPurchase) {
-      onPurchase(productId);
+      onPurchase(packageInfo);
     }
   };
 
@@ -124,7 +131,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                     variant="outline" 
                     size="sm" 
                     className="w-full"
-                    onClick={() => handlePurchase('basic')}
+                    onClick={() => handlePurchase({ key: 'basic', name: '尝鲜会员', price: 9.9, quota: 50 })}
                   >
                     立即购买
                   </Button>
@@ -133,7 +140,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   <Button 
                     size="sm" 
                     className="w-full bg-primary hover:bg-primary/90"
-                    onClick={() => handlePurchase('member365')}
+                    onClick={() => handlePurchase({ key: 'member365', name: '365会员', price: 365, quota: 1000 })}
                   >
                     立即购买
                   </Button>
@@ -143,7 +150,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                     variant="outline" 
                     size="sm" 
                     className="w-full"
-                    onClick={() => handlePurchase('945444e5-f341-4ba2-a77f-1641b54f47f1')}
+                    onClick={() => handlePurchase({ key: 'youjin-camps', name: '有劲训练营', price: 0 })}
                   >
                     立即加入
                   </Button>
@@ -153,7 +160,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                     variant="outline" 
                     size="sm" 
                     className="w-full"
-                    onClick={() => handlePurchase('7cbbfd5d-b73c-4e51-9791-ad9dc61384b1')}
+                    onClick={() => handlePurchase({ key: 'youjin-camps', name: '有劲训练营', price: 0 })}
                   >
                     立即加入
                   </Button>
@@ -255,7 +262,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   variant="outline" 
                   size="sm" 
                   className="w-full"
-                  onClick={() => handlePurchase('camp-fdbf32e0-61c5-464e-817a-45661dfc8105')}
+                  onClick={() => handlePurchase({ key: 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', name: '身份绽放训练营', price: 2980 })}
                 >
                   了解详情
                 </Button>
@@ -265,7 +272,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   variant="outline" 
                   size="sm" 
                   className="w-full"
-                  onClick={() => handlePurchase('camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5')}
+                  onClick={() => handlePurchase({ key: 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', name: '情感绽放训练营', price: 3980 })}
                 >
                   了解详情
                 </Button>
@@ -274,7 +281,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                 <Button 
                   size="sm" 
                   className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
-                  onClick={() => handlePurchase('partner')}
+                  onClick={() => handlePurchase({ key: 'partner', name: '绽放合伙人', price: 19800, quota: 9999999 })}
                 >
                   立即加入
                 </Button>
