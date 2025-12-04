@@ -101,6 +101,16 @@ export const EmotionButtonRecommendationCard = ({
           去试试看
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
+
+        {/* Learn more link */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full text-muted-foreground hover:text-foreground"
+          onClick={() => navigate('/emotion-button-intro')}
+        >
+          了解情绪按钮的科学原理 →
+        </Button>
       </div>
     </Card>
   );
