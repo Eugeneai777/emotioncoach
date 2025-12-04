@@ -723,7 +723,7 @@ const EmotionButtonIntro = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button 
                   size="lg"
-                  onClick={() => navigate("/")}
+                  onClick={() => navigate("/energy-studio")}
                   className="gap-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-white hover:opacity-90"
                 >
                   <Sparkles className="w-5 h-5" />
@@ -732,11 +732,11 @@ const EmotionButtonIntro = () => {
                 <Button 
                   size="lg"
                   variant="outline"
-                  onClick={() => navigate("/history")}
+                  onClick={() => navigate("/")}
                   className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50"
                 >
-                  <Target className="w-5 h-5" />
-                  了解情绪教练
+                  <Heart className="w-5 h-5" />
+                  开始情绪梳理
                 </Button>
               </div>
             </CardContent>
