@@ -37,7 +37,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.deduct-quota]
-verify_jwt = false
+verify_jwt = true
 
 [functions.check-streak-achievements]
 verify_jwt = false

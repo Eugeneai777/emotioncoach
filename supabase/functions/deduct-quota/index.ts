@@ -11,12 +11,45 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Extract JWT from Authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('❌ Missing Authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Missing Authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const jwt = authHeader.replace('Bearer ', '');
+    
+    // Create client with anon key to verify user
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!
+    );
+
+    // Get authenticated user from JWT
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(jwt);
+    
+    if (authError || !user) {
+      console.error('❌ Authentication failed:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = user.id;
+    console.log(`🔐 Authenticated user: ${userId}`);
+
+    // Create service role client for database operations
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { userId, source, amount = 1, conversationId, metadata } = await req.json();
+    const { source, amount = 1, conversationId, metadata } = await req.json();
 
     const { data, error: deductError } = await supabase.rpc('deduct_user_quota', {
       p_user_id: userId,
