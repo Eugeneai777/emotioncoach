@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Calendar, Loader2, BarChart3, Share2 } from "lucide-react";
+import { ArrowLeft, Calendar, Loader2, BarChart3, Share2, ChevronDown, ChevronUp, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import EmotionTagCloud from "@/components/EmotionTagCloud";
 import EmotionCycleAnalysis from "@/components/EmotionCycleAnalysis";
@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import UnifiedEmotionIntensityChart from "@/components/UnifiedEmotionIntensityChart";
 import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
 import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface TagType {
   id: string;
@@ -61,6 +62,7 @@ const History = () => {
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null);
   const [allTags, setAllTags] = useState<TagType[]>([]);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [isTagFilterExpanded, setIsTagFilterExpanded] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -433,33 +435,65 @@ const History = () => {
             </div>
           </div>
           {allTags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 md:gap-2 items-center">
-              <span className="text-xs text-muted-foreground whitespace-nowrap">筛选:</span>
-              <Button
-                variant={selectedTagFilter === null ? "secondary" : "outline"}
-                size="sm"
-                className="h-6 text-xs"
-                onClick={() => setSelectedTagFilter(null)}
-              >
-                全部
-              </Button>
-              {allTags.map((tag) => (
-                <Button
-                  key={tag.id}
-                  variant={selectedTagFilter === tag.id ? "secondary" : "outline"}
-                  size="sm"
-                  className="h-6 text-xs"
-                  onClick={() => setSelectedTagFilter(tag.id)}
-                  style={{
-                    backgroundColor: selectedTagFilter === tag.id ? `${tag.color}20` : undefined,
-                    color: selectedTagFilter === tag.id ? tag.color : undefined,
-                    borderColor: selectedTagFilter === tag.id ? tag.color : undefined,
-                  }}
-                >
-                  {tag.name}
+            <Collapsible open={isTagFilterExpanded} onOpenChange={setIsTagFilterExpanded}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 px-2 gap-1.5 text-xs">
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>筛选</span>
+                  <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                    {allTags.length}
+                  </Badge>
+                  {selectedTagFilter && (
+                    <Badge 
+                      variant="outline" 
+                      className="h-5 px-1.5 text-xs"
+                      style={{
+                        backgroundColor: `${allTags.find(t => t.id === selectedTagFilter)?.color}20`,
+                        color: allTags.find(t => t.id === selectedTagFilter)?.color,
+                        borderColor: allTags.find(t => t.id === selectedTagFilter)?.color,
+                      }}
+                    >
+                      {allTags.find(t => t.id === selectedTagFilter)?.name}
+                    </Badge>
+                  )}
+                  {isTagFilterExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </Button>
-              ))}
-            </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <div className="flex flex-wrap gap-1.5 md:gap-2 items-center">
+                  <Button
+                    variant={selectedTagFilter === null ? "secondary" : "outline"}
+                    size="sm"
+                    className="h-6 text-xs"
+                    onClick={() => {
+                      setSelectedTagFilter(null);
+                      setIsTagFilterExpanded(false);
+                    }}
+                  >
+                    全部
+                  </Button>
+                  {allTags.map((tag) => (
+                    <Button
+                      key={tag.id}
+                      variant={selectedTagFilter === tag.id ? "secondary" : "outline"}
+                      size="sm"
+                      className="h-6 text-xs"
+                      onClick={() => {
+                        setSelectedTagFilter(tag.id);
+                        setIsTagFilterExpanded(false);
+                      }}
+                      style={{
+                        backgroundColor: selectedTagFilter === tag.id ? `${tag.color}20` : undefined,
+                        color: selectedTagFilter === tag.id ? tag.color : undefined,
+                        borderColor: selectedTagFilter === tag.id ? tag.color : undefined,
+                      }}
+                    >
+                      {tag.name}
+                    </Button>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           )}
         </div>
       </header>
