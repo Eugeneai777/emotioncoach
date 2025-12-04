@@ -172,6 +172,8 @@ export default function VoiceCloneSetup() {
     }
   };
 
+  const TOTAL_REMINDERS = 288; // 9 emotions × 32 reminders
+
   const generateAllReminders = async () => {
     if (!user) return;
     setIsGenerating(true);
@@ -179,7 +181,7 @@ export default function VoiceCloneSetup() {
 
     try {
       const progressInterval = setInterval(() => {
-        setGenerationProgress(prev => Math.min(prev + 3, 95));
+        setGenerationProgress(prev => Math.min(prev + 0.3, 95));
       }, 1000);
 
       const { data, error } = await supabase.functions.invoke('generate-all-reminders');
@@ -188,8 +190,8 @@ export default function VoiceCloneSetup() {
       if (error) throw error;
 
       setGenerationProgress(100);
-      setGeneratedCount(data.generated || 32);
-      toast({ title: "语音生成完成！", description: `成功生成 ${data.generated} 条语音提醒` });
+      setGeneratedCount(data.generated || TOTAL_REMINDERS);
+      toast({ title: "语音生成完成！", description: `成功生成 ${data.generated}/${TOTAL_REMINDERS} 条语音提醒` });
 
       setTimeout(() => navigate('/panic-voice-settings'), 1500);
     } catch (error: unknown) {
@@ -291,23 +293,23 @@ export default function VoiceCloneSetup() {
         <Card className="p-5 bg-white/70 backdrop-blur border-teal-200/50">
           <div className="flex items-center gap-2 mb-4">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${hasVoiceClone ? 'bg-gradient-to-br from-teal-400 to-cyan-500' : 'bg-gray-300'}`}>2</div>
-            <h2 className={`font-semibold ${hasVoiceClone ? 'text-teal-800' : 'text-gray-400'}`}>生成32条语音提醒</h2>
-            {generatedCount >= 32 && <span className="ml-auto text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full">✓ 已生成</span>}
+            <h2 className={`font-semibold ${hasVoiceClone ? 'text-teal-800' : 'text-gray-400'}`}>生成288条语音提醒</h2>
+            {generatedCount >= 288 && <span className="ml-auto text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full">✓ 已生成</span>}
           </div>
 
           {hasVoiceClone ? (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">使用你的声音克隆，一键生成全部32条恐慌缓解语音提醒。</p>
+              <p className="text-sm text-muted-foreground">使用你的声音克隆，一键生成全部9种情绪×32条语音提醒。</p>
               {isGenerating && (
                 <div className="space-y-2">
                   <Progress value={generationProgress} className="h-2" />
-                  <p className="text-xs text-center text-muted-foreground">正在生成语音... {generationProgress}%</p>
+                  <p className="text-xs text-center text-muted-foreground">正在生成语音... {Math.round(generationProgress)}%（约需5-10分钟）</p>
                 </div>
               )}
               <Button onClick={generateAllReminders} disabled={isGenerating} className="w-full bg-gradient-to-r from-teal-500 to-cyan-500">
-                {isGenerating ? '生成中...' : <><Sparkles className="w-4 h-4 mr-2" />用我的声音生成32条语音</>}
+                {isGenerating ? '生成中...' : <><Sparkles className="w-4 h-4 mr-2" />用我的声音生成288条语音</>}
               </Button>
-              {generatedCount > 0 && !isGenerating && <p className="text-xs text-center text-muted-foreground">已生成 {generatedCount}/32 条语音</p>}
+              {generatedCount > 0 && !isGenerating && <p className="text-xs text-center text-muted-foreground">已生成 {generatedCount}/288 条语音</p>}
             </div>
           ) : (
             <p className="text-sm text-gray-400 text-center py-4">请先完成步骤1，录制你的声音样本</p>
@@ -316,9 +318,9 @@ export default function VoiceCloneSetup() {
 
         {/* Quick Generate without Clone */}
         <Card className="p-4 bg-white/50 backdrop-blur border-teal-200/30">
-          <p className="text-sm text-muted-foreground text-center mb-3">或者使用预设AI温柔女声快速生成</p>
+          <p className="text-sm text-muted-foreground text-center mb-3">或者使用预设AI温柔女声快速生成全部288条语音</p>
           <Button variant="outline" onClick={generateAllReminders} disabled={isGenerating || isCreatingClone} className="w-full">
-            <Volume2 className="w-4 h-4 mr-2" />使用预设女声生成
+            <Volume2 className="w-4 h-4 mr-2" />使用预设女声生成288条语音
           </Button>
         </Card>
       </div>

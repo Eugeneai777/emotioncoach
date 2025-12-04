@@ -213,14 +213,15 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
     setIsLoadingAudio(false);
   }, []);
 
-  // 加载用户录音
+  // 加载用户录音（按情绪类型过滤）
   const loadUserRecordings = useCallback(async () => {
     if (!user?.id) return;
     
     const { data, error } = await supabase
       .from('user_voice_recordings')
       .select('reminder_index, storage_path')
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .eq('emotion_type', emotionType.id);
 
     if (!error && data) {
       const recordingsMap = new Map<number, string>();
@@ -229,7 +230,7 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
       });
       setUserRecordings(recordingsMap);
     }
-  }, [user?.id]);
+  }, [user?.id, emotionType.id]);
 
   // 播放用户录音
   const playUserRecording = useCallback(async (reminderIndex: number) => {
