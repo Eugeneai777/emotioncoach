@@ -17,7 +17,8 @@ import CampSettings from "@/components/CampSettings";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { useToast } from "@/hooks/use-toast";
 import { usePartner } from "@/hooks/usePartner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
+import { generateApiDocWord } from "@/utils/generateApiDocWord";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -198,7 +199,7 @@ export default function Settings() {
                 </div>
 
                 {isAdmin && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <Button
                       onClick={() => navigate("/admin")}
                       className="w-full"
@@ -206,6 +207,20 @@ export default function Settings() {
                     >
                       <span className="mr-2">🔐</span>
                       进入管理后台
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        generateApiDocWord();
+                        toast({
+                          title: "正在生成文档",
+                          description: "Word文档将自动下载 📄",
+                        });
+                      }}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      下载API接口文档
                     </Button>
                     <p className="text-xs md:text-sm text-muted-foreground">
                       管理员专属功能
