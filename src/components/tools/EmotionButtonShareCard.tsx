@@ -9,15 +9,12 @@ const EmotionButtonShareCard = forwardRef<HTMLDivElement, EmotionButtonShareCard
   ({ partnerCode }, ref) => {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
-    // 使用正式域名，确保分享二维码指向稳定地址
-    const PRODUCTION_DOMAIN = 'https://www.eugeneaip.cn';
-    
     useEffect(() => {
       const generateQR = async () => {
         try {
           const targetUrl = partnerCode 
-            ? `${PRODUCTION_DOMAIN}/energy-studio?ref=${partnerCode}`
-            : `${PRODUCTION_DOMAIN}/energy-studio`;
+            ? `${window.location.origin}/energy-studio?ref=${partnerCode}`
+            : `${window.location.origin}/energy-studio`;
           const url = await QRCode.toDataURL(targetUrl, {
             width: 120,
             margin: 1,
