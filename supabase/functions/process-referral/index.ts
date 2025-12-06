@@ -7,18 +7,47 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { referred_user_id, partner_code } = await req.json();
-
-    if (!referred_user_id || !partner_code) {
+    // 验证 JWT
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    // 用 anon key 验证用户身份
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('❌ 认证失败:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { partner_code } = await req.json();
+
+    if (!partner_code) {
+      return new Response(
+        JSON.stringify({ error: 'Missing partner_code' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 只能为自己处理推荐关系
+    const referred_user_id = user.id;
+    console.log(`📝 处理推荐: 用户 ${referred_user_id} 使用推广码 ${partner_code}`);
+
+    // 使用 service role 进行数据库操作
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // 1. 验证推广码，查找合伙人
     const { data: partner, error: partnerError } = await supabase
@@ -33,6 +62,14 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Invalid partner code' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 防止自推荐
+    if (partner.user_id === referred_user_id) {
+      return new Response(
+        JSON.stringify({ error: 'Cannot refer yourself' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -102,6 +139,8 @@ Deno.serve(async (req) => {
           .eq('id', parentReferral.partner_id);
       }
     }
+
+    console.log(`✅ 推荐关系创建成功: ${referred_user_id} → ${partner.partner_code}`);
 
     return new Response(
       JSON.stringify({ 
