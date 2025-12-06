@@ -86,10 +86,15 @@ const VoiceCustomerSupport: React.FC<VoiceCustomerSupportProps> = ({ onClose }) 
       const userText = transcriptionData.text;
       setMessages(prev => [...prev, { role: 'user', content: userText }]);
 
-      // Step 2: Get AI response
+      // Step 2: Get AI response - build messages array from conversation history
+      const conversationMessages = [
+        ...messages.map(m => ({ role: m.role, content: m.content })),
+        { role: 'user', content: userText }
+      ];
+      
       const { data: supportData, error: supportError } = await supabase.functions.invoke('customer-support', {
         body: { 
-          message: userText,
+          messages: conversationMessages,
           sessionId 
         }
       });
