@@ -15,6 +15,8 @@ import { EnergyStudioToolsManagement } from "@/components/admin/EnergyStudioTool
 import { PartnerManagement } from "@/components/admin/PartnerManagement";
 import { PackagesManagement } from "@/components/admin/PackagesManagement";
 import { CoachTemplatesManagement } from "@/components/admin/CoachTemplatesManagement";
+import KnowledgeBaseManagement from "@/components/admin/KnowledgeBaseManagement";
+import CustomerServiceManagement from "@/components/admin/CustomerServiceManagement";
 
 export default function Admin() {
   const { user, loading } = useAuth();
@@ -71,7 +73,7 @@ export default function Admin() {
         </div>
         
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-10">
+          <TabsList className="flex flex-wrap gap-1">
             <TabsTrigger value="users">用户账户</TabsTrigger>
             <TabsTrigger value="orders">订单管理</TabsTrigger>
             <TabsTrigger value="usage">使用记录</TabsTrigger>
@@ -82,6 +84,8 @@ export default function Admin() {
             <TabsTrigger value="partners">合伙人管理</TabsTrigger>
             <TabsTrigger value="packages">套餐权益</TabsTrigger>
             <TabsTrigger value="coaches">教练模板</TabsTrigger>
+            <TabsTrigger value="knowledge">知识库</TabsTrigger>
+            <TabsTrigger value="service">客服管理</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -122,6 +126,14 @@ export default function Admin() {
 
           <TabsContent value="coaches">
             <CoachTemplatesManagement />
+          </TabsContent>
+
+          <TabsContent value="knowledge">
+            <KnowledgeBaseManagement />
+          </TabsContent>
+
+          <TabsContent value="service">
+            <CustomerServiceManagement />
           </TabsContent>
         </Tabs>
       </div>
