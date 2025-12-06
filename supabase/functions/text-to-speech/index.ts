@@ -22,8 +22,8 @@ serve(async (req) => {
       throw new Error('ELEVENLABS_API_KEY is not configured');
     }
 
-    // 使用温柔的中文女声 - Charlotte (温柔) 或 Lily (柔和)
-    const selectedVoiceId = voice_id || 'XB0fDUnXU5powFXDhCwa'; // Charlotte
+    // 使用温暖的中文男声 - Brian
+    const selectedVoiceId = voice_id || 'nPczCjzI2devNBz1zQrb'; // Brian 温暖男声
 
     console.log('Generating speech for text:', text.substring(0, 50) + '...');
 
