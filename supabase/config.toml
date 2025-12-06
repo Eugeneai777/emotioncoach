@@ -185,3 +185,6 @@ verify_jwt = false
 
 [functions.emotion-button-api]
 verify_jwt = false
+
+[functions.data-api]
+verify_jwt = false

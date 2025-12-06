@@ -51,6 +51,7 @@ import PanicVoiceSettings from "./pages/PanicVoiceSettings";
 import VoiceCloneSetup from "./pages/VoiceCloneSetup";
 import EmotionButtonIntro from "./pages/EmotionButtonIntro";
 import EmotionButtonApiDocs from "./pages/EmotionButtonApiDocs";
+import DataApiDocs from "./pages/DataApiDocs";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
 import { Navigate } from "react-router-dom";
 
@@ -110,6 +111,7 @@ const App = () => (
           <Route path="/voice-clone-setup" element={<VoiceCloneSetup />} />
           <Route path="/emotion-button-intro" element={<EmotionButtonIntro />} />
           <Route path="/emotion-button-api" element={<EmotionButtonApiDocs />} />
+          <Route path="/data-api" element={<DataApiDocs />} />
           <Route path="/coach/:coachKey" element={<DynamicCoach />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
