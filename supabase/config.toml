@@ -82,7 +82,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.analyze-user-behavior]
-verify_jwt = false
+verify_jwt = true
 
 [functions.trigger-notifications]
 verify_jwt = false
@@ -124,7 +124,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.admin-recharge]
-verify_jwt = false
+verify_jwt = true
 
 [functions.recommend-posts]
 verify_jwt = false
@@ -145,10 +145,10 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.calculate-commission]
-verify_jwt = false
+verify_jwt = true
 
 [functions.confirm-commissions]
-verify_jwt = false
+verify_jwt = true
 
 [functions.partner-withdrawal]
 verify_jwt = true
