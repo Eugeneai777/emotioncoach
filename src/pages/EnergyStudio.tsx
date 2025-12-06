@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Sparkles, Info } from "lucide-react";
+import { ArrowLeft, Sparkles, Info, Headphones, X } from "lucide-react";
 import * as Icons from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { categories, getCategoryConfig } from "@/config/energyStudioTools";
@@ -26,6 +26,8 @@ import { RelationshipTracker } from "@/components/tools/RelationshipTracker";
 import { EnergyDeclaration } from "@/components/tools/EnergyDeclaration";
 import { CoachSpaceContent } from "@/components/coach/CoachSpaceContent";
 import SafetyButtonsGrid from "@/components/tools/SafetyButtonsGrid";
+import VoiceCustomerSupport from "@/components/VoiceCustomerSupport";
+
 interface ToolCard {
   id: string;
   tool_id: string;
@@ -45,6 +47,7 @@ const EnergyStudio = () => {
   const [primaryTab, setPrimaryTab] = useState<"coach" | "tools" | "courses" | "camp" | "partner">("tools");
   const [activeTab, setActiveTab] = useState<"emotion" | "exploration" | "management">("emotion");
   const [activeTool, setActiveTool] = useState<string | null>(null);
+  const [showVoiceSupport, setShowVoiceSupport] = useState(false);
 
   // 根据 URL hash 设置初始 tab
   useEffect(() => {
@@ -276,6 +279,24 @@ const EnergyStudio = () => {
           </>}
           </>}
       </main>
+
+      {/* Floating Voice Support Button */}
+      <Button
+        onClick={() => setShowVoiceSupport(true)}
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-xl bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 z-50"
+        size="icon"
+      >
+        <Headphones className="w-6 h-6" />
+      </Button>
+
+      {/* Voice Support Modal */}
+      {showVoiceSupport && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <VoiceCustomerSupport onClose={() => setShowVoiceSupport(false)} />
+          </div>
+        </div>
+      )}
     </div>;
 };
 export default EnergyStudio;
