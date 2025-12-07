@@ -12,15 +12,10 @@ export default function YoujinPartnerIntro() {
     const level = youjinPartnerLevels.find(l => l.level === levelId);
     if (!level) return;
 
-    const totalAmount = level.minPrepurchase * 9.9;
-    toast.success(`即将支付 ¥${totalAmount.toFixed(2)}，成为${level.name}`);
+    toast.success(`即将支付 ¥${level.price}，成为${level.name}`);
     
     // TODO: 集成支付接口
     // navigate to payment page or trigger payment modal
-  };
-
-  const getPrice = (level: typeof youjinPartnerLevels[0]) => {
-    return (level.minPrepurchase * 9.9).toFixed(2);
   };
 
   return (
@@ -79,7 +74,7 @@ export default function YoujinPartnerIntro() {
               <div>
                 <p className="font-medium">等级越高佣金越高</p>
                 <p className="text-sm text-muted-foreground">
-                  L1享20%，L2享40%，L3享50%+二级10%
+                  L1享20%，L2享35%，L3享50%+二级10%
                 </p>
               </div>
             </div>
@@ -120,8 +115,8 @@ export default function YoujinPartnerIntro() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-3xl font-bold text-orange-600">¥{getPrice(level)}</p>
-                      <p className="text-sm text-muted-foreground">{level.minPrepurchase}份 × ¥9.9</p>
+                      <p className="text-3xl font-bold text-orange-600">¥{level.price}</p>
+                      <p className="text-sm text-muted-foreground">{level.minPrepurchase}份体验包分发权</p>
                     </div>
                   </div>
 

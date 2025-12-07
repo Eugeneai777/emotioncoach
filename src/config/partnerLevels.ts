@@ -1,6 +1,7 @@
 export interface PartnerLevel {
   level: string;
   name: string;
+  price: number;
   minPrepurchase: number;
   commissionRateL1: number;
   commissionRateL2: number;
@@ -14,10 +15,11 @@ export const youjinPartnerLevels: PartnerLevel[] = [
   {
     level: 'L1',
     name: '初级合伙人',
+    price: 792,
     minPrepurchase: 100,
     commissionRateL1: 0.20,
     commissionRateL2: 0,
-    description: '预购100份体验包',
+    description: '成为初级合伙人',
     benefits: [
       '全产品20%佣金',
       '专属推广二维码',
@@ -30,12 +32,13 @@ export const youjinPartnerLevels: PartnerLevel[] = [
   {
     level: 'L2',
     name: '高级合伙人',
+    price: 3217,
     minPrepurchase: 500,
-    commissionRateL1: 0.40,
+    commissionRateL1: 0.35,
     commissionRateL2: 0,
-    description: '预购500份体验包',
+    description: '成为高级合伙人',
     benefits: [
-      '全产品40%佣金',
+      '全产品35%佣金',
       '专属推广二维码',
       '500份体验包分发权',
       '优先活动参与权',
@@ -47,10 +50,11 @@ export const youjinPartnerLevels: PartnerLevel[] = [
   {
     level: 'L3',
     name: '钻石合伙人',
+    price: 4950,
     minPrepurchase: 1000,
     commissionRateL1: 0.50,
     commissionRateL2: 0.10,
-    description: '预购1000份体验包',
+    description: '成为钻石合伙人',
     benefits: [
       '全产品50%佣金',
       '二级10%佣金',
@@ -67,6 +71,7 @@ export const youjinPartnerLevels: PartnerLevel[] = [
 export const bloomPartnerLevel: PartnerLevel = {
   level: 'L0',
   name: '绽放合伙人',
+  price: 0,
   minPrepurchase: 0,
   commissionRateL1: 0.30,
   commissionRateL2: 0.10,
