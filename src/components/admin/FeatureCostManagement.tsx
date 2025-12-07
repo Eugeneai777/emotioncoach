@@ -9,25 +9,17 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/hooks/use-toast';
-import { Save, Loader2, Coins, Gift, Package } from 'lucide-react';
+import { toast } from 'sonner';
+import { Save, Loader2, Users, Tent, Wrench, BookOpen, Sparkles } from 'lucide-react';
 
-interface FeatureCostRule {
+interface FeatureItem {
   id: string;
-  feature_type: string;
-  feature_name: string;
-  default_cost: number;
+  category: string;
+  item_key: string;
+  item_name: string;
   description: string | null;
   is_active: boolean;
   display_order: number;
-}
-
-interface PackageFreeQuota {
-  id: string;
-  package_id: string;
-  feature_type: string;
-  free_quota: number;
-  period: string;
 }
 
 interface PackageInfo {
@@ -36,28 +28,45 @@ interface PackageInfo {
   package_key: string;
 }
 
+interface PackageFeatureSetting {
+  id: string;
+  package_id: string;
+  feature_id: string;
+  is_enabled: boolean;
+  cost_per_use: number;
+  free_quota: number;
+  free_quota_period: string;
+}
+
+const categoryConfig: Record<string, { label: string; icon: typeof Users; color: string }> = {
+  coach: { label: '教练', icon: Users, color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+  training_camp: { label: '训练营', icon: Tent, color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
+  tool: { label: '工具', icon: Wrench, color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
+  course: { label: '课程', icon: BookOpen, color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' },
+};
+
 const FeatureCostManagement = () => {
   const queryClient = useQueryClient();
-  const [editingCosts, setEditingCosts] = useState<Record<string, number>>({});
-  const [editingQuotas, setEditingQuotas] = useState<Record<string, { quota: number; period: string }>>({});
   const [selectedPackage, setSelectedPackage] = useState<string>('');
+  const [editingSettings, setEditingSettings] = useState<Record<string, Partial<PackageFeatureSetting>>>({});
 
-  // Fetch feature cost rules
-  const { data: costRules, isLoading: loadingRules } = useQuery({
-    queryKey: ['feature-cost-rules'],
+  // Fetch feature items (new table)
+  const { data: featureItems = [], isLoading: loadingFeatures } = useQuery({
+    queryKey: ['feature-items'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('feature_cost_rules')
+        .from('feature_items')
         .select('*')
+        .order('category')
         .order('display_order');
       if (error) throw error;
-      return data as FeatureCostRule[];
+      return data as FeatureItem[];
     }
   });
 
-  // Fetch packages
-  const { data: packages } = useQuery({
-    queryKey: ['packages-for-quotas'],
+  // Fetch packages (membership only)
+  const { data: packages = [] } = useQuery({
+    queryKey: ['packages-for-settings'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('packages')
@@ -69,129 +78,105 @@ const FeatureCostManagement = () => {
     }
   });
 
-  // Fetch free quotas for selected package
-  const { data: freeQuotas, isLoading: loadingQuotas } = useQuery({
-    queryKey: ['package-free-quotas', selectedPackage],
+  // Fetch package feature settings
+  const { data: packageSettings = [] } = useQuery({
+    queryKey: ['package-feature-settings', selectedPackage],
     queryFn: async () => {
       if (!selectedPackage) return [];
       const { data, error } = await supabase
-        .from('package_free_quotas')
+        .from('package_feature_settings')
         .select('*')
         .eq('package_id', selectedPackage);
       if (error) throw error;
-      return data as PackageFreeQuota[];
+      return data as PackageFeatureSetting[];
     },
     enabled: !!selectedPackage
   });
 
-  // Update cost rule mutation
-  const updateCostMutation = useMutation({
-    mutationFn: async ({ id, cost, isActive }: { id: string; cost?: number; isActive?: boolean }) => {
-      const updates: Partial<FeatureCostRule> = {};
-      if (cost !== undefined) updates.default_cost = cost;
-      if (isActive !== undefined) updates.is_active = isActive;
-      
+  // Update feature item mutation
+  const updateFeatureMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<FeatureItem> }) => {
       const { error } = await supabase
-        .from('feature_cost_rules')
+        .from('feature_items')
         .update(updates)
         .eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['feature-cost-rules'] });
-      toast({ title: '已更新扣费规则' });
+      queryClient.invalidateQueries({ queryKey: ['feature-items'] });
+      toast.success('功能更新成功');
     },
-    onError: (error) => {
-      toast({ title: '更新失败', description: error.message, variant: 'destructive' });
-    }
+    onError: () => toast.error('更新失败'),
   });
 
-  // Save/update free quota mutation
-  const saveQuotaMutation = useMutation({
-    mutationFn: async ({ packageId, featureType, quota, period }: { 
-      packageId: string; 
-      featureType: string; 
-      quota: number; 
-      period: string;
-    }) => {
-      // Check if exists
-      const { data: existing } = await supabase
-        .from('package_free_quotas')
-        .select('id')
-        .eq('package_id', packageId)
-        .eq('feature_type', featureType)
-        .single();
-
-      if (existing) {
+  // Save package feature settings mutation
+  const saveSettingsMutation = useMutation({
+    mutationFn: async ({ featureId, settings }: { featureId: string; settings: Partial<PackageFeatureSetting> }) => {
+      const existingSetting = packageSettings.find(s => s.feature_id === featureId);
+      
+      if (existingSetting) {
         const { error } = await supabase
-          .from('package_free_quotas')
-          .update({ free_quota: quota, period })
-          .eq('id', existing.id);
+          .from('package_feature_settings')
+          .update(settings)
+          .eq('id', existingSetting.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from('package_free_quotas')
-          .insert({ package_id: packageId, feature_type: featureType, free_quota: quota, period });
+          .from('package_feature_settings')
+          .insert({
+            package_id: selectedPackage,
+            feature_id: featureId,
+            ...settings,
+          });
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['package-free-quotas'] });
-      toast({ title: '已保存免费额度' });
+      queryClient.invalidateQueries({ queryKey: ['package-feature-settings', selectedPackage] });
+      toast.success('配置保存成功');
     },
-    onError: (error) => {
-      toast({ title: '保存失败', description: error.message, variant: 'destructive' });
-    }
+    onError: () => toast.error('保存失败'),
   });
 
-  const handleCostChange = (id: string, value: string) => {
-    const cost = parseInt(value) || 0;
-    setEditingCosts(prev => ({ ...prev, [id]: cost }));
+  const getSettingForFeature = (featureId: string): Partial<PackageFeatureSetting> => {
+    const existing = packageSettings.find(s => s.feature_id === featureId);
+    const editing = editingSettings[featureId];
+    return {
+      is_enabled: editing?.is_enabled ?? existing?.is_enabled ?? true,
+      cost_per_use: editing?.cost_per_use ?? existing?.cost_per_use ?? 0,
+      free_quota: editing?.free_quota ?? existing?.free_quota ?? 0,
+      free_quota_period: editing?.free_quota_period ?? existing?.free_quota_period ?? 'monthly',
+    };
   };
 
-  const handleSaveCost = (rule: FeatureCostRule) => {
-    const newCost = editingCosts[rule.id] ?? rule.default_cost;
-    updateCostMutation.mutate({ id: rule.id, cost: newCost });
-    setEditingCosts(prev => {
+  const updateEditingSetting = (featureId: string, field: string, value: any) => {
+    setEditingSettings(prev => ({
+      ...prev,
+      [featureId]: {
+        ...prev[featureId],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleSaveSetting = (featureId: string) => {
+    const setting = getSettingForFeature(featureId);
+    saveSettingsMutation.mutate({ featureId, settings: setting });
+    setEditingSettings(prev => {
       const next = { ...prev };
-      delete next[rule.id];
+      delete next[featureId];
       return next;
     });
   };
 
-  const handleToggleActive = (rule: FeatureCostRule) => {
-    updateCostMutation.mutate({ id: rule.id, isActive: !rule.is_active });
-  };
+  // Group features by category
+  const groupedFeatures = featureItems.reduce((acc, item) => {
+    if (!acc[item.category]) acc[item.category] = [];
+    acc[item.category].push(item);
+    return acc;
+  }, {} as Record<string, FeatureItem[]>);
 
-  const getQuotaForFeature = (featureType: string) => {
-    return freeQuotas?.find(q => q.feature_type === featureType);
-  };
-
-  const handleQuotaChange = (featureType: string, quota: number, period: string) => {
-    setEditingQuotas(prev => ({ ...prev, [featureType]: { quota, period } }));
-  };
-
-  const handleSaveQuota = (featureType: string) => {
-    const edit = editingQuotas[featureType];
-    const existing = getQuotaForFeature(featureType);
-    const quota = edit?.quota ?? existing?.free_quota ?? 0;
-    const period = edit?.period ?? existing?.period ?? 'monthly';
-
-    saveQuotaMutation.mutate({
-      packageId: selectedPackage,
-      featureType,
-      quota,
-      period
-    });
-
-    setEditingQuotas(prev => {
-      const next = { ...prev };
-      delete next[featureType];
-      return next;
-    });
-  };
-
-  if (loadingRules) {
+  if (loadingFeatures) {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-6 w-6 animate-spin" />
@@ -201,206 +186,200 @@ const FeatureCostManagement = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="costs">
-        <TabsList>
-          <TabsTrigger value="costs" className="gap-2">
-            <Coins className="h-4 w-4" />
-            扣费规则
-          </TabsTrigger>
-          <TabsTrigger value="quotas" className="gap-2">
-            <Gift className="h-4 w-4" />
-            免费额度
-          </TabsTrigger>
-        </TabsList>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            功能权益管理
+          </CardTitle>
+          <CardDescription>
+            管理4大功能类别（教练/训练营/工具/课程）及套餐权益配置
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="features">
+            <TabsList className="mb-4">
+              <TabsTrigger value="features">功能管理</TabsTrigger>
+              <TabsTrigger value="packages">套餐权益配置</TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="costs" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Coins className="h-5 w-5" />
-                功能扣费点数配置
-              </CardTitle>
-              <CardDescription>
-                设置每个功能使用时扣除的点数，0 表示免费
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>功能类型</TableHead>
-                    <TableHead>功能名称</TableHead>
-                    <TableHead>说明</TableHead>
-                    <TableHead className="w-24">扣费点数</TableHead>
-                    <TableHead className="w-20">状态</TableHead>
-                    <TableHead className="w-20">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {costRules?.map((rule) => {
-                    const currentCost = editingCosts[rule.id] ?? rule.default_cost;
-                    const hasChanges = editingCosts[rule.id] !== undefined && editingCosts[rule.id] !== rule.default_cost;
-                    
-                    return (
-                      <TableRow key={rule.id}>
-                        <TableCell>
-                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                            {rule.feature_type}
-                          </code>
-                        </TableCell>
-                        <TableCell className="font-medium">{rule.feature_name}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {rule.description}
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={currentCost}
-                            onChange={(e) => handleCostChange(rule.id, e.target.value)}
-                            className="w-20 h-8"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Switch
-                            checked={rule.is_active}
-                            onCheckedChange={() => handleToggleActive(rule)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {hasChanges && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleSaveCost(rule)}
-                              disabled={updateCostMutation.isPending}
-                            >
-                              <Save className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="quotas" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Gift className="h-5 w-5" />
-                套餐免费额度配置
-              </CardTitle>
-              <CardDescription>
-                为不同套餐设置功能免费使用次数
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <Package className="h-4 w-4 text-muted-foreground" />
-                <Select value={selectedPackage} onValueChange={setSelectedPackage}>
-                  <SelectTrigger className="w-64">
-                    <SelectValue placeholder="选择套餐" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {packages?.map((pkg) => (
-                      <SelectItem key={pkg.id} value={pkg.id}>
-                        {pkg.package_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedPackage && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>功能类型</TableHead>
-                      <TableHead>功能名称</TableHead>
-                      <TableHead className="w-24">免费次数</TableHead>
-                      <TableHead className="w-32">周期</TableHead>
-                      <TableHead className="w-20">操作</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {costRules?.map((rule) => {
-                      const existing = getQuotaForFeature(rule.feature_type);
-                      const editing = editingQuotas[rule.feature_type];
-                      const currentQuota = editing?.quota ?? existing?.free_quota ?? 0;
-                      const currentPeriod = editing?.period ?? existing?.period ?? 'monthly';
-                      const hasChanges = editing !== undefined;
+            <TabsContent value="features">
+              <div className="space-y-6">
+                {Object.entries(categoryConfig).map(([category, config]) => {
+                  const CategoryIcon = config.icon;
+                  const items = groupedFeatures[category] || [];
+                  
+                  return (
+                    <div key={category} className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <CategoryIcon className="h-5 w-5" />
+                        <h3 className="font-semibold">{config.label}</h3>
+                        <Badge className={config.color}>{items.length}项</Badge>
+                      </div>
                       
-                      return (
-                        <TableRow key={rule.id}>
-                          <TableCell>
-                            <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                              {rule.feature_type}
-                            </code>
-                          </TableCell>
-                          <TableCell className="font-medium">{rule.feature_name}</TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min="0"
-                              value={currentQuota}
-                              onChange={(e) => handleQuotaChange(
-                                rule.feature_type,
-                                parseInt(e.target.value) || 0,
-                                currentPeriod
-                              )}
-                              className="w-20 h-8"
+                      <div className="grid gap-2">
+                        {items.map(item => (
+                          <div
+                            key={item.id}
+                            className="flex items-center justify-between p-3 border rounded-lg bg-card"
+                          >
+                            <div className="flex-1">
+                              <div className="font-medium">{item.item_name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                <code className="text-xs bg-muted px-1 rounded">{item.item_key}</code>
+                                {item.description && ` · ${item.description}`}
+                              </div>
+                            </div>
+                            <Switch
+                              checked={item.is_active}
+                              onCheckedChange={(checked) =>
+                                updateFeatureMutation.mutate({ id: item.id, updates: { is_active: checked } })
+                              }
                             />
-                          </TableCell>
-                          <TableCell>
-                            <Select
-                              value={currentPeriod}
-                              onValueChange={(v) => handleQuotaChange(
-                                rule.feature_type,
-                                currentQuota,
-                                v
-                              )}
-                            >
-                              <SelectTrigger className="h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="daily">每日</SelectItem>
-                                <SelectItem value="monthly">每月</SelectItem>
-                                <SelectItem value="lifetime">永久</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            {hasChanges && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleSaveQuota(rule.feature_type)}
-                                disabled={saveQuotaMutation.isPending}
-                              >
-                                <Save className="h-3 w-3" />
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
+                          </div>
+                        ))}
+                        {items.length === 0 && (
+                          <div className="text-sm text-muted-foreground p-3">暂无功能项</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="packages">
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium">选择套餐:</span>
+                  <Select value={selectedPackage} onValueChange={setSelectedPackage}>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="选择套餐" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {packages.map(pkg => (
+                        <SelectItem key={pkg.id} value={pkg.id}>
+                          {pkg.package_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedPackage ? (
+                  <div className="space-y-6">
+                    {Object.entries(categoryConfig).map(([category, config]) => {
+                      const CategoryIcon = config.icon;
+                      const items = groupedFeatures[category] || [];
+                      
+                      if (items.length === 0) return null;
+
+                      return (
+                        <div key={category} className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <CategoryIcon className="h-5 w-5" />
+                            <h3 className="font-semibold">{config.label}</h3>
+                          </div>
+                          
+                          <div className="border rounded-lg overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>功能</TableHead>
+                                  <TableHead className="text-center w-20">启用</TableHead>
+                                  <TableHead className="text-center w-24">扣费点数</TableHead>
+                                  <TableHead className="text-center w-24">免费额度</TableHead>
+                                  <TableHead className="text-center w-28">额度周期</TableHead>
+                                  <TableHead className="text-center w-16">操作</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {items.map(item => {
+                                  const setting = getSettingForFeature(item.id);
+                                  const hasChanges = !!editingSettings[item.id];
+                                  
+                                  return (
+                                    <TableRow key={item.id}>
+                                      <TableCell>
+                                        <div className="font-medium">{item.item_name}</div>
+                                      </TableCell>
+                                      <TableCell className="text-center">
+                                        <Switch
+                                          checked={setting.is_enabled}
+                                          onCheckedChange={(checked) =>
+                                            updateEditingSetting(item.id, 'is_enabled', checked)
+                                          }
+                                        />
+                                      </TableCell>
+                                      <TableCell className="text-center">
+                                        <Input
+                                          type="number"
+                                          min="0"
+                                          value={setting.cost_per_use}
+                                          onChange={(e) =>
+                                            updateEditingSetting(item.id, 'cost_per_use', parseInt(e.target.value) || 0)
+                                          }
+                                          className="w-20 text-center mx-auto h-8"
+                                        />
+                                      </TableCell>
+                                      <TableCell className="text-center">
+                                        <Input
+                                          type="number"
+                                          min="0"
+                                          value={setting.free_quota}
+                                          onChange={(e) =>
+                                            updateEditingSetting(item.id, 'free_quota', parseInt(e.target.value) || 0)
+                                          }
+                                          className="w-20 text-center mx-auto h-8"
+                                        />
+                                      </TableCell>
+                                      <TableCell className="text-center">
+                                        <Select
+                                          value={setting.free_quota_period}
+                                          onValueChange={(value) =>
+                                            updateEditingSetting(item.id, 'free_quota_period', value)
+                                          }
+                                        >
+                                          <SelectTrigger className="w-24 mx-auto h-8">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="daily">每日</SelectItem>
+                                            <SelectItem value="monthly">每月</SelectItem>
+                                            <SelectItem value="lifetime">永久</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </TableCell>
+                                      <TableCell className="text-center">
+                                        <Button
+                                          size="sm"
+                                          variant={hasChanges ? "default" : "ghost"}
+                                          onClick={() => handleSaveSetting(item.id)}
+                                          disabled={saveSettingsMutation.isPending}
+                                        >
+                                          <Save className="h-4 w-4" />
+                                        </Button>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
                       );
                     })}
-                  </TableBody>
-                </Table>
-              )}
-
-              {!selectedPackage && (
-                <div className="text-center py-8 text-muted-foreground">
-                  请先选择一个套餐来配置免费额度
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    请先选择一个套餐来配置功能权益
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

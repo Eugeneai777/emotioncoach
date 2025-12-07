@@ -49,182 +49,221 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { feature_type, source, conversationId, metadata, amount: legacyAmount } = await req.json();
+    const { feature_key, source, conversationId, metadata, amount: legacyAmount, feature_type: legacyFeatureType } = await req.json();
+    
+    // Support both feature_key (new) and feature_type (legacy)
+    const featureKey = feature_key || legacyFeatureType;
 
-    // Determine actual cost - support both new feature_type and legacy amount
-    let actualCost = legacyAmount || 1;
-    let featureName = source || 'unknown';
+    if (!featureKey && !legacyAmount) {
+      return new Response(
+        JSON.stringify({ error: 'feature_key is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    if (feature_type) {
-      // New dynamic cost system - look up cost from feature_cost_rules
-      const { data: costRule, error: costError } = await supabase
-        .from('feature_cost_rules')
-        .select('default_cost, feature_name, is_active')
-        .eq('feature_type', feature_type)
+    // 1. Try to find feature in new feature_items table
+    const { data: featureItem } = await supabase
+      .from('feature_items')
+      .select('id, item_key, item_name, is_active')
+      .eq('item_key', featureKey)
+      .single();
+
+    // 2. Get user's active subscription/package
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('package_id')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    let packageId = subscription?.package_id;
+
+    // Fallback to user_accounts if no active subscription
+    if (!packageId) {
+      const { data: account } = await supabase
+        .from('user_accounts')
+        .select('current_package_id')
+        .eq('user_id', userId)
         .single();
+      packageId = account?.current_package_id;
+    }
 
-      if (costError) {
-        console.log(`⚠️ No cost rule found for ${feature_type}, using default 1`);
-        actualCost = 1;
-      } else if (!costRule.is_active) {
-        console.log(`ℹ️ Feature ${feature_type} is inactive, skipping charge`);
+    let actualCost = legacyAmount || 1;
+    let featureName = source || featureKey || 'unknown';
+    let usedFreeQuota = false;
+    let isEnabled = true;
+    let freeQuota = 0;
+    let freeQuotaPeriod = 'monthly';
+
+    // 3. If feature exists in new system, use package_feature_settings
+    if (featureItem) {
+      featureName = featureItem.item_name;
+
+      if (!featureItem.is_active) {
+        console.log(`ℹ️ Feature ${featureKey} is globally inactive`);
         return new Response(
-          JSON.stringify({ success: true, remaining_quota: -1, message: 'Feature inactive' }),
+          JSON.stringify({ success: true, cost: 0, message: '功能已禁用' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
-      } else {
+      }
+
+      // Get package-specific settings
+      if (packageId) {
+        const { data: featureSetting } = await supabase
+          .from('package_feature_settings')
+          .select('is_enabled, cost_per_use, free_quota, free_quota_period')
+          .eq('package_id', packageId)
+          .eq('feature_id', featureItem.id)
+          .single();
+
+        if (featureSetting) {
+          isEnabled = featureSetting.is_enabled;
+          actualCost = featureSetting.cost_per_use;
+          freeQuota = featureSetting.free_quota;
+          freeQuotaPeriod = featureSetting.free_quota_period;
+        }
+      }
+
+      if (!isEnabled) {
+        return new Response(
+          JSON.stringify({ error: '您的套餐不支持此功能', allowed: false }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      // Fallback to legacy feature_cost_rules
+      console.log(`⚠️ Feature ${featureKey} not in feature_items, checking legacy rules`);
+      
+      const { data: costRule } = await supabase
+        .from('feature_cost_rules')
+        .select('default_cost, feature_name, is_active')
+        .eq('feature_type', featureKey)
+        .single();
+
+      if (costRule) {
+        if (!costRule.is_active) {
+          return new Response(
+            JSON.stringify({ success: true, cost: 0, message: 'Feature inactive' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
         actualCost = costRule.default_cost;
         featureName = costRule.feature_name;
       }
 
-      // Check for free quota if cost > 0
-      if (actualCost > 0) {
-        // Get user's active subscription and package
-        const { data: subscription } = await supabase
-          .from('subscriptions')
-          .select('package_id')
-          .eq('user_id', userId)
-          .eq('status', 'active')
-          .order('created_at', { ascending: false })
-          .limit(1)
+      // Check legacy package_free_quotas
+      if (packageId && actualCost > 0) {
+        const { data: legacyFreeQuota } = await supabase
+          .from('package_free_quotas')
+          .select('free_quota, period')
+          .eq('package_id', packageId)
+          .eq('feature_type', featureKey)
           .single();
 
-        if (subscription?.package_id) {
-          // Check for free quota for this feature
-          const { data: freeQuota } = await supabase
-            .from('package_free_quotas')
-            .select('free_quota, period')
-            .eq('package_id', subscription.package_id)
-            .eq('feature_type', feature_type)
-            .single();
-
-          if (freeQuota && freeQuota.free_quota > 0) {
-            // Get or create usage record for current period
-            const periodStart = freeQuota.period === 'monthly' 
-              ? new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
-              : freeQuota.period === 'daily'
-              ? new Date(new Date().setHours(0, 0, 0, 0)).toISOString()
-              : new Date(0).toISOString(); // lifetime
-
-            const { data: usage, error: usageError } = await supabase
-              .from('user_free_quota_usage')
-              .select('id, used_count')
-              .eq('user_id', userId)
-              .eq('feature_type', feature_type)
-              .gte('period_start', periodStart)
-              .single();
-
-            const usedCount = usage?.used_count || 0;
-
-            if (usedCount < freeQuota.free_quota) {
-              // Use free quota instead of deducting
-              console.log(`🎁 Using free quota for ${feature_type}: ${usedCount + 1}/${freeQuota.free_quota}`);
-              
-              if (usage) {
-                await supabase
-                  .from('user_free_quota_usage')
-                  .update({ used_count: usedCount + 1 })
-                  .eq('id', usage.id);
-              } else {
-                await supabase
-                  .from('user_free_quota_usage')
-                  .insert({
-                    user_id: userId,
-                    feature_type,
-                    used_count: 1,
-                    period_start: periodStart
-                  });
-              }
-
-              // Record usage but with 0 cost
-              await supabase.from('usage_records').insert({
-                user_id: userId,
-                record_type: 'conversation',
-                amount: 0,
-                source: source || feature_type,
-                conversation_id: conversationId,
-                metadata: { ...metadata, free_quota_used: true, feature_type }
-              });
-
-              // Get current remaining quota for response
-              const { data: account } = await supabase
-                .from('user_accounts')
-                .select('remaining_quota')
-                .eq('user_id', userId)
-                .single();
-
-              return new Response(
-                JSON.stringify({
-                  success: true,
-                  remaining_quota: account?.remaining_quota || 0,
-                  free_quota_used: true,
-                  free_quota_remaining: freeQuota.free_quota - usedCount - 1
-                }),
-                { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-              );
-            }
-          }
+        if (legacyFreeQuota) {
+          freeQuota = legacyFreeQuota.free_quota;
+          freeQuotaPeriod = legacyFreeQuota.period;
         }
       }
     }
 
-    // If cost is 0, skip deduction
-    if (actualCost === 0) {
-      console.log(`ℹ️ Feature ${feature_type || source} has 0 cost, skipping deduction`);
+    // 4. Check and use free quota if available
+    if (freeQuota > 0 && actualCost > 0) {
+      // Calculate period start
+      let periodStart: Date;
+      const now = new Date();
       
-      // Still record usage
-      await supabase.from('usage_records').insert({
-        user_id: userId,
-        record_type: 'conversation',
-        amount: 0,
-        source: source || feature_type,
-        conversation_id: conversationId,
-        metadata: { ...metadata, feature_type }
-      });
+      if (freeQuotaPeriod === 'daily') {
+        periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      } else if (freeQuotaPeriod === 'monthly') {
+        periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      } else {
+        // lifetime
+        periodStart = new Date('2020-01-01');
+      }
 
-      const { data: account } = await supabase
-        .from('user_accounts')
-        .select('remaining_quota')
+      const { data: usageRecord } = await supabase
+        .from('user_free_quota_usage')
+        .select('id, used_count')
         .eq('user_id', userId)
+        .eq('feature_type', featureKey)
+        .gte('period_start', periodStart.toISOString())
         .single();
 
-      return new Response(
-        JSON.stringify({ success: true, remaining_quota: account?.remaining_quota || 0 }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      const currentUsed = usageRecord?.used_count || 0;
+
+      if (currentUsed < freeQuota) {
+        usedFreeQuota = true;
+        actualCost = 0;
+
+        if (usageRecord) {
+          await supabase
+            .from('user_free_quota_usage')
+            .update({ used_count: currentUsed + 1 })
+            .eq('id', usageRecord.id);
+        } else {
+          await supabase
+            .from('user_free_quota_usage')
+            .insert({
+              user_id: userId,
+              feature_type: featureKey,
+              used_count: 1,
+              period_start: periodStart.toISOString(),
+            });
+        }
+
+        console.log(`🎁 Used free quota for ${featureKey}: ${currentUsed + 1}/${freeQuota}`);
+      }
     }
 
-    // Execute deduction
-    const { data, error: deductError } = await supabase.rpc('deduct_user_quota', {
-      p_user_id: userId,
-      p_amount: actualCost,
-    });
+    // 5. Deduct from main quota if not using free quota and cost > 0
+    if (!usedFreeQuota && actualCost > 0) {
+      const { data, error: deductError } = await supabase.rpc('deduct_user_quota', {
+        p_user_id: userId,
+        p_amount: actualCost,
+      });
 
-    if (deductError) {
-      console.error(`❌ 扣费失败: ${deductError.message}`);
-      throw new Error(`扣费失败: ${deductError.message}`);
+      if (deductError) {
+        console.error(`❌ 扣费失败: ${deductError.message}`);
+        return new Response(
+          JSON.stringify({ error: '余额不足', details: deductError.message }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`✅ 用户 ${userId} 扣费 ${actualCost} 点 (${featureName})`);
     }
 
-    // Record usage
+    // 6. Record usage
     await supabase.from('usage_records').insert({
       user_id: userId,
       record_type: 'conversation',
       amount: actualCost,
-      source: source || feature_type,
+      source: source || featureKey,
       conversation_id: conversationId,
-      metadata: { ...metadata, feature_type }
+      metadata: { ...metadata, feature_key: featureKey, free_quota_used: usedFreeQuota }
     });
 
-    console.log(`✅ 用户 ${userId} 扣费 ${actualCost} 次 (${featureName})，剩余: ${data[0].remaining_quota}`);
+    // 7. Get remaining quota
+    const { data: account } = await supabase
+      .from('user_accounts')
+      .select('remaining_quota')
+      .eq('user_id', userId)
+      .single();
 
     return new Response(
       JSON.stringify({
         success: true,
-        remaining_quota: data[0].remaining_quota,
-        cost: actualCost
+        cost: actualCost,
+        used_free_quota: usedFreeQuota,
+        feature_name: featureName,
+        remaining_quota: account?.remaining_quota || 0,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error('deduct-quota error:', error);

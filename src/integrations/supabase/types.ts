@@ -1397,6 +1397,42 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_items: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          item_key: string
+          item_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          item_key: string
+          item_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          item_key?: string
+          item_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       finance_records: {
         Row: {
           amount: number
@@ -1703,6 +1739,57 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      package_feature_settings: {
+        Row: {
+          cost_per_use: number | null
+          created_at: string | null
+          feature_id: string
+          free_quota: number | null
+          free_quota_period: string | null
+          id: string
+          is_enabled: boolean | null
+          package_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          cost_per_use?: number | null
+          created_at?: string | null
+          feature_id: string
+          free_quota?: number | null
+          free_quota_period?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          package_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          cost_per_use?: number | null
+          created_at?: string | null
+          feature_id?: string
+          free_quota?: number | null
+          free_quota_period?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          package_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_feature_settings_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "feature_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_feature_settings_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       package_features: {
         Row: {
