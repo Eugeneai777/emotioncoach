@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Sparkles, Info, Headphones, X } from "lucide-react";
+import { ArrowLeft, Sparkles, Info, Headphones, X, MessageCircle } from "lucide-react";
 import * as Icons from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { categories, getCategoryConfig } from "@/config/energyStudioTools";
@@ -27,6 +27,7 @@ import { EnergyDeclaration } from "@/components/tools/EnergyDeclaration";
 import { CoachSpaceContent } from "@/components/coach/CoachSpaceContent";
 import SafetyButtonsGrid from "@/components/tools/SafetyButtonsGrid";
 import VoiceCustomerSupport from "@/components/VoiceCustomerSupport";
+import NaturalVoiceChat from "@/components/NaturalVoiceChat";
 
 interface ToolCard {
   id: string;
@@ -48,6 +49,7 @@ const EnergyStudio = () => {
   const [activeTab, setActiveTab] = useState<"emotion" | "exploration" | "management">("emotion");
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [showVoiceSupport, setShowVoiceSupport] = useState(false);
+  const [voiceMode, setVoiceMode] = useState<'button' | 'natural'>('natural');
 
   // 根据 URL hash 设置初始 tab
   useEffect(() => {
@@ -293,7 +295,42 @@ const EnergyStudio = () => {
       {showVoiceSupport && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md">
-            <VoiceCustomerSupport onClose={() => setShowVoiceSupport(false)} />
+            {/* Mode Toggle */}
+            <div className="flex justify-center mb-4">
+              <div className="inline-flex bg-white/90 backdrop-blur rounded-full p-1 shadow-lg">
+                <Button
+                  variant={voiceMode === 'natural' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setVoiceMode('natural')}
+                  className={cn(
+                    "rounded-full gap-2",
+                    voiceMode === 'natural' && "bg-gradient-to-r from-teal-500 to-cyan-500"
+                  )}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  自然对话
+                </Button>
+                <Button
+                  variant={voiceMode === 'button' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setVoiceMode('button')}
+                  className={cn(
+                    "rounded-full gap-2",
+                    voiceMode === 'button' && "bg-gradient-to-r from-teal-500 to-cyan-500"
+                  )}
+                >
+                  <Headphones className="w-4 h-4" />
+                  按钮模式
+                </Button>
+              </div>
+            </div>
+            
+            {/* Voice Component */}
+            {voiceMode === 'natural' ? (
+              <NaturalVoiceChat onClose={() => setShowVoiceSupport(false)} />
+            ) : (
+              <VoiceCustomerSupport onClose={() => setShowVoiceSupport(false)} />
+            )}
           </div>
         </div>
       )}
