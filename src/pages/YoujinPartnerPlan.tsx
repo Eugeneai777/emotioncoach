@@ -1,12 +1,56 @@
-import { ArrowLeft, Check, X, TrendingUp, Users, Zap, Target, Heart, Brain, Sparkles, Crown, Star, Diamond } from "lucide-react";
+import { ArrowLeft, Check, X, TrendingUp, Users, Zap, Target, Heart, Brain, Sparkles, Crown, Star, Diamond, Share2, AlertTriangle, Copy, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { youjinPartnerLevels } from "@/config/partnerLevels";
+import { toast } from "sonner";
+import html2canvas from "html2canvas";
+
 const YoujinPartnerPlan = () => {
   const navigate = useNavigate();
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [isGeneratingPoster, setIsGeneratingPoster] = useState(false);
+  const posterRef = useRef<HTMLDivElement>(null);
+
+  const handleShare = () => {
+    setShowShareDialog(true);
+  };
+
+  const handleCopyLink = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    toast.success("链接已复制", { description: "可以粘贴分享给朋友" });
+    setShowShareDialog(false);
+  };
+
+  const handleGeneratePoster = async () => {
+    if (!posterRef.current) return;
+    
+    setIsGeneratingPoster(true);
+    try {
+      const canvas = await html2canvas(posterRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#fff8f0',
+        logging: false,
+      });
+      
+      const link = document.createElement('a');
+      link.download = '有劲合伙人计划.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      toast.success("海报已保存", { description: "可以分享给朋友" });
+      setShowShareDialog(false);
+    } catch (error) {
+      toast.error("生成失败", { description: "请稍后再试" });
+    } finally {
+      setIsGeneratingPoster(false);
+    }
+  };
 
   // 净利润对比数据
   const profitData = [{
@@ -49,11 +93,16 @@ const YoujinPartnerPlan = () => {
   return <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="font-semibold">有劲合伙人计划</h1>
+          </div>
+          <Button variant="ghost" size="icon" onClick={handleShare}>
+            <Share2 className="h-5 w-5" />
           </Button>
-          <h1 className="font-semibold">有劲合伙人计划</h1>
         </div>
       </div>
 
@@ -591,6 +640,21 @@ const YoujinPartnerPlan = () => {
             </CardContent>
           </Card>
 
+          {/* 收入预测免责声明 */}
+          <Card className="bg-orange-50 border-orange-300">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-orange-800">
+                  <p className="font-medium mb-1">⚠️ 收入预测免责声明</p>
+                  <p className="text-orange-700 leading-relaxed">
+                    以上所有收入数据均为基于保守假设（30%用户升级365）的估算示例，仅供参考。实际收益可能因个人推广能力、市场变化、用户转化率等因素而有所不同。我们不保证任何特定收益水平。参与合伙人计划前，请充分了解相关风险，并根据自身情况做出独立判断。
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* 净利润对比图表 */}
           <Card>
             <CardContent className="p-6">
@@ -825,8 +889,9 @@ const YoujinPartnerPlan = () => {
             <Button className="flex-1 h-14 text-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600" onClick={() => navigate('/partner/youjin-intro')}>
               了解详情并加入
             </Button>
-            <Button variant="outline" className="flex-1 h-14 text-lg border-orange-300 text-orange-600 hover:bg-orange-50" onClick={() => navigate('/packages')}>
-              先体验产品
+            <Button variant="outline" className="flex-1 h-14 text-lg border-orange-300 text-orange-600 hover:bg-orange-50" onClick={handleShare}>
+              <Share2 className="h-5 w-5 mr-2" />
+              分享给朋友
             </Button>
           </div>
         </section>
@@ -834,6 +899,154 @@ const YoujinPartnerPlan = () => {
         {/* Bottom spacing */}
         <div className="h-8" />
       </div>
+
+      {/* Share Dialog */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>分享有劲合伙人计划</DialogTitle>
+            <DialogDescription>选择分享方式</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Share Options */}
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                className="h-20 flex-col gap-2"
+                onClick={handleCopyLink}
+              >
+                <Copy className="h-6 w-6 text-orange-500" />
+                <span className="text-sm">复制链接</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-20 flex-col gap-2"
+                onClick={handleGeneratePoster}
+                disabled={isGeneratingPoster}
+              >
+                <Download className="h-6 w-6 text-orange-500" />
+                <span className="text-sm">{isGeneratingPoster ? '生成中...' : '保存海报'}</span>
+              </Button>
+            </div>
+
+            {/* Poster Preview - Hidden for export */}
+            <div 
+              ref={posterRef}
+              style={{
+                width: '360px',
+                padding: '24px',
+                backgroundColor: '#fff8f0',
+                borderRadius: '12px',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+              }}
+            >
+              {/* Poster Header */}
+              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <div style={{ 
+                  fontSize: '14px', 
+                  color: '#ea580c', 
+                  backgroundColor: '#fed7aa',
+                  padding: '4px 12px',
+                  borderRadius: '9999px',
+                  display: 'inline-block',
+                  marginBottom: '12px',
+                }}>
+                  🌟 AI 时代最佳副业机会
+                </div>
+                <h2 style={{ 
+                  fontSize: '24px', 
+                  fontWeight: 'bold',
+                  background: 'linear-gradient(to right, #ea580c, #d97706)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  marginBottom: '8px',
+                }}>
+                  有劲合伙人 · 让 AI 为你赚钱
+                </h2>
+                <p style={{ fontSize: '14px', color: '#78716c' }}>
+                  在 AI 大浪潮中，靠 AI 赚到第一桶金
+                </p>
+              </div>
+
+              {/* Key Points */}
+              <div style={{ 
+                backgroundColor: '#ffffff',
+                borderRadius: '8px',
+                padding: '16px',
+                marginBottom: '16px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              }}>
+                <p style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px', color: '#1c1917' }}>
+                  ✔ 不需要技术、不需要流量、不需要拍视频
+                </p>
+                <p style={{ fontSize: '14px', color: '#57534e', marginBottom: '8px' }}>
+                  你只需要：<span style={{ fontWeight: '600', color: '#ea580c' }}>分享真实成长故事</span>
+                </p>
+                <p style={{ fontSize: '14px', color: '#57534e' }}>
+                  AI 替你：陪伴用户、分析情绪、生成报告、推动转化
+                </p>
+              </div>
+
+              {/* Income Preview */}
+              <div style={{ 
+                backgroundColor: '#ffffff',
+                borderRadius: '8px',
+                padding: '16px',
+                marginBottom: '16px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              }}>
+                <p style={{ fontSize: '12px', color: '#78716c', marginBottom: '12px' }}>
+                  收益预测（30%转化率假设）
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '13px', color: '#57534e' }}>💪 初级合伙人</span>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#16a34a' }}>净利润 ¥2,388</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '13px', color: '#57534e' }}>🔥 高级合伙人</span>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#16a34a' }}>净利润 ¥20,895</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '13px', color: '#57534e' }}>💎 钻石合伙人</span>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#16a34a' }}>净利润 ¥66,543</span>
+                </div>
+              </div>
+
+              {/* Disclaimer */}
+              <div style={{
+                backgroundColor: '#fef3c7',
+                borderRadius: '6px',
+                padding: '10px 12px',
+                marginBottom: '16px',
+              }}>
+                <p style={{ fontSize: '11px', color: '#92400e', lineHeight: '1.4' }}>
+                  ⚠️ 收入预测仅供参考，实际收益因个人能力和市场变化而异，不构成收益承诺。
+                </p>
+              </div>
+
+              {/* CTA */}
+              <div style={{ 
+                background: 'linear-gradient(to right, #f97316, #f59e0b)',
+                borderRadius: '8px',
+                padding: '12px',
+                textAlign: 'center',
+              }}>
+                <p style={{ fontSize: '14px', fontWeight: '600', color: '#ffffff' }}>
+                  扫码了解详情 或 访问有劲App
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                <p style={{ fontSize: '11px', color: '#a8a29e' }}>
+                  有劲 · 让情绪成为力量
+                </p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>;
 };
 export default YoujinPartnerPlan;
