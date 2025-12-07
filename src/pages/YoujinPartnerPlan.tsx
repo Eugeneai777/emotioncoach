@@ -5,33 +5,48 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { youjinPartnerLevels } from "@/config/partnerLevels";
-
 const YoujinPartnerPlan = () => {
   const navigate = useNavigate();
 
   // 净利润对比数据
-  const profitData = [
-    { name: '初级合伙人', 净利润: 2388, fill: '#f97316' },
-    { name: '高级合伙人', 净利润: 20895, fill: '#ea580c' },
-    { name: '钻石合伙人', 净利润: 66544, fill: '#c2410c' }
-  ];
+  const profitData = [{
+    name: '初级合伙人',
+    净利润: 2388,
+    fill: '#f97316'
+  }, {
+    name: '高级合伙人',
+    净利润: 20895,
+    fill: '#ea580c'
+  }, {
+    name: '钻石合伙人',
+    净利润: 66544,
+    fill: '#c2410c'
+  }];
 
   // 收益构成数据
-  const incomeBreakdownData = [
-    { name: '初级', 体验包收入: 990, '365佣金': 2190, 二级佣金: 0 },
-    { name: '高级', 体验包收入: 4950, '365佣金': 19162, 二级佣金: 0 },
-    { name: '钻石', 体验包收入: 9900, '365佣金': 54750, 二级佣金: 6844 }
-  ];
-
+  const incomeBreakdownData = [{
+    name: '初级',
+    体验包收入: 990,
+    '365佣金': 2190,
+    二级佣金: 0
+  }, {
+    name: '高级',
+    体验包收入: 4950,
+    '365佣金': 19162,
+    二级佣金: 0
+  }, {
+    name: '钻石',
+    体验包收入: 9900,
+    '365佣金': 54750,
+    二级佣金: 6844
+  }];
   const handleJoin = (levelId: string) => {
     const level = youjinPartnerLevels.find(l => l.level === levelId);
     if (level) {
       navigate('/partner/youjin-intro');
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+  return <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -101,14 +116,12 @@ const YoujinPartnerPlan = () => {
           <p className="text-center mb-4">而这个时代第一次给予普通人一个新机会：</p>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {['不需要技术', '不需要流量', '不需要拍视频', '不需要学习复杂 AI 工具'].map((item, i) => (
-              <Card key={i} className="bg-green-50 border-green-200">
+            {['不需要技术', '不需要流量', '不需要拍视频', '不需要学习复杂 AI 工具'].map((item, i) => <Card key={i} className="bg-green-50 border-green-200">
                 <CardContent className="p-4 flex items-center gap-2">
                   <Check className="h-5 w-5 text-green-600 flex-shrink-0" />
                   <span className="text-sm font-medium">{item}</span>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
 
           <p className="text-center text-lg">
@@ -137,14 +150,12 @@ const YoujinPartnerPlan = () => {
           <p className="text-lg">目前所有流行的 AI 赚钱方式，都有一个共同特点：</p>
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {['门槛比宣传的高', '竞争激烈', '需要专业技能', '不可复制', '没有持续性收入'].map((item, i) => (
-              <Card key={i} className="bg-red-50 border-red-200">
+            {['门槛比宣传的高', '竞争激烈', '需要专业技能', '不可复制', '没有持续性收入'].map((item, i) => <Card key={i} className="bg-red-50 border-red-200">
                 <CardContent className="p-4 flex items-center gap-2">
                   <X className="h-5 w-5 text-red-500 flex-shrink-0" />
                   <span className="text-sm font-medium">{item}</span>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
 
           <Card className="bg-slate-50">
@@ -181,13 +192,11 @@ const YoujinPartnerPlan = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {['你不需要变成专家', '你不需要做内容创作', '你不需要卖东西', '你不需要大量时间'].map((item, i) => (
-              <Card key={i} className="bg-white/80">
+            {['你不需要变成专家', '你不需要做内容创作', '你不需要卖东西', '你不需要大量时间'].map((item, i) => <Card key={i} className="bg-white/80">
                 <CardContent className="p-4 text-center">
                   <span className="text-sm">{item}</span>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
 
           <Card className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
@@ -200,22 +209,12 @@ const YoujinPartnerPlan = () => {
           <p className="text-lg text-center">剩下所有的价值创造，都由 AI 完成：</p>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {[
-              'AI 陪伴用户',
-              'AI 分析情绪',
-              'AI 生成报告',
-              'AI 引导用户升级',
-              'AI 负责长期留存',
-              'AI 推动训练营转化',
-              'AI 让用户越来越离不开'
-            ].map((item, i) => (
-              <Card key={i} className="bg-orange-50 border-orange-200">
+            {['AI 陪伴用户', 'AI 分析情绪', 'AI 生成报告', 'AI 引导用户升级', 'AI 负责长期留存', 'AI 推动训练营转化', 'AI 让用户越来越离不开'].map((item, i) => <Card key={i} className="bg-orange-50 border-orange-200">
                 <CardContent className="p-3 flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-orange-500 flex-shrink-0" />
                   <span className="text-sm">{item}</span>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
 
           <p className="text-xl font-bold text-center text-orange-600">
@@ -261,7 +260,7 @@ const YoujinPartnerPlan = () => {
               <CardContent className="p-6">
                 <p className="text-sm text-green-600 font-medium mb-2">📌 APA：73% 情绪困扰可用四部曲改善</p>
                 <p className="text-sm">
-                  Feel → Name → Recognize → Transform<br/>
+                  Feel → Name → Recognize → Transform<br />
                   <span className="text-muted-foreground">（这正是有劲AI情绪教练的方法论）</span>
                 </p>
               </CardContent>
@@ -295,32 +294,41 @@ const YoujinPartnerPlan = () => {
           <p className="text-lg">因为你、我、所有人都在经历：</p>
 
           <div className="flex flex-wrap gap-2">
-            {['情绪波动', '内耗', '不安全感', '关系困扰', '压力过载', '睡眠问题', '想改变又无从下手'].map((item, i) => (
-              <Badge key={i} variant="secondary" className="text-sm py-1.5 px-3">
+            {['情绪波动', '内耗', '不安全感', '关系困扰', '压力过载', '睡眠问题', '想改变又无从下手'].map((item, i) => <Badge key={i} variant="secondary" className="text-sm py-1.5 px-3">
                 {item}
-              </Badge>
-            ))}
+              </Badge>)}
           </div>
 
           <p className="text-lg">AI 情绪教练提供：</p>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { icon: Heart, label: '科学四部曲' },
-              { icon: Target, label: '21 天训练营' },
-              { icon: Sparkles, label: '宣言卡' },
-              { icon: Zap, label: '能量测评' },
-              { icon: Brain, label: '情绪词云' },
-              { icon: TrendingUp, label: '每日情绪日记' },
-              { icon: Users, label: '自动成长报告' }
-            ].map((item, i) => (
-              <Card key={i} className="bg-white/80">
+            {[{
+            icon: Heart,
+            label: '科学四部曲'
+          }, {
+            icon: Target,
+            label: '21 天训练营'
+          }, {
+            icon: Sparkles,
+            label: '宣言卡'
+          }, {
+            icon: Zap,
+            label: '能量测评'
+          }, {
+            icon: Brain,
+            label: '情绪词云'
+          }, {
+            icon: TrendingUp,
+            label: '每日情绪日记'
+          }, {
+            icon: Users,
+            label: '自动成长报告'
+          }].map((item, i) => <Card key={i} className="bg-white/80">
                 <CardContent className="p-4 flex items-center gap-3">
                   <item.icon className="h-5 w-5 text-orange-500" />
                   <span className="text-sm font-medium">{item.label}</span>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
 
           <Card className="border-l-4 border-l-orange-500 bg-orange-50/50">
@@ -424,14 +432,27 @@ const YoujinPartnerPlan = () => {
             <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-orange-300 via-amber-400 to-yellow-500" />
             
             <div className="space-y-4">
-              {[
-                { num: '1️⃣', title: '故事吸引', desc: '分享你的真实成长故事' },
-                { num: '2️⃣', title: '9.9 体验产生惊艳', desc: '用户低门槛体验 AI 情绪教练' },
-                { num: '3️⃣', title: 'AI 陪伴形成依赖', desc: '持续使用产生习惯与信任' },
-                { num: '4️⃣', title: '自然升级形成收益', desc: '用户主动升级为年度会员' },
-                { num: '5️⃣', title: '团队裂变形成复利', desc: '用户成为新合伙人继续传播' }
-              ].map((item, i) => (
-                <div key={i} className="relative pl-14">
+              {[{
+              num: '1️⃣',
+              title: '故事吸引',
+              desc: '分享你的真实成长故事'
+            }, {
+              num: '2️⃣',
+              title: '9.9 体验产生惊艳',
+              desc: '用户低门槛体验 AI 情绪教练'
+            }, {
+              num: '3️⃣',
+              title: 'AI 陪伴形成依赖',
+              desc: '持续使用产生习惯与信任'
+            }, {
+              num: '4️⃣',
+              title: '自然升级形成收益',
+              desc: '用户主动升级为年度会员'
+            }, {
+              num: '5️⃣',
+              title: '团队裂变形成复利',
+              desc: '用户成为新合伙人继续传播'
+            }].map((item, i) => <div key={i} className="relative pl-14">
                   <div className="absolute left-3 w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-bold">
                     {i + 1}
                   </div>
@@ -441,8 +462,7 @@ const YoujinPartnerPlan = () => {
                       <p className="text-sm text-muted-foreground">{item.desc}</p>
                     </CardContent>
                   </Card>
-                </div>
-              ))}
+                </div>)}
             </div>
           </div>
 
@@ -459,7 +479,7 @@ const YoujinPartnerPlan = () => {
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="text-3xl">🧩</span>
-            <h2 className="text-2xl font-bold">08｜合伙人等级（完整不删减版）</h2>
+            <h2 className="text-2xl font-bold">08｜合伙人等级</h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-4">
@@ -565,7 +585,7 @@ const YoujinPartnerPlan = () => {
           <Card className="bg-amber-50 border-amber-200">
             <CardContent className="p-4">
               <p className="text-sm text-amber-800">
-                以下所有计算 <span className="font-bold">完全基于最保守假设：30% 用户升级 365</span><br/>
+                以下所有计算 <span className="font-bold">完全基于最保守假设：30% 用户升级 365</span><br />
                 并且 <span className="font-bold">不含训练营、不含续费、不含更多裂变收益</span>。
               </p>
             </CardContent>
@@ -577,15 +597,22 @@ const YoujinPartnerPlan = () => {
               <h3 className="font-bold mb-4 text-center">净利润对比</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={profitData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart data={profitData} margin={{
+                  top: 20,
+                  right: 30,
+                  left: 20,
+                  bottom: 5
+                }}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`} />
+                    <XAxis dataKey="name" tick={{
+                    fontSize: 12
+                  }} />
+                    <YAxis tick={{
+                    fontSize: 12
+                  }} tickFormatter={value => `¥${(value / 1000).toFixed(0)}k`} />
                     <Tooltip formatter={(value: number) => [`¥${value.toLocaleString()}`, '净利润']} />
                     <Bar dataKey="净利润" radius={[4, 4, 0, 0]}>
-                      {profitData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
+                      {profitData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -599,10 +626,19 @@ const YoujinPartnerPlan = () => {
               <h3 className="font-bold mb-4 text-center">收益构成分析</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={incomeBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart data={incomeBreakdownData} margin={{
+                  top: 20,
+                  right: 30,
+                  left: 20,
+                  bottom: 5
+                }}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`} />
+                    <XAxis dataKey="name" tick={{
+                    fontSize: 12
+                  }} />
+                    <YAxis tick={{
+                    fontSize: 12
+                  }} tickFormatter={value => `¥${(value / 1000).toFixed(0)}k`} />
                     <Tooltip formatter={(value: number) => `¥${value.toLocaleString()}`} />
                     <Legend />
                     <Bar dataKey="体验包收入" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
@@ -786,17 +822,10 @@ const YoujinPartnerPlan = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <Button 
-              className="flex-1 h-14 text-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
-              onClick={() => navigate('/partner/youjin-intro')}
-            >
+            <Button className="flex-1 h-14 text-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600" onClick={() => navigate('/partner/youjin-intro')}>
               了解详情并加入
             </Button>
-            <Button 
-              variant="outline"
-              className="flex-1 h-14 text-lg border-orange-300 text-orange-600 hover:bg-orange-50"
-              onClick={() => navigate('/packages')}
-            >
+            <Button variant="outline" className="flex-1 h-14 text-lg border-orange-300 text-orange-600 hover:bg-orange-50" onClick={() => navigate('/packages')}>
               先体验产品
             </Button>
           </div>
@@ -805,8 +834,6 @@ const YoujinPartnerPlan = () => {
         {/* Bottom spacing */}
         <div className="h-8" />
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default YoujinPartnerPlan;
