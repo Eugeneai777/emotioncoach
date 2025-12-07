@@ -640,7 +640,7 @@ const YoujinPartnerPlan = () => {
                     fontSize: 12
                   }} tickFormatter={value => `¥${(value / 1000).toFixed(0)}k`} />
                     <Tooltip formatter={(value: number) => `¥${value.toLocaleString()}`} />
-                    <Legend />
+                    
                     <Bar dataKey="体验包收入" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
                     <Bar dataKey="365佣金" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} />
                     <Bar dataKey="二级佣金" stackId="a" fill="#6366f1" radius={[4, 4, 0, 0]} />
