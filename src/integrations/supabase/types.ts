@@ -1328,6 +1328,42 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_cost_rules: {
+        Row: {
+          created_at: string | null
+          default_cost: number
+          description: string | null
+          display_order: number | null
+          feature_name: string
+          feature_type: string
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_cost?: number
+          description?: string | null
+          display_order?: number | null
+          feature_name: string
+          feature_type: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          default_cost?: number
+          description?: string | null
+          display_order?: number | null
+          feature_name?: string
+          feature_type?: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       feature_definitions: {
         Row: {
           category: string
@@ -1703,6 +1739,44 @@ export type Database = {
           },
           {
             foreignKeyName: "package_features_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_free_quotas: {
+        Row: {
+          created_at: string | null
+          feature_type: string
+          free_quota: number
+          id: string
+          package_id: string | null
+          period: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          feature_type: string
+          free_quota?: number
+          id?: string
+          package_id?: string | null
+          period?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          feature_type?: string
+          free_quota?: number
+          id?: string
+          package_id?: string | null
+          period?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_free_quotas_package_id_fkey"
             columns: ["package_id"]
             isOneToOne: false
             referencedRelation: "packages"
@@ -3249,6 +3323,36 @@ export type Database = {
           follower_id?: string
           following_id?: string
           id?: string
+        }
+        Relationships: []
+      }
+      user_free_quota_usage: {
+        Row: {
+          created_at: string | null
+          feature_type: string
+          id: string
+          period_start: string | null
+          updated_at: string | null
+          used_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          feature_type: string
+          id?: string
+          period_start?: string | null
+          updated_at?: string | null
+          used_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          feature_type?: string
+          id?: string
+          period_start?: string | null
+          updated_at?: string | null
+          used_count?: number | null
+          user_id?: string
         }
         Relationships: []
       }

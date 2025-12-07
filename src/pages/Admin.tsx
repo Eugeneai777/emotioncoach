@@ -17,6 +17,7 @@ import { PackagesManagement } from "@/components/admin/PackagesManagement";
 import { CoachTemplatesManagement } from "@/components/admin/CoachTemplatesManagement";
 import KnowledgeBaseManagement from "@/components/admin/KnowledgeBaseManagement";
 import CustomerServiceManagement from "@/components/admin/CustomerServiceManagement";
+import FeatureCostManagement from "@/components/admin/FeatureCostManagement";
 
 export default function Admin() {
   const { user, loading } = useAuth();
@@ -77,6 +78,7 @@ export default function Admin() {
             <TabsTrigger value="users">用户账户</TabsTrigger>
             <TabsTrigger value="orders">订单管理</TabsTrigger>
             <TabsTrigger value="usage">使用记录</TabsTrigger>
+            <TabsTrigger value="costs">扣费规则</TabsTrigger>
             <TabsTrigger value="sync">同步状态</TabsTrigger>
             <TabsTrigger value="reports">举报管理</TabsTrigger>
             <TabsTrigger value="videos">视频课程</TabsTrigger>
@@ -98,6 +100,10 @@ export default function Admin() {
 
           <TabsContent value="usage">
             <UsageRecordsTable />
+          </TabsContent>
+
+          <TabsContent value="costs">
+            <FeatureCostManagement />
           </TabsContent>
 
           <TabsContent value="sync">
