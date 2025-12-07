@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Plus, Edit, Trash2, Settings } from "lucide-react";
 import { toast } from "sonner";
-import { PackageFeaturesDialog } from "./PackageFeaturesDialog";
+import { PackageFeatureSettingsDialog } from "./PackageFeatureSettingsDialog";
 
 import { Database } from "@/integrations/supabase/types";
 
@@ -23,7 +23,7 @@ export function PackagesManagement() {
   const queryClient = useQueryClient();
   const [editingPackage, setEditingPackage] = useState<Package | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [featuresPackageId, setFeaturesPackageId] = useState<string | null>(null);
+  const [settingsPackageId, setSettingsPackageId] = useState<string | null>(null);
 
   const { data: packages, isLoading } = useQuery({
     queryKey: ["admin-packages"],
@@ -107,8 +107,11 @@ export function PackagesManagement() {
     }
   };
 
-  const youjinPackages = packages?.filter((p) => p.product_line === "youjin") || [];
-  const bloomPackages = packages?.filter((p) => p.product_line === "bloom") || [];
+  // Filter packages - only show membership packages, not training camps
+  const membershipPackages = packages?.filter((p) => 
+    !p.package_key?.includes("camp") && 
+    !p.package_key?.includes("training")
+  ) || [];
 
   if (isLoading) {
     return <div className="flex justify-center p-8">加载中...</div>;
@@ -119,7 +122,7 @@ export function PackagesManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">套餐权益管理</h2>
-          <p className="text-muted-foreground">管理产品套餐和权益配置</p>
+          <p className="text-muted-foreground">管理会员套餐和权益配置（训练营在功能管理中配置）</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -248,149 +251,92 @@ export function PackagesManagement() {
         </Dialog>
       </div>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>有劲产品线</CardTitle>
-            <CardDescription>有劲情绪日记相关套餐</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>套餐名称</TableHead>
-                  <TableHead>价格</TableHead>
-                  <TableHead>有效期</TableHead>
-                  <TableHead>AI配额</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead>操作</TableHead>
+      <Card>
+        <CardHeader>
+          <CardTitle>会员套餐列表</CardTitle>
+          <CardDescription>点击设置按钮配置套餐包含的功能权益</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>套餐名称</TableHead>
+                <TableHead>产品线</TableHead>
+                <TableHead>价格</TableHead>
+                <TableHead>有效期</TableHead>
+                <TableHead>AI配额</TableHead>
+                <TableHead>状态</TableHead>
+                <TableHead>操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {membershipPackages.map((pkg) => (
+                <TableRow key={pkg.id}>
+                  <TableCell className="font-medium">{pkg.package_name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {pkg.product_line === "youjin" ? "有劲" : "绽放"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>¥{pkg.price || "-"}</TableCell>
+                  <TableCell>{pkg.duration_days ? `${pkg.duration_days}天` : "-"}</TableCell>
+                  <TableCell>{pkg.ai_quota === -1 ? "无限" : pkg.ai_quota || "-"}</TableCell>
+                  <TableCell>
+                    <Badge variant={pkg.is_active ? "default" : "secondary"}>
+                      {pkg.is_active ? "启用" : "禁用"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditingPackage(pkg);
+                          setIsDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSettingsPackageId(pkg.id)}
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          if (confirm("确定删除此套餐？")) {
+                            deletePackage.mutate(pkg.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {youjinPackages.map((pkg) => (
-                  <TableRow key={pkg.id}>
-                    <TableCell className="font-medium">{pkg.package_name}</TableCell>
-                    <TableCell>¥{pkg.price || "-"}</TableCell>
-                    <TableCell>{pkg.duration_days ? `${pkg.duration_days}天` : "-"}</TableCell>
-                    <TableCell>{pkg.ai_quota || "-"}</TableCell>
-                    <TableCell>
-                      <Badge variant={pkg.is_active ? "default" : "secondary"}>
-                        {pkg.is_active ? "启用" : "禁用"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setEditingPackage(pkg);
-                            setIsDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setFeaturesPackageId(pkg.id)}
-                        >
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            if (confirm("确定删除此套餐？")) {
-                              deletePackage.mutate(pkg.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>绽放产品线</CardTitle>
-            <CardDescription>绽放训练营和合伙人套餐</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
+              ))}
+              {membershipPackages.length === 0 && (
                 <TableRow>
-                  <TableHead>套餐名称</TableHead>
-                  <TableHead>价格</TableHead>
-                  <TableHead>有效期</TableHead>
-                  <TableHead>AI配额</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead>操作</TableHead>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    暂无套餐，点击右上角新增
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bloomPackages.map((pkg) => (
-                  <TableRow key={pkg.id}>
-                    <TableCell className="font-medium">{pkg.package_name}</TableCell>
-                    <TableCell>¥{pkg.price || "-"}</TableCell>
-                    <TableCell>{pkg.duration_days ? `${pkg.duration_days}天` : "-"}</TableCell>
-                    <TableCell>{pkg.ai_quota === -1 ? "无限" : pkg.ai_quota || "-"}</TableCell>
-                    <TableCell>
-                      <Badge variant={pkg.is_active ? "default" : "secondary"}>
-                        {pkg.is_active ? "启用" : "禁用"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setEditingPackage(pkg);
-                            setIsDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setFeaturesPackageId(pkg.id)}
-                        >
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            if (confirm("确定删除此套餐？")) {
-                              deletePackage.mutate(pkg.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-      {featuresPackageId && (
-        <PackageFeaturesDialog
-          packageId={featuresPackageId}
-          open={!!featuresPackageId}
-          onOpenChange={(open) => !open && setFeaturesPackageId(null)}
+      {settingsPackageId && (
+        <PackageFeatureSettingsDialog
+          packageId={settingsPackageId}
+          open={!!settingsPackageId}
+          onOpenChange={(open) => !open && setSettingsPackageId(null)}
         />
       )}
     </div>
