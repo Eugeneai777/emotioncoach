@@ -40,6 +40,7 @@ import PartnerBenefits from "./pages/PartnerBenefits";
 import PartnerIntro from "./pages/PartnerIntro";
 import PartnerTypeSelector from "./pages/PartnerTypeSelector";
 import YoujinPartnerIntro from "./pages/YoujinPartnerIntro";
+import YoujinPartnerPlan from "./pages/YoujinPartnerPlan";
 import RedeemCode from "./pages/RedeemCode";
 import NotFound from "./pages/NotFound";
 import DynamicCoach from "./pages/DynamicCoach";
@@ -98,6 +99,7 @@ const App = () => (
           <Route path="/courses" element={<Courses />} />
           <Route path="/partner/type" element={<PartnerTypeSelector />} />
           <Route path="/partner/youjin-intro" element={<YoujinPartnerIntro />} />
+          <Route path="/partner/youjin-plan" element={<YoujinPartnerPlan />} />
           <Route path="/partner-intro" element={<PartnerIntro />} />
           <Route path="/partner" element={<Partner />} />
           <Route path="/partner/benefits" element={<PartnerBenefits />} />

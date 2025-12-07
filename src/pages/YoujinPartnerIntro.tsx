@@ -39,6 +39,13 @@ export default function YoujinPartnerIntro() {
             <p className="text-muted-foreground text-lg">
               预购体验包，建立长期用户关系，享受持续分成
             </p>
+            <Button
+              variant="link"
+              onClick={() => navigate("/partner/youjin-plan")}
+              className="text-orange-600 hover:text-orange-700"
+            >
+              📖 查看完整介绍 →
+            </Button>
           </div>
         </div>
 
