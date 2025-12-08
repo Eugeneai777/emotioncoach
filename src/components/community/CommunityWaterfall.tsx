@@ -569,13 +569,15 @@ const CommunityWaterfall = () => {
     return map;
   }, [posts, likedPostIds]);
 
+  // 阻止按钮区域的触摸事件传播
+  const handleButtonTouchStart = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation();
+  }, []);
+
   return (
     <div 
       className="w-full"
       ref={containerRef}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
     >
       {/* 下拉刷新指示器 */}
       {pullDistance > 0 && (
@@ -592,16 +594,18 @@ const CommunityWaterfall = () => {
         </div>
       )}
 
-      {/* 标题栏 */}
-      <div className="flex items-center justify-between mb-4 px-1">
+      {/* 标题栏 - 按钮区域独立处理触摸事件 */}
+      <div 
+        className="flex items-center justify-between mb-4 px-1"
+        onTouchStart={handleButtonTouchStart}
+      >
         <div className="flex items-center gap-2">
           <h2 className="text-xl font-bold text-foreground">🌈 有劲社区</h2>
           <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full border border-border/50">NEW</span>
         </div>
           <Button 
-            size="sm" 
             variant="outline"
-            className="gap-1 bg-card border-border/60 hover:bg-muted hover:border-border transition-all duration-200 text-foreground/90"
+            className="gap-1 bg-card border-border/60 hover:bg-muted hover:border-border active:scale-95 transition-all duration-150 text-foreground/90 min-h-[44px] min-w-[44px] touch-manipulation"
             onClick={() => navigate("/community")}
           >
             <Plus className="w-4 h-4 text-foreground/70" />
@@ -609,15 +613,17 @@ const CommunityWaterfall = () => {
           </Button>
       </div>
 
-      {/* 分类标签栏 */}
-      <div className="grid grid-cols-4 gap-2 mb-4">
+      {/* 分类标签栏 - 按钮区域独立处理触摸事件 */}
+      <div 
+        className="grid grid-cols-4 gap-2 mb-4"
+        onTouchStart={handleButtonTouchStart}
+      >
         {categories.map((cat) => (
           <Button
             key={cat.value}
-            size="default"
             variant="outline"
             className={cn(
-              "flex-1 transition-all duration-200",
+              "flex-1 min-h-[44px] active:scale-95 transition-all duration-150 touch-manipulation",
                 activeFilter === cat.value 
                   ? "bg-card border-foreground text-foreground font-medium" 
                   : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"
@@ -633,15 +639,14 @@ const CommunityWaterfall = () => {
         ))}
       </div>
 
-      {/* 情绪标签筛选栏（仅故事分类显示） */}
+      {/* 情绪标签筛选栏（仅故事分类显示）- 按钮区域独立处理触摸事件 */}
       {activeFilter === 'story' && emotionTags.length > 0 && (
-        <ScrollArea className="w-full mb-4">
+        <ScrollArea className="w-full mb-4" onTouchStart={handleButtonTouchStart}>
           <div className="flex gap-2 pb-2">
             <Button
-              size="sm"
               variant="outline"
               className={cn(
-                "transition-all duration-200",
+                "min-h-[40px] active:scale-95 transition-all duration-150 touch-manipulation",
                   selectedEmotionTag === null 
                     ? "bg-card border-foreground text-foreground font-medium" 
                     : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"
@@ -653,10 +658,9 @@ const CommunityWaterfall = () => {
             {emotionTags.map((tag) => (
               <Button
                 key={tag}
-                size="sm"
                 variant="outline"
                 className={cn(
-                  "transition-all duration-200",
+                  "min-h-[40px] active:scale-95 transition-all duration-150 touch-manipulation",
                   selectedEmotionTag === tag 
                     ? "bg-card border-foreground text-foreground font-medium" 
                     : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"
@@ -671,72 +675,77 @@ const CommunityWaterfall = () => {
         </ScrollArea>
       )}
 
-      {/* 瀑布流内容 */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-foreground/60" />
-        </div>
-      ) : posts.length === 0 ? (
-        <div className="text-center py-12">
-          {activeFilter === 'following' ? (
-            <>
-              <p className="text-muted-foreground text-sm">还没有关注任何人</p>
-              <p className="text-xs text-muted-foreground mt-1">去发现页面找到志同道合的朋友吧</p>
-            </>
-          ) : activeFilter === 'resonance' ? (
-            <>
-              <p className="text-muted-foreground text-sm">暂无同频内容</p>
-              <p className="text-xs text-muted-foreground mt-1">先分享你的情绪日记，发现与你同频的伙伴</p>
-            </>
-          ) : activeFilter === 'story' ? (
-            <>
-              <p className="text-muted-foreground text-sm">暂无故事</p>
-              <p className="text-xs text-muted-foreground mt-1">去训练营用说好故事教练创建你的第一个故事吧</p>
-            </>
-          ) : (
-            <p className="text-muted-foreground text-sm">暂无内容</p>
-          )}
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-3">
-            {/* 左列 */}
-            <LeftColumnComponent 
-              posts={leftPosts} 
-              likedMap={likedMap}
-              onCardClick={handleCardClick} 
-            />
-
-            {/* 右列 */}
-            <RightColumnComponent 
-              posts={rightPosts} 
-              likedMap={likedMap}
-              onCardClick={handleCardClick} 
-            />
+      {/* 瀑布流内容 - 仅此区域支持下拉刷新 */}
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-foreground/60" />
           </div>
-
-          {/* 加载更多指示器 */}
-          <div ref={observerTarget} className="py-4 text-center">
-            {loadingMore ? (
-              <Loader2 className="w-5 h-5 animate-spin text-foreground/60 mx-auto" />
-            ) : !hasMore ? (
-              <p className="text-xs text-muted-foreground">没有更多内容了</p>
-            ) : null}
+        ) : posts.length === 0 ? (
+          <div className="text-center py-12">
+            {activeFilter === 'following' ? (
+              <>
+                <p className="text-muted-foreground text-sm">还没有关注任何人</p>
+                <p className="text-xs text-muted-foreground mt-1">去发现页面找到志同道合的朋友吧</p>
+              </>
+            ) : activeFilter === 'resonance' ? (
+              <>
+                <p className="text-muted-foreground text-sm">暂无同频内容</p>
+                <p className="text-xs text-muted-foreground mt-1">先分享你的情绪日记，发现与你同频的伙伴</p>
+              </>
+            ) : activeFilter === 'story' ? (
+              <>
+                <p className="text-muted-foreground text-sm">暂无故事</p>
+                <p className="text-xs text-muted-foreground mt-1">去训练营用说好故事教练创建你的第一个故事吧</p>
+              </>
+            ) : (
+              <p className="text-muted-foreground text-sm">暂无内容</p>
+            )}
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              {/* 左列 */}
+              <LeftColumnComponent 
+                posts={leftPosts} 
+                likedMap={likedMap}
+                onCardClick={handleCardClick} 
+              />
 
-          {/* 查看更多按钮 */}
-          <div className="mt-4 text-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/community")}
-              className="w-full"
-            >
-              查看完整社区
-            </Button>
-          </div>
-        </>
-      )}
+              {/* 右列 */}
+              <RightColumnComponent 
+                posts={rightPosts} 
+                likedMap={likedMap}
+                onCardClick={handleCardClick} 
+              />
+            </div>
+
+            {/* 加载更多指示器 */}
+            <div ref={observerTarget} className="py-4 text-center">
+              {loadingMore ? (
+                <Loader2 className="w-5 h-5 animate-spin text-foreground/60 mx-auto" />
+              ) : !hasMore ? (
+                <p className="text-xs text-muted-foreground">没有更多内容了</p>
+              ) : null}
+            </div>
+
+            {/* 查看更多按钮 */}
+            <div className="mt-4 text-center" onTouchStart={handleButtonTouchStart}>
+              <Button
+                variant="outline"
+                onClick={() => navigate("/community")}
+                className="w-full min-h-[44px] active:scale-[0.98] transition-all duration-150 touch-manipulation"
+              >
+                查看完整社区
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* 帖子详情弹窗 */}
       <PostDetailSheet
