@@ -623,10 +623,10 @@ const CommunityWaterfall = () => {
           <Button 
             variant="outline"
             className="gap-1 bg-card border-border/60 hover:bg-muted hover:border-border active:scale-95 transition-all duration-150 text-foreground/90 min-h-[44px] min-w-[44px] touch-manipulation"
-            onClick={() => navigate("/community")}
+            onClick={() => navigate("/my-posts")}
           >
             <Plus className="w-4 h-4 text-foreground/70" />
-            发布
+            我的动态
           </Button>
       </div>
 
