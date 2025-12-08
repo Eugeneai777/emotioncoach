@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_cost_logs: {
+        Row: {
+          created_at: string | null
+          estimated_cost_cny: number | null
+          estimated_cost_usd: number | null
+          feature_key: string | null
+          function_name: string
+          id: string
+          input_tokens: number | null
+          metadata: Json | null
+          model: string | null
+          output_tokens: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          estimated_cost_cny?: number | null
+          estimated_cost_usd?: number | null
+          feature_key?: string | null
+          function_name: string
+          id?: string
+          input_tokens?: number | null
+          metadata?: Json | null
+          model?: string | null
+          output_tokens?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          estimated_cost_cny?: number | null
+          estimated_cost_usd?: number | null
+          feature_key?: string | null
+          function_name?: string
+          id?: string
+          input_tokens?: number | null
+          metadata?: Json | null
+          model?: string | null
+          output_tokens?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       breathing_sessions: {
         Row: {
           created_at: string | null
@@ -904,6 +946,78 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      cost_alert_settings: {
+        Row: {
+          alert_type: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          notify_email: string | null
+          notify_wecom: boolean | null
+          threshold_cny: number
+          updated_at: string | null
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          notify_email?: string | null
+          notify_wecom?: boolean | null
+          threshold_cny: number
+          updated_at?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          notify_email?: string | null
+          notify_wecom?: boolean | null
+          threshold_cny?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      cost_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          actual_cost_cny: number | null
+          alert_message: string | null
+          alert_type: string
+          created_at: string | null
+          id: string
+          is_acknowledged: boolean | null
+          threshold_cny: number | null
+          user_id: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          actual_cost_cny?: number | null
+          alert_message?: string | null
+          alert_type: string
+          created_at?: string | null
+          id?: string
+          is_acknowledged?: boolean | null
+          threshold_cny?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          actual_cost_cny?: number | null
+          alert_message?: string | null
+          alert_type?: string
+          created_at?: string | null
+          id?: string
+          is_acknowledged?: boolean | null
+          threshold_cny?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }

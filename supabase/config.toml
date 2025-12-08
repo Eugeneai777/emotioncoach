@@ -191,3 +191,9 @@ verify_jwt = false
 
 [functions.realtime-token]
 verify_jwt = false
+
+[functions.log-api-cost]
+verify_jwt = false
+
+[functions.check-cost-alerts]
+verify_jwt = false
