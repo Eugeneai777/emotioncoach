@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, BookOpen, Tent, Wrench, Video, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronRight, BookOpen, Tent, Wrench, Video, Loader2, Home, CircleDot, Brain, Sparkles, Mic } from "lucide-react";
 import { toast } from "sonner";
 
 interface FeatureItem {
   id: string;
   category: string;
+  sub_category: string | null;
   item_key: string;
   item_name: string;
   description: string | null;
@@ -42,6 +43,14 @@ const categoryConfig: Record<string, { label: string; icon: React.ReactNode; col
   course: { label: "课程类", icon: <Video className="h-4 w-4" />, color: "text-purple-600" },
 };
 
+const subCategoryConfig: Record<string, { label: string; icon: React.ReactNode }> = {
+  studio: { label: "有劲生活馆工具", icon: <Home className="h-3 w-3" /> },
+  emotion_button: { label: "情绪按钮", icon: <CircleDot className="h-3 w-3" /> },
+  ai_analysis: { label: "AI分析工具", icon: <Brain className="h-3 w-3" /> },
+  ai_generation: { label: "AI生成工具", icon: <Sparkles className="h-3 w-3" /> },
+  ai_voice: { label: "AI语音工具", icon: <Mic className="h-3 w-3" /> },
+};
+
 export function PackageFeatureSettingsDialog({ packageId, open, onOpenChange }: PackageFeatureSettingsDialogProps) {
   const queryClient = useQueryClient();
   const [settings, setSettings] = useState<Record<string, FeatureSetting>>({});
@@ -50,6 +59,13 @@ export function PackageFeatureSettingsDialog({ packageId, open, onOpenChange }: 
     training_camp: true,
     tool: true,
     course: true,
+  });
+  const [expandedSubCategories, setExpandedSubCategories] = useState<Record<string, boolean>>({
+    studio: true,
+    emotion_button: true,
+    ai_analysis: true,
+    ai_generation: true,
+    ai_voice: true,
   });
 
   // Fetch package info
@@ -190,6 +206,13 @@ export function PackageFeatureSettingsDialog({ packageId, open, onOpenChange }: 
     }));
   };
 
+  const toggleSubCategory = (subCategory: string) => {
+    setExpandedSubCategories((prev) => ({
+      ...prev,
+      [subCategory]: !prev[subCategory],
+    }));
+  };
+
   // Group features by category
   const groupedFeatures = featureItems?.reduce((acc, feature) => {
     if (!acc[feature.category]) {
@@ -199,7 +222,101 @@ export function PackageFeatureSettingsDialog({ packageId, open, onOpenChange }: 
     return acc;
   }, {} as Record<string, FeatureItem[]>) || {};
 
+  // Group tool features by sub_category
+  const groupToolsBySubCategory = (tools: FeatureItem[]) => {
+    const subCategoryOrder = ['studio', 'emotion_button', 'ai_analysis', 'ai_generation', 'ai_voice'];
+    const grouped: Record<string, FeatureItem[]> = {};
+    
+    tools.forEach((tool) => {
+      const subCat = tool.sub_category || 'studio';
+      if (!grouped[subCat]) {
+        grouped[subCat] = [];
+      }
+      grouped[subCat].push(tool);
+    });
+    
+    // Return in order
+    return subCategoryOrder.map(key => ({ key, items: grouped[key] || [] })).filter(g => g.items.length > 0);
+  };
+
   const categoryOrder = ["coach", "training_camp", "tool", "course"];
+
+  const renderFeatureTable = (features: FeatureItem[]) => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-[180px]">功能名称</TableHead>
+          <TableHead className="w-[80px]">启用</TableHead>
+          <TableHead className="w-[100px]">扣费点数</TableHead>
+          <TableHead className="w-[100px]">免费额度</TableHead>
+          <TableHead className="w-[120px]">周期</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {features.map((feature) => {
+          const setting = settings[feature.id];
+          if (!setting) return null;
+          
+          return (
+            <TableRow key={feature.id}>
+              <TableCell className="font-medium">
+                <div>
+                  <div>{feature.item_name}</div>
+                  {feature.description && (
+                    <div className="text-xs text-muted-foreground">{feature.description}</div>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <Switch
+                  checked={setting.is_enabled}
+                  onCheckedChange={(checked) => updateSetting(feature.id, "is_enabled", checked)}
+                />
+              </TableCell>
+              <TableCell>
+                <Input
+                  type="number"
+                  min="0"
+                  value={setting.cost_per_use}
+                  onChange={(e) => updateSetting(feature.id, "cost_per_use", parseInt(e.target.value) || 0)}
+                  className="w-20"
+                  disabled={!setting.is_enabled}
+                />
+              </TableCell>
+              <TableCell>
+                <Input
+                  type="number"
+                  min="0"
+                  value={setting.free_quota}
+                  onChange={(e) => updateSetting(feature.id, "free_quota", parseInt(e.target.value) || 0)}
+                  className="w-20"
+                  placeholder="0=无限"
+                  disabled={!setting.is_enabled}
+                />
+              </TableCell>
+              <TableCell>
+                <Select
+                  value={setting.free_quota_period}
+                  onValueChange={(value) => updateSetting(feature.id, "free_quota_period", value)}
+                  disabled={!setting.is_enabled}
+                >
+                  <SelectTrigger className="w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">每日</SelectItem>
+                    <SelectItem value="monthly">每月</SelectItem>
+                    <SelectItem value="lifetime">永久</SelectItem>
+                    <SelectItem value="per_use">每次使用</SelectItem>
+                  </SelectContent>
+                </Select>
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -222,6 +339,43 @@ export function PackageFeatureSettingsDialog({ packageId, open, onOpenChange }: 
               const config = categoryConfig[category];
               const isExpanded = expandedCategories[category];
 
+              // Special handling for tool category with sub-categories
+              if (category === 'tool') {
+                const subGroups = groupToolsBySubCategory(features);
+                const totalCount = features.length;
+                
+                return (
+                  <Collapsible key={category} open={isExpanded} onOpenChange={() => toggleCategory(category)}>
+                    <CollapsibleTrigger className="flex items-center gap-2 w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+                      {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      <span className={config.color}>{config.icon}</span>
+                      <span className="font-medium">{config.label}</span>
+                      <span className="text-muted-foreground text-sm">({totalCount}个)</span>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pl-4 space-y-2 mt-2">
+                      {subGroups.map(({ key, items }) => {
+                        const subConfig = subCategoryConfig[key];
+                        const isSubExpanded = expandedSubCategories[key];
+                        
+                        return (
+                          <Collapsible key={key} open={isSubExpanded} onOpenChange={() => toggleSubCategory(key)}>
+                            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 bg-muted/30 rounded-md hover:bg-muted/50 transition-colors">
+                              {isSubExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                              <span className="text-muted-foreground">{subConfig?.icon}</span>
+                              <span className="text-sm font-medium">{subConfig?.label || key}</span>
+                              <span className="text-muted-foreground text-xs">({items.length}个)</span>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              {renderFeatureTable(items)}
+                            </CollapsibleContent>
+                          </Collapsible>
+                        );
+                      })}
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              }
+
               return (
                 <Collapsible key={category} open={isExpanded} onOpenChange={() => toggleCategory(category)}>
                   <CollapsibleTrigger className="flex items-center gap-2 w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
@@ -231,79 +385,7 @@ export function PackageFeatureSettingsDialog({ packageId, open, onOpenChange }: 
                     <span className="text-muted-foreground text-sm">({features.length}个)</span>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[180px]">功能名称</TableHead>
-                          <TableHead className="w-[80px]">启用</TableHead>
-                          <TableHead className="w-[100px]">扣费点数</TableHead>
-                          <TableHead className="w-[100px]">免费额度</TableHead>
-                          <TableHead className="w-[120px]">周期</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {features.map((feature) => {
-                          const setting = settings[feature.id];
-                          if (!setting) return null;
-                          
-                          return (
-                            <TableRow key={feature.id}>
-                              <TableCell className="font-medium">
-                                <div>
-                                  <div>{feature.item_name}</div>
-                                  {feature.description && (
-                                    <div className="text-xs text-muted-foreground">{feature.description}</div>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Switch
-                                  checked={setting.is_enabled}
-                                  onCheckedChange={(checked) => updateSetting(feature.id, "is_enabled", checked)}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  value={setting.cost_per_use}
-                                  onChange={(e) => updateSetting(feature.id, "cost_per_use", parseInt(e.target.value) || 0)}
-                                  className="w-20"
-                                  disabled={!setting.is_enabled}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  value={setting.free_quota}
-                                  onChange={(e) => updateSetting(feature.id, "free_quota", parseInt(e.target.value) || 0)}
-                                  className="w-20"
-                                  placeholder="0=无限"
-                                  disabled={!setting.is_enabled}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Select
-                                  value={setting.free_quota_period}
-                                  onValueChange={(value) => updateSetting(feature.id, "free_quota_period", value)}
-                                  disabled={!setting.is_enabled}
-                                >
-                                  <SelectTrigger className="w-24">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="daily">每日</SelectItem>
-                                    <SelectItem value="monthly">每月</SelectItem>
-                                    <SelectItem value="lifetime">永久</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                    {renderFeatureTable(features)}
                   </CollapsibleContent>
                 </Collapsible>
               );

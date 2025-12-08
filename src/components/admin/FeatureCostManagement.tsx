@@ -9,12 +9,14 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
-import { Save, Loader2, Users, Tent, Wrench, BookOpen, Sparkles } from 'lucide-react';
+import { Save, Loader2, Users, Tent, Wrench, BookOpen, Sparkles, ChevronDown, ChevronRight, Home, CircleDot, Brain, Mic } from 'lucide-react';
 
 interface FeatureItem {
   id: string;
   category: string;
+  sub_category: string | null;
   item_key: string;
   item_name: string;
   description: string | null;
@@ -45,10 +47,25 @@ const categoryConfig: Record<string, { label: string; icon: typeof Users; color:
   course: { label: '课程', icon: BookOpen, color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' },
 };
 
+const subCategoryConfig: Record<string, { label: string; icon: typeof Home; color: string }> = {
+  studio: { label: '有劲生活馆工具', icon: Home, color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200' },
+  emotion_button: { label: '情绪按钮', icon: CircleDot, color: 'bg-teal-100 text-teal-700 dark:bg-teal-800 dark:text-teal-200' },
+  ai_analysis: { label: 'AI分析工具', icon: Brain, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-800 dark:text-indigo-200' },
+  ai_generation: { label: 'AI生成工具', icon: Sparkles, color: 'bg-pink-100 text-pink-700 dark:bg-pink-800 dark:text-pink-200' },
+  ai_voice: { label: 'AI语音工具', icon: Mic, color: 'bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-200' },
+};
+
 const FeatureCostManagement = () => {
   const queryClient = useQueryClient();
   const [selectedPackage, setSelectedPackage] = useState<string>('');
   const [editingSettings, setEditingSettings] = useState<Record<string, Partial<PackageFeatureSetting>>>({});
+  const [expandedSubCategories, setExpandedSubCategories] = useState<Record<string, boolean>>({
+    studio: true,
+    emotion_button: true,
+    ai_analysis: true,
+    ai_generation: true,
+    ai_voice: true,
+  });
 
   // Fetch feature items (new table)
   const { data: featureItems = [], isLoading: loadingFeatures } = useQuery({
@@ -169,12 +186,35 @@ const FeatureCostManagement = () => {
     });
   };
 
+  const toggleSubCategory = (subCategory: string) => {
+    setExpandedSubCategories(prev => ({
+      ...prev,
+      [subCategory]: !prev[subCategory],
+    }));
+  };
+
   // Group features by category
   const groupedFeatures = featureItems.reduce((acc, item) => {
     if (!acc[item.category]) acc[item.category] = [];
     acc[item.category].push(item);
     return acc;
   }, {} as Record<string, FeatureItem[]>);
+
+  // Group tool features by sub_category
+  const groupToolsBySubCategory = (tools: FeatureItem[]) => {
+    const subCategoryOrder = ['studio', 'emotion_button', 'ai_analysis', 'ai_generation', 'ai_voice'];
+    const grouped: Record<string, FeatureItem[]> = {};
+    
+    tools.forEach((tool) => {
+      const subCat = tool.sub_category || 'studio';
+      if (!grouped[subCat]) {
+        grouped[subCat] = [];
+      }
+      grouped[subCat].push(tool);
+    });
+    
+    return subCategoryOrder.map(key => ({ key, items: grouped[key] || [] })).filter(g => g.items.length > 0);
+  };
 
   if (loadingFeatures) {
     return (
@@ -183,6 +223,77 @@ const FeatureCostManagement = () => {
       </div>
     );
   }
+
+  const renderFeatureRow = (item: FeatureItem) => {
+    const setting = getSettingForFeature(item.id);
+    const hasChanges = !!editingSettings[item.id];
+    
+    return (
+      <TableRow key={item.id}>
+        <TableCell>
+          <div className="font-medium">{item.item_name}</div>
+        </TableCell>
+        <TableCell className="text-center">
+          <Switch
+            checked={setting.is_enabled}
+            onCheckedChange={(checked) =>
+              updateEditingSetting(item.id, 'is_enabled', checked)
+            }
+          />
+        </TableCell>
+        <TableCell className="text-center">
+          <Input
+            type="number"
+            min="0"
+            value={setting.cost_per_use}
+            onChange={(e) =>
+              updateEditingSetting(item.id, 'cost_per_use', parseInt(e.target.value) || 0)
+            }
+            className="w-20 text-center mx-auto h-8"
+          />
+        </TableCell>
+        <TableCell className="text-center">
+          <Input
+            type="number"
+            min="0"
+            value={setting.free_quota}
+            onChange={(e) =>
+              updateEditingSetting(item.id, 'free_quota', parseInt(e.target.value) || 0)
+            }
+            className="w-20 text-center mx-auto h-8"
+          />
+        </TableCell>
+        <TableCell className="text-center">
+          <Select
+            value={setting.free_quota_period}
+            onValueChange={(value) =>
+              updateEditingSetting(item.id, 'free_quota_period', value)
+            }
+          >
+            <SelectTrigger className="w-24 mx-auto h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="daily">每日</SelectItem>
+              <SelectItem value="monthly">每月</SelectItem>
+              <SelectItem value="lifetime">永久</SelectItem>
+              <SelectItem value="per_use">每次使用</SelectItem>
+            </SelectContent>
+          </Select>
+        </TableCell>
+        <TableCell className="text-center">
+          <Button
+            size="sm"
+            variant={hasChanges ? "default" : "ghost"}
+            onClick={() => handleSaveSetting(item.id)}
+            disabled={saveSettingsMutation.isPending}
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+        </TableCell>
+      </TableRow>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -208,6 +319,60 @@ const FeatureCostManagement = () => {
                 {Object.entries(categoryConfig).map(([category, config]) => {
                   const CategoryIcon = config.icon;
                   const items = groupedFeatures[category] || [];
+                  
+                  // Special handling for tools with sub-categories
+                  if (category === 'tool') {
+                    const subGroups = groupToolsBySubCategory(items);
+                    
+                    return (
+                      <div key={category} className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <CategoryIcon className="h-5 w-5" />
+                          <h3 className="font-semibold">{config.label}</h3>
+                          <Badge className={config.color}>{items.length}项</Badge>
+                        </div>
+                        
+                        <div className="pl-4 space-y-3">
+                          {subGroups.map(({ key, items: subItems }) => {
+                            const subConfig = subCategoryConfig[key];
+                            const SubIcon = subConfig?.icon || Wrench;
+                            
+                            return (
+                              <div key={key} className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <SubIcon className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-sm font-medium">{subConfig?.label || key}</span>
+                                  <Badge variant="outline" className="text-xs">{subItems.length}项</Badge>
+                                </div>
+                                <div className="grid gap-2 pl-6">
+                                  {subItems.map(item => (
+                                    <div
+                                      key={item.id}
+                                      className="flex items-center justify-between p-3 border rounded-lg bg-card"
+                                    >
+                                      <div className="flex-1">
+                                        <div className="font-medium">{item.item_name}</div>
+                                        <div className="text-sm text-muted-foreground">
+                                          <code className="text-xs bg-muted px-1 rounded">{item.item_key}</code>
+                                          {item.description && ` · ${item.description}`}
+                                        </div>
+                                      </div>
+                                      <Switch
+                                        checked={item.is_active}
+                                        onCheckedChange={(checked) =>
+                                          updateFeatureMutation.mutate({ id: item.id, updates: { is_active: checked } })
+                                        }
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  }
                   
                   return (
                     <div key={category} className="space-y-3">
@@ -274,6 +439,59 @@ const FeatureCostManagement = () => {
                       
                       if (items.length === 0) return null;
 
+                      // Special handling for tools with sub-categories
+                      if (category === 'tool') {
+                        const subGroups = groupToolsBySubCategory(items);
+                        
+                        return (
+                          <div key={category} className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <CategoryIcon className="h-5 w-5" />
+                              <h3 className="font-semibold">{config.label}</h3>
+                              <Badge className={config.color}>{items.length}项</Badge>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              {subGroups.map(({ key, items: subItems }) => {
+                                const subConfig = subCategoryConfig[key];
+                                const SubIcon = subConfig?.icon || Wrench;
+                                const isExpanded = expandedSubCategories[key];
+                                
+                                return (
+                                  <Collapsible key={key} open={isExpanded} onOpenChange={() => toggleSubCategory(key)}>
+                                    <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 bg-muted/30 rounded-md hover:bg-muted/50 transition-colors">
+                                      {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                                      <SubIcon className="h-4 w-4 text-muted-foreground" />
+                                      <span className="text-sm font-medium">{subConfig?.label || key}</span>
+                                      <Badge variant="outline" className="text-xs">{subItems.length}项</Badge>
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent>
+                                      <div className="border rounded-lg overflow-hidden mt-2">
+                                        <Table>
+                                          <TableHeader>
+                                            <TableRow>
+                                              <TableHead>功能</TableHead>
+                                              <TableHead className="text-center w-20">启用</TableHead>
+                                              <TableHead className="text-center w-24">扣费点数</TableHead>
+                                              <TableHead className="text-center w-24">免费额度</TableHead>
+                                              <TableHead className="text-center w-28">额度周期</TableHead>
+                                              <TableHead className="text-center w-16">操作</TableHead>
+                                            </TableRow>
+                                          </TableHeader>
+                                          <TableBody>
+                                            {subItems.map(item => renderFeatureRow(item))}
+                                          </TableBody>
+                                        </Table>
+                                      </div>
+                                    </CollapsibleContent>
+                                  </Collapsible>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      }
+
                       return (
                         <div key={category} className="space-y-3">
                           <div className="flex items-center gap-2">
@@ -294,75 +512,7 @@ const FeatureCostManagement = () => {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {items.map(item => {
-                                  const setting = getSettingForFeature(item.id);
-                                  const hasChanges = !!editingSettings[item.id];
-                                  
-                                  return (
-                                    <TableRow key={item.id}>
-                                      <TableCell>
-                                        <div className="font-medium">{item.item_name}</div>
-                                      </TableCell>
-                                      <TableCell className="text-center">
-                                        <Switch
-                                          checked={setting.is_enabled}
-                                          onCheckedChange={(checked) =>
-                                            updateEditingSetting(item.id, 'is_enabled', checked)
-                                          }
-                                        />
-                                      </TableCell>
-                                      <TableCell className="text-center">
-                                        <Input
-                                          type="number"
-                                          min="0"
-                                          value={setting.cost_per_use}
-                                          onChange={(e) =>
-                                            updateEditingSetting(item.id, 'cost_per_use', parseInt(e.target.value) || 0)
-                                          }
-                                          className="w-20 text-center mx-auto h-8"
-                                        />
-                                      </TableCell>
-                                      <TableCell className="text-center">
-                                        <Input
-                                          type="number"
-                                          min="0"
-                                          value={setting.free_quota}
-                                          onChange={(e) =>
-                                            updateEditingSetting(item.id, 'free_quota', parseInt(e.target.value) || 0)
-                                          }
-                                          className="w-20 text-center mx-auto h-8"
-                                        />
-                                      </TableCell>
-                                      <TableCell className="text-center">
-                                        <Select
-                                          value={setting.free_quota_period}
-                                          onValueChange={(value) =>
-                                            updateEditingSetting(item.id, 'free_quota_period', value)
-                                          }
-                                        >
-                                          <SelectTrigger className="w-24 mx-auto h-8">
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="daily">每日</SelectItem>
-                                            <SelectItem value="monthly">每月</SelectItem>
-                                            <SelectItem value="lifetime">永久</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </TableCell>
-                                      <TableCell className="text-center">
-                                        <Button
-                                          size="sm"
-                                          variant={hasChanges ? "default" : "ghost"}
-                                          onClick={() => handleSaveSetting(item.id)}
-                                          disabled={saveSettingsMutation.isPending}
-                                        >
-                                          <Save className="h-4 w-4" />
-                                        </Button>
-                                      </TableCell>
-                                    </TableRow>
-                                  );
-                                })}
+                                {items.map(item => renderFeatureRow(item))}
                               </TableBody>
                             </Table>
                           </div>
