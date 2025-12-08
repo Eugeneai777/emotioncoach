@@ -2424,30 +2424,52 @@ export type Database = {
       }
       partner_referrals: {
         Row: {
+          conversion_status: string | null
           created_at: string
+          has_joined_group: boolean | null
           id: string
+          joined_camp_at: string | null
+          joined_camp_id: string | null
+          joined_group_at: string | null
           level: number
           parent_referral_id: string | null
           partner_id: string
           referred_user_id: string
         }
         Insert: {
+          conversion_status?: string | null
           created_at?: string
+          has_joined_group?: boolean | null
           id?: string
+          joined_camp_at?: string | null
+          joined_camp_id?: string | null
+          joined_group_at?: string | null
           level?: number
           parent_referral_id?: string | null
           partner_id: string
           referred_user_id: string
         }
         Update: {
+          conversion_status?: string | null
           created_at?: string
+          has_joined_group?: boolean | null
           id?: string
+          joined_camp_at?: string | null
+          joined_camp_id?: string | null
+          joined_group_at?: string | null
           level?: number
           parent_referral_id?: string | null
           partner_id?: string
           referred_user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "partner_referrals_joined_camp_id_fkey"
+            columns: ["joined_camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "partner_referrals_parent_referral_id_fkey"
             columns: ["parent_referral_id"]
@@ -2534,6 +2556,8 @@ export type Database = {
           total_referrals: number
           updated_at: string
           user_id: string
+          wecom_group_name: string | null
+          wecom_group_qrcode_url: string | null
           withdrawn_amount: number
         }
         Insert: {
@@ -2558,6 +2582,8 @@ export type Database = {
           total_referrals?: number
           updated_at?: string
           user_id: string
+          wecom_group_name?: string | null
+          wecom_group_qrcode_url?: string | null
           withdrawn_amount?: number
         }
         Update: {
@@ -2582,6 +2608,8 @@ export type Database = {
           total_referrals?: number
           updated_at?: string
           user_id?: string
+          wecom_group_name?: string | null
+          wecom_group_qrcode_url?: string | null
           withdrawn_amount?: number
         }
         Relationships: []
