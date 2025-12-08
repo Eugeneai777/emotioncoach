@@ -2,6 +2,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Video } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { deductVideoQuota } from "@/utils/videoQuotaUtils";
+import { toast } from "sonner";
 
 interface VideoRecommendationCardProps {
   topicSummary: string;
@@ -24,9 +27,37 @@ export const VideoRecommendationCard = ({
 }: VideoRecommendationCardProps) => {
   const navigate = useNavigate();
   
-  const handleClick = () => {
-    if (videoUrl) {
-      window.open(videoUrl, '_blank');
+  const handleClick = async () => {
+    if (videoUrl && videoId) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast.error("请先登录");
+          navigate('/auth');
+          return;
+        }
+
+        // 扣费检查
+        const result = await deductVideoQuota(user.id, videoId, videoTitle || '推荐课程', 'coach_recommendation');
+        if (!result.success) {
+          toast.error(result.error || "额度不足，请充值后观看");
+          return;
+        }
+
+        // 记录观看历史（仅首次观看时记录）
+        if (result.isFirstWatch) {
+          await supabase.from("video_watch_history").insert({
+            user_id: user.id,
+            video_id: videoId,
+            watched_at: new Date().toISOString()
+          });
+        }
+
+        window.open(videoUrl, '_blank');
+      } catch (error) {
+        console.error("Error watching video:", error);
+        toast.error("操作失败，请稍后重试");
+      }
     } else {
       navigate('/courses');
     }

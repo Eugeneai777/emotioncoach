@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { PersonalCourseZone } from "@/components/courses/PersonalCourseZone";
+import { deductVideoQuota } from "@/utils/videoQuotaUtils";
 
 interface Course {
   id: string;
@@ -107,23 +108,33 @@ const Courses = () => {
     // 判断是传入的 Course 对象还是 URL + ID
     let videoUrl: string;
     let videoId: string;
+    let videoTitle: string;
     
     if (typeof videoUrlOrCourse === 'string') {
       // 新的调用方式：handleWatch(videoUrl, courseId)
       videoUrl = videoUrlOrCourse;
       videoId = courseId!;
+      videoTitle = courses.find(c => c.id === courseId)?.title || '视频课程';
     } else {
       // 旧的调用方式：handleWatch(course)
       const course = videoUrlOrCourse;
       videoUrl = course.video_url;
       videoId = course.id;
+      videoTitle = course.title;
     }
 
-    // 先打开视频（同步操作，避免被弹窗拦截）
+    // 扣费检查（首次观看扣费）
+    const result = await deductVideoQuota(user.id, videoId, videoTitle, 'courses_page');
+    if (!result.success) {
+      toast.error(result.error || "额度不足，请充值后观看");
+      return;
+    }
+
+    // 打开视频
     const newWindow = window.open(videoUrl, '_blank');
     
     if (newWindow) {
-      toast.success("视频已在新标签页打开");
+      toast.success(result.isFirstWatch ? "扣费成功，视频已打开" : "视频已在新标签页打开");
     } else {
       toast.error("弹窗被拦截，请允许浏览器弹窗", {
         action: {
@@ -133,18 +144,20 @@ const Courses = () => {
       });
     }
 
-    // 异步记录观看历史（不阻塞视频打开）
-    try {
-      await supabase
-        .from('video_watch_history')
-        .insert({
-          user_id: user.id,
-          video_id: videoId,
-          watched_at: new Date().toISOString(),
-          completed: false
-        });
-    } catch (error) {
-      console.error('记录观看历史失败:', error);
+    // 记录观看历史（仅首次观看时记录）
+    if (result.isFirstWatch) {
+      try {
+        await supabase
+          .from('video_watch_history')
+          .insert({
+            user_id: user.id,
+            video_id: videoId,
+            watched_at: new Date().toISOString(),
+            completed: false
+          });
+      } catch (error) {
+        console.error('记录观看历史失败:', error);
+      }
     }
   };
 

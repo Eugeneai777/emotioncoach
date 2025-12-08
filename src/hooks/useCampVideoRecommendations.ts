@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { getTodayCST } from "@/utils/dateUtils";
+import { deductVideoQuota } from "@/utils/videoQuotaUtils";
 
 interface VideoRecommendation {
   id: string;
@@ -166,10 +167,21 @@ export const useCampVideoRecommendations = (
     }
   };
 
-  const markAsWatched = async (taskId: string, videoId: string) => {
-    if (!user) return;
+  const markAsWatched = async (taskId: string, videoId: string, videoTitle: string): Promise<{ success: boolean }> => {
+    if (!user) return { success: false };
 
     try {
+      // 扣费检查（首次观看扣费）
+      const deductResult = await deductVideoQuota(user.id, videoId, videoTitle, 'camp_video_tasks');
+      if (!deductResult.success) {
+        toast({
+          title: "额度不足",
+          description: deductResult.error || "请充值后观看",
+          variant: "destructive",
+        });
+        return { success: false };
+      }
+
       // 更新任务状态
       const { error: updateError } = await supabase
         .from("camp_video_tasks")
@@ -181,13 +193,15 @@ export const useCampVideoRecommendations = (
 
       if (updateError) throw updateError;
 
-      // 记录观看历史
-      await supabase.from("video_watch_history").insert({
-        user_id: user.id,
-        video_id: videoId,
-        watched_at: new Date().toISOString(),
-        completed: true,
-      });
+      // 记录观看历史（仅首次观看时记录）
+      if (deductResult.isFirstWatch) {
+        await supabase.from("video_watch_history").insert({
+          user_id: user.id,
+          video_id: videoId,
+          watched_at: new Date().toISOString(),
+          completed: true,
+        });
+      }
 
       // 更新每日进度
       const { data: progress } = await supabase
@@ -207,17 +221,18 @@ export const useCampVideoRecommendations = (
           user_id: user.id,
           progress_date: dateStr,
           videos_watched_count: currentCount + 1,
-          video_learning_completed: completedVideos >= 2, // 至少观看2个视频
+          video_learning_completed: completedVideos >= 2,
         }, {
           onConflict: "camp_id,progress_date",
         });
 
       toast({
-        title: "已标记为已观看",
+        title: deductResult.isFirstWatch ? "扣费成功，已标记为已观看" : "已标记为已观看",
         description: "继续保持学习的好习惯 ✨",
       });
 
       await loadRecommendations();
+      return { success: true };
     } catch (error) {
       console.error("标记观看失败:", error);
       toast({
@@ -225,6 +240,7 @@ export const useCampVideoRecommendations = (
         description: "请稍后重试",
         variant: "destructive",
       });
+      return { success: false };
     }
   };
 
