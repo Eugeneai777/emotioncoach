@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import WaterfallPostCard from "@/components/community/WaterfallPostCard";
 import PostDetailSheet from "@/components/community/PostDetailSheet";
 import PostComposer from "@/components/community/PostComposer";
-import { Loader2, Plus, ArrowLeft } from "lucide-react";
+import { Plus, ArrowLeft, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface CommunityPost {
   id: string;
@@ -256,74 +257,118 @@ const Community = () => {
     return map;
   }, [posts, likedPostIds]);
 
+  // Skeleton loading component
+  const SkeletonCards = () => (
+    <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-white/60 backdrop-blur-sm rounded-xl p-3 animate-pulse">
+            <div className="h-32 bg-teal-100/50 rounded-lg mb-3" />
+            <div className="h-4 bg-teal-100/50 rounded w-3/4 mb-2" />
+            <div className="h-3 bg-teal-100/50 rounded w-1/2" />
+          </div>
+        ))}
+      </div>
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-white/60 backdrop-blur-sm rounded-xl p-3 animate-pulse">
+            <div className="h-24 bg-teal-100/50 rounded-lg mb-3" />
+            <div className="h-4 bg-teal-100/50 rounded w-2/3 mb-2" />
+            <div className="h-3 bg-teal-100/50 rounded w-1/3" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header */}
-        <div className="flex items-start gap-4 mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/")}
-            className="mt-1"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1 text-center">
-            <h1 className="text-3xl font-bold mb-1 flex items-center justify-center gap-2">
-              <span className="inline-block">🌈</span>
-              <span className="bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 via-indigo-500 to-purple-500 bg-clip-text text-transparent" style={{ backgroundSize: '200% 200%' }}>
-                有劲社区
-              </span>
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              ✨ 分享成长 · 见证蜕变 ✨
-            </p>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/")}
+              className="text-teal-700 hover:bg-teal-100/50"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-teal-700 flex items-center gap-2">
+                🌈 有劲社区
+              </h1>
+              <p className="text-xs text-teal-600/70">分享成长 · 见证蜕变</p>
+            </div>
           </div>
-          <div className="w-10" />
+          {session ? (
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="bg-white/60 border-teal-200 hover:bg-white/80 text-teal-700"
+              onClick={() => navigate("/my-posts")}
+            >
+              <User className="w-4 h-4 mr-1" />
+              我的
+            </Button>
+          ) : (
+            <div className="w-10" />
+          )}
         </div>
 
-        {/* Category Filter */}
-        <ScrollArea className="w-full mb-4">
-          <div className="flex gap-2 pb-2">
-            {categories.map((category) => (
-              <Button
-                key={category.value}
-                variant={activeFilter === category.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setActiveFilter(category.value);
-                  setSelectedEmotionTag(null);
-                }}
-                className="whitespace-nowrap shrink-0"
-              >
-                <span className="mr-1">{category.emoji}</span>
-                {category.label}
-              </Button>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        {/* Category Filter - 4 Column Grid */}
+        <div className="grid grid-cols-4 gap-2 mb-4">
+          {categories.map((category) => (
+            <Button
+              key={category.value}
+              variant="outline"
+              onClick={() => {
+                setActiveFilter(category.value);
+                setSelectedEmotionTag(null);
+              }}
+              className={cn(
+                "min-h-[52px] active:scale-95 transition-all flex-col py-2",
+                activeFilter === category.value 
+                  ? "bg-white/80 border-teal-400 text-teal-700 font-medium shadow-sm" 
+                  : "bg-white/60 border-border/40 hover:bg-white/80 text-foreground/80"
+              )}
+            >
+              <span className="text-lg mb-0.5">{category.emoji}</span>
+              <span className="text-xs">{category.label}</span>
+            </Button>
+          ))}
+        </div>
 
         {/* Emotion Tag Filter for Story */}
         {activeFilter === "story" && emotionTags.length > 0 && (
           <ScrollArea className="w-full mb-4">
             <div className="flex gap-2 pb-2">
               <Button
-                variant={selectedEmotionTag === null ? "secondary" : "ghost"}
+                variant={selectedEmotionTag === null ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setSelectedEmotionTag(null)}
-                className="whitespace-nowrap shrink-0 text-xs"
+                className={cn(
+                  "whitespace-nowrap shrink-0 text-xs rounded-full px-4",
+                  selectedEmotionTag === null 
+                    ? "bg-teal-500 text-white hover:bg-teal-600" 
+                    : "bg-white/60 hover:bg-white/80 text-foreground/80"
+                )}
               >
                 全部
               </Button>
               {emotionTags.map((tag) => (
                 <Button
                   key={tag}
-                  variant={selectedEmotionTag === tag ? "secondary" : "ghost"}
+                  variant={selectedEmotionTag === tag ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setSelectedEmotionTag(tag)}
-                  className="whitespace-nowrap shrink-0 text-xs"
+                  className={cn(
+                    "whitespace-nowrap shrink-0 text-xs rounded-full px-4",
+                    selectedEmotionTag === tag 
+                      ? "bg-teal-500 text-white hover:bg-teal-600" 
+                      : "bg-white/60 hover:bg-white/80 text-foreground/80"
+                  )}
                 >
                   {tag}
                 </Button>
@@ -337,23 +382,31 @@ const Community = () => {
         {session && (
           <Button
             onClick={() => setShowComposer(true)}
-            variant="outline"
-            className="w-full h-11 text-sm mb-4 bg-card border-border/60 hover:bg-muted hover:border-border transition-all duration-200 text-foreground/90"
+            className="w-full h-12 bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 text-white shadow-lg shadow-teal-200/50 mb-4"
           >
-            <Plus className="mr-2 h-4 w-4 text-foreground/70" />
-            分享动态
+            <Plus className="mr-2 h-5 w-5" />
+            分享我的动态
           </Button>
         )}
 
         {/* Posts Waterfall */}
         {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-foreground/60" />
-          </div>
+          <SkeletonCards />
         ) : posts.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <p className="text-lg mb-2">暂无分享内容</p>
-            <p className="text-sm">成为第一个分享故事的人吧！</p>
+          <div className="text-center py-16">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full flex items-center justify-center">
+              <span className="text-4xl">✨</span>
+            </div>
+            <p className="text-lg font-medium text-foreground/80 mb-2">暂无分享内容</p>
+            <p className="text-sm text-muted-foreground mb-6">成为第一个分享故事的人吧！</p>
+            {session && (
+              <Button 
+                onClick={() => setShowComposer(true)}
+                className="bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 text-white"
+              >
+                <Plus className="mr-2 h-4 w-4" /> 发布第一个动态
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
