@@ -50,9 +50,24 @@ const ShareButton = ({ post }: ShareButtonProps) => {
 
   const handleGenerateImage = async () => {
     if (!cardRef.current) return;
+    
+    const container = cardRef.current.parentElement;
 
     try {
       setSharing(true);
+
+      // 临时让元素可见以确保正确渲染
+      if (container) {
+        container.style.position = 'fixed';
+        container.style.left = '0';
+        container.style.top = '0';
+        container.style.zIndex = '9999';
+        container.style.opacity = '1';
+        container.style.visibility = 'visible';
+      }
+
+      // 等待渲染稳定
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // 生成图片
       const canvas = await html2canvas(cardRef.current, {
@@ -62,6 +77,10 @@ const ShareButton = ({ post }: ShareButtonProps) => {
         useCORS: true,
         allowTaint: true,
         imageTimeout: 15000,
+        width: cardRef.current.scrollWidth,
+        height: cardRef.current.scrollHeight,
+        windowWidth: cardRef.current.scrollWidth,
+        windowHeight: cardRef.current.scrollHeight,
         // 强制使用系统字体，避免渲染异常
         onclone: (clonedDoc) => {
           const clonedElement = clonedDoc.body.querySelector('[data-share-card]');
@@ -118,8 +137,24 @@ const ShareButton = ({ post }: ShareButtonProps) => {
         description: "请稍后重试",
         variant: "destructive",
       });
+      
+      // 恢复隐藏
+      if (container) {
+        container.style.position = 'fixed';
+        container.style.left = '-9999px';
+        container.style.opacity = '0';
+        container.style.visibility = 'hidden';
+      }
     } finally {
       setSharing(false);
+      
+      // 确保恢复隐藏
+      if (container) {
+        container.style.position = 'fixed';
+        container.style.left = '-9999px';
+        container.style.opacity = '0';
+        container.style.visibility = 'hidden';
+      }
     }
   };
 
