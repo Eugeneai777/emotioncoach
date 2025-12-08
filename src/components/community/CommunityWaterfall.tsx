@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import WaterfallPostCard from "./WaterfallPostCard";
 import PostDetailSheet from "./PostDetailSheet";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, RefreshCw } from "lucide-react";
+import { Plus, Loader2, RefreshCw, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
@@ -616,9 +616,15 @@ const CommunityWaterfall = () => {
         className="flex items-center justify-between mb-4 px-1"
         onTouchStart={handleButtonTouchStart}
       >
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold text-foreground">🌈 有劲社区</h2>
+        <div 
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity group"
+          onClick={() => navigate("/community")}
+        >
+          <h2 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+            🌈 有劲社区
+          </h2>
           <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full border border-border/50">NEW</span>
+          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
         </div>
           <Button 
             variant="outline"
