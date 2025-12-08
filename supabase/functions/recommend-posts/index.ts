@@ -21,25 +21,25 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // 获取用户的点赞历史 - 优化查询速度
+    // 获取用户的点赞历史 - 优化查询速度，只取最近15条
     const { data: likes, error: likesError } = await supabase
       .from("post_likes")
       .select("post_id")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(15);
 
     if (likesError) {
       console.error("获取点赞历史失败:", likesError);
     }
 
-    // 获取用户的评论历史 - 优化查询速度
+    // 获取用户的评论历史 - 优化查询速度，只取最近15条
     const { data: comments, error: commentsError } = await supabase
       .from("post_comments")
       .select("post_id")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(15);
 
     if (commentsError) {
       console.error("获取评论历史失败:", commentsError);
@@ -79,8 +79,8 @@ serve(async (req) => {
     if (allInteractedPostIds.length > 0) {
       const { data: posts } = await supabase
         .from("community_posts")
-        .select("id, post_type, emotion_theme, title")
-        .in("id", allInteractedPostIds);
+        .select("id, post_type, emotion_theme")
+        .in("id", allInteractedPostIds.slice(0, 20)); // 限制数量
       interactedPosts = posts || [];
     }
 
@@ -126,29 +126,45 @@ serve(async (req) => {
 
     // 使用 Lovable AI 进行智能推荐
     console.log("使用AI推荐");
-    const userBehavior = {
-      interactedPosts: interactedPosts.map((post: any) => ({
-        type: post.post_type,
-        theme: post.emotion_theme,
-        title: post.title,
-      })),
-    };
+    
+    // 简化用户行为数据
+    const typeMap = new Map<string, number>();
+    const themeMap = new Map<string, number>();
+    
+    interactedPosts.forEach((post: any) => {
+      typeMap.set(post.post_type, (typeMap.get(post.post_type) || 0) + 1);
+      if (post.emotion_theme) {
+        themeMap.set(post.emotion_theme, (themeMap.get(post.emotion_theme) || 0) + 1);
+      }
+    });
+    
+    const preferredTypes = Array.from(typeMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([type]) => type);
+    
+    const preferredThemes = Array.from(themeMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([theme]) => theme);
+    
+    const userBehavior = { preferredTypes, preferredThemes };
 
     // 获取候选帖子（减少数量和字段以提高速度）
     const { data: candidatePosts } = await supabase
       .from("community_posts")
-      .select("id, post_type, emotion_theme, title, likes_count")
+      .select("id, post_type, emotion_theme, likes_count")
       .order("created_at", { ascending: false })
-      .limit(30);
+      .limit(20); // 减少到20条
 
     console.log("候选帖子数量:", candidatePosts?.length);
 
-    // 添加超时控制的 AI 调用
+    // 添加超时控制的 AI 调用 - 减少到5秒
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       console.log("AI调用超时，中止请求");
       controller.abort();
-    }, 8000); // 8秒超时
+    }, 5000); // 5秒超时
 
     try {
       const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -159,15 +175,15 @@ serve(async (req) => {
         },
         signal: controller.signal,
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-2.5-flash-lite", // 使用更快的模型
           messages: [
             {
               role: "system",
-              content: "你是一个社区内容推荐专家。基于用户的点赞和评论历史，从候选帖子中选择最符合用户兴趣的10个帖子ID。只返回帖子ID数组，不要其他内容。"
+              content: "你是推荐专家。基于用户偏好，从候选帖子中选择10个最匹配的帖子ID。只返回帖子ID数组。"
             },
             {
               role: "user",
-              content: `用户行为数据：\n${JSON.stringify(userBehavior, null, 2)}\n\n候选帖子：\n${JSON.stringify(candidatePosts, null, 2)}\n\n请选择最适合推荐给该用户的10个帖子ID（优先考虑用户感兴趣的主题和类型）。`
+              content: `用户偏好：类型=${userBehavior.preferredTypes.join(',')}，主题=${userBehavior.preferredThemes.join(',')}。候选：${JSON.stringify(candidatePosts?.map(p => ({id: p.id, t: p.post_type, e: p.emotion_theme})))}。选10个。`
             }
           ],
           tools: [

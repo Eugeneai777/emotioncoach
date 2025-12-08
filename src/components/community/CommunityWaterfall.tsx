@@ -28,6 +28,8 @@ interface Post {
 }
 
 const POSTS_PER_PAGE = 10;
+const RECOMMENDATION_CACHE_KEY = 'community_recommendation_cache';
+const RECOMMENDATION_CACHE_TTL = 5 * 60 * 1000; // 5分钟缓存
 
 const categories = [
   { value: 'following', label: '关注', emoji: '👥' },
@@ -35,6 +37,51 @@ const categories = [
   { value: 'resonance', label: '同频', emoji: '💫' },
   { value: 'story', label: '故事', emoji: '📖' },
 ];
+
+// 移到组件外部避免重新创建
+const LeftColumnComponent = memo(({ 
+  posts, 
+  likedMap, 
+  onCardClick 
+}: { 
+  posts: Post[]; 
+  likedMap: Map<string, boolean>;
+  onCardClick: (postId: string) => void;
+}) => (
+  <div className="space-y-0">
+    {posts.map((post) => (
+      <WaterfallPostCard 
+        key={post.id} 
+        post={post} 
+        isLiked={likedMap.get(post.id) || false}
+        onCardClick={onCardClick} 
+      />
+    ))}
+  </div>
+));
+LeftColumnComponent.displayName = 'LeftColumn';
+
+const RightColumnComponent = memo(({ 
+  posts, 
+  likedMap, 
+  onCardClick 
+}: { 
+  posts: Post[]; 
+  likedMap: Map<string, boolean>;
+  onCardClick: (postId: string) => void;
+}) => (
+  <div className="space-y-0">
+    {posts.map((post) => (
+      <WaterfallPostCard 
+        key={post.id} 
+        post={post} 
+        isLiked={likedMap.get(post.id) || false}
+        onCardClick={onCardClick} 
+      />
+    ))}
+  </div>
+));
+RightColumnComponent.displayName = 'RightColumn';
 
 const CommunityWaterfall = () => {
   const navigate = useNavigate();
@@ -53,12 +100,73 @@ const CommunityWaterfall = () => {
   const [pullDistance, setPullDistance] = useState(0);
   const [emotionTags, setEmotionTags] = useState<string[]>([]);
   const [selectedEmotionTag, setSelectedEmotionTag] = useState<string | null>(null);
+  const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const observerTarget = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const loadMoreTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 获取推荐帖子
+  // 批量获取点赞状态
+  const batchCheckLikedStatus = useCallback(async (postIds: string[]) => {
+    if (!session?.user || postIds.length === 0) return;
+
+    try {
+      const { data } = await supabase
+        .from("post_likes")
+        .select("post_id")
+        .eq("user_id", session.user.id)
+        .in("post_id", postIds);
+
+      if (data) {
+        const likedIds = new Set(data.map(item => item.post_id));
+        setLikedPostIds(prev => {
+          const newSet = new Set(prev);
+          likedIds.forEach(id => newSet.add(id));
+          return newSet;
+        });
+      }
+    } catch (error) {
+      console.error("批量检查点赞状态失败:", error);
+    }
+  }, [session]);
+
+  // 获取缓存的推荐
+  const getCachedRecommendation = useCallback(() => {
+    try {
+      const cached = sessionStorage.getItem(RECOMMENDATION_CACHE_KEY);
+      if (cached) {
+        const { ids, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < RECOMMENDATION_CACHE_TTL) {
+          return ids;
+        }
+      }
+    } catch {
+      // 忽略缓存读取错误
+    }
+    return null;
+  }, []);
+
+  // 缓存推荐结果
+  const setCachedRecommendation = useCallback((ids: string[]) => {
+    try {
+      sessionStorage.setItem(RECOMMENDATION_CACHE_KEY, JSON.stringify({
+        ids,
+        timestamp: Date.now()
+      }));
+    } catch {
+      // 忽略缓存写入错误
+    }
+  }, []);
+
+  // 获取推荐帖子（带缓存）
   const loadRecommendedPosts = useCallback(async () => {
     if (!session?.user || activeFilter !== 'all') return null;
+    
+    // 先检查缓存
+    const cachedIds = getCachedRecommendation();
+    if (cachedIds) {
+      console.log("使用缓存的推荐");
+      return cachedIds;
+    }
     
     try {
       const { data, error } = await supabase.functions.invoke('recommend-posts', {
@@ -70,12 +178,16 @@ const CommunityWaterfall = () => {
         return null;
       }
 
-      return data?.recommendedPostIds || null;
+      const ids = data?.recommendedPostIds || null;
+      if (ids) {
+        setCachedRecommendation(ids);
+      }
+      return ids;
     } catch (error) {
       console.error('推荐请求失败:', error);
       return null;
     }
-  }, [session, activeFilter]);
+  }, [session, activeFilter, getCachedRecommendation, setCachedRecommendation]);
 
   // 加载帖子
   const loadPosts = useCallback(async (pageNum: number, filter: string, append = false, useRecommendation = false) => {
@@ -203,6 +315,9 @@ const CommunityWaterfall = () => {
             query = query.order('created_at', { ascending: false })
               .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
           }
+        } else {
+          query = query.order('created_at', { ascending: false })
+            .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
         }
       }
 
@@ -229,6 +344,10 @@ const CommunityWaterfall = () => {
           setPosts(processedData);
         }
         setHasMore(data.length === POSTS_PER_PAGE);
+
+        // 批量获取点赞状态
+        const postIds = processedData.map((p: Post) => p.id);
+        batchCheckLikedStatus(postIds);
       }
     } catch (error) {
       console.error('加载帖子失败:', error);
@@ -236,7 +355,7 @@ const CommunityWaterfall = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [loadRecommendedPosts, session, selectedEmotionTag]);
+  }, [loadRecommendedPosts, session, selectedEmotionTag, batchCheckLikedStatus]);
   
   // 加载用户的情绪标签（用于故事筛选）
   const loadEmotionTags = useCallback(async () => {
@@ -266,6 +385,8 @@ const CommunityWaterfall = () => {
   // 下拉刷新
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
+    // 清除推荐缓存以获取新推荐
+    sessionStorage.removeItem(RECOMMENDATION_CACHE_KEY);
     await loadPosts(0, activeFilter, false, true);
     setPage(0);
     setRefreshing(false);
@@ -300,7 +421,20 @@ const CommunityWaterfall = () => {
     setPullDistance(0);
   };
 
-  // 加载帖子详情
+  // 处理卡片点击 - 使用缓存的数据
+  const handleCardClick = useCallback((postId: string) => {
+    setSelectedPostId(postId);
+    // 从已加载的帖子中查找，避免额外请求
+    const cachedPost = posts.find(p => p.id === postId);
+    if (cachedPost) {
+      setSelectedPost(cachedPost);
+    } else {
+      // 仅在缓存中找不到时才发起请求
+      loadPostDetail(postId);
+    }
+  }, [posts]);
+
+  // 加载帖子详情（备用）
   const loadPostDetail = useCallback(async (postId: string) => {
     try {
       const { data, error } = await supabase
@@ -340,11 +474,18 @@ const CommunityWaterfall = () => {
     }
   }, [toast]);
 
-  // 处理卡片点击
-  const handleCardClick = useCallback((postId: string) => {
-    setSelectedPostId(postId);
-    loadPostDetail(postId);
-  }, [loadPostDetail]);
+  // 更新点赞状态
+  const handleLikeChange = useCallback((postId: string, isLiked: boolean) => {
+    setLikedPostIds(prev => {
+      const newSet = new Set(prev);
+      if (isLiked) {
+        newSet.add(postId);
+      } else {
+        newSet.delete(postId);
+      }
+      return newSet;
+    });
+  }, []);
 
   // 初始加载
   useEffect(() => {
@@ -365,19 +506,27 @@ const CommunityWaterfall = () => {
     }
   }, [selectedEmotionTag]);
 
-  // 无限滚动 - 使用 useCallback 优化
+  // 无限滚动 - 带防抖
   const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
     if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
-      setPage(prev => {
-        const nextPage = prev + 1;
-        loadPosts(nextPage, activeFilter, true);
-        return nextPage;
-      });
+      // 清除之前的定时器
+      if (loadMoreTimeoutRef.current) {
+        clearTimeout(loadMoreTimeoutRef.current);
+      }
+      // 300ms 防抖
+      loadMoreTimeoutRef.current = setTimeout(() => {
+        setPage(prev => {
+          const nextPage = prev + 1;
+          loadPosts(nextPage, activeFilter, true);
+          return nextPage;
+        });
+      }, 300);
     }
   }, [hasMore, loading, loadingMore, activeFilter, loadPosts]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(handleIntersection, { threshold: 0.1 });
+    // 增加 threshold 到 0.3
+    const observer = new IntersectionObserver(handleIntersection, { threshold: 0.3 });
 
     const currentTarget = observerTarget.current;
     if (currentTarget) {
@@ -388,11 +537,15 @@ const CommunityWaterfall = () => {
       if (currentTarget) {
         observer.unobserve(currentTarget);
       }
+      // 清理定时器
+      if (loadMoreTimeoutRef.current) {
+        clearTimeout(loadMoreTimeoutRef.current);
+      }
     };
   }, [handleIntersection]);
 
-  // 瀑布流布局：将帖子分配到两列 - 使用 memo 优化
-  const columns = useMemo(() => {
+  // 瀑布流布局：将帖子分配到两列 - 使用 useMemo 优化
+  const { leftPosts, rightPosts } = useMemo(() => {
     const left: Post[] = [];
     const right: Post[] = [];
     
@@ -404,28 +557,17 @@ const CommunityWaterfall = () => {
       }
     });
     
-    return { left, right };
+    return { leftPosts: left, rightPosts: right };
   }, [posts]);
 
-  // Memoized 列渲染
-  const LeftColumn = memo(() => (
-    <div className="space-y-0">
-      {columns.left.map((post) => (
-        <WaterfallPostCard key={post.id} post={post} onCardClick={handleCardClick} />
-      ))}
-    </div>
-  ));
-
-  const RightColumn = memo(() => (
-    <div className="space-y-0">
-      {columns.right.map((post) => (
-        <WaterfallPostCard key={post.id} post={post} onCardClick={handleCardClick} />
-      ))}
-    </div>
-  ));
-
-  LeftColumn.displayName = 'LeftColumn';
-  RightColumn.displayName = 'RightColumn';
+  // 创建稳定的 likedMap
+  const likedMap = useMemo(() => {
+    const map = new Map<string, boolean>();
+    posts.forEach(post => {
+      map.set(post.id, likedPostIds.has(post.id));
+    });
+    return map;
+  }, [posts, likedPostIds]);
 
   return (
     <div 
@@ -559,10 +701,18 @@ const CommunityWaterfall = () => {
         <>
           <div className="grid grid-cols-2 gap-3">
             {/* 左列 */}
-            <LeftColumn />
+            <LeftColumnComponent 
+              posts={leftPosts} 
+              likedMap={likedMap}
+              onCardClick={handleCardClick} 
+            />
 
             {/* 右列 */}
-            <RightColumn />
+            <RightColumnComponent 
+              posts={rightPosts} 
+              likedMap={likedMap}
+              onCardClick={handleCardClick} 
+            />
           </div>
 
           {/* 加载更多指示器 */}
