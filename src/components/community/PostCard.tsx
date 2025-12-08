@@ -80,11 +80,12 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
     }
   };
   
-  // 获取教练空间信息
+  // 获取教练空间信息 - 传入 badges
   const coachSpace = getCoachSpaceInfo(
     post.camp_type,
     post.camp_name,
-    post.template_id
+    post.template_id,
+    post.badges
   );
 
   // 检查是否已关注

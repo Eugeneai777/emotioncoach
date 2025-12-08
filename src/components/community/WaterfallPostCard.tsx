@@ -26,6 +26,13 @@ interface WaterfallPostCardProps {
     camp_type?: string;
     camp_name?: string;
     template_id?: string;
+    badges?: {
+      coachType?: 'emotion' | 'communication' | 'parent' | 'vibrant_life';
+      coachLabel?: string;
+      coachEmoji?: string;
+      campName?: string;
+      [key: string]: unknown;
+    };
   };
   isLiked?: boolean;
   onCardClick?: (postId: string) => void;
@@ -56,11 +63,12 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
   // 显示用户名或匿名
   const displayName = post.is_anonymous ? "匿名用户" : `用户${post.user_id.slice(0, 6)}`;
   
-  // 获取教练空间信息
+  // 获取教练空间信息 - 传入 badges
   const coachSpace = getCoachSpaceInfo(
     post.camp_type,
     post.camp_name,
-    post.template_id
+    post.template_id,
+    post.badges
   );
 
   // 处理点赞
@@ -170,6 +178,17 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
              post.post_type === 'achievement' ? '🏆' :
              post.post_type === 'reflection' ? '💭' : '✨'}
           </span>
+          {/* 无图帖子也显示教练空间标签 */}
+          {coachSpace && (
+            <div className={cn(
+              "absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-medium z-10",
+              "flex items-center gap-1 backdrop-blur-md shadow-sm bg-white/70",
+              coachSpace.colorClass
+            )}>
+              <span>{coachSpace.emoji}</span>
+              <span>{coachSpace.shortName}</span>
+            </div>
+          )}
         </div>
       )}
       {/* 标题区域 */}

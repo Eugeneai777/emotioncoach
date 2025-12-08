@@ -8,15 +8,67 @@ export interface CoachSpaceInfo {
   routePath: string;
 }
 
+export interface PostBadges {
+  coachType?: 'emotion' | 'communication' | 'parent' | 'vibrant_life';
+  coachLabel?: string;
+  coachEmoji?: string;
+  campName?: string;
+  type?: string;
+  [key: string]: unknown;
+}
+
 export const getCoachSpaceInfo = (
   campType: string | undefined, 
   campName: string | undefined,
-  templateId: string | undefined
+  templateId: string | undefined,
+  badges?: PostBadges
 ): CoachSpaceInfo | null => {
-  if (!campType && !campName && !templateId) return null;
+  // 优先从 badges 中读取教练类型
+  if (badges?.coachType) {
+    const coachTypeMap: Record<string, CoachSpaceInfo> = {
+      emotion: {
+        name: '情绪教练',
+        shortName: '情绪',
+        emoji: '💚',
+        colorClass: 'text-emerald-600 dark:text-emerald-400',
+        bgClass: 'bg-emerald-100 dark:bg-emerald-900/30',
+        routePath: '/'
+      },
+      communication: {
+        name: '沟通教练',
+        shortName: '沟通',
+        emoji: '💬',
+        colorClass: 'text-blue-600 dark:text-blue-400',
+        bgClass: 'bg-blue-100 dark:bg-blue-900/30',
+        routePath: '/communication-coach'
+      },
+      parent: {
+        name: '亲子教练',
+        shortName: '亲子',
+        emoji: '👪',
+        colorClass: 'text-purple-600 dark:text-purple-400',
+        bgClass: 'bg-purple-100 dark:bg-purple-900/30',
+        routePath: '/parent-child-diary'
+      },
+      vibrant_life: {
+        name: '有劲生活教练',
+        shortName: '有劲',
+        emoji: '❤️',
+        colorClass: 'text-rose-600 dark:text-rose-400',
+        bgClass: 'bg-rose-100 dark:bg-rose-900/30',
+        routePath: '/dynamic-coach'
+      }
+    };
+    return coachTypeMap[badges.coachType] || null;
+  }
+
+  // 从 badges.campName 读取训练营名称
+  const effectiveCampName = campName || badges?.campName;
+  
+  if (!campType && !effectiveCampName && !templateId) return null;
   
   // 根据 camp_type 或 camp_name 识别教练空间
-  if (campType === 'parent_emotion_21' || campName?.includes('亲子') || campName?.includes('青少年')) {
+  if (campType === 'parent_emotion_21' || effectiveCampName?.includes('亲子') || effectiveCampName?.includes('青少年')) {
     return {
       name: '亲子情绪教练',
       shortName: '亲子',
@@ -27,7 +79,7 @@ export const getCoachSpaceInfo = (
     };
   }
   
-  if (campType === 'emotion_journal_21' || campName?.includes('情绪日记')) {
+  if (campType === 'emotion_journal_21' || effectiveCampName?.includes('情绪日记')) {
     return {
       name: '情绪日记教练',
       shortName: '情绪',
@@ -38,7 +90,7 @@ export const getCoachSpaceInfo = (
     };
   }
   
-  if (campType === 'emotion_bloom' || campName?.includes('绽放')) {
+  if (campType === 'emotion_bloom' || effectiveCampName?.includes('绽放')) {
     return {
       name: '情感绽放教练',
       shortName: '绽放',
@@ -51,7 +103,7 @@ export const getCoachSpaceInfo = (
   
   // 默认：其他训练营
   return {
-    name: campName || '训练营',
+    name: effectiveCampName || '训练营',
     shortName: '营',
     emoji: '🏕️',
     colorClass: 'text-blue-600 dark:text-blue-400',
