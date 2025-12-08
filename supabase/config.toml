@@ -19,7 +19,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.redeem-code]
-verify_jwt = false
+verify_jwt = true
 
 [functions.life-coach]
 verify_jwt = true
@@ -190,7 +190,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.realtime-token]
-verify_jwt = false
+verify_jwt = true
 
 [functions.log-api-cost]
 verify_jwt = false
