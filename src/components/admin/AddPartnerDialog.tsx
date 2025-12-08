@@ -17,9 +17,9 @@ interface AddPartnerDialogProps {
 }
 
 const LEVEL_CONFIG = {
-  L1: { name: '初级', icon: Zap, gradient: 'from-orange-400 to-amber-400', l1Rate: 20, l2Rate: 0, price: 792 },
-  L2: { name: '高级', icon: Flame, gradient: 'from-orange-500 to-amber-500', l1Rate: 35, l2Rate: 0, price: 3217 },
-  L3: { name: '钻石', icon: Gem, gradient: 'from-orange-600 to-amber-600', l1Rate: 50, l2Rate: 10, price: 4950 },
+  L1: { name: '初级', icon: Zap, gradient: 'from-orange-400 to-amber-400', l1Rate: 20, l2Rate: 0, price: 792, minPrepurchase: 100 },
+  L2: { name: '高级', icon: Flame, gradient: 'from-orange-500 to-amber-500', l1Rate: 35, l2Rate: 0, price: 3217, minPrepurchase: 500 },
+  L3: { name: '钻石', icon: Gem, gradient: 'from-orange-600 to-amber-600', l1Rate: 50, l2Rate: 10, price: 4950, minPrepurchase: 1000 },
 };
 
 export function AddPartnerDialog({ open, onOpenChange, onSuccess }: AddPartnerDialogProps) {
@@ -30,8 +30,13 @@ export function AddPartnerDialog({ open, onOpenChange, onSuccess }: AddPartnerDi
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 根据等级自动更新佣金比例
+  // 根据等级自动更新佣金比例和预购数量
   const currentConfig = LEVEL_CONFIG[level];
+
+  // 等级变化时自动更新预购数量
+  useEffect(() => {
+    setPrepurchaseCount(String(currentConfig.minPrepurchase));
+  }, [level, currentConfig.minPrepurchase]);
 
   const generatePartnerCode = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -103,7 +108,7 @@ export function AddPartnerDialog({ open, onOpenChange, onSuccess }: AddPartnerDi
       // 重置表单
       setUserId("");
       setLevel("L1");
-      setPrepurchaseCount("100");
+      setPrepurchaseCount(String(LEVEL_CONFIG.L1.minPrepurchase));
       setExpiryDays("365");
       setNote("");
       
@@ -205,10 +210,17 @@ export function AddPartnerDialog({ open, onOpenChange, onSuccess }: AddPartnerDi
               <Input
                 id="prepurchase"
                 type="number"
-                min="0"
+                min={currentConfig.minPrepurchase}
                 value={prepurchaseCount}
-                onChange={(e) => setPrepurchaseCount(e.target.value)}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 0;
+                  // 确保不低于等级要求的最低值
+                  setPrepurchaseCount(String(Math.max(value, currentConfig.minPrepurchase)));
+                }}
               />
+              <p className="text-xs text-muted-foreground">
+                {level}等级最低 {currentConfig.minPrepurchase}
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="expiry">有效期（天）</Label>
