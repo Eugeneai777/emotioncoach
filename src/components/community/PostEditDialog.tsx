@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -39,6 +39,16 @@ const PostEditDialog = ({
   const [imageStyle, setImageStyle] = useState("warm");
   const { session } = useAuth();
   const { toast } = useToast();
+
+  // 当 dialog 打开或 post 变化时，重新同步状态
+  useEffect(() => {
+    if (open) {
+      setImageUrls(post.image_urls || []);
+      setImageStyle("warm");
+      setSaving(false);
+      setGeneratingImage(false);
+    }
+  }, [open, post.id, post.image_urls]);
 
   const handleGenerateImage = async () => {
     if (!post.title && !post.content) {
