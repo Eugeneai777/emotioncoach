@@ -1,9 +1,23 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
+
+// 正式发布域名 - 确保用户扫码后不需要 Lovable 登录
+const PRODUCTION_DOMAIN = 'https://vlsuzskvykddwrxbmcbu.lovableproject.com';
+
+// 判断是否在正式发布环境
+const isProductionEnv = () => {
+  const host = window.location.host;
+  return host.includes('lovableproject.com') || !host.includes('lovable');
+};
+
+// 获取推广链接域名
+const getPromotionDomain = () => {
+  return isProductionEnv() ? window.location.origin : PRODUCTION_DOMAIN;
+};
 
 interface PartnerQRGeneratorProps {
   open: boolean;
@@ -14,6 +28,7 @@ interface PartnerQRGeneratorProps {
 export function PartnerQRGenerator({ open, onOpenChange, partnerId }: PartnerQRGeneratorProps) {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [promotionUrl, setPromotionUrl] = useState<string>('');
 
   useEffect(() => {
     if (open && partnerId) {
@@ -24,9 +39,10 @@ export function PartnerQRGenerator({ open, onOpenChange, partnerId }: PartnerQRG
   const generateQRCode = async () => {
     setLoading(true);
     try {
-      // 生成指向兑换页面的链接
-      // 用户扫码后可以输入任意兑换码
-      const redemptionUrl = `${window.location.origin}/redeem?partner=${partnerId}`;
+      // 使用正式发布域名生成推广链接
+      const domain = getPromotionDomain();
+      const redemptionUrl = `${domain}/redeem?partner=${partnerId}`;
+      setPromotionUrl(redemptionUrl);
       
       const qrUrl = await QRCode.toDataURL(redemptionUrl, {
         width: 400,
@@ -79,6 +95,17 @@ export function PartnerQRGenerator({ open, onOpenChange, partnerId }: PartnerQRG
               </div>
             ) : null}
           </div>
+
+          {/* 推广链接显示 */}
+          {promotionUrl && (
+            <div className="bg-muted/50 rounded-lg p-3 text-xs break-all">
+              <div className="flex items-center gap-1 text-muted-foreground mb-1">
+                <ExternalLink className="w-3 h-3" />
+                <span>推广链接：</span>
+              </div>
+              <span className="text-foreground">{promotionUrl}</span>
+            </div>
+          )}
 
           {/* 使用说明 */}
           <div className="bg-orange-50 rounded-lg p-4 space-y-2 text-sm">
