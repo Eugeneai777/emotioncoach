@@ -242,7 +242,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {session?.user?.id === post.user_id && !post.is_anonymous && (
+          {session?.user?.id === post.user_id && (
             <Button
               size="sm"
               variant="ghost"
