@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import QRCode from "qrcode";
 
 // 正式发布域名 - 使用自定义域名
-const PRODUCTION_DOMAIN = 'https://eugenewe.me';
+const PRODUCTION_DOMAIN = 'https://eugeneai.me';
 
 // 判断是否在正式发布环境
 const isProductionEnv = () => {
