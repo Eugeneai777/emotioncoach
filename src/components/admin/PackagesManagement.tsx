@@ -107,10 +107,12 @@ export function PackagesManagement() {
     }
   };
 
-  // Filter packages - only show membership packages, not training camps
+  // Filter packages - only show youjin membership packages, exclude camps, trainings and partner
   const membershipPackages = packages?.filter((p) => 
+    p.product_line === "youjin" &&
     !p.package_key?.includes("camp") && 
-    !p.package_key?.includes("training")
+    !p.package_key?.includes("training") &&
+    p.package_key !== "partner"
   ) || [];
 
   if (isLoading) {
@@ -253,7 +255,7 @@ export function PackagesManagement() {
 
       <Card>
         <CardHeader>
-          <CardTitle>会员套餐列表</CardTitle>
+          <CardTitle>有劲会员套餐列表</CardTitle>
           <CardDescription>点击设置按钮配置套餐包含的功能权益</CardDescription>
         </CardHeader>
         <CardContent>
