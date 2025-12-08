@@ -45,7 +45,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement, CoachInputFooter
         
         {/* 微信式单行输入 */}
         <div className="flex gap-2 items-end">
-          {/* 新对话按钮 */}
+          {/* 新对话按钮 - 44px 触摸区域 */}
           {hasMessages && onNewConversation && (
             <Button
               variant="ghost"
@@ -53,13 +53,13 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement, CoachInputFooter
               onClick={onNewConversation}
               disabled={isLoading}
               title="开始新对话"
-              className="h-10 w-10 flex-shrink-0 rounded-full"
+              className="h-11 w-11 min-w-[44px] flex-shrink-0 rounded-full"
             >
               <RotateCcw className="w-4 h-4" />
             </Button>
           )}
           
-          {/* 输入框 */}
+          {/* 输入框 - 44px 最小高度 */}
           <div className="flex-1 relative">
             <Textarea
               ref={ref}
@@ -69,19 +69,21 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement, CoachInputFooter
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               placeholder={placeholder}
-              className="resize-none min-h-[40px] max-h-[100px] w-full py-2.5 px-3 text-base rounded-2xl leading-relaxed"
+              className="resize-none min-h-[44px] max-h-[100px] w-full py-2.5 px-3 text-base rounded-2xl leading-relaxed"
               style={{ fontSize: '16px' }}
               disabled={isLoading}
               rows={1}
+              enterKeyHint="send"
+              inputMode="text"
             />
           </div>
 
-          {/* 发送按钮 */}
+          {/* 发送按钮 - 44px 触摸区域 */}
           <Button
             onClick={onSend}
             disabled={isLoading || !input.trim()}
             size="icon"
-            className={`h-10 w-10 min-w-[40px] flex-shrink-0 rounded-full bg-gradient-to-r ${gradient} text-white shadow-md`}
+            className={`h-11 w-11 min-w-[44px] flex-shrink-0 rounded-full bg-gradient-to-r ${gradient} text-white shadow-md`}
           >
             <Send className="w-5 h-5" />
           </Button>

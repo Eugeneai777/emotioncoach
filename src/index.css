@@ -136,12 +136,18 @@ All colors MUST be HSL.
 /* 安全区域支持 */
 @supports (padding: max(0px)) {
   .safe-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
   }
   
   .safe-top {
     padding-top: env(safe-area-inset-top, 0px);
   }
+}
+
+/* 平滑滚动容器 */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
 /* Celebration animations */
