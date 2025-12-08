@@ -485,7 +485,7 @@ ${briefing.growth_story || '暂无记录'}
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto pb-32">
+      <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto overscroll-none scroll-container pb-44">
         {/* Stage Progress - Show when there are messages */}
         {messages.length > 0 && session && (
           <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm py-3 -mx-3 px-3 md:-mx-4 md:px-4 mb-4">
@@ -778,10 +778,10 @@ ${briefing.growth_story || '暂无记录'}
       </main>
 
       {/* Footer - Fixed bottom input */}
-      <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20">
-        <div className="container max-w-xl mx-auto px-4 py-3">
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20 safe-bottom">
+        <div className="container max-w-xl mx-auto px-3 md:px-4 pt-2 pb-2">
             {messages.length === 0 && coachConfig?.enable_scenarios && coachConfig?.scenarios && (
-              <div className="mb-3 animate-in slide-in-from-bottom-2 duration-300">
+              <div className="mb-2 animate-in slide-in-from-bottom-2 duration-300">
                 <CoachScenarioChips
                   scenarios={coachConfig.scenarios as any[]}
                   onSelectScenario={async (prompt) => {
@@ -793,31 +793,44 @@ ${briefing.growth_story || '暂无记录'}
               </div>
             )}
             <div className="flex gap-2 items-end">
+              {/* 新对话按钮 - 44px 触摸区域 */}
+              {messages.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRestart}
+                  disabled={isLoading}
+                  title="开始新对话"
+                  className="h-11 w-11 min-w-[44px] flex-shrink-0 rounded-full"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </Button>
+              )}
+              
               <div className="flex-1 relative group">
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="分享一件亲子互动中的小事... (Enter发送，Shift+Enter换行)"
-                  className="min-h-[60px] max-h-[160px] resize-none rounded-xl text-sm md:text-base border-purple-200 focus:border-purple-400 transition-all duration-200 pr-16 shadow-sm"
+                  placeholder="分享一件亲子互动中的小事..."
+                  className="resize-none min-h-[44px] max-h-[100px] w-full py-2.5 px-3 text-base rounded-2xl leading-relaxed border-purple-200 focus:border-purple-400"
+                  style={{ fontSize: '16px' }}
                   disabled={isLoading}
+                  rows={1}
+                  enterKeyHint="send"
+                  inputMode="text"
                 />
-                {input.length > 0 && (
-                  <div className="absolute bottom-2 right-2 text-xs text-muted-foreground pointer-events-none">
-                    {input.length}/2000
-                  </div>
-                )}
               </div>
               <Button
                 onClick={handleSend}
                 disabled={isLoading || !input.trim()}
                 size="icon"
-                className="h-10 w-10 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                className="h-11 w-11 min-w-[44px] flex-shrink-0 rounded-full shadow-md bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
               >
                 {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  <Send className="w-4 h-4" />
+                  <Send className="w-5 h-5" />
                 )}
               </Button>
             </div>

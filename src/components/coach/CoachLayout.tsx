@@ -1,6 +1,6 @@
-import { ReactNode, useRef, useEffect } from "react";
+import { ReactNode, useRef, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowDown } from "lucide-react";
 import { ChatMessage } from "@/components/ChatMessage";
 import { CoachHeader } from "./CoachHeader";
 import { CoachEmptyState } from "./CoachEmptyState";
@@ -72,6 +72,7 @@ interface CoachLayoutProps {
   campRecommendation?: ReactNode;
   bottomContent?: ReactNode;
   showNotificationCenter?: boolean;
+  onRefresh?: () => Promise<void>;
 }
 
 export const CoachLayout = ({
@@ -110,12 +111,21 @@ export const CoachLayout = ({
   emotionButtonRecommendation,
   campRecommendation,
   bottomContent,
-  showNotificationCenter = true
+  showNotificationCenter = true,
+  onRefresh
 }: CoachLayoutProps) => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
+
+  // Pull to refresh state
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isPulling, setIsPulling] = useState(false);
+  const startY = useRef(0);
+  const threshold = 80;
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -141,6 +151,48 @@ export const CoachLayout = ({
     navigate("/auth");
   };
 
+  // Pull to refresh handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!onRefresh) return;
+    const scrollTop = mainRef.current?.scrollTop ?? 0;
+    if (scrollTop <= 0) {
+      startY.current = e.touches[0].clientY;
+      setIsPulling(true);
+    }
+  }, [onRefresh]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isPulling || isRefreshing || !onRefresh) return;
+    
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - startY.current;
+    
+    if (diff > 0) {
+      const dampedPull = Math.min(diff * 0.5, 120);
+      setPullDistance(dampedPull);
+    }
+  }, [isPulling, isRefreshing, onRefresh]);
+
+  const handleTouchEnd = useCallback(async () => {
+    if (!isPulling || !onRefresh) return;
+    
+    setIsPulling(false);
+    
+    if (pullDistance >= threshold && !isRefreshing) {
+      setIsRefreshing(true);
+      setPullDistance(threshold);
+      
+      try {
+        await onRefresh();
+      } finally {
+        setIsRefreshing(false);
+        setPullDistance(0);
+      }
+    } else {
+      setPullDistance(0);
+    }
+  }, [isPulling, pullDistance, isRefreshing, onRefresh]);
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -148,6 +200,8 @@ export const CoachLayout = ({
       </div>
     );
   }
+
+  const pullProgress = Math.min(pullDistance / threshold, 1);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -163,8 +217,49 @@ export const CoachLayout = ({
         showNotificationCenter={showNotificationCenter}
       />
 
+      {/* Pull to Refresh Indicator */}
+      {onRefresh && (pullDistance > 0 || isRefreshing) && (
+        <div 
+          className="absolute top-16 left-0 right-0 flex items-center justify-center pointer-events-none z-10"
+          style={{ 
+            height: `${Math.max(pullDistance, isRefreshing ? threshold : 0)}px`,
+            transition: isRefreshing ? 'height 0.3s ease-out' : 'none'
+          }}
+        >
+          <div 
+            className={`flex items-center justify-center w-10 h-10 rounded-full bg-card border border-border shadow-lg transition-all duration-200 ${
+              pullDistance >= threshold ? 'scale-110 bg-primary/10 border-primary/30' : ''
+            }`}
+            style={{
+              opacity: Math.min(pullProgress * 1.5, 1),
+              transform: `rotate(${pullProgress * 180}deg)`
+            }}
+          >
+            {isRefreshing ? (
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            ) : (
+              <ArrowDown 
+                className={`w-5 h-5 transition-colors ${
+                  pullDistance >= threshold ? 'text-primary' : 'text-muted-foreground'
+                }`} 
+              />
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-32">
+      <main 
+        ref={mainRef}
+        className="flex-1 overflow-y-auto overscroll-none scroll-container pb-44"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          transform: `translateY(${pullDistance}px)`,
+          transition: isPulling ? 'none' : 'transform 0.3s ease-out'
+        }}
+      >
         <div className="container max-w-xl mx-auto px-3 md:px-4 py-4 md:py-8">
           {messages.length === 0 ? (
             <CoachEmptyState
