@@ -59,8 +59,7 @@ const Community = () => {
         .from("community_posts")
         .select("emotion_theme")
         .eq("post_type", "story")
-        .not("emotion_theme", "is", null)
-        .not("camp_id", "is", null);
+        .not("emotion_theme", "is", null);
 
       if (data) {
         const uniqueTags = [...new Set(data.map(p => p.emotion_theme).filter(Boolean))] as string[];
@@ -148,9 +147,7 @@ const Community = () => {
           .in("emotion_theme", userThemes)
           .neq("user_id", session.user.id);
       } else if (activeFilter === "story") {
-        query = query
-          .eq("post_type", "story")
-          .not("camp_id", "is", null);
+        query = query.eq("post_type", "story");
         
         if (selectedEmotionTag) {
           query = query.eq("emotion_theme", selectedEmotionTag);
