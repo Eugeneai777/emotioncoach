@@ -11,6 +11,8 @@ import { RedemptionCodeManager } from "./RedemptionCodeManager";
 import { PartnerLevelProgress } from "./PartnerLevelProgress";
 import { StudentList } from "./StudentList";
 import { ConversionFunnel } from "./ConversionFunnel";
+import { ConversionAlerts } from "./ConversionAlerts";
+import { ConversionGuide } from "./ConversionGuide";
 import { getPartnerLevel } from "@/config/partnerLevels";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -275,6 +277,8 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
 
         <TabsContent value="students" className="space-y-4">
           <ConversionFunnel partnerId={partner.id} />
+          <ConversionAlerts partnerId={partner.id} />
+          <ConversionGuide />
           <StudentList partnerId={partner.id} />
         </TabsContent>
       </Tabs>
