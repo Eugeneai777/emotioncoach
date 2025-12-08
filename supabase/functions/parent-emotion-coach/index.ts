@@ -35,6 +35,7 @@ serve(async (req) => {
 
     // Get session
     let session;
+    let isNewSession = false;
     if (sessionId) {
       const { data } = await supabaseClient
         .from('parent_coaching_sessions')
@@ -42,6 +43,10 @@ serve(async (req) => {
         .eq('id', sessionId)
         .single();
       session = data;
+      
+      // Check if this is the first message in the session
+      const existingMessages = session?.messages || [];
+      isNewSession = existingMessages.length === 0;
     }
 
     if (!session) {
@@ -49,6 +54,41 @@ serve(async (req) => {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+    
+    // 方式2：每次新会话开始时扣费
+    if (isNewSession) {
+      try {
+        const deductResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/deduct-quota`, {
+          method: 'POST',
+          headers: {
+            'Authorization': req.headers.get('Authorization')!,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            feature_key: 'parent_coach',
+            source: 'parent_coach_session',
+            conversationId: session.conversation_id || sessionId,
+            metadata: { session_id: sessionId }
+          })
+        });
+        
+        if (deductResponse.ok) {
+          const result = await deductResponse.json();
+          console.log(`✅ 亲子教练会话扣费: ${result.cost} 点, 剩余: ${result.remaining_quota}`);
+        } else {
+          const error = await deductResponse.json();
+          console.error('❌ 亲子教练扣费失败:', error);
+          if (deductResponse.status === 400) {
+            return new Response(JSON.stringify({ error: '余额不足，请充值后继续使用' }), {
+              status: 402,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
+      } catch (error) {
+        console.error('❌ 亲子教练扣费请求失败:', error);
+      }
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');

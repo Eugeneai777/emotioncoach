@@ -235,6 +235,7 @@ serve(async (req) => {
 
     // 获取或创建会话
     let session: any;
+    let isNewSession = false;
     if (sessionId) {
       const { data } = await supabase
         .from('communication_coaching_sessions')
@@ -257,6 +258,40 @@ serve(async (req) => {
 
       if (sessionError) throw sessionError;
       session = newSession;
+      isNewSession = true;
+      
+      // 方式2：每次新会话开始时扣费
+      try {
+        const deductResponse = await fetch(`${supabaseUrl}/functions/v1/deduct-quota`, {
+          method: 'POST',
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            feature_key: 'communication_coach',
+            source: 'communication_coach_session',
+            conversationId: session.conversation_id || session.id,
+            metadata: { session_id: session.id }
+          })
+        });
+        
+        if (deductResponse.ok) {
+          const result = await deductResponse.json();
+          console.log(`✅ 沟通教练会话扣费: ${result.cost} 点, 剩余: ${result.remaining_quota}`);
+        } else {
+          const error = await deductResponse.json();
+          console.error('❌ 沟通教练扣费失败:', error);
+          if (deductResponse.status === 400) {
+            return new Response(JSON.stringify({ error: '余额不足，请充值后继续使用' }), {
+              status: 402,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
+      } catch (error) {
+        console.error('❌ 沟通教练扣费请求失败:', error);
+      }
     }
 
     const currentStage = session.current_stage;
