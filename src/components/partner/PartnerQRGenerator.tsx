@@ -11,7 +11,9 @@ const PRODUCTION_DOMAIN = 'https://vlsuzskvykddwrxbmcbu.lovableproject.com';
 // 判断是否在正式发布环境
 const isProductionEnv = () => {
   const host = window.location.host;
-  return host.includes('lovableproject.com') || !host.includes('lovable');
+  const productionHost = new URL(PRODUCTION_DOMAIN).host;
+  // 只有精确匹配正式域名或完全不含 lovable（自定义域名）才是正式环境
+  return host === productionHost || !host.includes('lovable');
 };
 
 // 获取推广链接域名
