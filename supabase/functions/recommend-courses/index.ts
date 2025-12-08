@@ -144,6 +144,28 @@ ${groupCoursesByCategory(courses)}
 
     console.log('Calling Lovable AI for recommendations...');
 
+    // 扣费（课程推荐可能没有用户认证，使用 service role）
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader) {
+      try {
+        await fetch(`${Deno.env.get('SUPABASE_URL')!}/functions/v1/deduct-quota`, {
+          method: 'POST',
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            feature_key: 'course_recommendation',
+            source: 'recommend_courses',
+            metadata: { coachType }
+          })
+        });
+        console.log(`✅ 课程推荐扣费成功`);
+      } catch (e) {
+        console.error('扣费失败:', e);
+      }
+    }
+
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {

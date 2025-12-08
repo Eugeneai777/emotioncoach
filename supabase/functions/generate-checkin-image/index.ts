@@ -86,6 +86,28 @@ Generate a beautiful header image following these requirements.`;
 
     console.log("正在生成打卡头图，提示词:", prompt);
 
+    // 扣费
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader) {
+      try {
+        await fetch(`${Deno.env.get('SUPABASE_URL')!}/functions/v1/deduct-quota`, {
+          method: 'POST',
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            feature_key: 'image_generation',
+            source: 'generate_checkin_image',
+            metadata: { style, campName, day }
+          })
+        });
+        console.log(`✅ 打卡头图生成扣费成功`);
+      } catch (e) {
+        console.error('扣费失败:', e);
+      }
+    }
+
     // 调用 Lovable AI 生成图片
     const aiResponse = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",

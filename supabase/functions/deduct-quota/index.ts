@@ -170,17 +170,25 @@ Deno.serve(async (req) => {
     }
 
     // 4. Check and use free quota if available
-    if (freeQuota > 0 && actualCost > 0) {
-      // Calculate period start
+    // Handle special period types: per_use and one_time
+    if (freeQuotaPeriod === 'per_use') {
+      // per_use: 每次使用都独立扣费，不使用免费额度
+      console.log(`ℹ️ Feature ${featureKey} is per_use, skipping free quota`);
+      // actualCost remains as configured, skip free quota check
+    } else if (freeQuota > 0 && actualCost > 0) {
+      // Calculate period start for other period types
       let periodStart: Date;
       const now = new Date();
       
-      if (freeQuotaPeriod === 'daily') {
+      if (freeQuotaPeriod === 'one_time') {
+        // one_time: 整个用户生命周期只能使用一次免费
+        periodStart = new Date('1970-01-01');
+      } else if (freeQuotaPeriod === 'daily') {
         periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       } else if (freeQuotaPeriod === 'monthly') {
         periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
       } else {
-        // lifetime
+        // lifetime: 用完为止
         periodStart = new Date('2020-01-01');
       }
 

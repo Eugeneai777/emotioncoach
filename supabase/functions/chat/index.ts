@@ -358,20 +358,20 @@ serve(async (req) => {
       });
     }
 
-    // ✅ 在返回流式响应前扣费
+    // ✅ 在返回流式响应前扣费（使用用户的 Authorization header）
     try {
       await fetch(
         `${supabaseUrl}/functions/v1/deduct-quota`,
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${supabaseServiceKey}`,
+            'Authorization': authHeader,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userId: user.id,
-            source: 'web',
-            amount: 1,
+            feature_key: 'general_chat',
+            source: 'web_chat',
+            conversationId: crypto.randomUUID(),
             metadata: {
               message_count: messages.length
             }

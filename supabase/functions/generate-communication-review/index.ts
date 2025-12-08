@@ -104,6 +104,25 @@ serve(async (req) => {
 
 语气温暖、具体、鼓励。`;
 
+    // 扣费
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/deduct-quota`, {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          feature_key: 'communication_review',
+          source: 'generate_communication_review',
+          metadata: { period }
+        })
+      });
+      console.log(`✅ 沟通复盘扣费成功`);
+    } catch (e) {
+      console.error('扣费失败:', e);
+    }
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {

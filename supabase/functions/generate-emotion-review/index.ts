@@ -151,6 +151,26 @@ ${briefingsWithTags.map((b, idx) => `
 
     console.log('Calling Lovable AI...');
 
+    // 扣费
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/deduct-quota`, {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          feature_key: 'emotion_review',
+          source: 'generate_emotion_review',
+          metadata: { reviewType, startDate, endDate }
+        })
+      });
+      console.log(`✅ 情绪复盘扣费成功`);
+    } catch (e) {
+      console.error('扣费失败:', e);
+    }
+
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {

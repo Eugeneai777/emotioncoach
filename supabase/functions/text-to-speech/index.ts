@@ -27,6 +27,27 @@ serve(async (req) => {
 
     console.log('Generating speech for text:', text.substring(0, 50) + '...');
 
+    // 扣费
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader) {
+      try {
+        await fetch(`${Deno.env.get('SUPABASE_URL')!}/functions/v1/deduct-quota`, {
+          method: 'POST',
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            feature_key: 'text_to_speech',
+            source: 'text_to_speech',
+          })
+        });
+        console.log(`✅ 语音合成扣费成功`);
+      } catch (e) {
+        console.error('扣费失败:', e);
+      }
+    }
+
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}`,
       {

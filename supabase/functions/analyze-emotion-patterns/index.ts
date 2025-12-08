@@ -121,6 +121,25 @@ ${briefingSummaries}
 
 请确保返回纯JSON格式，不要包含任何其他文字。`;
 
+    // 扣费
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/deduct-quota`, {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          feature_key: 'emotion_pattern_analysis',
+          source: 'analyze_emotion_patterns',
+        })
+      });
+      console.log(`✅ 情绪模式分析扣费成功`);
+    } catch (e) {
+      console.error('扣费失败:', e);
+    }
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {

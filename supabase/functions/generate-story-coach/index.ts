@@ -121,6 +121,29 @@ ${mode === 'briefing' ? '\n注意：用户提供了简报背景和自己的补�
 - 💭 第5天：从"我不行"到"我可以试试"的距离
 - ✨ 终于明白，允许自己慢下来也是一种勇敢`;
 
+    // 扣费
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader) {
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/deduct-quota`, {
+          method: 'POST',
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            feature_key: 'story_creation',
+            source: 'generate_story_coach',
+            metadata: { mode }
+          })
+        });
+        console.log(`✅ 故事创作扣费成功`);
+      } catch (e) {
+        console.error('扣费失败:', e);
+      }
+    }
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
