@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { partner_id, count } = await req.json();
+    const { partner_id, count, entry_type = 'free' } = await req.json();
 
     if (!partner_id || !count || count < 1) {
       return new Response(
@@ -33,6 +33,18 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // 验证入口类型
+    if (!['free', 'paid'].includes(entry_type)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid entry_type, must be "free" or "paid"' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 根据入口类型设置价格和额度
+    const entry_price = entry_type === 'free' ? 0 : 9.9;
+    const quota_amount = entry_type === 'free' ? 10 : 50;
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -76,12 +88,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 3. 批量插入兑换码
+    // 3. 批量插入兑换码（包含入口类型信息）
     const redemptionCodes = codes.map(code => ({
       partner_id,
       code,
       expires_at: expiresAt.toISOString(),
-      status: 'available'
+      status: 'available',
+      entry_type,
+      entry_price,
+      quota_amount
     }));
 
     const { error: insertError } = await supabase
@@ -133,6 +148,9 @@ Deno.serve(async (req) => {
         count: codes.length,
         level: newLevel,
         expires_at: expiresAt.toISOString(),
+        entry_type,
+        entry_price,
+        quota_amount,
         codes: codes  // 返回生成的兑换码列表
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

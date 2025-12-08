@@ -2376,9 +2376,12 @@ export type Database = {
         Row: {
           code: string
           created_at: string | null
+          entry_price: number | null
+          entry_type: string | null
           expires_at: string
           id: string
           partner_id: string
+          quota_amount: number | null
           redeemed_at: string | null
           redeemed_by: string | null
           status: string
@@ -2386,9 +2389,12 @@ export type Database = {
         Insert: {
           code: string
           created_at?: string | null
+          entry_price?: number | null
+          entry_type?: string | null
           expires_at: string
           id?: string
           partner_id: string
+          quota_amount?: number | null
           redeemed_at?: string | null
           redeemed_by?: string | null
           status?: string
@@ -2396,9 +2402,12 @@ export type Database = {
         Update: {
           code?: string
           created_at?: string | null
+          entry_price?: number | null
+          entry_type?: string | null
           expires_at?: string
           id?: string
           partner_id?: string
+          quota_amount?: number | null
           redeemed_at?: string | null
           redeemed_by?: string | null
           status?: string
