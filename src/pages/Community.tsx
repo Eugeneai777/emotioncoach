@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import PostCard from "@/components/community/PostCard";
+import WaterfallPostCard from "@/components/community/WaterfallPostCard";
+import PostDetailSheet from "@/components/community/PostDetailSheet";
 import PostComposer from "@/components/community/PostComposer";
-import { Loader2, Plus, Sparkles, ArrowLeft } from "lucide-react";
+import { Loader2, Plus, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface CommunityPost {
   id: string;
@@ -21,6 +22,7 @@ interface CommunityPost {
   insight: string | null;
   action: string | null;
   camp_day: number | null;
+  camp_id: string | null;
   badges: any;
   is_anonymous: boolean;
   likes_count: number;
@@ -29,14 +31,62 @@ interface CommunityPost {
   created_at: string;
 }
 
+const categories = [
+  { value: 'following', label: '关注', emoji: '👥' },
+  { value: 'discover', label: '发现', emoji: '✨' },
+  { value: 'resonance', label: '同频', emoji: '💫' },
+  { value: 'story', label: '故事', emoji: '📖' },
+];
+
 const Community = () => {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string>("discover");
   const [showComposer, setShowComposer] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
+  const [emotionTags, setEmotionTags] = useState<string[]>([]);
+  const [selectedEmotionTag, setSelectedEmotionTag] = useState<string | null>(null);
+  const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { session } = useAuth();
   const navigate = useNavigate();
+
+  // Load emotion tags for story filter
+  const loadEmotionTags = async () => {
+    try {
+      const { data } = await supabase
+        .from("community_posts")
+        .select("emotion_theme")
+        .eq("post_type", "story")
+        .not("emotion_theme", "is", null)
+        .not("camp_id", "is", null);
+
+      if (data) {
+        const uniqueTags = [...new Set(data.map(p => p.emotion_theme).filter(Boolean))] as string[];
+        setEmotionTags(uniqueTags);
+      }
+    } catch (error) {
+      console.error("加载情绪标签失败:", error);
+    }
+  };
+
+  // Load user's liked posts
+  const loadLikedPosts = async () => {
+    if (!session?.user?.id) return;
+    
+    try {
+      const { data } = await supabase
+        .from("post_likes")
+        .select("post_id")
+        .eq("user_id", session.user.id);
+      
+      if (data) {
+        setLikedPostIds(new Set(data.map(like => like.post_id)));
+      }
+    } catch (error) {
+      console.error("加载点赞状态失败:", error);
+    }
+  };
 
   const loadPosts = async () => {
     try {
@@ -47,10 +97,9 @@ const Community = () => {
         .select("*")
         .eq("visibility", "public")
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(50);
 
       if (activeFilter === "following") {
-        // 关注：获取关注用户的帖子
         if (!session) {
           setPosts([]);
           setLoading(false);
@@ -72,7 +121,6 @@ const Community = () => {
         
         query = query.in("user_id", followingIds);
       } else if (activeFilter === "resonance") {
-        // 同频：找到有相同情绪主题的其他用户的帖子
         if (!session) {
           setPosts([]);
           setLoading(false);
@@ -98,8 +146,15 @@ const Community = () => {
         query = query
           .in("emotion_theme", userThemes)
           .neq("user_id", session.user.id);
+      } else if (activeFilter === "story") {
+        query = query
+          .eq("post_type", "story")
+          .not("camp_id", "is", null);
+        
+        if (selectedEmotionTag) {
+          query = query.eq("emotion_theme", selectedEmotionTag);
+        }
       }
-      // discover: 显示全部公开帖子（默认逻辑）
 
       const { data, error } = await query;
 
@@ -119,12 +174,17 @@ const Community = () => {
 
   useEffect(() => {
     loadPosts();
-  }, [activeFilter]);
+    if (activeFilter === "story") {
+      loadEmotionTags();
+    }
+  }, [activeFilter, selectedEmotionTag]);
 
-  // 实时监听新帖子
   useEffect(() => {
-    console.log("[Community] Setting up realtime for new posts");
+    loadLikedPosts();
+  }, [session?.user?.id]);
 
+  // Realtime subscription
+  useEffect(() => {
     const channel = supabase
       .channel("community-posts-changes")
       .on(
@@ -136,10 +196,7 @@ const Community = () => {
           filter: "visibility=eq.public",
         },
         (payload) => {
-          console.log("[Community] New post received:", payload);
           const newPost = payload.new as CommunityPost;
-          
-          // 只在"发现"标签下显示新帖子通知
           if (activeFilter === "discover") {
             setPosts((current) => [newPost, ...current]);
             toast({
@@ -149,12 +206,9 @@ const Community = () => {
           }
         }
       )
-      .subscribe((status) => {
-        console.log("[Community] Subscription status:", status);
-      });
+      .subscribe();
 
     return () => {
-      console.log("[Community] Cleaning up realtime");
       supabase.removeChannel(channel);
     };
   }, [activeFilter]);
@@ -164,58 +218,134 @@ const Community = () => {
     loadPosts();
   };
 
+  const handleCardClick = (post: CommunityPost) => {
+    setSelectedPost(post);
+  };
+
+  const handleLikeChange = (postId: string, liked: boolean) => {
+    setLikedPostIds(prev => {
+      const next = new Set(prev);
+      if (liked) {
+        next.add(postId);
+      } else {
+        next.delete(postId);
+      }
+      return next;
+    });
+  };
+
+  // Split posts into two columns for waterfall layout
+  const { leftPosts, rightPosts } = useMemo(() => {
+    const left: CommunityPost[] = [];
+    const right: CommunityPost[] = [];
+    posts.forEach((post, index) => {
+      if (index % 2 === 0) {
+        left.push(post);
+      } else {
+        right.push(post);
+      }
+    });
+    return { leftPosts: left, rightPosts: right };
+  }, [posts]);
+
+  const likedMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    posts.forEach(post => {
+      map[post.id] = likedPostIds.has(post.id);
+    });
+    return map;
+  }, [posts, likedPostIds]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* 头部 */}
-        <div className="flex items-start gap-4 mb-8">
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        {/* Header */}
+        <div className="flex items-start gap-4 mb-6">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate("/")}
-            className="mt-2"
+            className="mt-1"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1 text-center">
-            <h1 className="text-4xl font-bold mb-2 hover:scale-105 transition-transform duration-300 cursor-default flex items-center justify-center gap-2">
-              <span className="inline-block animate-rainbow-spin">🌈</span>
-              <span className="bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 via-indigo-500 to-purple-500 bg-clip-text text-transparent animate-rainbow-flow" style={{ backgroundSize: '200% 200%' }}>
+            <h1 className="text-3xl font-bold mb-1 flex items-center justify-center gap-2">
+              <span className="inline-block">🌈</span>
+              <span className="bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 via-indigo-500 to-purple-500 bg-clip-text text-transparent" style={{ backgroundSize: '200% 200%' }}>
                 有劲社区
               </span>
             </h1>
-            <p className="text-muted-foreground flex items-center justify-center gap-2">
-              <span>✨</span>
-              分享成长 · 见证蜕变
-              <span>✨</span>
+            <p className="text-sm text-muted-foreground">
+              ✨ 分享成长 · 见证蜕变 ✨
             </p>
           </div>
           <div className="w-10" />
         </div>
 
-        {/* 筛选器 */}
-        <Tabs value={activeFilter} onValueChange={setActiveFilter} className="mb-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="following">关注</TabsTrigger>
-            <TabsTrigger value="discover">发现</TabsTrigger>
-            <TabsTrigger value="resonance">同频</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* Category Filter */}
+        <ScrollArea className="w-full mb-4">
+          <div className="flex gap-2 pb-2">
+            {categories.map((category) => (
+              <Button
+                key={category.value}
+                variant={activeFilter === category.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setActiveFilter(category.value);
+                  setSelectedEmotionTag(null);
+                }}
+                className="whitespace-nowrap shrink-0"
+              >
+                <span className="mr-1">{category.emoji}</span>
+                {category.label}
+              </Button>
+            ))}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
 
-        {/* 发布按钮 */}
+        {/* Emotion Tag Filter for Story */}
+        {activeFilter === "story" && emotionTags.length > 0 && (
+          <ScrollArea className="w-full mb-4">
+            <div className="flex gap-2 pb-2">
+              <Button
+                variant={selectedEmotionTag === null ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setSelectedEmotionTag(null)}
+                className="whitespace-nowrap shrink-0 text-xs"
+              >
+                全部
+              </Button>
+              {emotionTags.map((tag) => (
+                <Button
+                  key={tag}
+                  variant={selectedEmotionTag === tag ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setSelectedEmotionTag(tag)}
+                  className="whitespace-nowrap shrink-0 text-xs"
+                >
+                  {tag}
+                </Button>
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        )}
+
+        {/* Post Button */}
         {session && (
           <Button
             onClick={() => setShowComposer(true)}
             variant="outline"
-            className="w-full h-12 text-base mb-6 bg-card border-border/60 hover:bg-muted hover:border-border transition-all duration-200 text-foreground/90"
-            size="lg"
+            className="w-full h-11 text-sm mb-4 bg-card border-border/60 hover:bg-muted hover:border-border transition-all duration-200 text-foreground/90"
           >
-            <Plus className="mr-2 h-5 w-5 text-foreground/70" />
+            <Plus className="mr-2 h-4 w-4 text-foreground/70" />
             分享动态
           </Button>
         )}
 
-        {/* 帖子列表 */}
+        {/* Posts Waterfall */}
         {loading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-foreground/60" />
@@ -226,14 +356,45 @@ const Community = () => {
             <p className="text-sm">成为第一个分享故事的人吧！</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} onUpdate={loadPosts} />
-            ))}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3">
+              {leftPosts.map((post) => (
+                <WaterfallPostCard
+                  key={post.id}
+                  post={post}
+                  onCardClick={() => handleCardClick(post)}
+                  onLikeChange={handleLikeChange}
+                  isLiked={likedMap[post.id]}
+                />
+              ))}
+            </div>
+            <div className="space-y-3">
+              {rightPosts.map((post) => (
+                <WaterfallPostCard
+                  key={post.id}
+                  post={post}
+                  onCardClick={() => handleCardClick(post)}
+                  onLikeChange={handleLikeChange}
+                  isLiked={likedMap[post.id]}
+                />
+              ))}
+            </div>
           </div>
         )}
 
-        {/* 发布对话框 */}
+        {/* Post Detail Sheet */}
+        <PostDetailSheet
+          post={selectedPost}
+          open={!!selectedPost}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedPost(null);
+              loadPosts();
+            }
+          }}
+        />
+
+        {/* Post Composer Dialog */}
         <PostComposer
           open={showComposer}
           onOpenChange={setShowComposer}
