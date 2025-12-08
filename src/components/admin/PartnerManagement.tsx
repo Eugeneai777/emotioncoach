@@ -49,14 +49,10 @@ export function PartnerManagement() {
 
   const fetchPartners = async () => {
     try {
+      // Step 1: Fetch partners
       let query = supabase
         .from('partners')
-        .select(`
-          *,
-          profiles:user_id (
-            display_name
-          )
-        `)
+        .select('*')
         .eq('partner_type', 'youjin')
         .order('created_at', { ascending: false });
 
@@ -68,10 +64,36 @@ export function PartnerManagement() {
         query = query.eq('partner_level', levelFilter);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      const { data: partnersData, error: partnersError } = await query;
+      if (partnersError) throw partnersError;
+
+      if (!partnersData || partnersData.length === 0) {
+        setPartners([]);
+        return;
+      }
+
+      // Step 2: Fetch profiles separately
+      const userIds = partnersData.map(p => p.user_id).filter(Boolean);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.warn('Error fetching profiles:', profilesError);
+      }
+
+      // Step 3: Merge data
+      const profilesMap = new Map(
+        (profilesData || []).map(p => [p.id, { display_name: p.display_name }])
+      );
+
+      const mergedData = partnersData.map(partner => ({
+        ...partner,
+        profiles: profilesMap.get(partner.user_id) || null
+      }));
       
-      setPartners(data as any || []);
+      setPartners(mergedData as Partner[]);
     } catch (error) {
       console.error('Error fetching partners:', error);
       toast.error("加载有劲合伙人列表失败");
