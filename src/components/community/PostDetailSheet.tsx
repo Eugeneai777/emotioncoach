@@ -452,7 +452,7 @@ const PostDetailSheet = ({
               </div>}
 
             {/* 编辑/删除按钮区域 - 移到内容底部 */}
-            {session?.user?.id === post.user_id && !post.is_anonymous && <div className="flex items-center gap-2 pt-4 pb-4 mt-4 border-t border-border">
+            {session?.user?.id === post.user_id && <div className="flex items-center gap-2 pt-4 pb-4 mt-4 border-t border-border">
                 <Button size="sm" variant="outline" onClick={() => setShowEditDialog(true)} className="flex items-center gap-1">
                   <Pencil className="h-4 w-4" />
                   编辑
