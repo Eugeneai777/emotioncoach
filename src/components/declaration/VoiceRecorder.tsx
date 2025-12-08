@@ -75,19 +75,51 @@ export const VoiceRecorder = ({ declarationText, onGeneratePoster }: VoiceRecord
     }
   };
 
-  const downloadAudio = () => {
+  const downloadAudio = async () => {
     if (!audioURL) return;
 
-    const link = document.createElement('a');
-    link.href = audioURL;
     const timestamp = new Date().toISOString().split('T')[0];
-    link.download = `宣言朗读_${timestamp}.webm`;
-    link.click();
+    const fileName = `宣言朗读_${timestamp}.webm`;
 
-    toast({
-      title: "已下载录音",
-      description: "录音文件已保存",
-    });
+    try {
+      // 获取 blob
+      const response = await fetch(audioURL);
+      const blob = await response.blob();
+      const file = new File([blob], fileName, { type: 'audio/webm' });
+
+      // 尝试使用系统分享
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: '宣言朗读',
+          });
+          toast({ title: "分享成功" });
+          return;
+        } catch (shareError) {
+          console.log("系统分享取消，降级到下载");
+        }
+      }
+
+      // 降级：下载
+      const link = document.createElement('a');
+      link.href = audioURL;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "已下载录音",
+        description: "录音文件已保存",
+      });
+    } catch (error) {
+      console.error('下载失败:', error);
+      toast({
+        title: "下载失败",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

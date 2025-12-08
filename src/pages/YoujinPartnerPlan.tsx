@@ -38,10 +38,41 @@ const YoujinPartnerPlan = () => {
         logging: false,
       });
       
+      // 转换为 Blob
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((b) => {
+          if (b) resolve(b);
+          else reject(new Error("生成失败"));
+        }, "image/png", 1.0);
+      });
+      
+      const file = new File([blob], "有劲合伙人计划.png", { type: "image/png" });
+      
+      // 优先使用系统分享 API（移动端）
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: "有劲合伙人计划",
+            text: "加入有劲合伙人，开启 AI 赋能之旅",
+          });
+          toast.success("分享成功");
+          setShowShareDialog(false);
+          return;
+        } catch (shareError) {
+          console.log("系统分享取消，降级到下载");
+        }
+      }
+      
+      // 降级：下载图片
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.download = '有劲合伙人计划.png';
-      link.href = canvas.toDataURL('image/png');
+      link.href = url;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
       toast.success("海报已保存", { description: "可以分享给朋友" });
       setShowShareDialog(false);
