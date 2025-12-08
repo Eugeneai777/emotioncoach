@@ -1,10 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { Loader2 } from "lucide-react";
@@ -22,34 +19,63 @@ interface CommentSectionProps {
   onUpdate?: () => void;
 }
 
+const COMMENTS_PER_PAGE = 10;
+
 const CommentSection = ({ postId, onUpdate }: CommentSectionProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  useEffect(() => {
-    loadComments();
-  }, [postId]);
-
-  const loadComments = async () => {
+  const loadComments = useCallback(async (append = false) => {
     try {
-      setLoading(true);
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+
+      const offset = append ? comments.length : 0;
       const { data, error } = await supabase
         .from("post_comments")
         .select("*")
         .eq("post_id", postId)
         .is("parent_id", null)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .range(offset, offset + COMMENTS_PER_PAGE - 1);
 
       if (error) throw error;
-      setComments(data || []);
+
+      if (append) {
+        setComments(prev => [...prev, ...(data || [])]);
+      } else {
+        setComments(data || []);
+      }
+      setHasMore((data || []).length === COMMENTS_PER_PAGE);
     } catch (error) {
       console.error("加载评论失败:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  };
+  }, [postId, comments.length]);
 
+  useEffect(() => {
+    loadComments();
+  }, [postId]);
+
+  // 监听评论添加事件
+  useEffect(() => {
+    const handleCommentAdded = (e: CustomEvent<{ postId: string }>) => {
+      if (e.detail.postId === postId) {
+        loadComments();
+      }
+    };
+    window.addEventListener('comment-added', handleCommentAdded as EventListener);
+    return () => {
+      window.removeEventListener('comment-added', handleCommentAdded as EventListener);
+    };
+  }, [postId, loadComments]);
 
   return (
     <div className="mt-4 pt-4 border-t space-y-4" data-comment-section>
@@ -91,6 +117,28 @@ const CommentSection = ({ postId, onUpdate }: CommentSectionProps) => {
               </div>
             );
           })}
+          
+          {/* 加载更多按钮 */}
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => loadComments(true)}
+                disabled={loadingMore}
+                className="text-muted-foreground"
+              >
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    加载中...
+                  </>
+                ) : (
+                  "加载更多评论"
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
