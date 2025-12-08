@@ -247,29 +247,59 @@ const PostDetailSheet = ({
         imageTimeout: 15000
       });
       
-      // 导出图片
-      canvas.toBlob(blob => {
-        if (!blob) {
-          toast.error("生成图片失败");
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `有劲生活-分享-${new Date().getTime()}.png`;
-        link.click();
-        URL.revokeObjectURL(url);
-        toast.success("图片已保存，可分享至微信");
-        setShowShareDialog(false);
-
-        // 更新分享数
-        supabase.from("community_posts").update({
-          shares_count: (post.shares_count || 0) + 1
-        }).eq("id", post.id);
+      // 转换为 Blob
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((b) => {
+          if (b) resolve(b);
+          else reject(new Error("生成图片失败"));
+        }, "image/png", 1.0);
       });
+      
+      const file = new File([blob], "分享卡片.png", { type: "image/png" });
+      
+      // 优先尝试使用系统分享 API（移动端）
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: post.title || "我的分享",
+            text: post.content?.slice(0, 100) || "",
+          });
+          toast.success("分享成功");
+          setShowShareDialog(false);
+          
+          // 更新分享数
+          await supabase.from("community_posts").update({
+            shares_count: (post.shares_count || 0) + 1
+          }).eq("id", post.id);
+          return;
+        } catch (shareError) {
+          // 用户取消分享或分享失败，降级到下载
+          console.log("系统分享被取消或失败，降级到下载", shareError);
+        }
+      }
+      
+      // 降级方案：下载图片
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `有劲生活-分享-${new Date().getTime()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success("图片已保存，可分享至微信");
+      setShowShareDialog(false);
+
+      // 更新分享数
+      await supabase.from("community_posts").update({
+        shares_count: (post.shares_count || 0) + 1
+      }).eq("id", post.id);
+      
     } catch (error) {
       console.error("生成图片失败:", error);
-      toast.error("生成图片失败");
+      toast.error("生成图片失败，请稍后重试");
     } finally {
       setSharing(false);
     }
