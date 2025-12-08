@@ -146,7 +146,7 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
 
   return (
     <Card 
-      className="overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 group mb-3"
+      className="overflow-hidden cursor-pointer hover:shadow-lg active:scale-[0.98] transition-all duration-150 group mb-3 touch-manipulation"
       onClick={handleClick}
     >
       {/* 图片区域 */}
@@ -214,12 +214,13 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
             </span>
           </div>
 
-          {/* 快速点赞按钮 */}
+          {/* 快速点赞按钮 - 增加触摸区域 */}
           <button
             onClick={handleLike}
+            onTouchStart={(e) => e.stopPropagation()}
             disabled={loading}
             className={cn(
-              "flex items-center gap-1 transition-all duration-200",
+              "flex items-center gap-1 p-2 -m-2 min-w-[44px] min-h-[44px] justify-center active:scale-95 transition-all duration-150 touch-manipulation",
               liked
                 ? "text-red-500"
                 : "text-muted-foreground hover:text-red-500",
