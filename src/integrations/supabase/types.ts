@@ -2320,37 +2320,55 @@ export type Database = {
       }
       partner_level_rules: {
         Row: {
+          benefits: Json | null
           commission_rate_l1: number
           commission_rate_l2: number
           created_at: string | null
           description: string | null
+          display_order: number | null
+          gradient: string | null
+          icon: string | null
           id: string
           is_active: boolean | null
           level_name: string
           min_prepurchase: number
           partner_type: string
+          price: number | null
+          updated_at: string | null
         }
         Insert: {
+          benefits?: Json | null
           commission_rate_l1: number
           commission_rate_l2?: number
           created_at?: string | null
           description?: string | null
+          display_order?: number | null
+          gradient?: string | null
+          icon?: string | null
           id?: string
           is_active?: boolean | null
           level_name: string
           min_prepurchase: number
           partner_type: string
+          price?: number | null
+          updated_at?: string | null
         }
         Update: {
+          benefits?: Json | null
           commission_rate_l1?: number
           commission_rate_l2?: number
           created_at?: string | null
           description?: string | null
+          display_order?: number | null
+          gradient?: string | null
+          icon?: string | null
           id?: string
           is_active?: boolean | null
           level_name?: string
           min_prepurchase?: number
           partner_type?: string
+          price?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
