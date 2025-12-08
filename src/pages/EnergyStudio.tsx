@@ -83,7 +83,7 @@ const EnergyStudio = () => {
     id: "partner" as const,
     label: "合伙人",
     emoji: "🤝",
-    route: "/partner"
+    route: "/partner/type"
   }];
 
   // 从数据库查询工具数据
