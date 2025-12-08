@@ -200,8 +200,8 @@ export const EnergyDeclaration = () => {
             });
             toast({ title: "分享成功" });
             return;
-          } catch (shareError) {
-            console.log("系统分享取消，降级到下载");
+          } catch {
+            // 系统分享取消，降级到下载
           }
         }
 

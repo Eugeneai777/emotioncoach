@@ -108,8 +108,6 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
 
   // 实时监听点赞和评论变化
   useEffect(() => {
-    console.log(`[PostCard] Setting up realtime for post ${post.id}`);
-
     const channel = supabase
       .channel(`post-${post.id}`)
       .on(
@@ -121,7 +119,6 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
           filter: `id=eq.${post.id}`,
         },
         (payload) => {
-          console.log(`[PostCard] Received update for post ${post.id}:`, payload);
           if (payload.eventType === "UPDATE" && payload.new) {
             const newData = payload.new as any;
             setLikesCount(newData.likes_count);
@@ -129,12 +126,9 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
           }
         }
       )
-      .subscribe((status) => {
-        console.log(`[PostCard] Subscription status for post ${post.id}:`, status);
-      });
+      .subscribe();
 
     return () => {
-      console.log(`[PostCard] Cleaning up realtime for post ${post.id}`);
       supabase.removeChannel(channel);
     };
   }, [post.id]);

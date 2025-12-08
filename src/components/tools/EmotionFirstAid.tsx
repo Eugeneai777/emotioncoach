@@ -187,7 +187,6 @@ export const EmotionFirstAid = () => {
                   style={{ backgroundColor: selectedEmotion.color }}
                   onClick={() => {
                     // TODO: 启动 AI 对话
-                    console.log("Start AI conversation");
                   }}
                 >
                   <Sparkles className="w-4 h-4 mr-2" />

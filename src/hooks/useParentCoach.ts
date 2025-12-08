@@ -21,7 +21,6 @@ export const useParentCoach = () => {
   const createSession = async (campId?: string, eventDescription?: string) => {
     // Prevent duplicate creation
     if (isCreating || session) {
-      console.log('Session creation skipped - already creating or session exists');
       return session;
     }
 
@@ -29,8 +28,6 @@ export const useParentCoach = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-
-      console.log('Creating new session for user:', user.id, 'campId:', campId);
 
       const { data, error } = await supabase
         .from('parent_coaching_sessions')
@@ -45,8 +42,6 @@ export const useParentCoach = () => {
         .single();
 
       if (error) throw error;
-      
-      console.log('Session created successfully:', data);
       setSession(data);
       return data;
     } catch (error) {
@@ -97,10 +92,7 @@ export const useParentCoach = () => {
   };
 
   const sendMessage = async (message: string) => {
-    console.log('sendMessage called, session:', session, 'message:', message);
-    
     if (!session) {
-      console.log('No session found, showing toast');
       toast({
         title: '请先创建会话',
         variant: 'destructive'
@@ -122,8 +114,6 @@ export const useParentCoach = () => {
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession();
       
-      console.log('Calling parent-emotion-coach function, sessionId:', session.id);
-      
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parent-emotion-coach`,
         {
@@ -140,16 +130,11 @@ export const useParentCoach = () => {
         }
       );
 
-      console.log('Response status:', response.status);
-
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API request failed:', response.status, errorText);
         throw new Error('API request failed');
       }
 
       const data = await response.json();
-      console.log('Response data:', data);
       
       // 🔧 Only add message if content is not empty
       if (data.content && data.content.trim()) {

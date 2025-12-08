@@ -172,8 +172,6 @@ const Index = () => {
       if (error) throw error;
       
       if (data) {
-        console.log('loadActiveCamp - Raw data:', data);
-        console.log('loadActiveCamp - check_in_dates:', data.check_in_dates);
         
         // 动态计算 current_day，基于 start_date 和今天的日期
         const calculatedCurrentDay = Math.max(1, 

@@ -202,19 +202,16 @@ export class RealtimeChat {
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke('realtime-token');
       
       if (tokenError || !tokenData?.client_secret?.value) {
-        console.error('Token error:', tokenError, tokenData);
         throw new Error("Failed to get ephemeral token");
       }
 
       const EPHEMERAL_KEY = tokenData.client_secret.value;
-      console.log('Got ephemeral token');
 
       // 创建 WebRTC 连接
       this.pc = new RTCPeerConnection();
 
       // 设置远程音频
       this.pc.ontrack = e => {
-        console.log('Received remote track');
         this.audioEl.srcObject = e.streams[0];
       };
 
@@ -226,12 +223,10 @@ export class RealtimeChat {
       this.dc = this.pc.createDataChannel("oai-events");
       
       this.dc.addEventListener("open", () => {
-        console.log('Data channel opened');
         this.onStatusChange('connected');
       });
 
       this.dc.addEventListener("close", () => {
-        console.log('Data channel closed');
         this.onStatusChange('disconnected');
       });
 
@@ -261,8 +256,6 @@ export class RealtimeChat {
       });
 
       if (!sdpResponse.ok) {
-        const errorText = await sdpResponse.text();
-        console.error('SDP error:', errorText);
         throw new Error('Failed to connect to OpenAI Realtime API');
       }
 
@@ -272,7 +265,6 @@ export class RealtimeChat {
       };
       
       await this.pc.setRemoteDescription(answer);
-      console.log("WebRTC connection established");
 
       // 初始化音频上下文和队列
       this.audioContext = new AudioContext({ sampleRate: 24000 });
@@ -286,7 +278,6 @@ export class RealtimeChat {
   }
 
   private handleEvent(event: any) {
-    console.log('Received event:', event.type);
     this.onMessage(event);
 
     switch (event.type) {
@@ -316,15 +307,15 @@ export class RealtimeChat {
         break;
 
       case 'input_audio_buffer.speech_started':
-        console.log('User started speaking');
+        // User started speaking
         break;
 
       case 'input_audio_buffer.speech_stopped':
-        console.log('User stopped speaking');
+        // User stopped speaking
         break;
 
       case 'response.done':
-        console.log('Response completed');
+        // Response completed
         break;
 
       case 'error':
@@ -335,7 +326,6 @@ export class RealtimeChat {
 
   sendTextMessage(text: string) {
     if (!this.dc || this.dc.readyState !== 'open') {
-      console.error('Data channel not ready');
       return;
     }
 
@@ -358,7 +348,6 @@ export class RealtimeChat {
   }
 
   disconnect() {
-    console.log('Disconnecting...');
     this.recorder?.stop();
     this.dc?.close();
     this.pc?.close();

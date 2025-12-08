@@ -214,13 +214,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
   const phaseInfo = getPhaseInfo(post.camp_day);
   const emotionEmoji = getEmotionEmoji(post.emotion_theme);
   
-  // 调试日志
-  console.log('ShareCard post_type:', post.post_type);
-  console.log('ShareCard badges:', post.badges);
-  console.log('ShareCard camp_name:', post.camp_name);
-  
   const sourceLabel = getSourceLabel(post.post_type, post.camp_name, post.badges);
-  console.log('ShareCard sourceLabel:', sourceLabel);
   useEffect(() => {
     const qrUrl = getQRCodeUrl(partnerInfo, post);
     QRCode.toDataURL(qrUrl, {

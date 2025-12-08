@@ -94,7 +94,6 @@ export const MindfulnessPractice = () => {
   const handleComplete = () => {
     // TODO: 保存到数据库
     setShowSteps(false);
-    console.log("Practice completed with reflection:", reflection);
   };
 
   return (
