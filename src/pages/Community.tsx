@@ -33,10 +33,10 @@ interface CommunityPost {
 }
 
 const categories = [
-  { value: 'following', label: '关注', emoji: '👥' },
-  { value: 'discover', label: '发现', emoji: '✨' },
-  { value: 'resonance', label: '同频', emoji: '💫' },
-  { value: 'story', label: '故事', emoji: '📖' },
+  { value: 'following', label: '关注' },
+  { value: 'discover', label: '发现' },
+  { value: 'resonance', label: '同频' },
+  { value: 'story', label: '故事' },
 ];
 
 const Community = () => {
@@ -328,14 +328,13 @@ const Community = () => {
                 setSelectedEmotionTag(null);
               }}
               className={cn(
-                "min-h-[52px] active:scale-95 transition-all flex-col py-2",
+                "min-h-[44px] active:scale-95 transition-all duration-150 touch-manipulation font-medium",
                 activeFilter === category.value 
-                  ? "bg-white/80 border-teal-400 text-teal-700 font-medium shadow-sm" 
-                  : "bg-white/60 border-border/40 hover:bg-white/80 text-foreground/80"
+                  ? "bg-white border-teal-500 text-teal-700 shadow-sm" 
+                  : "bg-white/90 border-teal-200/60 hover:bg-white hover:border-teal-300 text-teal-600/80"
               )}
             >
-              <span className="text-lg mb-0.5">{category.emoji}</span>
-              <span className="text-xs">{category.label}</span>
+              {category.label}
             </Button>
           ))}
         </div>
