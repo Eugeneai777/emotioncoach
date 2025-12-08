@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Zap, Flame, Gem } from "lucide-react";
+import { addDays, format } from "date-fns";
 
 interface AddPartnerDialogProps {
   open: boolean;
@@ -13,12 +16,22 @@ interface AddPartnerDialogProps {
   onSuccess: () => void;
 }
 
+const LEVEL_CONFIG = {
+  L1: { name: '初级', icon: Zap, gradient: 'from-orange-400 to-amber-400', l1Rate: 20, l2Rate: 0, price: 792 },
+  L2: { name: '高级', icon: Flame, gradient: 'from-orange-500 to-amber-500', l1Rate: 35, l2Rate: 0, price: 3217 },
+  L3: { name: '钻石', icon: Gem, gradient: 'from-orange-600 to-amber-600', l1Rate: 50, l2Rate: 10, price: 4950 },
+};
+
 export function AddPartnerDialog({ open, onOpenChange, onSuccess }: AddPartnerDialogProps) {
-  const [email, setEmail] = useState("");
-  const [l1Rate, setL1Rate] = useState("30");
-  const [l2Rate, setL2Rate] = useState("10");
+  const [userId, setUserId] = useState("");
+  const [level, setLevel] = useState<keyof typeof LEVEL_CONFIG>("L1");
+  const [prepurchaseCount, setPrepurchaseCount] = useState("100");
+  const [expiryDays, setExpiryDays] = useState("365");
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // 根据等级自动更新佣金比例
+  const currentConfig = LEVEL_CONFIG[level];
 
   const generatePartnerCode = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -31,25 +44,71 @@ export function AddPartnerDialog({ open, onOpenChange, onSuccess }: AddPartnerDi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!userId.trim()) {
+      toast.error("请输入用户ID");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // 简化：直接通过邮箱查询用户配置文件
-      const { data: profiles, error: profileError } = await supabase
+      // 验证用户ID存在
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
+        .select('id, display_name')
+        .eq('id', userId.trim())
+        .single();
+
+      if (profileError || !profile) {
+        throw new Error("未找到该用户，请确认用户ID正确");
+      }
+
+      // 检查是否已是合伙人
+      const { data: existingPartner } = await supabase
+        .from('partners')
         .select('id')
-        .limit(100);
+        .eq('user_id', userId.trim())
+        .single();
 
-      if (profileError) throw profileError;
+      if (existingPartner) {
+        throw new Error("该用户已是合伙人");
+      }
 
-      // 这里需要管理员手动输入用户ID，或通过其他方式查找
-      // 暂时使用email作为查找依据（实际应该有更好的方式）
-      const { data: { user: currentAdmin } } = await supabase.auth.getUser();
-      if (!currentAdmin) throw new Error("请先登录");
+      // 计算有效期
+      const expiresAt = addDays(new Date(), parseInt(expiryDays) || 365);
 
-      // 由于无法直接通过email查找用户，这里简化处理
-      // 实际使用中，管理员应该通过用户列表选择用户
-      throw new Error("请通过用户管理页面选择用户ID后再添加合伙人");
+      // 创建合伙人记录
+      const { error: insertError } = await supabase
+        .from('partners')
+        .insert({
+          user_id: userId.trim(),
+          partner_code: generatePartnerCode(),
+          partner_type: 'youjin',
+          partner_level: level,
+          commission_rate_l1: currentConfig.l1Rate / 100,
+          commission_rate_l2: currentConfig.l2Rate / 100,
+          prepurchase_count: parseInt(prepurchaseCount) || 0,
+          prepurchase_expires_at: expiresAt.toISOString(),
+          status: 'active',
+          source: 'manual',
+        });
+
+      if (insertError) throw insertError;
+
+      toast.success("有劲合伙人添加成功", {
+        description: `已为 ${profile.display_name || '用户'} 开通 ${level} ${currentConfig.name}等级`
+      });
+      
+      // 重置表单
+      setUserId("");
+      setLevel("L1");
+      setPrepurchaseCount("100");
+      setExpiryDays("365");
+      setNote("");
+      
+      onOpenChange(false);
+      onSuccess();
 
     } catch (error: any) {
       console.error('Error adding partner:', error);
@@ -61,54 +120,110 @@ export function AddPartnerDialog({ open, onOpenChange, onSuccess }: AddPartnerDi
     }
   };
 
+  const LevelIcon = currentConfig.icon;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>手动添加合伙人</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            💪 添加有劲合伙人
+          </DialogTitle>
           <DialogDescription>
-            为指定用户开通合伙人权限
+            为指定用户开通有劲合伙人权限
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">用户邮箱</Label>
+            <Label htmlFor="userId">用户ID</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="请输入用户邮箱"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="userId"
+              placeholder="请输入用户ID（可从用户管理获取）"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
               required
             />
+            <p className="text-xs text-muted-foreground">
+              可在"用户管理"标签页查看和复制用户ID
+            </p>
           </div>
 
+          {/* 等级选择器 */}
+          <div className="space-y-2">
+            <Label>合伙人等级</Label>
+            <div className="grid grid-cols-3 gap-3">
+              {Object.entries(LEVEL_CONFIG).map(([key, config]) => {
+                const Icon = config.icon;
+                const isSelected = level === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setLevel(key as keyof typeof LEVEL_CONFIG)}
+                    className={`p-3 rounded-lg border-2 transition-all text-left ${
+                      isSelected 
+                        ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' 
+                        : 'border-border hover:border-orange-300'
+                    }`}
+                  >
+                    <div className={`inline-flex p-1.5 rounded-md bg-gradient-to-r ${config.gradient} mb-2`}>
+                      <Icon className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="font-medium text-sm">{key} {config.name}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      佣金 {config.l1Rate}%/{config.l2Rate}%
+                    </div>
+                    <div className="text-xs text-orange-600 font-medium mt-0.5">
+                      ¥{config.price}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 佣金比例显示（只读） */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="l1-rate">一级提成比例 (%)</Label>
+              <Label>一级佣金比例</Label>
+              <div className="h-10 px-3 flex items-center bg-muted rounded-md text-sm font-medium">
+                {currentConfig.l1Rate}%
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>二级佣金比例</Label>
+              <div className="h-10 px-3 flex items-center bg-muted rounded-md text-sm font-medium">
+                {currentConfig.l2Rate}%
+              </div>
+            </div>
+          </div>
+
+          {/* 预购配置 */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="prepurchase">预购数量</Label>
               <Input
-                id="l1-rate"
+                id="prepurchase"
                 type="number"
                 min="0"
-                max="100"
-                step="1"
-                value={l1Rate}
-                onChange={(e) => setL1Rate(e.target.value)}
-                required
+                value={prepurchaseCount}
+                onChange={(e) => setPrepurchaseCount(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="l2-rate">二级提成比例 (%)</Label>
-              <Input
-                id="l2-rate"
-                type="number"
-                min="0"
-                max="100"
-                step="1"
-                value={l2Rate}
-                onChange={(e) => setL2Rate(e.target.value)}
-                required
-              />
+              <Label htmlFor="expiry">有效期（天）</Label>
+              <Select value={expiryDays} onValueChange={setExpiryDays}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="30">30天</SelectItem>
+                  <SelectItem value="90">90天</SelectItem>
+                  <SelectItem value="180">180天</SelectItem>
+                  <SelectItem value="365">365天（1年）</SelectItem>
+                  <SelectItem value="730">730天（2年）</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -119,7 +234,7 @@ export function AddPartnerDialog({ open, onOpenChange, onSuccess }: AddPartnerDi
               placeholder="添加备注说明"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              rows={3}
+              rows={2}
             />
           </div>
 
@@ -127,7 +242,11 @@ export function AddPartnerDialog({ open, onOpenChange, onSuccess }: AddPartnerDi
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               取消
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button 
+              type="submit" 
+              disabled={loading}
+              className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+            >
               {loading ? "添加中..." : "确认添加"}
             </Button>
           </DialogFooter>
