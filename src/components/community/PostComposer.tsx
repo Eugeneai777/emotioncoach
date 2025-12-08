@@ -168,6 +168,14 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
               placeholder="分享你的故事、感悟或成长..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault();
+                  if (content.trim() && !submitting) {
+                    handleSubmit();
+                  }
+                }
+              }}
               rows={6}
               className="resize-none"
               maxLength={2000}
