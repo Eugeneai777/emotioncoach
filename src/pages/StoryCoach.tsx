@@ -302,7 +302,7 @@ export default function StoryCoach() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto pb-32">
+      <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto overscroll-none scroll-container pb-44">
         {!showCreation ? (
           <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-8 px-3 md:px-4">
             <div className="text-center space-y-3 md:space-y-4 w-full max-w-xl animate-in fade-in-50 duration-700">
@@ -410,16 +410,16 @@ export default function StoryCoach() {
       </main>
 
       {/* Fixed Footer Input Area */}
-      <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20">
-        <div className="container max-w-xl mx-auto px-4 py-3">
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20 safe-bottom">
+        <div className="container max-w-xl mx-auto px-3 md:px-4 pt-2 pb-2">
           {/* Quick Action Buttons */}
           {!showCreation && (
-            <div className="mb-3 flex flex-wrap gap-2">
+            <div className="mb-2 flex flex-wrap gap-2">
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => setShowCreation(true)}
-                className="border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                className="border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-900/20 min-h-[40px]"
               >
                 📝 从头开始创作
               </Button>
@@ -427,15 +427,27 @@ export default function StoryCoach() {
                 variant="outline" 
                 size="sm" 
                 onClick={() => navigate("/history")}
-                className="border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                className="border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-900/20 min-h-[40px]"
               >
                 📋 从情绪简报创作
               </Button>
             </div>
           )}
           
-          {/* Input Area */}
+          {/* Input Area - 44px touch targets */}
           <div className="flex gap-2 items-end">
+            {showCreation && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleRestart}
+                title="返回主页"
+                className="h-11 w-11 min-w-[44px] flex-shrink-0 rounded-full"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </Button>
+            )}
+            
             <Textarea
               ref={inputRef}
               value={input}
@@ -447,15 +459,19 @@ export default function StoryCoach() {
                 }
               }}
               placeholder="描述你想写的故事主题..."
-              className="min-h-[60px] max-h-[160px] resize-none rounded-xl"
+              className="resize-none min-h-[44px] max-h-[100px] w-full py-2.5 px-3 text-base rounded-2xl leading-relaxed"
+              style={{ fontSize: '16px' }}
+              rows={1}
+              enterKeyHint="send"
+              inputMode="text"
             />
             <Button
               size="icon"
               onClick={handleQuickStart}
               disabled={!input.trim()}
-              className="h-10 w-10 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+              className="h-11 w-11 min-w-[44px] flex-shrink-0 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5" />
             </Button>
           </div>
         </div>
