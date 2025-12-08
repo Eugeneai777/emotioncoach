@@ -21,6 +21,8 @@ export interface Partner {
   partner_level: string;
   prepurchase_count: number;
   prepurchase_expires_at: string | null;
+  wecom_group_qrcode_url?: string | null;
+  wecom_group_name?: string | null;
 }
 
 export function usePartner() {

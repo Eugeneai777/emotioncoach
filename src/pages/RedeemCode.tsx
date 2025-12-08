@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Gift, Loader2, CheckCircle2, CreditCard } from "lucide-react";
+import { Gift, Loader2, CheckCircle2, CreditCard, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { CampJoinSelector } from "@/components/camp/CampJoinSelector";
 
 interface CodeInfo {
   entry_type: string;
@@ -32,6 +33,8 @@ export default function RedeemCode() {
   const [checking, setChecking] = useState(false);
   const [success, setSuccess] = useState(false);
   const [quotaReceived, setQuotaReceived] = useState(50);
+  const [showCampSelector, setShowCampSelector] = useState(false);
+  const [referralId, setReferralId] = useState<string | null>(null);
   
   // 兑换码信息
   const [codeInfo, setCodeInfo] = useState<CodeInfo | null>(null);
@@ -122,13 +125,12 @@ export default function RedeemCode() {
       }
 
       setQuotaReceived(data.quota_amount || 10);
+      if (data.referral_id) {
+        setReferralId(data.referral_id);
+      }
       setSuccess(true);
+      setShowCampSelector(true);
       toast.success(data.message || '兑换成功！');
-
-      // 3秒后跳转到首页
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
 
     } catch (error: any) {
       console.error('Redeem error:', error);
@@ -181,12 +183,12 @@ export default function RedeemCode() {
       }
 
       setQuotaReceived(data.quota_amount || 50);
+      if (data.referral_id) {
+        setReferralId(data.referral_id);
+      }
       setSuccess(true);
+      setShowCampSelector(true);
       toast.success(data.message || '兑换成功！');
-
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
 
     } catch (error: any) {
       console.error('Redeem after payment error:', error);
@@ -208,25 +210,47 @@ export default function RedeemCode() {
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-orange-50/20 to-amber-50/20 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-orange-200">
-          <CardContent className="pt-12 pb-12 text-center space-y-6">
-            <div className="w-20 h-20 rounded-full bg-green-100 mx-auto flex items-center justify-center">
-              <CheckCircle2 className="w-10 h-10 text-green-600" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold">兑换成功！</h2>
-              <p className="text-muted-foreground">
-                您已获得{quotaReceived}次AI对话额度
-              </p>
-              <p className="text-sm text-muted-foreground">
-                正在跳转到首页...
-              </p>
-            </div>
-            <Button onClick={() => navigate('/')} className="w-full">
-              立即体验
+        <div className="w-full max-w-md space-y-4">
+          {/* 兑换成功卡片 */}
+          <Card className="border-green-200">
+            <CardContent className="pt-8 pb-6 text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-green-100 mx-auto flex items-center justify-center">
+                <CheckCircle2 className="w-8 h-8 text-green-600" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold">兑换成功！</h2>
+                <p className="text-muted-foreground">
+                  已获得 <span className="font-semibold text-green-600">{quotaReceived}次</span> AI对话额度
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 训练营选择 */}
+          {showCampSelector && (
+            <Card className="border-orange-200">
+              <CardContent className="pt-6 pb-6">
+                <CampJoinSelector 
+                  referralId={referralId || undefined}
+                  onJoinComplete={(campId) => {
+                    navigate(`/camp/${campId}/checkin`);
+                  }}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 跳过按钮 */}
+          <div className="text-center">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate('/')}
+              className="text-muted-foreground"
+            >
+              跳过，直接进入首页
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
