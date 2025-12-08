@@ -110,6 +110,24 @@ serve(async (req) => {
 
 请以JSON格式返回分析结果。`;
 
+    // 扣费
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/deduct-quota`, {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          feature_key: 'communication_pattern_analysis',
+          source: 'analyze_communication_patterns',
+        })
+      });
+      console.log(`✅ 沟通模式分析扣费成功`);
+    } catch (e) {
+      console.error('扣费失败:', e);
+    }
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {

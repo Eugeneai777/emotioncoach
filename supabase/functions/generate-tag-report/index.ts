@@ -164,6 +164,25 @@ ${tagSummaries.slice(0, 5).map(t => `${t.name}: ${t.topThemes.join(', ')}`).join
 
     console.log('Calling AI for weekly insights...');
 
+    // 扣费
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/deduct-quota`, {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          feature_key: 'tag_report',
+          source: 'generate_tag_report',
+          metadata: { startDate, endDate }
+        })
+      });
+      console.log(`✅ 标签报告扣费成功`);
+    } catch (e) {
+      console.error('扣费失败:', e);
+    }
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {

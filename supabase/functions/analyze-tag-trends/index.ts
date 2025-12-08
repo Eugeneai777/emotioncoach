@@ -32,6 +32,24 @@ serve(async (req) => {
 
     console.log(`Analyzing tag trends for user ${user.id}, ${weeks} weeks`);
 
+    // 扣费
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/deduct-quota`, {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          feature_key: 'tag_trend_analysis',
+          source: 'analyze_tag_trends',
+        })
+      });
+      console.log(`✅ 标签趋势分析扣费成功`);
+    } catch (e) {
+      console.error('扣费失败:', e);
+    }
+
     // 获取用户的所有标签
     const { data: tags, error: tagsError } = await supabase
       .from('tags')

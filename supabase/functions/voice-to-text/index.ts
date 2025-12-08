@@ -25,6 +25,27 @@ serve(async (req) => {
 
     console.log('Processing audio for transcription...');
 
+    // 扣费
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader) {
+      try {
+        await fetch(`${Deno.env.get('SUPABASE_URL')!}/functions/v1/deduct-quota`, {
+          method: 'POST',
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            feature_key: 'voice_to_text',
+            source: 'voice_to_text',
+          })
+        });
+        console.log(`✅ 语音转文字扣费成功`);
+      } catch (e) {
+        console.error('扣费失败:', e);
+      }
+    }
+
     // Decode base64 to binary
     const binaryString = atob(audio);
     const bytes = new Uint8Array(binaryString.length);

@@ -32,6 +32,24 @@ serve(async (req) => {
 
     console.log(`Analyzing tag associations for user ${user.id}`);
 
+    // 扣费
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/deduct-quota`, {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          feature_key: 'tag_association_analysis',
+          source: 'analyze_tag_associations',
+        })
+      });
+      console.log(`✅ 标签关联分析扣费成功`);
+    } catch (e) {
+      console.error('扣费失败:', e);
+    }
+
     // 获取用户所有标签
     const { data: tags, error: tagsError } = await supabase
       .from('tags')
