@@ -47,6 +47,7 @@ import DynamicCoach from "./pages/DynamicCoach";
 import StoryCoach from "./pages/StoryCoach";
 import StoryCoachIntro from "./pages/StoryCoachIntro";
 import MyStories from "./pages/MyStories";
+import MyPosts from "./pages/MyPosts";
 import PanicHistory from "./pages/PanicHistory";
 import PanicVoiceSettings from "./pages/PanicVoiceSettings";
 import VoiceCloneSetup from "./pages/VoiceCloneSetup";
@@ -107,6 +108,7 @@ const App = () => (
           <Route path="/story-coach" element={<StoryCoach />} />
           <Route path="/story-coach-intro" element={<StoryCoachIntro />} />
           <Route path="/my-stories" element={<MyStories />} />
+          <Route path="/my-posts" element={<MyPosts />} />
           <Route path="/panic-history" element={<PanicHistory />} />
           <Route path="/panic-voice-settings" element={<PanicVoiceSettings />} />
           <Route path="/voice-clone-setup" element={<VoiceCloneSetup />} />
