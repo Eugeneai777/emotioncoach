@@ -64,14 +64,42 @@ export function PartnerQRGenerator({ open, onOpenChange, partnerId }: PartnerQRG
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!qrCodeUrl) return;
 
-    const link = document.createElement('a');
-    link.href = qrCodeUrl;
-    link.download = `有劲合伙人推广码_${partnerId}.png`;
-    link.click();
-    toast.success('二维码已下载');
+    try {
+      // 获取 blob
+      const response = await fetch(qrCodeUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `有劲合伙人推广码_${partnerId}.png`, { type: 'image/png' });
+
+      // 尝试使用系统分享
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: '有劲合伙人推广码',
+            text: '扫码即可兑换体验包',
+          });
+          toast.success('分享成功');
+          return;
+        } catch (shareError) {
+          console.log("系统分享取消，降级到下载");
+        }
+      }
+
+      // 降级：下载
+      const link = document.createElement('a');
+      link.href = qrCodeUrl;
+      link.download = `有劲合伙人推广码_${partnerId}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('二维码已下载');
+    } catch (error) {
+      console.error('下载失败:', error);
+      toast.error('下载失败');
+    }
   };
 
   return (

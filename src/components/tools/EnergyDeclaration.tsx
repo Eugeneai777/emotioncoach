@@ -188,12 +188,31 @@ export const EnergyDeclaration = () => {
       const blob = await generatePosterBlob();
       
       if (blob) {
+        const timestamp = new Date().toISOString().split('T')[0];
+        const file = new File([blob], `有劲能量宣言_${timestamp}.png`, { type: 'image/png' });
+
+        // 尝试使用系统分享
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: '有劲能量宣言',
+            });
+            toast({ title: "分享成功" });
+            return;
+          } catch (shareError) {
+            console.log("系统分享取消，降级到下载");
+          }
+        }
+
+        // 降级：下载（修复 appendChild）
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        const timestamp = new Date().toISOString().split('T')[0];
         link.download = `有劲能量宣言_${timestamp}.png`;
         link.href = url;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
         URL.revokeObjectURL(url);
         
         toast({

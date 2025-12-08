@@ -110,8 +110,27 @@ const WeeklyTagReport = ({ startDate, endDate }: WeeklyTagReportProps): JSX.Elem
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       
       const fileName = `情绪报告_${reportData.period.startDate}_${reportData.period.endDate}.pdf`;
+      
+      // 尝试使用系统分享 API（移动端）
+      const pdfBlob = pdf.output('blob');
+      const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+      
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: '情绪周报',
+            text: `${reportData.period.startDate} 至 ${reportData.period.endDate} 情绪报告`,
+          });
+          toast.success('分享成功');
+          return;
+        } catch (shareError) {
+          console.log("系统分享取消，降级到下载");
+        }
+      }
+      
+      // 降级：直接下载
       pdf.save(fileName);
-
       toast.success('PDF已下载', {
         description: '报告已保存到本地',
       });
