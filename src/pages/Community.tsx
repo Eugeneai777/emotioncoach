@@ -259,19 +259,19 @@ const Community = () => {
     <div className="grid grid-cols-2 gap-3">
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white rounded-xl p-3 shadow-sm animate-pulse">
-            <div className="h-32 bg-gray-200 rounded-lg mb-3" />
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-            <div className="h-3 bg-gray-200 rounded w-1/2" />
+          <div key={i} className="bg-card rounded-xl p-3 shadow-sm animate-pulse">
+            <div className="h-32 bg-muted rounded-lg mb-3" />
+            <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+            <div className="h-3 bg-muted rounded w-1/2" />
           </div>
         ))}
       </div>
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white rounded-xl p-3 shadow-sm animate-pulse">
-            <div className="h-24 bg-gray-200 rounded-lg mb-3" />
-            <div className="h-4 bg-gray-200 rounded w-2/3 mb-2" />
-            <div className="h-3 bg-gray-200 rounded w-1/3" />
+          <div key={i} className="bg-card rounded-xl p-3 shadow-sm animate-pulse">
+            <div className="h-24 bg-muted rounded-lg mb-3" />
+            <div className="h-4 bg-muted rounded w-2/3 mb-2" />
+            <div className="h-3 bg-muted rounded w-1/3" />
           </div>
         ))}
       </div>
@@ -279,7 +279,7 @@ const Community = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -288,22 +288,22 @@ const Community = () => {
               variant="ghost"
               size="icon"
               onClick={() => navigate("/")}
-              className="text-teal-700 hover:bg-teal-100/50"
+              className="text-foreground hover:bg-accent"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-            <h1 className="text-2xl font-bold text-teal-800 flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               🌈 有劲社区
             </h1>
-            <p className="text-xs text-teal-600">分享成长 · 见证蜕变</p>
+            <p className="text-xs text-muted-foreground">分享成长 · 见证蜕变</p>
             </div>
           </div>
           {session ? (
             <Button 
               variant="outline" 
               size="sm"
-              className="bg-white border-teal-400 hover:bg-teal-50 hover:border-teal-500 text-teal-700 font-medium shadow-sm"
+              className="bg-card border-border hover:bg-accent hover:border-primary text-foreground font-medium shadow-sm"
               onClick={() => navigate("/my-posts")}
             >
               <User className="w-4 h-4 mr-1" />
@@ -327,8 +327,8 @@ const Community = () => {
               className={cn(
                 "min-h-[44px] active:scale-95 transition-all duration-150 touch-manipulation font-medium",
                 activeFilter === category.value 
-                  ? "bg-white border-teal-600 border-2 text-teal-800 shadow-md" 
-                  : "bg-white border-gray-200 hover:bg-gray-50 hover:border-teal-300 text-gray-600"
+                  ? "bg-card border-primary border-2 text-primary shadow-md" 
+                  : "bg-card border-border hover:bg-accent hover:border-primary/50 text-foreground"
               )}
             >
               {category.label}
@@ -347,8 +347,8 @@ const Community = () => {
                 className={cn(
                   "whitespace-nowrap shrink-0 text-xs rounded-full px-4 border",
                   selectedEmotionTag === null 
-                    ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700 shadow-sm" 
-                    : "bg-white border-gray-200 hover:bg-gray-50 text-gray-600"
+                    ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 shadow-sm" 
+                    : "bg-card border-border hover:bg-accent text-foreground"
                 )}
               >
                 全部
@@ -362,8 +362,8 @@ const Community = () => {
                   className={cn(
                     "whitespace-nowrap shrink-0 text-xs rounded-full px-4 border",
                     selectedEmotionTag === tag 
-                      ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700 shadow-sm" 
-                      : "bg-white border-gray-200 hover:bg-gray-50 text-gray-600"
+                      ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 shadow-sm" 
+                      : "bg-card border-border hover:bg-accent text-foreground"
                   )}
                 >
                   {tag}
@@ -378,7 +378,7 @@ const Community = () => {
         {session && (
           <Button
             onClick={() => setShowComposer(true)}
-            className="w-full h-12 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-medium shadow-lg shadow-teal-300/40 mb-4"
+            className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-lg shadow-primary/20 mb-4"
           >
             <Plus className="mr-2 h-5 w-5" />
             分享我的动态
@@ -390,15 +390,15 @@ const Community = () => {
           <SkeletonCards />
         ) : posts.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-teal-200 to-cyan-200 rounded-full flex items-center justify-center shadow-lg">
+            <div className="w-20 h-20 mx-auto mb-4 bg-accent rounded-full flex items-center justify-center shadow-lg">
               <span className="text-4xl">✨</span>
             </div>
-            <p className="text-lg font-semibold text-gray-700 mb-2">暂无分享内容</p>
-            <p className="text-sm text-gray-500 mb-6">成为第一个分享故事的人吧！</p>
+            <p className="text-lg font-semibold text-foreground mb-2">暂无分享内容</p>
+            <p className="text-sm text-muted-foreground mb-6">成为第一个分享故事的人吧！</p>
             {session && (
               <Button 
                 onClick={() => setShowComposer(true)}
-                className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white shadow-lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
               >
                 <Plus className="mr-2 h-4 w-4" /> 发布第一个动态
               </Button>
