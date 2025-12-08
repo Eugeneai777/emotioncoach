@@ -29,9 +29,21 @@ const EmotionButtonShareDialog: React.FC<EmotionButtonShareDialogProps> = ({
   const handleGenerateImage = async () => {
     if (!exportRef.current) return;
 
+    const container = exportRef.current.parentElement;
+    
     setIsGenerating(true);
     try {
-      // 等待二维码生成
+      // 临时让元素可见以确保正确渲染
+      if (container) {
+        container.style.position = 'fixed';
+        container.style.left = '0';
+        container.style.top = '0';
+        container.style.zIndex = '9999';
+        container.style.opacity = '1';
+        container.style.visibility = 'visible';
+      }
+      
+      // 等待二维码生成和渲染稳定
       await new Promise(resolve => setTimeout(resolve, 500));
 
       const canvas = await html2canvas(exportRef.current, {
@@ -40,6 +52,10 @@ const EmotionButtonShareDialog: React.FC<EmotionButtonShareDialogProps> = ({
         allowTaint: true,
         backgroundColor: null,
         logging: false,
+        width: exportRef.current.scrollWidth,
+        height: exportRef.current.scrollHeight,
+        windowWidth: exportRef.current.scrollWidth,
+        windowHeight: exportRef.current.scrollHeight,
       });
 
       const blob = await new Promise<Blob>((resolve) => {
@@ -88,8 +104,24 @@ const EmotionButtonShareDialog: React.FC<EmotionButtonShareDialogProps> = ({
         description: "请稍后重试",
         variant: "destructive",
       });
+      
+      // 恢复隐藏
+      if (container) {
+        container.style.position = 'fixed';
+        container.style.left = '-9999px';
+        container.style.opacity = '0';
+        container.style.visibility = 'hidden';
+      }
     } finally {
       setIsGenerating(false);
+      
+      // 确保恢复隐藏
+      if (container) {
+        container.style.position = 'fixed';
+        container.style.left = '-9999px';
+        container.style.opacity = '0';
+        container.style.visibility = 'hidden';
+      }
     }
   };
 
