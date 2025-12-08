@@ -34,6 +34,43 @@ serve(async (req) => {
 
     console.log(`🧘‍♀️ 有劲生活教练 - 用户: ${user.id}`);
 
+    // 方式2：每次会话开始时扣费（有劲生活教练没有持久session，每次对话视为新会话）
+    // 判断是否是新对话（第一条用户消息）
+    const isNewConversation = messages.length === 1 && messages[0]?.role === 'user';
+    
+    if (isNewConversation) {
+      try {
+        const deductResponse = await fetch(`${supabaseUrl}/functions/v1/deduct-quota`, {
+          method: 'POST',
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            feature_key: 'vibrant_life_coach',
+            source: 'vibrant_life_coach_session',
+            metadata: { user_id: user.id }
+          })
+        });
+        
+        if (deductResponse.ok) {
+          const result = await deductResponse.json();
+          console.log(`✅ 有劲生活教练会话扣费: ${result.cost} 点, 剩余: ${result.remaining_quota}`);
+        } else {
+          const error = await deductResponse.json();
+          console.error('❌ 有劲生活教练扣费失败:', error);
+          if (deductResponse.status === 400) {
+            return new Response(JSON.stringify({ error: '余额不足，请充值后继续使用' }), {
+              status: 402,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
+      } catch (error) {
+        console.error('❌ 有劲生活教练扣费请求失败:', error);
+      }
+    }
+
     // 从数据库加载系统提示词
     const { data: templateData } = await supabase
       .from('coach_templates')
