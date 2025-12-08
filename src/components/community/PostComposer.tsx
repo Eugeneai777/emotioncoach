@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,20 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
   const [imageStyle, setImageStyle] = useState("warm");
   const { toast } = useToast();
   const { session } = useAuth();
+
+  // 当 dialog 打开时重置表单状态
+  useEffect(() => {
+    if (open) {
+      setPostType("share");
+      setTitle("");
+      setContent("");
+      setImageUrls([]);
+      setIsAnonymous(false);
+      setImageStyle("warm");
+      setSubmitting(false);
+      setGeneratingImage(false);
+    }
+  }, [open]);
 
   const handleSubmit = async () => {
     if (!session?.user) {

@@ -106,18 +106,22 @@ const PostDetailSheet = ({
     fetchFollowersCount();
   }, [session, post?.user_id, post?.is_anonymous]);
 
-  // 检查是否已点赞
+  // 检查是否已点赞并同步点赞数
   useEffect(() => {
+    if (!open || !post) return;
+    
     const checkIfLiked = async () => {
-      if (!session?.user || !post) return;
+      if (!session?.user) return;
       const {
         data
       } = await supabase.from("post_likes").select("id").eq("post_id", post.id).eq("user_id", session.user.id).maybeSingle();
       setLiked(!!data);
     };
+    
     checkIfLiked();
-    setLikesCount(post?.likes_count || 0);
-  }, [session, post?.id]);
+    setLikesCount(post.likes_count || 0);
+    setNewComment("");
+  }, [open, session, post?.id, post?.likes_count]);
 
   // 关注/取消关注
   const handleFollowToggle = async () => {
