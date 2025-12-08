@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +42,15 @@ const ReportDialog = ({ open, onOpenChange, postId }: ReportDialogProps) => {
   const [reason, setReason] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // 当 dialog 打开时重置表单状态
+  useEffect(() => {
+    if (open) {
+      setReason("");
+      setDescription("");
+      setLoading(false);
+    }
+  }, [open]);
 
   const handleSubmit = async () => {
     if (!session?.user) {
