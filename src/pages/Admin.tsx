@@ -18,6 +18,7 @@ import { CoachTemplatesManagement } from "@/components/admin/CoachTemplatesManag
 import KnowledgeBaseManagement from "@/components/admin/KnowledgeBaseManagement";
 import CustomerServiceManagement from "@/components/admin/CustomerServiceManagement";
 import FeatureCostManagement from "@/components/admin/FeatureCostManagement";
+import CostMonitorDashboard from "@/components/admin/CostMonitorDashboard";
 
 export default function Admin() {
   const { user, loading } = useAuth();
@@ -79,6 +80,7 @@ export default function Admin() {
             <TabsTrigger value="orders">订单管理</TabsTrigger>
             <TabsTrigger value="usage">使用记录</TabsTrigger>
             <TabsTrigger value="costs">扣费规则</TabsTrigger>
+            <TabsTrigger value="cost-monitor">成本监控</TabsTrigger>
             <TabsTrigger value="sync">同步状态</TabsTrigger>
             <TabsTrigger value="reports">举报管理</TabsTrigger>
             <TabsTrigger value="videos">视频课程</TabsTrigger>
@@ -104,6 +106,10 @@ export default function Admin() {
 
           <TabsContent value="costs">
             <FeatureCostManagement />
+          </TabsContent>
+
+          <TabsContent value="cost-monitor">
+            <CostMonitorDashboard />
           </TabsContent>
 
           <TabsContent value="sync">
