@@ -74,7 +74,7 @@ const App = () => (
           <Route path="/tag-stats" element={<TagStats />} />
           <Route path="/goals" element={<Goals />} />
           <Route path="/calendar" element={<Calendar />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/*" element={<Admin />} />
           <Route path="/packages" element={<Packages />} />
           <Route path="/deployment-package" element={<DeploymentPackage />} />
           <Route path="/energy-studio" element={<EnergyStudio />} />
