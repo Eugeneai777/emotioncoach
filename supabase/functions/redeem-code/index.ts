@@ -72,6 +72,11 @@ Deno.serve(async (req) => {
       );
     }
 
+    // 获取入口类型和额度
+    const entryType = redemptionCode.entry_type || 'free';
+    const quotaAmount = redemptionCode.quota_amount || (entryType === 'free' ? 10 : 50);
+    const entryPrice = redemptionCode.entry_price || (entryType === 'free' ? 0 : 9.9);
+
     // 5. 标记兑换码为已使用
     const { error: updateError } = await supabase
       .from('partner_redemption_codes')
@@ -87,10 +92,10 @@ Deno.serve(async (req) => {
       throw updateError;
     }
 
-    // 6. 给用户增加50次对话额度
+    // 6. 给用户增加对话额度（根据入口类型）
     const { error: quotaError } = await supabase.rpc('deduct_user_quota', {
       p_user_id: user_id,
-      p_amount: -50  // 负数表示增加额度
+      p_amount: -quotaAmount  // 负数表示增加额度
     });
 
     if (quotaError) {
@@ -157,9 +162,12 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: '兑换成功！已获得50次对话额度',
+        message: `兑换成功！已获得${quotaAmount}次对话额度`,
         referral_id: referral.id,
-        partner_code: (redemptionCode.partners as any).partner_code
+        partner_code: (redemptionCode.partners as any).partner_code,
+        entry_type: entryType,
+        quota_amount: quotaAmount,
+        entry_price: entryPrice
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
