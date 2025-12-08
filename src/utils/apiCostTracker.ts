@@ -22,6 +22,118 @@ export const WHISPER_COST_PER_MINUTE = 0.006;
 // 汇率
 export const USD_TO_CNY = 7.2;
 
+// 套餐配额价值配置（每配额人民币）
+export const PACKAGE_QUOTA_VALUE: Record<string, { price: number; quota: number; valuePerQuota: number }> = {
+  basic: { price: 9.9, quota: 50, valuePerQuota: 9.9 / 50 },           // ¥0.198/配额
+  member365: { price: 365, quota: 1000, valuePerQuota: 365 / 1000 },   // ¥0.365/配额
+};
+
+// 功能配额消耗配置（默认值，实际以 package_feature_settings 为准）
+export const DEFAULT_FEATURE_QUOTA: Record<string, number> = {
+  'emotion_coach': 1,
+  'communication_coach': 1,
+  'parent_coach': 1,
+  'vibrant_life_coach': 1,
+  'story_coach': 1,
+  'emotion_review': 2,
+  'pattern_analysis': 2,
+  'image_generation': 5,
+  'text_to_speech': 1,
+  'voice_to_text': 1,
+  'voice_clone': 10,
+  'realtime_voice': 5,  // 每分钟
+  'customer_support': 1,
+};
+
+// 利润率分析接口
+export interface FeatureProfitability {
+  featureKey: string;
+  featureName: string;
+  usageCount: number;
+  totalCostCny: number;
+  avgCostPerUse: number;
+  quotaPerUse: number;
+  revenuePerUseBasic: number;
+  revenuePerUseMember: number;
+  avgRevenuePerUse: number;  // 加权平均
+  totalRevenueCny: number;
+  profitCny: number;
+  profitMargin: number;  // 百分比
+  status: 'profitable' | 'break_even' | 'loss';
+  suggestion?: string;
+}
+
+// 计算功能利润率
+export function calculateFeatureProfitability(
+  featureKey: string,
+  featureName: string,
+  usageCount: number,
+  totalCostCny: number,
+  quotaPerUse: number,
+  memberRatio: number = 0.3  // 假设30%是365会员
+): FeatureProfitability {
+  const avgCostPerUse = usageCount > 0 ? totalCostCny / usageCount : 0;
+  
+  const revenuePerUseBasic = quotaPerUse * PACKAGE_QUOTA_VALUE.basic.valuePerQuota;
+  const revenuePerUseMember = quotaPerUse * PACKAGE_QUOTA_VALUE.member365.valuePerQuota;
+  
+  // 加权平均收入（按会员比例）
+  const avgRevenuePerUse = revenuePerUseBasic * (1 - memberRatio) + revenuePerUseMember * memberRatio;
+  
+  const totalRevenueCny = usageCount * avgRevenuePerUse;
+  const profitCny = totalRevenueCny - totalCostCny;
+  const profitMargin = totalRevenueCny > 0 ? (profitCny / totalRevenueCny) * 100 : 0;
+  
+  let status: 'profitable' | 'break_even' | 'loss' = 'profitable';
+  let suggestion: string | undefined;
+  
+  if (profitMargin < -5) {
+    status = 'loss';
+    // 计算达到盈亏平衡所需的配额
+    const breakEvenQuota = Math.ceil(avgCostPerUse / PACKAGE_QUOTA_VALUE.basic.valuePerQuota);
+    suggestion = `建议将配额消耗从 ${quotaPerUse} 调整为 ${breakEvenQuota}`;
+  } else if (profitMargin >= -5 && profitMargin <= 5) {
+    status = 'break_even';
+  }
+  
+  return {
+    featureKey,
+    featureName,
+    usageCount,
+    totalCostCny,
+    avgCostPerUse,
+    quotaPerUse,
+    revenuePerUseBasic,
+    revenuePerUseMember,
+    avgRevenuePerUse,
+    totalRevenueCny,
+    profitCny,
+    profitMargin,
+    status,
+    suggestion,
+  };
+}
+
+// 获取利润状态颜色
+export function getProfitStatusColor(status: FeatureProfitability['status']): string {
+  switch (status) {
+    case 'profitable': return 'text-green-600';
+    case 'break_even': return 'text-amber-600';
+    case 'loss': return 'text-destructive';
+    default: return 'text-muted-foreground';
+  }
+}
+
+// 获取利润状态标签
+export function getProfitStatusLabel(status: FeatureProfitability['status']): string {
+  switch (status) {
+    case 'profitable': return '盈利';
+    case 'break_even': return '持平';
+    case 'loss': return '亏损';
+    default: return '未知';
+  }
+}
+
 // 估算 token 成本
 export function estimateTokenCost(
   model: string, 
@@ -99,6 +211,43 @@ export const FEATURE_COST_ESTIMATES: Record<string, { model: string; avgTokens?:
   
   // 实时语音
   'realtime_voice': { model: 'gpt-4o-realtime-preview-2024-12-17', fixedCost: 0.06 }, // per minute
+};
+
+// 功能名称映射
+export const FEATURE_NAME_MAP: Record<string, string> = {
+  'emotion_coach': '情绪教练',
+  'emotion-coach': '情绪教练',
+  'communication_coach': '沟通教练',
+  'carnegie-coach': '沟通教练',
+  'parent_coach': '亲子教练',
+  'parent-emotion-coach': '亲子教练',
+  'vibrant_life_coach': '有劲生活教练',
+  'vibrant-life-sage-coach': '有劲生活教练',
+  'story_coach': '故事教练',
+  'generate-story-coach': '故事教练',
+  'emotion_review': '情绪复盘',
+  'generate-emotion-review': '情绪复盘',
+  'generate-communication-review': '沟通复盘',
+  'pattern_analysis': '模式分析',
+  'analyze-emotion-patterns': '情绪模式分析',
+  'analyze-communication-patterns': '沟通模式分析',
+  'image_generation': '图片生成',
+  'generate-checkin-image': '打卡图片生成',
+  'text_to_speech': '文字转语音',
+  'text-to-speech': '文字转语音',
+  'voice_to_text': '语音转文字',
+  'voice-to-text': '语音转文字',
+  'voice_clone': '语音克隆',
+  'create-voice-clone': '语音克隆',
+  'realtime_voice': '实时语音',
+  'realtime-token': '实时语音',
+  'customer_support': '智能客服',
+  'customer-support': '智能客服',
+  'recommend-courses': '课程推荐',
+  'recommend-music': '音乐推荐',
+  'suggest-goals': '目标建议',
+  'suggest-smart-goals': '智能目标建议',
+  'generate-smart-notification': '智能通知',
 };
 
 // 获取功能的预估成本
