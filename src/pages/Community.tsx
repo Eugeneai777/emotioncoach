@@ -262,19 +262,19 @@ const Community = () => {
     <div className="grid grid-cols-2 gap-3">
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white/60 backdrop-blur-sm rounded-xl p-3 animate-pulse">
-            <div className="h-32 bg-teal-100/50 rounded-lg mb-3" />
-            <div className="h-4 bg-teal-100/50 rounded w-3/4 mb-2" />
-            <div className="h-3 bg-teal-100/50 rounded w-1/2" />
+          <div key={i} className="bg-white rounded-xl p-3 shadow-sm animate-pulse">
+            <div className="h-32 bg-gray-200 rounded-lg mb-3" />
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+            <div className="h-3 bg-gray-200 rounded w-1/2" />
           </div>
         ))}
       </div>
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white/60 backdrop-blur-sm rounded-xl p-3 animate-pulse">
-            <div className="h-24 bg-teal-100/50 rounded-lg mb-3" />
-            <div className="h-4 bg-teal-100/50 rounded w-2/3 mb-2" />
-            <div className="h-3 bg-teal-100/50 rounded w-1/3" />
+          <div key={i} className="bg-white rounded-xl p-3 shadow-sm animate-pulse">
+            <div className="h-24 bg-gray-200 rounded-lg mb-3" />
+            <div className="h-4 bg-gray-200 rounded w-2/3 mb-2" />
+            <div className="h-3 bg-gray-200 rounded w-1/3" />
           </div>
         ))}
       </div>
@@ -296,17 +296,17 @@ const Community = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-teal-700 flex items-center gap-2">
-                🌈 有劲社区
-              </h1>
-              <p className="text-xs text-teal-600/70">分享成长 · 见证蜕变</p>
+            <h1 className="text-2xl font-bold text-teal-800 flex items-center gap-2">
+              🌈 有劲社区
+            </h1>
+            <p className="text-xs text-teal-600">分享成长 · 见证蜕变</p>
             </div>
           </div>
           {session ? (
             <Button 
               variant="outline" 
               size="sm"
-              className="bg-white/60 border-teal-200 hover:bg-white/80 text-teal-700"
+              className="bg-white border-teal-400 hover:bg-teal-50 hover:border-teal-500 text-teal-700 font-medium shadow-sm"
               onClick={() => navigate("/my-posts")}
             >
               <User className="w-4 h-4 mr-1" />
@@ -330,8 +330,8 @@ const Community = () => {
               className={cn(
                 "min-h-[44px] active:scale-95 transition-all duration-150 touch-manipulation font-medium",
                 activeFilter === category.value 
-                  ? "bg-white border-teal-500 text-teal-700 shadow-sm" 
-                  : "bg-white/90 border-teal-200/60 hover:bg-white hover:border-teal-300 text-teal-600/80"
+                  ? "bg-white border-teal-600 border-2 text-teal-800 shadow-md" 
+                  : "bg-white border-gray-200 hover:bg-gray-50 hover:border-teal-300 text-gray-600"
               )}
             >
               {category.label}
@@ -348,10 +348,10 @@ const Community = () => {
                 size="sm"
                 onClick={() => setSelectedEmotionTag(null)}
                 className={cn(
-                  "whitespace-nowrap shrink-0 text-xs rounded-full px-4",
+                  "whitespace-nowrap shrink-0 text-xs rounded-full px-4 border",
                   selectedEmotionTag === null 
-                    ? "bg-teal-500 text-white hover:bg-teal-600" 
-                    : "bg-white/60 hover:bg-white/80 text-foreground/80"
+                    ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700 shadow-sm" 
+                    : "bg-white border-gray-200 hover:bg-gray-50 text-gray-600"
                 )}
               >
                 全部
@@ -363,10 +363,10 @@ const Community = () => {
                   size="sm"
                   onClick={() => setSelectedEmotionTag(tag)}
                   className={cn(
-                    "whitespace-nowrap shrink-0 text-xs rounded-full px-4",
+                    "whitespace-nowrap shrink-0 text-xs rounded-full px-4 border",
                     selectedEmotionTag === tag 
-                      ? "bg-teal-500 text-white hover:bg-teal-600" 
-                      : "bg-white/60 hover:bg-white/80 text-foreground/80"
+                      ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700 shadow-sm" 
+                      : "bg-white border-gray-200 hover:bg-gray-50 text-gray-600"
                   )}
                 >
                   {tag}
@@ -381,7 +381,7 @@ const Community = () => {
         {session && (
           <Button
             onClick={() => setShowComposer(true)}
-            className="w-full h-12 bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 text-white shadow-lg shadow-teal-200/50 mb-4"
+            className="w-full h-12 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-medium shadow-lg shadow-teal-300/40 mb-4"
           >
             <Plus className="mr-2 h-5 w-5" />
             分享我的动态
@@ -393,15 +393,15 @@ const Community = () => {
           <SkeletonCards />
         ) : posts.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-teal-200 to-cyan-200 rounded-full flex items-center justify-center shadow-lg">
               <span className="text-4xl">✨</span>
             </div>
-            <p className="text-lg font-medium text-foreground/80 mb-2">暂无分享内容</p>
-            <p className="text-sm text-muted-foreground mb-6">成为第一个分享故事的人吧！</p>
+            <p className="text-lg font-semibold text-gray-700 mb-2">暂无分享内容</p>
+            <p className="text-sm text-gray-500 mb-6">成为第一个分享故事的人吧！</p>
             {session && (
               <Button 
                 onClick={() => setShowComposer(true)}
-                className="bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 text-white"
+                className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white shadow-lg"
               >
                 <Plus className="mr-2 h-4 w-4" /> 发布第一个动态
               </Button>
