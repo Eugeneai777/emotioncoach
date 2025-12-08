@@ -2,13 +2,14 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import LikeButton from "./LikeButton";
 import CommentSection from "./CommentSection";
 import ShareButton from "./ShareButton";
 import { useState, useEffect } from "react";
-import { MessageCircle, UserPlus, UserCheck, Pencil } from "lucide-react";
+import { MessageCircle, UserPlus, UserCheck, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -51,8 +52,33 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const [commentsCount, setCommentsCount] = useState(post.comments_count);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoadingFollow, setIsLoadingFollow] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { session } = useAuth();
   const { toast } = useToast();
+
+  // 处理删除帖子
+  const handleDeletePost = async () => {
+    if (!session?.user || session.user.id !== post.user_id) return;
+    setDeleting(true);
+    try {
+      // 1. 删除关联的点赞记录
+      await supabase.from("post_likes").delete().eq("post_id", post.id);
+      // 2. 删除关联的评论
+      await supabase.from("post_comments").delete().eq("post_id", post.id);
+      // 3. 删除帖子本身
+      const { error } = await supabase.from("community_posts").delete().eq("id", post.id);
+      if (error) throw error;
+      toast({ title: "帖子已删除" });
+      // 触发自定义事件通知父组件刷新
+      window.dispatchEvent(new CustomEvent('post-deleted', { detail: { postId: post.id } }));
+      onUpdate();
+    } catch (error) {
+      console.error("删除帖子失败:", error);
+      toast({ title: "删除失败，请稍后重试", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  };
   
   // 获取教练空间信息
   const coachSpace = getCoachSpaceInfo(
@@ -243,14 +269,45 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
         </div>
         <div className="flex items-center gap-2">
           {session?.user?.id === post.user_id && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setShowEditDialog(true)}
-              className="h-8 px-2"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowEditDialog(true)}
+                className="h-8 px-2"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 px-2 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>确认删除？</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      此操作无法撤销，该帖子及所有评论、点赞将被永久删除。
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>取消</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDeletePost} 
+                      disabled={deleting}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {deleting ? "删除中..." : "确认删除"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           )}
           <Badge variant="secondary">
             {getTypeEmoji(post.post_type)} {getTypeLabel(post.post_type)}
