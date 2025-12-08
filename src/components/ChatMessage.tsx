@@ -150,17 +150,25 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
   }
   
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4 md:mb-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500`}>
-      <div className={`max-w-[85%] md:max-w-[80%] ${isUser ? "order-2" : "order-1"}`}>
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3 md:mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-500`}>
+      {/* 助手头像 */}
+      {!isUser && (
+        <div className="flex-shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center mr-2 mt-1">
+          <Sparkles className="w-4 h-4 text-white" />
+        </div>
+      )}
+      
+      <div className={`max-w-[78%] md:max-w-[75%] ${isUser ? "order-2" : "order-1"}`}>
+        {/* 消息气泡 */}
         <div
-          className={`rounded-2xl md:rounded-3xl px-4 md:px-6 py-3 md:py-4 transition-all duration-300 ${
+          className={`relative rounded-2xl px-4 py-3 transition-all duration-300 ${
             isUser
-              ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-              : "bg-card border border-border shadow-sm hover:shadow-md transition-shadow"
+              ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 rounded-tr-sm"
+              : "bg-card border border-border shadow-sm rounded-tl-sm"
           }`}
         >
           {textContent && (
-            <p className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap mb-3">
+            <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">
               {cleanMarkdown(textContent)}
             </p>
           )}
@@ -194,7 +202,7 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
                       }
                     }}
                     disabled={isDisabled && !isSelected}
-                    className={`group relative w-full text-left px-5 py-4 rounded-2xl transition-all duration-300 border overflow-hidden ${
+                    className={`group relative w-full text-left px-4 py-3 min-h-[48px] rounded-2xl transition-all duration-300 border overflow-hidden ${
                       isClicked
                         ? "bg-primary/20 border-primary/60 scale-[0.98]"
                         : isSelected
@@ -202,10 +210,10 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
                         : isDisabled
                         ? "bg-muted/50 border-muted opacity-50 cursor-not-allowed"
                         : isShareButton
-                        ? "bg-gradient-to-br from-orange-500/90 via-pink-500/90 to-rose-500/90 hover:from-orange-500 hover:via-pink-500 hover:to-rose-500 border-orange-400/50 text-white shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/50 hover:scale-[1.03] active:scale-[0.98]"
+                        ? "bg-gradient-to-br from-orange-500/90 via-pink-500/90 to-rose-500/90 hover:from-orange-500 hover:via-pink-500 hover:to-rose-500 border-orange-400/50 text-white shadow-lg shadow-pink-500/30 active:scale-[0.98]"
                         : isBriefingButton
-                        ? "bg-gradient-to-br from-primary via-primary/90 to-primary/80 hover:from-primary/90 hover:via-primary/80 hover:to-primary/70 border-primary text-primary-foreground shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:scale-[1.03] active:scale-[0.98] animate-in fade-in-50 slide-in-from-bottom-2 duration-500"
-                        : "bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 hover:from-primary/20 hover:via-primary/15 hover:to-primary/20 border-primary/20 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.02] active:scale-[0.98]"
+                        ? "bg-gradient-to-br from-primary via-primary/90 to-primary/80 border-primary text-primary-foreground shadow-lg shadow-primary/30 active:scale-[0.98] animate-in fade-in-50 slide-in-from-bottom-2 duration-500"
+                        : "bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-primary/20 active:scale-[0.98]"
                     }`}
                   >
                     {/* 背景光效 */}
