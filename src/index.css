@@ -122,6 +122,25 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 防止 iOS 输入框聚焦时页面缩放 */
+  input, textarea, select {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
+/* 安全区域支持 */
+@supports (padding: max(0px)) {
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+  }
+  
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 }
 

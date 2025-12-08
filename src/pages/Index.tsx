@@ -56,6 +56,7 @@ const Index = () => {
   const [showCheckInSuccess, setShowCheckInSuccess] = useState(false);
   const [checkInSuccessData, setCheckInSuccessData] = useState<any>(null);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const { toast } = useToast();
   
   // 从数据库加载教练配置
@@ -944,18 +945,19 @@ const Index = () => {
         )}
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20">
-        <div className="container max-w-xl mx-auto px-4 py-3">
-          {showIntensitySelector && (
-            <div className="mb-3 animate-in slide-in-from-bottom-2 duration-300">
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20 safe-bottom">
+        <div className="container max-w-xl mx-auto px-3 md:px-4 pt-2 pb-2">
+          {/* 键盘弹出时隐藏场景标签和强度选择器 */}
+          {!isInputFocused && showIntensitySelector && (
+            <div className="mb-2 animate-in slide-in-from-bottom-2 duration-300">
               <EmotionIntensitySelector
                 onSelect={handleIntensitySelect}
                 onSkip={handleSkipIntensity}
               />
             </div>
           )}
-          {messages.length === 0 && coachConfig?.enable_scenarios && coachConfig?.scenarios && (
-            <div className="mb-3 animate-in slide-in-from-bottom-2 duration-300">
+          {!isInputFocused && messages.length === 0 && coachConfig?.enable_scenarios && coachConfig?.scenarios && (
+            <div className="mb-2 animate-in slide-in-from-bottom-2 duration-300">
                 <CoachScenarioChips
                   scenarios={coachConfig.scenarios as any[]}
                   onSelectScenario={(prompt) => {
@@ -966,33 +968,33 @@ const Index = () => {
                 />
             </div>
           )}
+          {/* 微信式单行输入 */}
           <div className="flex gap-2 items-end">
-            <div className="flex-1 relative group">
+            <div className="flex-1 relative">
               <Textarea
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="分享你的想法... (Enter发送，Shift+Enter换行)"
-                className="min-h-[60px] max-h-[160px] resize-none rounded-xl text-sm md:text-base border-border/50 focus:border-primary/50 transition-all duration-200 pr-16 shadow-sm"
+                onFocus={() => setIsInputFocused(true)}
+                onBlur={() => setIsInputFocused(false)}
+                placeholder="分享你的想法..."
+                className="min-h-[40px] max-h-[100px] resize-none rounded-2xl text-base py-2.5 px-3 leading-relaxed"
+                style={{ fontSize: '16px' }}
                 disabled={isLoading}
+                rows={1}
               />
-              {input.length > 0 && (
-                <div className="absolute bottom-2 right-2 text-xs text-muted-foreground pointer-events-none">
-                  {input.length}/2000
-                </div>
-              )}
             </div>
             <Button
               onClick={handleSend}
               disabled={isLoading || !input.trim()}
               size="icon"
-              className="h-10 w-10 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-10 w-10 min-w-[40px] flex-shrink-0 rounded-full shadow-md"
             >
               {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                <Send className="w-4 h-4" />
+                <Send className="w-5 h-5" />
               )}
             </Button>
           </div>
