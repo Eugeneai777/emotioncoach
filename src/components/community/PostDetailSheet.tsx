@@ -273,9 +273,8 @@ const PostDetailSheet = ({
             shares_count: (post.shares_count || 0) + 1
           }).eq("id", post.id);
           return;
-        } catch (shareError) {
+        } catch {
           // 用户取消分享或分享失败，降级到下载
-          console.log("系统分享被取消或失败，降级到下载", shareError);
         }
       }
       

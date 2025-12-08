@@ -164,7 +164,6 @@ const CommunityWaterfall = () => {
     // 先检查缓存
     const cachedIds = getCachedRecommendation();
     if (cachedIds) {
-      console.log("使用缓存的推荐");
       return cachedIds;
     }
     

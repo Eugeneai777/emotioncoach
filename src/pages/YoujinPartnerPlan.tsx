@@ -59,8 +59,8 @@ const YoujinPartnerPlan = () => {
           toast.success("分享成功");
           setShowShareDialog(false);
           return;
-        } catch (shareError) {
-          console.log("系统分享取消，降级到下载");
+        } catch {
+          // 系统分享取消，降级到下载
         }
       }
       

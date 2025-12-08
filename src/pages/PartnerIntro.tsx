@@ -28,9 +28,6 @@ const PartnerIntro = () => {
   const { isPartner, loading: partnerLoading } = usePartner();
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // 添加日志确认组件加载
-  console.log('PartnerIntro component loaded');
-
   // 查询合伙人权益
   const { data: benefits = [] } = useQuery({
     queryKey: ['partner-benefits'],
