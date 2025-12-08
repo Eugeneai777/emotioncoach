@@ -127,7 +127,7 @@ export function PackageFeatureSettingsDialog({ packageId, open, onOpenChange }: 
             is_enabled: existing.is_enabled ?? true,
             cost_per_use: existing.cost_per_use ?? 0,
             free_quota: existing.free_quota ?? 0,
-            free_quota_period: existing.free_quota_period ?? "monthly",
+            free_quota_period: existing.free_quota_period ?? "per_use",
           };
         } else {
           // Default settings for new features
@@ -136,7 +136,7 @@ export function PackageFeatureSettingsDialog({ packageId, open, onOpenChange }: 
             is_enabled: true,
             cost_per_use: feature.category === "coach" ? 1 : 0,
             free_quota: 0,
-            free_quota_period: "monthly",
+            free_quota_period: "per_use",
           };
         }
       });
@@ -304,10 +304,11 @@ export function PackageFeatureSettingsDialog({ packageId, open, onOpenChange }: 
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="per_use">每次使用</SelectItem>
                     <SelectItem value="daily">每日</SelectItem>
                     <SelectItem value="monthly">每月</SelectItem>
                     <SelectItem value="lifetime">永久</SelectItem>
-                    <SelectItem value="per_use">每次使用</SelectItem>
+                    <SelectItem value="one_time">一次性</SelectItem>
                   </SelectContent>
                 </Select>
               </TableCell>
