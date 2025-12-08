@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Heart, ImageOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, memo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -40,6 +40,11 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
   const [loading, setLoading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+
+  // 同步 isLiked prop 到本地状态
+  useEffect(() => {
+    setLiked(isLiked);
+  }, [isLiked]);
   
   // 获取第一张图片作为封面
   const coverImage = post.image_urls && post.image_urls.length > 0 

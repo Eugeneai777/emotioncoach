@@ -497,6 +497,23 @@ const CommunityWaterfall = () => {
       loadEmotionTags();
     }
   }, [activeFilter, loadPosts, loadEmotionTags]);
+
+  // 监听帖子删除、更新事件
+  useEffect(() => {
+    const handlePostDeleted = (e: CustomEvent<{ postId: string }>) => {
+      setPosts(prev => prev.filter(p => p.id !== e.detail.postId));
+    };
+    const handlePostUpdated = () => {
+      loadPosts(0, activeFilter, false, true);
+      setPage(0);
+    };
+    window.addEventListener('post-deleted', handlePostDeleted as EventListener);
+    window.addEventListener('post-updated', handlePostUpdated as EventListener);
+    return () => {
+      window.removeEventListener('post-deleted', handlePostDeleted as EventListener);
+      window.removeEventListener('post-updated', handlePostUpdated as EventListener);
+    };
+  }, [activeFilter, loadPosts]);
   
   // 情绪标签变化时重新加载
   useEffect(() => {

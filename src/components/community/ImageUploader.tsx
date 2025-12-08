@@ -11,6 +11,50 @@ interface ImageUploaderProps {
   maxImages?: number;
 }
 
+// 图片压缩函数
+const compressImage = (file: File, maxSize: number = 1920, quality: number = 0.8): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    img.onload = () => {
+      let { width, height } = img;
+      
+      // 计算缩放比例
+      if (width > maxSize || height > maxSize) {
+        if (width > height) {
+          height = (height / width) * maxSize;
+          width = maxSize;
+        } else {
+          width = (width / height) * maxSize;
+          height = maxSize;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Canvas to Blob failed'));
+          }
+        },
+        file.type,
+        quality
+      );
+    };
+    
+    img.onerror = () => reject(new Error('Image load failed'));
+    img.src = URL.createObjectURL(file);
+  });
+};
+
 const ImageUploader = ({
   imageUrls,
   onImagesChange,
@@ -47,21 +91,31 @@ const ImageUploader = ({
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
-        // 检查文件大小（最大5MB）
-        if (file.size > 5 * 1024 * 1024) {
-          toast({
-            title: "图片过大",
-            description: `${file.name} 超过5MB限制`,
-            variant: "destructive",
-          });
-          continue;
-        }
-
         // 检查文件类型
         if (!file.type.startsWith("image/")) {
           toast({
             title: "文件类型错误",
             description: `${file.name} 不是图片文件`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        // 压缩大图片
+        let fileToUpload: File | Blob = file;
+        if (file.size > 1 * 1024 * 1024) {
+          try {
+            fileToUpload = await compressImage(file, 1920, 0.8);
+          } catch (compressError) {
+            console.warn("图片压缩失败，使用原图:", compressError);
+          }
+        }
+
+        // 检查压缩后大小（最大5MB）
+        if (fileToUpload.size > 5 * 1024 * 1024) {
+          toast({
+            title: "图片过大",
+            description: `${file.name} 超过5MB限制`,
             variant: "destructive",
           });
           continue;
@@ -76,7 +130,7 @@ const ImageUploader = ({
         // 上传到 Supabase Storage
         const { data, error } = await supabase.storage
           .from("community-images")
-          .upload(fileName, file);
+          .upload(fileName, fileToUpload);
 
         if (error) throw error;
 

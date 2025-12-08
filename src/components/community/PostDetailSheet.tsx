@@ -194,7 +194,7 @@ const PostDetailSheet = ({
     }
   };
 
-  // 处理删除帖子
+  // 处理删除帖子 - 触发回调而非刷新页面
   const handleDeletePost = async () => {
     if (!session?.user || session.user.id !== post.user_id) return;
     setDeleting(true);
@@ -212,8 +212,8 @@ const PostDetailSheet = ({
       if (error) throw error;
       toast.success("帖子已删除");
       onOpenChange(false);
-      // 触发刷新
-      window.location.reload();
+      // 触发自定义事件通知父组件刷新
+      window.dispatchEvent(new CustomEvent('post-deleted', { detail: { postId: post.id } }));
     } catch (error) {
       console.error("删除帖子失败:", error);
       toast.error("删除失败，请稍后重试");
@@ -271,7 +271,7 @@ const PostDetailSheet = ({
     }
   };
 
-  // 处理评论提交
+  // 处理评论提交 - 触发事件刷新评论区而非整页刷新
   const handleSubmitComment = async () => {
     if (!session?.user) {
       toast.error("请先登录");
@@ -294,19 +294,15 @@ const PostDetailSheet = ({
       if (error) throw error;
 
       // 更新评论数
-      const {
-        data: postData
-      } = await supabase.from("community_posts").select("comments_count").eq("id", post.id).single();
-      if (postData) {
-        await supabase.from("community_posts").update({
-          comments_count: postData.comments_count + 1
-        }).eq("id", post.id);
-      }
+      await supabase.from("community_posts").update({
+        comments_count: (post.comments_count || 0) + 1
+      }).eq("id", post.id);
+
       setNewComment("");
       toast.success("评论成功");
 
-      // 刷新评论区
-      window.location.reload();
+      // 触发评论区刷新事件
+      window.dispatchEvent(new CustomEvent('comment-added', { detail: { postId: post.id } }));
     } catch (error) {
       console.error("发表评论失败:", error);
       toast.error("评论失败，请稍后重试");
@@ -545,7 +541,8 @@ const PostDetailSheet = ({
         post={post} 
         onUpdate={() => {
           onOpenChange(false);
-          window.location.reload();
+          // 触发帖子更新事件
+          window.dispatchEvent(new CustomEvent('post-updated', { detail: { postId: post.id } }));
         }} 
       />
 
