@@ -5,6 +5,9 @@ import { VideoRecommendations } from "./VideoRecommendations";
 import { CommunicationCourseRecommendations } from "./communication/CommunicationCourseRecommendations";
 import { CoachRecommendationCard } from "./coach/CoachRecommendationCard";
 import { useCommunicationCourseRecommendations } from "@/hooks/useCommunicationCourseRecommendations";
+import { supabase } from "@/integrations/supabase/client";
+import { deductVideoQuota } from "@/utils/videoQuotaUtils";
+import { toast } from "sonner";
 
 interface ChatMessageProps {
   role: "user" | "assistant";
@@ -68,8 +71,35 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
     };
   };
 
-  const handleWatchCourse = (videoUrl: string, courseId: string) => {
-    window.open(videoUrl, '_blank');
+  const handleWatchCourse = async (videoUrl: string, courseId: string, courseTitle?: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("请先登录");
+        return;
+      }
+
+      // 扣费检查
+      const result = await deductVideoQuota(user.id, courseId, courseTitle || '推荐课程', 'chat_recommendation');
+      if (!result.success) {
+        toast.error(result.error || "额度不足，请充值后观看");
+        return;
+      }
+
+      // 记录观看历史（仅首次观看时记录）
+      if (result.isFirstWatch) {
+        await supabase.from("video_watch_history").insert({
+          user_id: user.id,
+          video_id: courseId,
+          watched_at: new Date().toISOString()
+        });
+      }
+
+      window.open(videoUrl, '_blank');
+    } catch (error) {
+      console.error("Error watching course:", error);
+      toast.error("操作失败，请稍后重试");
+    }
   };
   
   // 检测是否包含编号选项（如 "1. 选项"、"1、选项" 或 "A. 选项"）

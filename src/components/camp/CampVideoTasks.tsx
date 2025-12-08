@@ -18,9 +18,11 @@ const CampVideoTasks = ({ campId, date = new Date(), briefingData }: CampVideoTa
     dateStr
   );
 
-  const handleWatch = (taskId: string, videoId: string, videoUrl: string) => {
-    window.open(videoUrl, "_blank");
-    markAsWatched(taskId, videoId);
+  const handleWatch = async (taskId: string, videoId: string, videoUrl: string, videoTitle: string) => {
+    const result = await markAsWatched(taskId, videoId, videoTitle);
+    if (result.success) {
+      window.open(videoUrl, "_blank");
+    }
   };
 
   if (loading && recommendations.length === 0) {
@@ -126,7 +128,7 @@ const CampVideoTasks = ({ campId, date = new Date(), briefingData }: CampVideoTa
                     size="sm"
                     variant="ghost"
                     className="h-7 text-xs"
-                    onClick={() => handleWatch(rec.id, rec.video_id, rec.video_url)}
+                    onClick={() => handleWatch(rec.id, rec.video_id, rec.video_url, rec.title)}
                   >
                     <ExternalLink className="w-3 h-3 mr-1" />
                     {rec.is_completed ? "再次观看" : "点击观看"}

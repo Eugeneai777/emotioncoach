@@ -5,6 +5,7 @@ import { ExternalLink, Play, Award, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { deductVideoQuota } from "@/utils/videoQuotaUtils";
 
 interface VideoRecommendation {
   id: string;
@@ -30,21 +31,44 @@ export const VideoRecommendations = ({ recommendations }: VideoRecommendationsPr
   }
 
   const handleWatchClick = async (rec: VideoRecommendation) => {
-    // Record watch history
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      if (!user) {
+        toast({
+          title: "请先登录",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 扣费检查
+      const result = await deductVideoQuota(user.id, rec.id, rec.title, 'video_recommendations');
+      if (!result.success) {
+        toast({
+          title: "额度不足",
+          description: result.error || "请充值后观看",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 记录观看历史（仅首次观看时记录）
+      if (result.isFirstWatch) {
         await supabase.from("video_watch_history").insert({
           user_id: user.id,
           video_id: rec.id,
           watched_at: new Date().toISOString()
         });
       }
+
+      window.open(rec.video_url, '_blank');
     } catch (error) {
-      console.error("Error recording watch history:", error);
+      console.error("Error watching video:", error);
+      toast({
+        title: "操作失败",
+        variant: "destructive",
+      });
     }
-    
-    window.open(rec.video_url, '_blank');
   };
 
   const handleToggleFavorite = async (rec: VideoRecommendation) => {
