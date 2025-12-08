@@ -151,30 +151,38 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
   
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3 md:mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-500`}>
-      {/* 助手头像 */}
+      {/* 助手头像 - 统一 36px */}
       {!isUser && (
-        <div className="flex-shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center mr-2 mt-1">
-          <Sparkles className="w-4 h-4 text-white" />
+        <div className="flex-shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center mr-2 mt-1">
+          <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-white" />
         </div>
       )}
       
       <div className={`max-w-[78%] md:max-w-[75%] ${isUser ? "order-2" : "order-1"}`}>
-        {/* 消息气泡 */}
-        <div
-          className={`relative rounded-2xl px-4 py-3 transition-all duration-300 ${
-            isUser
-              ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 rounded-tr-sm"
-              : "bg-card border border-border shadow-sm rounded-tl-sm"
-          }`}
-        >
-          {textContent && (
-            <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">
-              {cleanMarkdown(textContent)}
-            </p>
+        {/* 消息气泡 - 带微信式尾巴 */}
+        <div className="relative">
+          {/* 气泡尾巴 */}
+          {isUser ? (
+            <div className="absolute -right-2 top-3 w-0 h-0 border-l-[8px] border-l-primary border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent" />
+          ) : (
+            <div className="absolute -left-2 top-3 w-0 h-0 border-r-[8px] border-r-card border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent" />
           )}
           
-          {options.length > 0 && (onOptionClick || onOptionSelect) && (
-            <div className="flex flex-col gap-3 mt-4">
+          <div
+            className={`relative rounded-2xl px-4 py-3 transition-all duration-300 ${
+              isUser
+                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 rounded-tr-sm"
+                : "bg-card border border-border shadow-sm rounded-tl-sm"
+            }`}
+          >
+            {textContent && (
+              <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">
+                {cleanMarkdown(textContent)}
+              </p>
+            )}
+          
+            {options.length > 0 && (onOptionClick || onOptionSelect) && (
+              <div className="flex flex-col gap-4 mt-4">
               {options.map((option, index) => {
                 const isClicked = clickedOption === option.text;
                 const isSelected = selectedOption === option.text;
@@ -291,8 +299,8 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
               })}
             </div>
           )}
+          </div>
         </div>
-        
         {/* Emotion Video Recommendations */}
         {showRecommendations && (
           <VideoRecommendations recommendations={videoRecommendations} />
