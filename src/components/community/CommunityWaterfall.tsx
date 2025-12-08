@@ -279,11 +279,9 @@ const CommunityWaterfall = () => {
           .order('created_at', { ascending: false })
           .range(pageNum * POSTS_PER_PAGE, (pageNum + 1) * POSTS_PER_PAGE - 1);
       }
-      // 故事筛选：只显示训练营故事教练生成的故事（必须有 camp_id）
+      // 故事筛选：显示所有经过故事教练梳理的故事
       else if (filter === 'story') {
-        query = query
-          .eq('post_type', 'story')
-          .not('camp_id', 'is', null);
+        query = query.eq('post_type', 'story');
         
         // 如果选择了情绪标签，进一步筛选
         if (selectedEmotionTag) {
@@ -366,7 +364,6 @@ const CommunityWaterfall = () => {
         .from('community_posts')
         .select('emotion_theme')
         .eq('post_type', 'story')
-        .not('camp_id', 'is', null)
         .not('emotion_theme', 'is', null)
         .order('created_at', { ascending: false });
       
