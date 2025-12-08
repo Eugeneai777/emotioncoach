@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Heart, ImageOff } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useCallback, memo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { getCoachSpaceInfo } from "@/utils/coachSpaceUtils";
+import ProgressiveImage from "./ProgressiveImage";
 
 interface WaterfallPostCardProps {
   post: {
@@ -38,10 +39,11 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
   const [liked, setLiked] = useState(isLiked);
   const [likesCount, setLikesCount] = useState(post.likes_count);
   const [loading, setLoading] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
 
   // 同步 isLiked prop 到本地状态
+  useEffect(() => {
+    setLiked(isLiked);
+  }, [isLiked]);
   useEffect(() => {
     setLiked(isLiked);
   }, [isLiked]);
@@ -138,43 +140,23 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
     }
   }, [onCardClick, post.id, navigate]);
 
-  const handleImageError = useCallback(() => {
-    setImageError(true);
-    setImageLoaded(true);
-    console.warn(`图片加载失败: ${coverImage}`);
-  }, [coverImage]);
-
-  const handleImageLoad = useCallback(() => {
-    setImageLoaded(true);
-    setImageError(false);
-  }, []);
-
   return (
     <Card 
       className="overflow-hidden cursor-pointer hover:shadow-lg active:scale-[0.98] transition-all duration-150 group mb-3 touch-manipulation"
       onClick={handleClick}
     >
-      {/* 图片区域 */}
-      {coverImage && !imageError ? (
-        <div className="relative w-full overflow-hidden bg-muted">
-          {!imageLoaded && (
-            <div className="w-full h-40 bg-gradient-to-br from-muted/50 to-muted animate-pulse" />
-          )}
-          <img 
-            src={coverImage} 
+      {/* 图片区域 - 使用渐进式加载组件 */}
+      {coverImage ? (
+        <div className="relative w-full overflow-hidden">
+          <ProgressiveImage
+            src={coverImage}
             alt={displayTitle}
-            className={cn(
-              "w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300",
-              !imageLoaded && "hidden"
-            )}
-            loading="lazy"
-            onLoad={handleImageLoad}
-            onError={handleImageError}
+            className="group-hover:scale-105 transition-transform duration-300"
           />
           {/* 教练空间标签 */}
           {coachSpace && (
             <div className={cn(
-              "absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-medium",
+              "absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-medium z-10",
               "flex items-center gap-1 backdrop-blur-sm shadow-sm",
               coachSpace.bgClass, coachSpace.colorClass
             )}>
@@ -182,12 +164,6 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
               <span>{coachSpace.shortName}</span>
             </div>
           )}
-        </div>
-      ) : coverImage && imageError ? (
-        // 图片加载失败的占位符
-        <div className="relative w-full h-40 bg-gradient-to-br from-muted/30 via-muted/50 to-muted/30 flex flex-col items-center justify-center gap-2">
-          <ImageOff className="w-8 h-8 text-muted-foreground/40" />
-          <span className="text-xs text-muted-foreground/60">图片加载失败</span>
         </div>
       ) : (
         <div className="relative w-full h-40 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center">
@@ -199,7 +175,6 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
           </span>
         </div>
       )}
-
       {/* 标题区域 */}
       <div className="p-3">
         <h3 className="text-sm font-medium text-foreground line-clamp-2 mb-2 leading-relaxed">
