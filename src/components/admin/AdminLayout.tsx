@@ -16,6 +16,7 @@ import KnowledgeBaseManagement from "./KnowledgeBaseManagement";
 import CustomerServiceManagement from "./CustomerServiceManagement";
 import FeatureCostManagement from "./FeatureCostManagement";
 import CostMonitorDashboard from "./CostMonitorDashboard";
+import { PartnerLevelManagement } from "./PartnerLevelManagement";
 
 export function AdminLayout() {
   return (
@@ -41,6 +42,7 @@ export function AdminLayout() {
               <Route path="cost-monitor" element={<CostMonitorDashboard />} />
               <Route path="reports" element={<ReportsManagement />} />
               <Route path="packages" element={<PackagesManagement />} />
+              <Route path="partner-levels" element={<PartnerLevelManagement />} />
               <Route path="sync" element={<SyncStatusDashboard />} />
               <Route path="service" element={<CustomerServiceManagement />} />
             </Routes>
