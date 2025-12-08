@@ -1,8 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Heart } from "lucide-react";
+import { Heart, ImageOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, memo } from "react";
+import { useState, useCallback, memo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -26,17 +26,20 @@ interface WaterfallPostCardProps {
     camp_name?: string;
     template_id?: string;
   };
+  isLiked?: boolean;
   onCardClick?: (postId: string) => void;
+  onLikeChange?: (postId: string, isLiked: boolean) => void;
 }
 
-const WaterfallPostCard = memo(({ post, onCardClick }: WaterfallPostCardProps) => {
+const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChange }: WaterfallPostCardProps) => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { toast } = useToast();
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(isLiked);
   const [likesCount, setLikesCount] = useState(post.likes_count);
   const [loading, setLoading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   // 获取第一张图片作为封面
   const coverImage = post.image_urls && post.image_urls.length > 0 
@@ -56,30 +59,8 @@ const WaterfallPostCard = memo(({ post, onCardClick }: WaterfallPostCardProps) =
     post.template_id
   );
 
-  // 检查是否已点赞
-  useEffect(() => {
-    checkIfLiked();
-  }, [post.id, session]);
-
-  const checkIfLiked = async () => {
-    if (!session?.user) return;
-
-    try {
-      const { data } = await supabase
-        .from("post_likes")
-        .select("id")
-        .eq("post_id", post.id)
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-
-      setLiked(!!data);
-    } catch (error) {
-      // 未点赞，忽略错误
-    }
-  };
-
   // 处理点赞
-  const handleLike = async (e: React.MouseEvent) => {
+  const handleLike = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation(); // 阻止卡片点击事件
 
     if (!session?.user) {
@@ -112,6 +93,7 @@ const WaterfallPostCard = memo(({ post, onCardClick }: WaterfallPostCardProps) =
 
         setLiked(false);
         setLikesCount((prev) => Math.max(0, prev - 1));
+        onLikeChange?.(post.id, false);
       } else {
         // 点赞
         await supabase
@@ -129,6 +111,7 @@ const WaterfallPostCard = memo(({ post, onCardClick }: WaterfallPostCardProps) =
 
         setLiked(true);
         setLikesCount((prev) => prev + 1);
+        onLikeChange?.(post.id, true);
       }
     } catch (error) {
       console.error("点赞操作失败:", error);
@@ -140,15 +123,26 @@ const WaterfallPostCard = memo(({ post, onCardClick }: WaterfallPostCardProps) =
     } finally {
       setLoading(false);
     }
-  };
+  }, [session, loading, liked, likesCount, post.id, toast, onLikeChange]);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (onCardClick) {
       onCardClick(post.id);
     } else {
       navigate("/community");
     }
-  };
+  }, [onCardClick, post.id, navigate]);
+
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+    setImageLoaded(true);
+    console.warn(`图片加载失败: ${coverImage}`);
+  }, [coverImage]);
+
+  const handleImageLoad = useCallback(() => {
+    setImageLoaded(true);
+    setImageError(false);
+  }, []);
 
   return (
     <Card 
@@ -156,7 +150,7 @@ const WaterfallPostCard = memo(({ post, onCardClick }: WaterfallPostCardProps) =
       onClick={handleClick}
     >
       {/* 图片区域 */}
-      {coverImage ? (
+      {coverImage && !imageError ? (
         <div className="relative w-full overflow-hidden bg-muted">
           {!imageLoaded && (
             <div className="w-full h-40 bg-gradient-to-br from-muted/50 to-muted animate-pulse" />
@@ -169,7 +163,8 @@ const WaterfallPostCard = memo(({ post, onCardClick }: WaterfallPostCardProps) =
               !imageLoaded && "hidden"
             )}
             loading="lazy"
-            onLoad={() => setImageLoaded(true)}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
           />
           {/* 教练空间标签 */}
           {coachSpace && (
@@ -182,6 +177,12 @@ const WaterfallPostCard = memo(({ post, onCardClick }: WaterfallPostCardProps) =
               <span>{coachSpace.shortName}</span>
             </div>
           )}
+        </div>
+      ) : coverImage && imageError ? (
+        // 图片加载失败的占位符
+        <div className="relative w-full h-40 bg-gradient-to-br from-muted/30 via-muted/50 to-muted/30 flex flex-col items-center justify-center gap-2">
+          <ImageOff className="w-8 h-8 text-muted-foreground/40" />
+          <span className="text-xs text-muted-foreground/60">图片加载失败</span>
         </div>
       ) : (
         <div className="relative w-full h-40 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center">
