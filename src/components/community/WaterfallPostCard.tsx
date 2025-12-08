@@ -44,9 +44,6 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
   useEffect(() => {
     setLiked(isLiked);
   }, [isLiked]);
-  useEffect(() => {
-    setLiked(isLiked);
-  }, [isLiked]);
   
   // 获取第一张图片作为封面
   const coverImage = post.image_urls && post.image_urls.length > 0 
@@ -142,7 +139,7 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
 
   return (
     <Card 
-      className="overflow-hidden cursor-pointer hover:shadow-lg active:scale-[0.98] transition-all duration-150 group mb-3 touch-manipulation"
+      className="overflow-hidden cursor-pointer hover:shadow-lg active:scale-[0.98] transition-all duration-200 group mb-3 touch-manipulation bg-white/60 backdrop-blur-sm border-white/40 hover:bg-white/80 shadow-sm hover:shadow-teal-100/50"
       onClick={handleClick}
     >
       {/* 图片区域 - 使用渐进式加载组件 */}
@@ -157,8 +154,8 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
           {coachSpace && (
             <div className={cn(
               "absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-medium z-10",
-              "flex items-center gap-1 backdrop-blur-sm shadow-sm",
-              coachSpace.bgClass, coachSpace.colorClass
+              "flex items-center gap-1 backdrop-blur-md shadow-sm bg-white/70",
+              coachSpace.colorClass
             )}>
               <span>{coachSpace.emoji}</span>
               <span>{coachSpace.shortName}</span>
@@ -166,8 +163,8 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
           )}
         </div>
       ) : (
-        <div className="relative w-full h-40 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center">
-          <span className="text-4xl opacity-30">
+        <div className="relative w-full h-40 bg-gradient-to-br from-teal-100/60 via-cyan-100/40 to-blue-100/60 flex items-center justify-center">
+          <span className="text-4xl opacity-50">
             {post.post_type === 'story' ? '🌸' : 
              post.post_type === 'checkin' ? '📅' :
              post.post_type === 'achievement' ? '🏆' :
@@ -177,15 +174,15 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
       )}
       {/* 标题区域 */}
       <div className="p-3">
-        <h3 className="text-sm font-medium text-foreground line-clamp-2 mb-2 leading-relaxed">
+        <h3 className="text-sm font-medium text-foreground/90 line-clamp-2 mb-2 leading-relaxed">
           {displayTitle}
         </h3>
 
         {/* 用户信息和点赞 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <Avatar className="w-5 h-5">
-              <AvatarFallback className="text-xs bg-primary/10">
+            <Avatar className="w-5 h-5 ring-1 ring-teal-200/50">
+              <AvatarFallback className="text-xs bg-gradient-to-br from-teal-100 to-cyan-100 text-teal-700">
                 {post.is_anonymous ? '?' : displayName[0]}
               </AvatarFallback>
             </Avatar>
@@ -200,10 +197,10 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
             onTouchStart={(e) => e.stopPropagation()}
             disabled={loading}
             className={cn(
-              "flex items-center gap-1 p-2 -m-2 min-w-[44px] min-h-[44px] justify-center active:scale-95 transition-all duration-150 touch-manipulation",
+              "flex items-center gap-1 p-2 -m-2 min-w-[44px] min-h-[44px] justify-center active:scale-95 transition-all duration-150 touch-manipulation rounded-full",
               liked
-                ? "text-red-500"
-                : "text-muted-foreground hover:text-red-500",
+                ? "text-rose-500"
+                : "text-muted-foreground hover:text-rose-500 hover:bg-rose-50/50",
               loading && "opacity-50 cursor-not-allowed"
             )}
           >
