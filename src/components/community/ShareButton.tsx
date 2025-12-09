@@ -4,6 +4,7 @@ import { Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
 import ShareCard from "./ShareCard";
+import ShareCardExport from "./ShareCardExport";
 import { usePartner } from "@/hooks/usePartner";
 import {
   Dialog,
@@ -181,9 +182,9 @@ const ShareButton = ({ post }: ShareButtonProps) => {
               <ShareCard post={post} partnerInfo={partnerInfo} isPreview />
             </div>
 
-            {/* 导出用卡片 - 隐藏但保持固定尺寸 */}
-            <div className="fixed -left-[9999px] top-0">
-              <ShareCard ref={cardRef} post={post} partnerInfo={partnerInfo} />
+            {/* 导出用卡片 - 使用纯内联样式版本 */}
+            <div className="fixed -left-[9999px] top-0 opacity-0 pointer-events-none">
+              <ShareCardExport ref={cardRef} post={post} partnerInfo={partnerInfo} />
             </div>
 
             <Button

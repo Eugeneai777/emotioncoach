@@ -143,7 +143,7 @@ const EmotionButtonShareDialog: React.FC<EmotionButtonShareDialogProps> = ({
         </div>
 
         {/* 隐藏的导出用卡片 */}
-        <div className="fixed left-[-9999px] top-0">
+        <div className="fixed -left-[9999px] top-0 opacity-0 pointer-events-none">
           <EmotionButtonShareCard ref={exportRef} partnerCode={partnerCode} />
         </div>
 
