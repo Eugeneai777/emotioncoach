@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, BookOpen, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, BookOpen, Sparkles, ExternalLink, Bell, Users, MessageSquare, Mic, Tent } from "lucide-react";
 import { CoachStepsEditor } from "./CoachStepsEditor";
 import { AICoachCreator } from "./AICoachCreator";
 import {
@@ -30,6 +31,14 @@ const gradientOptions = [
 ];
 
 const colorOptions = ['green', 'blue', 'purple', 'orange', 'pink', 'red'];
+
+// Feature badge component
+const FeatureBadge = ({ enabled, icon: Icon, label }: { enabled: boolean; icon: any; label: string }) => (
+  <Badge variant={enabled ? "default" : "outline"} className={`gap-1 ${enabled ? '' : 'opacity-50'}`}>
+    <Icon className="h-3 w-3" />
+    {label}
+  </Badge>
+);
 
 export function CoachTemplatesManagement() {
   const { data: templates, isLoading } = useCoachTemplates();
@@ -167,9 +176,22 @@ export function CoachTemplatesManagement() {
     setIsDialogOpen(true);
   };
 
+  const handlePreview = (route: string) => {
+    window.open(route, '_blank');
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center p-8">加载中...</div>;
   }
+
+  // Calculate feature statistics
+  const stats = {
+    total: templates?.length || 0,
+    active: templates?.filter(t => t.is_active).length || 0,
+    withTrainingCamp: templates?.filter(t => t.enable_training_camp).length || 0,
+    withNotifications: templates?.filter(t => t.enable_notifications).length || 0,
+    withCommunity: templates?.filter(t => t.enable_community).length || 0,
+  };
 
   return (
     <div className="space-y-4">
@@ -187,19 +209,50 @@ export function CoachTemplatesManagement() {
         </div>
       </div>
 
+      {/* Feature Statistics */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-5 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-sm text-muted-foreground">总教练数</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+              <div className="text-sm text-muted-foreground">已启用</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-orange-600">{stats.withTrainingCamp}</div>
+              <div className="text-sm text-muted-foreground">有训练营</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-blue-600">{stats.withNotifications}</div>
+              <div className="text-sm text-muted-foreground">有通知</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-purple-600">{stats.withCommunity}</div>
+              <div className="text-sm text-muted-foreground">有社区</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4">
         {templates?.map((template, index) => (
-          <Card key={template.id}>
+          <Card key={template.id} className={!template.is_active ? 'opacity-60' : ''}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{template.emoji}</span>
                   <div>
-                    <CardTitle className="text-lg">{template.title}</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      {template.title}
+                      {!template.is_active && <Badge variant="secondary">已禁用</Badge>}
+                    </CardTitle>
                     <p className="text-sm text-muted-foreground">{template.subtitle}</p>
                   </div>
                   {template.is_system && (
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">系统内置</span>
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">系统内置</Badge>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -222,6 +275,14 @@ export function CoachTemplatesManagement() {
                     disabled={index === templates.length - 1}
                   >
                     <ArrowDown className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handlePreview(template.page_route)}
+                    title="预览教练页面"
+                  >
+                    <ExternalLink className="h-4 w-4" />
                   </Button>
                   <Button 
                     variant="ghost" 
@@ -248,19 +309,33 @@ export function CoachTemplatesManagement() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4 text-sm">
+            <CardContent className="space-y-3">
+              {/* Feature Badges */}
+              <div className="flex flex-wrap gap-2">
+                <FeatureBadge enabled={template.enable_training_camp} icon={Tent} label="训练营" />
+                <FeatureBadge enabled={template.enable_notifications} icon={Bell} label="通知" />
+                <FeatureBadge enabled={template.enable_community} icon={Users} label="社区" />
+                <FeatureBadge enabled={template.enable_scenarios} icon={MessageSquare} label="场景" />
+                <FeatureBadge enabled={template.enable_voice_control} icon={Mic} label="语音" />
+              </div>
+              
+              {/* Routes and Config */}
+              <div className="grid grid-cols-4 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">标识：</span>
                   <span className="font-mono">{template.coach_key}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">页面路由：</span>
-                  <span className="font-mono">{template.page_route}</span>
+                  <span className="text-muted-foreground">页面：</span>
+                  <span className="font-mono text-blue-600">{template.page_route}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Edge Function：</span>
                   <span className="font-mono">{template.edge_function_name || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">简报表：</span>
+                  <span className="font-mono">{template.briefing_table_name || '-'}</span>
                 </div>
               </div>
             </CardContent>

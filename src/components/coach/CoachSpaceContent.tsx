@@ -1,56 +1,59 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { Target, TrendingUp, Calendar, MessageSquare } from "lucide-react";
 import { CoachCard } from "./CoachCard";
-const coaches = [{
-  id: "vibrant-life-coach",
-  title: "有劲生活教练",
-  subtitle: "劲老师带你活出光彩",
-  description: "温暖陪伴，点亮心灯",
-  icon: "Sparkles",
-  gradient: "from-rose-500 to-red-500",
-  route: "/coach/vibrant_life_sage",
-  badge: "推荐"
-}, {
-  id: "emotion-coach",
-  title: "情绪觉醒教练",
-  subtitle: "日常情绪觉察与记录",
-  description: "通过对话梳理情绪，生成情绪简报",
-  icon: "Heart",
-  gradient: "from-green-500 to-emerald-500",
-  route: "/",
-  badge: "推荐"
-}, {
-  id: "parent-coach",
-  title: "亲子教练",
-  subtitle: "亲子情绪四部曲",
-  description: "Feel · See · Sense · Transform",
-  icon: "Users",
-  gradient: "from-pink-500 to-rose-500",
-  route: "/parent-coach",
-  badge: null
-}, {
-  id: "communication-coach",
-  title: "卡内基沟通教练",
-  subtitle: "Dale Carnegie",
-  description: "See · Understand · Influence · Act",
-  icon: "MessageSquare",
-  gradient: "from-blue-500 to-indigo-500",
-  route: "/communication-coach",
-  badge: "新"
-}, {
-  id: "story-coach",
-  title: "故事教练",
-  subtitle: "英雄之旅四部曲",
-  description: "把经历变成动人的成长故事",
-  icon: "BookOpen",
-  gradient: "from-orange-500 to-amber-500",
-  route: "/story-coach",
-  badge: "新"
-}];
+import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Icon mapping for coach templates
+const iconMap: Record<string, string> = {
+  'emotion': 'Heart',
+  'parent': 'Users',
+  'communication': 'MessageSquare',
+  'story': 'BookOpen',
+  'vibrant_life_sage': 'Sparkles',
+};
+
+// Badge mapping based on coach_key or custom logic
+const getBadge = (coachKey: string, displayOrder: number): string | null => {
+  if (coachKey === 'vibrant_life_sage' || coachKey === 'emotion') return '推荐';
+  if (coachKey === 'communication' || coachKey === 'story') return '新';
+  if (displayOrder <= 2) return '推荐';
+  return null;
+};
+
 export const CoachSpaceContent = () => {
   const navigate = useNavigate();
-  return <div className="space-y-8 max-w-6xl mx-auto">
+  const { data: templates, isLoading } = useActiveCoachTemplates();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8 max-w-6xl mx-auto">
+        <div className="text-center space-y-2">
+          <h2 className="text-3xl font-bold">🎯 教练空间</h2>
+          <p className="text-muted-foreground">选择适合你的教练开始今天的成长</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <Skeleton key={i} className="h-32 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Transform database templates to coach card props
+  const coaches = templates?.map(template => ({
+    id: template.coach_key,
+    title: template.title,
+    subtitle: template.subtitle || '',
+    description: template.description || '',
+    icon: iconMap[template.coach_key] || 'Sparkles',
+    gradient: template.gradient,
+    route: template.page_route,
+    badge: getBadge(template.coach_key, template.display_order),
+  })) || [];
+
+  return (
+    <div className="space-y-8 max-w-6xl mx-auto">
       {/* Header */}
       <div className="text-center space-y-2">
         <h2 className="text-3xl font-bold">🎯 教练空间</h2>
@@ -59,10 +62,10 @@ export const CoachSpaceContent = () => {
 
       {/* Coach Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {coaches.map(coach => <CoachCard key={coach.id} {...coach} />)}
+        {coaches.map(coach => (
+          <CoachCard key={coach.id} {...coach} />
+        ))}
       </div>
-
-      {/* Quick Access Section */}
-      
-    </div>;
+    </div>
+  );
 };
