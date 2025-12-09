@@ -185,7 +185,8 @@ export const CoachHeader = ({
               className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
             >
               <Sparkles className="w-4 h-4" />
-              <span className="hidden md:inline font-medium">有劲生活馆</span>
+              <span className="hidden sm:inline font-medium">有劲生活馆</span>
+              <span className="sm:hidden font-medium">生活馆</span>
             </Button>
 
             {/* History/Diary Button */}

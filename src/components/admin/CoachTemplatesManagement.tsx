@@ -379,13 +379,21 @@ export function CoachTemplatesManagement() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label>历史按钮文案</Label>
                   <Input
                     value={editingTemplate.history_label || ''}
                     onChange={(e) => setEditingTemplate({ ...editingTemplate, history_label: e.target.value })}
                     placeholder="我的日记"
+                  />
+                </div>
+                <div>
+                  <Label>移动端按钮文字</Label>
+                  <Input
+                    value={editingTemplate.history_label_short || ''}
+                    onChange={(e) => setEditingTemplate({ ...editingTemplate, history_label_short: e.target.value })}
+                    placeholder="日记"
                   />
                 </div>
                 <div>

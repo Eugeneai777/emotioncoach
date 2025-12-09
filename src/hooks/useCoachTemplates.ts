@@ -26,6 +26,7 @@ export interface CoachTemplate {
   page_route: string;
   history_route: string;
   history_label: string;
+  history_label_short?: string;
   more_info_route: string | null;
   placeholder: string;
   // 基础功能开关
