@@ -22,7 +22,7 @@ const coaches = [{
   badge: "推荐"
 }, {
   id: "parent-coach",
-  title: "家长情绪教练",
+  title: "亲子教练",
   subtitle: "亲子情绪四部曲",
   description: "Feel · See · Sense · Transform",
   icon: "Users",

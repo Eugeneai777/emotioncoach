@@ -123,7 +123,7 @@ export const coachConfigs: Record<string, CoachConfig> = {
   parent: {
     id: "parent",
     emoji: "💜",
-    title: "家长情绪教练",
+    title: "亲子教练",
     subtitle: "亲子情绪四部曲",
     description: "Feel · See · Sense · Transform",
     gradient: "from-purple-500 via-pink-500 to-rose-500",

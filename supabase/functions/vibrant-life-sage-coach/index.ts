@@ -133,7 +133,7 @@ serve(async (req) => {
               recommended_coach_key: {
                 type: "string",
                 enum: ["emotion", "parent", "communication"],
-                description: "推荐的专业教练标识：emotion=情绪觉醒教练, parent=家长情绪教练, communication=卡内基沟通教练"
+                description: "推荐的专业教练标识：emotion=情绪觉醒教练, parent=亲子教练, communication=卡内基沟通教练"
               },
               reasoning: {
                 type: "string",
