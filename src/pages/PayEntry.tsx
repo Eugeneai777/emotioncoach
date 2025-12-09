@@ -30,7 +30,7 @@ export default function PayEntry() {
     try {
       const { data, error } = await supabase
         .from('partners')
-        .select('id, default_entry_type, default_entry_price, default_quota_amount')
+        .select('id, prepurchase_count, default_entry_type, default_entry_price, default_quota_amount')
         .eq('id', partnerId)
         .single();
 
@@ -56,12 +56,12 @@ export default function PayEntry() {
 
   const handlePaymentSuccess = async () => {
     setPaymentSuccess(true);
-    toast.success("🎉 支付成功！已获得50次对话额度");
+    toast.success("🎉 支付成功！已获得体验套餐");
     
-    // Create referral relationship
+    // Process referral and deduct partner quota
     try {
-      await supabase.functions.invoke('process-referral', {
-        body: { partner_code: partnerId }
+      await supabase.functions.invoke('claim-partner-entry', {
+        body: { partner_id: partnerId, is_paid: true }
       });
     } catch (error) {
       console.error("Process referral error:", error);
@@ -103,6 +103,26 @@ export default function PayEntry() {
     );
   }
 
+  // Check if partner has quota
+  if (!partner.prepurchase_count || partner.prepurchase_count < 1) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm">
+          <CardHeader className="text-center">
+            <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
+            <CardTitle>名额已满</CardTitle>
+            <CardDescription>该推广链接的体验名额已用完</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={handleGoHome} variant="outline" className="w-full">
+              返回首页
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (paymentSuccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
@@ -111,18 +131,38 @@ export default function PayEntry() {
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center mx-auto mb-3">
               <CheckCircle className="w-10 h-10 text-white" />
             </div>
-            <CardTitle className="text-xl text-teal-700">🎉 支付成功！</CardTitle>
+            <CardTitle className="text-xl text-teal-700">🎉 已获得体验套餐！</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="text-center space-y-4">
-              <div className="flex items-center justify-center gap-2 text-2xl font-bold text-teal-600">
-                <Gift className="w-6 h-6" />
-                <span>+50 次对话额度</span>
+            {/* Package benefits */}
+            <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-center gap-2 text-lg font-bold text-teal-600">
+                <Sparkles className="w-5 h-5" />
+                <span>体验套餐权益</span>
               </div>
-              <p className="text-muted-foreground">
-                现在就开始你的情绪梳理之旅吧！
-              </p>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-center gap-2">
+                  <Gift className="w-4 h-4 text-teal-500" />
+                  <span className="font-medium">50 点 AI 额度</span>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-teal-500">✓</span>
+                  <span>365 天有效期</span>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-teal-500">✓</span>
+                  <span>免费参加21天训练营</span>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-teal-500">✓</span>
+                  <span>解锁全部情绪工具</span>
+                </div>
+              </div>
             </div>
+            
+            <p className="text-center text-muted-foreground">
+              现在就开始你的情绪梳理之旅吧！
+            </p>
             
             <div className="space-y-3">
               <Button 
@@ -154,17 +194,21 @@ export default function PayEntry() {
           </div>
           <CardTitle className="text-xl">开启你的成长之旅</CardTitle>
           <CardDescription>
-            仅需 ¥9.9，获得50次AI对话额度
+            仅需 ¥9.9，获得完整体验套餐
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Benefits */}
           <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 space-y-3">
-            <h3 className="font-medium text-orange-800">🎁 你将获得</h3>
+            <h3 className="font-medium text-orange-800">🎁 体验套餐权益</h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <span className="text-orange-500">✓</span>
-                <span>50次AI情绪梳理对话</span>
+                <span><strong>50点</strong> AI情绪梳理额度</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-orange-500">✓</span>
+                <span><strong>365天</strong> 有效期</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-orange-500">✓</span>
@@ -210,7 +254,7 @@ export default function PayEntry() {
         onOpenChange={setShowPayDialog}
         packageInfo={{
           key: 'partner_entry_paid',
-          name: '有劲AI · 入门体验包',
+          name: '有劲AI · 体验套餐',
           price: 9.9,
           quota: 50
         }}
