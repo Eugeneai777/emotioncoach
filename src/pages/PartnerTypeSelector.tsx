@@ -1,14 +1,33 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Users, Sparkles } from "lucide-react";
+import { ArrowLeft, Users, Sparkles, ShoppingCart } from "lucide-react";
 import { productCategories } from "@/config/productCategories";
+import { WechatPayDialog } from "@/components/WechatPayDialog";
 
 export default function PartnerTypeSelector() {
   const navigate = useNavigate();
+  const [payDialogOpen, setPayDialogOpen] = useState(false);
 
   const youjinCategory = productCategories.find(c => c.id === 'youjin')!;
   const bloomCategory = productCategories.find(c => c.id === 'bloom')!;
+
+  const bloomPackage = {
+    key: 'bloom_partner',
+    name: '绽放合伙人',
+    price: 19800,
+    quota: 0
+  };
+
+  const handleBloomPurchase = () => {
+    setPayDialogOpen(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setPayDialogOpen(false);
+    navigate("/partner");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -35,8 +54,7 @@ export default function PartnerTypeSelector() {
         {/* Partner Type Cards */}
         <div className="grid md:grid-cols-2 gap-6">
           {/* 有劲合伙人 */}
-          <Card className="border-2 hover:border-primary/50 transition-all cursor-pointer"
-                onClick={() => navigate("/partner/youjin-intro")}>
+          <Card className="border-2 hover:border-primary/50 transition-all">
             <CardHeader className={`bg-gradient-to-br ${youjinCategory.gradient} text-white rounded-t-lg`}>
               <div className="text-5xl mb-2">{youjinCategory.emoji}</div>
               <CardTitle className="text-2xl">{youjinCategory.name}</CardTitle>
@@ -60,16 +78,27 @@ export default function PartnerTypeSelector() {
                 <p className="font-medium">通过兑换码/二维码分发体验包，建立长期关系</p>
               </div>
 
-              <Button className="w-full gap-2" size="lg">
-                <Sparkles className="w-4 h-4" />
-                了解详情
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  className="flex-1 gap-2" 
+                  variant="outline"
+                  onClick={() => navigate("/partner/youjin-intro")}
+                >
+                  了解详情
+                </Button>
+                <Button 
+                  className="flex-1 gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600" 
+                  onClick={() => navigate("/partner/youjin-intro")}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  立即开启
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
           {/* 绽放合伙人 */}
-          <Card className="border-2 hover:border-primary/50 transition-all cursor-pointer"
-                onClick={() => navigate("/partner-intro")}>
+          <Card className="border-2 hover:border-primary/50 transition-all">
             <CardHeader className={`bg-gradient-to-br ${bloomCategory.gradient} text-white rounded-t-lg`}>
               <div className="text-5xl mb-2">{bloomCategory.emoji}</div>
               <CardTitle className="text-2xl">{bloomCategory.name}</CardTitle>
@@ -93,10 +122,22 @@ export default function PartnerTypeSelector() {
                 <p className="font-medium">分享专属推广码，推荐好友购买绽放产品</p>
               </div>
 
-              <Button className="w-full gap-2" size="lg">
-                <Users className="w-4 h-4" />
-                了解详情
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  className="flex-1 gap-2" 
+                  variant="outline"
+                  onClick={() => navigate("/partner-intro")}
+                >
+                  了解详情
+                </Button>
+                <Button 
+                  className="flex-1 gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600" 
+                  onClick={handleBloomPurchase}
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  立即购买 ¥19,800
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -133,6 +174,13 @@ export default function PartnerTypeSelector() {
           </CardContent>
         </Card>
       </div>
+
+      <WechatPayDialog
+        open={payDialogOpen}
+        onOpenChange={setPayDialogOpen}
+        packageInfo={bloomPackage}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 }
