@@ -8,9 +8,10 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, BookOpen, Sparkles, ExternalLink, Bell, Users, MessageSquare, Mic, Tent, Activity, Clock, AlertTriangle, GraduationCap, Share2 } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, BookOpen, Sparkles, ExternalLink, Bell, Users, MessageSquare, Mic, Tent, Activity, Clock, AlertTriangle, GraduationCap, Share2, LayoutGrid, List } from "lucide-react";
 import { CoachStepsEditor } from "./CoachStepsEditor";
 import { AICoachCreator } from "./AICoachCreator";
+import { CoachFeatureMatrix } from "./CoachFeatureMatrix";
 import {
   useCoachTemplates,
   useCreateCoachTemplate,
@@ -53,6 +54,7 @@ export function CoachTemplatesManagement() {
   const [isStepsEditorOpen, setIsStepsEditorOpen] = useState(false);
   const [currentSteps, setCurrentSteps] = useState<CoachStep[]>([]);
   const [isAICreatorOpen, setIsAICreatorOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'cards' | 'matrix'>('cards');
 
   const handleCreate = () => {
     setEditingTemplate({
@@ -198,6 +200,27 @@ export function CoachTemplatesManagement() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">教练模板管理</h2>
         <div className="flex gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex rounded-lg border bg-muted p-1">
+            <Button
+              variant={viewMode === 'cards' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('cards')}
+              className="gap-1"
+            >
+              <List className="h-4 w-4" />
+              卡片
+            </Button>
+            <Button
+              variant={viewMode === 'matrix' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('matrix')}
+              className="gap-1"
+            >
+              <LayoutGrid className="h-4 w-4" />
+              矩阵
+            </Button>
+          </div>
           <Button variant="outline" onClick={() => setIsAICreatorOpen(true)}>
             <Sparkles className="h-4 w-4 mr-2" />
             AI智能创建
@@ -237,17 +260,24 @@ export function CoachTemplatesManagement() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4">
-        {templates?.map((template, index) => (
-          <Card key={template.id} className={!template.is_active ? 'opacity-60' : ''}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{template.emoji}</span>
-                  <div>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      {template.title}
-                      {!template.is_active && <Badge variant="secondary">已禁用</Badge>}
+      {/* Matrix View */}
+      {viewMode === 'matrix' && templates && (
+        <CoachFeatureMatrix templates={templates} />
+      )}
+
+      {/* Cards View */}
+      {viewMode === 'cards' && (
+        <div className="grid gap-4">
+          {templates?.map((template, index) => (
+            <Card key={template.id} className={!template.is_active ? 'opacity-60' : ''}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{template.emoji}</span>
+                    <div>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {template.title}
+                        {!template.is_active && <Badge variant="secondary">已禁用</Badge>}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">{template.subtitle}</p>
                   </div>
@@ -343,10 +373,11 @@ export function CoachTemplatesManagement() {
                   <span className="font-mono">{template.briefing_table_name || '-'}</span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
