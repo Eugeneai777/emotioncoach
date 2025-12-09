@@ -7,35 +7,30 @@ import { useCampPurchase } from "@/hooks/useCampPurchase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowRight,
-  Sparkles, 
-  Check,
-  Users,
-  Clock,
-  ArrowLeft,
-  ShoppingCart
-} from "lucide-react";
+import { ArrowRight, Sparkles, Check, Users, Clock, ArrowLeft, ShoppingCart } from "lucide-react";
 import type { CampTemplate } from "@/types/trainingCamp";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { CampPurchaseDialog } from "@/components/camp/CampPurchaseDialog";
-
 const CampTemplateDetail = () => {
-  const { templateId } = useParams();
+  const {
+    templateId
+  } = useParams();
   const navigate = useNavigate();
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
-  const { user } = useAuth();
-
-  const { data: camp, isLoading } = useQuery({
+  const {
+    user
+  } = useAuth();
+  const {
+    data: camp,
+    isLoading
+  } = useQuery({
     queryKey: ['camp-template', templateId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('camp_templates')
-        .select('*')
-        .eq('id', templateId)
-        .single();
-      
+      const {
+        data,
+        error
+      } = await supabase.from('camp_templates').select('*').eq('id', templateId).single();
       if (error) throw error;
       return data as unknown as CampTemplate;
     },
@@ -43,32 +38,30 @@ const CampTemplateDetail = () => {
   });
 
   // 查询用户是否已有该类型的活跃训练营
-  const { data: existingCamp } = useQuery({
+  const {
+    data: existingCamp
+  } = useQuery({
     queryKey: ['existing-camp', camp?.camp_type, user?.id],
     queryFn: async () => {
       if (!user || !camp?.camp_type) return null;
-      const { data } = await supabase
-        .from('training_camps')
-        .select('id, camp_name, current_day')
-        .eq('user_id', user.id)
-        .eq('camp_type', camp.camp_type)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const {
+        data
+      } = await supabase.from('training_camps').select('id, camp_name, current_day').eq('user_id', user.id).eq('camp_type', camp.camp_type).eq('status', 'active').order('created_at', {
+        ascending: false
+      }).limit(1).maybeSingle();
       return data;
     },
     enabled: !!user && !!camp?.camp_type
   });
 
   // 查询用户购买记录
-  const { data: purchaseRecord } = useCampPurchase(camp?.camp_type || '');
-
+  const {
+    data: purchaseRecord
+  } = useCampPurchase(camp?.camp_type || '');
   const hasJoinedCamp = !!existingCamp;
   const hasPurchased = !!purchaseRecord;
   const isFree = camp?.price === 0 || camp?.price === undefined || camp?.price === null;
   const needsPurchase = !isFree && !hasPurchased;
-
   const handleCTAClick = () => {
     if (hasJoinedCamp && existingCamp) {
       navigate(`/camp/${existingCamp.id}`);
@@ -78,50 +71,36 @@ const CampTemplateDetail = () => {
       setShowStartDialog(true);
     }
   };
-
   const getButtonText = () => {
     if (hasJoinedCamp) return '继续训练';
     if (needsPurchase && camp?.price) return `立即购买 ¥${camp.price.toLocaleString()}`;
     if (isFree) return '免费开启';
     return '立即加入';
   };
-
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
+    return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">加载中...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!camp) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
+    return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
         <div className="text-center">
           <p className="text-muted-foreground">训练营不存在</p>
           <Button onClick={() => navigate('/camps')} className="mt-4">
             返回训练营列表
           </Button>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <>
+  return <>
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
         {/* Header */}
         <header className="sticky top-0 z-10 bg-card/80 backdrop-blur-md border-b">
           <div className="container max-w-5xl mx-auto px-4 py-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate("/camps")} 
-              className="gap-2"
-            >
+            <Button variant="ghost" size="sm" onClick={() => navigate("/camps")} className="gap-2">
               <ArrowLeft className="w-4 h-4" />
               返回
             </Button>
@@ -131,79 +110,43 @@ const CampTemplateDetail = () => {
         <main className="container max-w-5xl mx-auto px-4 py-12 space-y-12">
           {/* Hero Section */}
           <section className="text-center space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
-            {!['emotion_bloom', 'identity_bloom'].includes(camp.camp_type) && (
-              <Badge className={`bg-gradient-to-r ${camp.gradient} text-white border-0 px-4 py-1.5 text-sm`}>
+            {!['emotion_bloom', 'identity_bloom'].includes(camp.camp_type) && <Badge className={`bg-gradient-to-r ${camp.gradient} text-white border-0 px-4 py-1.5 text-sm`}>
                 {camp.icon} {camp.duration_days}天养成计划
-              </Badge>
-            )}
+              </Badge>}
             <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight">
               {camp.camp_name}
             </h1>
-            {camp.camp_subtitle && (
-              <p className="text-xl text-muted-foreground">
+            {camp.camp_subtitle && <p className="text-xl text-muted-foreground">
                 {camp.camp_subtitle}
-              </p>
-            )}
+              </p>}
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               {camp.description}
             </p>
 
             {/* 价格信息 */}
-            {camp.price !== undefined && camp.price !== null && camp.price > 0 && (
-              <div className="inline-flex flex-col items-center gap-2 px-8 py-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl border-2 border-purple-200/50 dark:border-purple-800/50">
+            {camp.price !== undefined && camp.price !== null && camp.price > 0 && <div className="inline-flex flex-col items-center gap-2 px-8 py-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-2xl border-2 border-purple-200/50 dark:border-purple-800/50">
                 <div className="flex items-end gap-3">
-                  {camp.original_price && camp.original_price > camp.price && (
-                    <span className="text-muted-foreground line-through text-lg">
+                  {camp.original_price && camp.original_price > camp.price && <span className="text-muted-foreground line-through text-lg">
                       ¥{camp.original_price.toLocaleString()}
-                    </span>
-                  )}
+                    </span>}
                   <span className="text-4xl font-bold text-purple-600 dark:text-purple-400">
                     ¥{camp.price.toLocaleString()}
                   </span>
                 </div>
-                {camp.price_note && (
-                  <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                {camp.price_note && <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
                     {camp.price_note}
-                  </Badge>
-                )}
-              </div>
-            )}
+                  </Badge>}
+              </div>}
 
-            {camp.price === 0 && (
-              <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 text-lg px-6 py-2">
+            {camp.price === 0 && <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 text-lg px-6 py-2">
                 ✨ 完全免费
-              </Badge>
-            )}
+              </Badge>}
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-              <Button 
-                size="lg" 
-                onClick={handleCTAClick}
-                className={`gap-2 ${
-                  needsPurchase 
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white' 
-                    : `bg-gradient-to-r ${camp.gradient} hover:opacity-90 text-white`
-                } shadow-lg hover:shadow-xl transition-all duration-300`}
-              >
-                {needsPurchase && <ShoppingCart className="w-5 h-5" />}
-                {getButtonText()}
-                {!needsPurchase && <ArrowRight className="w-5 h-5" />}
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                onClick={() => navigate("/energy-studio")}
-                className="gap-2"
-              >
-                <Sparkles className="w-5 h-5" />
-                探索更多工具
-              </Button>
-            </div>
+            
           </section>
 
           {/* Stages */}
-          {camp.stages && camp.stages.length > 0 && (
-            <section className="space-y-6">
+          {camp.stages && camp.stages.length > 0 && <section className="space-y-6">
               <div className="text-center space-y-2">
                 <h2 className="text-3xl font-bold">课程阶段</h2>
                 <p className="text-muted-foreground">
@@ -211,8 +154,7 @@ const CampTemplateDetail = () => {
                 </p>
               </div>
               <div className="space-y-4">
-                {camp.stages.map((stage: any, index: number) => (
-                  <Card key={index} className="hover:shadow-lg transition-all duration-300">
+                {camp.stages.map((stage: any, index: number) => <Card key={index} className="hover:shadow-lg transition-all duration-300">
                     <CardHeader>
                       <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r ${camp.gradient} text-white text-sm font-medium mb-2 w-fit`}>
                         第{stage.stage}阶
@@ -220,30 +162,21 @@ const CampTemplateDetail = () => {
                       <CardTitle className="text-xl">{stage.title}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {stage.lessons && stage.lessons.length > 0 ? (
-                        <ul className="space-y-2">
-                          {stage.lessons.map((lesson: string, lessonIndex: number) => (
-                            <li key={lessonIndex} className="flex items-start gap-2">
+                      {stage.lessons && stage.lessons.length > 0 ? <ul className="space-y-2">
+                          {stage.lessons.map((lesson: string, lessonIndex: number) => <li key={lessonIndex} className="flex items-start gap-2">
                               <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${camp.gradient} flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5`}>
                                 {lessonIndex + 1}
                               </div>
                               <span className="text-sm leading-relaxed">{lesson}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <CardDescription className="text-sm">{stage.description}</CardDescription>
-                      )}
+                            </li>)}
+                        </ul> : <CardDescription className="text-sm">{stage.description}</CardDescription>}
                     </CardContent>
-                  </Card>
-                ))}
+                  </Card>)}
               </div>
-            </section>
-          )}
+            </section>}
 
           {/* Learning Formats */}
-          {camp.learning_formats && camp.learning_formats.length > 0 && (
-            <section className="space-y-6">
+          {camp.learning_formats && camp.learning_formats.length > 0 && <section className="space-y-6">
               <div className="text-center space-y-2">
                 <h2 className="text-3xl font-bold">上课形式</h2>
                 <p className="text-muted-foreground">
@@ -251,8 +184,7 @@ const CampTemplateDetail = () => {
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {camp.learning_formats.map((format: any, index: number) => (
-                  <Card key={index} className="hover:shadow-lg transition-all duration-300">
+                {camp.learning_formats.map((format: any, index: number) => <Card key={index} className="hover:shadow-lg transition-all duration-300">
                     <CardHeader>
                       <div className="flex items-center gap-3">
                         <div className="text-3xl">{format.icon}</div>
@@ -262,15 +194,12 @@ const CampTemplateDetail = () => {
                     <CardContent>
                       <p className="text-sm text-muted-foreground">{format.description}</p>
                     </CardContent>
-                  </Card>
-                ))}
+                  </Card>)}
               </div>
-            </section>
-          )}
+            </section>}
 
           {/* Daily Practice */}
-          {camp.daily_practice && camp.daily_practice.length > 0 && (
-            <section className="space-y-6">
+          {camp.daily_practice && camp.daily_practice.length > 0 && <section className="space-y-6">
               <div className="text-center space-y-2">
                 <h2 className="text-3xl font-bold">每日练习流程</h2>
                 <p className="text-muted-foreground">
@@ -278,8 +207,7 @@ const CampTemplateDetail = () => {
                 </p>
               </div>
               <div className="space-y-4">
-                {camp.daily_practice.map((practice: any, index: number) => (
-                  <Card key={index} className="hover:shadow-lg transition-all duration-300">
+                {camp.daily_practice.map((practice: any, index: number) => <Card key={index} className="hover:shadow-lg transition-all duration-300">
                     <CardHeader>
                       <div className="space-y-2">
                         <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r ${practice.gradient} text-white text-xs font-medium`}>
@@ -295,27 +223,20 @@ const CampTemplateDetail = () => {
                     <CardContent>
                       <p className="text-sm text-muted-foreground leading-relaxed">{practice.content}</p>
                     </CardContent>
-                  </Card>
-                ))}
+                  </Card>)}
               </div>
-            </section>
-          )}
+            </section>}
 
           {/* Benefits */}
-          {camp.benefits && camp.benefits.length > 0 && (
-            <section className="space-y-6">
+          {camp.benefits && camp.benefits.length > 0 && <section className="space-y-6">
               <div className="text-center space-y-2">
                 <h2 className="text-3xl font-bold">你将获得</h2>
                 <p className="text-muted-foreground">
-                  {['emotion_bloom', 'identity_bloom'].includes(camp.camp_type) 
-                    ? '实实在在的成长' 
-                    : `${camp.duration_days}天后，实实在在的成长`
-                  }
+                  {['emotion_bloom', 'identity_bloom'].includes(camp.camp_type) ? '实实在在的成长' : `${camp.duration_days}天后，实实在在的成长`}
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {camp.benefits.map((benefit: string, index: number) => (
-                  <Card key={index} className="hover:shadow-lg transition-all duration-300">
+                {camp.benefits.map((benefit: string, index: number) => <Card key={index} className="hover:shadow-lg transition-all duration-300">
                     <CardHeader className="pb-3">
                       <div className="flex items-start gap-3">
                         <div className={`p-2 rounded-lg bg-gradient-to-r ${camp.gradient} text-white`}>
@@ -324,15 +245,12 @@ const CampTemplateDetail = () => {
                         <CardTitle className="text-base leading-relaxed">{benefit}</CardTitle>
                       </div>
                     </CardHeader>
-                  </Card>
-                ))}
+                  </Card>)}
               </div>
-            </section>
-          )}
+            </section>}
 
           {/* Target Audience */}
-          {camp.target_audience && camp.target_audience.length > 0 && (
-            <section className="space-y-6">
+          {camp.target_audience && camp.target_audience.length > 0 && <section className="space-y-6">
               <div className="text-center space-y-2">
                 <h2 className="text-3xl font-bold">适合加入的人</h2>
                 <p className="text-muted-foreground">
@@ -340,26 +258,19 @@ const CampTemplateDetail = () => {
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {camp.target_audience.map((audience: string, index: number) => (
-                  <Card 
-                    key={index}
-                    className="hover:shadow-lg transition-all duration-300"
-                  >
+                {camp.target_audience.map((audience: string, index: number) => <Card key={index} className="hover:shadow-lg transition-all duration-300">
                     <CardHeader className="pb-3">
                       <div className="flex items-start gap-2">
                         <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
                         <p className="text-sm leading-relaxed">{audience}</p>
                       </div>
                     </CardHeader>
-                  </Card>
-                ))}
+                  </Card>)}
               </div>
-            </section>
-          )}
+            </section>}
 
           {/* Prerequisites */}
-          {camp.prerequisites && camp.prerequisites.message && (
-            <section>
+          {camp.prerequisites && camp.prerequisites.message && <section>
               <Card className="border-2 border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-base">
@@ -373,28 +284,18 @@ const CampTemplateDetail = () => {
                   </p>
                 </CardContent>
               </Card>
-            </section>
-          )}
+            </section>}
 
           {/* CTA Section */}
           <section className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${camp.gradient} p-12 text-center text-white`}>
             <div className="relative z-10 space-y-4">
               <h2 className="text-3xl font-bold">
-                开始你的{['emotion_bloom', 'identity_bloom'].includes(camp.camp_type) 
-                  ? '' 
-                  : `${camp.duration_days}天`
-                }{camp.camp_name}
+                开始你的{['emotion_bloom', 'identity_bloom'].includes(camp.camp_type) ? '' : `${camp.duration_days}天`}{camp.camp_name}
               </h2>
               <p className="text-lg text-white/90">
                 {camp.description}
               </p>
-              <Button 
-                size="lg" 
-                onClick={handleCTAClick}
-                className={`gap-2 bg-white ${
-                  needsPurchase ? 'text-purple-600' : 'text-purple-600'
-                } hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300`}
-              >
+              <Button size="lg" onClick={handleCTAClick} className={`gap-2 bg-white ${needsPurchase ? 'text-purple-600' : 'text-purple-600'} hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300`}>
                 {needsPurchase && <ShoppingCart className="w-5 h-5" />}
                 {getButtonText()}
                 {!needsPurchase && <Sparkles className="w-5 h-5" />}
@@ -411,23 +312,12 @@ const CampTemplateDetail = () => {
         </footer>
       </div>
 
-      <StartCampDialog
-        open={showStartDialog}
-        onOpenChange={setShowStartDialog}
-        campTemplate={camp}
-        onSuccess={(campId) => {
-          setShowStartDialog(false);
-          navigate(`/camp/${campId}`);
-        }}
-      />
+      <StartCampDialog open={showStartDialog} onOpenChange={setShowStartDialog} campTemplate={camp} onSuccess={campId => {
+      setShowStartDialog(false);
+      navigate(`/camp/${campId}`);
+    }} />
 
-      <CampPurchaseDialog
-        open={showPurchaseDialog}
-        onOpenChange={setShowPurchaseDialog}
-        camp={camp}
-      />
-    </>
-  );
+      <CampPurchaseDialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog} camp={camp} />
+    </>;
 };
-
 export default CampTemplateDetail;
