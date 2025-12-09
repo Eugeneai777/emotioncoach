@@ -14,7 +14,9 @@ interface CoachInputFooterProps {
   isLoading: boolean;
   hasMessages: boolean;
   gradient: string;
-  scenarioChips?: React.ReactNode;
+  scenarioChips?: React.ReactNode | any[];
+  scenarioOnSelect?: (prompt: string) => void;
+  scenarioPrimaryColor?: string;
   messagesCount?: number;
   intensitySelector?: React.ReactNode;
 }
@@ -30,6 +32,8 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   hasMessages,
   gradient,
   scenarioChips,
+  scenarioOnSelect,
+  scenarioPrimaryColor,
   messagesCount,
   intensitySelector
 }, ref) => {

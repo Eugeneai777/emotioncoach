@@ -18,7 +18,7 @@ interface Step {
 interface CoachEmptyStateProps {
   emoji: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   description: string;
   gradient: string;
   steps: Step[];
@@ -33,11 +33,12 @@ interface CoachEmptyStateProps {
   community?: ReactNode;
   dailyReminderContent?: ReactNode;
   showDailyReminder?: boolean;
+  campRecommendation?: ReactNode;
 }
 export const CoachEmptyState = ({
   emoji,
   title,
-  subtitle,
+  subtitle = "",
   description,
   gradient,
   steps,
@@ -51,7 +52,8 @@ export const CoachEmptyState = ({
   notifications,
   community,
   dailyReminderContent,
-  showDailyReminder = false
+  showDailyReminder = false,
+  campRecommendation
 }: CoachEmptyStateProps) => {
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [isStepsCardExpanded, setIsStepsCardExpanded] = useState(true);
@@ -159,6 +161,9 @@ export const CoachEmptyState = ({
 
       {/* Optional Scenarios */}
       {scenarios}
+
+      {/* Camp Recommendation */}
+      {campRecommendation}
 
       {/* Training Camp */}
       {trainingCamp}

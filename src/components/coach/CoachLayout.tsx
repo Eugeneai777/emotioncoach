@@ -1,4 +1,4 @@
-import { ReactNode, useRef, useEffect, useState, useCallback } from "react";
+import { ReactNode, useRef, useEffect, useState, useCallback, RefObject } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, ArrowDown } from "lucide-react";
 import { ChatMessage } from "@/components/ChatMessage";
@@ -8,6 +8,7 @@ import { CoachInputFooter } from "./CoachInputFooter";
 import { useAuth } from "@/hooks/useAuth";
 import { getCoachBackgroundGradient, getCoachLoaderColor } from "@/utils/coachThemeUtils";
 import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
+
 interface Step {
   id: number;
   emoji?: string;
@@ -23,32 +24,43 @@ interface Message {
   type?: string;
 }
 
+interface StepsConfig {
+  emoji: string;
+  title: string;
+  steps: Step[];
+  introRoute?: string;
+}
+
 interface CoachLayoutProps {
   // Theme configuration
   emoji: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   description: string;
   gradient: string;
   primaryColor: string;
   
-  // Steps configuration
-  steps: Step[];
-  stepsTitle: string;
-  stepsEmoji: string;
+  // Steps configuration - can use new stepsConfig or legacy individual props
+  stepsConfig?: StepsConfig;
+  steps?: Step[];
+  stepsTitle?: string;
+  stepsEmoji?: string;
   moreInfoRoute?: string;
   
   // Routes configuration
   historyRoute?: string;
   historyLabel?: string;
+  historyLabelShort?: string;
   
   // Chat configuration
   messages: Message[];
   isLoading: boolean;
-  input: string;
-  onInputChange: (value: string) => void;
-  onSend: () => void;
-  onNewConversation: () => void;
+  input?: string;
+  onInputChange?: (value: string) => void;
+  onSend: (message: string) => void;
+  onNewConversation?: () => void;
+  onRestart?: () => void;
+  onSignOut?: () => void;
   onOptionClick?: (option: string) => void;
   onOptionSelect?: (option: string) => void;
   placeholder: string;
@@ -61,13 +73,17 @@ interface CoachLayoutProps {
   
   // Optional features
   scenarios?: ReactNode;
-  scenarioChips?: ReactNode;
+  scenarioChips?: ReactNode | any[];
+  scenarioOnSelect?: (prompt: string) => void;
+  scenarioPrimaryColor?: string;
   stageProgress?: ReactNode;
   extraContent?: ReactNode;
   trainingCamp?: ReactNode;
   notifications?: ReactNode;
   community?: ReactNode;
+  communityContent?: ReactNode;
   videoRecommendation?: ReactNode;
+  videoRecommendations?: any[];
   toolRecommendation?: ReactNode;
   emotionButtonRecommendation?: ReactNode;
   campRecommendation?: ReactNode;
@@ -80,6 +96,7 @@ interface CoachLayoutProps {
   intensitySelector?: ReactNode;
   dailyReminderContent?: ReactNode;
   showDailyReminder?: boolean;
+  renderIntensityPrompt?: (message: any, index: number) => ReactNode | null;
   
   // Parent coach specific slots
   briefingConfirmation?: ReactNode;
@@ -89,27 +106,34 @@ interface CoachLayoutProps {
   
   // Current coach key for header
   currentCoachKey?: string;
+  
+  // External refs
+  messagesEndRef?: RefObject<HTMLDivElement>;
 }
 
 export const CoachLayout = ({
   emoji,
   title,
-  subtitle,
+  subtitle = "",
   description,
   gradient,
   primaryColor,
+  stepsConfig,
   steps,
   stepsTitle,
   stepsEmoji,
   moreInfoRoute,
   historyRoute,
   historyLabel,
+  historyLabelShort,
   messages,
   isLoading,
-  input,
-  onInputChange,
+  input: externalInput,
+  onInputChange: externalOnInputChange,
   onSend,
   onNewConversation,
+  onRestart,
+  onSignOut,
   onOptionClick,
   onOptionSelect,
   placeholder,
@@ -117,12 +141,16 @@ export const CoachLayout = ({
   coachRecommendation,
   scenarios,
   scenarioChips,
+  scenarioOnSelect,
+  scenarioPrimaryColor,
   stageProgress,
   extraContent,
   trainingCamp,
   notifications,
   community,
+  communityContent,
   videoRecommendation,
+  videoRecommendations,
   toolRecommendation,
   emotionButtonRecommendation,
   campRecommendation,
@@ -133,15 +161,23 @@ export const CoachLayout = ({
   intensitySelector,
   dailyReminderContent,
   showDailyReminder = false,
+  renderIntensityPrompt,
   briefingConfirmation,
   dialogs,
-  currentCoachKey
+  currentCoachKey,
+  messagesEndRef: externalMessagesEndRef
 }: CoachLayoutProps) => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const internalMessagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = externalMessagesEndRef || internalMessagesEndRef;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
+
+  // Internal input state management
+  const [internalInput, setInternalInput] = useState("");
+  const input = externalInput !== undefined ? externalInput : internalInput;
+  const handleInputChange = externalOnInputChange || setInternalInput;
 
   // Pull to refresh state
   const [pullDistance, setPullDistance] = useState(0);
@@ -149,6 +185,12 @@ export const CoachLayout = ({
   const [isPulling, setIsPulling] = useState(false);
   const startY = useRef(0);
   const threshold = 80;
+
+  // Resolve steps config
+  const resolvedSteps = stepsConfig?.steps || steps || [];
+  const resolvedStepsTitle = stepsConfig?.title || stepsTitle || "";
+  const resolvedStepsEmoji = stepsConfig?.emoji || stepsEmoji || "";
+  const resolvedMoreInfoRoute = stepsConfig?.introRoute || moreInfoRoute;
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -165,13 +207,33 @@ export const CoachLayout = ({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      onSend();
+      handleSend();
+    }
+  };
+
+  const handleSend = () => {
+    if (!input.trim() || isLoading) return;
+    onSend(input);
+    if (!externalOnInputChange) {
+      setInternalInput("");
     }
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/auth");
+    if (onSignOut) {
+      onSignOut();
+    } else {
+      await signOut();
+      navigate("/auth");
+    }
+  };
+
+  const handleRestart = () => {
+    if (onRestart) {
+      onRestart();
+    } else if (onNewConversation) {
+      onNewConversation();
+    }
   };
 
   // Pull to refresh handlers
@@ -235,8 +297,9 @@ export const CoachLayout = ({
           primaryColor={primaryColor}
           historyRoute={historyRoute}
           historyLabel={historyLabel}
+          historyLabelShort={historyLabelShort}
           hasMessages={messages.length > 0}
-          onRestart={onNewConversation}
+          onRestart={handleRestart}
           onSignOut={handleSignOut}
           showNotificationCenter={showNotificationCenter}
           currentCoachKey={currentCoachKey}
@@ -293,18 +356,19 @@ export const CoachLayout = ({
                 subtitle={subtitle}
                 description={description}
                 gradient={gradient}
-                steps={steps}
-                stepsTitle={stepsTitle}
-                stepsEmoji={stepsEmoji}
+                steps={resolvedSteps}
+                stepsTitle={resolvedStepsTitle}
+                stepsEmoji={resolvedStepsEmoji}
                 primaryColor={primaryColor}
-                moreInfoRoute={moreInfoRoute}
+                moreInfoRoute={resolvedMoreInfoRoute}
                 scenarios={scenarios}
                 extraContent={extraContent}
                 trainingCamp={trainingCamp}
                 notifications={notifications}
-                community={community}
+                community={community || communityContent}
                 dailyReminderContent={dailyReminderContent}
                 showDailyReminder={showDailyReminder}
+                campRecommendation={campRecommendation}
               />
             ) : (
               <div className="space-y-4">
@@ -316,7 +380,13 @@ export const CoachLayout = ({
                 )}
                 
                 {messages.map((message, index) => {
-                  // Handle intensity prompt message type
+                  // Handle intensity prompt message type via custom renderer
+                  if (message.type === "intensity_prompt" && renderIntensityPrompt) {
+                    const rendered = renderIntensityPrompt(message, index);
+                    if (rendered) return rendered;
+                  }
+                  
+                  // Handle intensity prompt message type via slot
                   if (message.type === "intensity_prompt" && intensityPrompt) {
                     return <div key={index}>{intensityPrompt}</div>;
                   }
@@ -331,6 +401,7 @@ export const CoachLayout = ({
                       isLastMessage={index === messages.length - 1}
                       communicationBriefingId={communicationBriefingId}
                       coachRecommendation={index === messages.length - 1 ? coachRecommendation : null}
+                      videoRecommendations={videoRecommendations}
                     />
                   );
                 })}
@@ -345,7 +416,7 @@ export const CoachLayout = ({
                 {/* Briefing confirmation slot */}
                 {briefingConfirmation}
                 
-                <div ref={messagesEndRef} />
+                <div ref={messagesEndRef as any} />
               </div>
             )}
             
@@ -367,7 +438,7 @@ export const CoachLayout = ({
         {messages.length > 0 && (
           <ScrollToBottomButton 
             scrollRef={mainRef} 
-            messagesEndRef={messagesEndRef}
+            messagesEndRef={messagesEndRef as any}
             primaryColor={primaryColor}
           />
         )}
@@ -376,15 +447,17 @@ export const CoachLayout = ({
         <CoachInputFooter
           ref={textareaRef}
           input={input}
-          onInputChange={onInputChange}
-          onSend={onSend}
+          onInputChange={handleInputChange}
+          onSend={handleSend}
           onKeyPress={handleKeyPress}
-          onNewConversation={onNewConversation}
+          onNewConversation={handleRestart}
           placeholder={placeholder}
           isLoading={isLoading}
           hasMessages={messages.length > 0}
           gradient={gradient}
           scenarioChips={scenarioChips}
+          scenarioOnSelect={scenarioOnSelect}
+          scenarioPrimaryColor={scenarioPrimaryColor}
           messagesCount={messages.length}
           intensitySelector={intensitySelector}
         />
