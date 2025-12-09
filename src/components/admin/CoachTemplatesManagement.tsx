@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, BookOpen, Sparkles, ExternalLink, Bell, Users, MessageSquare, Mic, Tent, Activity, Clock, AlertTriangle, GraduationCap, Share2, LayoutGrid, List } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, BookOpen, Sparkles, ExternalLink, Bell, Users, MessageSquare, Mic, Tent, Activity, Clock, AlertTriangle, GraduationCap, Share2 } from "lucide-react";
 import { CoachStepsEditor } from "./CoachStepsEditor";
 import { AICoachCreator } from "./AICoachCreator";
 import { CoachFeatureMatrix } from "./CoachFeatureMatrix";
@@ -54,7 +54,7 @@ export function CoachTemplatesManagement() {
   const [isStepsEditorOpen, setIsStepsEditorOpen] = useState(false);
   const [currentSteps, setCurrentSteps] = useState<CoachStep[]>([]);
   const [isAICreatorOpen, setIsAICreatorOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'cards' | 'matrix'>('cards');
+  
 
   const handleCreate = () => {
     setEditingTemplate({
@@ -200,27 +200,6 @@ export function CoachTemplatesManagement() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">教练模板管理</h2>
         <div className="flex gap-2">
-          {/* View Mode Toggle */}
-          <div className="flex rounded-lg border bg-muted p-1">
-            <Button
-              variant={viewMode === 'cards' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('cards')}
-              className="gap-1"
-            >
-              <List className="h-4 w-4" />
-              卡片
-            </Button>
-            <Button
-              variant={viewMode === 'matrix' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('matrix')}
-              className="gap-1"
-            >
-              <LayoutGrid className="h-4 w-4" />
-              矩阵
-            </Button>
-          </div>
           <Button variant="outline" onClick={() => setIsAICreatorOpen(true)}>
             <Sparkles className="h-4 w-4 mr-2" />
             AI智能创建
@@ -261,123 +240,7 @@ export function CoachTemplatesManagement() {
       </Card>
 
       {/* Matrix View */}
-      {viewMode === 'matrix' && templates && (
-        <CoachFeatureMatrix templates={templates} />
-      )}
-
-      {/* Cards View */}
-      {viewMode === 'cards' && (
-        <div className="grid gap-4">
-          {templates?.map((template, index) => (
-            <Card key={template.id} className={!template.is_active ? 'opacity-60' : ''}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{template.emoji}</span>
-                    <div>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        {template.title}
-                        {!template.is_active && <Badge variant="secondary">已禁用</Badge>}
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">{template.subtitle}</p>
-                  </div>
-                  {template.is_system && (
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">系统内置</Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={template.is_active}
-                    onCheckedChange={() => handleToggle(template.id, template.is_active)}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleMoveUp(index)}
-                    disabled={index === 0}
-                  >
-                    <ArrowUp className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleMoveDown(index)}
-                    disabled={index === templates.length - 1}
-                  >
-                    <ArrowDown className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handlePreview(template.page_route)}
-                    title="预览教练页面"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => {
-                      setCurrentSteps(template.steps as CoachStep[] || []);
-                      setIsStepsEditorOpen(true);
-                      setEditingTemplate(template);
-                    }}
-                  >
-                    <BookOpen className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleEdit(template)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(template.id, template.is_system)}
-                    disabled={template.is_system}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {/* Feature Badges */}
-              <div className="flex flex-wrap gap-2">
-                <FeatureBadge enabled={template.enable_training_camp} icon={Tent} label="训练营" />
-                <FeatureBadge enabled={template.enable_notifications} icon={Bell} label="通知" />
-                <FeatureBadge enabled={template.enable_community} icon={Users} label="社区" />
-                <FeatureBadge enabled={template.enable_scenarios} icon={MessageSquare} label="场景" />
-                <FeatureBadge enabled={template.enable_voice_control} icon={Mic} label="语音" />
-                <FeatureBadge enabled={template.enable_intensity_tracking} icon={Activity} label="强度追踪" />
-                <FeatureBadge enabled={template.enable_daily_reminder} icon={Clock} label="每日提醒" />
-                <FeatureBadge enabled={template.enable_emotion_alert} icon={AlertTriangle} label="情绪预警" />
-                <FeatureBadge enabled={template.enable_onboarding} icon={GraduationCap} label="新手引导" />
-                <FeatureBadge enabled={template.enable_briefing_share} icon={Share2} label="简报分享" />
-              </div>
-              
-              {/* Routes and Config */}
-              <div className="grid grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">标识：</span>
-                  <span className="font-mono">{template.coach_key}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">页面：</span>
-                  <span className="font-mono text-blue-600">{template.page_route}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Edge Function：</span>
-                  <span className="font-mono">{template.edge_function_name || '-'}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">简报表：</span>
-                  <span className="font-mono">{template.briefing_table_name || '-'}</span>
-                </div>
-              </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {templates && <CoachFeatureMatrix templates={templates} />}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
