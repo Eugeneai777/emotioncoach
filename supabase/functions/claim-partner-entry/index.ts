@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     // Check if partner exists and get entry config
     const { data: partner, error: partnerError } = await supabase
       .from('partners')
-      .select('id, user_id, default_entry_type, default_quota_amount, total_referrals')
+      .select('id, user_id, prepurchase_count, total_referrals')
       .eq('id', partner_id)
       .single();
 
@@ -69,6 +69,14 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Check if partner has enough prepurchase_count
+    if (!partner.prepurchase_count || partner.prepurchase_count < 1) {
+      return new Response(
+        JSON.stringify({ success: false, message: '合伙人体验名额已用完' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Check if already referred
     const { data: existingReferral } = await supabase
       .from('partner_referrals')
@@ -83,7 +91,39 @@ Deno.serve(async (req) => {
       );
     }
 
-    const quotaAmount = partner.default_quota_amount || 10;
+    // Get basic package info
+    const { data: basicPackage } = await supabase
+      .from('packages')
+      .select('id, package_name, ai_quota, duration_days')
+      .eq('package_key', 'basic')
+      .single();
+
+    const quotaAmount = basicPackage?.ai_quota || 50;
+    const durationDays = basicPackage?.duration_days || 365;
+
+    // Calculate dates
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + durationDays);
+
+    // Create subscription record for experience package
+    const { error: subscriptionError } = await supabase
+      .from('subscriptions')
+      .insert({
+        user_id: user.id,
+        package_id: basicPackage?.id,
+        subscription_type: 'basic',
+        status: 'active',
+        total_quota: quotaAmount,
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        combo_name: '体验套餐'
+      });
+
+    if (subscriptionError) {
+      console.error('Subscription creation error:', subscriptionError);
+      // Continue even if subscription fails, still add quota
+    }
 
     // Add quota to user account
     const { data: userAccount, error: accountError } = await supabase
@@ -116,6 +156,15 @@ Deno.serve(async (req) => {
         });
     }
 
+    // Deduct from partner's prepurchase_count
+    await supabase
+      .from('partners')
+      .update({
+        prepurchase_count: partner.prepurchase_count - 1,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', partner_id);
+
     // Create referral record
     await supabase
       .from('partner_referrals')
@@ -135,13 +184,14 @@ Deno.serve(async (req) => {
       })
       .eq('id', partner_id);
 
-    console.log(`Successfully claimed ${quotaAmount} quota for user ${user.id}`);
+    console.log(`Successfully claimed experience package (${quotaAmount} quota, ${durationDays} days) for user ${user.id}, deducted 1 from partner ${partner_id}`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `成功领取${quotaAmount}次对话额度！`,
-        quota_amount: quotaAmount
+        message: `成功领取体验套餐！`,
+        quota_amount: quotaAmount,
+        duration_days: durationDays
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -180,6 +180,7 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
           <EntryTypeSelector 
             partnerId={partner.id} 
             currentEntryType={partner.default_entry_type || 'free'}
+            prepurchaseCount={partner.prepurchase_count || 0}
           />
           
           <div className="p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border border-teal-100">

@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, Gift, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, Gift, AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Claim() {
@@ -13,7 +13,8 @@ export default function Claim() {
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'no-partner'>('loading');
   const [message, setMessage] = useState("");
-  const [quotaAmount, setQuotaAmount] = useState(10);
+  const [quotaAmount, setQuotaAmount] = useState(50);
+  const [durationDays, setDurationDays] = useState(365);
 
   useEffect(() => {
     if (!partnerId) {
@@ -45,7 +46,8 @@ export default function Claim() {
 
       if (data.success) {
         setStatus('success');
-        setQuotaAmount(data.quota_amount || 10);
+        setQuotaAmount(data.quota_amount || 50);
+        setDurationDays(data.duration_days || 365);
         setMessage(data.message || "领取成功！");
         toast.success("🎉 领取成功！");
       } else {
@@ -83,7 +85,7 @@ export default function Claim() {
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center">
                   <CheckCircle className="w-10 h-10 text-white" />
                 </div>
-                <span className="text-xl text-teal-700">🎉 领取成功！</span>
+                <span className="text-xl text-teal-700">🎉 已获得体验套餐！</span>
               </>
             )}
             {status === 'error' && (
@@ -108,10 +110,32 @@ export default function Claim() {
           {status === 'success' && (
             <>
               <div className="text-center space-y-4">
-                <div className="flex items-center justify-center gap-2 text-2xl font-bold text-teal-600">
-                  <Gift className="w-6 h-6" />
-                  <span>+{quotaAmount} 次对话额度</span>
+                {/* Package benefits */}
+                <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-center gap-2 text-lg font-bold text-teal-600">
+                    <Sparkles className="w-5 h-5" />
+                    <span>体验套餐权益</span>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-center gap-2">
+                      <Gift className="w-4 h-4 text-teal-500" />
+                      <span className="font-medium">{quotaAmount} 点 AI 额度</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-teal-500">✓</span>
+                      <span>{durationDays} 天有效期</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-teal-500">✓</span>
+                      <span>免费参加21天训练营</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-teal-500">✓</span>
+                      <span>解锁全部情绪工具</span>
+                    </div>
+                  </div>
                 </div>
+                
                 <p className="text-muted-foreground">
                   现在就开始你的情绪梳理之旅吧！
                 </p>
