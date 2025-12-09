@@ -102,9 +102,20 @@ export default function ParentCoach() {
   const [briefing, setBriefing] = useState<any>(null);
   const [pendingBriefing, setPendingBriefing] = useState<any>(null);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
+  const [isStepsCardExpanded, setIsStepsCardExpanded] = useState(true);
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+
+  // 首次访问展开，再次访问折叠
+  useEffect(() => {
+    const hasSeen = localStorage.getItem('has_seen_parent_steps_card');
+    if (hasSeen) {
+      setIsStepsCardExpanded(false);
+    } else {
+      localStorage.setItem('has_seen_parent_steps_card', 'true');
+    }
+  }, []);
 
   const {
     user,
@@ -503,57 +514,69 @@ ${briefing.growth_story || '暂无记录'}
                 </p>
               </div>
 
-              {/* 亲子情绪四部曲 */}
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50 rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
-                <div className="mb-card-gap flex items-center justify-between">
-                  <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
-                    <span className="text-purple-600 text-sm">💜</span>
-                    亲子情绪四部曲
-                  </h3>
-                  <Button 
-                    variant="link" 
-                    size="sm" 
-                    onClick={() => navigate("/parent-camp")}
-                    className="text-xs text-purple-600 hover:text-purple-700 p-0 h-auto"
-                  >
-                    了解更多 →
-                  </Button>
-                </div>
+              {/* 亲子情绪四部曲 - 可折叠 */}
+              <Collapsible open={isStepsCardExpanded} onOpenChange={setIsStepsCardExpanded}>
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50 rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
+                  <CollapsibleTrigger className="w-full">
+                    <div className="flex items-center justify-between cursor-pointer">
+                      <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
+                        <span className="text-purple-600 text-sm">💜</span>
+                        亲子情绪四部曲
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="link" 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate("/parent-camp");
+                          }}
+                          className="text-xs text-purple-600 hover:text-purple-700 p-0 h-auto"
+                        >
+                          了解更多 →
+                        </Button>
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isStepsCardExpanded ? 'rotate-180' : ''}`} />
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
 
-                <div className="grid grid-cols-2 gap-card-gap">
-                  {parentStages.map((stage) => (
-                    <Collapsible 
-                      key={stage.id}
-                      open={expandedStep === stage.id} 
-                      onOpenChange={() => setExpandedStep(expandedStep === stage.id ? null : stage.id)}
-                    >
-                      <CollapsibleTrigger className="w-full">
-                        <div className="bg-white/70 rounded-card p-card-sm border border-purple-200/50 hover:border-purple-400/50 transition-all duration-200 group cursor-pointer">
-                          <div className="flex items-center gap-1.5">
-                            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/15 text-purple-600 flex items-center justify-center font-bold text-xs group-hover:bg-purple-500 group-hover:text-white transition-all">
-                              {stage.id}
+                  <CollapsibleContent>
+                    <div className="grid grid-cols-2 gap-card-gap mt-card-gap">
+                      {parentStages.map((stage) => (
+                        <Collapsible 
+                          key={stage.id}
+                          open={expandedStep === stage.id} 
+                          onOpenChange={() => setExpandedStep(expandedStep === stage.id ? null : stage.id)}
+                        >
+                          <CollapsibleTrigger className="w-full">
+                            <div className="bg-white/70 rounded-card p-card-sm border border-purple-200/50 hover:border-purple-400/50 transition-all duration-200 group cursor-pointer">
+                              <div className="flex items-center gap-1.5">
+                                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/15 text-purple-600 flex items-center justify-center font-bold text-xs group-hover:bg-purple-500 group-hover:text-white transition-all">
+                                  {stage.id}
+                                </div>
+                                <div className="flex-1 text-left min-w-0">
+                                  <h4 className="font-medium text-foreground text-sm truncate">
+                                    {stage.name}
+                                  </h4>
+                                  <p className="text-xs text-muted-foreground truncate">{stage.subtitle}</p>
+                                </div>
+                                <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === stage.id ? 'rotate-180' : ''}`} />
+                              </div>
                             </div>
-                            <div className="flex-1 text-left min-w-0">
-                              <h4 className="font-medium text-foreground text-sm truncate">
-                                {stage.name}
-                              </h4>
-                              <p className="text-xs text-muted-foreground truncate">{stage.subtitle}</p>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-1">
+                            <div className="bg-white/50 rounded-card p-card-sm border border-purple-200/30 space-y-1">
+                              <p className="text-xs text-foreground leading-snug">
+                                {stage.description}
+                              </p>
                             </div>
-                            <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === stage.id ? 'rotate-180' : ''}`} />
-                          </div>
-                        </div>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-1">
-                        <div className="bg-white/50 rounded-card p-card-sm border border-purple-200/30 space-y-1">
-                          <p className="text-xs text-foreground leading-snug">
-                            {stage.description}
-                          </p>
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ))}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
                 </div>
-              </div>
+              </Collapsible>
 
               {/* 家长情绪训练营 */}
               <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
