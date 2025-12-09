@@ -214,9 +214,9 @@ const EnergyStudio = () => {
               setPrimaryTab(item.id);
               setActiveTool(null);
             }
-          }} className={cn("rounded-full py-2.5 px-3 gap-1.5 transition-all duration-300 text-xs md:text-sm", primaryTab === item.id && "bg-gradient-to-r from-primary to-warm text-white shadow-lg")}>
+          }} className={cn("rounded-full py-2.5 px-2 sm:px-3 gap-1 sm:gap-1.5 transition-all duration-300 text-xs md:text-sm", primaryTab === item.id && "bg-gradient-to-r from-primary to-warm text-white shadow-lg")}>
                 <span>{item.emoji}</span>
-                <span className="whitespace-nowrap">{item.label}</span>
+                <span className="hidden sm:inline whitespace-nowrap">{item.label}</span>
               </Button>)}
           </div>
         </div>

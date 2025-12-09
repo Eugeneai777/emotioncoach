@@ -258,20 +258,21 @@ const CampList = () => {
                   key={category.id}
                   value={category.id}
                   className={cn(
-                    "rounded-xl transition-all duration-300 gap-3 py-6 px-8",
-                    "data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:scale-105",
+                    "rounded-xl transition-all duration-300",
+                    "py-3 px-3 sm:py-6 sm:px-8 gap-2 sm:gap-3",
+                    "data-[state=active]:text-white data-[state=active]:shadow-xl sm:data-[state=active]:scale-105",
                     category.id === 'youjin' && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-500",
                     category.id === 'bloom' && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500"
                   )}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{category.emoji}</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <span className="text-xl sm:text-3xl">{category.emoji}</span>
                     <div className="flex flex-col items-start">
-                      <span className="font-bold text-base">{category.name}</span>
-                      <span className="text-xs opacity-90">{category.subtitle}</span>
+                      <span className="font-bold text-sm sm:text-base">{category.name}</span>
+                      <span className="hidden sm:block text-xs opacity-90">{category.subtitle}</span>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="bg-white/20 text-white border-0 mt-2 text-xs">
+                  <Badge variant="secondary" className="hidden sm:flex bg-white/20 text-white border-0 mt-2 text-xs">
                     {categoryStats.camps}个训练营
                   </Badge>
                 </TabsTrigger>
