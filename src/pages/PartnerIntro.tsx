@@ -64,7 +64,7 @@ const PartnerIntro = () => {
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       {/* Header */}
       <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
-        <div className="container max-w-5xl mx-auto px-4 py-6">
+        <div className="container max-w-5xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="gap-2">
               <ArrowLeft className="w-4 h-4" />
@@ -82,103 +82,98 @@ const PartnerIntro = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container max-w-5xl mx-auto px-4 py-8 space-y-8">
+      <main className="container max-w-5xl mx-auto px-4 py-5 space-y-5">
         {/* Hero Section */}
         <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-background to-warm/5">
-          <CardHeader className="text-center pb-4">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Badge variant="secondary" className="text-base px-4 py-1">
+          <CardHeader className="text-center pb-2 pt-4">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Badge variant="secondary" className="text-sm px-3 py-0.5">
                 总价值 ¥{totalValue.toLocaleString()}
               </Badge>
             </div>
-            <CardTitle className="text-2xl md:text-3xl">
+            <CardTitle className="text-xl md:text-2xl">
               成为绽放合伙人，享受长期收益分成
             </CardTitle>
-            <CardDescription className="text-base mt-2">
+            <CardDescription className="text-sm mt-1">
               推广有劲生活，获得直推30%、二级10%的永久佣金
             </CardDescription>
           </CardHeader>
-          <CardContent className="text-center pb-6">
-            <div className="text-4xl font-bold text-primary mb-4">¥19,800</div>
-            <Button size="lg" onClick={handlePurchase} className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-6 text-lg">
-              <Sparkles className="w-5 h-5" />
+          <CardContent className="text-center pb-4">
+            <div className="text-3xl font-bold text-primary mb-2">¥19,800</div>
+            <Button size="lg" onClick={handlePurchase} className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-4 text-base">
+              <Sparkles className="w-4 h-4" />
               立即购买，成为绽放合伙人
             </Button>
-            
           </CardContent>
         </Card>
 
         {/* What is Partner */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-6 h-6 text-primary" />
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Users className="w-5 h-5 text-primary" />
               什么是绽放合伙人？
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-muted-foreground leading-relaxed">
-            <p>
-              绽放合伙人是有劲生活的核心推广者，享受平台最高等级权益和持续分成收益。
-            </p>
-            <p>
-              通过分享您的专属链接，邀请好友加入有劲生活，即可获得丰厚佣金回报。推荐关系永久有效，被推荐用户后续所有消费都有分成。
-            </p>
+          <CardContent className="space-y-2 text-muted-foreground leading-relaxed text-sm px-4 pb-4">
+            <p>绽放合伙人是有劲生活的核心推广者，享受平台最高等级权益和持续分成收益。</p>
+            <p>通过分享您的专属链接，邀请好友加入有劲生活，即可获得丰厚佣金回报。推荐关系永久有效，被推荐用户后续所有消费都有分成。</p>
           </CardContent>
         </Card>
 
         {/* Revenue Mechanism */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="w-6 h-6 text-primary" />
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <DollarSign className="w-5 h-5 text-primary" />
               收益机制
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardContent className="space-y-4 px-4 pb-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
-                <CardHeader className="text-center pb-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-warm mx-auto mb-3 flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-white" />
+                <CardHeader className="text-center pb-2 pt-3 px-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-warm mx-auto mb-2 flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-white" />
                   </div>
-                  <CardTitle className="text-xl">直推佣金</CardTitle>
-                  <div className="text-3xl font-bold text-primary mt-2">30%</div>
+                  <CardTitle className="text-base">直推佣金</CardTitle>
+                  <div className="text-2xl font-bold text-primary mt-1">30%</div>
                 </CardHeader>
-                <CardContent className="text-center text-sm text-muted-foreground">
+                <CardContent className="text-center text-xs text-muted-foreground px-3 pb-3">
                   推荐好友购买任意套餐，立即获得30%佣金
                 </CardContent>
               </Card>
 
               <Card className="border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-background">
-                <CardHeader className="text-center pb-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent to-warm mx-auto mb-3 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-white" />
+                <CardHeader className="text-center pb-2 pt-3 px-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-warm mx-auto mb-2 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-white" />
                   </div>
-                  <CardTitle className="text-xl">二级佣金</CardTitle>
-                  <div className="text-3xl font-bold text-accent mt-2">10%</div>
+                  <CardTitle className="text-base">二级佣金</CardTitle>
+                  <div className="text-2xl font-bold text-accent mt-1">10%</div>
                 </CardHeader>
-                <CardContent className="text-center text-sm text-muted-foreground">
+                <CardContent className="text-center text-xs text-muted-foreground px-3 pb-3">
                   好友推荐的用户消费，你还能获得10%佣金
                 </CardContent>
               </Card>
 
               <Card className="border-2 border-warm/20 bg-gradient-to-br from-warm/5 to-background">
-                <CardHeader className="text-center pb-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-warm to-primary mx-auto mb-3 flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-white" />
+                <CardHeader className="text-center pb-2 pt-3 px-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-warm to-primary mx-auto mb-2 flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-white" />
                   </div>
-                  <CardTitle className="text-xl">长期收益</CardTitle>
-                  <div className="text-3xl font-bold text-warm mt-2">永久</div>
+                  <CardTitle className="text-base">长期收益</CardTitle>
+                  <div className="text-2xl font-bold text-warm mt-1">永久</div>
                 </CardHeader>
-                <CardContent className="text-center text-sm text-muted-foreground">
+                <CardContent className="text-center text-xs text-muted-foreground px-3 pb-3">
                   推荐关系永久有效，持续获得被动收入
                 </CardContent>
               </Card>
             </div>
 
-            <div className="bg-gradient-to-r from-primary/5 via-accent/5 to-warm/5 p-6 rounded-lg space-y-3">
-              <div className="font-semibold text-lg">📊 收益示例</div>
-              <div className="space-y-2 text-sm">
+            <div className="bg-gradient-to-r from-primary/5 via-accent/5 to-warm/5 p-4 rounded-lg space-y-2">
+              <div className="font-semibold text-sm">📊 收益示例</div>
+              <div className="space-y-1.5 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">推荐1人购买合伙人套餐 (¥19,800)</span>
                   <span className="font-semibold text-primary">= 直接获得 ¥5,940</span>
@@ -188,9 +183,9 @@ const PartnerIntro = () => {
                   <span className="font-semibold text-accent">+ 你还能获得 ¥1,980</span>
                 </div>
                 <Separator />
-                <div className="flex items-center justify-between font-bold">
+                <div className="flex items-center justify-between font-bold text-sm">
                   <span>推荐2人的总收益</span>
-                  <span className="text-xl text-warm">¥7,920</span>
+                  <span className="text-base text-warm">¥7,920</span>
                 </div>
               </div>
             </div>
@@ -199,24 +194,24 @@ const PartnerIntro = () => {
 
         {/* Benefits */}
         {benefits.length > 0 && <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Gift className="w-6 h-6 text-primary" />
+            <CardHeader className="pb-2 pt-4 px-4">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Gift className="w-5 h-5 text-primary" />
                 {benefits.length}大专属权益
-                <Badge variant="secondary">总价值 ¥{totalValue.toLocaleString()}</Badge>
+                <Badge variant="secondary" className="text-xs">总价值 ¥{totalValue.toLocaleString()}</Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="px-4 pb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {benefits.map(benefit => <Card key={benefit.id} className="border bg-gradient-to-br from-background to-accent/5">
-                    <CardContent className="p-4 flex items-start gap-3">
-                      <div className="text-3xl">{benefit.benefit_icon}</div>
+                    <CardContent className="p-3 flex items-start gap-2">
+                      <div className="text-2xl">{benefit.benefit_icon}</div>
                       <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="font-semibold">{benefit.benefit_name}</div>
-                          {Number(benefit.benefit_value) > 0 && <Badge variant="outline">¥{Number(benefit.benefit_value).toLocaleString()}</Badge>}
+                        <div className="flex items-center justify-between mb-0.5">
+                          <div className="font-semibold text-sm">{benefit.benefit_name}</div>
+                          {Number(benefit.benefit_value) > 0 && <Badge variant="outline" className="text-xs">¥{Number(benefit.benefit_value).toLocaleString()}</Badge>}
                         </div>
-                        {benefit.benefit_description && <p className="text-sm text-muted-foreground">{benefit.benefit_description}</p>}
+                        {benefit.benefit_description && <p className="text-xs text-muted-foreground">{benefit.benefit_description}</p>}
                       </div>
                     </CardContent>
                   </Card>)}
@@ -226,14 +221,14 @@ const PartnerIntro = () => {
 
         {/* How to Become Partner */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-primary" />
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="w-5 h-5 text-primary" />
               如何成为合伙人？
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="px-4 pb-4">
+            <div className="space-y-3">
               {[{
               step: 1,
               title: "购买合伙人套餐",
@@ -250,19 +245,19 @@ const PartnerIntro = () => {
               step: 4,
               title: "提现收益",
               desc: "订单确认后21天可申请提现到支付宝/微信"
-            }].map(item => <div key={item.step} className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-warm flex items-center justify-center text-white font-bold flex-shrink-0">
+            }].map(item => <div key={item.step} className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-warm flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
                     {item.step}
                   </div>
-                  <div className="flex-1 pt-1">
-                    <div className="font-semibold mb-1">{item.title}</div>
-                    <div className="text-sm text-muted-foreground">{item.desc}</div>
+                  <div className="flex-1 pt-0.5">
+                    <div className="font-semibold text-sm mb-0.5">{item.title}</div>
+                    <div className="text-xs text-muted-foreground">{item.desc}</div>
                   </div>
                 </div>)}
             </div>
-            <div className="mt-6 text-center">
-              <Button size="lg" onClick={handlePurchase} className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white">
-                <ShoppingCart className="w-5 h-5" />
+            <div className="mt-4 text-center">
+              <Button onClick={handlePurchase} className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white">
+                <ShoppingCart className="w-4 h-4" />
                 立即购买 ¥19,800
               </Button>
             </div>
@@ -272,13 +267,13 @@ const PartnerIntro = () => {
 
         {/* FAQ */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <HelpCircle className="w-6 h-6 text-primary" />
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <HelpCircle className="w-5 h-5 text-primary" />
               常见问题
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 px-4 pb-4">
             {[{
             q: "佣金多久到账？",
             a: "订单完成后进入21天确认期，确认后即可申请提现。提现审核通过后1-3个工作日到账。"
@@ -294,23 +289,23 @@ const PartnerIntro = () => {
           }, {
             q: "如果好友没有使用我的链接怎么办？",
             a: "好友在注册时输入您的推广码也可以绑定推荐关系。如有特殊情况，可联系客服手动绑定。"
-          }].map((faq, index) => <div key={index} className="pb-4 border-b last:border-0">
-                <div className="font-semibold mb-2">Q: {faq.q}</div>
-                <div className="text-sm text-muted-foreground">A: {faq.a}</div>
+          }].map((faq, index) => <div key={index} className="pb-3 border-b last:border-0 last:pb-0">
+                <div className="font-semibold text-sm mb-1">Q: {faq.q}</div>
+                <div className="text-xs text-muted-foreground">A: {faq.a}</div>
               </div>)}
           </CardContent>
         </Card>
 
         {/* CTA Footer */}
         <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-background to-warm/5">
-          <CardContent className="text-center py-8 space-y-4">
-            <div className="text-2xl font-bold">🎉 开启你的情绪觉醒事业</div>
-            <p className="text-muted-foreground">
+          <CardContent className="text-center py-5 space-y-2">
+            <div className="text-lg font-bold">🎉 开启你的情绪觉醒事业</div>
+            <p className="text-sm text-muted-foreground">
               加入绽放合伙人计划，分享成长，创造价值，获得持续收益
             </p>
-            <div className="pt-4">
-              <Button size="lg" onClick={handlePurchase} className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8">
-                <Sparkles className="w-5 h-5" />
+            <div className="pt-2">
+              <Button onClick={handlePurchase} className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6">
+                <Sparkles className="w-4 h-4" />
                 立即购买 ¥19,800
               </Button>
             </div>
