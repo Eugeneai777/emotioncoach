@@ -26,13 +26,33 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
+    // Create client with service role for database operations
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Extract user_id from JWT token instead of request body
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing authorization header');
+    }
+
+    // Create client with user's token to verify and extract user info
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      throw new Error('Unauthorized: Invalid token');
+    }
+
+    const user_id = user.id;
+
     const { 
-      user_id, 
       function_name, 
       feature_key, 
       model, 
@@ -61,7 +81,7 @@ serve(async (req) => {
     const estimated_cost_cny = estimated_cost_usd * USD_TO_CNY;
 
     // 插入成本日志
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('api_cost_logs')
       .insert({
         user_id,
@@ -83,7 +103,7 @@ serve(async (req) => {
     }
 
     // 检查单次调用阈值
-    const { data: settings } = await supabase
+    const { data: settings } = await supabaseAdmin
       .from('cost_alert_settings')
       .select('*')
       .eq('alert_type', 'single_call')
@@ -92,7 +112,7 @@ serve(async (req) => {
 
     if (settings && estimated_cost_cny >= settings.threshold_cny) {
       // 触发单次调用预警
-      await supabase.from('cost_alerts').insert({
+      await supabaseAdmin.from('cost_alerts').insert({
         alert_type: 'single_call',
         user_id,
         threshold_cny: settings.threshold_cny,
