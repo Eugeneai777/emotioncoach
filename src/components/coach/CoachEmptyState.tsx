@@ -111,33 +111,30 @@ export const CoachEmptyState = ({
         /* Collapsible mode for emotion coach */
         <Collapsible open={isStepsExpanded} onOpenChange={setIsStepsExpanded}>
           <div className="bg-card border border-border rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
-            <CollapsibleTrigger asChild>
-              <div className="flex items-center justify-between cursor-pointer">
-                <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
-                  <span className="text-primary text-sm">{stepsEmoji}</span>
-                  {stepsTitle}
-                </h3>
-                <div className="flex items-center gap-2">
-                  {moreInfoRoute && (
-                    <span 
-                      role="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(moreInfoRoute);
-                      }}
-                      className="text-xs text-primary hover:text-primary/80 cursor-pointer"
-                    >
-                      了解更多 →
-                    </span>
-                  )}
+            <div className="flex items-center justify-between">
+              <CollapsibleTrigger asChild>
+                <div className="flex items-center gap-2 cursor-pointer flex-1">
+                  <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
+                    <span className="text-primary text-sm">{stepsEmoji}</span>
+                    {stepsTitle}
+                  </h3>
                   <ChevronDown 
                     className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${
                       isStepsExpanded ? 'rotate-180' : ''
                     }`}
                   />
                 </div>
-              </div>
-            </CollapsibleTrigger>
+              </CollapsibleTrigger>
+              {moreInfoRoute && (
+                <span 
+                  role="button"
+                  onClick={() => navigate(moreInfoRoute)}
+                  className="text-xs text-primary hover:text-primary/80 cursor-pointer"
+                >
+                  了解更多 →
+                </span>
+              )}
+            </div>
             <CollapsibleContent className="mt-3">
               {renderStepsContent()}
             </CollapsibleContent>
