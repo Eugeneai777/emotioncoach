@@ -47,19 +47,23 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
 
   return (
     <Card 
-      className={`group relative overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl animate-in fade-in-50 slide-in-from-bottom-4 flex flex-col h-full ${
+      className={`group relative overflow-hidden transition-all duration-300 
+        hover:-translate-y-2 hover:shadow-xl hover:shadow-teal-200/30 
+        animate-in fade-in-50 slide-in-from-bottom-4 flex flex-col h-full
+        bg-white/70 backdrop-blur-sm border-teal-200/40
+        dark:bg-teal-950/20 dark:border-teal-800/30 ${
         isLocked ? 'opacity-60' : 'cursor-pointer'
       } ${
         isBloomCamp 
-          ? 'ring-2 ring-purple-200/50 shadow-[0_0_30px_rgba(168,85,247,0.1)]' 
+          ? 'ring-2 ring-purple-200/50' 
           : isParentCamp
-          ? 'ring-2 ring-emerald-200/50 shadow-[0_0_30px_rgba(16,185,129,0.1)]'
+          ? 'ring-2 ring-emerald-200/50'
           : ''
       }`}
       style={{ animationDelay: `${index * 150}ms` }}
       onClick={!isLocked ? onClick : undefined}
     >
-      {/* 封面背景 */}
+      {/* 封面背景 - 保留各训练营特色渐变 */}
       <div className={`relative h-36 bg-gradient-to-br ${camp.gradient} overflow-hidden`}>
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.3),transparent)]" />
         
@@ -93,7 +97,7 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
             </div>
           )}
           {!isBloomCamp && isRecommended && (
-            <div className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-purple-600 shadow-sm">
+            <div className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-teal-600 shadow-sm">
               ⭐ 推荐
             </div>
           )}
@@ -110,8 +114,8 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
       </div>
       
       <CardHeader className="relative z-10 pt-4">
-        <CardTitle className="text-xl line-clamp-1">{camp.camp_name}</CardTitle>
-        <CardDescription className="text-sm line-clamp-2 min-h-[2.5rem]">
+        <CardTitle className="text-xl line-clamp-1 text-teal-800 dark:text-teal-200">{camp.camp_name}</CardTitle>
+        <CardDescription className="text-sm line-clamp-2 min-h-[2.5rem] text-teal-600/80 dark:text-teal-400/80">
           {camp.camp_subtitle}
         </CardDescription>
       </CardHeader>
@@ -124,7 +128,7 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
             {camp.duration_days}天
           </Badge>
           {camp.stages && camp.stages.length > 0 && (
-            <Badge variant="outline">
+            <Badge variant="outline" className="border-teal-300/50 text-teal-600 dark:border-teal-700/50 dark:text-teal-400">
               {camp.stages.length}阶课程
             </Badge>
           )}
@@ -138,7 +142,7 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
                 ¥{camp.original_price.toLocaleString()}
               </span>
             )}
-            <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+            <span className="text-2xl font-bold text-teal-600 dark:text-teal-400">
               ¥{camp.price.toLocaleString()}
             </span>
             {camp.price_note && (
@@ -150,13 +154,13 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
         )}
         
         {camp.price === 0 && (
-          <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0">
+          <Badge className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-0">
             免费
           </Badge>
         )}
 
         {isLocked && camp.prerequisites?.message && (
-          <div className="bg-muted/50 p-3 rounded-lg border border-border">
+          <div className="bg-teal-50/50 dark:bg-teal-950/30 p-3 rounded-lg border border-teal-200/50 dark:border-teal-800/50">
             <p className="text-sm text-muted-foreground flex items-center gap-2">
               <Lock className="w-4 h-4" />
               {camp.prerequisites.message}
@@ -172,7 +176,7 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
             !isLocked 
               ? isBloomCamp
                 ? 'bg-gradient-to-r from-purple-500 via-purple-600 to-purple-500 bg-[length:200%_100%] animate-shimmer text-white hover:opacity-90'
-                : `bg-gradient-to-r ${camp.gradient} hover:opacity-90 text-white`
+                : `bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white`
               : ''
           }`}
         >
