@@ -21,11 +21,12 @@ const pointTiers = [
     features: ["AI对话", "语音识别", "情绪分析", "视频推荐", "工具使用"]
   },
   {
-    points: 2,
-    label: "2点",
+    points: "1-20",
+    label: "1-20点",
     color: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800",
     icon: Mic,
-    features: ["语音合成"]
+    features: ["语音识别", "语音合成", "语音克隆"],
+    note: "克隆20点"
   },
   {
     points: 5,
@@ -54,7 +55,9 @@ const detailedRules = [
   ]},
   { category: "语音类", items: [
     { name: "语音识别", cost: 1 },
-    { name: "语音合成", cost: 2 },
+    { name: "语音合成", cost: 1 },
+    { name: "AI语音批量生成", cost: 1 },
+    { name: "语音克隆", cost: 20 },
   ]},
   { category: "分析类", items: [
     { name: "情绪分析", cost: 1 },
