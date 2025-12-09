@@ -55,8 +55,8 @@ export const CoachStepsCard = ({
             open={expandedStep === step.id} 
             onOpenChange={() => setExpandedStep(expandedStep === step.id ? null : step.id)}
           >
-            <CollapsibleTrigger className="w-full">
-              <div className={`bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-${primaryColor}/30 transition-all duration-200 group cursor-pointer`}>
+          <CollapsibleTrigger asChild>
+              <div className={`w-full bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-${primaryColor}/30 transition-all duration-200 group cursor-pointer`}>
                 <div className="flex items-center gap-1.5">
                   <div className={`flex-shrink-0 w-6 h-6 rounded-full bg-${primaryColor}/15 text-${primaryColor} flex items-center justify-center font-bold text-xs group-hover:bg-${primaryColor} group-hover:text-${primaryColor}-foreground transition-all`}>
                     {step.emoji || step.id}
