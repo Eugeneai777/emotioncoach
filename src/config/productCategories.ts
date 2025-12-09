@@ -11,7 +11,7 @@ export interface ProductCategory {
 export const productCategories: ProductCategory[] = [
   {
     id: 'youjin',
-    name: '有劲产品',
+    name: '有劲合伙人',
     emoji: '💪',
     gradient: 'from-orange-500 to-amber-500',
     description: '日常成长必备，性价比之选',
@@ -20,7 +20,7 @@ export const productCategories: ProductCategory[] = [
   },
   {
     id: 'bloom',
-    name: '绽放产品',
+    name: '绽放合伙人',
     emoji: '🦋',
     gradient: 'from-purple-500 to-pink-500',
     description: '深度转化课程，实现生命绽放',
