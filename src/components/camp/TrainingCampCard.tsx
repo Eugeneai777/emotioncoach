@@ -52,127 +52,77 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   ];
 
   return (
-    <Card className="p-5 bg-gradient-to-br from-primary/5 via-primary/3 to-secondary/5 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
+    <Card className="p-5 bg-gradient-to-br from-teal-50/80 via-cyan-50/50 to-blue-50/30 border-teal-200/40 shadow-sm hover:shadow-md transition-all dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10 dark:border-teal-800/30">
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold flex items-center gap-2 mb-1">
+          <h3 className="text-base font-semibold flex items-center gap-2 text-teal-800 dark:text-teal-200">
             🏕️ {camp.camp_name}
           </h3>
-          <div className="flex items-center gap-3 text-sm">
-            {camp.status === 'active' && (
-              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                第 {displayCurrentDay} / {camp.duration_days} 天
-              </Badge>
-            )}
-            {hasCheckedInToday ? (
-              <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span className="font-medium">今日已打卡</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400 animate-pulse">
-                <Circle className="h-3.5 w-3.5" />
-                <span className="font-medium">待打卡</span>
-              </div>
-            )}
-            {currentStreak > 0 && (
-              <div className="flex items-center gap-1 text-primary">
-                <Flame className="h-3.5 w-3.5" />
-                <span className="font-medium">{currentStreak}天</span>
-              </div>
-            )}
-          </div>
+        </div>
+        {currentStreak > 0 && (
+          <Badge className="bg-gradient-to-r from-orange-100 to-amber-100 text-orange-600 border-orange-200/50 dark:from-orange-900/30 dark:to-amber-900/30 dark:text-orange-400">
+            <Flame className="h-3 w-3 mr-1" />
+            连续{currentStreak}天
+          </Badge>
+        )}
+      </div>
+      
+      {/* Status Line */}
+      <div className="flex items-center gap-2 mb-4 text-sm">
+        <span className="text-muted-foreground">第{displayCurrentDay}天</span>
+        <span className="text-muted-foreground/50">·</span>
+        {hasCheckedInToday ? (
+          <span className="text-teal-600 dark:text-teal-400 flex items-center gap-1">
+            <CheckCircle2 className="h-3.5 w-3.5" />今日已打卡
+          </span>
+        ) : (
+          <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1 animate-pulse">
+            <Circle className="h-3.5 w-3.5" />待打卡
+          </span>
+        )}
+      </div>
+
+      {/* Milestone Progress - Unified Design */}
+      <div className="mb-4">
+        <div className="flex justify-between items-center mb-2">
+          {getMilestones().map((m, i) => (
+            <div key={i} className="flex flex-col items-center">
+              <span className={`text-lg transition-all duration-300 ${m.reached ? 'scale-110' : 'opacity-40 grayscale'}`}>
+                {m.icon}
+              </span>
+              <span className={`text-[10px] mt-1 ${m.reached ? 'text-teal-600 dark:text-teal-400 font-medium' : 'text-muted-foreground'}`}>
+                {m.label}
+              </span>
+            </div>
+          ))}
+        </div>
+        <Progress value={progressPercent} className="h-2 bg-teal-100/50 dark:bg-teal-900/30" />
+        <div className="text-center text-xs text-muted-foreground mt-2">
+          已完成 <span className="font-semibold text-teal-600 dark:text-teal-400">{camp.completed_days}</span>/{camp.duration_days} 天 ({Math.round(progressPercent)}%)
         </div>
       </div>
 
-      {/* Integrated Progress Bar with Milestones */}
-      <div className="space-y-4">
-        <div className="relative">
-          {/* Milestone Icons above progress bar */}
-          <div className="relative h-8 mb-1">
-            {getMilestones().map((milestone, idx) => (
-              <div
-                key={idx}
-                className="absolute transform -translate-x-1/2 flex flex-col items-center"
-                style={{ left: `${milestone.position}%` }}
-              >
-                <div className={`text-xl transition-all duration-300 ${
-                  milestone.reached 
-                    ? 'opacity-100 scale-110 animate-scale-in' 
-                    : 'opacity-30 grayscale'
-                }`}>
-                  {milestone.icon}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Progress Bar */}
-          <div className="relative">
-            <Progress value={progressPercent} className="h-3 bg-secondary/30" />
-            <div className="flex items-center justify-between mt-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-bold text-primary">
-                  {camp.completed_days}
-                </span>
-                <span className="text-sm text-muted-foreground">/ {camp.duration_days} 天</span>
-              </div>
-              <div className="flex items-center gap-1 text-sm font-medium text-primary">
-                <TrendingUp className="h-3.5 w-3.5" />
-                {Math.round(progressPercent)}%
-              </div>
-            </div>
-          </div>
-
-          {/* Milestone Labels */}
-          <div className="relative h-5 mt-1">
-            {getMilestones().map((milestone, idx) => (
-              <div
-                key={idx}
-                className="absolute transform -translate-x-1/2"
-                style={{ left: `${milestone.position}%` }}
-              >
-                <div className={`text-xs transition-all ${
-                  milestone.reached 
-                    ? 'text-primary font-medium' 
-                    : 'text-muted-foreground opacity-50'
-                }`}>
-                  {milestone.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
-          {!hasCheckedInToday && camp.status === 'active' ? (
-            <Button 
-              onClick={() => navigate(`/camp-checkin/${camp.id}`)}
-              className="flex-1 shadow-sm hover:shadow-md transition-shadow"
-            >
-              <Calendar className="h-4 w-4 mr-2" />
-              立即打卡
-            </Button>
-          ) : (
-          <Button 
-            onClick={() => navigate(`/camp-checkin/${camp.id}`)}
-            variant="outline"
-            className="flex-1"
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            今日打卡
-          </Button>
-          )}
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/user-manual")}
-            className="flex-1"
-          >
-            使用手册
-          </Button>
-        </div>
+      {/* Action Buttons */}
+      <div className="flex gap-2">
+        <Button 
+          onClick={() => navigate(`/camp-checkin/${camp.id}`)}
+          className={`flex-1 ${hasCheckedInToday 
+            ? '' 
+            : 'bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shadow-sm'}`}
+          variant={hasCheckedInToday ? 'outline' : 'default'}
+        >
+          <Calendar className="h-4 w-4 mr-2" />
+          {hasCheckedInToday ? '查看记录' : '立即打卡'}
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={() => navigate("/user-manual")}
+          className="text-muted-foreground hover:text-teal-600"
+        >
+          <TrendingUp className="h-4 w-4" />
+        </Button>
       </div>
     </Card>
   );

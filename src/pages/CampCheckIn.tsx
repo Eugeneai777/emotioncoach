@@ -167,8 +167,8 @@ const CampCheckIn = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-background dark:to-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
       </div>
     );
   }
@@ -186,25 +186,25 @@ const CampCheckIn = () => {
   const displayCurrentDay = Math.min(calculatedCurrentDay, camp.duration_days);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-background dark:via-background dark:to-background">
       <div className="container mx-auto px-4 py-6 max-w-3xl">
         {/* 头部 */}
         <div className="flex items-center gap-3 mb-6">
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9"
+            className="h-9 w-9 text-teal-700 hover:bg-teal-100/50 dark:text-teal-300"
             onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-0.5">
-              <h1 className="text-xl font-bold text-foreground">
+              <h1 className="text-xl font-bold text-teal-800 dark:text-teal-200">
                 第 {displayCurrentDay} 天打卡
               </h1>
               {todayProgress?.is_checked_in && (
-                <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 h-5 px-2 text-xs">
+                <Badge className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-0 h-5 px-2 text-xs">
                   ✓ 已完成
                 </Badge>
               )}
@@ -217,35 +217,35 @@ const CampCheckIn = () => {
 
         <div className="space-y-5">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 h-9 bg-muted/50">
-              <TabsTrigger value="checkin" className="text-xs">今日打卡</TabsTrigger>
-              <TabsTrigger value="calendar" className="text-xs">打卡日历</TabsTrigger>
-              <TabsTrigger value="tasks" className="text-xs">任务清单</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 h-9 bg-white/60 backdrop-blur-sm border border-teal-200/30 dark:bg-background/60">
+              <TabsTrigger value="checkin" className="text-xs data-[state=active]:bg-teal-500 data-[state=active]:text-white">今日打卡</TabsTrigger>
+              <TabsTrigger value="calendar" className="text-xs data-[state=active]:bg-teal-500 data-[state=active]:text-white">打卡日历</TabsTrigger>
+              <TabsTrigger value="tasks" className="text-xs data-[state=active]:bg-teal-500 data-[state=active]:text-white">任务清单</TabsTrigger>
             </TabsList>
 
             <TabsContent value="checkin" className="space-y-3 mt-4">
-              {/* 打卡状态卡片 - 优化为更紧凑的设计 */}
-              <Card className="p-4 bg-gradient-to-br from-primary/5 via-primary/3 to-transparent border-primary/10">
+              {/* 打卡状态卡片 */}
+              <Card className="p-4 bg-white/70 backdrop-blur-sm border-teal-200/40 dark:bg-background/70">
                 <div className="flex items-center gap-3">
                   {todayProgress?.is_checked_in ? (
                     <>
-                      <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
                         <CheckCircle2 className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-semibold text-foreground">今日已打卡</h3>
+                        <h3 className="text-base font-semibold text-teal-800 dark:text-teal-200">今日已打卡</h3>
                         <p className="text-xs text-muted-foreground">
-                          连续打卡 {camp.completed_days || 0} 天
+                          已完成 {camp.completed_days || 0} 天打卡
                         </p>
                       </div>
                     </>
                   ) : (
                     <>
-                      <div className="w-12 h-12 bg-gradient-to-br from-muted to-muted/50 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Circle className="w-6 h-6 text-muted-foreground" />
+                      <div className="w-12 h-12 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Circle className="w-6 h-6 text-amber-500" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-semibold text-foreground">待完成打卡</h3>
+                        <h3 className="text-base font-semibold text-teal-800 dark:text-teal-200">待完成打卡</h3>
                         <p className="text-xs text-muted-foreground">
                           完成情绪对话自动打卡
                         </p>
@@ -259,10 +259,10 @@ const CampCheckIn = () => {
               <div className="space-y-3">
                 {/* 1. 情绪教练对话 - 核心任务 */}
                 <Card 
-                  className={`p-4 border transition-all duration-200 ${
+                  className={`p-4 border transition-all duration-200 bg-white/70 backdrop-blur-sm dark:bg-background/70 ${
                     todayProgress?.is_checked_in 
-                      ? "border-green-200 bg-gradient-to-br from-green-50/80 to-green-50/30 dark:border-green-800 dark:bg-green-950/10" 
-                      : "border-primary/20 bg-gradient-to-br from-primary/5 to-transparent hover:border-primary/40 hover:shadow-md cursor-pointer active:scale-[0.99]"
+                      ? "border-teal-300/50 dark:border-teal-700/50" 
+                      : "border-teal-200/40 hover:border-teal-400/60 hover:shadow-md cursor-pointer active:scale-[0.99]"
                   }`}
                   onClick={() => {
                     if (!todayProgress?.is_checked_in) {
@@ -277,8 +277,8 @@ const CampCheckIn = () => {
                   <div className="flex items-start gap-3">
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
                       todayProgress?.is_checked_in 
-                        ? "bg-gradient-to-br from-green-400 to-green-500" 
-                        : "bg-gradient-to-br from-primary to-primary/80"
+                        ? "bg-gradient-to-br from-teal-400 to-cyan-500" 
+                        : "bg-gradient-to-br from-teal-500 to-cyan-500"
                     }`}>
                       {todayProgress?.is_checked_in ? (
                         <CheckCircle2 className="w-5 h-5 text-white" />
@@ -292,10 +292,10 @@ const CampCheckIn = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <h4 className="text-sm font-semibold">
+                        <h4 className="text-sm font-semibold text-teal-800 dark:text-teal-200">
                           {camp.camp_type === 'parent_emotion_21' ? '家长情绪教练' : '情绪教练对话'}
                         </h4>
-                        <Badge className="bg-primary/10 text-primary border-0 h-4 px-1.5 text-[10px]">核心</Badge>
+                        <Badge className="bg-teal-100 text-teal-700 border-0 h-4 px-1.5 text-[10px] dark:bg-teal-900/50 dark:text-teal-300">核心</Badge>
                         {todayProgress?.emotion_logs_count > 0 && (
                           <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
                             {todayProgress.emotion_logs_count}次
@@ -320,7 +320,7 @@ const CampCheckIn = () => {
                             }
                           }}
                           size="sm"
-                          className="mt-2.5 h-7 text-xs"
+                          className="mt-2.5 h-7 text-xs bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
                         >
                           <Sparkles className="w-3 h-3 mr-1" />
                           开始对话
@@ -332,10 +332,10 @@ const CampCheckIn = () => {
 
                 {/* 2. 每日反思分享 */}
                 <Card 
-                  className={`p-4 border transition-all duration-200 ${
+                  className={`p-4 border transition-all duration-200 bg-white/70 backdrop-blur-sm dark:bg-background/70 ${
                     todayProgress?.has_shared_to_community 
-                      ? "border-green-200 bg-gradient-to-br from-green-50/80 to-green-50/30 dark:border-green-800 dark:bg-green-950/10" 
-                      : "hover:shadow-md hover:border-primary/20 cursor-pointer active:scale-[0.99]"
+                      ? "border-teal-300/50 dark:border-teal-700/50" 
+                      : "border-teal-200/40 hover:shadow-md hover:border-teal-400/60 cursor-pointer active:scale-[0.99]"
                   }`}
                   onClick={() => {
                     if (!todayProgress?.has_shared_to_community) {
@@ -346,20 +346,20 @@ const CampCheckIn = () => {
                   <div className="flex items-start gap-3">
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       todayProgress?.has_shared_to_community 
-                        ? "bg-gradient-to-br from-green-400 to-green-500 shadow-sm" 
-                        : "bg-muted"
+                        ? "bg-gradient-to-br from-teal-400 to-cyan-500 shadow-sm" 
+                        : "bg-teal-100/80 dark:bg-teal-900/30"
                     }`}>
                       {todayProgress?.has_shared_to_community ? (
                         <CheckCircle2 className="w-5 h-5 text-white" />
                       ) : (
-                        <Share2 className="w-5 h-5 text-muted-foreground" />
+                        <Share2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <h4 className="text-sm font-semibold">每日反思分享</h4>
+                        <h4 className="text-sm font-semibold text-teal-800 dark:text-teal-200">每日反思分享</h4>
                         {todayProgress?.has_shared_to_community && (
-                          <Badge className="bg-green-100 text-green-700 border-0 h-4 px-1.5 text-[10px] dark:bg-green-900 dark:text-green-300">
+                          <Badge className="bg-teal-100 text-teal-700 border-0 h-4 px-1.5 text-[10px] dark:bg-teal-900/50 dark:text-teal-300">
                             已分享
                           </Badge>
                         )}
@@ -377,7 +377,7 @@ const CampCheckIn = () => {
                           }}
                           size="sm"
                           variant="outline"
-                          className="mt-2.5 h-7 text-xs"
+                          className="mt-2.5 h-7 text-xs border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-300"
                         >
                           <Share2 className="w-3 h-3 mr-1" />
                           开始分享
@@ -389,28 +389,28 @@ const CampCheckIn = () => {
 
                 {/* 3. 今日成长课程 */}
                 <Card 
-                  className={`p-4 border transition-all duration-200 ${
+                  className={`p-4 border transition-all duration-200 bg-white/70 backdrop-blur-sm dark:bg-background/70 ${
                     todayProgress?.video_learning_completed 
-                      ? "border-green-200 bg-gradient-to-br from-green-50/80 to-green-50/30 dark:border-green-800 dark:bg-green-950/10" 
-                      : "hover:shadow-md hover:border-muted cursor-pointer active:scale-[0.99]"
+                      ? "border-teal-300/50 dark:border-teal-700/50" 
+                      : "border-teal-200/40 hover:shadow-md hover:border-teal-400/60 cursor-pointer active:scale-[0.99]"
                   }`}
                   onClick={() => !todayProgress?.video_learning_completed && setActiveTab("tasks")}
                 >
                   <div className="flex items-start gap-3">
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       todayProgress?.video_learning_completed 
-                        ? "bg-gradient-to-br from-green-400 to-green-500 shadow-sm" 
-                        : "bg-muted"
+                        ? "bg-gradient-to-br from-teal-400 to-cyan-500 shadow-sm" 
+                        : "bg-teal-100/80 dark:bg-teal-900/30"
                     }`}>
                       {todayProgress?.video_learning_completed ? (
                         <CheckCircle2 className="w-5 h-5 text-white" />
                       ) : (
-                        <Play className="w-5 h-5 text-muted-foreground" />
+                        <Play className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <h4 className="text-sm font-semibold">今日成长课程</h4>
+                        <h4 className="text-sm font-semibold text-teal-800 dark:text-teal-200">今日成长课程</h4>
                         {todayProgress?.videos_watched_count > 0 && (
                           <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
                             {todayProgress.videos_watched_count}个
@@ -430,7 +430,7 @@ const CampCheckIn = () => {
                           }}
                           size="sm"
                           variant="outline"
-                          className="mt-2.5 h-7 text-xs"
+                          className="mt-2.5 h-7 text-xs border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-300"
                         >
                           <Play className="w-3 h-3 mr-1" />
                           查看推荐
@@ -442,8 +442,8 @@ const CampCheckIn = () => {
               </div>
 
               {/* 提示信息 */}
-              <Card className="p-3 bg-muted/30 border-dashed border-muted-foreground/20">
-                <p className="text-xs text-muted-foreground text-center leading-relaxed">
+              <Card className="p-3 bg-teal-50/50 border-dashed border-teal-200/50 dark:bg-teal-950/20 dark:border-teal-800/30">
+                <p className="text-xs text-teal-700/70 dark:text-teal-300/70 text-center leading-relaxed">
                   💡 完成打卡自动生成，分享反思获得更多社区支持
                 </p>
               </Card>
