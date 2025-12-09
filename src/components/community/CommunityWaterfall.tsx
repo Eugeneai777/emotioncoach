@@ -557,13 +557,18 @@ const CommunityWaterfall = () => {
     };
   }, [handleIntersection]);
 
-  // 瀑布流布局：将帖子分配到两列 - 使用 useMemo 优化
+  // 瀑布流布局：将帖子分配到两列 - 使用 useMemo 优化，并去重
   const { leftPosts, rightPosts } = useMemo(() => {
     const left: Post[] = [];
     const right: Post[] = [];
+    const seenIds = new Set<string>();
     
     posts.forEach((post, index) => {
-      if (index % 2 === 0) {
+      // 跳过重复的帖子ID
+      if (seenIds.has(post.id)) return;
+      seenIds.add(post.id);
+      
+      if (left.length <= right.length) {
         left.push(post);
       } else {
         right.push(post);
