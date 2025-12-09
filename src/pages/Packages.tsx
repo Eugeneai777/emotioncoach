@@ -34,7 +34,7 @@ export default function Packages() {
     // 训练营详情页
     if (packageInfo.key.startsWith('camp-')) {
       const campId = packageInfo.key.replace('camp-', '');
-      navigate(`/camp-templates/${campId}`);
+      navigate(`/camp-template/${campId}`);
       return;
     }
     // 需要登录
