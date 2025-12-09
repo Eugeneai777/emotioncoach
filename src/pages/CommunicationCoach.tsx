@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
+import { UnifiedStageProgress } from "@/components/coach/UnifiedStageProgress";
 import { CommunicationDifficultyDialog } from "@/components/communication/CommunicationDifficultyDialog";
 import { CommunicationNotificationsModule } from "@/components/communication/CommunicationNotificationsModule";
 import { CommunicationTrainingCampModule } from "@/components/communication/CommunicationTrainingCampModule";
 import { CoachCommunity } from "@/components/coach/CoachCommunity";
-import { CommunicationStageProgress } from "@/components/coach/CommunicationStageProgress";
 import { useCommunicationChat } from "@/hooks/useCommunicationChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useToast } from "@/hooks/use-toast";
@@ -115,7 +115,7 @@ const CommunicationCoach = () => {
         }
         stageProgress={
           messages.length > 0 ? (
-            <CommunicationStageProgress currentStage={currentStage} />
+            <UnifiedStageProgress coachType="communication" currentStage={currentStage} />
           ) : undefined
         }
         notifications={<CommunicationNotificationsModule />}
