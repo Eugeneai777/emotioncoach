@@ -124,7 +124,7 @@ export function PosterGenerator({ templateKey, partnerId, entryType, onBack }: P
       {/* Preview Area */}
       <Card className="overflow-hidden">
         <CardContent className="p-4">
-          <div className="aspect-[9/16] max-w-[320px] mx-auto bg-gray-100 rounded-xl overflow-hidden relative">
+          <div className="flex justify-center">
             <PosterPreview
               ref={posterRef}
               template={template}
