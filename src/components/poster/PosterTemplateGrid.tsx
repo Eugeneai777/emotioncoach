@@ -43,12 +43,28 @@ const posterTemplates: PosterTemplate[] = [
     sellingPoints: ['化解冲突', '建立边界', '提升影响力']
   },
   {
-    key: 'training_camp',
-    name: '训练营',
-    emoji: '🏕️',
-    tagline: '21天习惯养成',
-    gradient: 'from-orange-400 to-red-500',
-    sellingPoints: ['每日打卡', '社群陪伴', '视频学习']
+    key: 'story_coach',
+    name: '故事教练',
+    emoji: '🌟',
+    tagline: '把经历变成动人的成长故事',
+    gradient: 'from-orange-400 to-amber-500',
+    sellingPoints: ['英雄之旅框架', '3种创作模式', 'AI即时生成']
+  },
+  {
+    key: 'emotion_journal_21',
+    name: '情绪日记训练营',
+    emoji: '📝',
+    tagline: '每天10分钟，让情绪变成你的力量',
+    gradient: 'from-purple-400 to-pink-500',
+    sellingPoints: ['21天系统训练', '每日情绪复盘', '焦虑下降31%']
+  },
+  {
+    key: 'parent_emotion_21',
+    name: '青少年困境突破营',
+    emoji: '👨‍👩‍👧',
+    tagline: '教你看懂孩子的情绪，让孩子愿意靠近你',
+    gradient: 'from-emerald-400 to-teal-500',
+    sellingPoints: ['父母三力模型', '亲子冲突减少', '21天突破']
   },
   {
     key: '365_member',
