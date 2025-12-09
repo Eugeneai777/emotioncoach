@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Partner } from "@/hooks/usePartner";
-import { TrendingUp, Users, Wallet, Gift, Upload, ImageIcon, BarChart3 } from "lucide-react";
+import { TrendingUp, Users, Wallet, Gift, Upload, ImageIcon, BarChart3, Palette } from "lucide-react";
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { EntryTypeSelector } from "./EntryTypeSelector";
 import { PartnerLevelProgress } from "./PartnerLevelProgress";
 import { StudentList } from "./StudentList";
@@ -23,6 +24,7 @@ interface YoujinPartnerDashboardProps {
 }
 
 export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps) {
+  const navigate = useNavigate();
   const [groupQrUrl, setGroupQrUrl] = useState(partner.wecom_group_qrcode_url || '');
   const [groupName, setGroupName] = useState(partner.wecom_group_name || '有劲学员群');
   const [uploading, setUploading] = useState(false);
@@ -182,6 +184,29 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
             currentEntryType={partner.default_entry_type || 'free'}
             prepurchaseCount={partner.prepurchase_count || 0}
           />
+          
+          {/* 海报生成中心入口 */}
+          <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
+                    <Palette className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-orange-800">推广海报生成中心</h4>
+                    <p className="text-xs text-orange-600">AI智能生成专属推广海报</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => navigate('/poster-center')}
+                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                >
+                  生成海报
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
           
           <div className="p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border border-teal-100">
             <h4 className="font-medium text-teal-800 mb-2">💡 如何推广</h4>
