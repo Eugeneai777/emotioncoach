@@ -2,10 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   ChevronDown, Sparkles, 
-  History, ShoppingBag, LogOut, User, Settings, Menu, RotateCcw, Wallet, Clock, Bell, Tent, Users, Target
+  History, ShoppingBag, LogOut, User, Menu, RotateCcw, Wallet, Clock, Bell, Tent, Users, Target
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +24,7 @@ interface CoachHeaderProps {
   onRestart: () => void;
   onSignOut: () => void;
   showNotificationCenter?: boolean;
-  currentCoachKey?: string; // 用于高亮当前教练
+  currentCoachKey?: string;
 }
 
 export const CoachHeader = ({
@@ -41,20 +40,7 @@ export const CoachHeader = ({
   currentCoachKey
 }: CoachHeaderProps) => {
   const navigate = useNavigate();
-
-  const coachesQuery = useQuery({
-    queryKey: ["coach-templates"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("coach_templates")
-        .select("*")
-        .eq("is_active", true)
-        .order("display_order");
-      
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: coaches } = useActiveCoachTemplates();
 
   const getGradientClass = (color: string) => {
     const gradients: Record<string, string> = {
@@ -165,7 +151,7 @@ export const CoachHeader = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52 bg-card border shadow-lg z-50">
-                {coachesQuery.data?.map((coach) => (
+              {coaches?.map((coach) => (
                   <DropdownMenuItem
                     key={coach.id}
                     onClick={() => navigate(coach.page_route)}
