@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Partner } from "@/hooks/usePartner";
-import { TrendingUp, Users, Wallet, Gift, QrCode, List, Upload, ImageIcon } from "lucide-react";
+import { TrendingUp, Users, Wallet, Gift, QrCode, List, Upload, ImageIcon, BarChart3 } from "lucide-react";
 import { useState, useRef } from "react";
 import { PartnerQRGenerator } from "./PartnerQRGenerator";
 import { RedemptionCodeManager } from "./RedemptionCodeManager";
@@ -13,6 +13,7 @@ import { StudentList } from "./StudentList";
 import { ConversionFunnel } from "./ConversionFunnel";
 import { ConversionAlerts } from "./ConversionAlerts";
 import { ConversionGuide } from "./ConversionGuide";
+import { PartnerAnalytics } from "./PartnerAnalytics";
 import { getPartnerLevel } from "@/config/partnerLevels";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -170,10 +171,11 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
 
       {/* 主要功能区 - Tabs */}
       <Tabs defaultValue="tools" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="tools">推广工具</TabsTrigger>
           <TabsTrigger value="group">群管理</TabsTrigger>
           <TabsTrigger value="students">我的学员</TabsTrigger>
+          <TabsTrigger value="analytics">数据分析</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tools" className="space-y-4">
@@ -280,6 +282,10 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
           <ConversionAlerts partnerId={partner.id} />
           <ConversionGuide />
           <StudentList partnerId={partner.id} />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <PartnerAnalytics partnerId={partner.id} />
         </TabsContent>
       </Tabs>
 

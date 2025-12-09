@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Search, Calendar, CheckCircle2, Crown, UserPlus } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users, Search, Calendar, CheckCircle2, Crown, UserPlus, ChevronDown, ChevronUp, Download, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { StudentTimeline } from "./StudentTimeline";
+import { toast } from "sonner";
 
 interface Student {
   id: string;
@@ -26,10 +31,14 @@ interface StudentListProps {
   partnerId: string;
 }
 
+type FilterStatus = 'all' | 'not_joined' | 'in_group' | 'purchased' | 'partner';
+
 export function StudentList({ partnerId }: StudentListProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     loadStudents();
@@ -95,10 +104,51 @@ export function StudentList({ partnerId }: StudentListProps) {
   };
 
   const filteredStudents = students.filter(student => {
-    if (!searchQuery) return true;
-    const name = student.profile?.display_name || '';
-    return name.toLowerCase().includes(searchQuery.toLowerCase());
+    // 搜索过滤
+    if (searchQuery) {
+      const name = student.profile?.display_name || '';
+      if (!name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    }
+
+    // 状态过滤
+    if (filterStatus === 'not_joined') {
+      return !student.has_joined_group;
+    }
+    if (filterStatus === 'in_group') {
+      return student.has_joined_group && student.conversion_status !== 'purchased_365' && student.conversion_status !== 'became_partner';
+    }
+    if (filterStatus === 'purchased') {
+      return student.conversion_status === 'purchased_365';
+    }
+    if (filterStatus === 'partner') {
+      return student.conversion_status === 'became_partner';
+    }
+
+    return true;
   });
+
+  const handleExport = () => {
+    const csvContent = [
+      ['昵称', '加入时间', '入群状态', '转化状态'].join(','),
+      ...students.map(s => [
+        s.profile?.display_name || '未设置',
+        format(new Date(s.created_at), 'yyyy-MM-dd HH:mm'),
+        s.has_joined_group ? '已入群' : '未入群',
+        s.conversion_status === 'became_partner' ? '合伙人' 
+          : s.conversion_status === 'purchased_365' ? '365会员' 
+          : '体验中'
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `学员列表_${format(new Date(), 'yyyyMMdd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('导出成功');
+  };
 
   if (loading) {
     return (
@@ -126,49 +176,94 @@ export function StudentList({ partnerId }: StudentListProps) {
 
   return (
     <div className="space-y-4">
-      {/* 搜索框 */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input 
-          placeholder="搜索学员..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
-        />
+      {/* 搜索和筛选 */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input 
+            placeholder="搜索学员..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
+          <SelectTrigger className="w-28">
+            <Filter className="w-4 h-4 mr-1" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部</SelectItem>
+            <SelectItem value="not_joined">未入群</SelectItem>
+            <SelectItem value="in_group">已入群</SelectItem>
+            <SelectItem value="purchased">365会员</SelectItem>
+            <SelectItem value="partner">合伙人</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button variant="outline" size="icon" onClick={handleExport} title="导出">
+          <Download className="w-4 h-4" />
+        </Button>
       </div>
 
       {/* 学员列表 */}
       <div className="space-y-2">
         {filteredStudents.map(student => (
-          <Card key={student.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">
-                    <span className="text-lg">
-                      {student.profile?.display_name?.[0] || '👤'}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="font-medium">
-                      {student.profile?.display_name || '未设置昵称'}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Calendar className="w-3 h-3" />
-                      {format(new Date(student.created_at), "MM月dd日加入", { locale: zhCN })}
+          <Collapsible 
+            key={student.id}
+            open={expandedId === student.id}
+            onOpenChange={(open) => setExpandedId(open ? student.id : null)}
+          >
+            <Card className="hover:shadow-md transition-shadow overflow-hidden">
+              <CollapsibleTrigger className="w-full">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">
+                        <span className="text-lg">
+                          {student.profile?.display_name?.[0] || '👤'}
+                        </span>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium">
+                          {student.profile?.display_name || '未设置昵称'}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Calendar className="w-3 h-3" />
+                          {format(new Date(student.created_at), "MM月dd日加入", { locale: zhCN })}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(student.conversion_status, student.has_joined_group)}
+                      {expandedId === student.id 
+                        ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                        : <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      }
                     </div>
                   </div>
+                </CardContent>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent>
+                <div className="border-t bg-muted/20">
+                  <StudentTimeline 
+                    studentId={student.referred_user_id}
+                    registeredAt={student.created_at}
+                    hasJoinedGroup={student.has_joined_group}
+                    joinedGroupAt={student.joined_group_at}
+                    joinedCampAt={student.joined_camp_at}
+                    conversionStatus={student.conversion_status}
+                  />
                 </div>
-                {getStatusBadge(student.conversion_status, student.has_joined_group)}
-              </div>
-            </CardContent>
-          </Card>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
         ))}
       </div>
 
       {/* 统计 */}
       <p className="text-xs text-muted-foreground text-center">
-        共 {students.length} 位学员
+        显示 {filteredStudents.length} / 共 {students.length} 位学员
       </p>
     </div>
   );
