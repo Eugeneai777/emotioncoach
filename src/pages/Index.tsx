@@ -6,6 +6,7 @@ import { EmotionAlert } from "@/components/EmotionAlert";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { EmotionIntensitySelector } from "@/components/EmotionIntensitySelector";
 import { IntensityReminderDialog } from "@/components/IntensityReminderDialog";
+import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 
 import { TrainingCampCard } from "@/components/camp/TrainingCampCard";
@@ -658,9 +659,15 @@ const Index = () => {
         notifications={null}
         campRecommendation={campRecommendationContent}
         communityContent={<CommunityWaterfall />}
-        scenarioChips={coachConfig?.enable_scenarios && coachConfig?.scenarios ? coachConfig.scenarios as any[] : undefined}
-        scenarioOnSelect={(prompt) => setInput(prompt)}
-        scenarioPrimaryColor={coachConfig?.primary_color}
+        scenarioChips={
+          coachConfig?.enable_scenarios && coachConfig?.scenarios ? (
+            <CoachScenarioChips
+              scenarios={coachConfig.scenarios as any[]}
+              onSelectScenario={(prompt) => setInput(prompt)}
+              primaryColor={coachConfig.primary_color}
+            />
+          ) : undefined
+        }
         intensitySelector={intensitySelectorContent}
         dailyReminderContent={dailyReminderContent}
         showDailyReminder={showReminder}
