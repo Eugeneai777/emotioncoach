@@ -1,9 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  ChevronDown, Sparkles, 
-  History, ShoppingBag, LogOut, User, Menu, RotateCcw, Wallet, Clock, Bell, Tent, Users, Target
-} from "lucide-react";
+import { ChevronDown, Sparkles, History, ShoppingBag, Menu, RotateCcw, Target } from "lucide-react";
 import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
 import {
   DropdownMenu,
@@ -11,9 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
-
+import { hamburgerMenuItems } from "@/config/hamburgerMenuConfig";
+import { cn } from "@/lib/utils";
+import { Fragment } from "react";
 interface CoachHeaderProps {
   emoji: string;
   primaryColor: string;
@@ -40,7 +40,18 @@ export const CoachHeader = ({
   currentCoachKey
 }: CoachHeaderProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: coaches } = useActiveCoachTemplates();
+
+  const isActiveRoute = (path: string) => {
+    if (!path) return false;
+    const [pathname, search] = path.split('?');
+    if (location.pathname !== pathname) return false;
+    if (search) {
+      return location.search.includes(search);
+    }
+    return true;
+  };
 
   const getGradientClass = (color: string) => {
     const gradients: Record<string, string> = {
@@ -80,44 +91,33 @@ export const CoachHeader = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-card border shadow-lg z-50">
-                <DropdownMenuItem onClick={() => navigate("/settings?tab=profile")} className="cursor-pointer hover:bg-accent">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>个人资料</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/settings?tab=account")} className="cursor-pointer hover:bg-accent">
-                  <Wallet className="mr-2 h-4 w-4" />
-                  <span>账户</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/settings?tab=reminders")} className="cursor-pointer hover:bg-accent">
-                  <Clock className="mr-2 h-4 w-4" />
-                  <span>提醒设置</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/settings?tab=notifications")} className="cursor-pointer hover:bg-accent">
-                  <Bell className="mr-2 h-4 w-4" />
-                  <span>通知偏好</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/settings?tab=camp")} className="cursor-pointer hover:bg-accent">
-                  <Tent className="mr-2 h-4 w-4" />
-                  <span>训练营</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/settings?tab=companion")} className="cursor-pointer hover:bg-accent">
-                  <Users className="mr-2 h-4 w-4" />
-                  <span>情绪伙伴</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-border/50" />
-                <DropdownMenuItem onClick={() => navigate("/packages")} className="cursor-pointer hover:bg-accent">
-                  <ShoppingBag className="mr-2 h-4 w-4" />
-                  <span>全部产品</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/partner")} className="cursor-pointer hover:bg-accent">
-                  <Users className="mr-2 h-4 w-4" />
-                  <span>合伙人中心</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-border/50" />
-                <DropdownMenuItem onClick={onSignOut} className="cursor-pointer hover:bg-accent text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>退出登录</span>
-                </DropdownMenuItem>
+                {hamburgerMenuItems.map((item, index) => {
+                  const prevItem = hamburgerMenuItems[index - 1];
+                  const showSeparator = index > 0 && prevItem?.group !== item.group;
+                  const Icon = item.icon;
+
+                  return (
+                    <Fragment key={item.id}>
+                      {showSeparator && <DropdownMenuSeparator className="bg-border/50" />}
+                      {item.groupLabel && (
+                        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal px-2 py-1">
+                          {item.groupLabel}
+                        </DropdownMenuLabel>
+                      )}
+                      <DropdownMenuItem
+                        onClick={() => item.path ? navigate(item.path) : onSignOut()}
+                        className={cn(
+                          "cursor-pointer hover:bg-accent",
+                          item.danger && "text-destructive",
+                          isActiveRoute(item.path) && "bg-accent font-medium"
+                        )}
+                      >
+                        <Icon className="mr-2 h-4 w-4" />
+                        <span>{item.label}</span>
+                      </DropdownMenuItem>
+                    </Fragment>
+                  );
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
 
