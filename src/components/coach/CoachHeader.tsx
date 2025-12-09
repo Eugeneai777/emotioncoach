@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
-  Target, ChevronDown, Sparkles, 
+  ChevronDown, Sparkles, 
   History, ShoppingBag, LogOut, User, Settings
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -134,7 +134,7 @@ export const CoachHeader = ({
                 variant="ghost"
                 className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
               >
-                <Target className="w-4 h-4" />
+                <span className="w-4 h-4 flex items-center justify-center text-sm">◎</span>
                 <span className="hidden md:inline">教练空间</span>
                 <ChevronDown className="w-3 h-3" />
               </Button>
@@ -160,7 +160,7 @@ export const CoachHeader = ({
                 onClick={() => navigate("/energy-studio#coach")}
                 className="gap-2 text-primary cursor-pointer hover:bg-accent"
               >
-                <Target className="w-4 h-4" />
+                <span className="w-4 h-4 flex items-center justify-center text-sm">◎</span>
                 <span className="font-medium">查看全部教练</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
