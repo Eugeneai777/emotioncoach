@@ -33,11 +33,11 @@ const EmotionButtonShareDialog: React.FC<EmotionButtonShareDialogProps> = ({
     
     setIsGenerating(true);
     try {
-      // 临时让元素可见以确保正确渲染
+      // 临时让元素可见以确保正确渲染 - 使用安全边距防止截断
       if (container) {
         container.style.position = 'fixed';
-        container.style.left = '0';
-        container.style.top = '0';
+        container.style.left = '16px';
+        container.style.top = '16px';
         container.style.zIndex = '9999';
         container.style.opacity = '1';
         container.style.visibility = 'visible';
@@ -54,8 +54,12 @@ const EmotionButtonShareDialog: React.FC<EmotionButtonShareDialogProps> = ({
         logging: false,
         width: exportRef.current.scrollWidth,
         height: exportRef.current.scrollHeight,
-        windowWidth: exportRef.current.scrollWidth,
-        windowHeight: exportRef.current.scrollHeight,
+        windowWidth: exportRef.current.scrollWidth + 100,
+        windowHeight: exportRef.current.scrollHeight + 100,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
       });
 
       const blob = await new Promise<Blob>((resolve) => {

@@ -57,18 +57,18 @@ const ShareButton = ({ post }: ShareButtonProps) => {
     try {
       setSharing(true);
 
-      // 临时让元素可见以确保正确渲染
+      // 临时让元素可见以确保正确渲染 - 使用安全边距防止截断
       if (container) {
         container.style.position = 'fixed';
-        container.style.left = '0';
-        container.style.top = '0';
+        container.style.left = '16px';
+        container.style.top = '16px';
         container.style.zIndex = '9999';
         container.style.opacity = '1';
         container.style.visibility = 'visible';
       }
 
-      // 等待渲染稳定
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // 等待渲染稳定 - 移动端需要更长时间
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       // 生成图片
       const canvas = await html2canvas(cardRef.current, {
@@ -80,8 +80,12 @@ const ShareButton = ({ post }: ShareButtonProps) => {
         imageTimeout: 15000,
         width: cardRef.current.scrollWidth,
         height: cardRef.current.scrollHeight,
-        windowWidth: cardRef.current.scrollWidth,
-        windowHeight: cardRef.current.scrollHeight,
+        windowWidth: cardRef.current.scrollWidth + 100,
+        windowHeight: cardRef.current.scrollHeight + 100,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
         // 强制使用系统字体，避免渲染异常
         onclone: (clonedDoc) => {
           const clonedElement = clonedDoc.body.querySelector('[data-share-card]');
