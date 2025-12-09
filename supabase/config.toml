@@ -187,7 +187,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.customer-support]
-verify_jwt = false
+verify_jwt = true
 
 [functions.realtime-token]
 verify_jwt = true
