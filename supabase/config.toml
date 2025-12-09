@@ -193,7 +193,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.log-api-cost]
-verify_jwt = false
+verify_jwt = true
 
 [functions.check-cost-alerts]
 verify_jwt = false
