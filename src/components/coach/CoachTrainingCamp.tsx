@@ -1,79 +1,89 @@
 import { Button } from "@/components/ui/button";
-import { Sparkles, Bell, Loader2 } from "lucide-react";
+import { Sparkles, Heart } from "lucide-react";
 import { TrainingCampCard } from "@/components/camp/TrainingCampCard";
-import { NotificationCard } from "@/components/NotificationCard";
 import { TrainingCamp } from "@/types/trainingCamp";
-
-interface Notification {
-  id: string;
-  notification_type: string;
-  title: string;
-  message: string;
-  icon?: string;
-  action_text?: string;
-  action_type?: string;
-  action_data?: any;
-  priority: number;
-  is_read: boolean;
-  is_dismissed: boolean;
-  created_at: string;
-}
 
 interface CoachTrainingCampProps {
   activeCamp: TrainingCamp | null;
   onStartCamp: () => void;
   onViewDetails: () => void;
   onCheckIn?: () => void;
-  notifications?: Notification[];
-  notificationsLoading?: boolean;
-  currentNotificationIndex?: number;
-  onNextNotification?: () => void;
-  onMarkAsRead?: (id: string) => void;
-  onDeleteNotification?: (id: string) => void;
-  colorTheme?: 'default' | 'purple' | 'green';
-  coachType?: string;
+  colorTheme?: 'green' | 'purple' | 'blue' | 'orange';
+  campName?: string;
+  campDescription?: string;
 }
+
+const themeStyles = {
+  green: {
+    gradient: 'bg-gradient-to-br from-teal-50/80 via-cyan-50/50 to-blue-50/30 dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10',
+    border: 'border-teal-200/40 dark:border-teal-800/30',
+    title: 'text-teal-800 dark:text-teal-200',
+    button: 'bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white',
+    outline: 'border-teal-300/50 text-teal-700 hover:bg-teal-50/50 dark:border-teal-700/50 dark:text-teal-400',
+    icon: Sparkles
+  },
+  purple: {
+    gradient: 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/10',
+    border: 'border-purple-200/50 dark:border-purple-800/30',
+    title: 'bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent',
+    button: 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white',
+    outline: 'border-purple-300 text-purple-600 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400',
+    icon: Heart
+  },
+  blue: {
+    gradient: 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/10',
+    border: 'border-blue-200/50 dark:border-blue-800/30',
+    title: 'text-blue-800 dark:text-blue-200',
+    button: 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white',
+    outline: 'border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400',
+    icon: Sparkles
+  },
+  orange: {
+    gradient: 'bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/10',
+    border: 'border-orange-200/50 dark:border-orange-800/30',
+    title: 'text-orange-800 dark:text-orange-200',
+    button: 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white',
+    outline: 'border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400',
+    icon: Sparkles
+  }
+};
 
 export const CoachTrainingCamp = ({
   activeCamp,
   onStartCamp,
   onViewDetails,
   onCheckIn,
-  notifications = [],
-  notificationsLoading = false,
-  currentNotificationIndex = 0,
-  onNextNotification,
-  onMarkAsRead,
-  onDeleteNotification,
   colorTheme = "green",
-  coachType = "情绪教练"
+  campName = "21天训练营",
+  campDescription = "用21天养成习惯，获得专属徽章和成长洞察"
 }: CoachTrainingCampProps) => {
+  const theme = themeStyles[colorTheme];
+  const IconComponent = theme.icon;
+
   if (!activeCamp) {
     return (
       <div className="w-full animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-        <div className="bg-gradient-to-br from-teal-50/80 via-cyan-50/50 to-blue-50/30 
-          border border-teal-200/40 rounded-xl p-5 shadow-sm
-          dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10 dark:border-teal-800/30">
+        <div className={`${theme.gradient} ${theme.border} border rounded-xl p-5 shadow-sm`}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2 text-teal-800 dark:text-teal-200">
-              🏕️ 21天训练营
+            <h3 className={`text-lg font-semibold flex items-center gap-2 ${theme.title}`}>
+              🏕️ {campName}
             </h3>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            用21天养成习惯，获得专属徽章和成长洞察
+            {campDescription}
           </p>
           <div className="flex gap-3">
             <Button 
               onClick={onStartCamp} 
-              className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white"
+              className={`flex-1 ${theme.button}`}
             >
-              <Sparkles className="h-4 w-4 mr-2" />
+              <IconComponent className="h-4 w-4 mr-2" />
               开启训练营
             </Button>
             <Button 
               variant="outline" 
               onClick={onViewDetails}
-              className="flex-1 border-teal-300/50 text-teal-700 hover:bg-teal-50/50 dark:border-teal-700/50 dark:text-teal-400"
+              className={`flex-1 ${theme.outline}`}
             >
               了解详情
             </Button>
@@ -84,61 +94,8 @@ export const CoachTrainingCamp = ({
   }
 
   return (
-    <div className="w-full space-y-4 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+    <div className="w-full animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
       <TrainingCampCard camp={activeCamp} onCheckIn={onCheckIn} />
-      
-      {/* Smart Notifications Display */}
-      {notifications.length > 0 && (
-        <div className="bg-gradient-to-br from-teal-50/60 via-cyan-50/40 to-blue-50/30 
-          border border-teal-200/40 rounded-xl p-4 shadow-sm
-          dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10 dark:border-teal-800/30">
-          <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
-            <Bell className="h-4 w-4 text-teal-600" />
-            <span className="text-teal-700 dark:text-teal-400">智能提醒</span>
-            <span className="text-xs px-2 py-0.5 bg-teal-100/50 text-teal-600 rounded-full dark:bg-teal-900/30 dark:text-teal-400">
-              {coachType}
-            </span>
-          </h4>
-          
-          {notificationsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-teal-500" />
-            </div>
-          ) : notifications.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              暂无新提醒
-            </p>
-          ) : (
-            <div className="space-y-3">
-              <NotificationCard
-                key={notifications[currentNotificationIndex].id}
-                notification={notifications[currentNotificationIndex]}
-                onClick={() => onMarkAsRead?.(notifications[currentNotificationIndex].id)}
-                onDelete={() => {
-                  onDeleteNotification?.(notifications[currentNotificationIndex].id);
-                }}
-                colorTheme={colorTheme}
-              />
-              
-              {notifications.length > 1 && onNextNotification && (
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-xs text-teal-600/70 dark:text-teal-400/70">
-                    {currentNotificationIndex + 1} / {notifications.length}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onNextNotification}
-                    className="h-7 text-xs border-teal-300/50 text-teal-600 hover:bg-teal-50/50 dark:border-teal-700/50 dark:text-teal-400"
-                  >
-                    下一条
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };
