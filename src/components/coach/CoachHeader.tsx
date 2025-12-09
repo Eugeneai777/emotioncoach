@@ -13,7 +13,9 @@ import {
 import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
 import { hamburgerMenuItems } from "@/config/hamburgerMenuConfig";
 import { cn } from "@/lib/utils";
-import { Fragment } from "react";
+import { Fragment, useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 interface CoachHeaderProps {
   emoji: string;
   primaryColor: string;
@@ -42,6 +44,30 @@ export const CoachHeader = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { data: coaches } = useActiveCoachTemplates();
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      setIsAdmin(!!data);
+    };
+    checkAdminRole();
+  }, [user]);
+
+  const filteredMenuItems = hamburgerMenuItems.filter(item => {
+    if (item.requireAdmin && !isAdmin) return false;
+    return true;
+  });
 
   const isActiveRoute = (path: string) => {
     if (!path) return false;
@@ -91,8 +117,8 @@ export const CoachHeader = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-card border shadow-lg z-50">
-                {hamburgerMenuItems.map((item, index) => {
-                  const prevItem = hamburgerMenuItems[index - 1];
+                {filteredMenuItems.map((item, index) => {
+                  const prevItem = filteredMenuItems[index - 1];
                   const showSeparator = index > 0 && prevItem?.group !== item.group;
                   const Icon = item.icon;
 
