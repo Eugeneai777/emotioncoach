@@ -12,6 +12,7 @@ import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { TrainingCampCard } from "@/components/camp/TrainingCampCard";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
+import { CoachTrainingCamp } from "@/components/coach/CoachTrainingCamp";
 
 import CampCheckInSuccessDialog from "@/components/camp/CampCheckInSuccessDialog";
 import CommunityWaterfall from "@/components/community/CommunityWaterfall";
@@ -490,7 +491,15 @@ const Index = () => {
   // Build training camp content
   const trainingCampContent = activeCamp ? (
     <div className="w-full mt-6 space-y-4 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-      <TrainingCampCard camp={activeCamp} onCheckIn={handleCheckIn} />
+      <CoachTrainingCamp
+        activeCamp={activeCamp}
+        onStartCamp={() => setShowStartCamp(true)}
+        onViewDetails={() => navigate("/camps")}
+        onCheckIn={handleCheckIn}
+        colorTheme="green"
+        campName="21天情绪日记训练营"
+        campDescription="用21天养成情绪记录习惯，获得专属徽章和成长洞察"
+      />
       
       <div className="w-full animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
         <EmotionAlert />
@@ -511,30 +520,15 @@ const Index = () => {
 
   // Build camp recommendation content
   const campRecommendationContent = !activeCamp ? (
-    <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-      <div className="bg-card border border-border rounded-card-lg p-card-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-        <div className="flex items-center justify-between mb-card-gap">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            🏕️ 21天情绪日记训练营
-          </h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-card">
-          用21天养成情绪记录习惯，获得专属徽章和成长洞察
-        </p>
-        <div className="flex gap-3">
-          <Button onClick={() => setShowStartCamp(true)} className="flex-1">
-            <Sparkles className="h-4 w-4 mr-2" />
-            开启训练营
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/camps")}
-            className="flex-1"
-          >
-            了解详情
-          </Button>
-        </div>
-      </div>
+    <div className="w-full mt-6">
+      <CoachTrainingCamp
+        activeCamp={null}
+        onStartCamp={() => setShowStartCamp(true)}
+        onViewDetails={() => navigate("/camps")}
+        colorTheme="green"
+        campName="21天情绪日记训练营"
+        campDescription="用21天养成情绪记录习惯，获得专属徽章和成长洞察"
+      />
     </div>
   ) : null;
 

@@ -10,6 +10,7 @@ import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
+import { CoachTrainingCamp } from "@/components/coach/CoachTrainingCamp";
 import CommunityWaterfall from "@/components/community/CommunityWaterfall";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -183,39 +184,21 @@ ${briefingData.growth_story || '暂无记录'}
 
   // Training Camp Module
   const trainingCampModule = (
-    <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-      <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50 rounded-card-lg p-card-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-        <div className="flex items-center justify-between mb-card-gap">
-          <h3 className="text-lg font-semibold flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            🏕️ 21天青少年困境突破营
-          </h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-card">
-          通过父母三力模型（稳定力、洞察力、修复力），21天系统提升亲子关系
-        </p>
-        <div className="flex gap-3">
-          <Button 
-            onClick={() => {
-              if (hasJoinedParentCamp && existingParentCamp) {
-                navigate(`/camp/${existingParentCamp.id}`);
-              } else {
-                setShowStartDialog(true);
-              }
-            }} 
-            className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-          >
-            <Heart className="h-4 w-4 mr-2" />
-            {hasJoinedParentCamp ? '进入训练营' : '加入训练营'}
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/parent-camp")}
-            className="flex-1 border-purple-300 text-purple-600 hover:bg-purple-50"
-          >
-            了解详情
-          </Button>
-        </div>
-      </div>
+    <div className="w-full mt-6">
+      <CoachTrainingCamp
+        activeCamp={null}
+        onStartCamp={() => {
+          if (hasJoinedParentCamp && existingParentCamp) {
+            navigate(`/camp/${existingParentCamp.id}`);
+          } else {
+            setShowStartDialog(true);
+          }
+        }}
+        onViewDetails={() => navigate("/parent-camp")}
+        colorTheme="purple"
+        campName="21天青少年困境突破营"
+        campDescription="通过父母三力模型（稳定力、洞察力、修复力），21天系统提升亲子关系"
+      />
     </div>
   );
 
