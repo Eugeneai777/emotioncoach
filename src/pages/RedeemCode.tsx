@@ -310,6 +310,9 @@ export default function RedeemCode() {
   const displayPrice = codeInfo?.entry_price ?? 9.9;
   const displayQuota = codeInfo?.quota_amount ?? 50;
   const isFree = codeInfo?.entry_type === 'free';
+  
+  // 判断是否从URL获取到有效兑换码
+  const hasCodeFromUrl = searchParams.get('code')?.length === 6;
 
   // 显示自动兑换中的加载状态
   if (autoRedeeming) {
@@ -369,22 +372,24 @@ export default function RedeemCode() {
             )}
           </div>
 
-          {/* 兑换码输入 */}
-          <div className="space-y-2">
-            <Label htmlFor="code">兑换码</Label>
-            <Input
-              id="code"
-              placeholder="请输入6位兑换码"
-              value={code}
-              onChange={(e) => handleCodeChange(e.target.value)}
-              maxLength={6}
-              className="text-center text-lg font-mono tracking-wider"
-              disabled={loading || checking}
-            />
-            <p className="text-xs text-muted-foreground text-center">
-              {checking ? '正在检查兑换码...' : '兑换码由有劲合伙人提供'}
-            </p>
-          </div>
+          {/* 兑换码输入 - 只有在URL没有带兑换码时才显示 */}
+          {!hasCodeFromUrl && (
+            <div className="space-y-2">
+              <Label htmlFor="code">兑换码</Label>
+              <Input
+                id="code"
+                placeholder="请输入6位兑换码"
+                value={code}
+                onChange={(e) => handleCodeChange(e.target.value)}
+                maxLength={6}
+                className="text-center text-lg font-mono tracking-wider"
+                disabled={loading || checking}
+              />
+              <p className="text-xs text-muted-foreground text-center">
+                {checking ? '正在检查兑换码...' : '兑换码由有劲合伙人提供'}
+              </p>
+            </div>
+          )}
 
           {/* 兑换按钮 */}
           {user ? (
