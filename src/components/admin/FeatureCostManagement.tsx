@@ -460,11 +460,13 @@ const FeatureCostManagement = () => {
                                 
                                 return (
                                   <Collapsible key={key} open={isExpanded} onOpenChange={() => toggleSubCategory(key)}>
-                                    <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 bg-muted/30 rounded-md hover:bg-muted/50 transition-colors">
-                                      {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                                      <SubIcon className="h-4 w-4 text-muted-foreground" />
-                                      <span className="text-sm font-medium">{subConfig?.label || key}</span>
-                                      <Badge variant="outline" className="text-xs">{subItems.length}项</Badge>
+                                    <CollapsibleTrigger asChild>
+                                      <div className="flex items-center gap-2 w-full p-2 bg-muted/30 rounded-md hover:bg-muted/50 transition-colors cursor-pointer">
+                                        {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                                        <SubIcon className="h-4 w-4 text-muted-foreground" />
+                                        <span className="text-sm font-medium">{subConfig?.label || key}</span>
+                                        <Badge variant="outline" className="text-xs">{subItems.length}项</Badge>
+                                      </div>
                                     </CollapsibleTrigger>
                                     <CollapsibleContent>
                                       <div className="border rounded-lg overflow-hidden mt-2">

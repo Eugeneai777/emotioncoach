@@ -347,11 +347,13 @@ export function PackageFeatureSettingsDialog({ packageId, open, onOpenChange }: 
                 
                 return (
                   <Collapsible key={category} open={isExpanded} onOpenChange={() => toggleCategory(category)}>
-                    <CollapsibleTrigger className="flex items-center gap-2 w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
-                      {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                      <span className={config.color}>{config.icon}</span>
-                      <span className="font-medium">{config.label}</span>
-                      <span className="text-muted-foreground text-sm">({totalCount}个)</span>
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center gap-2 w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        <span className={config.color}>{config.icon}</span>
+                        <span className="font-medium">{config.label}</span>
+                        <span className="text-muted-foreground text-sm">({totalCount}个)</span>
+                      </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="pl-4 space-y-2 mt-2">
                       {subGroups.map(({ key, items }) => {
@@ -360,11 +362,13 @@ export function PackageFeatureSettingsDialog({ packageId, open, onOpenChange }: 
                         
                         return (
                           <Collapsible key={key} open={isSubExpanded} onOpenChange={() => toggleSubCategory(key)}>
-                            <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 bg-muted/30 rounded-md hover:bg-muted/50 transition-colors">
-                              {isSubExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                              <span className="text-muted-foreground">{subConfig?.icon}</span>
-                              <span className="text-sm font-medium">{subConfig?.label || key}</span>
-                              <span className="text-muted-foreground text-xs">({items.length}个)</span>
+                            <CollapsibleTrigger asChild>
+                              <div className="flex items-center gap-2 w-full p-2 bg-muted/30 rounded-md hover:bg-muted/50 transition-colors cursor-pointer">
+                                {isSubExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                                <span className="text-muted-foreground">{subConfig?.icon}</span>
+                                <span className="text-sm font-medium">{subConfig?.label || key}</span>
+                                <span className="text-muted-foreground text-xs">({items.length}个)</span>
+                              </div>
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                               {renderFeatureTable(items)}
@@ -379,11 +383,13 @@ export function PackageFeatureSettingsDialog({ packageId, open, onOpenChange }: 
 
               return (
                 <Collapsible key={category} open={isExpanded} onOpenChange={() => toggleCategory(category)}>
-                  <CollapsibleTrigger className="flex items-center gap-2 w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
-                    {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                    <span className={config.color}>{config.icon}</span>
-                    <span className="font-medium">{config.label}</span>
-                    <span className="text-muted-foreground text-sm">({features.length}个)</span>
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-center gap-2 w-full p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                      {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      <span className={config.color}>{config.icon}</span>
+                      <span className="font-medium">{config.label}</span>
+                      <span className="text-muted-foreground text-sm">({features.length}个)</span>
+                    </div>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     {renderFeatureTable(features)}
