@@ -203,3 +203,6 @@ verify_jwt = false
 
 [functions.notify-partner]
 verify_jwt = false
+
+[functions.generate-poster-image]
+verify_jwt = true
