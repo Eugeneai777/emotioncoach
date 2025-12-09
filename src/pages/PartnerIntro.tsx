@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, TrendingUp, Users, DollarSign, Gift, Share2, Copy, CheckCircle, HelpCircle, Sparkles, ShoppingCart } from "lucide-react";
+import { ArrowLeft, TrendingUp, Users, DollarSign, Gift, CheckCircle, HelpCircle, Sparkles, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
 
@@ -16,7 +16,7 @@ const PartnerIntro = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isPartner, loading: partnerLoading } = usePartner();
-  const [copiedLink, setCopiedLink] = useState(false);
+  
   const [payDialogOpen, setPayDialogOpen] = useState(false);
 
   // 绽放合伙人套餐信息
@@ -43,13 +43,6 @@ const PartnerIntro = () => {
   // 计算权益总价值
   const totalValue = benefits.reduce((sum, benefit) => sum + (Number(benefit.benefit_value) || 0), 0);
 
-  const handleCopyLink = () => {
-    const link = `${window.location.origin}/?ref=YOUR_CODE`;
-    navigator.clipboard.writeText(link);
-    setCopiedLink(true);
-    toast.success("推广链接已复制");
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
 
   const handlePurchase = () => {
     if (!user) {
@@ -285,64 +278,6 @@ const PartnerIntro = () => {
           </CardContent>
         </Card>
 
-        {/* How to Share */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Share2 className="w-6 h-6 text-primary" />
-              合伙人如何分享推广？
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <div>
-                <div className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="text-primary">方式一：</span>分享专属链接
-                </div>
-                <div className="flex gap-2">
-                  <div className="flex-1 bg-muted/50 rounded-lg p-3 font-mono text-sm border">
-                    https://yourdomain.com/?ref=YOUR_CODE
-                  </div>
-                  <Button variant="outline" size="icon" onClick={handleCopyLink}>
-                    {copiedLink ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  好友通过您的专属链接访问并注册，推荐关系自动绑定
-                </p>
-              </div>
-
-              <div>
-                <div className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="text-primary">方式二：</span>分享推广码
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  好友注册时输入您的推广码即可绑定推荐关系。您的推广码可在合伙人中心查看。
-                </p>
-              </div>
-
-              <div>
-                <div className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="text-primary">方式三：</span>生成推广海报
-                  <Badge variant="secondary" className="text-xs">规划中</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  一键生成带二维码的精美海报，分享到朋友圈或社群
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-r from-primary/5 to-warm/5 p-4 rounded-lg">
-              <div className="font-semibold mb-2">💡 推广技巧</div>
-              <ul className="space-y-1.5 text-sm text-muted-foreground">
-                <li>• 分享真实的使用体验和成长故事，更容易引起共鸣</li>
-                <li>• 在社群中分享有价值的内容，自然引流效果更好</li>
-                <li>• 组织线下分享会，面对面介绍绽放课程</li>
-                <li>• 持续分享，建立个人IP，长期收益更可观</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* FAQ */}
         <Card>
