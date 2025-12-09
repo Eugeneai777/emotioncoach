@@ -122,11 +122,11 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
       <div
         ref={ref}
         style={{
-          width: '360px',
-          height: '640px',
+          width: '300px',
+          height: '533px',
           position: 'relative',
           overflow: 'hidden',
-          borderRadius: '24px',
+          borderRadius: '20px',
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         }}
       >
@@ -171,25 +171,25 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
               : 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.3) 100%)',
             display: 'flex',
             flexDirection: 'column',
-            padding: '28px 20px 20px',
+            padding: '20px 16px 16px',
             color: 'white',
             boxSizing: 'border-box'
           }}
         >
           {/* Top Section */}
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <div style={{ fontSize: '44px', marginBottom: '10px' }}>{template.emoji}</div>
+          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+            <div style={{ fontSize: '36px', marginBottom: '8px' }}>{template.emoji}</div>
             <h2 style={{ 
-              fontSize: '26px', 
+              fontSize: '22px', 
               fontWeight: 'bold', 
-              marginBottom: '6px',
+              marginBottom: '4px',
               textShadow: '0 2px 8px rgba(0,0,0,0.4)',
               margin: 0
             }}>
               {content.title}
             </h2>
             <p style={{ 
-              fontSize: '13px', 
+              fontSize: '12px', 
               opacity: 0.95,
               textShadow: '0 1px 4px rgba(0,0,0,0.4)',
               margin: 0
@@ -202,8 +202,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '10px',
-            marginBottom: '16px'
+            gap: '8px',
+            marginBottom: '12px'
           }}>
             {content.dataPoints.map((point, idx) => (
               <div 
@@ -211,13 +211,13 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
                 style={{
                   background: 'rgba(255,255,255,0.2)',
                   backdropFilter: 'blur(8px)',
-                  borderRadius: '14px',
-                  padding: '14px 10px',
+                  borderRadius: '12px',
+                  padding: '10px 8px',
                   textAlign: 'center'
                 }}
               >
-                <div style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '2px' }}>{point.value}</div>
-                <div style={{ fontSize: '11px', opacity: 0.9 }}>{point.label}</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '2px' }}>{point.value}</div>
+                <div style={{ fontSize: '10px', opacity: 0.9 }}>{point.label}</div>
               </div>
             ))}
           </div>
@@ -228,30 +228,30 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           {/* Bottom Section - QR Code */}
           <div style={{
             background: 'rgba(255,255,255,0.95)',
-            borderRadius: '16px',
-            padding: '16px',
+            borderRadius: '14px',
+            padding: '12px',
             display: 'flex',
             alignItems: 'center',
-            gap: '14px',
+            gap: '12px',
             boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
           }}>
             {qrCodeUrl && (
               <img 
                 src={qrCodeUrl} 
                 alt="QR Code"
-                style={{ width: '72px', height: '72px', borderRadius: '8px', flexShrink: 0 }}
+                style={{ width: '64px', height: '64px', borderRadius: '6px', flexShrink: 0 }}
               />
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ 
-                fontSize: '14px', 
+                fontSize: '13px', 
                 fontWeight: 'bold',
-                marginBottom: '4px',
+                marginBottom: '3px',
                 color: entryType === 'free' ? '#059669' : '#d97706'
               }}>
                 {entryType === 'free' ? '🆓 扫码免费体验' : '💰 扫码 ¥9.9 开启'}
               </div>
-              <div style={{ fontSize: '11px', color: '#666', lineHeight: 1.4 }}>
+              <div style={{ fontSize: '10px', color: '#666', lineHeight: 1.4 }}>
                 体验套餐 · 50点AI额度 · 365天有效
               </div>
             </div>
@@ -260,8 +260,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           {/* Brand Footer */}
           <div style={{
             textAlign: 'center',
-            marginTop: '12px',
-            fontSize: '11px',
+            marginTop: '10px',
+            fontSize: '10px',
             opacity: 0.85,
             textShadow: '0 1px 3px rgba(0,0,0,0.3)'
           }}>
