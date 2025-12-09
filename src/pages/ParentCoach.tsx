@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "@/components/ChatMessage";
@@ -83,6 +84,7 @@ export default function ParentCoach() {
   const campId = searchParams.get('campId');
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
   const initRef = useRef(false);
   
   const {
@@ -316,7 +318,7 @@ ${briefing.growth_story || '暂无记录'}
     <div className="min-h-screen bg-gradient-to-br from-purple-50/80 via-pink-50/50 to-rose-50/30 dark:from-purple-950/20 dark:via-pink-950/10 dark:to-rose-950/10 flex flex-col">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-10">
-        <div className="container max-w-xl mx-auto px-2 md:px-4 py-2 md:py-3">
+        <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-2 md:px-6 lg:px-8 py-2 md:py-3">
           <div className="flex items-center justify-between gap-2">
             {/* Left side - Menu, Coach Space & Back to home */}
             <div className="flex items-center gap-1 md:gap-2">
@@ -494,7 +496,7 @@ ${briefing.growth_story || '暂无记录'}
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto overscroll-none scroll-container pb-44">
+      <main ref={mainRef} className="flex-1 container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 flex flex-col overflow-y-auto overscroll-none scroll-container pb-44">
         {/* Stage Progress - Show when there are messages */}
         {messages.length > 0 && session && (
           <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm py-3 -mx-3 px-3 md:-mx-4 md:px-4 mb-4">
@@ -805,9 +807,18 @@ ${briefing.growth_story || '暂无记录'}
         )}
       </main>
 
+      {/* Scroll to Bottom Button */}
+      {messages.length > 0 && (
+        <ScrollToBottomButton 
+          scrollRef={mainRef} 
+          messagesEndRef={messagesEndRef}
+          primaryColor="purple"
+        />
+      )}
+
       {/* Footer - Fixed bottom input */}
       <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20 safe-bottom">
-        <div className="container max-w-xl mx-auto px-3 md:px-4 pt-2 pb-2">
+        <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 pt-2 pb-2">
             {messages.length === 0 && coachConfig?.enable_scenarios && coachConfig?.scenarios && (
               <div className="mb-2 animate-in slide-in-from-bottom-2 duration-300">
                 <CoachScenarioChips

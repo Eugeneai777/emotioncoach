@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, RotateCcw } from "lucide-react";
-import { forwardRef, useState } from "react";
+import { forwardRef, useState, useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CoachInputFooterProps {
@@ -32,7 +32,36 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   messagesCount
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const isMobile = useIsMobile();
+  const footerRef = useRef<HTMLElement>(null);
+
+  // 虚拟键盘适配
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        const newKeyboardHeight = windowHeight - viewportHeight;
+        
+        if (newKeyboardHeight > 100) {
+          setKeyboardHeight(newKeyboardHeight);
+        } else {
+          setKeyboardHeight(0);
+        }
+      }
+    };
+
+    window.visualViewport?.addEventListener('resize', handleResize);
+    window.visualViewport?.addEventListener('scroll', handleResize);
+    
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('scroll', handleResize);
+    };
+  }, [isMobile]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && input.trim()) {
@@ -42,7 +71,11 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   };
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20 safe-bottom">
+    <footer 
+      ref={footerRef}
+      className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20 safe-bottom transition-transform duration-200"
+      style={{ transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : undefined }}
+    >
       <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 pt-2 pb-2">
         {/* Scenario Chips - 键盘弹出时隐藏 */}
         {!isFocused && scenarioChips && (messagesCount === undefined || messagesCount <= 1) && (
