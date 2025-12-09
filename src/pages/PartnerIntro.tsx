@@ -130,8 +130,9 @@ const PartnerIntro = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 px-4 pb-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+            {/* 移动端横向滚动，桌面端三列 */}
+            <div className="flex md:grid md:grid-cols-3 gap-3 overflow-x-auto pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory">
+              <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background min-w-[160px] flex-shrink-0 snap-center">
                 <CardHeader className="text-center pb-2 pt-3 px-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-warm mx-auto mb-2 flex items-center justify-center">
                     <TrendingUp className="w-5 h-5 text-white" />
@@ -144,7 +145,7 @@ const PartnerIntro = () => {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-background">
+              <Card className="border-2 border-accent/20 bg-gradient-to-br from-accent/5 to-background min-w-[160px] flex-shrink-0 snap-center">
                 <CardHeader className="text-center pb-2 pt-3 px-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-warm mx-auto mb-2 flex items-center justify-center">
                     <Users className="w-5 h-5 text-white" />
@@ -157,7 +158,7 @@ const PartnerIntro = () => {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-warm/20 bg-gradient-to-br from-warm/5 to-background">
+              <Card className="border-2 border-warm/20 bg-gradient-to-br from-warm/5 to-background min-w-[160px] flex-shrink-0 snap-center">
                 <CardHeader className="text-center pb-2 pt-3 px-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-warm to-primary mx-auto mb-2 flex items-center justify-center">
                     <CheckCircle className="w-5 h-5 text-white" />
