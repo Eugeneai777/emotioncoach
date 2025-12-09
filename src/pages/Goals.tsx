@@ -586,6 +586,7 @@ const Goals = (): JSX.Element => {
                   <TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 )}
                 <span className="hidden sm:inline">目标建议</span>
+                <span className="sm:hidden">建议</span>
               </Button>
               <Button 
                 size="sm"
@@ -595,6 +596,7 @@ const Goals = (): JSX.Element => {
               >
                 <Activity className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span className="hidden sm:inline">强度目标</span>
+                <span className="sm:hidden">强度</span>
               </Button>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
