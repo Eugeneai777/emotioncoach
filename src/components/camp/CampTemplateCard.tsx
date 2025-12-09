@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Lock, ShoppingCart } from "lucide-react";
 import type { CampTemplate } from "@/types/trainingCamp";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,9 +11,10 @@ interface CampTemplateCardProps {
   index: number;
   enrolledCount?: number;
   onClick: () => void;
+  onPurchase?: (camp: CampTemplate) => void;
 }
 
-export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: CampTemplateCardProps) {
+export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPurchase }: CampTemplateCardProps) {
   // 绽放训练营不检查前置条件锁定
   const isBloomCamp = ['emotion_bloom', 'identity_bloom'].includes(camp.camp_type);
   // 父母训练营特殊标识
@@ -45,6 +46,8 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
   const isPopular = enrolledCount >= 5;
   const isRecommended = camp.camp_type === 'emotion_journal_21';
 
+  const isPaidCamp = camp.price && camp.price > 0;
+
   return (
     <Card 
       className={`group relative overflow-hidden transition-all duration-300 
@@ -52,7 +55,7 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
         animate-in fade-in-50 slide-in-from-bottom-4 flex flex-col h-full
         bg-white/70 backdrop-blur-sm border-teal-200/40
         dark:bg-teal-950/20 dark:border-teal-800/30 ${
-        isLocked ? 'opacity-60' : 'cursor-pointer'
+        isLocked ? 'opacity-60' : ''
       } ${
         isBloomCamp 
           ? 'ring-2 ring-purple-200/50' 
@@ -61,7 +64,6 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
           : ''
       }`}
       style={{ animationDelay: `${index * 150}ms` }}
-      onClick={!isLocked ? onClick : undefined}
     >
       {/* 封面背景 - 保留各训练营特色渐变 */}
       <div className={`relative h-36 bg-gradient-to-br ${camp.gradient} overflow-hidden`}>
@@ -170,28 +172,49 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick }: Ca
       </CardContent>
 
       <CardFooter className="relative z-10 mt-auto">
-        <Button
-          disabled={isLocked}
-          className={`w-full gap-2 pointer-events-none ${
-            !isLocked 
-              ? isBloomCamp
+        {isLocked ? (
+          <Button disabled className="w-full gap-2">
+            暂未解锁
+          </Button>
+        ) : isPaidCamp ? (
+          <div className="w-full space-y-2">
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onPurchase?.(camp);
+              }}
+              className="w-full gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-md hover:shadow-lg transition-all"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              立即购买 ¥{camp.price?.toLocaleString()}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick();
+              }}
+              className="w-full text-muted-foreground hover:text-primary"
+            >
+              了解更多 →
+            </Button>
+          </div>
+        ) : (
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+            className={`w-full gap-2 ${
+              isBloomCamp
                 ? 'bg-gradient-to-r from-purple-500 via-purple-600 to-purple-500 bg-[length:200%_100%] animate-shimmer text-white hover:opacity-90'
-                : `bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white`
-              : ''
-          }`}
-        >
-          {isLocked 
-            ? '暂未解锁' 
-            : camp.price && camp.price > 0
-            ? `立即购买 ¥${camp.price.toLocaleString()}`
-            : camp.price === 0
-            ? '免费开启'
-            : isBloomCamp 
-            ? '✨ 开启绽放之旅' 
-            : '了解详情'
-          }
-          {!isLocked && <ArrowRight className="w-4 h-4" />}
-        </Button>
+                : 'bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white'
+            }`}
+          >
+            {camp.price === 0 ? '免费开启' : isBloomCamp ? '✨ 开启绽放之旅' : '了解详情'}
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

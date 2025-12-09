@@ -17,8 +17,11 @@ import { ArrowLeft, TrendingUp, Users, Sparkles, Filter, Home, ChevronRight } fr
 import { CampTemplateCard } from "@/components/camp/CampTemplateCard";
 import { CampCardSkeleton } from "@/components/camp/CampCardSkeleton";
 import { CampEmptyState } from "@/components/camp/CampEmptyState";
+import { WechatPayDialog } from "@/components/WechatPayDialog";
 import type { CampTemplate } from "@/types/trainingCamp";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 const campCategories = [
   {
@@ -41,8 +44,21 @@ const campCategories = [
 
 const CampList = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState('youjin');
   const [sortBy, setSortBy] = useState<'popular' | 'duration' | 'newest'>('popular');
+  const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const [selectedCamp, setSelectedCamp] = useState<CampTemplate | null>(null);
+
+  const handlePurchase = (camp: CampTemplate) => {
+    if (!user) {
+      toast.error("请先登录", { description: "登录后即可购买训练营" });
+      navigate('/auth');
+      return;
+    }
+    setSelectedCamp(camp);
+    setPayDialogOpen(true);
+  };
 
   const {
     data: campTemplates,
@@ -303,14 +319,13 @@ const CampList = () => {
                     index={index}
                     enrolledCount={enrollmentStats?.[camp.camp_type] || 0}
                     onClick={() => {
-                      // 对于「21天青少年困境突破营」，导航到专属页面
                       if (camp.camp_type === 'parent_emotion_21') {
                         navigate('/parent-camp');
                       } else {
-                        // 其他训练营导航到通用详情页
                         navigate(`/camp-template/${camp.id}`);
                       }
                     }}
+                    onPurchase={handlePurchase}
                   />
                 ))}
               </div>
@@ -341,6 +356,21 @@ const CampList = () => {
           </p>
         </div>
       </footer>
+
+      {/* WeChat Pay Dialog */}
+      <WechatPayDialog
+        open={payDialogOpen}
+        onOpenChange={setPayDialogOpen}
+        packageInfo={selectedCamp ? {
+          key: `camp-${selectedCamp.id}`,
+          name: selectedCamp.camp_name,
+          price: selectedCamp.price || 0,
+        } : null}
+        onSuccess={() => {
+          toast.success("购买成功！", { description: "即将开启你的训练营之旅" });
+          setPayDialogOpen(false);
+        }}
+      />
     </div>
   );
 };
