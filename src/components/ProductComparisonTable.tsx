@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Check, X, Minus, Info, Sparkles } from "lucide-react";
 import { youjinFeatures, bloomFeatures, type YoujinFeature, type BloomFeature } from "@/config/productComparison";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useNavigate } from "react-router-dom";
+import { PointsRulesDialog } from "./PointsRulesDialog";
 
 interface PackageInfo {
   key: string;
@@ -18,7 +18,6 @@ interface ProductComparisonTableProps {
 }
 
 export function ProductComparisonTable({ category, onPurchase }: ProductComparisonTableProps) {
-  const navigate = useNavigate();
   const features = category === 'youjin' ? youjinFeatures : bloomFeatures;
   
   // 按类别分组
@@ -61,12 +60,13 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           </div>
           <div className="text-center text-xs text-muted-foreground mt-2">
             大部分功能1点/次 · 
-            <button 
-              onClick={() => navigate('/settings?tab=account')}
-              className="text-primary hover:underline"
-            >
-              了解点数规则 →
-            </button>
+            <PointsRulesDialog 
+              trigger={
+                <button className="text-primary hover:underline">
+                  了解点数规则 →
+                </button>
+              }
+            />
           </div>
         </div>
 
