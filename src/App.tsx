@@ -43,6 +43,8 @@ import PartnerTypeSelector from "./pages/PartnerTypeSelector";
 import YoujinPartnerIntro from "./pages/YoujinPartnerIntro";
 import YoujinPartnerPlan from "./pages/YoujinPartnerPlan";
 import RedeemCode from "./pages/RedeemCode";
+import Claim from "./pages/Claim";
+import PayEntry from "./pages/PayEntry";
 import NotFound from "./pages/NotFound";
 import DynamicCoach from "./pages/DynamicCoach";
 import StoryCoach from "./pages/StoryCoach";
@@ -107,6 +109,8 @@ const App = () => (
           <Route path="/partner" element={<Partner />} />
           <Route path="/partner/benefits" element={<PartnerBenefits />} />
           <Route path="/redeem" element={<RedeemCode />} />
+          <Route path="/claim" element={<Claim />} />
+          <Route path="/pay-entry" element={<PayEntry />} />
           <Route path="/story-coach" element={<StoryCoach />} />
           <Route path="/story-coach-intro" element={<StoryCoachIntro />} />
           <Route path="/my-stories" element={<MyStories />} />
