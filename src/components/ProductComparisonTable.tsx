@@ -166,7 +166,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
     );
   }
 
-  // Bloom category
+  // Bloom category - 只显示两个训练营
   return (
     <Card className="overflow-hidden">
       <div className="overflow-x-auto">
@@ -183,25 +183,16 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   <div className="text-xs text-muted-foreground font-semibold mt-1">¥2,980</div>
                 </div>
               </th>
-              <th className="text-center p-4 min-w-[160px]">
-                <div className="space-y-1">
-                  <div className="font-bold text-base text-foreground">情感绽放训练营</div>
-                  <div className="text-xs text-muted-foreground">体验内在情绪</div>
-                  <div className="text-xs text-muted-foreground font-semibold mt-1">¥3,980</div>
-                </div>
-              </th>
-              <th className="text-center p-4 min-w-[160px] bg-gradient-to-br from-amber-500/10 to-orange-500/10">
+              <th className="text-center p-4 min-w-[160px] bg-primary/5">
                 <div className="space-y-1">
                   <div className="flex items-center justify-center gap-2">
-                    <div className="font-bold text-base bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-                      绽放合伙人
-                    </div>
-                    <span className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full font-semibold">
+                    <div className="font-bold text-base text-primary">情感绽放训练营</div>
+                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-semibold">
                       推荐
                     </span>
                   </div>
-                  <div className="text-xs text-muted-foreground">共享事业成就</div>
-                  <div className="text-xs text-muted-foreground font-semibold mt-1">¥19,800</div>
+                  <div className="text-xs text-muted-foreground">体验内在情绪</div>
+                  <div className="text-xs text-muted-foreground font-semibold mt-1">¥3,980</div>
                 </div>
               </th>
             </tr>
@@ -212,7 +203,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
               return (
                 <TooltipProvider key={cat}>
                   <tr className="border-b bg-muted/30">
-                    <td colSpan={4} className="p-3">
+                    <td colSpan={3} className="p-3">
                       <div className="font-semibold text-sm text-primary flex items-center gap-2">
                         {cat}
                       </div>
@@ -239,10 +230,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                         </div>
                       </td>
                       <td className="p-3 text-center">{renderValue(feature.identityCamp)}</td>
-                      <td className="p-3 text-center">{renderValue(feature.emotionCamp)}</td>
-                      <td className="p-3 text-center bg-gradient-to-br from-amber-500/5 to-orange-500/5">
-                        {renderValue(feature.partner)}
-                      </td>
+                      <td className="p-3 text-center bg-primary/5">{renderValue(feature.emotionCamp)}</td>
                     </tr>
                   ))}
                 </TooltipProvider>
@@ -260,23 +248,13 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   了解详情
                 </Button>
               </td>
-              <td className="p-4 text-center">
+              <td className="p-4 text-center bg-primary/5">
                 <Button 
-                  variant="outline" 
                   size="sm" 
-                  className="w-full"
+                  className="w-full bg-primary hover:bg-primary/90"
                   onClick={() => handlePurchase({ key: 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', name: '情感绽放训练营', price: 3980 })}
                 >
                   了解详情
-                </Button>
-              </td>
-              <td className="p-4 text-center bg-gradient-to-br from-amber-500/5 to-orange-500/5">
-                <Button 
-                  size="sm" 
-                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
-                  onClick={() => handlePurchase({ key: 'partner', name: '绽放合伙人', price: 19800, quota: 9999999 })}
-                >
-                  立即加入
                 </Button>
               </td>
             </tr>
