@@ -262,25 +262,25 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
           {session?.user?.id === post.user_id && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => setShowEditDialog(true)}
-                className="h-8 px-2"
+                className="h-7 w-7 p-0 sm:h-8 sm:w-8"
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-8 px-2 text-destructive hover:text-destructive"
+                    className="h-7 w-7 p-0 sm:h-8 sm:w-8 text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -304,8 +304,8 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
               </AlertDialog>
             </div>
           )}
-          <Badge variant="secondary">
-            {getTypeEmoji(post.post_type)} {getTypeLabel(post.post_type)}
+          <Badge variant="secondary" className="text-xs">
+            {getTypeEmoji(post.post_type)} <span className="hidden sm:inline">{getTypeLabel(post.post_type)}</span>
           </Badge>
           {/* 教练空间标注 */}
           {coachSpace && (
@@ -314,7 +314,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
               className={`text-xs cursor-pointer hover:opacity-80 transition-opacity ${coachSpace.bgClass} ${coachSpace.colorClass} border-0`}
               onClick={() => navigate(coachSpace.routePath)}
             >
-              {coachSpace.emoji} {coachSpace.name}
+              {coachSpace.emoji} <span className="hidden sm:inline">{coachSpace.name}</span>
             </Badge>
           )}
         </div>
@@ -350,13 +350,19 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
 
       {/* 图片 */}
       {post.image_urls && post.image_urls.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+        <div className={`grid gap-2 mb-4 ${
+          post.image_urls.length === 1 
+            ? 'grid-cols-1' 
+            : 'grid-cols-2 md:grid-cols-3'
+        }`}>
           {post.image_urls.map((url, index) => (
             <img
               key={index}
               src={url}
               alt={`分享图片 ${index + 1}`}
-              className="w-full h-48 object-cover rounded-lg"
+              className={`w-full object-cover rounded-lg ${
+                post.image_urls!.length === 1 ? 'h-64 sm:h-80' : 'h-40 sm:h-48'
+              }`}
             />
           ))}
         </div>
