@@ -56,7 +56,7 @@ export const CoachStepsCard = ({
             onOpenChange={() => setExpandedStep(expandedStep === step.id ? null : step.id)}
           >
           <CollapsibleTrigger asChild>
-              <div className={`w-full bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-${primaryColor}/30 transition-all duration-200 group cursor-pointer`}>
+              <button type="button" className={`w-full bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-${primaryColor}/30 transition-all duration-200 group cursor-pointer text-left`}>
                 <div className="flex items-center gap-1.5">
                   <div className={`flex-shrink-0 w-6 h-6 rounded-full bg-${primaryColor}/15 text-${primaryColor} flex items-center justify-center font-bold text-xs group-hover:bg-${primaryColor} group-hover:text-${primaryColor}-foreground transition-all`}>
                     {step.emoji || step.id}
@@ -69,7 +69,7 @@ export const CoachStepsCard = ({
                   </div>
                   <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === step.id ? 'rotate-180' : ''}`} />
                 </div>
-              </div>
+              </button>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-1">
               <div className="bg-background/30 rounded-card p-card-sm border border-border/30 space-y-1">
