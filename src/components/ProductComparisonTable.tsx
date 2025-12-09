@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, X, Minus, Info, Sparkles } from "lucide-react";
+import { Check, X, Minus, Info, Sparkles, ShoppingCart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { youjinFeatures, bloomFeatures, type YoujinFeature, type BloomFeature } from "@/config/productComparison";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PointsRulesDialog } from "./PointsRulesDialog";
@@ -18,6 +19,7 @@ interface ProductComparisonTableProps {
 }
 
 export function ProductComparisonTable({ category, onPurchase }: ProductComparisonTableProps) {
+  const navigate = useNavigate();
   const features = category === 'youjin' ? youjinFeatures : bloomFeatures;
   
   // 按类别分组
@@ -239,22 +241,44 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             <tr>
               <td className="p-4 sticky left-0 bg-background z-10"></td>
               <td className="p-4 text-center">
-                <Button 
-                  size="sm" 
-                  className="w-full bg-primary hover:bg-primary/90"
-                  onClick={() => handlePurchase({ key: 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', name: '身份绽放训练营', price: 2980 })}
-                >
-                  了解详情
-                </Button>
+                <div className="space-y-2">
+                  <Button 
+                    size="sm" 
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-md hover:shadow-lg transition-all"
+                    onClick={() => handlePurchase({ key: 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', name: '身份绽放训练营', price: 2980 })}
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-1" />
+                    立即购买 ¥2,980
+                  </Button>
+                  <Button 
+                    variant="ghost"
+                    size="sm" 
+                    className="w-full text-muted-foreground hover:text-primary"
+                    onClick={() => navigate('/camp-template/fdbf32e0-61c5-464e-817a-45661dfc8105')}
+                  >
+                    了解更多 →
+                  </Button>
+                </div>
               </td>
               <td className="p-4 text-center bg-primary/5">
-                <Button 
-                  size="sm" 
-                  className="w-full bg-primary hover:bg-primary/90"
-                  onClick={() => handlePurchase({ key: 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', name: '情感绽放训练营', price: 3980 })}
-                >
-                  了解详情
-                </Button>
+                <div className="space-y-2">
+                  <Button 
+                    size="sm" 
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-md hover:shadow-lg transition-all"
+                    onClick={() => handlePurchase({ key: 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', name: '情感绽放训练营', price: 3980 })}
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-1" />
+                    立即购买 ¥3,980
+                  </Button>
+                  <Button 
+                    variant="ghost"
+                    size="sm" 
+                    className="w-full text-muted-foreground hover:text-primary"
+                    onClick={() => navigate('/camp-template/c77488e9-959f-4ee0-becd-9cbc99fd1dc5')}
+                  >
+                    了解更多 →
+                  </Button>
+                </div>
               </td>
             </tr>
           </tbody>
