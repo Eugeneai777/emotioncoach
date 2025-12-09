@@ -25,7 +25,7 @@ interface CoachNotificationsModuleProps {
   onIndexChange: (index: number) => void;
   onMarkAsRead: (id: string) => void;
   onDelete: (id: string) => void;
-  colorTheme: 'green' | 'purple';
+  colorTheme: 'green' | 'purple' | 'blue';
   coachLabel: string;
 }
 
@@ -47,6 +47,15 @@ const colorClasses = {
     badge: 'bg-purple-100 text-purple-600',
     button: 'border-purple-300 text-purple-600 hover:bg-purple-50',
     counter: 'text-purple-600/70'
+  },
+  blue: {
+    gradient: 'from-blue-50 to-indigo-50',
+    border: 'border-blue-200/50',
+    icon: 'text-blue-600',
+    label: 'text-blue-700',
+    badge: 'bg-blue-100 text-blue-600',
+    button: 'border-blue-300 text-blue-600 hover:bg-blue-50',
+    counter: 'text-blue-600/70'
   }
 };
 
