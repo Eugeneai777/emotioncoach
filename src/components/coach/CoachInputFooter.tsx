@@ -125,10 +125,15 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
                 placeholder="分享你的想法..."
-                className="w-full h-11 px-4 text-base rounded-2xl border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full h-11 px-4 text-base rounded-2xl border border-teal-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400 transition-all duration-200"
                 style={{ fontSize: '16px' }}
                 disabled={isLoading}
                 enterKeyHint="send"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-form-type="other"
               />
             ) : (
               <Textarea
@@ -139,7 +144,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
                 placeholder={placeholder}
-                className="resize-none min-h-[44px] max-h-[100px] w-full py-2.5 px-3 text-base rounded-2xl leading-relaxed"
+                className="resize-none min-h-[44px] max-h-[100px] w-full py-2.5 px-3 text-base rounded-2xl leading-relaxed border-teal-200 bg-white/80 focus:ring-teal-400/50 focus:border-teal-400 transition-all duration-200"
                 style={{ fontSize: '16px' }}
                 disabled={isLoading}
                 rows={1}
