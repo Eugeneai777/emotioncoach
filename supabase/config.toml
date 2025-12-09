@@ -197,3 +197,6 @@ verify_jwt = false
 
 [functions.check-cost-alerts]
 verify_jwt = false
+
+[functions.notify-partner]
+verify_jwt = false

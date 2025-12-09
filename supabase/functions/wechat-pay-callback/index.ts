@@ -179,6 +179,46 @@ serve(async (req) => {
       }
     }
 
+    // 更新 partner_referrals 的 conversion_status
+    const newConversionStatus = order.package_key === 'partner' ? 'became_partner' : 'purchased_365';
+    const { data: referral, error: referralQueryError } = await supabase
+      .from('partner_referrals')
+      .select('id, partner_id')
+      .eq('referred_user_id', order.user_id)
+      .eq('level', 1)
+      .single();
+
+    if (!referralQueryError && referral) {
+      const { error: referralUpdateError } = await supabase
+        .from('partner_referrals')
+        .update({ 
+          conversion_status: newConversionStatus,
+          converted_at: new Date().toISOString()
+        })
+        .eq('id', referral.id);
+
+      if (referralUpdateError) {
+        console.error('Update referral conversion_status error:', referralUpdateError);
+      } else {
+        console.log('Referral conversion_status updated:', referral.id, '->', newConversionStatus);
+        
+        // 发送合伙人通知
+        try {
+          await supabase.functions.invoke('notify-partner', {
+            body: {
+              partnerId: referral.partner_id,
+              eventType: newConversionStatus === 'became_partner' ? 'became_partner' : 'purchased',
+              referredUserId: order.user_id,
+              packageKey: order.package_key,
+              amount: order.amount
+            }
+          });
+        } catch (notifyError) {
+          console.error('Notify partner error:', notifyError);
+        }
+      }
+    }
+
     console.log('Payment callback processed successfully:', orderNo);
 
     return new Response(JSON.stringify({ code: 'SUCCESS', message: '成功' }), {
