@@ -62,7 +62,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           <div className="text-center text-xs text-muted-foreground mt-2">
             大部分功能1点/次 · 
             <button 
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate('/settings?tab=account')}
               className="text-primary hover:underline"
             >
               了解点数规则 →
