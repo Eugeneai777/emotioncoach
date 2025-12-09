@@ -11,23 +11,16 @@ export const CommunicationNotificationsModule = () => {
     deleteNotification 
   } = useSmartNotification('communication_coach');
 
-  if (loading) {
-    return (
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/50 dark:border-blue-800/50 rounded-card-lg p-card shadow-sm">
-        <div className="animate-pulse space-y-3">
-          <div className="h-4 bg-blue-200/50 dark:bg-blue-800/50 rounded w-1/3"></div>
-          <div className="h-16 bg-blue-200/50 dark:bg-blue-800/50 rounded"></div>
-        </div>
-      </div>
-    );
-  }
+  // 过滤未读通知
+  const unreadNotifications = notifications.filter(n => !n.is_read);
 
-  if (notifications.length === 0) {
+  // 加载中或无未读通知时隐藏整个模块
+  if (loading || unreadNotifications.length === 0) {
     return null;
   }
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/50 dark:border-blue-800/50 rounded-card-lg p-card shadow-sm">
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/50 dark:border-blue-800/50 rounded-card-lg p-card shadow-sm animate-in fade-in-50 duration-300">
       <div className="flex items-center justify-between mb-4">
         <h4 className="text-sm font-medium flex items-center gap-2">
           <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -39,7 +32,7 @@ export const CommunicationNotificationsModule = () => {
       </div>
       
       <div className="space-y-3">
-        {notifications.slice(0, 3).map((notification) => (
+        {unreadNotifications.slice(0, 3).map((notification) => (
           <div key={notification.id} className="relative">
             <NotificationCard
               notification={notification}
@@ -50,13 +43,13 @@ export const CommunicationNotificationsModule = () => {
         ))}
       </div>
       
-      {notifications.length > 3 && (
+      {unreadNotifications.length > 3 && (
         <Button
           variant="ghost"
           size="sm"
           className="w-full mt-3 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-100/50 dark:hover:bg-blue-900/30"
         >
-          查看全部 {notifications.length} 条提醒
+          查看全部 {unreadNotifications.length} 条提醒
         </Button>
       )}
     </div>

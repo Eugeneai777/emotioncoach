@@ -615,56 +615,63 @@ ${briefing.growth_story || '暂无记录'}
               </div>
 
               {/* 智能提醒模块 - 紫色主题 */}
-              <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50 rounded-card-lg p-card shadow-md">
-                  <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
-                    <Bell className="h-4 w-4 text-purple-600" />
-                    <span className="text-purple-700">智能提醒</span>
-                    <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-600 rounded-full">家长教练</span>
-                  </h4>
-                  
-                  {notificationsLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-purple-400" />
-                    </div>
-                  ) : notifications.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      暂无新提醒
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      <NotificationCard
-                        key={notifications[currentNotificationIndex].id}
-                        notification={notifications[currentNotificationIndex]}
-                        onClick={() => markAsRead(notifications[currentNotificationIndex].id)}
-                        onDelete={() => {
-                          deleteNotification(notifications[currentNotificationIndex].id);
-                          if (currentNotificationIndex >= notifications.length - 1) {
-                            setCurrentNotificationIndex(0);
-                          }
-                        }}
-                        colorTheme="purple"
-                      />
+              {(() => {
+                const unreadNotifications = notifications.filter(n => !n.is_read);
+                
+                if (notificationsLoading || unreadNotifications.length === 0) {
+                  return null;
+                }
+                
+                const safeIndex = Math.min(currentNotificationIndex, Math.max(0, unreadNotifications.length - 1));
+                
+                return (
+                  <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50 rounded-card-lg p-card shadow-md animate-in fade-in-50 duration-300">
+                      <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
+                        <Bell className="h-4 w-4 text-purple-600" />
+                        <span className="text-purple-700">智能提醒</span>
+                        <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-600 rounded-full">家长教练</span>
+                      </h4>
                       
-                      {notifications.length > 1 && (
-                        <div className="flex items-center justify-center gap-2">
-                          <span className="text-xs text-purple-600/70">
-                            {currentNotificationIndex + 1} / {notifications.length}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCurrentNotificationIndex((prev) => (prev + 1) % notifications.length)}
-                            className="h-7 text-xs border-purple-300 text-purple-600 hover:bg-purple-50"
-                          >
-                            下一条
-                          </Button>
-                        </div>
-                      )}
+                      <div className="space-y-3">
+                        <NotificationCard
+                          key={unreadNotifications[safeIndex].id}
+                          notification={unreadNotifications[safeIndex]}
+                          onClick={() => {
+                            markAsRead(unreadNotifications[safeIndex].id);
+                            if (safeIndex >= unreadNotifications.length - 1) {
+                              setCurrentNotificationIndex(0);
+                            }
+                          }}
+                          onDelete={() => {
+                            deleteNotification(unreadNotifications[safeIndex].id);
+                            if (safeIndex >= unreadNotifications.length - 1) {
+                              setCurrentNotificationIndex(0);
+                            }
+                          }}
+                          colorTheme="purple"
+                        />
+                        
+                        {unreadNotifications.length > 1 && (
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="text-xs text-purple-600/70">
+                              {safeIndex + 1} / {unreadNotifications.length}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentNotificationIndex((prev) => (prev + 1) % unreadNotifications.length)}
+                              className="h-7 text-xs border-purple-300 text-purple-600 hover:bg-purple-50"
+                            >
+                              下一条
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
+                );
+              })()}
 
               {/* 有劲社区 - 瀑布流展示 */}
               <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
