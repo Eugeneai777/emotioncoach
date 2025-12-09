@@ -140,7 +140,7 @@ export const CommunicationCourseRecommendations = ({
                   style={{ 
                     background: camp.gradient || 'linear-gradient(135deg, hsl(var(--primary)/0.1), transparent)'
                   }}
-                  onClick={() => navigate(`/camp-templates/${camp.id}`)}
+                  onClick={() => navigate(`/camp-template/${camp.id}`)}
                 >
                   <div className="flex items-start gap-3">
                     {camp.icon && (
@@ -165,7 +165,7 @@ export const CommunicationCourseRecommendations = ({
                       variant="default"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/camp-templates/${camp.id}`);
+                        navigate(`/camp-template/${camp.id}`);
                       }}
                     >
                       <TrendingUp className="w-4 h-4 mr-1" />
