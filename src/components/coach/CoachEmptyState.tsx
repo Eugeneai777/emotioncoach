@@ -88,9 +88,15 @@ export const CoachEmptyState = ({
           {dailyReminderContent}
         </div>
       ) : (
-      <Collapsible open={isStepsCardExpanded} onOpenChange={setIsStepsCardExpanded}>
+      <Collapsible open={isStepsCardExpanded} onOpenChange={(open) => {
+        console.log('Steps card toggled:', open);
+        setIsStepsCardExpanded(open);
+      }}>
         <div className="bg-card border border-border rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
-          <CollapsibleTrigger className="w-full flex items-center justify-between cursor-pointer bg-transparent border-0 p-0 text-left">
+          <CollapsibleTrigger 
+            className="w-full flex items-center justify-between cursor-pointer text-left outline-none focus:outline-none"
+            onClick={() => console.log('CollapsibleTrigger clicked')}
+          >
               <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
                 <span className="text-primary text-sm">{stepsEmoji}</span>
                 {stepsTitle}
