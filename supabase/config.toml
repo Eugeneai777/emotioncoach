@@ -1,5 +1,8 @@
 project_id = "vlsuzskvykddwrxbmcbu"
 
+[functions.poster-promotion-expert]
+verify_jwt = true
+
 [functions.emotion-coach]
 verify_jwt = true
 
