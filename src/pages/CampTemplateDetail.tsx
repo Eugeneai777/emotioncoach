@@ -64,19 +64,15 @@ const CampTemplateDetail = () => {
   const isFree = camp?.price === 0 || camp?.price === undefined || camp?.price === null;
   const needsPurchase = !isFree && !hasPurchased;
   const handleCTAClick = () => {
-    if (hasJoinedCamp && existingCamp) {
-      navigate(`/camp/${existingCamp.id}`);
-    } else if (needsPurchase) {
+    if (needsPurchase) {
       setShowPurchaseDialog(true);
     } else {
       setShowStartDialog(true);
     }
   };
   const getButtonText = () => {
-    if (hasJoinedCamp) return '继续训练';
     if (needsPurchase && camp?.price) return `立即购买 ¥${camp.price.toLocaleString()}`;
-    if (isFree) return '免费开启';
-    return '立即加入';
+    return '立即开启';
   };
   if (isLoading) {
     return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
@@ -139,9 +135,6 @@ const CampTemplateDetail = () => {
                   </Badge>}
               </div>}
 
-            {camp.price === 0 && <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 text-lg px-6 py-2">
-                ✨ 完全免费
-              </Badge>}
 
             
           </section>
@@ -289,7 +282,7 @@ const CampTemplateDetail = () => {
 
           {/* CTA Section */}
           <section className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${camp.gradient} p-12 text-center text-white`}>
-            <div className="relative z-10 space-y-4">
+            <div className="relative z-10 space-y-6">
               <h2 className="text-3xl font-bold">
                 开始你的{['emotion_bloom', 'identity_bloom'].includes(camp.camp_type) ? '' : `${camp.duration_days}天`}{camp.camp_name}
               </h2>
@@ -297,6 +290,15 @@ const CampTemplateDetail = () => {
                 {camp.description}
               </p>
               
+              <Button 
+                size="lg" 
+                onClick={handleCTAClick} 
+                className="gap-2 bg-white text-purple-600 hover:bg-white/90 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 px-10 py-6 text-lg font-bold"
+              >
+                {needsPurchase && <ShoppingCart className="w-6 h-6" />}
+                {getButtonText()}
+                {!needsPurchase && <Sparkles className="w-6 h-6" />}
+              </Button>
             </div>
           </section>
         </main>
