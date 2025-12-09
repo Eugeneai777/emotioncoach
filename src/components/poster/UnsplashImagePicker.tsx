@@ -32,7 +32,9 @@ const templateKeywords: Record<string, string[]> = {
   emotion_coach: ['mindfulness', 'wellness', 'self-care', 'mental health', 'peaceful'],
   parent_coach: ['family', 'parenting', 'love', 'children', 'warmth'],
   communication_coach: ['conversation', 'connection', 'people', 'relationship', 'teamwork'],
-  training_camp: ['growth', 'learning', 'journey', 'success', 'motivation'],
+  story_coach: ['story', 'book', 'writing', 'journey', 'inspiration', 'hero'],
+  emotion_journal_21: ['journal', 'diary', 'writing', 'mindfulness', 'calm', 'peaceful'],
+  parent_emotion_21: ['family', 'parenting', 'teenager', 'connection', 'love', 'bonding'],
   '365_member': ['premium', 'lifestyle', 'success', 'elegant', 'luxury'],
   partner_recruit: ['business', 'opportunity', 'entrepreneurship', 'success', 'growth'],
 };
