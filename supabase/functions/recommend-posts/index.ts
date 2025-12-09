@@ -12,11 +12,31 @@ serve(async (req) => {
   }
 
   try {
-    const { userId } = await req.json();
+    let userId: string;
+    try {
+      const body = await req.json();
+      userId = body.userId;
+    } catch (parseError) {
+      console.error("请求解析失败:", parseError);
+      return new Response(
+        JSON.stringify({ recommendedPostIds: [], strategy: "parse_error" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
     console.log("开始推荐，用户ID:", userId);
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("缺少环境变量");
+      return new Response(
+        JSON.stringify({ recommendedPostIds: [], strategy: "config_error" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
     const supabase = createClient(supabaseUrl, supabaseKey);
