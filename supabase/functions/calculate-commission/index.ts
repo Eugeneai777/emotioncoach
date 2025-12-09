@@ -85,10 +85,11 @@ Deno.serve(async (req) => {
           .single();
 
         if (!commError && commission) {
-          await supabase
-            .from('partners')
-            .update({ pending_balance: partner.pending_balance + commissionAmount })
-            .eq('id', partner.id);
+          // 使用原子化函数更新余额，防止竞态条件
+          await supabase.rpc('add_partner_pending_balance', {
+            p_partner_id: partner.id,
+            p_amount: commissionAmount
+          });
           commissions.push(commission);
         }
       }
@@ -141,10 +142,11 @@ Deno.serve(async (req) => {
             .single();
 
           if (!commError && commission) {
-            await supabase
-              .from('partners')
-              .update({ pending_balance: partner.pending_balance + commissionAmount })
-              .eq('id', partner.id);
+            // 使用原子化函数更新余额，防止竞态条件
+            await supabase.rpc('add_partner_pending_balance', {
+              p_partner_id: partner.id,
+              p_amount: commissionAmount
+            });
             commissions.push(commission);
           }
         }
