@@ -61,7 +61,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
               onClick={onNewConversation}
               disabled={isLoading}
               title="开始新对话"
-              className="h-11 w-11 min-w-[44px] flex-shrink-0 rounded-full"
+              className="h-11 w-11 min-w-[44px] min-h-[44px] flex-shrink-0 rounded-full active:scale-95 transition-transform"
             >
               <RotateCcw className="w-4 h-4" />
             </Button>
@@ -108,7 +108,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
             onClick={onSend}
             disabled={isLoading || !input.trim()}
             size="icon"
-            className={`h-11 w-11 min-w-[44px] flex-shrink-0 rounded-full bg-gradient-to-r ${gradient} text-white shadow-md`}
+            className={`h-11 w-11 min-w-[44px] min-h-[44px] flex-shrink-0 rounded-full bg-gradient-to-r ${gradient} text-white shadow-md active:scale-95 transition-transform`}
           >
             <Send className="w-5 h-5" />
           </Button>
