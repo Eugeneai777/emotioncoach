@@ -4,7 +4,7 @@ import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { UnifiedStageProgress } from "@/components/coach/UnifiedStageProgress";
 import { CommunicationDifficultyDialog } from "@/components/communication/CommunicationDifficultyDialog";
 import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
-import { CommunicationTrainingCampModule } from "@/components/communication/CommunicationTrainingCampModule";
+import { CoachTrainingCamp } from "@/components/coach/CoachTrainingCamp";
 import { CoachCommunity } from "@/components/coach/CoachCommunity";
 import { useCommunicationChat } from "@/hooks/useCommunicationChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
@@ -133,7 +133,7 @@ const CommunicationCoach = () => {
             coachLabel="沟通教练"
           />
         }
-        trainingCamp={<CommunicationTrainingCampModule />}
+        trainingCamp={<CoachTrainingCamp campType="identity_bloom" colorTheme="blue" />}
         community={<CoachCommunity />}
         showNotificationCenter={true}
       />
