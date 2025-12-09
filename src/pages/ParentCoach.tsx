@@ -9,13 +9,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
-import { NotificationCard } from "@/components/NotificationCard";
+import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
 import CommunityWaterfall from "@/components/community/CommunityWaterfall";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
-import { Sparkles, Bell, Heart } from "lucide-react";
+import { Sparkles, Heart } from "lucide-react";
 
 export default function ParentCoach() {
   const navigate = useNavigate();
@@ -219,59 +219,19 @@ ${briefingData.growth_story || '暂无记录'}
     </div>
   );
 
-  // Notifications Module
-  const notificationsModule = (() => {
-    const unreadNotifications = notifications.filter(n => !n.is_read);
-    if (notificationsLoading || unreadNotifications.length === 0) return null;
-    
-    const safeIndex = Math.min(currentNotificationIndex, Math.max(0, unreadNotifications.length - 1));
-    
-    return (
-      <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-        <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50 rounded-card-lg p-card shadow-md animate-in fade-in-50 duration-300">
-          <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
-            <Bell className="h-4 w-4 text-purple-600" />
-            <span className="text-purple-700">智能提醒</span>
-            <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-600 rounded-full">亲子教练</span>
-          </h4>
-          <div className="space-y-3">
-            <NotificationCard
-              key={unreadNotifications[safeIndex].id}
-              notification={unreadNotifications[safeIndex]}
-              onClick={() => {
-                markAsRead(unreadNotifications[safeIndex].id);
-                if (safeIndex >= unreadNotifications.length - 1) {
-                  setCurrentNotificationIndex(0);
-                }
-              }}
-              onDelete={() => {
-                deleteNotification(unreadNotifications[safeIndex].id);
-                if (safeIndex >= unreadNotifications.length - 1) {
-                  setCurrentNotificationIndex(0);
-                }
-              }}
-              colorTheme="purple"
-            />
-            {unreadNotifications.length > 1 && (
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-xs text-purple-600/70">
-                  {safeIndex + 1} / {unreadNotifications.length}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentNotificationIndex((prev) => (prev + 1) % unreadNotifications.length)}
-                  className="h-7 text-xs border-purple-300 text-purple-600 hover:bg-purple-50"
-                >
-                  下一条
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  })();
+  // Notifications Module - using shared component
+  const notificationsModule = (
+    <CoachNotificationsModule
+      notifications={notifications}
+      loading={notificationsLoading}
+      currentIndex={currentNotificationIndex}
+      onIndexChange={setCurrentNotificationIndex}
+      onMarkAsRead={markAsRead}
+      onDelete={deleteNotification}
+      colorTheme="purple"
+      coachLabel="亲子教练"
+    />
+  );
 
   // Briefing Confirmation
   const briefingConfirmation = pendingBriefing && !isLoading ? (

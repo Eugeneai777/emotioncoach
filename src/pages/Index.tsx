@@ -11,10 +11,10 @@ import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 
 import { TrainingCampCard } from "@/components/camp/TrainingCampCard";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
+import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
 
 import CampCheckInSuccessDialog from "@/components/camp/CampCheckInSuccessDialog";
 import CommunityWaterfall from "@/components/community/CommunityWaterfall";
-import { NotificationCard } from "@/components/NotificationCard";
 import { UnifiedStageProgress } from "@/components/coach/UnifiedStageProgress";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { useStreamChat } from "@/hooks/useStreamChat";
@@ -22,7 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingCamp } from "@/types/trainingCamp";
-import { Sparkles, Bell, Loader2 } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getTodayInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
 
@@ -496,61 +496,16 @@ const Index = () => {
         <EmotionAlert />
       </div>
       
-      {(() => {
-        const unreadNotifications = notifications.filter(n => !n.is_read);
-        
-        if (notificationsLoading || unreadNotifications.length === 0) {
-          return null;
-        }
-        
-        const safeIndex = Math.min(currentNotificationIndex, Math.max(0, unreadNotifications.length - 1));
-        
-        return (
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200/50 rounded-card-lg p-card shadow-md animate-in fade-in-50 duration-300">
-            <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
-              <Bell className="h-4 w-4 text-green-600" />
-              <span className="text-green-700">智能提醒</span>
-              <span className="text-xs px-2 py-0.5 bg-green-100 text-green-600 rounded-full">情绪教练</span>
-            </h4>
-            
-            <div className="space-y-3">
-              <NotificationCard
-                key={unreadNotifications[safeIndex].id}
-                notification={unreadNotifications[safeIndex]}
-                onClick={() => {
-                  markAsRead(unreadNotifications[safeIndex].id);
-                  if (safeIndex >= unreadNotifications.length - 1) {
-                    setCurrentNotificationIndex(0);
-                  }
-                }}
-                onDelete={() => {
-                  deleteNotification(unreadNotifications[safeIndex].id);
-                  if (safeIndex >= unreadNotifications.length - 1) {
-                    setCurrentNotificationIndex(0);
-                  }
-                }}
-                colorTheme="green"
-              />
-              
-              {unreadNotifications.length > 1 && (
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-xs text-green-600/70">
-                    {safeIndex + 1} / {unreadNotifications.length}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentNotificationIndex((prev) => (prev + 1) % unreadNotifications.length)}
-                    className="h-7 text-xs border-green-300 text-green-600 hover:bg-green-50"
-                  >
-                    下一条
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
+      <CoachNotificationsModule
+        notifications={notifications}
+        loading={notificationsLoading}
+        currentIndex={currentNotificationIndex}
+        onIndexChange={setCurrentNotificationIndex}
+        onMarkAsRead={markAsRead}
+        onDelete={deleteNotification}
+        colorTheme="green"
+        coachLabel="情绪教练"
+      />
     </div>
   ) : null;
 
