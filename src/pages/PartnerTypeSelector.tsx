@@ -5,40 +5,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Users, Sparkles, ShoppingCart } from "lucide-react";
 import { productCategories } from "@/config/productCategories";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
-
 export default function PartnerTypeSelector() {
   const navigate = useNavigate();
   const [payDialogOpen, setPayDialogOpen] = useState(false);
-
   const youjinCategory = productCategories.find(c => c.id === 'youjin')!;
   const bloomCategory = productCategories.find(c => c.id === 'bloom')!;
-
   const bloomPackage = {
     key: 'bloom_partner',
     name: '绽放合伙人',
     price: 19800,
     quota: 0
   };
-
   const handleBloomPurchase = () => {
     setPayDialogOpen(true);
   };
-
   const handlePaymentSuccess = () => {
     setPayDialogOpen(false);
     navigate("/partner");
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <div className="container max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div className="space-y-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/")}
-            className="gap-2"
-          >
+          <Button variant="ghost" onClick={() => navigate("/")} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
             返回首页
           </Button>
@@ -79,20 +68,10 @@ export default function PartnerTypeSelector() {
               </div>
 
               <div className="flex gap-2">
-                <Button 
-                  className="flex-1 gap-2" 
-                  variant="outline"
-                  onClick={() => navigate("/partner/youjin-intro")}
-                >
+                <Button className="flex-1 gap-2" variant="outline" onClick={() => navigate("/partner/youjin-intro")}>
                   了解详情
                 </Button>
-                <Button 
-                  className="flex-1 gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600" 
-                  onClick={() => navigate("/partner/youjin-intro")}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  立即开启
-                </Button>
+                
               </div>
             </CardContent>
           </Card>
@@ -123,20 +102,10 @@ export default function PartnerTypeSelector() {
               </div>
 
               <div className="flex gap-2">
-                <Button 
-                  className="flex-1 gap-2" 
-                  variant="outline"
-                  onClick={() => navigate("/partner-intro")}
-                >
+                <Button className="flex-1 gap-2" variant="outline" onClick={() => navigate("/partner-intro")}>
                   了解详情
                 </Button>
-                <Button 
-                  className="flex-1 gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600" 
-                  onClick={handleBloomPurchase}
-                >
-                  <ShoppingCart className="w-4 h-4" />
-                  立即购买 ¥19,800
-                </Button>
+                
               </div>
             </CardContent>
           </Card>
@@ -175,12 +144,6 @@ export default function PartnerTypeSelector() {
         </Card>
       </div>
 
-      <WechatPayDialog
-        open={payDialogOpen}
-        onOpenChange={setPayDialogOpen}
-        packageInfo={bloomPackage}
-        onSuccess={handlePaymentSuccess}
-      />
-    </div>
-  );
+      <WechatPayDialog open={payDialogOpen} onOpenChange={setPayDialogOpen} packageInfo={bloomPackage} onSuccess={handlePaymentSuccess} />
+    </div>;
 }
