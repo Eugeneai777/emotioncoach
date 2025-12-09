@@ -47,9 +47,53 @@ export default function RedeemCode() {
   const [autoRedeeming, setAutoRedeeming] = useState(false);
   const [autoRedeemAttempted, setAutoRedeemAttempted] = useState(false);
 
+  // 解析URL中的兑换码（处理微信浏览器的各种编码情况）
+  const getCodeFromUrl = (): string | null => {
+    // 方法1：标准URLSearchParams
+    let codeParam = searchParams.get('code');
+    if (codeParam && codeParam.length === 6) {
+      return codeParam.toUpperCase();
+    }
+    
+    // 方法2：处理微信可能的URL编码问题
+    const fullUrl = window.location.href;
+    
+    // 检查是否有 code= 参数（处理各种编码情况）
+    const codeMatch = fullUrl.match(/[?&]code[=]([A-Za-z0-9]{6})/i);
+    if (codeMatch) {
+      return codeMatch[1].toUpperCase();
+    }
+    
+    // 方法3：处理微信可能把参数放在hash后面的情况
+    const hashParams = window.location.hash.includes('?') 
+      ? new URLSearchParams(window.location.hash.split('?')[1])
+      : null;
+    if (hashParams) {
+      const hashCode = hashParams.get('code');
+      if (hashCode && hashCode.length === 6) {
+        return hashCode.toUpperCase();
+      }
+    }
+    
+    // 方法4：处理URL被截断或编码的情况
+    const decodedUrl = decodeURIComponent(fullUrl);
+    const decodedMatch = decodedUrl.match(/[?&]code[=]([A-Za-z0-9]{6})/i);
+    if (decodedMatch) {
+      return decodedMatch[1].toUpperCase();
+    }
+    
+    return null;
+  };
+
   // 初始化：检查兑换码
   useEffect(() => {
-    const codeParam = searchParams.get('code');
+    const codeParam = getCodeFromUrl();
+    console.log('[RedeemCode] URL解析结果:', {
+      fullUrl: window.location.href,
+      searchParams: searchParams.get('code'),
+      parsedCode: codeParam
+    });
+    
     if (codeParam) {
       setCode(codeParam);
       checkCodeInfo(codeParam);
@@ -58,7 +102,7 @@ export default function RedeemCode() {
 
   // 自动兑换：当用户已登录且有兑换码时自动执行
   useEffect(() => {
-    const codeParam = searchParams.get('code');
+    const codeParam = getCodeFromUrl();
     
     // 条件：有兑换码、用户已登录、有兑换码信息、是免费码、未尝试过自动兑换、未成功
     if (codeParam && user && codeInfo && codeInfo.entry_type === 'free' && !autoRedeemAttempted && !success) {
@@ -312,7 +356,7 @@ export default function RedeemCode() {
   const isFree = codeInfo?.entry_type === 'free';
   
   // 判断是否从URL获取到有效兑换码
-  const hasCodeFromUrl = searchParams.get('code')?.length === 6;
+  const hasCodeFromUrl = !!getCodeFromUrl();
 
   // 显示自动兑换中的加载状态
   if (autoRedeeming) {
