@@ -508,7 +508,7 @@ ${briefing.growth_story || '暂无记录'}
           <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-8 px-3 md:px-4">
             <div className="text-center space-y-3 md:space-y-4 w-full max-w-xl animate-in fade-in-50 duration-700">
               <div className="space-y-1.5 md:space-y-2 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">家长情绪教练</h2>
+                <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">亲子教练</h2>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                   劲老师陪着你，用四部曲化解亲子情绪困扰
                 </p>
