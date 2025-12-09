@@ -240,9 +240,8 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
               <td className="p-4 sticky left-0 bg-background z-10"></td>
               <td className="p-4 text-center">
                 <Button 
-                  variant="outline" 
                   size="sm" 
-                  className="w-full"
+                  className="w-full bg-primary hover:bg-primary/90"
                   onClick={() => handlePurchase({ key: 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', name: '身份绽放训练营', price: 2980 })}
                 >
                   了解详情
