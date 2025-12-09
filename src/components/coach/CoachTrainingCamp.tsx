@@ -1,16 +1,23 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Heart } from "lucide-react";
+import { Sparkles, Heart, ChevronRight } from "lucide-react";
 import { TrainingCampCard } from "@/components/camp/TrainingCampCard";
 import { TrainingCamp } from "@/types/trainingCamp";
+import { StartCampDialog } from "@/components/camp/StartCampDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CoachTrainingCampProps {
-  activeCamp: TrainingCamp | null;
-  onStartCamp: () => void;
-  onViewDetails: () => void;
+  activeCamp?: TrainingCamp | null;
+  onStartCamp?: () => void;
+  onViewDetails?: () => void;
   onCheckIn?: () => void;
   colorTheme?: 'green' | 'purple' | 'blue' | 'orange';
   campName?: string;
   campDescription?: string;
+  campType?: string;
 }
 
 const themeStyles = {
@@ -49,53 +56,134 @@ const themeStyles = {
 };
 
 export const CoachTrainingCamp = ({
-  activeCamp,
-  onStartCamp,
-  onViewDetails,
+  activeCamp: externalActiveCamp,
+  onStartCamp: externalOnStartCamp,
+  onViewDetails: externalOnViewDetails,
   onCheckIn,
   colorTheme = "green",
-  campName = "21天训练营",
-  campDescription = "用21天养成习惯，获得专属徽章和成长洞察"
+  campName,
+  campDescription,
+  campType
 }: CoachTrainingCampProps) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [showStartDialog, setShowStartDialog] = useState(false);
   const theme = themeStyles[colorTheme];
   const IconComponent = theme.icon;
 
+  // 如果提供了 campType，从数据库查询训练营模板和用户训练营
+  const { data: campTemplate } = useQuery({
+    queryKey: ['camp-template', campType],
+    queryFn: async () => {
+      if (!campType) return null;
+      const { data } = await supabase
+        .from('camp_templates')
+        .select('*')
+        .eq('camp_type', campType)
+        .single();
+      return data;
+    },
+    enabled: !!campType
+  });
+
+  const { data: userCamp } = useQuery({
+    queryKey: ['user-camp', campType, user?.id],
+    queryFn: async () => {
+      if (!user || !campType) return null;
+      const { data } = await supabase
+        .from('training_camps')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('camp_type', campType)
+        .eq('status', 'active')
+        .maybeSingle();
+      return data as TrainingCamp | null;
+    },
+    enabled: !!user && !!campType
+  });
+
+  // 使用外部传入的 activeCamp 或查询到的 userCamp
+  const activeCamp = externalActiveCamp !== undefined ? externalActiveCamp : userCamp;
+  
+  // 显示的训练营名称和描述
+  const displayName = campName || campTemplate?.camp_name || "21天训练营";
+  const displayDescription = campDescription || campTemplate?.camp_subtitle || "用21天养成习惯，获得专属徽章和成长洞察";
+
+  const handleStartCamp = () => {
+    if (externalOnStartCamp) {
+      externalOnStartCamp();
+    } else if (activeCamp) {
+      navigate(`/camp-check-in?campId=${activeCamp.id}`);
+    } else {
+      setShowStartDialog(true);
+    }
+  };
+
+  const handleViewDetails = () => {
+    if (externalOnViewDetails) {
+      externalOnViewDetails();
+    } else if (campTemplate) {
+      navigate(`/camp-template/${campTemplate.id}`);
+    }
+  };
+
+  // 如果使用 campType 但模板未加载，不渲染
+  if (campType && !campTemplate) return null;
+
   if (!activeCamp) {
     return (
-      <div className="w-full animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-        <div className={`${theme.gradient} ${theme.border} border rounded-xl p-5 shadow-sm`}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className={`text-lg font-semibold flex items-center gap-2 ${theme.title}`}>
-              🏕️ {campName}
-            </h3>
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            {campDescription}
-          </p>
-          <div className="flex gap-3">
-            <Button 
-              onClick={onStartCamp} 
-              className={`flex-1 ${theme.button}`}
-            >
-              <IconComponent className="h-4 w-4 mr-2" />
-              开启训练营
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={onViewDetails}
-              className={`flex-1 ${theme.outline}`}
-            >
-              了解详情
-            </Button>
+      <>
+        <div className="w-full animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+          <div className={`${theme.gradient} ${theme.border} border rounded-xl p-5 shadow-sm`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-lg font-semibold flex items-center gap-2 ${theme.title}`}>
+                🏕️ {displayName}
+              </h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              {displayDescription}
+            </p>
+            <div className="flex gap-3">
+              <Button 
+                onClick={handleStartCamp} 
+                className={`flex-1 ${theme.button}`}
+              >
+                <IconComponent className="h-4 w-4 mr-2" />
+                开启训练营
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleViewDetails}
+                className={`flex-1 ${theme.outline}`}
+              >
+                了解详情
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+        {campTemplate && (
+          <StartCampDialog
+            open={showStartDialog}
+            onOpenChange={setShowStartDialog}
+            campTemplate={campTemplate}
+          />
+        )}
+      </>
     );
   }
 
   return (
-    <div className="w-full animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-      <TrainingCampCard camp={activeCamp} onCheckIn={onCheckIn} />
-    </div>
+    <>
+      <div className="w-full animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+        <TrainingCampCard camp={activeCamp} onCheckIn={onCheckIn} />
+      </div>
+      {campTemplate && (
+        <StartCampDialog
+          open={showStartDialog}
+          onOpenChange={setShowStartDialog}
+          campTemplate={campTemplate}
+        />
+      )}
+    </>
   );
 };
