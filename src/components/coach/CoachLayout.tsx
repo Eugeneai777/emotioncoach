@@ -74,6 +74,21 @@ interface CoachLayoutProps {
   bottomContent?: ReactNode;
   showNotificationCenter?: boolean;
   onRefresh?: () => Promise<void>;
+  
+  // Emotion coach specific slots
+  intensityPrompt?: ReactNode;
+  intensitySelector?: ReactNode;
+  dailyReminderContent?: ReactNode;
+  showDailyReminder?: boolean;
+  
+  // Parent coach specific slots
+  briefingConfirmation?: ReactNode;
+  
+  // Dialog slots (rendered outside main layout)
+  dialogs?: ReactNode;
+  
+  // Current coach key for header
+  currentCoachKey?: string;
 }
 
 export const CoachLayout = ({
@@ -113,7 +128,14 @@ export const CoachLayout = ({
   campRecommendation,
   bottomContent,
   showNotificationCenter = true,
-  onRefresh
+  onRefresh,
+  intensityPrompt,
+  intensitySelector,
+  dailyReminderContent,
+  showDailyReminder = false,
+  briefingConfirmation,
+  dialogs,
+  currentCoachKey
 }: CoachLayoutProps) => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -205,144 +227,171 @@ export const CoachLayout = ({
   const pullProgress = Math.min(pullDistance / threshold, 1);
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${getCoachBackgroundGradient(primaryColor)} flex flex-col`}>
-      {/* Header */}
-      <CoachHeader
-        emoji={emoji}
-        primaryColor={primaryColor}
-        historyRoute={historyRoute}
-        historyLabel={historyLabel}
-        hasMessages={messages.length > 0}
-        onRestart={onNewConversation}
-        onSignOut={handleSignOut}
-        showNotificationCenter={showNotificationCenter}
-      />
+    <>
+      <div className={`min-h-screen bg-gradient-to-br ${getCoachBackgroundGradient(primaryColor)} flex flex-col`}>
+        {/* Header */}
+        <CoachHeader
+          emoji={emoji}
+          primaryColor={primaryColor}
+          historyRoute={historyRoute}
+          historyLabel={historyLabel}
+          hasMessages={messages.length > 0}
+          onRestart={onNewConversation}
+          onSignOut={handleSignOut}
+          showNotificationCenter={showNotificationCenter}
+          currentCoachKey={currentCoachKey}
+        />
 
-      {/* Pull to Refresh Indicator */}
-      {onRefresh && (pullDistance > 0 || isRefreshing) && (
-        <div 
-          className="absolute top-16 left-0 right-0 flex items-center justify-center pointer-events-none z-10"
-          style={{ 
-            height: `${Math.max(pullDistance, isRefreshing ? threshold : 0)}px`,
-            transition: isRefreshing ? 'height 0.3s ease-out' : 'none'
-          }}
-        >
+        {/* Pull to Refresh Indicator */}
+        {onRefresh && (pullDistance > 0 || isRefreshing) && (
           <div 
-            className={`flex items-center justify-center w-10 h-10 rounded-full bg-card border border-border shadow-lg transition-all duration-200 ${
-              pullDistance >= threshold ? 'scale-110 bg-primary/10 border-primary/30' : ''
-            }`}
-            style={{
-              opacity: Math.min(pullProgress * 1.5, 1),
-              transform: `rotate(${pullProgress * 180}deg)`
+            className="absolute top-16 left-0 right-0 flex items-center justify-center pointer-events-none z-10"
+            style={{ 
+              height: `${Math.max(pullDistance, isRefreshing ? threshold : 0)}px`,
+              transition: isRefreshing ? 'height 0.3s ease-out' : 'none'
             }}
           >
-            {isRefreshing ? (
-              <Loader2 className="w-5 h-5 text-primary animate-spin" />
-            ) : (
-              <ArrowDown 
-                className={`w-5 h-5 transition-colors ${
-                  pullDistance >= threshold ? 'text-primary' : 'text-muted-foreground'
-                }`} 
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <main 
-        ref={mainRef}
-        className="flex-1 overflow-y-auto overscroll-none scroll-container pb-44"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{
-          transform: `translateY(${pullDistance}px)`,
-          transition: isPulling ? 'none' : 'transform 0.3s ease-out'
-        }}
-      >
-        <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 py-4 md:py-8">
-          {messages.length === 0 ? (
-            <CoachEmptyState
-              emoji={emoji}
-              title={title}
-              subtitle={subtitle}
-              description={description}
-              gradient={gradient}
-              steps={steps}
-              stepsTitle={stepsTitle}
-              stepsEmoji={stepsEmoji}
-              primaryColor={primaryColor}
-              moreInfoRoute={moreInfoRoute}
-              scenarios={scenarios}
-              extraContent={extraContent}
-              trainingCamp={trainingCamp}
-              notifications={notifications}
-              community={community}
-            />
-          ) : (
-            <div className="space-y-4">
-              {stageProgress}
-              {messages.map((message, index) => (
-                <ChatMessage 
-                  key={index} 
-                  role={message.role}
-                  content={message.content}
-                  onOptionClick={onOptionClick}
-                  onOptionSelect={onOptionSelect}
-                  isLastMessage={index === messages.length - 1}
-                  communicationBriefingId={communicationBriefingId}
-                  coachRecommendation={index === messages.length - 1 ? coachRecommendation : null}
+            <div 
+              className={`flex items-center justify-center w-10 h-10 rounded-full bg-card border border-border shadow-lg transition-all duration-200 ${
+                pullDistance >= threshold ? 'scale-110 bg-primary/10 border-primary/30' : ''
+              }`}
+              style={{
+                opacity: Math.min(pullProgress * 1.5, 1),
+                transform: `rotate(${pullProgress * 180}deg)`
+              }}
+            >
+              {isRefreshing ? (
+                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              ) : (
+                <ArrowDown 
+                  className={`w-5 h-5 transition-colors ${
+                    pullDistance >= threshold ? 'text-primary' : 'text-muted-foreground'
+                  }`} 
                 />
-              ))}
-              {isLoading && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-sm">正在思考...</span>
-                </div>
               )}
-              <div ref={messagesEndRef} />
             </div>
-          )}
-          
-          {/* Recommendations section */}
-          {(videoRecommendation || toolRecommendation || emotionButtonRecommendation || campRecommendation) && messages.length > 0 && (
-            <div className="space-y-2 mt-4">
-              {emotionButtonRecommendation}
-              {campRecommendation}
-              {videoRecommendation}
-              {toolRecommendation}
-            </div>
-          )}
-          
-          {bottomContent}
-        </div>
-      </main>
+          </div>
+        )}
 
-      {/* Scroll to Bottom Button */}
-      {messages.length > 0 && (
-        <ScrollToBottomButton 
-          scrollRef={mainRef} 
-          messagesEndRef={messagesEndRef}
-          primaryColor={primaryColor}
+        {/* Main Content */}
+        <main 
+          ref={mainRef}
+          className="flex-1 overflow-y-auto overscroll-none scroll-container pb-44"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{
+            transform: `translateY(${pullDistance}px)`,
+            transition: isPulling ? 'none' : 'transform 0.3s ease-out'
+          }}
+        >
+          <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 py-4 md:py-8">
+            {messages.length === 0 ? (
+              <CoachEmptyState
+                emoji={emoji}
+                title={title}
+                subtitle={subtitle}
+                description={description}
+                gradient={gradient}
+                steps={steps}
+                stepsTitle={stepsTitle}
+                stepsEmoji={stepsEmoji}
+                primaryColor={primaryColor}
+                moreInfoRoute={moreInfoRoute}
+                scenarios={scenarios}
+                extraContent={extraContent}
+                trainingCamp={trainingCamp}
+                notifications={notifications}
+                community={community}
+                dailyReminderContent={dailyReminderContent}
+                showDailyReminder={showDailyReminder}
+              />
+            ) : (
+              <div className="space-y-4">
+                {/* Stage Progress - sticky at top */}
+                {stageProgress && (
+                  <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm -mx-3 px-3 md:-mx-4 md:px-4">
+                    {stageProgress}
+                  </div>
+                )}
+                
+                {messages.map((message, index) => {
+                  // Handle intensity prompt message type
+                  if (message.type === "intensity_prompt" && intensityPrompt) {
+                    return <div key={index}>{intensityPrompt}</div>;
+                  }
+                  
+                  return (
+                    <ChatMessage 
+                      key={index} 
+                      role={message.role}
+                      content={message.content}
+                      onOptionClick={onOptionClick}
+                      onOptionSelect={onOptionSelect}
+                      isLastMessage={index === messages.length - 1}
+                      communicationBriefingId={communicationBriefingId}
+                      coachRecommendation={index === messages.length - 1 ? coachRecommendation : null}
+                    />
+                  );
+                })}
+                
+                {isLoading && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">正在思考...</span>
+                  </div>
+                )}
+                
+                {/* Briefing confirmation slot */}
+                {briefingConfirmation}
+                
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+            
+            {/* Recommendations section */}
+            {(videoRecommendation || toolRecommendation || emotionButtonRecommendation || campRecommendation) && messages.length > 0 && (
+              <div className="space-y-2 mt-4">
+                {emotionButtonRecommendation}
+                {campRecommendation}
+                {videoRecommendation}
+                {toolRecommendation}
+              </div>
+            )}
+            
+            {bottomContent}
+          </div>
+        </main>
+
+        {/* Scroll to Bottom Button */}
+        {messages.length > 0 && (
+          <ScrollToBottomButton 
+            scrollRef={mainRef} 
+            messagesEndRef={messagesEndRef}
+            primaryColor={primaryColor}
+          />
+        )}
+
+        {/* Footer Input */}
+        <CoachInputFooter
+          ref={textareaRef}
+          input={input}
+          onInputChange={onInputChange}
+          onSend={onSend}
+          onKeyPress={handleKeyPress}
+          onNewConversation={onNewConversation}
+          placeholder={placeholder}
+          isLoading={isLoading}
+          hasMessages={messages.length > 0}
+          gradient={gradient}
+          scenarioChips={scenarioChips}
+          messagesCount={messages.length}
+          intensitySelector={intensitySelector}
         />
-      )}
-
-      {/* Footer Input */}
-      <CoachInputFooter
-        ref={textareaRef}
-        input={input}
-        onInputChange={onInputChange}
-        onSend={onSend}
-        onKeyPress={handleKeyPress}
-        onNewConversation={onNewConversation}
-        placeholder={placeholder}
-        isLoading={isLoading}
-        hasMessages={messages.length > 0}
-        gradient={gradient}
-        scenarioChips={scenarioChips}
-        messagesCount={messages.length}
-      />
-    </div>
+      </div>
+      
+      {/* Dialogs - rendered outside main layout */}
+      {dialogs}
+    </>
   );
 };

@@ -31,6 +31,8 @@ interface CoachEmptyStateProps {
   trainingCamp?: ReactNode;
   notifications?: ReactNode;
   community?: ReactNode;
+  dailyReminderContent?: ReactNode;
+  showDailyReminder?: boolean;
 }
 export const CoachEmptyState = ({
   emoji,
@@ -47,7 +49,9 @@ export const CoachEmptyState = ({
   extraContent,
   trainingCamp,
   notifications,
-  community
+  community,
+  dailyReminderContent,
+  showDailyReminder = false
 }: CoachEmptyStateProps) => {
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [isStepsCardExpanded, setIsStepsCardExpanded] = useState(true);
@@ -76,7 +80,12 @@ export const CoachEmptyState = ({
         </p>
       </div>
 
-      {/* Steps Card - 可折叠 */}
+      {/* Steps Card or Daily Reminder - 可折叠 */}
+      {showDailyReminder && dailyReminderContent ? (
+        <div className="bg-card border border-border rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
+          {dailyReminderContent}
+        </div>
+      ) : (
       <Collapsible open={isStepsCardExpanded} onOpenChange={setIsStepsCardExpanded}>
         <div className="bg-card border border-border rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
           <CollapsibleTrigger className="w-full">
@@ -146,6 +155,7 @@ export const CoachEmptyState = ({
           </CollapsibleContent>
         </div>
       </Collapsible>
+      )}
 
       {/* Optional Scenarios */}
       {scenarios}
