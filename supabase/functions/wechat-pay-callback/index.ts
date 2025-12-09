@@ -202,6 +202,26 @@ serve(async (req) => {
       } else {
         console.log('Referral conversion_status updated:', referral.id, '->', newConversionStatus);
         
+        // 计算合伙人佣金
+        try {
+          const { data: commissionResult, error: commissionError } = await supabase.functions.invoke('calculate-commission', {
+            body: {
+              order_id: order.id,
+              user_id: order.user_id,
+              order_amount: order.amount,
+              order_type: order.package_key
+            }
+          });
+          
+          if (commissionError) {
+            console.error('Commission calculation error:', commissionError);
+          } else {
+            console.log('Commission calculation result:', commissionResult);
+          }
+        } catch (commError) {
+          console.error('Failed to calculate commission:', commError);
+        }
+        
         // 发送合伙人通知
         try {
           await supabase.functions.invoke('notify-partner', {

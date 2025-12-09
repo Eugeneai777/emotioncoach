@@ -2425,6 +2425,7 @@ export type Database = {
       partner_referrals: {
         Row: {
           conversion_status: string | null
+          converted_at: string | null
           created_at: string
           has_joined_group: boolean | null
           id: string
@@ -2438,6 +2439,7 @@ export type Database = {
         }
         Insert: {
           conversion_status?: string | null
+          converted_at?: string | null
           created_at?: string
           has_joined_group?: boolean | null
           id?: string
@@ -2451,6 +2453,7 @@ export type Database = {
         }
         Update: {
           conversion_status?: string | null
+          converted_at?: string | null
           created_at?: string
           has_joined_group?: boolean | null
           id?: string
@@ -4105,6 +4108,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_partner_pending_balance: {
+        Args: { p_amount: number; p_partner_id: string }
+        Returns: undefined
+      }
       deduct_user_quota: {
         Args: { p_amount?: number; p_user_id: string }
         Returns: {
