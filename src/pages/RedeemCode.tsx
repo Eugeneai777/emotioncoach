@@ -100,13 +100,32 @@ export default function RedeemCode() {
     }
   }, [searchParams]);
 
-  // 自动兑换：当用户已登录且有兑换码时自动执行
+  // 自动兑换/自动支付：当用户已登录且有兑换码时自动执行
   useEffect(() => {
     const codeParam = getCodeFromUrl();
     
-    // 条件：有兑换码、用户已登录、有兑换码信息、是免费码、未尝试过自动兑换、未成功
-    if (codeParam && user && codeInfo && codeInfo.entry_type === 'free' && !autoRedeemAttempted && !success) {
+    if (!codeParam || !user || !codeInfo || autoRedeemAttempted || success) return;
+    
+    console.log('[RedeemCode] 自动处理检查:', {
+      codeParam,
+      entryType: codeInfo.entry_type,
+      autoRedeemAttempted
+    });
+    
+    // 免费码：自动兑换
+    if (codeInfo.entry_type === 'free') {
       handleAutoRedeem(codeParam);
+    }
+    // 付费码：自动打开支付对话框
+    else if (codeInfo.entry_type === 'paid') {
+      setAutoRedeemAttempted(true);
+      setPaymentPackageInfo({
+        key: `trial_${codeParam}`,
+        name: '有劲AI·情绪日记 体验包',
+        price: codeInfo.entry_price,
+        quota: codeInfo.quota_amount
+      });
+      setShowPayDialog(true);
     }
   }, [user, codeInfo, autoRedeemAttempted, success]);
 
@@ -357,6 +376,49 @@ export default function RedeemCode() {
   
   // 判断是否从URL获取到有效兑换码
   const hasCodeFromUrl = !!getCodeFromUrl();
+  
+  // URL带码验证中 - 显示加载状态
+  if (hasCodeFromUrl && checking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-orange-50/20 to-amber-50/20 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-orange-200">
+          <CardContent className="pt-8 pb-8 text-center space-y-4">
+            <Loader2 className="w-12 h-12 animate-spin text-orange-500 mx-auto" />
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold">正在验证兑换码...</h2>
+              <p className="text-muted-foreground">请稍候</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  // URL带码但验证失败 - 显示错误
+  if (hasCodeFromUrl && !checking && !codeInfo && code) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-orange-50/20 to-amber-50/20 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-destructive/50">
+          <CardContent className="pt-8 pb-8 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 mx-auto flex items-center justify-center">
+              <Gift className="w-8 h-8 text-destructive" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-destructive">兑换码无效</h2>
+              <p className="text-muted-foreground">该兑换码不存在或已被使用</p>
+            </div>
+            <Button 
+              onClick={() => navigate('/redeem')}
+              variant="outline"
+              className="mt-4"
+            >
+              重新输入兑换码
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // 显示自动兑换中的加载状态
   if (autoRedeeming) {
