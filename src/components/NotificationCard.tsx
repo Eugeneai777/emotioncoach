@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Trash2, Heart, Star, Sparkles, Trophy, Bell, MessageCircle, TrendingUp } from 'lucide-react';
+import { Trash2, Heart, Star, Sparkles, Trophy, Bell, MessageCircle, TrendingUp, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
@@ -118,6 +118,11 @@ export const NotificationCard = ({ notification, onClick, onDelete, colorTheme =
     onDelete();
   };
 
+  const handleMarkAsRead = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClick();
+  };
+
   const timeAgo = formatDistanceToNow(new Date(notification.created_at), {
     addSuffix: true,
     locale: zhCN
@@ -188,6 +193,19 @@ export const NotificationCard = ({ notification, onClick, onDelete, colorTheme =
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* 已读按钮 - 仅在未读时显示 */}
+        {!notification.is_read && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 px-2 text-xs text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+            onClick={handleMarkAsRead}
+          >
+            <Check className="h-3 w-3 mr-1" />
+            已读
+          </Button>
+        )}
       </div>
     </Card>
   );
