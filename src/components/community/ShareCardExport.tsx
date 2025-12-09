@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
+import { getPartnerShareUrl, getDefaultShareUrl } from "@/utils/partnerQRUtils";
 
 interface ShareCardExportProps {
   post: {
@@ -21,6 +22,7 @@ interface ShareCardExportProps {
   partnerInfo?: {
     isPartner: boolean;
     partnerId?: string;
+    entryType?: 'free' | 'paid';
   };
 }
 
@@ -51,29 +53,14 @@ const getPhaseInfo = (campDay: number | null) => {
 
 // 根据合伙人状态和帖子来源生成二维码URL
 const getQRCodeUrl = (partnerInfo: ShareCardExportProps['partnerInfo'], post: ShareCardExportProps['post']): string => {
-  const baseUrl = import.meta.env.VITE_PRODUCTION_URL || window.location.origin;
-  
+  // 合伙人：使用统一的合伙人分享URL
   if (partnerInfo?.isPartner && partnerInfo?.partnerId) {
-    return `${baseUrl}/redeem?partner=${partnerInfo.partnerId}`;
+    const entryType = partnerInfo.entryType || 'free';
+    return getPartnerShareUrl(partnerInfo.partnerId, entryType);
   }
-  
-  if (post.camp_type) {
-    const campTypeMap: Record<string, string> = {
-      'parent_emotion_21': '/parent-camp',
-      'emotion_journal_21': '/camp-intro/emotion_journal_21',
-      'emotion_bloom': '/camp-intro/emotion_bloom',
-      'identity_bloom': '/camp-intro/identity_bloom'
-    };
-    if (campTypeMap[post.camp_type]) {
-      return `${baseUrl}${campTypeMap[post.camp_type]}`;
-    }
-  }
-  
-  if (post.template_id) {
-    return `${baseUrl}/camp-template/${post.template_id}`;
-  }
-  
-  return `${baseUrl}/introduction`;
+
+  // 非合伙人：使用默认分享URL
+  return getDefaultShareUrl(post);
 };
 
 // 生成来源标签

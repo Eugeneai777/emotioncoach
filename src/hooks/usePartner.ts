@@ -23,6 +23,9 @@ export interface Partner {
   prepurchase_expires_at: string | null;
   wecom_group_qrcode_url?: string | null;
   wecom_group_name?: string | null;
+  default_entry_type?: string | null;
+  default_entry_price?: number | null;
+  default_quota_amount?: number | null;
 }
 
 export function usePartner() {

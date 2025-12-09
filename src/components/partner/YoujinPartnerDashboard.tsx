@@ -5,10 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Partner } from "@/hooks/usePartner";
-import { TrendingUp, Users, Wallet, Gift, QrCode, List, Upload, ImageIcon, BarChart3 } from "lucide-react";
+import { TrendingUp, Users, Wallet, Gift, Upload, ImageIcon, BarChart3 } from "lucide-react";
 import { useState, useRef } from "react";
-import { PartnerQRGenerator } from "./PartnerQRGenerator";
-import { RedemptionCodeManager } from "./RedemptionCodeManager";
+import { EntryTypeSelector } from "./EntryTypeSelector";
 import { PartnerLevelProgress } from "./PartnerLevelProgress";
 import { StudentList } from "./StudentList";
 import { ConversionFunnel } from "./ConversionFunnel";
@@ -24,8 +23,6 @@ interface YoujinPartnerDashboardProps {
 }
 
 export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps) {
-  const [showQR, setShowQR] = useState(false);
-  const [showCodes, setShowCodes] = useState(false);
   const [groupQrUrl, setGroupQrUrl] = useState(partner.wecom_group_qrcode_url || '');
   const [groupName, setGroupName] = useState(partner.wecom_group_name || '有劲学员群');
   const [uploading, setUploading] = useState(false);
@@ -180,32 +177,17 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
         </TabsList>
 
         <TabsContent value="tools" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Gift className="w-5 h-5" />
-                推广工具
-              </CardTitle>
-              <CardDescription>生成二维码或查看兑换码列表</CardDescription>
-            </CardHeader>
-            <CardContent className="flex gap-3">
-              <Button 
-                onClick={() => setShowQR(true)} 
-                className="flex-1 gap-2 bg-gradient-to-r from-orange-500 to-amber-500"
-              >
-                <QrCode className="w-4 h-4" />
-                生成推广二维码
-              </Button>
-              <Button 
-                onClick={() => setShowCodes(true)}
-                variant="outline"
-                className="flex-1 gap-2"
-              >
-                <List className="w-4 h-4" />
-                查看兑换码
-              </Button>
-            </CardContent>
-          </Card>
+          <EntryTypeSelector 
+            partnerId={partner.id} 
+            currentEntryType={partner.default_entry_type || 'free'}
+          />
+          
+          <div className="p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border border-teal-100">
+            <h4 className="font-medium text-teal-800 mb-2">💡 如何推广</h4>
+            <p className="text-sm text-teal-700">
+              设置入口类型后，你在社区分享帖子、训练营打卡或情绪按钮分享时，生成的二维码会自动使用你的设置。用户扫码后即可按你选择的方式（免费/付费）获得对话额度，并自动成为你的学员。
+            </p>
+          </div>
         </TabsContent>
 
         <TabsContent value="group" className="space-y-4">
@@ -289,19 +271,6 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
           <PartnerAnalytics partnerId={partner.id} />
         </TabsContent>
       </Tabs>
-
-      {/* Dialogs */}
-      <PartnerQRGenerator 
-        open={showQR} 
-        onOpenChange={setShowQR} 
-        partnerId={partner.id} 
-      />
-
-      <RedemptionCodeManager 
-        open={showCodes} 
-        onOpenChange={setShowCodes} 
-        partnerId={partner.id} 
-      />
     </div>
   );
 }

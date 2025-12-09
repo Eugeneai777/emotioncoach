@@ -2587,6 +2587,9 @@ export type Database = {
           commission_rate_l1: number
           commission_rate_l2: number
           created_at: string
+          default_entry_price: number | null
+          default_entry_type: string | null
+          default_quota_amount: number | null
           id: string
           partner_code: string
           partner_level: string | null
@@ -2613,6 +2616,9 @@ export type Database = {
           commission_rate_l1?: number
           commission_rate_l2?: number
           created_at?: string
+          default_entry_price?: number | null
+          default_entry_type?: string | null
+          default_quota_amount?: number | null
           id?: string
           partner_code: string
           partner_level?: string | null
@@ -2639,6 +2645,9 @@ export type Database = {
           commission_rate_l1?: number
           commission_rate_l2?: number
           created_at?: string
+          default_entry_price?: number | null
+          default_entry_type?: string | null
+          default_quota_amount?: number | null
           id?: string
           partner_code?: string
           partner_level?: string | null
