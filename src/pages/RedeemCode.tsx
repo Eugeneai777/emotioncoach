@@ -42,7 +42,12 @@ export default function RedeemCode() {
   // 支付对话框
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [paymentPackageInfo, setPaymentPackageInfo] = useState<PackageInfo | null>(null);
+  
+  // 自动兑换状态
+  const [autoRedeeming, setAutoRedeeming] = useState(false);
+  const [autoRedeemAttempted, setAutoRedeemAttempted] = useState(false);
 
+  // 初始化：检查兑换码
   useEffect(() => {
     const codeParam = searchParams.get('code');
     if (codeParam) {
@@ -50,6 +55,52 @@ export default function RedeemCode() {
       checkCodeInfo(codeParam);
     }
   }, [searchParams]);
+
+  // 自动兑换：当用户已登录且有兑换码时自动执行
+  useEffect(() => {
+    const codeParam = searchParams.get('code');
+    
+    // 条件：有兑换码、用户已登录、有兑换码信息、是免费码、未尝试过自动兑换、未成功
+    if (codeParam && user && codeInfo && codeInfo.entry_type === 'free' && !autoRedeemAttempted && !success) {
+      handleAutoRedeem(codeParam);
+    }
+  }, [user, codeInfo, autoRedeemAttempted, success]);
+
+  // 自动兑换逻辑
+  const handleAutoRedeem = async (codeValue: string) => {
+    if (!user) return;
+    
+    setAutoRedeemAttempted(true);
+    setAutoRedeeming(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('redeem-code', {
+        body: { code: codeValue.toUpperCase(), user_id: user.id }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        toast.error(data.error);
+        setAutoRedeeming(false);
+        return;
+      }
+
+      setQuotaReceived(data.quota_amount || 10);
+      if (data.referral_id) {
+        setReferralId(data.referral_id);
+      }
+      setSuccess(true);
+      setShowCampSelector(true);
+      toast.success(data.message || '兑换成功！');
+
+    } catch (error: any) {
+      console.error('Auto redeem error:', error);
+      toast.error(error.message || '自动兑换失败，请手动兑换');
+    } finally {
+      setAutoRedeeming(false);
+    }
+  };
 
   // 检查兑换码信息
   const checkCodeInfo = async (codeValue: string) => {
@@ -259,6 +310,23 @@ export default function RedeemCode() {
   const displayPrice = codeInfo?.entry_price ?? 9.9;
   const displayQuota = codeInfo?.quota_amount ?? 50;
   const isFree = codeInfo?.entry_type === 'free';
+
+  // 显示自动兑换中的加载状态
+  if (autoRedeeming) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-orange-50/20 to-amber-50/20 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-orange-200">
+          <CardContent className="pt-8 pb-8 text-center space-y-4">
+            <Loader2 className="w-12 h-12 animate-spin text-orange-500 mx-auto" />
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold">正在为您兑换...</h2>
+              <p className="text-muted-foreground">请稍候，马上就好</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-orange-50/20 to-amber-50/20 flex items-center justify-center p-4">
