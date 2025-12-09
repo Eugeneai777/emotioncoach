@@ -11,30 +11,34 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, TrendingUp, Users, DollarSign, Gift, CheckCircle, HelpCircle, Sparkles, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
-
 const PartnerIntro = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { isPartner, loading: partnerLoading } = usePartner();
-  
+  const {
+    user
+  } = useAuth();
+  const {
+    isPartner,
+    loading: partnerLoading
+  } = usePartner();
   const [payDialogOpen, setPayDialogOpen] = useState(false);
 
   // 绽放合伙人套餐信息
   const bloomPackage = {
     key: 'bloom_partner',
     name: '绽放合伙人',
-    price: 19800,
+    price: 19800
   };
 
   // 查询合伙人权益
-  const { data: benefits = [] } = useQuery({
+  const {
+    data: benefits = []
+  } = useQuery({
     queryKey: ['partner-benefits'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('partner_benefits')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order');
+      const {
+        data,
+        error
+      } = await supabase.from('partner_benefits').select('*').eq('is_active', true).order('display_order');
       if (error) throw error;
       return data;
     }
@@ -42,8 +46,6 @@ const PartnerIntro = () => {
 
   // 计算权益总价值
   const totalValue = benefits.reduce((sum, benefit) => sum + (Number(benefit.benefit_value) || 0), 0);
-
-
   const handlePurchase = () => {
     if (!user) {
       toast.error("请先登录");
@@ -52,18 +54,14 @@ const PartnerIntro = () => {
     }
     setPayDialogOpen(true);
   };
-
   const handlePaymentSuccess = () => {
     toast.success('🎉 恭喜您成为绽放合伙人！');
     navigate('/partner');
   };
-
   const handleGoToPartnerCenter = () => {
     navigate("/partner");
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       {/* Header */}
       <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
         <div className="container max-w-5xl mx-auto px-4 py-6">
@@ -102,15 +100,11 @@ const PartnerIntro = () => {
           </CardHeader>
           <CardContent className="text-center pb-6">
             <div className="text-4xl font-bold text-primary mb-4">¥19,800</div>
-            <Button 
-              size="lg" 
-              onClick={handlePurchase}
-              className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-6 text-lg"
-            >
+            <Button size="lg" onClick={handlePurchase} className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-6 text-lg">
               <Sparkles className="w-5 h-5" />
               立即购买，成为绽放合伙人
             </Button>
-            <p className="text-sm text-muted-foreground mt-3">支持微信支付</p>
+            
           </CardContent>
         </Card>
 
@@ -204,8 +198,7 @@ const PartnerIntro = () => {
         </Card>
 
         {/* Benefits */}
-        {benefits.length > 0 && (
-          <Card>
+        {benefits.length > 0 && <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Gift className="w-6 h-6 text-primary" />
@@ -215,28 +208,21 @@ const PartnerIntro = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {benefits.map(benefit => (
-                  <Card key={benefit.id} className="border bg-gradient-to-br from-background to-accent/5">
+                {benefits.map(benefit => <Card key={benefit.id} className="border bg-gradient-to-br from-background to-accent/5">
                     <CardContent className="p-4 flex items-start gap-3">
                       <div className="text-3xl">{benefit.benefit_icon}</div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
                           <div className="font-semibold">{benefit.benefit_name}</div>
-                          {Number(benefit.benefit_value) > 0 && (
-                            <Badge variant="outline">¥{Number(benefit.benefit_value).toLocaleString()}</Badge>
-                          )}
+                          {Number(benefit.benefit_value) > 0 && <Badge variant="outline">¥{Number(benefit.benefit_value).toLocaleString()}</Badge>}
                         </div>
-                        {benefit.benefit_description && (
-                          <p className="text-sm text-muted-foreground">{benefit.benefit_description}</p>
-                        )}
+                        {benefit.benefit_description && <p className="text-sm text-muted-foreground">{benefit.benefit_description}</p>}
                       </div>
                     </CardContent>
-                  </Card>
-                ))}
+                  </Card>)}
               </div>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
         {/* How to Become Partner */}
         <Card>
@@ -248,13 +234,23 @@ const PartnerIntro = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { step: 1, title: "购买合伙人套餐", desc: "支付 ¥19,800 加入合伙人计划" },
-                { step: 2, title: "获得推广权限", desc: "系统自动生成专属推广码和推广链接" },
-                { step: 3, title: "分享给好友", desc: "通过链接、推广码或海报分享，开始赚取佣金" },
-                { step: 4, title: "提现收益", desc: "订单确认后21天可申请提现到支付宝/微信" }
-              ].map(item => (
-                <div key={item.step} className="flex items-start gap-4">
+              {[{
+              step: 1,
+              title: "购买合伙人套餐",
+              desc: "支付 ¥19,800 加入合伙人计划"
+            }, {
+              step: 2,
+              title: "获得推广权限",
+              desc: "系统自动生成专属推广码和推广链接"
+            }, {
+              step: 3,
+              title: "分享给好友",
+              desc: "通过链接、推广码或海报分享，开始赚取佣金"
+            }, {
+              step: 4,
+              title: "提现收益",
+              desc: "订单确认后21天可申请提现到支付宝/微信"
+            }].map(item => <div key={item.step} className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-warm flex items-center justify-center text-white font-bold flex-shrink-0">
                     {item.step}
                   </div>
@@ -262,15 +258,10 @@ const PartnerIntro = () => {
                     <div className="font-semibold mb-1">{item.title}</div>
                     <div className="text-sm text-muted-foreground">{item.desc}</div>
                   </div>
-                </div>
-              ))}
+                </div>)}
             </div>
             <div className="mt-6 text-center">
-              <Button 
-                size="lg" 
-                onClick={handlePurchase} 
-                className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-              >
+              <Button size="lg" onClick={handlePurchase} className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white">
                 <ShoppingCart className="w-5 h-5" />
                 立即购买 ¥19,800
               </Button>
@@ -288,18 +279,25 @@ const PartnerIntro = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {[
-              { q: "佣金多久到账？", a: "订单完成后进入21天确认期，确认后即可申请提现。提现审核通过后1-3个工作日到账。" },
-              { q: "推荐关系有效期多久？", a: "推荐关系永久有效。被推荐用户后续所有消费（包括续费、升级套餐等）都会给您分成。" },
-              { q: "如何查看我的推广数据？", a: "进入「合伙人中心」可查看推荐列表、佣金明细、提现记录等完整数据。" },
-              { q: "佣金提现有手续费吗？", a: "目前提现免手续费。单笔提现金额需满100元，每月可提现3次。" },
-              { q: "如果好友没有使用我的链接怎么办？", a: "好友在注册时输入您的推广码也可以绑定推荐关系。如有特殊情况，可联系客服手动绑定。" }
-            ].map((faq, index) => (
-              <div key={index} className="pb-4 border-b last:border-0">
+            {[{
+            q: "佣金多久到账？",
+            a: "订单完成后进入21天确认期，确认后即可申请提现。提现审核通过后1-3个工作日到账。"
+          }, {
+            q: "推荐关系有效期多久？",
+            a: "推荐关系永久有效。被推荐用户后续所有消费（包括续费、升级套餐等）都会给您分成。"
+          }, {
+            q: "如何查看我的推广数据？",
+            a: "进入「合伙人中心」可查看推荐列表、佣金明细、提现记录等完整数据。"
+          }, {
+            q: "佣金提现有手续费吗？",
+            a: "目前提现免手续费。单笔提现金额需满100元，每月可提现3次。"
+          }, {
+            q: "如果好友没有使用我的链接怎么办？",
+            a: "好友在注册时输入您的推广码也可以绑定推荐关系。如有特殊情况，可联系客服手动绑定。"
+          }].map((faq, index) => <div key={index} className="pb-4 border-b last:border-0">
                 <div className="font-semibold mb-2">Q: {faq.q}</div>
                 <div className="text-sm text-muted-foreground">A: {faq.a}</div>
-              </div>
-            ))}
+              </div>)}
           </CardContent>
         </Card>
 
@@ -311,11 +309,7 @@ const PartnerIntro = () => {
               加入绽放合伙人计划，分享成长，创造价值，获得持续收益
             </p>
             <div className="pt-4">
-              <Button 
-                size="lg" 
-                onClick={handlePurchase}
-                className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8"
-              >
+              <Button size="lg" onClick={handlePurchase} className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8">
                 <Sparkles className="w-5 h-5" />
                 立即购买 ¥19,800
               </Button>
@@ -325,14 +319,7 @@ const PartnerIntro = () => {
       </main>
 
       {/* WeChat Pay Dialog */}
-      <WechatPayDialog
-        open={payDialogOpen}
-        onOpenChange={setPayDialogOpen}
-        packageInfo={bloomPackage}
-        onSuccess={handlePaymentSuccess}
-      />
-    </div>
-  );
+      <WechatPayDialog open={payDialogOpen} onOpenChange={setPayDialogOpen} packageInfo={bloomPackage} onSuccess={handlePaymentSuccess} />
+    </div>;
 };
-
 export default PartnerIntro;
