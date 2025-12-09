@@ -36,13 +36,13 @@ export const youjinFeatures: YoujinFeature[] = [
   { name: "生活管理工具", category: "成长工具", basic: true, premium: true, tooltip: "习惯追踪、能量管理、睡眠记录等" },
   
   // 学习课程
-  { name: "公开课程", category: "学习课程", basic: "1点/次", premium: "1点/次", tooltip: "情绪/沟通/亲子/领导力/生活主题的公开视频课程" },
-  { name: "AI视频推荐", category: "学习课程", basic: "1点/次", premium: "1点/次", tooltip: "根据简报内容智能推荐对应教练主题（情绪/沟通/亲子/领导力/生活）的视频课程" },
-  { name: "简报生成", category: "学习课程", basic: "1点/次", premium: "1点/次", tooltip: "情绪/沟通/亲子/领导力/生活教练对话后自动生成简报" },
+  { name: "公开课程", category: "学习课程", basic: true, premium: true, tooltip: "情绪/沟通/亲子/领导力/生活主题的公开视频课程" },
+  { name: "AI视频推荐", category: "学习课程", basic: true, premium: true, tooltip: "根据简报内容智能推荐对应教练主题（情绪/沟通/亲子/领导力/生活）的视频课程" },
+  { name: "简报生成", category: "学习课程", basic: true, premium: true, tooltip: "情绪/沟通/亲子/领导力/生活教练对话后自动生成简报" },
   
   // 训练营
-  { name: "21天情绪日记训练营", category: "训练营", basic: "5点参加", premium: "5点参加", tooltip: "系统化21天情绪管理训练" },
-  { name: "21天青少年困境突破营", category: "训练营", basic: "5点参加", premium: "5点参加", tooltip: "针对青少年的心理成长训练" },
+  { name: "21天情绪日记训练营", category: "训练营", basic: true, premium: true, tooltip: "系统化21天情绪管理训练" },
+  { name: "21天青少年困境突破营", category: "训练营", basic: true, premium: true, tooltip: "针对青少年的心理成长训练" },
 ];
 
 // 绽放产品对比数据
