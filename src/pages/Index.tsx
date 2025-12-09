@@ -582,7 +582,7 @@ const Index = () => {
       <CoachLayout
         emoji={coachConfig?.emoji || "💚"}
         title={coachConfig?.title || "情绪觉醒教练"}
-        description={coachConfig?.description || "劲老师陪着你，一步步梳理情绪，重新找到情绪里的力量"}
+        description={coachConfig?.description || "跟劲老师一起，找回情绪里的力量"}
         primaryColor="green"
         gradient="from-emerald-500 to-green-500"
         historyRoute="/history"
