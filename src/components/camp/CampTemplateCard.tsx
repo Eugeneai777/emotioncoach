@@ -155,11 +155,6 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
           </div>
         )}
         
-        {camp.price === 0 && (
-          <Badge className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-0">
-            免费
-          </Badge>
-        )}
 
         {isLocked && camp.prerequisites?.message && (
           <div className="bg-teal-50/50 dark:bg-teal-950/30 p-3 rounded-lg border border-teal-200/50 dark:border-teal-800/50">
@@ -211,7 +206,7 @@ export function CampTemplateCard({ camp, index, enrolledCount = 0, onClick, onPu
                 : 'bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white'
             }`}
           >
-            {camp.price === 0 ? '免费开启' : isBloomCamp ? '✨ 开启绽放之旅' : '了解详情'}
+            {isBloomCamp ? '✨ 开启绽放之旅' : '立即开启'}
             <ArrowRight className="w-4 h-4" />
           </Button>
         )}
