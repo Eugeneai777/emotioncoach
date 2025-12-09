@@ -51,7 +51,8 @@ const Index = () => {
   const [selectedIntensity, setSelectedIntensity] = useState<number | null>(null);
   const [activeCamp, setActiveCamp] = useState<TrainingCamp | null>(null);
   const [showStartCamp, setShowStartCamp] = useState(false);
-  const [expandedStep, setExpandedStep] = useState<number | null>(null);
+const [expandedStep, setExpandedStep] = useState<number | null>(null);
+  const [isStepsCardExpanded, setIsStepsCardExpanded] = useState(true);
   const [autoDismissSeconds, setAutoDismissSeconds] = useState(10);
   const [showCheckInSuccess, setShowCheckInSuccess] = useState(false);
   const [checkInSuccessData, setCheckInSuccessData] = useState<any>(null);
@@ -96,6 +97,16 @@ const Index = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // 检查情绪四部曲卡片是否首次访问
+  useEffect(() => {
+    const hasSeenStepsCard = localStorage.getItem('has_seen_steps_card');
+    if (hasSeenStepsCard) {
+      setIsStepsCardExpanded(false);
+    } else {
+      localStorage.setItem('has_seen_steps_card', 'true');
+    }
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -744,61 +755,75 @@ const Index = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="animate-in fade-in-50 duration-300">
-                    <div className="mb-card-gap flex items-center justify-between">
-                      <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
-                        <span className="text-primary text-sm">{coachConfig?.steps_emoji || '🌱'}</span>
-                        {coachConfig?.steps_title || '情绪四部曲'}
-                      </h3>
-                      <Button 
-                        variant="link" 
-                        size="sm" 
-                        onClick={() => navigate("/introduction")}
-                        className="text-xs text-primary hover:text-primary/80 p-0 h-auto"
-                      >
-                        了解更多 →
-                      </Button>
-                    </div>
+                  <Collapsible 
+                    open={isStepsCardExpanded} 
+                    onOpenChange={setIsStepsCardExpanded}
+                    className="animate-in fade-in-50 duration-300"
+                  >
+                    <CollapsibleTrigger className="w-full">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
+                          <span className="text-primary text-sm">{coachConfig?.steps_emoji || '🌱'}</span>
+                          {coachConfig?.steps_title || '情绪四部曲'}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="link" 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate("/introduction");
+                            }}
+                            className="text-xs text-primary hover:text-primary/80 p-0 h-auto"
+                          >
+                            了解更多 →
+                          </Button>
+                          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isStepsCardExpanded ? 'rotate-180' : ''}`} />
+                        </div>
+                      </div>
+                    </CollapsibleTrigger>
 
-                    <div className="grid grid-cols-2 gap-card-gap">
-                      {(coachConfig?.steps || []).map((step, index) => (
-                        <Collapsible 
-                          key={step.id} 
-                          open={expandedStep === step.id} 
-                          onOpenChange={() => setExpandedStep(expandedStep === step.id ? null : step.id)}
-                        >
-                          <CollapsibleTrigger className="w-full">
-                            <div className="bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
-                              <div className="flex items-center gap-1.5">
-                                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                                  {step.emoji || step.id}
+                    <CollapsibleContent className="mt-card-gap">
+                      <div className="grid grid-cols-2 gap-card-gap">
+                        {(coachConfig?.steps || []).map((step, index) => (
+                          <Collapsible 
+                            key={step.id} 
+                            open={expandedStep === step.id} 
+                            onOpenChange={() => setExpandedStep(expandedStep === step.id ? null : step.id)}
+                          >
+                            <CollapsibleTrigger className="w-full">
+                              <div className="bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
+                                <div className="flex items-center gap-1.5">
+                                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                                    {step.emoji || step.id}
+                                  </div>
+                                  <div className="flex-1 text-left min-w-0">
+                                    <h4 className="font-medium text-foreground text-sm truncate">
+                                      {step.name}
+                                    </h4>
+                                    <p className="text-xs text-muted-foreground truncate">{step.subtitle}</p>
+                                  </div>
+                                  <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === step.id ? 'rotate-180' : ''}`} />
                                 </div>
-                                <div className="flex-1 text-left min-w-0">
-                                  <h4 className="font-medium text-foreground text-sm truncate">
-                                    {step.name}
-                                  </h4>
-                                  <p className="text-xs text-muted-foreground truncate">{step.subtitle}</p>
-                                </div>
-                                <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === step.id ? 'rotate-180' : ''}`} />
                               </div>
-                            </div>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="mt-1">
-                            <div className="bg-background/30 rounded-card p-card-sm border border-border/30 space-y-1">
-                              <p className="text-xs text-foreground leading-snug">
-                                {step.description}
-                              </p>
-                              {step.details && (
-                                <p className="text-xs text-muted-foreground leading-snug whitespace-pre-line">
-                                  {step.details}
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="mt-1">
+                              <div className="bg-background/30 rounded-card p-card-sm border border-border/30 space-y-1">
+                                <p className="text-xs text-foreground leading-snug">
+                                  {step.description}
                                 </p>
-                              )}
-                            </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      ))}
-                    </div>
-                  </div>
+                                {step.details && (
+                                  <p className="text-xs text-muted-foreground leading-snug whitespace-pre-line">
+                                    {step.details}
+                                  </p>
+                                )}
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
                 )}
               </div>
 
