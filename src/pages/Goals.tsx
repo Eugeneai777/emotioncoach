@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Loader2, Target, TrendingUp, Calendar as CalendarIcon, Award, Activity } from "lucide-react";
+import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { IntensityGoalDialog } from "@/components/IntensityGoalDialog";
 import { IntensityGoalCard } from "@/components/IntensityGoalCard";
 import { 
@@ -671,11 +672,11 @@ const Goals = (): JSX.Element => {
 
       <main className="container max-w-4xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-6 md:space-y-8">
         <Tabs defaultValue="active" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="active">活跃目标</TabsTrigger>
-            <TabsTrigger value="history">历史成就</TabsTrigger>
-            <TabsTrigger value="reports">数据报告</TabsTrigger>
-            <TabsTrigger value="analysis">关联分析</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 h-auto">
+            <ResponsiveTabsTrigger value="active" label="活跃目标" shortLabel="活跃" />
+            <ResponsiveTabsTrigger value="history" label="历史成就" shortLabel="成就" />
+            <ResponsiveTabsTrigger value="reports" label="数据报告" shortLabel="报告" />
+            <ResponsiveTabsTrigger value="analysis" label="关联分析" shortLabel="分析" />
           </TabsList>
 
           <TabsContent value="active" className="space-y-6 md:space-y-8">

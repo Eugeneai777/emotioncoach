@@ -5,7 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePartner } from "@/hooks/usePartner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { ArrowLeft, Copy, Share2, Users, TrendingUp, Wallet, Clock, Gift, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { PartnerStats } from "@/components/partner/PartnerStats";
@@ -245,19 +246,10 @@ export default function Partner() {
 
             {/* Tabs */}
             <Tabs defaultValue="referrals" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="referrals" className="gap-2">
-              <Users className="w-4 h-4" />
-              推荐列表
-            </TabsTrigger>
-            <TabsTrigger value="commissions" className="gap-2">
-              <TrendingUp className="w-4 h-4" />
-              佣金明细
-            </TabsTrigger>
-            <TabsTrigger value="withdrawal" className="gap-2">
-              <Wallet className="w-4 h-4" />
-              提现申请
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 h-auto">
+            <ResponsiveTabsTrigger value="referrals" label="推荐列表" shortLabel="推荐" icon={<Users className="w-4 h-4" />} />
+            <ResponsiveTabsTrigger value="commissions" label="佣金明细" shortLabel="佣金" icon={<TrendingUp className="w-4 h-4" />} />
+            <ResponsiveTabsTrigger value="withdrawal" label="提现申请" shortLabel="提现" icon={<Wallet className="w-4 h-4" />} />
           </TabsList>
 
           <TabsContent value="referrals">
