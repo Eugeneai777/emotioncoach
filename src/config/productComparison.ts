@@ -24,7 +24,7 @@ export const youjinFeatures: YoujinFeature[] = [
   
   // 教练空间
   { name: "情绪觉醒教练", category: "教练空间", basic: true, premium: true, tooltip: "基础情绪觉醒和陪伴功能" },
-  { name: "家长情绪教练", category: "教练空间", basic: true, premium: true, tooltip: "针对家长的亲子关系情绪教练" },
+  { name: "亲子教练", category: "教练空间", basic: true, premium: true, tooltip: "针对家长的亲子关系情绪教练" },
   { name: "沟通教练", category: "教练空间", basic: true, premium: true, tooltip: "人际沟通技巧指导" },
   { name: "有劲生活教练", category: "教练空间", basic: true, premium: true, tooltip: "全方位生活指导和规划" },
   
@@ -54,7 +54,7 @@ export const bloomFeatures: BloomFeature[] = [
   
   // 教练空间
   { name: "情绪觉醒教练", category: "教练空间", identityCamp: true, emotionCamp: true, tooltip: "全功能情绪觉醒教练" },
-  { name: "家长情绪教练", category: "教练空间", identityCamp: false, emotionCamp: true, tooltip: "家庭关系情绪教练" },
+  { name: "亲子教练", category: "教练空间", identityCamp: false, emotionCamp: true, tooltip: "家庭关系情绪教练" },
   { name: "AI生活教练", category: "教练空间", identityCamp: true, emotionCamp: true, tooltip: "生活全方位指导" },
   
   // 成长工具

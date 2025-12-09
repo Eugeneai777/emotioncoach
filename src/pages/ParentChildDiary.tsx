@@ -414,7 +414,7 @@ const ParentChildDiary = () => {
         {sessions.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">还没有亲子教练记录</p>
-            <p className="text-sm text-muted-foreground mt-2">完成家长情绪教练对话后会生成记录 💜</p>
+            <p className="text-sm text-muted-foreground mt-2">完成亲子教练对话后会生成记录 💜</p>
           </div>
         ) : (
           <Tabs defaultValue="list" className="w-full">

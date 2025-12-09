@@ -18,7 +18,7 @@ const coachConfig: Record<string, { emoji: string; title: string; route: string;
   },
   parent: {
     emoji: "👨‍👩‍👧",
-    title: "家长情绪教练",
+    title: "亲子教练",
     route: "/parent-coach",
     gradient: "from-pink-500 to-rose-500"
   },

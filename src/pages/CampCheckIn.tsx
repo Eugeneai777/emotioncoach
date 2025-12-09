@@ -294,7 +294,7 @@ const CampCheckIn = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
                         <h4 className="text-sm font-semibold text-teal-800 dark:text-teal-200">
-                          {camp.camp_type === 'parent_emotion_21' ? '家长情绪教练' : '情绪教练对话'}
+                          {camp.camp_type === 'parent_emotion_21' ? '亲子教练' : '情绪教练对话'}
                         </h4>
                         <Badge className="bg-teal-100 text-teal-700 border-0 h-4 px-1.5 text-[10px] dark:bg-teal-900/50 dark:text-teal-300">核心</Badge>
                         {todayProgress?.emotion_logs_count > 0 && (

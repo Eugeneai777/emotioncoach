@@ -74,7 +74,7 @@ export const SmartNotificationCenter = () => {
               <SelectItem value="parent_coach">
                 <div className="flex items-center gap-2">
                   <span className="text-purple-500">💜</span>
-                  家长情绪教练
+                  亲子教练
                 </div>
               </SelectItem>
               <SelectItem value="life_coach">
