@@ -476,6 +476,7 @@ export type Database = {
           enable_voice_control: boolean | null
           gradient: string | null
           history_label: string | null
+          history_label_short: string | null
           history_route: string
           id: string
           is_active: boolean | null
@@ -515,6 +516,7 @@ export type Database = {
           enable_voice_control?: boolean | null
           gradient?: string | null
           history_label?: string | null
+          history_label_short?: string | null
           history_route: string
           id?: string
           is_active?: boolean | null
@@ -554,6 +556,7 @@ export type Database = {
           enable_voice_control?: boolean | null
           gradient?: string | null
           history_label?: string | null
+          history_label_short?: string | null
           history_route?: string
           id?: string
           is_active?: boolean | null
