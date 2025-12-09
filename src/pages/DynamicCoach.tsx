@@ -126,6 +126,8 @@ const DynamicCoach = () => {
       moreInfoRoute={template.more_info_route || undefined}
       historyRoute={template.history_route}
       historyLabel={template.history_label || '我的日记'}
+      historyLabelShort="日记"
+      currentCoachKey={coachKey}
       messages={messages}
       isLoading={isLoading}
       input={input}

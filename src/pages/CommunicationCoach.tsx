@@ -97,6 +97,8 @@ const CommunicationCoach = () => {
         moreInfoRoute={template.more_info_route || undefined}
         historyRoute={template.history_route}
         historyLabel={template.history_label || '我的日记'}
+        historyLabelShort="日记"
+        currentCoachKey="communication"
         messages={messages}
         isLoading={isLoading}
         input={input}
