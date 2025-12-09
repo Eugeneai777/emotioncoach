@@ -158,7 +158,7 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
         </div>
       )}
       
-      <div className={`max-w-[85%] md:max-w-[80%] ${isUser ? "order-2" : "order-1"}`}>
+      <div className={`max-w-[88%] sm:max-w-[85%] md:max-w-[80%] lg:max-w-[70%] ${isUser ? "order-2" : "order-1"}`}>
         {/* 消息气泡 - 带微信式尾巴 */}
         <div className="relative">
           {/* 气泡尾巴 */}
