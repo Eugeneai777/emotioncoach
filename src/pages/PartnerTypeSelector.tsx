@@ -67,12 +67,13 @@ export default function PartnerTypeSelector() {
                 <p className="font-medium">通过兑换码/二维码分发体验包，建立长期关系</p>
               </div>
 
-              <div className="flex gap-2">
-                <Button className="flex-1 gap-2" variant="outline" onClick={() => navigate("/partner/youjin-intro")}>
-                  了解详情
-                </Button>
-                
-              </div>
+              <Button 
+                className="w-full gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white" 
+                onClick={() => navigate("/partner/youjin-intro")}
+              >
+                <Sparkles className="w-4 h-4" />
+                了解详情
+              </Button>
             </CardContent>
           </Card>
 
@@ -101,12 +102,13 @@ export default function PartnerTypeSelector() {
                 <p className="font-medium">分享专属推广码，推荐好友购买绽放产品</p>
               </div>
 
-              <div className="flex gap-2">
-                <Button className="flex-1 gap-2" variant="outline" onClick={() => navigate("/partner-intro")}>
-                  了解详情
-                </Button>
-                
-              </div>
+              <Button 
+                className="w-full gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white" 
+                onClick={() => navigate("/partner-intro")}
+              >
+                <Sparkles className="w-4 h-4" />
+                了解详情
+              </Button>
             </CardContent>
           </Card>
         </div>
