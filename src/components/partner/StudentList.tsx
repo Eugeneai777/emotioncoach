@@ -214,8 +214,8 @@ export function StudentList({ partnerId }: StudentListProps) {
             onOpenChange={(open) => setExpandedId(open ? student.id : null)}
           >
             <Card className="hover:shadow-md transition-shadow overflow-hidden">
-              <CollapsibleTrigger className="w-full">
-                <CardContent className="p-4">
+              <CollapsibleTrigger asChild>
+                <CardContent className="p-4 cursor-pointer">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">

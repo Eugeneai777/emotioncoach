@@ -699,8 +699,8 @@ const ApiDocs = () => {
                   onOpenChange={() => toggleEndpoint(endpoint.name)}
                 >
                   <div className="border rounded-lg overflow-hidden">
-                    <CollapsibleTrigger className="w-full">
-                      <div className="flex items-center justify-between p-3 hover:bg-slate-50 transition-colors">
+                    <CollapsibleTrigger asChild>
+                      <div className="w-full flex items-center justify-between p-3 hover:bg-slate-50 transition-colors cursor-pointer">
                         <div className="flex items-center gap-3">
                           <Badge
                             className={

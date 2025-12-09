@@ -159,8 +159,8 @@ const UnifiedEmotionHeatmap = ({ briefings, quickLogs }: UnifiedEmotionHeatmapPr
     <>
       <Card className={`${isExpanded ? 'p-3 md:p-4' : 'p-3'} bg-card/50 backdrop-blur-sm border-border`}>
         <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-          <CollapsibleTrigger className="w-full">
-            <div className="flex items-center justify-between hover:bg-muted/50 rounded-md transition-colors p-2 -m-2">
+          <CollapsibleTrigger asChild>
+            <div className="w-full flex items-center justify-between hover:bg-muted/50 rounded-md transition-colors p-2 -m-2 cursor-pointer">
               <div className="flex items-center gap-2">
                 <h3 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
                   📅 情绪日历

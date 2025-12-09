@@ -295,24 +295,26 @@ export function ConversionAlerts({ partnerId }: ConversionAlertsProps) {
             onOpenChange={() => toggleAlert(alert.type)}
           >
             <div className={`rounded-lg border ${alert.color}`}>
-              <CollapsibleTrigger className="w-full p-3 flex items-center gap-3 text-left">
-                <div className="p-1.5 rounded-full bg-white shadow-sm">
-                  {alert.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{alert.title}</span>
-                    <Badge variant="destructive" className="text-xs">
-                      {alert.students.length}人
-                    </Badge>
+              <CollapsibleTrigger asChild>
+                <div className="w-full p-3 flex items-center gap-3 text-left cursor-pointer">
+                  <div className="p-1.5 rounded-full bg-white shadow-sm">
+                    {alert.icon}
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{alert.description}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{alert.title}</span>
+                      <Badge variant="destructive" className="text-xs">
+                        {alert.students.length}人
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{alert.description}</p>
+                  </div>
+                  {expandedAlerts.includes(alert.type) ? (
+                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  )}
                 </div>
-                {expandedAlerts.includes(alert.type) ? (
-                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                )}
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="px-3 pb-3 space-y-2">
@@ -356,9 +358,11 @@ export function ConversionAlerts({ partnerId }: ConversionAlertsProps) {
         {/* 其他优先级提醒 */}
         {otherAlerts.length > 0 && (
           <Collapsible>
-            <CollapsibleTrigger className="w-full p-2 text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1">
-              查看更多提醒 ({otherAlerts.length})
-              <ChevronDown className="w-3.5 h-3.5" />
+            <CollapsibleTrigger asChild>
+              <div className="w-full p-2 text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 cursor-pointer">
+                查看更多提醒 ({otherAlerts.length})
+                <ChevronDown className="w-3.5 h-3.5" />
+              </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-2 pt-2">
               {otherAlerts.map(alert => (
@@ -368,24 +372,26 @@ export function ConversionAlerts({ partnerId }: ConversionAlertsProps) {
                   onOpenChange={() => toggleAlert(alert.type)}
                 >
                   <div className={`rounded-lg border ${alert.color}`}>
-                    <CollapsibleTrigger className="w-full p-3 flex items-center gap-3 text-left">
-                      <div className="p-1.5 rounded-full bg-white shadow-sm">
-                        {alert.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">{alert.title}</span>
-                          <Badge variant="secondary" className="text-xs">
-                            {alert.students.length}人
-                          </Badge>
+                    <CollapsibleTrigger asChild>
+                      <div className="w-full p-3 flex items-center gap-3 text-left cursor-pointer">
+                        <div className="p-1.5 rounded-full bg-white shadow-sm">
+                          {alert.icon}
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">{alert.description}</p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{alert.title}</span>
+                            <Badge variant="secondary" className="text-xs">
+                              {alert.students.length}人
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">{alert.description}</p>
+                        </div>
+                        {expandedAlerts.includes(alert.type) ? (
+                          <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        )}
                       </div>
-                      {expandedAlerts.includes(alert.type) ? (
-                        <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                      )}
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <div className="px-3 pb-3 space-y-2">
