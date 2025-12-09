@@ -1,21 +1,36 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Check, TrendingUp, Users, Gift, Clock } from "lucide-react";
 import { youjinPartnerLevels } from "@/config/partnerLevels";
 import { toast } from "sonner";
+import { WechatPayDialog } from "@/components/WechatPayDialog";
 
 export default function YoujinPartnerIntro() {
   const navigate = useNavigate();
+  const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<{
+    key: string;
+    name: string;
+    price: number;
+  } | null>(null);
 
   const handlePurchase = (levelId: string) => {
     const level = youjinPartnerLevels.find(l => l.level === levelId);
     if (!level) return;
 
-    toast.success(`即将支付 ¥${level.price}，成为${level.name}`);
-    
-    // TODO: 集成支付接口
-    // navigate to payment page or trigger payment modal
+    setSelectedPackage({
+      key: `youjin_partner_${level.level.toLowerCase()}`,
+      name: level.name,
+      price: level.price,
+    });
+    setPayDialogOpen(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    toast.success('恭喜您成为有劲合伙人！');
+    navigate('/partner');
   };
 
   return (
@@ -199,6 +214,13 @@ export default function YoujinPartnerIntro() {
           </CardContent>
         </Card>
       </div>
+
+      <WechatPayDialog
+        open={payDialogOpen}
+        onOpenChange={setPayDialogOpen}
+        packageInfo={selectedPackage}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 }
