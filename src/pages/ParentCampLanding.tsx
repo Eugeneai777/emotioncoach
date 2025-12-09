@@ -100,7 +100,7 @@ export default function ParentCampLanding() {
           </Badge>
           
           <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent leading-tight animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            21天青少年问题<br className="md:hidden" />家庭训练营
+            21天青少年困境<br className="md:hidden" />突破营
           </h1>
           
           <p className="text-2xl md:text-3xl text-muted-foreground font-medium animate-fade-in" style={{ animationDelay: '0.2s' }}>
