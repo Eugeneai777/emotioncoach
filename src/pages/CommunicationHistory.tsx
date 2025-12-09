@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Loader2, ArrowLeft, MessageSquare, Share2 } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -413,26 +414,11 @@ export default function CommunicationHistory() {
       <main className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
         <Tabs defaultValue="list" className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-4 md:mb-6 h-auto">
-            <TabsTrigger value="list" className="text-xs md:text-sm py-2">
-              <span className="hidden sm:inline">记录列表</span>
-              <span className="sm:hidden">列表</span>
-            </TabsTrigger>
-            <TabsTrigger value="trends" className="text-xs md:text-sm py-2">
-              <span className="hidden sm:inline">沟通趋势</span>
-              <span className="sm:hidden">趋势</span>
-            </TabsTrigger>
-            <TabsTrigger value="insights" className="text-xs md:text-sm py-2">
-              <span className="hidden sm:inline">模式洞察</span>
-              <span className="sm:hidden">洞察</span>
-            </TabsTrigger>
-            <TabsTrigger value="comparison" className="text-xs md:text-sm py-2">
-              <span className="hidden sm:inline">记录对比</span>
-              <span className="sm:hidden">对比</span>
-            </TabsTrigger>
-            <TabsTrigger value="review" className="text-xs md:text-sm py-2">
-              <span className="hidden sm:inline">沟通复盘</span>
-              <span className="sm:hidden">复盘</span>
-            </TabsTrigger>
+            <ResponsiveTabsTrigger value="list" label="记录列表" shortLabel="列表" />
+            <ResponsiveTabsTrigger value="trends" label="沟通趋势" shortLabel="趋势" />
+            <ResponsiveTabsTrigger value="insights" label="模式洞察" shortLabel="洞察" />
+            <ResponsiveTabsTrigger value="comparison" label="记录对比" shortLabel="对比" />
+            <ResponsiveTabsTrigger value="review" label="沟通复盘" shortLabel="复盘" />
           </TabsList>
 
           <TabsContent value="list" className="space-y-4 md:space-y-6">

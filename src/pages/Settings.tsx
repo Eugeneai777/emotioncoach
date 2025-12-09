@@ -6,7 +6,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { CompanionSelector } from "@/components/CompanionSelector";
 import { SmartReminderSettings } from "@/components/SmartReminderSettings";
 import { SmartNotificationPreferences } from "@/components/SmartNotificationPreferences";
@@ -147,12 +148,12 @@ export default function Settings() {
 
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-4 md:mb-6 h-auto">
-            <TabsTrigger value="profile" className="text-xs md:text-sm py-2">个人资料</TabsTrigger>
-            <TabsTrigger value="account" className="text-xs md:text-sm py-2">账户</TabsTrigger>
-            <TabsTrigger value="reminders" className="text-xs md:text-sm py-2">提醒设置</TabsTrigger>
-            <TabsTrigger value="notifications" className="text-xs md:text-sm py-2">通知偏好</TabsTrigger>
-            <TabsTrigger value="camp" className="text-xs md:text-sm py-2">训练营</TabsTrigger>
-            <TabsTrigger value="companion" className="text-xs md:text-sm py-2">情绪伙伴</TabsTrigger>
+            <ResponsiveTabsTrigger value="profile" label="个人资料" shortLabel="资料" />
+            <ResponsiveTabsTrigger value="account" label="账户" />
+            <ResponsiveTabsTrigger value="reminders" label="提醒设置" shortLabel="提醒" />
+            <ResponsiveTabsTrigger value="notifications" label="通知偏好" shortLabel="通知" />
+            <ResponsiveTabsTrigger value="camp" label="训练营" />
+            <ResponsiveTabsTrigger value="companion" label="情绪伙伴" shortLabel="伙伴" />
           </TabsList>
 
           <TabsContent value="profile">

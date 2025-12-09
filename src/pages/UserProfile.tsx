@@ -5,7 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Heart, MessageCircle, Award } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -202,11 +203,11 @@ const UserProfile = () => {
         {/* 内容标签页 */}
         <Tabs defaultValue="posts" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="posts">帖子</TabsTrigger>
-            <TabsTrigger value="likes">点赞</TabsTrigger>
-            <TabsTrigger value="comments">评论</TabsTrigger>
-            <TabsTrigger value="achievements">成就</TabsTrigger>
-            <TabsTrigger value="learning">学习档案</TabsTrigger>
+            <ResponsiveTabsTrigger value="posts" label="帖子" />
+            <ResponsiveTabsTrigger value="likes" label="点赞" />
+            <ResponsiveTabsTrigger value="comments" label="评论" />
+            <ResponsiveTabsTrigger value="achievements" label="成就" />
+            <ResponsiveTabsTrigger value="learning" label="学习档案" shortLabel="学习" />
           </TabsList>
 
           {/* 帖子列表 */}

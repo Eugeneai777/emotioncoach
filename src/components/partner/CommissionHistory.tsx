@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList } from "@/components/ui/tabs";
+import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { TrendingUp } from "lucide-react";
@@ -96,10 +97,10 @@ export function CommissionHistory({ partnerId }: CommissionHistoryProps) {
       <CardContent>
         <Tabs value={filter} onValueChange={(v) => setFilter(v as any)} className="space-y-4">
           <TabsList>
-            <TabsTrigger value="all">全部</TabsTrigger>
-            <TabsTrigger value="pending">待确认</TabsTrigger>
-            <TabsTrigger value="confirmed">已确认</TabsTrigger>
-            <TabsTrigger value="cancelled">已取消</TabsTrigger>
+            <ResponsiveTabsTrigger value="all" label="全部" />
+            <ResponsiveTabsTrigger value="pending" label="待确认" shortLabel="待确" />
+            <ResponsiveTabsTrigger value="confirmed" label="已确认" shortLabel="已确" />
+            <ResponsiveTabsTrigger value="cancelled" label="已取消" shortLabel="取消" />
           </TabsList>
 
           <div className="space-y-4">

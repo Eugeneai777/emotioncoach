@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Copy, Download, Search, Plus, Loader2, QrCode } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList } from "@/components/ui/tabs";
+import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import QRCode from "qrcode";
 
@@ -275,10 +276,10 @@ export function RedemptionCodeManager({ open, onOpenChange, partnerId }: Redempt
           {/* 过滤标签 */}
           <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="all">全部</TabsTrigger>
-              <TabsTrigger value="available">可用</TabsTrigger>
-              <TabsTrigger value="redeemed">已兑换</TabsTrigger>
-              <TabsTrigger value="expired">已过期</TabsTrigger>
+              <ResponsiveTabsTrigger value="all" label="全部" />
+              <ResponsiveTabsTrigger value="available" label="可用" />
+              <ResponsiveTabsTrigger value="redeemed" label="已兑换" shortLabel="兑换" />
+              <ResponsiveTabsTrigger value="expired" label="已过期" shortLabel="过期" />
             </TabsList>
           </Tabs>
 
