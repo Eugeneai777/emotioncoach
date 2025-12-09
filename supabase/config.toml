@@ -209,3 +209,6 @@ verify_jwt = false
 
 [functions.generate-poster-image]
 verify_jwt = true
+
+[functions.fetch-unsplash-image]
+verify_jwt = true

@@ -1,9 +1,11 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Download, RefreshCw, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, Loader2 } from "lucide-react";
 import { posterTemplates } from "./PosterTemplateGrid";
 import { PosterPreview } from "./PosterPreview";
+import { BackgroundSourceSelector } from "./BackgroundSourceSelector";
+import { UnsplashImagePicker } from "./UnsplashImagePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
@@ -16,8 +18,10 @@ interface PosterGeneratorProps {
 }
 
 export function PosterGenerator({ templateKey, partnerId, entryType, onBack }: PosterGeneratorProps) {
+  const [backgroundSource, setBackgroundSource] = useState<'unsplash' | 'ai'>('unsplash');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string>('');
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string>('');
+  const [unsplashAuthor, setUnsplashAuthor] = useState<{ name: string; link: string } | null>(null);
   const posterRef = useRef<HTMLDivElement>(null);
 
   const template = posterTemplates.find(t => t.key === templateKey);
@@ -54,7 +58,8 @@ export function PosterGenerator({ templateKey, partnerId, entryType, onBack }: P
       if (error) throw error;
       
       if (data?.imageUrl) {
-        setGeneratedImageUrl(data.imageUrl);
+        setBackgroundImageUrl(data.imageUrl);
+        setUnsplashAuthor(null);
         toast.success("AI背景图生成成功！");
       } else {
         throw new Error("未获取到图片");
@@ -65,6 +70,12 @@ export function PosterGenerator({ templateKey, partnerId, entryType, onBack }: P
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleUnsplashSelect = (imageUrl: string, author?: { name: string; link: string }) => {
+    setBackgroundImageUrl(imageUrl);
+    setUnsplashAuthor(author || null);
+    toast.success("已选择背景图片");
   };
 
   const handleDownload = async () => {
@@ -121,6 +132,40 @@ export function PosterGenerator({ templateKey, partnerId, entryType, onBack }: P
         </div>
       </div>
 
+      {/* Background Source Selector */}
+      <BackgroundSourceSelector 
+        source={backgroundSource} 
+        onSourceChange={setBackgroundSource} 
+      />
+
+      {/* Unsplash Image Picker */}
+      {backgroundSource === 'unsplash' && (
+        <UnsplashImagePicker
+          templateKey={templateKey}
+          onImageSelect={handleUnsplashSelect}
+          selectedImageUrl={backgroundImageUrl}
+        />
+      )}
+
+      {/* AI Generate Button */}
+      {backgroundSource === 'ai' && (
+        <Button 
+          variant="outline" 
+          className="w-full"
+          onClick={generateAIBackground}
+          disabled={isGenerating}
+        >
+          {isGenerating ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              AI生成中...
+            </>
+          ) : (
+            <>✨ 点击生成AI艺术背景 (消耗5点)</>
+          )}
+        </Button>
+      )}
+
       {/* Preview Area */}
       <Card className="overflow-hidden">
         <CardContent className="p-4">
@@ -130,49 +175,30 @@ export function PosterGenerator({ templateKey, partnerId, entryType, onBack }: P
               template={template}
               partnerId={partnerId}
               entryType={entryType}
-              backgroundImageUrl={generatedImageUrl}
+              backgroundImageUrl={backgroundImageUrl}
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <Button 
-          variant="outline" 
-          className="flex-1"
-          onClick={generateAIBackground}
-          disabled={isGenerating}
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              生成中...
-            </>
-          ) : generatedImageUrl ? (
-            <>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              重新生成
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI生成背景
-            </>
-          )}
-        </Button>
-        <Button 
-          className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500"
-          onClick={handleDownload}
-        >
-          <Download className="w-4 h-4 mr-2" />
-          下载海报
-        </Button>
-      </div>
+      {/* Download Button */}
+      <Button 
+        className="w-full bg-gradient-to-r from-orange-500 to-amber-500"
+        onClick={handleDownload}
+      >
+        <Download className="w-4 h-4 mr-2" />
+        下载海报
+      </Button>
+
+      {/* Attribution */}
+      {unsplashAuthor && (
+        <p className="text-xs text-center text-muted-foreground">
+          背景图片来自 <a href={unsplashAuthor.link} target="_blank" rel="noopener noreferrer" className="underline">{unsplashAuthor.name}</a> / Unsplash
+        </p>
+      )}
 
       {/* Tips */}
-      <div className="text-xs text-center text-muted-foreground space-y-1">
-        <p>💡 点击「AI生成背景」获得独特的AI艺术背景</p>
+      <div className="text-xs text-center text-muted-foreground">
         <p>📱 长按保存图片到相册，分享到朋友圈或微信群</p>
       </div>
     </div>
