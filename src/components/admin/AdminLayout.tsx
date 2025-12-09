@@ -14,7 +14,7 @@ import { PackagesManagement } from "./PackagesManagement";
 import { CoachTemplatesManagement } from "./CoachTemplatesManagement";
 import KnowledgeBaseManagement from "./KnowledgeBaseManagement";
 import CustomerServiceManagement from "./CustomerServiceManagement";
-import FeatureCostManagement from "./FeatureCostManagement";
+
 import CostMonitorDashboard from "./CostMonitorDashboard";
 import { PartnerLevelManagement } from "./PartnerLevelManagement";
 
@@ -38,7 +38,6 @@ export function AdminLayout() {
               <Route path="knowledge" element={<KnowledgeBaseManagement />} />
               <Route path="tools" element={<EnergyStudioToolsManagement />} />
               <Route path="usage" element={<UsageRecordsTable />} />
-              <Route path="pricing" element={<FeatureCostManagement />} />
               <Route path="cost-monitor" element={<CostMonitorDashboard />} />
               <Route path="reports" element={<ReportsManagement />} />
               <Route path="packages" element={<PackagesManagement />} />

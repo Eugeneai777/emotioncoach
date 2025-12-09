@@ -72,7 +72,6 @@ const NAV_GROUPS = [
     defaultOpen: false,
     items: [
       { key: "usage", label: "使用记录", path: "/admin/usage", icon: BarChart3 },
-      { key: "costs", label: "扣费规则", path: "/admin/pricing", icon: CreditCard },
       { key: "cost-monitor", label: "成本监控", path: "/admin/cost-monitor", icon: DollarSign },
       { key: "reports", label: "举报管理", path: "/admin/reports", icon: Flag }
     ]
