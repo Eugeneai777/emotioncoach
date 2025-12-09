@@ -4112,6 +4112,10 @@ export type Database = {
         Args: { p_amount: number; p_partner_id: string }
         Returns: undefined
       }
+      confirm_partner_commission: {
+        Args: { p_amount: number; p_partner_id: string }
+        Returns: undefined
+      }
       deduct_user_quota: {
         Args: { p_amount?: number; p_user_id: string }
         Returns: {

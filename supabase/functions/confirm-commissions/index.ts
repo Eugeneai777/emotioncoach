@@ -51,29 +51,16 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // 查询合伙人当前余额
-      const { data: partner } = await supabase
-        .from('partners')
-        .select('pending_balance, available_balance, total_earnings')
-        .eq('id', commission.partner_id)
-        .single();
+      // 使用原子化函数确认佣金，防止竞态条件
+      const { error: balanceError } = await supabase.rpc('confirm_partner_commission', {
+        p_partner_id: commission.partner_id,
+        p_amount: commission.commission_amount
+      });
 
-      if (partner) {
-        // 从待确认转到可提现，并更新总收益
-        const { error: balanceError } = await supabase
-          .from('partners')
-          .update({
-            pending_balance: Math.max(0, partner.pending_balance - commission.commission_amount),
-            available_balance: partner.available_balance + commission.commission_amount,
-            total_earnings: partner.total_earnings + commission.commission_amount
-          })
-          .eq('id', commission.partner_id);
-
-        if (balanceError) {
-          console.error(`Error updating partner balance ${commission.partner_id}:`, balanceError);
-        } else {
-          confirmed.push(commission.id);
-        }
+      if (balanceError) {
+        console.error(`Error confirming commission ${commission.partner_id}:`, balanceError);
+      } else {
+        confirmed.push(commission.id);
       }
     }
 
