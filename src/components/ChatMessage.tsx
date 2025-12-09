@@ -172,7 +172,7 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
             className={`relative rounded-2xl px-4 py-3 transition-all duration-300 ${
               isUser
                 ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 rounded-tr-sm"
-                : "bg-card border border-border shadow-sm rounded-tl-sm"
+                : "bg-card border border-border shadow-md shadow-black/5 rounded-tl-sm"
             }`}
           >
             {textContent && (
