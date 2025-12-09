@@ -7,6 +7,7 @@ import { CoachEmptyState } from "./CoachEmptyState";
 import { CoachInputFooter } from "./CoachInputFooter";
 import { useAuth } from "@/hooks/useAuth";
 import { getCoachBackgroundGradient, getCoachLoaderColor } from "@/utils/coachThemeUtils";
+import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
 interface Step {
   id: number;
   emoji?: string;
@@ -260,7 +261,7 @@ export const CoachLayout = ({
           transition: isPulling ? 'none' : 'transform 0.3s ease-out'
         }}
       >
-        <div className="container max-w-xl mx-auto px-3 md:px-4 py-4 md:py-8">
+        <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 py-4 md:py-8">
           {messages.length === 0 ? (
             <CoachEmptyState
               emoji={emoji}
@@ -317,6 +318,15 @@ export const CoachLayout = ({
           {bottomContent}
         </div>
       </main>
+
+      {/* Scroll to Bottom Button */}
+      {messages.length > 0 && (
+        <ScrollToBottomButton 
+          scrollRef={mainRef} 
+          messagesEndRef={messagesEndRef}
+          primaryColor={primaryColor}
+        />
+      )}
 
       {/* Footer Input */}
       <CoachInputFooter

@@ -14,6 +14,8 @@ export default {
     },
     extend: {
       screens: {
+        'xs': '475px',
+        'tablet': '640px',
         'landscape': { 'raw': '(orientation: landscape) and (max-width: 1023px)' },
       },
       colors: {
