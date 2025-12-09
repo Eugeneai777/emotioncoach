@@ -7,16 +7,29 @@ import { VideoRecommendationCard } from "@/components/coach/VideoRecommendationC
 import { ToolRecommendationCard } from "@/components/coach/ToolRecommendationCard";
 import { EmotionButtonRecommendationCard } from "@/components/coach/EmotionButtonRecommendationCard";
 import { CampRecommendationCard } from "@/components/coach/CampRecommendationCard";
+import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
+import { CoachTrainingCamp } from "@/components/coach/CoachTrainingCamp";
 import { useDynamicCoachChat } from "@/hooks/useDynamicCoachChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
+import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 const DynamicCoach = () => {
   const { coachKey } = useParams<{ coachKey: string }>();
   const [input, setInput] = useState("");
+  const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const { toast } = useToast();
   const { data: template, isLoading: templateLoading } = useCoachTemplate(coachKey || '');
+  
+  // 智能通知
+  const {
+    notifications,
+    unreadCount,
+    loading: notificationsLoading,
+    markAsRead,
+    deleteNotification,
+  } = useSmartNotification(template?.coach_key ? `${template.coach_key}_coach` : null);
 
   const {
     messages,
@@ -166,6 +179,27 @@ const DynamicCoach = () => {
       ) : undefined}
       community={template.enable_community ? <CoachCommunity /> : undefined}
       showNotificationCenter={template.enable_notifications || false}
+      notifications={
+        template.enable_notifications ? (
+          <CoachNotificationsModule
+            notifications={notifications}
+            loading={notificationsLoading}
+            currentIndex={currentNotificationIndex}
+            onIndexChange={setCurrentNotificationIndex}
+            onMarkAsRead={markAsRead}
+            onDelete={deleteNotification}
+            colorTheme={template.primary_color === 'purple' ? 'purple' : template.primary_color === 'blue' ? 'blue' : 'green'}
+            coachLabel={template.title}
+          />
+        ) : undefined
+      }
+      trainingCamp={
+        template.enable_training_camp ? (
+          <CoachTrainingCamp
+            colorTheme={template.primary_color === 'purple' ? 'purple' : template.primary_color === 'blue' ? 'blue' : template.primary_color === 'orange' ? 'orange' : 'green'}
+          />
+        ) : undefined
+      }
     />
   );
 };
