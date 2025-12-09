@@ -146,7 +146,8 @@ export const CoachHeader = ({
                   className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
                 >
                   <Target className="w-4 h-4" />
-                  <span className="hidden md:inline">教练空间</span>
+              <span className="hidden sm:inline">教练空间</span>
+              <span className="sm:hidden">教练</span>
                   <ChevronDown className="w-3 h-3" />
                 </Button>
               </DropdownMenuTrigger>
