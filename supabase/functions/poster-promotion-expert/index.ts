@@ -32,17 +32,45 @@ const systemPrompt = `你是一位专业的AI推广专家，帮助合伙人创�
 - partner_recruit: 招募合伙人 - 适合想创业/副业的人群
 
 对话流程：
-1. 首先询问目标用户群体
-2. 了解推广场景
-3. 深挖用户痛点
+1. 首先询问目标用户群体 - 同时调用 provide_quick_options 提供选项
+2. 了解推广场景 - 同时调用 provide_quick_options 提供选项
+3. 深挖用户痛点 - 同时调用 provide_quick_options 提供选项
 4. 当信息足够时，调用 generate_poster_copy 工具生成文案
 
-重要：
+重要规则：
+- 每次回复都必须同时调用 provide_quick_options 工具提供3-4个快捷选项
+- 选项要与当前问题相关，方便用户快速选择
 - 不要一次问太多问题
 - 根据用户回答灵活调整
-- 当收集到足够信息（人群+场景+痛点）后，立即调用工具生成文案`;
+- 当收集到足够信息（人群+场景+痛点）后，立即调用 generate_poster_copy 工具生成文案`;
 
 const tools = [
+  {
+    type: "function",
+    function: {
+      name: "provide_quick_options",
+      description: "为用户提供快捷选项按钮。每次回复都必须调用此工具，提供3-4个与当前问题相关的选项。",
+      parameters: {
+        type: "object",
+        properties: {
+          options: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                emoji: { type: "string", description: "选项前的emoji图标" },
+                label: { type: "string", description: "选项显示文本，简短" },
+                value: { type: "string", description: "选项的详细值，用于发送给AI" }
+              },
+              required: ["emoji", "label", "value"]
+            },
+            description: "3-4个快捷选项"
+          }
+        },
+        required: ["options"]
+      }
+    }
+  },
   {
     type: "function",
     function: {
@@ -64,6 +92,7 @@ const tools = [
           },
           promotion_scene: {
             type: "string",
+            enum: ["wechat_moments", "wechat_group", "xiaohongshu", "one_on_one", "offline"],
             description: "推广场景"
           },
           headline_options: {
@@ -88,10 +117,25 @@ const tools = [
           promotion_tips: {
             type: "string",
             description: "推广技巧建议，帮助合伙人更好地推广"
+          },
+          visual_style: {
+            type: "string",
+            enum: ["minimalist", "vibrant", "elegant", "warm", "professional"],
+            description: "海报视觉风格"
+          },
+          color_scheme: {
+            type: "object",
+            properties: {
+              primary: { type: "string", description: "主色调，如 #6366f1" },
+              secondary: { type: "string", description: "次色调" },
+              accent: { type: "string", description: "强调色" }
+            },
+            description: "配色方案"
           }
         },
-        required: ["recommended_template", "target_audience", "headline_options", 
-                   "subtitle_options", "selling_points", "call_to_action"]
+        required: ["recommended_template", "target_audience", "promotion_scene",
+                   "headline_options", "subtitle_options", "selling_points", 
+                   "call_to_action", "visual_style", "color_scheme"]
       }
     }
   }
