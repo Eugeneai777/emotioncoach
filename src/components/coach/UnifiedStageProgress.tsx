@@ -30,9 +30,10 @@ const stageConfigs: Record<string, Stage[]> = {
 interface UnifiedStageProgressProps {
   coachType: 'emotion' | 'parent' | 'communication';
   currentStage: number;
+  primaryColor?: string;
 }
 
-export const UnifiedStageProgress = ({ coachType, currentStage }: UnifiedStageProgressProps) => {
+export const UnifiedStageProgress = ({ coachType, currentStage, primaryColor }: UnifiedStageProgressProps) => {
   const stages = stageConfigs[coachType] || stageConfigs.emotion;
   
   return (
