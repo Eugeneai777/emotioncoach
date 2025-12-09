@@ -236,15 +236,38 @@ const PostDetailSheet = ({
     if (!cardRef.current) return;
     setSharing(true);
     
+    const container = cardRef.current.parentElement;
+    
     try {
-      // 直接捕获 ShareCardExport 组件（已全部使用内联样式）
+      // 临时让元素可见以确保正确渲染 - 使用安全边距防止截断
+      if (container) {
+        container.style.position = 'fixed';
+        container.style.left = '16px';
+        container.style.top = '16px';
+        container.style.zIndex = '9999';
+        container.style.opacity = '1';
+        container.style.visibility = 'visible';
+      }
+      
+      // 等待渲染稳定
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // 捕获 ShareCardExport 组件
       const canvas = await html2canvas(cardRef.current, {
         backgroundColor: "#ffffff",
         scale: 2,
         logging: false,
         useCORS: true,
         allowTaint: true,
-        imageTimeout: 15000
+        imageTimeout: 15000,
+        width: cardRef.current.scrollWidth,
+        height: cardRef.current.scrollHeight,
+        windowWidth: cardRef.current.scrollWidth + 100,
+        windowHeight: cardRef.current.scrollHeight + 100,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
       });
       
       // 转换为 Blob
@@ -300,6 +323,13 @@ const PostDetailSheet = ({
       console.error("生成图片失败:", error);
       toast.error("生成图片失败，请稍后重试");
     } finally {
+      // 确保恢复隐藏状态
+      if (container) {
+        container.style.position = 'fixed';
+        container.style.left = '-9999px';
+        container.style.opacity = '0';
+        container.style.visibility = 'hidden';
+      }
       setSharing(false);
     }
   };
