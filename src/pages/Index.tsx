@@ -767,17 +767,23 @@ const [expandedStep, setExpandedStep] = useState<number | null>(null);
                           {coachConfig?.steps_title || '情绪四部曲'}
                         </h3>
                         <div className="flex items-center gap-2">
-                          <Button 
-                            variant="link" 
-                            size="sm" 
+                          <span 
+                            role="button"
+                            tabIndex={0}
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate("/introduction");
                             }}
-                            className="text-xs text-primary hover:text-primary/80 p-0 h-auto"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.stopPropagation();
+                                navigate("/introduction");
+                              }
+                            }}
+                            className="text-xs text-primary hover:text-primary/80 cursor-pointer hover:underline"
                           >
                             了解更多 →
-                          </Button>
+                          </span>
                           <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isStepsCardExpanded ? 'rotate-180' : ''}`} />
                         </div>
                       </div>
