@@ -319,7 +319,7 @@ ${briefingData.growth_story || '暂无记录'}
       emoji={coachConfig?.emoji || "💜"}
       title={coachConfig?.title || "亲子教练"}
       subtitle={coachConfig?.subtitle || ""}
-      description={coachConfig?.description || "劲老师陪着你，用四部曲化解亲子情绪困扰"}
+      description={coachConfig?.description || "跟劲老师一起，化解亲子情绪困扰"}
       gradient={coachConfig?.gradient || "from-purple-500 to-pink-500"}
       primaryColor={coachConfig?.primary_color || "purple"}
       steps={coachConfig?.steps || []}
