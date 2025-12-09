@@ -6,9 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Copy, Download, Search, Plus, Loader2 } from "lucide-react";
+import { Copy, Download, Search, Plus, Loader2, QrCode } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import QRCode from "qrcode";
+
+// 正式发布域名
+const PRODUCTION_DOMAIN = 'https://eugeneai.me';
+const isProductionEnv = () => {
+  const host = window.location.host;
+  const productionHost = new URL(PRODUCTION_DOMAIN).host;
+  return host === productionHost || !host.includes('lovable');
+};
+const getPromotionDomain = () => isProductionEnv() ? window.location.origin : PRODUCTION_DOMAIN;
 
 interface RedemptionCode {
   id: string;
@@ -110,6 +120,31 @@ export function RedemptionCodeManager({ open, onOpenChange, partnerId }: Redempt
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast.success('兑换码已复制');
+  };
+
+  const handleGenerateCodeQR = async (code: string) => {
+    try {
+      const domain = getPromotionDomain();
+      const redemptionUrl = `${domain}/redeem?code=${code}`;
+      
+      const qrUrl = await QRCode.toDataURL(redemptionUrl, {
+        width: 400,
+        margin: 2,
+        color: { dark: '#f97316', light: '#ffffff' }
+      });
+
+      // 下载二维码
+      const link = document.createElement('a');
+      link.href = qrUrl;
+      link.download = `兑换码_${code}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('二维码已下载');
+    } catch (error) {
+      console.error('Generate QR failed:', error);
+      toast.error('生成二维码失败');
+    }
   };
 
   const handleCopyLink = (code: string) => {
@@ -276,12 +311,15 @@ export function RedemptionCodeManager({ open, onOpenChange, partnerId }: Redempt
                       {code.redeemed_at && ` · 兑换于 ${new Date(code.redeemed_at).toLocaleDateString()}`}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="ghost" onClick={() => handleCopyCode(code.code)}>
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => handleCopyCode(code.code)} title="复制兑换码">
                       <Copy className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => handleCopyLink(code.code)}>
+                    <Button size="sm" variant="ghost" onClick={() => handleCopyLink(code.code)} title="复制链接">
                       复制链接
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => handleGenerateCodeQR(code.code)} title="生成二维码">
+                      <QrCode className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
