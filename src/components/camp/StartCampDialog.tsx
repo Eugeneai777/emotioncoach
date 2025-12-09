@@ -44,33 +44,38 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
   if (needsPurchase && open) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-gradient-to-br from-teal-50/95 via-cyan-50/80 to-blue-50/60
+          dark:from-teal-950/95 dark:via-cyan-950/80 dark:to-blue-950/60 border-teal-200/50 dark:border-teal-800/50">
           <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2">
+            <DialogTitle className="text-xl flex items-center gap-2 text-teal-800 dark:text-teal-200">
               <Lock className="w-5 h-5 text-amber-600" />
               需要购买此训练营
             </DialogTitle>
             <DialogDescription className="text-left space-y-3 pt-2">
               <p>该训练营需要购买后才能开启。</p>
-              <div className="bg-purple-50 dark:bg-purple-950/20 p-4 rounded-lg space-y-2">
+              <div className="bg-teal-100/50 dark:bg-teal-900/30 p-4 rounded-lg space-y-2 border border-teal-200/50 dark:border-teal-800/50">
                 <div className="flex items-end gap-2">
                   {campTemplate.original_price && campTemplate.original_price > (campTemplate.price || 0) && (
                     <span className="text-muted-foreground line-through">
                       ¥{campTemplate.original_price.toLocaleString()}
                     </span>
                   )}
-                  <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  <span className="text-2xl font-bold text-teal-600 dark:text-teal-400">
                     ¥{campTemplate.price?.toLocaleString() || '0'}
                   </span>
                 </div>
                 {campTemplate.price_note && (
-                  <p className="text-sm text-purple-700 dark:text-purple-300">{campTemplate.price_note}</p>
+                  <p className="text-sm text-teal-700 dark:text-teal-300">{campTemplate.price_note}</p>
                 )}
               </div>
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)} 
+              className="flex-1 border-teal-300/50 text-teal-700 hover:bg-teal-50/50 dark:border-teal-700/50 dark:text-teal-400"
+            >
               取消
             </Button>
             <Button 
@@ -78,7 +83,7 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
                 onOpenChange(false);
                 window.open('https://work.weixin.qq.com/kfid/kfcf2ea5c20b7e50e1d', '_blank');
               }} 
-              className="flex-1"
+              className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white"
             >
               联系购买
             </Button>
@@ -174,16 +179,17 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-gradient-to-br from-teal-50/95 via-cyan-50/80 to-blue-50/60
+        dark:from-teal-950/95 dark:via-cyan-950/80 dark:to-blue-950/60 border-teal-200/50 dark:border-teal-800/50">
         <DialogHeader>
-          <DialogTitle className="text-xl">
+          <DialogTitle className="text-xl text-teal-800 dark:text-teal-200">
             {campTemplate.icon || '🏕️'} 开启{campTemplate.duration_days}天训练营
           </DialogTitle>
           <DialogDescription className="text-left space-y-3 pt-2">
             <p>{campTemplate.camp_name}将帮助你开启深度成长之旅</p>
-            <div className="bg-primary/5 p-3 rounded-lg mt-4">
-              <p className="text-sm font-medium mb-2">训练营规则：</p>
-              <ul className="text-sm space-y-1 list-disc list-inside">
+            <div className="bg-teal-100/50 dark:bg-teal-900/30 p-3 rounded-lg border border-teal-200/50 dark:border-teal-800/50">
+              <p className="text-sm font-medium mb-2 text-teal-700 dark:text-teal-400">训练营规则：</p>
+              <ul className="text-sm space-y-1 list-disc list-inside text-muted-foreground">
                 <li>每天完成相应练习即为打卡</li>
                 <li>达成里程碑可获得专属徽章</li>
                 <li>完成{campTemplate.duration_days}天获得毕业证书</li>
@@ -194,13 +200,13 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>选择开始日期</Label>
+            <Label className="text-teal-700 dark:text-teal-400">选择开始日期</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-left font-normal border-teal-300/50 dark:border-teal-700/50",
                     !startDate && "text-muted-foreground"
                   )}
                 >
@@ -225,7 +231,7 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
           </div>
 
           {campTemplate.camp_type === 'emotion_bloom' && (
-            <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
+            <div className="flex items-center gap-3 p-4 bg-teal-100/50 dark:bg-teal-900/30 rounded-lg border border-teal-200/50 dark:border-teal-800/50">
               <Checkbox 
                 id="bundle-camps"
                 checked={bundleWithIdentity} 
@@ -242,10 +248,18 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)} 
+            className="flex-1 border-teal-300/50 text-teal-700 hover:bg-teal-50/50 dark:border-teal-700/50 dark:text-teal-400"
+          >
             取消
           </Button>
-          <Button onClick={handleStart} disabled={loading} className="flex-1">
+          <Button 
+            onClick={handleStart} 
+            disabled={loading} 
+            className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white"
+          >
             {loading ? "开启中..." : "开启训练营"}
           </Button>
         </div>

@@ -116,10 +116,11 @@ const CampList = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-        <header className="sticky top-0 z-10 bg-card/80 backdrop-blur-md border-b">
+      <div className="min-h-screen bg-gradient-to-br from-teal-50/80 via-cyan-50/50 to-blue-50/30
+        dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10">
+        <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-teal-200/30">
           <div className="container max-w-6xl mx-auto px-4 py-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/energy-studio")} className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/energy-studio")} className="gap-2 text-teal-700 hover:text-teal-800 hover:bg-teal-100/50">
               <ArrowLeft className="w-4 h-4" />
               返回
             </Button>
@@ -130,8 +131,8 @@ const CampList = () => {
           {/* Skeleton Hero */}
           <div className="text-center space-y-6 mb-12">
             <div className="space-y-4">
-              <div className="h-16 w-3/4 mx-auto bg-muted animate-pulse rounded-lg" />
-              <div className="h-6 w-1/2 mx-auto bg-muted animate-pulse rounded-lg" />
+              <div className="h-16 w-3/4 mx-auto bg-teal-100/50 animate-pulse rounded-lg" />
+              <div className="h-6 w-1/2 mx-auto bg-teal-100/50 animate-pulse rounded-lg" />
             </div>
           </div>
 
@@ -147,13 +148,14 @@ const CampList = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50/80 via-cyan-50/50 to-blue-50/30
+      dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10">
       {/* Header with Breadcrumb */}
-      <header className="sticky top-0 z-10 bg-card/80 backdrop-blur-md border-b">
+      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-teal-200/30">
         <div className="container max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/energy-studio")} className="gap-2">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/energy-studio")} className="gap-2 text-teal-700 hover:text-teal-800 hover:bg-teal-100/50">
                 <ArrowLeft className="w-4 h-4" />
                 返回
               </Button>
@@ -164,7 +166,7 @@ const CampList = () => {
                 <ChevronRight className="w-4 h-4" />
                 <span>训练营</span>
                 <ChevronRight className="w-4 h-4" />
-                <span className="text-foreground font-medium">训练营列表</span>
+                <span className="text-teal-700 font-medium">训练营列表</span>
               </div>
             </div>
 
@@ -172,7 +174,7 @@ const CampList = () => {
               variant="outline"
               size="sm"
               onClick={() => navigate("/camps")}
-              className="gap-2"
+              className="gap-2 border-teal-300/50 text-teal-700 hover:bg-teal-50/50"
             >
               <Users className="w-4 h-4" />
               我的训练营
@@ -186,17 +188,17 @@ const CampList = () => {
         <section className="relative text-center space-y-8 mb-12 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
           {/* Decorative Background */}
           <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl" />
-            <div className="absolute top-20 right-1/4 w-80 h-80 bg-pink-200/20 rounded-full blur-3xl" />
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl" />
+            <div className="absolute top-20 right-1/4 w-80 h-80 bg-cyan-200/20 rounded-full blur-3xl" />
           </div>
 
           <div className="space-y-4">
-            <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 text-base px-4 py-2 animate-pulse">
+            <Badge className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-0 text-base px-4 py-2 animate-pulse">
               <Sparkles className="w-4 h-4 inline mr-2" />
               专业成长训练营
             </Badge>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600 bg-clip-text text-transparent leading-tight">
               选择你的成长之旅
             </h1>
             
@@ -207,16 +209,16 @@ const CampList = () => {
 
           {/* Global Stats */}
           <div className="grid grid-cols-3 gap-4 max-w-3xl mx-auto">
-            <Card className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
-              <div className="text-3xl font-bold text-purple-600">{stats.total.camps}</div>
+            <Card className="p-4 bg-gradient-to-br from-teal-50/80 to-cyan-50/60 border-teal-200/50 dark:from-teal-950/30 dark:to-cyan-950/20 dark:border-teal-800/30">
+              <div className="text-3xl font-bold text-teal-600 dark:text-teal-400">{stats.total.camps}</div>
               <div className="text-sm text-muted-foreground mt-1">训练营总数</div>
             </Card>
-            <Card className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
-              <div className="text-3xl font-bold text-blue-600">21天</div>
+            <Card className="p-4 bg-gradient-to-br from-cyan-50/80 to-blue-50/60 border-cyan-200/50 dark:from-cyan-950/30 dark:to-blue-950/20 dark:border-cyan-800/30">
+              <div className="text-3xl font-bold text-cyan-600 dark:text-cyan-400">21天</div>
               <div className="text-sm text-muted-foreground mt-1">科学周期</div>
             </Card>
-            <Card className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200">
-              <div className="text-3xl font-bold text-emerald-600">专业</div>
+            <Card className="p-4 bg-gradient-to-br from-blue-50/80 to-teal-50/60 border-blue-200/50 dark:from-blue-950/30 dark:to-teal-950/20 dark:border-blue-800/30">
+              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">专业</div>
               <div className="text-sm text-muted-foreground mt-1">导师陪伴</div>
             </Card>
           </div>
@@ -224,7 +226,9 @@ const CampList = () => {
 
         {/* Tabs with Enhanced Design */}
         <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2 mb-10 h-auto p-2 bg-card/50 backdrop-blur-sm rounded-2xl shadow-lg">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-2 mb-10 h-auto p-2 
+            bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-teal-200/30
+            dark:bg-teal-950/30 dark:border-teal-800/30">
             {campCategories.map(category => {
               const categoryStats = {
                 camps: campTemplates?.filter(c => (c.category || 'youjin') === category.id).length || 0,
@@ -268,14 +272,14 @@ const CampList = () => {
             {/* Filter and Sort */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <TrendingUp className="w-4 h-4" />
+                <TrendingUp className="w-4 h-4 text-teal-500" />
                 <span>共 {stats.category.camps} 个训练营</span>
               </div>
 
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-muted-foreground" />
                 <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-[150px] border-teal-300/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -324,13 +328,13 @@ const CampList = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t py-8 mt-16 bg-card/50">
+      <footer className="border-t border-teal-200/30 py-8 mt-16 bg-white/50 backdrop-blur-sm dark:bg-teal-950/20 dark:border-teal-800/30">
         <div className="container max-w-6xl mx-auto px-4 text-center space-y-4">
           <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-primary transition-colors">关于我们</a>
-            <a href="#" className="hover:text-primary transition-colors">使用条款</a>
-            <a href="#" className="hover:text-primary transition-colors">隐私政策</a>
-            <a href="#" className="hover:text-primary transition-colors">联系我们</a>
+            <a href="#" className="hover:text-teal-600 transition-colors">关于我们</a>
+            <a href="#" className="hover:text-teal-600 transition-colors">使用条款</a>
+            <a href="#" className="hover:text-teal-600 transition-colors">隐私政策</a>
+            <a href="#" className="hover:text-teal-600 transition-colors">联系我们</a>
           </div>
           <p className="text-sm text-muted-foreground">
             © 2024 有劲生活馆. 让生命绽放
