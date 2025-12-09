@@ -3,11 +3,12 @@ import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { UnifiedStageProgress } from "@/components/coach/UnifiedStageProgress";
 import { CommunicationDifficultyDialog } from "@/components/communication/CommunicationDifficultyDialog";
-import { CommunicationNotificationsModule } from "@/components/communication/CommunicationNotificationsModule";
+import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
 import { CommunicationTrainingCampModule } from "@/components/communication/CommunicationTrainingCampModule";
 import { CoachCommunity } from "@/components/coach/CoachCommunity";
 import { useCommunicationChat } from "@/hooks/useCommunicationChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
+import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -16,9 +17,11 @@ const CommunicationCoach = () => {
   const [difficulty, setDifficulty] = useState(5);
   const [showDifficultyDialog, setShowDifficultyDialog] = useState(false);
   const [difficultyConfirmed, setDifficultyConfirmed] = useState(false);
+  const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const { toast } = useToast();
   const { messages, isLoading, userMessageCount, lastBriefingId, currentStage, sendMessage, resetConversation } = useCommunicationChat();
   const { data: template, isLoading: templateLoading } = useCoachTemplate('communication');
+  const { notifications, loading: notificationsLoading, markAsRead, deleteNotification } = useSmartNotification('communication_coach');
   
   // 在对话进行2轮后自动弹出难度选择
   useEffect(() => {
@@ -118,7 +121,18 @@ const CommunicationCoach = () => {
             <UnifiedStageProgress coachType="communication" currentStage={currentStage} />
           ) : undefined
         }
-        notifications={<CommunicationNotificationsModule />}
+        notifications={
+          <CoachNotificationsModule
+            notifications={notifications}
+            loading={notificationsLoading}
+            currentIndex={currentNotificationIndex}
+            onIndexChange={setCurrentNotificationIndex}
+            onMarkAsRead={markAsRead}
+            onDelete={deleteNotification}
+            colorTheme="blue"
+            coachLabel="沟通教练"
+          />
+        }
         trainingCamp={<CommunicationTrainingCampModule />}
         community={<CoachCommunity />}
         showNotificationCenter={true}
