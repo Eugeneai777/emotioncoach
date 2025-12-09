@@ -16,6 +16,7 @@ interface CoachInputFooterProps {
   gradient: string;
   scenarioChips?: React.ReactNode;
   messagesCount?: number;
+  intensitySelector?: React.ReactNode;
 }
 
 export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElement, CoachInputFooterProps>(({
@@ -29,7 +30,8 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   hasMessages,
   gradient,
   scenarioChips,
-  messagesCount
+  messagesCount,
+  intensitySelector
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -77,6 +79,13 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
       style={{ transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : undefined }}
     >
       <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 pt-2 pb-2">
+        {/* Intensity Selector - 键盘弹出时隐藏 */}
+        {!isFocused && intensitySelector && (
+          <div className="mb-2 animate-in slide-in-from-bottom-2 duration-300">
+            {intensitySelector}
+          </div>
+        )}
+        
         {/* Scenario Chips - 键盘弹出时隐藏 */}
         {!isFocused && scenarioChips && (messagesCount === undefined || messagesCount <= 1) && (
           <div className="mb-2">
