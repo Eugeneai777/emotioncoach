@@ -28,12 +28,19 @@ export interface CoachTemplate {
   history_label: string;
   more_info_route: string | null;
   placeholder: string;
+  // 基础功能开关
   enable_voice_control: boolean;
   enable_training_camp: boolean;
   enable_notifications: boolean;
   enable_community: boolean;
   enable_scenarios: boolean;
   disable_option_buttons: boolean;
+  // 扩展功能开关
+  enable_intensity_tracking: boolean;
+  enable_daily_reminder: boolean;
+  enable_emotion_alert: boolean;
+  enable_onboarding: boolean;
+  enable_briefing_share: boolean;
   scenarios?: Array<{
     id: string;
     emoji: string;
