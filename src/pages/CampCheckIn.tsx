@@ -192,11 +192,12 @@ const CampCheckIn = () => {
         <div className="flex items-center gap-3 mb-6">
           <Button
             variant="ghost"
-            size="icon"
-            className="h-9 w-9 text-teal-700 hover:bg-teal-100/50 dark:text-teal-300"
+            size="sm"
+            className="gap-1 text-teal-700 hover:bg-teal-100/50 dark:text-teal-300"
             onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-4 w-4" />
+            返回
           </Button>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-0.5">
