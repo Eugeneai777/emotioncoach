@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Progress } from "@/components/ui/progress";
 import { 
   Video, 
@@ -238,8 +239,8 @@ export const VideoLearningProfile = () => {
       {/* Tabs for History and Favorites */}
       <Tabs defaultValue="history" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="history">观看历史</TabsTrigger>
-          <TabsTrigger value="favorites">我的收藏</TabsTrigger>
+          <ResponsiveTabsTrigger value="history" label="观看历史" shortLabel="历史" />
+          <ResponsiveTabsTrigger value="favorites" label="我的收藏" shortLabel="收藏" />
         </TabsList>
 
         <TabsContent value="history" className="space-y-3 mt-4">

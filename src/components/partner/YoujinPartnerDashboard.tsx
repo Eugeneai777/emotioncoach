@@ -2,7 +2,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Partner } from "@/hooks/usePartner";
 import { TrendingUp, Users, Wallet, Gift, QrCode, List, Upload, ImageIcon, BarChart3 } from "lucide-react";
 import { useState, useRef } from "react";
@@ -172,10 +173,10 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
       {/* 主要功能区 - Tabs */}
       <Tabs defaultValue="tools" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="tools">推广工具</TabsTrigger>
-          <TabsTrigger value="group">群管理</TabsTrigger>
-          <TabsTrigger value="students">我的学员</TabsTrigger>
-          <TabsTrigger value="analytics">数据分析</TabsTrigger>
+          <ResponsiveTabsTrigger value="tools" label="推广工具" shortLabel="推广" />
+          <ResponsiveTabsTrigger value="group" label="群管理" shortLabel="群管" />
+          <ResponsiveTabsTrigger value="students" label="我的学员" shortLabel="学员" />
+          <ResponsiveTabsTrigger value="analytics" label="数据分析" shortLabel="分析" />
         </TabsList>
 
         <TabsContent value="tools" className="space-y-4">

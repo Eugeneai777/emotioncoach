@@ -8,7 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import EmotionTagCloud from "@/components/EmotionTagCloud";
 import EmotionCycleAnalysis from "@/components/EmotionCycleAnalysis";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { TagManager } from "@/components/TagManager";
 import { EmotionPatternInsights } from "@/components/EmotionPatternInsights";
 import { EmotionComparison } from "@/components/EmotionComparison";
@@ -507,26 +508,11 @@ const History = () => {
         ) : (
           <Tabs defaultValue="list" className="w-full">
               <TabsList className="grid w-full grid-cols-5 mb-4 md:mb-6 h-auto">
-                <TabsTrigger value="list" className="text-xs md:text-sm py-2">
-                  <span className="hidden sm:inline">简报列表</span>
-                  <span className="sm:hidden">列表</span>
-                </TabsTrigger>
-                <TabsTrigger value="trends" className="text-xs md:text-sm py-2">
-                  <span className="hidden sm:inline">情绪趋势</span>
-                  <span className="sm:hidden">趋势</span>
-                </TabsTrigger>
-                <TabsTrigger value="patterns" className="text-xs md:text-sm py-2">
-                  <span className="hidden sm:inline">模式洞察</span>
-                  <span className="sm:hidden">模式</span>
-                </TabsTrigger>
-                <TabsTrigger value="compare" className="text-xs md:text-sm py-2">
-                  <span className="hidden sm:inline">对比分析</span>
-                  <span className="sm:hidden">对比</span>
-                </TabsTrigger>
-                <TabsTrigger value="review" className="text-xs md:text-sm py-2">
-                  <span className="hidden sm:inline">情绪复盘</span>
-                  <span className="sm:hidden">复盘</span>
-                </TabsTrigger>
+                <ResponsiveTabsTrigger value="list" label="简报列表" shortLabel="列表" />
+                <ResponsiveTabsTrigger value="trends" label="情绪趋势" shortLabel="趋势" />
+                <ResponsiveTabsTrigger value="patterns" label="模式洞察" shortLabel="模式" />
+                <ResponsiveTabsTrigger value="compare" label="对比分析" shortLabel="对比" />
+                <ResponsiveTabsTrigger value="review" label="情绪复盘" shortLabel="复盘" />
               </TabsList>
             
             <TabsContent value="list">

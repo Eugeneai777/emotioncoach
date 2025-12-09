@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
+import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -176,18 +177,9 @@ const CommunityDiscover = () => {
         {/* 标签页 */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="hot">
-              <TrendingUp className="h-4 w-4 mr-2" />
-              热门
-            </TabsTrigger>
-            <TabsTrigger value="featured">
-              <Star className="h-4 w-4 mr-2" />
-              精华
-            </TabsTrigger>
-            <TabsTrigger value="ranking">
-              <Trophy className="h-4 w-4 mr-2" />
-              排行榜
-            </TabsTrigger>
+            <ResponsiveTabsTrigger value="hot" label="热门" icon={<TrendingUp className="h-4 w-4" />} />
+            <ResponsiveTabsTrigger value="featured" label="精华" icon={<Star className="h-4 w-4" />} />
+            <ResponsiveTabsTrigger value="ranking" label="排行榜" shortLabel="排行" icon={<Trophy className="h-4 w-4" />} />
           </TabsList>
 
           {/* 热门内容 */}

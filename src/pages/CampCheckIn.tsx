@@ -5,7 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ArrowLeft, Calendar, CheckCircle2, Circle, Share2, MessageSquare, Sparkles, Play, ChevronRight } from "lucide-react";
 import { TrainingCamp } from "@/types/trainingCamp";
@@ -219,9 +220,9 @@ const CampCheckIn = () => {
         <div className="space-y-5">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3 h-9 bg-white/60 backdrop-blur-sm border border-teal-200/30 dark:bg-background/60">
-              <TabsTrigger value="checkin" className="text-xs data-[state=active]:bg-teal-500 data-[state=active]:text-white">今日打卡</TabsTrigger>
-              <TabsTrigger value="calendar" className="text-xs data-[state=active]:bg-teal-500 data-[state=active]:text-white">打卡日历</TabsTrigger>
-              <TabsTrigger value="tasks" className="text-xs data-[state=active]:bg-teal-500 data-[state=active]:text-white">任务清单</TabsTrigger>
+              <ResponsiveTabsTrigger value="checkin" label="今日打卡" shortLabel="打卡" className="data-[state=active]:bg-teal-500 data-[state=active]:text-white" />
+              <ResponsiveTabsTrigger value="calendar" label="打卡日历" shortLabel="日历" className="data-[state=active]:bg-teal-500 data-[state=active]:text-white" />
+              <ResponsiveTabsTrigger value="tasks" label="任务清单" shortLabel="任务" className="data-[state=active]:bg-teal-500 data-[state=active]:text-white" />
             </TabsList>
 
             <TabsContent value="checkin" className="space-y-3 mt-4">
