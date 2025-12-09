@@ -58,6 +58,12 @@ export const useSmartNotification = (coachTypeFilter?: string | null) => {
 
   // 标记为已读
   const markAsRead = useCallback(async (notificationId: string) => {
+    // 检查通知是否已经是已读状态
+    const notification = notifications.find(n => n.id === notificationId);
+    if (!notification || notification.is_read) {
+      return; // 已经是已读状态，无需再次更新
+    }
+
     try {
       const { error } = await supabase
         .from('smart_notifications')
@@ -76,7 +82,7 @@ export const useSmartNotification = (coachTypeFilter?: string | null) => {
     } catch (error) {
       console.error('标记已读失败:', error);
     }
-  }, []);
+  }, [notifications]);
 
   // 删除通知
   const deleteNotification = useCallback(async (notificationId: string) => {
