@@ -90,8 +90,8 @@ export const CoachEmptyState = ({
       ) : (
       <Collapsible open={isStepsCardExpanded} onOpenChange={setIsStepsCardExpanded}>
         <div className="bg-card border border-border rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
-          <CollapsibleTrigger className="w-full">
-            <div className="flex items-center justify-between cursor-pointer">
+          <CollapsibleTrigger asChild>
+            <div className="w-full flex items-center justify-between cursor-pointer">
               <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
                 <span className="text-primary text-sm">{stepsEmoji}</span>
                 {stepsTitle}
@@ -123,8 +123,8 @@ export const CoachEmptyState = ({
                   open={expandedStep === step.id} 
                   onOpenChange={() => setExpandedStep(expandedStep === step.id ? null : step.id)}
                 >
-                  <CollapsibleTrigger className="w-full">
-                    <div className="bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
+                  <CollapsibleTrigger asChild>
+                    <div className="w-full bg-background/50 rounded-card p-card-sm border border-border/50 hover:border-primary/30 transition-all duration-200 group cursor-pointer">
                       <div className="flex items-center gap-1.5">
                         <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                           {step.emoji || step.id}
