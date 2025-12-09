@@ -296,15 +296,7 @@ const CampTemplateDetail = () => {
               <p className="text-lg text-white/90">
                 {camp.description}
               </p>
-              <Button 
-                size="lg" 
-                onClick={handleCTAClick} 
-                className="gap-2 bg-white text-purple-600 hover:bg-white/90 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 px-10 py-6 text-lg font-bold"
-              >
-                {needsPurchase && <ShoppingCart className="w-6 h-6" />}
-                {getButtonText()}
-                {!needsPurchase && <Sparkles className="w-6 h-6" />}
-              </Button>
+              
             </div>
           </section>
         </main>
@@ -322,20 +314,17 @@ const CampTemplateDetail = () => {
       navigate(`/camp/${campId}`);
     }} />
 
-      <WechatPayDialog
-        open={showPurchaseDialog}
-        onOpenChange={setShowPurchaseDialog}
-        packageInfo={camp ? {
-          key: `camp-${camp.camp_type}`,
-          name: camp.camp_name,
-          price: camp.price || 0,
-        } : null}
-        onSuccess={() => {
-          setShowPurchaseDialog(false);
-          toast.success("购买成功！", { description: "训练营权限已开通" });
-          window.location.reload();
-        }}
-      />
+      <WechatPayDialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog} packageInfo={camp ? {
+      key: `camp-${camp.camp_type}`,
+      name: camp.camp_name,
+      price: camp.price || 0
+    } : null} onSuccess={() => {
+      setShowPurchaseDialog(false);
+      toast.success("购买成功！", {
+        description: "训练营权限已开通"
+      });
+      window.location.reload();
+    }} />
     </>;
 };
 export default CampTemplateDetail;
