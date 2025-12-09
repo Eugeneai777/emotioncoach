@@ -63,18 +63,18 @@ export const CoachHeader = ({
   };
 
   return (
-    <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-      <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
-        <div className="flex items-center justify-between gap-3">
+    <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-10">
+      <div className="container max-w-xl mx-auto px-2 md:px-4 py-2 md:py-3">
+        <div className="flex items-center justify-between gap-2">
         {/* Left side */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2">
           {/* Hamburger menu dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 md:h-9 md:w-9"
+                className="h-10 w-10 min-h-[44px] min-w-[44px]"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -126,16 +126,16 @@ export const CoachHeader = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Coach Space Dropdown */}
+          {/* Coach Space Dropdown - 移动端只显示图标 */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 size="sm"
                 variant="ghost"
-                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
+                className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
               >
-                <Target className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline">教练空间</span>
+                <Target className="w-4 h-4" />
+                <span className="hidden md:inline">教练空间</span>
                 <ChevronDown className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
@@ -168,17 +168,16 @@ export const CoachHeader = ({
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-2 md:gap-3">
-          {/* Energy Studio */}
+        <div className="flex items-center gap-1 md:gap-2">
+          {/* Energy Studio - 移动端只显示图标 */}
             <Button
               size="sm"
               variant="ghost"
               onClick={() => navigate("/energy-studio")}
-              className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 text-muted-foreground hover:text-foreground hover:bg-accent"
+              className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
             >
-              <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
-              <span className="hidden sm:inline font-medium">有劲生活馆</span>
-              <span className="sm:hidden font-medium">生活馆</span>
+              <Sparkles className="w-4 h-4" />
+              <span className="hidden md:inline font-medium">有劲生活馆</span>
             </Button>
 
             {/* History/Diary Button */}
@@ -186,20 +185,19 @@ export const CoachHeader = ({
               <Button
                 size="sm"
                 onClick={() => navigate(historyRoute)}
-                className={`gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-gradient-to-r ${getGradientClass(primaryColor)} text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 font-semibold border-0`}
+                className={`gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 bg-gradient-to-r ${getGradientClass(primaryColor)} text-white shadow-md hover:shadow-lg active:scale-95 transition-all duration-200 font-semibold border-0`}
               >
-                <History className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <History className="w-4 h-4" />
                 <span className="hidden sm:inline font-medium">{historyLabel}</span>
-                <span className="sm:hidden font-medium">日记</span>
               </Button>
             )}
 
-            {/* Packages */}
+            {/* Packages - 合并到更多菜单，移动端隐藏 */}
             <Button
               size="sm"
               variant="ghost"
               onClick={() => navigate("/packages")}
-              className="h-8 md:h-9 w-8 md:w-9 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
+              className="hidden sm:flex h-10 min-h-[44px] w-10 min-w-[44px] p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
             >
               <ShoppingBag className="w-4 h-4" />
             </Button>

@@ -6,7 +6,7 @@ import { CoachHeader } from "./CoachHeader";
 import { CoachEmptyState } from "./CoachEmptyState";
 import { CoachInputFooter } from "./CoachInputFooter";
 import { useAuth } from "@/hooks/useAuth";
-
+import { getCoachBackgroundGradient, getCoachLoaderColor } from "@/utils/coachThemeUtils";
 interface Step {
   id: number;
   emoji?: string;
@@ -195,8 +195,8 @@ export const CoachLayout = ({
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className={`w-8 h-8 animate-spin text-${primaryColor}-500`} />
+      <div className={`min-h-screen bg-gradient-to-br ${getCoachBackgroundGradient(primaryColor)} flex items-center justify-center`}>
+        <Loader2 className={`w-8 h-8 animate-spin ${getCoachLoaderColor(primaryColor)}`} />
       </div>
     );
   }
@@ -204,7 +204,7 @@ export const CoachLayout = ({
   const pullProgress = Math.min(pullDistance / threshold, 1);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={`min-h-screen bg-gradient-to-br ${getCoachBackgroundGradient(primaryColor)} flex flex-col`}>
       {/* Header */}
       <CoachHeader
         emoji={emoji}

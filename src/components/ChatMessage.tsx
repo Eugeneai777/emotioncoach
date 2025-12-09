@@ -151,14 +151,14 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
   
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3 md:mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-500`}>
-      {/* 助手头像 - 统一 36px */}
+      {/* 助手头像 */}
       {!isUser && (
-        <div className="flex-shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center mr-2 mt-1">
+        <div className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center mr-2 mt-1">
           <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-white" />
         </div>
       )}
       
-      <div className={`max-w-[78%] md:max-w-[75%] ${isUser ? "order-2" : "order-1"}`}>
+      <div className={`max-w-[85%] md:max-w-[80%] ${isUser ? "order-2" : "order-1"}`}>
         {/* 消息气泡 - 带微信式尾巴 */}
         <div className="relative">
           {/* 气泡尾巴 */}

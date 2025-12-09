@@ -306,29 +306,29 @@ ${briefing.growth_story || '暂无记录'}
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50/80 via-pink-50/50 to-rose-50/30 dark:from-purple-950/20 dark:via-pink-950/10 dark:to-rose-950/10 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50/80 via-pink-50/50 to-rose-50/30 dark:from-purple-950/20 dark:via-pink-950/10 dark:to-rose-950/10 flex flex-col">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-3">
+      <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-10">
+        <div className="container max-w-xl mx-auto px-2 md:px-4 py-2 md:py-3">
+          <div className="flex items-center justify-between gap-2">
             {/* Left side - Menu, Coach Space & Back to home */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
               {/* Hamburger Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="h-8 md:h-9 px-2"
+                    size="icon"
+                    className="h-10 w-10 min-h-[44px] min-w-[44px]"
                   >
-                    <Menu className="w-4 h-4 md:w-5 md:h-5" />
+                    <Menu className="w-5 h-5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48 bg-card border shadow-lg z-50">
@@ -370,26 +370,26 @@ ${briefing.growth_story || '暂无记录'}
                   variant="ghost"
                   size="sm"
                   onClick={handleRestart}
-                  className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-purple-600 hover:text-purple-600 hover:bg-purple-100 transition-colors font-medium"
+                  className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 text-purple-600 hover:text-purple-600 hover:bg-purple-100 active:scale-95 transition-all font-medium"
                 >
-                  <RotateCcw className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                  <span>返回主页</span>
+                  <RotateCcw className="w-4 h-4" />
+                  <span className="hidden sm:inline">返回主页</span>
                 </Button>
               )}
             </div>
 
             {/* Right side - Main navigation */}
-            <div className="flex items-center gap-1.5 md:gap-2">
-              {/* 教练空间 */}
+            <div className="flex items-center gap-1 md:gap-2">
+              {/* 教练空间 - 移动端只显示图标 */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
+                    className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
                   >
-                    <Target className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                    <span className="hidden sm:inline">教练空间</span>
+                    <Target className="w-4 h-4" />
+                    <span className="hidden md:inline">教练空间</span>
                     <ChevronDown className="w-3 h-3" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -455,35 +455,33 @@ ${briefing.growth_story || '暂无记录'}
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* 有劲生活馆 */}
+              {/* 有劲生活馆 - 移动端只显示图标 */}
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => navigate("/energy-studio")}
-                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 text-muted-foreground hover:text-foreground hover:bg-accent"
+                className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
               >
-                <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline font-medium">有劲生活馆</span>
-                <span className="sm:hidden font-medium">生活馆</span>
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden md:inline font-medium">有劲生活馆</span>
               </Button>
 
               {/* 我的亲子日记 - 主CTA */}
               <Button
                 size="sm"
                 onClick={() => navigate("/parent-diary")}
-                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 font-semibold border-0"
+                className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white shadow-md hover:shadow-lg active:scale-95 transition-all font-semibold border-0"
               >
-                <BookHeart className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline font-medium">我的亲子日记</span>
-                <span className="sm:hidden font-medium">亲子</span>
+                <BookHeart className="w-4 h-4" />
+                <span className="hidden sm:inline font-medium">亲子日记</span>
               </Button>
 
-              {/* 全部产品 */}
+              {/* 全部产品 - 移动端隐藏 */}
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => navigate("/packages")}
-                className="h-8 md:h-9 w-8 md:w-9 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
+                className="hidden sm:flex h-10 min-h-[44px] w-10 min-w-[44px] p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
               >
                 <ShoppingBag className="w-4 h-4" />
               </Button>
