@@ -27,6 +27,7 @@ import CampCheckIn from "./pages/CampCheckIn";
 import ParentCampLanding from "./pages/ParentCampLanding";
 import ParentCampManual from "./pages/ParentCampManual";
 import ParentCoach from "./pages/ParentCoach";
+import ParentCoachIntro from "./pages/ParentCoachIntro";
 import CommunicationCoach from "./pages/CommunicationCoach";
 import CommunicationHistory from "./pages/CommunicationHistory";
 import CommunicationCoachIntro from "./pages/CommunicationCoachIntro";
@@ -86,6 +87,7 @@ const App = () => (
           <Route path="/parent-camp" element={<ParentCampLanding />} />
           <Route path="/parent-camp-manual" element={<ParentCampManual />} />
           <Route path="/parent-coach" element={<ParentCoach />} />
+          <Route path="/parent-coach-intro" element={<ParentCoachIntro />} />
           <Route path="/communication-coach" element={<CommunicationCoach />} />
           <Route path="/communication-history" element={<CommunicationHistory />} />
           <Route path="/communication-intro" element={<CommunicationCoachIntro />} />

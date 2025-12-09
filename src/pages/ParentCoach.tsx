@@ -325,7 +325,7 @@ ${briefingData.growth_story || '暂无记录'}
       steps={coachConfig?.steps || []}
       stepsTitle={coachConfig?.steps_title || "亲子情绪四部曲"}
       stepsEmoji={coachConfig?.steps_emoji || "💜"}
-      moreInfoRoute="/parent-camp"
+      moreInfoRoute="/parent-coach-intro"
       historyRoute="/parent-diary"
       historyLabel="亲子日记"
       messages={messages.map(m => ({ ...m, role: m.role as "user" | "assistant" }))}
