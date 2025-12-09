@@ -464,8 +464,13 @@ export type Database = {
           display_order: number | null
           edge_function_name: string | null
           emoji: string
+          enable_briefing_share: boolean | null
           enable_community: boolean | null
+          enable_daily_reminder: boolean | null
+          enable_emotion_alert: boolean | null
+          enable_intensity_tracking: boolean | null
           enable_notifications: boolean | null
+          enable_onboarding: boolean | null
           enable_scenarios: boolean | null
           enable_training_camp: boolean | null
           enable_voice_control: boolean | null
@@ -498,8 +503,13 @@ export type Database = {
           display_order?: number | null
           edge_function_name?: string | null
           emoji?: string
+          enable_briefing_share?: boolean | null
           enable_community?: boolean | null
+          enable_daily_reminder?: boolean | null
+          enable_emotion_alert?: boolean | null
+          enable_intensity_tracking?: boolean | null
           enable_notifications?: boolean | null
+          enable_onboarding?: boolean | null
           enable_scenarios?: boolean | null
           enable_training_camp?: boolean | null
           enable_voice_control?: boolean | null
@@ -532,8 +542,13 @@ export type Database = {
           display_order?: number | null
           edge_function_name?: string | null
           emoji?: string
+          enable_briefing_share?: boolean | null
           enable_community?: boolean | null
+          enable_daily_reminder?: boolean | null
+          enable_emotion_alert?: boolean | null
+          enable_intensity_tracking?: boolean | null
           enable_notifications?: boolean | null
+          enable_onboarding?: boolean | null
           enable_scenarios?: boolean | null
           enable_training_camp?: boolean | null
           enable_voice_control?: boolean | null

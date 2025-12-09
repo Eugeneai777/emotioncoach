@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, BookOpen, Sparkles, ExternalLink, Bell, Users, MessageSquare, Mic, Tent } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, BookOpen, Sparkles, ExternalLink, Bell, Users, MessageSquare, Mic, Tent, Activity, Clock, AlertTriangle, GraduationCap, Share2 } from "lucide-react";
 import { CoachStepsEditor } from "./CoachStepsEditor";
 import { AICoachCreator } from "./AICoachCreator";
 import {
@@ -317,6 +317,11 @@ export function CoachTemplatesManagement() {
                 <FeatureBadge enabled={template.enable_community} icon={Users} label="社区" />
                 <FeatureBadge enabled={template.enable_scenarios} icon={MessageSquare} label="场景" />
                 <FeatureBadge enabled={template.enable_voice_control} icon={Mic} label="语音" />
+                <FeatureBadge enabled={template.enable_intensity_tracking} icon={Activity} label="强度追踪" />
+                <FeatureBadge enabled={template.enable_daily_reminder} icon={Clock} label="每日提醒" />
+                <FeatureBadge enabled={template.enable_emotion_alert} icon={AlertTriangle} label="情绪预警" />
+                <FeatureBadge enabled={template.enable_onboarding} icon={GraduationCap} label="新手引导" />
+                <FeatureBadge enabled={template.enable_briefing_share} icon={Share2} label="简报分享" />
               </div>
               
               {/* Routes and Config */}
@@ -518,43 +523,116 @@ export function CoachTemplatesManagement() {
                 </div>
               </div>
 
-              <div className="space-y-3 border rounded-lg p-4">
-                <Label>功能开关</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">语音控制</span>
-                    <Switch
-                      checked={editingTemplate.enable_voice_control}
-                      onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_voice_control: checked })}
-                    />
+              <div className="space-y-4 border rounded-lg p-4">
+                <div>
+                  <Label className="text-base font-medium">基础功能</Label>
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Mic className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">语音控制</span>
+                      </div>
+                      <Switch
+                        checked={editingTemplate.enable_voice_control}
+                        onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_voice_control: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Tent className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">训练营</span>
+                      </div>
+                      <Switch
+                        checked={editingTemplate.enable_training_camp}
+                        onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_training_camp: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Bell className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">通知</span>
+                      </div>
+                      <Switch
+                        checked={editingTemplate.enable_notifications}
+                        onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_notifications: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">社区</span>
+                      </div>
+                      <Switch
+                        checked={editingTemplate.enable_community}
+                        onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_community: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">场景库</span>
+                      </div>
+                      <Switch
+                        checked={editingTemplate.enable_scenarios}
+                        onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_scenarios: checked })}
+                      />
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">训练营</span>
-                    <Switch
-                      checked={editingTemplate.enable_training_camp}
-                      onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_training_camp: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">通知</span>
-                    <Switch
-                      checked={editingTemplate.enable_notifications}
-                      onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_notifications: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">社区</span>
-                    <Switch
-                      checked={editingTemplate.enable_community}
-                      onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_community: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">场景库</span>
-                    <Switch
-                      checked={editingTemplate.enable_scenarios}
-                      onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_scenarios: checked })}
-                    />
+                </div>
+
+                <div className="border-t pt-4">
+                  <Label className="text-base font-medium">扩展功能</Label>
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">强度追踪</span>
+                      </div>
+                      <Switch
+                        checked={editingTemplate.enable_intensity_tracking ?? false}
+                        onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_intensity_tracking: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">每日提醒</span>
+                      </div>
+                      <Switch
+                        checked={editingTemplate.enable_daily_reminder ?? false}
+                        onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_daily_reminder: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">情绪预警</span>
+                      </div>
+                      <Switch
+                        checked={editingTemplate.enable_emotion_alert ?? false}
+                        onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_emotion_alert: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">新手引导</span>
+                      </div>
+                      <Switch
+                        checked={editingTemplate.enable_onboarding ?? false}
+                        onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_onboarding: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Share2 className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">简报分享</span>
+                      </div>
+                      <Switch
+                        checked={editingTemplate.enable_briefing_share ?? true}
+                        onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, enable_briefing_share: checked })}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
