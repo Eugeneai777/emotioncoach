@@ -3,14 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Search, MessageSquare, AlertCircle, Lightbulb, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Search, MessageSquare, AlertCircle, Lightbulb, CheckCircle, Clock, XCircle, Settings, Headphones, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 
 interface Ticket {
@@ -59,6 +60,16 @@ const feedbackStatusConfig = {
   rejected: { label: '已拒绝', color: 'bg-gray-500' },
 };
 
+interface ServiceConfig {
+  enabledModes: {
+    text: boolean;
+    voice_natural: boolean;
+    voice_button: boolean;
+  };
+  defaultMode: 'text' | 'voice_natural' | 'voice_button';
+  floatingButtonVisible: boolean;
+}
+
 export default function CustomerServiceManagement() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
@@ -71,9 +82,67 @@ export default function CustomerServiceManagement() {
   const [resolution, setResolution] = useState("");
   const [adminNote, setAdminNote] = useState("");
 
+  // 客服设置状态
+  const [serviceConfig, setServiceConfig] = useState<ServiceConfig>({
+    enabledModes: { text: true, voice_natural: true, voice_button: true },
+    defaultMode: 'voice_natural',
+    floatingButtonVisible: true,
+  });
+  const [savingConfig, setSavingConfig] = useState(false);
+
   useEffect(() => {
     loadData();
+    loadServiceConfig();
   }, []);
+
+  const loadServiceConfig = async () => {
+    const { data, error } = await supabase
+      .from('customer_service_config')
+      .select('config_key, config_value');
+    
+    if (error) {
+      console.error('Config error:', error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      const configMap = data.reduce((acc, item) => {
+        acc[item.config_key] = item.config_value;
+        return acc;
+      }, {} as Record<string, unknown>);
+
+      setServiceConfig({
+        enabledModes: (configMap['enabled_modes'] as ServiceConfig['enabledModes']) || serviceConfig.enabledModes,
+        defaultMode: (configMap['default_mode'] as ServiceConfig['defaultMode']) || serviceConfig.defaultMode,
+        floatingButtonVisible: configMap['floating_button_visible'] !== false,
+      });
+    }
+  };
+
+  const saveServiceConfig = async () => {
+    setSavingConfig(true);
+    try {
+      const updates = [
+        { config_key: 'enabled_modes', config_value: serviceConfig.enabledModes, description: '启用的客服模式' },
+        { config_key: 'default_mode', config_value: serviceConfig.defaultMode, description: '默认客服模式' },
+        { config_key: 'floating_button_visible', config_value: serviceConfig.floatingButtonVisible, description: '悬浮语音按钮是否显示' },
+      ];
+
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('customer_service_config')
+          .upsert(update, { onConflict: 'config_key' });
+        if (error) throw error;
+      }
+
+      toast.success('设置已保存');
+    } catch (error) {
+      console.error('Save config error:', error);
+      toast.error('保存失败');
+    } finally {
+      setSavingConfig(false);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -226,6 +295,10 @@ export default function CustomerServiceManagement() {
         <TabsList>
           <TabsTrigger value="tickets">工单管理 ({ticketStats.total})</TabsTrigger>
           <TabsTrigger value="feedbacks">用户建议 ({feedbackStats.total})</TabsTrigger>
+          <TabsTrigger value="settings" className="gap-1">
+            <Settings className="h-4 w-4" />
+            客服设置
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="tickets" className="space-y-4">
@@ -383,6 +456,128 @@ export default function CustomerServiceManagement() {
                   )}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 客服设置 Tab */}
+        <TabsContent value="settings" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                客服模式配置
+              </CardTitle>
+              <CardDescription>控制用户可用的客服交互方式</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* 模式开关 */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-blue-100">
+                      <MessageCircle className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium">文字客服</div>
+                      <div className="text-sm text-muted-foreground">用户可通过文字与AI客服交流</div>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={serviceConfig.enabledModes.text}
+                    onCheckedChange={(checked) =>
+                      setServiceConfig(prev => ({
+                        ...prev,
+                        enabledModes: { ...prev.enabledModes, text: checked }
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-teal-100">
+                      <Headphones className="h-5 w-5 text-teal-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium">语音客服 - 自然对话</div>
+                      <div className="text-sm text-muted-foreground">自动检测用户语音，无需按钮控制</div>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={serviceConfig.enabledModes.voice_natural}
+                    onCheckedChange={(checked) =>
+                      setServiceConfig(prev => ({
+                        ...prev,
+                        enabledModes: { ...prev.enabledModes, voice_natural: checked }
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-purple-100">
+                      <Headphones className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium">语音客服 - 按钮模式</div>
+                      <div className="text-sm text-muted-foreground">用户按住按钮进行语音录制</div>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={serviceConfig.enabledModes.voice_button}
+                    onCheckedChange={(checked) =>
+                      setServiceConfig(prev => ({
+                        ...prev,
+                        enabledModes: { ...prev.enabledModes, voice_button: checked }
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* 默认模式 */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">默认模式</label>
+                <Select
+                  value={serviceConfig.defaultMode}
+                  onValueChange={(value: ServiceConfig['defaultMode']) =>
+                    setServiceConfig(prev => ({ ...prev, defaultMode: value }))
+                  }
+                >
+                  <SelectTrigger className="w-full max-w-xs">
+                    <SelectValue placeholder="选择默认模式" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text" disabled={!serviceConfig.enabledModes.text}>文字客服</SelectItem>
+                    <SelectItem value="voice_natural" disabled={!serviceConfig.enabledModes.voice_natural}>语音-自然对话</SelectItem>
+                    <SelectItem value="voice_button" disabled={!serviceConfig.enabledModes.voice_button}>语音-按钮模式</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">用户打开客服时默认显示的模式</p>
+              </div>
+
+              {/* 悬浮按钮设置 */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <div className="font-medium">显示悬浮客服按钮</div>
+                  <div className="text-sm text-muted-foreground">在页面右下角显示快捷客服入口</div>
+                </div>
+                <Switch
+                  checked={serviceConfig.floatingButtonVisible}
+                  onCheckedChange={(checked) =>
+                    setServiceConfig(prev => ({ ...prev, floatingButtonVisible: checked }))
+                  }
+                />
+              </div>
+
+              {/* 保存按钮 */}
+              <div className="flex justify-end pt-4">
+                <Button onClick={saveServiceConfig} disabled={savingConfig}>
+                  {savingConfig ? '保存中...' : '保存设置'}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
