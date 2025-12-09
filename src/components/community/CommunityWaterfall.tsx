@@ -169,7 +169,7 @@ const CommunityWaterfall = () => {
     
     try {
       const { data, error } = await supabase.functions.invoke('recommend-posts', {
-        body: { userId: session.user.id }
+        body: {}
       });
 
       if (error) {

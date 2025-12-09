@@ -12,20 +12,6 @@ serve(async (req) => {
   }
 
   try {
-    let userId: string;
-    try {
-      const body = await req.json();
-      userId = body.userId;
-    } catch (parseError) {
-      console.error("请求解析失败:", parseError);
-      return new Response(
-        JSON.stringify({ recommendedPostIds: [], strategy: "parse_error" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    
-    console.log("开始推荐，用户ID:", userId);
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
@@ -36,10 +22,34 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+
+    // Extract userId from JWT token for security
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "未授权", recommendedPostIds: [], strategy: "auth_error" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || supabaseKey);
+    
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error("认证失败:", authError);
+      return new Response(
+        JSON.stringify({ error: "认证失败", recommendedPostIds: [], strategy: "auth_error" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = user.id;
+    console.log("开始推荐，用户ID:", userId);
+    
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
     // 获取用户的点赞历史 - 优化查询速度，只取最近15条
     const { data: likes, error: likesError } = await supabase
