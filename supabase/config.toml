@@ -109,7 +109,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.import-video-courses]
-verify_jwt = false
+verify_jwt = true
 
 [functions.recommend-courses]
 verify_jwt = true
