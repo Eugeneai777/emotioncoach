@@ -1,10 +1,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0'
 import { corsHeaders } from '../_shared/cors.ts'
 
-// 判断产品线
+// 判断产品线 - 与 wechat-pay-callback 中的 package_key 保持一致
 function getProductLine(orderType: string): 'youjin' | 'bloom' {
-  const youjinProducts = ['package_trial', 'package_365', 'ai_coach_upgrade'];
-  const bloomProducts = ['partner_package'];
+  // 有劲产品线：基础会员、365会员、尝鲜会员
+  const youjinProducts = ['basic', 'member365', 'trial', 'package_trial', 'package_365', 'ai_coach_upgrade'];
+  // 绽放产品线：合伙人套餐
+  const bloomProducts = ['partner', 'partner_package'];
   
   if (youjinProducts.includes(orderType)) return 'youjin';
   if (bloomProducts.includes(orderType)) return 'bloom';
