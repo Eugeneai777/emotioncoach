@@ -628,6 +628,7 @@ const Index = () => {
           steps: coachConfig?.steps || [],
           introRoute: '/introduction'
         }}
+        enableStepsCollapse={true}
         messagesEndRef={messagesEndRef}
       />
     </>

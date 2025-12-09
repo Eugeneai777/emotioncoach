@@ -109,6 +109,9 @@ interface CoachLayoutProps {
   
   // External refs
   messagesEndRef?: RefObject<HTMLDivElement>;
+  
+  // Steps collapse control
+  enableStepsCollapse?: boolean;
 }
 
 export const CoachLayout = ({
@@ -165,7 +168,8 @@ export const CoachLayout = ({
   briefingConfirmation,
   dialogs,
   currentCoachKey,
-  messagesEndRef: externalMessagesEndRef
+  messagesEndRef: externalMessagesEndRef,
+  enableStepsCollapse = false
 }: CoachLayoutProps) => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -369,6 +373,7 @@ export const CoachLayout = ({
                 dailyReminderContent={dailyReminderContent}
                 showDailyReminder={showDailyReminder}
                 campRecommendation={campRecommendation}
+                enableCollapse={enableStepsCollapse}
               />
             ) : (
               <div className="space-y-4">
