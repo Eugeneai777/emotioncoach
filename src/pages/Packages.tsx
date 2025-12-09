@@ -31,12 +31,6 @@ export default function Packages() {
       navigate('/camp-list');
       return;
     }
-    // 训练营详情页
-    if (packageInfo.key.startsWith('camp-')) {
-      const campId = packageInfo.key.replace('camp-', '');
-      navigate(`/camp-template/${campId}`);
-      return;
-    }
     // 需要登录
     if (!user) {
       toast.error("请先登录", {
@@ -45,7 +39,7 @@ export default function Packages() {
       navigate('/auth');
       return;
     }
-    // 打开支付对话框
+    // 训练营和普通套餐统一使用微信支付
     setSelectedPackage(packageInfo);
     setPayDialogOpen(true);
   };
