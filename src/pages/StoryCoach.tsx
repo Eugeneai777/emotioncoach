@@ -1,20 +1,13 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import StoryCreationFlow from "@/components/coach/StoryCreationFlow";
 import CommunityWaterfall from "@/components/community/CommunityWaterfall";
-import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
+import { CoachHeader } from "@/components/coach/CoachHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { 
-  Menu, RotateCcw, History, LogOut, Sparkles, ChevronDown, 
-  Send, User, Wallet, Clock, Tent, Users, Target, ShoppingBag, BookOpen, Bell
-} from "lucide-react";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Send, BookOpen, ChevronDown, RotateCcw } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const HERO_JOURNEY_STAGES = [
@@ -116,190 +109,19 @@ export default function StoryCoach() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-3">
-            {/* Left side - Menu & Back to home */}
-            <div className="flex items-center gap-2">
-              {/* Hamburger Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 md:h-9 px-2"
-                  >
-                    <Menu className="w-4 h-4 md:w-5 md:h-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 bg-card border shadow-lg z-50">
-                  <DropdownMenuItem onClick={() => navigate("/settings?tab=profile")}>
-                    <User className="w-4 h-4 mr-2" />
-                    个人资料
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/settings?tab=account")}>
-                    <Wallet className="w-4 h-4 mr-2" />
-                    账户
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/settings?tab=reminders")}>
-                    <Clock className="w-4 h-4 mr-2" />
-                    提醒设置
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/settings?tab=notifications")}>
-                    <Bell className="w-4 h-4 mr-2" />
-                    通知偏好
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/settings?tab=camp")}>
-                    <Tent className="w-4 h-4 mr-2" />
-                    训练营
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/settings?tab=companion")}>
-                    <Users className="w-4 h-4 mr-2" />
-                    情绪伙伴
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/packages")}>
-                    <ShoppingBag className="w-4 h-4 mr-2" />
-                    全部产品
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/partner")}>
-                    <Users className="w-4 h-4 mr-2" />
-                    合伙人中心
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
-                    <LogOut className="w-4 h-4 mr-2" />
-                    退出登录
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {showCreation && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRestart}
-                  className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-primary hover:text-primary hover:bg-primary/10 transition-colors font-medium"
-                >
-                  <RotateCcw className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                  <span>返回主页</span>
-                </Button>
-              )}
-            </div>
-
-            {/* Right side - Main navigation */}
-            <div className="flex items-center gap-2 md:gap-3">
-              {/* 教练空间快速切换 */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
-                  >
-                    <Target className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                    <span className="hidden sm:inline">教练空间</span>
-                    <ChevronDown className="w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52 bg-card border shadow-lg z-50">
-                  <DropdownMenuItem
-                    onClick={() => navigate("/coach/vibrant_life_sage")}
-                    className="gap-2"
-                  >
-                    <span className="text-rose-500">❤️</span>
-                    <div className="flex flex-col">
-                      <span className="font-medium">有劲生活教练</span>
-                      <span className="text-xs text-muted-foreground">温暖陪伴点亮心灯</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => navigate("/")}
-                    className="gap-2"
-                  >
-                    <span className="text-blue-500">💙</span>
-                    <div className="flex flex-col">
-                      <span className="font-medium">情绪教练</span>
-                      <span className="text-xs text-muted-foreground">日常情绪觉察</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => navigate("/parent-coach")}
-                    className="gap-2"
-                  >
-                    <span className="text-purple-500">💜</span>
-                    <div className="flex flex-col">
-                      <span className="font-medium">亲子教练</span>
-                      <span className="text-xs text-muted-foreground">亲子情绪沟通</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => navigate("/communication-coach")}
-                    className="gap-2"
-                  >
-                    <span className="text-blue-500">💙</span>
-                    <div className="flex flex-col">
-                      <span className="font-medium">沟通教练</span>
-                      <span className="text-xs text-muted-foreground">温暖表达影响</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => navigate("/story-coach")}
-                    className="gap-2"
-                  >
-                    <span className="text-orange-500">📖</span>
-                    <div className="flex flex-col">
-                      <span className="font-medium">故事教练</span>
-                      <span className="text-xs text-muted-foreground">英雄之旅创作</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => navigate("/energy-studio#coach")}
-                    className="gap-2 text-primary"
-                  >
-                    <Target className="w-4 h-4" />
-                    <span className="font-medium">查看全部教练</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => navigate("/energy-studio")}
-                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 text-muted-foreground hover:text-foreground hover:bg-accent"
-              >
-                <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline font-medium">有劲生活馆</span>
-                <span className="sm:hidden font-medium">生活馆</span>
-              </Button>
-
-              <Button
-                size="sm"
-                onClick={() => navigate("/my-stories")}
-                className="gap-1.5 text-xs md:text-sm h-8 md:h-9 px-3 md:px-4 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 font-semibold border-0"
-              >
-                <BookOpen className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                <span className="hidden sm:inline font-medium">我的故事广场</span>
-                <span className="sm:hidden font-medium">故事广场</span>
-              </Button>
-
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => navigate("/packages")}
-                className="h-8 md:h-9 w-8 md:w-9 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
-              >
-                <ShoppingBag className="w-4 h-4" />
-              </Button>
-
-              <SmartNotificationCenter />
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Header - 使用共享的 CoachHeader 组件 */}
+      <CoachHeader
+        emoji="📖"
+        primaryColor="orange"
+        historyRoute="/my-stories"
+        historyLabel="我的故事广场"
+        historyLabelShort="故事广场"
+        hasMessages={showCreation}
+        onRestart={handleRestart}
+        onSignOut={handleSignOut}
+        showNotificationCenter={true}
+        currentCoachKey="story_coach"
+      />
 
       {/* Main Content */}
       <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto overscroll-none scroll-container pb-44">
