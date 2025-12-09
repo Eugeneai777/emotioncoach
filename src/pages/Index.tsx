@@ -864,55 +864,68 @@ const [expandedStep, setExpandedStep] = useState<number | null>(null);
                     <EmotionAlert />
                   </div>
                   
-                  {/* Smart Notifications Display */}
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200/50 rounded-card-lg p-card shadow-md">
-                    <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
-                      <Bell className="h-4 w-4 text-green-600" />
-                      <span className="text-green-700">智能提醒</span>
-                      <span className="text-xs px-2 py-0.5 bg-green-100 text-green-600 rounded-full">情绪教练</span>
-                    </h4>
+                  {/* Smart Notifications Display - 只显示未读通知 */}
+                  {(() => {
+                    const unreadNotifications = notifications.filter(n => !n.is_read);
+                    const safeIndex = Math.min(currentNotificationIndex, Math.max(0, unreadNotifications.length - 1));
                     
-                    {notificationsLoading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : notifications.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-8">
-                        暂无新提醒
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        <NotificationCard
-                          key={notifications[currentNotificationIndex].id}
-                          notification={notifications[currentNotificationIndex]}
-                          onClick={() => markAsRead(notifications[currentNotificationIndex].id)}
-                          onDelete={() => {
-                            deleteNotification(notifications[currentNotificationIndex].id);
-                            if (currentNotificationIndex >= notifications.length - 1) {
-                              setCurrentNotificationIndex(0);
-                            }
-                          }}
-                          colorTheme="green"
-                        />
+                    return (
+                      <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200/50 rounded-card-lg p-card shadow-md">
+                        <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
+                          <Bell className="h-4 w-4 text-green-600" />
+                          <span className="text-green-700">智能提醒</span>
+                          <span className="text-xs px-2 py-0.5 bg-green-100 text-green-600 rounded-full">情绪教练</span>
+                        </h4>
                         
-                        {notifications.length > 1 && (
-                          <div className="flex items-center justify-center gap-2">
-                            <span className="text-xs text-green-600/70">
-                              {currentNotificationIndex + 1} / {notifications.length}
-                            </span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setCurrentNotificationIndex((prev) => (prev + 1) % notifications.length)}
-                              className="h-7 text-xs border-green-300 text-green-600 hover:bg-green-50"
-                            >
-                              下一条
-                            </Button>
+                        {notificationsLoading ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                          </div>
+                        ) : unreadNotifications.length === 0 ? (
+                          <p className="text-sm text-muted-foreground text-center py-8">
+                            暂无新提醒
+                          </p>
+                        ) : (
+                          <div className="space-y-3">
+                            <NotificationCard
+                              key={unreadNotifications[safeIndex].id}
+                              notification={unreadNotifications[safeIndex]}
+                              onClick={() => {
+                                markAsRead(unreadNotifications[safeIndex].id);
+                                // 已读后重置索引，防止越界
+                                if (safeIndex >= unreadNotifications.length - 1) {
+                                  setCurrentNotificationIndex(0);
+                                }
+                              }}
+                              onDelete={() => {
+                                deleteNotification(unreadNotifications[safeIndex].id);
+                                if (safeIndex >= unreadNotifications.length - 1) {
+                                  setCurrentNotificationIndex(0);
+                                }
+                              }}
+                              colorTheme="green"
+                            />
+                            
+                            {unreadNotifications.length > 1 && (
+                              <div className="flex items-center justify-center gap-2">
+                                <span className="text-xs text-green-600/70">
+                                  {safeIndex + 1} / {unreadNotifications.length}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setCurrentNotificationIndex((prev) => (prev + 1) % unreadNotifications.length)}
+                                  className="h-7 text-xs border-green-300 text-green-600 hover:bg-green-50"
+                                >
+                                  下一条
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
-                    )}
-                  </div>
+                    );
+                  })()}
                   
                 </div>
               )}
