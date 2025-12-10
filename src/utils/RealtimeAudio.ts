@@ -184,22 +184,25 @@ export class RealtimeChat {
   private recorder: AudioRecorder | null = null;
   private audioContext: AudioContext | null = null;
   private audioQueue: AudioQueue | null = null;
+  private tokenEndpoint: string;
 
   constructor(
     private onMessage: (message: any) => void,
     private onStatusChange: (status: 'connecting' | 'connected' | 'disconnected' | 'error') => void,
-    private onTranscript: (text: string, isFinal: boolean, role: 'user' | 'assistant') => void
+    private onTranscript: (text: string, isFinal: boolean, role: 'user' | 'assistant') => void,
+    tokenEndpoint: string = 'realtime-token'
   ) {
     this.audioEl = document.createElement("audio");
     this.audioEl.autoplay = true;
+    this.tokenEndpoint = tokenEndpoint;
   }
 
   async init() {
     try {
       this.onStatusChange('connecting');
       
-      // 获取临时令牌
-      const { data: tokenData, error: tokenError } = await supabase.functions.invoke('realtime-token');
+      // 获取临时令牌（使用可配置的 endpoint）
+      const { data: tokenData, error: tokenError } = await supabase.functions.invoke(this.tokenEndpoint);
       
       if (tokenError || !tokenData?.client_secret?.value) {
         throw new Error("Failed to get ephemeral token");

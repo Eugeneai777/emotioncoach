@@ -198,6 +198,9 @@ verify_jwt = true
 [functions.realtime-token]
 verify_jwt = true
 
+[functions.vibrant-life-realtime-token]
+verify_jwt = true
+
 [functions.log-api-cost]
 verify_jwt = true
 
