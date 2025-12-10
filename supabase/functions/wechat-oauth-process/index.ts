@@ -71,6 +71,10 @@ serve(async (req) => {
 
     let finalUserId: string | null = null;
     let isNewUser = false;
+    
+    // 解析 state：支持 'register', 'bind_用户ID' 格式
+    const isBind = state.startsWith('bind_');
+    const bindUserId = isBind ? state.replace('bind_', '') : null;
 
     // 如果 state 是 'register'，表示是注册流程
     if (state === 'register') {
@@ -144,24 +148,18 @@ serve(async (req) => {
           console.log('Created new user:', finalUserId);
         }
       }
-    } else if (state === 'bind') {
-      // 绑定流程 - 从 authorization header 获取当前用户
-      const authHeader = req.headers.get('Authorization');
-      if (!authHeader) {
+    } else if (isBind && bindUserId) {
+      // 绑定流程 - 从 state 中获取用户ID（因为从微信跳回来时session可能丢失）
+      console.log('Binding WeChat to user:', bindUserId);
+      
+      // 验证用户是否存在
+      const { data: userData, error: userError } = await supabaseClient.auth.admin.getUserById(bindUserId);
+      
+      if (userError || !userData?.user) {
+        console.error('User not found:', bindUserId, userError);
         return new Response(
-          JSON.stringify({ error: 'Not authenticated' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
-        authHeader.replace('Bearer ', '')
-      );
-
-      if (userError || !user) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid token' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: 'User not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -170,18 +168,19 @@ serve(async (req) => {
         .from('wechat_user_mappings')
         .select('id')
         .eq('openid', tokenData.openid)
-        .eq('system_user_id', user.id)
+        .eq('system_user_id', bindUserId)
         .maybeSingle();
       
       if (existingUserMapping) {
         // 当前用户已绑定此微信，返回成功
+        console.log('User already bound to this WeChat:', bindUserId);
         return new Response(
-          JSON.stringify({ success: true, isNewUser: false, alreadyBound: true }),
+          JSON.stringify({ success: true, isNewUser: false, alreadyBound: true, bindSuccess: true }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      finalUserId = user.id;
+      finalUserId = bindUserId;
       console.log('Binding to existing user:', finalUserId);
     } else if (existingMapping) {
       // 登录流程且已有映射
