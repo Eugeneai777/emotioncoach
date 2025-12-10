@@ -189,29 +189,6 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
               paidCount={codeStats.paid}
             />
           </div>
-          
-          {/* 海报生成中心入口 */}
-          <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 overflow-hidden">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center shadow-lg">
-                    <Palette className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-orange-800">AI推广海报</h4>
-                    <p className="text-xs text-orange-600">智能生成专属推广海报</p>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => navigate('/poster-center')}
-                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg"
-                >
-                  生成海报
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* 群管理 - 折叠区块 */}
           <Collapsible open={groupExpanded} onOpenChange={setGroupExpanded}>
