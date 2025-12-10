@@ -21,8 +21,8 @@ export default function WeChatAuth() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [isOpenPlatform, setIsOpenPlatform] = useState(true);
+  const [loading, setLoading] = useState(true); // 默认loading状态
+  const [isOpenPlatform, setIsOpenPlatform] = useState<boolean | null>(null); // null表示未确定
   const [authUrl, setAuthUrl] = useState<string>("");
   const mode = searchParams.get("mode") || "login"; // login, register, or follow
 
@@ -40,6 +40,8 @@ export default function WeChatAuth() {
     // follow 模式不需要生成登录二维码
     if (mode !== "follow") {
       generateAuthUrl();
+    } else {
+      setLoading(false);
     }
   }, [mode, user]);
 
@@ -51,6 +53,7 @@ export default function WeChatAuth() {
       if (error || !data?.appId) {
         console.error("获取微信配置失败:", error);
         toast.error("微信登录未配置，请联系管理员");
+        setLoading(false);
         return;
       }
 
@@ -68,20 +71,23 @@ export default function WeChatAuth() {
         // 开放平台网站应用 - 扫码登录（iframe方式）
         url = `https://open.weixin.qq.com/connect/qrconnect?appid=${appid}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_login&state=${state}#wechat_redirect`;
         setQrCodeUrl(url);
+        setLoading(false);
       } else {
         // 公众号 - 网页授权（需要跳转，只能在微信内使用）
         url = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appid}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=${state}#wechat_redirect`;
         setAuthUrl(url);
         
-        // 如果在微信浏览器中，直接跳转
+        // 如果在微信浏览器中，直接跳转，不需要设置loading为false
         if (isWeChatBrowser()) {
           window.location.href = url;
+          // 保持loading状态，因为正在跳转
+        } else {
+          setLoading(false);
         }
       }
     } catch (error) {
       console.error("生成授权链接失败:", error);
       toast.error("生成授权链接失败");
-    } finally {
       setLoading(false);
     }
   };
@@ -156,6 +162,20 @@ export default function WeChatAuth() {
                 稍后关注
               </Button>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // 加载中或正在跳转微信授权
+  if (loading || isOpenPlatform === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 p-4">
+        <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <Loader2 className="h-12 w-12 animate-spin text-teal-500 mb-4" />
+            <p className="text-muted-foreground">正在加载微信授权...</p>
           </CardContent>
         </Card>
       </div>
@@ -253,9 +273,7 @@ export default function WeChatAuth() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl">
-            {loading ? (
-              <Loader2 className="h-12 w-12 animate-spin text-teal-500" />
-            ) : qrCodeUrl ? (
+            {qrCodeUrl ? (
               <div className="text-center space-y-4">
                 <div className="text-sm text-muted-foreground">
                   请使用微信扫描下方二维码
@@ -270,8 +288,17 @@ export default function WeChatAuth() {
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-muted-foreground">
-                二维码加载失败，请刷新页面重试
+              <div className="text-center space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  二维码加载失败，请刷新页面重试
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => generateAuthUrl()}
+                  className="text-teal-600 border-teal-300"
+                >
+                  重新加载
+                </Button>
               </div>
             )}
           </div>
