@@ -29,7 +29,15 @@ export function PosterGenerator({
   customSellingPoints,
   scene = 'default'
 }: PosterGeneratorProps) {
-  const [backgroundSource, setBackgroundSource] = useState<'unsplash' | 'ai'>('unsplash');
+  const [backgroundSource, setBackgroundSource] = useState<'solid' | 'unsplash' | 'ai'>('solid');
+
+  const handleSourceChange = (source: 'solid' | 'unsplash' | 'ai') => {
+    setBackgroundSource(source);
+    if (source === 'solid') {
+      setBackgroundImageUrl('');
+      setUnsplashAuthor(null);
+    }
+  };
   const [isGenerating, setIsGenerating] = useState(false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string>('');
   const [unsplashAuthor, setUnsplashAuthor] = useState<{ name: string; link: string } | null>(null);
@@ -167,7 +175,7 @@ export function PosterGenerator({
       {/* Background Source Selector */}
       <BackgroundSourceSelector 
         source={backgroundSource} 
-        onSourceChange={setBackgroundSource} 
+        onSourceChange={handleSourceChange} 
       />
 
       {/* Unsplash Image Picker */}
