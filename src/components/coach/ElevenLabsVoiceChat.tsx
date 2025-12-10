@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useConversation } from '@elevenlabs/react';
 import { Button } from '@/components/ui/button';
-import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins } from 'lucide-react';
+import { PhoneOff, Mic, Volume2, Loader2, Coins } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -12,7 +13,6 @@ interface ElevenLabsVoiceChatProps {
   agentId?: string;
 }
 
-type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
 type SpeakingStatus = 'idle' | 'user-speaking' | 'assistant-speaking';
 
 const POINTS_PER_MINUTE = 8;
@@ -26,7 +26,6 @@ export const ElevenLabsVoiceChat = ({
   agentId
 }: ElevenLabsVoiceChatProps) => {
   const { toast } = useToast();
-  const [status, setStatus] = useState<ConnectionStatus>('idle');
   const [speakingStatus, setSpeakingStatus] = useState<SpeakingStatus>('idle');
   const [transcript, setTranscript] = useState('');
   const [userTranscript, setUserTranscript] = useState('');
@@ -34,11 +33,8 @@ export const ElevenLabsVoiceChat = ({
   const [billedMinutes, setBilledMinutes] = useState(0);
   const [remainingQuota, setRemainingQuota] = useState<number | null>(null);
   const [isCheckingQuota, setIsCheckingQuota] = useState(true);
+  const [isConnecting, setIsConnecting] = useState(false);
   
-  const wsRef = useRef<WebSocket | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
   const durationRef = useRef<NodeJS.Timeout | null>(null);
   const lastBilledMinuteRef = useRef(0);
   const userIdRef = useRef<string | null>(null);
@@ -59,6 +55,80 @@ export const ElevenLabsVoiceChat = ({
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // 处理 Client Tools 调用
+  const handleToolCall = useCallback(async (toolName: string, params: any) => {
+    console.log('Tool call received:', toolName, params);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('life-coach-tools', {
+        body: { tool: toolName, params }
+      });
+
+      if (error) {
+        console.error('Tool call error:', error);
+        return { error: error.message };
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Tool call exception:', error);
+      return { error: 'Tool execution failed' };
+    }
+  }, []);
+
+  // 使用 ElevenLabs React SDK 的 useConversation hook
+  const conversation = useConversation({
+    onConnect: () => {
+      console.log('ElevenLabs connected');
+      setIsConnecting(false);
+      
+      // 开始计时
+      durationRef.current = setInterval(() => {
+        setDuration(prev => prev + 1);
+      }, 1000);
+    },
+    onDisconnect: () => {
+      console.log('ElevenLabs disconnected');
+      if (durationRef.current) {
+        clearInterval(durationRef.current);
+        durationRef.current = null;
+      }
+    },
+    onMessage: (message: any) => {
+      console.log('ElevenLabs message:', message);
+      
+      // Handle user transcript
+      if ('user_transcript' in message) {
+        setUserTranscript(message.user_transcript || '');
+        setSpeakingStatus('idle');
+      }
+      // Handle agent response
+      if ('agent_response' in message) {
+        setTranscript(message.agent_response || '');
+      }
+    },
+    onError: (error) => {
+      console.error('ElevenLabs error:', error);
+      toast({
+        title: "连接错误",
+        description: "语音服务出现问题，请重试",
+        variant: "destructive"
+      });
+    },
+    clientTools: {
+      // 在这里定义 Client Tools，如果 Agent 配置了的话
+    }
+  });
+
+  // 监听 isSpeaking 状态
+  useEffect(() => {
+    if (conversation.isSpeaking) {
+      setSpeakingStatus('assistant-speaking');
+    } else if (conversation.status === 'connected') {
+      setSpeakingStatus('idle');
+    }
+  }, [conversation.isSpeaking, conversation.status]);
 
   // 检查余额
   const checkQuota = async (): Promise<boolean> => {
@@ -162,60 +232,21 @@ export const ElevenLabsVoiceChat = ({
     }
   };
 
-  // 处理 Client Tools 调用
-  const handleToolCall = useCallback(async (toolName: string, params: any) => {
-    console.log('Tool call received:', toolName, params);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('life-coach-tools', {
-        body: { tool: toolName, params }
-      });
-
-      if (error) {
-        console.error('Tool call error:', error);
-        return { error: error.message };
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Tool call exception:', error);
-      return { error: 'Tool execution failed' };
-    }
-  }, []);
-
-  // 播放音频
-  const playAudio = useCallback(async (audioData: ArrayBuffer) => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContext({ sampleRate: 16000 });
-    }
-
-    try {
-      const audioBuffer = await audioContextRef.current.decodeAudioData(audioData);
-      const source = audioContextRef.current.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(audioContextRef.current.destination);
-      source.start(0);
-      
-      source.onended = () => {
-        setSpeakingStatus('idle');
-      };
-    } catch (error) {
-      console.error('Audio playback error:', error);
-    }
-  }, []);
-
   // 开始通话
   const startCall = async () => {
     try {
-      setStatus('connecting');
+      setIsConnecting(true);
       
       // 预扣第一分钟
       const deducted = await deductQuota(1);
       if (!deducted) {
-        setStatus('error');
+        setIsConnecting(false);
         setTimeout(onClose, 1500);
         return;
       }
+
+      // 请求麦克风权限
+      await navigator.mediaDevices.getUserMedia({ audio: true });
 
       // 获取 ElevenLabs Signed URL
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke(
@@ -227,187 +258,34 @@ export const ElevenLabsVoiceChat = ({
         throw new Error('Failed to get conversation token');
       }
 
-      console.log('Got signed URL, connecting to ElevenLabs...');
+      console.log('Got signed URL, starting ElevenLabs session...');
 
-      // 连接 WebSocket
-      const ws = new WebSocket(tokenData.signed_url);
-      wsRef.current = ws;
-
-      ws.onopen = async () => {
-        console.log('WebSocket connected');
-        setStatus('connected');
-        
-        // 开始计时
-        durationRef.current = setInterval(() => {
-          setDuration(prev => prev + 1);
-        }, 1000);
-
-        // 获取麦克风权限并开始发送音频
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              sampleRate: 16000,
-              channelCount: 1,
-              echoCancellation: true,
-              noiseSuppression: true,
-            }
-          });
-          
-          mediaStreamRef.current = stream;
-          
-          const audioContext = new AudioContext({ sampleRate: 16000 });
-          audioContextRef.current = audioContext;
-          
-          const source = audioContext.createMediaStreamSource(stream);
-          const processor = audioContext.createScriptProcessor(4096, 1, 1);
-          processorRef.current = processor;
-          
-          processor.onaudioprocess = (e) => {
-            if (ws.readyState === WebSocket.OPEN) {
-              const inputData = e.inputBuffer.getChannelData(0);
-              const int16Data = new Int16Array(inputData.length);
-              
-              for (let i = 0; i < inputData.length; i++) {
-                const s = Math.max(-1, Math.min(1, inputData[i]));
-                int16Data[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-              }
-              
-              // 发送音频数据
-              ws.send(JSON.stringify({
-                type: 'audio',
-                audio: btoa(String.fromCharCode(...new Uint8Array(int16Data.buffer)))
-              }));
-            }
-          };
-          
-          source.connect(processor);
-          processor.connect(audioContext.destination);
-        } catch (micError) {
-          console.error('Microphone access error:', micError);
-          toast({
-            title: "麦克风权限",
-            description: "请允许麦克风访问以使用语音功能",
-            variant: "destructive"
-          });
-        }
-      };
-
-      ws.onmessage = async (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          console.log('WS message:', message.type);
-
-          switch (message.type) {
-            case 'audio':
-              setSpeakingStatus('assistant-speaking');
-              // 解码并播放音频
-              const audioBytes = Uint8Array.from(atob(message.audio), c => c.charCodeAt(0));
-              await playAudio(audioBytes.buffer);
-              break;
-
-            case 'transcript':
-              if (message.role === 'user') {
-                setUserTranscript(message.text);
-                setSpeakingStatus('user-speaking');
-              } else {
-                setTranscript(message.text);
-              }
-              break;
-
-            case 'user_transcript':
-              setUserTranscript(message.text);
-              setSpeakingStatus('idle');
-              break;
-
-            case 'agent_response':
-              setTranscript(message.text);
-              break;
-
-            case 'client_tool_call':
-              // 处理 Client Tools 调用
-              const result = await handleToolCall(message.tool_name, message.parameters);
-              
-              // 发送工具执行结果回 Agent
-              ws.send(JSON.stringify({
-                type: 'client_tool_result',
-                tool_call_id: message.tool_call_id,
-                result: JSON.stringify(result)
-              }));
-              break;
-
-            case 'interruption':
-              setSpeakingStatus('idle');
-              break;
-
-            case 'ping':
-              ws.send(JSON.stringify({ type: 'pong' }));
-              break;
-
-            case 'error':
-              console.error('ElevenLabs error:', message);
-              toast({
-                title: "连接错误",
-                description: message.message || "语音服务出现问题",
-                variant: "destructive"
-              });
-              break;
-          }
-        } catch (error) {
-          console.error('Message parse error:', error);
-        }
-      };
-
-      ws.onclose = () => {
-        console.log('WebSocket closed');
-        setStatus('disconnected');
-        cleanup();
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setStatus('error');
-        toast({
-          title: "连接失败",
-          description: "无法建立语音连接",
-          variant: "destructive"
-        });
-      };
+      // 使用 SDK 开始会话
+      await conversation.startSession({
+        signedUrl: tokenData.signed_url
+      });
 
     } catch (error) {
       console.error('Failed to start call:', error);
-      setStatus('error');
+      setIsConnecting(false);
       toast({
         title: "连接失败",
-        description: "无法建立语音连接，请检查网络",
+        description: error instanceof Error && error.message.includes('microphone') 
+          ? "请允许麦克风访问以使用语音功能"
+          : "无法建立语音连接，请检查网络",
         variant: "destructive"
       });
     }
   };
 
-  const cleanup = () => {
-    if (processorRef.current) {
-      processorRef.current.disconnect();
-      processorRef.current = null;
-    }
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop());
-      mediaStreamRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
+  // 结束通话
+  const endCall = async () => {
+    await conversation.endSession();
+    
     if (durationRef.current) {
       clearInterval(durationRef.current);
       durationRef.current = null;
     }
-  };
-
-  // 结束通话
-  const endCall = async () => {
-    wsRef.current?.close();
-    wsRef.current = null;
-    cleanup();
     
     // 记录会话
     await recordSession();
@@ -417,7 +295,7 @@ export const ElevenLabsVoiceChat = ({
 
   // 每分钟扣费逻辑
   useEffect(() => {
-    if (status !== 'connected') return;
+    if (conversation.status !== 'connected') return;
 
     const currentMinute = Math.floor(duration / 60) + 1;
     
@@ -437,7 +315,7 @@ export const ElevenLabsVoiceChat = ({
         }
       });
     }
-  }, [duration, status]);
+  }, [duration, conversation.status]);
 
   // 低余额警告
   useEffect(() => {
@@ -466,8 +344,10 @@ export const ElevenLabsVoiceChat = ({
     init();
     
     return () => {
-      wsRef.current?.close();
-      cleanup();
+      conversation.endSession();
+      if (durationRef.current) {
+        clearInterval(durationRef.current);
+      }
     };
   }, []);
 
@@ -480,13 +360,16 @@ export const ElevenLabsVoiceChat = ({
     );
   }
 
+  const isConnected = conversation.status === 'connected';
+  const isLoading = isConnecting || conversation.status === 'connecting';
+
   return (
     <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
       {/* 顶部状态栏 */}
       <div className="flex items-center justify-between p-4 pt-safe">
         <div className="text-white/70 text-sm flex items-center gap-3">
-          {status === 'connecting' && '正在连接 ElevenLabs...'}
-          {status === 'connected' && (
+          {isLoading && '正在连接 ElevenLabs...'}
+          {isConnected && (
             <>
               <span>{formatDuration(duration)}</span>
               <span className="flex items-center gap-1 text-amber-400">
@@ -495,8 +378,7 @@ export const ElevenLabsVoiceChat = ({
               </span>
             </>
           )}
-          {status === 'error' && '连接失败'}
-          {status === 'disconnected' && '已断开'}
+          {conversation.status === 'disconnected' && !isLoading && '已断开'}
         </div>
         <div className="flex items-center gap-2">
           {remainingQuota !== null && remainingQuota < POINTS_PER_MINUTE * 3 && (
@@ -530,25 +412,25 @@ export const ElevenLabsVoiceChat = ({
         
         {/* 状态文字 */}
         <div className="flex items-center gap-2 text-white/60 text-sm mb-8">
-          {status === 'connecting' && (
+          {isLoading && (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
               正在建立连接...
             </>
           )}
-          {status === 'connected' && speakingStatus === 'idle' && (
+          {isConnected && speakingStatus === 'idle' && (
             <>
               <Mic className="w-4 h-4" />
               正在聆听...
             </>
           )}
-          {status === 'connected' && speakingStatus === 'user-speaking' && (
+          {isConnected && speakingStatus === 'user-speaking' && (
             <>
               <Mic className="w-4 h-4 text-green-400 animate-pulse" />
               你正在说话...
             </>
           )}
-          {status === 'connected' && speakingStatus === 'assistant-speaking' && (
+          {isConnected && speakingStatus === 'assistant-speaking' && (
             <>
               <Volume2 className="w-4 h-4 text-rose-400 animate-pulse" />
               劲老师正在回复...
