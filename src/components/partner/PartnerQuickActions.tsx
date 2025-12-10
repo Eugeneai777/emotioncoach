@@ -19,8 +19,8 @@ export function PartnerQuickActions({ onTabChange }: PartnerQuickActionsProps) {
     },
     {
       icon: QrCode,
-      label: "推广设置",
-      description: "入口配置",
+      label: "推广链接",
+      description: "复制/下载",
       gradient: "from-teal-400 to-cyan-500",
       bgGradient: "from-teal-50 to-cyan-50",
       onClick: () => onTabChange?.('promote')
