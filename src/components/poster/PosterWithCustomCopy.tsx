@@ -65,6 +65,19 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
       : templateGradients[copy.recommended_template] || templateGradients.emotion_coach;
     const emoji = templateEmojis[copy.recommended_template] || '✨';
 
+    // Check if there are any trust elements
+    const hasTrustElements = copy.trust_elements && (
+      copy.trust_elements.data_point || 
+      copy.trust_elements.authority_badge || 
+      copy.trust_elements.user_proof || 
+      copy.trust_elements.certification
+    );
+
+    // Get active trust elements for display
+    const activeTrustElements = copy.trust_elements 
+      ? Object.entries(copy.trust_elements).filter(([_, value]) => value).slice(0, 2)
+      : [];
+
     return (
       <div
         ref={ref}
@@ -112,11 +125,11 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
           }}
         >
           {/* Top Section - Emoji & Headline */}
-          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <div style={{ fontSize: '40px', marginBottom: '12px' }}>{emoji}</div>
+          <div style={{ textAlign: 'center', marginBottom: '12px' }}>
+            <div style={{ fontSize: '36px', marginBottom: '10px' }}>{emoji}</div>
             <h1
               style={{
-                fontSize: '22px',
+                fontSize: '20px',
                 fontWeight: 'bold',
                 color: 'white',
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
@@ -128,15 +141,52 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             </h1>
             <p
               style={{
-                fontSize: '14px',
+                fontSize: '13px',
                 color: 'rgba(255,255,255,0.9)',
-                marginTop: '8px',
+                marginTop: '6px',
                 textShadow: '0 1px 2px rgba(0,0,0,0.2)',
               }}
             >
               {copy.subtitle}
             </p>
           </div>
+
+          {/* Trust Elements Badge - Compact display at top */}
+          {hasTrustElements && activeTrustElements.length > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '8px',
+                marginBottom: '12px',
+                flexWrap: 'wrap',
+              }}
+            >
+              {activeTrustElements.map(([key, value]) => (
+                <span
+                  key={key}
+                  style={{
+                    background: 'rgba(255,255,255,0.2)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '20px',
+                    padding: '4px 10px',
+                    fontSize: '10px',
+                    color: 'white',
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  {key === 'data_point' && '📊'}
+                  {key === 'authority_badge' && '🏛️'}
+                  {key === 'user_proof' && '👥'}
+                  {key === 'certification' && '✅'}
+                  {value}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Middle Section - Selling Points */}
           <div
@@ -145,7 +195,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
-              gap: '10px',
+              gap: '8px',
             }}
           >
             {copy.selling_points.map((point, i) => (
@@ -161,10 +211,10 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
                   gap: '8px',
                 }}
               >
-                <span style={{ fontSize: '16px' }}>✨</span>
+                <span style={{ fontSize: '14px' }}>✨</span>
                 <span
                   style={{
-                    fontSize: '13px',
+                    fontSize: '12px',
                     color: 'white',
                     fontWeight: 500,
                   }}
@@ -180,14 +230,14 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             <div
               style={{
                 textAlign: 'center',
-                marginBottom: '12px',
+                marginBottom: '10px',
               }}
             >
               <span
                 style={{
                   background: 'rgba(239, 68, 68, 0.9)',
                   color: 'white',
-                  fontSize: '12px',
+                  fontSize: '11px',
                   fontWeight: 'bold',
                   padding: '4px 12px',
                   borderRadius: '20px',
@@ -214,8 +264,8 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
                 src={qrCodeUrl}
                 alt="QR Code"
                 style={{
-                  width: '70px',
-                  height: '70px',
+                  width: '65px',
+                  height: '65px',
                   borderRadius: '8px',
                 }}
               />
@@ -223,7 +273,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             <div style={{ flex: 1 }}>
               <p
                 style={{
-                  fontSize: '13px',
+                  fontSize: '12px',
                   fontWeight: 'bold',
                   color: '#1a1a1a',
                   margin: '0 0 4px 0',
@@ -233,7 +283,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
               </p>
               <p
                 style={{
-                  fontSize: '11px',
+                  fontSize: '10px',
                   color: '#666',
                   margin: 0,
                 }}
@@ -247,12 +297,12 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
           <div
             style={{
               textAlign: 'center',
-              marginTop: '10px',
+              marginTop: '8px',
             }}
           >
             <span
               style={{
-                fontSize: '10px',
+                fontSize: '9px',
                 color: 'rgba(255,255,255,0.7)',
               }}
             >
