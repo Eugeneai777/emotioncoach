@@ -142,20 +142,17 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
         <TabsList className="grid w-full grid-cols-3 h-12 bg-white/80 backdrop-blur-sm">
           <ResponsiveTabsTrigger 
             value="promote" 
-            label="推广" 
-            shortLabel="推广" 
+            label="推广"
             icon={<Palette className="w-4 h-4" />} 
           />
           <ResponsiveTabsTrigger 
             value="students" 
-            label="学员" 
-            shortLabel="学员" 
+            label="学员"
             icon={<Users className="w-4 h-4" />}
           />
           <ResponsiveTabsTrigger 
             value="earnings" 
-            label="收益" 
-            shortLabel="收益" 
+            label="收益"
             icon={<Wallet className="w-4 h-4" />}
           />
         </TabsList>
