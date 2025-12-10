@@ -70,7 +70,6 @@ export const CoachStepsCard = ({
                     <h4 className="font-medium text-foreground text-sm truncate">
                       {step.name}
                     </h4>
-                    <p className="text-xs text-muted-foreground truncate">{step.subtitle}</p>
                   </div>
                   <ChevronDown className={`w-3 h-3 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${expandedStep === step.id ? 'rotate-180' : ''}`} />
                 </div>
