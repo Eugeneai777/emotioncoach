@@ -221,3 +221,9 @@ verify_jwt = false
 
 [functions.get-wechat-bind-url]
 verify_jwt = true
+
+[functions.elevenlabs-conversation-token]
+verify_jwt = true
+
+[functions.life-coach-tools]
+verify_jwt = true
