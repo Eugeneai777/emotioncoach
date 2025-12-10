@@ -58,7 +58,8 @@ serve(async (req) => {
 
     // 构建微信 OAuth 授权链接
     const encodedRedirectUri = encodeURIComponent(redirectUri);
-    const state = user.id; // 使用用户ID作为state，便于回调时识别用户
+    // 使用 bind_用户ID 作为state，便于回调时识别绑定流程和用户
+    const state = `bind_${user.id}`;
     const authUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=snsapi_userinfo&state=${state}#wechat_redirect`;
 
     console.log('Generated WeChat bind URL for user:', user.id);

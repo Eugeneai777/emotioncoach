@@ -21,6 +21,9 @@ export default function WeChatOAuthCallback() {
         return;
       }
 
+      // 判断是否是绑定流程（state 格式：bind_用户ID）
+      const isBind = state.startsWith('bind_');
+
       try {
         // 调用 Edge Function 处理 OAuth
         const { data, error: invokeError } = await supabase.functions.invoke('wechat-oauth-process', {
@@ -31,8 +34,8 @@ export default function WeChatOAuthCallback() {
           throw new Error(invokeError.message);
         }
 
-        // 处理绑定成功的情况（从设置页面来的绑定流程）
-        if (data?.success && state === 'bind') {
+        // 处理绑定成功的情况
+        if (isBind && (data?.success || data?.bindSuccess)) {
           toast.success("微信账号绑定成功！");
           navigate("/settings?tab=notifications");
           return;
