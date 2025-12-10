@@ -46,30 +46,26 @@ serve(async (req) => {
       throw new Error('System WeChat configuration not found. Please configure WECHAT_APP_ID and WECHAT_APP_SECRET in Supabase Secrets.');
     }
 
-    // 获取用户的代理配置（可选）
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('wechat_proxy_enabled, wechat_proxy_url, wechat_proxy_auth_token')
-      .eq('id', user.id)
-      .single();
+    // 优先使用系统级代理配置 (Supabase Secrets)
+    const systemProxyUrl = Deno.env.get('WECHAT_PROXY_URL');
+    const systemProxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
 
     const tokenUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
     
     let response;
     let data;
 
-    // Check if proxy is enabled (from user profile or system config)
-    if (profile?.wechat_proxy_enabled && profile?.wechat_proxy_url) {
-      console.log('Using proxy server for WeChat API call');
+    // 如果配置了系统级代理，则通过代理调用
+    if (systemProxyUrl) {
+      console.log('Using system proxy server for WeChat API call:', systemProxyUrl);
       
-      // Call through proxy
-      const proxyUrl = `${profile.wechat_proxy_url}/wechat-proxy`;
+      const proxyUrl = `${systemProxyUrl}/wechat-proxy`;
       const proxyHeaders: Record<string, string> = {
         'Content-Type': 'application/json',
       };
       
-      if (profile.wechat_proxy_auth_token) {
-        proxyHeaders['Authorization'] = `Bearer ${profile.wechat_proxy_auth_token}`;
+      if (systemProxyToken) {
+        proxyHeaders['Authorization'] = `Bearer ${systemProxyToken}`;
       }
       
       response = await fetch(proxyUrl, {
@@ -82,9 +78,14 @@ serve(async (req) => {
       });
       
       data = await response.json();
+      
+      // 检查代理返回的数据结构
+      if (data.data) {
+        data = data.data; // 代理服务器可能包装了响应
+      }
     } else {
-      // Direct call to WeChat API
-      console.log('Direct call to WeChat API');
+      // 直接调用微信 API
+      console.log('Direct call to WeChat API (no proxy configured)');
       response = await fetch(tokenUrl);
       data = await response.json();
     }

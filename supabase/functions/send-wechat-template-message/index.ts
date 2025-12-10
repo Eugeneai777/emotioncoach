@@ -88,15 +88,51 @@ serve(async (req) => {
     // 获取 access_token（使用系统级配置）
     const appId = Deno.env.get('WECHAT_APP_ID');
     const appSecret = Deno.env.get('WECHAT_APP_SECRET');
+    const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
+    const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
     
     if (!appId || !appSecret) {
       throw new Error('WeChat AppID or AppSecret not configured');
     }
 
-    // 直接获取access_token
+    // 获取access_token的辅助函数
+    const fetchWechatApi = async (url: string, options?: { method?: string; body?: string }) => {
+      if (proxyUrl) {
+        console.log('Using proxy server for WeChat API call');
+        const proxyHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (proxyToken) {
+          proxyHeaders['Authorization'] = `Bearer ${proxyToken}`;
+        }
+        
+        const proxyResponse = await fetch(`${proxyUrl}/wechat-proxy`, {
+          method: 'POST',
+          headers: proxyHeaders,
+          body: JSON.stringify({
+            target_url: url,
+            method: options?.method || 'GET',
+            headers: options?.body ? { 'Content-Type': 'application/json' } : undefined,
+            body: options?.body ? JSON.parse(options.body) : undefined,
+          }),
+        });
+        
+        const proxyData = await proxyResponse.json();
+        return proxyData.data || proxyData;
+      } else {
+        console.log('Direct call to WeChat API');
+        const response = await fetch(url, {
+          method: options?.method || 'GET',
+          headers: options?.body ? { 'Content-Type': 'application/json' } : undefined,
+          body: options?.body,
+        });
+        return response.json();
+      }
+    };
+
+    // 获取access_token
     const tokenUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
-    const tokenResponse = await fetch(tokenUrl);
-    const tokenData = await tokenResponse.json();
+    const tokenData = await fetchWechatApi(tokenUrl);
 
     if (tokenData.errcode) {
       throw new Error(`Failed to get access token: ${tokenData.errmsg}`);
@@ -184,13 +220,12 @@ serve(async (req) => {
 
     console.log('Sending template message:', JSON.stringify(messageBody, null, 2));
 
-    const sendResponse = await fetch(sendUrl, {
+    const result = await fetchWechatApi(sendUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(messageBody),
     });
 
-    const result = await sendResponse.json();
+    
 
     if (result.errcode !== 0) {
       console.error('WeChat API error:', result);
