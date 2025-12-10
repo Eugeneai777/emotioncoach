@@ -247,6 +247,35 @@ serve(async (req) => {
       );
     }
 
+    // 发送登录成功通知（异步，不阻塞登录流程）
+    try {
+      const now = new Date();
+      const loginTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      
+      supabaseClient.functions.invoke('send-wechat-template-message', {
+        body: {
+          userId: finalUserId,
+          scenario: 'login_success',
+          notification: {
+            id: crypto.randomUUID(),
+            title: '登录成功',
+            message: `您已于 ${loginTime} 成功登录有劲365`
+          }
+        }
+      }).then(result => {
+        if (result.error) {
+          console.log('Login notification send failed:', result.error);
+        } else {
+          console.log('Login notification sent:', result.data);
+        }
+      }).catch(err => {
+        console.log('Login notification error:', err);
+      });
+    } catch (notifyError) {
+      console.log('Failed to send login notification:', notifyError);
+      // 不阻止登录流程
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
