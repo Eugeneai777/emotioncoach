@@ -168,7 +168,7 @@ serve(async (req) => {
     const isCheckinScenario = ['checkin_success', 'checkin_streak_milestone', 'checkin_reminder', 'checkin_streak_break_warning'].includes(scenario);
     
     if (scenario === 'login_success') {
-      // 登录成功模板结构（用户名、账号、时间）
+      // 登录成功模板结构：thing3(用户名)、character_string1(账号)、time2(登录时间)
       // 格式化当前时间
       const now = new Date();
       const loginTime = now.toLocaleString('zh-CN', { 
@@ -182,7 +182,7 @@ serve(async (req) => {
       });
       
       messageData = {
-        thing1: { 
+        thing3: { 
           value: (displayName || '用户').slice(0, 20),
           color: "#173177" 
         },
