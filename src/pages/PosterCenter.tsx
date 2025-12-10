@@ -12,6 +12,7 @@ import { PosterWithCustomCopy } from '@/components/poster/PosterWithCustomCopy';
 import { PosterLayoutSelector, type PosterLayout } from '@/components/poster/PosterLayoutSelector';
 import { BackgroundSourceSelector } from '@/components/poster/BackgroundSourceSelector';
 import { UnsplashImagePicker } from '@/components/poster/UnsplashImagePicker';
+import { PosterSizeSelector, POSTER_SIZES, type PosterSize } from '@/components/poster/PosterSizeSelector';
 import { type PosterScheme } from '@/components/poster/SchemePreview';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
@@ -40,6 +41,7 @@ export default function PosterCenter() {
   const [isCopied, setIsCopied] = useState(false);
   const [savedPosterId, setSavedPosterId] = useState<string | null>(null);
   const [isGeneratingAiBackground, setIsGeneratingAiBackground] = useState(false);
+  const [selectedPosterSize, setSelectedPosterSize] = useState<PosterSize>(POSTER_SIZES[0]);
   const posterRef = useRef<HTMLDivElement>(null);
 
   // Auth check
@@ -158,15 +160,30 @@ export default function PosterCenter() {
     toast.loading('正在生成海报...');
 
     try {
-      const canvas = await html2canvas(posterRef.current, {
-        scale: 2,
+      const posterElement = posterRef.current;
+      const originalStyle = posterElement.style.cssText;
+      
+      // Temporarily move element to visible position for capture
+      posterElement.style.cssText = 'position: fixed; top: 0; left: 0; z-index: 9999; opacity: 1; pointer-events: none; transform: none;';
+      
+      // Wait for render
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const canvas = await html2canvas(posterElement, {
+        scale: 3,
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
+        logging: false,
+        width: selectedPosterSize.width,
+        height: selectedPosterSize.height,
       });
 
+      // Restore original styles
+      posterElement.style.cssText = originalStyle;
+
       const link = document.createElement('a');
-      link.download = `promotion-poster-${Date.now()}.png`;
+      link.download = `promotion-poster-${selectedPosterSize.key}-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
 
@@ -228,6 +245,7 @@ export default function PosterCenter() {
     setSelectedLayout('default');
     setBackgroundSource('solid');
     setBackgroundImageUrl(null);
+    setSelectedPosterSize(POSTER_SIZES[0]);
   };
 
   // Get current template object
@@ -439,6 +457,16 @@ export default function PosterCenter() {
           </div>
         </div>
 
+        {/* Size Selector */}
+        <div className="max-w-lg mx-auto px-4 pt-4">
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border">
+            <PosterSizeSelector
+              selectedSize={selectedPosterSize.key}
+              onSizeSelect={setSelectedPosterSize}
+            />
+          </div>
+        </div>
+
         {/* Poster Preview */}
         <div className="flex flex-col items-center px-4 py-6">
           <div className="mb-6">
@@ -450,6 +478,8 @@ export default function PosterCenter() {
               backgroundImageUrl={backgroundImageUrl || undefined}
               posterId={savedPosterId || undefined}
               layout={selectedLayout}
+              width={selectedPosterSize.width}
+              height={selectedPosterSize.height}
             />
           </div>
 

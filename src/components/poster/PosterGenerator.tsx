@@ -112,16 +112,18 @@ export function PosterGenerator({
       // Temporarily make the poster visible for capture
       const posterElement = posterRef.current;
       const originalStyle = posterElement.style.cssText;
-      posterElement.style.cssText = 'position: fixed; top: 0; left: 0; z-index: 9999; opacity: 1; pointer-events: none;';
+      posterElement.style.cssText = 'position: fixed; top: 0; left: 0; z-index: 9999; opacity: 1; pointer-events: none; transform: none;';
       
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       const canvas = await html2canvas(posterElement, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
-        logging: false
+        logging: false,
+        width: 300,
+        height: 533,
       });
 
       // Restore original style

@@ -10,6 +10,8 @@ interface PosterWithCustomCopyProps {
   backgroundImageUrl?: string;
   posterId?: string;
   layout?: PosterLayout;
+  width?: number;
+  height?: number;
 }
 
 const PRODUCTION_DOMAIN = 'https://eugeneai.me';
@@ -54,7 +56,7 @@ const templateNames: Record<string, string> = {
 };
 
 export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomCopyProps>(
-  ({ copy, partnerId, entryType, backgroundImageUrl, posterId, layout = 'default' }, ref) => {
+  ({ copy, partnerId, entryType, backgroundImageUrl, posterId, layout = 'default', width = 300, height = 533 }, ref) => {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
     useEffect(() => {
@@ -90,10 +92,13 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
       ? Object.entries(copy.trust_elements).filter(([_, value]) => value).slice(0, 2)
       : [];
 
+    // Dynamic scale factor for font sizes based on dimensions
+    const scaleFactor = Math.min(width / 300, height / 533);
+    
     // Common styles
     const containerStyle: React.CSSProperties = {
-      width: '300px',
-      height: '533px',
+      width: `${width}px`,
+      height: `${height}px`,
       position: 'relative',
       overflow: 'hidden',
       borderRadius: '16px',
