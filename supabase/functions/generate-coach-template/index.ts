@@ -7,20 +7,47 @@ serve(async (req) => {
   }
 
   try {
-    const { topic, targetAudience, methodology, interactionStyle } = await req.json();
+    const { topic, targetAudience, methodology, interactionStyle, directPrompt } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // 默认值处理
+    const defaultAudience = "所有需要情绪支持和心理疏导的人";
+    const defaultStyle = `温柔、缓慢、有节奏的对话风格，如同一杯温热的茶。
+使用第一人称视角（劲老师风格），以"劲老师"作为教练人设。
+核心原则：共情式教练提问而非心理学解释、接纳而非修复、有连结而非评判。
+避免命令式语气，每次回应简洁有力，不超过100字。
+多用开放式问题引导用户自我觉察和思考。`;
+
+    let userPrompt;
+    
+    if (directPrompt) {
+      // 自由 Prompt 模式
+      userPrompt = `用户自由描述的需求：
+${directPrompt}
+
+**重要说明：**
+- 如果用户没有明确指定目标人群，请默认设置为：${defaultAudience}
+- 如果用户没有明确指定对话风格/人设，请使用以下劲老师风格：
+${defaultStyle}`;
+    } else {
+      // 结构化模式（使用默认值填充空白字段）
+      const finalAudience = targetAudience?.trim() || defaultAudience;
+      const finalStyle = interactionStyle?.trim() || defaultStyle;
+      
+      userPrompt = `- 教练主题：${topic}
+- 目标人群：${finalAudience}
+- 核心方法：${methodology}
+- 交互风格：${finalStyle}`;
+    }
+
     const prompt = `你是一位专业的心理教练体系设计专家。请基于以下信息，生成一个完整的教练模板配置：
 
 **用户需求：**
-- 教练主题：${topic}
-- 目标人群：${targetAudience}
-- 核心方法：${methodology}
-- 交互风格：${interactionStyle}
+${userPrompt}
 
 **请生成以下内容（必须返回有效的JSON格式）：**
 
@@ -47,7 +74,7 @@ serve(async (req) => {
 
 4. **System Prompt：**
    - system_prompt: 详细的AI教练系统提示词（300-500字），包含：
-     * 角色定位
+     * 角色定位（使用劲老师第一人称）
      * 核心方法论
      * 四步曲详细说明
      * 交互风格要求
