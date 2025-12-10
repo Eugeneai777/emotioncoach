@@ -51,9 +51,10 @@ export const GratitudeThemeBadge = ({
       variant="outline"
       className={`
         ${sizeClasses[size]}
-        cursor-pointer transition-all duration-200
+        cursor-pointer transition-all duration-200 ease-out
+        hover:scale-105 active:scale-95
         ${selected 
-          ? "ring-2 ring-offset-1 ring-primary shadow-md" 
+          ? "ring-2 ring-offset-1 ring-primary shadow-md scale-105" 
           : "hover:shadow-sm"
         }
       `}
@@ -64,7 +65,9 @@ export const GratitudeThemeBadge = ({
       }}
       onClick={onClick}
     >
-      <span className="mr-1">{theme.emoji}</span>
+      <span className={`mr-1 inline-block transition-transform duration-200 ${selected ? "animate-bounce" : ""}`}>
+        {theme.emoji}
+      </span>
       {showLabel && <span>{theme.name}</span>}
     </Badge>
   );
