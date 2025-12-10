@@ -13,6 +13,8 @@ export interface GeneratedCopy {
   selling_points: string[];
   call_to_action: string;
   promotion_tips?: string;
+  template_reason?: string;
+  urgency_text?: string;
 }
 
 interface CopyPreviewProps {
@@ -25,7 +27,11 @@ const templateNames: Record<string, string> = {
   emotion_coach: '情绪教练',
   parent_coach: '亲子教练',
   communication_coach: '沟通教练',
+  story_coach: '故事教练',
+  emotion_journal_21: '情绪日记训练营',
+  parent_emotion_21: '青少年困境突破营',
   training_camp: '21天训练营',
+  '365_member': '365会员',
   member_365: '365会员',
   partner_recruit: '招募合伙人',
 };
@@ -45,11 +51,22 @@ export function CopyPreview({ copy, onConfirm }: CopyPreviewProps) {
   return (
     <div className="mt-4 space-y-4">
       {/* Recommended Template Badge */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">推荐模板：</span>
-        <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-          {templateNames[copy.recommended_template] || copy.recommended_template}
-        </span>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">推荐模板：</span>
+          <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+            {templateNames[copy.recommended_template] || copy.recommended_template}
+          </span>
+        </div>
+        
+        {/* Template Reason */}
+        {copy.template_reason && (
+          <div className="bg-muted/50 rounded-lg p-2">
+            <p className="text-xs text-muted-foreground">
+              💡 {copy.template_reason}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Headlines Selection */}
@@ -128,6 +145,16 @@ export function CopyPreview({ copy, onConfirm }: CopyPreviewProps) {
           ))}
         </div>
       </div>
+
+      {/* Urgency Text */}
+      {copy.urgency_text && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">紧迫感：</span>
+          <span className="text-xs font-medium text-red-500">
+            🔥 {copy.urgency_text}
+          </span>
+        </div>
+      )}
 
       {/* Promotion Tips */}
       {copy.promotion_tips && (

@@ -4,35 +4,26 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { CopyPreview, type GeneratedCopy } from './CopyPreview';
+import { SchemePreview, type GeneratedSchemes, type PosterScheme } from './SchemePreview';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
 
+interface QuickOption {
+  emoji: string;
+  label: string;
+  value: string;
+}
+
 interface PosterExpertChatProps {
   partnerId: string;
   entryType: 'free' | 'paid';
-  onCopyConfirmed: (copy: GeneratedCopy) => void;
+  onSchemeConfirmed: (scheme: PosterScheme & { target_audience: string; promotion_scene: string }) => void;
 }
 
-const quickOptions = {
-  audience: [
-    { label: '👩 职场女性', value: '职场女性，25-40岁，工作压力大，追求事业与生活平衡' },
-    { label: '👨‍👩‍👧 年轻家长', value: '年轻家长，有3-15岁孩子，关心孩子成长和亲子关系' },
-    { label: '🧑‍🎓 大学生', value: '大学生或刚毕业的年轻人，面临学业压力和就业焦虑' },
-    { label: '👴 中年人群', value: '40-55岁中年人，面临人生转型、家庭和事业双重压力' },
-  ],
-  scene: [
-    { label: '📱 朋友圈', value: '微信朋友圈' },
-    { label: '👥 微信群', value: '微信群分享' },
-    { label: '📕 小红书', value: '小红书发帖' },
-    { label: '💬 一对一', value: '一对一私聊推荐' },
-  ],
-};
-
-export function PosterExpertChat({ partnerId, entryType, onCopyConfirmed }: PosterExpertChatProps) {
+export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: PosterExpertChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -41,31 +32,33 @@ export function PosterExpertChat({ partnerId, entryType, onCopyConfirmed }: Post
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedCopy, setGeneratedCopy] = useState<GeneratedCopy | null>(null);
-  const [currentStep, setCurrentStep] = useState<'audience' | 'scene' | 'chat'>('audience');
+  const [quickOptions, setQuickOptions] = useState<QuickOption[]>([]);
+  const [generatedSchemes, setGeneratedSchemes] = useState<GeneratedSchemes | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, generatedSchemes]);
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = async (content: string, isRegenerate = false) => {
     if (!content.trim() || isLoading) return;
 
     const userMessage: Message = { role: 'user', content };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    let newMessages = [...messages];
+    
+    if (!isRegenerate) {
+      newMessages = [...messages, userMessage];
+      setMessages(newMessages);
+    } else {
+      // For regeneration, add a hidden message to trigger new schemes
+      newMessages = [...messages, { role: 'user', content: '请重新生成2个不同的方案' }];
+    }
+    
     setInput('');
     setIsLoading(true);
-
-    // Update step based on conversation progress
-    if (currentStep === 'audience') {
-      setCurrentStep('scene');
-    } else if (currentStep === 'scene') {
-      setCurrentStep('chat');
-    }
+    setQuickOptions([]);
 
     try {
       const response = await fetch(
@@ -91,7 +84,7 @@ export function PosterExpertChat({ partnerId, entryType, onCopyConfirmed }: Post
 
       const decoder = new TextDecoder();
       let assistantContent = '';
-      let toolCallData: any = null;
+      let toolCallsData: Record<string, { name: string; arguments: string }> = {};
 
       while (true) {
         const { done, value } = await reader.read();
@@ -111,19 +104,23 @@ export function PosterExpertChat({ partnerId, entryType, onCopyConfirmed }: Post
             
             if (delta?.content) {
               assistantContent += delta.content;
-              setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
+              if (!isRegenerate) {
+                setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
+              }
             }
             
             // Handle tool calls
             if (delta?.tool_calls) {
               for (const toolCall of delta.tool_calls) {
-                if (toolCall.function?.name === 'generate_poster_copy') {
-                  if (!toolCallData) {
-                    toolCallData = { arguments: '' };
-                  }
-                  if (toolCall.function.arguments) {
-                    toolCallData.arguments += toolCall.function.arguments;
-                  }
+                const index = toolCall.index ?? 0;
+                if (!toolCallsData[index]) {
+                  toolCallsData[index] = { name: '', arguments: '' };
+                }
+                if (toolCall.function?.name) {
+                  toolCallsData[index].name = toolCall.function.name;
+                }
+                if (toolCall.function?.arguments) {
+                  toolCallsData[index].arguments += toolCall.function.arguments;
                 }
               }
             }
@@ -133,26 +130,43 @@ export function PosterExpertChat({ partnerId, entryType, onCopyConfirmed }: Post
         }
       }
 
-      // Process tool call result
-      if (toolCallData?.arguments) {
-        try {
-          const copyData = JSON.parse(toolCallData.arguments);
-          console.log('Generated copy:', copyData);
-          setGeneratedCopy(copyData);
-          
-          // Add confirmation message
-          if (!assistantContent) {
-            assistantContent = '🎉 太棒了！我根据你的需求生成了定制文案，请查看下方预览并选择你喜欢的版本！';
-            setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
+      // Process tool call results
+      for (const key in toolCallsData) {
+        const toolCall = toolCallsData[key];
+        
+        if (toolCall.name === 'provide_quick_options' && toolCall.arguments) {
+          try {
+            const optionsData = JSON.parse(toolCall.arguments);
+            if (optionsData.options) {
+              setQuickOptions(optionsData.options);
+            }
+          } catch (e) {
+            console.error('Failed to parse quick options:', e);
           }
-        } catch (e) {
-          console.error('Failed to parse tool call:', e);
+        }
+        
+        if (toolCall.name === 'generate_poster_schemes' && toolCall.arguments) {
+          try {
+            const schemesData = JSON.parse(toolCall.arguments) as GeneratedSchemes;
+            console.log('Generated schemes:', schemesData);
+            setGeneratedSchemes(schemesData);
+            
+            // Add confirmation message
+            if (!assistantContent) {
+              assistantContent = '🎉 根据你的需求，我为你生成了2个差异化的推广方案！\n\n请选择最适合你的方案，然后我们就可以开始设计海报了！';
+              if (!isRegenerate) {
+                setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
+              }
+            }
+          } catch (e) {
+            console.error('Failed to parse schemes:', e);
+          }
         }
       }
 
     } catch (error) {
       console.error('Chat error:', error);
-      setMessages([...newMessages, { 
+      setMessages([...messages, { 
         role: 'assistant', 
         content: '抱歉，出了点问题，请重试一下 🙏' 
       }]);
@@ -165,48 +179,19 @@ export function PosterExpertChat({ partnerId, entryType, onCopyConfirmed }: Post
     sendMessage(value);
   };
 
-  const renderQuickOptions = () => {
-    if (generatedCopy) return null;
-    
-    if (currentStep === 'audience') {
-      return (
-        <div className="grid grid-cols-2 gap-2 mt-3">
-          {quickOptions.audience.map((opt) => (
-            <Button
-              key={opt.value}
-              variant="outline"
-              size="sm"
-              className="justify-start h-auto py-2 px-3 text-left"
-              onClick={() => handleQuickOption(opt.value)}
-              disabled={isLoading}
-            >
-              {opt.label}
-            </Button>
-          ))}
-        </div>
-      );
+  const handleSchemeSelect = (scheme: PosterScheme) => {
+    if (generatedSchemes) {
+      onSchemeConfirmed({
+        ...scheme,
+        target_audience: generatedSchemes.target_audience,
+        promotion_scene: generatedSchemes.promotion_scene,
+      });
     }
+  };
 
-    if (currentStep === 'scene') {
-      return (
-        <div className="grid grid-cols-2 gap-2 mt-3">
-          {quickOptions.scene.map((opt) => (
-            <Button
-              key={opt.value}
-              variant="outline"
-              size="sm"
-              className="justify-start h-auto py-2 px-3 text-left"
-              onClick={() => handleQuickOption(opt.value)}
-              disabled={isLoading}
-            >
-              {opt.label}
-            </Button>
-          ))}
-        </div>
-      );
-    }
-
-    return null;
+  const handleRegenerate = () => {
+    setGeneratedSchemes(null);
+    sendMessage('请基于相同的用户画像和场景，重新生成2个完全不同风格的方案', true);
   };
 
   return (
@@ -256,19 +241,36 @@ export function PosterExpertChat({ partnerId, entryType, onCopyConfirmed }: Post
         </div>
 
         {/* Quick Options */}
-        {!isLoading && renderQuickOptions()}
+        {!isLoading && quickOptions.length > 0 && !generatedSchemes && (
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            {quickOptions.map((opt, i) => (
+              <Button
+                key={i}
+                variant="outline"
+                size="sm"
+                className="justify-start h-auto py-2 px-3 text-left"
+                onClick={() => handleQuickOption(opt.value)}
+                disabled={isLoading}
+              >
+                {opt.emoji} {opt.label}
+              </Button>
+            ))}
+          </div>
+        )}
       </ScrollArea>
 
-      {/* Generated Copy Preview */}
-      {generatedCopy && (
-        <CopyPreview
-          copy={generatedCopy}
-          onConfirm={onCopyConfirmed}
+      {/* Generated Schemes Preview */}
+      {generatedSchemes && (
+        <SchemePreview
+          data={generatedSchemes}
+          onSelectScheme={handleSchemeSelect}
+          onRegenerate={handleRegenerate}
+          isRegenerating={isLoading}
         />
       )}
 
       {/* Input */}
-      {!generatedCopy && (
+      {!generatedSchemes && (
         <div className="flex gap-2 pt-3 border-t">
           <Input
             value={input}
