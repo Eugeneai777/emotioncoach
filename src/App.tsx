@@ -57,6 +57,7 @@ import PanicVoiceSettings from "./pages/PanicVoiceSettings";
 import VoiceCloneSetup from "./pages/VoiceCloneSetup";
 import EmotionButtonIntro from "./pages/EmotionButtonIntro";
 import GratitudeJournalIntro from "./pages/GratitudeJournalIntro";
+import GratitudeHistory from "./pages/GratitudeHistory";
 import ApiDocs from "./pages/ApiDocs";
 import PosterCenter from "./pages/PosterCenter";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
@@ -124,6 +125,7 @@ const App = () => (
           <Route path="/voice-clone-setup" element={<VoiceCloneSetup />} />
           <Route path="/emotion-button-intro" element={<EmotionButtonIntro />} />
           <Route path="/gratitude-journal-intro" element={<GratitudeJournalIntro />} />
+          <Route path="/gratitude-history" element={<GratitudeHistory />} />
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="/poster-center" element={<PosterCenter />} />
           <Route path="/coach/:coachKey" element={<DynamicCoach />} />
