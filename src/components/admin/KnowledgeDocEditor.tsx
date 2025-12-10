@@ -24,6 +24,8 @@ interface KnowledgeItem {
   doc_type: string;
   coach_key: string | null;
   camp_type: string | null;
+  package_key: string | null;
+  partner_level: string | null;
   keywords: string[];
   is_active: boolean;
   display_order?: number;
@@ -38,6 +40,8 @@ interface KnowledgeDocEditorProps {
   coachKey: string | null;
   coachName: string;
   campType: string | null;
+  packageKey?: string | null;
+  partnerLevel?: string | null;
   onSaved: () => void;
 }
 
@@ -50,6 +54,8 @@ const KnowledgeDocEditor = ({
   coachKey,
   coachName,
   campType,
+  packageKey,
+  partnerLevel,
   onSaved,
 }: KnowledgeDocEditorProps) => {
   const [title, setTitle] = useState("");
@@ -101,9 +107,11 @@ const KnowledgeDocEditor = ({
         doc_type: docType,
         coach_key: coachKey,
         camp_type: campType,
+        package_key: packageKey || null,
+        partner_level: partnerLevel || null,
         is_active: isActive,
         display_order: displayOrder,
-        category: campType ? "camp" : coachKey ? "coach" : "general",
+        category: packageKey ? "package" : partnerLevel ? "partner" : campType ? "camp" : coachKey ? "coach" : "general",
       };
 
       if (isEditing && item) {

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Search, Database, BookOpen, Users, Tent } from "lucide-react";
+import { RefreshCw, Search, Database, BookOpen, Users, Tent, Package, Star } from "lucide-react";
 import { toast } from "sonner";
 import KnowledgeBaseMatrix from "./KnowledgeBaseMatrix";
 import KnowledgeDocEditor from "./KnowledgeDocEditor";
@@ -24,6 +24,8 @@ interface KnowledgeItem {
   doc_type: string;
   coach_key: string | null;
   camp_type: string | null;
+  package_key: string | null;
+  partner_level: string | null;
   keywords: string[];
   is_active: boolean;
   display_order?: number;
@@ -45,6 +47,18 @@ interface CampTemplate {
   icon: string;
 }
 
+interface PackageTemplate {
+  id: string;
+  package_key: string;
+  package_name: string;
+}
+
+interface PartnerLevel {
+  id: string;
+  level_name: string;
+  partner_type: string;
+}
+
 // Document types configuration
 const DOC_TYPES = [
   { type: "intro", label: "产品介绍", description: "产品定位、核心功能、价值主张" },
@@ -53,6 +67,7 @@ const DOC_TYPES = [
   { type: "faq", label: "常见问题", description: "FAQ、用户疑问解答" },
   { type: "scenarios", label: "适用场景", description: "使用场景、案例说明" },
   { type: "audience", label: "适用人群", description: "目标用户、适用条件" },
+  { type: "benefits", label: "权益说明", description: "套餐权益、合伙人权益详情" },
   { type: "usage_guide", label: "使用指南", description: "操作步骤、使用方法" },
   { type: "general", label: "通用知识", description: "其他通用内容" },
 ];
@@ -61,6 +76,8 @@ export default function KnowledgeBaseManagement() {
   const [items, setItems] = useState<KnowledgeItem[]>([]);
   const [coaches, setCoaches] = useState<CoachTemplate[]>([]);
   const [camps, setCamps] = useState<CampTemplate[]>([]);
+  const [packages, setPackages] = useState<PackageTemplate[]>([]);
+  const [partnerLevels, setPartnerLevels] = useState<PartnerLevel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -72,6 +89,8 @@ export default function KnowledgeBaseManagement() {
   const [editorCoachKey, setEditorCoachKey] = useState<string | null>(null);
   const [editorCoachName, setEditorCoachName] = useState("");
   const [editorCampType, setEditorCampType] = useState<string | null>(null);
+  const [editorPackageKey, setEditorPackageKey] = useState<string | null>(null);
+  const [editorPartnerLevel, setEditorPartnerLevel] = useState<string | null>(null);
   
   // View dialog state
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -108,6 +127,26 @@ export default function KnowledgeBaseManagement() {
 
       if (campsError) throw campsError;
       setCamps(campsData || []);
+
+      // Load packages
+      const { data: packagesData, error: packagesError } = await supabase
+        .from("packages")
+        .select("id, package_key, package_name")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (packagesError) throw packagesError;
+      setPackages(packagesData || []);
+
+      // Load partner levels
+      const { data: levelsData, error: levelsError } = await supabase
+        .from("partner_level_rules")
+        .select("id, level_name, partner_type")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (levelsError) throw levelsError;
+      setPartnerLevels(levelsData || []);
     } catch (error: any) {
       console.error("Load error:", error);
       toast.error("加载失败");
@@ -122,7 +161,7 @@ export default function KnowledgeBaseManagement() {
 
   // Build columns for matrix
   const matrixColumns = useMemo(() => {
-    const columns: { key: string; name: string; emoji: string; type: "coach" | "tool" | "camp" }[] = [];
+    const columns: { key: string; name: string; emoji: string; type: "coach" | "tool" | "camp" | "package" | "partner" }[] = [];
     
     // Add emotion button as a special tool
     columns.push({
@@ -151,20 +190,42 @@ export default function KnowledgeBaseManagement() {
         type: "camp",
       });
     });
+
+    // Add packages
+    packages.forEach((pkg) => {
+      columns.push({
+        key: pkg.package_key,
+        name: pkg.package_name,
+        emoji: "📦",
+        type: "package",
+      });
+    });
+
+    // Add partner levels
+    partnerLevels.forEach((level) => {
+      columns.push({
+        key: level.level_name,
+        name: level.partner_type === 'bloom' ? '绽放合伙人' : `${level.level_name}合伙人`,
+        emoji: "⭐",
+        type: "partner",
+      });
+    });
     
     return columns;
-  }, [coaches, camps]);
+  }, [coaches, camps, packages, partnerLevels]);
 
   // Handle cell click in matrix
   const handleCellClick = (
     docType: string,
     coachKey: string | null,
     campType: string | null,
+    packageKey: string | null,
+    partnerLevel: string | null,
     existingItem?: KnowledgeItem
   ) => {
     const docTypeConfig = DOC_TYPES.find((d) => d.type === docType);
     const column = matrixColumns.find(
-      (c) => (campType && c.key === campType) || (!campType && c.key === coachKey)
+      (c) => (campType && c.key === campType) || (packageKey && c.key === packageKey) || (partnerLevel && c.key === partnerLevel) || (!campType && !packageKey && !partnerLevel && c.key === coachKey)
     );
 
     setEditingItem(existingItem);
@@ -173,6 +234,8 @@ export default function KnowledgeBaseManagement() {
     setEditorCoachKey(coachKey);
     setEditorCoachName(column?.name || "通用");
     setEditorCampType(campType);
+    setEditorPackageKey(packageKey);
+    setEditorPartnerLevel(partnerLevel);
     setEditorOpen(true);
   };
 
@@ -185,11 +248,13 @@ export default function KnowledgeBaseManagement() {
   // Statistics
   const stats = useMemo(() => {
     const total = items.length;
-    const coachCount = items.filter((i) => i.coach_key && !i.camp_type).length;
+    const coachCount = items.filter((i) => i.coach_key && !i.camp_type && !i.package_key && !i.partner_level).length;
     const campCount = items.filter((i) => i.camp_type).length;
+    const packageCount = items.filter((i) => i.package_key).length;
+    const partnerCount = items.filter((i) => i.partner_level).length;
     const activeCount = items.filter((i) => i.is_active).length;
     
-    return { total, coachCount, campCount, activeCount };
+    return { total, coachCount, campCount, packageCount, partnerCount, activeCount };
   }, [items]);
 
   // Filter items for list view
@@ -214,6 +279,14 @@ export default function KnowledgeBaseManagement() {
     if (item.camp_type) {
       const camp = camps.find((c) => c.camp_type === item.camp_type);
       return camp?.camp_name || item.camp_type;
+    }
+    if (item.package_key) {
+      const pkg = packages.find((p) => p.package_key === item.package_key);
+      return pkg?.package_name || item.package_key;
+    }
+    if (item.partner_level) {
+      const level = partnerLevels.find((l) => l.level_name === item.partner_level);
+      return level ? (level.partner_type === 'bloom' ? '绽放合伙人' : `${level.level_name}合伙人`) : item.partner_level;
     }
     if (item.coach_key) {
       if (item.coach_key === "emotion_button") return "情绪按钮";
@@ -246,14 +319,14 @@ export default function KnowledgeBaseManagement() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <Database className="w-8 h-8 text-primary" />
               <div>
                 <div className="text-2xl font-bold">{stats.total}</div>
-                <div className="text-sm text-muted-foreground">总文档数</div>
+                <div className="text-sm text-muted-foreground">总文档</div>
               </div>
             </div>
           </CardContent>
@@ -264,7 +337,7 @@ export default function KnowledgeBaseManagement() {
               <BookOpen className="w-8 h-8 text-blue-500" />
               <div>
                 <div className="text-2xl font-bold">{stats.coachCount}</div>
-                <div className="text-sm text-muted-foreground">教练文档</div>
+                <div className="text-sm text-muted-foreground">教练</div>
               </div>
             </div>
           </CardContent>
@@ -275,7 +348,29 @@ export default function KnowledgeBaseManagement() {
               <Tent className="w-8 h-8 text-purple-500" />
               <div>
                 <div className="text-2xl font-bold">{stats.campCount}</div>
-                <div className="text-sm text-muted-foreground">训练营文档</div>
+                <div className="text-sm text-muted-foreground">训练营</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Package className="w-8 h-8 text-orange-500" />
+              <div>
+                <div className="text-2xl font-bold">{stats.packageCount}</div>
+                <div className="text-sm text-muted-foreground">套餐</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Star className="w-8 h-8 text-amber-500" />
+              <div>
+                <div className="text-2xl font-bold">{stats.partnerCount}</div>
+                <div className="text-sm text-muted-foreground">合伙人</div>
               </div>
             </div>
           </CardContent>
@@ -376,6 +471,8 @@ export default function KnowledgeBaseManagement() {
                           setEditorCoachKey(item.coach_key);
                           setEditorCoachName(getColumnName(item));
                           setEditorCampType(item.camp_type);
+                          setEditorPackageKey(item.package_key);
+                          setEditorPartnerLevel(item.partner_level);
                           setEditorOpen(true);
                         }}
                       >
@@ -400,6 +497,8 @@ export default function KnowledgeBaseManagement() {
         coachKey={editorCoachKey}
         coachName={editorCoachName}
         campType={editorCampType}
+        packageKey={editorPackageKey}
+        partnerLevel={editorPartnerLevel}
         onSaved={loadData}
       />
 
@@ -459,6 +558,8 @@ export default function KnowledgeBaseManagement() {
                   setEditorCoachKey(viewingItem.coach_key);
                   setEditorCoachName(getColumnName(viewingItem));
                   setEditorCampType(viewingItem.camp_type);
+                  setEditorPackageKey(viewingItem.package_key);
+                  setEditorPartnerLevel(viewingItem.partner_level);
                   setEditorOpen(true);
                 }
               }}
