@@ -2581,56 +2581,6 @@ export type Database = {
         }
         Relationships: []
       }
-      partner_redemption_codes: {
-        Row: {
-          code: string
-          created_at: string | null
-          entry_price: number | null
-          entry_type: string | null
-          expires_at: string
-          id: string
-          partner_id: string
-          quota_amount: number | null
-          redeemed_at: string | null
-          redeemed_by: string | null
-          status: string
-        }
-        Insert: {
-          code: string
-          created_at?: string | null
-          entry_price?: number | null
-          entry_type?: string | null
-          expires_at: string
-          id?: string
-          partner_id: string
-          quota_amount?: number | null
-          redeemed_at?: string | null
-          redeemed_by?: string | null
-          status?: string
-        }
-        Update: {
-          code?: string
-          created_at?: string | null
-          entry_price?: number | null
-          entry_type?: string | null
-          expires_at?: string
-          id?: string
-          partner_id?: string
-          quota_amount?: number | null
-          redeemed_at?: string | null
-          redeemed_by?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "partner_redemption_codes_partner_id_fkey"
-            columns: ["partner_id"]
-            isOneToOne: false
-            referencedRelation: "partners"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       partner_referrals: {
         Row: {
           conversion_status: string | null
