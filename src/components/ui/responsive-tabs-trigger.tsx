@@ -27,7 +27,7 @@ const ResponsiveTabsTrigger = React.forwardRef<
     >
       {icon && <span className="mr-1">{icon}</span>}
       <span className="hidden sm:inline">{label}</span>
-      <span className="sm:hidden">{mobileLabel}</span>
+      <span className="inline sm:hidden">{mobileLabel}</span>
     </TabsTrigger>
   );
 });
