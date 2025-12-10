@@ -189,12 +189,13 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
       }
 
       // Ensure we always have a message to display (fix for stuck UI)
-      if (!assistantContent && Object.keys(toolCallsData).length > 0 && !hasSchemes) {
+      // Check for empty or whitespace-only content - AI sometimes returns "" instead of null
+      if ((!assistantContent || !assistantContent.trim()) && Object.keys(toolCallsData).length > 0 && !hasSchemes) {
         assistantContent = '请从下方选项中选择，或者告诉我你的想法 👇';
       }
 
       // Update messages if we have content
-      if (assistantContent && !isRegenerate) {
+      if (assistantContent && assistantContent.trim() && !isRegenerate) {
         setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
       }
 
