@@ -161,15 +161,38 @@ export default function PosterCenter() {
 
     try {
       const posterElement = posterRef.current;
-      const originalStyle = posterElement.style.cssText;
       
-      // Temporarily move element to visible position for capture
-      posterElement.style.cssText = 'position: fixed; top: 0; left: 0; z-index: 9999; opacity: 1; pointer-events: none; transform: none;';
+      // Create a wrapper container with fixed dimensions
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: ${selectedPosterSize.width}px;
+        height: ${selectedPosterSize.height}px;
+        z-index: 99999;
+        background: transparent;
+        overflow: visible;
+      `;
+      
+      // Clone the poster element
+      const clone = posterElement.cloneNode(true) as HTMLElement;
+      clone.style.cssText = `
+        width: ${selectedPosterSize.width}px !important;
+        height: ${selectedPosterSize.height}px !important;
+        min-width: ${selectedPosterSize.width}px !important;
+        min-height: ${selectedPosterSize.height}px !important;
+        transform: none !important;
+        position: relative !important;
+      `;
+      
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
       
       // Wait for render
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      const canvas = await html2canvas(posterElement, {
+      const canvas = await html2canvas(clone, {
         scale: 3,
         useCORS: true,
         allowTaint: true,
@@ -179,8 +202,8 @@ export default function PosterCenter() {
         height: selectedPosterSize.height,
       });
 
-      // Restore original styles
-      posterElement.style.cssText = originalStyle;
+      // Remove wrapper
+      document.body.removeChild(wrapper);
 
       const link = document.createElement('a');
       link.download = `promotion-poster-${selectedPosterSize.key}-${Date.now()}.png`;

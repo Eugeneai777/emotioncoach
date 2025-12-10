@@ -109,25 +109,51 @@ export function PosterGenerator({
     try {
       toast.loading("正在生成海报...");
       
-      // Temporarily make the poster visible for capture
       const posterElement = posterRef.current;
-      const originalStyle = posterElement.style.cssText;
-      posterElement.style.cssText = 'position: fixed; top: 0; left: 0; z-index: 9999; opacity: 1; pointer-events: none; transform: none;';
+      const posterWidth = 300;
+      const posterHeight = 533;
       
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Create a wrapper container with fixed dimensions
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: ${posterWidth}px;
+        height: ${posterHeight}px;
+        z-index: 99999;
+        background: transparent;
+        overflow: visible;
+      `;
+      
+      // Clone the poster element
+      const clone = posterElement.cloneNode(true) as HTMLElement;
+      clone.style.cssText = `
+        width: ${posterWidth}px !important;
+        height: ${posterHeight}px !important;
+        min-width: ${posterWidth}px !important;
+        min-height: ${posterHeight}px !important;
+        transform: none !important;
+        position: relative !important;
+      `;
+      
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      const canvas = await html2canvas(posterElement, {
+      const canvas = await html2canvas(clone, {
         scale: 3,
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
         logging: false,
-        width: 300,
-        height: 533,
+        width: posterWidth,
+        height: posterHeight,
       });
 
-      // Restore original style
-      posterElement.style.cssText = originalStyle;
+      // Remove wrapper
+      document.body.removeChild(wrapper);
 
       const link = document.createElement('a');
       link.download = `${template.name}-推广海报.png`;
