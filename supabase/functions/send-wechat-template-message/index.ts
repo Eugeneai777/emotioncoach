@@ -14,6 +14,8 @@ const SYSTEM_TEMPLATE_IDS: Record<string, string> = {
   'checkin_streak_milestone': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
   'checkin_reminder': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
   'checkin_streak_break_warning': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
+  // 登录成功使用专用模板
+  'login_success': Deno.env.get('WECHAT_TEMPLATE_LOGIN') || Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
   // 其他场景使用通用模板
   'default': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
 };
