@@ -7,9 +7,11 @@ import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Partner } from "@/hooks/usePartner";
 import { Upload, ImageIcon, Palette, Users, TrendingUp, Wallet, ChevronDown, ChevronUp, Bell } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { EntryTypeSelector } from "./EntryTypeSelector";
+import { FixedPromoLinkCard } from "./FixedPromoLinkCard";
+import { ActivityCodeCard } from "./ActivityCodeCard";
 import { StudentList } from "./StudentList";
 import { ConversionFunnel } from "./ConversionFunnel";
 import { ConversionAlerts } from "./ConversionAlerts";
@@ -35,7 +37,34 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
   const [activeTab, setActiveTab] = useState('promote');
   const [groupExpanded, setGroupExpanded] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
+  const [codeStats, setCodeStats] = useState({ total: 0, free: 0, paid: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch redemption code statistics
+  useEffect(() => {
+    const fetchCodeStats = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('partner_redemption_codes')
+          .select('entry_type')
+          .eq('partner_id', partner.id)
+          .eq('status', 'available');
+
+        if (error) throw error;
+
+        const stats = {
+          total: data?.length || 0,
+          free: data?.filter(c => c.entry_type === 'free' || !c.entry_type).length || 0,
+          paid: data?.filter(c => c.entry_type === 'paid').length || 0
+        };
+        setCodeStats(stats);
+      } catch (error) {
+        console.error('Failed to fetch code stats:', error);
+      }
+    };
+
+    fetchCodeStats();
+  }, [partner.id]);
 
   const handleUploadQR = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -133,11 +162,33 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
 
         {/* 推广Tab */}
         <TabsContent value="promote" className="space-y-4 mt-4">
+          {/* 入口类型设置 */}
           <EntryTypeSelector 
             partnerId={partner.id} 
             currentEntryType={partner.default_entry_type || 'free'}
             prepurchaseCount={partner.prepurchase_count || 0}
           />
+          
+          {/* 两种推广方式 */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              📢 推广方式
+            </h3>
+            
+            {/* 固定推广链接 - 推荐 */}
+            <FixedPromoLinkCard 
+              partnerId={partner.id}
+              entryType={(partner.default_entry_type || 'free') as 'free' | 'paid'}
+            />
+            
+            {/* 活动兑换码 - 可选 */}
+            <ActivityCodeCard 
+              partnerId={partner.id}
+              availableCount={codeStats.total}
+              freeCount={codeStats.free}
+              paidCount={codeStats.paid}
+            />
+          </div>
           
           {/* 海报生成中心入口 */}
           <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 overflow-hidden">

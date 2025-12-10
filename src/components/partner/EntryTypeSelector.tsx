@@ -64,6 +64,9 @@ export function EntryTypeSelector({
         <CardTitle className="text-lg flex items-center gap-2">
           <Gift className="w-5 h-5 text-orange-500" />
           推广入口设置
+          <span className="text-xs font-normal text-muted-foreground ml-1">
+            (影响固定推广链接)
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -165,9 +168,10 @@ export function EntryTypeSelector({
 
         {/* Hint */}
         <div className="text-xs text-muted-foreground bg-gray-50 p-3 rounded-lg space-y-1">
-          <p>💡 <strong>体验套餐权益</strong>：50点AI额度 + 365天有效期 + 免费训练营</p>
+          <p>💡 <strong>此设置影响固定推广链接的入口方式</strong></p>
           <p>📌 每领取1人将从你的<span className="text-orange-600 font-medium">预购额度</span>中扣除1个名额</p>
           <p>💰 付费入口用户支付的 ¥9.9 将计入你的佣金收益</p>
+          <p>🎁 体验套餐权益：50点AI额度 + 365天有效期 + 免费训练营</p>
         </div>
       </CardContent>
     </Card>
