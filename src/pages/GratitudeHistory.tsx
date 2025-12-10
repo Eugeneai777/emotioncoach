@@ -26,7 +26,7 @@ const GratitudeHistory = () => {
             <TabsTrigger value="journal">📝 感恩记录</TabsTrigger>
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
-              Dashboard
+              幸福仪表盘
             </TabsTrigger>
           </TabsList>
 

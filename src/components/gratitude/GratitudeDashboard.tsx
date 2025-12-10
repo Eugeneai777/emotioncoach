@@ -57,7 +57,7 @@ export const GratitudeDashboard = () => {
       }
 
       setDashboardData(data);
-      toast({ title: "Dashboard 生成成功！" });
+      toast({ title: "幸福仪表盘生成成功！" });
     } catch (error) {
       console.error("Error generating dashboard:", error);
       toast({ title: "生成失败", variant: "destructive" });
@@ -79,7 +79,7 @@ export const GratitudeDashboard = () => {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <BarChart3 className="w-5 h-5 text-primary" />
-            感恩日记 Dashboard
+            幸福仪表盘
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
