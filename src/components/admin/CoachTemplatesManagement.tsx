@@ -226,7 +226,13 @@ export function CoachTemplatesManagement() {
       </Card>
 
       {/* Matrix View */}
-      {templates && <CoachFeatureMatrix templates={templates} />}
+      {templates && (
+        <CoachFeatureMatrix 
+          templates={templates} 
+          onMoveUp={handleMoveUp}
+          onMoveDown={handleMoveDown}
+        />
+      )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">

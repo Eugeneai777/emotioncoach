@@ -453,6 +453,44 @@ export type Database = {
           },
         ]
       }
+      coach_prompt_versions: {
+        Row: {
+          change_note: string | null
+          coach_template_id: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          system_prompt: string
+          version_number: number
+        }
+        Insert: {
+          change_note?: string | null
+          coach_template_id: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          system_prompt: string
+          version_number: number
+        }
+        Update: {
+          change_note?: string | null
+          coach_template_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          system_prompt?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_prompt_versions_coach_template_id_fkey"
+            columns: ["coach_template_id"]
+            isOneToOne: false
+            referencedRelation: "coach_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_templates: {
         Row: {
           briefing_table_name: string | null
