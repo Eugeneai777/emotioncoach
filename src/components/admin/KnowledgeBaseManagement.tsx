@@ -1,55 +1,60 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash2, Search, BookOpen, GraduationCap, FileText, Users, MessageCircle } from "lucide-react";
+import { RefreshCw, Search, Database, BookOpen, Users, Tent } from "lucide-react";
 import { toast } from "sonner";
+import KnowledgeBaseMatrix from "./KnowledgeBaseMatrix";
+import KnowledgeDocEditor from "./KnowledgeDocEditor";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface KnowledgeItem {
   id: string;
-  category: string;
   title: string;
   content: string;
-  keywords: string[] | null;
-  display_order: number;
-  is_active: boolean;
-  doc_type: string | null;
+  doc_type: string;
   coach_key: string | null;
   camp_type: string | null;
+  keywords: string[];
+  is_active: boolean;
+  display_order?: number;
+  category?: string;
+  created_at?: string;
 }
 
 interface CoachTemplate {
+  id: string;
   coach_key: string;
   title: string;
   emoji: string;
 }
 
 interface CampTemplate {
+  id: string;
   camp_type: string;
   camp_name: string;
   icon: string;
 }
 
-const docTypeConfig: Record<string, { label: string; color: string; icon: any }> = {
-  intro: { label: "介绍", color: "bg-blue-100 text-blue-800", icon: BookOpen },
-  camp: { label: "训练营", color: "bg-purple-100 text-purple-800", icon: GraduationCap },
-  faq: { label: "常见问题", color: "bg-green-100 text-green-800", icon: MessageCircle },
-  guide: { label: "使用指南", color: "bg-amber-100 text-amber-800", icon: FileText },
-  policy: { label: "政策说明", color: "bg-gray-100 text-gray-800", icon: FileText },
-};
-
-const scopeOptions = [
-  { value: "coach", label: "关联教练" },
-  { value: "camp", label: "关联训练营" },
-  { value: "general", label: "通用文档" },
+// Document types configuration
+const DOC_TYPES = [
+  { type: "intro", label: "产品介绍", description: "产品定位、核心功能、价值主张" },
+  { type: "four_steps", label: "四部曲/模型", description: "核心方法论、步骤详解" },
+  { type: "science", label: "科学依据", description: "理论基础、研究支持" },
+  { type: "faq", label: "常见问题", description: "FAQ、用户疑问解答" },
+  { type: "scenarios", label: "适用场景", description: "使用场景、案例说明" },
+  { type: "audience", label: "适用人群", description: "目标用户、适用条件" },
+  { type: "usage_guide", label: "使用指南", description: "操作步骤、使用方法" },
+  { type: "general", label: "通用知识", description: "其他通用内容" },
 ];
 
 export default function KnowledgeBaseManagement() {
@@ -58,612 +63,411 @@ export default function KnowledgeBaseManagement() {
   const [camps, setCamps] = useState<CampTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCoach, setSelectedCoach] = useState<string>("all");
-  const [selectedCamp, setSelectedCamp] = useState<string>("all");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<KnowledgeItem | null>(null);
-  const [formData, setFormData] = useState({
-    title: "",
-    content: "",
-    keywords: "",
-    display_order: 0,
-    is_active: true,
-    doc_type: "faq",
-    scope: "general",
-    coach_key: "",
-    camp_type: "",
-  });
-
-  useEffect(() => {
-    loadData();
-  }, []);
+  
+  // Editor state
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<KnowledgeItem | undefined>();
+  const [editorDocType, setEditorDocType] = useState("");
+  const [editorDocTypeLabel, setEditorDocTypeLabel] = useState("");
+  const [editorCoachKey, setEditorCoachKey] = useState<string | null>(null);
+  const [editorCoachName, setEditorCoachName] = useState("");
+  const [editorCampType, setEditorCampType] = useState<string | null>(null);
+  
+  // View dialog state
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [viewingItem, setViewingItem] = useState<KnowledgeItem | null>(null);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [itemsRes, coachesRes, campsRes] = await Promise.all([
-        supabase.from("support_knowledge_base").select("*").order("display_order"),
-        supabase.from("coach_templates").select("coach_key, title, emoji").eq("is_active", true).order("display_order"),
-        supabase.from("camp_templates").select("camp_type, camp_name, icon").eq("is_active", true).order("display_order"),
-      ]);
+      // Load knowledge items
+      const { data: itemsData, error: itemsError } = await supabase
+        .from("support_knowledge_base")
+        .select("*")
+        .order("display_order", { ascending: true });
 
-      if (itemsRes.error) throw itemsRes.error;
-      if (coachesRes.error) throw coachesRes.error;
-      if (campsRes.error) throw campsRes.error;
+      if (itemsError) throw itemsError;
+      setItems(itemsData || []);
 
-      setItems(itemsRes.data || []);
-      setCoaches(coachesRes.data || []);
-      setCamps(campsRes.data || []);
-    } catch (error) {
-      console.error("Error loading data:", error);
-      toast.error("加载数据失败");
+      // Load coaches
+      const { data: coachesData, error: coachesError } = await supabase
+        .from("coach_templates")
+        .select("id, coach_key, title, emoji")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (coachesError) throw coachesError;
+      setCoaches(coachesData || []);
+
+      // Load camps
+      const { data: campsData, error: campsError } = await supabase
+        .from("camp_templates")
+        .select("id, camp_type, camp_name, icon")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (campsError) throw campsError;
+      setCamps(campsData || []);
+    } catch (error: any) {
+      console.error("Load error:", error);
+      toast.error("加载失败");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async () => {
-    if (!formData.title || !formData.content) {
-      toast.error("请填写标题和内容");
-      return;
-    }
+  useEffect(() => {
+    loadData();
+  }, []);
 
-    const dataToSave = {
-      title: formData.title,
-      content: formData.content,
-      keywords: formData.keywords.split(",").map(k => k.trim()).filter(Boolean),
-      display_order: formData.display_order,
-      is_active: formData.is_active,
-      doc_type: formData.doc_type,
-      category: formData.doc_type,
-      coach_key: formData.scope === "coach" ? formData.coach_key : null,
-      camp_type: formData.scope === "camp" ? formData.camp_type : null,
-    };
-
-    try {
-      if (editingItem) {
-        const { error } = await supabase
-          .from("support_knowledge_base")
-          .update(dataToSave)
-          .eq("id", editingItem.id);
-        if (error) throw error;
-        toast.success("更新成功");
-      } else {
-        const { error } = await supabase
-          .from("support_knowledge_base")
-          .insert([dataToSave]);
-        if (error) throw error;
-        toast.success("添加成功");
-      }
-      closeDialog();
-      loadData();
-    } catch (error) {
-      console.error("Error saving:", error);
-      toast.error("保存失败");
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("确定删除此文档？")) return;
-    try {
-      const { error } = await supabase.from("support_knowledge_base").delete().eq("id", id);
-      if (error) throw error;
-      toast.success("删除成功");
-      loadData();
-    } catch (error) {
-      console.error("Error deleting:", error);
-      toast.error("删除失败");
-    }
-  };
-
-  const handleToggleActive = async (id: string, isActive: boolean) => {
-    try {
-      const { error } = await supabase
-        .from("support_knowledge_base")
-        .update({ is_active: isActive })
-        .eq("id", id);
-      if (error) throw error;
-      loadData();
-    } catch (error) {
-      console.error("Error toggling:", error);
-      toast.error("更新失败");
-    }
-  };
-
-  const openEditDialog = (item: KnowledgeItem) => {
-    setEditingItem(item);
-    const scope = item.coach_key ? "coach" : item.camp_type ? "camp" : "general";
-    setFormData({
-      title: item.title,
-      content: item.content,
-      keywords: item.keywords?.join(", ") || "",
-      display_order: item.display_order,
-      is_active: item.is_active,
-      doc_type: item.doc_type || "faq",
-      scope,
-      coach_key: item.coach_key || "",
-      camp_type: item.camp_type || "",
+  // Build columns for matrix
+  const matrixColumns = useMemo(() => {
+    const columns: { key: string; name: string; emoji: string; type: "coach" | "tool" | "camp" }[] = [];
+    
+    // Add emotion button as a special tool
+    columns.push({
+      key: "emotion_button",
+      name: "情绪按钮",
+      emoji: "🆘",
+      type: "tool",
     });
-    setIsDialogOpen(true);
-  };
-
-  const closeDialog = () => {
-    setIsDialogOpen(false);
-    setEditingItem(null);
-    setFormData({
-      title: "",
-      content: "",
-      keywords: "",
-      display_order: 0,
-      is_active: true,
-      doc_type: "faq",
-      scope: "general",
-      coach_key: "",
-      camp_type: "",
+    
+    // Add coaches
+    coaches.forEach((coach) => {
+      columns.push({
+        key: coach.coach_key,
+        name: coach.title,
+        emoji: coach.emoji,
+        type: "coach",
+      });
     });
-  };
+    
+    // Add camps
+    camps.forEach((camp) => {
+      columns.push({
+        key: camp.camp_type,
+        name: camp.camp_name,
+        emoji: camp.icon,
+        type: "camp",
+      });
+    });
+    
+    return columns;
+  }, [coaches, camps]);
 
-  const getCoachItems = () => {
-    let filtered = items.filter(item => item.coach_key);
-    if (selectedCoach !== "all") {
-      filtered = filtered.filter(item => item.coach_key === selectedCoach);
-    }
-    if (searchQuery) {
-      filtered = filtered.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.content.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    return filtered;
-  };
-
-  const getCampItems = () => {
-    let filtered = items.filter(item => item.camp_type);
-    if (selectedCamp !== "all") {
-      filtered = filtered.filter(item => item.camp_type === selectedCamp);
-    }
-    if (searchQuery) {
-      filtered = filtered.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.content.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    return filtered;
-  };
-
-  const getGeneralItems = () => {
-    let filtered = items.filter(item => !item.coach_key && !item.camp_type);
-    if (searchQuery) {
-      filtered = filtered.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.content.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    return filtered;
-  };
-
-  const renderDocCard = (item: KnowledgeItem) => {
-    const docType = docTypeConfig[item.doc_type || "faq"] || docTypeConfig.faq;
-    const DocIcon = docType.icon;
-
-    return (
-      <Card key={item.id} className={`${!item.is_active ? "opacity-60" : ""}`}>
-        <CardHeader className="pb-2">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <DocIcon className="h-4 w-4 text-muted-foreground" />
-              <CardTitle className="text-base">{item.title}</CardTitle>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge className={docType.color}>{docType.label}</Badge>
-              <Switch
-                checked={item.is_active}
-                onCheckedChange={(checked) => handleToggleActive(item.id, checked)}
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{item.content}</p>
-          {item.keywords && item.keywords.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
-              {item.keywords.slice(0, 5).map((kw, i) => (
-                <Badge key={i} variant="outline" className="text-xs">{kw}</Badge>
-              ))}
-              {item.keywords.length > 5 && (
-                <Badge variant="outline" className="text-xs">+{item.keywords.length - 5}</Badge>
-              )}
-            </div>
-          )}
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => openEditDialog(item)}>
-              <Pencil className="h-3 w-3 mr-1" />
-              编辑
-            </Button>
-            <Button size="sm" variant="outline" className="text-destructive" onClick={() => handleDelete(item.id)}>
-              <Trash2 className="h-3 w-3 mr-1" />
-              删除
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+  // Handle cell click in matrix
+  const handleCellClick = (
+    docType: string,
+    coachKey: string | null,
+    campType: string | null,
+    existingItem?: KnowledgeItem
+  ) => {
+    const docTypeConfig = DOC_TYPES.find((d) => d.type === docType);
+    const column = matrixColumns.find(
+      (c) => (campType && c.key === campType) || (!campType && c.key === coachKey)
     );
+
+    setEditingItem(existingItem);
+    setEditorDocType(docType);
+    setEditorDocTypeLabel(docTypeConfig?.label || docType);
+    setEditorCoachKey(coachKey);
+    setEditorCoachName(column?.name || "通用");
+    setEditorCampType(campType);
+    setEditorOpen(true);
   };
 
-  const renderCoachSection = () => {
-    const coachItems = getCoachItems();
-    const groupedByCoach = coaches.reduce((acc, coach) => {
-      acc[coach.coach_key] = coachItems.filter(item => item.coach_key === coach.coach_key);
-      return acc;
-    }, {} as Record<string, KnowledgeItem[]>);
+  // Handle view item
+  const handleViewItem = (item: KnowledgeItem) => {
+    setViewingItem(item);
+    setViewDialogOpen(true);
+  };
 
-    if (selectedCoach !== "all") {
-      return (
-        <div className="grid gap-4 md:grid-cols-2">
-          {coachItems.map(renderDocCard)}
-          {coachItems.length === 0 && (
-            <div className="col-span-2 text-center py-8 text-muted-foreground">
-              暂无文档，点击"添加文档"创建
-            </div>
-          )}
-        </div>
-      );
-    }
+  // Statistics
+  const stats = useMemo(() => {
+    const total = items.length;
+    const coachCount = items.filter((i) => i.coach_key && !i.camp_type).length;
+    const campCount = items.filter((i) => i.camp_type).length;
+    const activeCount = items.filter((i) => i.is_active).length;
+    
+    return { total, coachCount, campCount, activeCount };
+  }, [items]);
 
-    return (
-      <div className="space-y-6">
-        {coaches.map(coach => {
-          const docs = groupedByCoach[coach.coach_key] || [];
-          return (
-            <Card key={coach.coach_key}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <span>{coach.emoji}</span>
-                  {coach.title}
-                  <Badge variant="secondary">{docs.length} 篇</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {docs.length > 0 ? (
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {docs.map(renderDocCard)}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground py-4 text-center">暂无文档</p>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+  // Filter items for list view
+  const filteredItems = useMemo(() => {
+    if (!searchQuery) return items;
+    const query = searchQuery.toLowerCase();
+    return items.filter(
+      (item) =>
+        item.title.toLowerCase().includes(query) ||
+        item.content.toLowerCase().includes(query) ||
+        item.keywords?.some((k) => k.toLowerCase().includes(query))
     );
+  }, [items, searchQuery]);
+
+  // Get doc type label
+  const getDocTypeLabel = (type: string) => {
+    return DOC_TYPES.find((d) => d.type === type)?.label || type;
   };
 
-  const renderCampSection = () => {
-    const campItems = getCampItems();
-    const groupedByCamp = camps.reduce((acc, camp) => {
-      acc[camp.camp_type] = campItems.filter(item => item.camp_type === camp.camp_type);
-      return acc;
-    }, {} as Record<string, KnowledgeItem[]>);
-
-    if (selectedCamp !== "all") {
-      return (
-        <div className="grid gap-4 md:grid-cols-2">
-          {campItems.map(renderDocCard)}
-          {campItems.length === 0 && (
-            <div className="col-span-2 text-center py-8 text-muted-foreground">
-              暂无文档，点击"添加文档"创建
-            </div>
-          )}
-        </div>
-      );
+  // Get column name
+  const getColumnName = (item: KnowledgeItem) => {
+    if (item.camp_type) {
+      const camp = camps.find((c) => c.camp_type === item.camp_type);
+      return camp?.camp_name || item.camp_type;
     }
-
-    return (
-      <div className="space-y-6">
-        {camps.map(camp => {
-          const docs = groupedByCamp[camp.camp_type] || [];
-          return (
-            <Card key={camp.camp_type}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <span>{camp.icon}</span>
-                  {camp.camp_name}
-                  <Badge variant="secondary">{docs.length} 篇</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {docs.length > 0 ? (
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {docs.map(renderDocCard)}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground py-4 text-center">暂无文档</p>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const stats = {
-    total: items.length,
-    byCoach: items.filter(i => i.coach_key).length,
-    byCamp: items.filter(i => i.camp_type).length,
-    general: items.filter(i => !i.coach_key && !i.camp_type).length,
+    if (item.coach_key) {
+      if (item.coach_key === "emotion_button") return "情绪按钮";
+      const coach = coaches.find((c) => c.coach_key === item.coach_key);
+      return coach?.title || item.coach_key;
+    }
+    return "通用";
   };
 
   if (loading) {
-    return <div className="flex justify-center py-8">加载中...</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      {/* 统计卡片 */}
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">知识库管理</h2>
+          <p className="text-muted-foreground">管理AI客服的知识库内容</p>
+        </div>
+        <Button onClick={loadData} variant="outline" size="sm">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          刷新
+        </Button>
+      </div>
+
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Database className="w-8 h-8 text-primary" />
               <div>
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">总文档数</p>
+                <div className="text-2xl font-bold">{stats.total}</div>
+                <div className="text-sm text-muted-foreground">总文档数</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-green-600" />
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <BookOpen className="w-8 h-8 text-blue-500" />
               <div>
-                <p className="text-2xl font-bold">{stats.byCoach}</p>
-                <p className="text-xs text-muted-foreground">教练文档</p>
+                <div className="text-2xl font-bold">{stats.coachCount}</div>
+                <div className="text-sm text-muted-foreground">教练文档</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-purple-600" />
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Tent className="w-8 h-8 text-purple-500" />
               <div>
-                <p className="text-2xl font-bold">{stats.byCamp}</p>
-                <p className="text-xs text-muted-foreground">训练营文档</p>
+                <div className="text-2xl font-bold">{stats.campCount}</div>
+                <div className="text-sm text-muted-foreground">训练营文档</div>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-amber-600" />
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Users className="w-8 h-8 text-green-500" />
               <div>
-                <p className="text-2xl font-bold">{stats.general}</p>
-                <p className="text-xs text-muted-foreground">通用文档</p>
+                <div className="text-2xl font-bold">{stats.activeCount}</div>
+                <div className="text-sm text-muted-foreground">已启用</div>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* 搜索和操作栏 */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="搜索文档..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => closeDialog()}>
-              <Plus className="h-4 w-4 mr-2" />
-              添加文档
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingItem ? "编辑文档" : "添加文档"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {/* 所属范围 */}
-              <div className="space-y-2">
-                <Label>所属范围</Label>
-                <Select value={formData.scope} onValueChange={(v) => setFormData({ ...formData, scope: v, coach_key: "", camp_type: "" })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {scopeOptions.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* 关联对象 */}
-              {formData.scope === "coach" && (
-                <div className="space-y-2">
-                  <Label>选择教练</Label>
-                  <Select value={formData.coach_key} onValueChange={(v) => setFormData({ ...formData, coach_key: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择教练" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {coaches.map(coach => (
-                        <SelectItem key={coach.coach_key} value={coach.coach_key}>
-                          {coach.emoji} {coach.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {formData.scope === "camp" && (
-                <div className="space-y-2">
-                  <Label>选择训练营</Label>
-                  <Select value={formData.camp_type} onValueChange={(v) => setFormData({ ...formData, camp_type: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择训练营" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {camps.map(camp => (
-                        <SelectItem key={camp.camp_type} value={camp.camp_type}>
-                          {camp.icon} {camp.camp_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* 文档类型 */}
-              <div className="space-y-2">
-                <Label>文档类型</Label>
-                <Select value={formData.doc_type} onValueChange={(v) => setFormData({ ...formData, doc_type: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(docTypeConfig).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>{config.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* 标题 */}
-              <div className="space-y-2">
-                <Label>标题</Label>
-                <Input
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="文档标题"
-                />
-              </div>
-
-              {/* 内容 */}
-              <div className="space-y-2">
-                <Label>内容</Label>
-                <Textarea
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder="文档内容..."
-                  rows={8}
-                />
-              </div>
-
-              {/* 关键词 */}
-              <div className="space-y-2">
-                <Label>关键词（逗号分隔）</Label>
-                <Input
-                  value={formData.keywords}
-                  onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
-                  placeholder="关键词1, 关键词2, ..."
-                />
-              </div>
-
-              {/* 排序 */}
-              <div className="space-y-2">
-                <Label>排序（数字越小越靠前）</Label>
-                <Input
-                  type="number"
-                  value={formData.display_order}
-                  onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
-                />
-              </div>
-
-              {/* 是否启用 */}
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                />
-                <Label>启用</Label>
-              </div>
-
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={closeDialog}>取消</Button>
-                <Button onClick={handleSubmit}>保存</Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* 分类 Tab */}
-      <Tabs defaultValue="coach" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="coach" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            按教练
-          </TabsTrigger>
-          <TabsTrigger value="camp" className="flex items-center gap-2">
-            <GraduationCap className="h-4 w-4" />
-            按训练营
-          </TabsTrigger>
-          <TabsTrigger value="general" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            通用文档
-          </TabsTrigger>
+      {/* Tabs */}
+      <Tabs defaultValue="matrix" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="matrix">📊 矩阵视图</TabsTrigger>
+          <TabsTrigger value="list">📋 列表视图</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="coach" className="mt-4">
-          <div className="mb-4">
-            <Select value={selectedCoach} onValueChange={setSelectedCoach}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="筛选教练" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部教练</SelectItem>
-                {coaches.map(coach => (
-                  <SelectItem key={coach.coach_key} value={coach.coach_key}>
-                    {coach.emoji} {coach.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {renderCoachSection()}
+        {/* Matrix View */}
+        <TabsContent value="matrix">
+          <KnowledgeBaseMatrix
+            items={items}
+            coaches={matrixColumns}
+            docTypes={DOC_TYPES}
+            onCellClick={handleCellClick}
+            onViewItem={handleViewItem}
+          />
         </TabsContent>
 
-        <TabsContent value="camp" className="mt-4">
-          <div className="mb-4">
-            <Select value={selectedCamp} onValueChange={setSelectedCamp}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="筛选训练营" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部训练营</SelectItem>
-                {camps.map(camp => (
-                  <SelectItem key={camp.camp_type} value={camp.camp_type}>
-                    {camp.icon} {camp.camp_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* List View */}
+        <TabsContent value="list" className="space-y-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="搜索标题、内容、关键词..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
           </div>
-          {renderCampSection()}
-        </TabsContent>
 
-        <TabsContent value="general" className="mt-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            {getGeneralItems().map(renderDocCard)}
-            {getGeneralItems().length === 0 && (
-              <div className="col-span-2 text-center py-8 text-muted-foreground">
-                暂无通用文档，点击"添加文档"创建
-              </div>
+          {/* List */}
+          <div className="space-y-3">
+            {filteredItems.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  {searchQuery ? "未找到匹配的文档" : "暂无知识库文档"}
+                </CardContent>
+              </Card>
+            ) : (
+              filteredItems.map((item) => (
+                <Card
+                  key={item.id}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleViewItem(item)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium truncate">{item.title}</h3>
+                          {!item.is_active && (
+                            <Badge variant="secondary" className="text-xs">
+                              已停用
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {item.content?.substring(0, 100)}...
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {getDocTypeLabel(item.doc_type || "general")}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {getColumnName(item)}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {item.content?.length || 0}字
+                          </span>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingItem(item);
+                          setEditorDocType(item.doc_type || "general");
+                          setEditorDocTypeLabel(getDocTypeLabel(item.doc_type || "general"));
+                          setEditorCoachKey(item.coach_key);
+                          setEditorCoachName(getColumnName(item));
+                          setEditorCampType(item.camp_type);
+                          setEditorOpen(true);
+                        }}
+                      >
+                        编辑
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
             )}
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Editor Dialog */}
+      <KnowledgeDocEditor
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        item={editingItem}
+        docType={editorDocType}
+        docTypeLabel={editorDocTypeLabel}
+        coachKey={editorCoachKey}
+        coachName={editorCoachName}
+        campType={editorCampType}
+        onSaved={loadData}
+      />
+
+      {/* View Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {viewingItem?.title}
+              {viewingItem && !viewingItem.is_active && (
+                <Badge variant="secondary">已停用</Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh]">
+            <div className="space-y-4 pr-4">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">
+                  {getDocTypeLabel(viewingItem?.doc_type || "general")}
+                </Badge>
+                <Badge variant="secondary">{viewingItem && getColumnName(viewingItem)}</Badge>
+                <span className="text-sm text-muted-foreground">
+                  {viewingItem?.content?.length || 0}字
+                </span>
+              </div>
+              <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">
+                {viewingItem?.content}
+              </div>
+              {viewingItem?.keywords && viewingItem.keywords.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium mb-2">关键词</div>
+                  <div className="flex flex-wrap gap-1">
+                    {viewingItem.keywords.map((keyword, i) => (
+                      <Badge key={i} variant="outline" className="text-xs">
+                        {keyword}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setViewDialogOpen(false)}
+            >
+              关闭
+            </Button>
+            <Button
+              onClick={() => {
+                setViewDialogOpen(false);
+                if (viewingItem) {
+                  setEditingItem(viewingItem);
+                  setEditorDocType(viewingItem.doc_type || "general");
+                  setEditorDocTypeLabel(getDocTypeLabel(viewingItem.doc_type || "general"));
+                  setEditorCoachKey(viewingItem.coach_key);
+                  setEditorCoachName(getColumnName(viewingItem));
+                  setEditorCampType(viewingItem.camp_type);
+                  setEditorOpen(true);
+                }
+              }}
+            >
+              编辑
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
