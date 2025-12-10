@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, BookOpen, Sparkles, ExternalLink, Bell, Users, MessageSquare, Mic, Tent, Activity, Clock, AlertTriangle, GraduationCap, Share2 } from "lucide-react";
+import { Edit, Trash2, ArrowUp, ArrowDown, BookOpen, Sparkles, ExternalLink, Bell, Users, MessageSquare, Mic, Tent, Activity, Clock, AlertTriangle, GraduationCap, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CoachStepsEditor } from "./CoachStepsEditor";
 import { AICoachCreator } from "./AICoachCreator";
@@ -55,35 +55,6 @@ export function CoachTemplatesManagement() {
   const [isStepsEditorOpen, setIsStepsEditorOpen] = useState(false);
   const [currentSteps, setCurrentSteps] = useState<CoachStep[]>([]);
   const [isAICreatorOpen, setIsAICreatorOpen] = useState(false);
-  
-
-  const handleCreate = () => {
-    setEditingTemplate({
-      coach_key: '',
-      emoji: '💚',
-      title: '',
-      subtitle: '',
-      description: '',
-      gradient: gradientOptions[0].value,
-      primary_color: 'green',
-      steps: [],
-      steps_title: '四部曲',
-      steps_emoji: '🌱',
-      page_route: '/',
-      history_route: '/history',
-      history_label: '我的日记',
-      placeholder: '分享你的想法...',
-      enable_voice_control: true,
-      enable_training_camp: false,
-      enable_notifications: false,
-      enable_community: false,
-      enable_scenarios: false,
-      is_active: true,
-      is_system: false,
-      display_order: (templates?.length || 0) + 1,
-    });
-    setIsDialogOpen(true);
-  };
 
   const handleEdit = (template: CoachTemplate) => {
     setEditingTemplate(template);
@@ -220,16 +191,10 @@ export function CoachTemplatesManagement() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">教练模板管理</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsAICreatorOpen(true)}>
-            <Sparkles className="h-4 w-4 mr-2" />
-            AI智能创建
-          </Button>
-          <Button onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-2" />
-            手动创建
-          </Button>
-        </div>
+        <Button onClick={() => setIsAICreatorOpen(true)}>
+          <Sparkles className="h-4 w-4 mr-2" />
+          AI智能创建
+        </Button>
       </div>
 
       {/* Feature Statistics */}
