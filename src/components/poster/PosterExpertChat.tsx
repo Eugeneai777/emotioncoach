@@ -423,9 +423,14 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
             onChange={(e) => setInput(e.target.value)}
             placeholder="输入你的想法..."
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey && input.trim()) {
+              console.log('Key pressed:', e.key, 'Input:', input, 'isLoading:', isLoading);
+              if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                sendMessage(input);
+                e.stopPropagation();
+                if (input.trim() && !isLoading) {
+                  console.log('Sending message via Enter key');
+                  sendMessage(input);
+                }
               }
             }}
             disabled={isLoading}
