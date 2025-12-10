@@ -2417,6 +2417,51 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_posters: {
+        Row: {
+          call_to_action: string
+          created_at: string
+          entry_type: string
+          headline: string
+          id: string
+          partner_id: string
+          scan_count: number
+          selling_points: string[]
+          subtitle: string
+          template_key: string
+          updated_at: string
+          urgency_text: string | null
+        }
+        Insert: {
+          call_to_action: string
+          created_at?: string
+          entry_type?: string
+          headline: string
+          id?: string
+          partner_id: string
+          scan_count?: number
+          selling_points: string[]
+          subtitle: string
+          template_key: string
+          updated_at?: string
+          urgency_text?: string | null
+        }
+        Update: {
+          call_to_action?: string
+          created_at?: string
+          entry_type?: string
+          headline?: string
+          id?: string
+          partner_id?: string
+          scan_count?: number
+          selling_points?: string[]
+          subtitle?: string
+          template_key?: string
+          updated_at?: string
+          urgency_text?: string | null
+        }
+        Relationships: []
+      }
       partner_redemption_codes: {
         Row: {
           code: string
@@ -2797,6 +2842,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      poster_scan_logs: {
+        Row: {
+          id: string
+          ip_hash: string | null
+          partner_id: string
+          poster_id: string
+          referrer: string | null
+          scanned_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          id?: string
+          ip_hash?: string | null
+          partner_id: string
+          poster_id: string
+          referrer?: string | null
+          scanned_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          id?: string
+          ip_hash?: string | null
+          partner_id?: string
+          poster_id?: string
+          referrer?: string | null
+          scanned_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

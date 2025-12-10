@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { usePartner } from '@/hooks/usePartner';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Zap, Sparkles, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, Zap, Sparkles, Download, Loader2, Copy, Check, ImageIcon } from 'lucide-react';
 import { PosterTemplateGrid } from '@/components/poster/PosterTemplateGrid';
 import { PosterGenerator } from '@/components/poster/PosterGenerator';
 import { PosterExpertChat } from '@/components/poster/PosterExpertChat';
@@ -11,6 +11,7 @@ import { PosterWithCustomCopy } from '@/components/poster/PosterWithCustomCopy';
 import { type PosterScheme } from '@/components/poster/SchemePreview';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
+import { supabase } from '@/integrations/supabase/client';
 
 type Mode = 'quick' | 'expert';
 type ExpertStep = 'chat' | 'preview';
@@ -25,6 +26,8 @@ export default function PosterCenter() {
   const [customCopy, setCustomCopy] = useState<(PosterScheme & { target_audience: string; promotion_scene: string }) | null>(null);
   const [backgroundImageUrl] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const [savedPosterId, setSavedPosterId] = useState<string | null>(null);
   const posterRef = useRef<HTMLDivElement>(null);
 
   // Auth check
@@ -62,9 +65,34 @@ export default function PosterCenter() {
 
   const entryType = partner.default_entry_type === 'paid' ? 'paid' : 'free';
 
-  const handleSchemeConfirmed = (scheme: PosterScheme & { target_audience: string; promotion_scene: string }) => {
+  const handleSchemeConfirmed = async (scheme: PosterScheme & { target_audience: string; promotion_scene: string }) => {
     setCustomCopy(scheme);
     setExpertStep('preview');
+    
+    // Save poster to database for tracking
+    try {
+      const { data, error } = await supabase
+        .from('partner_posters')
+        .insert({
+          partner_id: partner.id,
+          template_key: scheme.recommended_template,
+          headline: scheme.headline,
+          subtitle: scheme.subtitle,
+          selling_points: scheme.selling_points,
+          call_to_action: scheme.call_to_action,
+          urgency_text: scheme.urgency_text || null,
+          entry_type: entryType,
+        })
+        .select('id')
+        .single();
+      
+      if (!error && data) {
+        setSavedPosterId(data.id);
+        console.log('Poster saved with ID:', data.id);
+      }
+    } catch (e) {
+      console.error('Failed to save poster:', e);
+    }
   };
 
   const handleDownload = async () => {
@@ -97,10 +125,47 @@ export default function PosterCenter() {
     }
   };
 
+  // Generate share copy text
+  const generateShareCopy = () => {
+    if (!customCopy) return '';
+    
+    const lines = [
+      customCopy.headline,
+      customCopy.subtitle,
+      '',
+      customCopy.selling_points.map(p => `✨ ${p}`).join('\n'),
+      '',
+      `${customCopy.call_to_action}`,
+    ];
+    
+    if (customCopy.urgency_text) {
+      lines.push(`🔥 ${customCopy.urgency_text}`);
+    }
+    
+    return lines.join('\n');
+  };
+
+  const handleCopyShareText = async () => {
+    const shareText = generateShareCopy();
+    
+    try {
+      await navigator.clipboard.writeText(shareText);
+      setIsCopied(true);
+      toast.success('文案已复制，配合海报一起发布效果更好！');
+      
+      setTimeout(() => setIsCopied(false), 3000);
+    } catch (e) {
+      console.error('Copy failed:', e);
+      toast.error('复制失败，请手动复制');
+    }
+  };
+
   const resetToModeSelection = () => {
     setSelectedTemplate(null);
     setCustomCopy(null);
     setExpertStep('chat');
+    setSavedPosterId(null);
+    setIsCopied(false);
   };
 
   // Quick mode with template selected
@@ -142,11 +207,13 @@ export default function PosterCenter() {
               partnerId={partner.id}
               entryType={entryType as 'free' | 'paid'}
               backgroundImageUrl={backgroundImageUrl || undefined}
+              posterId={savedPosterId || undefined}
             />
           </div>
 
           {/* Action Buttons */}
           <div className="w-full max-w-[300px] space-y-3">
+            {/* Save to Album */}
             <Button
               className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
               onClick={handleDownload}
@@ -155,21 +222,55 @@ export default function PosterCenter() {
               {isDownloading ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                <Download className="w-4 h-4 mr-2" />
+                <ImageIcon className="w-4 h-4 mr-2" />
               )}
-              保存海报
+              保存到相册
             </Button>
-            
+
+            {/* Copy Share Text */}
             <Button
               variant="outline"
               className="w-full"
+              onClick={handleCopyShareText}
+            >
+              {isCopied ? (
+                <>
+                  <Check className="w-4 h-4 mr-2 text-green-500" />
+                  已复制文案
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 mr-2" />
+                  复制分享文案
+                </>
+              )}
+            </Button>
+
+            {/* Share Copy Preview */}
+            <div className="bg-white/80 rounded-lg p-3 text-xs text-muted-foreground border">
+              <p className="font-medium text-foreground mb-1 text-sm">分享文案预览：</p>
+              <p className="whitespace-pre-line line-clamp-4">{generateShareCopy()}</p>
+            </div>
+            
+            <Button
+              variant="ghost"
+              className="w-full text-muted-foreground"
               onClick={() => {
                 setExpertStep('chat');
                 setCustomCopy(null);
+                setSavedPosterId(null);
               }}
             >
               重新生成文案
             </Button>
+
+            {/* Scan Stats Badge */}
+            {savedPosterId && (
+              <div className="text-center text-xs text-muted-foreground">
+                <p>📊 海报ID: {savedPosterId.slice(0, 8)}...</p>
+                <p className="mt-1">扫码数据将在「我的学员」页面显示</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
