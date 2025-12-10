@@ -297,28 +297,24 @@ serve(async (req) => {
     const currentStage = session.current_stage;
     const isFirstMessage = messages.length <= 1;
 
-    // 构建系统提示
-    const systemPrompt = `你是劲老师，一位温柔的沟通陪伴者。
+    // Fetch system prompt from database
+    const { data: coachTemplate } = await supabase
+      .from('coach_templates')
+      .select('system_prompt')
+      .eq('coach_key', 'communication')
+      .single();
 
-【⚠️ 严格规则 - 必须遵守】
-1. 你当前在【阶段${currentStage}/4】
-2. 你【只能】使用系统允许的工具
-3. 【禁止】跳过任何阶段
-4. 【禁止】在用户明确说"生成简报"之前调用 generate_communication_briefing
-5. 每次回应必须以开放性问题结尾
+    const basePrompt = coachTemplate?.system_prompt || '';
+    
+    // Build complete system prompt with dynamic stage info
+    const systemPrompt = `${basePrompt}
 
-【你的声音】
-- 始终用"我"说话，像朋友聊天
-- 语气温柔但不做作，真诚但不说教
-- 每次回应80-150字，有呼吸感
-- 多用"嗯""我听到了""我能感受到"开头
+【当前阶段:${currentStage}/4】
+${getStagePrompt(currentStage)}
 
 ${isFirstMessage ? `【⭐ 首次对话】
 用温暖友好的方式开场，比如："嗨，我是劲老师 👋"
 ` : ''}
-【当前阶段任务】
-${getStagePrompt(currentStage)}
-
 ${userDifficulty ? `【用户难度评分】用户评价此次沟通难度为：${userDifficulty}/10。生成简报时使用此评分。` : ''}`;
 
     const availableTools = getAvailableTools(currentStage, session.briefing_requested);
