@@ -181,25 +181,31 @@ export function SchemePreview({
             </div>
 
             {/* Selling Points */}
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {scheme.selling_points.map((point, i) => (
-                <span
-                  key={i}
-                  className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full"
-                >
-                  ✨ {point}
-                </span>
-              ))}
-            </div>
+            {scheme.selling_points && scheme.selling_points.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {scheme.selling_points.map((point, i) => (
+                  <span
+                    key={i}
+                    className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full"
+                  >
+                    ✨ {point}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {/* CTA & Urgency */}
             <div className="flex items-center gap-2 text-xs">
-              <span className="bg-primary/10 text-primary px-2 py-1 rounded font-medium">
-                {scheme.call_to_action}
-              </span>
-              <span className="text-red-500 font-medium">
-                🔥 {scheme.urgency_text}
-              </span>
+              {scheme.call_to_action && (
+                <span className="bg-primary/10 text-primary px-2 py-1 rounded font-medium">
+                  {scheme.call_to_action}
+                </span>
+              )}
+              {scheme.urgency_text && (
+                <span className="text-red-500 font-medium">
+                  🔥 {scheme.urgency_text}
+                </span>
+              )}
             </div>
 
             {/* Trust Elements */}
