@@ -104,6 +104,7 @@ serve(async (req) => {
       'checkin_streak_milestone': '连续打卡里程碑',
       'checkin_reminder': '每日打卡提醒',
       'checkin_streak_break_warning': '打卡即将中断',
+      'login_success': '登录成功',
     };
 
     const scenarioName = scenarioNames[scenario] || '系统通知';
