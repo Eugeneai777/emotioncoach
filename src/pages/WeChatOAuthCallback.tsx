@@ -31,6 +31,13 @@ export default function WeChatOAuthCallback() {
           throw new Error(invokeError.message);
         }
 
+        // 处理绑定成功的情况（从设置页面来的绑定流程）
+        if (data?.success && state === 'bind') {
+          toast.success("微信账号绑定成功！");
+          navigate("/settings?tab=notifications");
+          return;
+        }
+
         if (data?.error) {
           if (data.error === 'already_bound') {
             toast.error("该微信已绑定其他账号");
