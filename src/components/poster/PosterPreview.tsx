@@ -10,10 +10,11 @@ interface PosterPreviewProps {
   backgroundImageUrl?: string;
   customTagline?: string;
   customSellingPoints?: string[];
+  scene?: 'default' | 'moments' | 'xiaohongshu' | 'wechat_group';
 }
 
 export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
-  ({ template, partnerId, entryType, backgroundImageUrl, customTagline, customSellingPoints }, ref) => {
+  ({ template, partnerId, entryType, backgroundImageUrl, customTagline, customSellingPoints, scene = 'default' }, ref) => {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
     useEffect(() => {
@@ -39,92 +40,587 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
       emotion_coach: 'linear-gradient(135deg, #22c55e 0%, #10b981 50%, #059669 100%)',
       parent_coach: 'linear-gradient(135deg, #a855f7 0%, #8b5cf6 50%, #7c3aed 100%)',
       communication_coach: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #4f46e5 100%)',
-      training_camp: 'linear-gradient(135deg, #f97316 0%, #ef4444 50%, #dc2626 100%)',
+      story_coach: 'linear-gradient(135deg, #f97316 0%, #f59e0b 50%, #eab308 100%)',
+      emotion_journal_21: 'linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f43f5e 100%)',
+      parent_emotion_21: 'linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #06b6d4 100%)',
       '365_member': 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #facc15 100%)',
       partner_recruit: 'linear-gradient(135deg, #f43f5e 0%, #ec4899 50%, #d946ef 100%)'
     };
 
-    // Template-specific content
-    const templateContent: Record<string, { title: string; subtitle: string; dataPoints: { value: string; label: string }[] }> = {
-      emotion_button: {
-        title: '情绪按钮',
-        subtitle: '基于神经科学的即时情绪稳定系统',
-        dataPoints: [
-          { value: '288', label: '认知提醒' },
-          { value: '9', label: '情绪场景' },
-          { value: '4', label: '阶段设计' },
-          { value: '100%', label: '即时可用' }
-        ]
-      },
-      emotion_coach: {
-        title: '情绪教练',
-        subtitle: 'AI深度陪伴你的每一次情绪梳理',
-        dataPoints: [
-          { value: '4', label: '部曲对话' },
-          { value: '∞', label: '无限对话' },
-          { value: '专属', label: '情绪简报' },
-          { value: '24h', label: '随时陪伴' }
-        ]
-      },
-      parent_coach: {
-        title: '亲子教练',
-        subtitle: '让亲子沟通更轻松更有爱',
-        dataPoints: [
-          { value: '科学', label: '育儿方法' },
-          { value: '专业', label: '心理支持' },
-          { value: '实用', label: '沟通技巧' },
-          { value: '持续', label: '成长陪伴' }
-        ]
-      },
-      communication_coach: {
-        title: '沟通教练',
-        subtitle: '轻松说出想说的话，让对方愿意听',
-        dataPoints: [
-          { value: '高效', label: '表达技巧' },
-          { value: '化解', label: '冲突方法' },
-          { value: '建立', label: '健康边界' },
-          { value: '提升', label: '影响力' }
-        ]
-      },
-      training_camp: {
-        title: '训练营',
-        subtitle: '21天打卡 · 社群陪伴 · 习惯养成',
-        dataPoints: [
-          { value: '21', label: '天打卡' },
-          { value: '每日', label: '视频学习' },
-          { value: '社群', label: '互相陪伴' },
-          { value: '证书', label: '完成奖励' }
-        ]
-      },
-      '365_member': {
-        title: '365会员',
-        subtitle: '全功能解锁，陪伴你一整年',
-        dataPoints: [
-          { value: '1000', label: 'AI点数' },
-          { value: '全部', label: '教练功能' },
-          { value: '专属', label: '训练营' },
-          { value: '365', label: '天有效' }
-        ]
-      },
-      partner_recruit: {
-        title: '有劲合伙人',
-        subtitle: 'AI时代的创业新机会',
-        dataPoints: [
-          { value: '50%', label: '最高佣金' },
-          { value: '3级', label: '分销体系' },
-          { value: '被动', label: '收入来源' },
-          { value: '0', label: '门槛启动' }
-        ]
+    // Get display content
+    const displayTagline = customTagline || template.tagline;
+    const displaySellingPoints = customSellingPoints && customSellingPoints.length > 0 
+      ? customSellingPoints 
+      : template.sellingPoints;
+
+    // Scene-specific CTA text
+    const getCtaText = () => {
+      if (scene === 'moments') return '👇 长按识别，开启疗愈之旅';
+      if (scene === 'xiaohongshu') return '🔗 扫码立即体验';
+      if (scene === 'wechat_group') return '👥 群友都在用，扫码加入';
+      return entryType === 'free' ? '🆓 扫码免费体验' : '💰 扫码 ¥9.9 开启';
+    };
+
+    // Render based on scene type
+    const renderContent = () => {
+      switch (scene) {
+        case 'moments':
+          return renderMomentsLayout();
+        case 'xiaohongshu':
+          return renderXiaohongshuLayout();
+        case 'wechat_group':
+          return renderWechatGroupLayout();
+        default:
+          return renderDefaultLayout();
       }
     };
 
-    const baseContent = templateContent[template.key] || templateContent.emotion_button;
-    
-    // Use custom content if provided
-    const content = {
-      ...baseContent,
-      subtitle: customTagline || baseContent.subtitle
-    };
+    // 朋友圈版：故事感排版 - 大标题 + 情感引导
+    const renderMomentsLayout = () => (
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: backgroundImageUrl 
+          ? 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%)'
+          : 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '24px 18px 16px',
+        color: 'white',
+        boxSizing: 'border-box'
+      }}>
+        {/* 顶部装饰光晕 */}
+        <div style={{
+          position: 'absolute',
+          top: '-50px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '200px',
+          height: '100px',
+          background: 'radial-gradient(ellipse, rgba(255,255,255,0.2) 0%, transparent 70%)',
+          pointerEvents: 'none'
+        }} />
+
+        {/* Emoji标识 */}
+        <div style={{ 
+          fontSize: '42px', 
+          textAlign: 'center',
+          marginBottom: '12px',
+          filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
+        }}>
+          {template.emoji}
+        </div>
+
+        {/* 主标语 - 故事感大字 */}
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '20px',
+          padding: '0 8px'
+        }}>
+          <p style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            lineHeight: 1.5,
+            textShadow: '0 2px 12px rgba(0,0,0,0.5)',
+            margin: 0,
+            letterSpacing: '0.5px'
+          }}>
+            「{displayTagline}」
+          </p>
+        </div>
+
+        {/* 卖点 - 诗意排列 */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          marginBottom: '16px',
+          padding: '0 12px'
+        }}>
+          {displaySellingPoints.slice(0, 3).map((point, idx) => (
+            <div 
+              key={idx}
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '20px',
+                padding: '10px 14px',
+                fontSize: '13px',
+                lineHeight: 1.4,
+                textAlign: 'center',
+                border: '1px solid rgba(255,255,255,0.2)',
+                textShadow: '0 1px 4px rgba(0,0,0,0.3)'
+              }}
+            >
+              ✨ {point}
+            </div>
+          ))}
+        </div>
+
+        {/* 情感引导语 */}
+        <div style={{
+          textAlign: 'center',
+          fontSize: '11px',
+          opacity: 0.85,
+          marginBottom: '12px',
+          fontStyle: 'italic'
+        }}>
+          — 愿你也能找到内心的力量 —
+        </div>
+
+        <div style={{ flex: 1 }} />
+
+        {/* 底部二维码区 */}
+        {renderQRSection()}
+      </div>
+    );
+
+    // 小红书版：数据卡片排版 - 标签风格 + 数据突出
+    const renderXiaohongshuLayout = () => (
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: backgroundImageUrl 
+          ? 'linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)'
+          : 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.35) 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '20px 16px 16px',
+        color: 'white',
+        boxSizing: 'border-box'
+      }}>
+        {/* 顶部标签栏 */}
+        <div style={{
+          display: 'flex',
+          gap: '6px',
+          marginBottom: '14px',
+          flexWrap: 'wrap'
+        }}>
+          <span style={{
+            background: 'rgba(255,255,255,0.9)',
+            color: '#ef4444',
+            fontSize: '10px',
+            padding: '4px 8px',
+            borderRadius: '10px',
+            fontWeight: '600'
+          }}>
+            🔥 热门推荐
+          </span>
+          <span style={{
+            background: 'rgba(255,255,255,0.2)',
+            fontSize: '10px',
+            padding: '4px 8px',
+            borderRadius: '10px'
+          }}>
+            #情绪管理
+          </span>
+          <span style={{
+            background: 'rgba(255,255,255,0.2)',
+            fontSize: '10px',
+            padding: '4px 8px',
+            borderRadius: '10px'
+          }}>
+            #心理健康
+          </span>
+        </div>
+
+        {/* Emoji + 产品名 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          marginBottom: '10px'
+        }}>
+          <span style={{ fontSize: '32px' }}>{template.emoji}</span>
+          <div>
+            <div style={{ 
+              fontSize: '18px', 
+              fontWeight: 'bold',
+              textShadow: '0 2px 8px rgba(0,0,0,0.4)'
+            }}>
+              {template.name}
+            </div>
+            <div style={{ 
+              fontSize: '10px', 
+              opacity: 0.9,
+              background: 'rgba(255,255,255,0.2)',
+              padding: '2px 6px',
+              borderRadius: '8px',
+              display: 'inline-block',
+              marginTop: '2px'
+            }}>
+              科学验证 · 专业设计
+            </div>
+          </div>
+        </div>
+
+        {/* 主标语 */}
+        <div style={{
+          fontSize: '15px',
+          fontWeight: '500',
+          lineHeight: 1.5,
+          marginBottom: '14px',
+          textShadow: '0 1px 6px rgba(0,0,0,0.4)',
+          padding: '0 4px'
+        }}>
+          {displayTagline}
+        </div>
+
+        {/* 数据卡片网格 */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '8px',
+          marginBottom: '14px'
+        }}>
+          {displaySellingPoints.slice(0, 4).map((point, idx) => {
+            // 提取数字或关键词
+            const match = point.match(/(\d+|∞)/);
+            const number = match ? match[1] : '✓';
+            const text = point.replace(/(\d+|∞)/, '').trim();
+            
+            return (
+              <div 
+                key={idx}
+                style={{
+                  background: 'rgba(255,255,255,0.95)',
+                  borderRadius: '12px',
+                  padding: '10px 8px',
+                  textAlign: 'center',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}
+              >
+                <div style={{ 
+                  fontSize: '20px', 
+                  fontWeight: 'bold',
+                  color: '#0d9488',
+                  marginBottom: '2px'
+                }}>
+                  {number}
+                </div>
+                <div style={{ 
+                  fontSize: '10px', 
+                  color: '#374151',
+                  lineHeight: 1.3
+                }}>
+                  {text || point}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ flex: 1 }} />
+
+        {/* 底部二维码区 */}
+        {renderQRSection()}
+      </div>
+    );
+
+    // 微信群版：社群推荐排版 - 群友背书 + 信任感
+    const renderWechatGroupLayout = () => (
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: backgroundImageUrl 
+          ? 'linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%)'
+          : 'linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.38) 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '20px 16px 16px',
+        color: 'white',
+        boxSizing: 'border-box'
+      }}>
+        {/* 顶部群友推荐标识 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '14px'
+        }}>
+          <div style={{
+            display: 'flex',
+            marginLeft: '-4px'
+          }}>
+            {['👤', '👤', '👤'].map((_, idx) => (
+              <div 
+                key={idx}
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: `hsl(${180 + idx * 30}, 60%, 50%)`,
+                  border: '2px solid white',
+                  marginLeft: idx > 0 ? '-8px' : '0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px'
+                }}
+              >
+                {['😊', '🥰', '😄'][idx]}
+              </div>
+            ))}
+          </div>
+          <span style={{
+            fontSize: '11px',
+            opacity: 0.95,
+            background: 'rgba(255,255,255,0.2)',
+            padding: '4px 10px',
+            borderRadius: '12px'
+          }}>
+            群友都在推荐 👍
+          </span>
+        </div>
+
+        {/* Emoji + 产品名 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          marginBottom: '12px'
+        }}>
+          <span style={{ 
+            fontSize: '36px',
+            filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.3))'
+          }}>
+            {template.emoji}
+          </span>
+          <div style={{ 
+            fontSize: '20px', 
+            fontWeight: 'bold',
+            textShadow: '0 2px 8px rgba(0,0,0,0.4)'
+          }}>
+            {template.name}
+          </div>
+        </div>
+
+        {/* 主标语 - 对话框样式 */}
+        <div style={{
+          background: 'rgba(255,255,255,0.95)',
+          borderRadius: '16px',
+          borderTopLeftRadius: '4px',
+          padding: '12px 14px',
+          marginBottom: '14px',
+          color: '#1f2937',
+          fontSize: '14px',
+          lineHeight: 1.5,
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+        }}>
+          💬 "{displayTagline}"
+        </div>
+
+        {/* 卖点列表 - 清单样式 */}
+        <div style={{
+          background: 'rgba(255,255,255,0.15)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '14px',
+          padding: '12px 14px',
+          marginBottom: '12px'
+        }}>
+          {displaySellingPoints.slice(0, 3).map((point, idx) => (
+            <div 
+              key={idx}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '12px',
+                lineHeight: 1.4,
+                marginBottom: idx < displaySellingPoints.slice(0, 3).length - 1 ? '8px' : '0'
+              }}
+            >
+              <span style={{
+                width: '18px',
+                height: '18px',
+                background: 'rgba(16, 185, 129, 0.9)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '10px',
+                flexShrink: 0
+              }}>
+                ✓
+              </span>
+              <span>{point}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* 低门槛提示 */}
+        <div style={{
+          textAlign: 'center',
+          fontSize: '11px',
+          background: 'rgba(251, 191, 36, 0.9)',
+          color: '#78350f',
+          padding: '6px 12px',
+          borderRadius: '20px',
+          marginBottom: '10px',
+          fontWeight: '500'
+        }}>
+          🎁 新用户免费体验 · 无需下载
+        </div>
+
+        <div style={{ flex: 1 }} />
+
+        {/* 底部二维码区 */}
+        {renderQRSection()}
+      </div>
+    );
+
+    // 默认布局 - 通用版
+    const renderDefaultLayout = () => (
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: backgroundImageUrl 
+          ? 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%)'
+          : 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.3) 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '24px 18px 16px',
+        color: 'white',
+        boxSizing: 'border-box'
+      }}>
+        {/* Emoji标识 */}
+        <div style={{ 
+          fontSize: '40px', 
+          textAlign: 'center',
+          marginBottom: '10px',
+          filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
+        }}>
+          {template.emoji}
+        </div>
+
+        {/* 产品名 */}
+        <h2 style={{ 
+          fontSize: '22px', 
+          fontWeight: 'bold', 
+          textAlign: 'center',
+          marginBottom: '8px',
+          textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+          margin: 0
+        }}>
+          {template.name}
+        </h2>
+
+        {/* 主标语 */}
+        <p style={{ 
+          fontSize: '14px', 
+          textAlign: 'center',
+          lineHeight: 1.5,
+          opacity: 0.95,
+          textShadow: '0 1px 4px rgba(0,0,0,0.4)',
+          margin: '0 0 16px 0',
+          padding: '0 8px'
+        }}>
+          {displayTagline}
+        </p>
+
+        {/* 卖点卡片 */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          marginBottom: '14px'
+        }}>
+          {displaySellingPoints.slice(0, 4).map((point, idx) => (
+            <div 
+              key={idx}
+              style={{
+                background: 'rgba(255,255,255,0.18)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                fontSize: '12px',
+                lineHeight: 1.4,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                border: '1px solid rgba(255,255,255,0.15)'
+              }}
+            >
+              <span style={{ fontSize: '14px' }}>✨</span>
+              <span>{point}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ flex: 1 }} />
+
+        {/* 底部二维码区 */}
+        {renderQRSection()}
+      </div>
+    );
+
+    // 通用二维码区域
+    const renderQRSection = () => (
+      <>
+        <div style={{
+          background: 'rgba(255,255,255,0.95)',
+          borderRadius: '14px',
+          padding: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+        }}>
+          {qrCodeUrl && (
+            <img 
+              src={qrCodeUrl} 
+              alt="QR Code"
+              style={{ 
+                width: '60px', 
+                height: '60px', 
+                borderRadius: '8px', 
+                flexShrink: 0,
+                border: '2px solid #f0f0f0'
+              }}
+            />
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ 
+              fontSize: '13px', 
+              fontWeight: 'bold',
+              marginBottom: '4px',
+              color: entryType === 'free' ? '#059669' : '#d97706'
+            }}>
+              {getCtaText()}
+            </div>
+            <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: 1.4 }}>
+              {entryType === 'free' 
+                ? '免费体验 · 10次AI对话' 
+                : '体验套餐 · 50点AI额度 · 365天有效'
+              }
+            </div>
+          </div>
+        </div>
+
+        {/* 品牌Footer */}
+        <div style={{
+          textAlign: 'center',
+          marginTop: '10px',
+          fontSize: '10px',
+          opacity: 0.85,
+          textShadow: '0 1px 3px rgba(0,0,0,0.3)'
+        }}>
+          有劲生活 · 情绪梳理教练
+        </div>
+      </>
+    );
 
     return (
       <div
@@ -166,116 +662,8 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           />
         )}
 
-        {/* Content Overlay */}
-        <div 
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            background: backgroundImageUrl 
-              ? 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%)'
-              : 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.3) 100%)',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '20px 16px 16px',
-            color: 'white',
-            boxSizing: 'border-box'
-          }}
-        >
-          {/* Top Section */}
-          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <div style={{ fontSize: '36px', marginBottom: '8px' }}>{template.emoji}</div>
-            <h2 style={{ 
-              fontSize: '22px', 
-              fontWeight: 'bold', 
-              marginBottom: '4px',
-              textShadow: '0 2px 8px rgba(0,0,0,0.4)',
-              margin: 0
-            }}>
-              {content.title}
-            </h2>
-            <p style={{ 
-              fontSize: '12px', 
-              opacity: 0.95,
-              textShadow: '0 1px 4px rgba(0,0,0,0.4)',
-              margin: 0
-            }}>
-              {content.subtitle}
-            </p>
-          </div>
-
-          {/* Data Points */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '8px',
-            marginBottom: '12px'
-          }}>
-            {content.dataPoints.map((point, idx) => (
-              <div 
-                key={idx}
-                style={{
-                  background: 'rgba(255,255,255,0.2)',
-                  backdropFilter: 'blur(8px)',
-                  borderRadius: '12px',
-                  padding: '10px 8px',
-                  textAlign: 'center'
-                }}
-              >
-                <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '2px' }}>{point.value}</div>
-                <div style={{ fontSize: '10px', opacity: 0.9 }}>{point.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Spacer */}
-          <div style={{ flex: 1 }} />
-
-          {/* Bottom Section - QR Code */}
-          <div style={{
-            background: 'rgba(255,255,255,0.95)',
-            borderRadius: '14px',
-            padding: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-          }}>
-            {qrCodeUrl && (
-              <img 
-                src={qrCodeUrl} 
-                alt="QR Code"
-                style={{ width: '64px', height: '64px', borderRadius: '6px', flexShrink: 0 }}
-              />
-            )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ 
-                fontSize: '13px', 
-                fontWeight: 'bold',
-                marginBottom: '3px',
-                color: entryType === 'free' ? '#059669' : '#d97706'
-              }}>
-                {entryType === 'free' ? '🆓 扫码免费体验' : '💰 扫码 ¥9.9 开启'}
-              </div>
-              <div style={{ fontSize: '10px', color: '#666', lineHeight: 1.4 }}>
-                体验套餐 · 50点AI额度 · 365天有效
-              </div>
-            </div>
-          </div>
-
-          {/* Brand Footer */}
-          <div style={{
-            textAlign: 'center',
-            marginTop: '10px',
-            fontSize: '10px',
-            opacity: 0.85,
-            textShadow: '0 1px 3px rgba(0,0,0,0.3)'
-          }}>
-            有劲生活 · 情绪梳理教练
-          </div>
-        </div>
+        {/* Render scene-specific content */}
+        {renderContent()}
       </div>
     );
   }
