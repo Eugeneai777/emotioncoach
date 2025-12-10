@@ -204,12 +204,23 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
         }
       }
 
-      // Always update messages when we have content to show
+      // Always update messages when we have content to show (must happen BEFORE setIsLoading(false))
       if (assistantContent && assistantContent.trim() && !isRegenerate) {
-        setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
+        setMessages(prev => {
+          const lastMsg = prev[prev.length - 1];
+          // Avoid duplicate assistant messages
+          if (lastMsg?.role === 'assistant' && lastMsg?.content === assistantContent) {
+            return prev;
+          }
+          // Check if we already added this message during streaming
+          if (lastMsg?.role === 'assistant') {
+            return [...prev.slice(0, -1), { role: 'assistant', content: assistantContent }];
+          }
+          return [...newMessages, { role: 'assistant', content: assistantContent }];
+        });
       }
       
-      console.log('Final state - content:', assistantContent.substring(0, 50), 'hasQuickOptions:', hasQuickOptions, 'hasSchemes:', hasSchemes);
+      console.log('Final state - content:', assistantContent?.substring(0, 50) || '(empty)', 'hasQuickOptions:', hasQuickOptions, 'hasSchemes:', hasSchemes);
 
     } catch (error) {
       console.error('Chat error:', error);
