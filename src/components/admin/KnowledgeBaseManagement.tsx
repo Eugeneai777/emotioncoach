@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Plus, Pencil, Trash2, Search, BookOpen, GraduationCap, FileText, Users, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search, BookOpen, HelpCircle, FileText, Megaphone } from "lucide-react";
 
 interface KnowledgeItem {
   id: string;
@@ -20,145 +21,168 @@ interface KnowledgeItem {
   keywords: string[] | null;
   display_order: number;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  doc_type: string | null;
+  coach_key: string | null;
+  camp_type: string | null;
 }
 
-const categoryConfig = {
-  faq: { label: '常见问题', icon: HelpCircle, color: 'bg-blue-500' },
-  guide: { label: '使用指南', icon: BookOpen, color: 'bg-green-500' },
-  policy: { label: '政策说明', icon: FileText, color: 'bg-amber-500' },
-  announcement: { label: '公告通知', icon: Megaphone, color: 'bg-purple-500' },
+interface CoachTemplate {
+  coach_key: string;
+  title: string;
+  emoji: string;
+}
+
+interface CampTemplate {
+  camp_type: string;
+  camp_name: string;
+  icon: string;
+}
+
+const docTypeConfig: Record<string, { label: string; color: string; icon: any }> = {
+  intro: { label: "介绍", color: "bg-blue-100 text-blue-800", icon: BookOpen },
+  camp: { label: "训练营", color: "bg-purple-100 text-purple-800", icon: GraduationCap },
+  faq: { label: "常见问题", color: "bg-green-100 text-green-800", icon: MessageCircle },
+  guide: { label: "使用指南", color: "bg-amber-100 text-amber-800", icon: FileText },
+  policy: { label: "政策说明", color: "bg-gray-100 text-gray-800", icon: FileText },
 };
+
+const scopeOptions = [
+  { value: "coach", label: "关联教练" },
+  { value: "camp", label: "关联训练营" },
+  { value: "general", label: "通用文档" },
+];
 
 export default function KnowledgeBaseManagement() {
   const [items, setItems] = useState<KnowledgeItem[]>([]);
+  const [coaches, setCoaches] = useState<CoachTemplate[]>([]);
+  const [camps, setCamps] = useState<CampTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [selectedCoach, setSelectedCoach] = useState<string>("all");
+  const [selectedCamp, setSelectedCamp] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<KnowledgeItem | null>(null);
-  
-  // 表单状态
   const [formData, setFormData] = useState({
-    category: 'faq',
-    title: '',
-    content: '',
-    keywords: '',
+    title: "",
+    content: "",
+    keywords: "",
     display_order: 0,
     is_active: true,
+    doc_type: "faq",
+    scope: "general",
+    coach_key: "",
+    camp_type: "",
   });
 
   useEffect(() => {
-    loadItems();
+    loadData();
   }, []);
 
-  const loadItems = async () => {
+  const loadData = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('support_knowledge_base')
-      .select('*')
-      .order('category')
-      .order('display_order');
-    
-    if (error) {
-      toast.error('加载知识库失败');
-      console.error(error);
-    } else {
-      setItems(data || []);
+    try {
+      const [itemsRes, coachesRes, campsRes] = await Promise.all([
+        supabase.from("support_knowledge_base").select("*").order("display_order"),
+        supabase.from("coach_templates").select("coach_key, title, emoji").eq("is_active", true).order("display_order"),
+        supabase.from("camp_templates").select("camp_type, camp_name, icon").eq("is_active", true).order("display_order"),
+      ]);
+
+      if (itemsRes.error) throw itemsRes.error;
+      if (coachesRes.error) throw coachesRes.error;
+      if (campsRes.error) throw campsRes.error;
+
+      setItems(itemsRes.data || []);
+      setCoaches(coachesRes.data || []);
+      setCamps(campsRes.data || []);
+    } catch (error) {
+      console.error("Error loading data:", error);
+      toast.error("加载数据失败");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSubmit = async () => {
-    if (!formData.title.trim() || !formData.content.trim()) {
-      toast.error('请填写标题和内容');
+    if (!formData.title || !formData.content) {
+      toast.error("请填写标题和内容");
       return;
     }
 
-    const keywordsArray = formData.keywords
-      .split(',')
-      .map(k => k.trim())
-      .filter(k => k.length > 0);
-
-    const payload = {
-      category: formData.category,
-      title: formData.title.trim(),
-      content: formData.content.trim(),
-      keywords: keywordsArray.length > 0 ? keywordsArray : null,
+    const dataToSave = {
+      title: formData.title,
+      content: formData.content,
+      keywords: formData.keywords.split(",").map(k => k.trim()).filter(Boolean),
       display_order: formData.display_order,
       is_active: formData.is_active,
+      doc_type: formData.doc_type,
+      category: formData.doc_type,
+      coach_key: formData.scope === "coach" ? formData.coach_key : null,
+      camp_type: formData.scope === "camp" ? formData.camp_type : null,
     };
 
-    if (editingItem) {
-      const { error } = await supabase
-        .from('support_knowledge_base')
-        .update(payload)
-        .eq('id', editingItem.id);
-      
-      if (error) {
-        toast.error('更新失败');
-        console.error(error);
+    try {
+      if (editingItem) {
+        const { error } = await supabase
+          .from("support_knowledge_base")
+          .update(dataToSave)
+          .eq("id", editingItem.id);
+        if (error) throw error;
+        toast.success("更新成功");
       } else {
-        toast.success('更新成功');
-        loadItems();
-        closeDialog();
+        const { error } = await supabase
+          .from("support_knowledge_base")
+          .insert([dataToSave]);
+        if (error) throw error;
+        toast.success("添加成功");
       }
-    } else {
-      const { error } = await supabase
-        .from('support_knowledge_base')
-        .insert(payload);
-      
-      if (error) {
-        toast.error('创建失败');
-        console.error(error);
-      } else {
-        toast.success('创建成功');
-        loadItems();
-        closeDialog();
-      }
+      closeDialog();
+      loadData();
+    } catch (error) {
+      console.error("Error saving:", error);
+      toast.error("保存失败");
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这条记录吗？')) return;
-    
-    const { error } = await supabase
-      .from('support_knowledge_base')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      toast.error('删除失败');
-      console.error(error);
-    } else {
-      toast.success('删除成功');
-      loadItems();
+    if (!confirm("确定删除此文档？")) return;
+    try {
+      const { error } = await supabase.from("support_knowledge_base").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("删除成功");
+      loadData();
+    } catch (error) {
+      console.error("Error deleting:", error);
+      toast.error("删除失败");
     }
   };
 
-  const handleToggleActive = async (item: KnowledgeItem) => {
-    const { error } = await supabase
-      .from('support_knowledge_base')
-      .update({ is_active: !item.is_active })
-      .eq('id', item.id);
-    
-    if (error) {
-      toast.error('更新失败');
-    } else {
-      loadItems();
+  const handleToggleActive = async (id: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("support_knowledge_base")
+        .update({ is_active: isActive })
+        .eq("id", id);
+      if (error) throw error;
+      loadData();
+    } catch (error) {
+      console.error("Error toggling:", error);
+      toast.error("更新失败");
     }
   };
 
   const openEditDialog = (item: KnowledgeItem) => {
     setEditingItem(item);
+    const scope = item.coach_key ? "coach" : item.camp_type ? "camp" : "general";
     setFormData({
-      category: item.category,
       title: item.title,
       content: item.content,
-      keywords: item.keywords?.join(', ') || '',
+      keywords: item.keywords?.join(", ") || "",
       display_order: item.display_order,
       is_active: item.is_active,
+      doc_type: item.doc_type || "faq",
+      scope,
+      coach_key: item.coach_key || "",
+      camp_type: item.camp_type || "",
     });
     setIsDialogOpen(true);
   };
@@ -167,236 +191,479 @@ export default function KnowledgeBaseManagement() {
     setIsDialogOpen(false);
     setEditingItem(null);
     setFormData({
-      category: 'faq',
-      title: '',
-      content: '',
-      keywords: '',
+      title: "",
+      content: "",
+      keywords: "",
       display_order: 0,
       is_active: true,
+      doc_type: "faq",
+      scope: "general",
+      coach_key: "",
+      camp_type: "",
     });
   };
 
-  const filteredItems = items.filter(item => {
-    const matchesSearch = searchQuery === '' || 
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.content.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  const getCoachItems = () => {
+    let filtered = items.filter(item => item.coach_key);
+    if (selectedCoach !== "all") {
+      filtered = filtered.filter(item => item.coach_key === selectedCoach);
+    }
+    if (searchQuery) {
+      filtered = filtered.filter(item =>
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.content.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    return filtered;
+  };
+
+  const getCampItems = () => {
+    let filtered = items.filter(item => item.camp_type);
+    if (selectedCamp !== "all") {
+      filtered = filtered.filter(item => item.camp_type === selectedCamp);
+    }
+    if (searchQuery) {
+      filtered = filtered.filter(item =>
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.content.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    return filtered;
+  };
+
+  const getGeneralItems = () => {
+    let filtered = items.filter(item => !item.coach_key && !item.camp_type);
+    if (searchQuery) {
+      filtered = filtered.filter(item =>
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.content.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    return filtered;
+  };
+
+  const renderDocCard = (item: KnowledgeItem) => {
+    const docType = docTypeConfig[item.doc_type || "faq"] || docTypeConfig.faq;
+    const DocIcon = docType.icon;
+
+    return (
+      <Card key={item.id} className={`${!item.is_active ? "opacity-60" : ""}`}>
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2">
+              <DocIcon className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-base">{item.title}</CardTitle>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className={docType.color}>{docType.label}</Badge>
+              <Switch
+                checked={item.is_active}
+                onCheckedChange={(checked) => handleToggleActive(item.id, checked)}
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{item.content}</p>
+          {item.keywords && item.keywords.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {item.keywords.slice(0, 5).map((kw, i) => (
+                <Badge key={i} variant="outline" className="text-xs">{kw}</Badge>
+              ))}
+              {item.keywords.length > 5 && (
+                <Badge variant="outline" className="text-xs">+{item.keywords.length - 5}</Badge>
+              )}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => openEditDialog(item)}>
+              <Pencil className="h-3 w-3 mr-1" />
+              编辑
+            </Button>
+            <Button size="sm" variant="outline" className="text-destructive" onClick={() => handleDelete(item.id)}>
+              <Trash2 className="h-3 w-3 mr-1" />
+              删除
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderCoachSection = () => {
+    const coachItems = getCoachItems();
+    const groupedByCoach = coaches.reduce((acc, coach) => {
+      acc[coach.coach_key] = coachItems.filter(item => item.coach_key === coach.coach_key);
+      return acc;
+    }, {} as Record<string, KnowledgeItem[]>);
+
+    if (selectedCoach !== "all") {
+      return (
+        <div className="grid gap-4 md:grid-cols-2">
+          {coachItems.map(renderDocCard)}
+          {coachItems.length === 0 && (
+            <div className="col-span-2 text-center py-8 text-muted-foreground">
+              暂无文档，点击"添加文档"创建
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {coaches.map(coach => {
+          const docs = groupedByCoach[coach.coach_key] || [];
+          return (
+            <Card key={coach.coach_key}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <span>{coach.emoji}</span>
+                  {coach.title}
+                  <Badge variant="secondary">{docs.length} 篇</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {docs.length > 0 ? (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {docs.map(renderDocCard)}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground py-4 text-center">暂无文档</p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderCampSection = () => {
+    const campItems = getCampItems();
+    const groupedByCamp = camps.reduce((acc, camp) => {
+      acc[camp.camp_type] = campItems.filter(item => item.camp_type === camp.camp_type);
+      return acc;
+    }, {} as Record<string, KnowledgeItem[]>);
+
+    if (selectedCamp !== "all") {
+      return (
+        <div className="grid gap-4 md:grid-cols-2">
+          {campItems.map(renderDocCard)}
+          {campItems.length === 0 && (
+            <div className="col-span-2 text-center py-8 text-muted-foreground">
+              暂无文档，点击"添加文档"创建
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {camps.map(camp => {
+          const docs = groupedByCamp[camp.camp_type] || [];
+          return (
+            <Card key={camp.camp_type}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <span>{camp.icon}</span>
+                  {camp.camp_name}
+                  <Badge variant="secondary">{docs.length} 篇</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {docs.length > 0 ? (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {docs.map(renderDocCard)}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground py-4 text-center">暂无文档</p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  };
 
   const stats = {
     total: items.length,
-    faq: items.filter(i => i.category === 'faq').length,
-    guide: items.filter(i => i.category === 'guide').length,
-    policy: items.filter(i => i.category === 'policy').length,
-    announcement: items.filter(i => i.category === 'announcement').length,
+    byCoach: items.filter(i => i.coach_key).length,
+    byCamp: items.filter(i => i.camp_type).length,
+    general: items.filter(i => !i.coach_key && !i.camp_type).length,
   };
+
+  if (loading) {
+    return <div className="flex justify-center py-8">加载中...</div>;
+  }
 
   return (
     <div className="space-y-6">
       {/* 统计卡片 */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <div className="text-sm text-muted-foreground">总条目</div>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-xs text-muted-foreground">总文档数</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
-        {Object.entries(categoryConfig).map(([key, config]) => (
-          <Card key={key}>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold">{stats[key as keyof typeof stats]}</div>
-              <div className="text-sm text-muted-foreground">{config.label}</div>
-            </CardContent>
-          </Card>
-        ))}
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-green-600" />
+              <div>
+                <p className="text-2xl font-bold">{stats.byCoach}</p>
+                <p className="text-xs text-muted-foreground">教练文档</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-purple-600" />
+              <div>
+                <p className="text-2xl font-bold">{stats.byCamp}</p>
+                <p className="text-xs text-muted-foreground">训练营文档</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-amber-600" />
+              <div>
+                <p className="text-2xl font-bold">{stats.general}</p>
+                <p className="text-xs text-muted-foreground">通用文档</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* 操作栏 */}
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <div className="flex gap-2 flex-1 w-full md:w-auto">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="搜索标题或内容..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="分类" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部分类</SelectItem>
-              {Object.entries(categoryConfig).map(([key, config]) => (
-                <SelectItem key={key} value={key}>{config.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* 搜索和操作栏 */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="relative w-full sm:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="搜索文档..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
         </div>
-        
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => closeDialog()}>
               <Plus className="h-4 w-4 mr-2" />
-              新增条目
+              添加文档
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingItem ? '编辑知识库条目' : '新增知识库条目'}</DialogTitle>
+              <DialogTitle>{editingItem ? "编辑文档" : "添加文档"}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
+              {/* 所属范围 */}
+              <div className="space-y-2">
+                <Label>所属范围</Label>
+                <Select value={formData.scope} onValueChange={(v) => setFormData({ ...formData, scope: v, coach_key: "", camp_type: "" })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {scopeOptions.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 关联对象 */}
+              {formData.scope === "coach" && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">分类</label>
-                  <Select value={formData.category} onValueChange={(v) => setFormData({...formData, category: v})}>
+                  <Label>选择教练</Label>
+                  <Select value={formData.coach_key} onValueChange={(v) => setFormData({ ...formData, coach_key: v })}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="选择教练" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(categoryConfig).map(([key, config]) => (
-                        <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                      {coaches.map(coach => (
+                        <SelectItem key={coach.coach_key} value={coach.coach_key}>
+                          {coach.emoji} {coach.title}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+              )}
+
+              {formData.scope === "camp" && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">排序</label>
-                  <Input
-                    type="number"
-                    value={formData.display_order}
-                    onChange={(e) => setFormData({...formData, display_order: parseInt(e.target.value) || 0})}
-                  />
+                  <Label>选择训练营</Label>
+                  <Select value={formData.camp_type} onValueChange={(v) => setFormData({ ...formData, camp_type: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择训练营" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {camps.map(camp => (
+                        <SelectItem key={camp.camp_type} value={camp.camp_type}>
+                          {camp.icon} {camp.camp_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-              
+              )}
+
+              {/* 文档类型 */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">标题</label>
+                <Label>文档类型</Label>
+                <Select value={formData.doc_type} onValueChange={(v) => setFormData({ ...formData, doc_type: v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(docTypeConfig).map(([key, config]) => (
+                      <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 标题 */}
+              <div className="space-y-2">
+                <Label>标题</Label>
                 <Input
                   value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  placeholder="如：如何开始使用情绪教练？"
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="文档标题"
                 />
               </div>
-              
+
+              {/* 内容 */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">内容</label>
+                <Label>内容</Label>
                 <Textarea
                   value={formData.content}
-                  onChange={(e) => setFormData({...formData, content: e.target.value})}
-                  placeholder="详细的回答或说明内容..."
-                  rows={6}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  placeholder="文档内容..."
+                  rows={8}
                 />
               </div>
-              
+
+              {/* 关键词 */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">关键词（用逗号分隔）</label>
+                <Label>关键词（逗号分隔）</Label>
                 <Input
                   value={formData.keywords}
-                  onChange={(e) => setFormData({...formData, keywords: e.target.value})}
-                  placeholder="如：情绪教练, 使用, 开始"
+                  onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
+                  placeholder="关键词1, 关键词2, ..."
                 />
-                <p className="text-xs text-muted-foreground">关键词用于AI智能匹配，请填写用户可能搜索的词语</p>
               </div>
-              
+
+              {/* 排序 */}
+              <div className="space-y-2">
+                <Label>排序（数字越小越靠前）</Label>
+                <Input
+                  type="number"
+                  value={formData.display_order}
+                  onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+
+              {/* 是否启用 */}
               <div className="flex items-center gap-2">
                 <Switch
                   checked={formData.is_active}
-                  onCheckedChange={(v) => setFormData({...formData, is_active: v})}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
                 />
-                <label className="text-sm">启用</label>
+                <Label>启用</Label>
               </div>
-              
-              <div className="flex justify-end gap-2 pt-4">
+
+              <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={closeDialog}>取消</Button>
-                <Button onClick={handleSubmit}>{editingItem ? '保存' : '创建'}</Button>
+                <Button onClick={handleSubmit}>保存</Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* 列表 */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-24">分类</TableHead>
-                <TableHead>标题</TableHead>
-                <TableHead className="hidden md:table-cell">关键词</TableHead>
-                <TableHead className="w-20">排序</TableHead>
-                <TableHead className="w-20">状态</TableHead>
-                <TableHead className="w-24">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">加载中...</TableCell>
-                </TableRow>
-              ) : filteredItems.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    暂无数据
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredItems.map((item) => {
-                  const config = categoryConfig[item.category as keyof typeof categoryConfig];
-                  const Icon = config?.icon || HelpCircle;
-                  return (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <Badge variant="secondary" className="gap-1">
-                          <Icon className="h-3 w-3" />
-                          {config?.label || item.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">{item.title}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-1 max-w-xs">
-                          {item.content}
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div className="flex flex-wrap gap-1">
-                          {item.keywords?.slice(0, 3).map((kw, i) => (
-                            <Badge key={i} variant="outline" className="text-xs">{kw}</Badge>
-                          ))}
-                          {item.keywords && item.keywords.length > 3 && (
-                            <Badge variant="outline" className="text-xs">+{item.keywords.length - 3}</Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{item.display_order}</TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={item.is_active}
-                          onCheckedChange={() => handleToggleActive(item)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => openEditDialog(item)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* 分类 Tab */}
+      <Tabs defaultValue="coach" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="coach" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            按教练
+          </TabsTrigger>
+          <TabsTrigger value="camp" className="flex items-center gap-2">
+            <GraduationCap className="h-4 w-4" />
+            按训练营
+          </TabsTrigger>
+          <TabsTrigger value="general" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            通用文档
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="coach" className="mt-4">
+          <div className="mb-4">
+            <Select value={selectedCoach} onValueChange={setSelectedCoach}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="筛选教练" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部教练</SelectItem>
+                {coaches.map(coach => (
+                  <SelectItem key={coach.coach_key} value={coach.coach_key}>
+                    {coach.emoji} {coach.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {renderCoachSection()}
+        </TabsContent>
+
+        <TabsContent value="camp" className="mt-4">
+          <div className="mb-4">
+            <Select value={selectedCamp} onValueChange={setSelectedCamp}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="筛选训练营" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部训练营</SelectItem>
+                {camps.map(camp => (
+                  <SelectItem key={camp.camp_type} value={camp.camp_type}>
+                    {camp.icon} {camp.camp_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {renderCampSection()}
+        </TabsContent>
+
+        <TabsContent value="general" className="mt-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            {getGeneralItems().map(renderDocCard)}
+            {getGeneralItems().length === 0 && (
+              <div className="col-span-2 text-center py-8 text-muted-foreground">
+                暂无通用文档，点击"添加文档"创建
+              </div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
