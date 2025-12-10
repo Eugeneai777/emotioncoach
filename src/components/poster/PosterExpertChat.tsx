@@ -357,7 +357,12 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="输入你的想法..."
-            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey && input.trim()) {
+                e.preventDefault();
+                sendMessage(input);
+              }
+            }}
             disabled={isLoading}
           />
           <Button
