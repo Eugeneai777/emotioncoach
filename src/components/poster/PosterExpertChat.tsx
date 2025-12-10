@@ -417,32 +417,31 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
 
       {/* Input */}
       {!generatedSchemes && (
-        <div className="flex gap-2 pt-3 border-t">
+        <form 
+          className="flex gap-2 pt-3 border-t"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (input.trim() && !isLoading) {
+              sendMessage(input);
+            }
+          }}
+        >
           <Input
+            type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="输入你的想法..."
-            onKeyDown={(e) => {
-              console.log('Key pressed:', e.key, 'Input:', input, 'isLoading:', isLoading);
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (input.trim() && !isLoading) {
-                  console.log('Sending message via Enter key');
-                  sendMessage(input);
-                }
-              }
-            }}
             disabled={isLoading}
+            autoComplete="off"
           />
           <Button
+            type="submit"
             size="icon"
-            onClick={() => sendMessage(input)}
             disabled={!input.trim() || isLoading}
           >
             <Send className="w-4 h-4" />
           </Button>
-        </div>
+        </form>
       )}
     </div>
   );
