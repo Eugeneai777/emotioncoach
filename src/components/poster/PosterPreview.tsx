@@ -34,6 +34,38 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
       generateQR();
     }, [partnerId, entryType]);
 
+    // Product slogan mapping
+    const getProductSlogan = (key: string): string => {
+      const slogans: Record<string, string> = {
+        emotion_button: '30秒情绪急救',
+        emotion_coach: 'AI深度陪伴梳理',
+        parent_coach: '科学化解亲子僵局',
+        communication_coach: '高情商沟通指南',
+        story_coach: '把经历变成力量',
+        emotion_journal_21: '21天建立新回路',
+        parent_emotion_21: '21天突破亲子困境',
+        '365_member': '一整年情绪自由',
+        partner_recruit: '边助人边赚收入'
+      };
+      return slogans[key] || '有劲生活';
+    };
+
+    // Product category mapping
+    const getProductCategory = (key: string): string => {
+      const categories: Record<string, string> = {
+        emotion_button: '情绪工具',
+        emotion_coach: 'AI教练',
+        parent_coach: 'AI教练',
+        communication_coach: 'AI教练',
+        story_coach: 'AI教练',
+        emotion_journal_21: '训练营',
+        parent_emotion_21: '训练营',
+        '365_member': '年度会员',
+        partner_recruit: '创业机会'
+      };
+      return categories[key] || '有劲生活';
+    };
+
     // Gradient backgrounds for different templates
     const gradientStyles: Record<string, string> = {
       emotion_button: 'linear-gradient(135deg, #0d9488 0%, #06b6d4 50%, #22d3ee 100%)',
@@ -108,10 +140,35 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
         <div style={{ 
           fontSize: '42px', 
           textAlign: 'center',
-          marginBottom: '12px',
+          marginBottom: '6px',
           filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
         }}>
           {template.emoji}
+        </div>
+
+        {/* 产品名 + 定位语 */}
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '12px'
+        }}>
+          <div style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+            marginBottom: '4px'
+          }}>
+            {template.name}
+          </div>
+          <div style={{
+            fontSize: '11px',
+            opacity: 0.9,
+            background: 'rgba(255,255,255,0.2)',
+            padding: '3px 10px',
+            borderRadius: '12px',
+            display: 'inline-block'
+          }}>
+            {getProductSlogan(template.key)}
+          </div>
         </div>
 
         {/* 主标语 - 故事感大字 */}
@@ -240,11 +297,20 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           <span style={{ fontSize: '32px' }}>{template.emoji}</span>
           <div>
             <div style={{ 
-              fontSize: '18px', 
+              fontSize: '20px', 
               fontWeight: 'bold',
               textShadow: '0 2px 8px rgba(0,0,0,0.4)'
             }}>
               {template.name}
+            </div>
+            {/* 产品定位语 */}
+            <div style={{ 
+              fontSize: '11px', 
+              opacity: 0.95,
+              marginTop: '3px',
+              textShadow: '0 1px 4px rgba(0,0,0,0.3)'
+            }}>
+              {getProductSlogan(template.key)}
             </div>
             <div style={{ 
               fontSize: '10px', 
@@ -253,9 +319,9 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
               padding: '2px 6px',
               borderRadius: '8px',
               display: 'inline-block',
-              marginTop: '2px'
+              marginTop: '4px'
             }}>
-              科学验证 · 专业设计
+              有劲生活 · 科学验证
             </div>
           </div>
         </div>
@@ -382,12 +448,12 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           </span>
         </div>
 
-        {/* Emoji + 产品名 */}
+        {/* Emoji + 产品名 + 类别标签 */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
-          marginBottom: '12px'
+          marginBottom: '8px'
         }}>
           <span style={{ 
             fontSize: '36px',
@@ -395,12 +461,38 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           }}>
             {template.emoji}
           </span>
-          <div style={{ 
-            fontSize: '20px', 
-            fontWeight: 'bold',
-            textShadow: '0 2px 8px rgba(0,0,0,0.4)'
-          }}>
-            {template.name}
+          <div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{ 
+                fontSize: '20px', 
+                fontWeight: 'bold',
+                textShadow: '0 2px 8px rgba(0,0,0,0.4)'
+              }}>
+                {template.name}
+              </span>
+              <span style={{
+                fontSize: '10px',
+                background: 'rgba(16, 185, 129, 0.9)',
+                color: 'white',
+                padding: '2px 8px',
+                borderRadius: '10px'
+              }}>
+                {getProductCategory(template.key)}
+              </span>
+            </div>
+            {/* 产品定位语 */}
+            <div style={{ 
+              fontSize: '11px', 
+              opacity: 0.9,
+              marginTop: '4px',
+              textShadow: '0 1px 4px rgba(0,0,0,0.3)'
+            }}>
+              {getProductSlogan(template.key)}
+            </div>
           </div>
         </div>
 
@@ -510,12 +602,28 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           fontSize: '22px', 
           fontWeight: 'bold', 
           textAlign: 'center',
-          marginBottom: '8px',
+          marginBottom: '4px',
           textShadow: '0 2px 8px rgba(0,0,0,0.4)',
           margin: 0
         }}>
           {template.name}
         </h2>
+
+        {/* 产品定位语 */}
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '10px'
+        }}>
+          <span style={{
+            fontSize: '12px',
+            background: 'rgba(255,255,255,0.25)',
+            padding: '4px 12px',
+            borderRadius: '12px',
+            textShadow: '0 1px 4px rgba(0,0,0,0.3)'
+          }}>
+            {getProductSlogan(template.key)}
+          </span>
+        </div>
 
         {/* 主标语 */}
         <p style={{ 
