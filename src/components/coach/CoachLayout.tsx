@@ -467,6 +467,7 @@ export const CoachLayout = ({
           isLoading={isLoading}
           hasMessages={messages.length > 0}
           gradient={gradient}
+          primaryColor={primaryColor}
           scenarioChips={scenarioChips}
           scenarioOnSelect={scenarioOnSelect}
           scenarioPrimaryColor={scenarioPrimaryColor}
