@@ -8,14 +8,15 @@ const corsHeaders = {
 };
 
 // 系统级模板ID配置 - 从环境变量读取或使用默认值
+// 统一使用打卡模板(thing1-4结构)
 const SYSTEM_TEMPLATE_IDS: Record<string, string> = {
   // 打卡相关场景使用打卡模板
   'checkin_success': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
   'checkin_streak_milestone': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
   'checkin_reminder': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
   'checkin_streak_break_warning': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
-  // 登录成功使用专用模板
-  'login_success': Deno.env.get('WECHAT_TEMPLATE_LOGIN') || Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
+  // 登录成功也使用打卡模板（结构相同）
+  'login_success': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
   // 其他场景使用通用模板
   'default': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
 };
