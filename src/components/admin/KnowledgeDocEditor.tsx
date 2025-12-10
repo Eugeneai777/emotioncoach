@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, Save, Eye } from "lucide-react";
+import { Trash2, Save, Eye, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -66,6 +66,7 @@ const KnowledgeDocEditor = ({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   const isEditing = !!item;
 
@@ -86,6 +87,36 @@ const KnowledgeDocEditor = ({
     }
     setPreviewMode(false);
   }, [item, docType, docTypeLabel, coachKey, coachName, campType, open]);
+
+  const handleAIGenerate = async () => {
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-knowledge-content", {
+        body: {
+          docType,
+          docTypeLabel,
+          coachKey,
+          coachName,
+          campType,
+          packageKey,
+          partnerLevel,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.title) setTitle(data.title);
+      if (data.keywords?.length) setKeywords(data.keywords.join(", "));
+      if (data.content) setContent(data.content);
+
+      toast.success("AI已生成内容，请检查并调整");
+    } catch (error: any) {
+      console.error("AI generate error:", error);
+      toast.error(error.message || "AI生成失败");
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!title.trim() || !content.trim()) {
@@ -192,15 +223,31 @@ const KnowledgeDocEditor = ({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="content">内容</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPreviewMode(!previewMode)}
-                  className="gap-1"
-                >
-                  <Eye className="w-4 h-4" />
-                  {previewMode ? "编辑" : "预览"}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAIGenerate}
+                    disabled={generating}
+                    className="gap-1 text-primary"
+                  >
+                    {generating ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    {generating ? "生成中..." : "AI智能填充"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPreviewMode(!previewMode)}
+                    className="gap-1"
+                  >
+                    <Eye className="w-4 h-4" />
+                    {previewMode ? "编辑" : "预览"}
+                  </Button>
+                </div>
               </div>
               {previewMode ? (
                 <div className="min-h-[300px] p-4 bg-muted/50 rounded-md whitespace-pre-wrap text-sm">
