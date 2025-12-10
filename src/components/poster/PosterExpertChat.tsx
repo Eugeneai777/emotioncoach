@@ -85,6 +85,17 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
     setIsLoading(true);
     setQuickOptions([]);
 
+    // Timeout protection - 30 seconds max
+    const timeoutId = setTimeout(() => {
+      console.log('Request timeout - 30s reached');
+      setIsLoading(false);
+      setMessages(prev => {
+        const lastMsg = prev[prev.length - 1];
+        if (lastMsg?.role === 'assistant') return prev;
+        return [...prev, { role: 'assistant', content: 'AI思考超时了，请重新发送消息试试 🤔' }];
+      });
+    }, 30000);
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/poster-promotion-expert`,
@@ -110,18 +121,25 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
       const decoder = new TextDecoder();
       let assistantContent = '';
       let toolCallsData: Record<string, { name: string; arguments: string }> = {};
+      let sseBuffer = ''; // Buffer for handling partial JSON across chunks
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        sseBuffer += chunk; // Accumulate chunks in buffer
+        
+        // Process complete lines only
+        const lines = sseBuffer.split('\n');
+        // Keep the last potentially incomplete line in buffer
+        sseBuffer = lines.pop() || '';
 
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const jsonStr = line.slice(6).trim();
           if (jsonStr === '[DONE]') continue;
+          if (!jsonStr) continue;
 
           try {
             const parsed = JSON.parse(jsonStr);
@@ -150,41 +168,57 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
               }
             }
           } catch (e) {
-            console.log('SSE parse issue (may be partial chunk):', jsonStr.substring(0, 100));
+            // JSON parse failed - might be split across chunks, skip this line
+            console.log('SSE parse skip:', jsonStr.substring(0, 50));
+          }
+        }
+      }
+      
+      // Process any remaining buffer content
+      if (sseBuffer.trim() && sseBuffer.startsWith('data: ')) {
+        const jsonStr = sseBuffer.slice(6).trim();
+        if (jsonStr && jsonStr !== '[DONE]') {
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed.choices?.[0]?.delta;
+            if (delta?.content) {
+              assistantContent += delta.content;
+            }
+          } catch (e) {
+            console.log('Final buffer parse skip');
           }
         }
       }
 
       // Process tool call results
-      console.log('Tool calls collected:', toolCallsData);
+      console.log('Tool calls collected:', Object.keys(toolCallsData).length);
       let hasSchemes = false;
       let hasQuickOptions = false;
       
       for (const key in toolCallsData) {
         const toolCall = toolCallsData[key];
-        console.log(`Processing tool: ${toolCall.name}, args length: ${toolCall.arguments.length}`);
+        console.log(`Processing tool: ${toolCall.name}`);
         
         if (toolCall.name === 'provide_quick_options' && toolCall.arguments) {
           try {
             const optionsData = JSON.parse(toolCall.arguments);
-            console.log('Quick options parsed:', optionsData);
             if (optionsData.options && Array.isArray(optionsData.options)) {
               setQuickOptions(optionsData.options);
               hasQuickOptions = true;
+              console.log('Quick options set:', optionsData.options.length);
             }
           } catch (e) {
-            console.error('Failed to parse quick options:', e, 'Raw args:', toolCall.arguments);
+            console.error('Failed to parse quick options:', e);
           }
         }
         
         if (toolCall.name === 'generate_poster_schemes' && toolCall.arguments) {
           try {
             const schemesData = JSON.parse(toolCall.arguments) as GeneratedSchemes;
-            console.log('Generated schemes:', schemesData);
+            console.log('Generated schemes set');
             setGeneratedSchemes(schemesData);
             hasSchemes = true;
             
-            // Add confirmation message
             if (!assistantContent) {
               assistantContent = '🎉 根据你的需求，我为你生成了2个差异化的推广方案！\n\n请选择最适合你的方案，然后我们就可以开始设计海报了！';
             }
@@ -194,25 +228,32 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
         }
       }
 
-      // Ensure we always have a message to display (fix for stuck UI)
-      // Check for empty or whitespace-only content - AI sometimes returns "" instead of null
-      if ((!assistantContent || !assistantContent.trim()) && Object.keys(toolCallsData).length > 0 && !hasSchemes) {
+      // Enhanced fallback logic - ensure we always have interactive content
+      if ((!assistantContent || !assistantContent.trim())) {
         if (hasQuickOptions) {
           assistantContent = '请从下方选项中选择，或者直接输入你的想法 👇';
+        } else if (hasSchemes) {
+          // Schemes are shown, message already set above
+        } else if (Object.keys(toolCallsData).length > 0) {
+          // Had tool calls but nothing parsed successfully - provide retry options
+          assistantContent = '让我重新整理一下思路...';
+          setQuickOptions([
+            { emoji: '🔄', label: '重新开始', value: '请重新开始询问我的推广需求' },
+            { emoji: '💡', label: '继续', value: '请继续' }
+          ]);
+          hasQuickOptions = true;
         } else {
           assistantContent = '请告诉我更多信息，帮我更好地了解你的推广需求 💡';
         }
       }
 
-      // Always update messages when we have content to show (must happen BEFORE setIsLoading(false))
+      // Always update messages when we have content
       if (assistantContent && assistantContent.trim() && !isRegenerate) {
         setMessages(prev => {
           const lastMsg = prev[prev.length - 1];
-          // Avoid duplicate assistant messages
           if (lastMsg?.role === 'assistant' && lastMsg?.content === assistantContent) {
             return prev;
           }
-          // Check if we already added this message during streaming
           if (lastMsg?.role === 'assistant') {
             return [...prev.slice(0, -1), { role: 'assistant', content: assistantContent }];
           }
@@ -220,15 +261,16 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
         });
       }
       
-      console.log('Final state - content:', assistantContent?.substring(0, 50) || '(empty)', 'hasQuickOptions:', hasQuickOptions, 'hasSchemes:', hasSchemes);
+      console.log('Final state - content:', assistantContent?.substring(0, 30) || '(empty)', 'options:', hasQuickOptions, 'schemes:', hasSchemes);
 
     } catch (error) {
       console.error('Chat error:', error);
-      setMessages([...messages, { 
+      setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: '抱歉，出了点问题，请重试一下 🙏' 
       }]);
     } finally {
+      clearTimeout(timeoutId);
       setIsLoading(false);
     }
   };
