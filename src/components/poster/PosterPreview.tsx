@@ -321,7 +321,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
               display: 'inline-block',
               marginTop: '4px'
             }}>
-              有劲生活 · 科学验证
+              有劲AI · 科学验证
             </div>
           </div>
         </div>
@@ -725,7 +725,7 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
           opacity: 0.85,
           textShadow: '0 1px 3px rgba(0,0,0,0.3)'
         }}>
-          有劲生活 · 情绪梳理教练
+          有劲AI · 每个人的生活教练
         </div>
       </>
     );
