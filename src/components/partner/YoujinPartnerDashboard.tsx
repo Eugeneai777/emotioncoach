@@ -189,6 +189,36 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
               paidCount={codeStats.paid}
             />
           </div>
+          
+          {/* 推广指南 */}
+          <div className="p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border border-teal-100">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-medium text-teal-800">💡 如何推广</h4>
+              <Button 
+                variant="link" 
+                size="sm" 
+                className="text-teal-600 p-0 h-auto"
+                onClick={() => navigate('/partner/promo-guide')}
+              >
+                了解推广模式 →
+              </Button>
+            </div>
+            <p className="text-sm text-teal-700">
+              设置入口类型后，你在社区分享、训练营打卡或情绪按钮分享时，生成的二维码会自动使用你的设置。用户扫码后即可按你选择的方式获得对话额度，并自动成为你的学员。
+            </p>
+          </div>
+        </TabsContent>
+
+        {/* 学员Tab */}
+        <TabsContent value="students" className="space-y-4 mt-4">
+          {/* 跟进提醒 */}
+          <ConversionAlerts partnerId={partner.id} />
+          
+          {/* 详细漏斗 */}
+          <ConversionFunnel partnerId={partner.id} />
+          
+          {/* 转化指南 */}
+          <ConversionGuide />
 
           {/* 群管理 - 折叠区块 */}
           <Collapsible open={groupExpanded} onOpenChange={setGroupExpanded}>
@@ -272,36 +302,6 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
               </CollapsibleContent>
             </Card>
           </Collapsible>
-          
-          {/* 推广指南 */}
-          <div className="p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border border-teal-100">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium text-teal-800">💡 如何推广</h4>
-              <Button 
-                variant="link" 
-                size="sm" 
-                className="text-teal-600 p-0 h-auto"
-                onClick={() => navigate('/partner/promo-guide')}
-              >
-                了解推广模式 →
-              </Button>
-            </div>
-            <p className="text-sm text-teal-700">
-              设置入口类型后，你在社区分享、训练营打卡或情绪按钮分享时，生成的二维码会自动使用你的设置。用户扫码后即可按你选择的方式获得对话额度，并自动成为你的学员。
-            </p>
-          </div>
-        </TabsContent>
-
-        {/* 学员Tab */}
-        <TabsContent value="students" className="space-y-4 mt-4">
-          {/* 跟进提醒 */}
-          <ConversionAlerts partnerId={partner.id} />
-          
-          {/* 详细漏斗 */}
-          <ConversionFunnel partnerId={partner.id} />
-          
-          {/* 转化指南 */}
-          <ConversionGuide />
           
           {/* 学员列表 */}
           <StudentList partnerId={partner.id} />
