@@ -4029,6 +4029,39 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_chat_sessions: {
+        Row: {
+          billed_minutes: number
+          coach_key: string
+          created_at: string | null
+          duration_seconds: number
+          id: string
+          total_cost: number
+          transcript_summary: string | null
+          user_id: string
+        }
+        Insert: {
+          billed_minutes?: number
+          coach_key: string
+          created_at?: string | null
+          duration_seconds?: number
+          id?: string
+          total_cost?: number
+          transcript_summary?: string | null
+          user_id: string
+        }
+        Update: {
+          billed_minutes?: number
+          coach_key?: string
+          created_at?: string | null
+          duration_seconds?: number
+          id?: string
+          total_cost?: number
+          transcript_summary?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       wechat_template_messages: {
         Row: {
           data: Json
