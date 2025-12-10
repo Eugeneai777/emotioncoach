@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Download, Loader2 } from "lucide-react";
-import { posterTemplates } from "./PosterTemplateGrid";
+import { posterTemplates, type SceneType } from "./PosterTemplateGrid";
 import { PosterPreview } from "./PosterPreview";
 import { BackgroundSourceSelector } from "./BackgroundSourceSelector";
 import { UnsplashImagePicker } from "./UnsplashImagePicker";
@@ -15,9 +15,20 @@ interface PosterGeneratorProps {
   partnerId: string;
   entryType: 'free' | 'paid';
   onBack: () => void;
+  customTagline?: string;
+  customSellingPoints?: string[];
+  scene?: SceneType;
 }
 
-export function PosterGenerator({ templateKey, partnerId, entryType, onBack }: PosterGeneratorProps) {
+export function PosterGenerator({ 
+  templateKey, 
+  partnerId, 
+  entryType, 
+  onBack,
+  customTagline,
+  customSellingPoints,
+  scene = 'default'
+}: PosterGeneratorProps) {
   const [backgroundSource, setBackgroundSource] = useState<'unsplash' | 'ai'>('unsplash');
   const [isGenerating, setIsGenerating] = useState(false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string>('');
@@ -35,6 +46,10 @@ export function PosterGenerator({ templateKey, partnerId, entryType, onBack }: P
     );
   }
 
+  // Use custom copy if provided, otherwise use template default
+  const displayTagline = customTagline || template.tagline;
+  const displaySellingPoints = customSellingPoints || template.sellingPoints;
+
   const generateAIBackground = async () => {
     setIsGenerating(true);
     try {
@@ -43,7 +58,9 @@ export function PosterGenerator({ templateKey, partnerId, entryType, onBack }: P
         emotion_coach: `Create a warm nurturing poster background with soft green tones. Gentle flowing organic shapes suggesting growth and support. Warm lighting, professional yet comforting. Vertical 9:16 ratio. No text.`,
         parent_coach: `Create a warm family-themed poster background with soft purple and lavender tones. Gentle abstract shapes suggesting connection and love. Warm, inviting atmosphere. Vertical 9:16 ratio. No text.`,
         communication_coach: `Create a professional poster background with calm blue and indigo gradients. Subtle connected shapes suggesting communication flow. Modern, trustworthy aesthetic. Vertical 9:16 ratio. No text.`,
-        training_camp: `Create an energetic poster background with warm orange and red gradients. Dynamic shapes suggesting progress and achievement. Motivating, active atmosphere. Vertical 9:16 ratio. No text.`,
+        story_coach: `Create an inspiring poster background with warm orange and amber gradients. Flowing shapes suggesting narrative and journey. Creative, storytelling atmosphere. Vertical 9:16 ratio. No text.`,
+        emotion_journal_21: `Create an energetic poster background with purple and pink gradients. Dynamic shapes suggesting progress and transformation. Motivating, active atmosphere. Vertical 9:16 ratio. No text.`,
+        parent_emotion_21: `Create a warm family poster background with emerald and teal gradients. Shapes suggesting connection and breakthrough. Hopeful, nurturing atmosphere. Vertical 9:16 ratio. No text.`,
         '365_member': `Create a premium poster background with elegant gold and amber gradients. Subtle luxurious textures suggesting value and exclusivity. Sophisticated, high-end aesthetic. Vertical 9:16 ratio. No text.`,
         partner_recruit: `Create an inspiring poster background with vibrant rose and pink gradients. Dynamic upward-flowing shapes suggesting growth and opportunity. Energetic, ambitious atmosphere. Vertical 9:16 ratio. No text.`
       };
@@ -116,6 +133,14 @@ export function PosterGenerator({ templateKey, partnerId, entryType, onBack }: P
     }
   };
 
+  // Scene label for display
+  const sceneLabels: Record<SceneType, string> = {
+    default: '通用版',
+    moments: '朋友圈版',
+    xiaohongshu: '小红书版',
+    wechat_group: '微信群版'
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -123,12 +148,19 @@ export function PosterGenerator({ templateKey, partnerId, entryType, onBack }: P
         <Button variant="ghost" size="icon" onClick={onBack}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h2 className="font-semibold flex items-center gap-2">
             <span className="text-xl">{template.emoji}</span>
             {template.name}推广海报
           </h2>
-          <p className="text-xs text-muted-foreground">{template.tagline}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-muted-foreground line-clamp-1">{displayTagline}</p>
+            {scene !== 'default' && (
+              <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                {sceneLabels[scene]}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -176,6 +208,8 @@ export function PosterGenerator({ templateKey, partnerId, entryType, onBack }: P
               partnerId={partnerId}
               entryType={entryType}
               backgroundImageUrl={backgroundImageUrl}
+              customTagline={displayTagline}
+              customSellingPoints={displaySellingPoints}
             />
           </div>
         </CardContent>
