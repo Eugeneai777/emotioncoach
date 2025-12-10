@@ -60,12 +60,14 @@ serve(async (req) => {
 
     console.log('Got user info:', userInfo.nickname);
 
-    // 检查是否已存在该 openid 的映射
-    const { data: existingMapping } = await supabaseClient
+    // 检查是否已存在该 openid 的映射（支持一个微信绑定多个账号）
+    const { data: existingMappings } = await supabaseClient
       .from('wechat_user_mappings')
       .select('system_user_id')
-      .eq('openid', tokenData.openid)
-      .single();
+      .eq('openid', tokenData.openid);
+    
+    // 取第一个绑定的用户作为默认登录用户
+    const existingMapping = existingMappings && existingMappings.length > 0 ? existingMappings[0] : null;
 
     let finalUserId: string | null = null;
     let isNewUser = false;
@@ -105,7 +107,7 @@ serve(async (req) => {
               isNewUser = false;
               console.log('Found existing user by email:', finalUserId);
               
-              // 确保映射存在
+              // 确保映射存在（支持多账号绑定同一微信）
               await supabaseClient
                 .from('wechat_user_mappings')
                 .upsert({
@@ -116,7 +118,7 @@ serve(async (req) => {
                   avatar_url: userInfo.headimgurl,
                   subscribe_status: true,
                   updated_at: new Date().toISOString(),
-                }, { onConflict: 'openid' });
+                }, { onConflict: 'openid,system_user_id' });
             } else {
               console.error('Sign up error:', signUpError);
               return new Response(
@@ -163,9 +165,18 @@ serve(async (req) => {
         );
       }
 
-      if (existingMapping?.system_user_id && existingMapping.system_user_id !== user.id) {
+      // 检查当前用户是否已经绑定过这个微信（允许不同用户绑定同一微信）
+      const { data: existingUserMapping } = await supabaseClient
+        .from('wechat_user_mappings')
+        .select('id')
+        .eq('openid', tokenData.openid)
+        .eq('system_user_id', user.id)
+        .maybeSingle();
+      
+      if (existingUserMapping) {
+        // 当前用户已绑定此微信，返回成功
         return new Response(
-          JSON.stringify({ error: 'already_bound' }),
+          JSON.stringify({ success: true, isNewUser: false, alreadyBound: true }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -183,7 +194,7 @@ serve(async (req) => {
       );
     }
 
-    // 保存或更新用户映射
+    // 保存或更新用户映射（支持一个微信绑定多个账号，冲突检测基于 openid + system_user_id）
     const { error: upsertError } = await supabaseClient
       .from('wechat_user_mappings')
       .upsert({
@@ -198,7 +209,7 @@ serve(async (req) => {
         registered_at: isNewUser ? new Date().toISOString() : undefined,
         updated_at: new Date().toISOString(),
       }, {
-        onConflict: 'openid'
+        onConflict: 'openid,system_user_id'
       });
 
     if (upsertError) {
