@@ -113,36 +113,35 @@ export function PosterGenerator({
       const posterWidth = 300;
       const posterHeight = 533;
       
-      // Create a wrapper container with fixed dimensions
-      const wrapper = document.createElement('div');
-      wrapper.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: ${posterWidth}px;
-        height: ${posterHeight}px;
-        z-index: 99999;
-        background: transparent;
-        overflow: visible;
-      `;
+      // 保存原始样式
+      const originalTransform = posterElement.style.transform;
+      const originalPosition = posterElement.style.position;
+      const originalTop = posterElement.style.top;
+      const originalLeft = posterElement.style.left;
+      const originalZIndex = posterElement.style.zIndex;
+      const originalWidth = posterElement.style.width;
+      const originalHeight = posterElement.style.height;
       
-      // Clone the poster element
-      const clone = posterElement.cloneNode(true) as HTMLElement;
-      clone.style.cssText = `
-        width: ${posterWidth}px !important;
-        height: ${posterHeight}px !important;
-        min-width: ${posterWidth}px !important;
-        min-height: ${posterHeight}px !important;
-        transform: none !important;
-        position: relative !important;
-      `;
+      // 查找并临时禁用父容器的缩放
+      const previewContainer = posterElement.parentElement;
+      let originalContainerTransform = '';
+      if (previewContainer) {
+        originalContainerTransform = previewContainer.style.transform;
+        previewContainer.style.transform = 'none';
+      }
       
-      wrapper.appendChild(clone);
-      document.body.appendChild(wrapper);
+      // 将海报移到可见位置
+      posterElement.style.position = 'fixed';
+      posterElement.style.top = '0';
+      posterElement.style.left = '0';
+      posterElement.style.zIndex = '99999';
+      posterElement.style.transform = 'none';
+      posterElement.style.width = `${posterWidth}px`;
+      posterElement.style.height = `${posterHeight}px`;
       
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      const canvas = await html2canvas(clone, {
+      const canvas = await html2canvas(posterElement, {
         scale: 3,
         useCORS: true,
         allowTaint: true,
@@ -152,8 +151,18 @@ export function PosterGenerator({
         height: posterHeight,
       });
 
-      // Remove wrapper
-      document.body.removeChild(wrapper);
+      // 恢复原始样式
+      posterElement.style.transform = originalTransform;
+      posterElement.style.position = originalPosition;
+      posterElement.style.top = originalTop;
+      posterElement.style.left = originalLeft;
+      posterElement.style.zIndex = originalZIndex;
+      posterElement.style.width = originalWidth;
+      posterElement.style.height = originalHeight;
+      
+      if (previewContainer) {
+        previewContainer.style.transform = originalContainerTransform;
+      }
 
       const link = document.createElement('a');
       link.download = `${template.name}-推广海报.png`;

@@ -162,37 +162,37 @@ export default function PosterCenter() {
     try {
       const posterElement = posterRef.current;
       
-      // Create a wrapper container with fixed dimensions
-      const wrapper = document.createElement('div');
-      wrapper.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: ${selectedPosterSize.width}px;
-        height: ${selectedPosterSize.height}px;
-        z-index: 99999;
-        background: transparent;
-        overflow: visible;
-      `;
+      // 保存原始样式
+      const originalTransform = posterElement.style.transform;
+      const originalPosition = posterElement.style.position;
+      const originalTop = posterElement.style.top;
+      const originalLeft = posterElement.style.left;
+      const originalZIndex = posterElement.style.zIndex;
+      const originalWidth = posterElement.style.width;
+      const originalHeight = posterElement.style.height;
       
-      // Clone the poster element
-      const clone = posterElement.cloneNode(true) as HTMLElement;
-      clone.style.cssText = `
-        width: ${selectedPosterSize.width}px !important;
-        height: ${selectedPosterSize.height}px !important;
-        min-width: ${selectedPosterSize.width}px !important;
-        min-height: ${selectedPosterSize.height}px !important;
-        transform: none !important;
-        position: relative !important;
-      `;
+      // 查找并临时禁用父容器的缩放
+      const previewContainer = posterElement.parentElement;
+      let originalContainerTransform = '';
+      if (previewContainer) {
+        originalContainerTransform = previewContainer.style.transform;
+        previewContainer.style.transform = 'none';
+      }
       
-      wrapper.appendChild(clone);
-      document.body.appendChild(wrapper);
+      // 将海报移到可见位置，确保不受缩放影响
+      posterElement.style.position = 'fixed';
+      posterElement.style.top = '0';
+      posterElement.style.left = '0';
+      posterElement.style.zIndex = '99999';
+      posterElement.style.transform = 'none';
+      posterElement.style.width = `${selectedPosterSize.width}px`;
+      posterElement.style.height = `${selectedPosterSize.height}px`;
       
-      // Wait for render
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 等待重新渲染
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      const canvas = await html2canvas(clone, {
+      // 直接截图原始元素（保留所有内部布局）
+      const canvas = await html2canvas(posterElement, {
         scale: 3,
         useCORS: true,
         allowTaint: true,
@@ -202,8 +202,18 @@ export default function PosterCenter() {
         height: selectedPosterSize.height,
       });
 
-      // Remove wrapper
-      document.body.removeChild(wrapper);
+      // 恢复原始样式
+      posterElement.style.transform = originalTransform;
+      posterElement.style.position = originalPosition;
+      posterElement.style.top = originalTop;
+      posterElement.style.left = originalLeft;
+      posterElement.style.zIndex = originalZIndex;
+      posterElement.style.width = originalWidth;
+      posterElement.style.height = originalHeight;
+      
+      if (previewContainer) {
+        previewContainer.style.transform = originalContainerTransform;
+      }
 
       const link = document.createElement('a');
       link.download = `promotion-poster-${selectedPosterSize.key}-${Date.now()}.png`;
