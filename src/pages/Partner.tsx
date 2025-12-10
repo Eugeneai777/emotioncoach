@@ -72,7 +72,7 @@ export default function Partner() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate("/partner/benefits")}
+              onClick={() => navigate(partner?.partner_type === 'youjin' ? "/partner/youjin-plan" : "/partner/benefits")}
               className="gap-2"
             >
               <Gift className="w-4 h-4" />
