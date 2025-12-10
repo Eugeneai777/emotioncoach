@@ -524,7 +524,7 @@ export default function PosterCenter() {
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="font-medium">推广海报中心</h1>
+          <h1 className="font-medium">海报工坊</h1>
           <div className="w-10" />
         </div>
       </div>
