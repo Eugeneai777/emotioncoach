@@ -42,6 +42,7 @@ import PartnerIntro from "./pages/PartnerIntro";
 import PartnerTypeSelector from "./pages/PartnerTypeSelector";
 import YoujinPartnerIntro from "./pages/YoujinPartnerIntro";
 import YoujinPartnerPlan from "./pages/YoujinPartnerPlan";
+import PromoGuide from "./pages/partner/PromoGuide";
 import RedeemCode from "./pages/RedeemCode";
 import Claim from "./pages/Claim";
 import PayEntry from "./pages/PayEntry";
@@ -106,6 +107,7 @@ const App = () => (
           <Route path="/partner/type" element={<PartnerTypeSelector />} />
           <Route path="/partner/youjin-intro" element={<YoujinPartnerIntro />} />
           <Route path="/partner/youjin-plan" element={<YoujinPartnerPlan />} />
+          <Route path="/partner/promo-guide" element={<PromoGuide />} />
           <Route path="/partner-intro" element={<PartnerIntro />} />
           <Route path="/partner" element={<Partner />} />
           <Route path="/partner/benefits" element={<PartnerBenefits />} />
