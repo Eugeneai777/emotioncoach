@@ -218,3 +218,6 @@ verify_jwt = true
 
 [functions.track-poster-scan]
 verify_jwt = false
+
+[functions.get-wechat-bind-url]
+verify_jwt = true
