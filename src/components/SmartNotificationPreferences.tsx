@@ -35,26 +35,10 @@ export function SmartNotificationPreferences() {
     icon: string;
   } | null>(null);
   
-  // 微信公众号状态
+  // 微信公众号状态（简化：用户只需开关，系统统一配置AppID/AppSecret）
   const [wechatEnabled, setWechatEnabled] = useState(false);
-  const [wechatAppId, setWechatAppId] = useState("");
-  const [wechatAppSecret, setWechatAppSecret] = useState("");
-  const [wechatToken, setWechatToken] = useState("");
-  const [wechatEncodingAESKey, setWechatEncodingAESKey] = useState("");
-  const [wechatTemplateIds, setWechatTemplateIds] = useState<Record<string, string>>({
-    default: "",
-    daily_reminder: "",
-    goal_milestone: "",
-    sustained_low_mood: "",
-    inactivity: "",
-  });
   const [wechatBound, setWechatBound] = useState(false);
   const [testingWechat, setTestingWechat] = useState(false);
-  
-  // 微信代理配置
-  const [wechatProxyEnabled, setWechatProxyEnabled] = useState(false);
-  const [wechatProxyUrl, setWechatProxyUrl] = useState("");
-  const [wechatProxyAuthToken, setWechatProxyAuthToken] = useState("");
 
   useEffect(() => {
     loadPreferences();
@@ -75,10 +59,10 @@ export function SmartNotificationPreferences() {
 
       setIsAdmin(!!roleData);
 
-      // 加载用户个人偏好
+      // 加载用户个人偏好（简化：只获取必要的字段）
       const { data, error } = await supabase
         .from("profiles")
-        .select("smart_notification_enabled, notification_frequency, preferred_encouragement_style, wecom_enabled, wecom_webhook_url, wecom_corp_id, wecom_corp_secret, wecom_agent_id, wechat_enabled, wechat_appid, wechat_appsecret, wechat_token, wechat_encoding_aes_key, wechat_template_ids, wechat_proxy_enabled, wechat_proxy_url, wechat_proxy_auth_token")
+        .select("smart_notification_enabled, notification_frequency, preferred_encouragement_style, wecom_enabled, wecom_webhook_url, wecom_corp_id, wecom_corp_secret, wecom_agent_id, wechat_enabled")
         .eq("id", user.id)
         .single();
 
@@ -94,21 +78,6 @@ export function SmartNotificationPreferences() {
         setWecomCorpSecret(data.wecom_corp_secret ?? "");
         setWecomAgentId(data.wecom_agent_id ?? "");
         setWechatEnabled(data.wechat_enabled ?? false);
-        setWechatAppId(data.wechat_appid ?? "");
-        setWechatAppSecret(data.wechat_appsecret ?? "");
-        setWechatToken(data.wechat_token ?? "");
-        setWechatEncodingAESKey(data.wechat_encoding_aes_key ?? "");
-        const templateIds = data.wechat_template_ids as Record<string, string> | null;
-        setWechatTemplateIds(templateIds || {
-          default: "",
-          daily_reminder: "",
-          goal_milestone: "",
-          sustained_low_mood: "",
-          inactivity: "",
-        });
-        setWechatProxyEnabled(data.wechat_proxy_enabled ?? false);
-        setWechatProxyUrl(data.wechat_proxy_url ?? "");
-        setWechatProxyAuthToken(data.wechat_proxy_auth_token ?? "");
       }
 
       // 检查是否已绑定微信
@@ -174,14 +143,7 @@ export function SmartNotificationPreferences() {
           wecom_corp_secret: wecomCorpSecret.trim() || null,
           wecom_agent_id: wecomAgentId.trim() || null,
           wechat_enabled: wechatEnabled,
-          wechat_appid: wechatAppId.trim() || null,
-          wechat_appsecret: wechatAppSecret.trim() || null,
-          wechat_token: wechatToken.trim() || null,
-          wechat_encoding_aes_key: wechatEncodingAESKey.trim() || null,
-          wechat_template_ids: wechatTemplateIds,
-          wechat_proxy_enabled: wechatProxyEnabled,
-          wechat_proxy_url: wechatProxyUrl.trim() || null,
-          wechat_proxy_auth_token: wechatProxyAuthToken.trim() || null,
+          // 注意：AppID/AppSecret/Token/EncodingAESKey/TemplateIDs/Proxy 现在由系统统一配置
         })
         .eq("id", user.id);
 
@@ -336,13 +298,22 @@ export function SmartNotificationPreferences() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const redirectUri = encodeURIComponent(
-      `${window.location.origin}/wechat-oauth-callback`
-    );
-    const state = user.id;
-    const authUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${wechatAppId}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=${state}#wechat_redirect`;
+    // 使用系统配置的 AppID（从环境变量获取）
+    // 由于前端无法直接访问 Supabase Secrets，通过后端 Edge Function 获取绑定链接
+    const { data, error } = await supabase.functions.invoke("get-wechat-bind-url", {
+      body: { redirectUri: `${window.location.origin}/wechat-oauth-callback` }
+    });
 
-    window.location.href = authUrl;
+    if (error || !data?.url) {
+      toast({
+        title: "获取绑定链接失败",
+        description: "请联系管理员检查微信公众号配置",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    window.location.href = data.url;
   };
 
   const testWechatConnection = async () => {
@@ -913,261 +884,31 @@ export function SmartNotificationPreferences() {
 
               {wechatEnabled && (
                 <>
+                  {/* 简化的用户说明 */}
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription className="text-xs">
-                      <strong>配置说明：</strong>
+                      <strong>使用说明：</strong>
                       <ol className="list-decimal list-inside mt-2 space-y-1">
-                        <li>登录微信公众平台（mp.weixin.qq.com）</li>
-                        <li>在"设置与开发 → 基本配置"中获取 AppID 和 AppSecret</li>
-                        <li>配置服务器地址、Token和消息加密密钥</li>
-                        <li>在"功能 → 模板消息"中申请并获取模板ID</li>
-                        <li>保存配置后，点击"绑定微信账号"进行授权</li>
+                        <li>点击"绑定微信账号"按钮，使用微信扫码授权</li>
+                        <li>授权成功后，系统会通过微信公众号向您推送通知</li>
+                        <li>您可以随时关闭此开关停止接收通知</li>
                       </ol>
                     </AlertDescription>
                   </Alert>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="wechat-appid">AppID</Label>
-                    <Input
-                      id="wechat-appid"
-                      type="text"
-                      placeholder="wx1234567890abcdef"
-                      value={wechatAppId}
-                      onChange={(e) => setWechatAppId(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="wechat-appsecret">AppSecret</Label>
-                    <Input
-                      id="wechat-appsecret"
-                      type="password"
-                      placeholder="请输入 AppSecret（将加密存储）"
-                      value={wechatAppSecret}
-                      onChange={(e) => setWechatAppSecret(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>服务器配置</Label>
-                    <div className="p-4 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
-                      <div className="space-y-2">
-                        <Label className="text-xs text-muted-foreground">服务器地址(URL)</Label>
-                        <code className="block p-2 rounded bg-background/80 text-xs break-all font-mono border border-border">
-                          https://vlsuzskvykddwrxbmcbu.supabase.co/functions/v1/wechat-callback
-                        </code>
-                        <p className="text-xs text-muted-foreground">
-                          请在微信公众平台"设置与开发 → 基本配置"中填入此URL
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="wechat-token" className="text-xs text-muted-foreground">Token（令牌）</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="wechat-token"
-                            value={wechatToken}
-                            onChange={(e) => setWechatToken(e.target.value)}
-                            placeholder="3-32位英文或数字"
-                            maxLength={32}
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const token = Math.random().toString(36).substring(2, 15) + 
-                                           Math.random().toString(36).substring(2, 15);
-                              setWechatToken(token.substring(0, 32));
-                              toast({
-                                title: "Token已生成",
-                                description: "随机生成的令牌",
-                              });
-                            }}
-                          >
-                            生成
-                          </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          用于验证请求来源
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="wechat-encoding-aes-key" className="text-xs text-muted-foreground">EncodingAESKey（消息加密密钥）</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="wechat-encoding-aes-key"
-                            value={wechatEncodingAESKey}
-                            onChange={(e) => setWechatEncodingAESKey(e.target.value)}
-                            placeholder="43位Base64字符"
-                            maxLength={43}
-                            className="flex-1 font-mono text-xs"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const array = new Uint8Array(32);
-                              crypto.getRandomValues(array);
-                              let key = btoa(String.fromCharCode.apply(null, Array.from(array)))
-                                .replace(/\+/g, '-')
-                                .replace(/\//g, '_')
-                                .replace(/=+$/, '');
-                              
-                              if (key.length < 43) {
-                                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-                                while (key.length < 43) {
-                                  key += chars.charAt(Math.floor(Math.random() * chars.length));
-                                }
-                              } else if (key.length > 43) {
-                                key = key.substring(0, 43);
-                              }
-                              setWechatEncodingAESKey(key);
-                              toast({
-                                title: "EncodingAESKey已生成",
-                                description: "43位加密密钥",
-                              });
-                            }}
-                          >
-                            生成
-                          </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          消息加密密钥，必须43位
-                        </p>
-                      </div>
-
-                      <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertDescription className="text-xs">
-                          ⚠️ 在微信公众平台配置时，请选择"安全模式"（加密）
-                        </AlertDescription>
-                      </Alert>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label>模板消息ID配置</Label>
-                    <Alert>
-                      <Info className="h-4 w-4" />
-                      <AlertDescription className="text-xs">
-                        填写您在微信公众平台获取的模板ID。
-                        <br />
-                        您当前使用的模板："客户跟进提醒"
-                        <br />
-                        <span className="text-muted-foreground">模板字段：客户姓名、任务名称、当前状态、当前进度</span>
-                      </AlertDescription>
-                    </Alert>
-                    
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">模板ID</Label>
-                      <Input
-                        placeholder="T4Q0BLLjd9dvjfTSUny3DUYSNa5_uUgqorYl-lo_A4Q"
-                        value={wechatTemplateIds?.default || ""}
-                        onChange={(e) => {
-                          const templateId = e.target.value;
-                          setWechatTemplateIds({
-                            default: templateId,
-                            // 所有场景都使用同一个模板
-                            daily_reminder: templateId,
-                            goal_milestone: templateId,
-                            sustained_low_mood: templateId,
-                            inactivity: templateId,
-                          });
-                        }}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        此模板将用于所有通知场景
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* 代理服务器配置 */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <Label htmlFor="wechat-proxy-enabled" className="text-sm font-medium">启用代理服务器</Label>
-                        <p className="text-xs text-muted-foreground">
-                          解决IP白名单限制问题（适用于生产环境）
-                        </p>
-                      </div>
-                      <Switch
-                        id="wechat-proxy-enabled"
-                        checked={wechatProxyEnabled}
-                        onCheckedChange={setWechatProxyEnabled}
-                      />
-                    </div>
-
-                    {wechatProxyEnabled && (
-                      <>
-                        <Alert>
-                          <Info className="h-4 w-4" />
-                          <AlertDescription className="text-xs">
-                            <strong>代理服务器说明：</strong>
-                            <ul className="list-disc list-inside mt-2 space-y-1">
-                              <li>代理服务器需要有固定的公网IP地址</li>
-                              <li>在微信公众平台的IP白名单中添加代理服务器的IP</li>
-                              <li>代理服务器将转发所有对微信API的请求</li>
-                              <li>需要部署专门的代理服务（参考文档）</li>
-                            </ul>
-                          </AlertDescription>
-                        </Alert>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="wechat-proxy-url">代理服务器地址</Label>
-                          <Input
-                            id="wechat-proxy-url"
-                            type="url"
-                            placeholder="https://your-proxy-server.com"
-                            value={wechatProxyUrl}
-                            onChange={(e) => setWechatProxyUrl(e.target.value)}
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            代理服务器的完整URL（不含路径）
-                          </p>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="wechat-proxy-auth-token">代理认证令牌（可选）</Label>
-                          <Input
-                            id="wechat-proxy-auth-token"
-                            type="password"
-                            placeholder="如果代理需要认证，请输入令牌"
-                            value={wechatProxyAuthToken}
-                            onChange={(e) => setWechatProxyAuthToken(e.target.value)}
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            用于验证对代理服务器的请求（如果代理配置了认证）
-                          </p>
-                        </div>
-
-                        <Alert className="bg-amber-50 border-amber-200">
-                          <Info className="h-4 w-4 text-amber-600" />
-                          <AlertDescription className="text-amber-800 text-xs">
-                            <strong>注意：</strong>代理服务器配置仅影响微信API调用（获取access_token和发送模板消息）。
-                            回调URL（接收微信消息）不受影响，无需代理。
-                          </AlertDescription>
-                        </Alert>
-                      </>
-                    )}
-                  </div>
 
                   {wechatBound ? (
                     <Alert className="bg-green-50 border-green-200">
                       <Heart className="h-4 w-4 text-green-600" />
                       <AlertDescription className="text-green-800">
-                        微信账号已成功绑定 ✅
+                        微信账号已成功绑定 ✅ 您将收到公众号消息推送
                       </AlertDescription>
                     </Alert>
                   ) : (
-                    <Alert>
-                      <Info className="h-4 w-4" />
-                      <AlertDescription>
-                        请先保存配置，然后点击下方按钮授权绑定微信账号
+                    <Alert className="bg-amber-50 border-amber-200">
+                      <Info className="h-4 w-4 text-amber-600" />
+                      <AlertDescription className="text-amber-700">
+                        请先绑定微信账号才能接收公众号通知
                       </AlertDescription>
                     </Alert>
                   )}
@@ -1176,18 +917,19 @@ export function SmartNotificationPreferences() {
                     <Button
                       variant="outline"
                       onClick={handleWechatBind}
-                      disabled={!wechatAppId || !wechatAppSecret}
                     >
-                      {wechatBound ? "重新绑定" : "绑定微信账号"}
+                      {wechatBound ? "重新绑定微信" : "绑定微信账号"}
                     </Button>
-                    <Button
-                      variant="outline"
-                      onClick={testWechatConnection}
-                      disabled={testingWechat || !wechatBound}
-                    >
-                      {testingWechat && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      测试推送
-                    </Button>
+                    {wechatBound && (
+                      <Button
+                        variant="outline"
+                        onClick={testWechatConnection}
+                        disabled={testingWechat}
+                      >
+                        {testingWechat && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                        测试推送
+                      </Button>
+                    )}
                   </div>
                 </>
               )}

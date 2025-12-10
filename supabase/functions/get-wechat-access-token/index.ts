@@ -38,25 +38,28 @@ serve(async (req) => {
       );
     }
 
-    const userId = user.id;
+    // 使用系统级配置的 AppID 和 AppSecret (Supabase Secrets)
+    const appId = Deno.env.get('WECHAT_APP_ID');
+    const appSecret = Deno.env.get('WECHAT_APP_SECRET');
 
-    const { data: profile, error } = await supabaseClient
-      .from('profiles')
-      .select('wechat_appid, wechat_appsecret, wechat_proxy_enabled, wechat_proxy_url, wechat_proxy_auth_token')
-      .eq('id', userId)
-      .single();
-
-    if (error || !profile?.wechat_appid || !profile?.wechat_appsecret) {
-      throw new Error('WeChat configuration not found');
+    if (!appId || !appSecret) {
+      throw new Error('System WeChat configuration not found. Please configure WECHAT_APP_ID and WECHAT_APP_SECRET in Supabase Secrets.');
     }
 
-    const tokenUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${profile.wechat_appid}&secret=${profile.wechat_appsecret}`;
+    // 获取用户的代理配置（可选）
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('wechat_proxy_enabled, wechat_proxy_url, wechat_proxy_auth_token')
+      .eq('id', user.id)
+      .single();
+
+    const tokenUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
     
     let response;
     let data;
 
-    // Check if proxy is enabled
-    if (profile.wechat_proxy_enabled && profile.wechat_proxy_url) {
+    // Check if proxy is enabled (from user profile or system config)
+    if (profile?.wechat_proxy_enabled && profile?.wechat_proxy_url) {
       console.log('Using proxy server for WeChat API call');
       
       // Call through proxy
