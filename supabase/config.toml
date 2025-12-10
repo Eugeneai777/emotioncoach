@@ -227,3 +227,9 @@ verify_jwt = true
 
 [functions.life-coach-tools]
 verify_jwt = true
+
+[functions.analyze-gratitude-entry]
+verify_jwt = true
+
+[functions.generate-gratitude-dashboard]
+verify_jwt = true
