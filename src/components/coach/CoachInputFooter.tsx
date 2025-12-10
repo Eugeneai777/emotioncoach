@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, RotateCcw, Phone } from "lucide-react";
-import { forwardRef, useState, useEffect, useRef } from "react";
+import { forwardRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CoachInputFooterProps {
@@ -42,45 +42,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   onVoiceChatClick
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const isMobile = useIsMobile();
-  const footerRef = useRef<HTMLElement>(null);
-
-  // 虚拟键盘适配 - 使用 visualViewport API
-  useEffect(() => {
-    if (!isMobile || !window.visualViewport) return;
-    
-    const viewport = window.visualViewport;
-    
-    const handleViewportChange = () => {
-      // 计算键盘高度：窗口高度 - 可视视口高度
-      const keyboardH = window.innerHeight - viewport.height;
-      
-      if (keyboardH > 100) {
-        setKeyboardHeight(keyboardH);
-        // 确保输入框可见
-        if (footerRef.current) {
-          footerRef.current.style.bottom = `${keyboardH}px`;
-        }
-      } else {
-        setKeyboardHeight(0);
-        if (footerRef.current) {
-          footerRef.current.style.bottom = '0px';
-        }
-      }
-    };
-
-    viewport.addEventListener('resize', handleViewportChange);
-    viewport.addEventListener('scroll', handleViewportChange);
-    
-    // 初始化时检查一次
-    handleViewportChange();
-    
-    return () => {
-      viewport.removeEventListener('resize', handleViewportChange);
-      viewport.removeEventListener('scroll', handleViewportChange);
-    };
-  }, [isMobile]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && input.trim()) {
@@ -91,9 +53,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
 
   return (
     <footer 
-      ref={footerRef}
-      className="fixed left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-50 safe-bottom"
-      style={{ bottom: 0 }}
+      className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-50 safe-bottom"
     >
       <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 pt-2 pb-2">
         {/* Intensity Selector - 键盘弹出时隐藏 */}
