@@ -72,11 +72,11 @@ export function CompactConversionFunnel({ partnerId, onClick }: CompactConversio
   return (
     <button 
       onClick={onClick}
-      className="w-full p-4 rounded-xl bg-white/80 backdrop-blur-sm border hover:shadow-md transition-all text-left"
+      className="w-full p-3 rounded-xl bg-white/80 backdrop-blur-sm border hover:shadow-md transition-all text-left"
     >
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="font-medium text-sm flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-orange-500" />
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="font-medium text-xs flex items-center gap-1.5">
+          <TrendingUp className="w-3.5 h-3.5 text-orange-500" />
           学员转化
         </h4>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -91,13 +91,13 @@ export function CompactConversionFunnel({ partnerId, onClick }: CompactConversio
           return (
             <div key={step.label} className="flex items-center">
               <div className="text-center">
-                <div className={`w-10 h-10 rounded-full ${step.bg} flex items-center justify-center mx-auto mb-1`}>
-                  <span className={`text-lg font-bold ${step.color}`}>{step.value}</span>
+                <div className={`w-8 h-8 rounded-full ${step.bg} flex items-center justify-center mx-auto`}>
+                  <span className={`text-sm font-bold ${step.color}`}>{step.value}</span>
                 </div>
-                <span className="text-xs text-muted-foreground">{step.label}</span>
+                <span className="text-[10px] text-muted-foreground mt-0.5 block">{step.label}</span>
               </div>
               {index < funnelSteps.length - 1 && (
-                <ArrowRight className="w-4 h-4 text-muted-foreground/50 mx-1" />
+                <ArrowRight className="w-3 h-3 text-muted-foreground/50 mx-0.5" />
               )}
             </div>
           );
