@@ -35,6 +35,24 @@ const Auth = () => {
     // 监听认证状态变化
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session && event === 'SIGNED_IN') {
+        // 发送登录成功通知到微信公众号
+        try {
+          await supabase.functions.invoke('send-wechat-template-message', {
+            body: {
+              userId: session.user.id,
+              scenario: 'login_success',
+              notification: {
+                title: '登录成功',
+                message: '欢迎回来',
+                account: session.user.email?.replace(/(.{3}).*(@.*)/, '$1***$2') || '***',
+                email: session.user.email
+              }
+            }
+          });
+        } catch (error) {
+          console.log('发送登录通知失败（非关键错误）:', error);
+        }
+
         // 如果有推荐码，处理推荐关系
         const savedRefCode = localStorage.getItem('referral_code');
         if (savedRefCode) {
