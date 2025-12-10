@@ -202,39 +202,22 @@ export const GratitudeJournal = () => {
   const selectedTagDef = filterTag ? THEME_DEFINITIONS.find(t => t.id === filterTag) : null;
 
   return (
-    <div className="space-y-6">
-      {/* Tag Cloud */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            ☁️ 感恩标签云
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <GratitudeTagCloud 
-            themeStats={themeStats} 
-            onTagClick={handleTagCloudClick}
-            selectedTag={filterTag}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Streak Tracker */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            🔥 连续记录追踪
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <GratitudeStreakTracker />
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      {/* Top Section: Streak + Tag Cloud */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <GratitudeStreakTracker compact />
+        <GratitudeTagCloud 
+          themeStats={themeStats} 
+          onTagClick={handleTagCloudClick}
+          selectedTag={filterTag}
+          showCounts
+        />
+      </div>
 
       {/* Add Entry Card */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
             <Heart className="w-5 h-5 text-red-500" />
             今日感恩记录
           </CardTitle>
@@ -306,10 +289,10 @@ export const GratitudeJournal = () => {
         </CardContent>
       </Card>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-4">
         <Card>
-          <CardHeader>
-            <CardTitle>选择日期</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">选择日期</CardTitle>
           </CardHeader>
           <CardContent>
             <Calendar
@@ -323,15 +306,15 @@ export const GratitudeJournal = () => {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>
-                  {selectedDate ? format(selectedDate, "yyyy年MM月dd日", { locale: zhCN }) : "所有"}的感恩日记
+                <CardTitle className="text-base">
+                  {selectedDate ? format(selectedDate, "MM月dd日", { locale: zhCN }) : "所有"}的感恩
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs">
                   共 {filteredEntries.length} 条
-                  {filterTag && ` · 筛选: ${selectedTagDef?.emoji} ${selectedTagDef?.name}`}
+                  {filterTag && ` · ${selectedTagDef?.emoji} ${selectedTagDef?.name}`}
                 </CardDescription>
               </div>
               {filterTag && (
@@ -339,22 +322,21 @@ export const GratitudeJournal = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => setFilterTag(null)}
-                  className="text-muted-foreground"
+                  className="text-muted-foreground h-8"
                 >
-                  <X className="w-4 h-4 mr-1" />
-                  清除筛选
+                  <X className="w-4 h-4" />
                 </Button>
               )}
             </div>
           </CardHeader>
           <CardContent>
             {filteredEntries.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Heart className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>{filterTag ? "没有符合筛选条件的记录" : "这一天还没有感恩记录"}</p>
+              <div className="text-center py-6 text-muted-foreground">
+                <Heart className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">{filterTag ? "没有符合筛选条件的记录" : "这一天还没有感恩记录"}</p>
               </div>
             ) : (
-              <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              <div className="space-y-2 max-h-[350px] overflow-y-auto">
                 {filteredEntries.map((entry) => {
                   const themes = entry.themes || [];
                   const primaryTheme = themes[0] ? THEME_DEFINITIONS.find(t => t.id === themes[0]) : null;
@@ -362,22 +344,20 @@ export const GratitudeJournal = () => {
                   return (
                     <div
                       key={entry.id}
-                      className="p-4 rounded-lg border-l-4 transition-all duration-200 hover:shadow-md animate-fade-in"
+                      className="p-3 rounded-lg border-l-4 transition-all duration-200 hover:shadow-md animate-fade-in"
                       style={{
                         borderLeftColor: primaryTheme?.color || "hsl(var(--muted))",
                         backgroundColor: primaryTheme ? `${primaryTheme.color}10` : "hsl(var(--muted)/0.1)"
                       }}
                     >
-                      <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-start justify-between mb-1">
                         <div className="flex flex-wrap gap-1">
                           {themes.length > 0 ? (
                             <>
-                              {/* Primary tag - larger */}
                               <GratitudeThemeBadge
                                 themeId={themes[0]}
                                 size="sm"
                               />
-                              {/* Secondary tags - smaller pills */}
                               {themes.slice(1).map(themeId => (
                                 <GratitudeThemeBadge
                                   key={themeId}
@@ -392,7 +372,7 @@ export const GratitudeJournal = () => {
                               {analyzing ? (
                                 <>
                                   <Sparkles className="w-3 h-3 animate-pulse text-amber-500" />
-                                  <span className="animate-pulse">✨ AI分析中...</span>
+                                  <span className="animate-pulse">AI分析中...</span>
                                 </>
                               ) : (
                                 <>
@@ -407,7 +387,7 @@ export const GratitudeJournal = () => {
                           {format(new Date(entry.created_at), "HH:mm")}
                         </span>
                       </div>
-                      <p className="text-sm">{entry.content}</p>
+                      <p className="text-sm leading-relaxed">{entry.content}</p>
                     </div>
                   );
                 })}
@@ -416,78 +396,6 @@ export const GratitudeJournal = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Theme Statistics with Progress Bars */}
-      {Object.keys(themeStats).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-500" />
-              七维度感恩分布
-            </CardTitle>
-            <CardDescription>
-              看看你最常感恩什么
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {THEME_DEFINITIONS.map((theme) => {
-                const count = themeStats[theme.id] || 0;
-                const total = Object.values(themeStats).reduce((sum, v) => sum + v, 0);
-                const percentage = total > 0 ? ((count / total) * 100) : 0;
-                const maxCount = Math.max(...Object.values(themeStats), 1);
-                const isTopTheme = count === maxCount && count > 0;
-                
-                return (
-                  <div
-                    key={theme.id}
-                    className={`
-                      p-3 rounded-lg text-center transition-all duration-300 hover:scale-105 cursor-pointer
-                      ${isTopTheme ? "ring-2 ring-amber-400 ring-offset-2" : ""}
-                    `}
-                    style={{ 
-                      backgroundColor: count > 0 ? `${theme.color}20` : "hsl(var(--muted)/0.3)",
-                      opacity: count > 0 ? 1 : 0.5
-                    }}
-                    onClick={() => handleTagCloudClick(theme.id)}
-                  >
-                    <div className="text-2xl mb-1">{theme.emoji}</div>
-                    <div 
-                      className="text-lg font-bold transition-all duration-500" 
-                      style={{ color: count > 0 ? theme.color : "hsl(var(--muted-foreground))" }}
-                    >
-                      {count}
-                    </div>
-                    <div className="text-xs text-muted-foreground">{theme.name}</div>
-                    {count > 0 && (
-                      <>
-                        <div className="text-xs mt-1" style={{ color: theme.color }}>
-                          {percentage.toFixed(0)}%
-                        </div>
-                        {/* Progress bar */}
-                        <div className="h-1 bg-muted/50 rounded-full mt-2 overflow-hidden">
-                          <div 
-                            className="h-full rounded-full transition-all duration-700 ease-out"
-                            style={{ 
-                              width: `${percentage}%`,
-                              backgroundColor: theme.color
-                            }}
-                          />
-                        </div>
-                      </>
-                    )}
-                    {isTopTheme && (
-                      <div className="text-xs mt-2 text-amber-600 font-medium">
-                        ⭐ 幸福强项
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
