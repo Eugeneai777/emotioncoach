@@ -55,35 +55,28 @@ export default function Partner() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <div className="container max-w-7xl mx-auto px-4 py-8 space-y-8">
-        {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-orange-50">
+      <div className="container max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {/* Header - 简化版 */}
         <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/")}
-                className="gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                返回首页
-              </Button>
-            </div>
-            <h1 className="text-3xl font-bold">合伙人中心</h1>
-            <p className="text-muted-foreground">
-              {isPartner ? "管理您的推广业务和收益" : "了解合伙人计划，开启收益之旅"}
-            </p>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/")}
+            className="gap-2 -ml-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            返回
+          </Button>
           {isPartner && (
             <Button
               variant="outline"
+              size="sm"
               onClick={() => navigate("/partner/benefits")}
               className="gap-2"
             >
-              <Users className="w-4 h-4" />
-              查看权益
+              <Gift className="w-4 h-4" />
+              权益
             </Button>
           )}
         </div>

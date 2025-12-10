@@ -88,23 +88,30 @@ export function ConversionFunnel({ partnerId }: ConversionFunnelProps) {
   ];
 
   const maxValue = Math.max(stats.total, 1);
+  const overallRate = stats.total > 0 ? Math.round((stats.purchased365 / stats.total) * 100) : 0;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <TrendingUp className="w-4 h-4" />
-          转化漏斗
-        </CardTitle>
-        <CardDescription>学员转化路径分析</CardDescription>
+    <Card className="bg-white/80 backdrop-blur-sm">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-orange-500" />
+            转化漏斗
+          </CardTitle>
+          {stats.total > 0 && (
+            <span className="text-sm">
+              整体转化 <span className="font-bold text-green-600">{overallRate}%</span>
+            </span>
+          )}
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         {funnelSteps.map((step, index) => {
           const Icon = step.icon;
           const widthPercent = (step.value / maxValue) * 100;
           
           return (
-            <div key={step.label} className="space-y-2">
+            <div key={step.label} className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={`w-6 h-6 rounded-full ${step.color} flex items-center justify-center`}>
@@ -123,38 +130,21 @@ export function ConversionFunnel({ partnerId }: ConversionFunnelProps) {
               </div>
               
               {/* 漏斗条 */}
-              <div className="relative h-4 bg-muted rounded-full overflow-hidden">
+              <div className="relative h-2.5 bg-muted rounded-full overflow-hidden">
                 <div 
                   className={`absolute left-0 top-0 h-full ${step.color} rounded-full transition-all duration-500`}
                   style={{ width: `${widthPercent}%` }}
                 />
               </div>
               
-              <p className="text-xs text-muted-foreground">{step.description}</p>
-              
               {index < funnelSteps.length - 1 && (
-                <div className="flex justify-center py-1">
-                  <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-muted-foreground/30" />
+                <div className="flex justify-center py-0.5">
+                  <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-muted-foreground/20" />
                 </div>
               )}
             </div>
           );
         })}
-
-        {/* 总体转化率 */}
-        {stats.total > 0 && (
-          <div className="pt-4 border-t">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">整体转化率</span>
-              <span className="text-lg font-bold text-green-600">
-                {Math.round((stats.purchased365 / stats.total) * 100)}%
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              从兑换到购买365的转化比例
-            </p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
