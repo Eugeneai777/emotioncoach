@@ -7,6 +7,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// 系统级模板ID配置 - 从环境变量读取或使用默认值
+const SYSTEM_TEMPLATE_IDS: Record<string, string> = {
+  // 打卡相关场景使用打卡模板
+  'checkin_success': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
+  'checkin_streak_milestone': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
+  'checkin_reminder': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
+  'checkin_streak_break_warning': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
+  // 其他场景使用通用模板
+  'default': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -47,10 +58,10 @@ serve(async (req) => {
       );
     }
 
-    // 获取用户配置的模板ID和代理设置
+    // 获取用户是否启用微信通知
     const { data: profile } = await supabaseClient
       .from('profiles')
-      .select('wechat_enabled, wechat_template_ids, wechat_proxy_enabled, wechat_proxy_url, wechat_proxy_auth_token')
+      .select('wechat_enabled, display_name')
       .eq('id', userId)
       .single();
 
@@ -62,35 +73,35 @@ serve(async (req) => {
       );
     }
 
-    // 根据场景获取模板ID
-    const templateId = profile.wechat_template_ids?.[scenario] || profile.wechat_template_ids?.default;
+    // 使用系统级模板ID配置
+    const templateId = SYSTEM_TEMPLATE_IDS[scenario] || SYSTEM_TEMPLATE_IDS['default'];
     if (!templateId) {
-      console.log(`场景 ${scenario} 未配置模板ID`);
+      console.log(`场景 ${scenario} 未配置系统模板ID`);
       return new Response(
         JSON.stringify({ success: false, reason: 'no_template' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // 获取 access_token
-    const tokenResponse = await supabaseClient.functions.invoke('get-wechat-access-token', {
-      body: { userId }
-    });
-
-    if (tokenResponse.error || !tokenResponse.data?.access_token) {
-      throw new Error('Failed to get access token');
+    // 获取 access_token（使用系统级配置）
+    const appId = Deno.env.get('WECHAT_APP_ID');
+    const appSecret = Deno.env.get('WECHAT_APP_SECRET');
+    
+    if (!appId || !appSecret) {
+      throw new Error('WeChat AppID or AppSecret not configured');
     }
 
-    const accessToken = tokenResponse.data.access_token;
+    // 直接获取access_token
+    const tokenUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
+    const tokenResponse = await fetch(tokenUrl);
+    const tokenData = await tokenResponse.json();
 
-    // 获取用户显示名称
-    const { data: userProfile } = await supabaseClient
-      .from('profiles')
-      .select('display_name')
-      .eq('id', userId)
-      .single();
+    if (tokenData.errcode) {
+      throw new Error(`Failed to get access token: ${tokenData.errmsg}`);
+    }
 
-    const displayName = userProfile?.display_name || '用户';
+    const accessToken = tokenData.access_token;
+    const displayName = profile?.display_name || '用户';
 
     // 场景中文映射
     const scenarioNames: Record<string, string> = {
@@ -160,58 +171,27 @@ serve(async (req) => {
     // 发送模板消息
     const sendUrl = `https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=${accessToken}`;
     
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const appUrl = supabaseUrl.replace('.supabase.co', '.lovableproject.com');
+    const productionUrl = Deno.env.get('VITE_PRODUCTION_URL') || 'https://eugeneai.me';
 
     const messageBody = {
       touser: mapping.openid,
       template_id: templateId,
-      url: `${appUrl}/?notification=${notification.id}`,
+      url: `${productionUrl}/?notification=${notification.id}`,
       data: messageData,
     };
 
-    let sendResponse;
-    let result;
+    console.log('Sending template message:', JSON.stringify(messageBody, null, 2));
 
-    // Check if proxy is enabled
-    if (profile.wechat_proxy_enabled && profile.wechat_proxy_url) {
-      console.log('Using proxy server for WeChat API call');
-      
-      // Call through proxy
-      const proxyUrl = `${profile.wechat_proxy_url}/wechat-proxy`;
-      const proxyHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      
-      if (profile.wechat_proxy_auth_token) {
-        proxyHeaders['Authorization'] = `Bearer ${profile.wechat_proxy_auth_token}`;
-      }
-      
-      sendResponse = await fetch(proxyUrl, {
-        method: 'POST',
-        headers: proxyHeaders,
-        body: JSON.stringify({
-          target_url: sendUrl,
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: messageBody,
-        }),
-      });
-      
-      result = await sendResponse.json();
-    } else {
-      // Direct call to WeChat API
-      console.log('Direct call to WeChat API');
-      sendResponse = await fetch(sendUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(messageBody),
-      });
+    const sendResponse = await fetch(sendUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(messageBody),
+    });
 
-      result = await sendResponse.json();
-    }
+    const result = await sendResponse.json();
 
     if (result.errcode !== 0) {
+      console.error('WeChat API error:', result);
       throw new Error(`WeChat API error: ${result.errmsg || 'Unknown error'}`);
     }
 
