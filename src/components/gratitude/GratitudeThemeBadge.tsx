@@ -9,13 +9,13 @@ export interface ThemeDefinition {
 }
 
 export const THEME_DEFINITIONS: ThemeDefinition[] = [
-  { id: "CREATION", name: "创造/工作", emoji: "🧠", color: "hsl(210, 75%, 55%)", description: "工作进展、产品、创意、学习、技能提升" },
-  { id: "RELATIONSHIPS", name: "亲密关系", emoji: "❤️", color: "hsl(350, 75%, 55%)", description: "伴侣、孩子、父母、朋友、同事、团队" },
-  { id: "MONEY", name: "金钱/资源", emoji: "💰", color: "hsl(45, 85%, 50%)", description: "收入、投资、折扣、奖金、资源、人脉" },
-  { id: "HEALTH", name: "健康/休息", emoji: "🩺", color: "hsl(150, 65%, 45%)", description: "睡眠、运动、医疗、疗愈、养生" },
-  { id: "INNER", name: "内在成长", emoji: "🌱", color: "hsl(120, 50%, 45%)", description: "觉察、突破、疗愈、自我接纳、信仰" },
-  { id: "JOY", name: "享乐/体验", emoji: "🎉", color: "hsl(280, 65%, 55%)", description: "美食、旅行、音乐、电影、庆祝" },
-  { id: "IMPACT", name: "贡献/服务", emoji: "🤝", color: "hsl(200, 70%, 50%)", description: "帮助别人、教练、分享、服务、给予" },
+  { id: "CREATION", name: "创造幸福", emoji: "🧠", color: "hsl(210, 75%, 55%)", description: "工作进展、产品、创意、学习、技能提升" },
+  { id: "RELATIONSHIPS", name: "关系幸福", emoji: "❤️", color: "hsl(350, 75%, 55%)", description: "伴侣、孩子、父母、朋友、同事、团队" },
+  { id: "MONEY", name: "财富幸福", emoji: "💰", color: "hsl(45, 85%, 50%)", description: "收入、投资、折扣、奖金、资源、人脉" },
+  { id: "HEALTH", name: "健康幸福", emoji: "🩺", color: "hsl(150, 65%, 45%)", description: "睡眠、运动、医疗、疗愈、养生" },
+  { id: "INNER", name: "内在幸福", emoji: "🌱", color: "hsl(120, 50%, 45%)", description: "觉察、突破、疗愈、自我接纳、信仰" },
+  { id: "JOY", name: "体验幸福", emoji: "🎉", color: "hsl(280, 65%, 55%)", description: "美食、旅行、音乐、电影、庆祝" },
+  { id: "IMPACT", name: "贡献幸福", emoji: "🤝", color: "hsl(200, 70%, 50%)", description: "帮助别人、教练、分享、服务、给予" },
 ];
 
 export const getThemeById = (id: string): ThemeDefinition | undefined => {
