@@ -1746,25 +1746,106 @@ export type Database = {
       }
       gratitude_entries: {
         Row: {
+          ai_analyzed: boolean | null
           category: string | null
           content: string
           created_at: string | null
+          date: string | null
           id: string
+          themes: string[] | null
           user_id: string
         }
         Insert: {
+          ai_analyzed?: boolean | null
           category?: string | null
           content: string
           created_at?: string | null
+          date?: string | null
           id?: string
+          themes?: string[] | null
           user_id: string
         }
         Update: {
+          ai_analyzed?: boolean | null
           category?: string | null
           content?: string
           created_at?: string | null
+          date?: string | null
           id?: string
+          themes?: string[] | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      gratitude_reports: {
+        Row: {
+          analysis_content: string | null
+          created_at: string | null
+          end_date: string
+          highlights: Json | null
+          id: string
+          report_type: string
+          start_date: string
+          theme_stats: Json | null
+          total_entries: number | null
+          user_id: string
+        }
+        Insert: {
+          analysis_content?: string | null
+          created_at?: string | null
+          end_date: string
+          highlights?: Json | null
+          id?: string
+          report_type: string
+          start_date: string
+          theme_stats?: Json | null
+          total_entries?: number | null
+          user_id: string
+        }
+        Update: {
+          analysis_content?: string | null
+          created_at?: string | null
+          end_date?: string
+          highlights?: Json | null
+          id?: string
+          report_type?: string
+          start_date?: string
+          theme_stats?: Json | null
+          total_entries?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gratitude_theme_definitions: {
+        Row: {
+          color: string
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          emoji: string
+          id: string
+          keywords: string[] | null
+          name: string
+        }
+        Insert: {
+          color: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          emoji: string
+          id: string
+          keywords?: string[] | null
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          emoji?: string
+          id?: string
+          keywords?: string[] | null
+          name?: string
         }
         Relationships: []
       }
