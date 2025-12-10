@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Link2, Copy, QrCode, Check, ExternalLink } from "lucide-react";
+import { Link2, Copy, QrCode, Check, ImagePlus } from "lucide-react";
 import { getPartnerShareUrl } from "@/utils/partnerQRUtils";
 import QRCode from "qrcode";
 
@@ -14,6 +15,7 @@ interface FixedPromoLinkCardProps {
 export function FixedPromoLinkCard({ partnerId, entryType }: FixedPromoLinkCardProps) {
   const [copied, setCopied] = useState(false);
   const [generatingQR, setGeneratingQR] = useState(false);
+  const navigate = useNavigate();
 
   const promoUrl = getPartnerShareUrl(partnerId, entryType);
 
@@ -90,22 +92,33 @@ export function FixedPromoLinkCard({ partnerId, entryType }: FixedPromoLinkCardP
         </div>
 
         {/* 操作按钮 */}
-        <div className="flex gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <Button 
             onClick={handleCopyLink}
-            className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+            size="sm"
+            className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
           >
-            <Copy className="w-4 h-4 mr-2" />
-            复制链接
+            <Copy className="w-4 h-4 mr-1" />
+            复制
           </Button>
           <Button 
             onClick={handleDownloadQR}
             variant="outline"
-            className="flex-1 border-teal-300 text-teal-700 hover:bg-teal-50"
+            size="sm"
+            className="border-teal-300 text-teal-700 hover:bg-teal-50"
             disabled={generatingQR}
           >
-            <QrCode className="w-4 h-4 mr-2" />
-            {generatingQR ? '生成中...' : '下载二维码'}
+            <QrCode className="w-4 h-4 mr-1" />
+            二维码
+          </Button>
+          <Button 
+            onClick={() => navigate('/poster-center')}
+            variant="outline"
+            size="sm"
+            className="border-orange-300 text-orange-700 hover:bg-orange-50"
+          >
+            <ImagePlus className="w-4 h-4 mr-1" />
+            海报
           </Button>
         </div>
 
