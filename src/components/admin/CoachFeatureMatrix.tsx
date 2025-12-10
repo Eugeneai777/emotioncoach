@@ -1,3 +1,4 @@
+import { Fragment, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Mic, Tent, Bell, Users, MessageSquare, Activity, Clock, AlertTriangle, GraduationCap, Share2, Bot, Copy, Save, Pencil, ArrowUp, ArrowDown, History, RotateCcw } from "lucide-react";
 import { CoachTemplate, useUpdateCoachTemplate } from "@/hooks/useCoachTemplates";
 import { usePromptVersions, useCreatePromptVersion, useRestorePromptVersion, PromptVersion } from "@/hooks/usePromptVersions";
-import { useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -212,8 +212,8 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFea
           </TableHeader>
           <TableBody>
             {featureGroups.map((group, groupIndex) => (
-              <>
-                <TableRow key={`group-${groupIndex}`} className="bg-muted/30">
+              <Fragment key={`group-${groupIndex}`}>
+                <TableRow className="bg-muted/30">
                   <TableCell 
                     colSpan={templates.length + 1} 
                     className="font-medium text-sm py-2 sticky left-0"
@@ -255,7 +255,7 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFea
                     })}
                   </TableRow>
                 ))}
-              </>
+              </Fragment>
             ))}
           </TableBody>
         </Table>
