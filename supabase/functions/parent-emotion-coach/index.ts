@@ -362,7 +362,7 @@ serve(async (req) => {
     const { data: coachTemplate } = await serviceClient
       .from('coach_templates')
       .select('system_prompt')
-      .eq('coach_key', 'parent-child')
+      .eq('coach_key', 'parent')
       .single();
 
     const basePrompt = coachTemplate?.system_prompt || '';
