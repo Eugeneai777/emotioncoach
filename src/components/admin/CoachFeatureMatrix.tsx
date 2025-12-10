@@ -4,14 +4,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Mic, Tent, Bell, Users, MessageSquare, Activity, Clock, AlertTriangle, GraduationCap, Share2, Bot, Copy, Save, Pencil } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Mic, Tent, Bell, Users, MessageSquare, Activity, Clock, AlertTriangle, GraduationCap, Share2, Bot, Copy, Save, Pencil, ArrowUp, ArrowDown, History, RotateCcw } from "lucide-react";
 import { CoachTemplate, useUpdateCoachTemplate } from "@/hooks/useCoachTemplates";
+import { usePromptVersions, useCreatePromptVersion, useRestorePromptVersion, PromptVersion } from "@/hooks/usePromptVersions";
 import { useState } from "react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { zhCN } from "date-fns/locale";
 
 interface CoachFeatureMatrixProps {
   templates: CoachTemplate[];
+  onMoveUp?: (index: number) => void;
+  onMoveDown?: (index: number) => void;
 }
 
 const featureGroups = [
@@ -37,15 +44,23 @@ const featureGroups = [
   }
 ];
 
-export function CoachFeatureMatrix({ templates }: CoachFeatureMatrixProps) {
+export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFeatureMatrixProps) {
   const updateTemplate = useUpdateCoachTemplate();
+  const createPromptVersion = useCreatePromptVersion();
+  const restorePromptVersion = useRestorePromptVersion();
+  
   const [updatingCell, setUpdatingCell] = useState<string | null>(null);
   const [selectedPrompt, setSelectedPrompt] = useState<{
     template: CoachTemplate;
     isEditing: boolean;
     editedPrompt: string;
+    changeNote: string;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [viewingVersion, setViewingVersion] = useState<PromptVersion | null>(null);
+
+  // Fetch versions for selected template
+  const { data: versions = [], isLoading: isLoadingVersions } = usePromptVersions(selectedPrompt?.template.id);
 
   const handleToggle = async (templateId: string, featureKey: string, currentValue: boolean) => {
     const cellKey = `${templateId}-${featureKey}`;
@@ -65,20 +80,36 @@ export function CoachFeatureMatrix({ templates }: CoachFeatureMatrixProps) {
     setSelectedPrompt({
       template,
       isEditing: false,
-      editedPrompt: template.system_prompt || ''
+      editedPrompt: template.system_prompt || '',
+      changeNote: ''
     });
+    setViewingVersion(null);
   };
 
   const handleSavePrompt = async () => {
     if (!selectedPrompt) return;
     setIsSaving(true);
     try {
+      // Save to coach_templates
       await updateTemplate.mutateAsync({
         id: selectedPrompt.template.id,
         data: { system_prompt: selectedPrompt.editedPrompt }
       });
-      setSelectedPrompt(prev => prev ? { ...prev, isEditing: false } : null);
-      toast.success('Prompt 已保存');
+      
+      // Create version record
+      await createPromptVersion.mutateAsync({
+        coachTemplateId: selectedPrompt.template.id,
+        systemPrompt: selectedPrompt.editedPrompt,
+        changeNote: selectedPrompt.changeNote || undefined,
+      });
+      
+      setSelectedPrompt(prev => prev ? { 
+        ...prev, 
+        isEditing: false,
+        changeNote: '',
+        template: { ...prev.template, system_prompt: prev.editedPrompt }
+      } : null);
+      toast.success('Prompt 已保存并记录版本');
     } catch (error) {
       toast.error('保存失败');
     } finally {
@@ -86,9 +117,27 @@ export function CoachFeatureMatrix({ templates }: CoachFeatureMatrixProps) {
     }
   };
 
+  const handleRestoreVersion = async (version: PromptVersion) => {
+    if (!selectedPrompt) return;
+    
+    await restorePromptVersion.mutateAsync({
+      coachTemplateId: selectedPrompt.template.id,
+      versionId: String(version.version_number),
+      systemPrompt: version.system_prompt,
+    });
+    
+    setSelectedPrompt(prev => prev ? {
+      ...prev,
+      editedPrompt: version.system_prompt,
+      template: { ...prev.template, system_prompt: version.system_prompt }
+    } : null);
+    setViewingVersion(null);
+  };
+
   const handleCopyPrompt = () => {
-    if (selectedPrompt?.editedPrompt) {
-      navigator.clipboard.writeText(selectedPrompt.editedPrompt);
+    const textToCopy = viewingVersion?.system_prompt || selectedPrompt?.editedPrompt;
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy);
       toast.success('已复制到剪贴板');
     }
   };
@@ -97,7 +146,6 @@ export function CoachFeatureMatrix({ templates }: CoachFeatureMatrixProps) {
     return (template as any)[featureKey] ?? false;
   };
 
-  // Count enabled features per coach
   const getEnabledCount = (template: CoachTemplate) => {
     return featureGroups.flatMap(g => g.features).filter(f => getFeatureValue(template, f.key)).length;
   };
@@ -111,9 +159,32 @@ export function CoachFeatureMatrix({ templates }: CoachFeatureMatrixProps) {
               <TableHead className="w-[180px] sticky left-0 bg-muted/50 z-10 font-semibold">
                 功能配置
               </TableHead>
-              {templates.map(template => (
-                <TableHead key={template.id} className="text-center min-w-[120px]">
+              {templates.map((template, index) => (
+                <TableHead key={template.id} className="text-center min-w-[140px]">
                   <div className="flex flex-col items-center gap-1">
+                    {/* Sorting buttons */}
+                    {(onMoveUp || onMoveDown) && (
+                      <div className="flex gap-1 mb-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => onMoveUp?.(index)}
+                          disabled={index === 0}
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => onMoveDown?.(index)}
+                          disabled={index === templates.length - 1}
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
                     <span className="text-2xl">{template.emoji}</span>
                     <span className="text-xs font-medium truncate max-w-[100px]">{template.title}</span>
                     <Badge 
@@ -142,7 +213,6 @@ export function CoachFeatureMatrix({ templates }: CoachFeatureMatrixProps) {
           <TableBody>
             {featureGroups.map((group, groupIndex) => (
               <>
-                {/* Group Header Row */}
                 <TableRow key={`group-${groupIndex}`} className="bg-muted/30">
                   <TableCell 
                     colSpan={templates.length + 1} 
@@ -152,7 +222,6 @@ export function CoachFeatureMatrix({ templates }: CoachFeatureMatrixProps) {
                   </TableCell>
                 </TableRow>
                 
-                {/* Feature Rows */}
                 {group.features.map(feature => (
                   <TableRow key={feature.key} className="hover:bg-muted/20">
                     <TableCell className="sticky left-0 bg-background z-10">
@@ -205,9 +274,9 @@ export function CoachFeatureMatrix({ templates }: CoachFeatureMatrixProps) {
         <span>共 {templates.length} 个教练 · {featureGroups.flatMap(g => g.features).length} 项功能</span>
       </div>
 
-      {/* Prompt Dialog */}
+      {/* Prompt Dialog with Version History */}
       <Dialog open={!!selectedPrompt} onOpenChange={(open) => !open && setSelectedPrompt(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
+        <DialogContent className="max-w-3xl max-h-[85vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-2xl">{selectedPrompt?.template.emoji}</span>
@@ -215,77 +284,180 @@ export function CoachFeatureMatrix({ templates }: CoachFeatureMatrixProps) {
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
-            {selectedPrompt?.template.system_prompt || selectedPrompt?.isEditing ? (
-              <>
-                {selectedPrompt?.isEditing ? (
-                  <Textarea
-                    value={selectedPrompt.editedPrompt}
-                    onChange={(e) => setSelectedPrompt(prev => prev ? { ...prev, editedPrompt: e.target.value } : null)}
-                    className="min-h-[400px] font-mono text-sm"
-                    placeholder="输入 AI Prompt..."
-                  />
-                ) : (
-                  <ScrollArea className="h-[400px] rounded-md border p-4">
+          <Tabs defaultValue="current" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="current">当前版本</TabsTrigger>
+              <TabsTrigger value="history" className="flex items-center gap-1">
+                <History className="h-4 w-4" />
+                历史版本 ({versions.length})
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="current" className="space-y-4 mt-4">
+              {selectedPrompt?.template.system_prompt || selectedPrompt?.isEditing ? (
+                <>
+                  {selectedPrompt?.isEditing ? (
+                    <div className="space-y-3">
+                      <Textarea
+                        value={selectedPrompt.editedPrompt}
+                        onChange={(e) => setSelectedPrompt(prev => prev ? { ...prev, editedPrompt: e.target.value } : null)}
+                        className="min-h-[350px] font-mono text-sm"
+                        placeholder="输入 AI Prompt..."
+                      />
+                      <div>
+                        <Input
+                          value={selectedPrompt.changeNote}
+                          onChange={(e) => setSelectedPrompt(prev => prev ? { ...prev, changeNote: e.target.value } : null)}
+                          placeholder="变更说明（可选）例如：优化了共情语气"
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[380px] rounded-md border p-4">
+                      <pre className="text-sm whitespace-pre-wrap font-mono">
+                        {selectedPrompt?.editedPrompt}
+                      </pre>
+                    </ScrollArea>
+                  )}
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      字符数: {selectedPrompt?.editedPrompt.length || 0}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={handleCopyPrompt}>
+                        <Copy className="h-4 w-4 mr-1" />
+                        复制
+                      </Button>
+                      {selectedPrompt?.isEditing ? (
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setSelectedPrompt(prev => prev ? { 
+                              ...prev, 
+                              isEditing: false, 
+                              editedPrompt: prev.template.system_prompt || '',
+                              changeNote: ''
+                            } : null)}
+                          >
+                            取消
+                          </Button>
+                          <Button size="sm" onClick={handleSavePrompt} disabled={isSaving}>
+                            {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+                            保存并记录版本
+                          </Button>
+                        </>
+                      ) : (
+                        <Button size="sm" onClick={() => setSelectedPrompt(prev => prev ? { ...prev, isEditing: true } : null)}>
+                          <Pencil className="h-4 w-4 mr-1" />
+                          编辑
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="h-[200px] flex flex-col items-center justify-center text-muted-foreground">
+                  <Bot className="h-12 w-12 mb-4 opacity-50" />
+                  <p className="text-sm">该教练的 Prompt 存储在 Edge Function 中</p>
+                  <p className="text-xs mt-1">或点击下方按钮添加数据库配置</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-4"
+                    onClick={() => setSelectedPrompt(prev => prev ? { ...prev, isEditing: true } : null)}
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    添加 Prompt
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="history" className="mt-4">
+              {isLoadingVersions ? (
+                <div className="flex items-center justify-center h-[300px]">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : versions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+                  <History className="h-12 w-12 mb-4 opacity-50" />
+                  <p className="text-sm">暂无历史版本</p>
+                  <p className="text-xs mt-1">保存 Prompt 后将自动记录版本</p>
+                </div>
+              ) : viewingVersion ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setViewingVersion(null)}>
+                        ← 返回列表
+                      </Button>
+                      <Badge variant="outline">v{viewingVersion.version_number}</Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {format(new Date(viewingVersion.created_at), 'yyyy-MM-dd HH:mm', { locale: zhCN })}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={handleCopyPrompt}>
+                        <Copy className="h-4 w-4 mr-1" />
+                        复制
+                      </Button>
+                      <Button size="sm" onClick={() => handleRestoreVersion(viewingVersion)}>
+                        <RotateCcw className="h-4 w-4 mr-1" />
+                        恢复此版本
+                      </Button>
+                    </div>
+                  </div>
+                  {viewingVersion.change_note && (
+                    <div className="text-sm text-muted-foreground bg-muted/50 px-3 py-2 rounded">
+                      变更说明：{viewingVersion.change_note}
+                    </div>
+                  )}
+                  <ScrollArea className="h-[320px] rounded-md border p-4">
                     <pre className="text-sm whitespace-pre-wrap font-mono">
-                      {selectedPrompt?.editedPrompt}
+                      {viewingVersion.system_prompt}
                     </pre>
                   </ScrollArea>
-                )}
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    字符数: {selectedPrompt?.editedPrompt.length || 0}
-                  </span>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={handleCopyPrompt}>
-                      <Copy className="h-4 w-4 mr-1" />
-                      复制
-                    </Button>
-                    {selectedPrompt?.isEditing ? (
-                      <>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => setSelectedPrompt(prev => prev ? { 
-                            ...prev, 
-                            isEditing: false, 
-                            editedPrompt: prev.template.system_prompt || '' 
-                          } : null)}
-                        >
-                          取消
-                        </Button>
-                        <Button size="sm" onClick={handleSavePrompt} disabled={isSaving}>
-                          {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-                          保存
-                        </Button>
-                      </>
-                    ) : (
-                      <Button size="sm" onClick={() => setSelectedPrompt(prev => prev ? { ...prev, isEditing: true } : null)}>
-                        <Pencil className="h-4 w-4 mr-1" />
-                        编辑
-                      </Button>
-                    )}
-                  </div>
                 </div>
-              </>
-            ) : (
-              <div className="h-[200px] flex flex-col items-center justify-center text-muted-foreground">
-                <Bot className="h-12 w-12 mb-4 opacity-50" />
-                <p className="text-sm">该教练的 Prompt 存储在 Edge Function 中</p>
-                <p className="text-xs mt-1">或点击下方按钮添加数据库配置</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-4"
-                  onClick={() => setSelectedPrompt(prev => prev ? { ...prev, isEditing: true } : null)}
-                >
-                  <Pencil className="h-4 w-4 mr-1" />
-                  添加 Prompt
-                </Button>
-              </div>
-            )}
-          </div>
+              ) : (
+                <ScrollArea className="h-[380px]">
+                  <div className="space-y-2">
+                    {versions.map(version => (
+                      <div
+                        key={version.id}
+                        className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className="font-mono">v{version.version_number}</Badge>
+                          <div>
+                            <div className="text-sm">
+                              {format(new Date(version.created_at), 'yyyy-MM-dd HH:mm', { locale: zhCN })}
+                            </div>
+                            {version.change_note && (
+                              <div className="text-xs text-muted-foreground truncate max-w-[300px]">
+                                {version.change_note}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => setViewingVersion(version)}>
+                            查看
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleRestoreVersion(version)}>
+                            <RotateCcw className="h-3 w-3 mr-1" />
+                            恢复
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
