@@ -211,6 +211,19 @@ serve(async (req) => {
 
     console.log('User mapping saved for:', tokenData.openid);
 
+    // 更新 profiles 表的 auth_provider 为 wechat
+    const { error: profileUpdateError } = await supabaseClient
+      .from('profiles')
+      .update({ auth_provider: 'wechat' })
+      .eq('id', finalUserId);
+
+    if (profileUpdateError) {
+      console.error('Profile update error:', profileUpdateError);
+      // 不阻止登录流程，只记录错误
+    } else {
+      console.log('Profile auth_provider updated to wechat for:', finalUserId);
+    }
+
     // 对于绑定流程，直接返回成功
     if (state === 'bind') {
       return new Response(
