@@ -59,6 +59,57 @@ export const CoachVoiceChat = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // 处理工具执行完成
+  const handleToolExecuted = (tool: string, result: any, args: any) => {
+    const toolLabels: Record<string, { title: string; getDesc: (r: any, a: any) => string }> = {
+      create_gratitude_entry: {
+        title: '✨ 感恩已记录',
+        getDesc: (r, a) => a?.content?.slice(0, 30) + '...' || '感恩日记已保存'
+      },
+      recommend_coach: {
+        title: '🎯 教练推荐',
+        getDesc: (r, a) => {
+          const coachNames: Record<string, string> = {
+            emotion: '情绪教练',
+            parent: '亲子教练',
+            communication: '沟通教练',
+            story: '故事教练',
+            gratitude: '感恩教练'
+          };
+          return `推荐使用${coachNames[a?.coach_type] || '教练'}`;
+        }
+      },
+      recommend_tool: {
+        title: '🛠️ 工具推荐',
+        getDesc: (r, a) => {
+          const toolNames: Record<string, string> = {
+            emotion_button: '情绪按钮',
+            breathing: '呼吸练习',
+            meditation: '冥想',
+            declaration_card: '宣言卡'
+          };
+          return `推荐使用${toolNames[a?.tool_type] || '工具'}`;
+        }
+      },
+      get_user_insights: {
+        title: '📊 状态分析',
+        getDesc: () => '正在分析你的近期状态...'
+      },
+      get_recent_briefings: {
+        title: '📋 历史回顾',
+        getDesc: () => '正在获取最近的简报...'
+      }
+    };
+    
+    const config = toolLabels[tool];
+    if (config) {
+      toast({
+        title: config.title,
+        description: config.getDesc(result, args),
+      });
+    }
+  };
+
   // 检查余额
   const checkQuota = async (): Promise<boolean> => {
     try {
@@ -186,6 +237,9 @@ export const CoachVoiceChat = ({
             setSpeakingStatus('assistant-speaking');
           } else if (event.type === 'response.done') {
             setSpeakingStatus('idle');
+          } else if (event.type === 'tool_executed') {
+            // 工具执行完成，显示 toast
+            handleToolExecuted(event.tool, event.result, event.args);
           }
         },
         // onStatusChange

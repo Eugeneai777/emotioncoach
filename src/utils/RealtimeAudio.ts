@@ -321,9 +321,74 @@ export class RealtimeChat {
         // Response completed
         break;
 
+      case 'response.function_call_arguments.done':
+        // 工具调用完成，执行工具
+        console.log('Tool call:', event.name, event.arguments);
+        this.executeToolCall(event.name, event.arguments, event.call_id);
+        break;
+
       case 'error':
         console.error('Realtime API error:', event.error);
         break;
+    }
+  }
+
+  // 执行工具调用
+  private async executeToolCall(toolName: string, argsString: string, callId: string) {
+    try {
+      const args = JSON.parse(argsString);
+      console.log(`Executing tool: ${toolName}`, args);
+
+      // 调用后端 life-coach-tools
+      const { data, error } = await supabase.functions.invoke('life-coach-tools', {
+        body: { tool: toolName, params: args }
+      });
+
+      if (error) {
+        console.error('Tool execution error:', error);
+        throw error;
+      }
+
+      console.log('Tool result:', data);
+
+      // 发送工具执行结果回 OpenAI
+      if (this.dc && this.dc.readyState === 'open') {
+        this.dc.send(JSON.stringify({
+          type: 'conversation.item.create',
+          item: {
+            type: 'function_call_output',
+            call_id: callId,
+            output: JSON.stringify(data)
+          }
+        }));
+
+        // 触发 AI 继续响应
+        this.dc.send(JSON.stringify({ type: 'response.create' }));
+      }
+
+      // 通知前端显示状态
+      this.onMessage({ 
+        type: 'tool_executed', 
+        tool: toolName, 
+        result: data,
+        args: args
+      });
+
+    } catch (error) {
+      console.error('Tool execution error:', error);
+      
+      // 发送错误结果回 OpenAI
+      if (this.dc && this.dc.readyState === 'open') {
+        this.dc.send(JSON.stringify({
+          type: 'conversation.item.create',
+          item: {
+            type: 'function_call_output',
+            call_id: callId,
+            output: JSON.stringify({ error: '工具执行失败' })
+          }
+        }));
+        this.dc.send(JSON.stringify({ type: 'response.create' }));
+      }
     }
   }
 
