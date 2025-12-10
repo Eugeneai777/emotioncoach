@@ -1,8 +1,15 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Check, RefreshCw, Lightbulb, Sparkles } from 'lucide-react';
+import { Check, RefreshCw, Lightbulb, Sparkles, Shield, Award, Users, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+export interface TrustElements {
+  data_point?: string;
+  authority_badge?: string;
+  user_proof?: string;
+  certification?: string;
+}
 
 export interface PosterScheme {
   scheme_name: string;
@@ -14,6 +21,7 @@ export interface PosterScheme {
   selling_points: string[];
   call_to_action: string;
   urgency_text: string;
+  trust_elements?: TrustElements;
   background_keywords: string[];
   visual_style: string;
   color_scheme?: {
@@ -27,6 +35,7 @@ export interface GeneratedSchemes {
   schemes: PosterScheme[];
   target_audience: string;
   promotion_scene: string;
+  trust_preference?: string;
   promotion_tips: string;
 }
 
@@ -41,6 +50,20 @@ const schemeGradients = [
   'from-amber-500 to-orange-500',
   'from-teal-500 to-cyan-500',
 ];
+
+const trustElementIcons: Record<string, typeof Shield> = {
+  data_point: BarChart3,
+  authority_badge: Award,
+  user_proof: Users,
+  certification: Shield,
+};
+
+const trustElementLabels: Record<string, string> = {
+  data_point: '数据支持',
+  authority_badge: '权威背书',
+  user_proof: '用户验证',
+  certification: '品牌认证',
+};
 
 export function SchemePreview({ 
   data, 
@@ -58,6 +81,36 @@ export function SchemePreview({
     if (selectedIndex !== null) {
       onSelectScheme(data.schemes[selectedIndex]);
     }
+  };
+
+  const renderTrustElements = (trustElements?: TrustElements) => {
+    if (!trustElements) return null;
+    
+    const elements = Object.entries(trustElements).filter(([_, value]) => value);
+    if (elements.length === 0) return null;
+
+    return (
+      <div className="mt-3 pt-3 border-t border-border/50">
+        <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+          <Shield className="w-3 h-3" />
+          信任元素
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {elements.map(([key, value]) => {
+            const Icon = trustElementIcons[key] || Shield;
+            return (
+              <span
+                key={key}
+                className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full flex items-center gap-1"
+              >
+                <Icon className="w-3 h-3" />
+                {value}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -148,6 +201,9 @@ export function SchemePreview({
                 🔥 {scheme.urgency_text}
               </span>
             </div>
+
+            {/* Trust Elements */}
+            {renderTrustElements(scheme.trust_elements)}
           </Card>
         ))}
       </div>
