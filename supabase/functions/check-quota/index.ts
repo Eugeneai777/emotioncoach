@@ -11,15 +11,37 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
+    // Extract user from JWT token
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { userId, source } = await req.json();
+    // Verify the JWT and get the user
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('Auth error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = user.id;
+    const { source } = await req.json().catch(() => ({}));
 
     // Get user account
-    const { data: account, error: accountError } = await supabase
+    const { data: account, error: accountError } = await supabaseAdmin
       .from('user_accounts')
       .select('*')
       .eq('user_id', userId)
@@ -37,7 +59,7 @@ Deno.serve(async (req) => {
     }
 
     // Get subscription separately
-    const { data: subscriptions } = await supabase
+    const { data: subscriptions } = await supabaseAdmin
       .from('subscriptions')
       .select('*')
       .eq('user_id', userId)
@@ -56,7 +78,7 @@ Deno.serve(async (req) => {
 
     const allowed = hasQuota && !isExpired;
 
-    console.log(`✅ 检查额度 [${source}]: 用户 ${userId}, 剩余 ${account.remaining_quota}, 允许: ${allowed}`);
+    console.log(`✅ 检查额度 [${source || 'unknown'}]: 用户 ${userId}, 剩余 ${account.remaining_quota}, 允许: ${allowed}`);
 
     return new Response(
       JSON.stringify({
