@@ -131,6 +131,7 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
       }
 
       // Process tool call results
+      let hasSchemes = false;
       for (const key in toolCallsData) {
         const toolCall = toolCallsData[key];
         
@@ -150,18 +151,26 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
             const schemesData = JSON.parse(toolCall.arguments) as GeneratedSchemes;
             console.log('Generated schemes:', schemesData);
             setGeneratedSchemes(schemesData);
+            hasSchemes = true;
             
             // Add confirmation message
             if (!assistantContent) {
               assistantContent = '🎉 根据你的需求，我为你生成了2个差异化的推广方案！\n\n请选择最适合你的方案，然后我们就可以开始设计海报了！';
-              if (!isRegenerate) {
-                setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
-              }
             }
           } catch (e) {
             console.error('Failed to parse schemes:', e);
           }
         }
+      }
+
+      // Ensure we always have a message to display (fix for stuck UI)
+      if (!assistantContent && Object.keys(toolCallsData).length > 0 && !hasSchemes) {
+        assistantContent = '请从下方选项中选择，或者告诉我你的想法 👇';
+      }
+
+      // Update messages if we have content
+      if (assistantContent && !isRegenerate) {
+        setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
       }
 
     } catch (error) {
