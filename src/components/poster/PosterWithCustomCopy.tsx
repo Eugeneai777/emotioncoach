@@ -1,9 +1,9 @@
 import { forwardRef, useEffect, useState } from 'react';
 import QRCode from 'qrcode';
-import { GeneratedCopy } from './CopyPreview';
+import { type PosterScheme } from './SchemePreview';
 
 interface PosterWithCustomCopyProps {
-  copy: GeneratedCopy & { selectedHeadline: number; selectedSubtitle: number };
+  copy: PosterScheme & { target_audience: string; promotion_scene: string };
   partnerId: string;
   entryType: 'free' | 'paid';
   backgroundImageUrl?: string;
@@ -16,7 +16,10 @@ const templateGradients: Record<string, string> = {
   emotion_coach: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
   parent_coach: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
   communication_coach: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-  training_camp: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+  story_coach: 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)',
+  emotion_journal_21: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+  parent_emotion_21: 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)',
+  '365_member': 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
   member_365: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
   partner_recruit: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
 };
@@ -26,7 +29,10 @@ const templateEmojis: Record<string, string> = {
   emotion_coach: '💚',
   parent_coach: '👨‍👩‍👧',
   communication_coach: '💬',
-  training_camp: '🎯',
+  story_coach: '🌟',
+  emotion_journal_21: '📝',
+  parent_emotion_21: '👨‍👩‍👧',
+  '365_member': '👑',
   member_365: '👑',
   partner_recruit: '🤝',
 };
@@ -48,10 +54,11 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
       generateQR();
     }, [partnerId, entryType]);
 
-    const gradient = templateGradients[copy.recommended_template] || templateGradients.emotion_coach;
+    // Use color scheme from AI if provided, otherwise fall back to template gradient
+    const gradient = copy.color_scheme 
+      ? `linear-gradient(135deg, ${copy.color_scheme.primary} 0%, ${copy.color_scheme.secondary || copy.color_scheme.primary} 100%)`
+      : templateGradients[copy.recommended_template] || templateGradients.emotion_coach;
     const emoji = templateEmojis[copy.recommended_template] || '✨';
-    const headline = copy.headline_options[copy.selectedHeadline];
-    const subtitle = copy.subtitle_options[copy.selectedSubtitle];
 
     return (
       <div
@@ -112,7 +119,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
                 margin: 0,
               }}
             >
-              {headline}
+              {copy.headline}
             </h1>
             <p
               style={{
@@ -122,7 +129,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
                 textShadow: '0 1px 2px rgba(0,0,0,0.2)',
               }}
             >
-              {subtitle}
+              {copy.subtitle}
             </p>
           </div>
 
@@ -163,6 +170,29 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
             ))}
           </div>
 
+          {/* Urgency Badge */}
+          {copy.urgency_text && (
+            <div
+              style={{
+                textAlign: 'center',
+                marginBottom: '12px',
+              }}
+            >
+              <span
+                style={{
+                  background: 'rgba(239, 68, 68, 0.9)',
+                  color: 'white',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  padding: '4px 12px',
+                  borderRadius: '20px',
+                }}
+              >
+                🔥 {copy.urgency_text}
+              </span>
+            </div>
+          )}
+
           {/* Bottom Section - QR Code & CTA */}
           <div
             style={{
@@ -172,7 +202,6 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              marginTop: '16px',
             }}
           >
             {qrCodeUrl && (

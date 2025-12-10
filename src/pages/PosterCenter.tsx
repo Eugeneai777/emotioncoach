@@ -8,7 +8,7 @@ import { PosterTemplateGrid } from '@/components/poster/PosterTemplateGrid';
 import { PosterGenerator } from '@/components/poster/PosterGenerator';
 import { PosterExpertChat } from '@/components/poster/PosterExpertChat';
 import { PosterWithCustomCopy } from '@/components/poster/PosterWithCustomCopy';
-import { GeneratedCopy } from '@/components/poster/CopyPreview';
+import { type PosterScheme } from '@/components/poster/SchemePreview';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 
@@ -22,7 +22,7 @@ export default function PosterCenter() {
   const [mode, setMode] = useState<Mode>('quick');
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [expertStep, setExpertStep] = useState<ExpertStep>('chat');
-  const [customCopy, setCustomCopy] = useState<GeneratedCopy & { selectedHeadline: number; selectedSubtitle: number } | null>(null);
+  const [customCopy, setCustomCopy] = useState<(PosterScheme & { target_audience: string; promotion_scene: string }) | null>(null);
   const [backgroundImageUrl] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
@@ -62,8 +62,8 @@ export default function PosterCenter() {
 
   const entryType = partner.default_entry_type === 'paid' ? 'paid' : 'free';
 
-  const handleCopyConfirmed = (copy: GeneratedCopy & { selectedHeadline: number; selectedSubtitle: number }) => {
-    setCustomCopy(copy);
+  const handleSchemeConfirmed = (scheme: PosterScheme & { target_audience: string; promotion_scene: string }) => {
+    setCustomCopy(scheme);
     setExpertStep('preview');
   };
 
@@ -234,7 +234,7 @@ export default function PosterCenter() {
               <PosterExpertChat
                 partnerId={partner.id}
                 entryType={entryType as 'free' | 'paid'}
-                onCopyConfirmed={handleCopyConfirmed}
+                onSchemeConfirmed={handleSchemeConfirmed}
               />
             </div>
           </>
