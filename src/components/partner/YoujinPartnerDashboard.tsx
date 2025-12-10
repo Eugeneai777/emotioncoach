@@ -128,14 +128,14 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
         onWithdraw={() => setActiveTab('earnings')}
       />
 
-      {/* 快捷操作 */}
-      <PartnerQuickActions onTabChange={handleTabChange} />
-
       {/* 转化漏斗预览 */}
       <CompactConversionFunnel 
         partnerId={partner.id} 
         onClick={() => setActiveTab('students')}
       />
+
+      {/* 快捷操作 */}
+      <PartnerQuickActions onTabChange={handleTabChange} />
 
       {/* 主要功能区 - Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
