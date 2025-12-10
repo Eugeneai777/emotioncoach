@@ -40,7 +40,7 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.check-quota]
-verify_jwt = false
+verify_jwt = true
 
 [functions.deduct-quota]
 verify_jwt = true
