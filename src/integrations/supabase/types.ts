@@ -2875,6 +2875,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_provider: string | null
           camp_checkin_requirement: string | null
           camp_evening_reminder_time: string | null
           camp_late_warning_enabled: boolean | null
@@ -2926,6 +2927,7 @@ export type Database = {
           wecom_webhook_url: string | null
         }
         Insert: {
+          auth_provider?: string | null
           camp_checkin_requirement?: string | null
           camp_evening_reminder_time?: string | null
           camp_late_warning_enabled?: boolean | null
@@ -2977,6 +2979,7 @@ export type Database = {
           wecom_webhook_url?: string | null
         }
         Update: {
+          auth_provider?: string | null
           camp_checkin_requirement?: string | null
           camp_evening_reminder_time?: string | null
           camp_late_warning_enabled?: boolean | null
