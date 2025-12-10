@@ -106,6 +106,19 @@ serve(async (req) => {
         result = await recommendTrainingCamp(supabase, user.id, params?.goal);
         break;
 
+      // ========== 用户洞察分析 ==========
+      case 'get_user_insights':
+        result = await getUserInsights(supabase, user.id, params?.insight_type);
+        break;
+
+      case 'get_recent_briefings':
+        result = await getRecentBriefings(supabase, user.id, params?.coach_type, params?.days);
+        break;
+
+      case 'recommend_coach':
+        result = await recommendCoach(params?.coach_type, params?.reason);
+        break;
+
       default:
         result = { error: `Unknown tool: ${tool}` };
     }
@@ -669,4 +682,227 @@ async function recommendTrainingCamp(supabase: any, userId: string, goal?: strin
   }
 
   return { recommended_camps: recommendations.slice(0, 3) };
+}
+
+// ========== 用户洞察分析 ==========
+
+async function getUserInsights(supabase: any, userId: string, insightType: string) {
+  console.log(`Getting user insights: ${insightType} for user: ${userId}`);
+
+  // 获取情绪数据
+  const emotionData = await getEmotionTimeline(supabase, userId, 14);
+  
+  // 获取感恩数据
+  const gratitudeData = await getGratitudeEntries(supabase, userId, 20);
+  
+  // 获取教练历史
+  const coachHistory = await getCoachHistory(supabase, userId);
+
+  if (insightType === 'emotion_pattern') {
+    return {
+      insight_type: 'emotion_pattern',
+      period_days: 14,
+      average_intensity: emotionData.patterns.average_intensity,
+      top_themes: emotionData.patterns.top_themes,
+      total_logs: emotionData.patterns.total_logs,
+      recent_logs: emotionData.quick_logs.slice(0, 5),
+      summary: generateEmotionSummary(emotionData),
+    };
+  }
+
+  if (insightType === 'gratitude_themes') {
+    return {
+      insight_type: 'gratitude_themes',
+      total_entries: gratitudeData.total_count,
+      category_stats: gratitudeData.category_stats,
+      recent_entries: gratitudeData.entries.slice(0, 5),
+      summary: generateGratitudeSummary(gratitudeData),
+    };
+  }
+
+  // comprehensive - 综合分析
+  return {
+    insight_type: 'comprehensive',
+    emotion: {
+      average_intensity: emotionData.patterns.average_intensity,
+      top_themes: emotionData.patterns.top_themes,
+      total_logs: emotionData.patterns.total_logs,
+    },
+    gratitude: {
+      total_entries: gratitudeData.total_count,
+      top_categories: Object.entries(gratitudeData.category_stats)
+        .sort((a: any, b: any) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([cat]) => cat),
+    },
+    coach_activity: {
+      recent_conversations: coachHistory.recent_conversations,
+      last_activity: coachHistory.last_activity,
+      recent_insights: coachHistory.recent_briefings?.slice(0, 3).map((b: any) => b.insight).filter(Boolean),
+    },
+    summary: generateComprehensiveSummary(emotionData, gratitudeData, coachHistory),
+  };
+}
+
+function generateEmotionSummary(data: any): string {
+  const { patterns } = data;
+  if (patterns.total_logs === 0) {
+    return '最近14天暂无情绪记录，建议开始记录每天的情绪状态。';
+  }
+  
+  const intensity = patterns.average_intensity;
+  let intensityDesc = '';
+  if (intensity && intensity <= 3) intensityDesc = '情绪状态整体比较平稳';
+  else if (intensity && intensity <= 6) intensityDesc = '情绪有一些波动，但整体还好';
+  else if (intensity) intensityDesc = '最近情绪波动比较大';
+  
+  const themes = patterns.top_themes?.slice(0, 2).join('、') || '';
+  const themePart = themes ? `，主要涉及${themes}` : '';
+  
+  return `过去14天共记录${patterns.total_logs}次情绪，${intensityDesc}${themePart}。`;
+}
+
+function generateGratitudeSummary(data: any): string {
+  if (data.total_count === 0) {
+    return '暂无感恩记录，每天记录一件感恩的事能提升幸福感哦。';
+  }
+  
+  const topCategories = Object.entries(data.category_stats)
+    .sort((a: any, b: any) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([cat]) => cat);
+  
+  const categoryPart = topCategories.length > 0 ? `，主要集中在${topCategories.join('、')}方面` : '';
+  
+  return `已记录${data.total_count}条感恩${categoryPart}，这是很好的习惯！`;
+}
+
+function generateComprehensiveSummary(emotion: any, gratitude: any, coach: any): string {
+  const parts = [];
+  
+  if (emotion.patterns.total_logs > 0) {
+    const intensity = emotion.patterns.average_intensity;
+    if (intensity && intensity <= 4) parts.push('情绪状态平稳');
+    else if (intensity && intensity <= 7) parts.push('情绪有些波动');
+    else if (intensity) parts.push('情绪波动较大');
+  }
+  
+  if (gratitude.total_count > 0) {
+    parts.push(`感恩记录积极（${gratitude.total_count}条）`);
+  }
+  
+  if (coach.recent_conversations > 0) {
+    parts.push('有持续使用教练服务');
+  }
+  
+  if (parts.length === 0) {
+    return '最近活跃度较低，可以多和我聊聊哦～';
+  }
+  
+  return `最近14天：${parts.join('，')}。`;
+}
+
+async function getRecentBriefings(supabase: any, userId: string, coachType?: string, days?: number) {
+  const daysToFetch = days || 7;
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - daysToFetch);
+
+  // 获取用户的对话
+  const { data: conversations } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('user_id', userId);
+
+  if (!conversations || conversations.length === 0) {
+    return { briefings: [], message: '暂无教练对话记录' };
+  }
+
+  const conversationIds = conversations.map((c: any) => c.id);
+
+  // 根据教练类型获取简报
+  let briefings: any[] = [];
+
+  if (!coachType || coachType === 'all' || coachType === 'emotion') {
+    const { data: emotionBriefings } = await supabase
+      .from('briefings')
+      .select('emotion_theme, insight, action, created_at')
+      .in('conversation_id', conversationIds)
+      .gte('created_at', startDate.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(5);
+    
+    briefings = briefings.concat((emotionBriefings || []).map((b: any) => ({ ...b, coach_type: 'emotion' })));
+  }
+
+  if (!coachType || coachType === 'all' || coachType === 'communication') {
+    const { data: commBriefings } = await supabase
+      .from('communication_briefings')
+      .select('communication_theme, growth_insight, micro_action, created_at')
+      .in('conversation_id', conversationIds)
+      .gte('created_at', startDate.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(5);
+    
+    briefings = briefings.concat((commBriefings || []).map((b: any) => ({
+      emotion_theme: b.communication_theme,
+      insight: b.growth_insight,
+      action: b.micro_action,
+      created_at: b.created_at,
+      coach_type: 'communication'
+    })));
+  }
+
+  // 按时间排序
+  briefings.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  return {
+    briefings: briefings.slice(0, 10),
+    period_days: daysToFetch,
+    total_count: briefings.length,
+  };
+}
+
+function recommendCoach(coachType: string, reason: string) {
+  const coachInfo: Record<string, { name: string; route: string; description: string }> = {
+    emotion: {
+      name: '情绪教练',
+      route: '/',
+      description: '帮助你深入梳理情绪，找到情绪背后的需求和价值'
+    },
+    parent: {
+      name: '亲子教练',
+      route: '/parent-coach',
+      description: '陪伴你处理亲子关系中的困惑，建立更好的亲子连结'
+    },
+    communication: {
+      name: '沟通教练',
+      route: '/communication-coach',
+      description: '帮助你在人际沟通中表达自己，被对方理解和接受'
+    },
+    story: {
+      name: '故事教练',
+      route: '/story-coach',
+      description: '将你的经历转化为充满力量的成长故事'
+    },
+    gratitude: {
+      name: '感恩教练',
+      route: '/gratitude-coach',
+      description: '帮助你发现生活中的美好，培养感恩的心态'
+    }
+  };
+
+  const coach = coachInfo[coachType];
+  if (!coach) {
+    return { error: `未知的教练类型: ${coachType}` };
+  }
+
+  return {
+    success: true,
+    coach_type: coachType,
+    coach_name: coach.name,
+    route: coach.route,
+    description: coach.description,
+    reason: reason,
+    message: `推荐你使用${coach.name}，${reason}。你可以点击界面上的链接进入。`
+  };
 }
