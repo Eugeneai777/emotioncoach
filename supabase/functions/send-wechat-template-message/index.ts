@@ -8,15 +8,14 @@ const corsHeaders = {
 };
 
 // 系统级模板ID配置 - 从环境变量读取或使用默认值
-// 统一使用打卡模板(thing1-4结构)
 const SYSTEM_TEMPLATE_IDS: Record<string, string> = {
   // 打卡相关场景使用打卡模板
   'checkin_success': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
   'checkin_streak_milestone': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
   'checkin_reminder': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
   'checkin_streak_break_warning': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
-  // 登录成功也使用打卡模板（结构相同）
-  'login_success': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
+  // 登录成功使用专用模板（用户名、账号、时间结构）
+  'login_success': Deno.env.get('WECHAT_TEMPLATE_LOGIN') || '',
   // 其他场景使用通用模板
   'default': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
 };
@@ -159,31 +158,56 @@ serve(async (req) => {
 
     const scenarioName = scenarioNames[scenario] || '系统通知';
 
-    // 检测使用打卡模板的场景 (thing1-4结构)
-    // 登录成功场景如果有专用模板，也使用 thing 结构
-    const loginTemplateId = Deno.env.get('WECHAT_TEMPLATE_LOGIN');
-    const useThingFormat = ['checkin_success', 'checkin_streak_milestone', 'checkin_reminder', 'checkin_streak_break_warning', 'login_success'].includes(scenario);
-    
     // 根据场景选择不同的模板数据结构
     let messageData;
     
     // 获取消息内容，支持 message 或 content 字段
     const messageContent = notification.message || notification.content || '欢迎使用';
     
-    if (useThingFormat) {
+    // 检测打卡相关场景 (thing1-4结构)
+    const isCheckinScenario = ['checkin_success', 'checkin_streak_milestone', 'checkin_reminder', 'checkin_streak_break_warning'].includes(scenario);
+    
+    if (scenario === 'login_success') {
+      // 登录成功模板结构（用户名、账号、时间）
+      // 格式化当前时间
+      const now = new Date();
+      const loginTime = now.toLocaleString('zh-CN', { 
+        timeZone: 'Asia/Shanghai',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      
+      messageData = {
+        thing1: { 
+          value: (displayName || '用户').slice(0, 20),
+          color: "#173177" 
+        },
+        character_string1: { 
+          value: (notification.account || notification.email || '***').slice(0, 32),
+          color: "#173177" 
+        },
+        time2: { 
+          value: loginTime,
+          color: "#173177" 
+        },
+      };
+    } else if (isCheckinScenario) {
       // "上课打卡成功通知"模板结构 (thing1, thing2, thing3, thing4)
-      // 适用于打卡和登录成功等场景
       messageData = {
         thing1: { 
           value: (displayName || '用户').slice(0, 20),
           color: "#173177" 
         },
         thing2: { 
-          value: scenario === 'login_success' ? '账号登录' : '情绪记录打卡',
+          value: '情绪记录打卡',
           color: "#173177" 
         },
         thing3: { 
-          value: (notification.title || '登录成功').slice(0, 20),
+          value: (notification.title || '打卡成功').slice(0, 20),
           color: "#173177" 
         },
         thing4: { 
