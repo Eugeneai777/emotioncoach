@@ -16,7 +16,17 @@ interface CoachStepsEditorProps {
 }
 
 export function CoachStepsEditor({ open, onOpenChange, steps: initialSteps, onSave }: CoachStepsEditorProps) {
-  const [steps, setSteps] = useState<CoachStep[]>(initialSteps);
+  // 标准化输入步骤格式
+  const normalizeSteps = (rawSteps: any[]): CoachStep[] => {
+    return rawSteps.map((step, index) => ({
+      id: step.id ?? step.step ?? (index + 1),
+      emoji: step.emoji ?? step.icon ?? "➡️",
+      name: step.name ?? step.title ?? "新步骤",
+      description: step.description ?? ""
+    }));
+  };
+
+  const [steps, setSteps] = useState<CoachStep[]>(normalizeSteps(initialSteps));
 
   const handleAddStep = () => {
     const newId = Math.max(...steps.map(s => s.id), 0) + 1;
@@ -24,9 +34,7 @@ export function CoachStepsEditor({ open, onOpenChange, steps: initialSteps, onSa
       id: newId,
       emoji: "➡️",
       name: "新步骤",
-      subtitle: "Subtitle",
-      description: "步骤描述",
-      details: "详细说明"
+      description: "步骤描述"
     }]);
   };
 
@@ -51,7 +59,14 @@ export function CoachStepsEditor({ open, onOpenChange, steps: initialSteps, onSa
   };
 
   const handleSave = () => {
-    onSave(steps);
+    // 保存时只保留标准字段 (id, emoji, name, description)
+    const standardizedSteps = steps.map(step => ({
+      id: step.id,
+      emoji: step.emoji,
+      name: step.name,
+      description: step.description
+    }));
+    onSave(standardizedSteps);
     onOpenChange(false);
   };
 
@@ -109,32 +124,13 @@ export function CoachStepsEditor({ open, onOpenChange, steps: initialSteps, onSa
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <Label>英文副标题</Label>
-                              <Input
-                                value={step.subtitle}
-                                onChange={(e) => handleUpdateStep(step.id, 'subtitle', e.target.value)}
-                                placeholder="Feel It"
-                              />
-                            </div>
-                            <div>
-                              <Label>描述</Label>
-                              <Input
-                                value={step.description}
-                                onChange={(e) => handleUpdateStep(step.id, 'description', e.target.value)}
-                                placeholder="此刻我的身体感受是什么？"
-                              />
-                            </div>
-                          </div>
-
                           <div>
-                            <Label>详细说明</Label>
+                            <Label>描述（一句话说明）</Label>
                             <Textarea
-                              value={step.details}
-                              onChange={(e) => handleUpdateStep(step.id, 'details', e.target.value)}
-                              placeholder="从不知道 → 有觉察&#10;从混乱 → 清晰可描述"
-                              rows={3}
+                              value={step.description}
+                              onChange={(e) => handleUpdateStep(step.id, 'description', e.target.value)}
+                              placeholder="简洁的一句话描述，10-20字"
+                              rows={2}
                             />
                           </div>
                         </div>
