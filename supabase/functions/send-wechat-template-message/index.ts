@@ -158,29 +158,35 @@ serve(async (req) => {
 
     const scenarioName = scenarioNames[scenario] || '系统通知';
 
-    // 检测打卡相关场景，使用新模板结构
-    const isCheckinScenario = ['checkin_success', 'checkin_streak_milestone', 'checkin_reminder', 'checkin_streak_break_warning'].includes(scenario);
+    // 检测使用打卡模板的场景 (thing1-4结构)
+    // 登录成功场景如果有专用模板，也使用 thing 结构
+    const loginTemplateId = Deno.env.get('WECHAT_TEMPLATE_LOGIN');
+    const useThingFormat = ['checkin_success', 'checkin_streak_milestone', 'checkin_reminder', 'checkin_streak_break_warning', 'login_success'].includes(scenario);
     
     // 根据场景选择不同的模板数据结构
     let messageData;
     
-    if (isCheckinScenario) {
+    // 获取消息内容，支持 message 或 content 字段
+    const messageContent = notification.message || notification.content || '欢迎使用';
+    
+    if (useThingFormat) {
       // "上课打卡成功通知"模板结构 (thing1, thing2, thing3, thing4)
+      // 适用于打卡和登录成功等场景
       messageData = {
         thing1: { 
-          value: displayName.slice(0, 20),
+          value: (displayName || '用户').slice(0, 20),
           color: "#173177" 
         },
         thing2: { 
-          value: '情绪记录打卡'.slice(0, 20),
+          value: scenario === 'login_success' ? '账号登录' : '情绪记录打卡',
           color: "#173177" 
         },
         thing3: { 
-          value: notification.title.slice(0, 20),
+          value: (notification.title || '登录成功').slice(0, 20),
           color: "#173177" 
         },
         thing4: { 
-          value: notification.message.slice(0, 20),
+          value: messageContent.slice(0, 20),
           color: "#00C853" 
         },
       };
@@ -188,11 +194,11 @@ serve(async (req) => {
       // "客户跟进提醒"模板结构 (thing1, const12, const9, const14)
       messageData = {
         thing1: { 
-          value: displayName.slice(0, 20),
+          value: (displayName || '用户').slice(0, 20),
           color: "#173177" 
         },
         const12: { 
-          value: notification.title.slice(0, 20),
+          value: (notification.title || '系统通知').slice(0, 20),
           color: "#173177" 
         },
         const9: { 
@@ -200,7 +206,7 @@ serve(async (req) => {
           color: "#173177" 
         },
         const14: { 
-          value: notification.message.slice(0, 20),
+          value: (messageContent || '查看详情').slice(0, 20),
           color: "#00C853" 
         },
       };
