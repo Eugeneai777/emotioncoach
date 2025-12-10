@@ -244,7 +244,13 @@ export const GratitudeJournal = () => {
                   <Textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder="写下让你感恩的事情..."
+                    onKeyDown={(e) => {
+                      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSave();
+                      }
+                    }}
+                    placeholder="写下让你感恩的事情... (Ctrl+Enter 保存)"
                     rows={4}
                   />
                 </div>
