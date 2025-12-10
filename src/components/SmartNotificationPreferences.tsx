@@ -124,26 +124,73 @@ export function SmartNotificationPreferences() {
     }
   };
 
+  // 自动保存单个偏好设置
+  const autoSavePreference = async (field: string, value: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ [field]: value })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "已保存",
+        description: "设置已自动更新 🌿",
+      });
+    } catch (error) {
+      console.error("Error auto-saving preference:", error);
+      toast({
+        title: "保存失败",
+        description: "请稍后再试",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // 处理开关变化并自动保存
+  const handleNotificationEnabledChange = (checked: boolean) => {
+    setNotificationEnabled(checked);
+    autoSavePreference("smart_notification_enabled", checked);
+  };
+
+  const handleFrequencyChange = (value: "minimal" | "balanced" | "frequent") => {
+    setFrequency(value);
+    autoSavePreference("notification_frequency", value);
+  };
+
+  const handleStyleChange = (value: "gentle" | "cheerful" | "motivational") => {
+    setStyle(value);
+    autoSavePreference("preferred_encouragement_style", value);
+  };
+
+  const handleWecomEnabledChange = (checked: boolean) => {
+    setWecomEnabled(checked);
+    autoSavePreference("wecom_enabled", checked);
+  };
+
+  const handleWechatEnabledChange = (checked: boolean) => {
+    setWechatEnabled(checked);
+    autoSavePreference("wechat_enabled", checked);
+  };
+
   const savePreferences = async () => {
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // 保存用户个人偏好
+      // 保存用户个人偏好（主要用于保存文本输入字段）
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
-          smart_notification_enabled: notificationEnabled,
-          notification_frequency: frequency,
-          preferred_encouragement_style: style,
-          wecom_enabled: wecomEnabled,
           wecom_webhook_url: wecomWebhookUrl.trim() || null,
           wecom_corp_id: wecomCorpId.trim() || null,
           wecom_corp_secret: wecomCorpSecret.trim() || null,
           wecom_agent_id: wecomAgentId.trim() || null,
-          wechat_enabled: wechatEnabled,
-          // 注意：AppID/AppSecret/Token/EncodingAESKey/TemplateIDs/Proxy 现在由系统统一配置
         })
         .eq("id", user.id);
 
@@ -152,7 +199,6 @@ export function SmartNotificationPreferences() {
       // 如果是管理员，保存全局机器人配置
       if (isAdmin) {
         if (botConfigExists) {
-          // 更新现有配置
           const { data: existingConfig } = await supabase
             .from("wecom_bot_config")
             .select("id")
@@ -172,7 +218,6 @@ export function SmartNotificationPreferences() {
             if (updateError) throw updateError;
           }
         } else {
-          // 创建新配置
           const { error: insertError } = await supabase
             .from("wecom_bot_config")
             .insert({
@@ -439,7 +484,7 @@ export function SmartNotificationPreferences() {
             <Switch
               id="notification-enabled"
               checked={notificationEnabled}
-              onCheckedChange={setNotificationEnabled}
+              onCheckedChange={handleNotificationEnabledChange}
             />
           </div>
         </CardContent>
@@ -456,7 +501,7 @@ export function SmartNotificationPreferences() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <RadioGroup value={frequency} onValueChange={(v) => setFrequency(v as typeof frequency)}>
+              <RadioGroup value={frequency} onValueChange={(v) => handleFrequencyChange(v as typeof frequency)}>
                 <div className="space-y-3">
                   {frequencyOptions.map((option) => {
                     const Icon = option.icon;
@@ -505,7 +550,7 @@ export function SmartNotificationPreferences() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <RadioGroup value={style} onValueChange={(v) => setStyle(v as typeof style)}>
+              <RadioGroup value={style} onValueChange={(v) => handleStyleChange(v as typeof style)}>
                 <div className="space-y-3">
                   {styleOptions.map((option) => {
                     const Icon = option.icon;
@@ -562,7 +607,7 @@ export function SmartNotificationPreferences() {
                 <Switch
                   id="wecom-enabled"
                   checked={wecomEnabled}
-                  onCheckedChange={setWecomEnabled}
+                  onCheckedChange={handleWecomEnabledChange}
                 />
               </div>
 
@@ -878,7 +923,7 @@ export function SmartNotificationPreferences() {
                 <Switch
                   id="wechat-enabled"
                   checked={wechatEnabled}
-                  onCheckedChange={setWechatEnabled}
+                  onCheckedChange={handleWechatEnabledChange}
                 />
               </div>
 
