@@ -281,7 +281,8 @@ serve(async (req) => {
         success: true,
         magicLink: true,
         tokenHash: session.properties.hashed_token,
-        isNewUser
+        isNewUser,
+        userId: finalUserId
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
