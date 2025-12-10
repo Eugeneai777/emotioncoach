@@ -584,7 +584,7 @@ export default function PosterCenter() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/partner')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="font-medium">海报工坊</h1>
