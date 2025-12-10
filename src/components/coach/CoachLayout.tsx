@@ -1,6 +1,7 @@
 import { ReactNode, useRef, useEffect, useState, useCallback, RefObject } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, ArrowDown } from "lucide-react";
+import { Loader2, ArrowDown, Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ChatMessage } from "@/components/ChatMessage";
 import { CoachHeader } from "./CoachHeader";
 import { CoachEmptyState } from "./CoachEmptyState";
@@ -91,6 +92,10 @@ interface CoachLayoutProps {
   showNotificationCenter?: boolean;
   onRefresh?: () => Promise<void>;
   
+  // Voice chat feature
+  enableVoiceChat?: boolean;
+  onVoiceChatClick?: () => void;
+  
   // Emotion coach specific slots
   intensityPrompt?: ReactNode;
   intensitySelector?: ReactNode;
@@ -160,6 +165,8 @@ export const CoachLayout = ({
   bottomContent,
   showNotificationCenter = true,
   onRefresh,
+  enableVoiceChat = false,
+  onVoiceChatClick,
   intensityPrompt,
   intensitySelector,
   dailyReminderContent,
@@ -465,6 +472,8 @@ export const CoachLayout = ({
           scenarioPrimaryColor={scenarioPrimaryColor}
           messagesCount={messages.length}
           intensitySelector={intensitySelector}
+          enableVoiceChat={enableVoiceChat}
+          onVoiceChatClick={onVoiceChatClick}
         />
       </div>
       

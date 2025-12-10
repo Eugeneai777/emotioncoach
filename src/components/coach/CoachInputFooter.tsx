@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, RotateCcw } from "lucide-react";
+import { Send, RotateCcw, Phone } from "lucide-react";
 import { forwardRef, useState, useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -19,6 +19,8 @@ interface CoachInputFooterProps {
   scenarioPrimaryColor?: string;
   messagesCount?: number;
   intensitySelector?: React.ReactNode;
+  enableVoiceChat?: boolean;
+  onVoiceChatClick?: () => void;
 }
 
 export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElement, CoachInputFooterProps>(({
@@ -35,7 +37,9 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   scenarioOnSelect,
   scenarioPrimaryColor,
   messagesCount,
-  intensitySelector
+  intensitySelector,
+  enableVoiceChat = false,
+  onVoiceChatClick
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -163,6 +167,20 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
           >
             <Send className="w-5 h-5" />
           </Button>
+
+          {/* 语音对话按钮 */}
+          {enableVoiceChat && onVoiceChatClick && (
+            <Button
+              onClick={onVoiceChatClick}
+              disabled={isLoading}
+              size="icon"
+              variant="outline"
+              title="语音对话"
+              className="h-11 w-11 min-w-[44px] min-h-[44px] flex-shrink-0 rounded-full border-rose-300 text-rose-500 hover:bg-rose-50 active:scale-95 transition-transform"
+            >
+              <Phone className="w-5 h-5" />
+            </Button>
+          )}
         </div>
       </div>
     </footer>

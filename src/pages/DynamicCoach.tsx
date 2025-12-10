@@ -9,6 +9,7 @@ import { EmotionButtonRecommendationCard } from "@/components/coach/EmotionButto
 import { CampRecommendationCard } from "@/components/coach/CampRecommendationCard";
 import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
 import { CoachTrainingCamp } from "@/components/coach/CoachTrainingCamp";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { useDynamicCoachChat } from "@/hooks/useDynamicCoachChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
@@ -19,6 +20,7 @@ const DynamicCoach = () => {
   const { coachKey } = useParams<{ coachKey: string }>();
   const [input, setInput] = useState("");
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
+  const [showVoiceChat, setShowVoiceChat] = useState(false);
   const { toast } = useToast();
   const { data: template, isLoading: templateLoading } = useCoachTemplate(coachKey || '');
   
@@ -113,6 +115,7 @@ const DynamicCoach = () => {
   const optionSelectHandler = template.disable_option_buttons ? undefined : handleOptionSelect;
 
   return (
+    <>
     <CoachLayout
       emoji={template.emoji}
       title={template.title}
@@ -202,7 +205,21 @@ const DynamicCoach = () => {
           />
         ) : undefined
       }
+      enableVoiceChat={template.coach_key === 'vibrant_life_sage'}
+      onVoiceChatClick={() => setShowVoiceChat(true)}
     />
+    
+    {/* 语音对话全屏界面 */}
+    {showVoiceChat && (
+      <CoachVoiceChat
+        onClose={() => setShowVoiceChat(false)}
+        coachEmoji={template.emoji}
+        coachTitle={template.title}
+        primaryColor={template.primary_color || 'rose'}
+        tokenEndpoint="vibrant-life-realtime-token"
+      />
+    )}
+  </>
   );
 };
 
