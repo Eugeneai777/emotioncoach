@@ -52,7 +52,19 @@ export default function WeChatAuth() {
       const redirectUri = encodeURIComponent(`${appDomain}/wechat-oauth-callback`);
       const state = mode;
 
-      const authUrl = `https://open.weixin.qq.com/connect/qrconnect?appid=${appid}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_login&state=${state}#wechat_redirect`;
+      // 检查是开放平台网站应用还是公众号
+      // 开放平台网站应用使用 qrconnect + snsapi_login
+      // 公众号使用 authorize + snsapi_userinfo
+      const isOpenPlatform = data.isOpenPlatform !== false; // 默认为开放平台
+      
+      let authUrl: string;
+      if (isOpenPlatform) {
+        // 开放平台网站应用 - 扫码登录
+        authUrl = `https://open.weixin.qq.com/connect/qrconnect?appid=${appid}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_login&state=${state}#wechat_redirect`;
+      } else {
+        // 公众号 - 网页授权
+        authUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appid}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=${state}#wechat_redirect`;
+      }
       
       setQrCodeUrl(authUrl);
     } catch (error) {

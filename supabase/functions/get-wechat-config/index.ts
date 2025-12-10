@@ -12,6 +12,8 @@ serve(async (req) => {
 
   try {
     const appId = Deno.env.get('WECHAT_APP_ID');
+    // 是否为开放平台网站应用（默认true），设置为false则使用公众号OAuth
+    const isOpenPlatform = Deno.env.get('WECHAT_IS_OPEN_PLATFORM') !== 'false';
 
     if (!appId) {
       console.error('WECHAT_APP_ID not configured');
@@ -21,10 +23,10 @@ serve(async (req) => {
       );
     }
 
-    console.log('返回微信 AppID 配置');
+    console.log('返回微信 AppID 配置, isOpenPlatform:', isOpenPlatform);
 
     return new Response(
-      JSON.stringify({ appId }),
+      JSON.stringify({ appId, isOpenPlatform }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
