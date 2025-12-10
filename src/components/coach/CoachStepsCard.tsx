@@ -18,6 +18,7 @@ interface CoachStepsCardProps {
   steps: Step[];
   moreInfoRoute?: string;
   primaryColor?: string;
+  showMoreInfo?: boolean;
 }
 
 export const CoachStepsCard = ({ 
@@ -25,7 +26,8 @@ export const CoachStepsCard = ({
   titleEmoji, 
   steps, 
   moreInfoRoute,
-  primaryColor = "primary"
+  primaryColor = "primary",
+  showMoreInfo = true
 }: CoachStepsCardProps) => {
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
 
@@ -36,7 +38,7 @@ export const CoachStepsCard = ({
           <span className={`text-${primaryColor} text-sm`}>{titleEmoji}</span>
           {title}
         </h3>
-        {moreInfoRoute && (
+        {moreInfoRoute && showMoreInfo && (
           <Button 
             variant="link" 
             size="sm" 
