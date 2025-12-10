@@ -6,9 +6,10 @@ export interface CoachStep {
   id: number;
   emoji: string;
   name: string;
-  subtitle: string;
   description: string;
-  details: string;
+  // Legacy fields for backward compatibility (will be phased out)
+  subtitle?: string;
+  details?: string;
 }
 
 export interface CoachTemplate {
