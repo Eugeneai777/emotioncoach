@@ -46,30 +46,39 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   const isMobile = useIsMobile();
   const footerRef = useRef<HTMLElement>(null);
 
-  // 虚拟键盘适配
+  // 虚拟键盘适配 - 使用 visualViewport API
   useEffect(() => {
-    if (!isMobile) return;
+    if (!isMobile || !window.visualViewport) return;
     
-    const handleResize = () => {
-      if (window.visualViewport) {
-        const viewportHeight = window.visualViewport.height;
-        const windowHeight = window.innerHeight;
-        const newKeyboardHeight = windowHeight - viewportHeight;
-        
-        if (newKeyboardHeight > 100) {
-          setKeyboardHeight(newKeyboardHeight);
-        } else {
-          setKeyboardHeight(0);
+    const viewport = window.visualViewport;
+    
+    const handleViewportChange = () => {
+      // 计算键盘高度：窗口高度 - 可视视口高度
+      const keyboardH = window.innerHeight - viewport.height;
+      
+      if (keyboardH > 100) {
+        setKeyboardHeight(keyboardH);
+        // 确保输入框可见
+        if (footerRef.current) {
+          footerRef.current.style.bottom = `${keyboardH}px`;
+        }
+      } else {
+        setKeyboardHeight(0);
+        if (footerRef.current) {
+          footerRef.current.style.bottom = '0px';
         }
       }
     };
 
-    window.visualViewport?.addEventListener('resize', handleResize);
-    window.visualViewport?.addEventListener('scroll', handleResize);
+    viewport.addEventListener('resize', handleViewportChange);
+    viewport.addEventListener('scroll', handleViewportChange);
+    
+    // 初始化时检查一次
+    handleViewportChange();
     
     return () => {
-      window.visualViewport?.removeEventListener('resize', handleResize);
-      window.visualViewport?.removeEventListener('scroll', handleResize);
+      viewport.removeEventListener('resize', handleViewportChange);
+      viewport.removeEventListener('scroll', handleViewportChange);
     };
   }, [isMobile]);
 
@@ -83,8 +92,8 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   return (
     <footer 
       ref={footerRef}
-      className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20 safe-bottom transition-transform duration-200"
-      style={{ transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : undefined }}
+      className="fixed left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-50 safe-bottom"
+      style={{ bottom: 0 }}
     >
       <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 pt-2 pb-2">
         {/* Intensity Selector - 键盘弹出时隐藏 */}
