@@ -193,7 +193,7 @@ const DynamicCoach = () => {
             onIndexChange={setCurrentNotificationIndex}
             onMarkAsRead={markAsRead}
             onDelete={deleteNotification}
-            colorTheme={template.primary_color === 'purple' ? 'purple' : template.primary_color === 'blue' ? 'blue' : 'green'}
+            colorTheme={template.primary_color === 'purple' ? 'purple' : template.primary_color === 'blue' ? 'blue' : template.primary_color === 'pink' ? 'pink' : 'green'}
             coachLabel={template.title}
           />
         ) : undefined
@@ -201,7 +201,7 @@ const DynamicCoach = () => {
       trainingCamp={
         template.enable_training_camp ? (
           <CoachTrainingCamp
-            colorTheme={template.primary_color === 'purple' ? 'purple' : template.primary_color === 'blue' ? 'blue' : template.primary_color === 'orange' ? 'orange' : 'green'}
+            colorTheme={template.primary_color === 'purple' ? 'purple' : template.primary_color === 'blue' ? 'blue' : template.primary_color === 'orange' ? 'orange' : template.primary_color === 'pink' ? 'pink' : 'green'}
           />
         ) : undefined
       }

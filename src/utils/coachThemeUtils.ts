@@ -9,6 +9,7 @@ export const getCoachBackgroundGradient = (primaryColor: string): string => {
     red: 'from-rose-50/80 via-red-50/50 to-orange-50/30 dark:from-rose-950/20 dark:via-red-950/10 dark:to-orange-950/10',
     teal: 'from-teal-50/80 via-cyan-50/50 to-blue-50/30 dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10',
     orange: 'from-orange-50/80 via-amber-50/50 to-yellow-50/30 dark:from-orange-950/20 dark:via-amber-950/10 dark:to-yellow-950/10',
+    pink: 'from-pink-50/80 via-rose-50/50 to-fuchsia-50/30 dark:from-pink-950/20 dark:via-rose-950/10 dark:to-fuchsia-950/10',
   };
   return colorMap[primaryColor] || colorMap.teal;
 };
@@ -22,6 +23,7 @@ export const getCoachLoaderColor = (primaryColor: string): string => {
     red: 'text-rose-500',
     teal: 'text-teal-500',
     orange: 'text-orange-500',
+    pink: 'text-pink-500',
   };
   return colorMap[primaryColor] || 'text-primary';
 };
@@ -35,6 +37,7 @@ export const getCoachAccentColor = (primaryColor: string): string => {
     red: 'rose',
     teal: 'teal',
     orange: 'orange',
+    pink: 'pink',
   };
   return colorMap[primaryColor] || 'primary';
 };

@@ -26,7 +26,7 @@ interface NotificationCardProps {
   };
   onClick: () => void;
   onDelete: () => void;
-  colorTheme?: 'default' | 'purple' | 'green' | 'blue';
+  colorTheme?: 'default' | 'purple' | 'green' | 'blue' | 'pink';
 }
 
 // 教练类型映射：数据库中的 coach_type -> CoachType
@@ -95,6 +95,9 @@ const themeStyles: Record<string, { iconColor: string }> = {
   },
   blue: {
     iconColor: 'text-blue-600'
+  },
+  pink: {
+    iconColor: 'text-pink-600'
   }
 };
 
