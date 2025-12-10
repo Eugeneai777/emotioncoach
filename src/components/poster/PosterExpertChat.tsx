@@ -149,25 +149,31 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
                 }
               }
             }
-          } catch {
-            // Ignore parse errors
+          } catch (e) {
+            console.log('SSE parse issue (may be partial chunk):', jsonStr.substring(0, 100));
           }
         }
       }
 
       // Process tool call results
+      console.log('Tool calls collected:', toolCallsData);
       let hasSchemes = false;
+      let hasQuickOptions = false;
+      
       for (const key in toolCallsData) {
         const toolCall = toolCallsData[key];
+        console.log(`Processing tool: ${toolCall.name}, args length: ${toolCall.arguments.length}`);
         
         if (toolCall.name === 'provide_quick_options' && toolCall.arguments) {
           try {
             const optionsData = JSON.parse(toolCall.arguments);
-            if (optionsData.options) {
+            console.log('Quick options parsed:', optionsData);
+            if (optionsData.options && Array.isArray(optionsData.options)) {
               setQuickOptions(optionsData.options);
+              hasQuickOptions = true;
             }
           } catch (e) {
-            console.error('Failed to parse quick options:', e);
+            console.error('Failed to parse quick options:', e, 'Raw args:', toolCall.arguments);
           }
         }
         
@@ -191,13 +197,19 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
       // Ensure we always have a message to display (fix for stuck UI)
       // Check for empty or whitespace-only content - AI sometimes returns "" instead of null
       if ((!assistantContent || !assistantContent.trim()) && Object.keys(toolCallsData).length > 0 && !hasSchemes) {
-        assistantContent = '请从下方选项中选择，或者告诉我你的想法 👇';
+        if (hasQuickOptions) {
+          assistantContent = '请从下方选项中选择，或者直接输入你的想法 👇';
+        } else {
+          assistantContent = '请告诉我更多信息，帮我更好地了解你的推广需求 💡';
+        }
       }
 
-      // Update messages if we have content
+      // Always update messages when we have content to show
       if (assistantContent && assistantContent.trim() && !isRegenerate) {
         setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
       }
+      
+      console.log('Final state - content:', assistantContent.substring(0, 50), 'hasQuickOptions:', hasQuickOptions, 'hasSchemes:', hasSchemes);
 
     } catch (error) {
       console.error('Chat error:', error);
