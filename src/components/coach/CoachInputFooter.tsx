@@ -44,7 +44,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   const [isFocused, setIsFocused] = useState(false);
   const isMobile = useIsMobile();
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && input.trim()) {
       e.preventDefault();
       onSend();
@@ -113,7 +113,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
                 ref={ref as React.Ref<HTMLTextAreaElement>}
                 value={input}
                 onChange={(e) => onInputChange(e.target.value)}
-                onKeyPress={onKeyPress}
+                onKeyDown={handleKeyDown}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
                 placeholder={placeholder}
