@@ -10,11 +10,38 @@ export default function Claim() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const partnerId = searchParams.get("partner");
+  const posterId = searchParams.get("poster");
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'no-partner'>('loading');
   const [message, setMessage] = useState("");
   const [quotaAmount, setQuotaAmount] = useState(50);
   const [durationDays, setDurationDays] = useState(365);
+
+  // Track poster scan on page load
+  useEffect(() => {
+    if (partnerId && posterId) {
+      trackPosterScan();
+    }
+  }, [partnerId, posterId]);
+
+  const trackPosterScan = async () => {
+    try {
+      await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-poster-scan`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            poster_id: posterId,
+            partner_id: partnerId,
+            referrer: document.referrer || null,
+          }),
+        }
+      );
+    } catch (e) {
+      console.error('Failed to track poster scan:', e);
+    }
+  };
 
   useEffect(() => {
     if (!partnerId) {

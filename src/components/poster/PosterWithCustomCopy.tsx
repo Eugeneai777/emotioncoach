@@ -7,6 +7,7 @@ interface PosterWithCustomCopyProps {
   partnerId: string;
   entryType: 'free' | 'paid';
   backgroundImageUrl?: string;
+  posterId?: string;
 }
 
 const PRODUCTION_DOMAIN = 'https://eugeneai.me';
@@ -38,12 +39,16 @@ const templateEmojis: Record<string, string> = {
 };
 
 export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomCopyProps>(
-  ({ copy, partnerId, entryType, backgroundImageUrl }, ref) => {
+  ({ copy, partnerId, entryType, backgroundImageUrl, posterId }, ref) => {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
     useEffect(() => {
       const generateQR = async () => {
-        const referralUrl = `${PRODUCTION_DOMAIN}/claim/${partnerId}?type=${entryType}`;
+        // Include poster_id in URL for scan tracking
+        let referralUrl = `${PRODUCTION_DOMAIN}/claim/${partnerId}?type=${entryType}`;
+        if (posterId) {
+          referralUrl += `&poster=${posterId}`;
+        }
         const url = await QRCode.toDataURL(referralUrl, {
           width: 100,
           margin: 1,
@@ -52,7 +57,7 @@ export const PosterWithCustomCopy = forwardRef<HTMLDivElement, PosterWithCustomC
         setQrCodeUrl(url);
       };
       generateQR();
-    }, [partnerId, entryType]);
+    }, [partnerId, entryType, posterId]);
 
     // Use color scheme from AI if provided, otherwise fall back to template gradient
     const gradient = copy.color_scheme 

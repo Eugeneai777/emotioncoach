@@ -212,3 +212,6 @@ verify_jwt = true
 
 [functions.fetch-unsplash-image]
 verify_jwt = true
+
+[functions.track-poster-scan]
+verify_jwt = false
