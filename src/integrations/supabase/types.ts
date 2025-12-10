@@ -3347,6 +3347,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           keywords: string[] | null
+          package_key: string | null
+          partner_level: string | null
           title: string
           updated_at: string
           updated_by: string | null
@@ -3363,6 +3365,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           keywords?: string[] | null
+          package_key?: string | null
+          partner_level?: string | null
           title: string
           updated_at?: string
           updated_by?: string | null
@@ -3379,6 +3383,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           keywords?: string[] | null
+          package_key?: string | null
+          partner_level?: string | null
           title?: string
           updated_at?: string
           updated_by?: string | null
