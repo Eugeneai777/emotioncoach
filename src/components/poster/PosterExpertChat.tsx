@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Sparkles, Loader2 } from 'lucide-react';
+import { Send, Sparkles, Loader2, Users, MapPin, Heart, Shield, Wand2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SchemePreview, type GeneratedSchemes, type PosterScheme } from './SchemePreview';
 
@@ -23,6 +23,14 @@ interface PosterExpertChatProps {
   onSchemeConfirmed: (scheme: PosterScheme & { target_audience: string; promotion_scene: string }) => void;
 }
 
+const STEPS = [
+  { id: 1, label: '目标人群', icon: Users, keywords: ['职场', '家长', '宝妈', '学生', '中年', '女性', '男性', '年轻人', '老年'] },
+  { id: 2, label: '推广场景', icon: MapPin, keywords: ['朋友圈', '微信群', '小红书', '私聊', '线下', '一对一'] },
+  { id: 3, label: '用户痛点', icon: Heart, keywords: ['焦虑', '压力', '情绪', '孩子', '沟通', '困扰', '问题', '需求', '痛点'] },
+  { id: 4, label: '信任元素', icon: Shield, keywords: ['数据', '研究', '权威', '机构', '用户', '证明', '背书', '不需要'] },
+  { id: 5, label: '生成方案', icon: Wand2, keywords: [] },
+];
+
 export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: PosterExpertChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -35,6 +43,23 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
   const [quickOptions, setQuickOptions] = useState<QuickOption[]>([]);
   const [generatedSchemes, setGeneratedSchemes] = useState<GeneratedSchemes | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Calculate current step based on conversation
+  const currentStep = useMemo(() => {
+    if (generatedSchemes) return 5;
+    
+    const userMessages = messages.filter(m => m.role === 'user').map(m => m.content.toLowerCase());
+    const allText = userMessages.join(' ');
+    
+    let completedSteps = 0;
+    for (let i = 0; i < 4; i++) {
+      const step = STEPS[i];
+      const hasKeyword = step.keywords.some(kw => allText.includes(kw.toLowerCase()));
+      if (hasKeyword) completedSteps = i + 1;
+    }
+    
+    return Math.min(completedSteps + 1, 4);
+  }, [messages, generatedSchemes]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -205,14 +230,60 @@ export function PosterExpertChat({ partnerId, entryType, onSchemeConfirmed }: Po
 
   return (
     <div className="flex flex-col h-full max-h-[70vh]">
-      {/* Header */}
-      <div className="flex items-center gap-2 pb-3 border-b">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-          <Sparkles className="w-4 h-4 text-white" />
+      {/* Header with Progress */}
+      <div className="pb-3 border-b space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h3 className="font-medium text-sm">AI推广专家</h3>
+            <p className="text-xs text-muted-foreground">帮你创建高转化海报文案</p>
+          </div>
         </div>
-        <div>
-          <h3 className="font-medium text-sm">AI推广专家</h3>
-          <p className="text-xs text-muted-foreground">帮你创建高转化海报文案</p>
+        
+        {/* Progress Indicator */}
+        <div className="flex items-center gap-1">
+          {STEPS.map((step, index) => {
+            const StepIcon = step.icon;
+            const isCompleted = currentStep > step.id;
+            const isCurrent = currentStep === step.id;
+            
+            return (
+              <div key={step.id} className="flex items-center flex-1">
+                <div className="flex flex-col items-center flex-1">
+                  <div
+                    className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center transition-all",
+                      isCompleted && "bg-green-500 text-white",
+                      isCurrent && "bg-amber-500 text-white ring-2 ring-amber-200",
+                      !isCompleted && !isCurrent && "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {isCompleted ? (
+                      <Check className="w-3.5 h-3.5" />
+                    ) : (
+                      <StepIcon className="w-3.5 h-3.5" />
+                    )}
+                  </div>
+                  <span className={cn(
+                    "text-[10px] mt-1 whitespace-nowrap",
+                    isCurrent && "text-amber-600 font-medium",
+                    isCompleted && "text-green-600",
+                    !isCompleted && !isCurrent && "text-muted-foreground"
+                  )}>
+                    {step.label}
+                  </span>
+                </div>
+                {index < STEPS.length - 1 && (
+                  <div className={cn(
+                    "h-0.5 w-full -mt-4",
+                    currentStep > step.id ? "bg-green-500" : "bg-muted"
+                  )} />
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
