@@ -100,7 +100,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.get-wechat-access-token]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-wechat-template-message]
 verify_jwt = false
