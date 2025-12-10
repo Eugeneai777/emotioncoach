@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { usePartner } from '@/hooks/usePartner';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Zap, Sparkles, Download, Loader2, Copy, Check, ImageIcon } from 'lucide-react';
+import { ArrowLeft, Zap, Sparkles, Download, Loader2, Copy, Check, ImageIcon, ChevronRight } from 'lucide-react';
 import { PosterTemplateGrid, posterTemplates, type SceneType } from '@/components/poster/PosterTemplateGrid';
 import { SceneSelector } from '@/components/poster/SceneSelector';
 import { PosterGenerator } from '@/components/poster/PosterGenerator';
 import { PosterExpertChat } from '@/components/poster/PosterExpertChat';
 import { PosterWithCustomCopy } from '@/components/poster/PosterWithCustomCopy';
+import { PosterLayoutSelector, type PosterLayout } from '@/components/poster/PosterLayoutSelector';
+import { BackgroundSourceSelector } from '@/components/poster/BackgroundSourceSelector';
+import { UnsplashImagePicker } from '@/components/poster/UnsplashImagePicker';
 import { type PosterScheme } from '@/components/poster/SchemePreview';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
@@ -16,7 +19,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 type Mode = 'quick' | 'expert';
 type QuickStep = 'template' | 'scene' | 'generate';
-type ExpertStep = 'chat' | 'preview';
+type ExpertStep = 'chat' | 'layout' | 'background' | 'preview';
+type BackgroundSource = 'solid' | 'unsplash' | 'ai';
 
 export default function PosterCenter() {
   const navigate = useNavigate();
@@ -29,10 +33,13 @@ export default function PosterCenter() {
   const [sceneCopy, setSceneCopy] = useState<{ tagline: string; sellingPoints: string[] } | null>(null);
   const [expertStep, setExpertStep] = useState<ExpertStep>('chat');
   const [customCopy, setCustomCopy] = useState<(PosterScheme & { target_audience: string; promotion_scene: string }) | null>(null);
-  const [backgroundImageUrl] = useState<string | null>(null);
+  const [selectedLayout, setSelectedLayout] = useState<PosterLayout>('default');
+  const [backgroundSource, setBackgroundSource] = useState<BackgroundSource>('solid');
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [savedPosterId, setSavedPosterId] = useState<string | null>(null);
+  const [isGeneratingAiBackground, setIsGeneratingAiBackground] = useState(false);
   const posterRef = useRef<HTMLDivElement>(null);
 
   // Auth check
@@ -83,31 +90,64 @@ export default function PosterCenter() {
 
   const handleSchemeConfirmed = async (scheme: PosterScheme & { target_audience: string; promotion_scene: string }) => {
     setCustomCopy(scheme);
-    setExpertStep('preview');
-    
+    setExpertStep('layout'); // Go to layout selection first
+  };
+
+  const handleLayoutConfirm = () => {
+    setExpertStep('background'); // Then go to background selection
+  };
+
+  const handleBackgroundConfirm = async () => {
     // Save poster to database for tracking
+    if (customCopy) {
+      try {
+        const { data, error } = await supabase
+          .from('partner_posters')
+          .insert({
+            partner_id: partner.id,
+            template_key: customCopy.recommended_template,
+            headline: customCopy.headline,
+            subtitle: customCopy.subtitle,
+            selling_points: customCopy.selling_points,
+            call_to_action: customCopy.call_to_action,
+            urgency_text: customCopy.urgency_text || null,
+            entry_type: entryType,
+          })
+          .select('id')
+          .single();
+        
+        if (!error && data) {
+          setSavedPosterId(data.id);
+          console.log('Poster saved with ID:', data.id);
+        }
+      } catch (e) {
+        console.error('Failed to save poster:', e);
+      }
+    }
+    setExpertStep('preview');
+  };
+
+  const handleGenerateAiBackground = async () => {
+    if (!customCopy) return;
+    
+    setIsGeneratingAiBackground(true);
     try {
-      const { data, error } = await supabase
-        .from('partner_posters')
-        .insert({
-          partner_id: partner.id,
-          template_key: scheme.recommended_template,
-          headline: scheme.headline,
-          subtitle: scheme.subtitle,
-          selling_points: scheme.selling_points,
-          call_to_action: scheme.call_to_action,
-          urgency_text: scheme.urgency_text || null,
-          entry_type: entryType,
-        })
-        .select('id')
-        .single();
+      const prompt = `Professional promotional poster background for ${customCopy.recommended_template}, ${customCopy.headline}, abstract, elegant, gradient, high quality`;
       
-      if (!error && data) {
-        setSavedPosterId(data.id);
-        console.log('Poster saved with ID:', data.id);
+      const { data, error } = await supabase.functions.invoke('generate-poster-image', {
+        body: { prompt, templateKey: customCopy.recommended_template }
+      });
+      
+      if (error) throw error;
+      if (data?.imageUrl) {
+        setBackgroundImageUrl(data.imageUrl);
+        toast.success('AI背景生成成功');
       }
     } catch (e) {
-      console.error('Failed to save poster:', e);
+      console.error('Failed to generate AI background:', e);
+      toast.error('生成失败，请重试');
+    } finally {
+      setIsGeneratingAiBackground(false);
     }
   };
 
@@ -185,6 +225,9 @@ export default function PosterCenter() {
     setExpertStep('chat');
     setSavedPosterId(null);
     setIsCopied(false);
+    setSelectedLayout('default');
+    setBackgroundSource('solid');
+    setBackgroundImageUrl(null);
   };
 
   // Get current template object
@@ -235,6 +278,152 @@ export default function PosterCenter() {
     );
   }
 
+  // Expert mode - Layout selection step
+  if (mode === 'expert' && expertStep === 'layout' && customCopy) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
+          <div className="flex items-center justify-between max-w-lg mx-auto">
+            <Button variant="ghost" size="icon" onClick={() => {
+              setExpertStep('chat');
+              setCustomCopy(null);
+            }}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="font-medium">选择海报风格</h1>
+            <div className="w-10" />
+          </div>
+        </div>
+
+        <div className="max-w-lg mx-auto px-4 py-6">
+          {/* Layout selector */}
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border mb-4">
+            <PosterLayoutSelector
+              selectedLayout={selectedLayout}
+              onLayoutSelect={setSelectedLayout}
+            />
+          </div>
+
+          {/* Preview */}
+          <div className="flex justify-center mb-4">
+            <div className="transform scale-[0.6] origin-top">
+              <PosterWithCustomCopy
+                copy={customCopy}
+                partnerId={partner.id}
+                entryType={entryType as 'free' | 'paid'}
+                layout={selectedLayout}
+              />
+            </div>
+          </div>
+
+          {/* Continue button */}
+          <Button
+            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+            onClick={handleLayoutConfirm}
+          >
+            下一步：选择背景
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Expert mode - Background selection step
+  if (mode === 'expert' && expertStep === 'background' && customCopy) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
+          <div className="flex items-center justify-between max-w-lg mx-auto">
+            <Button variant="ghost" size="icon" onClick={() => setExpertStep('layout')}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="font-medium">选择背景</h1>
+            <div className="w-10" />
+          </div>
+        </div>
+
+        <div className="max-w-lg mx-auto px-4 py-6">
+          {/* Background source selector */}
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border mb-4">
+            <BackgroundSourceSelector
+              source={backgroundSource}
+              onSourceChange={(source) => {
+                setBackgroundSource(source);
+                if (source === 'solid') {
+                  setBackgroundImageUrl(null);
+                }
+              }}
+            />
+          </div>
+
+          {/* Background options based on source */}
+          {backgroundSource === 'unsplash' && (
+            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border mb-4">
+              <UnsplashImagePicker
+                templateKey={customCopy.recommended_template}
+                onImageSelect={(url) => setBackgroundImageUrl(url)}
+                selectedImageUrl={backgroundImageUrl || undefined}
+              />
+            </div>
+          )}
+
+          {backgroundSource === 'ai' && (
+            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border mb-4 text-center">
+              <p className="text-sm text-muted-foreground mb-3">
+                使用AI生成专属背景图片（消耗5点配额）
+              </p>
+              <Button
+                variant="outline"
+                onClick={handleGenerateAiBackground}
+                disabled={isGeneratingAiBackground}
+              >
+                {isGeneratingAiBackground ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    生成中...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    生成AI背景
+                  </>
+                )}
+              </Button>
+              {backgroundImageUrl && backgroundSource === 'ai' && (
+                <div className="mt-3">
+                  <img src={backgroundImageUrl} alt="AI Generated" className="w-32 h-auto mx-auto rounded-lg" />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Preview */}
+          <div className="flex justify-center mb-4">
+            <div className="transform scale-[0.6] origin-top">
+              <PosterWithCustomCopy
+                copy={customCopy}
+                partnerId={partner.id}
+                entryType={entryType as 'free' | 'paid'}
+                layout={selectedLayout}
+                backgroundImageUrl={backgroundImageUrl || undefined}
+              />
+            </div>
+          </div>
+
+          {/* Continue button */}
+          <Button
+            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+            onClick={handleBackgroundConfirm}
+          >
+            生成海报
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // Expert mode with custom copy - preview step
   if (mode === 'expert' && expertStep === 'preview' && customCopy) {
     return (
@@ -242,10 +431,7 @@ export default function PosterCenter() {
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
           <div className="flex items-center justify-between max-w-lg mx-auto">
-            <Button variant="ghost" size="icon" onClick={() => {
-              setExpertStep('chat');
-              setCustomCopy(null);
-            }}>
+            <Button variant="ghost" size="icon" onClick={() => setExpertStep('background')}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <h1 className="font-medium">AI定制海报</h1>
@@ -263,6 +449,7 @@ export default function PosterCenter() {
               entryType={entryType as 'free' | 'paid'}
               backgroundImageUrl={backgroundImageUrl || undefined}
               posterId={savedPosterId || undefined}
+              layout={selectedLayout}
             />
           </div>
 
@@ -310,13 +497,9 @@ export default function PosterCenter() {
             <Button
               variant="ghost"
               className="w-full text-muted-foreground"
-              onClick={() => {
-                setExpertStep('chat');
-                setCustomCopy(null);
-                setSavedPosterId(null);
-              }}
+              onClick={resetToModeSelection}
             >
-              重新生成文案
+              重新生成海报
             </Button>
 
             {/* Scan Stats Badge */}
