@@ -210,6 +210,7 @@ export function PosterGenerator({
               backgroundImageUrl={backgroundImageUrl}
               customTagline={displayTagline}
               customSellingPoints={displaySellingPoints}
+              scene={scene}
             />
           </div>
         </CardContent>
