@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, ArrowUp, ArrowDown, BookOpen, Sparkles, ExternalLink, Bell, Users, MessageSquare, Mic, Tent, Activity, Clock, AlertTriangle, GraduationCap, Share2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { CoachStepsEditor } from "./CoachStepsEditor";
 import { AICoachCreator } from "./AICoachCreator";
 import { CoachFeatureMatrix } from "./CoachFeatureMatrix";
@@ -98,7 +99,27 @@ export function CoachTemplatesManagement() {
         data: editingTemplate
       });
     } else {
-      await createTemplate.mutateAsync(editingTemplate);
+      // 创建新教练模板
+      const result = await createTemplate.mutateAsync(editingTemplate);
+      
+      // 同时添加到 feature_items 表用于套餐配置
+      if (editingTemplate.coach_key) {
+        try {
+          await supabase.from('feature_items').insert({
+            category: 'coach',
+            item_key: `coach_${editingTemplate.coach_key}`,
+            item_name: editingTemplate.title || editingTemplate.coach_key,
+            description: editingTemplate.description || '',
+            sub_category: '教练空间',
+            is_active: editingTemplate.is_active ?? true,
+            display_order: editingTemplate.display_order || 0
+          });
+          console.log('Added coach to feature_items:', editingTemplate.coach_key);
+        } catch (featureError) {
+          console.error('Error adding to feature_items:', featureError);
+          // 不阻塞主流程，仅记录错误
+        }
+      }
     }
     setIsDialogOpen(false);
     setEditingTemplate(null);
