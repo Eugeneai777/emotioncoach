@@ -2,14 +2,15 @@ import { useState, useEffect, useMemo } from "react";
 import { Flame, Calendar, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, differenceInDays } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
 interface GratitudeStreakTrackerProps {
   className?: string;
+  compact?: boolean;
 }
 
-export const GratitudeStreakTracker = ({ className }: GratitudeStreakTrackerProps) => {
+export const GratitudeStreakTracker = ({ className, compact = false }: GratitudeStreakTrackerProps) => {
   const { user } = useAuth();
   const [recordDates, setRecordDates] = useState<Date[]>([]);
   const [currentStreak, setCurrentStreak] = useState(0);
@@ -33,7 +34,6 @@ export const GratitudeStreakTracker = ({ className }: GratitudeStreakTrackerProp
 
       if (error) throw error;
 
-      // Get unique dates
       const uniqueDates = [...new Set(
         (data || []).map(entry => 
           format(new Date(entry.created_at), "yyyy-MM-dd")
@@ -54,10 +54,8 @@ export const GratitudeStreakTracker = ({ className }: GratitudeStreakTrackerProp
       return;
     }
 
-    // Sort dates descending
     const sortedDates = [...dates].sort((a, b) => b.getTime() - a.getTime());
     
-    // Calculate current streak
     let streak = 0;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -75,7 +73,6 @@ export const GratitudeStreakTracker = ({ className }: GratitudeStreakTrackerProp
       if (hasRecord) {
         streak++;
       } else if (i === 0) {
-        // Today has no record, check if yesterday has
         continue;
       } else {
         break;
@@ -84,7 +81,6 @@ export const GratitudeStreakTracker = ({ className }: GratitudeStreakTrackerProp
     
     setCurrentStreak(streak);
 
-    // Calculate longest streak (simplified for recent 30 days)
     let maxStreak = streak;
     let tempStreak = 0;
     
@@ -103,7 +99,6 @@ export const GratitudeStreakTracker = ({ className }: GratitudeStreakTrackerProp
     setLongestStreak(maxStreak);
   };
 
-  // Generate heatmap data for current month
   const heatmapData = useMemo(() => {
     const today = new Date();
     const monthStart = startOfMonth(today);
@@ -128,9 +123,59 @@ export const GratitudeStreakTracker = ({ className }: GratitudeStreakTrackerProp
     return "🌱";
   };
 
+  // Compact mode for side-by-side layout
+  if (compact) {
+    return (
+      <div className={`p-4 rounded-xl bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-gray-800/50 dark:to-gray-700/50 h-full ${className}`}>
+        {/* Streak Stats */}
+        <div className="flex items-center justify-center gap-4 mb-3">
+          <div className="flex items-center gap-2">
+            <Flame className="w-5 h-5 text-amber-600" />
+            <span className="text-xl font-bold text-amber-600">{currentStreak}</span>
+            <span className="text-xs text-muted-foreground">天</span>
+          </div>
+          <div className="h-4 w-px bg-border" />
+          <div className="flex items-center gap-1">
+            <Trophy className="w-4 h-4 text-orange-500" />
+            <span className="text-sm font-medium text-orange-500">{longestStreak}</span>
+          </div>
+          <span className="text-lg">{getMilestoneEmoji(currentStreak)}</span>
+        </div>
+
+        {/* Compact Heatmap */}
+        <div className="grid grid-cols-7 gap-0.5">
+          {Array.from({ length: heatmapData[0]?.day.getDay() || 0 }).map((_, i) => (
+            <div key={`pad-${i}`} className="aspect-square" />
+          ))}
+          
+          {heatmapData.map(({ day, hasRecord, isFuture, isToday }) => (
+            <div
+              key={day.toISOString()}
+              className={`
+                aspect-square rounded-sm
+                ${isFuture 
+                  ? "bg-muted/30" 
+                  : hasRecord 
+                    ? "bg-gradient-to-br from-amber-400 to-orange-500" 
+                    : "bg-muted/50"
+                }
+                ${isToday ? "ring-1 ring-primary" : ""}
+              `}
+              title={format(day, "MM月dd日")}
+            />
+          ))}
+        </div>
+        
+        <p className="text-center text-xs text-muted-foreground mt-2">
+          {format(new Date(), "yyyy年MM月", { locale: zhCN })}
+        </p>
+      </div>
+    );
+  }
+
+  // Full mode
   return (
     <div className={`p-4 rounded-xl bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-gray-800/50 dark:to-gray-700/50 ${className}`}>
-      {/* Streak Stats */}
       <div className="flex items-center justify-around mb-4">
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 text-2xl font-bold text-amber-600">
@@ -162,7 +207,6 @@ export const GratitudeStreakTracker = ({ className }: GratitudeStreakTrackerProp
         </div>
       </div>
 
-      {/* Heatmap */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Calendar className="w-4 h-4" />
@@ -176,7 +220,6 @@ export const GratitudeStreakTracker = ({ className }: GratitudeStreakTrackerProp
             </div>
           ))}
           
-          {/* Padding for first day of month */}
           {Array.from({ length: heatmapData[0]?.day.getDay() || 0 }).map((_, i) => (
             <div key={`pad-${i}`} />
           ))}
@@ -203,7 +246,6 @@ export const GratitudeStreakTracker = ({ className }: GratitudeStreakTrackerProp
         </div>
       </div>
 
-      {/* Milestone Progress */}
       {currentStreak > 0 && currentStreak < 21 && (
         <div className="mt-4 p-3 rounded-lg bg-background/50">
           <div className="flex items-center justify-between text-sm mb-1">
