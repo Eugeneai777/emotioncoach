@@ -3336,11 +3336,14 @@ export type Database = {
       }
       support_knowledge_base: {
         Row: {
+          camp_type: string | null
           category: string
+          coach_key: string | null
           content: string
           created_at: string
           created_by: string | null
           display_order: number | null
+          doc_type: string | null
           id: string
           is_active: boolean | null
           keywords: string[] | null
@@ -3349,11 +3352,14 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          camp_type?: string | null
           category: string
+          coach_key?: string | null
           content: string
           created_at?: string
           created_by?: string | null
           display_order?: number | null
+          doc_type?: string | null
           id?: string
           is_active?: boolean | null
           keywords?: string[] | null
@@ -3362,11 +3368,14 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          camp_type?: string | null
           category?: string
+          coach_key?: string | null
           content?: string
           created_at?: string
           created_by?: string | null
           display_order?: number | null
+          doc_type?: string | null
           id?: string
           is_active?: boolean | null
           keywords?: string[] | null
