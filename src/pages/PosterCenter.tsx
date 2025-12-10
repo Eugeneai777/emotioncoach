@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePartner } from '@/hooks/usePartner';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Zap, Sparkles, Download, Loader2, Copy, Check, ImageIcon } from 'lucide-react';
-import { PosterTemplateGrid } from '@/components/poster/PosterTemplateGrid';
+import { PosterTemplateGrid, posterTemplates, type SceneType } from '@/components/poster/PosterTemplateGrid';
+import { SceneSelector } from '@/components/poster/SceneSelector';
 import { PosterGenerator } from '@/components/poster/PosterGenerator';
 import { PosterExpertChat } from '@/components/poster/PosterExpertChat';
 import { PosterWithCustomCopy } from '@/components/poster/PosterWithCustomCopy';
@@ -14,6 +15,7 @@ import html2canvas from 'html2canvas';
 import { supabase } from '@/integrations/supabase/client';
 
 type Mode = 'quick' | 'expert';
+type QuickStep = 'template' | 'scene' | 'generate';
 type ExpertStep = 'chat' | 'preview';
 
 export default function PosterCenter() {
@@ -21,7 +23,10 @@ export default function PosterCenter() {
   const { user, loading: authLoading } = useAuth();
   const { partner, loading: partnerLoading } = usePartner();
   const [mode, setMode] = useState<Mode>('quick');
+  const [quickStep, setQuickStep] = useState<QuickStep>('template');
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [selectedScene, setSelectedScene] = useState<SceneType>('default');
+  const [sceneCopy, setSceneCopy] = useState<{ tagline: string; sellingPoints: string[] } | null>(null);
   const [expertStep, setExpertStep] = useState<ExpertStep>('chat');
   const [customCopy, setCustomCopy] = useState<(PosterScheme & { target_audience: string; promotion_scene: string }) | null>(null);
   const [backgroundImageUrl] = useState<string | null>(null);
@@ -64,6 +69,17 @@ export default function PosterCenter() {
   }
 
   const entryType = partner.default_entry_type === 'paid' ? 'paid' : 'free';
+
+  const handleTemplateSelect = (templateKey: string) => {
+    setSelectedTemplate(templateKey);
+    setQuickStep('scene');
+  };
+
+  const handleSceneConfirm = (scene: SceneType, tagline: string, sellingPoints: string[]) => {
+    setSelectedScene(scene);
+    setSceneCopy({ tagline, sellingPoints });
+    setQuickStep('generate');
+  };
 
   const handleSchemeConfirmed = async (scheme: PosterScheme & { target_audience: string; promotion_scene: string }) => {
     setCustomCopy(scheme);
@@ -162,20 +178,59 @@ export default function PosterCenter() {
 
   const resetToModeSelection = () => {
     setSelectedTemplate(null);
+    setSelectedScene('default');
+    setSceneCopy(null);
+    setQuickStep('template');
     setCustomCopy(null);
     setExpertStep('chat');
     setSavedPosterId(null);
     setIsCopied(false);
   };
 
-  // Quick mode with template selected
-  if (mode === 'quick' && selectedTemplate) {
+  // Get current template object
+  const currentTemplate = selectedTemplate 
+    ? posterTemplates.find(t => t.key === selectedTemplate) 
+    : null;
+
+  // Quick mode - Scene selection step
+  if (mode === 'quick' && quickStep === 'scene' && currentTemplate) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
+          <div className="flex items-center justify-between max-w-lg mx-auto">
+            <Button variant="ghost" size="icon" onClick={() => setQuickStep('template')}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="font-medium">选择推广场景</h1>
+            <div className="w-10" />
+          </div>
+        </div>
+
+        <div className="max-w-lg mx-auto px-4 py-6">
+          <SceneSelector
+            template={currentTemplate}
+            onConfirm={handleSceneConfirm}
+            onBack={() => setQuickStep('template')}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Quick mode with template and scene selected - Generate
+  if (mode === 'quick' && quickStep === 'generate' && selectedTemplate && sceneCopy) {
     return (
       <PosterGenerator
         templateKey={selectedTemplate}
         partnerId={partner.id}
         entryType={entryType as 'free' | 'paid'}
-        onBack={() => setSelectedTemplate(null)}
+        onBack={() => {
+          setQuickStep('scene');
+          setSceneCopy(null);
+        }}
+        customTagline={sceneCopy.tagline}
+        customSellingPoints={sceneCopy.sellingPoints}
+        scene={selectedScene}
       />
     );
   }
@@ -322,9 +377,9 @@ export default function PosterCenter() {
         {mode === 'quick' ? (
           <>
             <p className="text-sm text-muted-foreground text-center mb-4">
-              选择模板快速生成推广海报
+              选择模板，选择推广场景，一键生成专属海报
             </p>
-            <PosterTemplateGrid onSelect={setSelectedTemplate} />
+            <PosterTemplateGrid onSelect={handleTemplateSelect} />
           </>
         ) : (
           <>

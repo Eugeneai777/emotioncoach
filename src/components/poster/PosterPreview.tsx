@@ -8,10 +8,12 @@ interface PosterPreviewProps {
   partnerId: string;
   entryType: 'free' | 'paid';
   backgroundImageUrl?: string;
+  customTagline?: string;
+  customSellingPoints?: string[];
 }
 
 export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
-  ({ template, partnerId, entryType, backgroundImageUrl }, ref) => {
+  ({ template, partnerId, entryType, backgroundImageUrl, customTagline, customSellingPoints }, ref) => {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
     useEffect(() => {
@@ -116,7 +118,13 @@ export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
       }
     };
 
-    const content = templateContent[template.key] || templateContent.emotion_button;
+    const baseContent = templateContent[template.key] || templateContent.emotion_button;
+    
+    // Use custom content if provided
+    const content = {
+      ...baseContent,
+      subtitle: customTagline || baseContent.subtitle
+    };
 
     return (
       <div
