@@ -73,45 +73,75 @@ serve(async (req) => {
     // 如果 state 是 'register'，表示是注册流程
     if (state === 'register') {
       if (existingMapping?.system_user_id) {
-        return new Response(
-          JSON.stringify({ error: 'already_bound' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+        // 用户已存在，直接当作登录处理
+        finalUserId = existingMapping.system_user_id;
+        isNewUser = false;
+        console.log('User already registered, logging in:', finalUserId);
+      } else {
+        // 创建新用户
+        const email = `wechat_${tokenData.openid}@temp.youjin365.com`;
+        const password = crypto.randomUUID();
+        
+        const { data: newUser, error: signUpError } = await supabaseClient.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: {
+            nickname: userInfo.nickname,
+            avatar_url: userInfo.headimgurl,
+            wechat_openid: tokenData.openid
+          }
+        });
 
-      // 创建新用户
-      const email = `wechat_${tokenData.openid}@temp.youjin365.com`;
-      const password = crypto.randomUUID();
-      
-      const { data: newUser, error: signUpError } = await supabaseClient.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          nickname: userInfo.nickname,
-          avatar_url: userInfo.headimgurl,
-          wechat_openid: tokenData.openid
+        if (signUpError) {
+          // 如果是邮箱已存在错误，尝试获取现有用户并登录
+          if (signUpError.code === 'email_exists') {
+            console.log('Email exists, fetching existing user...');
+            const { data: existingUsers } = await supabaseClient.auth.admin.listUsers();
+            const existingUser = existingUsers?.users?.find(u => u.email === email);
+            
+            if (existingUser) {
+              finalUserId = existingUser.id;
+              isNewUser = false;
+              console.log('Found existing user by email:', finalUserId);
+              
+              // 确保映射存在
+              await supabaseClient
+                .from('wechat_user_mappings')
+                .upsert({
+                  system_user_id: finalUserId,
+                  openid: tokenData.openid,
+                  unionid: tokenData.unionid,
+                  nickname: userInfo.nickname,
+                  avatar_url: userInfo.headimgurl,
+                  subscribe_status: true,
+                  updated_at: new Date().toISOString(),
+                }, { onConflict: 'openid' });
+            } else {
+              console.error('Sign up error:', signUpError);
+              return new Response(
+                JSON.stringify({ error: signUpError.message }),
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              );
+            }
+          } else {
+            console.error('Sign up error:', signUpError);
+            return new Response(
+              JSON.stringify({ error: signUpError.message }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        } else if (!newUser?.user) {
+          return new Response(
+            JSON.stringify({ error: 'Failed to create user' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } else {
+          finalUserId = newUser.user.id;
+          isNewUser = true;
+          console.log('Created new user:', finalUserId);
         }
-      });
-
-      if (signUpError) {
-        console.error('Sign up error:', signUpError);
-        return new Response(
-          JSON.stringify({ error: signUpError.message }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
       }
-      
-      if (!newUser.user) {
-        return new Response(
-          JSON.stringify({ error: 'Failed to create user' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      finalUserId = newUser.user.id;
-      isNewUser = true;
-      console.log('Created new user:', finalUserId);
     } else if (state === 'bind') {
       // 绑定流程 - 从 authorization header 获取当前用户
       const authHeader = req.headers.get('Authorization');
