@@ -222,7 +222,7 @@ export const GratitudeJournal = () => {
         <Card>
           <CardHeader>
             <CardTitle>
-              {selectedDate ? format(selectedDate, "yyyy年MM月dd日", { locale: zhCN }) : "所有"}的感恩记录
+              {selectedDate ? format(selectedDate, "yyyy年MM月dd日", { locale: zhCN }) : "所有"}的感恩日记
             </CardTitle>
             <CardDescription>共 {entries.length} 条</CardDescription>
           </CardHeader>
