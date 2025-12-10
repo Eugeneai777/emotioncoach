@@ -60,13 +60,14 @@ ${userPrompt}
    - primary_color: 主题色（如'purple', 'blue', 'green'等）
    - gradient: Tailwind渐变类名（如'from-purple-500 to-pink-500'）
 
-2. **四部曲步骤（steps数组，包含4个步骤）：**
-每个步骤包含：
-   - step: 步骤编号 (1-4)
-   - title: 步骤标题
-   - icon: emoji图标
-   - description: 步骤说明
-   - questions: 该步骤的引导问题数组（2-3个）
+2. **四部曲步骤（steps数组，必须包含4个步骤）：**
+每个步骤只包含以下4个字段（不要添加任何其他字段）：
+   - id: 步骤编号 (1-4)
+   - emoji: emoji图标
+   - name: 步骤标题（2-3字）
+   - description: 简洁的一句话描述（10-20字）
+
+**重要：steps数组中每个对象只能包含 id, emoji, name, description 这4个字段！不要包含 step, title, icon, subtitle, details, questions 等任何其他字段！**
 
 3. **交互配置：**
    - placeholder: 输入框占位文字
