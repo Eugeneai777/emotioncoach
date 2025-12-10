@@ -417,17 +417,6 @@ const apiEndpoints: ApiEndpoint[] = [
     requiresAuth: false,
     category: "用户账户"
   },
-  {
-    name: "redeem-code",
-    description: "兑换码核销",
-    method: "POST",
-    requiresAuth: false,
-    category: "用户账户",
-    parameters: [
-      { name: "code", type: "string", required: true, description: "兑换码" },
-      { name: "userId", type: "string", required: true, description: "用户ID" }
-    ]
-  },
 
   // 合伙人
   {
@@ -454,13 +443,6 @@ const apiEndpoints: ApiEndpoint[] = [
   {
     name: "partner-withdrawal",
     description: "合伙人提现申请",
-    method: "POST",
-    requiresAuth: true,
-    category: "合伙人系统"
-  },
-  {
-    name: "generate-redemption-codes",
-    description: "生成兑换码",
     method: "POST",
     requiresAuth: true,
     category: "合伙人系统"

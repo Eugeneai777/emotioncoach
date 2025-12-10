@@ -18,13 +18,7 @@ verify_jwt = true
 [functions.generate-communication-review]
 verify_jwt = true
 
-[functions.generate-redemption-codes]
-verify_jwt = true
-
 [functions.claim-partner-entry]
-verify_jwt = true
-
-[functions.redeem-code]
 verify_jwt = true
 
 [functions.life-coach]
