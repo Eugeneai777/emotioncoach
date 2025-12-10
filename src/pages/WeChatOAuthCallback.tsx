@@ -56,28 +56,9 @@ export default function WeChatOAuthCallback() {
             throw signInError;
           }
 
-          // 发送登录成功通知到微信公众号
-          try {
-            const { data: userData } = await supabase.auth.getUser();
-            if (userData?.user) {
-              await supabase.functions.invoke('send-wechat-template-message', {
-                body: {
-                  userId: userData.user.id,
-                  scenario: 'login_success',
-                  notification: {
-                    title: '登录成功',
-                    message: '欢迎回来',
-                    account: 'WeChat',
-                    email: userData.user.email
-                  }
-                }
-              });
-            }
-          } catch (error) {
-            console.log('发送登录通知失败（非关键错误）:', error);
-          }
-
           toast.success("登录成功！");
+          
+          // 登录通知已在后端 wechat-oauth-process 中发送，前端无需重复发送
           
           // 新用户跳转到关注页，老用户直接进入首页
           if (data.isNewUser) {
