@@ -133,6 +133,37 @@ All colors MUST be HSL.
   }
 }
 
+/* 修复移动端键盘弹出时输入框位置问题 */
+@supports (height: 100dvh) {
+  html {
+    height: 100dvh;
+  }
+}
+
+/* 确保输入框聚焦时滚动到可见位置 */
+input:focus, textarea:focus, select:focus {
+  scroll-margin-bottom: 120px;
+  scroll-padding-bottom: 120px;
+}
+
+/* 移动端虚拟键盘适配 */
+@media (max-width: 768px) {
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+  
+  html {
+    height: -webkit-fill-available;
+  }
+  
+  /* 防止输入框聚焦时页面跳动 */
+  input:focus, textarea:focus {
+    position: relative;
+    z-index: 1;
+  }
+}
+
 /* 安全区域支持 */
 @supports (padding: max(0px)) {
   .safe-bottom {

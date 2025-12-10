@@ -41,6 +41,22 @@ export default function Settings() {
     loadSettings();
   }, []);
 
+  // 修复移动端键盘弹出时输入框位置问题
+  useEffect(() => {
+    const handleFocus = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        // 延迟滚动，等待键盘完全弹出
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }
+    };
+
+    document.addEventListener('focusin', handleFocus);
+    return () => document.removeEventListener('focusin', handleFocus);
+  }, []);
+
   const loadSettings = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
