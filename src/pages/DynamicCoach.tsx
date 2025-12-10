@@ -9,7 +9,7 @@ import { EmotionButtonRecommendationCard } from "@/components/coach/EmotionButto
 import { CampRecommendationCard } from "@/components/coach/CampRecommendationCard";
 import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
 import { CoachTrainingCamp } from "@/components/coach/CoachTrainingCamp";
-import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { ElevenLabsVoiceChat } from "@/components/coach/ElevenLabsVoiceChat";
 import { useDynamicCoachChat } from "@/hooks/useDynamicCoachChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
@@ -213,14 +213,13 @@ const DynamicCoach = () => {
       onVoiceChatClick={() => setShowVoiceChat(true)}
     />
     
-    {/* 语音对话全屏界面 */}
+    {/* ElevenLabs 语音对话全屏界面 */}
     {showVoiceChat && (
-      <CoachVoiceChat
+      <ElevenLabsVoiceChat
         onClose={() => setShowVoiceChat(false)}
         coachEmoji={template.emoji}
         coachTitle={template.title}
         primaryColor={template.primary_color || 'rose'}
-        tokenEndpoint="vibrant-life-realtime-token"
       />
     )}
   </>
