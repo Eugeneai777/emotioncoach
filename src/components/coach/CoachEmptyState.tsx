@@ -55,11 +55,26 @@ export const CoachEmptyState = ({
   const navigate = useNavigate();
   const [isStepsExpanded, setIsStepsExpanded] = useState(!enableCollapse);
 
+  // 根据主题色获取步骤卡片样式
+  const getStepCardStyle = () => {
+    if (primaryColor === 'pink') {
+      return 'bg-gradient-to-br from-pink-50/80 to-rose-50/60 dark:from-pink-950/30 dark:to-rose-950/20 border-pink-200/50 dark:border-pink-800/30';
+    }
+    return 'bg-background/50 border-border/50';
+  };
+
+  const getStepIconStyle = () => {
+    if (primaryColor === 'pink') {
+      return 'bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400';
+    }
+    return 'bg-primary/15 text-primary';
+  };
+
   // Render steps content (shared between collapse and non-collapse modes)
   const renderStepsContent = () => <div className="grid grid-cols-2 gap-card-gap">
-      {steps.map(step => <div key={step.id} className="bg-background/50 rounded-card p-card-sm border border-border/50">
+      {steps.map(step => <div key={step.id} className={`rounded-card p-card-sm border ${getStepCardStyle()} transition-all duration-300 hover:shadow-md`}>
           <div className="flex items-center gap-1.5 mb-2">
-            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-xs">
+            <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${getStepIconStyle()}`}>
               {step.emoji || step.id}
             </div>
             <div className="flex-1 text-left min-w-0">
@@ -91,18 +106,28 @@ export const CoachEmptyState = ({
           {dailyReminderContent}
         </div> : enableCollapse ? (/* Collapsible mode for emotion coach */
     <Collapsible open={isStepsExpanded} onOpenChange={setIsStepsExpanded}>
-          <div className="bg-card border border-border rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
+          <div className={`border rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200 ${
+            primaryColor === 'pink' 
+              ? 'bg-gradient-to-br from-pink-50/90 to-rose-50/70 dark:from-pink-950/40 dark:to-rose-950/30 border-pink-200/60 dark:border-pink-800/40' 
+              : 'bg-card border-border'
+          }`}>
             <div className="flex items-center justify-between">
               <CollapsibleTrigger asChild>
                 <div className="flex items-center gap-2 cursor-pointer flex-1">
-                  <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
-                    <span className="text-primary text-sm">{stepsEmoji}</span>
+                  <h3 className={`font-medium flex items-center gap-1.5 text-sm ${
+                    primaryColor === 'pink' ? 'text-pink-800 dark:text-pink-200' : 'text-foreground'
+                  }`}>
+                    <span className={`text-sm ${primaryColor === 'pink' ? 'text-pink-500' : 'text-primary'}`}>{stepsEmoji}</span>
                     {stepsTitle}
                   </h3>
-                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isStepsExpanded ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
+                    primaryColor === 'pink' ? 'text-pink-400' : 'text-muted-foreground'
+                  } ${isStepsExpanded ? 'rotate-180' : ''}`} />
                 </div>
               </CollapsibleTrigger>
-              {moreInfoRoute && <span role="button" onClick={() => navigate(moreInfoRoute)} className="text-xs text-primary hover:text-primary/80 cursor-pointer">
+              {moreInfoRoute && <span role="button" onClick={() => navigate(moreInfoRoute)} className={`text-xs hover:opacity-80 cursor-pointer ${
+                primaryColor === 'pink' ? 'text-pink-600 dark:text-pink-400' : 'text-primary'
+              }`}>
                   了解更多 →
                 </span>}
             </div>
@@ -110,14 +135,22 @@ export const CoachEmptyState = ({
               {renderStepsContent()}
             </CollapsibleContent>
           </div>
-        </Collapsible>) : (/* Non-collapsible mode for parent/communication coach */
-    <div className="bg-card border border-border rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
+        </Collapsible>) : (/* Non-collapsible mode for parent/communication/gratitude coach */
+    <div className={`border rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200 ${
+      primaryColor === 'pink' 
+        ? 'bg-gradient-to-br from-pink-50/90 to-rose-50/70 dark:from-pink-950/40 dark:to-rose-950/30 border-pink-200/60 dark:border-pink-800/40' 
+        : 'bg-card border-border'
+    }`}>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium text-foreground flex items-center gap-1.5 text-sm">
-              <span className="text-primary text-sm">{stepsEmoji}</span>
+            <h3 className={`font-medium flex items-center gap-1.5 text-sm ${
+              primaryColor === 'pink' ? 'text-pink-800 dark:text-pink-200' : 'text-foreground'
+            }`}>
+              <span className={`text-sm ${primaryColor === 'pink' ? 'text-pink-500' : 'text-primary'}`}>{stepsEmoji}</span>
               {stepsTitle}
             </h3>
-            {moreInfoRoute && <span role="button" onClick={() => navigate(moreInfoRoute)} className="text-xs text-primary hover:text-primary/80 cursor-pointer">
+            {moreInfoRoute && <span role="button" onClick={() => navigate(moreInfoRoute)} className={`text-xs hover:opacity-80 cursor-pointer ${
+              primaryColor === 'pink' ? 'text-pink-600 dark:text-pink-400' : 'text-primary'
+            }`}>
                 了解更多 →
               </span>}
           </div>

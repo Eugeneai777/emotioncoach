@@ -114,6 +114,9 @@ const DynamicCoach = () => {
   const optionClickHandler = template.disable_option_buttons ? undefined : handleOptionClick;
   const optionSelectHandler = template.disable_option_buttons ? undefined : handleOptionSelect;
 
+  // 判断是否启用步骤折叠（情绪教练折叠，其他教练展开）
+  const enableStepsCollapse = template.coach_key === 'emotion';
+
   return (
     <>
     <CoachLayout
@@ -142,6 +145,7 @@ const DynamicCoach = () => {
       placeholder={template.placeholder || '分享你的想法...'}
       communicationBriefingId={lastBriefingId}
       coachRecommendation={coachRecommendation}
+      enableStepsCollapse={enableStepsCollapse}
       scenarioChips={
         template.enable_scenarios && template.scenarios ? (
           <CoachScenarioChips

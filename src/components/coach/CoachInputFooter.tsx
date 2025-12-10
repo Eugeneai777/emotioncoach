@@ -14,6 +14,7 @@ interface CoachInputFooterProps {
   isLoading: boolean;
   hasMessages: boolean;
   gradient: string;
+  primaryColor?: string;
   scenarioChips?: React.ReactNode | any[];
   scenarioOnSelect?: (prompt: string) => void;
   scenarioPrimaryColor?: string;
@@ -33,6 +34,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   isLoading,
   hasMessages,
   gradient,
+  primaryColor = 'teal',
   scenarioChips,
   scenarioOnSelect,
   scenarioPrimaryColor,
@@ -50,6 +52,24 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
       onSend();
     }
   };
+
+  // 根据主题色获取输入框样式
+  const getInputStyles = () => {
+    if (primaryColor === 'pink') {
+      return {
+        border: 'border-pink-200',
+        focus: 'focus:ring-pink-400/50 focus:border-pink-400',
+        bg: 'bg-pink-50/50'
+      };
+    }
+    return {
+      border: 'border-teal-200',
+      focus: 'focus:ring-teal-400/50 focus:border-teal-400',
+      bg: 'bg-white/80'
+    };
+  };
+
+  const inputStyles = getInputStyles();
 
   return (
     <footer 
@@ -98,7 +118,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
                 placeholder="分享你的想法..."
-                className="w-full h-11 px-4 text-base rounded-2xl border border-teal-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400 transition-all duration-200"
+                className={`w-full h-11 px-4 text-base rounded-2xl border ${inputStyles.border} ${inputStyles.bg} focus:outline-none focus:ring-2 ${inputStyles.focus} transition-all duration-200`}
                 style={{ fontSize: '16px' }}
                 disabled={isLoading}
                 enterKeyHint="send"
@@ -117,7 +137,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
                 placeholder={placeholder}
-                className="resize-none min-h-[44px] max-h-[100px] w-full py-2.5 px-3 text-base rounded-2xl leading-relaxed border-teal-200 bg-white/80 focus:ring-teal-400/50 focus:border-teal-400 transition-all duration-200"
+                className={`resize-none min-h-[44px] max-h-[100px] w-full py-2.5 px-3 text-base rounded-2xl leading-relaxed border ${inputStyles.border} ${inputStyles.bg} ${inputStyles.focus} transition-all duration-200`}
                 style={{ fontSize: '16px' }}
                 disabled={isLoading}
                 rows={1}
