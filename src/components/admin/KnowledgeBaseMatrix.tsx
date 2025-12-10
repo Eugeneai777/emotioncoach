@@ -12,6 +12,8 @@ interface KnowledgeItem {
   doc_type: string;
   coach_key: string | null;
   camp_type: string | null;
+  package_key: string | null;
+  partner_level: string | null;
   keywords: string[];
   is_active: boolean;
 }
@@ -20,7 +22,7 @@ interface CoachColumn {
   key: string;
   name: string;
   emoji: string;
-  type: 'coach' | 'tool' | 'camp';
+  type: 'coach' | 'tool' | 'camp' | 'package' | 'partner';
 }
 
 interface DocTypeRow {
@@ -33,7 +35,7 @@ interface KnowledgeBaseMatrixProps {
   items: KnowledgeItem[];
   coaches: CoachColumn[];
   docTypes: DocTypeRow[];
-  onCellClick: (docType: string, coachKey: string | null, campType: string | null, existingItem?: KnowledgeItem) => void;
+  onCellClick: (docType: string, coachKey: string | null, campType: string | null, packageKey: string | null, partnerLevel: string | null, existingItem?: KnowledgeItem) => void;
   onViewItem: (item: KnowledgeItem) => void;
 }
 
@@ -54,6 +56,10 @@ const KnowledgeBaseMatrix = ({
         return item.coach_key === column.key;
       } else if (column.type === 'camp') {
         return item.camp_type === column.key;
+      } else if (column.type === 'package') {
+        return item.package_key === column.key;
+      } else if (column.type === 'partner') {
+        return item.partner_level === column.key;
       }
       return false;
     });
@@ -98,7 +104,7 @@ const KnowledgeBaseMatrix = ({
                           {coach.name}
                         </span>
                         <Badge variant="outline" className="text-[10px] px-1">
-                          {coach.type === 'coach' ? '教练' : coach.type === 'tool' ? '工具' : '训练营'}
+                          {coach.type === 'coach' ? '教练' : coach.type === 'tool' ? '工具' : coach.type === 'camp' ? '训练营' : coach.type === 'package' ? '套餐' : '合伙人'}
                         </Badge>
                       </div>
                     </th>
@@ -137,7 +143,14 @@ const KnowledgeBaseMatrix = ({
                               <TooltipTrigger asChild>
                                 <div 
                                   className="inline-flex flex-col items-center gap-0.5 p-2 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 cursor-pointer hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors group"
-                                  onClick={() => onCellClick(docType.type, coach.type === 'camp' ? null : coach.key, coach.type === 'camp' ? coach.key : null, item)}
+                                  onClick={() => onCellClick(
+                                    docType.type, 
+                                    (coach.type === 'coach' || coach.type === 'tool') ? coach.key : null, 
+                                    coach.type === 'camp' ? coach.key : null,
+                                    coach.type === 'package' ? coach.key : null,
+                                    coach.type === 'partner' ? coach.key : null,
+                                    item
+                                  )}
                                 >
                                   <Check className="w-4 h-4 text-green-600" />
                                   <span className="text-[10px] text-green-700 dark:text-green-400">
@@ -161,7 +174,14 @@ const KnowledgeBaseMatrix = ({
                                       className="h-5 w-5"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        onCellClick(docType.type, coach.type === 'camp' ? null : coach.key, coach.type === 'camp' ? coach.key : null, item);
+                                        onCellClick(
+                                          docType.type, 
+                                          (coach.type === 'coach' || coach.type === 'tool') ? coach.key : null, 
+                                          coach.type === 'camp' ? coach.key : null,
+                                          coach.type === 'package' ? coach.key : null,
+                                          coach.type === 'partner' ? coach.key : null,
+                                          item
+                                        );
                                       }}
                                     >
                                       <Edit className="w-3 h-3" />
@@ -181,7 +201,13 @@ const KnowledgeBaseMatrix = ({
                               <TooltipTrigger asChild>
                                 <button
                                   className="inline-flex items-center justify-center p-2 rounded-lg bg-muted/30 border border-dashed border-muted-foreground/30 cursor-pointer hover:bg-muted/50 hover:border-primary/50 transition-colors group"
-                                  onClick={() => onCellClick(docType.type, coach.type === 'camp' ? null : coach.key, coach.type === 'camp' ? coach.key : null)}
+                                  onClick={() => onCellClick(
+                                    docType.type, 
+                                    (coach.type === 'coach' || coach.type === 'tool') ? coach.key : null, 
+                                    coach.type === 'camp' ? coach.key : null,
+                                    coach.type === 'package' ? coach.key : null,
+                                    coach.type === 'partner' ? coach.key : null
+                                  )}
                                 >
                                   <Plus className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
                                 </button>
