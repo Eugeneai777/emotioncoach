@@ -4,18 +4,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Partner } from "@/hooks/usePartner";
-import { TrendingUp, Users, Wallet, Gift, Upload, ImageIcon, BarChart3, Palette } from "lucide-react";
+import { Upload, ImageIcon, Palette, Users, TrendingUp, Wallet, ChevronDown, ChevronUp, Bell } from "lucide-react";
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { EntryTypeSelector } from "./EntryTypeSelector";
-import { PartnerLevelProgress } from "./PartnerLevelProgress";
 import { StudentList } from "./StudentList";
 import { ConversionFunnel } from "./ConversionFunnel";
 import { ConversionAlerts } from "./ConversionAlerts";
 import { ConversionGuide } from "./ConversionGuide";
 import { PartnerAnalytics } from "./PartnerAnalytics";
-import { getPartnerLevel } from "@/config/partnerLevels";
+import { CommissionHistory } from "./CommissionHistory";
+import { WithdrawalForm } from "./WithdrawalForm";
+import { PartnerOverviewCard } from "./PartnerOverviewCard";
+import { PartnerQuickActions } from "./PartnerQuickActions";
+import { CompactConversionFunnel } from "./CompactConversionFunnel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -28,9 +32,10 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
   const [groupQrUrl, setGroupQrUrl] = useState(partner.wecom_group_qrcode_url || '');
   const [groupName, setGroupName] = useState(partner.wecom_group_name || '有劲学员群');
   const [uploading, setUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState('promote');
+  const [groupExpanded, setGroupExpanded] = useState(false);
+  const [alertCount, setAlertCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const currentLevel = getPartnerLevel('youjin', partner.partner_level);
 
   const handleUploadQR = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -82,103 +87,52 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
     }
   };
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
+
   return (
-    <div className="space-y-6">
-      {/* 等级进度 */}
-      <PartnerLevelProgress partner={partner} />
+    <div className="space-y-4">
+      {/* 顶部概览卡片 */}
+      <PartnerOverviewCard 
+        partner={partner} 
+        onWithdraw={() => setActiveTab('earnings')}
+      />
 
-      {/* 统计概览 */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">累计收益</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">¥{partner.total_earnings.toFixed(2)}</div>
-          </CardContent>
-        </Card>
+      {/* 快捷操作 */}
+      <PartnerQuickActions onTabChange={handleTabChange} />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">可提现</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">¥{partner.available_balance.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">直推用户</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{partner.total_referrals}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">预购数量</CardTitle>
-            <Gift className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{partner.prepurchase_count}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {partner.prepurchase_expires_at 
-                ? `有效期至 ${new Date(partner.prepurchase_expires_at).toLocaleDateString()}`
-                : '暂无预购'
-              }
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 当前等级信息 */}
-      {currentLevel && (
-        <Card className="border-orange-200 bg-gradient-to-br from-orange-50/50 to-amber-50/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span className="text-2xl">{currentLevel.icon}</span>
-              {currentLevel.name}
-            </CardTitle>
-            <CardDescription>{currentLevel.description}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-medium">
-                一级佣金 {(currentLevel.commissionRateL1 * 100).toFixed(0)}%
-              </span>
-              {currentLevel.commissionRateL2 > 0 && (
-                <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-medium">
-                  二级佣金 {(currentLevel.commissionRateL2 * 100).toFixed(0)}%
-                </span>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              {currentLevel.benefits.map((benefit, idx) => (
-                <div key={idx} className="text-sm text-muted-foreground">
-                  • {benefit}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* 转化漏斗预览 */}
+      <CompactConversionFunnel 
+        partnerId={partner.id} 
+        onClick={() => setActiveTab('students')}
+      />
 
       {/* 主要功能区 - Tabs */}
-      <Tabs defaultValue="tools" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <ResponsiveTabsTrigger value="tools" label="推广工具" shortLabel="推广" />
-          <ResponsiveTabsTrigger value="group" label="群管理" shortLabel="群管" />
-          <ResponsiveTabsTrigger value="students" label="我的学员" shortLabel="学员" />
-          <ResponsiveTabsTrigger value="analytics" label="数据分析" shortLabel="分析" />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 h-12 bg-white/80 backdrop-blur-sm">
+          <ResponsiveTabsTrigger 
+            value="promote" 
+            label="推广" 
+            shortLabel="推广" 
+            icon={<Palette className="w-4 h-4" />} 
+          />
+          <ResponsiveTabsTrigger 
+            value="students" 
+            label="学员" 
+            shortLabel="学员" 
+            icon={<Users className="w-4 h-4" />}
+          />
+          <ResponsiveTabsTrigger 
+            value="earnings" 
+            label="收益" 
+            shortLabel="收益" 
+            icon={<Wallet className="w-4 h-4" />}
+          />
         </TabsList>
 
-        <TabsContent value="tools" className="space-y-4">
+        {/* 推广Tab */}
+        <TabsContent value="promote" className="space-y-4 mt-4">
           <EntryTypeSelector 
             partnerId={partner.id} 
             currentEntryType={partner.default_entry_type || 'free'}
@@ -186,115 +140,145 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
           />
           
           {/* 海报生成中心入口 */}
-          <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50">
+          <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 overflow-hidden">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
-                    <Palette className="w-5 h-5 text-white" />
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center shadow-lg">
+                    <Palette className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-orange-800">推广海报生成中心</h4>
-                    <p className="text-xs text-orange-600">AI智能生成专属推广海报</p>
+                    <h4 className="font-bold text-orange-800">AI推广海报</h4>
+                    <p className="text-xs text-orange-600">智能生成专属推广海报</p>
                   </div>
                 </div>
                 <Button 
                   onClick={() => navigate('/poster-center')}
-                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg"
                 >
                   生成海报
                 </Button>
               </div>
             </CardContent>
           </Card>
+
+          {/* 群管理 - 折叠区块 */}
+          <Collapsible open={groupExpanded} onOpenChange={setGroupExpanded}>
+            <Card className="bg-white/80 backdrop-blur-sm">
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-muted/20 transition-colors py-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Users className="w-4 h-4 text-blue-500" />
+                      学员群管理
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      {groupQrUrl && (
+                        <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full">已配置</span>
+                      )}
+                      {groupExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0 space-y-4">
+                  {/* 群二维码 */}
+                  <div className="space-y-2">
+                    <Label>群二维码</Label>
+                    <div className="flex gap-3 items-start">
+                      {groupQrUrl ? (
+                        <div className="w-24 h-24 border rounded-lg overflow-hidden bg-white p-1.5">
+                          <img src={groupQrUrl} alt="群二维码" className="w-full h-full object-contain" />
+                        </div>
+                      ) : (
+                        <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/20">
+                          <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 space-y-2">
+                        <input 
+                          type="file" 
+                          ref={fileInputRef}
+                          accept="image/*"
+                          onChange={handleUploadQR}
+                          className="hidden"
+                        />
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploading}
+                          className="w-full"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          {uploading ? "上传中..." : groupQrUrl ? "更换" : "上传"}
+                        </Button>
+                        <p className="text-xs text-muted-foreground">
+                          上传微信/企业微信群二维码
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 群名称 */}
+                  <div className="space-y-2">
+                    <Label>群名称</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        value={groupName}
+                        onChange={(e) => setGroupName(e.target.value)}
+                        placeholder="输入群名称"
+                        className="h-9"
+                      />
+                      <Button variant="outline" size="sm" onClick={handleSaveGroupName}>
+                        保存
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
           
+          {/* 推广指南 */}
           <div className="p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border border-teal-100">
             <h4 className="font-medium text-teal-800 mb-2">💡 如何推广</h4>
             <p className="text-sm text-teal-700">
-              设置入口类型后，你在社区分享帖子、训练营打卡或情绪按钮分享时，生成的二维码会自动使用你的设置。用户扫码后即可按你选择的方式（免费/付费）获得对话额度，并自动成为你的学员。
+              设置入口类型后，你在社区分享、训练营打卡或情绪按钮分享时，生成的二维码会自动使用你的设置。用户扫码后即可按你选择的方式获得对话额度，并自动成为你的学员。
             </p>
           </div>
         </TabsContent>
 
-        <TabsContent value="group" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                学员群管理
-              </CardTitle>
-              <CardDescription>上传群二维码，学员兑换后可扫码加群</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* 群二维码 */}
-              <div className="space-y-2">
-                <Label>群二维码</Label>
-                <div className="flex gap-3 items-start">
-                  {groupQrUrl ? (
-                    <div className="w-32 h-32 border rounded-lg overflow-hidden bg-white p-2">
-                      <img src={groupQrUrl} alt="群二维码" className="w-full h-full object-contain" />
-                    </div>
-                  ) : (
-                    <div className="w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted/20">
-                      <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="flex-1 space-y-2">
-                    <input 
-                      type="file" 
-                      ref={fileInputRef}
-                      accept="image/*"
-                      onChange={handleUploadQR}
-                      className="hidden"
-                    />
-                    <Button 
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
-                      className="w-full"
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      {uploading ? "上传中..." : groupQrUrl ? "更换二维码" : "上传二维码"}
-                    </Button>
-                    <p className="text-xs text-muted-foreground">
-                      上传微信/企业微信群二维码
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 群名称 */}
-              <div className="space-y-2">
-                <Label>群名称</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    value={groupName}
-                    onChange={(e) => setGroupName(e.target.value)}
-                    placeholder="输入群名称"
-                  />
-                  <Button variant="outline" onClick={handleSaveGroupName}>
-                    保存
-                  </Button>
-                </div>
-              </div>
-
-              {/* 提示 */}
-              <div className="p-3 bg-orange-50 rounded-lg text-sm text-orange-800">
-                💡 学员通过你的兑换码注册后，会在训练营页面看到这个群二维码
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="students" className="space-y-4">
-          <ConversionFunnel partnerId={partner.id} />
+        {/* 学员Tab */}
+        <TabsContent value="students" className="space-y-4 mt-4">
+          {/* 跟进提醒 */}
           <ConversionAlerts partnerId={partner.id} />
+          
+          {/* 详细漏斗 */}
+          <ConversionFunnel partnerId={partner.id} />
+          
+          {/* 转化指南 */}
           <ConversionGuide />
+          
+          {/* 学员列表 */}
           <StudentList partnerId={partner.id} />
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-4">
+        {/* 收益Tab */}
+        <TabsContent value="earnings" className="space-y-4 mt-4">
+          {/* 数据分析 */}
           <PartnerAnalytics partnerId={partner.id} />
+          
+          {/* 佣金明细 */}
+          <CommissionHistory partnerId={partner.id} />
+          
+          {/* 提现申请 */}
+          <WithdrawalForm partner={partner} />
         </TabsContent>
       </Tabs>
     </div>
