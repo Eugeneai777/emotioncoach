@@ -205,7 +205,7 @@ serve(async (req) => {
           color: "#173177" 
         },
         thing4: { 
-          value: (notification.title || '每日打卡').slice(0, 20),
+          value: `恭喜！已连续打卡${notification.streakDays || 1}天`.slice(0, 20),
           color: "#173177" 
         },
         time3: { 
