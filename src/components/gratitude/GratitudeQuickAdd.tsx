@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Send, Loader2, Sparkles } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { VoiceInputButton } from "@/components/coach/VoiceInputButton";
 
 interface GratitudeQuickAddProps {
   userId: string;
@@ -20,7 +21,7 @@ export const GratitudeQuickAdd = ({ userId, onAdded }: GratitudeQuickAddProps) =
 
     setLoading(true);
     try {
-      const { data: insertedData, error } = await supabase
+      const { error } = await supabase
         .from("gratitude_entries")
         .insert({
           user_id: userId,
@@ -52,35 +53,44 @@ export const GratitudeQuickAdd = ({ userId, onAdded }: GratitudeQuickAddProps) =
     }
   };
 
+  const handleVoiceTranscript = (text: string) => {
+    setContent(prev => prev ? `${prev} ${text}` : text);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="p-4 rounded-xl bg-white/60 dark:bg-gray-800/40 backdrop-blur">
-      <div className="flex items-center gap-2">
-        <div className="flex-1 relative">
-          <Input
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="今天感恩什么？按 Enter 记录..."
-            className="pr-10 bg-white/80 dark:bg-gray-700/50"
+    <footer className="fixed bottom-0 left-0 right-0 border-t bg-card/98 backdrop-blur-xl z-50 safe-bottom">
+      <form onSubmit={handleSubmit} className="p-3 max-w-3xl mx-auto">
+        <div className="flex items-center gap-2">
+          <VoiceInputButton 
+            onTranscript={handleVoiceTranscript}
             disabled={loading}
           />
-          <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <div className="flex-1">
+            <Input
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="今天感恩什么？按 Enter 记录..."
+              className="bg-muted/50 border-muted"
+              disabled={loading}
+            />
+          </div>
+          <Button
+            type="submit"
+            size="icon"
+            disabled={!content.trim() || loading}
+            className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shrink-0"
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+          </Button>
         </div>
-        <Button
-          type="submit"
-          size="icon"
-          disabled={!content.trim() || loading}
-          className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shrink-0"
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Send className="w-4 h-4" />
-          )}
-        </Button>
-      </div>
-      <p className="text-xs text-muted-foreground mt-2 text-center">
-        标签每日凌晨自动分析 · 或手动同步 (1点/条)
-      </p>
-    </form>
+        <p className="text-xs text-muted-foreground mt-2 text-center">
+          标签每日凌晨自动分析 · 或手动同步 (1点/条)
+        </p>
+      </form>
+    </footer>
   );
 };
