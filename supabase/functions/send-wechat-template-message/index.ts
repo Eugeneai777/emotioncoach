@@ -28,6 +28,334 @@ const SYSTEM_TEMPLATE_IDS: Record<string, string> = {
   'default': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
 };
 
+// =============== 消息变体系统 ===============
+
+interface MessageVariant {
+  first: string;
+  content: string;
+  remark: string;
+  priority?: number; // 优先级，数字越大优先级越高
+}
+
+interface MessageContext {
+  hour: number;
+  isWeekend: boolean;
+  lunarMonth?: number;
+  lunarDay?: number;
+  solarMonth: number;
+  solarDay: number;
+  streakDays?: number;
+  inactiveDays?: number;
+  emotionTrend?: 'improving' | 'stable' | 'declining';
+  displayName: string;
+  isBirthday?: boolean;
+}
+
+// 获取农历日期（简化版，仅支持常见节日）
+function getLunarDate(date: Date): { month: number; day: number } | null {
+  // 这是简化实现，实际项目中可使用完整的农历库
+  // 返回 null 表示无法确定
+  return null;
+}
+
+// 检测当前节日/特殊日期
+function detectSpecialDay(ctx: MessageContext): string | null {
+  const { solarMonth, solarDay, lunarMonth, lunarDay } = ctx;
+  
+  // 农历节日（如果有农历数据）
+  if (lunarMonth && lunarDay) {
+    if (lunarMonth === 1 && lunarDay >= 1 && lunarDay <= 15) return 'spring_festival'; // 春节期间
+    if (lunarMonth === 1 && lunarDay === 15) return 'lantern_festival'; // 元宵节
+    if (lunarMonth === 5 && lunarDay === 5) return 'dragon_boat'; // 端午节
+    if (lunarMonth === 8 && lunarDay === 15) return 'mid_autumn'; // 中秋节
+    if (lunarMonth === 9 && lunarDay === 9) return 'double_ninth'; // 重阳节
+  }
+  
+  // 阳历节日
+  if (solarMonth === 1 && solarDay === 1) return 'new_year'; // 元旦
+  if (solarMonth === 2 && solarDay === 14) return 'valentines'; // 情人节
+  if (solarMonth === 3 && solarDay === 8) return 'womens_day'; // 妇女节
+  if (solarMonth === 5 && solarDay >= 8 && solarDay <= 14) {
+    // 母亲节（5月第二个周日，简化为5月8-14日）
+    const date = new Date(new Date().getFullYear(), 4, solarDay);
+    if (date.getDay() === 0) return 'mothers_day';
+  }
+  if (solarMonth === 6 && solarDay >= 15 && solarDay <= 21) {
+    // 父亲节（6月第三个周日）
+    const date = new Date(new Date().getFullYear(), 5, solarDay);
+    if (date.getDay() === 0) return 'fathers_day';
+  }
+  if (solarMonth === 5 && solarDay === 1) return 'labor_day'; // 劳动节
+  if (solarMonth === 6 && solarDay === 1) return 'childrens_day'; // 儿童节
+  if (solarMonth === 9 && solarDay === 10) return 'teachers_day'; // 教师节
+  if (solarMonth === 10 && solarDay === 1) return 'national_day'; // 国庆节
+  if (solarMonth === 11 && solarDay === 11) return 'singles_day'; // 双十一
+  if (solarMonth === 12 && solarDay === 24) return 'christmas_eve'; // 平安夜
+  if (solarMonth === 12 && solarDay === 25) return 'christmas'; // 圣诞节
+  if (solarMonth === 12 && solarDay === 31) return 'new_years_eve'; // 跨年夜
+  
+  // 生日
+  if (ctx.isBirthday) return 'birthday';
+  
+  return null;
+}
+
+// 获取时间段问候
+function getTimeGreeting(hour: number): { period: string; greeting: string } {
+  if (hour >= 5 && hour < 9) return { period: 'early_morning', greeting: '早安' };
+  if (hour >= 9 && hour < 12) return { period: 'morning', greeting: '上午好' };
+  if (hour >= 12 && hour < 14) return { period: 'noon', greeting: '中午好' };
+  if (hour >= 14 && hour < 18) return { period: 'afternoon', greeting: '下午好' };
+  if (hour >= 18 && hour < 22) return { period: 'evening', greeting: '晚上好' };
+  return { period: 'night', greeting: '夜深了' };
+}
+
+// 节日特殊消息
+const holidayMessages: Record<string, { first: string; remark: string }> = {
+  'spring_festival': { 
+    first: '🧧 新春快乐，{name}', 
+    remark: '新的一年，愿您心想事成，万事如意 🎊' 
+  },
+  'lantern_festival': { 
+    first: '🏮 元宵节快乐，{name}', 
+    remark: '团团圆圆，幸福美满 🌕' 
+  },
+  'dragon_boat': { 
+    first: '🐲 端午安康，{name}', 
+    remark: '粽香四溢，愿您一切安好 🎋' 
+  },
+  'mid_autumn': { 
+    first: '🥮 中秋快乐，{name}', 
+    remark: '月圆人团圆，思念与祝福同在 🌙' 
+  },
+  'double_ninth': { 
+    first: '🍂 重阳安康，{name}', 
+    remark: '登高望远，愿您健康长寿 🏔️' 
+  },
+  'new_year': { 
+    first: '🎉 新年快乐，{name}', 
+    remark: '新的一年，新的开始，愿您心想事成 ✨' 
+  },
+  'valentines': { 
+    first: '💕 情人节快乐，{name}', 
+    remark: '愿爱与被爱，温暖您的每一天 💝' 
+  },
+  'womens_day': { 
+    first: '🌸 女神节快乐，{name}', 
+    remark: '愿您永远美丽自信，活出精彩 💐' 
+  },
+  'mothers_day': { 
+    first: '🌹 母亲节快乐，{name}', 
+    remark: '感恩您的付出，愿您被温柔以待 💗' 
+  },
+  'fathers_day': { 
+    first: '👔 父亲节快乐，{name}', 
+    remark: '感谢您的守护，愿您健康幸福 💙' 
+  },
+  'labor_day': { 
+    first: '🎊 劳动节快乐，{name}', 
+    remark: '劳动最光荣，也别忘了好好休息 🌿' 
+  },
+  'childrens_day': { 
+    first: '🎈 儿童节快乐，{name}', 
+    remark: '愿您永葆童心，快乐每一天 🎠' 
+  },
+  'teachers_day': { 
+    first: '📚 教师节快乐，{name}', 
+    remark: '感谢每一位传道授业的老师 🍎' 
+  },
+  'national_day': { 
+    first: '🇨🇳 国庆节快乐，{name}', 
+    remark: '祝祖国繁荣昌盛，愿您假期愉快 🎆' 
+  },
+  'singles_day': { 
+    first: '🛒 双十一快乐，{name}', 
+    remark: '理性消费，对自己好一点 💝' 
+  },
+  'christmas_eve': { 
+    first: '🎄 平安夜好，{name}', 
+    remark: '愿平安与温暖伴您度过每一天 🌟' 
+  },
+  'christmas': { 
+    first: '🎅 圣诞快乐，{name}', 
+    remark: '愿您收获满满的爱与祝福 🎁' 
+  },
+  'new_years_eve': { 
+    first: '🎊 跨年快乐，{name}', 
+    remark: '告别过去，拥抱新的一年 ✨' 
+  },
+  'birthday': { 
+    first: '🎂 生日快乐，{name}', 
+    remark: '愿您的每一个愿望都能实现 🎁' 
+  },
+};
+
+// 场景消息变体配置
+const scenarioMessageVariants: Record<string, MessageVariant[]> = {
+  'after_briefing': [
+    // 早安版
+    { first: '早安，{name}，您的情绪简报已生成', content: '新的一天，带着觉察开始', remark: '每一个清晨都是新的开始 🌅', priority: 1 },
+    // 午间版
+    { first: '{name}，午间时光，简报已就绪', content: '今日情绪梳理已完成，记得查看洞察', remark: '忙碌中也要关照自己 🌿', priority: 1 },
+    // 晚间版
+    { first: '晚上好，{name}，今日简报已生成', content: '一天的情绪旅程已记录', remark: '夜晚是回顾与沉淀的好时光 🌙', priority: 1 },
+    // 深夜版
+    { first: '夜深了，{name}，简报已为您准备好', content: '今日的情绪故事已记录', remark: '好好休息，明天会更好 🌟', priority: 1 },
+    // 周末版
+    { first: '周末愉快，{name}，简报已生成', content: '放松之余，也来看看内心的声音', remark: '周末是与自己对话的好时机 🍃', priority: 2 },
+    // 默认版
+    { first: '您好，{name}，您的情绪简报已生成', content: '今日情绪梳理已完成，记得查看成长洞察', remark: '每一次记录都是成长的印记 🌿', priority: 0 },
+  ],
+  'emotion_improvement': [
+    // 持续改善版
+    { first: '太棒了，{name}，情绪持续好转', content: '您的努力正在收获成果', remark: '保持这份积极的力量 💪', priority: 1 },
+    // 初步改善版
+    { first: '{name}，劲老师发现您的情绪有好转', content: '每一点进步都值得肯定', remark: '您的每一步努力都被看见 ✨', priority: 0 },
+    // 大幅改善版
+    { first: '🎉 {name}，情绪有了明显改善', content: '从低谷到现在，您真的很棒', remark: '相信自己，您比想象中更强大 💫', priority: 2 },
+  ],
+  'goal_milestone': [
+    // 7天里程碑
+    { first: '🎉 恭喜{name}，完成7天小目标', content: '一周的坚持，已经很棒了', remark: '好的开始是成功的一半 🌱', priority: 1 },
+    // 21天里程碑
+    { first: '🏆 太厉害了，{name}，21天习惯养成', content: '21天的坚持，习惯已在形成', remark: '您正在成为更好的自己 💪', priority: 2 },
+    // 30天里程碑
+    { first: '🌟 {name}，30天成就解锁', content: '一个月的努力，成果斐然', remark: '坚持的力量，超乎想象 🎯', priority: 2 },
+    // 100天里程碑
+    { first: '🎊 百日大成就！{name}，太了不起了', content: '100天的坚持，您是真正的英雄', remark: '这份毅力，值得所有掌声 👏', priority: 3 },
+    // 默认版
+    { first: '🎉 恭喜{name}达成目标里程碑', content: '目标进度已更新，快来查看', remark: '每一个小目标都值得庆祝 💪', priority: 0 },
+  ],
+  'sustained_low_mood': [
+    // 温柔关怀版
+    { first: '{name}，劲老师想轻轻问候您', content: '发现您最近情绪有些波动', remark: '无论什么时候，我都在这里陪着您 💚', priority: 0 },
+    // 深度关怀版
+    { first: '亲爱的{name}，您还好吗', content: '劲老师注意到您这几天情绪有些低落', remark: '低谷也是旅程的一部分，我陪您走过 🤗', priority: 1 },
+    // 周末关怀版
+    { first: '周末好，{name}，来看看您', content: '周末放松之余，也来陪陪自己', remark: '给自己一个温暖的拥抱 🫂', priority: 2 },
+    // 夜间关怀版
+    { first: '夜深了，{name}，还没休息吗', content: '夜晚容易多想，但别忘了您很棒', remark: '好好休息，明天的太阳照常升起 🌙', priority: 1 },
+  ],
+  'inactivity': [
+    // 3天不活跃
+    { first: '嗨，{name}，好久不见', content: '有空来记录一下最近的心情吧', remark: '慢慢来，劲老师等着您 🌸', priority: 1 },
+    // 7天不活跃
+    { first: '{name}，一周没见，想您了', content: '不管忙或闲，都欢迎回来', remark: '这里永远有您的位置 🏡', priority: 2 },
+    // 14天不活跃
+    { first: '亲爱的{name}，两周了呢', content: '有什么需要，随时来找劲老师', remark: '门一直为您敞开 🚪', priority: 2 },
+    // 30天不活跃
+    { first: '{name}，一个月了，真的很想您', content: '不管多久没来，回来就好', remark: '您的成长旅程，随时可以继续 🌈', priority: 3 },
+    // 默认版
+    { first: '您好，{name}，好久不见', content: '有空来记录一下最近的心情吧', remark: '慢慢来，劲老师等着您 🌸', priority: 0 },
+  ],
+  'consistent_checkin': [
+    // 3天连续
+    { first: '棒棒的，{name}，连续3天打卡', content: '好的开始，继续保持', remark: '坚持就是力量 💪', priority: 1 },
+    // 7天连续
+    { first: '🎉 {name}，一周连续打卡达成', content: '7天的坚持，习惯正在养成', remark: '您比想象中更有毅力 🌟', priority: 2 },
+    // 14天连续
+    { first: '🏆 太棒了，{name}，14天连续打卡', content: '两周的努力，真的很了不起', remark: '您正在成为更好的自己 ✨', priority: 2 },
+    // 21天连续
+    { first: '🌟 {name}，21天习惯养成大师', content: '21天的坚持，习惯已经形成', remark: '这份自律，值得所有掌声 👏', priority: 3 },
+    // 30天连续
+    { first: '🎊 满月成就！{name}，30天连续打卡', content: '一个月的坚持，您是榜样', remark: '持续的努力终将收获美好 🌈', priority: 3 },
+    // 默认版
+    { first: '您好，{name}，坚持的力量真棒', content: '已连续记录情绪，非常了不起', remark: '持续的努力终将收获美好 🌟', priority: 0 },
+  ],
+  'encouragement': [
+    // 早安鼓励
+    { first: '早安，{name}，新的一天开始了', content: '今天也要好好照顾自己哦', remark: '每一天都是新的开始 🌅', priority: 1 },
+    // 午间鼓励
+    { first: '午安，{name}，忙碌中也要休息', content: '适当放松，效率更高', remark: '照顾好自己才能更好前行 🌿', priority: 1 },
+    // 晚间鼓励
+    { first: '晚上好，{name}，辛苦了一天', content: '今天的您，很棒哦', remark: '好好休息，明天继续加油 🌙', priority: 1 },
+    // 周末鼓励
+    { first: '周末愉快，{name}', content: '难得的休息日，好好放松吧', remark: '适当的休息是为了更好的出发 🍃', priority: 2 },
+    // 默认版
+    { first: '您好，{name}，这是来自劲老师的问候', content: '今天也要好好照顾自己哦', remark: '您值得被温柔以待 💝', priority: 0 },
+  ],
+};
+
+// 选择最佳消息变体
+function selectBestVariant(scenario: string, ctx: MessageContext, notification: any): MessageVariant {
+  const variants = scenarioMessageVariants[scenario] || scenarioMessageVariants['encouragement'];
+  const { hour, isWeekend, streakDays, inactiveDays } = ctx;
+  const time = getTimeGreeting(hour);
+  
+  let selectedVariant: MessageVariant | null = null;
+  let highestPriority = -1;
+  
+  for (const variant of variants) {
+    let matches = false;
+    let priority = variant.priority || 0;
+    
+    // 根据场景特定条件匹配
+    if (scenario === 'consistent_checkin' && streakDays) {
+      if (streakDays >= 30 && variant.first.includes('30天')) { matches = true; priority += 10; }
+      else if (streakDays >= 21 && variant.first.includes('21天')) { matches = true; priority += 8; }
+      else if (streakDays >= 14 && variant.first.includes('14天')) { matches = true; priority += 6; }
+      else if (streakDays >= 7 && variant.first.includes('7天') || variant.first.includes('一周')) { matches = true; priority += 4; }
+      else if (streakDays >= 3 && variant.first.includes('3天')) { matches = true; priority += 2; }
+    }
+    
+    if (scenario === 'goal_milestone' && streakDays) {
+      if (streakDays >= 100 && variant.first.includes('100天')) { matches = true; priority += 10; }
+      else if (streakDays >= 30 && variant.first.includes('30天')) { matches = true; priority += 8; }
+      else if (streakDays >= 21 && variant.first.includes('21天')) { matches = true; priority += 6; }
+      else if (streakDays >= 7 && variant.first.includes('7天')) { matches = true; priority += 4; }
+    }
+    
+    if (scenario === 'inactivity' && inactiveDays) {
+      if (inactiveDays >= 30 && variant.first.includes('一个月')) { matches = true; priority += 10; }
+      else if (inactiveDays >= 14 && variant.first.includes('两周')) { matches = true; priority += 6; }
+      else if (inactiveDays >= 7 && variant.first.includes('一周')) { matches = true; priority += 4; }
+      else if (inactiveDays >= 3 && variant.first.includes('好久不见')) { matches = true; priority += 2; }
+    }
+    
+    // 周末匹配
+    if (isWeekend && variant.first.includes('周末')) {
+      matches = true;
+      priority += 5;
+    }
+    
+    // 时间段匹配
+    if (time.period === 'early_morning' && variant.first.includes('早安')) {
+      matches = true;
+      priority += 3;
+    } else if (time.period === 'noon' && variant.first.includes('午')) {
+      matches = true;
+      priority += 3;
+    } else if (time.period === 'evening' && variant.first.includes('晚上好')) {
+      matches = true;
+      priority += 3;
+    } else if (time.period === 'night' && variant.first.includes('夜深')) {
+      matches = true;
+      priority += 3;
+    }
+    
+    // 更新最佳选择
+    if (matches && priority > highestPriority) {
+      selectedVariant = variant;
+      highestPriority = priority;
+    }
+  }
+  
+  // 如果没有特殊匹配，返回默认变体（priority为0的）
+  if (!selectedVariant) {
+    selectedVariant = variants.find(v => (v.priority || 0) === 0) || variants[0];
+  }
+  
+  return selectedVariant;
+}
+
+// 替换消息中的占位符
+function replacePlaceholders(text: string, ctx: MessageContext, notification: any): string {
+  return text
+    .replace(/\{name\}/g, ctx.displayName)
+    .replace(/\{days\}/g, String(ctx.streakDays || ctx.inactiveDays || ''))
+    .replace(/\{emotion\}/g, notification?.emotion || '情绪');
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -71,7 +399,7 @@ serve(async (req) => {
     // 获取用户是否启用微信通知
     const { data: profile } = await supabaseClient
       .from('profiles')
-      .select('wechat_enabled, display_name')
+      .select('wechat_enabled, display_name, birthday')
       .eq('id', userId)
       .single();
 
@@ -149,6 +477,30 @@ serve(async (req) => {
     const accessToken = tokenData.access_token;
     const displayName = profile?.display_name || '用户';
 
+    // 构建消息上下文
+    const now = new Date();
+    const beijingTime = new Date(now.getTime() + (8 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
+    
+    // 检查是否是用户生日
+    let isBirthday = false;
+    if (profile?.birthday) {
+      const birthday = new Date(profile.birthday);
+      isBirthday = birthday.getMonth() === beijingTime.getUTCMonth() && 
+                   birthday.getDate() === beijingTime.getUTCDate();
+    }
+    
+    const messageContext: MessageContext = {
+      hour: beijingTime.getUTCHours(),
+      isWeekend: [0, 6].includes(beijingTime.getUTCDay()),
+      solarMonth: beijingTime.getUTCMonth() + 1,
+      solarDay: beijingTime.getUTCDate(),
+      streakDays: notification.streakDays,
+      inactiveDays: notification.inactiveDays,
+      emotionTrend: notification.emotionTrend,
+      displayName,
+      isBirthday,
+    };
+
     // 场景中文映射
     const scenarioNames: Record<string, string> = {
       'daily_reminder': '每日情绪记录',
@@ -184,9 +536,7 @@ serve(async (req) => {
     
     if (scenario === 'login_success') {
       // 登录成功模板结构：thing3(用户名)、character_string1(账号)、time2(登录时间)
-      // 格式化当前时间
-      const now = new Date();
-      const loginTime = now.toLocaleString('zh-CN', { 
+      const loginTime = beijingTime.toLocaleString('zh-CN', { 
         timeZone: 'Asia/Shanghai',
         year: 'numeric',
         month: '2-digit',
@@ -212,9 +562,6 @@ serve(async (req) => {
       };
     } else if (isCheckinScenario) {
       // "打卡成功通知"模板结构 (thing10学生姓名, thing4打卡名称, time3时间)
-      // 使用北京标准时间 (UTC+8)
-      const now = new Date();
-      const beijingTime = new Date(now.getTime() + (8 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
       const timeStr = `${beijingTime.getUTCFullYear()}-${String(beijingTime.getUTCMonth() + 1).padStart(2, '0')}-${String(beijingTime.getUTCDate()).padStart(2, '0')} ${String(beijingTime.getUTCHours()).padStart(2, '0')}:${String(beijingTime.getUTCMinutes()).padStart(2, '0')}`;
       messageData = {
         thing10: { 
@@ -232,55 +579,34 @@ serve(async (req) => {
       };
     } else if (isFollowupScenario) {
       // "答疑提醒"模板结构 (first, keyword1, keyword2, keyword3, remark)
-      // 使用北京标准时间 (UTC+8)
-      const now = new Date();
-      const beijingTime = new Date(now.getTime() + (8 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
       const timeStr = `${beijingTime.getUTCFullYear()}年${beijingTime.getUTCMonth() + 1}月${beijingTime.getUTCDate()}日 ${String(beijingTime.getUTCHours()).padStart(2, '0')}:${String(beijingTime.getUTCMinutes()).padStart(2, '0')}`;
       
-      // 根据场景生成开头语、核心内容和结尾语
-      const scenarioMessages: Record<string, { first: string; content: string; remark: string }> = {
-        'after_briefing': {
-          first: '您好，您的情绪简报已生成',
-          content: notification.title || '今日情绪梳理已完成，记得查看成长洞察',
-          remark: '每一次记录都是成长的印记 🌿'
-        },
-        'emotion_improvement': {
-          first: '您好，劲老师发现您的情绪正在好转',
-          content: notification.title || '情绪趋势持续改善，继续保持',
-          remark: '您的每一步努力都被看见 ✨'
-        },
-        'goal_milestone': {
-          first: '🎉 恭喜您达成目标里程碑',
-          content: notification.title || '目标进度已更新，快来查看',
-          remark: '每一个小目标都值得庆祝 💪'
-        },
-        'sustained_low_mood': {
-          first: '您好，劲老师想关心一下您',
-          content: notification.title || '发现您最近情绪有些波动',
-          remark: '无论什么时候，我都在这里陪着您 💚'
-        },
-        'inactivity': {
-          first: '您好，好久不见，想您了',
-          content: notification.title || '有空来记录一下最近的心情吧',
-          remark: '慢慢来，劲老师等着您 🌸'
-        },
-        'consistent_checkin': {
-          first: '您好，坚持的力量真棒',
-          content: notification.title || `已连续记录情绪，非常了不起`,
-          remark: '持续的努力终将收获美好 🌟'
-        },
-        'encouragement': {
-          first: '您好，这是来自劲老师的问候',
-          content: notification.title || '今天也要好好照顾自己哦',
-          remark: '您值得被温柔以待 💝'
-        }
-      };
+      // 检测节日/特殊日期
+      const specialDay = detectSpecialDay(messageContext);
       
-      const msg = scenarioMessages[scenario] || scenarioMessages['encouragement'];
+      let first: string, content: string, remark: string;
+      
+      if (specialDay && holidayMessages[specialDay]) {
+        // 使用节日问候
+        const holidayMsg = holidayMessages[specialDay];
+        first = replacePlaceholders(holidayMsg.first, messageContext, notification);
+        remark = holidayMsg.remark;
+        // 内容使用场景默认的
+        const variant = selectBestVariant(scenario, messageContext, notification);
+        content = replacePlaceholders(notification.title || variant.content, messageContext, notification);
+      } else {
+        // 使用场景消息变体
+        const variant = selectBestVariant(scenario, messageContext, notification);
+        first = replacePlaceholders(variant.first, messageContext, notification);
+        content = replacePlaceholders(notification.title || variant.content, messageContext, notification);
+        remark = variant.remark;
+      }
+      
+      console.log(`Selected message for scenario ${scenario}:`, { first, content, remark, specialDay });
       
       messageData = {
         first: { 
-          value: msg.first,
+          value: first,
           color: "#173177" 
         },
         keyword1: { 
@@ -288,7 +614,7 @@ serve(async (req) => {
           color: "#173177" 
         },
         keyword2: { 
-          value: msg.content.slice(0, 20),
+          value: content.slice(0, 20),
           color: "#173177" 
         },
         keyword3: { 
@@ -296,15 +622,12 @@ serve(async (req) => {
           color: "#173177" 
         },
         remark: { 
-          value: msg.remark,
+          value: remark,
           color: "#173177" 
         },
       };
     } else {
       // "客户跟进提醒"模板结构 (thing1, thing19, time21) - 其他默认场景
-      // 使用北京标准时间 (UTC+8)
-      const now = new Date();
-      const beijingTime = new Date(now.getTime() + (8 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
       const timeStr = `${beijingTime.getUTCFullYear()}-${String(beijingTime.getUTCMonth() + 1).padStart(2, '0')}-${String(beijingTime.getUTCDate()).padStart(2, '0')} ${String(beijingTime.getUTCHours()).padStart(2, '0')}:${String(beijingTime.getUTCMinutes()).padStart(2, '0')}`;
       
       // 根据场景设置thing19字段内容
@@ -350,8 +673,6 @@ serve(async (req) => {
       method: 'POST',
       body: JSON.stringify(messageBody),
     });
-
-    
 
     if (result.errcode !== 0) {
       console.error('WeChat API error:', result);
