@@ -211,9 +211,14 @@ export const GratitudeEntriesList = ({
         {groupedEntries.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <Heart className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">
+            <p className="text-sm mb-2">
               {filterTag ? "没有符合筛选条件的记录" : "还没有感恩记录"}
             </p>
+            {!filterTag && (
+              <p className="text-xs text-muted-foreground/70">
+                试试用语音对话记录第一条感恩吧 ✨
+              </p>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-border/30">
