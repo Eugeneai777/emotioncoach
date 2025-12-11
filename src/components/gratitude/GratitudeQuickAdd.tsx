@@ -39,14 +39,22 @@ export const GratitudeQuickAdd = ({ userId, onAdded }: GratitudeQuickAddProps) =
         description: "感恩的心，让生活更美好"
       });
 
-      // Auto analyze with AI
+      setContent("");
+      
+      // Auto analyze with AI and wait for completion
       if (insertedData) {
-        supabase.functions.invoke("analyze-gratitude-entry", {
-          body: { entryId: insertedData.id, content: content.trim() },
-        }).catch(console.error);
+        try {
+          const { error: analyzeError } = await supabase.functions.invoke("analyze-gratitude-entry", {
+            body: { entryId: insertedData.id, content: content.trim() },
+          });
+          if (analyzeError) {
+            console.error("分析失败:", analyzeError);
+          }
+        } catch (err) {
+          console.error("分析出错:", err);
+        }
       }
 
-      setContent("");
       onAdded();
     } catch (error) {
       console.error("Error saving:", error);
