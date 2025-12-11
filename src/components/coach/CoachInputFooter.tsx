@@ -46,9 +46,13 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   enableVoiceInput = false
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
   const isMobile = useIsMobile();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    // 如果正在使用输入法组合，不处理回车
+    if (isComposing) return;
+    
     if (e.key === 'Enter' && !e.shiftKey && input.trim()) {
       e.preventDefault();
       onSend();
@@ -128,6 +132,8 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
                 onKeyDown={handleKeyDown}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
                 placeholder="分享你的想法..."
                 className={`w-full h-11 px-4 text-base rounded-2xl border ${inputStyles.border} ${inputStyles.bg} focus:outline-none focus:ring-2 ${inputStyles.focus} transition-all duration-200`}
                 style={{ fontSize: '16px' }}
@@ -147,6 +153,8 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
                 onKeyDown={handleKeyDown}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
                 placeholder={placeholder}
                 className={`resize-none min-h-[44px] max-h-[100px] w-full py-2.5 px-3 text-base rounded-2xl leading-relaxed border ${inputStyles.border} ${inputStyles.bg} ${inputStyles.focus} transition-all duration-200`}
                 style={{ fontSize: '16px' }}
