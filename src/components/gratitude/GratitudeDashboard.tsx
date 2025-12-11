@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { BarChart3, Sparkles, Calendar, Loader2, TrendingUp, Star, Rocket, Target, Lightbulb, Tag, AlertCircle, TrendingDown, ArrowUp, Beaker } from "lucide-react";
+import { BarChart3, Sparkles, Calendar, Loader2, Star, Rocket, Target, Tag, AlertCircle, ArrowUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeRadarChart } from "./ThemeRadarChart";
@@ -273,71 +273,28 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
             </CardContent>
           </Card>
 
-          {/* 2. 幸福构成 - 雷达图 + 百分比 */}
+          {/* 2. 幸福构成 - 雷达图 + 一句话总结 */}
           <Card className="bg-gradient-to-br from-blue-50/80 to-indigo-50/80 dark:from-blue-950/30 dark:to-indigo-950/30 backdrop-blur border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-blue-600" />
-                幸福构成（七维占比）
+                幸福构成
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-4">
-                {/* Radar Chart */}
-                <div className="bg-white/60 dark:bg-black/20 rounded-xl p-2">
-                  <ThemeRadarChart themeStats={dashboardData.themeStats} />
-                </div>
-                
-                {/* Percentage List with indicators */}
-                <div className="space-y-2">
-                  {THEME_DEFINITIONS.map(theme => {
-                    const percentage = percentages[theme.id] || 0;
-                    const count = dashboardData.themeStats[theme.id] || 0;
-                    const isHighest = percentage === Math.max(...Object.values(percentages));
-                    const isLowest = percentage === Math.min(...Object.values(percentages)) && percentage < 20;
-                    return (
-                      <div 
-                        key={theme.id} 
-                        className={`flex items-center gap-2 p-2 rounded-lg transition-all ${
-                          isHighest ? 'bg-emerald-100/80 dark:bg-emerald-900/30 ring-1 ring-emerald-300' :
-                          isLowest ? 'bg-amber-100/80 dark:bg-amber-900/30 ring-1 ring-amber-300' :
-                          'bg-white/60 dark:bg-black/20'
-                        }`}
-                      >
-                        <span className="text-lg">{theme.emoji}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium truncate flex items-center gap-1">
-                              {theme.name}
-                              {isHighest && <span className="text-emerald-600">🔝</span>}
-                              {isLowest && <span className="text-amber-600">⚠️</span>}
-                            </span>
-                            <span className="text-xs text-muted-foreground">{percentage}%</span>
-                          </div>
-                          <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all duration-500"
-                              style={{
-                                width: `${percentage}%`,
-                                backgroundColor: theme.color,
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <span className="text-xs text-muted-foreground w-8 text-right">{count}条</span>
-                      </div>
-                    );
-                  })}
-                </div>
+            <CardContent className="space-y-4">
+              {/* Radar Chart - 居中显示 */}
+              <div className="bg-white/60 dark:bg-black/20 rounded-xl p-2 max-w-md mx-auto">
+                <ThemeRadarChart themeStats={dashboardData.themeStats} />
               </div>
               
+              {/* 一句话总结 */}
               {sections.composition && (
-                <div className="mt-4 p-3 bg-white/40 dark:bg-black/10 rounded-lg">
+                <div className="p-4 bg-white/40 dark:bg-black/10 rounded-lg text-center">
                   <ReactMarkdown
                     components={{
                       p: ({ children }) => <p className="text-sm text-muted-foreground">{children}</p>,
                       blockquote: ({ children }) => (
-                        <blockquote className="border-l-2 border-blue-400 pl-3 italic text-sm text-muted-foreground">
+                        <blockquote className="text-base font-medium text-blue-700 dark:text-blue-300">
                           {children}
                         </blockquote>
                       ),
@@ -350,64 +307,36 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
             </CardContent>
           </Card>
 
-          {/* 3. 幸福趋势 - 拆分为上升/需关注 */}
-          <div className="grid md:grid-cols-2 gap-4">
-            {/* 上升维度 */}
-            <Card className="bg-gradient-to-br from-emerald-50/80 to-teal-50/80 dark:from-emerald-950/30 dark:to-teal-950/30 backdrop-blur border-border/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <ArrowUp className="w-4 h-4 text-emerald-600" />
-                  <span className="text-emerald-700 dark:text-emerald-400">上升维度</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {sections.trendsUp ? (
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <ReactMarkdown
-                      components={{
-                        p: ({ children }) => <p className="text-sm text-muted-foreground mb-2">{children}</p>,
-                        ul: ({ children }) => <ul className="text-sm space-y-2 list-none pl-0">{children}</ul>,
-                        li: ({ children }) => (
-                          <li className="text-muted-foreground bg-white/50 dark:bg-black/20 p-2 rounded-lg text-sm">
-                            {children}
-                          </li>
-                        ),
-                      }}
-                    >
-                      {sections.trendsUp}
-                    </ReactMarkdown>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">暂无数据</p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* 组合模式 */}
-            <Card className="bg-gradient-to-br from-violet-50/80 to-purple-50/80 dark:from-violet-950/30 dark:to-purple-950/30 backdrop-blur border-border/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-violet-600" />
-                  <span className="text-violet-700 dark:text-violet-400">幸福组合模式</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {sections.trendsPattern ? (
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <ReactMarkdown
-                      components={{
-                        p: ({ children }) => <p className="text-sm text-muted-foreground">{children}</p>,
-                      }}
-                    >
-                      {sections.trendsPattern}
-                    </ReactMarkdown>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">暂无数据</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          {/* 3. 上升维度 */}
+          <Card className="bg-gradient-to-br from-emerald-50/80 to-teal-50/80 dark:from-emerald-950/30 dark:to-teal-950/30 backdrop-blur border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <ArrowUp className="w-4 h-4 text-emerald-600" />
+                <span className="text-emerald-700 dark:text-emerald-400">上升维度</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {sections.trendsUp ? (
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => <p className="text-sm text-muted-foreground mb-2">{children}</p>,
+                      ul: ({ children }) => <ul className="text-sm space-y-2 list-none pl-0">{children}</ul>,
+                      li: ({ children }) => (
+                        <li className="text-muted-foreground bg-white/50 dark:bg-black/20 p-2 rounded-lg text-sm">
+                          {children}
+                        </li>
+                      ),
+                    }}
+                  >
+                    {sections.trendsUp}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">暂无数据</p>
+              )}
+            </CardContent>
+          </Card>
 
           {/* 💡 需要关注的维度 - 专属卡片 */}
           {sections.trendsDown && (
@@ -440,7 +369,37 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
             </Card>
           )}
 
-          {/* 4. 幸福亮点 */}
+          {/* 4. 幸福组合洞察 */}
+          {sections.trendsPattern && (
+            <Card className="bg-gradient-to-br from-violet-50/80 to-purple-50/80 dark:from-violet-950/30 dark:to-purple-950/30 backdrop-blur border-border/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-violet-600" />
+                  <span className="text-violet-700 dark:text-violet-400">幸福组合洞察</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => <p className="text-sm text-muted-foreground mb-2">{children}</p>,
+                      ol: ({ children }) => <ol className="text-sm space-y-3 list-none pl-0">{children}</ol>,
+                      li: ({ children }) => (
+                        <li className="text-muted-foreground bg-white/50 dark:bg-black/20 p-3 rounded-lg text-sm">
+                          {children}
+                        </li>
+                      ),
+                      strong: ({ children }) => <strong className="text-violet-700 dark:text-violet-300 font-semibold">{children}</strong>,
+                    }}
+                  >
+                    {sections.trendsPattern}
+                  </ReactMarkdown>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 5. 幸福亮点 */}
           <Card className="bg-gradient-to-br from-rose-50/80 via-pink-50/60 to-amber-50/80 dark:from-rose-950/30 dark:via-pink-950/20 dark:to-amber-950/30 backdrop-blur border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
@@ -457,7 +416,6 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
                       ul: ({ children }) => <ul className="text-sm space-y-2 list-none pl-0">{children}</ul>,
                       li: ({ children }) => (
                         <li className="text-muted-foreground bg-gradient-to-r from-white/70 to-rose-50/50 dark:from-black/20 dark:to-rose-950/20 p-3 rounded-xl border-l-3 border-rose-400 shadow-sm">
-                          <span className="text-rose-500 mr-2">✨</span>
                           {children}
                         </li>
                       ),
@@ -472,7 +430,7 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
             </CardContent>
           </Card>
 
-          {/* 5. 幸福下一步 */}
+          {/* 6. 幸福下一步 */}
           <Card className="bg-gradient-to-br from-cyan-50/80 to-blue-50/80 dark:from-cyan-950/30 dark:to-blue-950/30 backdrop-blur border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
@@ -482,33 +440,27 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
             </CardHeader>
             <CardContent>
               {sections.nextSteps ? (
-                <div className="grid gap-3">
+                <div className="space-y-2">
                   <ReactMarkdown
                     components={{
                       p: ({ children }) => <p className="text-sm text-muted-foreground mb-2">{children}</p>,
                       ul: ({ children }) => <div className="space-y-2">{children}</div>,
                       li: ({ children }) => {
                         const text = String(children);
-                        let icon = <Lightbulb className="w-4 h-4 text-cyan-500" />;
                         let bgClass = "bg-white/50 dark:bg-black/20";
                         
                         if (text.includes("继续") || text.includes("✅")) {
-                          icon = <span className="text-sm">✅</span>;
-                          bgClass = "bg-emerald-50/80 dark:bg-emerald-950/30";
+                          bgClass = "bg-emerald-50/80 dark:bg-emerald-950/30 border-l-3 border-emerald-400";
                         } else if (text.includes("加强") || text.includes("📈")) {
-                          icon = <TrendingUp className="w-4 h-4 text-blue-500" />;
-                          bgClass = "bg-blue-50/80 dark:bg-blue-950/30";
+                          bgClass = "bg-blue-50/80 dark:bg-blue-950/30 border-l-3 border-blue-400";
                         } else if (text.includes("实验") || text.includes("🧪")) {
-                          icon = <Beaker className="w-4 h-4 text-violet-500" />;
-                          bgClass = "bg-violet-50/80 dark:bg-violet-950/30";
+                          bgClass = "bg-violet-50/80 dark:bg-violet-950/30 border-l-3 border-violet-400";
                         } else if (text.includes("盲区") || text.includes("🔍")) {
-                          icon = <span className="text-sm">🔍</span>;
-                          bgClass = "bg-amber-50/80 dark:bg-amber-950/30";
+                          bgClass = "bg-amber-50/80 dark:bg-amber-950/30 border-l-3 border-amber-400";
                         }
                         
                         return (
-                          <div className={`p-3 rounded-xl flex items-start gap-2 ${bgClass}`}>
-                            <span className="mt-0.5 shrink-0">{icon}</span>
+                          <div className={`p-3 rounded-xl ${bgClass}`}>
                             <span className="text-sm text-muted-foreground">{children}</span>
                           </div>
                         );
