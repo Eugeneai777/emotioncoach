@@ -54,30 +54,31 @@ export const GratitudeTagDistribution = ({
 
   if (total === 0) {
     return (
-      <div className="rounded-xl bg-white/60 dark:bg-gray-800/40 backdrop-blur p-4">
-        <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
-          🏷️ 标签分布
-        </h3>
+      <div className="rounded-lg bg-white/60 dark:bg-gray-800/40 backdrop-blur p-3">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs font-medium flex items-center gap-1.5">
+            🏷️ 标签分布
+          </h3>
+          <Collapsible open={showPhilosophy} onOpenChange={setShowPhilosophy}>
+            <CollapsibleTrigger className="flex items-center gap-1 py-0.5 px-1.5 rounded bg-primary/5 hover:bg-primary/10 transition-colors">
+              <HelpCircle className="w-2.5 h-2.5 text-primary" />
+              <span className="text-[10px] text-primary">七种幸福</span>
+              {showPhilosophy ? <ChevronUp className="w-2.5 h-2.5 text-primary" /> : <ChevronDown className="w-2.5 h-2.5 text-primary" />}
+            </CollapsibleTrigger>
+          </Collapsible>
+        </div>
         
-        {/* 七种幸福介绍 */}
         <Collapsible open={showPhilosophy} onOpenChange={setShowPhilosophy}>
-          <CollapsibleTrigger className="w-full flex items-center justify-between p-2 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors mb-3">
-            <span className="text-xs text-primary flex items-center gap-1">
-              <HelpCircle className="w-3 h-3" />
-              了解七种幸福
-            </span>
-            {showPhilosophy ? <ChevronUp className="w-3 h-3 text-primary" /> : <ChevronDown className="w-3 h-3 text-primary" />}
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mb-4">
-            <div className="p-3 rounded-lg bg-gradient-to-br from-teal-50/80 to-cyan-50/80 dark:from-teal-900/20 dark:to-cyan-900/20 space-y-2">
-              <p className="text-xs text-muted-foreground leading-relaxed">{TAG_PHILOSOPHY.intro}</p>
-              <div className="space-y-1.5">
+          <CollapsibleContent className="mb-2">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-teal-50/80 to-cyan-50/80 dark:from-teal-900/20 dark:to-cyan-900/20 space-y-1">
+              <p className="text-[10px] text-muted-foreground leading-relaxed">{TAG_PHILOSOPHY.intro}</p>
+              <div className="space-y-0.5">
                 {TAG_PHILOSOPHY.tags.map((tag) => (
-                  <div key={tag.name} className="flex items-start gap-2 text-xs">
+                  <div key={tag.name} className="flex items-start gap-1.5 text-[10px]">
                     <span className="shrink-0">{tag.emoji}</span>
                     <div>
-                      <span className="font-medium text-foreground">{tag.name}</span>
-                      <span className="text-muted-foreground ml-1">— {tag.desc.split(" — ")[1]}</span>
+                      <span className="font-medium text-foreground">{tag.name.replace("幸福", "")}</span>
+                      <span className="text-muted-foreground ml-0.5">— {tag.desc.split(" — ")[1]}</span>
                     </div>
                   </div>
                 ))}
@@ -86,8 +87,8 @@ export const GratitudeTagDistribution = ({
           </CollapsibleContent>
         </Collapsible>
         
-        <div className="text-center py-6 text-muted-foreground">
-          <p className="text-sm">开始记录感恩，看看你的幸福来源 ✨</p>
+        <div className="text-center py-4 text-muted-foreground">
+          <p className="text-xs">开始记录感恩，看看你的幸福来源 ✨</p>
         </div>
       </div>
     );
@@ -95,31 +96,32 @@ export const GratitudeTagDistribution = ({
 
   return (
     <TooltipProvider>
-      <div className="rounded-xl bg-white/60 dark:bg-gray-800/40 backdrop-blur p-4">
-        <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
-          🏷️ 标签分布
-          <span className="text-xs text-muted-foreground font-normal">点击筛选</span>
-        </h3>
+      <div className="rounded-lg bg-white/60 dark:bg-gray-800/40 backdrop-blur p-3">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs font-medium flex items-center gap-1.5">
+            🏷️ 标签分布
+            <span className="text-[10px] text-muted-foreground font-normal">点击筛选</span>
+          </h3>
+          <Collapsible open={showPhilosophy} onOpenChange={setShowPhilosophy}>
+            <CollapsibleTrigger className="flex items-center gap-1 py-0.5 px-1.5 rounded bg-primary/5 hover:bg-primary/10 transition-colors">
+              <HelpCircle className="w-2.5 h-2.5 text-primary" />
+              <span className="text-[10px] text-primary">七种幸福</span>
+              {showPhilosophy ? <ChevronUp className="w-2.5 h-2.5 text-primary" /> : <ChevronDown className="w-2.5 h-2.5 text-primary" />}
+            </CollapsibleTrigger>
+          </Collapsible>
+        </div>
         
-        {/* 七种幸福介绍 */}
         <Collapsible open={showPhilosophy} onOpenChange={setShowPhilosophy}>
-          <CollapsibleTrigger className="w-full flex items-center justify-between p-2 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors mb-3">
-            <span className="text-xs text-primary flex items-center gap-1">
-              <HelpCircle className="w-3 h-3" />
-              了解七种幸福
-            </span>
-            {showPhilosophy ? <ChevronUp className="w-3 h-3 text-primary" /> : <ChevronDown className="w-3 h-3 text-primary" />}
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mb-4">
-            <div className="p-3 rounded-lg bg-gradient-to-br from-teal-50/80 to-cyan-50/80 dark:from-teal-900/20 dark:to-cyan-900/20 space-y-2">
-              <p className="text-xs text-muted-foreground leading-relaxed">{TAG_PHILOSOPHY.intro}</p>
-              <div className="space-y-1.5">
+          <CollapsibleContent className="mb-2">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-teal-50/80 to-cyan-50/80 dark:from-teal-900/20 dark:to-cyan-900/20 space-y-1">
+              <p className="text-[10px] text-muted-foreground leading-relaxed">{TAG_PHILOSOPHY.intro}</p>
+              <div className="space-y-0.5">
                 {TAG_PHILOSOPHY.tags.map((tag) => (
-                  <div key={tag.name} className="flex items-start gap-2 text-xs">
+                  <div key={tag.name} className="flex items-start gap-1.5 text-[10px]">
                     <span className="shrink-0">{tag.emoji}</span>
                     <div>
-                      <span className="font-medium text-foreground">{tag.name}</span>
-                      <span className="text-muted-foreground ml-1">— {tag.desc.split(" — ")[1]}</span>
+                      <span className="font-medium text-foreground">{tag.name.replace("幸福", "")}</span>
+                      <span className="text-muted-foreground ml-0.5">— {tag.desc.split(" — ")[1]}</span>
                     </div>
                   </div>
                 ))}
@@ -128,7 +130,7 @@ export const GratitudeTagDistribution = ({
           </CollapsibleContent>
         </Collapsible>
         
-        <div className="space-y-2">
+        <div className="space-y-1">
           {sortedThemes.map((theme) => {
             const isSelected = selectedTag === theme.id;
             const needsAttention = theme.percentage > 0 && theme.percentage < 10;
@@ -140,15 +142,15 @@ export const GratitudeTagDistribution = ({
                     onClick={() => theme.count > 0 && onTagClick?.(theme.id)}
                     disabled={theme.count === 0}
                     className={`
-                      w-full flex items-center gap-2 p-2 rounded-lg transition-all
+                      w-full flex items-center gap-1.5 py-1 px-2 rounded-md transition-all
                       ${theme.count > 0 ? "cursor-pointer hover:bg-muted/50" : "opacity-40 cursor-not-allowed"}
-                      ${isSelected ? "ring-2 ring-primary bg-primary/5" : ""}
+                      ${isSelected ? "ring-1 ring-primary bg-primary/5" : ""}
                     `}
                   >
-                    <span className="text-lg shrink-0">{theme.emoji}</span>
-                    <span className="text-sm font-medium shrink-0 text-left">{theme.name}</span>
+                    <span className="text-base shrink-0">{theme.emoji}</span>
+                    <span className="text-xs font-medium shrink-0 text-left w-8">{theme.name.replace("幸福", "")}</span>
                     
-                    <div className="flex-1 h-3 bg-muted/30 rounded-full overflow-hidden min-w-0">
+                    <div className="flex-1 h-2 bg-muted/30 rounded-full overflow-hidden min-w-0">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
@@ -158,17 +160,15 @@ export const GratitudeTagDistribution = ({
                       />
                     </div>
                     
-                    <span className="text-xs text-muted-foreground shrink-0">
+                    <span className="text-[10px] text-muted-foreground shrink-0 w-6 text-right">
                       {theme.percentage.toFixed(0)}%
                     </span>
-                    <span className="text-xs font-medium shrink-0">
+                    <span className="text-[10px] font-medium shrink-0 w-4 text-right">
                       {theme.count}
                     </span>
                     
                     {needsAttention && (
-                      <span className="text-amber-500 text-xs flex items-center gap-0.5 shrink-0">
-                        <AlertTriangle className="w-3 h-3" />
-                      </span>
+                      <AlertTriangle className="w-2.5 h-2.5 text-amber-500 shrink-0" />
                     )}
                   </button>
                 </TooltipTrigger>
@@ -180,14 +180,14 @@ export const GratitudeTagDistribution = ({
           })}
         </div>
         
-        <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
-          <span>总计 {total} 条标签</span>
+        <div className="mt-2 pt-2 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground">
+          <span>共{total}条</span>
           {selectedTag && (
             <button 
               onClick={() => onTagClick?.(selectedTag)}
               className="text-primary hover:underline"
             >
-              清除筛选
+              清除
             </button>
           )}
         </div>
