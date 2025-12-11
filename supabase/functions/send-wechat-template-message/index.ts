@@ -218,13 +218,25 @@ serve(async (req) => {
       const now = new Date();
       const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       
+      // 根据场景设置thing19字段内容
+      const scenarioThing19Map: Record<string, string> = {
+        'daily_reminder': '今日情绪记录提醒',
+        'goal_milestone': notification.title || '目标达成情况',
+        'sustained_low_mood': '持续低落情绪关怀',
+        'inactivity': '活跃度提醒',
+        'weekly_report': '本周情绪报告已生成',
+        'goal_at_risk': '目标风险提醒',
+      };
+      
+      const thing19Value = scenarioThing19Map[scenario] || notification.title || '情绪提醒';
+      
       messageData = {
         thing1: { 
           value: (displayName || '用户').slice(0, 20),
           color: "#173177" 
         },
         thing19: { 
-          value: (notification.title || '情绪提醒').slice(0, 20),
+          value: thing19Value.slice(0, 20),
           color: "#173177" 
         },
         time21: { 
