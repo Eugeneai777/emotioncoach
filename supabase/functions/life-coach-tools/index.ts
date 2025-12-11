@@ -30,6 +30,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
+      console.log('[life-coach-tools] Auth failed:', authError?.message || 'No user');
       return new Response(
         JSON.stringify({ error: '身份验证失败' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -37,7 +38,7 @@ serve(async (req) => {
     }
 
     const { tool, params } = await req.json();
-    console.log(`Executing tool: ${tool} for user: ${user.id}`);
+    console.log(`[life-coach-tools] Executing tool: ${tool} for user: ${user.id} (${user.email})`);
 
     let result: any;
 

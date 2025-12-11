@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, BarChart3, Sparkles, Loader2 } from "lucide-react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { ArrowLeft, BarChart3, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,27 @@ const GratitudeHistory = () => {
   const [loading, setLoading] = useState(true);
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // 手动刷新
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await loadEntries();
+    setIsRefreshing(false);
+  }, [user]);
+
+  // 页面聚焦时自动刷新
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user) {
+        console.log('[GratitudeHistory] Page visible, refreshing data...');
+        loadEntries();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user]);
 
   useEffect(() => {
     console.log('[GratitudeHistory] Current user:', user?.id, user?.email);
@@ -118,14 +139,25 @@ const GratitudeHistory = () => {
     <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       <div className="max-w-2xl mx-auto p-4 pb-20">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-xl font-bold">我的感恩日记</h1>
-            <p className="text-sm text-muted-foreground">看见日常微光，点亮内心力量</p>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold">我的感恩日记</h1>
+              <p className="text-sm text-muted-foreground">看见日常微光，点亮内心力量</p>
+            </div>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
         </div>
 
         <div className="space-y-4">

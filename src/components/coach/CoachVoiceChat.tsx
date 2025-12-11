@@ -221,6 +221,20 @@ export const CoachVoiceChat = ({
     try {
       setStatus('connecting');
       
+      // 刷新 session 确保 token 有效
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('Session refresh failed:', refreshError);
+        toast({
+          title: "登录已过期",
+          description: "请重新登录后再试",
+          variant: "destructive"
+        });
+        setStatus('error');
+        setTimeout(onClose, 1500);
+        return;
+      }
+      
       // 预扣第一分钟
       const deducted = await deductQuota(1);
       if (!deducted) {
@@ -245,6 +259,14 @@ export const CoachVoiceChat = ({
           } else if (event.type === 'tool_executed') {
             // 工具执行完成，显示 toast
             handleToolExecuted(event.tool, event.result, event.args);
+          } else if (event.type === 'tool_error' && event.requiresAuth) {
+            // 认证错误，结束通话并提示
+            toast({
+              title: "登录已过期",
+              description: "请重新登录后再试",
+              variant: "destructive"
+            });
+            endCall();
           }
         },
         // onStatusChange
