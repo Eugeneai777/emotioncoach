@@ -71,9 +71,9 @@ serve(async (req) => {
   }
 
   try {
-    const { packageKey, packageName, amount, userId } = await req.json();
+    const { packageKey, packageName, amount, userId, payType = 'h5' } = await req.json();
     
-    console.log('Creating order:', { packageKey, packageName, amount, userId });
+    console.log('Creating order:', { packageKey, packageName, amount, userId, payType });
 
     // 验证参数
     if (!packageKey || !packageName || !amount || !userId) {
@@ -86,6 +86,8 @@ serve(async (req) => {
     const certSerialNo = Deno.env.get('WECHAT_CERT_SERIAL_NO');
     const privateKey = Deno.env.get('WECHAT_PRIVATE_KEY');
     const appId = Deno.env.get('WECHAT_APP_ID');
+    const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
+    const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
 
     if (!mchId || !apiV3Key || !certSerialNo || !privateKey || !appId) {
       throw new Error('微信支付配置不完整');
@@ -104,7 +106,12 @@ serve(async (req) => {
     const amountInFen = Math.round(amount * 100); // 转换为分
     const notifyUrl = `${supabaseUrl}/functions/v1/wechat-pay-callback`;
     
-    const requestBody = {
+    // 根据支付类型选择不同的API和请求体
+    const isH5 = payType === 'h5';
+    const apiPath = isH5 ? '/v3/pay/transactions/h5' : '/v3/pay/transactions/native';
+    const apiUrl = `https://api.mch.weixin.qq.com${apiPath}`;
+    
+    const requestBody: Record<string, unknown> = {
       appid: appId,
       mchid: mchId,
       description: packageName,
@@ -117,38 +124,94 @@ serve(async (req) => {
       }
     };
 
+    // H5支付需要额外的scene_info
+    if (isH5) {
+      requestBody.scene_info = {
+        payer_client_ip: '127.0.0.1', // 实际项目中应从请求头获取
+        h5_info: {
+          type: 'Wap',
+          wap_url: 'https://eugeneai.me',
+          wap_name: '有劲AI'
+        }
+      };
+    }
+
     console.log('WeChat pay request:', requestBody);
 
     // 签名
     const timestamp = getTimestamp();
     const nonceStr = generateNonceStr();
     const bodyStr = JSON.stringify(requestBody);
-    const signMessage = buildSignMessage('POST', '/v3/pay/transactions/native', timestamp, nonceStr, bodyStr);
+    const signMessage = buildSignMessage('POST', apiPath, timestamp, nonceStr, bodyStr);
     const signature = await signWithRSA(signMessage, privateKey);
     
     const authorization = `WECHATPAY2-SHA256-RSA2048 mchid="${mchId}",nonce_str="${nonceStr}",timestamp="${timestamp}",serial_no="${certSerialNo}",signature="${signature}"`;
 
-    // 调用微信支付API
-    const wechatResponse = await fetch('https://api.mch.weixin.qq.com/v3/pay/transactions/native', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': authorization,
-      },
-      body: bodyStr,
-    });
+    let wechatResult: Record<string, unknown>;
+    
+    // 使用代理服务器调用微信API
+    if (proxyUrl && proxyToken) {
+      console.log('Using proxy server:', proxyUrl);
+      const proxyResponse = await fetch(`${proxyUrl}/wechat-proxy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${proxyToken}`,
+        },
+        body: JSON.stringify({
+          target_url: apiUrl,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': authorization,
+          },
+          body: requestBody
+        }),
+      });
 
-    const wechatResult = await wechatResponse.json();
-    console.log('WeChat response:', wechatResult);
+      const proxyResult = await proxyResponse.json();
+      console.log('Proxy response:', proxyResult);
+      
+      if (proxyResult.error) {
+        throw new Error(proxyResult.error);
+      }
+      wechatResult = proxyResult.data || proxyResult;
+    } else {
+      // 直接调用微信API（可能会遇到IP白名单问题）
+      console.log('Direct API call to WeChat');
+      const wechatResponse = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': authorization,
+        },
+        body: bodyStr,
+      });
 
-    if (!wechatResponse.ok) {
-      throw new Error(wechatResult.message || '微信支付接口调用失败');
+      wechatResult = await wechatResponse.json();
+      console.log('WeChat response:', wechatResult);
+
+      if (!wechatResponse.ok) {
+        throw new Error((wechatResult as { message?: string }).message || '微信支付接口调用失败');
+      }
     }
 
-    const codeUrl = wechatResult.code_url;
-    if (!codeUrl) {
-      throw new Error('未获取到支付二维码');
+    // 获取支付URL
+    let payUrl: string;
+    if (isH5) {
+      // H5支付返回 h5_url
+      payUrl = wechatResult.h5_url as string;
+      if (!payUrl) {
+        throw new Error('未获取到H5支付链接');
+      }
+    } else {
+      // Native支付返回 code_url
+      payUrl = wechatResult.code_url as string;
+      if (!payUrl) {
+        throw new Error('未获取到支付二维码');
+      }
     }
 
     // 保存订单到数据库
@@ -161,7 +224,7 @@ serve(async (req) => {
         amount: amount,
         order_no: orderNo,
         status: 'pending',
-        qr_code_url: codeUrl,
+        qr_code_url: payUrl, // 存储支付URL（H5或Native）
         expired_at: expiredAt.toISOString(),
       });
 
@@ -176,7 +239,10 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         orderNo,
-        qrCodeUrl: codeUrl,
+        payUrl, // 统一返回payUrl
+        qrCodeUrl: isH5 ? undefined : payUrl, // 兼容旧版本
+        h5Url: isH5 ? payUrl : undefined, // H5支付专用
+        payType,
         expiredAt: expiredAt.toISOString(),
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
