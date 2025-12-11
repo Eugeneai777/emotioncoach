@@ -156,17 +156,25 @@ export const CoachVoiceChat = ({
     }
   };
 
-  // 扣费函数
+  // 扣费函数 - 添加防重复扣费和显式 amount 参数
   const deductQuota = async (minute: number): Promise<boolean> => {
     try {
-      console.log(`Deducting quota for minute ${minute}`);
+      // 防重复扣费：检查是否已经扣过这一分钟
+      if (minute <= lastBilledMinuteRef.current) {
+        console.log(`Minute ${minute} already billed, skipping`);
+        return true;
+      }
+
+      console.log(`Deducting quota for minute ${minute}, amount: ${POINTS_PER_MINUTE}`);
       
       const { data, error } = await supabase.functions.invoke('deduct-quota', {
         body: {
           feature_key: 'realtime_voice',
           source: 'voice_chat',
+          amount: POINTS_PER_MINUTE,  // 显式传递扣费金额作为备用
           metadata: {
             minute,
+            session_id: `voice_${Date.now()}`,  // 添加唯一标识
             coach_key: 'vibrant_life_sage',
             cost_per_minute: POINTS_PER_MINUTE
           }
@@ -187,7 +195,7 @@ export const CoachVoiceChat = ({
       setRemainingQuota(data.remaining_quota);
       lastBilledMinuteRef.current = minute;
       
-      console.log(`Deducted ${POINTS_PER_MINUTE} points for minute ${minute}, remaining: ${data.remaining_quota}`);
+      console.log(`✅ Deducted ${data.cost || POINTS_PER_MINUTE} points for minute ${minute}, remaining: ${data.remaining_quota}`);
       return true;
     } catch (error) {
       console.error('Deduct quota error:', error);
