@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin } from 'lucide-react';
+import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink } from 'lucide-react';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,6 +42,8 @@ export const CoachVoiceChat = ({
   const [isCheckingQuota, setIsCheckingQuota] = useState(true);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<{ path: string; name: string } | null>(null);
+  const [searchResults, setSearchResults] = useState<any[] | null>(null);
+  const [searchKeyword, setSearchKeyword] = useState('');
   const chatRef = useRef<RealtimeChat | null>(null);
   const durationRef = useRef<NodeJS.Timeout | null>(null);
   const lastBilledMinuteRef = useRef(0);
@@ -116,6 +118,10 @@ export const CoachVoiceChat = ({
       navigate_to: {
         title: '🚀 正在跳转',
         getDesc: (r) => r?.message || `正在打开${r?.name || '页面'}...`
+      },
+      search_community_posts: {
+        title: '🔍 社区搜索',
+        getDesc: (r) => r?.found ? `找到 ${r?.posts?.length || 0} 条相关分享` : '未找到相关内容'
       }
     };
     
@@ -318,6 +324,16 @@ export const CoachVoiceChat = ({
           } else if (event.type === 'navigation_request') {
             // 处理页面导航请求
             handleNavigation(event.path, event.name);
+          } else if (event.type === 'search_results') {
+            // 处理搜索结果
+            setSearchKeyword(event.keyword || '');
+            setSearchResults(event.posts || []);
+            if (event.posts?.length > 0) {
+              toast({
+                title: `🔍 找到 ${event.posts.length} 条关于"${event.keyword}"的分享`,
+                description: "点击卡片查看详情",
+              });
+            }
           } else if (event.type === 'tool_error' && event.requiresAuth) {
             // 认证错误，结束通话并提示
             toast({
@@ -588,6 +604,86 @@ export const CoachVoiceChat = ({
             </div>
           )}
         </div>
+
+        {/* 搜索结果卡片浮层 */}
+        {searchResults && searchResults.length > 0 && (
+          <div className="absolute bottom-40 left-4 right-4 bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 max-h-64 overflow-y-auto">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Search className="w-4 h-4 text-white/70" />
+                <span className="text-white/90 text-sm font-medium">
+                  关于"{searchKeyword}"的分享
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchResults(null)}
+                className="text-white/50 hover:text-white hover:bg-white/10 h-6 w-6 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="space-y-2">
+              {searchResults.slice(0, 3).map((post, idx) => (
+                <div
+                  key={post.id}
+                  onClick={() => {
+                    chatRef.current?.disconnect();
+                    if (durationRef.current) {
+                      clearInterval(durationRef.current);
+                    }
+                    recordSession().then(() => {
+                      navigate(`/community?highlight=${post.id}`);
+                    });
+                  }}
+                  className="bg-white/10 hover:bg-white/20 rounded-xl p-3 cursor-pointer transition-all border border-white/10 hover:border-white/20"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white/90 text-sm font-medium truncate">
+                        {post.title || post.emotion_theme || '分享'}
+                      </p>
+                      {post.content && (
+                        <p className="text-white/50 text-xs mt-1 line-clamp-2">
+                          {post.content}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 text-white/40 text-xs shrink-0">
+                      <Heart className="w-3 h-3" />
+                      {post.likes_count || 0}
+                    </div>
+                  </div>
+                  {post.emotion_theme && (
+                    <span className="inline-block mt-2 px-2 py-0.5 bg-white/10 rounded-full text-white/60 text-xs">
+                      {post.emotion_theme}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                chatRef.current?.disconnect();
+                if (durationRef.current) {
+                  clearInterval(durationRef.current);
+                }
+                recordSession().then(() => {
+                  navigate('/community');
+                });
+              }}
+              className="w-full mt-3 text-white/70 hover:text-white hover:bg-white/10 text-xs"
+            >
+              <ExternalLink className="w-3 h-3 mr-1" />
+              查看全部社区内容
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* 底部操作区 */}
