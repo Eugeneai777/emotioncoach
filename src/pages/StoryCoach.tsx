@@ -5,7 +5,9 @@ import { Textarea } from "@/components/ui/textarea";
 import StoryCreationFlow from "@/components/coach/StoryCreationFlow";
 import CommunityWaterfall from "@/components/community/CommunityWaterfall";
 import { CoachHeader } from "@/components/coach/CoachHeader";
+import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
 import { supabase } from "@/integrations/supabase/client";
+import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { toast } from "sonner";
 import { Send, BookOpen, ChevronDown, RotateCcw } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -46,7 +48,17 @@ export default function StoryCoach() {
   const [showCreation, setShowCreation] = useState(false);
   const [input, setInput] = useState("");
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
+  const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  
+  // 智能通知
+  const {
+    notifications,
+    loading: notificationsLoading,
+    markAsRead,
+    deleteNotification,
+    triggerNotification,
+  } = useSmartNotification('story_coach');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -79,6 +91,12 @@ export default function StoryCoach() {
         });
 
       if (error) throw error;
+
+      // 触发智能提醒
+      triggerNotification('after_story', {
+        title: data.title,
+        emotionTag: data.emotionTag
+      });
 
       toast.success("故事已保存！");
       setShowCreation(false);
@@ -217,6 +235,18 @@ export default function StoryCoach() {
                   </div>
                 </div>
               </div>
+
+              {/* Smart Notifications */}
+              <CoachNotificationsModule
+                notifications={notifications}
+                loading={notificationsLoading}
+                currentIndex={currentNotificationIndex}
+                onIndexChange={setCurrentNotificationIndex}
+                onMarkAsRead={markAsRead}
+                onDelete={deleteNotification}
+                colorTheme="pink"
+                coachLabel="故事教练"
+              />
 
               {/* Community Waterfall Preview */}
               <div className="w-full mt-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">

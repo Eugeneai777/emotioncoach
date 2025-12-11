@@ -31,7 +31,36 @@ const DynamicCoach = () => {
     loading: notificationsLoading,
     markAsRead,
     deleteNotification,
+    triggerNotification,
   } = useSmartNotification(template?.coach_key ? `${template.coach_key}_coach` : null);
+
+  // 根据教练类型决定通知场景
+  const getNotificationScenario = (coachKey: string) => {
+    switch (coachKey) {
+      case 'communication':
+        return 'after_communication';
+      case 'parent':
+        return 'after_parent';
+      case 'gratitude_coach':
+        return 'after_gratitude_analysis';
+      default:
+        return 'after_briefing';
+    }
+  };
+
+  // 简报生成后触发智能通知
+  const handleBriefingGenerated = (briefingData: any) => {
+    if (!template?.coach_key) return;
+    
+    const scenario = getNotificationScenario(template.coach_key);
+    triggerNotification(scenario, {
+      emotion_theme: briefingData.emotion_theme,
+      emotion_intensity: briefingData.emotion_intensity,
+      communication_theme: briefingData.communication_theme,
+      communication_difficulty: briefingData.communication_difficulty,
+      parent_theme: briefingData.parent_theme || briefingData.emotion_theme,
+    });
+  };
 
   const {
     messages,
@@ -52,7 +81,9 @@ const DynamicCoach = () => {
     template?.coach_key || '',
     template?.edge_function_name || '',
     template?.briefing_table_name || '',
-    template?.briefing_tool_config as any
+    template?.briefing_tool_config as any,
+    undefined,
+    handleBriefingGenerated
   );
 
   if (templateLoading) {

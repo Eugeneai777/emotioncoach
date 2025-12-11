@@ -461,6 +461,22 @@ ${data.growth_insight}
                 const savedBriefingId = await saveCommunicationBriefing(convId!, finalBriefingData);
                 if (savedBriefingId) {
                   setLastBriefingId(savedBriefingId);
+                  
+                  // 触发智能通知
+                  try {
+                    await supabase.functions.invoke('generate-smart-notification', {
+                      body: {
+                        scenario: 'after_communication',
+                        context: {
+                          communication_theme: finalBriefingData.communication_theme,
+                          communication_difficulty: finalBriefingData.communication_difficulty,
+                          scenario_type: finalBriefingData.scenario_type,
+                        }
+                      }
+                    });
+                  } catch (notificationError) {
+                    console.error("Error triggering notification:", notificationError);
+                  }
                 }
                 
                 // 标记会话完成
