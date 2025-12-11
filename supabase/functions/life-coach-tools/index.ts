@@ -643,29 +643,64 @@ async function recommendTool(supabase: any, userId: string, toolType?: string) {
   return { available_tools: tools || [] };
 }
 
-async function recommendCourse(supabase: any, userId: string, topic?: string) {
+async function recommendCourse(supabase: any, userId: string, topic?: string, limit: number = 3) {
+  console.log(`[recommendCourse] topic: ${topic}, limit: ${limit}`);
+  
   let query = supabase
     .from('video_courses')
-    .select('id, title, description, duration_minutes, category, thumbnail_url')
+    .select('id, title, description, duration_minutes, category, thumbnail_url, video_url')
     .eq('is_published', true)
     .order('view_count', { ascending: false })
-    .limit(5);
+    .limit(limit);
 
   if (topic) {
     query = query.or(`title.ilike.%${topic}%,description.ilike.%${topic}%,category.ilike.%${topic}%`);
   }
 
-  const { data: courses } = await query;
+  const { data: courses, error } = await query;
+  
+  if (error) {
+    console.error('[recommendCourse] error:', error);
+    return { success: false, error: error.message };
+  }
 
-  return { recommended_courses: courses || [] };
+  // 生成语音播报摘要
+  const speechSummary = courses && courses.length > 0
+    ? `找到${courses.length}个${topic ? '关于' + topic + '的' : ''}推荐课程。第一个是"${courses[0]?.title}"，${courses[0]?.description?.slice(0, 40) || ''}...`
+    : `暂时没有找到${topic ? '关于' + topic + '的' : ''}课程`;
+
+  return { 
+    success: true,
+    action: 'show_course_recommendations',
+    topic,
+    courses: courses?.map((c: any) => ({
+      id: c.id,
+      title: c.title,
+      description: c.description?.slice(0, 60),
+      category: c.category,
+      duration_minutes: c.duration_minutes,
+      video_url: c.video_url,
+      match_score: topic ? 85 : 70
+    })) || [],
+    message: speechSummary,
+    can_navigate: true,
+    navigation: { path: '/courses', name: '课程中心' }
+  };
 }
 
 async function recommendTrainingCamp(supabase: any, userId: string, goal?: string) {
-  const { data: templates } = await supabase
+  console.log(`[recommendTrainingCamp] goal: ${goal}`);
+  
+  const { data: templates, error } = await supabase
     .from('camp_templates')
-    .select('id, camp_name, camp_subtitle, description, duration_days, icon, benefits')
+    .select('id, camp_name, camp_subtitle, description, duration_days, icon, gradient, benefits')
     .eq('is_active', true)
     .order('display_order');
+
+  if (error) {
+    console.error('[recommendTrainingCamp] error:', error);
+    return { success: false, error: error.message };
+  }
 
   // 检查用户已参加的训练营
   const { data: userCamps } = await supabase
@@ -675,7 +710,7 @@ async function recommendTrainingCamp(supabase: any, userId: string, goal?: strin
 
   const joinedTypes = new Set(userCamps?.map((c: any) => c.camp_type) || []);
 
-  const recommendations = templates?.map((t: any) => ({
+  let recommendations = templates?.map((t: any) => ({
     ...t,
     already_joined: joinedTypes.has(t.id),
   })) || [];
@@ -687,10 +722,34 @@ async function recommendTrainingCamp(supabase: any, userId: string, goal?: strin
       r.description?.includes(goal) ||
       r.camp_subtitle?.includes(goal)
     );
-    return { recommended_camps: filtered.length > 0 ? filtered : recommendations.slice(0, 3) };
+    recommendations = filtered.length > 0 ? filtered : recommendations.slice(0, 3);
+  } else {
+    recommendations = recommendations.slice(0, 3);
   }
 
-  return { recommended_camps: recommendations.slice(0, 3) };
+  // 生成语音播报摘要
+  const speechSummary = recommendations.length > 0
+    ? `为你推荐${recommendations.length}个训练营。第一个是"${recommendations[0]?.camp_name}"，${recommendations[0]?.camp_subtitle || ''}，${recommendations[0]?.duration_days}天完成。`
+    : '暂时没有找到合适的训练营';
+
+  return { 
+    success: true,
+    action: 'show_camp_recommendations',
+    goal,
+    camps: recommendations.map((c: any) => ({
+      id: c.id,
+      camp_name: c.camp_name,
+      camp_subtitle: c.camp_subtitle,
+      duration_days: c.duration_days,
+      icon: c.icon,
+      gradient: c.gradient,
+      already_joined: c.already_joined,
+      benefits: c.benefits?.slice?.(0, 3) || []
+    })),
+    message: speechSummary,
+    can_navigate: true,
+    navigation: { path: '/training-camp', name: '训练营' }
+  };
 }
 
 // ========== 用户洞察分析 ==========

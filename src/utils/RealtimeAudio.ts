@@ -411,6 +411,28 @@ export class RealtimeChat {
         });
       }
 
+      // 检查是否是课程推荐
+      if (data?.action === 'show_course_recommendations' && data?.courses) {
+        this.onMessage({
+          type: 'course_recommendations',
+          topic: data.topic,
+          courses: data.courses,
+          message: data.message,
+          navigation: data.navigation
+        });
+      }
+
+      // 检查是否是训练营推荐
+      if (data?.action === 'show_camp_recommendations' && data?.camps) {
+        this.onMessage({
+          type: 'camp_recommendations',
+          goal: data.goal,
+          camps: data.camps,
+          message: data.message,
+          navigation: data.navigation
+        });
+      }
+
     } catch (error: any) {
       console.error('Tool execution error:', error);
       
