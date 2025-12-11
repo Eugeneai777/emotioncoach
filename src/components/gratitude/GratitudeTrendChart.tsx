@@ -57,8 +57,8 @@ export const GratitudeTrendChart = ({ entries }: GratitudeTrendChartProps) => {
   };
 
   return (
-    <div className="p-4 rounded-xl bg-white/60 dark:bg-gray-800/40 backdrop-blur">
-      <div className="flex items-center justify-between mb-4">
+    <div className="p-3 rounded-xl bg-white/60 dark:bg-gray-800/40 backdrop-blur">
+      <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-medium flex items-center gap-2">
           📈 每日记录趋势
         </h3>
@@ -82,7 +82,7 @@ export const GratitudeTrendChart = ({ entries }: GratitudeTrendChartProps) => {
         </div>
       </div>
       
-      <div className="h-[180px]">
+      <div className="h-[120px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
             <XAxis 
@@ -122,7 +122,7 @@ export const GratitudeTrendChart = ({ entries }: GratitudeTrendChartProps) => {
         </ResponsiveContainer>
       </div>
       
-      <div className="flex items-center justify-center gap-4 mt-2 text-xs text-muted-foreground">
+      <div className="flex items-center justify-center gap-4 mt-1 text-xs text-muted-foreground">
         <span>平均每天 {average.toFixed(1)} 条</span>
         <span>·</span>
         <span>最高 {Math.max(...chartData.map(d => d.count))} 条</span>
