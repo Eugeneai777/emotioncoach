@@ -346,6 +346,22 @@ export class RealtimeChat {
 
       if (error) {
         console.error('Tool execution error:', error);
+        
+        // 检查是否是认证错误
+        const isAuthError = error.message?.includes('401') || 
+                           error.message?.includes('未授权') || 
+                           error.message?.includes('身份验证');
+        
+        if (isAuthError) {
+          // 通知前端认证错误
+          this.onMessage({ 
+            type: 'tool_error', 
+            tool: toolName, 
+            error: '登录已过期，请重新登录',
+            requiresAuth: true
+          });
+        }
+        
         throw error;
       }
 
@@ -374,8 +390,23 @@ export class RealtimeChat {
         args: args
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Tool execution error:', error);
+      
+      // 检查是否是认证错误
+      const isAuthError = error?.message?.includes('401') || 
+                         error?.message?.includes('未授权') || 
+                         error?.message?.includes('身份验证');
+      
+      if (isAuthError) {
+        // 通知前端认证错误
+        this.onMessage({ 
+          type: 'tool_error', 
+          tool: toolName, 
+          error: '登录已过期，请重新登录',
+          requiresAuth: true
+        });
+      }
       
       // 发送错误结果回 OpenAI
       if (this.dc && this.dc.readyState === 'open') {
