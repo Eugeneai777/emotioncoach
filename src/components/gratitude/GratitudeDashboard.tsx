@@ -103,6 +103,23 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const { toast } = useToast();
 
+  // Calculate theme stats list with percentages and indicators
+  const themeStatsList = useMemo(() => {
+    const stats = dashboardData?.themeStats || themeStats;
+    const total = Object.values(stats).reduce((sum, c) => sum + c, 0);
+    const counts = Object.values(stats);
+    const maxCount = Math.max(...counts);
+    const minCount = Math.min(...counts);
+    
+    return THEME_DEFINITIONS.map(theme => ({
+      ...theme,
+      count: stats[theme.id] || 0,
+      percentage: total > 0 ? ((stats[theme.id] || 0) / total * 100) : 0,
+      isMax: (stats[theme.id] || 0) === maxCount && maxCount > 0,
+      isMin: (stats[theme.id] || 0) === minCount && total > 0
+    })).sort((a, b) => b.count - a.count);
+  }, [dashboardData?.themeStats, themeStats]);
+
   const generateReport = async () => {
     setLoading(true);
     try {
@@ -273,7 +290,7 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
             </CardContent>
           </Card>
 
-          {/* 2. 幸福构成 - 雷达图 + 一句话总结 */}
+          {/* 2. 幸福构成 - 雷达图 + 七维统计 + 一句话总结 */}
           <Card className="bg-gradient-to-br from-blue-50/80 to-indigo-50/80 dark:from-blue-950/30 dark:to-indigo-950/30 backdrop-blur border-border/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
@@ -286,22 +303,68 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
               <div className="bg-white/60 dark:bg-black/20 rounded-xl p-2 max-w-md mx-auto">
                 <ThemeRadarChart themeStats={dashboardData.themeStats} />
               </div>
+
+              {/* 七维幸福占比 - 详细统计列表 */}
+              <div className="bg-white/60 dark:bg-black/20 rounded-xl p-4">
+                <h4 className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-3 flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  七维幸福占比
+                </h4>
+                <div className="space-y-2.5">
+                  {themeStatsList.map(theme => {
+                    const maxPercentage = Math.max(...themeStatsList.map(t => t.percentage));
+                    const barWidth = maxPercentage > 0 ? (theme.percentage / maxPercentage) * 100 : 0;
+                    
+                    return (
+                      <div key={theme.id} className="flex items-center gap-2">
+                        {/* Emoji + Name */}
+                        <div className="w-20 flex items-center gap-1.5 shrink-0">
+                          <span className="text-base">{theme.emoji}</span>
+                          <span className="text-xs font-medium text-foreground/80 truncate">{theme.name.replace('幸福', '')}</span>
+                        </div>
+                        
+                        {/* Progress Bar */}
+                        <div className="flex-1 h-2.5 bg-muted/40 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ 
+                              width: `${barWidth}%`,
+                              backgroundColor: theme.color 
+                            }}
+                          />
+                        </div>
+                        
+                        {/* Count */}
+                        <span className="w-8 text-right text-xs font-semibold text-foreground">
+                          {theme.count}次
+                        </span>
+                        
+                        {/* Percentage */}
+                        <span className="w-12 text-right text-xs text-muted-foreground">
+                          ({theme.percentage.toFixed(1)}%)
+                        </span>
+                        
+                        {/* Indicator */}
+                        <div className="w-6">
+                          {theme.isMax && theme.count > 0 && (
+                            <span className="text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1 py-0.5 rounded">🔝</span>
+                          )}
+                          {theme.isMin && theme.count === 0 && (
+                            <span className="text-xs bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-1 py-0.5 rounded">⚠️</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
               
               {/* 一句话总结 */}
               {sections.composition && (
-                <div className="p-4 bg-white/40 dark:bg-black/10 rounded-lg text-center">
-                  <ReactMarkdown
-                    components={{
-                      p: ({ children }) => <p className="text-sm text-muted-foreground">{children}</p>,
-                      blockquote: ({ children }) => (
-                        <blockquote className="text-base font-medium text-blue-700 dark:text-blue-300">
-                          {children}
-                        </blockquote>
-                      ),
-                    }}
-                  >
-                    {sections.composition}
-                  </ReactMarkdown>
+                <div className="p-4 bg-gradient-to-r from-blue-100/60 to-indigo-100/60 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border border-blue-200/50 dark:border-blue-700/30">
+                  <p className="text-sm text-blue-800 dark:text-blue-200 text-center font-medium">
+                    💬 {sections.composition.replace(/^["「]|["」]$/g, '').trim()}
+                  </p>
                 </div>
               )}
             </CardContent>
