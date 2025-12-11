@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { BarChart3, Sparkles, Calendar, Loader2, Star, Rocket, Target, Tag, AlertCircle, ArrowUp } from "lucide-react";
+import { BarChart3, Sparkles, Calendar, Loader2, Star, Rocket, Target, Tag, AlertCircle, ArrowUp, Lightbulb, Brain, CheckCircle2, ArrowRight, Link } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeRadarChart } from "./ThemeRadarChart";
@@ -65,7 +65,7 @@ const parseAnalysisContent = (content: string) => {
   if (sections.trends) {
     const upMatch = sections.trends.match(/###\s*📈\s*上升维度[\s\S]*?(?=###|$)/i);
     const downMatch = sections.trends.match(/###\s*⚠️\s*需要关注的维度[\s\S]*?(?=###|$)/i);
-    const patternMatch = sections.trends.match(/###\s*🔗\s*组合模式[\s\S]*/i);
+    const patternMatch = sections.trends.match(/###\s*🔗\s*幸福组合洞察[\s\S]*/i);
     
     if (upMatch) sections.trendsUp = upMatch[0].replace(/^###[^\n]+\n/, "").trim();
     if (downMatch) sections.trendsDown = downMatch[0].replace(/^###[^\n]+\n/, "").trim();
@@ -369,35 +369,117 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
             </Card>
           )}
 
-          {/* 4. 幸福组合洞察 */}
-          {sections.trendsPattern && (
-            <Card className="bg-gradient-to-br from-violet-50/80 to-purple-50/80 dark:from-violet-950/30 dark:to-purple-950/30 backdrop-blur border-border/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-violet-600" />
-                  <span className="text-violet-700 dark:text-violet-400">幸福组合洞察</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown
-                    components={{
-                      p: ({ children }) => <p className="text-sm text-muted-foreground mb-2">{children}</p>,
-                      ol: ({ children }) => <ol className="text-sm space-y-3 list-none pl-0">{children}</ol>,
-                      li: ({ children }) => (
-                        <li className="text-muted-foreground bg-white/50 dark:bg-black/20 p-3 rounded-lg text-sm">
-                          {children}
-                        </li>
-                      ),
-                      strong: ({ children }) => <strong className="text-violet-700 dark:text-violet-300 font-semibold">{children}</strong>,
-                    }}
-                  >
-                    {sections.trendsPattern}
-                  </ReactMarkdown>
+          {/* 4. 幸福组合洞察 - 重新设计 */}
+          <Card className="bg-gradient-to-br from-violet-50/90 to-purple-50/90 dark:from-violet-950/40 dark:to-purple-950/40 backdrop-blur border-violet-200/50 dark:border-violet-800/50 overflow-hidden">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Link className="w-5 h-5 text-violet-600" />
+                <span className="text-violet-700 dark:text-violet-400">幸福组合洞察</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* 为什么重要 - 固定说明 */}
+              <div className="p-4 bg-violet-100/60 dark:bg-violet-900/30 rounded-xl border border-violet-200/50 dark:border-violet-700/50">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-violet-200/60 dark:bg-violet-800/40 rounded-lg shrink-0">
+                    <Lightbulb className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-violet-800 dark:text-violet-200 mb-1">为什么「幸福组合」很重要？</h4>
+                    <p className="text-xs text-violet-700/80 dark:text-violet-300/80 leading-relaxed">
+                      当一个场景能同时触发多种幸福，你的幸福感会<strong className="text-violet-800 dark:text-violet-200">成倍增长</strong>。
+                      这就是「<strong className="text-violet-800 dark:text-violet-200">幸福复利</strong>」—— 找到并主动创造这些高效幸福场景。
+                    </p>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+
+              {sections.trendsPattern ? (
+                <div className="space-y-3">
+                  {/* 解析并分别显示三个部分 */}
+                  {(() => {
+                    const patternContent = sections.trendsPattern;
+                    const targetMatch = patternContent.match(/\*\*🎯[^*]*\*\*[\s\S]*?(?=\*\*🧠|$)/i);
+                    const brainMatch = patternContent.match(/\*\*🧠[^*]*\*\*[\s\S]*?(?=\*\*✅|$)/i);
+                    const actionMatch = patternContent.match(/\*\*✅[^*]*\*\*[\s\S]*/i);
+                    
+                    return (
+                      <>
+                        {/* 发现的组合模式 */}
+                        {targetMatch && (
+                          <div className="p-3 bg-white/60 dark:bg-black/20 rounded-xl">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Target className="w-4 h-4 text-violet-500" />
+                              <span className="text-sm font-medium text-violet-700 dark:text-violet-300">发现的组合模式</span>
+                            </div>
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown
+                                components={{
+                                  p: ({ children }) => <p className="text-sm text-muted-foreground mb-1">{children}</p>,
+                                  strong: ({ children }) => <strong className="text-violet-600 dark:text-violet-400">{children}</strong>,
+                                }}
+                              >
+                                {targetMatch[0].replace(/\*\*🎯[^*]*\*\*\s*/i, "")}
+                              </ReactMarkdown>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 这说明什么 */}
+                        {brainMatch && (
+                          <div className="p-3 bg-blue-50/60 dark:bg-blue-950/20 rounded-xl border border-blue-100/50 dark:border-blue-800/30">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Brain className="w-4 h-4 text-blue-500" />
+                              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">这说明什么</span>
+                            </div>
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown
+                                components={{
+                                  p: ({ children }) => <p className="text-sm text-blue-800/80 dark:text-blue-200/80">{children}</p>,
+                                  strong: ({ children }) => <strong className="text-blue-700 dark:text-blue-300">{children}</strong>,
+                                }}
+                              >
+                                {brainMatch[0].replace(/\*\*🧠[^*]*\*\*\s*/i, "")}
+                              </ReactMarkdown>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 你可以这样做 - 突出行动 */}
+                        {actionMatch && (
+                          <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 rounded-xl border-2 border-emerald-200/60 dark:border-emerald-700/40">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="p-1.5 bg-emerald-100 dark:bg-emerald-800/40 rounded-lg">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                              </div>
+                              <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">你可以这样做</span>
+                            </div>
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown
+                                components={{
+                                  p: ({ children }) => (
+                                    <p className="text-sm text-emerald-800 dark:text-emerald-200 flex items-start gap-2">
+                                      <ArrowRight className="w-4 h-4 mt-0.5 shrink-0 text-emerald-500" />
+                                      <span>{children}</span>
+                                    </p>
+                                  ),
+                                  strong: ({ children }) => <strong className="text-emerald-700 dark:text-emerald-300 font-semibold">{children}</strong>,
+                                }}
+                              >
+                                {actionMatch[0].replace(/\*\*✅[^*]*\*\*\s*/i, "")}
+                              </ReactMarkdown>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">生成报告后可查看您的幸福组合洞察</p>
+              )}
+            </CardContent>
+          </Card>
 
           {/* 5. 幸福亮点 */}
           <Card className="bg-gradient-to-br from-rose-50/80 via-pink-50/60 to-amber-50/80 dark:from-rose-950/30 dark:via-pink-950/20 dark:to-amber-950/30 backdrop-blur border-border/50">
