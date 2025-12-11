@@ -196,22 +196,21 @@ serve(async (req) => {
         },
       };
     } else if (isCheckinScenario) {
-      // "上课打卡成功通知"模板结构 (thing10学生姓名, thing1课程名称, thing4打卡名称, const8课程状态)
+      // "打卡成功通知"模板结构 (thing10学生姓名, thing4打卡名称, time3时间)
+      const now = new Date();
+      const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       messageData = {
         thing10: { 
           value: (displayName || '用户').slice(0, 20),
-          color: "#173177" 
-        },
-        thing1: { 
-          value: '情绪日记训练营',
           color: "#173177" 
         },
         thing4: { 
           value: (notification.title || '每日打卡').slice(0, 20),
           color: "#173177" 
         },
-        const8: { 
-          value: '进行中'
+        time3: { 
+          value: timeStr,
+          color: "#173177" 
         },
       };
     } else {
