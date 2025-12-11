@@ -90,8 +90,15 @@ Deno.serve(async (req) => {
       packageId = account?.current_package_id;
     }
 
+    // 优先使用请求中传递的 amount，如果没有则使用 1 作为默认值
+    // 这确保了即使 feature_items 中没有配置，也能使用前端传递的金额
     let actualCost = legacyAmount || 1;
     let featureName = source || featureKey || 'unknown';
+    
+    // 如果有显式传递 amount，记录日志
+    if (legacyAmount) {
+      console.log(`📌 Using explicit amount: ${legacyAmount} for ${featureKey}`);
+    }
     let usedFreeQuota = false;
     let isEnabled = true;
     let freeQuota = 0;
