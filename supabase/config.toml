@@ -230,3 +230,6 @@ verify_jwt = true
 
 [functions.batch-analyze-gratitude]
 verify_jwt = true
+
+[functions.check-billing-mismatch]
+verify_jwt = false

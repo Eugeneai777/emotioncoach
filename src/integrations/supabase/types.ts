@@ -1048,6 +1048,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_acknowledged: boolean | null
+          metadata: Json | null
           threshold_cny: number | null
           user_id: string | null
         }
@@ -1060,6 +1061,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_acknowledged?: boolean | null
+          metadata?: Json | null
           threshold_cny?: number | null
           user_id?: string | null
         }
@@ -1072,6 +1074,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_acknowledged?: boolean | null
+          metadata?: Json | null
           threshold_cny?: number | null
           user_id?: string | null
         }

@@ -59,13 +59,22 @@ interface CostAlert {
   alert_message: string;
   is_acknowledged: boolean;
   created_at: string;
+  metadata?: {
+    feature_key?: string;
+    feature_name?: string;
+    expected_amount?: number;
+    actual_amount?: number;
+    deviation_percentage?: number;
+    cost_source?: string;
+  };
 }
 
 const ALERT_TYPE_LABELS: Record<string, string> = {
   'daily_total': '每日总成本',
   'monthly_total': '每月总成本',
   'single_user_daily': '单用户每日',
-  'single_call': '单次调用'
+  'single_call': '单次调用',
+  'billing_mismatch': '扣费异常'
 };
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
@@ -77,6 +86,7 @@ export default function CostMonitorDashboard() {
   const [featureSettings, setFeatureSettings] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
+  const [checkingMismatch, setCheckingMismatch] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -104,7 +114,7 @@ export default function CostMonitorDashboard() {
 
       if (logsRes.data) setCostLogs(logsRes.data);
       if (settingsRes.data) setAlertSettings(settingsRes.data);
-      if (alertsRes.data) setAlerts(alertsRes.data);
+      if (alertsRes.data) setAlerts(alertsRes.data as CostAlert[]);
       
       // 构建功能配额映射
       if (featureSettingsRes.data) {
@@ -122,6 +132,21 @@ export default function CostMonitorDashboard() {
       toast.error('加载数据失败');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const runMismatchCheck = async () => {
+    setCheckingMismatch(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-billing-mismatch');
+      if (error) throw error;
+      toast.success(`扣费异常检查完成，发现 ${data.mismatches_found} 条异常`);
+      fetchData();
+    } catch (error) {
+      console.error('Error running mismatch check:', error);
+      toast.error('扣费异常检查失败');
+    } finally {
+      setCheckingMismatch(false);
     }
   };
 
@@ -398,6 +423,10 @@ export default function CostMonitorDashboard() {
           <TabsTrigger value="profit" className="flex items-center gap-1">
             <PieChartIcon className="h-3 w-3" />
             利润分析
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            扣费监控
           </TabsTrigger>
           <TabsTrigger value="alerts">预警管理</TabsTrigger>
           <TabsTrigger value="settings">阈值设置</TabsTrigger>
@@ -733,6 +762,174 @@ export default function CostMonitorDashboard() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* 扣费监控 Tab */}
+        <TabsContent value="billing" className="space-y-4">
+          {/* 扣费异常概览 */}
+          {(() => {
+            const billingMismatches = alerts.filter(a => a.alert_type === 'billing_mismatch');
+            const pendingMismatches = billingMismatches.filter(a => !a.is_acknowledged);
+            const severeMismatches = billingMismatches.filter(a => 
+              Math.abs(a.metadata?.deviation_percentage || 0) > 50
+            );
+            const affectedFeatures = [...new Set(billingMismatches.map(a => a.metadata?.feature_name).filter(Boolean))];
+
+            return (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">扣费异常总数</CardTitle>
+                      <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{billingMismatches.length}</div>
+                      <p className="text-xs text-muted-foreground">最近100条记录</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">待处理异常</CardTitle>
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-destructive flex items-center gap-2">
+                        {pendingMismatches.length}
+                        {pendingMismatches.length > 0 && (
+                          <Badge variant="destructive" className="text-xs">需处理</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">未确认的异常</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">严重异常</CardTitle>
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-amber-600">{severeMismatches.length}</div>
+                      <p className="text-xs text-muted-foreground">偏差超过50%</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">涉及功能</CardTitle>
+                      <Activity className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{affectedFeatures.length}</div>
+                      <Button 
+                        variant="link" 
+                        size="sm" 
+                        className="p-0 h-auto text-xs"
+                        onClick={runMismatchCheck}
+                        disabled={checkingMismatch}
+                      >
+                        {checkingMismatch ? '检查中...' : '立即检查异常'}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* 异常列表 */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-base">扣费异常记录</CardTitle>
+                    <Button size="sm" variant="outline" onClick={runMismatchCheck} disabled={checkingMismatch}>
+                      <RefreshCw className={`h-4 w-4 mr-2 ${checkingMismatch ? 'animate-spin' : ''}`} />
+                      检查异常
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {billingMismatches.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Check className="h-12 w-12 mx-auto mb-3 text-green-500" />
+                        <p className="text-lg font-medium text-green-600">扣费正常</p>
+                        <p className="text-sm">暂无扣费异常记录</p>
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>时间</TableHead>
+                            <TableHead>功能</TableHead>
+                            <TableHead>用户ID</TableHead>
+                            <TableHead className="text-right">预期扣费</TableHead>
+                            <TableHead className="text-right">实际扣费</TableHead>
+                            <TableHead className="text-right">偏差</TableHead>
+                            <TableHead>来源</TableHead>
+                            <TableHead>状态</TableHead>
+                            <TableHead>操作</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {billingMismatches.map(alert => (
+                            <TableRow key={alert.id}>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {format(new Date(alert.created_at), 'MM-dd HH:mm', { locale: zhCN })}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {alert.metadata?.feature_name || alert.metadata?.feature_key || '-'}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {alert.user_id?.slice(0, 8) || '-'}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {alert.metadata?.expected_amount || alert.threshold_cny} 点
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {alert.metadata?.actual_amount || alert.actual_cost_cny} 点
+                              </TableCell>
+                              <TableCell className={`text-right font-medium ${
+                                (alert.metadata?.deviation_percentage || 0) > 0 ? 'text-destructive' : 'text-amber-600'
+                              }`}>
+                                {(alert.metadata?.deviation_percentage || 0) > 0 ? '+' : ''}
+                                {(alert.metadata?.deviation_percentage || 0).toFixed(1)}%
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="text-xs">
+                                  {alert.metadata?.cost_source || 'unknown'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {alert.is_acknowledged ? (
+                                  <Badge variant="outline" className="text-green-600">
+                                    <Check className="h-3 w-3 mr-1" />
+                                    已确认
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="destructive">
+                                    <AlertTriangle className="h-3 w-3 mr-1" />
+                                    待处理
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {!alert.is_acknowledged && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost"
+                                    onClick={() => acknowledgeAlert(alert.id)}
+                                  >
+                                    确认
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            );
+          })()}
         </TabsContent>
 
         <TabsContent value="alerts" className="space-y-4">
