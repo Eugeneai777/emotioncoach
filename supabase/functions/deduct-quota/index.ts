@@ -117,6 +117,7 @@ Deno.serve(async (req) => {
       }
 
       // Get package-specific settings
+      let foundSettings = false;
       if (packageId) {
         const { data: featureSetting } = await supabase
           .from('package_feature_settings')
@@ -126,10 +127,34 @@ Deno.serve(async (req) => {
           .single();
 
         if (featureSetting) {
+          foundSettings = true;
           isEnabled = featureSetting.is_enabled;
           actualCost = featureSetting.cost_per_use;
           freeQuota = featureSetting.free_quota;
           freeQuotaPeriod = featureSetting.free_quota_period;
+          console.log(`📋 Found package settings: cost=${actualCost}, freeQuota=${freeQuota}`);
+        }
+      }
+
+      // 如果用户没有套餐或套餐没有配置该功能，尝试获取任意套餐的默认配置
+      if (!foundSettings) {
+        const { data: defaultSetting } = await supabase
+          .from('package_feature_settings')
+          .select('cost_per_use, free_quota, free_quota_period')
+          .eq('feature_id', featureItem.id)
+          .order('cost_per_use', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (defaultSetting) {
+          actualCost = defaultSetting.cost_per_use;
+          freeQuota = 0; // 无套餐用户不享受免费额度
+          freeQuotaPeriod = 'per_use';
+          console.log(`ℹ️ No package settings, using default cost: ${actualCost} for ${featureKey}`);
+        } else if (legacyAmount) {
+          // 如果数据库完全没有配置，使用前端传递的 amount
+          actualCost = legacyAmount;
+          console.log(`ℹ️ No DB config, using explicit amount: ${legacyAmount} for ${featureKey}`);
         }
       }
 
