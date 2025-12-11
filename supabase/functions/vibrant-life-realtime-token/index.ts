@@ -190,7 +190,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "gpt-4o-realtime-preview-2024-12-17",
-        voice: "shimmer", // 温柔女声
+        voice: "echo", // 男声
         instructions: instructions,
         tools: tools,
         tool_choice: "auto",
