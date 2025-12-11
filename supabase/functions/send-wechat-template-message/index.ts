@@ -211,7 +211,7 @@ serve(async (req) => {
           color: "#173177" 
         },
         const8: { 
-          value: '打卡成功',
+          value: '已完成',
           color: "#00C853" 
         },
       };
