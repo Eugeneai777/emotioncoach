@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins } from 'lucide-react';
+import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin } from 'lucide-react';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,6 +31,7 @@ export const CoachVoiceChat = ({
   userId
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [status, setStatus] = useState<ConnectionStatus>('idle');
   const [speakingStatus, setSpeakingStatus] = useState<SpeakingStatus>('idle');
   const [transcript, setTranscript] = useState('');
@@ -39,6 +41,7 @@ export const CoachVoiceChat = ({
   const [remainingQuota, setRemainingQuota] = useState<number | null>(null);
   const [isCheckingQuota, setIsCheckingQuota] = useState(true);
   const [showPayDialog, setShowPayDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<{ path: string; name: string } | null>(null);
   const chatRef = useRef<RealtimeChat | null>(null);
   const durationRef = useRef<NodeJS.Timeout | null>(null);
   const lastBilledMinuteRef = useRef(0);
@@ -109,6 +112,10 @@ export const CoachVoiceChat = ({
       get_recent_briefings: {
         title: '📋 历史回顾',
         getDesc: () => '正在获取最近的简报...'
+      },
+      navigate_to: {
+        title: '🚀 正在跳转',
+        getDesc: (r) => r?.message || `正在打开${r?.name || '页面'}...`
       }
     };
     
@@ -119,6 +126,45 @@ export const CoachVoiceChat = ({
         description: config.getDesc(result, args),
       });
     }
+  };
+
+  // 处理页面导航
+  const handleNavigation = (path: string, name: string) => {
+    setPendingNavigation({ path, name });
+    
+    toast({
+      title: `🚀 ${name}`,
+      description: "即将为你打开...",
+    });
+
+    // 延迟1.5秒后跳转，让用户听完AI回复
+    setTimeout(() => {
+      chatRef.current?.disconnect();
+      if (durationRef.current) {
+        clearInterval(durationRef.current);
+      }
+      recordSession().then(() => {
+        navigate(path);
+      });
+    }, 1500);
+  };
+
+  // 确认导航
+  const confirmNavigation = () => {
+    if (pendingNavigation) {
+      chatRef.current?.disconnect();
+      if (durationRef.current) {
+        clearInterval(durationRef.current);
+      }
+      recordSession().then(() => {
+        navigate(pendingNavigation.path);
+      });
+    }
+  };
+
+  // 取消导航
+  const cancelNavigation = () => {
+    setPendingNavigation(null);
   };
 
   // 检查余额
@@ -269,6 +315,9 @@ export const CoachVoiceChat = ({
           } else if (event.type === 'tool_executed') {
             // 工具执行完成，显示 toast
             handleToolExecuted(event.tool, event.result, event.args);
+          } else if (event.type === 'navigation_request') {
+            // 处理页面导航请求
+            handleNavigation(event.path, event.name);
           } else if (event.type === 'tool_error' && event.requiresAuth) {
             // 认证错误，结束通话并提示
             toast({

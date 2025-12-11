@@ -390,6 +390,16 @@ export class RealtimeChat {
         args: args
       });
 
+      // 检查是否是导航动作
+      if (data?.action === 'navigate' && data?.path) {
+        this.onMessage({
+          type: 'navigation_request',
+          path: data.path,
+          name: data.name || data.coach_name,
+          message: data.message
+        });
+      }
+
     } catch (error: any) {
       console.error('Tool execution error:', error);
       
