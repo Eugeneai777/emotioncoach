@@ -4,6 +4,7 @@ import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins } from 'lucide-react';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { WechatPayDialog } from '@/components/WechatPayDialog';
 
 interface CoachVoiceChatProps {
   onClose: () => void;
@@ -37,9 +38,17 @@ export const CoachVoiceChat = ({
   const [billedMinutes, setBilledMinutes] = useState(0);
   const [remainingQuota, setRemainingQuota] = useState<number | null>(null);
   const [isCheckingQuota, setIsCheckingQuota] = useState(true);
+  const [showPayDialog, setShowPayDialog] = useState(false);
   const chatRef = useRef<RealtimeChat | null>(null);
   const durationRef = useRef<NodeJS.Timeout | null>(null);
   const lastBilledMinuteRef = useRef(0);
+
+  const MEMBER_365_PACKAGE = {
+    key: 'member365',
+    name: '365会员',
+    price: 365,
+    quota: 1000
+  };
 
   // 颜色映射
   const colorMap: Record<string, { bg: string; border: string; text: string; glow: string }> = {
@@ -111,7 +120,7 @@ export const CoachVoiceChat = ({
   };
 
   // 检查余额
-  const checkQuota = async (): Promise<boolean> => {
+  const checkQuota = async (): Promise<boolean | 'show_pay'> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -130,12 +139,8 @@ export const CoachVoiceChat = ({
         .single();
 
       if (!account || account.remaining_quota < POINTS_PER_MINUTE) {
-        toast({
-          title: "点数不足",
-          description: `至少需要 ${POINTS_PER_MINUTE} 点才能开始语音对话`,
-          variant: "destructive"
-        });
-        return false;
+        // 返回特殊值表示需要显示支付
+        return 'show_pay';
       }
 
       setRemainingQuota(account.remaining_quota);
@@ -339,10 +344,13 @@ export const CoachVoiceChat = ({
   useEffect(() => {
     const init = async () => {
       setIsCheckingQuota(true);
-      const hasQuota = await checkQuota();
+      const quotaResult = await checkQuota();
       setIsCheckingQuota(false);
       
-      if (hasQuota) {
+      if (quotaResult === 'show_pay') {
+        // 显示支付对话框
+        setShowPayDialog(true);
+      } else if (quotaResult === true) {
         startCall();
       } else {
         setTimeout(onClose, 1500);
@@ -358,6 +366,38 @@ export const CoachVoiceChat = ({
       }
     };
   }, []);
+
+  // 显示支付对话框
+  if (showPayDialog) {
+    return (
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center">
+        <div className="text-center mb-6">
+          <div className="text-5xl mb-4">💫</div>
+          <h2 className="text-white text-xl font-medium mb-2">点数不足</h2>
+          <p className="text-white/60 text-sm">至少需要 {POINTS_PER_MINUTE} 点才能开始语音对话</p>
+        </div>
+        
+        <WechatPayDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowPayDialog(false);
+              onClose();
+            }
+          }}
+          packageInfo={MEMBER_365_PACKAGE}
+          onSuccess={() => {
+            toast({
+              title: "续费成功！",
+              description: "正在开始语音对话...",
+            });
+            setShowPayDialog(false);
+            startCall();
+          }}
+        />
+      </div>
+    );
+  }
 
   if (isCheckingQuota) {
     return (

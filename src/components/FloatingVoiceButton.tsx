@@ -4,9 +4,19 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { CoachVoiceChat } from '@/components/coach/CoachVoiceChat';
+import { WechatPayDialog } from '@/components/WechatPayDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 // 不显示浮动按钮的路由
 const EXCLUDED_ROUTES = ['/auth', '/wechat-auth'];
+
+const POINTS_PER_MINUTE = 8;
+const MEMBER_365_PACKAGE = {
+  key: 'member365',
+  name: '365会员',
+  price: 365,
+  quota: 1000
+};
 
 const STORAGE_KEY = 'floating-voice-button-position';
 
@@ -20,6 +30,8 @@ const FloatingVoiceButton: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showVoiceChat, setShowVoiceChat] = useState(false);
+  const [showPayDialog, setShowPayDialog] = useState(false);
+  const [isCheckingQuota, setIsCheckingQuota] = useState(false);
   
   // 拖拽相关状态
   const [position, setPosition] = useState<Position | null>(null);
@@ -152,7 +164,7 @@ const FloatingVoiceButton: React.FC = () => {
     return null;
   }
 
-  const handleClick = () => {
+  const handleClick = async () => {
     // 如果发生了拖拽，不触发点击
     if (hasMoved) return;
     
@@ -164,7 +176,34 @@ const FloatingVoiceButton: React.FC = () => {
       navigate('/auth');
       return;
     }
-    setShowVoiceChat(true);
+
+    // 检查余额
+    setIsCheckingQuota(true);
+    try {
+      const { data: account } = await supabase
+        .from('user_accounts')
+        .select('remaining_quota')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!account || account.remaining_quota < POINTS_PER_MINUTE) {
+        // 余额不足，直接弹出365续费
+        setShowPayDialog(true);
+        setIsCheckingQuota(false);
+        return;
+      }
+
+      setIsCheckingQuota(false);
+      setShowVoiceChat(true);
+    } catch (error) {
+      console.error('Check quota error:', error);
+      setIsCheckingQuota(false);
+      toast({
+        title: "检查余额失败",
+        description: "请稍后重试",
+        variant: "destructive"
+      });
+    }
   };
 
   // 计算样式
@@ -224,6 +263,21 @@ const FloatingVoiceButton: React.FC = () => {
           primaryColor="rose"
         />
       )}
+
+      {/* 额度不足时直接弹出365续费 */}
+      <WechatPayDialog
+        open={showPayDialog}
+        onOpenChange={setShowPayDialog}
+        packageInfo={MEMBER_365_PACKAGE}
+        onSuccess={() => {
+          toast({
+            title: "续费成功！",
+            description: "现在可以开始语音通话了 🎉",
+          });
+          setShowPayDialog(false);
+          setShowVoiceChat(true);
+        }}
+      />
     </>
   );
 };
