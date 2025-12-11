@@ -38,6 +38,8 @@ export const ElevenLabsVoiceChat = ({
   const durationRef = useRef<NodeJS.Timeout | null>(null);
   const lastBilledMinuteRef = useRef(0);
   const userIdRef = useRef<string | null>(null);
+  const isDeductingRef = useRef(false);  // 防止并发扣费
+  const sessionIdRef = useRef(`elevenlabs_${Date.now()}`);  // 固定 session ID
 
   // 颜色映射
   const colorMap: Record<string, { bg: string; border: string; text: string; glow: string }> = {
@@ -173,17 +175,25 @@ export const ElevenLabsVoiceChat = ({
     }
   };
 
-  // 扣费函数
+  // 扣费函数 - 添加防重复扣费和显式 amount 参数
   const deductQuota = async (minute: number): Promise<boolean> => {
     try {
-      console.log(`Deducting quota for minute ${minute}`);
+      // 防重复扣费：检查是否已经扣过这一分钟
+      if (minute <= lastBilledMinuteRef.current) {
+        console.log(`Minute ${minute} already billed, skipping`);
+        return true;
+      }
+
+      console.log(`Deducting quota for minute ${minute}, amount: ${POINTS_PER_MINUTE}`);
       
       const { data, error } = await supabase.functions.invoke('deduct-quota', {
         body: {
           feature_key: 'elevenlabs_voice',
           source: 'voice_chat',
+          amount: POINTS_PER_MINUTE,  // 显式传递扣费金额
           metadata: {
             minute,
+            session_id: sessionIdRef.current,  // 使用固定 session ID
             coach_key: 'life_coach',
             cost_per_minute: POINTS_PER_MINUTE
           }
@@ -204,7 +214,7 @@ export const ElevenLabsVoiceChat = ({
       setRemainingQuota(data.remaining_quota);
       lastBilledMinuteRef.current = minute;
       
-      console.log(`Deducted ${POINTS_PER_MINUTE} points for minute ${minute}, remaining: ${data.remaining_quota}`);
+      console.log(`✅ Deducted ${data.cost || POINTS_PER_MINUTE} points for minute ${minute}, remaining: ${data.remaining_quota}`);
       return true;
     } catch (error) {
       console.error('Deduct quota error:', error);
@@ -293,28 +303,36 @@ export const ElevenLabsVoiceChat = ({
     onClose();
   };
 
-  // 每分钟扣费逻辑
+  // 每分钟扣费逻辑 - 添加防并发保护
   useEffect(() => {
     if (conversation.status !== 'connected') return;
 
     const currentMinute = Math.floor(duration / 60) + 1;
     
-    if (currentMinute > lastBilledMinuteRef.current) {
-      if (currentMinute > MAX_DURATION_MINUTES) {
-        toast({
-          title: "已达最大时长",
-          description: `单次通话最长 ${MAX_DURATION_MINUTES} 分钟`,
-        });
-        endCall();
-        return;
-      }
-
-      deductQuota(currentMinute).then(success => {
-        if (!success) {
-          endCall();
-        }
-      });
+    // 防并发：检查是否已在扣费中或已扣过这一分钟
+    if (currentMinute <= lastBilledMinuteRef.current || isDeductingRef.current) {
+      return;
     }
+
+    // 检查最大时长限制
+    if (currentMinute > MAX_DURATION_MINUTES) {
+      toast({
+        title: "已达最大时长",
+        description: `单次通话最长 ${MAX_DURATION_MINUTES} 分钟`,
+      });
+      endCall();
+      return;
+    }
+
+    // 立即设置标志，防止并发调用
+    isDeductingRef.current = true;
+
+    deductQuota(currentMinute).then(success => {
+      isDeductingRef.current = false;  // 扣费完成后重置
+      if (!success) {
+        endCall();
+      }
+    });
   }, [duration, conversation.status]);
 
   // 低余额警告
