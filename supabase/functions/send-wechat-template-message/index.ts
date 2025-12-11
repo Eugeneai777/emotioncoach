@@ -196,22 +196,22 @@ serve(async (req) => {
         },
       };
     } else if (isCheckinScenario) {
-      // "上课打卡成功通知"模板结构 (thing1, thing2, thing3, thing4)
+      // "上课打卡成功通知"模板结构 (thing10学生姓名, thing1课程名称, thing4打卡名称, const8课程状态)
       messageData = {
-        thing1: { 
+        thing10: { 
           value: (displayName || '用户').slice(0, 20),
           color: "#173177" 
         },
-        thing2: { 
-          value: '情绪记录打卡',
-          color: "#173177" 
-        },
-        thing3: { 
-          value: (notification.title || '打卡成功').slice(0, 20),
+        thing1: { 
+          value: '情绪日记训练营',
           color: "#173177" 
         },
         thing4: { 
-          value: messageContent.slice(0, 20),
+          value: (notification.title || '每日打卡').slice(0, 20),
+          color: "#173177" 
+        },
+        const8: { 
+          value: '打卡成功',
           color: "#00C853" 
         },
       };
