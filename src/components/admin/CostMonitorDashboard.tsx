@@ -50,6 +50,22 @@ interface AlertSetting {
   notify_wecom: boolean;
 }
 
+interface BillingCorrection {
+  id: string;
+  user_id: string;
+  alert_id: string | null;
+  correction_type: 'refund' | 'charge';
+  original_amount: number;
+  expected_amount: number;
+  correction_amount: number;
+  feature_key: string | null;
+  feature_name: string | null;
+  status: 'pending' | 'completed' | 'failed' | 'skipped';
+  error_message: string | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
 interface CostAlert {
   id: string;
   alert_type: string;
@@ -59,6 +75,8 @@ interface CostAlert {
   alert_message: string;
   is_acknowledged: boolean;
   created_at: string;
+  correction_status?: 'pending' | 'corrected' | 'skipped' | 'failed';
+  correction_id?: string | null;
   metadata?: {
     feature_key?: string;
     feature_name?: string;
@@ -83,9 +101,11 @@ export default function CostMonitorDashboard() {
   const [costLogs, setCostLogs] = useState<CostLog[]>([]);
   const [alertSettings, setAlertSettings] = useState<AlertSetting[]>([]);
   const [alerts, setAlerts] = useState<CostAlert[]>([]);
+  const [corrections, setCorrections] = useState<BillingCorrection[]>([]);
   const [featureSettings, setFeatureSettings] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
+  const [autoFixing, setAutoFixing] = useState(false);
   const [checkingMismatch, setCheckingMismatch] = useState(false);
 
   useEffect(() => {
@@ -95,7 +115,7 @@ export default function CostMonitorDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [logsRes, settingsRes, alertsRes, featureSettingsRes] = await Promise.all([
+      const [logsRes, settingsRes, alertsRes, featureSettingsRes, correctionsRes] = await Promise.all([
         supabase
           .from('api_cost_logs')
           .select('*')
@@ -109,12 +129,18 @@ export default function CostMonitorDashboard() {
           .limit(100),
         supabase
           .from('package_feature_settings')
-          .select('feature_id, cost_per_use, feature_items!inner(item_key)')
+          .select('feature_id, cost_per_use, feature_items!inner(item_key)'),
+        supabase
+          .from('billing_corrections')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100)
       ]);
 
       if (logsRes.data) setCostLogs(logsRes.data);
       if (settingsRes.data) setAlertSettings(settingsRes.data);
       if (alertsRes.data) setAlerts(alertsRes.data as CostAlert[]);
+      if (correctionsRes.data) setCorrections(correctionsRes.data as BillingCorrection[]);
       
       // 构建功能配额映射
       if (featureSettingsRes.data) {
@@ -135,18 +161,34 @@ export default function CostMonitorDashboard() {
     }
   };
 
-  const runMismatchCheck = async () => {
-    setCheckingMismatch(true);
+  const runMismatchCheck = async (autoCorrect: boolean = false, dryRun: boolean = false) => {
+    if (autoCorrect) {
+      setAutoFixing(true);
+    } else {
+      setCheckingMismatch(true);
+    }
     try {
-      const { data, error } = await supabase.functions.invoke('check-billing-mismatch');
+      const { data, error } = await supabase.functions.invoke('check-billing-mismatch', {
+        body: { autoCorrect, dryRun }
+      });
       if (error) throw error;
-      toast.success(`扣费异常检查完成，发现 ${data.mismatches_found} 条异常`);
+      
+      if (autoCorrect && !dryRun) {
+        toast.success(
+          `自动修复完成: 成功 ${data.corrections_successful} 条, 失败 ${data.corrections_failed} 条`
+        );
+      } else if (dryRun) {
+        toast.info(`试运行完成: 发现 ${data.new_mismatches_found} 条异常, 待修复 ${data.pending_corrections} 条`);
+      } else {
+        toast.success(`扣费异常检查完成，发现 ${data.new_mismatches_found} 条异常`);
+      }
       fetchData();
     } catch (error) {
       console.error('Error running mismatch check:', error);
-      toast.error('扣费异常检查失败');
+      toast.error(autoCorrect ? '自动修复失败' : '扣费异常检查失败');
     } finally {
       setCheckingMismatch(false);
+      setAutoFixing(false);
     }
   };
 
@@ -827,7 +869,7 @@ export default function CostMonitorDashboard() {
                         variant="link" 
                         size="sm" 
                         className="p-0 h-auto text-xs"
-                        onClick={runMismatchCheck}
+                        onClick={() => runMismatchCheck(false, false)}
                         disabled={checkingMismatch}
                       >
                         {checkingMismatch ? '检查中...' : '立即检查异常'}
@@ -840,10 +882,36 @@ export default function CostMonitorDashboard() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-base">扣费异常记录</CardTitle>
-                    <Button size="sm" variant="outline" onClick={runMismatchCheck} disabled={checkingMismatch}>
-                      <RefreshCw className={`h-4 w-4 mr-2 ${checkingMismatch ? 'animate-spin' : ''}`} />
-                      检查异常
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => runMismatchCheck(false, false)} 
+                        disabled={checkingMismatch || autoFixing}
+                      >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${checkingMismatch ? 'animate-spin' : ''}`} />
+                        检查异常
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="default"
+                        onClick={() => runMismatchCheck(true, false)} 
+                        disabled={checkingMismatch || autoFixing}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {autoFixing ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            修复中...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-4 w-4 mr-2" />
+                            自动修复
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {billingMismatches.length === 0 ? (
@@ -862,62 +930,157 @@ export default function CostMonitorDashboard() {
                             <TableHead className="text-right">预期扣费</TableHead>
                             <TableHead className="text-right">实际扣费</TableHead>
                             <TableHead className="text-right">偏差</TableHead>
-                            <TableHead>来源</TableHead>
-                            <TableHead>状态</TableHead>
+                            <TableHead>修复状态</TableHead>
                             <TableHead>操作</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {billingMismatches.map(alert => (
-                            <TableRow key={alert.id}>
+                          {billingMismatches.map(alert => {
+                            const expected = alert.metadata?.expected_amount || alert.threshold_cny;
+                            const actual = alert.metadata?.actual_amount || alert.actual_cost_cny;
+                            const difference = expected - actual;
+                            const correctionType = difference > 0 ? '补扣' : '退还';
+                            
+                            return (
+                              <TableRow key={alert.id}>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {format(new Date(alert.created_at), 'MM-dd HH:mm', { locale: zhCN })}
+                                </TableCell>
+                                <TableCell className="font-medium">
+                                  {alert.metadata?.feature_name || alert.metadata?.feature_key || '-'}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {alert.user_id?.slice(0, 8) || '-'}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {expected} 点
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {actual} 点
+                                </TableCell>
+                                <TableCell className={`text-right font-medium ${
+                                  (alert.metadata?.deviation_percentage || 0) > 0 ? 'text-destructive' : 'text-amber-600'
+                                }`}>
+                                  {(alert.metadata?.deviation_percentage || 0) > 0 ? '+' : ''}
+                                  {(alert.metadata?.deviation_percentage || 0).toFixed(1)}%
+                                  <span className="text-xs text-muted-foreground ml-1">
+                                    ({correctionType}{Math.abs(difference)}点)
+                                  </span>
+                                </TableCell>
+                                <TableCell>
+                                  {alert.correction_status === 'corrected' ? (
+                                    <Badge variant="outline" className="text-green-600 bg-green-50">
+                                      <Check className="h-3 w-3 mr-1" />
+                                      已修复
+                                    </Badge>
+                                  ) : alert.correction_status === 'failed' ? (
+                                    <Badge variant="destructive">
+                                      <AlertTriangle className="h-3 w-3 mr-1" />
+                                      修复失败
+                                    </Badge>
+                                  ) : alert.correction_status === 'skipped' ? (
+                                    <Badge variant="secondary">
+                                      跳过
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-amber-600 bg-amber-50">
+                                      <AlertCircle className="h-3 w-3 mr-1" />
+                                      待修复
+                                    </Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {alert.correction_status === 'pending' && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost"
+                                      onClick={() => acknowledgeAlert(alert.id)}
+                                    >
+                                      跳过
+                                    </Button>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* 修复记录 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">修复记录</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {corrections.length === 0 ? (
+                      <div className="text-center py-6 text-muted-foreground">
+                        <p className="text-sm">暂无修复记录</p>
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>时间</TableHead>
+                            <TableHead>功能</TableHead>
+                            <TableHead>用户ID</TableHead>
+                            <TableHead>类型</TableHead>
+                            <TableHead className="text-right">原扣费</TableHead>
+                            <TableHead className="text-right">应扣费</TableHead>
+                            <TableHead className="text-right">修复金额</TableHead>
+                            <TableHead>状态</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {corrections.map(correction => (
+                            <TableRow key={correction.id}>
                               <TableCell className="text-sm text-muted-foreground">
-                                {format(new Date(alert.created_at), 'MM-dd HH:mm', { locale: zhCN })}
+                                {format(new Date(correction.created_at), 'MM-dd HH:mm', { locale: zhCN })}
                               </TableCell>
                               <TableCell className="font-medium">
-                                {alert.metadata?.feature_name || alert.metadata?.feature_key || '-'}
+                                {correction.feature_name || correction.feature_key || '-'}
                               </TableCell>
                               <TableCell className="text-sm text-muted-foreground">
-                                {alert.user_id?.slice(0, 8) || '-'}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {alert.metadata?.expected_amount || alert.threshold_cny} 点
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {alert.metadata?.actual_amount || alert.actual_cost_cny} 点
-                              </TableCell>
-                              <TableCell className={`text-right font-medium ${
-                                (alert.metadata?.deviation_percentage || 0) > 0 ? 'text-destructive' : 'text-amber-600'
-                              }`}>
-                                {(alert.metadata?.deviation_percentage || 0) > 0 ? '+' : ''}
-                                {(alert.metadata?.deviation_percentage || 0).toFixed(1)}%
+                                {correction.user_id?.slice(0, 8) || '-'}
                               </TableCell>
                               <TableCell>
-                                <Badge variant="outline" className="text-xs">
-                                  {alert.metadata?.cost_source || 'unknown'}
+                                <Badge variant={correction.correction_type === 'refund' ? 'default' : 'secondary'} 
+                                  className={correction.correction_type === 'refund' ? 'bg-green-600' : 'bg-amber-600'}>
+                                  {correction.correction_type === 'refund' ? '退还' : '补扣'}
                                 </Badge>
                               </TableCell>
-                              <TableCell>
-                                {alert.is_acknowledged ? (
-                                  <Badge variant="outline" className="text-green-600">
-                                    <Check className="h-3 w-3 mr-1" />
-                                    已确认
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="destructive">
-                                    <AlertTriangle className="h-3 w-3 mr-1" />
-                                    待处理
-                                  </Badge>
-                                )}
+                              <TableCell className="text-right">
+                                {correction.original_amount} 点
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {correction.expected_amount} 点
+                              </TableCell>
+                              <TableCell className={`text-right font-medium ${
+                                correction.correction_type === 'refund' ? 'text-green-600' : 'text-amber-600'
+                              }`}>
+                                {correction.correction_type === 'refund' ? '+' : '-'}{correction.correction_amount} 点
                               </TableCell>
                               <TableCell>
-                                {!alert.is_acknowledged && (
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost"
-                                    onClick={() => acknowledgeAlert(alert.id)}
-                                  >
-                                    确认
-                                  </Button>
+                                {correction.status === 'completed' ? (
+                                  <Badge variant="outline" className="text-green-600">
+                                    <Check className="h-3 w-3 mr-1" />
+                                    完成
+                                  </Badge>
+                                ) : correction.status === 'failed' ? (
+                                  <Badge variant="destructive" title={correction.error_message || ''}>
+                                    <AlertTriangle className="h-3 w-3 mr-1" />
+                                    失败
+                                  </Badge>
+                                ) : correction.status === 'skipped' ? (
+                                  <Badge variant="secondary">
+                                    跳过
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline">
+                                    待处理
+                                  </Badge>
                                 )}
                               </TableCell>
                             </TableRow>
