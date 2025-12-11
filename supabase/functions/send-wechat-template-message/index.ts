@@ -8,22 +8,23 @@ const corsHeaders = {
 };
 
 // 系统级模板ID配置 - 从环境变量读取或使用默认值
+// 注意：WECHAT_TEMPLATE_FOLLOWUP 已停用，智能跟进场景改用 WECHAT_TEMPLATE_DEFAULT
 const SYSTEM_TEMPLATE_IDS: Record<string, string> = {
-  // 打卡相关场景使用打卡模板
+  // 打卡相关场景使用打卡模板 (thing10, thing4, time3)
   'checkin_success': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
   'checkin_streak_milestone': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
   'checkin_reminder': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
   'checkin_streak_break_warning': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
-  // 登录成功使用专用模板（用户名、账号、时间结构）
+  // 登录成功使用专用模板 (thing3, character_string1, time2)
   'login_success': Deno.env.get('WECHAT_TEMPLATE_LOGIN') || '',
-  // 智能跟进提醒场景使用答疑提醒模板 (first, keyword1, keyword2, keyword3, remark)
-  'after_briefing': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
-  'emotion_improvement': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
-  'goal_milestone': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
-  'sustained_low_mood': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
-  'inactivity': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
-  'consistent_checkin': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
-  'encouragement': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
+  // 智能跟进提醒场景统一使用通用模板 (thing1, thing19, time21)
+  'after_briefing': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
+  'emotion_improvement': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
+  'goal_milestone': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
+  'sustained_low_mood': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
+  'inactivity': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
+  'consistent_checkin': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
+  'encouragement': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
   // 其他场景使用通用模板
   'default': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
 };
@@ -578,51 +579,39 @@ serve(async (req) => {
         },
       };
     } else if (isFollowupScenario) {
-      // "答疑提醒"模板结构 (first, keyword1, keyword2, keyword3, remark)
-      const timeStr = `${beijingTime.getUTCFullYear()}年${beijingTime.getUTCMonth() + 1}月${beijingTime.getUTCDate()}日 ${String(beijingTime.getUTCHours()).padStart(2, '0')}:${String(beijingTime.getUTCMinutes()).padStart(2, '0')}`;
+      // 智能跟进场景现在使用 WECHAT_TEMPLATE_DEFAULT (thing1, thing19, time21)
+      // 注意：WECHAT_TEMPLATE_FOLLOWUP 已停用
+      const timeStr = `${beijingTime.getUTCFullYear()}-${String(beijingTime.getUTCMonth() + 1).padStart(2, '0')}-${String(beijingTime.getUTCDate()).padStart(2, '0')} ${String(beijingTime.getUTCHours()).padStart(2, '0')}:${String(beijingTime.getUTCMinutes()).padStart(2, '0')}`;
       
       // 检测节日/特殊日期
       const specialDay = detectSpecialDay(messageContext);
       
-      let first: string, content: string, remark: string;
+      let thing19Content: string;
       
       if (specialDay && holidayMessages[specialDay]) {
-        // 使用节日问候
+        // 使用节日问候作为内容
         const holidayMsg = holidayMessages[specialDay];
-        first = replacePlaceholders(holidayMsg.first, messageContext, notification);
-        remark = holidayMsg.remark;
-        // 内容使用场景默认的
-        const variant = selectBestVariant(scenario, messageContext, notification);
-        content = replacePlaceholders(notification.title || variant.content, messageContext, notification);
+        const greeting = replacePlaceholders(holidayMsg.first, messageContext, notification);
+        thing19Content = greeting;
       } else {
-        // 使用场景消息变体
+        // 使用场景消息变体的内容
         const variant = selectBestVariant(scenario, messageContext, notification);
-        first = replacePlaceholders(variant.first, messageContext, notification);
-        content = replacePlaceholders(notification.title || variant.content, messageContext, notification);
-        remark = variant.remark;
+        thing19Content = replacePlaceholders(notification.title || variant.content, messageContext, notification);
       }
       
-      console.log(`Selected message for scenario ${scenario}:`, { first, content, remark, specialDay });
+      console.log(`Selected message for scenario ${scenario}:`, { thing19Content, specialDay });
       
       messageData = {
-        first: { 
-          value: first,
-          color: "#173177" 
-        },
-        keyword1: { 
+        thing1: { 
           value: (displayName || '用户').slice(0, 20),
           color: "#173177" 
         },
-        keyword2: { 
-          value: content.slice(0, 20),
+        thing19: { 
+          value: thing19Content.slice(0, 20),
           color: "#173177" 
         },
-        keyword3: { 
+        time21: { 
           value: timeStr,
-          color: "#173177" 
-        },
-        remark: { 
-          value: remark,
           color: "#173177" 
         },
       };
