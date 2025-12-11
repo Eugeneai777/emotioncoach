@@ -211,8 +211,7 @@ serve(async (req) => {
           color: "#173177" 
         },
         const8: { 
-          value: '已完成',
-          color: "#00C853" 
+          value: '进行中'
         },
       };
     } else {
