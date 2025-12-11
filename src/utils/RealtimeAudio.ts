@@ -400,6 +400,17 @@ export class RealtimeChat {
         });
       }
 
+      // 检查是否是搜索结果
+      if (data?.action === 'show_search_results' && data?.posts) {
+        this.onMessage({
+          type: 'search_results',
+          keyword: data.keyword,
+          posts: data.posts,
+          message: data.message,
+          navigation: data.navigation
+        });
+      }
+
     } catch (error: any) {
       console.error('Tool execution error:', error);
       

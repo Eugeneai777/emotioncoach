@@ -124,6 +124,10 @@ serve(async (req) => {
         result = handleNavigateTo(params?.destination);
         break;
 
+      case 'search_community_posts':
+        result = await searchCommunityPosts(supabase, params?.keyword, params?.post_type, params?.limit);
+        break;
+
       default:
         result = { error: `Unknown tool: ${tool}` };
     }
@@ -943,4 +947,78 @@ function handleNavigateTo(destination: string) {
     name: target.name,
     message: `好的，正在为你打开${target.name}`
   };
+}
+
+// 搜索社区帖子
+async function searchCommunityPosts(supabase: any, keyword: string, postType?: string, limit?: number) {
+  if (!keyword || keyword.trim() === '') {
+    return { success: false, error: '请提供搜索关键词' };
+  }
+
+  const searchLimit = limit || 3;
+  
+  try {
+    let query = supabase
+      .from('community_posts')
+      .select('id, title, content, emotion_theme, post_type, likes_count, created_at, is_anonymous')
+      .eq('visibility', 'public')
+      .or(`title.ilike.%${keyword}%,content.ilike.%${keyword}%,emotion_theme.ilike.%${keyword}%`)
+      .order('likes_count', { ascending: false })
+      .limit(searchLimit);
+
+    if (postType && postType !== 'all') {
+      query = query.eq('post_type', postType);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Search community posts error:', error);
+      return { success: false, error: '搜索失败' };
+    }
+
+    if (!data || data.length === 0) {
+      return {
+        success: true,
+        found: false,
+        keyword,
+        posts: [],
+        message: `没有找到关于"${keyword}"的分享，社区还在成长中，你可以成为第一个分享者～`
+      };
+    }
+
+    // 生成AI播报摘要
+    const summaries = data.map((post: any, idx: number) => {
+      const title = post.title || post.emotion_theme || '一条分享';
+      const preview = post.content?.slice(0, 50) || '';
+      return `第${idx + 1}条：${title}${preview ? '，' + preview + '...' : ''}`;
+    });
+
+    const speechSummary = `找到 ${data.length} 条关于"${keyword}"的分享。${summaries.slice(0, 2).join('；')}${data.length > 2 ? '，还有更多可以查看' : ''}`;
+
+    return {
+      success: true,
+      found: true,
+      action: 'show_search_results',
+      keyword,
+      posts: data.map((post: any) => ({
+        id: post.id,
+        title: post.title || post.emotion_theme || '分享',
+        content: post.content?.slice(0, 100) || '',
+        emotion_theme: post.emotion_theme,
+        post_type: post.post_type,
+        likes_count: post.likes_count || 0,
+        created_at: post.created_at,
+        is_anonymous: post.is_anonymous
+      })),
+      message: speechSummary,
+      navigation: {
+        path: '/community',
+        name: '社区'
+      }
+    };
+  } catch (error) {
+    console.error('Search community posts error:', error);
+    return { success: false, error: '搜索出错' };
+  }
 }

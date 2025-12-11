@@ -208,6 +208,31 @@ serve(async (req) => {
           },
           required: ["destination"]
         }
+      },
+      // 社区搜索工具
+      {
+        type: "function",
+        name: "search_community_posts",
+        description: "当用户想搜索社区帖子、看看别人的分享、找相关话题时调用。触发词：社区有人分享过、有没有人讨论、看看别人怎么说、搜索、找一找",
+        parameters: {
+          type: "object",
+          properties: {
+            keyword: { 
+              type: "string", 
+              description: "搜索关键词，如：焦虑、育儿、沟通、感恩等" 
+            },
+            post_type: { 
+              type: "string", 
+              enum: ["story", "briefing_share", "checkin", "all"],
+              description: "帖子类型：story=故事，briefing_share=简报分享，checkin=打卡，all=全部" 
+            },
+            limit: { 
+              type: "number", 
+              description: "返回数量，默认3条" 
+            }
+          },
+          required: ["keyword"]
+        }
       }
     ];
 
