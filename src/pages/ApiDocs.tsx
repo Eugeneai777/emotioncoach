@@ -79,7 +79,7 @@ const apiEndpoints: ApiEndpoint[] = [
   },
   {
     name: "vibrant-life-sage-coach",
-    description: "有劲生活教练，智能导航入口",
+    description: "有劲AI，智能导航入口",
     method: "POST",
     requiresAuth: true,
     category: "情绪教练"

@@ -55,7 +55,7 @@ const coachConfig: Record<CoachType, { label: string; emoji: string; color: stri
     gradient: 'from-purple-500/20 to-pink-500/20',
   },
   vibrant_life: {
-    label: '有劲生活教练',
+    label: '有劲AI',
     emoji: '❤️',
     color: 'hsl(350, 70%, 60%)',
     gradient: 'from-rose-500/20 to-orange-500/20',

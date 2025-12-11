@@ -26,7 +26,7 @@ export const youjinFeatures: YoujinFeature[] = [
   { name: "情绪觉醒教练", category: "教练空间", basic: true, premium: true, tooltip: "基础情绪觉醒和陪伴功能" },
   { name: "亲子教练", category: "教练空间", basic: true, premium: true, tooltip: "针对家长的亲子关系情绪教练" },
   { name: "沟通教练", category: "教练空间", basic: true, premium: true, tooltip: "人际沟通技巧指导" },
-  { name: "有劲生活教练", category: "教练空间", basic: true, premium: true, tooltip: "全方位生活指导和规划" },
+  { name: "有劲AI", category: "教练空间", basic: true, premium: true, tooltip: "全方位生活指导和规划" },
   
   // 成长工具
   { name: "情绪按钮 (9种情绪)", category: "成长工具", basic: true, premium: true, tooltip: "9种情绪场景，288条认知提醒" },
