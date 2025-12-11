@@ -293,10 +293,71 @@ Deno.serve(async (req) => {
       amount: actualCost,
       source: source || featureKey,
       conversation_id: conversationId,
-      metadata: { ...metadata, feature_key: featureKey, free_quota_used: usedFreeQuota }
+      metadata: { ...metadata, feature_key: featureKey, free_quota_used: usedFreeQuota, cost_source: costSource }
     });
 
-    // 7. Get remaining quota
+    // 7. 实时扣费异常监控
+    // 如果不是显式金额且不是免费额度，检查扣费是否与配置一致
+    if (!useExplicitAmount && !usedFreeQuota && actualCost > 0) {
+      // 获取数据库中配置的预期成本
+      let expectedCostFromDb = 1;
+      if (featureItem) {
+        const { data: dbSetting } = await supabase
+          .from('package_feature_settings')
+          .select('cost_per_use')
+          .eq('feature_id', featureItem.id)
+          .order('cost_per_use', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (dbSetting) {
+          expectedCostFromDb = dbSetting.cost_per_use;
+        }
+      }
+
+      // 如果实际扣费与数据库配置不符，记录异常
+      if (actualCost !== expectedCostFromDb) {
+        const deviation = ((actualCost - expectedCostFromDb) / expectedCostFromDb) * 100;
+        
+        console.log(`⚠️ 扣费异常检测: expected=${expectedCostFromDb}, actual=${actualCost}, deviation=${deviation.toFixed(1)}%`);
+        
+        await supabase.from('cost_alerts').insert({
+          alert_type: 'billing_mismatch',
+          user_id: userId,
+          threshold_cny: expectedCostFromDb,
+          actual_cost_cny: actualCost,
+          alert_message: `扣费异常: ${featureName} 预期扣${expectedCostFromDb}点，实际扣${actualCost}点 (偏差${deviation.toFixed(1)}%)`,
+          is_acknowledged: false,
+          metadata: {
+            feature_key: featureKey,
+            feature_name: featureName,
+            expected_amount: expectedCostFromDb,
+            actual_amount: actualCost,
+            deviation_percentage: deviation,
+            cost_source: costSource,
+            source: source
+          }
+        });
+
+        // 严重异常（偏差>50%）立即发送企业微信通知
+        if (Math.abs(deviation) > 50) {
+          try {
+            await supabase.functions.invoke('send-wecom-notification', {
+              body: {
+                notification: {
+                  title: '🚨 严重扣费异常',
+                  message: `功能: ${featureName}\n预期: ${expectedCostFromDb}点\n实际: ${actualCost}点\n偏差: ${deviation.toFixed(1)}%\n\n请立即检查扣费配置！`
+                }
+              }
+            });
+          } catch (notifyError) {
+            console.error('⚠️ 发送通知失败:', notifyError);
+          }
+        }
+      }
+    }
+
+    // 8. Get remaining quota
     const { data: account } = await supabase
       .from('user_accounts')
       .select('remaining_quota')
