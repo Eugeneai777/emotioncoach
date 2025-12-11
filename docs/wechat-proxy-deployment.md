@@ -587,6 +587,61 @@ htop
 
 ---
 
+## 📬 微信模板消息配置
+
+### 模板ID环境变量
+
+| 环境变量 | 用途 | 模板字段结构 |
+|---------|------|-------------|
+| `WECHAT_TEMPLATE_LOGIN` | 登录成功通知 | thing3(用户名), character_string1(账号), time2(时间) |
+| `WECHAT_TEMPLATE_CHECKIN` | 打卡相关通知 | thing10(学生姓名), thing4(打卡名称), time3(时间) |
+| `WECHAT_TEMPLATE_FOLLOWUP` | 智能跟进提醒 | first(开头语), keyword1(用户名), keyword2(内容), keyword3(时间), remark(结尾语) |
+| `WECHAT_TEMPLATE_DEFAULT` | 其他默认场景 | thing1(客户名), thing19(内容), time21(时间) |
+
+### 场景与模板映射
+
+| 场景 | 使用模板 | 说明 |
+|------|---------|------|
+| `login_success` | WECHAT_TEMPLATE_LOGIN | 登录成功通知 |
+| `checkin_success` | WECHAT_TEMPLATE_CHECKIN | 打卡成功通知 |
+| `checkin_streak_milestone` | WECHAT_TEMPLATE_CHECKIN | 连续打卡里程碑 |
+| `checkin_reminder` | WECHAT_TEMPLATE_CHECKIN | 每日打卡提醒 |
+| `checkin_streak_break_warning` | WECHAT_TEMPLATE_CHECKIN | 打卡即将中断 |
+| `after_briefing` | WECHAT_TEMPLATE_FOLLOWUP | 简报生成后跟进 |
+| `emotion_improvement` | WECHAT_TEMPLATE_FOLLOWUP | 情绪改善鼓励 |
+| `goal_milestone` | WECHAT_TEMPLATE_FOLLOWUP | 目标里程碑庆祝 |
+| `sustained_low_mood` | WECHAT_TEMPLATE_FOLLOWUP | 持续低落关怀 |
+| `inactivity` | WECHAT_TEMPLATE_FOLLOWUP | 活跃度提醒 |
+| `consistent_checkin` | WECHAT_TEMPLATE_FOLLOWUP | 坚持打卡鼓励 |
+| `encouragement` | WECHAT_TEMPLATE_FOLLOWUP | 常规鼓励 |
+| 其他 | WECHAT_TEMPLATE_DEFAULT | 默认场景 |
+
+### 智能跟进提醒消息示例
+
+**简报生成后（after_briefing）**
+```
+您好，您的情绪简报已生成
+
+申请人：小红
+问题内容：今日情绪梳理已完成，记得查看成长洞察
+时间：2025年12月11日 18:30
+
+每一次记录都是成长的印记 🌿
+```
+
+**持续低落关怀（sustained_low_mood）**
+```
+您好，劲老师想关心一下您
+
+申请人：小红
+问题内容：发现您最近情绪有些波动
+时间：2025年12月11日 18:30
+
+无论什么时候，我都在这里陪着您 💚
+```
+
+---
+
 ## 💳 微信H5支付代理配置
 
 本代理服务器同样支持微信H5支付API的代理转发。H5支付允许在手机浏览器中直接拉起微信支付，无需扫码。
