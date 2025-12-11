@@ -42,6 +42,8 @@ export const CoachVoiceChat = ({
   const chatRef = useRef<RealtimeChat | null>(null);
   const durationRef = useRef<NodeJS.Timeout | null>(null);
   const lastBilledMinuteRef = useRef(0);
+  const isDeductingRef = useRef(false);  // 防止并发扣费
+  const sessionIdRef = useRef(`voice_${Date.now()}`);  // 固定 session ID
 
   const MEMBER_365_PACKAGE = {
     key: 'member365',
@@ -171,10 +173,10 @@ export const CoachVoiceChat = ({
         body: {
           feature_key: 'realtime_voice',
           source: 'voice_chat',
-          amount: POINTS_PER_MINUTE,  // 显式传递扣费金额作为备用
+          amount: POINTS_PER_MINUTE,  // 显式传递扣费金额
           metadata: {
             minute,
-            session_id: `voice_${Date.now()}`,  // 添加唯一标识
+            session_id: sessionIdRef.current,  // 使用固定 session ID
             coach_key: 'vibrant_life_sage',
             cost_per_minute: POINTS_PER_MINUTE
           }
@@ -334,30 +336,36 @@ export const CoachVoiceChat = ({
     onClose();
   };
 
-  // 每分钟扣费逻辑
+  // 每分钟扣费逻辑 - 添加防并发保护
   useEffect(() => {
     if (status !== 'connected') return;
 
     const currentMinute = Math.floor(duration / 60) + 1; // 第几分钟
     
-    // 检查是否需要扣费（新的一分钟）
-    if (currentMinute > lastBilledMinuteRef.current) {
-      // 检查最大时长限制
-      if (currentMinute > MAX_DURATION_MINUTES) {
-        toast({
-          title: "已达最大时长",
-          description: `单次通话最长 ${MAX_DURATION_MINUTES} 分钟`,
-        });
-        endCall();
-        return;
-      }
-
-      deductQuota(currentMinute).then(success => {
-        if (!success) {
-          endCall();
-        }
-      });
+    // 防并发：检查是否已在扣费中或已扣过这一分钟
+    if (currentMinute <= lastBilledMinuteRef.current || isDeductingRef.current) {
+      return;
     }
+
+    // 检查最大时长限制
+    if (currentMinute > MAX_DURATION_MINUTES) {
+      toast({
+        title: "已达最大时长",
+        description: `单次通话最长 ${MAX_DURATION_MINUTES} 分钟`,
+      });
+      endCall();
+      return;
+    }
+
+    // 立即设置标志，防止并发调用
+    isDeductingRef.current = true;
+    
+    deductQuota(currentMinute).then(success => {
+      isDeductingRef.current = false;  // 扣费完成后重置
+      if (!success) {
+        endCall();
+      }
+    });
   }, [duration, status]);
 
   // 低余额警告
