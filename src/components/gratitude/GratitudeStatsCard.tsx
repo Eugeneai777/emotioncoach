@@ -65,36 +65,36 @@ export const GratitudeStatsCard = ({ entries }: GratitudeStatsCardProps) => {
   };
 
   return (
-    <div className="grid grid-cols-4 gap-3">
-      <div className="p-4 rounded-xl bg-gradient-to-br from-teal-100/80 to-cyan-100/80 dark:from-teal-900/30 dark:to-cyan-900/30 text-center">
-        <div className="text-3xl font-bold text-teal-600 dark:text-teal-400">
+    <div className="grid grid-cols-4 gap-2">
+      <div className="p-2.5 rounded-lg bg-gradient-to-br from-teal-100/80 to-cyan-100/80 dark:from-teal-900/30 dark:to-cyan-900/30 text-center">
+        <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">
           {stats.total}
         </div>
-        <div className="text-xs text-muted-foreground mt-1">总感恩</div>
+        <div className="text-[10px] text-muted-foreground">总感恩</div>
       </div>
       
-      <div className="p-4 rounded-xl bg-gradient-to-br from-amber-100/80 to-orange-100/80 dark:from-amber-900/30 dark:to-orange-900/30 text-center">
-        <div className="flex items-center justify-center gap-1">
-          <span className="text-3xl font-bold text-amber-600 dark:text-amber-400">
+      <div className="p-2.5 rounded-lg bg-gradient-to-br from-amber-100/80 to-orange-100/80 dark:from-amber-900/30 dark:to-orange-900/30 text-center">
+        <div className="flex items-center justify-center gap-0.5">
+          <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">
             {stats.currentStreak}
           </span>
-          <span className="text-lg">{getMilestoneEmoji(stats.currentStreak)}</span>
+          <span className="text-sm">{getMilestoneEmoji(stats.currentStreak)}</span>
         </div>
-        <div className="text-xs text-muted-foreground mt-1">连续天</div>
+        <div className="text-[10px] text-muted-foreground">连续天</div>
       </div>
       
-      <div className="p-4 rounded-xl bg-gradient-to-br from-blue-100/80 to-indigo-100/80 dark:from-blue-900/30 dark:to-indigo-900/30 text-center">
-        <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+      <div className="p-2.5 rounded-lg bg-gradient-to-br from-blue-100/80 to-indigo-100/80 dark:from-blue-900/30 dark:to-indigo-900/30 text-center">
+        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
           {stats.weekCount}
         </div>
-        <div className="text-xs text-muted-foreground mt-1">本周</div>
+        <div className="text-[10px] text-muted-foreground">本周</div>
       </div>
       
-      <div className="p-4 rounded-xl bg-gradient-to-br from-purple-100/80 to-pink-100/80 dark:from-purple-900/30 dark:to-pink-900/30 text-center">
-        <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+      <div className="p-2.5 rounded-lg bg-gradient-to-br from-purple-100/80 to-pink-100/80 dark:from-purple-900/30 dark:to-pink-900/30 text-center">
+        <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
           {stats.monthCount}
         </div>
-        <div className="text-xs text-muted-foreground mt-1">本月</div>
+        <div className="text-[10px] text-muted-foreground">本月</div>
       </div>
     </div>
   );

@@ -59,7 +59,7 @@ export const GratitudeQuickAdd = ({ userId, onAdded }: GratitudeQuickAddProps) =
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 border-t bg-card/98 backdrop-blur-xl z-50 safe-bottom">
-      <form onSubmit={handleSubmit} className="p-3 max-w-3xl mx-auto">
+      <form onSubmit={handleSubmit} className="px-3 py-2 max-w-3xl mx-auto">
         <div className="flex items-center gap-2">
           <VoiceInputButton 
             onTranscript={handleVoiceTranscript}
@@ -69,8 +69,8 @@ export const GratitudeQuickAdd = ({ userId, onAdded }: GratitudeQuickAddProps) =
             <Input
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="今天感恩什么？按 Enter 记录..."
-              className="bg-muted/50 border-muted"
+              placeholder="今天感恩什么？"
+              className="bg-muted/50 border-muted h-9 text-sm"
               disabled={loading}
             />
           </div>
@@ -78,7 +78,7 @@ export const GratitudeQuickAdd = ({ userId, onAdded }: GratitudeQuickAddProps) =
             type="submit"
             size="icon"
             disabled={!content.trim() || loading}
-            className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shrink-0"
+            className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shrink-0 h-9 w-9"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -87,9 +87,6 @@ export const GratitudeQuickAdd = ({ userId, onAdded }: GratitudeQuickAddProps) =
             )}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center">
-          标签每日凌晨自动分析 · 或手动同步 (1点/条)
-        </p>
       </form>
     </footer>
   );
