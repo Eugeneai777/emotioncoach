@@ -56,6 +56,7 @@ import PanicHistory from "./pages/PanicHistory";
 import PanicVoiceSettings from "./pages/PanicVoiceSettings";
 import VoiceCloneSetup from "./pages/VoiceCloneSetup";
 import EmotionButtonIntro from "./pages/EmotionButtonIntro";
+import VibrantLifeIntro from "./pages/VibrantLifeIntro";
 import GratitudeJournalIntro from "./pages/GratitudeJournalIntro";
 import GratitudeHistory from "./pages/GratitudeHistory";
 import ApiDocs from "./pages/ApiDocs";
