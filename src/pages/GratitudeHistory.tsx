@@ -118,6 +118,7 @@ const GratitudeHistory = () => {
             entries={entries}
             filterTag={filterTag}
             onFilterTagChange={setFilterTag}
+            onRefresh={loadEntries}
           />
 
           {/* AI Dashboard - Collapsible */}

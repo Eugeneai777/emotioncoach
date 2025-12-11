@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { Heart, ChevronDown, X, Filter } from "lucide-react";
+import { Heart, ChevronDown, X, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GratitudeThemeBadge, THEME_DEFINITIONS } from "./GratitudeThemeBadge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface GratitudeEntry {
   id: string;
@@ -17,15 +19,19 @@ interface GratitudeEntriesListProps {
   entries: GratitudeEntry[];
   filterTag: string | null;
   onFilterTagChange: (tag: string | null) => void;
+  onRefresh: () => void;
 }
 
 export const GratitudeEntriesList = ({ 
   entries, 
   filterTag, 
-  onFilterTagChange 
+  onFilterTagChange,
+  onRefresh
 }: GratitudeEntriesListProps) => {
   const [timeFilter, setTimeFilter] = useState<"all" | "week" | "month">("all");
   const [showCount, setShowCount] = useState(20);
+  const [analyzingIds, setAnalyzingIds] = useState<Set<string>>(new Set());
+  const [batchAnalyzing, setBatchAnalyzing] = useState(false);
 
   const filteredEntries = useMemo(() => {
     let result = [...entries];
@@ -47,6 +53,15 @@ export const GratitudeEntriesList = ({
     
     return result;
   }, [entries, timeFilter, filterTag]);
+
+  // Calculate global index for each entry
+  const entryIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    entries.forEach((entry, idx) => {
+      map.set(entry.id, entries.length - idx);
+    });
+    return map;
+  }, [entries]);
 
   // Group by date
   const groupedEntries = useMemo(() => {
@@ -71,6 +86,53 @@ export const GratitudeEntriesList = ({
 
   const selectedTagDef = filterTag ? THEME_DEFINITIONS.find(t => t.id === filterTag) : null;
 
+  // Count unanalyzed entries
+  const unanalyzedCount = entries.filter(e => !e.themes || e.themes.length === 0).length;
+
+  const handleReanalyze = async (entryId: string, content: string) => {
+    setAnalyzingIds(prev => new Set(prev).add(entryId));
+    try {
+      const { error } = await supabase.functions.invoke("analyze-gratitude-entry", {
+        body: { entryId, content },
+      });
+      if (error) throw error;
+      toast({ title: "分析完成 ✨" });
+      onRefresh();
+    } catch (err) {
+      console.error("分析失败:", err);
+      toast({ title: "分析失败", variant: "destructive" });
+    } finally {
+      setAnalyzingIds(prev => {
+        const next = new Set(prev);
+        next.delete(entryId);
+        return next;
+      });
+    }
+  };
+
+  const handleBatchAnalyze = async () => {
+    const unanalyzed = entries.filter(e => !e.themes || e.themes.length === 0);
+    if (unanalyzed.length === 0) return;
+
+    setBatchAnalyzing(true);
+    let successCount = 0;
+
+    for (const entry of unanalyzed) {
+      try {
+        const { error } = await supabase.functions.invoke("analyze-gratitude-entry", {
+          body: { entryId: entry.id, content: entry.content },
+        });
+        if (!error) successCount++;
+      } catch (err) {
+        console.error("分析失败:", err);
+      }
+    }
+
+    setBatchAnalyzing(false);
+    toast({ title: `已分析 ${successCount}/${unanalyzed.length} 条记录 ✨` });
+    onRefresh();
+  };
+
   return (
     <div className="rounded-xl bg-white/60 dark:bg-gray-800/40 backdrop-blur overflow-hidden">
       {/* Header */}
@@ -79,9 +141,26 @@ export const GratitudeEntriesList = ({
           <h3 className="text-sm font-medium flex items-center gap-2">
             📝 全部感恩记录
             <span className="text-xs text-muted-foreground font-normal">
-              共 {filteredEntries.length} 条
+              共 {entries.length} 条
             </span>
           </h3>
+          
+          {unanalyzedCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBatchAnalyze}
+              disabled={batchAnalyzing}
+              className="text-xs h-7"
+            >
+              {batchAnalyzing ? (
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3 h-3 mr-1" />
+              )}
+              分析全部 ({unanalyzedCount})
+            </Button>
+          )}
         </div>
         
         {/* Filters */}
@@ -138,6 +217,8 @@ export const GratitudeEntriesList = ({
                   {group.entries.map(entry => {
                     const themes = entry.themes || [];
                     const primaryTheme = themes[0] ? THEME_DEFINITIONS.find(t => t.id === themes[0]) : null;
+                    const globalIndex = entryIndexMap.get(entry.id) || 0;
+                    const isAnalyzing = analyzingIds.has(entry.id);
                     
                     return (
                       <div
@@ -149,19 +230,35 @@ export const GratitudeEntriesList = ({
                         }}
                       >
                         <div className="flex items-start justify-between gap-2 mb-1">
-                          <div className="flex flex-wrap gap-1">
-                            {themes.length > 0 ? (
-                              themes.map((themeId, idx) => (
-                                <GratitudeThemeBadge
-                                  key={themeId}
-                                  themeId={themeId}
-                                  size="sm"
-                                  showLabel={idx === 0}
-                                />
-                              ))
-                            ) : (
-                              <span className="text-xs text-muted-foreground">待分析</span>
-                            )}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                              #{globalIndex}
+                            </span>
+                            <div className="flex flex-wrap gap-1">
+                              {themes.length > 0 ? (
+                                themes.map((themeId, idx) => (
+                                  <GratitudeThemeBadge
+                                    key={themeId}
+                                    themeId={themeId}
+                                    size="sm"
+                                    showLabel={idx === 0}
+                                  />
+                                ))
+                              ) : (
+                                <button
+                                  onClick={() => handleReanalyze(entry.id, entry.content)}
+                                  disabled={isAnalyzing}
+                                  className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                                >
+                                  {isAnalyzing ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="w-3 h-3" />
+                                  )}
+                                  {isAnalyzing ? "分析中..." : "点击分析"}
+                                </button>
+                              )}
+                            </div>
                           </div>
                           <span className="text-xs text-muted-foreground shrink-0">
                             {format(new Date(entry.created_at), "HH:mm")}
