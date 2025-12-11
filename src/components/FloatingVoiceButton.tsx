@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle } from 'lucide-react';
+import { Phone } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
@@ -244,7 +244,7 @@ const FloatingVoiceButton: React.FC = () => {
           <div className={`relative w-14 h-14 bg-gradient-to-r from-rose-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg shadow-rose-500/30 transition-all duration-200 ${
             isDragging ? 'scale-110 shadow-xl shadow-rose-500/50' : 'hover:scale-105 hover:shadow-xl hover:shadow-rose-500/40'
           }`}>
-            <MessageCircle className="w-6 h-6 text-white" />
+            <Phone className="w-6 h-6 text-white" />
           </div>
         </div>
         
