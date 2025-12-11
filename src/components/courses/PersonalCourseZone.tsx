@@ -82,7 +82,7 @@ export const PersonalCourseZone = ({ onWatchCourse }: PersonalCourseZoneProps) =
           .order("created_at", { ascending: false })
           .limit(5),
         
-        // 4. 有劲生活教练简报
+        // 4. 有劲AI简报
         supabase
           .from("vibrant_life_sage_briefings")
           .select("id, created_at, user_issue_summary, reasoning, conversation_id")

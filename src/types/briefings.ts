@@ -43,7 +43,7 @@ export const coachConfig: Record<CoachType, { icon: string; color: string; label
   vibrant_life: {
     icon: '❤️',
     color: 'text-rose-600',
-    label: '有劲生活教练',
+    label: '有劲AI',
     gradient: 'from-rose-500/10 to-red-500/5'
   }
 };

@@ -51,7 +51,7 @@ export const getCoachSpaceInfo = (
         routePath: '/parent-child-diary'
       },
       vibrant_life: {
-        name: '有劲生活教练',
+        name: '有劲AI',
         shortName: '有劲',
         emoji: '❤️',
         colorClass: 'text-rose-600 dark:text-rose-400',
