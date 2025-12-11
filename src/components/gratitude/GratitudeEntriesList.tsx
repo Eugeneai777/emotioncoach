@@ -151,14 +151,36 @@ export const GratitudeEntriesList = ({
   return (
     <div className="rounded-xl bg-white/60 dark:bg-gray-800/40 backdrop-blur overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-border/50">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium flex items-center gap-2">
-            📝 全部感恩记录
-            <span className="text-xs text-muted-foreground font-normal">
-              共 {entries.length} 条
-            </span>
-          </h3>
+      <div className="p-3 border-b border-border/50">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className="text-sm font-medium whitespace-nowrap">📝 记录</h3>
+            <span className="text-xs text-muted-foreground">({entries.length})</span>
+            
+            {/* Filters inline */}
+            <Select value={timeFilter} onValueChange={(v) => setTimeFilter(v as typeof timeFilter)}>
+              <SelectTrigger className="w-16 h-6 text-xs px-2">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部</SelectItem>
+                <SelectItem value="week">本周</SelectItem>
+                <SelectItem value="month">本月</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {filterTag && (
+              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-xs">
+                <span className="text-xs">{selectedTagDef?.emoji}</span>
+                <button
+                  onClick={() => onFilterTagChange(null)}
+                  className="hover:text-destructive"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+          </div>
           
           {unanalyzedCount > 0 && (
             <Button
@@ -166,48 +188,23 @@ export const GratitudeEntriesList = ({
               size="sm"
               onClick={handleBatchAnalyze}
               disabled={batchAnalyzing}
-              className="text-xs h-7 bg-gradient-to-r from-teal-500/10 to-cyan-500/10 border-teal-200 hover:border-teal-300"
+              className="text-xs h-6 px-2 bg-gradient-to-r from-teal-500/10 to-cyan-500/10 border-teal-200 hover:border-teal-300 shrink-0"
             >
               {batchAnalyzing ? (
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
-                <RefreshCw className="w-3 h-3 mr-1" />
+                <>
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  {unanalyzedCount}
+                </>
               )}
-              同步分析 ({unanalyzedCount}条·扣1点)
             </Button>
-          )}
-        </div>
-        
-        {/* Filters */}
-        <div className="flex items-center gap-2">
-          <Select value={timeFilter} onValueChange={(v) => setTimeFilter(v as typeof timeFilter)}>
-            <SelectTrigger className="w-24 h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部</SelectItem>
-              <SelectItem value="week">本周</SelectItem>
-              <SelectItem value="month">本月</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          {filterTag && (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-xs">
-              <span>{selectedTagDef?.emoji}</span>
-              <span>{selectedTagDef?.name}</span>
-              <button
-                onClick={() => onFilterTagChange(null)}
-                className="ml-1 hover:text-destructive"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
           )}
         </div>
       </div>
       
       {/* Entries */}
-      <div className="max-h-[500px] overflow-y-auto">
+      <div className="max-h-[400px] overflow-y-auto">
         {groupedEntries.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <Heart className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -223,17 +220,17 @@ export const GratitudeEntriesList = ({
         ) : (
           <div className="divide-y divide-border/30">
             {groupedEntries.map(group => (
-              <div key={group.date} className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-muted-foreground">
+              <div key={group.date} className="p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-muted-foreground">
                     {group.displayDate}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    {group.entries.length} 条
+                  <span className="text-[10px] text-muted-foreground">
+                    {group.entries.length}条
                   </span>
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {group.entries.map(entry => {
                     const themes = entry.themes || [];
                     const primaryTheme = themes[0] ? THEME_DEFINITIONS.find(t => t.id === themes[0]) : null;
@@ -243,48 +240,46 @@ export const GratitudeEntriesList = ({
                     return (
                       <div
                         key={entry.id}
-                        className="p-3 rounded-lg border-l-4 transition-all hover:shadow-sm"
+                        className="p-2 rounded-lg border-l-3 transition-all hover:shadow-sm"
                         style={{
+                          borderLeftWidth: "3px",
                           borderLeftColor: primaryTheme?.color || "hsl(var(--muted))",
                           backgroundColor: primaryTheme ? `${primaryTheme.color}08` : "hsl(var(--muted)/0.05)"
                         }}
                       >
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
-                              #{globalIndex}
-                            </span>
-                            <div className="flex flex-wrap gap-1">
-                              {themes.length > 0 ? (
-                                themes.map((themeId, idx) => (
-                                  <GratitudeThemeBadge
-                                    key={themeId}
-                                    themeId={themeId}
-                                    size="sm"
-                                    showLabel={idx === 0}
-                                  />
-                                ))
-                              ) : (
-                                <button
-                                  onClick={() => handleReanalyze(entry.id, entry.content)}
-                                  disabled={isAnalyzing}
-                                  className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
-                                >
-                                  {isAnalyzing ? (
-                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                  ) : (
-                                    <RefreshCw className="w-3 h-3" />
-                                  )}
-                                  {isAnalyzing ? "分析中..." : "点击分析"}
-                                </button>
-                              )}
-                            </div>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="text-[10px] font-semibold text-primary/70">
+                            #{globalIndex}
+                          </span>
+                          <div className="flex items-center gap-1 flex-1 min-w-0">
+                            {themes.length > 0 ? (
+                              themes.slice(0, 2).map((themeId) => (
+                                <GratitudeThemeBadge
+                                  key={themeId}
+                                  themeId={themeId}
+                                  size="sm"
+                                  showLabel={false}
+                                />
+                              ))
+                            ) : (
+                              <button
+                                onClick={() => handleReanalyze(entry.id, entry.content)}
+                                disabled={isAnalyzing}
+                                className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-0.5"
+                              >
+                                {isAnalyzing ? (
+                                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="w-2.5 h-2.5" />
+                                )}
+                              </button>
+                            )}
                           </div>
-                          <span className="text-xs text-muted-foreground shrink-0">
+                          <span className="text-[10px] text-muted-foreground shrink-0">
                             {format(new Date(entry.created_at), "HH:mm")}
                           </span>
                         </div>
-                        <p className="text-sm leading-relaxed">{entry.content}</p>
+                        <p className="text-xs leading-relaxed text-foreground/90">{entry.content}</p>
                       </div>
                     );
                   })}
