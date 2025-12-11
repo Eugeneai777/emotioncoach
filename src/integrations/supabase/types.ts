@@ -56,6 +56,65 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_corrections: {
+        Row: {
+          alert_id: string | null
+          completed_at: string | null
+          correction_amount: number
+          correction_type: string
+          created_at: string
+          error_message: string | null
+          expected_amount: number
+          feature_key: string | null
+          feature_name: string | null
+          id: string
+          original_amount: number
+          status: string
+          usage_record_id: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_id?: string | null
+          completed_at?: string | null
+          correction_amount: number
+          correction_type: string
+          created_at?: string
+          error_message?: string | null
+          expected_amount: number
+          feature_key?: string | null
+          feature_name?: string | null
+          id?: string
+          original_amount: number
+          status?: string
+          usage_record_id?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_id?: string | null
+          completed_at?: string | null
+          correction_amount?: number
+          correction_type?: string
+          created_at?: string
+          error_message?: string | null
+          expected_amount?: number
+          feature_key?: string | null
+          feature_name?: string | null
+          id?: string
+          original_amount?: number
+          status?: string
+          usage_record_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_corrections_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "cost_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       breathing_sessions: {
         Row: {
           created_at: string | null
@@ -1045,6 +1104,8 @@ export type Database = {
           actual_cost_cny: number | null
           alert_message: string | null
           alert_type: string
+          correction_id: string | null
+          correction_status: string | null
           created_at: string | null
           id: string
           is_acknowledged: boolean | null
@@ -1058,6 +1119,8 @@ export type Database = {
           actual_cost_cny?: number | null
           alert_message?: string | null
           alert_type: string
+          correction_id?: string | null
+          correction_status?: string | null
           created_at?: string | null
           id?: string
           is_acknowledged?: boolean | null
@@ -1071,6 +1134,8 @@ export type Database = {
           actual_cost_cny?: number | null
           alert_message?: string | null
           alert_type?: string
+          correction_id?: string | null
+          correction_status?: string | null
           created_at?: string | null
           id?: string
           is_acknowledged?: boolean | null
@@ -1078,7 +1143,15 @@ export type Database = {
           threshold_cny?: number | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cost_alerts_correction_id_fkey"
+            columns: ["correction_id"]
+            isOneToOne: false
+            referencedRelation: "billing_corrections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       custom_carousel_cards: {
         Row: {
