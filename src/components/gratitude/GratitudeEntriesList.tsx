@@ -173,7 +173,7 @@ export const GratitudeEntriesList = ({
               ) : (
                 <RefreshCw className="w-3 h-3 mr-1" />
               )}
-              同步分析 ({unanalyzedCount}条·扣{unanalyzedCount}点)
+              同步分析 ({unanalyzedCount}条·扣1点)
             </Button>
           )}
         </div>
