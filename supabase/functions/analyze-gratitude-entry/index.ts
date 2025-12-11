@@ -24,13 +24,40 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { entryId, content } = await req.json();
+    const { entryId, content, skipDeduct } = await req.json();
 
     if (!content) {
       return new Response(JSON.stringify({ error: "Content is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Deduct quota (1 point per analysis) unless skipDeduct is true
+    if (!skipDeduct) {
+      const deductResponse = await fetch(`${supabaseUrl}/functions/v1/deduct-quota`, {
+        method: "POST",
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          feature_key: "gratitude_analysis",
+          source: "gratitude_entry_analysis",
+        }),
+      });
+
+      if (!deductResponse.ok) {
+        const errorData = await deductResponse.json().catch(() => ({}));
+        console.error("Deduct quota failed:", deductResponse.status, errorData);
+        return new Response(
+          JSON.stringify({
+            error: "余额不足，无法分析标签",
+            insufficient_quota: true,
+          }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Fetch theme definitions for keywords

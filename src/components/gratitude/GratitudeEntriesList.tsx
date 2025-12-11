@@ -115,22 +115,37 @@ export const GratitudeEntriesList = ({
     if (unanalyzed.length === 0) return;
 
     setBatchAnalyzing(true);
-    let successCount = 0;
+    try {
+      const { data, error } = await supabase.functions.invoke("batch-analyze-gratitude", {
+        body: {},
+      });
 
-    for (const entry of unanalyzed) {
-      try {
-        const { error } = await supabase.functions.invoke("analyze-gratitude-entry", {
-          body: { entryId: entry.id, content: entry.content },
+      if (error) {
+        console.error("批量分析失败:", error);
+        toast({ 
+          title: "分析失败", 
+          description: error.message || "请稍后重试",
+          variant: "destructive" 
         });
-        if (!error) successCount++;
-      } catch (err) {
-        console.error("分析失败:", err);
+      } else if (data?.insufficient_quota || data?.failed > 0 && data?.success === 0) {
+        toast({ 
+          title: "余额不足", 
+          description: "请充值后再试",
+          variant: "destructive" 
+        });
+      } else {
+        toast({ 
+          title: `已分析 ${data?.success || 0} 条记录 ✨`,
+          description: data?.failed > 0 ? `${data.failed} 条失败` : undefined
+        });
       }
+      onRefresh();
+    } catch (err) {
+      console.error("批量分析出错:", err);
+      toast({ title: "分析失败", variant: "destructive" });
+    } finally {
+      setBatchAnalyzing(false);
     }
-
-    setBatchAnalyzing(false);
-    toast({ title: `已分析 ${successCount}/${unanalyzed.length} 条记录 ✨` });
-    onRefresh();
   };
 
   return (
@@ -151,14 +166,14 @@ export const GratitudeEntriesList = ({
               size="sm"
               onClick={handleBatchAnalyze}
               disabled={batchAnalyzing}
-              className="text-xs h-7"
+              className="text-xs h-7 bg-gradient-to-r from-teal-500/10 to-cyan-500/10 border-teal-200 hover:border-teal-300"
             >
               {batchAnalyzing ? (
                 <Loader2 className="w-3 h-3 mr-1 animate-spin" />
               ) : (
                 <RefreshCw className="w-3 h-3 mr-1" />
               )}
-              分析全部 ({unanalyzedCount})
+              同步分析 ({unanalyzedCount}条·扣{unanalyzedCount}点)
             </Button>
           )}
         </div>

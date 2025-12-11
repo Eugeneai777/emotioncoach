@@ -35,26 +35,11 @@ export const GratitudeQuickAdd = ({ userId, onAdded }: GratitudeQuickAddProps) =
       if (error) throw error;
 
       toast({
-        title: "记录成功 ❤️",
-        description: "感恩的心，让生活更美好"
+        title: "记录成功 ✨",
+        description: "标签将自动分析，或点击「同步分析」立即生成"
       });
 
       setContent("");
-      
-      // Auto analyze with AI and wait for completion
-      if (insertedData) {
-        try {
-          const { error: analyzeError } = await supabase.functions.invoke("analyze-gratitude-entry", {
-            body: { entryId: insertedData.id, content: content.trim() },
-          });
-          if (analyzeError) {
-            console.error("分析失败:", analyzeError);
-          }
-        } catch (err) {
-          console.error("分析出错:", err);
-        }
-      }
-
       onAdded();
     } catch (error) {
       console.error("Error saving:", error);
@@ -94,7 +79,7 @@ export const GratitudeQuickAdd = ({ userId, onAdded }: GratitudeQuickAddProps) =
         </Button>
       </div>
       <p className="text-xs text-muted-foreground mt-2 text-center">
-        AI 会自动分析标签 ✨
+        标签每日凌晨自动分析 · 或手动同步 (1点/条)
       </p>
     </form>
   );

@@ -227,3 +227,6 @@ verify_jwt = true
 
 [functions.generate-gratitude-dashboard]
 verify_jwt = true
+
+[functions.batch-analyze-gratitude]
+verify_jwt = true
