@@ -63,11 +63,35 @@ serve(async (req) => {
 
     console.log(`Found ${unanalyzedEntries.length} unanalyzed entries for user ${user.id}`);
 
+    // Deduct 1 point once for the entire batch (not per entry)
+    const deductResponse = await fetch(`${supabaseUrl}/functions/v1/deduct-quota`, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        feature_key: "gratitude_analysis",
+        source: "batch_gratitude_analysis",
+      }),
+    });
+
+    if (!deductResponse.ok) {
+      const deductError = await deductResponse.json().catch(() => ({}));
+      console.error("Quota deduction failed:", deductError);
+      return new Response(
+        JSON.stringify({ error: "余额不足", insufficient_quota: true }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Quota deducted successfully (1 point for batch)");
+
     let successCount = 0;
     let failedCount = 0;
     const results: { entryId: string; success: boolean; error?: string }[] = [];
 
-    // Analyze each entry
+    // Analyze each entry with skipDeduct: true (already deducted once above)
     for (const entry of unanalyzedEntries) {
       try {
         const analyzeResponse = await fetch(`${supabaseUrl}/functions/v1/analyze-gratitude-entry`, {
@@ -79,6 +103,7 @@ serve(async (req) => {
           body: JSON.stringify({
             entryId: entry.id,
             content: entry.content,
+            skipDeduct: true,
           }),
         });
 
