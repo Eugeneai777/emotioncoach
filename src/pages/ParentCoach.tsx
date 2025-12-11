@@ -86,7 +86,8 @@ export default function ParentCoach() {
     notifications, 
     loading: notificationsLoading,
     markAsRead, 
-    deleteNotification 
+    deleteNotification,
+    triggerNotification,
   } = useSmartNotification('parent_coach');
 
   useEffect(() => {
@@ -152,6 +153,13 @@ ${briefingData.growth_story || '暂无记录'}
       setBriefing(pendingBriefing);
       await fetchRecommendations(pendingBriefing);
       setPendingBriefing(null);
+      
+      // 触发智能通知
+      triggerNotification('after_parent', {
+        parent_theme: pendingBriefing.emotion_theme,
+        emotion_intensity: pendingBriefing.emotion_intensity,
+      });
+      
       toast({
         title: "简报已生成",
         description: "已保存到你的亲子日记中"

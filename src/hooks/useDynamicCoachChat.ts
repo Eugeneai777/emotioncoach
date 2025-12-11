@@ -54,7 +54,8 @@ export const useDynamicCoachChat = (
   edgeFunctionName: string,
   briefingTableName: string,
   briefingToolConfig?: BriefingToolConfig,
-  conversationId?: string
+  conversationId?: string,
+  onBriefingGenerated?: (briefingData: any) => void
 ) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -151,6 +152,14 @@ export const useDynamicCoachChat = (
         title: "简报已生成",
         description: "你的对话简报已保存 ✨",
       });
+      
+      // 触发简报生成回调（用于智能通知等）
+      if (onBriefingGenerated) {
+        onBriefingGenerated({
+          briefingId: data.id,
+          ...briefingData
+        });
+      }
     } catch (error: any) {
       console.error("保存简报失败:", error);
     }
