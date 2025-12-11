@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, CheckCircle, XCircle, QrCode, RefreshCw } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, QrCode, RefreshCw, Copy, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -29,6 +29,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
   const { user } = useAuth();
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  const [payUrl, setPayUrl] = useState<string>('');
   const [orderNo, setOrderNo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
@@ -51,8 +52,20 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
     clearTimers();
     setStatus('idle');
     setQrCodeDataUrl('');
+    setPayUrl('');
     setOrderNo('');
     setErrorMessage('');
+  };
+
+  // 复制链接
+  const handleCopyLink = async () => {
+    if (!payUrl) return;
+    try {
+      await navigator.clipboard.writeText(payUrl);
+      toast.success('链接已复制，请在微信中打开');
+    } catch (error) {
+      toast.error('复制失败，请手动复制');
+    }
   };
 
   // 创建订单
@@ -74,6 +87,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
 
       if (error) throw error;
       if (!data.success) throw new Error(data.error || '创建订单失败');
+
+      // 保存支付链接
+      setPayUrl(data.qrCodeUrl);
 
       // 生成二维码
       const qrDataUrl = await QRCode.toDataURL(data.qrCodeUrl, {
@@ -223,13 +239,25 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
 
           {/* 状态提示 */}
           {(status === 'ready' || status === 'polling') && (
-            <div className="text-center space-y-1">
+            <div className="text-center space-y-2">
               <p className="text-sm text-muted-foreground">请使用微信扫码支付</p>
               {status === 'polling' && (
                 <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   等待支付中...
                 </p>
+              )}
+              {/* 复制链接按钮 */}
+              {payUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyLink}
+                  className="gap-2 text-xs"
+                >
+                  <Copy className="h-3 w-3" />
+                  复制链接去微信打开
+                </Button>
               )}
             </div>
           )}
