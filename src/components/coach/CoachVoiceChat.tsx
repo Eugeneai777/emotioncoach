@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink } from 'lucide-react';
+import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock } from 'lucide-react';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,6 +44,8 @@ export const CoachVoiceChat = ({
   const [pendingNavigation, setPendingNavigation] = useState<{ path: string; name: string } | null>(null);
   const [searchResults, setSearchResults] = useState<any[] | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [courseRecommendations, setCourseRecommendations] = useState<any[] | null>(null);
+  const [campRecommendations, setCampRecommendations] = useState<any[] | null>(null);
   const chatRef = useRef<RealtimeChat | null>(null);
   const durationRef = useRef<NodeJS.Timeout | null>(null);
   const lastBilledMinuteRef = useRef(0);
@@ -122,6 +124,14 @@ export const CoachVoiceChat = ({
       search_community_posts: {
         title: '🔍 社区搜索',
         getDesc: (r) => r?.found ? `找到 ${r?.posts?.length || 0} 条相关分享` : '未找到相关内容'
+      },
+      recommend_course: {
+        title: '📚 课程推荐',
+        getDesc: (r) => r?.courses?.length > 0 ? `找到 ${r?.courses?.length} 个相关课程` : '正在搜索课程...'
+      },
+      recommend_training_camp: {
+        title: '🏕️ 训练营推荐',
+        getDesc: (r) => r?.camps?.length > 0 ? `为你推荐 ${r?.camps?.length} 个训练营` : '正在搜索训练营...'
       }
     };
     
@@ -332,6 +342,24 @@ export const CoachVoiceChat = ({
               toast({
                 title: `🔍 找到 ${event.posts.length} 条关于"${event.keyword}"的分享`,
                 description: "点击卡片查看详情",
+              });
+            }
+          } else if (event.type === 'course_recommendations') {
+            // 处理课程推荐
+            setCourseRecommendations(event.courses || []);
+            if (event.courses?.length > 0) {
+              toast({
+                title: `📚 找到 ${event.courses.length} 个${event.topic ? '关于"' + event.topic + '"的' : ''}课程`,
+                description: "点击卡片开始学习",
+              });
+            }
+          } else if (event.type === 'camp_recommendations') {
+            // 处理训练营推荐
+            setCampRecommendations(event.camps || []);
+            if (event.camps?.length > 0) {
+              toast({
+                title: `🏕️ 为你推荐 ${event.camps.length} 个训练营`,
+                description: "点击卡片了解详情",
               });
             }
           } else if (event.type === 'tool_error' && event.requiresAuth) {
@@ -681,6 +709,154 @@ export const CoachVoiceChat = ({
             >
               <ExternalLink className="w-3 h-3 mr-1" />
               查看全部社区内容
+            </Button>
+          </div>
+        )}
+
+        {/* 课程推荐卡片浮层 */}
+        {courseRecommendations && courseRecommendations.length > 0 && (
+          <div className="absolute bottom-40 left-4 right-4 bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 max-h-64 overflow-y-auto">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-primary" />
+                <span className="text-white/90 text-sm font-medium">📚 推荐课程</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCourseRecommendations(null)}
+                className="text-white/50 hover:text-white hover:bg-white/10 h-6 w-6 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {courseRecommendations.slice(0, 3).map((course) => (
+                <div
+                  key={course.id}
+                  onClick={() => {
+                    if (course.video_url) {
+                      window.open(course.video_url, '_blank');
+                    } else {
+                      chatRef.current?.disconnect();
+                      if (durationRef.current) {
+                        clearInterval(durationRef.current);
+                      }
+                      recordSession().then(() => {
+                        navigate(`/courses`);
+                      });
+                    }
+                  }}
+                  className="bg-gradient-to-br from-primary/30 to-primary/10 hover:from-primary/40 hover:to-primary/20 rounded-xl p-3 cursor-pointer transition-all border border-primary/20 hover:border-primary/40 w-44 flex-shrink-0"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="px-2 py-0.5 bg-primary/20 rounded-full text-white text-xs">
+                      匹配 {course.match_score}%
+                    </span>
+                    {course.category && (
+                      <span className="text-white/50 text-xs truncate">{course.category}</span>
+                    )}
+                  </div>
+                  <h4 className="text-white font-medium text-sm line-clamp-2 mb-1">{course.title}</h4>
+                  {course.description && (
+                    <p className="text-white/60 text-xs line-clamp-2">{course.description}</p>
+                  )}
+                  <div className="flex items-center gap-2 mt-2 text-white/50 text-xs">
+                    <Play className="w-3 h-3" />
+                    <span>点击观看</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                chatRef.current?.disconnect();
+                if (durationRef.current) {
+                  clearInterval(durationRef.current);
+                }
+                recordSession().then(() => {
+                  navigate('/courses');
+                });
+              }}
+              className="w-full mt-3 text-white/70 hover:text-white hover:bg-white/10 text-xs"
+            >
+              <ExternalLink className="w-3 h-3 mr-1" />
+              查看全部课程
+            </Button>
+          </div>
+        )}
+
+        {/* 训练营推荐卡片浮层 */}
+        {campRecommendations && campRecommendations.length > 0 && (
+          <div className="absolute bottom-40 left-4 right-4 bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 max-h-64 overflow-y-auto">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Tent className="w-4 h-4 text-amber-400" />
+                <span className="text-white/90 text-sm font-medium">🏕️ 推荐训练营</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCampRecommendations(null)}
+                className="text-white/50 hover:text-white hover:bg-white/10 h-6 w-6 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {campRecommendations.slice(0, 3).map((camp) => (
+                <div
+                  key={camp.id}
+                  onClick={() => {
+                    chatRef.current?.disconnect();
+                    if (durationRef.current) {
+                      clearInterval(durationRef.current);
+                    }
+                    recordSession().then(() => {
+                      navigate(`/camp/${camp.id}`);
+                    });
+                  }}
+                  className={`rounded-xl p-3 cursor-pointer transition-all w-44 flex-shrink-0 bg-gradient-to-br ${camp.gradient || 'from-amber-500/40 to-orange-500/30'} border border-white/20 hover:border-white/40`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">{camp.icon || '🏕️'}</span>
+                    {camp.already_joined && (
+                      <span className="px-2 py-0.5 bg-green-500/30 rounded-full text-white text-xs">已参加</span>
+                    )}
+                  </div>
+                  <h4 className="text-white font-medium text-sm line-clamp-1">{camp.camp_name}</h4>
+                  {camp.camp_subtitle && (
+                    <p className="text-white/70 text-xs mt-1 line-clamp-2">{camp.camp_subtitle}</p>
+                  )}
+                  <div className="flex items-center gap-2 mt-2 text-white/60 text-xs">
+                    <Clock className="w-3 h-3" />
+                    <span>{camp.duration_days}天 · 系统学习</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                chatRef.current?.disconnect();
+                if (durationRef.current) {
+                  clearInterval(durationRef.current);
+                }
+                recordSession().then(() => {
+                  navigate('/training-camp');
+                });
+              }}
+              className="w-full mt-3 text-white/70 hover:text-white hover:bg-white/10 text-xs"
+            >
+              <ExternalLink className="w-3 h-3 mr-1" />
+              查看全部训练营
             </Button>
           </div>
         )}

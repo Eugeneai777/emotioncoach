@@ -233,6 +233,40 @@ serve(async (req) => {
           },
           required: ["keyword"]
         }
+      },
+      // 课程推荐工具
+      {
+        type: "function",
+        name: "recommend_course",
+        description: "当用户想学习某个主题、找课程、推荐视频、看教程时调用。触发词：推荐课程、学习、有什么视频、教程、想学",
+        parameters: {
+          type: "object",
+          properties: {
+            topic: { 
+              type: "string", 
+              description: "学习主题关键词，如：焦虑、沟通、领导力、情绪、亲子" 
+            },
+            limit: { 
+              type: "number", 
+              description: "推荐数量，默认3条" 
+            }
+          }
+        }
+      },
+      // 训练营推荐工具
+      {
+        type: "function",
+        name: "recommend_training_camp",
+        description: "当用户想参加训练营、系统学习、21天挑战、找营时调用。触发词：训练营、系统学习、21天、营、挑战、想加入",
+        parameters: {
+          type: "object",
+          properties: {
+            goal: { 
+              type: "string", 
+              description: "用户目标，如：情绪管理、亲子关系、突破困境、成长" 
+            }
+          }
+        }
       }
     ];
 
