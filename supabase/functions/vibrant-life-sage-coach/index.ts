@@ -71,14 +71,76 @@ serve(async (req) => {
       }
     }
 
-    // 从数据库加载系统提示词
-    const { data: templateData } = await supabase
-      .from('coach_templates')
-      .select('system_prompt')
-      .eq('coach_key', 'vibrant_life_sage')
-      .single();
+    // 从数据库加载系统提示词和实时产品信息
+    const [templateRes, packagesRes, coachesRes, campsRes, toolsRes] = await Promise.all([
+      supabase
+        .from('coach_templates')
+        .select('system_prompt')
+        .eq('coach_key', 'vibrant_life_sage')
+        .single(),
+      supabase
+        .from('packages')
+        .select('package_name, price, ai_quota, duration_days, description')
+        .eq('is_active', true)
+        .order('display_order'),
+      supabase
+        .from('coach_templates')
+        .select('coach_key, emoji, title, subtitle, description')
+        .eq('is_active', true)
+        .order('display_order'),
+      supabase
+        .from('camp_templates')
+        .select('camp_type, camp_name, camp_subtitle, duration_days, price, description')
+        .eq('is_active', true)
+        .order('display_order'),
+      supabase
+        .from('energy_studio_tools')
+        .select('tool_id, title, description, category')
+        .eq('is_available', true)
+        .order('display_order'),
+    ]);
 
-    const systemPrompt = templateData?.system_prompt || `你是劲老师，一位温暖的生活教练。帮助用户探索问题、找到方向。`;
+    // 构建实时产品信息
+    const packagesInfo = packagesRes.data?.map(p => 
+      `- ${p.package_name}：¥${p.price}，${p.ai_quota}点对话额度，${p.duration_days}天有效期${p.description ? `，${p.description}` : ''}`
+    ).join('\n') || '暂无套餐信息';
+
+    const coachesInfo = coachesRes.data?.map(c => 
+      `- ${c.emoji || '🧘'} ${c.title}（${c.coach_key}）：${c.subtitle || c.description || ''}`
+    ).join('\n') || '暂无教练信息';
+
+    const campsInfo = campsRes.data?.map(c => 
+      `- ${c.camp_name}（${c.camp_type}）：${c.duration_days}天，¥${c.price || '免费'}，${c.camp_subtitle || c.description || ''}`
+    ).join('\n') || '暂无训练营信息';
+
+    const toolsInfo = toolsRes.data?.map(t => 
+      `- ${t.title}（${t.tool_id}）：${t.description}`
+    ).join('\n') || '暂无工具信息';
+
+    const productKnowledge = `
+
+【最新产品信息 - 请以此为准，不要编造】
+
+## 会员套餐
+${packagesInfo}
+
+## AI教练
+${coachesInfo}
+
+## 训练营
+${campsInfo}
+
+## 能量工具
+${toolsInfo}
+
+【重要提醒】
+- 推荐产品时请使用上述最新信息
+- 不要编造价格、时长或功能
+- 如果用户问到具体价格，请引用上述准确数据
+`;
+
+    const basePrompt = templateRes.data?.system_prompt || `你是劲老师，一位温暖的生活教练。帮助用户探索问题、找到方向。`;
+    const systemPrompt = basePrompt + productKnowledge;
 
     // 定义推荐工具
     const tools = [
