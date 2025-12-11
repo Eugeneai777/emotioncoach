@@ -16,6 +16,14 @@ const SYSTEM_TEMPLATE_IDS: Record<string, string> = {
   'checkin_streak_break_warning': Deno.env.get('WECHAT_TEMPLATE_CHECKIN') || '',
   // 登录成功使用专用模板（用户名、账号、时间结构）
   'login_success': Deno.env.get('WECHAT_TEMPLATE_LOGIN') || '',
+  // 智能跟进提醒场景使用答疑提醒模板 (first, keyword1, keyword2, keyword3, remark)
+  'after_briefing': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
+  'emotion_improvement': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
+  'goal_milestone': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
+  'sustained_low_mood': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
+  'inactivity': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
+  'consistent_checkin': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
+  'encouragement': Deno.env.get('WECHAT_TEMPLATE_FOLLOWUP') || '',
   // 其他场景使用通用模板
   'default': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
 };
@@ -154,6 +162,10 @@ serve(async (req) => {
       'checkin_reminder': '每日打卡提醒',
       'checkin_streak_break_warning': '打卡即将中断',
       'login_success': '登录成功',
+      'after_briefing': '简报生成',
+      'emotion_improvement': '情绪改善',
+      'consistent_checkin': '坚持打卡',
+      'encouragement': '温暖鼓励',
     };
 
     const scenarioName = scenarioNames[scenario] || '系统通知';
@@ -164,8 +176,11 @@ serve(async (req) => {
     // 获取消息内容，支持 message 或 content 字段
     const messageContent = notification.message || notification.content || '欢迎使用';
     
-    // 检测打卡相关场景 (thing1-4结构)
+    // 检测打卡相关场景 (thing10, thing4, time3结构)
     const isCheckinScenario = ['checkin_success', 'checkin_streak_milestone', 'checkin_reminder', 'checkin_streak_break_warning'].includes(scenario);
+    
+    // 检测智能跟进场景 (first, keyword1, keyword2, keyword3, remark结构)
+    const isFollowupScenario = ['after_briefing', 'emotion_improvement', 'goal_milestone', 'sustained_low_mood', 'inactivity', 'consistent_checkin', 'encouragement'].includes(scenario);
     
     if (scenario === 'login_success') {
       // 登录成功模板结构：thing3(用户名)、character_string1(账号)、time2(登录时间)
@@ -215,8 +230,78 @@ serve(async (req) => {
           color: "#173177" 
         },
       };
+    } else if (isFollowupScenario) {
+      // "答疑提醒"模板结构 (first, keyword1, keyword2, keyword3, remark)
+      // 使用北京标准时间 (UTC+8)
+      const now = new Date();
+      const beijingTime = new Date(now.getTime() + (8 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
+      const timeStr = `${beijingTime.getUTCFullYear()}年${beijingTime.getUTCMonth() + 1}月${beijingTime.getUTCDate()}日 ${String(beijingTime.getUTCHours()).padStart(2, '0')}:${String(beijingTime.getUTCMinutes()).padStart(2, '0')}`;
+      
+      // 根据场景生成开头语、核心内容和结尾语
+      const scenarioMessages: Record<string, { first: string; content: string; remark: string }> = {
+        'after_briefing': {
+          first: '您好，您的情绪简报已生成',
+          content: notification.title || '今日情绪梳理已完成，记得查看成长洞察',
+          remark: '每一次记录都是成长的印记 🌿'
+        },
+        'emotion_improvement': {
+          first: '您好，劲老师发现您的情绪正在好转',
+          content: notification.title || '情绪趋势持续改善，继续保持',
+          remark: '您的每一步努力都被看见 ✨'
+        },
+        'goal_milestone': {
+          first: '🎉 恭喜您达成目标里程碑',
+          content: notification.title || '目标进度已更新，快来查看',
+          remark: '每一个小目标都值得庆祝 💪'
+        },
+        'sustained_low_mood': {
+          first: '您好，劲老师想关心一下您',
+          content: notification.title || '发现您最近情绪有些波动',
+          remark: '无论什么时候，我都在这里陪着您 💚'
+        },
+        'inactivity': {
+          first: '您好，好久不见，想您了',
+          content: notification.title || '有空来记录一下最近的心情吧',
+          remark: '慢慢来，劲老师等着您 🌸'
+        },
+        'consistent_checkin': {
+          first: '您好，坚持的力量真棒',
+          content: notification.title || `已连续记录情绪，非常了不起`,
+          remark: '持续的努力终将收获美好 🌟'
+        },
+        'encouragement': {
+          first: '您好，这是来自劲老师的问候',
+          content: notification.title || '今天也要好好照顾自己哦',
+          remark: '您值得被温柔以待 💝'
+        }
+      };
+      
+      const msg = scenarioMessages[scenario] || scenarioMessages['encouragement'];
+      
+      messageData = {
+        first: { 
+          value: msg.first,
+          color: "#173177" 
+        },
+        keyword1: { 
+          value: (displayName || '用户').slice(0, 20),
+          color: "#173177" 
+        },
+        keyword2: { 
+          value: msg.content.slice(0, 20),
+          color: "#173177" 
+        },
+        keyword3: { 
+          value: timeStr,
+          color: "#173177" 
+        },
+        remark: { 
+          value: msg.remark,
+          color: "#173177" 
+        },
+      };
     } else {
-      // "客户跟进提醒"模板结构 (thing1, thing19, time21)
+      // "客户跟进提醒"模板结构 (thing1, thing19, time21) - 其他默认场景
       // 使用北京标准时间 (UTC+8)
       const now = new Date();
       const beijingTime = new Date(now.getTime() + (8 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
@@ -225,9 +310,6 @@ serve(async (req) => {
       // 根据场景设置thing19字段内容
       const scenarioThing19Map: Record<string, string> = {
         'daily_reminder': '今日情绪记录提醒',
-        'goal_milestone': notification.title || '目标达成情况',
-        'sustained_low_mood': '持续低落情绪关怀',
-        'inactivity': '活跃度提醒',
         'weekly_report': '本周情绪报告已生成',
         'goal_at_risk': '目标风险提醒',
       };
