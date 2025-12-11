@@ -214,23 +214,22 @@ serve(async (req) => {
         },
       };
     } else {
-      // "客户跟进提醒"模板结构 (thing1, const12, const9, const14)
+      // "客户跟进提醒"模板结构 (thing1, thing19, time21)
+      const now = new Date();
+      const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      
       messageData = {
         thing1: { 
           value: (displayName || '用户').slice(0, 20),
           color: "#173177" 
         },
-        const12: { 
-          value: (notification.title || '系统通知').slice(0, 20),
+        thing19: { 
+          value: (notification.title || '情绪提醒').slice(0, 20),
           color: "#173177" 
         },
-        const9: { 
-          value: scenarioName,
+        time21: { 
+          value: timeStr,
           color: "#173177" 
-        },
-        const14: { 
-          value: (messageContent || '查看详情').slice(0, 20),
-          color: "#00C853" 
         },
       };
     }
