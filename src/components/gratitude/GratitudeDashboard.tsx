@@ -371,49 +371,49 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
           </Card>
 
           {/* 3. 上升维度 */}
-          <div className="rounded-lg bg-gradient-to-br from-emerald-50/80 to-teal-50/80 dark:from-emerald-950/30 dark:to-teal-950/30 p-3">
-            <h4 className="text-xs font-medium flex items-center gap-1.5 mb-1.5 text-emerald-700 dark:text-emerald-400">
-              <ArrowUp className="w-3 h-3" />
+          <div className="rounded-lg bg-gradient-to-br from-emerald-50/80 to-teal-50/80 dark:from-emerald-950/30 dark:to-teal-950/30 p-4">
+            <h4 className="text-sm font-medium flex items-center gap-2 mb-3 text-emerald-700 dark:text-emerald-400">
+              <ArrowUp className="w-4 h-4" />
               上升维度
             </h4>
             {sections.trendsUp ? (
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
                 {sections.trendsUp.replace(/\*\*/g, '').replace(/^[-•]\s*/gm, '').trim()}
               </p>
             ) : (
-              <p className="text-xs text-muted-foreground">暂无数据</p>
+              <p className="text-sm text-muted-foreground">暂无数据</p>
             )}
           </div>
 
           {/* 💡 需要关注的维度 */}
           {sections.trendsDown && (
-            <div className="rounded-lg bg-gradient-to-br from-amber-50/90 to-orange-50/90 dark:from-amber-950/40 dark:to-orange-950/40 p-3 border border-amber-200/50 dark:border-amber-800/50">
-              <h4 className="text-xs font-medium flex items-center gap-1.5 mb-1.5 text-amber-700 dark:text-amber-400">
-                <AlertCircle className="w-3 h-3" />
+            <div className="rounded-lg bg-gradient-to-br from-amber-50/90 to-orange-50/90 dark:from-amber-950/40 dark:to-orange-950/40 p-4 border border-amber-200/50 dark:border-amber-800/50">
+              <h4 className="text-sm font-medium flex items-center gap-2 mb-3 text-amber-700 dark:text-amber-400">
+                <AlertCircle className="w-4 h-4" />
                 需要关注
               </h4>
-              <p className="text-xs text-amber-900/80 dark:text-amber-100/80 leading-relaxed">
+              <p className="text-sm text-amber-900/80 dark:text-amber-100/80 leading-relaxed whitespace-pre-line">
                 {sections.trendsDown.replace(/\*\*/g, '').replace(/^[-•]\s*/gm, '').trim()}
               </p>
             </div>
           )}
 
           {/* 4. 幸福组合洞察 */}
-          <div className="rounded-lg bg-gradient-to-br from-violet-50/90 to-purple-50/90 dark:from-violet-950/40 dark:to-purple-950/40 p-3 border border-violet-200/50 dark:border-violet-800/50">
-            <h4 className="text-xs font-medium flex items-center gap-1.5 mb-2 text-violet-700 dark:text-violet-400">
-              <Link className="w-3 h-3" />
+          <div className="rounded-lg bg-gradient-to-br from-violet-50/90 to-purple-50/90 dark:from-violet-950/40 dark:to-purple-950/40 p-4 border border-violet-200/50 dark:border-violet-800/50">
+            <h4 className="text-sm font-medium flex items-center gap-2 mb-3 text-violet-700 dark:text-violet-400">
+              <Link className="w-4 h-4" />
               幸福组合洞察
             </h4>
             
             {/* 为什么重要 - 精简版 */}
-            <div className="p-2 bg-violet-100/60 dark:bg-violet-900/30 rounded-md mb-2">
-              <p className="text-xs text-violet-700/80 dark:text-violet-300/80 leading-relaxed">
+            <div className="p-3 bg-violet-100/60 dark:bg-violet-900/30 rounded-md mb-3">
+              <p className="text-sm text-violet-700/80 dark:text-violet-300/80 leading-relaxed">
                 💡 当一个场景触发多种幸福，幸福感会<strong className="text-violet-800 dark:text-violet-200">成倍增长</strong>——这是「幸福复利」
               </p>
             </div>
 
             {sections.trendsPattern ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {(() => {
                   const patternContent = sections.trendsPattern;
                   const targetMatch = patternContent.match(/\*\*🎯[^*]*\*\*[\s\S]*?(?=\*\*🧠|$)/i);
@@ -423,36 +423,36 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
                   return (
                     <>
                       {targetMatch && (
-                        <div className="py-1.5 px-2 bg-white/60 dark:bg-black/20 rounded-md">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <Target className="w-3 h-3 text-violet-500" />
-                            <span className="text-xs font-medium text-violet-700 dark:text-violet-300">组合模式</span>
+                        <div className="p-3 bg-white/60 dark:bg-black/20 rounded-md">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Target className="w-4 h-4 text-violet-500" />
+                            <span className="text-sm font-medium text-violet-700 dark:text-violet-300">组合模式</span>
                           </div>
-                          <p className="text-xs text-muted-foreground leading-relaxed">
+                          <p className="text-sm text-muted-foreground leading-relaxed">
                             {targetMatch[0].replace(/\*\*🎯[^*]*\*\*\s*/i, "").replace(/\*\*/g, '').trim()}
                           </p>
                         </div>
                       )}
 
                       {brainMatch && (
-                        <div className="py-1.5 px-2 bg-blue-50/60 dark:bg-blue-950/20 rounded-md">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <Brain className="w-3 h-3 text-blue-500" />
-                            <span className="text-xs font-medium text-blue-700 dark:text-blue-300">这说明</span>
+                        <div className="p-3 bg-blue-50/60 dark:bg-blue-950/20 rounded-md">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Brain className="w-4 h-4 text-blue-500" />
+                            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">这说明</span>
                           </div>
-                          <p className="text-xs text-blue-800/80 dark:text-blue-200/80 leading-relaxed">
+                          <p className="text-sm text-blue-800/80 dark:text-blue-200/80 leading-relaxed">
                             {brainMatch[0].replace(/\*\*🧠[^*]*\*\*\s*/i, "").replace(/\*\*/g, '').trim()}
                           </p>
                         </div>
                       )}
 
                       {actionMatch && (
-                        <div className="py-1.5 px-2 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 rounded-md border border-emerald-200/60 dark:border-emerald-700/40">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                            <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">行动建议</span>
+                        <div className="p-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 rounded-md border border-emerald-200/60 dark:border-emerald-700/40">
+                          <div className="flex items-center gap-2 mb-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                            <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">行动建议</span>
                           </div>
-                          <p className="text-xs text-emerald-800 dark:text-emerald-200 leading-relaxed">
+                          <p className="text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed">
                             {actionMatch[0].replace(/\*\*✅[^*]*\*\*\s*/i, "").replace(/\*\*/g, '').trim()}
                           </p>
                         </div>
@@ -462,7 +462,7 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
                 })()}
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground text-center py-2">生成报告后可查看</p>
+              <p className="text-sm text-muted-foreground text-center py-3">生成报告后可查看</p>
             )}
           </div>
 
