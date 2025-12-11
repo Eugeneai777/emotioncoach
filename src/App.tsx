@@ -64,6 +64,7 @@ import ApiDocs from "./pages/ApiDocs";
 import PosterCenter from "./pages/PosterCenter";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
 import { Navigate } from "react-router-dom";
+import FloatingVoiceButton from "./components/FloatingVoiceButton";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <FloatingVoiceButton />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
