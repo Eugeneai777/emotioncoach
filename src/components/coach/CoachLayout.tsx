@@ -96,6 +96,9 @@ interface CoachLayoutProps {
   enableVoiceChat?: boolean;
   onVoiceChatClick?: () => void;
   
+  // Voice input feature (speech-to-text)
+  enableVoiceInput?: boolean;
+  
   // Emotion coach specific slots
   intensityPrompt?: ReactNode;
   intensitySelector?: ReactNode;
@@ -167,6 +170,7 @@ export const CoachLayout = ({
   onRefresh,
   enableVoiceChat = false,
   onVoiceChatClick,
+  enableVoiceInput = false,
   intensityPrompt,
   intensitySelector,
   dailyReminderContent,
@@ -475,6 +479,7 @@ export const CoachLayout = ({
           intensitySelector={intensitySelector}
           enableVoiceChat={enableVoiceChat}
           onVoiceChatClick={onVoiceChatClick}
+          enableVoiceInput={enableVoiceInput}
         />
       </div>
       

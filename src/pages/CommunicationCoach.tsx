@@ -138,6 +138,7 @@ const CommunicationCoach = () => {
         trainingCamp={<CoachTrainingCamp campType="identity_bloom" colorTheme="blue" />}
         community={<CoachCommunity />}
         showNotificationCenter={true}
+        enableVoiceInput={true}
       />
       
       <CommunicationDifficultyDialog

@@ -359,6 +359,7 @@ ${briefingData.growth_story || '暂无记录'}
           />
         ) : undefined
       }
+      enableVoiceInput={true}
       dialogs={dialogs}
     />
   );
