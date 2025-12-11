@@ -197,8 +197,10 @@ serve(async (req) => {
       };
     } else if (isCheckinScenario) {
       // "打卡成功通知"模板结构 (thing10学生姓名, thing4打卡名称, time3时间)
+      // 使用北京标准时间 (UTC+8)
       const now = new Date();
-      const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const beijingTime = new Date(now.getTime() + (8 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
+      const timeStr = `${beijingTime.getUTCFullYear()}-${String(beijingTime.getUTCMonth() + 1).padStart(2, '0')}-${String(beijingTime.getUTCDate()).padStart(2, '0')} ${String(beijingTime.getUTCHours()).padStart(2, '0')}:${String(beijingTime.getUTCMinutes()).padStart(2, '0')}`;
       messageData = {
         thing10: { 
           value: (displayName || '用户').slice(0, 20),
@@ -215,8 +217,10 @@ serve(async (req) => {
       };
     } else {
       // "客户跟进提醒"模板结构 (thing1, thing19, time21)
+      // 使用北京标准时间 (UTC+8)
       const now = new Date();
-      const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const beijingTime = new Date(now.getTime() + (8 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
+      const timeStr = `${beijingTime.getUTCFullYear()}-${String(beijingTime.getUTCMonth() + 1).padStart(2, '0')}-${String(beijingTime.getUTCDate()).padStart(2, '0')} ${String(beijingTime.getUTCHours()).padStart(2, '0')}:${String(beijingTime.getUTCMinutes()).padStart(2, '0')}`;
       
       // 根据场景设置thing19字段内容
       const scenarioThing19Map: Record<string, string> = {
