@@ -49,16 +49,26 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { feature_key, source, conversationId, metadata, amount: legacyAmount, feature_type: legacyFeatureType } = await req.json();
+    const { feature_key, source, conversationId, metadata, amount: explicitAmount, feature_type: legacyFeatureType, session_id } = await req.json();
     
     // Support both feature_key (new) and feature_type (legacy)
     const featureKey = feature_key || legacyFeatureType;
 
-    if (!featureKey && !legacyAmount) {
+    console.log(`📥 扣费请求: feature_key=${featureKey}, source=${source}, explicitAmount=${explicitAmount}, session_id=${session_id}`);
+
+    if (!featureKey && !explicitAmount) {
       return new Response(
         JSON.stringify({ error: 'feature_key is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // ⭐ 关键改进：显式 amount 具有最高优先级
+    // 如果前端传递了 amount，直接使用它，不再查询数据库
+    let useExplicitAmount = false;
+    if (explicitAmount && explicitAmount > 0) {
+      useExplicitAmount = true;
+      console.log(`⭐ 使用显式传递的 amount: ${explicitAmount} (最高优先级)`);
     }
 
     // 1. Try to find feature in new feature_items table
@@ -90,21 +100,17 @@ Deno.serve(async (req) => {
       packageId = account?.current_package_id;
     }
 
-    // 优先使用请求中传递的 amount，如果没有则使用 1 作为默认值
-    // 这确保了即使 feature_items 中没有配置，也能使用前端传递的金额
-    let actualCost = legacyAmount || 1;
+    // ⭐ 如果有显式 amount，直接使用；否则使用 1 作为默认值
+    let actualCost = useExplicitAmount ? explicitAmount : 1;
     let featureName = source || featureKey || 'unknown';
-    
-    // 如果有显式传递 amount，记录日志
-    if (legacyAmount) {
-      console.log(`📌 Using explicit amount: ${legacyAmount} for ${featureKey}`);
-    }
+    let costSource = useExplicitAmount ? 'explicit_amount' : 'default';
     let usedFreeQuota = false;
     let isEnabled = true;
     let freeQuota = 0;
     let freeQuotaPeriod = 'monthly';
 
     // 3. If feature exists in new system, use package_feature_settings
+    // ⭐ 但如果有显式 amount，跳过成本查询（仍需检查 is_enabled 和 free_quota）
     if (featureItem) {
       featureName = featureItem.item_name;
 
@@ -129,15 +135,19 @@ Deno.serve(async (req) => {
         if (featureSetting) {
           foundSettings = true;
           isEnabled = featureSetting.is_enabled;
-          actualCost = featureSetting.cost_per_use;
+          // ⭐ 只有在没有显式 amount 时才使用数据库配置的 cost
+          if (!useExplicitAmount) {
+            actualCost = featureSetting.cost_per_use;
+            costSource = 'package_settings';
+          }
           freeQuota = featureSetting.free_quota;
           freeQuotaPeriod = featureSetting.free_quota_period;
-          console.log(`📋 Found package settings: cost=${actualCost}, freeQuota=${freeQuota}`);
+          console.log(`📋 Found package settings: dbCost=${featureSetting.cost_per_use}, actualCost=${actualCost}, freeQuota=${freeQuota}, costSource=${costSource}`);
         }
       }
 
       // 如果用户没有套餐或套餐没有配置该功能，尝试获取任意套餐的默认配置
-      if (!foundSettings) {
+      if (!foundSettings && !useExplicitAmount) {
         const { data: defaultSetting } = await supabase
           .from('package_feature_settings')
           .select('cost_per_use, free_quota, free_quota_period')
@@ -148,13 +158,10 @@ Deno.serve(async (req) => {
 
         if (defaultSetting) {
           actualCost = defaultSetting.cost_per_use;
+          costSource = 'default_package_settings';
           freeQuota = 0; // 无套餐用户不享受免费额度
           freeQuotaPeriod = 'per_use';
           console.log(`ℹ️ No package settings, using default cost: ${actualCost} for ${featureKey}`);
-        } else if (legacyAmount) {
-          // 如果数据库完全没有配置，使用前端传递的 amount
-          actualCost = legacyAmount;
-          console.log(`ℹ️ No DB config, using explicit amount: ${legacyAmount} for ${featureKey}`);
         }
       }
 
@@ -164,8 +171,8 @@ Deno.serve(async (req) => {
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-    } else {
-      // Fallback to legacy feature_cost_rules
+    } else if (!useExplicitAmount) {
+      // Fallback to legacy feature_cost_rules (only if no explicit amount)
       console.log(`⚠️ Feature ${featureKey} not in feature_items, checking legacy rules`);
       
       const { data: costRule } = await supabase
@@ -182,6 +189,7 @@ Deno.serve(async (req) => {
           );
         }
         actualCost = costRule.default_cost;
+        costSource = 'legacy_cost_rules';
         featureName = costRule.feature_name;
       }
 
@@ -200,6 +208,8 @@ Deno.serve(async (req) => {
         }
       }
     }
+
+    console.log(`💰 最终扣费决定: actualCost=${actualCost}, costSource=${costSource}, featureName=${featureName}`);
 
     // 4. Check and use free quota if available
     // Handle special period types: per_use and one_time

@@ -86,25 +86,33 @@ Generate a beautiful header image following these requirements.`;
 
     console.log("正在生成打卡头图，提示词:", prompt);
 
-    // 扣费
+    // 扣费 - 图片生成固定扣 5 点
     const authHeader = req.headers.get('Authorization');
     if (authHeader) {
       try {
-        await fetch(`${Deno.env.get('SUPABASE_URL')!}/functions/v1/deduct-quota`, {
-          method: 'POST',
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+        
+        const { error: deductError } = await supabaseClient.functions.invoke('deduct-quota', {
           headers: {
             'Authorization': authHeader,
-            'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
+          body: {
             feature_key: 'image_generation',
             source: 'generate_checkin_image',
+            amount: 5, // 显式指定扣费金额
             metadata: { style, campName, day }
-          })
+          }
         });
-        console.log(`✅ 打卡头图生成扣费成功`);
+        
+        if (deductError) {
+          console.error('扣费失败:', deductError);
+        } else {
+          console.log(`✅ 打卡头图生成扣费成功: 5 点`);
+        }
       } catch (e) {
-        console.error('扣费失败:', e);
+        console.error('扣费调用异常:', e);
       }
     }
 
