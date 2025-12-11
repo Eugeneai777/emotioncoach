@@ -59,6 +59,7 @@ import EmotionButtonIntro from "./pages/EmotionButtonIntro";
 import VibrantLifeIntro from "./pages/VibrantLifeIntro";
 import GratitudeJournalIntro from "./pages/GratitudeJournalIntro";
 import GratitudeHistory from "./pages/GratitudeHistory";
+import VibrantLifeHistory from "./pages/VibrantLifeHistory";
 import ApiDocs from "./pages/ApiDocs";
 import PosterCenter from "./pages/PosterCenter";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
@@ -128,6 +129,7 @@ const App = () => (
           <Route path="/vibrant-life-intro" element={<VibrantLifeIntro />} />
           <Route path="/gratitude-journal-intro" element={<GratitudeJournalIntro />} />
           <Route path="/gratitude-history" element={<GratitudeHistory />} />
+          <Route path="/vibrant-life-history" element={<VibrantLifeHistory />} />
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="/poster-center" element={<PosterCenter />} />
           <Route path="/coach/:coachKey" element={<DynamicCoach />} />
