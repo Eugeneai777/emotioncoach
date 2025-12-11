@@ -120,6 +120,10 @@ serve(async (req) => {
         result = await recommendCoach(params?.coach_type, params?.reason);
         break;
 
+      case 'navigate_to':
+        result = handleNavigateTo(params?.destination);
+        break;
+
       default:
         result = { error: `Unknown tool: ${tool}` };
     }
@@ -899,11 +903,44 @@ function recommendCoach(coachType: string, reason: string) {
 
   return {
     success: true,
+    action: 'navigate',  // 添加导航 action
     coach_type: coachType,
     coach_name: coach.name,
+    path: coach.route,
     route: coach.route,
     description: coach.description,
     reason: reason,
     message: `推荐你使用${coach.name}，${reason}。你可以点击界面上的链接进入。`
+  };
+}
+
+// 页面导航处理
+function handleNavigateTo(destination: string) {
+  const pathMap: Record<string, { path: string; name: string }> = {
+    emotion_button: { path: '/energy-studio', name: '情绪按钮' },
+    emotion_coach: { path: '/', name: '情绪教练' },
+    parent_coach: { path: '/parent-coach', name: '亲子教练' },
+    communication_coach: { path: '/communication-coach', name: '沟通教练' },
+    story_coach: { path: '/story-coach', name: '故事教练' },
+    gratitude_coach: { path: '/coach/gratitude_coach', name: '感恩教练' },
+    training_camp: { path: '/training-camp', name: '训练营' },
+    community: { path: '/community', name: '社区' },
+    packages: { path: '/packages', name: '套餐' },
+    meditation: { path: '/meditation', name: '冥想' },
+    history: { path: '/history', name: '历史记录' },
+    profile: { path: '/profile', name: '个人中心' }
+  };
+
+  const target = pathMap[destination];
+  if (!target) {
+    return { success: false, error: `未知页面: ${destination}` };
+  }
+
+  return {
+    success: true,
+    action: 'navigate',
+    path: target.path,
+    name: target.name,
+    message: `好的，正在为你打开${target.name}`
   };
 }

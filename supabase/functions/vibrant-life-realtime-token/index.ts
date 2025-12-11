@@ -178,6 +178,36 @@ serve(async (req) => {
             days: { type: "number", description: "查看最近几天，默认7天" }
           }
         }
+      },
+      // 页面导航工具
+      {
+        type: "function",
+        name: "navigate_to",
+        description: "当用户想去某个功能页面时调用。触发词：去、打开、带我去、跳转到、进入、我想看",
+        parameters: {
+          type: "object",
+          properties: {
+            destination: {
+              type: "string",
+              enum: [
+                "emotion_button",
+                "emotion_coach",
+                "parent_coach",
+                "communication_coach",
+                "story_coach",
+                "gratitude_coach",
+                "training_camp",
+                "community",
+                "packages",
+                "meditation",
+                "history",
+                "profile"
+              ],
+              description: "目标页面：emotion_button=情绪按钮，emotion_coach=情绪教练，parent_coach=亲子教练，communication_coach=沟通教练，story_coach=故事教练，gratitude_coach=感恩教练，training_camp=训练营，community=社区，packages=套餐，meditation=冥想，history=历史记录，profile=个人中心"
+            }
+          },
+          required: ["destination"]
+        }
       }
     ];
 
