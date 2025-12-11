@@ -3,6 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Send, RotateCcw, Phone } from "lucide-react";
 import { forwardRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { VoiceInputButton } from "./VoiceInputButton";
 
 interface CoachInputFooterProps {
   input: string;
@@ -22,8 +23,8 @@ interface CoachInputFooterProps {
   intensitySelector?: React.ReactNode;
   enableVoiceChat?: boolean;
   onVoiceChatClick?: () => void;
+  enableVoiceInput?: boolean;
 }
-
 export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElement, CoachInputFooterProps>(({
   input,
   onInputChange,
@@ -41,7 +42,8 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   messagesCount,
   intensitySelector,
   enableVoiceChat = false,
-  onVoiceChatClick
+  onVoiceChatClick,
+  enableVoiceInput = false
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
   const isMobile = useIsMobile();
@@ -104,6 +106,15 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
             >
               <RotateCcw className="w-4 h-4" />
             </Button>
+          )}
+
+          {/* 语音输入按钮 */}
+          {enableVoiceInput && (
+            <VoiceInputButton
+              onTranscript={(text) => onInputChange(input ? `${input} ${text}` : text)}
+              disabled={isLoading}
+              primaryColor={primaryColor}
+            />
           )}
           
           {/* 输入框 - 移动端单行，桌面端多行 */}

@@ -629,6 +629,7 @@ const Index = () => {
           introRoute: '/introduction'
         }}
         enableStepsCollapse={true}
+        enableVoiceInput={true}
         messagesEndRef={messagesEndRef}
       />
     </>
