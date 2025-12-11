@@ -54,7 +54,7 @@ export const GratitudeTagDistribution = ({
 
   if (total === 0) {
     return (
-      <div className="p-4 rounded-xl bg-white/60 dark:bg-gray-800/40 backdrop-blur">
+      <div className="rounded-xl bg-white/60 dark:bg-gray-800/40 backdrop-blur p-4">
         <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
           🏷️ 标签分布
         </h3>
@@ -95,7 +95,7 @@ export const GratitudeTagDistribution = ({
 
   return (
     <TooltipProvider>
-      <div className="p-4 rounded-xl bg-white/60 dark:bg-gray-800/40 backdrop-blur">
+      <div className="rounded-xl bg-white/60 dark:bg-gray-800/40 backdrop-blur p-4">
         <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
           🏷️ 标签分布
           <span className="text-xs text-muted-foreground font-normal">点击筛选</span>

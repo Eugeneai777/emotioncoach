@@ -1,18 +1,15 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { ArrowLeft, BarChart3, Sparkles, Loader2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { GratitudeStatsCard } from "@/components/gratitude/GratitudeStatsCard";
 import { GratitudeTrendChart } from "@/components/gratitude/GratitudeTrendChart";
-import { GratitudeTagDistribution } from "@/components/gratitude/GratitudeTagDistribution";
 import { GratitudeQuickAdd } from "@/components/gratitude/GratitudeQuickAdd";
 import { GratitudeEntriesList } from "@/components/gratitude/GratitudeEntriesList";
 import { GratitudeDashboard } from "@/components/gratitude/GratitudeDashboard";
-import { THEME_DEFINITIONS } from "@/components/gratitude/GratitudeThemeBadge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 interface GratitudeEntry {
   id: string;
@@ -28,7 +25,6 @@ const GratitudeHistory = () => {
   const [entries, setEntries] = useState<GratitudeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterTag, setFilterTag] = useState<string | null>(null);
-  const [showDashboard, setShowDashboard] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // 手动刷新
@@ -167,8 +163,8 @@ const GratitudeHistory = () => {
           {/* Trend Chart */}
           <GratitudeTrendChart entries={entries} />
 
-          {/* Tag Distribution */}
-          <GratitudeTagDistribution
+          {/* Happiness Dashboard (integrated with Tag Distribution) */}
+          <GratitudeDashboard
             themeStats={themeStats}
             onTagClick={handleTagClick}
             selectedTag={filterTag}
@@ -186,25 +182,6 @@ const GratitudeHistory = () => {
             onFilterTagChange={setFilterTag}
             onRefresh={loadEntries}
           />
-
-          {/* AI Dashboard - Collapsible */}
-          <Collapsible open={showDashboard} onOpenChange={setShowDashboard}>
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-between bg-white/60 dark:bg-gray-800/40 backdrop-blur"
-              >
-                <span className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  AI 幸福仪表盘
-                </span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${showDashboard ? "rotate-180" : ""}`} />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-4">
-              <GratitudeDashboard />
-            </CollapsibleContent>
-          </Collapsible>
         </div>
       </div>
     </div>

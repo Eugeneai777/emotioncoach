@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { BarChart3, Sparkles, Calendar, Loader2, TrendingUp, Star, Rocket, Target, Lightbulb } from "lucide-react";
+import { BarChart3, Sparkles, Calendar, Loader2, TrendingUp, Star, Rocket, Target, Lightbulb, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeRadarChart } from "./ThemeRadarChart";
 import { GratitudeThemeBadge, THEME_DEFINITIONS, getThemeById } from "./GratitudeThemeBadge";
+import { GratitudeTagDistribution } from "./GratitudeTagDistribution";
 import ReactMarkdown from "react-markdown";
 
 interface DashboardData {
@@ -24,6 +25,12 @@ interface DashboardData {
     themes: string[];
     date: string;
   }>;
+}
+
+interface GratitudeDashboardProps {
+  themeStats: Record<string, number>;
+  onTagClick?: (themeId: string) => void;
+  selectedTag?: string | null;
 }
 
 // Parse AI content into sections
@@ -67,8 +74,9 @@ const calculatePercentages = (themeStats: Record<string, number>) => {
   );
 };
 
-export const GratitudeDashboard = () => {
+export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: GratitudeDashboardProps) => {
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"distribution" | "report">("distribution");
   const [reportType, setReportType] = useState<"daily" | "weekly" | "monthly">("weekly");
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const { toast } = useToast();
@@ -98,7 +106,7 @@ export const GratitudeDashboard = () => {
       }
 
       setDashboardData(data);
-      toast({ title: "幸福仪表盘生成成功！" });
+      toast({ title: "幸福报告生成成功！" });
     } catch (error) {
       console.error("Error generating dashboard:", error);
       toast({ title: "生成失败", variant: "destructive" });
@@ -118,7 +126,7 @@ export const GratitudeDashboard = () => {
 
   return (
     <div className="space-y-4">
-      {/* Report Type Selection */}
+      {/* Main Dashboard Card with Tabs */}
       <Card className="bg-gradient-to-br from-teal-50/80 via-cyan-50/60 to-blue-50/80 dark:from-teal-950/30 dark:via-cyan-950/20 dark:to-blue-950/30 backdrop-blur border-border/50">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -127,37 +135,64 @@ export const GratitudeDashboard = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Tabs value={reportType} onValueChange={(v) => setReportType(v as typeof reportType)}>
-            <TabsList className="grid grid-cols-3 w-full">
-              <TabsTrigger value="daily" className="text-xs">
-                📝 今日
+          {/* Main Tabs: Distribution vs Report */}
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+            <TabsList className="grid grid-cols-2 w-full">
+              <TabsTrigger value="distribution" className="text-xs gap-1.5">
+                <Tag className="w-3.5 h-3.5" />
+                标签分布
               </TabsTrigger>
-              <TabsTrigger value="weekly" className="text-xs">
-                📊 本周
-              </TabsTrigger>
-              <TabsTrigger value="monthly" className="text-xs">
-                📈 本月
+              <TabsTrigger value="report" className="text-xs gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                幸福报告
               </TabsTrigger>
             </TabsList>
-          </Tabs>
 
-          <Button
-            onClick={generateReport}
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                AI 分析中...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                生成 {reportLabels[reportType]}
-              </>
-            )}
-          </Button>
+            {/* Distribution Tab Content */}
+            <TabsContent value="distribution" className="mt-4">
+              <GratitudeTagDistribution
+                themeStats={themeStats}
+                onTagClick={onTagClick}
+                selectedTag={selectedTag}
+              />
+            </TabsContent>
+
+            {/* Report Tab Content */}
+            <TabsContent value="report" className="mt-4 space-y-4">
+              {/* Time Range Selection */}
+              <Tabs value={reportType} onValueChange={(v) => setReportType(v as typeof reportType)}>
+                <TabsList className="grid grid-cols-3 w-full">
+                  <TabsTrigger value="daily" className="text-xs">
+                    📝 今日
+                  </TabsTrigger>
+                  <TabsTrigger value="weekly" className="text-xs">
+                    📊 本周
+                  </TabsTrigger>
+                  <TabsTrigger value="monthly" className="text-xs">
+                    📈 本月
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
+              <Button
+                onClick={generateReport}
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    AI 分析中...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    生成 {reportLabels[reportType]}
+                  </>
+                )}
+              </Button>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
