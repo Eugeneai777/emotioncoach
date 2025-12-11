@@ -125,6 +125,7 @@ const App = () => (
           <Route path="/panic-voice-settings" element={<PanicVoiceSettings />} />
           <Route path="/voice-clone-setup" element={<VoiceCloneSetup />} />
           <Route path="/emotion-button-intro" element={<EmotionButtonIntro />} />
+          <Route path="/vibrant-life-intro" element={<VibrantLifeIntro />} />
           <Route path="/gratitude-journal-intro" element={<GratitudeJournalIntro />} />
           <Route path="/gratitude-history" element={<GratitudeHistory />} />
           <Route path="/api-docs" element={<ApiDocs />} />
