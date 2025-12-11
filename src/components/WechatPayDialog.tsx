@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, CheckCircle, XCircle, QrCode, RefreshCw, Copy, ExternalLink } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, QrCode, RefreshCw, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -57,15 +57,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
     setErrorMessage('');
   };
 
-  // 复制链接
-  const handleCopyLink = async () => {
+  // 跳转微信支付
+  const handleOpenWechat = () => {
     if (!payUrl) return;
-    try {
-      await navigator.clipboard.writeText(payUrl);
-      toast.success('链接已复制，请在微信中打开');
-    } catch (error) {
-      toast.error('复制失败，请手动复制');
-    }
+    // 直接跳转到微信支付链接
+    window.location.href = payUrl;
   };
 
   // 创建订单
@@ -247,16 +243,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
                   等待支付中...
                 </p>
               )}
-              {/* 复制链接按钮 */}
+              {/* 跳转微信支付按钮 */}
               {payUrl && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleCopyLink}
+                  onClick={handleOpenWechat}
                   className="gap-2 text-xs"
                 >
-                  <Copy className="h-3 w-3" />
-                  复制链接去微信打开
+                  <ExternalLink className="h-3 w-3" />
+                  点击跳转微信支付
                 </Button>
               )}
             </div>
