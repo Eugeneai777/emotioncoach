@@ -127,6 +127,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
               <input
                 ref={ref as React.Ref<HTMLInputElement>}
                 type="text"
+                inputMode="text"
                 value={input}
                 onChange={(e) => onInputChange(e.target.value)}
                 onKeyDown={handleKeyDown}
