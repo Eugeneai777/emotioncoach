@@ -100,7 +100,7 @@ serve(async (req) => {
     // Load conversation history
     const conversationHistory = session.messages || [];
 
-    // 计算当前阶段已进行的对话轮数
+    // 计算当前阶段已进行的对话轮数（用户消息数）
     const calculateStageRounds = (messages: any[]) => {
       let rounds = 0;
       for (let i = messages.length - 1; i >= 0; i--) {
@@ -114,6 +114,29 @@ serve(async (req) => {
       }
       return rounds;
     };
+
+    // 获取用户历史偏好选项
+    const getUserPreferences = async (userId: string, stage: number) => {
+      try {
+        const { data } = await supabaseClient
+          .from('emotion_coach_preferences')
+          .select('custom_option, frequency')
+          .eq('user_id', userId)
+          .eq('stage', stage)
+          .order('frequency', { ascending: false })
+          .limit(3);
+        return data || [];
+      } catch (e) {
+        console.log('获取用户偏好失败:', e);
+        return [];
+      }
+    };
+
+    // 获取用户偏好
+    const userPreferences = await getUserPreferences(user.id, session?.current_stage || 1);
+    const preferenceHint = userPreferences.length > 0 
+      ? `\n【用户历史偏好 - 可优先使用这些选项】\n${userPreferences.map(p => `- "${p.custom_option}" (使用${p.frequency}次)`).join('\n')}\n`
+      : '';
 
     // 教练式提问技术（所有阶段共享）
     const coachingTechniques = `
@@ -134,16 +157,74 @@ serve(async (req) => {
    示例："你刚才这句话很重要——「原来我在乎的是被认可」，说出来后心里什么感觉？"
 
 ❌ 禁止事项：
-- 不要一开始就给选项
-- 不要问"你的需求是什么？1. 2. 3. 4."这种选择题
-- 选项只在用户说"不知道"时作为最后手段
+- 第1-2轮不要给选项，先自然对话
+- 选项只在用户说"不知道"或第3轮时作为帮助手段
+- 不要用"你的需求是什么？1. 2. 3. 4."这种机械选择题
 `;
+
+    // 多样化问法模板
+    const questionTemplates = {
+      stage1: {
+        round1: [
+          "你说[镜像用户的话]......那一刻，你心里是什么滋味？",
+          "听起来这件事对你影响挺大的......你现在的感受是什么？",
+          "嗯，我听到了......当时你心里是什么感觉？",
+        ],
+        round2: [
+          "这个[情绪词]，是什么样的感觉？是闷闷的，还是刺痛的？",
+          "你说的这个[情绪词]......它像什么？沉重的石头，还是闷热的空气？",
+          "这个[情绪词]来的时候......你身体有什么感觉吗？",
+        ],
+        deepenNoEmotion: [
+          "我听到了事情的经过......那你自己呢？你的感受是什么？",
+          "抛开事情本身，你现在心里是什么感觉？",
+          "这件事发生的时候，你内心是什么滋味？",
+        ]
+      },
+      stage2: {
+        round1: [
+          "这个情绪来的时候，它好像在告诉你什么？",
+          "你觉得这个[情绪]背后，在保护什么？",
+          "如果这个[情绪]会说话，它想要什么？",
+        ],
+        round2: [
+          "所以你其实很在乎......是吗？",
+          "听起来你其实很渴望......对吗？",
+          "我感受到你内心深处想要的是......",
+        ],
+        helpOptions: "有些人在这种时候，会发现自己其实渴望被理解，或者需要更多安全感，或者想要更自由......你觉得哪个更接近？或者都不是？"
+      },
+      stage3: {
+        round1: [
+          "当这个情绪来的时候，你通常会怎么做？",
+          "遇到这种感觉，你的第一反应是什么？",
+          "每次有这种感觉的时候，你习惯怎么处理？",
+        ],
+        acknowledge: "[用户的反应]......这个方式陪伴你多久了？它帮你度过了哪些时刻？",
+        newPossibility: [
+          "如果这一次，你可以用不同的方式回应自己，你会想试什么？",
+          "除了这样，你还想过用什么不同的方式对待自己吗？",
+          "如果可以温柔一点对待自己，你会怎么做？",
+        ],
+        helpOptions: "比如：当情绪来的时候先深呼吸三次，或者告诉对方'我需要冷静一下'，或者把感受写下来......你觉得哪个可能适合你？"
+      },
+      stage4: {
+        round1: [
+          "你选择了[新应对]......太棒了！接下来，你想给自己一个什么小小的行动？",
+          "[新应对]是很好的觉察！现在，选一个小行动送给自己吧。",
+          "我看到你愿意尝试[新应对]......接下来，有什么具体的小事你想为自己做？",
+        ]
+      }
+    };
 
     const getStagePrompt = (stage: number, stageRounds: number = 0) => {
       const maxRounds = stage === 4 ? 2 : 3;
       const forceProgressWarning = stageRounds >= maxRounds 
         ? `\n⚠️ 【已达到本阶段最大轮数（${maxRounds}轮），必须在这一轮完成本阶段！不要再问问题，直接帮用户总结并调用 complete_stage 推进！】\n` 
         : '';
+      
+      // 随机选择问法模板的索引
+      const templateIdx = Math.floor(Math.random() * 3);
       
       switch (stage) {
         case 0:
@@ -160,33 +241,45 @@ serve(async (req) => {
 【觉察（Feel it）：从情绪被动 → 情绪被看见】
 【本阶段已进行 ${stageRounds} 轮对话，最多3轮】
 ${forceProgressWarning}
+${preferenceHint}
 
 【核心任务】帮用户从"说事情"转变为"说感受"
 
-【引导策略 - 不给选项，使用教练式提问】
+【对话策略 - 先自然对话，再给选项】
 
-第一轮（开放探索）：
-- 用镜像技术："你说[用户的话]......那一刻，你心里是什么滋味？"
-- 或开放提问："你能说说当时的感受吗？"
-- ❌ 不要问"身体有什么反应" ❌ 不要给选项
+第一轮（开放探索，❌不给选项）：
+- 使用问法模板（随机选择一个）：
+  · "${questionTemplates.stage1.round1[templateIdx]}"
+- 用镜像技术重复用户关键词
+- ❌ 不要问"身体有什么反应" ❌ 不要列选项
 
-第二轮（聚焦情绪）：
-- 如果用户还在说事件：用留白技术"我听到了事情的经过......那你自己呢？你的感受是什么？"
-- 如果用户说了情绪词：用镜像确认"你说感觉很[xx]......这个[xx]，是什么样的感觉？"
+第二轮（聚焦情绪，❌不给选项）：
+- 如果用户还在说事件：使用深入模板
+  · "${questionTemplates.stage1.deepenNoEmotion[templateIdx]}"
+- 如果用户说了情绪词：用镜像确认
+  · "${questionTemplates.stage1.round2[templateIdx]}"
 - 用户说出情绪词后 → 立即调用 complete_stage
 
-第三轮（必须推进）：
-- 主动帮ta命名："从你说的，我感受到你现在有些焦虑/难过/压抑......是这样吗？"
+第三轮（必须推进，可给选项帮助）：
+- 如果用户仍未明确，可以提供动态选项帮助：
+  "我感受到你现在可能有些......
+  1. 我感到[根据对话推断的情绪1]
+  2. 我感到[根据对话推断的情绪2]
+  3. 我感到[根据对话推断的情绪3]
+  4. 其他感受（请分享）"
+- 选项要根据用户描述的具体情境动态生成
 - 无论用户如何回应 → 立即调用 complete_stage
+
+【动态选项生成规则】
+- 根据用户描述的事件推断可能的情绪
+- 选项用第一人称"我感到..."
+- 例如用户说工作压力大 → 可能是焦虑、疲惫、无力
+- 例如用户说和家人吵架 → 可能是委屈、愤怒、失望
 
 【推进信号 - 立即调用 complete_stage】
 ✅ 用户说出情绪词（焦虑、烦、难过、不安、累、压抑、愤怒、害怕、委屈等）
 ✅ 用户用身体感受描述（心里堵、喘不过气、头疼）→ 帮ta命名后推进
 ✅ 第3轮必须推进，不要再问问题
-
-【关于身体感受】
-❌ 不要主动问"身体有什么反应"
-✅ 只有用户自己提到时才顺着探索
 
 完成本阶段后，必须立即调用 request_emotion_intensity。`;
 
@@ -196,33 +289,44 @@ ${forceProgressWarning}
 【理解（Name it）：从情绪混乱 → 看见情绪背后的需求】
 【本阶段已进行 ${stageRounds} 轮对话，最多3轮】
 ${forceProgressWarning}
+${preferenceHint}
 
 【核心任务】帮用户看见情绪背后"在保护什么"或"在渴望什么"
 
-【引导策略 - 优先开放提问，不直接给选项】
+【对话策略 - 先自然对话，再给选项】
 
-第一轮（开放探索）：
-- "这个情绪来的时候，它好像在告诉你什么？"
-- 或用假设技术："如果这个情绪会说话，它想要什么？"
-- 或用镜像："你说[用户的话]......这背后，你其实很在乎的是什么？"
+第一轮（开放探索，❌不给选项）：
+- 使用问法模板（随机选择一个）：
+  · "${questionTemplates.stage2.round1[templateIdx]}"
 - ❌ 不要列出"1. 2. 3. 4."选项
 
-第二轮（深入挖掘）：
-- 如果用户回答了，用洞察确认："所以你其实很在乎......（用用户的话）是吗？"
-- 如果用户说"不知道"，轻柔提供参考（不是选项）：
-  "有些人在这种时候，会发现自己其实渴望被理解，或者需要更多安全感，或者想要更自由......你觉得哪个更接近？或者都不是？"
+第二轮（深入挖掘，❌不给选项）：
+- 如果用户回答了，用洞察确认：
+  · "${questionTemplates.stage2.round2[templateIdx]}"
+- 如果用户说"不知道"，轻柔提供参考（不是编号选项）：
+  · "${questionTemplates.stage2.helpOptions}"
 - 用户说出需求后 → 立即调用 complete_stage
 
-第三轮（必须推进）：
-- 帮用户总结需求："我感受到你其实很在乎被[理解/尊重/看见/支持]..."
+第三轮（必须推进，可给选项帮助）：
+- 如果用户仍不明确，可以提供动态选项：
+  "你说的让我感受到，你可能在渴望：
+  1. 我渴望[根据情绪推断的需求1]
+  2. 我需要[根据情绪推断的需求2]
+  3. 我想要[根据情绪推断的需求3]
+  4. 其他需求（请分享）"
 - 无论用户如何回应 → 立即调用 complete_stage
+
+【动态选项生成规则】
+- 根据情绪类型推断可能的需求
+- 焦虑背后 → 可能需要确定性、安全感、掌控感
+- 愤怒背后 → 可能需要被尊重、被公平对待、边界
+- 难过背后 → 可能需要被理解、被接纳、连接
+- 委屈背后 → 可能需要被看见、被认可、被重视
 
 【推进信号 - 立即调用 complete_stage】
 ✅ 用户说出需求："原来我在乎的是..."、"我需要..."、"我其实想要..."
 ✅ 用户认同你的总结（"对"、"是的"、"嗯"）
-✅ 第3轮必须推进
-
-❌ 禁止：不要直接列出"1. 2. 3. 4."让用户选`;
+✅ 第3轮必须推进`;
 
         case 3:
           return `${coachingTechniques}
@@ -230,26 +334,40 @@ ${forceProgressWarning}
 【反应（React it）：从自动反应 → 有觉察的反应】
 【本阶段已进行 ${stageRounds} 轮对话，最多3轮】
 ${forceProgressWarning}
+${preferenceHint}
 
 【核心任务】帮用户觉察习惯性反应，并发现新的应对可能
 
-【引导策略 - 开放探索反应】
+【对话策略 - 先自然对话，再给选项】
 
-第一轮（探索反应模式）：
-- 开放提问："当这个情绪来的时候，你通常会怎么做？"
-- 或："遇到这种感觉，你习惯怎么处理？"
-- 用户回答后，用镜像承认保护功能："[用户的反应]......这个方式陪伴你多久了？它帮你度过了哪些时刻？"
+第一轮（探索反应模式，❌不给选项）：
+- 使用问法模板（随机选择一个）：
+  · "${questionTemplates.stage3.round1[templateIdx]}"
+- 用户回答后，用镜像承认保护功能：
+  · "${questionTemplates.stage3.acknowledge}"
 - ❌ 不要给反应模式选项
 
-第二轮（探索新可能）：
-- 用假设技术："如果这一次，你可以用不同的方式回应自己，你会想试什么？"
-- 如果用户说不知道，温柔提供2-3个参考：
-  "比如：当情绪来的时候先深呼吸三次，或者告诉对方'我需要冷静一下'，或者把感受写下来......你觉得哪个可能适合你？"
+第二轮（探索新可能，❌不给选项）：
+- 使用新可能模板：
+  · "${questionTemplates.stage3.newPossibility[templateIdx]}"
+- 如果用户说不知道，温柔提供参考（不是编号选项）：
+  · "${questionTemplates.stage3.helpOptions}"
 - 用户选择或提出应对方式后 → 立即调用 complete_stage
 
-第三轮（必须推进）：
-- 确认用户的应对方式选择，或帮ta做一个选择
+第三轮（必须推进，可给选项帮助）：
+- 如果用户仍不明确，可以提供动态选项：
+  "或许你可以试试：
+  1. [根据情境的新应对1]
+  2. [根据情境的新应对2]
+  3. [根据情境的新应对3]
+  4. 其他方式（请分享）"
 - 无论用户如何回应 → 立即调用 complete_stage
+
+【动态选项生成规则】
+- 根据用户的情绪和情境推断可能的新应对
+- 焦虑 → 深呼吸、写下来、告诉自己"现在是安全的"
+- 愤怒 → 先冷静10分钟、把感受写下来、运动发泄
+- 难过 → 允许自己哭一下、找人倾诉、做一件让自己开心的小事
 
 【推进信号 - 立即调用 complete_stage】
 ✅ 用户识别了反应模式 + 选择/认同了任何新应对方式
@@ -262,22 +380,32 @@ ${forceProgressWarning}
 【转化（Transform it）：从情绪困住 → 开始出现新的可能】
 【本阶段已进行 ${stageRounds} 轮对话，最多2轮】
 ${forceProgressWarning}
+${preferenceHint}
 
 【核心任务】帮用户确定一个具体可执行的小行动
 
-【引导策略 - 快速聚焦行动】
+【对话策略 - 快速聚焦行动】
 
 第一轮（邀请选择微行动）：
-- 根据前面对话内容，提供2-3个个性化的具体微行动：
+- 使用问法模板：
+  · "${questionTemplates.stage4.round1[templateIdx]}"
+- 如果用户没想法，直接提供动态选项：
   "接下来，你可以选一个小小的行动送给自己：
-  · [根据对话定制的选项1，如：花5分钟写下今天的感受]
-  · [根据对话定制的选项2，如：对一个信任的人说一句真心话]  
-  · 或者你有自己的想法？"
+  1. [根据对话定制的微行动1，如：花5分钟写下今天的感受]
+  2. [根据对话定制的微行动2，如：对一个信任的人说一句真心话]
+  3. [根据对话定制的微行动3，如：给自己泡一杯热茶]
+  4. 其他行动（请分享）"
+- 选项必须具体、可执行、5分钟内能完成
 - 用户选择任何选项后 → 立即调用 complete_stage 和 generate_briefing
 
 第二轮（必须推进）：
 - 确认用户选择，然后同时调用 complete_stage 和 generate_briefing
 - 无论用户如何回应 → 必须生成简报
+
+【动态选项生成规则】
+- 根据整个对话内容定制微行动
+- 例如用户说工作压力 → 出去走5分钟、听一首喜欢的歌、写3件今天做得好的事
+- 例如用户说家庭矛盾 → 给家人发一条表达感谢的消息、今晚主动说一句软话
 
 【推进信号 - 立即完成】
 ✅ 用户提出或认同任何具体小行动
@@ -443,6 +571,69 @@ ${getStagePrompt(session?.current_stage || 0, stageRounds)}
         }
       }
     ];
+
+    // 检测用户是否选择了"其他"并保存偏好
+    const saveUserPreference = async (userId: string, stage: number, userMessage: string) => {
+      // 检测用户是否在回复"其他"类型的自定义输入
+      // 常见模式：用户直接描述情绪/需求/反应，而不是选择数字选项
+      const stageCategories: Record<number, string> = {
+        1: 'emotions',
+        2: 'needs', 
+        3: 'reactions',
+        4: 'actions'
+      };
+      
+      const category = stageCategories[stage];
+      if (!category) return;
+      
+      // 检查消息是否像自定义输入（不是简单的数字选择）
+      const isCustomInput = !/^[1-4]$/.test(userMessage.trim()) && 
+                           userMessage.length > 2 && 
+                           userMessage.length < 50;
+      
+      if (isCustomInput) {
+        try {
+          // 先查询是否已存在
+          const { data: existing } = await supabaseClient
+            .from('emotion_coach_preferences')
+            .select('id, frequency')
+            .eq('user_id', userId)
+            .eq('stage', stage)
+            .eq('category', category)
+            .eq('custom_option', userMessage.trim())
+            .single();
+          
+          if (existing) {
+            // 更新频率
+            await supabaseClient
+              .from('emotion_coach_preferences')
+              .update({ 
+                frequency: existing.frequency + 1,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existing.id);
+            console.log(`✅ 更新用户偏好频率: stage=${stage}, option="${userMessage.trim()}", frequency=${existing.frequency + 1}`);
+          } else {
+            // 插入新记录
+            await supabaseClient
+              .from('emotion_coach_preferences')
+              .insert({
+                user_id: userId,
+                stage: stage,
+                category: category,
+                custom_option: userMessage.trim(),
+                frequency: 1
+              });
+            console.log(`✅ 保存新用户偏好: stage=${stage}, category=${category}, option="${userMessage.trim()}"`);
+          }
+        } catch (e) {
+          console.log('保存用户偏好失败:', e);
+        }
+      }
+    };
+
+    // 保存用户输入作为潜在偏好
+    await saveUserPreference(user.id, session?.current_stage || 1, message);
 
     // Add user message to history
     conversationHistory.push({ role: "user", content: message });
