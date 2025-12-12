@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -8,12 +8,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Mic, Tent, Bell, Users, MessageSquare, Activity, Clock, AlertTriangle, GraduationCap, Share2, Bot, Copy, Save, Pencil, ArrowUp, ArrowDown, History, RotateCcw } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Loader2, Mic, Tent, Bell, Users, MessageSquare, Activity, Clock, AlertTriangle, GraduationCap, Share2, Bot, Copy, Save, Pencil, ArrowUp, ArrowDown, History, RotateCcw, CheckCircle2, AlertCircle, Circle } from "lucide-react";
 import { CoachTemplate, useUpdateCoachTemplate } from "@/hooks/useCoachTemplates";
 import { usePromptVersions, useCreatePromptVersion, useRestorePromptVersion, PromptVersion } from "@/hooks/usePromptVersions";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
+
+// 获取同步状态
+type SyncStatus = 'synced' | 'modified' | 'pending' | 'empty';
+const getSyncStatus = (template: CoachTemplate, versions: PromptVersion[]): { status: SyncStatus; icon: string; label: string; color: string } => {
+  if (!template.system_prompt) return { status: 'empty', icon: '🔴', label: '未配置', color: 'text-destructive' };
+  if (versions.length === 0) return { status: 'pending', icon: '🟡', label: '待保存', color: 'text-amber-500' };
+  const latestVersion = versions[0];
+  const isInSync = latestVersion.system_prompt === template.system_prompt;
+  return isInSync 
+    ? { status: 'synced', icon: '🟢', label: '已同步', color: 'text-emerald-500' }
+    : { status: 'modified', icon: '🟠', label: '有修改', color: 'text-orange-500' };
+};
 
 interface CoachFeatureMatrixProps {
   templates: CoachTemplate[];
@@ -57,10 +72,79 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFea
     changeNote: string;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingAll, setIsSavingAll] = useState(false);
   const [viewingVersion, setViewingVersion] = useState<PromptVersion | null>(null);
 
   // Fetch versions for selected template
   const { data: versions = [], isLoading: isLoadingVersions } = usePromptVersions(selectedPrompt?.template.id);
+  
+  // Fetch all versions for all templates to show sync status
+  const { data: allVersions = [] } = useQuery({
+    queryKey: ['all-prompt-versions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('coach_prompt_versions')
+        .select('*')
+        .order('version_number', { ascending: false });
+      if (error) throw error;
+      return data as PromptVersion[];
+    },
+  });
+  
+  // Group versions by template
+  const versionsByTemplate = useMemo(() => {
+    const map = new Map<string, PromptVersion[]>();
+    allVersions.forEach(v => {
+      const existing = map.get(v.coach_template_id) || [];
+      existing.push(v);
+      map.set(v.coach_template_id, existing);
+    });
+    return map;
+  }, [allVersions]);
+  
+  // Get sync status for each template
+  const templateSyncStatus = useMemo(() => {
+    const statuses = new Map<string, ReturnType<typeof getSyncStatus>>();
+    templates.forEach(t => {
+      const versions = versionsByTemplate.get(t.id) || [];
+      statuses.set(t.id, getSyncStatus(t, versions));
+    });
+    return statuses;
+  }, [templates, versionsByTemplate]);
+  
+  // Check if any templates need saving
+  const templatesNeedingSave = useMemo(() => {
+    return templates.filter(t => {
+      const status = templateSyncStatus.get(t.id);
+      return status?.status === 'pending' || status?.status === 'modified';
+    });
+  }, [templates, templateSyncStatus]);
+  
+  // Batch save all modified/pending prompts
+  const handleSaveAllVersions = async () => {
+    if (templatesNeedingSave.length === 0) {
+      toast.info('所有 Prompt 已同步');
+      return;
+    }
+    
+    setIsSavingAll(true);
+    try {
+      for (const template of templatesNeedingSave) {
+        if (template.system_prompt) {
+          await createPromptVersion.mutateAsync({
+            coachTemplateId: template.id,
+            systemPrompt: template.system_prompt,
+            changeNote: '批量同步版本',
+          });
+        }
+      }
+      toast.success(`已保存 ${templatesNeedingSave.length} 个教练的版本`);
+    } catch (error) {
+      toast.error('批量保存失败');
+    } finally {
+      setIsSavingAll(false);
+    }
+  };
 
   const handleToggle = async (templateId: string, featureKey: string, currentValue: boolean) => {
     const cellKey = `${templateId}-${featureKey}`;
@@ -196,15 +280,25 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFea
                     <span className="text-[10px] text-muted-foreground">
                       {getEnabledCount(template)}/10
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`h-6 text-xs px-2 ${template.system_prompt ? 'text-primary hover:text-primary' : 'text-muted-foreground'}`}
-                      onClick={() => handleOpenPrompt(template)}
-                    >
-                      <Bot className="h-3 w-3 mr-1" />
-                      Prompt
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`h-6 text-xs px-2 ${template.system_prompt ? 'text-primary hover:text-primary' : 'text-muted-foreground'}`}
+                            onClick={() => handleOpenPrompt(template)}
+                          >
+                            <Bot className="h-3 w-3 mr-1" />
+                            Prompt
+                            <span className="ml-1">{templateSyncStatus.get(template.id)?.icon}</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{templateSyncStatus.get(template.id)?.label}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </TableHead>
               ))}
@@ -270,8 +364,28 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFea
           <span className="flex items-center gap-1">
             <div className="w-8 h-4 rounded-full bg-muted border" /> 未启用
           </span>
+          <span className="border-l pl-4 flex items-center gap-2">
+            <span>🟢 已同步</span>
+            <span>🟠 有修改</span>
+            <span>🟡 待保存</span>
+            <span>🔴 未配置</span>
+          </span>
         </div>
-        <span>共 {templates.length} 个教练 · {featureGroups.flatMap(g => g.features).length} 项功能</span>
+        <div className="flex items-center gap-3">
+          <span>共 {templates.length} 个教练 · {featureGroups.flatMap(g => g.features).length} 项功能</span>
+          {templatesNeedingSave.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 text-xs"
+              onClick={handleSaveAllVersions}
+              disabled={isSavingAll}
+            >
+              {isSavingAll ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+              保存全部版本 ({templatesNeedingSave.length})
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Prompt Dialog with Version History */}
