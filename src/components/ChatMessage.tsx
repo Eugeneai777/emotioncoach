@@ -17,12 +17,28 @@ interface ChatMessageProps {
   videoRecommendations?: any[];
   isLastMessage?: boolean;
   communicationBriefingId?: string | null;
+  primaryColor?: string;
   coachRecommendation?: {
     coachKey: string;
     userIssueSummary: string;
     reasoning: string;
   } | null;
 }
+
+// 根据教练主题色获取头像渐变
+const getAvatarGradient = (color?: string) => {
+  const colorMap: Record<string, string> = {
+    pink: 'from-pink-400 to-rose-500',
+    rose: 'from-rose-400 to-pink-500',
+    green: 'from-teal-400 to-cyan-500',
+    teal: 'from-teal-400 to-cyan-500',
+    blue: 'from-blue-400 to-indigo-500',
+    purple: 'from-purple-400 to-violet-500',
+    orange: 'from-orange-400 to-amber-500',
+    amber: 'from-amber-400 to-orange-500',
+  };
+  return colorMap[color || 'teal'] || 'from-teal-400 to-cyan-500';
+};
 
 // 清理 Markdown 格式符号
 const cleanMarkdown = (text: string): string => {
@@ -35,7 +51,7 @@ const cleanMarkdown = (text: string): string => {
     .replace(/\*/g, '');
 };
 
-export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, videoRecommendations, isLastMessage, communicationBriefingId, coachRecommendation }: ChatMessageProps) => {
+export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, videoRecommendations, isLastMessage, communicationBriefingId, primaryColor, coachRecommendation }: ChatMessageProps) => {
   const isUser = role === "user";
   const navigate = useNavigate();
   const [clickedOption, setClickedOption] = useState<string | null>(null);
@@ -153,7 +169,7 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3 md:mb-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-500`}>
       {/* 助手头像 */}
       {!isUser && (
-        <div className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center mr-2 mt-1">
+        <div className={`flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br ${getAvatarGradient(primaryColor)} flex items-center justify-center mr-2 mt-1`}>
           <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-white" />
         </div>
       )}
