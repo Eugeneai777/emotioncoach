@@ -188,7 +188,7 @@ export const GratitudeEntriesList = ({
               size="sm"
               onClick={handleBatchAnalyze}
               disabled={batchAnalyzing}
-              className="text-xs h-6 px-2 bg-gradient-to-r from-teal-500/10 to-cyan-500/10 border-teal-200 hover:border-teal-300 shrink-0"
+              className="text-xs h-6 px-2 bg-gradient-to-r from-pink-500/10 to-rose-500/10 border-pink-200 hover:border-pink-300 shrink-0"
             >
               {batchAnalyzing ? (
                 <Loader2 className="w-3 h-3 animate-spin" />

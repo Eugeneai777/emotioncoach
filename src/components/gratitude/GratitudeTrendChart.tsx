@@ -47,7 +47,7 @@ export const GratitudeTrendChart = ({ entries }: GratitudeTrendChartProps) => {
       return (
         <div className="bg-background/95 backdrop-blur border rounded-lg shadow-lg p-2">
           <p className="text-sm font-medium">{payload[0].payload.fullDate}</p>
-          <p className="text-sm text-teal-600">
+          <p className="text-sm text-pink-600">
             {payload[0].value} 条感恩
           </p>
         </div>
@@ -113,10 +113,10 @@ export const GratitudeTrendChart = ({ entries }: GratitudeTrendChartProps) => {
             <Line
               type="monotone"
               dataKey="count"
-              stroke="hsl(174, 60%, 50%)"
+              stroke="hsl(330, 80%, 60%)"
               strokeWidth={2}
-              dot={{ fill: "hsl(174, 60%, 50%)", strokeWidth: 0, r: 4 }}
-              activeDot={{ r: 6, fill: "hsl(174, 60%, 40%)" }}
+              dot={{ fill: "hsl(330, 80%, 60%)", strokeWidth: 0, r: 4 }}
+              activeDot={{ r: 6, fill: "hsl(330, 80%, 50%)" }}
             />
           </LineChart>
         </ResponsiveContainer>

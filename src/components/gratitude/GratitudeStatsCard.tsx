@@ -66,8 +66,8 @@ export const GratitudeStatsCard = ({ entries }: GratitudeStatsCardProps) => {
 
   return (
     <div className="grid grid-cols-4 gap-2">
-      <div className="p-2.5 rounded-lg bg-gradient-to-br from-teal-100/80 to-cyan-100/80 dark:from-teal-900/30 dark:to-cyan-900/30 text-center">
-        <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">
+      <div className="p-2.5 rounded-lg bg-gradient-to-br from-pink-100/80 to-rose-100/80 dark:from-pink-900/30 dark:to-rose-900/30 text-center">
+        <div className="text-2xl font-bold text-pink-600 dark:text-pink-400">
           {stats.total}
         </div>
         <div className="text-[10px] text-muted-foreground">总感恩</div>

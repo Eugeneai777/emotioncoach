@@ -28,7 +28,7 @@ export const GratitudeTagCloud = ({ themeStats, onTagClick, selectedTag, showCou
 
   if (total === 0) {
     return (
-      <div className="p-4 rounded-xl bg-gradient-to-br from-teal-50/50 to-cyan-50/50 dark:from-gray-800/50 dark:to-gray-700/50">
+      <div className="p-4 rounded-xl bg-gradient-to-br from-pink-50/50 to-rose-50/50 dark:from-gray-800/50 dark:to-gray-700/50">
         <div className="text-center py-4 text-muted-foreground">
           <p className="text-sm">开始记录感恩，标签云将在这里绽放 ✨</p>
         </div>
@@ -37,7 +37,7 @@ export const GratitudeTagCloud = ({ themeStats, onTagClick, selectedTag, showCou
   }
 
   return (
-    <div className="p-4 rounded-xl bg-gradient-to-br from-teal-50/50 to-cyan-50/50 dark:from-gray-800/50 dark:to-gray-700/50 h-full">
+    <div className="p-4 rounded-xl bg-gradient-to-br from-pink-50/50 to-rose-50/50 dark:from-gray-800/50 dark:to-gray-700/50 h-full">
       <div className="flex flex-wrap items-center justify-center gap-2">
         {sortedThemes.map((theme) => {
           const isSelected = selectedTag === theme.id;
