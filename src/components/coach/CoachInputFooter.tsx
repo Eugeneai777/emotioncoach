@@ -59,6 +59,14 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
     }
   };
 
+  // 自动调整高度
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+    onInputChange(e.target.value);
+  };
+
   // 根据主题色获取输入框样式
   const getInputStyles = () => {
     if (primaryColor === 'pink') {
@@ -123,48 +131,23 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
           
           {/* 输入框 - 移动端单行，桌面端多行 */}
           <div className="flex-1 relative">
-            {isMobile ? (
-              <input
-                ref={ref as React.Ref<HTMLInputElement>}
-                type="text"
-                inputMode="text"
-                value={input}
-                onChange={(e) => onInputChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={() => setIsComposing(false)}
-                placeholder="分享你的想法..."
-                className={`w-full h-11 px-4 text-base rounded-2xl border ${inputStyles.border} ${inputStyles.bg} focus:outline-none focus:ring-2 ${inputStyles.focus} transition-all duration-200`}
-                style={{ fontSize: '16px' }}
-                disabled={isLoading}
-                enterKeyHint="send"
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                data-form-type="other"
-              />
-            ) : (
-              <Textarea
-                ref={ref as React.Ref<HTMLTextAreaElement>}
-                value={input}
-                onChange={(e) => onInputChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={() => setIsComposing(false)}
-                placeholder={placeholder}
-                className={`resize-none min-h-[44px] max-h-[100px] w-full py-2.5 px-3 text-base rounded-2xl leading-relaxed border ${inputStyles.border} ${inputStyles.bg} ${inputStyles.focus} transition-all duration-200`}
-                style={{ fontSize: '16px' }}
-                disabled={isLoading}
-                rows={1}
-                enterKeyHint="send"
-                inputMode="text"
-              />
-            )}
+          <Textarea
+            ref={ref as React.Ref<HTMLTextAreaElement>}
+            value={input}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
+            placeholder={isMobile ? "分享你的想法..." : placeholder}
+            className={`resize-none min-h-[44px] max-h-[150px] w-full py-2.5 px-4 text-base rounded-2xl leading-relaxed border ${inputStyles.border} ${inputStyles.bg} ${inputStyles.focus} transition-all duration-200`}
+            style={{ fontSize: '16px' }}
+            disabled={isLoading}
+            rows={1}
+            enterKeyHint="send"
+            inputMode="text"
+          />
           </div>
 
           {/* 发送按钮 */}
