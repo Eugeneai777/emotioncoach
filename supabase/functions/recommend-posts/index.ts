@@ -253,15 +253,21 @@ serve(async (req) => {
       console.log("AI响应成功");
       
       const toolCall = aiData.choices[0]?.message?.tool_calls?.[0];
-      const recommendedIds = toolCall
+      let aiRecommendedIds = toolCall
         ? JSON.parse(toolCall.function.arguments).postIds
-        : candidatePosts?.slice(0, 10).map(p => p.id) || [];
+        : [];
       
-      console.log("推荐的帖子数量:", recommendedIds.length);
+      // 🚨 强制包含最新的3条帖子，确保新内容及时展示
+      const latestPostIds = candidatePosts?.slice(0, 3).map(p => p.id) || [];
+      
+      // 合并：最新帖子优先 + AI推荐（去重）
+      const mergedIds = [...new Set([...latestPostIds, ...aiRecommendedIds])].slice(0, 10);
+      
+      console.log("推荐的帖子数量:", mergedIds.length, "（含最新3条）");
       
       return new Response(
         JSON.stringify({
-          recommendedPostIds: recommendedIds,
+          recommendedPostIds: mergedIds,
           strategy: "ai"
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
