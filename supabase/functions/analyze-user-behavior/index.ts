@@ -149,16 +149,37 @@ serve(async (req) => {
         }
       }
 
+      // 分层不活跃提醒阈值
+      const inactivityThresholds = {
+        mild: 3,      // 3天未使用 - 温柔提醒
+        moderate: 7,  // 7天未使用 - 关心询问
+        severe: 14    // 14天未使用 - 关怀回访
+      };
+
+      // 根据不活跃天数设置提醒级别
+      let inactivityLevel: string | null = null;
+      if (daysSinceLastCheckin !== null) {
+        if (daysSinceLastCheckin >= inactivityThresholds.severe) {
+          inactivityLevel = 'severe';
+        } else if (daysSinceLastCheckin >= inactivityThresholds.moderate) {
+          inactivityLevel = 'moderate';
+        } else if (daysSinceLastCheckin >= inactivityThresholds.mild) {
+          inactivityLevel = 'mild';
+        }
+      }
+
       // 判断需要什么类型的关注
       const needsEncouragement = checkinCount >= 5 || emotionTrend === 'improving';
-      const needsReminder = daysSinceLastCheckin !== null && daysSinceLastCheckin >= 2 && activeGoalsCount > 0;
+      const needsReminder = daysSinceLastCheckin !== null && daysSinceLastCheckin >= inactivityThresholds.mild;
       const needsCare = emotionTrend === 'declining' || (avgEmotionIntensity !== null && avgEmotionIntensity >= 7);
 
-      // 计算成长指标
+      // 计算成长指标（包含不活跃级别）
       const growthIndicators = {
         consistency_score: Math.min(100, (checkinCount / 7) * 100),
         emotional_stability: emotionTrend === 'stable' ? 100 : emotionTrend === 'improving' ? 80 : 50,
-        goal_engagement: activeGoalsCount > 0 ? Math.min(100, (goalsOnTrack / activeGoalsCount) * 100) : 0
+        goal_engagement: activeGoalsCount > 0 ? Math.min(100, (goalsOnTrack / activeGoalsCount) * 100) : 0,
+        inactivity_level: inactivityLevel,
+        days_inactive: daysSinceLastCheckin
       };
 
       // 保存或更新分析结果

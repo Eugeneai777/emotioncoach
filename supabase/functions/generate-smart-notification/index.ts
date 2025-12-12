@@ -144,7 +144,11 @@ serve(async (req) => {
       goal_milestone: `用户在目标"${context?.goal_description || '情绪记录目标'}"上取得了${context?.progress_percentage}%的里程碑进展${context?.is_final ? '，目标已完成！' : ''}。当前进度：${context?.actual_count || 0}/${context?.target_count || 0}。${context?.is_final ? '请热烈庆祝这个成就！' : '请为他们庆祝这个阶段性成功，鼓励继续加油。'}`,
       emotion_improvement: `用户的情绪趋势正在改善！最近的平均强度从${context?.baseline_intensity}降低到${context?.current_intensity}。请给予积极的反馈。`,
       consistent_checkin: `用户已经连续${context?.streak_days}天坚持记录情绪。这是很了不起的坚持！请给予认可和鼓励。`,
-      inactivity: `用户已经${context?.days_inactive}天没有记录情绪了，但还有${context?.active_goals_count}个活跃目标。请用温柔的方式提醒他们。`,
+      inactivity: context?.inactivity_level === 'severe'
+        ? `用户已经${context?.days_inactive}天没有使用了。这是一次温暖的回访，请用关怀但不施压的语气，询问他们最近的状态，让他们知道我们一直记得他们、一直在这里陪伴。不要责怪，只是温柔地表达思念和关心。`
+        : context?.inactivity_level === 'moderate'
+        ? `用户已经${context?.days_inactive}天没有记录情绪了${context?.active_goals_count ? `，还有${context.active_goals_count}个活跃目标` : ''}。请用温柔关心的方式询问他们是否一切安好，轻轻提醒记录情绪对自我了解的帮助，但不要制造压力。`
+        : `用户已经${context?.days_inactive}天没有来了${context?.active_goals_count ? `，有${context.active_goals_count}个目标等待他们` : ''}。请用温柔、轻松的语气打个招呼，就像老朋友问候"最近怎么样"，让他们感受到陪伴而非催促。`,
       sustained_low_mood: `用户最近${context?.consecutive_days}天的情绪持续低落（平均强度${context?.avg_intensity}/10）${context?.dominant_emotions?.length ? `，主要情绪包括"${context.dominant_emotions.join('、')}"` : ''}。请用温暖、关怀的语气给予支持，提醒他们可以寻求帮助，但不要让他们感到被评判。`,
       encouragement: `这是一条常规的鼓励通知，展示你的陪伴风格。用户当前${activeGoals?.length || 0}个活跃目标${activeGoals?.length ? '正在进行中' : ''}。`,
       checkin_success: `用户刚刚完成今日情绪打卡！${context?.streak_days ? `已连续打卡${context.streak_days}天。` : ''}请给予即时的肯定和鼓励，让他们感受到坚持的价值。`,
