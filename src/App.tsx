@@ -59,7 +59,6 @@ import EmotionButtonIntro from "./pages/EmotionButtonIntro";
 import VibrantLifeIntro from "./pages/VibrantLifeIntro";
 import GratitudeJournalIntro from "./pages/GratitudeJournalIntro";
 import GratitudeHistory from "./pages/GratitudeHistory";
-import GratitudeCoach from "./pages/GratitudeCoach";
 import VibrantLifeHistory from "./pages/VibrantLifeHistory";
 import ApiDocs from "./pages/ApiDocs";
 import PosterCenter from "./pages/PosterCenter";
@@ -135,7 +134,6 @@ const App = () => (
           <Route path="/vibrant-life-history" element={<VibrantLifeHistory />} />
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="/poster-center" element={<PosterCenter />} />
-          <Route path="/coach/gratitude_coach" element={<GratitudeCoach />} />
           <Route path="/coach/:coachKey" element={<DynamicCoach />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
