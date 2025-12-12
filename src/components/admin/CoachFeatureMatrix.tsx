@@ -230,8 +230,10 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFea
     
     await restorePromptVersion.mutateAsync({
       coachTemplateId: selectedPrompt.template.id,
-      versionId: String(version.version_number),
+      versionId: String(version.id),
+      versionNumber: version.version_number,
       systemPrompt: version.system_prompt,
+      stagePrompts: version.stage_prompts,
     });
     
     setSelectedPrompt(prev => prev ? {
