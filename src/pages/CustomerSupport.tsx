@@ -5,10 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
+import { SupportCoachCard } from "@/components/customer-support/SupportCoachCard";
+import { SupportPackageCard } from "@/components/customer-support/SupportPackageCard";
+import { SupportCampCard } from "@/components/customer-support/SupportCampCard";
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  recommendations?: {
+    coaches?: Array<{ coach_key: string; reason: string }>;
+    packages?: { package_ids: string[]; highlight_reason?: string };
+    camps?: Array<{ camp_type: string; reason: string }>;
+  };
 }
 
 const quickOptions = [
@@ -63,13 +71,11 @@ const CustomerSupport = () => {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const sessionId = useRef(`session_${Date.now()}`);
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const sendMessage = async (messageText: string) => {
@@ -95,7 +101,8 @@ const CustomerSupport = () => {
 
       const assistantMessage: Message = {
         role: 'assistant',
-        content: data.reply || '抱歉，我暂时无法回答这个问题。'
+        content: data.reply || '抱歉，我暂时无法回答这个问题。',
+        recommendations: data.recommendations
       };
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
@@ -159,22 +166,47 @@ const CustomerSupport = () => {
 
         {/* Chat Area */}
         <div className="flex-1 bg-white/60 backdrop-blur-sm rounded-xl border border-border/50 flex flex-col overflow-hidden">
-          <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+          <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
               {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
-                      message.role === 'user'
-                        ? 'bg-gradient-to-r from-teal-400 to-cyan-500 text-white'
-                        : 'bg-muted/50'
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                <div key={index}>
+                  <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
+                        message.role === 'user'
+                          ? 'bg-gradient-to-r from-teal-400 to-cyan-500 text-white'
+                          : 'bg-muted/50'
+                      }`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    </div>
                   </div>
+                  
+                  {/* 推荐卡片 */}
+                  {message.recommendations && (
+                    <div className="mt-3 space-y-2">
+                      {message.recommendations.coaches?.map(coach => (
+                        <SupportCoachCard 
+                          key={coach.coach_key} 
+                          coach_key={coach.coach_key} 
+                          reason={coach.reason} 
+                        />
+                      ))}
+                      {message.recommendations.packages && (
+                        <SupportPackageCard 
+                          package_ids={message.recommendations.packages.package_ids} 
+                          highlight_reason={message.recommendations.packages.highlight_reason} 
+                        />
+                      )}
+                      {message.recommendations.camps?.map(camp => (
+                        <SupportCampCard 
+                          key={camp.camp_type} 
+                          camp_type={camp.camp_type} 
+                          reason={camp.reason} 
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
               {isLoading && (
@@ -184,6 +216,7 @@ const CustomerSupport = () => {
                   </div>
                 </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
 
