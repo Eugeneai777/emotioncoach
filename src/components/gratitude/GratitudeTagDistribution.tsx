@@ -70,7 +70,7 @@ export const GratitudeTagDistribution = ({
         
         <Collapsible open={showPhilosophy} onOpenChange={setShowPhilosophy}>
           <CollapsibleContent className="mb-2">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-teal-50/80 to-cyan-50/80 dark:from-teal-900/20 dark:to-cyan-900/20 space-y-1">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-pink-50/80 to-rose-50/80 dark:from-pink-900/20 dark:to-rose-900/20 space-y-1">
               <p className="text-[10px] text-muted-foreground leading-relaxed">{TAG_PHILOSOPHY.intro}</p>
               <div className="space-y-0.5">
                 {TAG_PHILOSOPHY.tags.map((tag) => (
@@ -113,7 +113,7 @@ export const GratitudeTagDistribution = ({
         
         <Collapsible open={showPhilosophy} onOpenChange={setShowPhilosophy}>
           <CollapsibleContent className="mb-2">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-teal-50/80 to-cyan-50/80 dark:from-teal-900/20 dark:to-cyan-900/20 space-y-1">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-pink-50/80 to-rose-50/80 dark:from-pink-900/20 dark:to-rose-900/20 space-y-1">
               <p className="text-[10px] text-muted-foreground leading-relaxed">{TAG_PHILOSOPHY.intro}</p>
               <div className="space-y-0.5">
                 {TAG_PHILOSOPHY.tags.map((tag) => (

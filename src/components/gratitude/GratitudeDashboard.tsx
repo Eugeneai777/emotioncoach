@@ -166,10 +166,10 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
   return (
     <div className="space-y-4">
       {/* Main Dashboard Card with Tabs */}
-      <Card className="bg-gradient-to-br from-teal-50/80 via-cyan-50/60 to-blue-50/80 dark:from-teal-950/30 dark:via-cyan-950/20 dark:to-blue-950/30 backdrop-blur border-border/50">
+      <Card className="bg-gradient-to-br from-pink-50/80 via-rose-50/60 to-amber-50/80 dark:from-pink-950/30 dark:via-rose-950/20 dark:to-amber-950/30 backdrop-blur border-border/50">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <BarChart3 className="w-5 h-5 text-teal-600" />
+            <BarChart3 className="w-5 h-5 text-pink-600" />
             幸福仪表盘
           </CardTitle>
         </CardHeader>
@@ -216,7 +216,7 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
               <Button
                 onClick={generateReport}
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                className="w-full bg-gradient-to-r from-pink-400 to-rose-500 hover:from-pink-500 hover:to-rose-600"
               >
                 {loading ? (
                   <>
@@ -239,11 +239,11 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
       {dashboardData && sections && (
         <div className="space-y-5 animate-fade-in">
           {/* 1. 幸福总览 */}
-          <Card className="bg-gradient-to-br from-teal-50/80 to-cyan-50/80 dark:from-teal-950/30 dark:to-cyan-950/30 backdrop-blur border-border/50 overflow-hidden">
+          <Card className="bg-gradient-to-br from-pink-50/80 to-rose-50/80 dark:from-pink-950/30 dark:to-rose-950/30 backdrop-blur border-border/50 overflow-hidden">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Target className="w-5 h-5 text-teal-600" />
+                  <Target className="w-5 h-5 text-pink-600" />
                   幸福总览
                 </CardTitle>
                 <span className="text-xs text-muted-foreground bg-background/50 px-2 py-1 rounded-full">
@@ -254,7 +254,7 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
             <CardContent>
               <div className="flex items-center gap-4 p-4 bg-white/60 dark:bg-black/20 rounded-xl mb-3">
                 <div className="text-center px-4 border-r border-border/30">
-                  <div className="text-3xl font-bold text-teal-600">{dashboardData.totalEntries}</div>
+                  <div className="text-3xl font-bold text-pink-600">{dashboardData.totalEntries}</div>
                   <div className="text-xs text-muted-foreground">条感恩</div>
                 </div>
                 <div className="flex-1">
@@ -371,8 +371,8 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
           </Card>
 
           {/* 3. 上升维度 */}
-          <div className="rounded-lg bg-gradient-to-br from-emerald-50/80 to-teal-50/80 dark:from-emerald-950/30 dark:to-teal-950/30 p-4">
-            <h4 className="text-sm font-medium flex items-center gap-2 mb-3 text-emerald-700 dark:text-emerald-400">
+          <div className="rounded-lg bg-gradient-to-br from-pink-50/80 to-rose-50/80 dark:from-pink-950/30 dark:to-rose-950/30 p-4">
+            <h4 className="text-sm font-medium flex items-center gap-2 mb-3 text-pink-700 dark:text-pink-400">
               <ArrowUp className="w-4 h-4" />
               上升维度
             </h4>

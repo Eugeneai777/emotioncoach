@@ -78,7 +78,7 @@ export const GratitudeQuickAdd = ({ userId, onAdded }: GratitudeQuickAddProps) =
             type="submit"
             size="icon"
             disabled={!content.trim() || loading}
-            className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shrink-0 h-9 w-9"
+            className="bg-gradient-to-r from-pink-400 to-rose-500 hover:from-pink-500 hover:to-rose-600 shrink-0 h-9 w-9"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
