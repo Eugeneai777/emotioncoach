@@ -290,38 +290,18 @@ serve(async (req) => {
   } catch (error) {
     console.error("推荐失败:", error);
     
-    // 发生错误时返回热门帖子作为最后的回退
-    try {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      
-      const { data: fallbackPosts } = await supabase
-        .from("community_posts")
-        .select("id")
-        .order("likes_count", { ascending: false })
-        .limit(10);
-      
-      return new Response(
-        JSON.stringify({
-          recommendedPostIds: fallbackPosts?.map(p => p.id) || [],
-          strategy: "error_fallback"
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    } catch (fallbackError) {
-      console.error("回退策略也失败:", fallbackError);
-      return new Response(
-        JSON.stringify({ 
-          error: error instanceof Error ? error.message : "推荐失败",
-          recommendedPostIds: [],
-          strategy: "error"
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
+    // 发生错误时返回空数组而不是500错误，让前端使用本地数据
+    // 这样即使网络问题也不会导致页面崩溃
+    return new Response(
+      JSON.stringify({
+        recommendedPostIds: [],
+        strategy: "error_graceful",
+        message: "推荐服务暂时不可用"
+      }),
+      { 
+        status: 200, // 返回200而非500，避免前端崩溃
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
+    );
   }
 });
