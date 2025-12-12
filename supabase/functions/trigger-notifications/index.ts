@@ -273,7 +273,7 @@ serve(async (req) => {
       });
     }
 
-    // 调用生成通知函数
+    // 调用生成通知函数（传入 user_id 用于批量触发模式）
     const generateResponse = await fetch(
       `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-smart-notification`,
       {
@@ -284,7 +284,8 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           scenario,
-          context: notificationContext
+          context: notificationContext,
+          user_id: user_id  // 传入用户ID用于批量触发
         })
       }
     );

@@ -18,27 +18,49 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const { scenario, context, user_id: providedUserId } = await req.json();
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "身份验证失败" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // 支持两种调用方式：
+    // 1. 用户直接调用（通过JWT获取user_id）
+    // 2. 后端批量调用（通过请求体传入user_id + service role key）
+    let userId: string;
+    
+    // 检查是否是 service role key 调用（批量触发场景）
+    const isServiceRole = authHeader.includes(Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || 'never-match');
+    
+    if (isServiceRole && providedUserId) {
+      // 批量触发模式：使用提供的 user_id
+      userId = providedUserId;
+      console.log(`批量触发模式: 为用户 ${userId} 生成通知`);
+    } else {
+      // 用户直接调用模式：从 JWT 获取用户
+      const supabaseAuth = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        { global: { headers: { Authorization: authHeader } } }
+      );
+
+      const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: "身份验证失败" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      userId = user.id;
     }
 
-    const { scenario, context } = await req.json();
+    // 使用 service role 创建客户端以确保有权限操作
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
     // 后端去重检查：24小时内同场景不重复发送
     const { data: recentSameScenario } = await supabase
       .from('smart_notifications')
       .select('id, created_at')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('scenario', scenario)
       .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
       .order('created_at', { ascending: false })
@@ -60,7 +82,7 @@ serve(async (req) => {
       const { data: recentCare } = await supabase
         .from('smart_notifications')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('scenario', 'sustained_low_mood')
         .gte('created_at', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
         .limit(1);
@@ -80,8 +102,8 @@ serve(async (req) => {
     // 获取用户偏好设置
     const { data: profile } = await supabase
       .from('profiles')
-      .select('preferred_encouragement_style, companion_type, display_name, notification_frequency, smart_notification_enabled, wecom_enabled, wecom_webhook_url')
-      .eq('id', user.id)
+      .select('preferred_encouragement_style, companion_type, display_name, notification_frequency, smart_notification_enabled, wecom_enabled, wecom_webhook_url, wechat_enabled')
+      .eq('id', userId)
       .single();
 
     // 检查用户是否启用了智能通知
@@ -110,7 +132,7 @@ serve(async (req) => {
     const { data: recentConversations } = await supabase
       .from('conversations')
       .select('id, messages(content, role, created_at)')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(3);
 
@@ -126,7 +148,7 @@ serve(async (req) => {
     const { data: activeGoals } = await supabase
       .from('emotion_goals')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('is_active', true);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -321,7 +343,7 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
     const { data: notification, error: insertError } = await supabase
       .from('smart_notifications')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         notification_type: type,
         scenario: scenario,
         title: notificationData.title,
@@ -362,23 +384,19 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
     }
 
     // 如果用户启用了微信公众号推送，同时发送模板消息
-    const { data: wechatProfile } = await supabase
-      .from('profiles')
-      .select('wechat_enabled')
-      .eq('id', user.id)
-      .single();
-
-    if (wechatProfile?.wechat_enabled) {
+    if (profile?.wechat_enabled) {
       try {
         await supabase.functions.invoke('send-wechat-template-message', {
           body: {
-            userId: user.id,
+            userId: userId,
             scenario: scenario,
             notification: {
               id: notification.id,
               title: notificationData.title,
               message: notificationData.message,
               scenario: scenario,
+              inactivity_level: context?.inactivity_level,
+              days_inactive: context?.days_inactive,
             },
           },
         });
