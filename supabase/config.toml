@@ -233,3 +233,6 @@ verify_jwt = true
 
 [functions.check-billing-mismatch]
 verify_jwt = false
+
+[functions.batch-trigger-inactivity]
+verify_jwt = false
