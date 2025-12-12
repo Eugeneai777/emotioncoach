@@ -131,6 +131,7 @@ const App = () => (
           <Route path="/emotion-button-intro" element={<EmotionButtonIntro />} />
           <Route path="/vibrant-life-intro" element={<VibrantLifeIntro />} />
           <Route path="/gratitude-journal-intro" element={<GratitudeJournalIntro />} />
+          <Route path="/gratitude-journal" element={<GratitudeHistory />} />
           <Route path="/gratitude-history" element={<GratitudeHistory />} />
           <Route path="/vibrant-life-history" element={<VibrantLifeHistory />} />
           <Route path="/api-docs" element={<ApiDocs />} />
