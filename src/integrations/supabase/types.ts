@@ -583,6 +583,7 @@ export type Database = {
           placeholder: string | null
           primary_color: string | null
           scenarios: Json | null
+          stage_prompts: Json | null
           steps: Json | null
           steps_emoji: string | null
           steps_title: string | null
@@ -623,6 +624,7 @@ export type Database = {
           placeholder?: string | null
           primary_color?: string | null
           scenarios?: Json | null
+          stage_prompts?: Json | null
           steps?: Json | null
           steps_emoji?: string | null
           steps_title?: string | null
@@ -663,6 +665,7 @@ export type Database = {
           placeholder?: string | null
           primary_color?: string | null
           scenarios?: Json | null
+          stage_prompts?: Json | null
           steps?: Json | null
           steps_emoji?: string | null
           steps_title?: string | null

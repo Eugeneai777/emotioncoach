@@ -9,14 +9,15 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Mic, Tent, Bell, Users, MessageSquare, Activity, Clock, AlertTriangle, GraduationCap, Share2, Bot, Copy, Save, Pencil, ArrowUp, ArrowDown, History, RotateCcw, CheckCircle2, AlertCircle, Circle } from "lucide-react";
-import { CoachTemplate, useUpdateCoachTemplate } from "@/hooks/useCoachTemplates";
+import { Loader2, Mic, Tent, Bell, Users, MessageSquare, Activity, Clock, AlertTriangle, GraduationCap, Share2, Bot, Copy, Save, Pencil, ArrowUp, ArrowDown, History, RotateCcw, CheckCircle2, AlertCircle, Circle, Layers } from "lucide-react";
+import { CoachTemplate, StagePrompts, useUpdateCoachTemplate } from "@/hooks/useCoachTemplates";
 import { usePromptVersions, useCreatePromptVersion, useRestorePromptVersion, PromptVersion } from "@/hooks/usePromptVersions";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { StagePromptsEditor } from "./StagePromptsEditor";
 
 // 获取同步状态
 type SyncStatus = 'synced' | 'modified' | 'pending' | 'empty';
@@ -70,8 +71,10 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFea
     isEditing: boolean;
     editedPrompt: string;
     changeNote: string;
+    editedStagePrompts: StagePrompts | null;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingStagePrompts, setIsSavingStagePrompts] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
   const [viewingVersion, setViewingVersion] = useState<PromptVersion | null>(null);
 
@@ -165,9 +168,30 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFea
       template,
       isEditing: false,
       editedPrompt: template.system_prompt || '',
-      changeNote: ''
+      changeNote: '',
+      editedStagePrompts: template.stage_prompts || null
     });
     setViewingVersion(null);
+  };
+
+  const handleSaveStagePrompts = async () => {
+    if (!selectedPrompt) return;
+    setIsSavingStagePrompts(true);
+    try {
+      await updateTemplate.mutateAsync({
+        id: selectedPrompt.template.id,
+        data: { stage_prompts: selectedPrompt.editedStagePrompts as any }
+      });
+      setSelectedPrompt(prev => prev ? { 
+        ...prev, 
+        template: { ...prev.template, stage_prompts: prev.editedStagePrompts as StagePrompts }
+      } : null);
+      toast.success('阶段提示词已保存');
+    } catch (error) {
+      toast.error('保存失败');
+    } finally {
+      setIsSavingStagePrompts(false);
+    }
   };
 
   const handleSavePrompt = async () => {
@@ -415,8 +439,12 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFea
           </DialogHeader>
           
           <Tabs defaultValue="current" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="current">当前版本</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="current">基础 Prompt</TabsTrigger>
+              <TabsTrigger value="stages" className="flex items-center gap-1">
+                <Layers className="h-4 w-4" />
+                阶段提示词
+              </TabsTrigger>
               <TabsTrigger value="history" className="flex items-center gap-1">
                 <History className="h-4 w-4" />
                 历史版本 ({versions.length})
@@ -504,6 +532,15 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFea
                   </Button>
                 </div>
               )}
+            </TabsContent>
+            
+            <TabsContent value="stages" className="mt-4">
+              <StagePromptsEditor
+                stagePrompts={selectedPrompt?.editedStagePrompts}
+                onChange={(newStagePrompts) => setSelectedPrompt(prev => prev ? { ...prev, editedStagePrompts: newStagePrompts } : null)}
+                onSave={handleSaveStagePrompts}
+                isSaving={isSavingStagePrompts}
+              />
             </TabsContent>
             
             <TabsContent value="history" className="mt-4">
