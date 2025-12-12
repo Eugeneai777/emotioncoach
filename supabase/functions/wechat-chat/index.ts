@@ -9,25 +9,56 @@ const corsHeaders = {
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const MAX_REQUESTS_PER_WINDOW = 10; // 10 requests per minute per openid
+const DAILY_REQUEST_LIMIT = 100; // Maximum 100 requests per day per openid
 
-// In-memory rate limit store (resets on function cold start)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+// Persistent rate limiting using database
+async function checkRateLimitPersistent(
+  supabase: ReturnType<typeof createClient>,
+  openid: string
+): Promise<{ allowed: boolean; remaining: number; dailyRemaining: number }> {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - RATE_LIMIT_WINDOW_MS);
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-function checkRateLimit(openid: string): { allowed: boolean; remaining: number } {
-  const now = Date.now();
-  const record = rateLimitStore.get(openid);
-  
-  if (!record || now > record.resetTime) {
-    rateLimitStore.set(openid, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
-    return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1 };
+  try {
+    // Check minute window rate limit
+    const { count: minuteCount } = await supabase
+      .from('wechat_rate_limits')
+      .select('*', { count: 'exact', head: true })
+      .eq('openid', openid)
+      .gte('created_at', windowStart.toISOString());
+
+    // Check daily limit
+    const { count: dailyCount } = await supabase
+      .from('wechat_rate_limits')
+      .select('*', { count: 'exact', head: true })
+      .eq('openid', openid)
+      .gte('created_at', dayStart.toISOString());
+
+    const currentMinuteCount = minuteCount || 0;
+    const currentDailyCount = dailyCount || 0;
+
+    if (currentMinuteCount >= MAX_REQUESTS_PER_WINDOW) {
+      return { allowed: false, remaining: 0, dailyRemaining: DAILY_REQUEST_LIMIT - currentDailyCount };
+    }
+
+    if (currentDailyCount >= DAILY_REQUEST_LIMIT) {
+      return { allowed: false, remaining: 0, dailyRemaining: 0 };
+    }
+
+    // Record this request
+    await supabase.from('wechat_rate_limits').insert({ openid });
+
+    return {
+      allowed: true,
+      remaining: MAX_REQUESTS_PER_WINDOW - currentMinuteCount - 1,
+      dailyRemaining: DAILY_REQUEST_LIMIT - currentDailyCount - 1
+    };
+  } catch (error) {
+    console.error('[Rate Limit] Database error, falling back to allow:', error);
+    // Fail open but log the error - prevents service disruption
+    return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW, dailyRemaining: DAILY_REQUEST_LIMIT };
   }
-  
-  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
-    return { allowed: false, remaining: 0 };
-  }
-  
-  record.count++;
-  return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - record.count };
 }
 
 // Input validation
