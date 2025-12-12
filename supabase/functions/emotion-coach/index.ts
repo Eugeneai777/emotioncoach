@@ -396,23 +396,34 @@ ${preferenceHint}
   3. [根据对话定制的微行动3，如：给自己泡一杯热茶]
   4. 其他行动（请分享）"
 - 选项必须具体、可执行、5分钟内能完成
-- 用户选择任何选项后 → 立即调用 complete_stage 和 generate_briefing
+- 用户选择任何选项后 → 立即调用 complete_stage(stage=4)
 
 第二轮（必须推进）：
-- 确认用户选择，然后同时调用 complete_stage 和 generate_briefing
-- 无论用户如何回应 → 必须生成简报
+- 确认用户选择，然后调用 complete_stage(stage=4)
+- 无论用户如何回应 → 必须完成本阶段
 
 【动态选项生成规则】
 - 根据整个对话内容定制微行动
 - 例如用户说工作压力 → 出去走5分钟、听一首喜欢的歌、写3件今天做得好的事
 - 例如用户说家庭矛盾 → 给家人发一条表达感谢的消息、今晚主动说一句软话
 
-【推进信号 - 立即完成】
+【推进信号 - 立即调用 complete_stage(stage=4)】
 ✅ 用户提出或认同任何具体小行动
 ✅ 用户说"好的"/"可以"/"我试试"
-✅ 第2轮必须生成简报
+✅ 第2轮必须推进`;
 
-完成后立即调用 generate_briefing。`;
+        case 5:
+          return `【阶段5：生成简报】
+
+你已经陪伴用户完成了完整的情绪四部曲！现在必须：
+
+⚠️ 【强制要求】立即调用 generate_briefing 工具，为用户生成一份温暖的情绪简报。
+
+❌ 不要输出任何文字询问用户是否要简报
+❌ 不要给用户选项
+❌ 不要等待用户回复
+
+✅ 直接调用 generate_briefing 工具`;
 
         default:
           return '';
@@ -739,10 +750,10 @@ ${getStagePrompt(session?.current_stage || 0, stageRounds)}
       }
 
       if (functionName === 'complete_stage') {
-        // Update session
+        // Update session - 阶段4完成后推进到阶段5
         const stageKey = `stage_${args.stage}_insight`;
         const updateData: any = {
-          current_stage: args.stage < 4 ? args.stage + 1 : 4,
+          current_stage: args.stage + 1,  // 1→2, 2→3, 3→4, 4→5
           [stageKey]: args.insight,
           updated_at: new Date().toISOString()
         };
@@ -834,6 +845,20 @@ ${getStagePrompt(updatedSession?.current_stage || 0, newStageRounds)}
           const nestedArgs = JSON.parse(nestedToolCall.function.arguments);
           
           console.log('Nested tool call:', nestedFunctionName, nestedArgs);
+          
+          // 如果是 generate_briefing，直接返回简报信号
+          if (nestedFunctionName === 'generate_briefing') {
+            console.log('generate_briefing detected in nested loop, returning briefing signal');
+            const briefingContent = followUpMessage.content || 
+              "太棒了！你已经完成了今天的情绪四部曲 🌿\n\n这是为你生成的情绪简报：";
+            
+            return new Response(JSON.stringify({
+              content: briefingContent,
+              tool_call: { function: 'generate_briefing', args: nestedArgs }
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
           
           // Add nested tool call to history
           conversationHistory.push({
