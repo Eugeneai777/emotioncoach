@@ -53,11 +53,12 @@ const SafetyButtonsGrid: React.FC = () => {
         {/* 9按钮网格 */}
         <TooltipProvider delayDuration={300}>
           <div className="grid grid-cols-3 gap-2">
-            {emotionTypes.map((emotion) => (
+            {emotionTypes.map((emotion, index) => (
               <EmotionReliefButton
                 key={emotion.id}
                 emotion={emotion}
                 onClick={() => setActiveEmotion(emotion)}
+                animationDelay={index * 60}
               />
             ))}
           </div>
