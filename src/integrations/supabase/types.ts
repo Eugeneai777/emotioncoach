@@ -1336,6 +1336,39 @@ export type Database = {
         }
         Relationships: []
       }
+      emotion_coach_preferences: {
+        Row: {
+          category: string
+          created_at: string | null
+          custom_option: string
+          frequency: number | null
+          id: string
+          stage: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          custom_option: string
+          frequency?: number | null
+          id?: string
+          stage: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          custom_option?: string
+          frequency?: number | null
+          id?: string
+          stage?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       emotion_coaching_sessions: {
         Row: {
           conversation_id: string | null
