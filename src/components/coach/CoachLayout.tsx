@@ -420,6 +420,7 @@ export const CoachLayout = ({
                       onOptionSelect={onOptionSelect}
                       isLastMessage={index === messages.length - 1}
                       communicationBriefingId={communicationBriefingId}
+                      primaryColor={primaryColor}
                       coachRecommendation={index === messages.length - 1 ? coachRecommendation : null}
                       videoRecommendations={videoRecommendations}
                     />
