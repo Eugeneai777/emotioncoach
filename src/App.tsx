@@ -62,6 +62,7 @@ import GratitudeHistory from "./pages/GratitudeHistory";
 import VibrantLifeHistory from "./pages/VibrantLifeHistory";
 import ApiDocs from "./pages/ApiDocs";
 import PosterCenter from "./pages/PosterCenter";
+import CustomerSupport from "./pages/CustomerSupport";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
 import { Navigate } from "react-router-dom";
 import FloatingVoiceButton from "./components/FloatingVoiceButton";
@@ -134,6 +135,7 @@ const App = () => (
           <Route path="/vibrant-life-history" element={<VibrantLifeHistory />} />
           <Route path="/api-docs" element={<ApiDocs />} />
           <Route path="/poster-center" element={<PosterCenter />} />
+          <Route path="/customer-support" element={<CustomerSupport />} />
           <Route path="/coach/:coachKey" element={<DynamicCoach />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
