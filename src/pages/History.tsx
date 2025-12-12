@@ -519,9 +519,15 @@ const History = () => {
             
             <TabsContent value="list">
               <div className="space-y-4 md:space-y-6">
-                {/* 情绪日历概览 */}
+              {/* 情绪日历概览 */}
                 <UnifiedEmotionHeatmap 
-                  briefings={briefings}
+                  briefings={briefings.map(b => ({
+                    id: b.id,
+                    emotion_theme: b.emotion_theme,
+                    emotion_intensity: b.emotion_intensity,
+                    created_at: b.created_at,
+                    briefing_tags: b.tags?.map(t => ({ tags: { name: t.name, sentiment: null } })) || []
+                  }))}
                   quickLogs={quickLogs}
                 />
 
