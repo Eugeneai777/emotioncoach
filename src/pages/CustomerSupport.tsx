@@ -4,10 +4,12 @@ import { ArrowLeft, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { SupportCoachCard } from "@/components/customer-support/SupportCoachCard";
 import { SupportPackageCard } from "@/components/customer-support/SupportPackageCard";
 import { SupportCampCard } from "@/components/customer-support/SupportCampCard";
+import { PointsRulesCard } from "@/components/PointsRulesCard";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -16,6 +18,7 @@ interface Message {
     coaches?: Array<{ coach_key: string; reason: string }>;
     packages?: { package_ids: string[]; highlight_reason?: string };
     camps?: Array<{ camp_type: string; reason: string }>;
+    points_rules?: { show_balance: boolean };
   };
 }
 
@@ -30,7 +33,6 @@ const quickOptions = [
   { id: 'issue', emoji: '🔧', title: '报问题', prompt: '我遇到了一个问题需要帮助' },
   { id: 'suggestion', emoji: '💡', title: '提建议', prompt: '我想给有劲提一个建议' },
   { id: 'help', emoji: '❓', title: '求帮助', prompt: '我不太会用这个App，需要帮助' },
-  { id: 'refund', emoji: '💰', title: '退款咨询', prompt: '我想咨询退款相关问题' },
   { id: 'human', emoji: '👤', title: '联系人工', prompt: '我想联系人工客服' },
 ];
 
@@ -174,6 +176,18 @@ const CustomerSupport = () => {
                           reason={camp.reason} 
                         />
                       ))}
+                      {message.recommendations.points_rules && (
+                        <Card className="bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200/50">
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm flex items-center gap-2">
+                              🎯 积分规则
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <PointsRulesCard mode="detailed" />
+                          </CardContent>
+                        </Card>
+                      )}
                     </div>
                   )}
                 </div>
