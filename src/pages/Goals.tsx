@@ -138,6 +138,33 @@ const Goals = (): JSX.Element => {
     loadCalendarData();
   }, []);
 
+  // 检查并触发里程碑通知（50%, 75%, 100%）
+  const checkAndTriggerMilestone = async (goal: Goal, progress: { current: number; percentage: number }) => {
+    const milestones = [50, 75, 100];
+    
+    for (const milestone of milestones) {
+      if (progress.percentage >= milestone) {
+        // 检查是否已触发过该里程碑
+        const milestoneKey = `goal_milestone_${goal.id}_${milestone}`;
+        const triggered = localStorage.getItem(milestoneKey);
+        
+        if (!triggered) {
+          await triggerNotification('goal_milestone', {
+            goal_type: goal.goal_type,
+            goal_category: goal.goal_category || 'frequency',
+            goal_description: goal.description || `${goal.goal_type === 'weekly' ? '每周' : '每月'}情绪记录目标`,
+            target_count: goal.target_count,
+            actual_count: progress.current,
+            progress_percentage: milestone,
+            is_final: milestone === 100
+          });
+          localStorage.setItem(milestoneKey, 'true');
+          break; // 一次只触发一个里程碑
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     // Calculate progress for all goals when goals change
     const loadAllProgress = async () => {
@@ -150,7 +177,10 @@ const Goals = (): JSX.Element => {
       
       for (const goal of goals) {
         if (goal.goal_category === 'frequency' || !goal.goal_category) {
-          progressMap[goal.id] = await calculateProgress(goal);
+          const progress = await calculateProgress(goal);
+          progressMap[goal.id] = progress;
+          // 检查并触发里程碑通知
+          await checkAndTriggerMilestone(goal, progress);
         } else if (goal.goal_category === 'tag_reduction' && goal.target_tag_id) {
           tagProgressMap[goal.id] = await calculateTagReductionProgress(
             user.id, goal.target_tag_id, goal.target_count, goal.start_date, goal.end_date
@@ -188,7 +218,7 @@ const Goals = (): JSX.Element => {
     if (goals.length > 0) {
       loadAllProgress();
     }
-  }, [goals]);
+  }, [goals, triggerNotification]);
 
   const checkAuthAndLoadGoals = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -461,14 +491,20 @@ const Goals = (): JSX.Element => {
       if (progress.percentage >= 100) {
         await awardAchievement(goal);
         
-        // 触发庆祝通知
-        await triggerNotification('goal_milestone', {
-          goal_type: goal.goal_type,
-          goal_category: goal.goal_category || 'frequency',
-          target_count: goal.target_count,
-          actual_count: progress.current,
-          completion_rate: progress.percentage
-        });
+        // 触发100%里程碑通知（如果还没触发过）
+        const milestoneKey = `goal_milestone_${goal.id}_100`;
+        if (!localStorage.getItem(milestoneKey)) {
+          await triggerNotification('goal_milestone', {
+            goal_type: goal.goal_type,
+            goal_category: goal.goal_category || 'frequency',
+            goal_description: goal.description || `${goal.goal_type === 'weekly' ? '每周' : '每月'}情绪记录目标`,
+            target_count: goal.target_count,
+            actual_count: progress.current,
+            progress_percentage: 100,
+            is_final: true
+          });
+          localStorage.setItem(milestoneKey, 'true');
+        }
       }
 
       // Mark goal as inactive
