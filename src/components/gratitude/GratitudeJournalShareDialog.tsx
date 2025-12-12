@@ -59,22 +59,70 @@ export const GratitudeJournalShareDialog = ({ trigger }: GratitudeJournalShareDi
 
   const handleDownloadPoster = async () => {
     if (!posterRef.current) return;
+    if (!qrCodeUrl) {
+      toast.error("请等待二维码生成完成");
+      return;
+    }
     
     setGenerating(true);
     try {
-      const canvas = await html2canvas(posterRef.current, {
+      const posterElement = posterRef.current;
+      
+      // 保存原始样式
+      const originalPosition = posterElement.style.position;
+      const originalLeft = posterElement.style.left;
+      const originalTop = posterElement.style.top;
+      const originalZIndex = posterElement.style.zIndex;
+      const originalOpacity = posterElement.style.opacity;
+      const originalVisibility = posterElement.style.visibility;
+      
+      // 临时将元素移到可见位置确保正确渲染
+      posterElement.style.position = 'fixed';
+      posterElement.style.left = '16px';
+      posterElement.style.top = '16px';
+      posterElement.style.zIndex = '9999';
+      posterElement.style.opacity = '1';
+      posterElement.style.visibility = 'visible';
+      
+      // 等待二维码和渲染稳定
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const canvas = await html2canvas(posterElement, {
         scale: 3,
-        backgroundColor: null,
         useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        logging: false,
+        width: posterElement.scrollWidth,
+        height: posterElement.scrollHeight,
       });
+      
+      // 恢复原始样式
+      posterElement.style.position = originalPosition;
+      posterElement.style.left = originalLeft;
+      posterElement.style.top = originalTop;
+      posterElement.style.zIndex = originalZIndex;
+      posterElement.style.opacity = originalOpacity;
+      posterElement.style.visibility = originalVisibility;
       
       const link = document.createElement("a");
       link.download = "感恩日记-分享海报.png";
       link.href = canvas.toDataURL("image/png");
       link.click();
       toast.success("海报已保存");
-    } catch {
+    } catch (error) {
+      console.error("Generate poster error:", error);
       toast.error("生成海报失败");
+      
+      // 确保恢复样式
+      if (posterRef.current) {
+        posterRef.current.style.position = '';
+        posterRef.current.style.left = '';
+        posterRef.current.style.top = '';
+        posterRef.current.style.zIndex = '';
+        posterRef.current.style.opacity = '';
+        posterRef.current.style.visibility = '';
+      }
     } finally {
       setGenerating(false);
     }
@@ -156,7 +204,7 @@ export const GratitudeJournalShareDialog = ({ trigger }: GratitudeJournalShareDi
           <Button
             className="flex-1 gap-2 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
             onClick={handleDownloadPoster}
-            disabled={generating}
+            disabled={generating || !qrCodeUrl}
           >
             <Download className="w-4 h-4" />
             {generating ? "生成中..." : "保存海报"}
