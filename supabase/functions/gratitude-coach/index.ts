@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { sessionId, message } = await req.json();
+    const { messages: inputMessages } = await req.json();
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -33,28 +33,8 @@ serve(async (req) => {
       });
     }
 
-    // Get session from gratitude_coaching_sessions or create logic
-    let session;
-    let isNewSession = false;
-    if (sessionId) {
-      const { data } = await supabaseClient
-        .from('gratitude_coaching_sessions')
-        .select('*')
-        .eq('id', sessionId)
-        .single();
-      session = data;
-      
-      // Check if this is the first message in the session
-      const existingMessages = session?.messages || [];
-      isNewSession = existingMessages.length === 0;
-    }
-
-    if (!session) {
-      return new Response(JSON.stringify({ error: 'Session not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // Check if this is the first message (new session)
+    const isNewSession = inputMessages.length === 1;
     
     // Deduct quota for new sessions
     if (isNewSession) {
@@ -68,8 +48,7 @@ serve(async (req) => {
           body: JSON.stringify({
             feature_key: 'gratitude_coach',
             source: 'gratitude_coach_session',
-            conversationId: session.conversation_id || sessionId,
-            metadata: { session_id: sessionId }
+            metadata: { user_id: user.id }
           })
         });
         
@@ -96,8 +75,9 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    // Load conversation history
-    const conversationHistory = session.messages || [];
+    // Determine current stage from conversation length
+    const messageCount = inputMessages.length;
+    const currentStage = Math.min(Math.floor(messageCount / 2), 4);
 
     // Get stage-specific prompts for gratitude coaching
     const getStagePrompt = (stage: number) => {
@@ -107,7 +87,7 @@ serve(async (req) => {
 用温暖的开场白回应用户分享的内容。
 - 判断用户是分享情绪事件还是随手记录感恩
 - 如果是事件模式：温柔共情，准备进入四步曲
-- 如果是记录模式：直接记录，生成感恩清单`;
+- 如果是记录模式：直接调用 record_gratitude 工具记录，然后温暖回应`;
         case 1:
           return `【觉察（Awareness）：让用户感到被理解】
 
@@ -191,35 +171,13 @@ serve(async (req) => {
     // Build complete system prompt with dynamic stage info
     const systemPrompt = `${basePrompt}
 
-【当前阶段:${session?.current_stage || 0}/4】
-${getStagePrompt(session?.current_stage || 0)}
+【当前阶段:${currentStage}/4】
+${getStagePrompt(currentStage)}
 
 【伙伴信息】
 你现在是「劲老师」🌿，请使用这个身份与用户对话。`;
 
     const tools = [
-      {
-        type: "function",
-        function: {
-          name: "detect_mode",
-          description: "检测用户输入是事件模式还是记录模式",
-          parameters: {
-            type: "object",
-            properties: {
-              mode: {
-                type: "string",
-                enum: ["event_mode", "quick_gratitude_mode"],
-                description: "事件模式(event_mode)用于情绪事件处理，记录模式(quick_gratitude_mode)用于快速感恩记录"
-              },
-              summary: {
-                type: "string",
-                description: "用户输入的简要概括"
-              }
-            },
-            required: ["mode", "summary"]
-          }
-        }
-      },
       {
         type: "function",
         function: {
@@ -249,7 +207,7 @@ ${getStagePrompt(session?.current_stage || 0)}
         type: "function",
         function: {
           name: "record_gratitude",
-          description: "记录一条感恩事件（用于记录模式）",
+          description: "记录一条感恩事件（用于记录模式或快速记录）",
           parameters: {
             type: "object",
             properties: {
@@ -315,16 +273,13 @@ ${getStagePrompt(session?.current_stage || 0)}
       }
     ];
 
-    // Add user message to history
-    conversationHistory.push({ role: "user", content: message });
-
     // Build messages array with full history
-    const messages = [
+    const aiMessages = [
       { role: "system", content: systemPrompt },
-      ...conversationHistory
+      ...inputMessages
     ];
 
-    console.log('Sending to AI with history:', conversationHistory.length, 'messages');
+    console.log('Sending to AI with history:', inputMessages.length, 'messages, stage:', currentStage);
 
     // Retry logic for transient errors
     const MAX_RETRIES = 3;
@@ -341,7 +296,7 @@ ${getStagePrompt(session?.current_stage || 0)}
           },
           body: JSON.stringify({
             model: 'google/gemini-2.5-flash',
-            messages,
+            messages: aiMessages,
             tools,
             temperature: 0.7,
           }),
@@ -381,21 +336,6 @@ ${getStagePrompt(session?.current_stage || 0)}
     const data = await response.json();
     const assistantMessage = data.choices[0].message;
 
-    // Add assistant message to history
-    conversationHistory.push({
-      role: "assistant",
-      content: assistantMessage.content || ""
-    });
-
-    // Save updated conversation history
-    await supabaseClient
-      .from('gratitude_coaching_sessions')
-      .update({ 
-        messages: conversationHistory,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', sessionId);
-
     // Handle tool calls
     if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
       const toolCall = assistantMessage.tool_calls[0];
@@ -403,20 +343,6 @@ ${getStagePrompt(session?.current_stage || 0)}
       const toolArgs = JSON.parse(toolCall.function.arguments);
 
       console.log(`Tool call: ${toolName}`, toolArgs);
-
-      if (toolName === 'complete_stage') {
-        const { stage, insight } = toolArgs;
-        const insightField = `stage_${stage}_insight`;
-        
-        await supabaseClient
-          .from('gratitude_coaching_sessions')
-          .update({ 
-            current_stage: stage + 1,
-            [insightField]: insight,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', sessionId);
-      }
 
       if (toolName === 'record_gratitude') {
         // Save gratitude entry directly
@@ -428,6 +354,8 @@ ${getStagePrompt(session?.current_stage || 0)}
             category: toolArgs.category || null,
             date: new Date().toISOString().split('T')[0]
           });
+        
+        console.log('✅ 感恩记录已保存');
       }
 
       if (toolName === 'generate_gratitude_briefing') {
@@ -436,7 +364,6 @@ ${getStagePrompt(session?.current_stage || 0)}
           .from('gratitude_coach_briefings')
           .insert({
             user_id: user.id,
-            conversation_id: session.conversation_id,
             event_summary: toolArgs.event_summary,
             gratitude_items: toolArgs.gratitude_items,
             stage_1_content: toolArgs.stage_1_content,
@@ -467,15 +394,6 @@ ${getStagePrompt(session?.current_stage || 0)}
             .from('gratitude_entries')
             .insert(entries);
         }
-
-        // Update session status
-        await supabaseClient
-          .from('gratitude_coaching_sessions')
-          .update({ 
-            status: 'completed',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', sessionId);
 
         return new Response(JSON.stringify({
           response: assistantMessage.content,
