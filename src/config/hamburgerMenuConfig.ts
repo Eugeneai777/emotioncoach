@@ -1,5 +1,5 @@
 import { 
-  User, Wallet, Clock, Bell, Tent, ShoppingBag, LogOut, UserCircle, Handshake, Settings, type LucideIcon 
+  User, Wallet, Clock, Bell, Tent, ShoppingBag, LogOut, UserCircle, Handshake, Settings, Headphones, type LucideIcon 
 } from "lucide-react";
 
 export interface MenuItemConfig {
@@ -25,6 +25,7 @@ export const hamburgerMenuItems: MenuItemConfig[] = [
   // 产品服务分组
   { id: 'packages', label: '全部产品', icon: ShoppingBag, path: '/packages', group: 'products', groupLabel: '产品服务' },
   { id: 'partner', label: '合伙人中心', icon: Handshake, path: '/partner', group: 'products' },
+  { id: 'customer-service', label: '联系客服', icon: Headphones, path: '/customer-support', group: 'products' },
   
   // 管理员分组
   { id: 'admin', label: '后台管理', icon: Settings, path: '/admin', group: 'admin', groupLabel: '管理', requireAdmin: true },
