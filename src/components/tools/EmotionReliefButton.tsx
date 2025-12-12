@@ -9,9 +9,14 @@ import {
 interface EmotionReliefButtonProps {
   emotion: EmotionType;
   onClick: () => void;
+  animationDelay?: number;
 }
 
-const EmotionReliefButton: React.FC<EmotionReliefButtonProps> = ({ emotion, onClick }) => {
+const EmotionReliefButton: React.FC<EmotionReliefButtonProps> = ({ 
+  emotion, 
+  onClick,
+  animationDelay = 0 
+}) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -27,16 +32,21 @@ const EmotionReliefButton: React.FC<EmotionReliefButtonProps> = ({ emotion, onCl
             transition-all duration-200 ease-out
             flex flex-col items-center justify-center gap-1
             group cursor-pointer
+            animate-bounce-in opacity-0
           `}
+          style={{ animationDelay: `${animationDelay}ms` }}
         >
+          {/* 光晕脉冲背景 */}
+          <div className="absolute inset-0 bg-white/20 rounded-full scale-50 animate-glow-pulse pointer-events-none" />
+          
           {/* 顶部高光效果 */}
           <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-black/10 pointer-events-none" />
           
           {/* 左侧光泽 */}
           <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent pointer-events-none" />
           
-          {/* Emoji图标 - 更大更突出 */}
-          <span className="text-3xl drop-shadow-md group-hover:scale-110 transition-transform duration-200 relative z-10">
+          {/* Emoji图标 - 呼吸动画 + 悬停摇摆 */}
+          <span className="text-3xl drop-shadow-md relative z-10 animate-emoji-breathe group-hover:animate-wiggle">
             {emotion.emoji}
           </span>
           
