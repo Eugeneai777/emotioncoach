@@ -1,6 +1,6 @@
 // 统一简报类型定义，用于整合多个教练的简报数据
 
-export type CoachType = 'emotion' | 'communication' | 'parent' | 'vibrant_life';
+export type CoachType = 'emotion' | 'communication' | 'parent' | 'vibrant_life' | 'story' | 'gratitude';
 
 export interface UnifiedBriefing {
   id: string;
@@ -45,6 +45,18 @@ export const coachConfig: Record<CoachType, { icon: string; color: string; label
     color: 'text-rose-600',
     label: '有劲AI',
     gradient: 'from-rose-500/10 to-red-500/5'
+  },
+  story: {
+    icon: '📖',
+    color: 'text-pink-600',
+    label: '故事教练',
+    gradient: 'from-pink-500/10 to-fuchsia-500/5'
+  },
+  gratitude: {
+    icon: '🙏',
+    color: 'text-amber-600',
+    label: '感恩教练',
+    gradient: 'from-amber-500/10 to-yellow-500/5'
   }
 };
 

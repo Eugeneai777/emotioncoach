@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bell, Filter } from 'lucide-react';
+import { Bell, Filter, CheckCheck, Trash2 } from 'lucide-react';
 import { useSmartNotification } from '@/hooks/useSmartNotification';
 import { NotificationCard } from './NotificationCard';
 import {
@@ -17,7 +17,7 @@ import {
 export const SmartNotificationCenter = () => {
   const [open, setOpen] = useState(false);
   const [coachFilter, setCoachFilter] = useState<string | null>(null);
-  const { notifications, unreadCount, loading, markAsRead, deleteNotification } = useSmartNotification(coachFilter);
+  const { notifications, unreadCount, loading, markAsRead, deleteNotification, markAllAsRead, clearReadNotifications } = useSmartNotification(coachFilter);
 
   const handleNotificationClick = (notificationId: string) => {
     markAsRead(notificationId);
@@ -77,6 +77,24 @@ export const SmartNotificationCenter = () => {
                   亲子教练
                 </div>
               </SelectItem>
+              <SelectItem value="communication_coach">
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-500">💬</span>
+                  沟通教练
+                </div>
+              </SelectItem>
+              <SelectItem value="story_coach">
+                <div className="flex items-center gap-2">
+                  <span className="text-pink-500">📖</span>
+                  故事教练
+                </div>
+              </SelectItem>
+              <SelectItem value="gratitude_coach">
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-500">🙏</span>
+                  感恩教练
+                </div>
+              </SelectItem>
               <SelectItem value="life_coach">
                 <div className="flex items-center gap-2">
                   <span className="text-indigo-500">✨</span>
@@ -91,6 +109,29 @@ export const SmartNotificationCenter = () => {
               </SelectItem>
             </SelectContent>
           </Select>
+          
+          {/* 批量操作按钮 */}
+          <div className="flex gap-2 mt-3">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={markAllAsRead}
+              disabled={unreadCount === 0}
+              className="flex-1"
+            >
+              <CheckCheck className="h-4 w-4 mr-1" />
+              全部已读
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={clearReadNotifications}
+              className="flex-1"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              清除已读
+            </Button>
+          </div>
         </div>
 
         <ScrollArea className="h-[calc(100vh-14rem)] mt-4">

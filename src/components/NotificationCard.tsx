@@ -34,7 +34,9 @@ const coachTypeMap: Record<string, CoachType> = {
   'emotion_coach': 'emotion',
   'communication_coach': 'communication',
   'parent_coach': 'parent',
-  'vibrant_life_coach': 'vibrant_life'
+  'vibrant_life_coach': 'vibrant_life',
+  'story_coach': 'story',
+  'gratitude_coach': 'gratitude'
 };
 
 const iconMap: Record<string, any> = {
@@ -134,12 +136,23 @@ export const NotificationCard = ({ notification, onClick, onDelete, colorTheme =
     locale: zhCN
   });
 
+  const isHighPriority = notification.priority >= 4;
+
   return (
     <Card 
       className={`relative p-3 transition-all hover:shadow-md ${style.bg} ${style.border} ${
         !notification.is_read ? 'border-2' : 'border'
-      }`}
+      } ${isHighPriority ? 'ring-2 ring-amber-400/50' : ''}`}
     >
+      {/* 高优先级标识 */}
+      {isHighPriority && (
+        <Badge 
+          variant="secondary" 
+          className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-1.5 py-0.5"
+        >
+          重要
+        </Badge>
+      )}
       {/* Title Row */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">

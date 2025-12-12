@@ -104,6 +104,57 @@ export const useSmartNotification = (coachTypeFilter?: string | null) => {
     }
   }, [notifications]);
 
+  // 全部标记已读
+  const markAllAsRead = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('smart_notifications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .eq('is_read', false);
+
+      if (error) throw error;
+
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+      
+      toast({
+        title: "已全部标记为已读",
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error('批量标记已读失败:', error);
+    }
+  }, [toast]);
+
+  // 清除已读通知
+  const clearReadNotifications = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('smart_notifications')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('is_read', true);
+
+      if (error) throw error;
+
+      setNotifications(prev => prev.filter(n => !n.is_read));
+      
+      toast({
+        title: "已清除所有已读通知",
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error('清除已读通知失败:', error);
+    }
+  }, [toast]);
+
   // 触发通知生成
   const triggerNotification = useCallback(async (scenario: string, context?: any) => {
     try {
@@ -170,6 +221,8 @@ export const useSmartNotification = (coachTypeFilter?: string | null) => {
     loading,
     markAsRead,
     deleteNotification,
+    markAllAsRead,
+    clearReadNotifications,
     triggerNotification,
     refresh: loadNotifications
   };
