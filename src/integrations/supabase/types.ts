@@ -519,6 +519,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           id: string
+          stage_prompts: Json | null
           system_prompt: string
           version_number: number
         }
@@ -528,6 +529,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          stage_prompts?: Json | null
           system_prompt: string
           version_number: number
         }
@@ -537,6 +539,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          stage_prompts?: Json | null
           system_prompt?: string
           version_number?: number
         }
@@ -577,11 +580,14 @@ export type Database = {
           history_route: string
           id: string
           is_active: boolean | null
+          is_prompt_locked: boolean | null
           is_system: boolean | null
           more_info_route: string | null
           page_route: string
           placeholder: string | null
           primary_color: string | null
+          prompt_locked_at: string | null
+          prompt_locked_by: string | null
           scenarios: Json | null
           stage_prompts: Json | null
           steps: Json | null
@@ -618,11 +624,14 @@ export type Database = {
           history_route: string
           id?: string
           is_active?: boolean | null
+          is_prompt_locked?: boolean | null
           is_system?: boolean | null
           more_info_route?: string | null
           page_route: string
           placeholder?: string | null
           primary_color?: string | null
+          prompt_locked_at?: string | null
+          prompt_locked_by?: string | null
           scenarios?: Json | null
           stage_prompts?: Json | null
           steps?: Json | null
@@ -659,11 +668,14 @@ export type Database = {
           history_route?: string
           id?: string
           is_active?: boolean | null
+          is_prompt_locked?: boolean | null
           is_system?: boolean | null
           more_info_route?: string | null
           page_route?: string
           placeholder?: string | null
           primary_color?: string | null
+          prompt_locked_at?: string | null
+          prompt_locked_by?: string | null
           scenarios?: Json | null
           stage_prompts?: Json | null
           steps?: Json | null
@@ -3318,6 +3330,53 @@ export type Database = {
           wecom_webhook_url?: string | null
         }
         Relationships: []
+      }
+      prompt_change_logs: {
+        Row: {
+          change_note: string | null
+          change_type: string
+          changed_at: string | null
+          changed_by: string | null
+          coach_template_id: string
+          id: string
+          new_stage_prompts: Json | null
+          new_system_prompt: string | null
+          old_stage_prompts: Json | null
+          old_system_prompt: string | null
+        }
+        Insert: {
+          change_note?: string | null
+          change_type: string
+          changed_at?: string | null
+          changed_by?: string | null
+          coach_template_id: string
+          id?: string
+          new_stage_prompts?: Json | null
+          new_system_prompt?: string | null
+          old_stage_prompts?: Json | null
+          old_system_prompt?: string | null
+        }
+        Update: {
+          change_note?: string | null
+          change_type?: string
+          changed_at?: string | null
+          changed_by?: string | null
+          coach_template_id?: string
+          id?: string
+          new_stage_prompts?: Json | null
+          new_system_prompt?: string | null
+          old_stage_prompts?: Json | null
+          old_system_prompt?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prompt_change_logs_coach_template_id_fkey"
+            columns: ["coach_template_id"]
+            isOneToOne: false
+            referencedRelation: "coach_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sleep_logs: {
         Row: {
