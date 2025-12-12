@@ -396,6 +396,22 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFea
               <span className="text-2xl">{selectedPrompt?.template.emoji}</span>
               <span>{selectedPrompt?.template.title} - AI Prompt</span>
             </DialogTitle>
+            {/* 显示当前版本号和更新时间 */}
+            {versions.length > 0 && (
+              <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                <Badge variant="outline" className="font-mono">
+                  当前版本: v{versions[0].version_number}
+                </Badge>
+                <span>
+                  最后更新: {format(new Date(versions[0].created_at), 'yyyy-MM-dd HH:mm', { locale: zhCN })}
+                </span>
+                {versions[0].change_note && (
+                  <span className="text-xs truncate max-w-[200px]" title={versions[0].change_note}>
+                    ({versions[0].change_note})
+                  </span>
+                )}
+              </div>
+            )}
           </DialogHeader>
           
           <Tabs defaultValue="current" className="w-full">
