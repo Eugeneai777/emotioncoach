@@ -23,7 +23,7 @@ interface Message {
   content: string;
   recommendations?: {
     coaches?: Array<{ coach_key: string; reason: string }>;
-    packages?: { package_ids: string[]; highlight_reason?: string };
+    packages?: { package_ids?: string[]; package_names?: string[]; highlight_reason?: string };
     camps?: Array<{ camp_type: string; reason: string }>;
     points_rules?: { show_balance: boolean };
     navigations?: Navigation[];
@@ -189,7 +189,7 @@ const CustomerSupport = () => {
                       ))}
                       {message.recommendations.packages && (
                         <SupportPackageCard 
-                          package_ids={message.recommendations.packages.package_ids} 
+                          package_names={message.recommendations.packages.package_names} 
                           highlight_reason={message.recommendations.packages.highlight_reason} 
                         />
                       )}

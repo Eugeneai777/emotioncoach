@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SupportPackageCardProps {
-  package_ids: string[];
+  package_ids?: string[];
+  package_names?: string[];
   highlight_reason?: string;
 }
 
@@ -17,7 +18,7 @@ interface PackageInfo {
   description: string | null;
 }
 
-export const SupportPackageCard = ({ package_ids, highlight_reason }: SupportPackageCardProps) => {
+export const SupportPackageCard = ({ package_ids, package_names, highlight_reason }: SupportPackageCardProps) => {
   const navigate = useNavigate();
   const [packages, setPackages] = useState<PackageInfo[]>([]);
 
@@ -30,8 +31,10 @@ export const SupportPackageCard = ({ package_ids, highlight_reason }: SupportPac
         .order('display_order');
       
       if (data) {
-        // Filter by package_ids if provided, otherwise show all
-        if (package_ids.length > 0) {
+        // Filter by package_names first, then package_ids, otherwise show all
+        if (package_names && package_names.length > 0) {
+          setPackages(data.filter(p => package_names.includes(p.package_name)));
+        } else if (package_ids && package_ids.length > 0) {
           setPackages(data.filter(p => package_ids.includes(p.id)));
         } else {
           setPackages(data);
@@ -39,7 +42,7 @@ export const SupportPackageCard = ({ package_ids, highlight_reason }: SupportPac
       }
     };
     fetchPackages();
-  }, [package_ids]);
+  }, [package_ids, package_names]);
 
   if (packages.length === 0) return null;
 

@@ -256,17 +256,17 @@ ${policyContent}
           parameters: {
             type: 'object',
             properties: {
-              package_ids: {
+              package_names: {
                 type: 'array',
                 items: { type: 'string' },
-                description: '推荐的套餐ID列表'
+                description: '推荐的套餐名称列表，如 ["尝鲜会员", "365会员"]'
               },
               highlight_reason: {
                 type: 'string',
                 description: '推荐说明'
               }
             },
-            required: ['package_ids']
+            required: ['package_names']
           }
         }
       },
@@ -376,7 +376,7 @@ ${policyContent}
     // 用于收集推荐数据
     let recommendations: {
       coaches?: Array<{ coach_key: string; reason: string }>;
-      packages?: { package_ids: string[]; highlight_reason: string };
+      packages?: { package_names: string[]; highlight_reason: string };
       camps?: Array<{ camp_type: string; reason: string }>;
       points_rules?: { show_balance: boolean };
       navigations?: Array<{ page_type: string; title: string; reason?: string }>;
@@ -444,10 +444,10 @@ ${policyContent}
 
           case 'recommend_packages':
             recommendations.packages = {
-              package_ids: args.package_ids,
+              package_names: args.package_names,
               highlight_reason: args.highlight_reason || ''
             };
-            result = `已为用户展示套餐卡片：${args.package_ids.join('、')}`;
+            result = `已为用户展示套餐卡片：${args.package_names.join('、')}`;
             break;
 
           case 'recommend_camps':
