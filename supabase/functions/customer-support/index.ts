@@ -43,11 +43,11 @@ serve(async (req) => {
     ).join('\n') || '暂无套餐信息';
 
     const coachesInfo = coachesRes.data?.map(c => 
-      `【${c.emoji} ${c.title}】${c.subtitle || ''} - ${c.description || ''}`
+      `【${c.emoji} ${c.title}】coach_key:${c.coach_key}, ${c.subtitle || ''} - ${c.description || ''}`
     ).join('\n') || '暂无教练信息';
 
     const campsInfo = campsRes.data?.map(c => 
-      `【${c.icon} ${c.camp_name}】${c.camp_subtitle || ''}, ${c.duration_days}天, 价格:${c.price}元`
+      `【${c.icon} ${c.camp_name}】camp_type:${c.camp_type}, ${c.camp_subtitle || ''}, ${c.duration_days}天, 价格:${c.price}元`
     ).join('\n') || '暂无训练营信息';
 
     const faqContent = knowledgeRes.data?.filter(k => k.category === 'faq')
@@ -61,12 +61,18 @@ serve(async (req) => {
 
     const systemPrompt = `你是"有劲"智能客服，一个温暖、专业、耐心的客服助手。
 
+## 回复格式要求【重要】
+- 使用纯文本回复，禁止使用任何Markdown格式（禁止使用 **加粗**、*斜体*、# 标题、- 列表符号等）
+- 需要强调时用「」或【】包裹
+- 列表使用 • 或数字 1. 2. 3.
+- 段落之间用空行分隔
+
 ## 你的职责
-1. **解答疑问**：回答用户关于产品功能、使用方法的问题
-2. **推荐产品**：根据用户需求推荐合适的套餐、教练或训练营
-3. **处理投诉**：耐心倾听用户的不满，记录投诉并表达歉意
-4. **收集反馈**：接收用户的建议和意见，帮助产品改进
-5. **引导使用**：指导新用户如何开始使用各项功能
+1. 解答疑问：回答用户关于产品功能、使用方法的问题
+2. 推荐产品：根据用户需求推荐合适的套餐、教练或训练营
+3. 处理投诉：耐心倾听用户的不满，记录投诉并表达歉意
+4. 收集反馈：接收用户的建议和意见，帮助产品改进
+5. 引导使用：指导新用户如何开始使用各项功能
 
 ## 产品知识库（实时更新）
 
@@ -89,24 +95,27 @@ ${guideContent}
 ${policyContent}
 
 ## 核心功能介绍
-- **情绪教练**：通过情绪四部曲(觉察→理解→反应→转化)帮助用户深度梳理情绪
-- **情绪按钮**：9种情绪场景，288条认知提醒，即时情绪疗愈工具
-- **沟通教练**：帮助用户改善人际沟通
-- **亲子教练**：专注亲子关系的情绪管理
-- **训练营**：21天系统化情绪管理训练
+• 情绪教练：通过情绪四部曲(觉察→理解→反应→转化)帮助用户深度梳理情绪
+• 情绪按钮：9种情绪场景，288条认知提醒，即时情绪疗愈工具
+• 沟通教练：帮助用户改善人际沟通
+• 亲子教练：专注亲子关系的情绪管理
+• 训练营：21天系统化情绪管理训练
 
 ## 对话原则
-- 语气温暖友善，像朋友一样交谈
-- 回答简洁明了，避免冗长
-- 遇到无法解答的问题，诚实告知并记录
-- 当用户有投诉时，先表达理解和歉意，再记录问题
-- 当用户有建议时，表示感谢并认真记录
+• 语气温暖友善，像朋友一样交谈
+• 回答简洁明了，避免冗长
+• 遇到无法解答的问题，诚实告知并记录
+• 当用户有投诉时，先表达理解和歉意，再记录问题
+• 当用户有建议时，表示感谢并认真记录
 
 ## 工具使用说明
-- 当用户想投诉或反映问题时，使用 submit_ticket 工具
-- 当用户提出建议或反馈时，使用 submit_feedback 工具
-- 当用户询问套餐/价格时，使用 query_packages 工具获取最新信息
-- 当用户询问功能使用方法时，使用 query_knowledge 工具搜索知识库`;
+• 当用户想投诉或反映问题时，使用 submit_ticket 工具
+• 当用户提出建议或反馈时，使用 submit_feedback 工具
+• 当用户询问套餐/价格时，使用 query_packages 工具获取最新信息
+• 当用户询问功能使用方法时，使用 query_knowledge 工具搜索知识库
+• 当用户询问教练相关问题时，使用 recommend_coaches 工具返回教练卡片
+• 当用户询问套餐/会员时，使用 recommend_packages 工具返回套餐卡片
+• 当用户询问训练营时，使用 recommend_camps 工具返回训练营卡片`;
 
     const tools = [
       {
@@ -200,6 +209,78 @@ ${policyContent}
             required: ['keywords']
           }
         }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'recommend_coaches',
+          description: '当用户询问教练相关问题时，返回教练推荐卡片供用户点击',
+          parameters: {
+            type: 'object',
+            properties: {
+              coaches: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    coach_key: { type: 'string', description: '教练标识，如 emotion, parent, communication, gratitude, vibrant-life' },
+                    reason: { type: 'string', description: '推荐理由，简短说明' }
+                  },
+                  required: ['coach_key', 'reason']
+                },
+                description: '要推荐的教练列表'
+              }
+            },
+            required: ['coaches']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'recommend_packages',
+          description: '当用户询问套餐、价格、会员时，返回套餐推荐卡片供用户购买',
+          parameters: {
+            type: 'object',
+            properties: {
+              package_ids: {
+                type: 'array',
+                items: { type: 'string' },
+                description: '推荐的套餐ID列表'
+              },
+              highlight_reason: {
+                type: 'string',
+                description: '推荐说明'
+              }
+            },
+            required: ['package_ids']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'recommend_camps',
+          description: '当用户询问训练营时，返回训练营推荐卡片供用户了解',
+          parameters: {
+            type: 'object',
+            properties: {
+              camps: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    camp_type: { type: 'string', description: '训练营类型' },
+                    reason: { type: 'string', description: '推荐理由' }
+                  },
+                  required: ['camp_type', 'reason']
+                },
+                description: '要推荐的训练营列表'
+              }
+            },
+            required: ['camps']
+          }
+        }
       }
     ];
 
@@ -231,6 +312,13 @@ ${policyContent}
 
     const aiData = await aiResponse.json();
     const assistantMessage = aiData.choices[0].message;
+
+    // 用于收集推荐数据
+    let recommendations: {
+      coaches?: Array<{ coach_key: string; reason: string }>;
+      packages?: { package_ids: string[]; highlight_reason: string };
+      camps?: Array<{ camp_type: string; reason: string }>;
+    } = {};
 
     // 处理工具调用
     if (assistantMessage.tool_calls) {
@@ -285,6 +373,24 @@ ${policyContent}
             result = matched?.length 
               ? matched.map(k => `【${k.title}】\n${k.content}`).join('\n\n')
               : '未找到相关信息';
+            break;
+
+          case 'recommend_coaches':
+            recommendations.coaches = args.coaches;
+            result = `已为用户展示教练卡片：${args.coaches.map((c: any) => c.coach_key).join('、')}`;
+            break;
+
+          case 'recommend_packages':
+            recommendations.packages = {
+              package_ids: args.package_ids,
+              highlight_reason: args.highlight_reason || ''
+            };
+            result = `已为用户展示套餐卡片：${args.package_ids.join('、')}`;
+            break;
+
+          case 'recommend_camps':
+            recommendations.camps = args.camps;
+            result = `已为用户展示训练营卡片：${args.camps.map((c: any) => c.camp_type).join('、')}`;
             break;
         }
 
@@ -344,7 +450,10 @@ ${policyContent}
         }
       }
 
-      return new Response(JSON.stringify({ reply: finalMessage }), {
+      return new Response(JSON.stringify({ 
+        reply: finalMessage,
+        recommendations: Object.keys(recommendations).length > 0 ? recommendations : undefined
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
