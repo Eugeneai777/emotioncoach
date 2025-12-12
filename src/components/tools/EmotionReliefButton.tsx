@@ -5,7 +5,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { EmotionIcon } from "@/components/icons/emotions";
 
 interface EmotionReliefButtonProps {
   emotion: EmotionType;
@@ -46,10 +45,10 @@ const EmotionReliefButton: React.FC<EmotionReliefButtonProps> = ({
           {/* 左侧光泽 */}
           <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent pointer-events-none" />
           
-          {/* SVG图标 - 呼吸动画 + 悬停摇摆 */}
-          <div className="relative z-10 animate-emoji-breathe group-hover:animate-wiggle drop-shadow-md">
-            <EmotionIcon type={emotion.id} className="w-10 h-10" />
-          </div>
+          {/* Emoji图标 - 呼吸动画 + 悬停摇摆 */}
+          <span className="text-3xl drop-shadow-md relative z-10 animate-emoji-breathe group-hover:animate-wiggle">
+            {emotion.emoji}
+          </span>
           
           {/* 标题 */}
           <span className="font-semibold text-sm tracking-wide drop-shadow-sm relative z-10">
