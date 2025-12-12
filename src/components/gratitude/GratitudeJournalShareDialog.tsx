@@ -1,9 +1,13 @@
-import { useState, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useState, useRef, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Share2, Download, Copy, Check, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
+import QRCode from "qrcode";
+import { usePartner } from "@/hooks/usePartner";
+import { getPartnerShareUrl, getPromotionDomain } from "@/utils/partnerQRUtils";
 
 interface GratitudeJournalShareDialogProps {
   trigger?: React.ReactNode;
@@ -13,9 +17,34 @@ export const GratitudeJournalShareDialog = ({ trigger }: GratitudeJournalShareDi
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const posterRef = useRef<HTMLDivElement>(null);
+  
+  const { partner, isPartner } = usePartner();
 
-  const shareUrl = `${window.location.origin}/gratitude-journal-intro`;
+  // 根据是否是合伙人生成不同的分享链接
+  const shareUrl = isPartner && partner?.id 
+    ? getPartnerShareUrl(partner.id, (partner.default_entry_type as 'free' | 'paid') || 'free')
+    : `${getPromotionDomain()}/gratitude-journal-intro`;
+
+  // 生成二维码
+  useEffect(() => {
+    const generateQR = async () => {
+      try {
+        const url = await QRCode.toDataURL(shareUrl, {
+          width: 120,
+          margin: 1,
+          color: { dark: '#0d9488', light: '#ffffff' }
+        });
+        setQrCodeUrl(url);
+      } catch (error) {
+        console.error('Error generating QR code:', error);
+      }
+    };
+    if (open) {
+      generateQR();
+    }
+  }, [open, shareUrl]);
 
   const handleCopyLink = async () => {
     try {
@@ -64,6 +93,9 @@ export const GratitudeJournalShareDialog = ({ trigger }: GratitudeJournalShareDi
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="text-center">分享感恩日记</DialogTitle>
+          <DialogDescription className="text-center text-sm text-muted-foreground">
+            {isPartner ? "分享给朋友，赚取推广佣金" : "分享给朋友，一起记录感恩时刻"}
+          </DialogDescription>
         </DialogHeader>
 
         {/* Share Poster Preview */}
@@ -72,6 +104,11 @@ export const GratitudeJournalShareDialog = ({ trigger }: GratitudeJournalShareDi
           className="bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 rounded-2xl p-6 space-y-4"
         >
           <div className="text-center space-y-2">
+            {isPartner && (
+              <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white mb-2">
+                🌟 合伙人专属推广
+              </Badge>
+            )}
             <div className="text-4xl">📔</div>
             <h3 className="text-lg font-bold text-teal-900">我的感恩日记</h3>
             <p className="text-sm text-teal-700">每天1分钟，看见幸福的力量</p>
@@ -91,11 +128,17 @@ export const GratitudeJournalShareDialog = ({ trigger }: GratitudeJournalShareDi
           </div>
 
           <div className="text-center">
-            <p className="text-xs text-teal-600">扫码开始记录</p>
+            <p className="text-xs text-teal-600">
+              {isPartner ? "🎁 扫码领取专属福利" : "扫码开始记录"}
+            </p>
             <div className="mt-2 inline-block bg-white p-2 rounded-lg">
-              <div className="w-20 h-20 bg-teal-100 rounded flex items-center justify-center">
-                <span className="text-teal-400 text-xs">二维码</span>
-              </div>
+              {qrCodeUrl ? (
+                <img src={qrCodeUrl} alt="感恩日记二维码" className="w-20 h-20 rounded" />
+              ) : (
+                <div className="w-20 h-20 bg-teal-100 rounded flex items-center justify-center">
+                  <span className="text-teal-400 text-xs">生成中...</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
