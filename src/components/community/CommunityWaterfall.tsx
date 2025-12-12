@@ -29,7 +29,7 @@ interface Post {
 
 const POSTS_PER_PAGE = 10;
 const RECOMMENDATION_CACHE_KEY = 'community_recommendation_cache';
-const RECOMMENDATION_CACHE_TTL = 5 * 60 * 1000; // 5分钟缓存
+const RECOMMENDATION_CACHE_TTL = 2 * 60 * 1000; // 2分钟缓存（更快显示新帖子）
 
 const categories = [
   { value: 'following', label: '关注', emoji: '👥' },
