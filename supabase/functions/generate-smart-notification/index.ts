@@ -56,48 +56,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 后端去重检查：24小时内同场景不重复发送
-    const { data: recentSameScenario } = await supabase
-      .from('smart_notifications')
-      .select('id, created_at')
-      .eq('user_id', userId)
-      .eq('scenario', scenario)
-      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if ((recentSameScenario?.length ?? 0) > 0 && !context?.force && !context?.preview) {
-      console.log(`24小时内已发送过 ${scenario} 场景通知，跳过`);
-      return new Response(JSON.stringify({ 
-        success: false,
-        message: "24小时内已发送相同场景通知",
-        duplicate: true
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // sustained_low_mood 特殊处理：3天内最多1次
-    if (scenario === 'sustained_low_mood' && !context?.force && !context?.preview) {
-      const { data: recentCare } = await supabase
-        .from('smart_notifications')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('scenario', 'sustained_low_mood')
-        .gte('created_at', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
-        .limit(1);
-        
-      if ((recentCare?.length ?? 0) > 0) {
-        console.log('3天内已发送过 sustained_low_mood 通知，跳过');
-        return new Response(JSON.stringify({ 
-          success: false,
-          message: "3天内已发送过关怀通知",
-          duplicate: true
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    }
+    // 已移除去重逻辑：每次都生成智能提醒
 
     // 获取用户偏好设置
     const { data: profile } = await supabase
