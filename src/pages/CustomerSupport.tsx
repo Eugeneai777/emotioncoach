@@ -9,7 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { SupportCoachCard } from "@/components/customer-support/SupportCoachCard";
 import { SupportPackageCard } from "@/components/customer-support/SupportPackageCard";
 import { SupportCampCard } from "@/components/customer-support/SupportCampCard";
+import { SupportNavigationCard } from "@/components/customer-support/SupportNavigationCard";
 import { PointsRulesCard } from "@/components/PointsRulesCard";
+
+interface Navigation {
+  page_type: string;
+  title: string;
+  reason?: string;
+}
 
 interface Message {
   role: 'user' | 'assistant';
@@ -19,8 +26,25 @@ interface Message {
     packages?: { package_ids: string[]; highlight_reason?: string };
     camps?: Array<{ camp_type: string; reason: string }>;
     points_rules?: { show_balance: boolean };
+    navigations?: Navigation[];
   };
 }
+
+const PAGE_ROUTES: Record<string, { route: string; emoji: string; title: string; subtitle: string }> = {
+  orders: { route: '/settings?tab=account', emoji: '📋', title: '我的订单', subtitle: '查看购买记录和订单状态' },
+  profile: { route: '/settings?tab=profile', emoji: '⚙️', title: '个人设置', subtitle: '修改个人信息和偏好' },
+  emotion_button: { route: '/energy-studio', emoji: '🎯', title: '情绪按钮', subtitle: '9种情绪场景，即时疗愈' },
+  gratitude: { route: '/gratitude-journal', emoji: '📝', title: '感恩日记', subtitle: '记录日常感恩，生成幸福报告' },
+  emotion_coach: { route: '/', emoji: '💙', title: '情绪教练', subtitle: '深度梳理情绪' },
+  parent_coach: { route: '/parent-coach', emoji: '💜', title: '亲子教练', subtitle: '亲子情绪沟通' },
+  communication_coach: { route: '/communication-coach', emoji: '💬', title: '沟通教练', subtitle: '改善人际沟通' },
+  gratitude_coach: { route: '/gratitude-coach', emoji: '💖', title: '感恩教练', subtitle: '日常感恩练习' },
+  story_coach: { route: '/story-coach', emoji: '📖', title: '故事教练', subtitle: '英雄之旅创作' },
+  vibrant_life: { route: '/vibrant-life', emoji: '❤️', title: '有劲生活教练', subtitle: '智能总入口' },
+  training_camps: { route: '/training-camps', emoji: '🏕️', title: '训练营', subtitle: '21天系统化训练' },
+  community: { route: '/community', emoji: '🌈', title: '社区', subtitle: '分享与交流' },
+  packages: { route: '/packages', emoji: '📦', title: '会员套餐', subtitle: '查看所有套餐' },
+};
 
 const quickOptions = [
   { id: 'packages', emoji: '📦', title: '查套餐', prompt: '我想了解会员套餐的详情' },
@@ -188,6 +212,20 @@ const CustomerSupport = () => {
                           </CardContent>
                         </Card>
                       )}
+                      {message.recommendations.navigations?.map((nav, idx) => {
+                        const pageInfo = PAGE_ROUTES[nav.page_type];
+                        if (!pageInfo) return null;
+                        return (
+                          <SupportNavigationCard
+                            key={idx}
+                            emoji={pageInfo.emoji}
+                            title={nav.title || pageInfo.title}
+                            subtitle={pageInfo.subtitle}
+                            route={pageInfo.route}
+                            reason={nav.reason}
+                          />
+                        );
+                      })}
                     </div>
                   )}
                 </div>

@@ -76,6 +76,11 @@ const systemPrompt = `你是"有劲"智能客服，一个温暖、专业、耐�
 4. 积分/扣费/点数/计费规则 → 【必须】调用 show_points_rules 工具
 5. 投诉/问题 → 使用 submit_ticket 工具
 6. 建议/反馈 → 使用 submit_feedback 工具
+7. 查看订单/订单记录/购买记录 → 【必须】调用 navigate_to_page(page_type: 'orders')
+8. 修改信息/个人资料/设置/修改头像/修改昵称 → 【必须】调用 navigate_to_page(page_type: 'profile')
+9. 情绪按钮/情绪急救/9种情绪/288条提醒 → 【必须】调用 navigate_to_page(page_type: 'emotion_button')
+10. 感恩日记/感恩记录/幸福报告 → 【必须】调用 navigate_to_page(page_type: 'gratitude')
+11. 新手指引时，介绍完功能后 → 【必须】调用 navigate_to_page 展示多个功能入口
 
 调用工具后，用简短的文字说明即可，卡片会自动展示给用户。
 
@@ -106,15 +111,17 @@ ${guideContent}
 ### 政策说明
 ${policyContent}
 
-## 核心功能介绍
-• 情绪教练：通过情绪四部曲(觉察→理解→反应→转化)帮助用户深度梳理情绪
-• 情绪按钮：9种情绪场景，288条认知提醒，即时情绪疗愈工具
-• 沟通教练：帮助用户改善人际沟通
-• 亲子教练：专注亲子关系的情绪管理
-• 感恩教练：通过感恩四部曲(看见→感受→意义→力量)帮助用户发现日常微光，记录感恩日记
-• 感恩日记：随手记录感恩事件，AI自动分析生成幸福报告，追踪七维幸福指标
-• 有劲生活教练：智能总入口，根据用户需求引导到合适的教练或工具
-• 训练营：21天系统化情绪管理训练
+## 核心功能介绍（新手指引时使用，介绍完后用navigate_to_page展示入口卡片）
+• 💙情绪教练(emotion_coach)：通过情绪四部曲(觉察→理解→反应→转化)帮助用户深度梳理情绪
+• 🎯情绪按钮(emotion_button)：9种情绪场景(恐慌/担心/负面/恐惧/烦躁/压力/无力/崩溃/失落)，288条认知提醒，即时情绪疗愈工具
+• 💬沟通教练(communication_coach)：通过四步沟通模型(看见→读懂→影响→行动)帮助用户改善人际沟通
+• 💜亲子教练(parent_coach)：专注亲子情绪四部曲(觉察→理解→影响→行动)
+• 💖感恩教练(gratitude_coach)：通过感恩四部曲(看见→感受→意义→力量)帮助用户发现日常微光
+• 📝感恩日记(gratitude)：随手记录感恩事件，AI自动分析生成幸福报告，追踪七维幸福指标
+• ❤️有劲生活教练(vibrant_life)：智能总入口，根据用户需求引导到合适的教练或工具
+• 📖故事教练(story_coach)：通过英雄之旅框架，帮助用户创作个人成长故事
+• 🏕️训练营(training_camps)：21天系统化情绪管理训练
+• 🌈社区(community)：分享成长故事，与同行者交流互动
 
 ## 对话原则
 • 语气温暖友善，像朋友一样交谈
@@ -304,6 +311,36 @@ ${policyContent}
             required: []
           }
         }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'navigate_to_page',
+          description: '引导用户跳转到特定页面，如订单、设置、感恩日记、情绪按钮等。新手指引完成后必须调用此工具展示多个功能入口卡片。',
+          parameters: {
+            type: 'object',
+            properties: {
+              navigations: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    page_type: { 
+                      type: 'string', 
+                      enum: ['orders', 'profile', 'emotion_button', 'gratitude', 'emotion_coach', 'parent_coach', 'communication_coach', 'gratitude_coach', 'story_coach', 'vibrant_life', 'training_camps', 'community', 'packages'],
+                      description: '页面类型' 
+                    },
+                    title: { type: 'string', description: '卡片显示标题' },
+                    reason: { type: 'string', description: '推荐理由，可选' }
+                  },
+                  required: ['page_type', 'title']
+                },
+                description: '要导航的页面列表'
+              }
+            },
+            required: ['navigations']
+          }
+        }
       }
     ];
 
@@ -342,6 +379,7 @@ ${policyContent}
       packages?: { package_ids: string[]; highlight_reason: string };
       camps?: Array<{ camp_type: string; reason: string }>;
       points_rules?: { show_balance: boolean };
+      navigations?: Array<{ page_type: string; title: string; reason?: string }>;
     } = {};
 
     // 处理工具调用
@@ -420,6 +458,11 @@ ${policyContent}
           case 'show_points_rules':
             recommendations.points_rules = { show_balance: args.show_balance || false };
             result = '已为用户展示积分规则卡片';
+            break;
+
+          case 'navigate_to_page':
+            recommendations.navigations = args.navigations;
+            result = `已为用户展示页面导航卡片：${args.navigations.map((n: any) => n.page_type).join('、')}`;
             break;
         }
 
