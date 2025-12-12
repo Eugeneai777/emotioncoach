@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Calendar, Loader2, BarChart3, Share2, ChevronDown, ChevronUp, Filter } from "lucide-react";
+import { ArrowLeft, Calendar, Loader2, BarChart3, Share2, ChevronDown, ChevronUp, Filter, PieChart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import EmotionTagCloud from "@/components/EmotionTagCloud";
 import EmotionCycleAnalysis from "@/components/EmotionCycleAnalysis";
@@ -24,6 +24,7 @@ import UnifiedEmotionIntensityChart from "@/components/UnifiedEmotionIntensityCh
 import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
 import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { EmotionAnalyticsDashboard } from "@/components/emotion/EmotionAnalyticsDashboard";
 
 interface TagType {
   id: string;
@@ -507,8 +508,9 @@ const History = () => {
           </div>
         ) : (
           <Tabs defaultValue="list" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 mb-4 md:mb-6 h-auto">
+              <TabsList className="grid w-full grid-cols-6 mb-4 md:mb-6 h-auto">
                 <ResponsiveTabsTrigger value="list" label="简报列表" shortLabel="列表" />
+                <ResponsiveTabsTrigger value="analytics" label="数据分析" shortLabel="分析" />
                 <ResponsiveTabsTrigger value="trends" label="情绪趋势" shortLabel="趋势" />
                 <ResponsiveTabsTrigger value="patterns" label="模式洞察" shortLabel="模式" />
                 <ResponsiveTabsTrigger value="compare" label="对比分析" shortLabel="对比" />
@@ -603,7 +605,13 @@ const History = () => {
                 </div>
               </div>
             </TabsContent>
-            
+
+            <TabsContent value="analytics">
+              <ScrollArea className="h-[calc(100vh-280px)]">
+                <EmotionAnalyticsDashboard />
+              </ScrollArea>
+            </TabsContent>
+
             <TabsContent value="trends">
               <ScrollArea className="h-[calc(100vh-280px)]">
                 <div className="space-y-4 md:space-y-6">
