@@ -120,6 +120,9 @@ interface CoachLayoutProps {
   
   // Steps collapse control
   enableStepsCollapse?: boolean;
+  
+  // Custom footer component (replaces default CoachInputFooter)
+  customFooter?: ReactNode;
 }
 
 export const CoachLayout = ({
@@ -180,7 +183,8 @@ export const CoachLayout = ({
   dialogs,
   currentCoachKey,
   messagesEndRef: externalMessagesEndRef,
-  enableStepsCollapse = false
+  enableStepsCollapse = false,
+  customFooter
 }: CoachLayoutProps) => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -460,27 +464,29 @@ export const CoachLayout = ({
         )}
 
         {/* Footer Input */}
-        <CoachInputFooter
-          ref={textareaRef}
-          input={input}
-          onInputChange={handleInputChange}
-          onSend={handleSend}
-          onKeyPress={handleKeyPress}
-          onNewConversation={handleRestart}
-          placeholder={placeholder}
-          isLoading={isLoading}
-          hasMessages={messages.length > 0}
-          gradient={gradient}
-          primaryColor={primaryColor}
-          scenarioChips={scenarioChips}
-          scenarioOnSelect={scenarioOnSelect}
-          scenarioPrimaryColor={scenarioPrimaryColor}
-          messagesCount={messages.length}
-          intensitySelector={intensitySelector}
-          enableVoiceChat={enableVoiceChat}
-          onVoiceChatClick={onVoiceChatClick}
-          enableVoiceInput={enableVoiceInput}
-        />
+        {customFooter ? customFooter : (
+          <CoachInputFooter
+            ref={textareaRef}
+            input={input}
+            onInputChange={handleInputChange}
+            onSend={handleSend}
+            onKeyPress={handleKeyPress}
+            onNewConversation={handleRestart}
+            placeholder={placeholder}
+            isLoading={isLoading}
+            hasMessages={messages.length > 0}
+            gradient={gradient}
+            primaryColor={primaryColor}
+            scenarioChips={scenarioChips}
+            scenarioOnSelect={scenarioOnSelect}
+            scenarioPrimaryColor={scenarioPrimaryColor}
+            messagesCount={messages.length}
+            intensitySelector={intensitySelector}
+            enableVoiceChat={enableVoiceChat}
+            onVoiceChatClick={onVoiceChatClick}
+            enableVoiceInput={enableVoiceInput}
+          />
+        )}
       </div>
       
       {/* Dialogs - rendered outside main layout */}

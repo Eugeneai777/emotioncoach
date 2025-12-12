@@ -14,6 +14,8 @@ import { useDynamicCoachChat } from "@/hooks/useDynamicCoachChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { GratitudeQuickAdd } from "@/components/gratitude/GratitudeQuickAdd";
 import { Loader2 } from "lucide-react";
 
 const DynamicCoach = () => {
@@ -22,6 +24,7 @@ const DynamicCoach = () => {
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   const { data: template, isLoading: templateLoading } = useCoachTemplate(coachKey || '');
   
   // 智能通知
@@ -148,6 +151,19 @@ const DynamicCoach = () => {
   // 判断是否启用步骤折叠（情绪教练折叠，其他教练展开）
   const enableStepsCollapse = template.coach_key === 'emotion';
 
+  // 感恩教练使用 GratitudeQuickAdd 输入框
+  const gratitudeFooter = template.coach_key === 'gratitude_coach' && user?.id ? (
+    <GratitudeQuickAdd
+      userId={user.id}
+      onAdded={() => {
+        toast({
+          title: "记录成功 ✨",
+          description: "感恩已记录，可在日记中查看"
+        });
+      }}
+    />
+  ) : undefined;
+
   return (
     <>
     <CoachLayout
@@ -243,6 +259,7 @@ const DynamicCoach = () => {
       enableVoiceChat={template.coach_key === 'vibrant_life_sage'}
       onVoiceChatClick={() => setShowVoiceChat(true)}
       enableVoiceInput={true}
+      customFooter={gratitudeFooter}
     />
     
     {/* ElevenLabs 语音对话全屏界面 */}
