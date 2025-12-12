@@ -20,48 +20,18 @@ interface Message {
 }
 
 const quickOptions = [
-  {
-    id: 'suggestion',
-    emoji: '💡',
-    title: '提建议',
-    prompt: '我想给有劲提一个建议',
-    description: '提交产品改进意见'
-  },
-  {
-    id: 'issue',
-    emoji: '🔧',
-    title: '报问题',
-    prompt: '我遇到了一个问题需要帮助',
-    description: '反馈遇到的问题'
-  },
-  {
-    id: 'packages',
-    emoji: '📦',
-    title: '查套餐',
-    prompt: '我想了解会员套餐的详情',
-    description: '查看套餐和价格'
-  },
-  {
-    id: 'help',
-    emoji: '❓',
-    title: '求帮助',
-    prompt: '我不太会用这个App，需要帮助',
-    description: '获取使用指导'
-  },
-  {
-    id: 'guide',
-    emoji: '🎓',
-    title: '新手指引',
-    prompt: '我是新用户，请介绍一下有劲的主要功能',
-    description: '了解产品功能'
-  },
-  {
-    id: 'human',
-    emoji: '👤',
-    title: '联系人工',
-    prompt: '我想联系人工客服',
-    description: '转接人工服务'
-  }
+  { id: 'packages', emoji: '📦', title: '查套餐', prompt: '我想了解会员套餐的详情' },
+  { id: 'points', emoji: '🎯', title: '积分规则', prompt: '请介绍一下积分规则和扣费标准' },
+  { id: 'orders', emoji: '📋', title: '我的订单', prompt: '我想查看我的订单记录' },
+  { id: 'profile', emoji: '⚙️', title: '修改信息', prompt: '我想修改我的个人信息' },
+  { id: 'coaches', emoji: '💚', title: '教练介绍', prompt: '有劲有哪些教练？分别有什么功能？' },
+  { id: 'camps', emoji: '🏕️', title: '训练营', prompt: '介绍一下有劲的训练营' },
+  { id: 'guide', emoji: '🎓', title: '新手指引', prompt: '我是新用户，请介绍一下有劲的主要功能' },
+  { id: 'issue', emoji: '🔧', title: '报问题', prompt: '我遇到了一个问题需要帮助' },
+  { id: 'suggestion', emoji: '💡', title: '提建议', prompt: '我想给有劲提一个建议' },
+  { id: 'help', emoji: '❓', title: '求帮助', prompt: '我不太会用这个App，需要帮助' },
+  { id: 'refund', emoji: '💰', title: '退款咨询', prompt: '我想咨询退款相关问题' },
+  { id: 'human', emoji: '👤', title: '联系人工', prompt: '我想联系人工客服' },
 ];
 
 const CustomerSupport = () => {
@@ -147,18 +117,17 @@ const CustomerSupport = () => {
       <div className="max-w-2xl mx-auto px-4 py-4 flex flex-col h-[calc(100vh-60px)]">
         {/* Quick Options */}
         <div className="mb-4">
-          <p className="text-sm text-muted-foreground mb-3">🎯 快速选项</p>
-          <div className="grid grid-cols-3 gap-2">
+          <p className="text-sm text-muted-foreground mb-2">🎯 快速选项</p>
+          <div className="flex flex-wrap gap-1.5">
             {quickOptions.map((option) => (
               <button
                 key={option.id}
                 onClick={() => handleQuickOption(option.prompt)}
                 disabled={isLoading}
-                className="bg-white/60 backdrop-blur-sm border border-border/50 rounded-xl p-3 text-left hover:bg-white/80 hover:shadow-sm transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-1 bg-white/70 backdrop-blur-sm border border-border/50 rounded-full px-2.5 py-1 text-xs hover:bg-white hover:shadow-sm transition-all disabled:opacity-50"
               >
-                <span className="text-xl mb-1 block">{option.emoji}</span>
-                <span className="text-sm font-medium block">{option.title}</span>
-                <span className="text-xs text-muted-foreground block mt-0.5">{option.description}</span>
+                <span>{option.emoji}</span>
+                <span className="font-medium">{option.title}</span>
               </button>
             ))}
           </div>
