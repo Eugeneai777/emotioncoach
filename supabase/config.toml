@@ -236,3 +236,6 @@ verify_jwt = false
 
 [functions.batch-trigger-inactivity]
 verify_jwt = false
+
+[functions.gratitude-coach]
+verify_jwt = true
