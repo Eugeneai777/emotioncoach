@@ -12,6 +12,35 @@ export interface CoachStep {
   details?: string;
 }
 
+// 阶段提示词结构
+export interface StagePrompts {
+  coaching_techniques?: string;
+  question_templates?: {
+    stage1?: {
+      round1?: string[];
+      round2?: string[];
+      deepenNoEmotion?: string[];
+    };
+    stage2?: {
+      round1?: string[];
+      round2?: string[];
+      helpOptions?: string;
+    };
+    stage3?: {
+      round1?: string[];
+      acknowledge?: string;
+      newPossibility?: string[];
+      helpOptions?: string;
+    };
+    stage4?: {
+      round1?: string[];
+    };
+  };
+  stages?: {
+    [key: string]: string; // "0", "1", "2", "3", "4", "5"
+  };
+}
+
 export interface CoachTemplate {
   id: string;
   coach_key: string;
@@ -52,6 +81,7 @@ export interface CoachTemplate {
   edge_function_name: string | null;
   briefing_table_name: string | null;
   system_prompt?: string;
+  stage_prompts?: StagePrompts;
   briefing_tool_config?: any;
   is_active: boolean;
   is_system: boolean;
@@ -73,7 +103,9 @@ export function useCoachTemplates() {
       if (error) throw error;
       return data.map(t => ({
         ...t,
-        steps: (t.steps || []) as unknown as CoachStep[]
+        steps: (t.steps || []) as unknown as CoachStep[],
+        scenarios: (t.scenarios || undefined) as unknown as CoachTemplate['scenarios'],
+        stage_prompts: (t.stage_prompts || undefined) as unknown as StagePrompts,
       })) as CoachTemplate[];
     },
   });
@@ -93,7 +125,9 @@ export function useActiveCoachTemplates() {
       if (error) throw error;
       return data.map(t => ({
         ...t,
-        steps: (t.steps || []) as unknown as CoachStep[]
+        steps: (t.steps || []) as unknown as CoachStep[],
+        scenarios: (t.scenarios || undefined) as unknown as CoachTemplate['scenarios'],
+        stage_prompts: (t.stage_prompts || undefined) as unknown as StagePrompts,
       })) as CoachTemplate[];
     },
     staleTime: 5 * 60 * 1000, // 5分钟缓存
@@ -120,7 +154,9 @@ export function useCoachTemplate(coachKey: string) {
       
       return {
         ...data,
-        steps: (data.steps || []) as unknown as CoachStep[]
+        steps: (data.steps || []) as unknown as CoachStep[],
+        scenarios: (data.scenarios || undefined) as unknown as CoachTemplate['scenarios'],
+        stage_prompts: (data.stage_prompts || undefined) as unknown as StagePrompts,
       } as CoachTemplate;
     },
     staleTime: 5 * 60 * 1000,
