@@ -63,6 +63,20 @@ const Calendar = () => {
 
       if (briefingsError) throw briefingsError;
 
+      // 过滤掉家长教练的简报，确保只显示情绪日记的简报
+      const { data: parentBriefingLinks } = await supabase
+        .from('parent_coaching_sessions')
+        .select('briefing_id')
+        .not('briefing_id', 'is', null);
+
+      const parentBriefingIds = new Set(
+        parentBriefingLinks?.map(p => p.briefing_id).filter(Boolean) || []
+      );
+
+      const emotionDiaryBriefings = (briefingsData || []).filter(
+        b => !parentBriefingIds.has(b.id)
+      );
+
       // 获取 quick logs
       const { data: quickLogsData, error: quickLogsError } = await supabase
         .from('emotion_quick_logs')
@@ -72,7 +86,7 @@ const Calendar = () => {
 
       if (quickLogsError) throw quickLogsError;
 
-      setBriefings(briefingsData || []);
+      setBriefings(emotionDiaryBriefings);
       setQuickLogs(quickLogsData || []);
     } catch (error) {
       console.error('Error loading data:', error);
