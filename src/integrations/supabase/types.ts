@@ -1820,6 +1820,112 @@ export type Database = {
         }
         Relationships: []
       }
+      gratitude_coach_briefings: {
+        Row: {
+          conversation_id: string | null
+          created_at: string | null
+          daily_declaration: string | null
+          event_summary: string | null
+          gratitude_items: Json | null
+          id: string
+          insight: string | null
+          stage_1_content: string | null
+          stage_2_content: string | null
+          stage_3_content: string | null
+          stage_4_content: string | null
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string | null
+          daily_declaration?: string | null
+          event_summary?: string | null
+          gratitude_items?: Json | null
+          id?: string
+          insight?: string | null
+          stage_1_content?: string | null
+          stage_2_content?: string | null
+          stage_3_content?: string | null
+          stage_4_content?: string | null
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string | null
+          daily_declaration?: string | null
+          event_summary?: string | null
+          gratitude_items?: Json | null
+          id?: string
+          insight?: string | null
+          stage_1_content?: string | null
+          stage_2_content?: string | null
+          stage_3_content?: string | null
+          stage_4_content?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gratitude_coach_briefings_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gratitude_coaching_sessions: {
+        Row: {
+          conversation_id: string | null
+          created_at: string | null
+          current_stage: number | null
+          id: string
+          messages: Json | null
+          stage_1_insight: string | null
+          stage_2_insight: string | null
+          stage_3_insight: string | null
+          stage_4_insight: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string | null
+          current_stage?: number | null
+          id?: string
+          messages?: Json | null
+          stage_1_insight?: string | null
+          stage_2_insight?: string | null
+          stage_3_insight?: string | null
+          stage_4_insight?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string | null
+          current_stage?: number | null
+          id?: string
+          messages?: Json | null
+          stage_1_insight?: string | null
+          stage_2_insight?: string | null
+          stage_3_insight?: string | null
+          stage_4_insight?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gratitude_coaching_sessions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gratitude_entries: {
         Row: {
           ai_analyzed: boolean | null
