@@ -431,6 +431,17 @@ const Index = () => {
     setInput("");
   };
 
+  // 点击"生成简报"等特殊按钮 → 直接发送
+  const handleOptionClick = async (option: string) => {
+    setInput("");
+    await sendMessage(option);
+  };
+
+  // 点击普通四部曲选项 → 填入输入框，用户可编辑后发送
+  const handleOptionSelect = (option: string) => {
+    setInput(option);
+  };
+
   const handleRestart = () => {
     resetConversation();
   };
@@ -591,7 +602,11 @@ const Index = () => {
         currentCoachKey="emotion"
         messages={messages}
         isLoading={isLoading}
+        input={input}
+        onInputChange={setInput}
         onSend={handleSend}
+        onOptionClick={handleOptionClick}
+        onOptionSelect={handleOptionSelect}
         onRestart={handleRestart}
         onSignOut={handleSignOut}
         placeholder="分享你的想法..."
