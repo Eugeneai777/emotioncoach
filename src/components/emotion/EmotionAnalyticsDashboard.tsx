@@ -194,8 +194,8 @@ export const EmotionAnalyticsDashboard = () => {
         </Card>
       )}
 
-      {/* 反应模式 & 行动选择 */}
-      <div className="grid md:grid-cols-2 gap-4">
+      {/* 反应模式 & 行动选择 - 上下排列，标签云展示 */}
+      <div className="space-y-4">
         {topReactions.length > 0 && (
           <Card>
             <CardHeader className="pb-2">
@@ -205,22 +205,15 @@ export const EmotionAnalyticsDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="flex flex-wrap gap-2">
                 {topReactions.map((reaction, index) => (
-                  <div key={reaction.name} className="flex items-center gap-2">
-                    <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
-                      <div 
-                        className="h-full rounded-full"
-                        style={{ 
-                          width: `${reaction.percentage}%`,
-                          backgroundColor: COLORS[index % COLORS.length]
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs text-muted-foreground w-20 truncate">
-                      {reaction.name}
-                    </span>
-                  </div>
+                  <span
+                    key={reaction.name}
+                    className="px-3 py-1.5 rounded-full text-xs font-medium text-white"
+                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                  >
+                    {reaction.name} ({reaction.count}次)
+                  </span>
                 ))}
               </div>
             </CardContent>
@@ -236,22 +229,15 @@ export const EmotionAnalyticsDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="flex flex-wrap gap-2">
                 {topActions.map((action, index) => (
-                  <div key={action.name} className="flex items-center gap-2">
-                    <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
-                      <div 
-                        className="h-full rounded-full"
-                        style={{ 
-                          width: `${action.percentage}%`,
-                          backgroundColor: COLORS[index % COLORS.length]
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs text-muted-foreground w-20 truncate">
-                      {action.name}
-                    </span>
-                  </div>
+                  <span
+                    key={action.name}
+                    className="px-3 py-1.5 rounded-full text-xs font-medium text-white"
+                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                  >
+                    {action.name} ({action.count}次)
+                  </span>
                 ))}
               </div>
             </CardContent>
