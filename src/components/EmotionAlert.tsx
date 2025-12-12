@@ -111,21 +111,32 @@ export const EmotionAlert = () => {
         
         // 如果有至少3天出现低落情绪，触发关怀通知
         if (uniqueDates.size >= 3) {
-          const avgIntensity = lowMoodBriefings.reduce(
-            (sum, b) => sum + (b.emotion_intensity || 0), 
-            0
-          ) / lowMoodBriefings.length;
+          // 去重检查：每3天最多触发一次
+          const lastTriggerKey = 'sustained_low_mood_last_trigger';
+          const lastTrigger = localStorage.getItem(lastTriggerKey);
+          const now = Date.now();
+          const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+          
+          if (!lastTrigger || (now - parseInt(lastTrigger)) > threeDaysMs) {
+            const avgIntensity = lowMoodBriefings.reduce(
+              (sum, b) => sum + (b.emotion_intensity || 0), 
+              0
+            ) / lowMoodBriefings.length;
 
-          const dominantEmotions = lowMoodBriefings
-            .slice(0, 5)
-            .map(b => b.emotion_theme);
+            const dominantEmotions = lowMoodBriefings
+              .slice(0, 5)
+              .map(b => b.emotion_theme);
 
-          // 触发关怀通知
-          await triggerNotification('sustained_low_mood', {
-            consecutive_days: uniqueDates.size,
-            avg_intensity: Math.round(avgIntensity * 10) / 10,
-            dominant_emotions: dominantEmotions
-          });
+            // 触发关怀通知
+            await triggerNotification('sustained_low_mood', {
+              consecutive_days: uniqueDates.size,
+              avg_intensity: Math.round(avgIntensity * 10) / 10,
+              dominant_emotions: dominantEmotions
+            });
+            
+            // 记录触发时间
+            localStorage.setItem(lastTriggerKey, now.toString());
+          }
         }
       }
     } catch (error) {
