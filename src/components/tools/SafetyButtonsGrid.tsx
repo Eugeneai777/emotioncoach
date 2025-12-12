@@ -68,25 +68,37 @@ const SafetyButtonsGrid: React.FC = () => {
           🌿 按钮是即时的陪伴，教练是深入的梳理
         </p>
         
-        {/* 底部双按钮 */}
+        {/* 底部按钮区域 */}
         {user ? (
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              className="h-10 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 
-                text-white shadow-sm hover:shadow-md transition-all gap-1.5 text-sm"
-              onClick={() => navigate('/')}
-            >
-              <Heart className="w-4 h-4" />
-              情绪教练
-            </Button>
+          <div className="space-y-2">
+            {/* 第一行：情绪教练 + 感恩教练 */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                className="h-10 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 
+                  text-white shadow-sm hover:shadow-md transition-all gap-1.5 text-sm"
+                onClick={() => navigate('/')}
+              >
+                <Heart className="w-4 h-4" />
+                情绪教练
+              </Button>
+              <Button
+                className="h-10 rounded-xl bg-gradient-to-r from-pink-400 to-rose-400 
+                  text-white shadow-sm hover:shadow-md transition-all gap-1.5 text-sm"
+                onClick={() => navigate('/gratitude-journal')}
+              >
+                💖 感恩教练
+              </Button>
+            </div>
+            
+            {/* 第二行：历史记录 */}
             <Button
               variant="outline"
-              className="h-10 rounded-xl border-2 border-teal-200 
+              className="w-full h-9 rounded-xl border-2 border-teal-200 
                 bg-white/70 backdrop-blur-sm hover:bg-teal-50 
-                text-teal-700 shadow-sm gap-1.5 text-sm"
+                text-teal-700 shadow-sm gap-1.5 text-xs"
               onClick={() => navigate('/panic-history')}
             >
-              <History className="w-4 h-4" />
+              <History className="w-3.5 h-3.5" />
               历史记录
             </Button>
           </div>
