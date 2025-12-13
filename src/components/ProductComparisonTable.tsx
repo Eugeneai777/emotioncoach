@@ -73,28 +73,28 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
         </div>
 
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+          <div className="overflow-x-auto -mx-0">
+            <table className="w-full border-collapse min-w-[400px]">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left p-4 font-semibold text-sm text-muted-foreground min-w-[140px] sticky left-0 bg-muted/50 z-10">
+                  <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm text-muted-foreground min-w-[100px] sm:min-w-[140px] sticky left-0 bg-muted/50 z-10">
                     权益项目
                   </th>
-                  <th className="text-center p-4 min-w-[140px]">
-                    <div className="space-y-1">
-                      <div className="font-bold text-base text-foreground">尝鲜会员</div>
-                      <div className="text-xs text-muted-foreground">¥9.9 · 50点</div>
+                  <th className="text-center p-2 sm:p-4 min-w-[100px] sm:min-w-[140px]">
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <div className="font-bold text-sm sm:text-base text-foreground">尝鲜会员</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground">¥9.9 · 50点</div>
                     </div>
                   </th>
-                  <th className="text-center p-4 min-w-[140px] bg-primary/5">
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="font-bold text-base text-primary">365会员</div>
-                        <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-semibold">
+                  <th className="text-center p-2 sm:p-4 min-w-[100px] sm:min-w-[140px] bg-primary/5">
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <div className="flex items-center justify-center gap-1 sm:gap-2">
+                        <div className="font-bold text-sm sm:text-base text-primary">365会员</div>
+                        <span className="text-[10px] sm:text-xs bg-primary text-primary-foreground px-1.5 sm:px-2 py-0.5 rounded-full font-semibold">
                           推荐
                         </span>
                       </div>
-                      <div className="text-xs text-muted-foreground">¥365 · 1000点</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground">¥365 · 1000点</div>
                     </div>
                   </th>
                 </tr>
@@ -116,13 +116,13 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                           key={`${cat}-${idx}`} 
                           className="border-b hover:bg-muted/30 transition-colors"
                         >
-                          <td className="p-3 text-sm text-muted-foreground sticky left-0 bg-background z-10">
-                            <div className="flex items-center gap-2">
-                              {feature.name}
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm text-muted-foreground sticky left-0 bg-background z-10">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <span className="line-clamp-2">{feature.name}</span>
                               {feature.tooltip && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help" />
+                                    <Info className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground/60 cursor-help flex-shrink-0" />
                                   </TooltipTrigger>
                                   <TooltipContent>
                                     <p className="max-w-xs text-xs">{feature.tooltip}</p>
@@ -131,8 +131,8 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                               )}
                             </div>
                           </td>
-                          <td className="p-3 text-center">{renderValue(feature.basic)}</td>
-                          <td className="p-3 text-center bg-primary/5">{renderValue(feature.premium)}</td>
+                          <td className="p-2 sm:p-3 text-center">{renderValue(feature.basic)}</td>
+                          <td className="p-2 sm:p-3 text-center bg-primary/5">{renderValue(feature.premium)}</td>
                         </tr>
                       ))}
                     </TooltipProvider>
@@ -171,30 +171,30 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
   // Bloom category - 只显示两个训练营
   return (
     <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
+      <div className="overflow-x-auto -mx-0">
+        <table className="w-full border-collapse min-w-[440px]">
           <thead>
             <tr className="border-b bg-muted/50">
-              <th className="text-left p-4 font-semibold text-sm text-muted-foreground min-w-[140px] sticky left-0 bg-muted/50 z-10">
+              <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm text-muted-foreground min-w-[100px] sm:min-w-[140px] sticky left-0 bg-muted/50 z-10">
                 权益项目
               </th>
-              <th className="text-center p-4 min-w-[160px]">
-                <div className="space-y-1">
-                  <div className="font-bold text-base text-foreground">身份绽放训练营</div>
-                  <div className="text-xs text-muted-foreground">认识真实自我</div>
-                  <div className="text-xs text-muted-foreground font-semibold mt-1">¥2,980</div>
+              <th className="text-center p-2 sm:p-4 min-w-[120px] sm:min-w-[160px]">
+                <div className="space-y-0.5 sm:space-y-1">
+                  <div className="font-bold text-xs sm:text-base text-foreground">身份绽放训练营</div>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground">认识真实自我</div>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground font-semibold mt-1">¥2,980</div>
                 </div>
               </th>
-              <th className="text-center p-4 min-w-[160px] bg-primary/5">
-                <div className="space-y-1">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="font-bold text-base text-primary">情感绽放训练营</div>
-                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-semibold">
+              <th className="text-center p-2 sm:p-4 min-w-[120px] sm:min-w-[160px] bg-primary/5">
+                <div className="space-y-0.5 sm:space-y-1">
+                  <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
+                    <div className="font-bold text-xs sm:text-base text-primary">情感绽放训练营</div>
+                    <span className="text-[10px] sm:text-xs bg-primary text-primary-foreground px-1.5 sm:px-2 py-0.5 rounded-full font-semibold">
                       推荐
                     </span>
                   </div>
-                  <div className="text-xs text-muted-foreground">体验内在情绪</div>
-                  <div className="text-xs text-muted-foreground font-semibold mt-1">¥3,980</div>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground">体验内在情绪</div>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground font-semibold mt-1">¥3,980</div>
                 </div>
               </th>
             </tr>

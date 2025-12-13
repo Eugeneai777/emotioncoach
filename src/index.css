@@ -361,3 +361,44 @@ input:focus, textarea:focus, select:focus {
   animation: breathe-delayed 4s ease-in-out infinite;
   animation-delay: 0.5s;
 }
+
+/* ===== 响应式工具类 ===== */
+
+/* 响应式表格滚动 */
+.responsive-table {
+  @apply overflow-x-auto -mx-4 px-4;
+}
+
+/* 触摸友好按钮最小尺寸 */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* 移动端卡片间距优化 */
+@media (max-width: 640px) {
+  .card-grid {
+    @apply gap-3;
+  }
+  
+  /* 超小屏幕文字优化 */
+  .text-responsive {
+    @apply text-sm;
+  }
+}
+
+/* 超小屏幕断点 (< 375px) */
+@media (max-width: 374px) {
+  .xs-text-xs {
+    font-size: 0.65rem;
+    line-height: 1rem;
+  }
+  
+  .xs-p-2 {
+    padding: 0.5rem;
+  }
+  
+  .xs-gap-1 {
+    gap: 0.25rem;
+  }
+}

@@ -187,8 +187,8 @@ const EnergyStudio = () => {
       {/* Main Content */}
       <main className="container max-w-6xl mx-auto px-4 py-8">
         {/* 一级导航菜单 */}
-        <div className="flex justify-center mb-6">
-          <div className="grid w-full max-w-4xl grid-cols-5 bg-card/50 backdrop-blur-sm rounded-full p-1.5 border shadow-sm">
+        <div className="flex justify-center mb-6 px-2">
+          <div className="grid w-full max-w-4xl grid-cols-3 sm:grid-cols-5 bg-card/50 backdrop-blur-sm rounded-2xl sm:rounded-full p-1 sm:p-1.5 border shadow-sm gap-1">
             {primaryMenuItems.map(item => <Button key={item.id} variant={primaryTab === item.id ? "default" : "ghost"} onClick={() => {
             if (item.route) {
               navigate(item.route);
@@ -196,9 +196,9 @@ const EnergyStudio = () => {
               setPrimaryTab(item.id);
               setActiveTool(null);
             }
-          }} className={cn("rounded-full py-2.5 px-2 sm:px-3 gap-1 sm:gap-1.5 transition-all duration-300 text-xs md:text-sm", primaryTab === item.id && "bg-gradient-to-r from-primary to-warm text-white shadow-lg")}>
-                <span>{item.emoji}</span>
-                <span className="hidden sm:inline whitespace-nowrap">{item.label}</span>
+          }} className={cn("rounded-xl sm:rounded-full py-2 sm:py-2.5 px-1.5 sm:px-3 gap-1 transition-all duration-300 text-xs flex-col sm:flex-row h-auto min-h-[44px] sm:min-h-0", primaryTab === item.id && "bg-gradient-to-r from-primary to-warm text-white shadow-lg")}>
+                <span className="text-base sm:text-sm">{item.emoji}</span>
+                <span className="text-[10px] sm:text-sm whitespace-nowrap">{item.label}</span>
               </Button>)}
           </div>
         </div>

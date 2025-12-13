@@ -146,20 +146,20 @@ const YoujinPartnerPlan = () => {
             <Badge className="mb-4 bg-orange-100 text-orange-700 hover:bg-orange-100">
               🌟 AI 时代最佳副业机会
             </Badge>
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-4 px-2">
               有劲合伙人 · 让 AI 为你赚钱
             </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
               在 AI 大浪潮中，不被淘汰、反而靠 AI 赚到第一桶金
             </p>
           </div>
         </section>
 
         {/* Section 01: 时代变了 */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">🧭</span>
-            <h2 className="text-2xl font-bold">01｜时代变了：人人都在问——如何抓住 AI 机会？如何不被淘汰？</h2>
+        <section className="space-y-4 sm:space-y-6">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <span className="text-2xl sm:text-3xl">🧭</span>
+            <h2 className="text-lg sm:text-2xl font-bold">01｜时代变了：人人都在问——如何抓住 AI 机会？</h2>
           </div>
           
           <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
@@ -195,11 +195,11 @@ const YoujinPartnerPlan = () => {
 
           <p className="text-center mb-4">而这个时代第一次给予普通人一个新机会：</p>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             {['不需要技术', '不需要流量', '不需要拍视频', '不需要学习复杂 AI 工具'].map((item, i) => <Card key={i} className="bg-green-50 border-green-200">
-                <CardContent className="p-4 flex items-center gap-2">
-                  <Check className="h-5 w-5 text-green-600 flex-shrink-0" />
-                  <span className="text-sm font-medium">{item}</span>
+                <CardContent className="p-2 sm:p-4 flex items-center gap-1.5 sm:gap-2">
+                  <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm font-medium">{item}</span>
                 </CardContent>
               </Card>)}
           </div>
@@ -221,19 +221,19 @@ const YoujinPartnerPlan = () => {
         </section>
 
         {/* Section 02: 为什么大多数 AI 副业都难做 */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">🔥</span>
-            <h2 className="text-2xl font-bold">02｜为什么大多数 AI 副业都难做？（你一定感受过）</h2>
+        <section className="space-y-4 sm:space-y-6">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <span className="text-2xl sm:text-3xl">🔥</span>
+            <h2 className="text-lg sm:text-2xl font-bold">02｜为什么大多数 AI 副业都难做？</h2>
           </div>
 
           <p className="text-lg">目前所有流行的 AI 赚钱方式，都有一个共同特点：</p>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {['门槛比宣传的高', '竞争激烈', '需要专业技能', '不可复制', '没有持续性收入'].map((item, i) => <Card key={i} className="bg-red-50 border-red-200">
-                <CardContent className="p-4 flex items-center gap-2">
-                  <X className="h-5 w-5 text-red-500 flex-shrink-0" />
-                  <span className="text-sm font-medium">{item}</span>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
+            {['门槛高', '竞争激烈', '需要专业技能', '不可复制', '无持续收入'].map((item, i) => <Card key={i} className="bg-red-50 border-red-200">
+                <CardContent className="p-2 sm:p-4 flex items-center gap-1.5 sm:gap-2">
+                  <X className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm font-medium">{item}</span>
                 </CardContent>
               </Card>)}
           </div>
@@ -265,10 +265,10 @@ const YoujinPartnerPlan = () => {
         </section>
 
         {/* Section 03: 有劲合伙人完全不同 */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">🌈</span>
-            <h2 className="text-2xl font-bold">03｜有劲合伙人完全不同：AI 替你提供价值，你只负责分享成长</h2>
+        <section className="space-y-4 sm:space-y-6">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <span className="text-2xl sm:text-3xl">🌈</span>
+            <h2 className="text-lg sm:text-2xl font-bold">03｜有劲合伙人：AI 替你提供价值</h2>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

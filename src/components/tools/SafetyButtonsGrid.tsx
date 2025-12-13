@@ -52,7 +52,7 @@ const SafetyButtonsGrid: React.FC = () => {
       <CardContent className="relative z-10 space-y-3 pt-0">
         {/* 9按钮网格 */}
         <TooltipProvider delayDuration={300}>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
             {emotionTypes.map((emotion, index) => (
               <EmotionReliefButton
                 key={emotion.id}
