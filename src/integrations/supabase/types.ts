@@ -590,6 +590,100 @@ export type Database = {
           },
         ]
       }
+      coach_call_signals: {
+        Row: {
+          call_id: string | null
+          created_at: string | null
+          from_user_id: string
+          id: string
+          signal_data: Json
+          signal_type: string
+          to_user_id: string
+        }
+        Insert: {
+          call_id?: string | null
+          created_at?: string | null
+          from_user_id: string
+          id?: string
+          signal_data: Json
+          signal_type: string
+          to_user_id: string
+        }
+        Update: {
+          call_id?: string | null
+          created_at?: string | null
+          from_user_id?: string
+          id?: string
+          signal_data?: Json
+          signal_type?: string
+          to_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_call_signals_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "coach_calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_calls: {
+        Row: {
+          appointment_id: string | null
+          call_status: string
+          callee_id: string
+          caller_id: string
+          caller_type: string
+          connected_at: string | null
+          created_at: string | null
+          duration_seconds: number | null
+          end_reason: string | null
+          ended_at: string | null
+          id: string
+          quality_rating: number | null
+          started_at: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          call_status?: string
+          callee_id: string
+          caller_id: string
+          caller_type: string
+          connected_at?: string | null
+          created_at?: string | null
+          duration_seconds?: number | null
+          end_reason?: string | null
+          ended_at?: string | null
+          id?: string
+          quality_rating?: number | null
+          started_at?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          call_status?: string
+          callee_id?: string
+          caller_id?: string
+          caller_type?: string
+          connected_at?: string | null
+          created_at?: string | null
+          duration_seconds?: number | null
+          end_reason?: string | null
+          ended_at?: string | null
+          id?: string
+          quality_rating?: number | null
+          started_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_calls_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_certifications: {
         Row: {
           admin_note: string | null
