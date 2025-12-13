@@ -8,12 +8,11 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
 import { hamburgerMenuItems } from "@/config/hamburgerMenuConfig";
 import { cn } from "@/lib/utils";
-import { Fragment, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 interface CoachHeaderProps {
@@ -121,31 +120,21 @@ export const CoachHeader = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-card border shadow-lg z-50">
-                {filteredMenuItems.map((item, index) => {
-                  const prevItem = filteredMenuItems[index - 1];
-                  const showSeparator = index > 0 && prevItem?.group !== item.group;
+                {filteredMenuItems.map((item) => {
                   const Icon = item.icon;
-
                   return (
-                    <Fragment key={item.id}>
-                      {showSeparator && <DropdownMenuSeparator className="bg-border/50" />}
-                      {item.groupLabel && (
-                        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal px-2 py-1">
-                          {item.groupLabel}
-                        </DropdownMenuLabel>
+                    <DropdownMenuItem
+                      key={item.id}
+                      onClick={() => item.path ? navigate(item.path) : onSignOut()}
+                      className={cn(
+                        "cursor-pointer hover:bg-accent",
+                        item.danger && "text-destructive",
+                        isActiveRoute(item.path) && "bg-accent font-medium"
                       )}
-                      <DropdownMenuItem
-                        onClick={() => item.path ? navigate(item.path) : onSignOut()}
-                        className={cn(
-                          "cursor-pointer hover:bg-accent",
-                          item.danger && "text-destructive",
-                          isActiveRoute(item.path) && "bg-accent font-medium"
-                        )}
-                      >
-                        <Icon className="mr-2 h-4 w-4" />
-                        <span>{item.label}</span>
-                      </DropdownMenuItem>
-                    </Fragment>
+                    >
+                      <Icon className="mr-2 h-4 w-4" />
+                      <span>{item.label}</span>
+                    </DropdownMenuItem>
                   );
                 })}
               </DropdownMenuContent>
