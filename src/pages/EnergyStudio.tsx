@@ -175,7 +175,7 @@ const EnergyStudio = () => {
               </h1>
               <p className="text-sm text-muted-foreground mt-1">探索更好的自己 · 享受有劲生活</p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => navigate("/energy-studio-intro")} className="gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/user-manual")} className="gap-2">
               <Info className="w-4 h-4" />
               <span className="hidden sm:inline">使用指南</span>
               <span className="sm:hidden">指南</span>
