@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCoachProfile } from "@/hooks/useCoachDashboard";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -13,7 +14,8 @@ import {
   Settings,
   ArrowLeft,
   Menu,
-  X
+  X,
+  Bell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CoachDashboardOverview } from "@/components/coach-dashboard/CoachDashboardOverview";
@@ -22,9 +24,12 @@ import { CoachAppointmentManagement } from "@/components/coach-dashboard/CoachAp
 import { CoachIncomeManagement } from "@/components/coach-dashboard/CoachIncomeManagement";
 import { CoachReviewManagement } from "@/components/coach-dashboard/CoachReviewManagement";
 import { CoachProfileSettings } from "@/components/coach-dashboard/CoachProfileSettings";
+import { CoachNotificationCenter } from "@/components/coach-dashboard/CoachNotificationCenter";
+import { useCoachNotifications } from "@/hooks/useCoachNotifications";
 
 const menuItems = [
   { id: 'overview', label: '数据概览', icon: LayoutDashboard },
+  { id: 'notifications', label: '消息中心', icon: Bell },
   { id: 'time', label: '时间管理', icon: Calendar },
   { id: 'appointments', label: '预约管理', icon: ClipboardList },
   { id: 'income', label: '收入管理', icon: Wallet },
@@ -38,6 +43,7 @@ export default function CoachDashboard() {
   const { data: coachProfile, isLoading: profileLoading } = useCoachProfile();
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { unreadCount } = useCoachNotifications(coachProfile?.id);
 
   if (authLoading || profileLoading) {
     return (
@@ -69,6 +75,8 @@ export default function CoachDashboard() {
     switch (activeTab) {
       case 'overview':
         return <CoachDashboardOverview coachId={coachProfile.id} />;
+      case 'notifications':
+        return <CoachNotificationCenter coachId={coachProfile.id} onNavigate={setActiveTab} />;
       case 'time':
         return <CoachTimeManagement coachId={coachProfile.id} />;
       case 'appointments':
@@ -128,6 +136,7 @@ export default function CoachDashboard() {
           <nav className="flex-1 p-4 space-y-1">
             {menuItems.map((item) => {
               const Icon = item.icon;
+              const showBadge = item.id === 'notifications' && unreadCount > 0;
               return (
                 <button
                   key={item.id}
@@ -143,7 +152,12 @@ export default function CoachDashboard() {
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  {item.label}
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {showBadge && (
+                    <Badge variant="destructive" className="h-5 px-1.5 text-xs">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Badge>
+                  )}
                 </button>
               );
             })}
