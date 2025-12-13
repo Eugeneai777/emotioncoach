@@ -245,3 +245,9 @@ verify_jwt = true
 
 [functions.cancel-appointment]
 verify_jwt = true
+
+[functions.send-appointment-notification]
+verify_jwt = false
+
+[functions.trigger-appointment-reminders]
+verify_jwt = false
