@@ -176,13 +176,7 @@ export const CoachEmptyState = ({
       {/* Notifications */}
       {notifications}
 
-      {/* Community Guidance */}
-      {community && (
-        <div className="text-center py-3 text-muted-foreground text-sm flex flex-col items-center gap-1">
-          <ChevronDown className="w-4 h-4 animate-bounce" />
-          <span>下滑看看大家在分享什么</span>
-        </div>
-      )}
+      {/* Community Waterfall */}
 
       {/* Community Waterfall */}
       {community}
