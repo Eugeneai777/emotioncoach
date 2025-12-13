@@ -218,8 +218,29 @@ export class RealtimeChat {
         this.audioEl.srcObject = e.streams[0];
       };
 
-      // 添加本地音频轨道
-      const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // 添加本地音频轨道 - 先检查麦克风权限
+      let ms: MediaStream;
+      try {
+        // 检查权限状态
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        
+        if (permissionStatus.state === 'denied') {
+          throw new Error('MICROPHONE_DENIED');
+        }
+        
+        ms = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (micError: any) {
+        console.error('Microphone access error:', micError);
+        
+        if (micError.message === 'MICROPHONE_DENIED' || micError.name === 'NotAllowedError') {
+          throw new Error('麦克风权限被拒绝。请在浏览器设置中允许麦克风访问，然后刷新页面重试。');
+        } else if (micError.name === 'NotFoundError') {
+          throw new Error('未检测到麦克风设备。请确保设备已连接并正常工作。');
+        } else {
+          throw new Error(`麦克风访问失败: ${micError.message || '未知错误'}`);
+        }
+      }
+      
       this.pc.addTrack(ms.getTracks()[0]);
 
       // 设置数据通道

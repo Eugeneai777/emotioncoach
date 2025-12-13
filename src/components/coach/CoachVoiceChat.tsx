@@ -404,12 +404,26 @@ export const CoachVoiceChat = ({
       chatRef.current = chat;
       await chat.init();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to start call:', error);
       setStatus('error');
+      
+      // 根据错误类型显示更具体的提示
+      const errorMessage = error?.message || '';
+      let title = "连接失败";
+      let description = "无法建立语音连接，请稍后重试";
+      
+      if (errorMessage.includes('麦克风权限被拒绝') || errorMessage.includes('麦克风')) {
+        title = "麦克风权限不足";
+        description = errorMessage;
+      } else if (errorMessage.includes('ephemeral token')) {
+        title = "服务连接失败";
+        description = "语音服务暂时不可用，请稍后重试";
+      }
+      
       toast({
-        title: "连接失败",
-        description: "无法建立语音连接，请检查麦克风权限",
+        title,
+        description,
         variant: "destructive"
       });
     }
