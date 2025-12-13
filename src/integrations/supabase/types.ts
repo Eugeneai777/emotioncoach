@@ -56,6 +56,84 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_reviews: {
+        Row: {
+          appointment_id: string
+          coach_id: string
+          coach_replied_at: string | null
+          coach_reply: string | null
+          comment: string | null
+          created_at: string | null
+          flag_reason: string | null
+          id: string
+          is_anonymous: boolean | null
+          is_flagged: boolean | null
+          is_visible: boolean | null
+          quick_tags: string[] | null
+          rating_communication: number | null
+          rating_helpfulness: number | null
+          rating_overall: number
+          rating_professionalism: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          appointment_id: string
+          coach_id: string
+          coach_replied_at?: string | null
+          coach_reply?: string | null
+          comment?: string | null
+          created_at?: string | null
+          flag_reason?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          is_flagged?: boolean | null
+          is_visible?: boolean | null
+          quick_tags?: string[] | null
+          rating_communication?: number | null
+          rating_helpfulness?: number | null
+          rating_overall: number
+          rating_professionalism?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          appointment_id?: string
+          coach_id?: string
+          coach_replied_at?: string | null
+          coach_reply?: string | null
+          comment?: string | null
+          created_at?: string | null
+          flag_reason?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          is_flagged?: boolean | null
+          is_visible?: boolean | null
+          quick_tags?: string[] | null
+          rating_communication?: number | null
+          rating_helpfulness?: number | null
+          rating_overall?: number
+          rating_professionalism?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_reviews_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "coaching_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reviews_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       billing_corrections: {
         Row: {
           alert_id: string | null
@@ -512,6 +590,65 @@ export type Database = {
           },
         ]
       }
+      coach_certifications: {
+        Row: {
+          admin_note: string | null
+          cert_name: string
+          cert_number: string | null
+          cert_type: string
+          coach_id: string
+          created_at: string | null
+          expiry_date: string | null
+          id: string
+          image_url: string | null
+          issue_date: string | null
+          issuing_authority: string | null
+          verification_status: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          cert_name: string
+          cert_number?: string | null
+          cert_type: string
+          coach_id: string
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          image_url?: string | null
+          issue_date?: string | null
+          issuing_authority?: string | null
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          cert_name?: string
+          cert_number?: string | null
+          cert_type?: string
+          coach_id?: string
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          image_url?: string | null
+          issue_date?: string | null
+          issuing_authority?: string | null
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_certifications_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_prompt_versions: {
         Row: {
           change_note: string | null
@@ -549,6 +686,56 @@ export type Database = {
             columns: ["coach_template_id"]
             isOneToOne: false
             referencedRelation: "coach_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_services: {
+        Row: {
+          advance_booking_days: number | null
+          cancel_hours_before: number | null
+          coach_id: string
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          duration_minutes: number
+          id: string
+          is_active: boolean | null
+          price: number
+          service_name: string
+        }
+        Insert: {
+          advance_booking_days?: number | null
+          cancel_hours_before?: number | null
+          coach_id: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          price: number
+          service_name: string
+        }
+        Update: {
+          advance_booking_days?: number | null
+          cancel_hours_before?: number | null
+          coach_id?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          price?: number
+          service_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_services_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches"
             referencedColumns: ["id"]
           },
         ]
@@ -687,6 +874,150 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      coach_time_slots: {
+        Row: {
+          appointment_id: string | null
+          coach_id: string
+          created_at: string | null
+          end_time: string
+          id: string
+          slot_date: string
+          start_time: string
+          status: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          coach_id: string
+          created_at?: string | null
+          end_time: string
+          id?: string
+          slot_date: string
+          start_time: string
+          status?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          coach_id?: string
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          slot_date?: string
+          start_time?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_time_slots_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_appointments: {
+        Row: {
+          amount_paid: number
+          appointment_date: string
+          cancel_reason: string | null
+          cancelled_at: string | null
+          coach_id: string
+          coach_notes: string | null
+          created_at: string | null
+          duration_minutes: number
+          end_time: string
+          id: string
+          meeting_link: string | null
+          meeting_type: string | null
+          order_id: string | null
+          payment_status: string | null
+          reviewed_at: string | null
+          room_id: string | null
+          service_id: string | null
+          service_name: string | null
+          slot_id: string | null
+          start_time: string
+          status: string | null
+          updated_at: string | null
+          user_id: string
+          user_notes: string | null
+        }
+        Insert: {
+          amount_paid: number
+          appointment_date: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          coach_id: string
+          coach_notes?: string | null
+          created_at?: string | null
+          duration_minutes: number
+          end_time: string
+          id?: string
+          meeting_link?: string | null
+          meeting_type?: string | null
+          order_id?: string | null
+          payment_status?: string | null
+          reviewed_at?: string | null
+          room_id?: string | null
+          service_id?: string | null
+          service_name?: string | null
+          slot_id?: string | null
+          start_time: string
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+          user_notes?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          appointment_date?: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          coach_id?: string
+          coach_notes?: string | null
+          created_at?: string | null
+          duration_minutes?: number
+          end_time?: string
+          id?: string
+          meeting_link?: string | null
+          meeting_type?: string | null
+          order_id?: string | null
+          payment_status?: string | null
+          reviewed_at?: string | null
+          room_id?: string | null
+          service_id?: string | null
+          service_name?: string | null
+          slot_id?: string | null
+          start_time?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+          user_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_appointments_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_appointments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "coach_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_appointments_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "coach_time_slots"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       communication_briefing_tags: {
         Row: {
@@ -2144,6 +2475,99 @@ export type Database = {
         }
         Relationships: []
       }
+      human_coaches: {
+        Row: {
+          avatar_url: string | null
+          badge_type: string | null
+          bio: string | null
+          case_studies: Json | null
+          created_at: string | null
+          display_order: number | null
+          education: string | null
+          experience_years: number | null
+          id: string
+          intro_video_url: string | null
+          is_accepting_new: boolean | null
+          is_verified: boolean | null
+          name: string
+          positive_rate: number | null
+          rating: number | null
+          rating_communication: number | null
+          rating_helpfulness: number | null
+          rating_professionalism: number | null
+          specialties: string[] | null
+          status: string | null
+          title: string | null
+          total_reviews: number | null
+          total_sessions: number | null
+          training_background: string | null
+          trust_level: number | null
+          updated_at: string | null
+          user_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          badge_type?: string | null
+          bio?: string | null
+          case_studies?: Json | null
+          created_at?: string | null
+          display_order?: number | null
+          education?: string | null
+          experience_years?: number | null
+          id?: string
+          intro_video_url?: string | null
+          is_accepting_new?: boolean | null
+          is_verified?: boolean | null
+          name: string
+          positive_rate?: number | null
+          rating?: number | null
+          rating_communication?: number | null
+          rating_helpfulness?: number | null
+          rating_professionalism?: number | null
+          specialties?: string[] | null
+          status?: string | null
+          title?: string | null
+          total_reviews?: number | null
+          total_sessions?: number | null
+          training_background?: string | null
+          trust_level?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          badge_type?: string | null
+          bio?: string | null
+          case_studies?: Json | null
+          created_at?: string | null
+          display_order?: number | null
+          education?: string | null
+          experience_years?: number | null
+          id?: string
+          intro_video_url?: string | null
+          is_accepting_new?: boolean | null
+          is_verified?: boolean | null
+          name?: string
+          positive_rate?: number | null
+          rating?: number | null
+          rating_communication?: number | null
+          rating_helpfulness?: number | null
+          rating_professionalism?: number | null
+          specialties?: string[] | null
+          status?: string | null
+          title?: string | null
+          total_reviews?: number | null
+          total_sessions?: number | null
+          training_background?: string | null
+          trust_level?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       meditation_sessions: {
         Row: {
           background_sound: string | null
@@ -3377,6 +3801,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      review_quick_tags: {
+        Row: {
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          tag_name: string
+          tag_type: string | null
+        }
+        Insert: {
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          tag_name: string
+          tag_type?: string | null
+        }
+        Update: {
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          tag_name?: string
+          tag_type?: string | null
+        }
+        Relationships: []
       }
       sleep_logs: {
         Row: {
