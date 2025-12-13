@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Sparkles, Info, Headphones, X, MessageCircle } from "lucide-react";
+import { ArrowLeft, Sparkles, Info } from "lucide-react";
 import * as Icons from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { categories, getCategoryConfig } from "@/config/energyStudioTools";
@@ -26,10 +26,6 @@ import { RelationshipTracker } from "@/components/tools/RelationshipTracker";
 import { EnergyDeclaration } from "@/components/tools/EnergyDeclaration";
 import { CoachSpaceContent } from "@/components/coach/CoachSpaceContent";
 import SafetyButtonsGrid from "@/components/tools/SafetyButtonsGrid";
-import VoiceCustomerSupport from "@/components/VoiceCustomerSupport";
-import NaturalVoiceChat from "@/components/NaturalVoiceChat";
-import TextCustomerSupport from "@/components/TextCustomerSupport";
-import { useCustomerServiceConfig } from "@/hooks/useCustomerServiceConfig";
 
 interface ToolCard {
   id: string;
@@ -50,20 +46,6 @@ const EnergyStudio = () => {
   const [primaryTab, setPrimaryTab] = useState<"coach" | "tools" | "courses" | "camp" | "partner">("tools");
   const [activeTab, setActiveTab] = useState<"emotion" | "exploration" | "management">("emotion");
   const [activeTool, setActiveTool] = useState<string | null>(null);
-  const [showVoiceSupport, setShowVoiceSupport] = useState(false);
-  const [voiceMode, setVoiceMode] = useState<'text' | 'voice_natural' | 'voice_button'>('voice_natural');
-  
-  // 获取客服配置
-  const { config: serviceConfig, availableModes } = useCustomerServiceConfig();
-  
-  // 当配置加载完成后，设置默认模式
-  useEffect(() => {
-    if (serviceConfig.defaultMode && availableModes.includes(serviceConfig.defaultMode)) {
-      setVoiceMode(serviceConfig.defaultMode);
-    } else if (availableModes.length > 0) {
-      setVoiceMode(availableModes[0]);
-    }
-  }, [serviceConfig.defaultMode, availableModes]);
 
   // 根据 URL hash 设置初始 tab
   useEffect(() => {
@@ -297,82 +279,6 @@ const EnergyStudio = () => {
           </>}
       </main>
 
-      {/* Floating Voice Support Button */}
-      {serviceConfig.floatingButtonVisible && (
-        <Button
-          onClick={() => setShowVoiceSupport(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-xl bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 z-50"
-          size="icon"
-        >
-          <Headphones className="w-6 h-6" />
-        </Button>
-      )}
-
-      {/* Voice Support Modal */}
-      {showVoiceSupport && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md">
-            {/* Mode Toggle - only show if more than one mode available */}
-            {availableModes.length > 1 && (
-              <div className="flex justify-center mb-4">
-                <div className="inline-flex bg-white/90 backdrop-blur rounded-full p-1 shadow-lg flex-wrap gap-1">
-                  {serviceConfig.enabledModes.text && (
-                    <Button
-                      variant={voiceMode === 'text' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setVoiceMode('text')}
-                      className={cn(
-                        "rounded-full gap-2",
-                        voiceMode === 'text' && "bg-gradient-to-r from-teal-500 to-cyan-500"
-                      )}
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      文字
-                    </Button>
-                  )}
-                  {serviceConfig.enabledModes.voice_natural && (
-                    <Button
-                      variant={voiceMode === 'voice_natural' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setVoiceMode('voice_natural')}
-                      className={cn(
-                        "rounded-full gap-2",
-                        voiceMode === 'voice_natural' && "bg-gradient-to-r from-teal-500 to-cyan-500"
-                      )}
-                    >
-                      <Headphones className="w-4 h-4" />
-                      自然对话
-                    </Button>
-                  )}
-                  {serviceConfig.enabledModes.voice_button && (
-                    <Button
-                      variant={voiceMode === 'voice_button' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setVoiceMode('voice_button')}
-                      className={cn(
-                        "rounded-full gap-2",
-                        voiceMode === 'voice_button' && "bg-gradient-to-r from-teal-500 to-cyan-500"
-                      )}
-                    >
-                      <Headphones className="w-4 h-4" />
-                      按钮模式
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {/* Customer Service Component */}
-            {voiceMode === 'text' ? (
-              <TextCustomerSupport onClose={() => setShowVoiceSupport(false)} />
-            ) : voiceMode === 'voice_natural' ? (
-              <NaturalVoiceChat onClose={() => setShowVoiceSupport(false)} />
-            ) : (
-              <VoiceCustomerSupport onClose={() => setShowVoiceSupport(false)} />
-            )}
-          </div>
-        </div>
-      )}
     </div>;
 };
 export default EnergyStudio;
