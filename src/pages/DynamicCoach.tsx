@@ -9,7 +9,7 @@ import { EmotionButtonRecommendationCard } from "@/components/coach/EmotionButto
 import { CampRecommendationCard } from "@/components/coach/CampRecommendationCard";
 import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
 import { CoachTrainingCamp } from "@/components/coach/CoachTrainingCamp";
-import { ElevenLabsVoiceChat } from "@/components/coach/ElevenLabsVoiceChat";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { VoiceCallCTA } from "@/components/coach/VoiceCallCTA";
 import { useDynamicCoachChat } from "@/hooks/useDynamicCoachChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
@@ -271,9 +271,9 @@ const DynamicCoach = () => {
       customFooter={gratitudeFooter}
     />
     
-    {/* ElevenLabs 语音对话全屏界面 */}
+    {/* OpenAI Realtime 语音对话全屏界面 */}
     {showVoiceChat && (
-      <ElevenLabsVoiceChat
+      <CoachVoiceChat
         onClose={() => setShowVoiceChat(false)}
         coachEmoji={template.emoji}
         coachTitle={template.title}
