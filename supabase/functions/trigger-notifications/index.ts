@@ -255,6 +255,17 @@ serve(async (req) => {
         }
         break;
 
+      case 'after_gratitude_analysis':
+        // 感恩报告生成后
+        shouldTrigger = true;
+        scenario = 'after_gratitude_analysis';
+        notificationContext = {
+          report_type: context?.report_type || 'weekly',
+          dimensions_count: context?.dimensions_count || 0,
+          highlight_dimension: context?.highlight_dimension || ''
+        };
+        break;
+
       default:
         return new Response(JSON.stringify({ 
           error: "未知的触发类型" 
