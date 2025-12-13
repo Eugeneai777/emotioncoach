@@ -18,7 +18,16 @@ import {
   BarChart3,
   Lightbulb,
   Star,
-  Award
+  Award,
+  Mic,
+  Phone,
+  Shield,
+  Palette,
+  Compass,
+  ClipboardList,
+  Video,
+  GraduationCap,
+  Handshake
 } from "lucide-react";
 import {
   Accordion,
@@ -30,257 +39,245 @@ import {
 const UserManual = () => {
   const navigate = useNavigate();
 
-  // 四大整合能力
-  const integrations = [
-    {
-      icon: Heart,
-      title: "情绪引导能力",
-      description: "温暖陪伴，精准识别你的情绪需求",
-      gradient: "from-rose-500 to-pink-500"
-    },
-    {
-      icon: Brain,
-      title: "AI 大模型的智慧回答能力",
-      description: "随时问，随时得到清晰方向",
-      gradient: "from-purple-500 to-indigo-500"
-    },
-    {
-      icon: BarChart3,
-      title: "成长可视化报告",
-      description: "日报、周报，看见你的进步轨迹",
-      gradient: "from-blue-500 to-cyan-500"
-    },
+  // 有劲生活馆五大模块
+  const studioModules = [
     {
       icon: Users,
-      title: "社群共振的支持系统",
-      description: "真实故事激励，小组深度对话",
-      gradient: "from-green-500 to-teal-500"
+      emoji: "🎯",
+      title: "教练空间",
+      description: "AI 智能教练与真人教练，陪你深度梳理情绪与人际关系",
+      gradient: "from-rose-500 to-pink-500",
+      features: ["情绪教练", "亲子教练", "沟通教练", "故事教练", "有劲生活教练", "真人一对一预约"]
+    },
+    {
+      icon: Palette,
+      emoji: "🛠️",
+      title: "成长工具",
+      description: "三大类工具助力情绪管理、自我探索与生活习惯养成",
+      gradient: "from-purple-500 to-indigo-500",
+      features: ["情绪按钮（9种情绪即时疗愈）", "能量宣言卡", "呼吸练习", "感恩日记", "习惯追踪"]
+    },
+    {
+      icon: Video,
+      emoji: "📚",
+      title: "学习课程",
+      description: "系统化视频课程，帮你建立情绪管理与人际沟通能力",
+      gradient: "from-blue-500 to-cyan-500",
+      features: ["情绪管理课程", "亲子沟通课程", "人际关系课程", "自我成长课程"]
+    },
+    {
+      icon: GraduationCap,
+      emoji: "🏕️",
+      title: "训练营",
+      description: "21天系统训练，养成持久的情绪管理习惯",
+      gradient: "from-green-500 to-teal-500",
+      features: ["21天情绪日记训练营", "21天亲子情绪训练营", "每日打卡", "社区分享"]
+    },
+    {
+      icon: Handshake,
+      emoji: "🤝",
+      title: "合伙人",
+      description: "成为有劲合伙人，传递有劲能量，获得持续收益",
+      gradient: "from-amber-500 to-orange-500",
+      features: ["推广系统", "学员管理", "佣金收益", "专属物料"]
     }
   ];
 
-  // 核心价值
-  const coreValues = [
+  // 教练空间详细介绍
+  const coachTypes = [
     {
-      emoji: "🤗",
-      title: "温暖陪伴与真实关系",
-      description: "理解你的痛点",
-      gradient: "from-orange-500/10 to-yellow-500/10"
+      emoji: "💪",
+      title: "有劲生活教练",
+      subtitle: "智能总入口",
+      description: "你只需开口，有劲 AI 帮你找到方向。三步交互：共情陪伴 → 即时技巧 → 资源推荐",
+      gradient: "from-teal-500 to-cyan-500"
+    },
+    {
+      emoji: "🌿",
+      title: "情绪教练",
+      subtitle: "情绪四部曲",
+      description: "觉察 → 理解 → 反应 → 转化，深度梳理每一次情绪体验",
+      gradient: "from-rose-500 to-pink-500"
+    },
+    {
+      emoji: "👨‍👩‍👧",
+      title: "亲子教练",
+      subtitle: "父母先稳，孩子才愿意走向你",
+      description: "帮助父母管理自己的情绪，建立更健康的亲子关系",
+      gradient: "from-blue-500 to-indigo-500"
+    },
+    {
+      emoji: "💬",
+      title: "沟通教练",
+      subtitle: "轻松说出想说的话",
+      description: "让对方愿意听，改善人际表达与关系沟通",
+      gradient: "from-purple-500 to-violet-500"
+    },
+    {
+      emoji: "📖",
+      title: "故事教练",
+      subtitle: "用故事疗愈心灵",
+      description: "记录你的成长故事，发现生命中的力量与意义",
+      gradient: "from-amber-500 to-yellow-500"
+    },
+    {
+      emoji: "✨",
+      title: "感恩教练",
+      subtitle: "看见日常微光",
+      description: "点亮内心力量，培养感恩的习惯",
+      gradient: "from-green-500 to-emerald-500"
+    }
+  ];
+
+  // 情绪按钮系统
+  const emotionButtonFeatures = [
+    { number: "9", label: "种情绪类型", description: "恐慌、担心、负面、恐惧、烦躁、压力、无力、崩溃、失落" },
+    { number: "288", label: "条专业认知提醒", description: "每种情绪32条，全部使用第一人称肯定语气" },
+    { number: "4", label: "阶段科学设计", description: "觉察 → 理解 → 稳定 → 转化" },
+    { number: "100%", label: "即时可用", description: "无需登录，随时获取情绪支持" }
+  ];
+
+  // 成长工具三大分类
+  const toolCategories = [
+    {
+      emoji: "💜",
+      title: "情绪工具",
+      color: "purple",
+      tools: ["情绪按钮（9种情绪即时疗愈）", "能量宣言卡", "呼吸练习", "正念冥想", "频率疗愈"]
+    },
+    {
+      emoji: "💚",
+      title: "自我探索",
+      color: "green",
+      tools: ["价值观探索", "优势发现", "感恩日记", "成长记录"]
+    },
+    {
+      emoji: "🧡",
+      title: "生活管理",
+      color: "orange",
+      tools: ["习惯追踪", "睡眠记录", "运动打卡", "能量日志"]
+    }
+  ];
+
+  // 更新后的结构地图
+  const structureMap = [
+    {
+      emoji: "🎯",
+      title: "教练空间",
+      items: ["有劲生活教练（智能入口）", "情绪/亲子/沟通/故事/感恩教练", "真人教练预约"],
+      color: "rose"
     },
     {
       emoji: "🛠️",
-      title: "系统工具与可执行方法",
-      description: "给你能做到的行动",
-      gradient: "from-blue-500/10 to-cyan-500/10"
-    },
-    {
-      emoji: "🌟",
-      title: "社群连接与成长支持",
-      description: "让改变可持续发生",
-      gradient: "from-purple-500/10 to-pink-500/10"
-    }
-  ];
-
-  // 三大情绪困境
-  const emotionChallenges = [
-    { emoji: "🌪️", text: "看不见自己的情绪" },
-    { emoji: "💭", text: "说不清自己的感受" },
-    { emoji: "🔄", text: "转不动自己的状态" }
-  ];
-
-  // 五大核心能力
-  const coreAbilities = [
-    {
-      number: "①",
-      title: "情绪管理能力（主功能）",
-      icon: Heart,
-      features: [
-        "情绪日记",
-        "情绪四部曲（觉察 → 理解 → 反应 → 转化）",
-        "情绪复盘",
-        "今日洞察",
-        "今日行动",
-        "今日成长故事"
-      ],
-      gradient: "from-rose-500 to-pink-500"
-    },
-    {
-      number: "②",
-      title: "每日成长能力",
-      icon: TrendingUp,
-      features: [
-        "今日能量宣言",
-        "宣言卡",
-        "有劲日报",
-        "有劲周报"
-      ],
-      gradient: "from-blue-500 to-cyan-500"
-    },
-    {
-      number: "③",
-      title: "测评能力",
-      icon: Target,
-      features: [
-        "有劲能量测评（共振/觉醒/升维）"
-      ],
-      gradient: "from-purple-500 to-indigo-500"
-    },
-    {
-      number: "④",
-      title: "AI 生活智慧回答能力",
-      icon: Lightbulb,
-      features: [
-        "情绪与压力",
-        "关系沟通",
-        "家庭教育",
-        "职场困境",
-        "决策分析",
-        "时间与目标管理",
-        "自我怀疑、自卑、焦虑等心理状况",
-        "随时问，随时得到清晰方向"
-      ],
-      gradient: "from-orange-500 to-yellow-500"
-    },
-    {
-      number: "⑤",
-      title: "社群共振与教练支持能力",
-      icon: Users,
-      features: [
-        "绽放故事（真实成长见证）",
-        "海沃塔深度对话",
-        "每周成长直播",
-        "小组支持"
-      ],
-      gradient: "from-green-500 to-teal-500"
-    }
-  ];
-
-  // 结构地图
-  const structureMap = [
-    {
-      emoji: "🟣",
-      title: "主入口：情绪日记",
-      items: ["一句话记录心情", "AI 情绪分析", "成长建议", "打卡追踪"],
+      title: "成长工具",
+      items: ["情绪工具（情绪按钮为核心）", "自我探索工具", "生活管理工具"],
       color: "purple"
     },
     {
-      emoji: "🟢",
-      title: "每日成长模块",
-      items: ["今日能量宣言", "宣言卡", "有劲日报"],
-      color: "green"
-    },
-    {
-      emoji: "🟡",
-      title: "进阶成长模块",
-      items: ["有劲周报", "能量测评", "财富卡点测评"],
-      color: "yellow"
-    },
-    {
-      emoji: "🔵",
-      title: "智慧回答模块",
-      items: ["\"问有劲 AI\"", "任何生活问题 → 有答案"],
+      emoji: "📚",
+      title: "学习课程",
+      items: ["情绪管理课程", "亲子沟通课程", "人际关系课程"],
       color: "blue"
     },
     {
-      emoji: "🟤",
-      title: "社群共振模块",
-      items: ["绽放故事", "海沃塔小组", "教练直播"],
+      emoji: "🏕️",
+      title: "训练营",
+      items: ["21天情绪训练营", "21天亲子训练营", "每日打卡与社区"],
+      color: "green"
+    },
+    {
+      emoji: "🤝",
+      title: "合伙人",
+      items: ["推广系统", "学员管理", "佣金收益"],
       color: "amber"
     }
   ];
 
-  // 每日使用流程
-  const dailyFlow: Array<{
-    time: string;
-    title: string;
-    description: string;
-    gradient: string;
-    features?: string[];
-  }> = [
+  // 更新后的每日使用流程
+  const dailyFlow = [
     {
       time: "☀️ 早晨（1分钟）",
-      title: "今日能量宣言卡",
-      description: "为一天定下心态能量",
+      title: "能量宣言卡",
+      description: "为一天定下心态能量，开启有力量的一天",
       gradient: "from-orange-500/10 to-yellow-500/10"
     },
     {
-      time: "🌤 白天（2-3分钟）",
-      title: "情绪日记（主功能）",
-      description: "一句话告诉有劲 AI 你的感觉",
-      features: ["情绪命名", "找触发点", "找需求", "找盲点", "给行动建议"],
-      gradient: "from-blue-500/10 to-cyan-500/10"
+      time: "🌤 白天（随时）",
+      title: "有劲生活教练 + 情绪按钮",
+      description: "遇到情绪困扰时，选择合适的方式获得支持",
+      features: ["情绪按钮（即时缓解）", "情绪教练（深度梳理）", "语音对话（随时随地）"],
+      gradient: "from-teal-500/10 to-cyan-500/10"
     },
     {
-      time: "🌙 晚上（6分钟）",
-      title: "情绪复盘 + 今日有劲日报",
-      description: "将当天情绪与行为整理成一个完整故事",
+      time: "🌙 晚上（5分钟）",
+      title: "感恩日记 + 情绪简报",
+      description: "记录今日感恩，回顾情绪成长",
       gradient: "from-purple-500/10 to-indigo-500/10"
     },
     {
       time: "📅 每周",
-      title: "AI 自动生成有劲周报",
-      description: "看见成长趋势与规律",
+      title: "成长报告 + 社区分享",
+      description: "查看成长趋势，与社区伙伴共振成长",
       gradient: "from-green-500/10 to-teal-500/10"
     }
   ];
 
-  // 训练营内容
-  const campIncludes = [
-    "今日宣言卡",
-    "情绪日记",
-    "情绪复盘",
-    "日报生成",
-    "海沃塔深度对话",
-    "每周成长直播",
-    "AI 自动周报",
-    "21 天情绪成长档案"
+  // 语音对话介绍
+  const voiceFeatures = [
+    { icon: Phone, title: "全局悬浮按钮", description: "任何页面都可一键发起语音对话" },
+    { icon: Mic, title: "自然对话", description: "无需打字，直接说出你的困扰" },
+    { icon: Brain, title: "智能理解", description: "AI 实时理解并给予温暖回应" }
   ];
 
-  // 训练营成果
-  const campResults = [
-    { icon: "✅", text: "情绪更稳定" },
-    { icon: "✅", text: "思绪更清晰" },
-    { icon: "✅", text: "行动力更强" },
-    { icon: "✅", text: "关系更顺畅" },
-    { icon: "✅", text: "自我感更强" }
+  // 真人教练特色
+  const humanCoachFeatures = [
+    { icon: Award, title: "四级认证体系", description: "新晋 → 认证 → 优选 → 金牌" },
+    { icon: Star, title: "多维度评价", description: "专业度、沟通力、帮助性综合评分" },
+    { icon: Calendar, title: "灵活预约", description: "选择合适的时间进行一对一咨询" },
+    { icon: Shield, title: "安全保障", description: "资质认证、隐私保护、满意保障" }
   ];
 
   // 附加功能
   const additionalFeatures = [
-    { icon: Sparkles, title: "今日能量宣言", gradient: "from-orange-500 to-yellow-500" },
-    { icon: Star, title: "宣言卡", gradient: "from-pink-500 to-rose-500" },
-    { icon: Zap, title: "有劲能量测评", gradient: "from-purple-500 to-indigo-500" },
-    { icon: TrendingUp, title: "财富卡点测评", gradient: "from-green-500 to-emerald-500" },
-    { icon: Calendar, title: "有劲日报", gradient: "from-blue-500 to-cyan-500" },
-    { icon: BarChart3, title: "有劲周报", gradient: "from-teal-500 to-green-500" },
-    { icon: MessageCircle, title: "AI 智慧回答系统", gradient: "from-indigo-500 to-purple-500" },
-    { icon: Award, title: "绽放故事（社群共振）", gradient: "from-amber-500 to-orange-500" }
+    { icon: Shield, title: "情绪按钮", description: "9种情绪即时疗愈", gradient: "from-teal-500 to-cyan-500" },
+    { icon: Phone, title: "语音对话", description: "随时随地语音交流", gradient: "from-rose-500 to-pink-500" },
+    { icon: Users, title: "真人教练", description: "一对一预约咨询", gradient: "from-purple-500 to-indigo-500" },
+    { icon: Sparkles, title: "能量宣言卡", description: "开启有力量的一天", gradient: "from-orange-500 to-yellow-500" },
+    { icon: Heart, title: "感恩日记", description: "培养感恩习惯", gradient: "from-green-500 to-emerald-500" },
+    { icon: Zap, title: "频率疗愈", description: "科学频率冥想", gradient: "from-blue-500 to-cyan-500" },
+    { icon: BarChart3, title: "成长报告", description: "可视化成长轨迹", gradient: "from-indigo-500 to-purple-500" },
+    { icon: Award, title: "社区分享", description: "与伙伴共振成长", gradient: "from-amber-500 to-orange-500" }
   ];
 
   // FAQ
   const faqs = [
     {
-      q: "必须每天写吗？",
-      a: "不需要，但越持续越有效。"
+      q: "情绪按钮和情绪教练有什么区别？",
+      a: "情绪按钮是即时的陪伴，适合情绪激动时快速获得认知提醒和稳定；情绪教练是深入的梳理，适合有时间时系统性地处理情绪。两者配合使用效果最佳。"
     },
     {
-      q: "不知道写什么怎么办？",
-      a: "只要一句话，有劲 AI 会引导你。"
+      q: "如何选择合适的教练？",
+      a: "有劲生活教练是智能入口，会根据你的需求自动推荐合适的资源。如果你明确知道自己的需求，也可以直接选择：情绪困扰找情绪教练，亲子问题找亲子教练，人际沟通找沟通教练。"
     },
     {
-      q: "我有多个情绪怎么办？",
-      a: "一个一个来，有劲 AI 会帮你梳理。"
+      q: "语音对话消耗多少点数？",
+      a: "语音对话按分钟计费，每分钟消耗8点。首次连接时预扣第一分钟费用，之后每分钟扣费。最长通话10分钟。"
     },
     {
-      q: "晚上太累，不想写？",
-      a: "说一句「帮我做日报即可」。"
+      q: "如何预约真人教练？",
+      a: "进入教练空间，点击真人教练，选择合适的教练和时间段，完成支付即可预约。预约成功后会收到微信通知。"
     },
     {
-      q: "有劲 AI 真的懂我吗？",
-      a: "越用越懂，这就是 AI 的优势。"
+      q: "必须每天使用吗？",
+      a: "不需要强制每天使用，但持续使用效果更好。建议至少保持情绪按钮和感恩日记的使用习惯。"
     },
     {
-      q: "我不想深度分享可以吗？",
-      a: "可以，写一句话也有效。"
+      q: "训练营和自由使用有什么区别？",
+      a: "训练营提供系统化的21天成长路径，包含每日打卡、视频学习、社区分享等完整体验。自由使用则可以根据自己的节奏选择性使用各项功能。"
+    },
+    {
+      q: "如何成为有劲合伙人？",
+      a: "在有劲生活馆点击「合伙人」进入，选择合适的合伙人等级并完成注册。成为合伙人后可获得专属推广物料和佣金收益。"
     }
   ];
 
@@ -293,24 +290,24 @@ const UserManual = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/energy-studio")}
               className="gap-2 hover:bg-background/80"
             >
               <ArrowLeft className="w-4 h-4" />
-              返回首页
+              返回生活馆
             </Button>
             <div className="flex-1 text-center">
               <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
-                有劲 AI · 情绪日记 使用手册
+                有劲 AI · 使用手册
               </h1>
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate("/camps")}
+              onClick={() => navigate("/energy-studio")}
               className="gap-2"
             >
-              开始训练营
+              开始使用
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
@@ -322,242 +319,216 @@ const UserManual = () => {
         <section className="text-center space-y-6 animate-fade-in">
           <div className="inline-block text-6xl mb-4">💪</div>
           <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-warm bg-clip-text text-transparent">
-            把情绪变力量，让你天天都有劲
+            有劲生活馆 · 完整使用指南
           </h2>
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-            一位懂你、陪你、帮你成长的生活教练
+            把情绪变力量，让你天天都有劲
           </p>
         </section>
 
-        {/* 一、什么是有劲 AI */}
+        {/* 一、有劲生活馆结构 */}
         <section className="space-y-8">
           <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">一、什么是有劲 AI？</h3>
+            <h3 className="text-3xl font-bold">一、有劲生活馆结构</h3>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              有劲 AI 是一位懂你、陪你、帮你成长的生活教练。<br />
-              帮助每个人在情绪、关系、职场、家庭、生活压力中找到方向、找到力量、找到节奏。
+              有劲生活馆是一个完整的情绪管理与个人成长平台，包含五大核心模块
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {integrations.map((item, index) => (
-              <Card key={item.title} className="overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-                <div className={`h-2 bg-gradient-to-r ${item.gradient}`} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {studioModules.map((module, index) => (
+              <Card key={module.title} className="overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
+                <div className={`h-2 bg-gradient-to-r ${module.gradient}`} />
                 <CardHeader>
                   <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-xl bg-gradient-to-br ${item.gradient} text-white`}>
-                      <item.icon className="w-6 h-6" />
-                    </div>
+                    <div className="text-4xl">{module.emoji}</div>
                     <div className="flex-1">
-                      <CardTitle className="text-xl mb-2">{item.title}</CardTitle>
-                      <CardDescription className="text-base">{item.description}</CardDescription>
+                      <CardTitle className="text-xl mb-2">{module.title}</CardTitle>
+                      <CardDescription className="text-sm">{module.description}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-1">
+                    {module.features.map((feature) => (
+                      <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <CheckCircle2 className="w-3 h-3 text-primary flex-shrink-0" />
+                        <span>{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
               </Card>
             ))}
           </div>
         </section>
 
-        {/* 使命、愿景、核心价值 */}
+        {/* 二、教练空间 */}
         <section className="space-y-8">
-          <Card className="overflow-hidden border-2 bg-gradient-to-br from-primary/5 via-accent/5 to-warm/5">
-            <CardContent className="p-8 md:p-12 text-center space-y-8">
-              <div>
-                <h3 className="text-2xl font-bold mb-4 text-primary">有劲 AI 的使命</h3>
-                <p className="text-2xl md:text-3xl font-bold">
-                  让好的行为变得简单，让更好的自己成为必然。
-                </p>
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold mb-4 text-primary">有劲 AI 的愿景</h3>
-                <p className="text-xl md:text-2xl">
-                  让 有劲 AI 成为每个人的生活教练。
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="text-center space-y-3">
+            <h3 className="text-3xl font-bold">二、教练空间</h3>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              AI 智能教练 + 真人教练，为你提供全方位的情绪与成长支持
+            </p>
+          </div>
 
-          <div>
-            <h3 className="text-2xl font-bold mb-6 text-center">有劲 AI 的核心价值</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {coreValues.map((value, index) => (
-                <Card key={value.title} className={`overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in`} style={{ animationDelay: `${index * 100}ms` }}>
-                  <div className={`bg-gradient-to-br ${value.gradient} p-6`}>
-                    <div className="text-center space-y-3">
-                      <div className="text-4xl">{value.emoji}</div>
-                      <h4 className="text-lg font-bold">{value.title}</h4>
-                      <p className="text-sm text-muted-foreground">{value.description}</p>
+          {/* AI 教练 */}
+          <div className="space-y-4">
+            <h4 className="text-2xl font-bold text-center">🤖 AI 智能教练</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {coachTypes.map((coach, index) => (
+                <Card key={coach.title} className="overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in" style={{ animationDelay: `${index * 80}ms` }}>
+                  <div className={`h-1 bg-gradient-to-r ${coach.gradient}`} />
+                  <CardContent className="p-5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-3xl">{coach.emoji}</span>
+                        <div>
+                          <h5 className="font-bold">{coach.title}</h5>
+                          <p className="text-sm text-muted-foreground">{coach.subtitle}</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{coach.description}</p>
                     </div>
-                  </div>
+                  </CardContent>
                 </Card>
               ))}
             </div>
           </div>
-        </section>
 
-        {/* 二、为什么从情绪日记开始 */}
-        <section className="space-y-8">
-          <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">二、为什么从情绪日记开始？</h3>
-            <p className="text-lg text-muted-foreground">
-              情绪日记是整个有劲 AI 系统的主入口，原因很简单：
-            </p>
-          </div>
-
-          {/* 三大情绪困境 */}
+          {/* 真人教练 */}
           <Card className="overflow-hidden border-2">
-            <CardHeader className="bg-gradient-to-r from-rose-500/10 to-pink-500/10">
-              <CardTitle className="text-2xl text-center">🌪 当代三大情绪困境</CardTitle>
+            <CardHeader className="bg-gradient-to-r from-purple-500/10 to-pink-500/10">
+              <CardTitle className="text-2xl text-center">👩‍🏫 真人教练一对一</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {emotionChallenges.map((challenge, index) => (
-                  <div key={index} className="text-center space-y-2 p-4 rounded-lg bg-accent/5">
-                    <div className="text-4xl">{challenge.emoji}</div>
-                    <p className="font-semibold">{challenge.text}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {humanCoachFeatures.map((feature) => (
+                  <div key={feature.title} className="text-center space-y-2 p-4 rounded-lg bg-accent/5">
+                    <feature.icon className="w-8 h-8 mx-auto text-primary" />
+                    <h5 className="font-semibold">{feature.title}</h5>
+                    <p className="text-sm text-muted-foreground">{feature.description}</p>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
-
-          {/* 科学研究数据 */}
-          <Card className="overflow-hidden border-2">
-            <CardHeader className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10">
-              <CardTitle className="text-2xl text-center">📊 科学研究证实：记录情绪 = 最快的改善路径</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <tbody>
-                    <tr className="border-b">
-                      <td className="py-4 px-6 font-semibold bg-accent/5">连续 21 天记录情绪</td>
-                      <td className="py-4 px-6 text-primary font-bold">焦虑下降 31%</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-4 px-6 font-semibold bg-accent/5">给情绪命名</td>
-                      <td className="py-4 px-6 text-primary font-bold">决策清晰度提升 40%</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-4 px-6 font-semibold bg-accent/5">持续书写</td>
-                      <td className="py-4 px-6 text-primary font-bold">睡眠改善 28%</td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 px-6 font-semibold bg-accent/5">写下行动</td>
-                      <td className="py-4 px-6 text-primary font-bold">行动力提升 2.4 倍</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <p className="text-center text-muted-foreground mt-6">
-                原来不是你的情绪太难，而是你缺少一个稳定、温暖、可持续的系统来引导你。
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* 六个影响源模型 */}
-          <Card className="overflow-hidden border-2">
-            <CardHeader className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10">
-              <div className="space-y-2">
-                <CardTitle className="text-2xl text-center">为什么 有劲 AI 更快、更有效？</CardTitle>
-                <p className="text-center text-muted-foreground">
-                  基于领导力专家约瑟夫·葛伦尼的「六个影响源模型」：<br />
-                  当 6 个影响源同时作用时，改变的力量可以放大 10 倍。
-                </p>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b-2">
-                      <th className="text-left py-4 px-6 font-bold bg-primary/5">影响源</th>
-                      <th className="text-left py-4 px-6 font-bold bg-primary/5">有劲 AI 如何作用</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b">
-                      <td className="py-4 px-6 font-semibold">个人动机</td>
-                      <td className="py-4 px-6">让你被理解，被看见</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-4 px-6 font-semibold">个人能力</td>
-                      <td className="py-4 px-6">提供方法、步骤、工具</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-4 px-6 font-semibold">社会动机</td>
-                      <td className="py-4 px-6">社群共振、故事激励</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-4 px-6 font-semibold">社会能力</td>
-                      <td className="py-4 px-6">模仿成功案例</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-4 px-6 font-semibold">结构动机</td>
-                      <td className="py-4 px-6">日报、周报形成正反馈</td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 px-6 font-semibold">结构能力</td>
-                      <td className="py-4 px-6">可持续系统，陪你每天练习</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div className="text-center mt-6 p-4 bg-gradient-to-r from-primary/10 to-warm/10 rounded-lg">
-                <p className="text-xl font-bold">
-                  有劲 AI = 改变最省力、最温柔、最持久的方式。
-                </p>
-              </div>
-            </CardContent>
-          </Card>
         </section>
 
-        {/* 三、五大核心能力 */}
+        {/* 三、情绪按钮系统 */}
         <section className="space-y-8">
           <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">三、有劲 AI 能做什么？（五大核心能力）</h3>
+            <h3 className="text-3xl font-bold">三、情绪按钮系统（核心功能）</h3>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              当情绪来袭时，情绪按钮是你最快速的支持系统
+            </p>
           </div>
 
-          <div className="space-y-6">
-            {coreAbilities.map((ability, index) => (
-              <Card key={ability.title} className="overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-                <div className={`h-2 bg-gradient-to-r ${ability.gradient}`} />
-                <CardHeader>
-                  <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-xl bg-gradient-to-br ${ability.gradient} text-white text-2xl font-bold min-w-[48px] text-center`}>
-                      {ability.number}
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-xl mb-4">{ability.title}</CardTitle>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {ability.features.map((feature) => (
-                          <div key={feature} className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                            <span className="text-sm">{feature}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {emotionButtonFeatures.map((feature) => (
+              <Card key={feature.label} className="overflow-hidden border-2 bg-gradient-to-br from-teal-500/5 to-cyan-500/5">
+                <CardContent className="p-6 text-center">
+                  <div className="text-4xl font-bold text-primary mb-2">{feature.number}</div>
+                  <div className="font-semibold mb-2">{feature.label}</div>
+                  <p className="text-xs text-muted-foreground">{feature.description}</p>
+                </CardContent>
               </Card>
             ))}
           </div>
 
-          <Card className="overflow-hidden border-2 bg-gradient-to-br from-green-500/5 to-teal-500/5">
-            <CardContent className="p-8 text-center">
-              <p className="text-xl font-semibold">
-                你不是一个人在改变，是一群人一起共振改变。
-              </p>
+          <Card className="overflow-hidden border-2">
+            <CardHeader className="bg-gradient-to-r from-teal-500/10 to-cyan-500/10">
+              <CardTitle className="text-xl text-center">🧠 科学依据</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-accent/5">
+                  <h5 className="font-semibold mb-2">多迷走神经理论</h5>
+                  <p className="text-sm text-muted-foreground">通过呼吸和自我对话激活副交感神经，帮助身体从"战或逃"回到"安全与连接"状态</p>
+                </div>
+                <div className="p-4 rounded-lg bg-accent/5">
+                  <h5 className="font-semibold mb-2">认知行为疗法</h5>
+                  <p className="text-sm text-muted-foreground">288条认知提醒帮助你识别并转化消极思维模式</p>
+                </div>
+                <div className="p-4 rounded-lg bg-accent/5">
+                  <h5 className="font-semibold mb-2">自我效能理论</h5>
+                  <p className="text-sm text-muted-foreground">第一人称肯定语气增强自我信念和应对能力</p>
+                </div>
+                <div className="p-4 rounded-lg bg-accent/5">
+                  <h5 className="font-semibold mb-2">安全学习理论</h5>
+                  <p className="text-sm text-muted-foreground">四阶段设计帮助大脑重新学习"这个情绪是安全的"</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </section>
 
-        {/* 四、结构地图 */}
+        {/* 四、成长工具 */}
         <section className="space-y-8">
           <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">四、有劲 AI 的结构地图（导航指南）</h3>
+            <h3 className="text-3xl font-bold">四、成长工具</h3>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              三大类工具，覆盖情绪管理、自我探索和生活习惯
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {toolCategories.map((category, index) => (
+              <Card key={category.title} className="overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
+                <CardHeader className="text-center">
+                  <div className="text-4xl mb-2">{category.emoji}</div>
+                  <CardTitle>{category.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    {category.tools.map((tool) => (
+                      <div key={tool} className="flex items-center gap-2 text-sm">
+                        <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span>{tool}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* 五、语音对话 */}
+        <section className="space-y-8">
+          <div className="text-center space-y-3">
+            <h3 className="text-3xl font-bold">五、语音对话</h3>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              全局悬浮语音按钮，随时随地与有劲 AI 对话
+            </p>
+          </div>
+
+          <Card className="overflow-hidden border-2">
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {voiceFeatures.map((feature) => (
+                  <div key={feature.title} className="text-center space-y-3 p-4">
+                    <div className="inline-block p-4 rounded-full bg-gradient-to-br from-rose-500/10 to-pink-500/10">
+                      <feature.icon className="w-8 h-8 text-primary" />
+                    </div>
+                    <h5 className="font-semibold">{feature.title}</h5>
+                    <p className="text-sm text-muted-foreground">{feature.description}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 p-4 bg-amber-500/10 rounded-lg text-center">
+                <p className="text-sm">
+                  💡 语音对话每分钟消耗 8 点，最长通话 10 分钟，需要至少 8 点余额才能开始
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* 六、结构地图 */}
+        <section className="space-y-8">
+          <div className="text-center space-y-3">
+            <h3 className="text-3xl font-bold">六、结构地图（导航指南）</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -567,15 +538,13 @@ const UserManual = () => {
                   <div className="text-center space-y-4">
                     <div className="text-5xl">{module.emoji}</div>
                     <h4 className="font-bold text-lg">{module.title}</h4>
-                    {module.items && (
-                      <div className="space-y-2 pt-2 border-t">
-                        {module.items.map((item) => (
-                          <div key={item} className="text-sm text-muted-foreground">
-                            • {item}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <div className="space-y-2 pt-2 border-t">
+                      {module.items.map((item) => (
+                        <div key={item} className="text-sm text-muted-foreground">
+                          • {item}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -583,15 +552,15 @@ const UserManual = () => {
           </div>
         </section>
 
-        {/* 五、每日使用流程 */}
+        {/* 七、每日使用流程 */}
         <section className="space-y-8">
           <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">五、每日使用流程（10 分钟）</h3>
+            <h3 className="text-3xl font-bold">七、每日使用流程</h3>
           </div>
 
           <div className="space-y-6">
             {dailyFlow.map((flow, index) => (
-              <Card key={flow.title} className={`overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in`} style={{ animationDelay: `${index * 100}ms` }}>
+              <Card key={flow.title} className="overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
                 <div className={`bg-gradient-to-br ${flow.gradient} p-6`}>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
@@ -619,64 +588,22 @@ const UserManual = () => {
           </div>
         </section>
 
-        {/* 六、21天训练营 */}
+        {/* 八、附加功能 */}
         <section className="space-y-8">
           <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">六、21 天情绪日记训练营（完整成长路径）</h3>
+            <h3 className="text-3xl font-bold">八、亮点功能一览</h3>
           </div>
 
-          <Card className="overflow-hidden border-2">
-            <CardHeader className="bg-gradient-to-r from-purple-500/10 to-pink-500/10">
-              <CardTitle className="text-2xl text-center">训练营包含</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {campIncludes.map((item) => (
-                  <div key={item} className="flex items-center gap-2 p-3 rounded-lg bg-accent/5">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                    <span className="text-sm font-medium">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="overflow-hidden border-2">
-            <CardHeader className="bg-gradient-to-r from-green-500/10 to-teal-500/10">
-              <CardTitle className="text-2xl text-center">训练营成果</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {campResults.map((result, index) => (
-                  <div key={index} className="flex items-center gap-3 p-4 rounded-lg bg-green-500/5 border border-green-500/20">
-                    <span className="text-2xl">{result.icon}</span>
-                    <span className="text-lg font-semibold">{result.text}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* 七、附加功能 */}
-        <section className="space-y-8">
-          <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">七、有劲 AI 附加功能（亮点功能）</h3>
-            <p className="text-lg text-muted-foreground">
-              这些附加功能让用户感觉：<br />
-              "原来有劲 AI 不是一个功能，而是一个完整的成长系统。"
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {additionalFeatures.map((feature, index) => (
               <Card key={feature.title} className="overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:scale-105 animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-                <CardContent className="p-6">
-                  <div className="text-center space-y-3">
-                    <div className={`p-4 rounded-xl bg-gradient-to-br ${feature.gradient} text-white inline-block`}>
-                      <feature.icon className="w-8 h-8" />
+                <CardContent className="p-5">
+                  <div className="text-center space-y-2">
+                    <div className={`p-3 rounded-xl bg-gradient-to-br ${feature.gradient} text-white inline-block`}>
+                      <feature.icon className="w-6 h-6" />
                     </div>
                     <h4 className="font-semibold text-sm">{feature.title}</h4>
+                    <p className="text-xs text-muted-foreground">{feature.description}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -684,10 +611,10 @@ const UserManual = () => {
           </div>
         </section>
 
-        {/* 八、FAQ */}
+        {/* 九、FAQ */}
         <section className="space-y-8">
           <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">八、常见问题 FAQ</h3>
+            <h3 className="text-3xl font-bold">九、常见问题 FAQ</h3>
           </div>
 
           <Card className="overflow-hidden border-2">
@@ -715,23 +642,23 @@ const UserManual = () => {
               <div className="text-5xl mb-4">🚀</div>
               <h3 className="text-3xl font-bold">准备好开始你的成长之旅了吗？</h3>
               <p className="text-lg text-muted-foreground">
-                从情绪日记开始，让有劲 AI 陪伴你每一天的成长
+                从有劲生活馆开始，让有劲 AI 陪伴你每一天的成长
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <Button 
                   size="lg" 
-                  onClick={() => navigate("/camps")}
+                  onClick={() => navigate("/energy-studio")}
                   className="gap-2 bg-gradient-to-r from-primary to-warm hover:opacity-90"
                 >
-                  开始 21 天训练营
+                  进入有劲生活馆
                   <ArrowRight className="w-4 h-4" />
                 </Button>
                 <Button 
                   size="lg" 
                   variant="outline"
-                  onClick={() => navigate("/energy-studio")}
+                  onClick={() => navigate("/camps")}
                 >
-                  探索有劲生活馆
+                  开始 21 天训练营
                 </Button>
               </div>
             </CardContent>
