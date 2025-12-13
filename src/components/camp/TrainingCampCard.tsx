@@ -116,12 +116,13 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
           {hasCheckedInToday ? '查看记录' : '立即打卡'}
         </Button>
         <Button 
-          variant="ghost" 
-          size="icon"
+          variant="outline"
+          size="sm"
           onClick={() => navigate(`/camp-intro/${camp.camp_type}`)}
-          className="text-muted-foreground hover:text-teal-600"
+          className="text-teal-600 border-teal-200 hover:bg-teal-50 hover:border-teal-400 dark:text-teal-400 dark:border-teal-700 dark:hover:bg-teal-900/30"
         >
-          <TrendingUp className="h-4 w-4" />
+          <TrendingUp className="h-4 w-4 mr-1" />
+          课程介绍
         </Button>
       </div>
     </Card>
