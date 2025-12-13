@@ -239,6 +239,53 @@ serve(async (req) => {
       }
     }
 
+    // 如果是预约订单，更新预约状态并发送确认通知
+    if (order.order_type === 'appointment') {
+      // 查找关联的预约
+      const { data: appointment, error: appointmentQueryError } = await supabase
+        .from('coaching_appointments')
+        .select('id')
+        .eq('order_id', orderNo)
+        .single();
+
+      if (!appointmentQueryError && appointment) {
+        // 更新预约状态为已确认
+        const { error: appointmentUpdateError } = await supabase
+          .from('coaching_appointments')
+          .update({
+            status: 'confirmed',
+            payment_status: 'paid',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', appointment.id);
+
+        if (appointmentUpdateError) {
+          console.error('Update appointment status error:', appointmentUpdateError);
+        } else {
+          console.log('Appointment confirmed:', appointment.id);
+
+          // 发送预约确认通知
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/send-appointment-notification`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+              },
+              body: JSON.stringify({
+                userId: order.user_id,
+                scenario: 'appointment_confirmed',
+                appointmentId: appointment.id,
+              }),
+            });
+            console.log('Appointment confirmation notification sent');
+          } catch (notifyError) {
+            console.error('Failed to send appointment confirmation:', notifyError);
+          }
+        }
+      }
+    }
+
     console.log('Payment callback processed successfully:', orderNo);
 
     return new Response(JSON.stringify({ code: 'SUCCESS', message: '成功' }), {

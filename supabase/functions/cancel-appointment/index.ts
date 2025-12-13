@@ -103,6 +103,24 @@ serve(async (req) => {
 
     // TODO: Process refund if payment was made
 
+    // Send cancellation notification
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/send-appointment-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          scenario: 'appointment_cancelled',
+          appointmentId,
+        }),
+      });
+    } catch (notifyError) {
+      console.error('Failed to send cancellation notification:', notifyError);
+    }
+
     console.log('Appointment cancelled successfully:', appointmentId);
 
     return new Response(
