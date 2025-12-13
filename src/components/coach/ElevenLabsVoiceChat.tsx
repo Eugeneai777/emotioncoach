@@ -255,8 +255,33 @@ export const ElevenLabsVoiceChat = ({
         return;
       }
 
-      // 请求麦克风权限
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // 请求麦克风权限 - 先检查权限状态
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        
+        if (permissionStatus.state === 'denied') {
+          throw new Error('MICROPHONE_DENIED');
+        }
+        
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (micError: any) {
+        console.error('Microphone access error:', micError);
+        setIsConnecting(false);
+        
+        let description = '请允许麦克风访问以使用语音功能';
+        if (micError.message === 'MICROPHONE_DENIED' || micError.name === 'NotAllowedError') {
+          description = '麦克风权限被拒绝。请在浏览器设置中允许麦克风访问，然后刷新页面重试。';
+        } else if (micError.name === 'NotFoundError') {
+          description = '未检测到麦克风设备。请确保设备已连接并正常工作。';
+        }
+        
+        toast({
+          title: "麦克风权限不足",
+          description,
+          variant: "destructive"
+        });
+        return;
+      }
 
       // 获取 ElevenLabs Signed URL
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke(
@@ -280,9 +305,7 @@ export const ElevenLabsVoiceChat = ({
       setIsConnecting(false);
       toast({
         title: "连接失败",
-        description: error instanceof Error && error.message.includes('microphone') 
-          ? "请允许麦克风访问以使用语音功能"
-          : "无法建立语音连接，请检查网络",
+        description: "无法建立语音连接，请检查网络后重试",
         variant: "destructive"
       });
     }
