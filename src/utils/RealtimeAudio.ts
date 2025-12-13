@@ -1,5 +1,100 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// ============= Token 缓存管理 =============
+interface CachedToken {
+  token: string;
+  realtimeUrl: string;
+  expiresAt: number; // 时间戳
+}
+
+const TOKEN_CACHE_KEY = 'realtime_token_cache';
+const TOKEN_TTL_MS = 50 * 1000; // Token 有效期 50秒（OpenAI ephemeral token 有效期 60秒，留10秒缓冲）
+
+// 获取缓存的 token
+function getCachedToken(endpoint: string): CachedToken | null {
+  try {
+    const cacheKey = `${TOKEN_CACHE_KEY}_${endpoint}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (!cached) return null;
+    
+    const data: CachedToken = JSON.parse(cached);
+    
+    // 检查是否过期
+    if (Date.now() >= data.expiresAt) {
+      sessionStorage.removeItem(cacheKey);
+      console.log('[TokenCache] Token expired, removed from cache');
+      return null;
+    }
+    
+    console.log('[TokenCache] Using cached token, expires in', Math.round((data.expiresAt - Date.now()) / 1000), 's');
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+// 缓存 token
+function setCachedToken(endpoint: string, token: string, realtimeUrl: string): void {
+  try {
+    const cacheKey = `${TOKEN_CACHE_KEY}_${endpoint}`;
+    const data: CachedToken = {
+      token,
+      realtimeUrl,
+      expiresAt: Date.now() + TOKEN_TTL_MS
+    };
+    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+    console.log('[TokenCache] Token cached for', TOKEN_TTL_MS / 1000, 's');
+  } catch (e) {
+    console.warn('[TokenCache] Failed to cache token:', e);
+  }
+}
+
+// 清除 token 缓存
+export function clearTokenCache(endpoint?: string): void {
+  try {
+    if (endpoint) {
+      sessionStorage.removeItem(`${TOKEN_CACHE_KEY}_${endpoint}`);
+    } else {
+      // 清除所有 token 缓存
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith(TOKEN_CACHE_KEY)) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    }
+    console.log('[TokenCache] Cache cleared');
+  } catch (e) {
+    console.warn('[TokenCache] Failed to clear cache:', e);
+  }
+}
+
+// ============= 麦克风权限预检查 =============
+let micPermissionGranted: boolean | null = null;
+
+// 检查麦克风权限状态（不触发权限请求）
+async function checkMicPermission(): Promise<boolean> {
+  try {
+    if ('permissions' in navigator) {
+      const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      micPermissionGranted = result.state === 'granted';
+      return micPermissionGranted;
+    }
+  } catch {
+    // 部分浏览器不支持 permissions API
+  }
+  return false;
+}
+
+// 预热麦克风权限（可在页面加载时调用）
+export async function prewarmMicrophone(): Promise<boolean> {
+  const hasPermission = await checkMicPermission();
+  if (hasPermission) {
+    console.log('[Microphone] Permission already granted');
+    return true;
+  }
+  return false;
+}
+
 // 音频录制器 - 录制麦克风音频并转换为 PCM16 格式
 export class AudioRecorder {
   private stream: MediaStream | null = null;
@@ -212,31 +307,50 @@ export class RealtimeChat {
       this.audioEl = document.createElement("audio");
       this.audioEl.autoplay = true;
 
-      // 🚀 优化：并行执行 token 获取和麦克风权限请求
-      const [tokenResult, micResult] = await Promise.all([
-        // 获取临时令牌
-        supabase.functions.invoke(this.tokenEndpoint).then(result => {
-          console.log('[WebRTC] Token fetched:', performance.now() - startTime, 'ms');
-          return result;
-        }),
-        // 同时请求麦克风权限
-        this.requestMicrophoneAccess().then(stream => {
-          console.log('[WebRTC] Microphone ready:', performance.now() - startTime, 'ms');
-          return stream;
-        })
-      ]);
-
-      const { data: tokenData, error: tokenError } = tokenResult;
+      // 🚀 优化1：检查 token 缓存
+      const cachedToken = getCachedToken(this.tokenEndpoint);
       
-      if (tokenError || !tokenData?.client_secret?.value) {
-        throw new Error("Failed to get ephemeral token");
+      let EPHEMERAL_KEY: string;
+      let realtimeApiUrl: string;
+
+      if (cachedToken) {
+        console.log('[WebRTC] Using cached token:', performance.now() - startTime, 'ms');
+        EPHEMERAL_KEY = cachedToken.token;
+        realtimeApiUrl = cachedToken.realtimeUrl;
+        
+        // 只需要获取麦克风权限
+        this.localStream = await this.requestMicrophoneAccess();
+        console.log('[WebRTC] Microphone ready:', performance.now() - startTime, 'ms');
+      } else {
+        // 🚀 优化2：并行执行 token 获取和麦克风权限请求
+        const [tokenResult, micResult] = await Promise.all([
+          // 获取临时令牌
+          supabase.functions.invoke(this.tokenEndpoint).then(result => {
+            console.log('[WebRTC] Token fetched:', performance.now() - startTime, 'ms');
+            return result;
+          }),
+          // 同时请求麦克风权限
+          this.requestMicrophoneAccess().then(stream => {
+            console.log('[WebRTC] Microphone ready:', performance.now() - startTime, 'ms');
+            return stream;
+          })
+        ]);
+
+        const { data: tokenData, error: tokenError } = tokenResult;
+        
+        if (tokenError || !tokenData?.client_secret?.value) {
+          throw new Error("Failed to get ephemeral token");
+        }
+
+        EPHEMERAL_KEY = tokenData.client_secret.value;
+        realtimeApiUrl = tokenData.realtime_url || 'https://api.openai.com/v1/realtime';
+        
+        // 缓存 token
+        setCachedToken(this.tokenEndpoint, EPHEMERAL_KEY, realtimeApiUrl);
+
+        // 保存麦克风流
+        this.localStream = micResult;
       }
-
-      const EPHEMERAL_KEY = tokenData.client_secret.value;
-      const realtimeApiUrl = tokenData.realtime_url || 'https://api.openai.com/v1/realtime';
-
-      // 保存麦克风流
-      this.localStream = micResult;
 
       // 创建 WebRTC 连接 - 使用优化的 ICE 配置
       this.pc = new RTCPeerConnection({
