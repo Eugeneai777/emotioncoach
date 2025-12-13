@@ -69,6 +69,7 @@ import FloatingVoiceButton from "./components/FloatingVoiceButton";
 import HumanCoaches from "./pages/HumanCoaches";
 import HumanCoachDetail from "./pages/HumanCoachDetail";
 import MyAppointments from "./pages/MyAppointments";
+import BecomeCoach from "./pages/BecomeCoach";
 
 const queryClient = new QueryClient();
 
@@ -143,6 +144,7 @@ const App = () => (
           <Route path="/human-coaches" element={<HumanCoaches />} />
           <Route path="/human-coaches/:id" element={<HumanCoachDetail />} />
           <Route path="/my-appointments" element={<MyAppointments />} />
+          <Route path="/become-coach" element={<BecomeCoach />} />
           <Route path="/coach/:coachKey" element={<DynamicCoach />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
