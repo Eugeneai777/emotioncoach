@@ -245,3 +245,6 @@ verify_jwt = false
 
 [functions.recommend-coaches]
 verify_jwt = false
+
+[functions.generate-greeting]
+verify_jwt = true
