@@ -2784,6 +2784,7 @@ export type Database = {
           free_quota_period: string | null
           id: string
           is_enabled: boolean | null
+          max_duration_minutes: number | null
           package_id: string
           updated_at: string | null
         }
@@ -2795,6 +2796,7 @@ export type Database = {
           free_quota_period?: string | null
           id?: string
           is_enabled?: boolean | null
+          max_duration_minutes?: number | null
           package_id: string
           updated_at?: string | null
         }
@@ -2806,6 +2808,7 @@ export type Database = {
           free_quota_period?: string | null
           id?: string
           is_enabled?: boolean | null
+          max_duration_minutes?: number | null
           package_id?: string
           updated_at?: string | null
         }
