@@ -93,7 +93,11 @@ export const CoachEmptyState = ({
     </div>;
   return <div className="space-y-2 md:space-y-3">
       {/* Voice Chat CTA - 当有居中CTA时，替代原有标题区 */}
-      {voiceChatCTA ? voiceChatCTA : (/* Title Section */
+      {voiceChatCTA ? (
+        <div className="mb-6 md:mb-8">
+          {voiceChatCTA}
+        </div>
+      ) : (/* Title Section */
     <div className="text-center space-y-2 md:space-y-3 pt-4 md:pt-6 pb-0">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
             {title}
