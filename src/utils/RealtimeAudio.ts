@@ -1,75 +1,75 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// ============= Token 缓存管理 =============
-interface CachedToken {
-  token: string;
+// ============= 配置缓存管理 =============
+// 注意：OpenAI ephemeral token 有效期只有 60 秒，无法长期缓存
+// 但 realtime_url 配置可以按天缓存，减少重复请求
+
+interface CachedConfig {
   realtimeUrl: string;
-  expiresAt: number; // 时间戳
+  expiresAt: number;
 }
 
-const TOKEN_CACHE_KEY = 'realtime_token_cache';
-const TOKEN_TTL_MS = 50 * 1000; // Token 有效期 50秒（OpenAI ephemeral token 有效期 60秒，留10秒缓冲）
+const CONFIG_CACHE_KEY = 'realtime_config_cache';
+const CONFIG_TTL_MS = 24 * 60 * 60 * 1000; // 配置缓存 24 小时
 
-// 获取缓存的 token
-function getCachedToken(endpoint: string): CachedToken | null {
+// 获取缓存的配置
+function getCachedConfig(endpoint: string): CachedConfig | null {
   try {
-    const cacheKey = `${TOKEN_CACHE_KEY}_${endpoint}`;
-    const cached = sessionStorage.getItem(cacheKey);
+    const cacheKey = `${CONFIG_CACHE_KEY}_${endpoint}`;
+    const cached = localStorage.getItem(cacheKey);
     if (!cached) return null;
     
-    const data: CachedToken = JSON.parse(cached);
+    const data: CachedConfig = JSON.parse(cached);
     
-    // 检查是否过期
     if (Date.now() >= data.expiresAt) {
-      sessionStorage.removeItem(cacheKey);
-      console.log('[TokenCache] Token expired, removed from cache');
+      localStorage.removeItem(cacheKey);
+      console.log('[ConfigCache] Config expired, removed from cache');
       return null;
     }
     
-    console.log('[TokenCache] Using cached token, expires in', Math.round((data.expiresAt - Date.now()) / 1000), 's');
+    console.log('[ConfigCache] Using cached config');
     return data;
   } catch {
     return null;
   }
 }
 
-// 缓存 token
-function setCachedToken(endpoint: string, token: string, realtimeUrl: string): void {
+// 缓存配置
+function setCachedConfig(endpoint: string, realtimeUrl: string): void {
   try {
-    const cacheKey = `${TOKEN_CACHE_KEY}_${endpoint}`;
-    const data: CachedToken = {
-      token,
+    const cacheKey = `${CONFIG_CACHE_KEY}_${endpoint}`;
+    const data: CachedConfig = {
       realtimeUrl,
-      expiresAt: Date.now() + TOKEN_TTL_MS
+      expiresAt: Date.now() + CONFIG_TTL_MS
     };
-    sessionStorage.setItem(cacheKey, JSON.stringify(data));
-    console.log('[TokenCache] Token cached for', TOKEN_TTL_MS / 1000, 's');
+    localStorage.setItem(cacheKey, JSON.stringify(data));
+    console.log('[ConfigCache] Config cached for 24 hours');
   } catch (e) {
-    console.warn('[TokenCache] Failed to cache token:', e);
+    console.warn('[ConfigCache] Failed to cache config:', e);
   }
 }
 
-// 清除 token 缓存
-export function clearTokenCache(endpoint?: string): void {
+// 清除配置缓存
+export function clearConfigCache(endpoint?: string): void {
   try {
     if (endpoint) {
-      sessionStorage.removeItem(`${TOKEN_CACHE_KEY}_${endpoint}`);
+      localStorage.removeItem(`${CONFIG_CACHE_KEY}_${endpoint}`);
     } else {
-      // 清除所有 token 缓存
-      Object.keys(sessionStorage).forEach(key => {
-        if (key.startsWith(TOKEN_CACHE_KEY)) {
-          sessionStorage.removeItem(key);
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith(CONFIG_CACHE_KEY)) {
+          localStorage.removeItem(key);
         }
       });
     }
-    console.log('[TokenCache] Cache cleared');
+    console.log('[ConfigCache] Cache cleared');
   } catch (e) {
-    console.warn('[TokenCache] Failed to clear cache:', e);
+    console.warn('[ConfigCache] Failed to clear cache:', e);
   }
 }
 
 // ============= 麦克风权限预检查 =============
 let micPermissionGranted: boolean | null = null;
+let cachedMicStream: MediaStream | null = null;
 
 // 检查麦克风权限状态（不触发权限请求）
 async function checkMicPermission(): Promise<boolean> {
@@ -93,6 +93,37 @@ export async function prewarmMicrophone(): Promise<boolean> {
     return true;
   }
   return false;
+}
+
+// 预获取麦克风流（用户已授权时可复用）
+export async function prewarmMicrophoneStream(): Promise<MediaStream | null> {
+  const hasPermission = await checkMicPermission();
+  if (hasPermission && !cachedMicStream) {
+    try {
+      cachedMicStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+      console.log('[Microphone] Stream pre-warmed');
+    } catch (e) {
+      console.warn('[Microphone] Failed to pre-warm stream:', e);
+    }
+  }
+  return cachedMicStream;
+}
+
+// 获取预热的麦克风流或请求新的
+function getOrRequestMicStream(): MediaStream | null {
+  if (cachedMicStream && cachedMicStream.active) {
+    console.log('[Microphone] Using pre-warmed stream');
+    const stream = cachedMicStream;
+    cachedMicStream = null; // 使用后清空，避免重复使用
+    return stream;
+  }
+  return null;
 }
 
 // 音频录制器 - 录制麦克风音频并转换为 PCM16 格式
@@ -307,33 +338,41 @@ export class RealtimeChat {
       this.audioEl = document.createElement("audio");
       this.audioEl.autoplay = true;
 
-      // 🚀 优化1：检查 token 缓存
-      const cachedToken = getCachedToken(this.tokenEndpoint);
+      // 🚀 优化1：检查配置缓存（realtime_url 可按天缓存）
+      const cachedConfig = getCachedConfig(this.tokenEndpoint);
       
       let EPHEMERAL_KEY: string;
       let realtimeApiUrl: string;
 
-      if (cachedToken) {
-        console.log('[WebRTC] Using cached token:', performance.now() - startTime, 'ms');
-        EPHEMERAL_KEY = cachedToken.token;
-        realtimeApiUrl = cachedToken.realtimeUrl;
+      // 🚀 优化2：尝试使用预热的麦克风流
+      const prewarmedStream = getOrRequestMicStream();
+
+      if (cachedConfig && prewarmedStream) {
+        // 最快路径：配置已缓存 + 麦克风已预热，只需获取新 token
+        console.log('[WebRTC] Using cached config + pre-warmed mic');
+        realtimeApiUrl = cachedConfig.realtimeUrl;
+        this.localStream = prewarmedStream;
         
-        // 只需要获取麦克风权限
-        this.localStream = await this.requestMicrophoneAccess();
-        console.log('[WebRTC] Microphone ready:', performance.now() - startTime, 'ms');
+        const { data: tokenData, error: tokenError } = await supabase.functions.invoke(this.tokenEndpoint);
+        console.log('[WebRTC] Token fetched:', performance.now() - startTime, 'ms');
+        
+        if (tokenError || !tokenData?.client_secret?.value) {
+          throw new Error("Failed to get ephemeral token");
+        }
+        EPHEMERAL_KEY = tokenData.client_secret.value;
       } else {
-        // 🚀 优化2：并行执行 token 获取和麦克风权限请求
+        // 并行执行 token 获取和麦克风权限请求
         const [tokenResult, micResult] = await Promise.all([
-          // 获取临时令牌
           supabase.functions.invoke(this.tokenEndpoint).then(result => {
             console.log('[WebRTC] Token fetched:', performance.now() - startTime, 'ms');
             return result;
           }),
-          // 同时请求麦克风权限
-          this.requestMicrophoneAccess().then(stream => {
-            console.log('[WebRTC] Microphone ready:', performance.now() - startTime, 'ms');
-            return stream;
-          })
+          prewarmedStream 
+            ? Promise.resolve(prewarmedStream)
+            : this.requestMicrophoneAccess().then(stream => {
+                console.log('[WebRTC] Microphone ready:', performance.now() - startTime, 'ms');
+                return stream;
+              })
         ]);
 
         const { data: tokenData, error: tokenError } = tokenResult;
@@ -345,10 +384,9 @@ export class RealtimeChat {
         EPHEMERAL_KEY = tokenData.client_secret.value;
         realtimeApiUrl = tokenData.realtime_url || 'https://api.openai.com/v1/realtime';
         
-        // 缓存 token
-        setCachedToken(this.tokenEndpoint, EPHEMERAL_KEY, realtimeApiUrl);
+        // 缓存配置（按天）
+        setCachedConfig(this.tokenEndpoint, realtimeApiUrl);
 
-        // 保存麦克风流
         this.localStream = micResult;
       }
 
