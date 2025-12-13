@@ -10,6 +10,7 @@ import { CampRecommendationCard } from "@/components/coach/CampRecommendationCar
 import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
 import { CoachTrainingCamp } from "@/components/coach/CoachTrainingCamp";
 import { ElevenLabsVoiceChat } from "@/components/coach/ElevenLabsVoiceChat";
+import { VoiceCallCTA } from "@/components/coach/VoiceCallCTA";
 import { useDynamicCoachChat } from "@/hooks/useDynamicCoachChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
@@ -153,7 +154,8 @@ const DynamicCoach = () => {
   const optionSelectHandler = template.disable_option_buttons ? undefined : handleOptionSelect;
 
   // 判断是否启用步骤折叠（情绪教练折叠，其他教练展开）
-  const enableStepsCollapse = template.coach_key === 'emotion';
+  // 判断是否启用步骤折叠（情绪教练和有劲生活教练折叠，其他教练展开）
+  const enableStepsCollapse = template.coach_key === 'emotion' || template.coach_key === 'vibrant_life_sage';
 
   // 感恩教练使用 GratitudeQuickAdd 输入框
   const gratitudeFooter = template.coach_key === 'gratitude_coach' && user?.id ? (
@@ -197,6 +199,9 @@ const DynamicCoach = () => {
       communicationBriefingId={lastBriefingId}
       coachRecommendation={coachRecommendation}
       enableStepsCollapse={enableStepsCollapse}
+      voiceChatCTA={template.coach_key === 'vibrant_life_sage' ? (
+        <VoiceCallCTA onVoiceChatClick={() => setShowVoiceChat(true)} />
+      ) : undefined}
       scenarioChips={
         template.enable_scenarios && template.scenarios ? (
           <CoachScenarioChips

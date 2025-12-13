@@ -30,6 +30,7 @@ interface CoachEmptyStateProps {
   showDailyReminder?: boolean;
   campRecommendation?: ReactNode;
   enableCollapse?: boolean;
+  voiceChatCTA?: ReactNode;
 }
 export const CoachEmptyState = ({
   emoji,
@@ -50,7 +51,8 @@ export const CoachEmptyState = ({
   dailyReminderContent,
   showDailyReminder = false,
   campRecommendation,
-  enableCollapse = false
+  enableCollapse = false,
+  voiceChatCTA
 }: CoachEmptyStateProps) => {
   const navigate = useNavigate();
   const [isStepsExpanded, setIsStepsExpanded] = useState(!enableCollapse);
@@ -91,15 +93,20 @@ export const CoachEmptyState = ({
         </div>)}
     </div>;
   return <div className="space-y-2 md:space-y-3">
-      {/* Title Section */}
-      <div className="text-center space-y-2 md:space-y-3 pt-4 md:pt-6 pb-0">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-          {title}
-        </h1>
-        <p className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-md mx-auto">
-          {description}
-        </p>
-      </div>
+      {/* Voice Chat CTA - 当有居中CTA时，替代原有标题区 */}
+      {voiceChatCTA ? (
+        voiceChatCTA
+      ) : (
+        /* Title Section */
+        <div className="text-center space-y-2 md:space-y-3 pt-4 md:pt-6 pb-0">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+            {title}
+          </h1>
+          <p className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-md mx-auto">
+            {description}
+          </p>
+        </div>
+      )}
 
       {/* Steps Card or Daily Reminder */}
       {showDailyReminder && dailyReminderContent ? <div className="bg-card border border-border rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
@@ -168,6 +175,14 @@ export const CoachEmptyState = ({
 
       {/* Notifications */}
       {notifications}
+
+      {/* Community Guidance */}
+      {community && (
+        <div className="text-center py-3 text-muted-foreground text-sm flex flex-col items-center gap-1">
+          <ChevronDown className="w-4 h-4 animate-bounce" />
+          <span>下滑看看大家在分享什么</span>
+        </div>
+      )}
 
       {/* Community Waterfall */}
       {community}
