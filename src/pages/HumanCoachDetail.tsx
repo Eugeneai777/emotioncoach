@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, Users, Award, CheckCircle, MapPin, GraduationCap, Play } from "lucide-react";
+import { ArrowLeft, Clock, Users, Award, CheckCircle, MapPin, GraduationCap, Play, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { CoachBadge } from "@/components/human-coach/CoachBadge";
 import { CoachRatingDisplay, MultiDimensionRating } from "@/components/human-coach/CoachRatingDisplay";
 import { ReviewCard } from "@/components/human-coach/ReviewCard";
 import { BookingDialog } from "@/components/human-coach/booking/BookingDialog";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   useHumanCoach, 
   useCoachServices, 
@@ -25,11 +26,25 @@ export default function HumanCoachDetail() {
   const [activeTab, setActiveTab] = useState("intro");
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<CoachService | undefined>();
+  const [isCurrentUserCoach, setIsCurrentUserCoach] = useState(false);
   
   const { data: coach, isLoading: loadingCoach } = useHumanCoach(id);
   const { data: services = [] } = useCoachServices(id);
   const { data: certifications = [] } = useCoachCertifications(id);
   const { data: reviews = [] } = useCoachReviews(id);
+  
+  // 检查当前用户是否为此教练
+  useEffect(() => {
+    const checkIfCurrentUserIsCoach = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && coach?.user_id === user.id) {
+        setIsCurrentUserCoach(true);
+      }
+    };
+    if (coach) {
+      checkIfCurrentUserIsCoach();
+    }
+  }, [coach]);
   
   if (loadingCoach) {
     return (
@@ -63,13 +78,26 @@ export default function HumanCoachDetail() {
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b">
         <div className="container max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            {isCurrentUserCoach && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/coach-dashboard")}
+                className="text-teal-600 border-teal-200 hover:bg-teal-50"
+              >
+                <Settings className="w-4 h-4 mr-1" />
+                我的后台
+              </Button>
+            )}
+          </div>
           <h1 className="text-lg font-semibold">教练详情</h1>
           <div className="w-10" />
         </div>
