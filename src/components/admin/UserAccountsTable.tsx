@@ -98,7 +98,9 @@ export function UserAccountsTable() {
               <TableCell>{account.total_quota}</TableCell>
               <TableCell>
                 <Badge variant="outline">
-                  {account.subscription?.subscription_type || 'free'}
+                  {account.subscription?.subscription_type === '365' ? '365会员' 
+                   : account.subscription?.subscription_type === 'custom' ? '自定义'
+                   : '尝鲜'}
                 </Badge>
               </TableCell>
               <TableCell>
