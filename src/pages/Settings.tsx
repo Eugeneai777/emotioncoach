@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
-import { CompanionSelector } from "@/components/CompanionSelector";
 import { SmartReminderSettings } from "@/components/SmartReminderSettings";
 import { SmartNotificationPreferences } from "@/components/SmartNotificationPreferences";
 import { AccountBalance } from "@/components/AccountBalance";
@@ -20,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePartner } from "@/hooks/usePartner";
 import { useCoachProfile } from "@/hooks/useCoachDashboard";
 import { ArrowLeft, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -165,13 +165,17 @@ export default function Settings() {
         <h1 className="text-xl md:text-3xl font-bold text-foreground mb-4 md:mb-6">设置</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-4 md:mb-6 h-auto">
+          <TabsList className={cn(
+            "grid w-full mb-4 md:mb-6 h-auto",
+            isAdmin ? "grid-cols-3 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4"
+          )}>
             <ResponsiveTabsTrigger value="profile" label="个人资料" shortLabel="资料" />
             <ResponsiveTabsTrigger value="account" label="账户" />
             <ResponsiveTabsTrigger value="reminders" label="提醒设置" shortLabel="提醒" />
             <ResponsiveTabsTrigger value="notifications" label="通知偏好" shortLabel="通知" />
-            <ResponsiveTabsTrigger value="camp" label="训练营" />
-            <ResponsiveTabsTrigger value="companion" label="情绪伙伴" shortLabel="伙伴" />
+            {isAdmin && (
+              <ResponsiveTabsTrigger value="camp" label="训练营" />
+            )}
           </TabsList>
 
           <TabsContent value="profile">
@@ -344,31 +348,11 @@ export default function Settings() {
             <SmartNotificationPreferences />
           </TabsContent>
 
-          <TabsContent value="camp">
-            {isAdmin ? (
+          {isAdmin && (
+            <TabsContent value="camp">
               <CampSettings />
-            ) : (
-              <Card className="border-border shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-lg md:text-2xl text-foreground">
-                    训练营设置
-                  </CardTitle>
-                  <CardDescription className="text-xs md:text-sm text-muted-foreground">
-                    仅限管理员访问
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p className="text-sm md:text-base">此功能仅对管理员开放</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="companion">
-            <CompanionSelector />
-          </TabsContent>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
