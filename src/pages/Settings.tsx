@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,9 +15,7 @@ import { PackageSelector } from "@/components/PackageSelector";
 import CampSettings from "@/components/CampSettings";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { useToast } from "@/hooks/use-toast";
-import { usePartner } from "@/hooks/usePartner";
-import { useCoachProfile } from "@/hooks/useCoachDashboard";
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Settings() {
@@ -34,8 +31,6 @@ export default function Settings() {
   const [timezone, setTimezone] = useState("Asia/Shanghai");
   const [userId, setUserId] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
-  const { partner, isPartner, loading: partnerLoading } = usePartner();
-  const { data: coachProfile, isLoading: coachLoading } = useCoachProfile();
   
   const defaultTab = searchParams.get("tab") || "reminders";
 
@@ -219,88 +214,6 @@ export default function Settings() {
                     你的唯一用户标识符
                   </p>
                 </div>
-
-                {isAdmin && (
-                  <div className="space-y-2">
-                    <Button
-                      onClick={() => navigate("/admin")}
-                      className="w-full"
-                      variant="default"
-                    >
-                      <span className="mr-2">🔐</span>
-                      进入管理后台
-                    </Button>
-                    <p className="text-xs md:text-sm text-muted-foreground">
-                      管理员专属功能
-                    </p>
-                  </div>
-                )}
-
-                {coachProfile && !coachLoading && (
-                  <div className="space-y-2">
-                    <div className="p-4 bg-teal-500/5 border border-teal-500/20 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-foreground flex items-center gap-2">
-                          <Users className="w-4 h-4 text-teal-600" />
-                          认证教练身份
-                        </span>
-                        <span className="px-2 py-1 bg-teal-500/10 text-teal-600 text-xs rounded-full">
-                          ✨ 已认证
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        {coachProfile.name} · {coachProfile.title}
-                      </p>
-                      <Button
-                        onClick={() => navigate("/coach-dashboard")}
-                        className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
-                      >
-                        进入教练后台
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {isPartner && partner && (
-                  <div className="space-y-2">
-                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-foreground">合伙人身份</span>
-                        <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                          ✨ 已激活
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        推广码：{partner.partner_code}
-                      </p>
-                      <Button
-                        onClick={() => navigate("/partner")}
-                        className="w-full"
-                        variant="default"
-                      >
-                        进入合伙人中心
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {!isPartner && !partnerLoading && (
-                  <div className="space-y-2">
-                    <div className="p-4 bg-muted/30 border rounded-lg">
-                      <p className="text-sm text-foreground mb-2">成为合伙人</p>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        加入合伙人计划，获得丰厚佣金和专属权益
-                      </p>
-                      <Button
-                        onClick={() => navigate("/partner/benefits")}
-                        className="w-full"
-                        variant="outline"
-                      >
-                        了解合伙人权益
-                      </Button>
-                    </div>
-                  </div>
-                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="display-name" className="text-xs md:text-sm text-foreground">
