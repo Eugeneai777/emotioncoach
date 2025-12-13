@@ -113,10 +113,10 @@ export const CoachEmptyState = ({
           {dailyReminderContent}
         </div> : enableCollapse ? (/* Collapsible mode for emotion coach */
     <Collapsible open={isStepsExpanded} onOpenChange={setIsStepsExpanded}>
-          <div className={`border rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200 ${
+          <div className={`border rounded-card-lg p-3 text-left shadow-sm hover:shadow-md transition-all duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200 ${
             primaryColor === 'pink' 
-              ? 'bg-gradient-to-br from-pink-50/90 to-rose-50/70 dark:from-pink-950/40 dark:to-rose-950/30 border-pink-200/60 dark:border-pink-800/40' 
-              : 'bg-card border-border'
+              ? 'bg-white/60 dark:bg-pink-950/30 backdrop-blur-sm border-rose-200/40 dark:border-pink-800/30' 
+              : 'bg-card/60 backdrop-blur-sm border-border/50'
           }`}>
             <div className="flex items-center justify-between">
               <CollapsibleTrigger asChild>
@@ -177,9 +177,15 @@ export const CoachEmptyState = ({
       {notifications}
 
       {/* Community Waterfall */}
-
-      {/* Community Waterfall */}
-      {community}
+      {community && (
+        <div className="pt-2">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+            <span className="text-base">🌿</span>
+            有劲社区
+          </h3>
+          {community}
+        </div>
+      )}
 
       {/* Extra Content */}
       {extraContent}
