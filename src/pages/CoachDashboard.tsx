@@ -15,7 +15,8 @@ import {
   ArrowLeft,
   Menu,
   X,
-  Bell
+  Bell,
+  Phone
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CoachDashboardOverview } from "@/components/coach-dashboard/CoachDashboardOverview";
@@ -26,6 +27,7 @@ import { CoachReviewManagement } from "@/components/coach-dashboard/CoachReviewM
 import { CoachProfileSettings } from "@/components/coach-dashboard/CoachProfileSettings";
 import { CoachNotificationCenter } from "@/components/coach-dashboard/CoachNotificationCenter";
 import { CoachAppointmentCalendar } from "@/components/coach-dashboard/CoachAppointmentCalendar";
+import { CoachCallHistory } from "@/components/coach-dashboard/CoachCallHistory";
 import { useCoachNotifications } from "@/hooks/useCoachNotifications";
 
 const menuItems = [
@@ -34,6 +36,7 @@ const menuItems = [
   { id: 'calendar', label: '预约日历', icon: Calendar },
   { id: 'time', label: '时间管理', icon: Calendar },
   { id: 'appointments', label: '预约管理', icon: ClipboardList },
+  { id: 'calls', label: '通话记录', icon: Phone },
   { id: 'income', label: '收入管理', icon: Wallet },
   { id: 'reviews', label: '评价管理', icon: Star },
   { id: 'settings', label: '个人设置', icon: Settings },
@@ -85,6 +88,8 @@ export default function CoachDashboard() {
         return <CoachTimeManagement coachId={coachProfile.id} />;
       case 'appointments':
         return <CoachAppointmentManagement coachId={coachProfile.id} />;
+      case 'calls':
+        return <CoachCallHistory userId={coachProfile.user_id} isCoach />;
       case 'income':
         return <CoachIncomeManagement coachId={coachProfile.id} />;
       case 'reviews':

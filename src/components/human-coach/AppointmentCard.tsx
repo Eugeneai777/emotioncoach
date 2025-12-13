@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Video, MessageSquare, X, Star } from "lucide-react";
+import { Calendar, Clock, Video, MessageSquare, X, Star, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
@@ -31,13 +31,15 @@ interface AppointmentCardProps {
   onCancel?: (id: string) => void;
   onJoinMeeting?: (link: string) => void;
   onReview?: (appointmentId: string, coachId: string, coachName: string) => void;
+  onCall?: (coachUserId: string, coachName: string, appointmentId: string) => void;
 }
 
 export function AppointmentCard({ 
   appointment, 
   onCancel, 
   onJoinMeeting,
-  onReview 
+  onReview,
+  onCall
 }: AppointmentCardProps) {
   const coach = appointment.human_coaches;
   
@@ -64,6 +66,7 @@ export function AppointmentCard({
   const canCancel = appointment.status === 'pending' || appointment.status === 'confirmed';
   const canJoin = appointment.status === 'confirmed' && appointment.meeting_link;
   const canReview = appointment.status === 'completed' && !appointment.reviewed_at;
+  const canCall = appointment.status === 'confirmed';
 
   return (
     <Card className="p-4">
@@ -110,14 +113,25 @@ export function AppointmentCard({
           )}
 
           {/* Actions */}
-          <div className="flex items-center gap-2 mt-3">
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
+            {canCall && onCall && (
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                onClick={() => onCall(appointment.coach_id, coach?.name || '教练', appointment.id)}
+              >
+                <Phone className="w-4 h-4 mr-1" />
+                发起通话
+              </Button>
+            )}
             {canJoin && (
               <Button
                 size="sm"
+                variant="outline"
                 onClick={() => onJoinMeeting?.(appointment.meeting_link!)}
               >
                 <Video className="w-4 h-4 mr-1" />
-                进入通话
+                进入会议
               </Button>
             )}
             {canReview && (

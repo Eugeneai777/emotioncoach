@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { CoachCallProvider } from "@/components/coach-call";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import WeChatAuth from "./pages/WeChatAuth";
@@ -77,11 +78,12 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <FloatingVoiceButton />
-        <Routes>
+      <CoachCallProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <FloatingVoiceButton />
+          <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/wechat-auth" element={<WeChatAuth />} />
@@ -148,10 +150,11 @@ const App = () => (
           <Route path="/become-coach" element={<BecomeCoach />} />
           <Route path="/coach-dashboard" element={<CoachDashboard />} />
           <Route path="/coach/:coachKey" element={<DynamicCoach />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </CoachCallProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
