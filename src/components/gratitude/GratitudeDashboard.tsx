@@ -10,6 +10,7 @@ import { ThemeRadarChart } from "./ThemeRadarChart";
 import { GratitudeThemeBadge, THEME_DEFINITIONS, getThemeById } from "./GratitudeThemeBadge";
 import { GratitudeTagDistribution } from "./GratitudeTagDistribution";
 import ReactMarkdown from "react-markdown";
+import { useSmartNotification } from "@/hooks/useSmartNotification";
 
 interface DashboardData {
   reportId?: string;
@@ -102,6 +103,7 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
   const [reportType, setReportType] = useState<"daily" | "weekly" | "monthly">("weekly");
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const { toast } = useToast();
+  const { triggerNotification } = useSmartNotification('gratitude_coach');
 
   // Calculate theme stats list with percentages and indicators
   const themeStatsList = useMemo(() => {
@@ -146,6 +148,17 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
 
       setDashboardData(data);
       toast({ title: "幸福报告生成成功！" });
+
+      // 触发智能通知
+      const highlightDimension = Object.entries(data.themeStats || {})
+        .sort((a, b) => (b[1] as number) - (a[1] as number))[0]?.[0] || '';
+      const dimensionsCount = Object.values(data.themeStats || {}).filter((c: any) => c > 0).length;
+      
+      triggerNotification('after_gratitude_analysis', {
+        report_type: reportType,
+        dimensions_count: dimensionsCount,
+        highlight_dimension: highlightDimension,
+      });
     } catch (error) {
       console.error("Error generating dashboard:", error);
       toast({ title: "生成失败", variant: "destructive" });
