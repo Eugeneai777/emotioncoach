@@ -9,6 +9,9 @@ interface VoiceCallCTAProps {
 
 export const VoiceCallCTA = ({ onVoiceChatClick }: VoiceCallCTAProps) => {
   const [isRippling, setIsRippling] = useState(false);
+  const [hasUsedVoiceChat, setHasUsedVoiceChat] = useState(() => {
+    return localStorage.getItem('hasUsedVoiceChat') === 'true';
+  });
   const { greeting, isLoading } = usePersonalizedGreeting();
 
   const handleClick = () => {
@@ -16,12 +19,20 @@ export const VoiceCallCTA = ({ onVoiceChatClick }: VoiceCallCTAProps) => {
     setIsRippling(true);
     setTimeout(() => setIsRippling(false), 600);
     
+    // 标记已使用过语音对话
+    if (!hasUsedVoiceChat) {
+      localStorage.setItem('hasUsedVoiceChat', 'true');
+      setHasUsedVoiceChat(true);
+    }
+    
     // 调用语音对话
     onVoiceChatClick();
   };
 
   return (
-    <div className="flex flex-col items-center justify-center py-8 animate-in fade-in-50 duration-500">
+    <div className={`flex flex-col items-center justify-center animate-in fade-in-50 duration-500 ${
+      hasUsedVoiceChat ? 'py-8 pb-12' : 'py-8'
+    }`}>
       {/* 欢迎语 */}
       <div className="text-center mb-10 animate-in fade-in-50 duration-700">
         {isLoading ? (
@@ -72,11 +83,13 @@ export const VoiceCallCTA = ({ onVoiceChatClick }: VoiceCallCTAProps) => {
         </div>
       </button>
       
-      {/* 操作提示 - 移到按钮外部下方 */}
-      <p className="mt-10 text-sm text-muted-foreground flex items-center gap-2">
-        <span className="w-2 h-2 bg-rose-400 rounded-full animate-pulse" />
-        点击开始对话
-      </p>
+      {/* 操作提示 - 仅首次显示 */}
+      {!hasUsedVoiceChat && (
+        <p className="mt-10 text-sm text-muted-foreground flex items-center gap-2">
+          <span className="w-2 h-2 bg-rose-400 rounded-full animate-pulse" />
+          点击开始对话
+        </p>
+      )}
     </div>
   );
 };
