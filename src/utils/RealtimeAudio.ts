@@ -180,11 +180,13 @@ class AudioQueue {
 export class RealtimeChat {
   private pc: RTCPeerConnection | null = null;
   private dc: RTCDataChannel | null = null;
-  private audioEl: HTMLAudioElement;
+  private audioEl: HTMLAudioElement | null = null;
   private recorder: AudioRecorder | null = null;
   private audioContext: AudioContext | null = null;
   private audioQueue: AudioQueue | null = null;
   private tokenEndpoint: string;
+  private localStream: MediaStream | null = null;  // 保存麦克风流以便清理
+  private isDisconnected: boolean = false;  // 防止断开后继续操作
 
   constructor(
     private onMessage: (message: any) => void,
@@ -192,14 +194,17 @@ export class RealtimeChat {
     private onTranscript: (text: string, isFinal: boolean, role: 'user' | 'assistant') => void,
     tokenEndpoint: string = 'realtime-token'
   ) {
-    this.audioEl = document.createElement("audio");
-    this.audioEl.autoplay = true;
     this.tokenEndpoint = tokenEndpoint;
   }
 
   async init() {
     try {
+      this.isDisconnected = false;
       this.onStatusChange('connecting');
+      
+      // 创建音频元素
+      this.audioEl = document.createElement("audio");
+      this.audioEl.autoplay = true;
       
       // 获取临时令牌（使用可配置的 endpoint）
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke(this.tokenEndpoint);
@@ -213,9 +218,11 @@ export class RealtimeChat {
       // 创建 WebRTC 连接
       this.pc = new RTCPeerConnection();
 
-      // 设置远程音频
+      // 设置远程音频 - 只使用 WebRTC 自动播放
       this.pc.ontrack = e => {
-        this.audioEl.srcObject = e.streams[0];
+        if (this.audioEl && !this.isDisconnected) {
+          this.audioEl.srcObject = e.streams[0];
+        }
       };
 
       // 添加本地音频轨道 - 先检查麦克风权限
@@ -237,10 +244,12 @@ export class RealtimeChat {
         } else if (micError.name === 'NotFoundError') {
           throw new Error('未检测到麦克风设备。请确保设备已连接并正常工作。');
         } else {
-          throw new Error(`麦克风访问失败: ${micError.message || '未知错误'}`);
+        throw new Error(`麦克风访问失败: ${micError.message || '未知错误'}`);
         }
       }
       
+      // 保存麦克风流以便后续清理
+      this.localStream = ms;
       this.pc.addTrack(ms.getTracks()[0]);
 
       // 设置数据通道
@@ -302,6 +311,9 @@ export class RealtimeChat {
   }
 
   private handleEvent(event: any) {
+    // 如果已断开，忽略所有事件
+    if (this.isDisconnected) return;
+    
     this.onMessage(event);
 
     switch (event.type) {
@@ -488,7 +500,7 @@ export class RealtimeChat {
   }
 
   sendTextMessage(text: string) {
-    if (!this.dc || this.dc.readyState !== 'open') {
+    if (this.isDisconnected || !this.dc || this.dc.readyState !== 'open') {
       return;
     }
 
@@ -511,15 +523,31 @@ export class RealtimeChat {
   }
 
   disconnect() {
+    // 防止重复断开
+    if (this.isDisconnected) {
+      console.log('RealtimeChat: already disconnected');
+      return;
+    }
+    this.isDisconnected = true;
     console.log('RealtimeChat: disconnecting...');
     
     // 停止录音器
     this.recorder?.stop();
     this.recorder = null;
     
+    // 停止本地麦克风流
+    if (this.localStream) {
+      this.localStream.getTracks().forEach(track => {
+        track.stop();
+        console.log('Stopped local stream track:', track.kind);
+      });
+      this.localStream = null;
+    }
+    
     // 停止音频元素播放
     if (this.audioEl) {
       this.audioEl.pause();
+      this.audioEl.currentTime = 0;
       if (this.audioEl.srcObject) {
         const stream = this.audioEl.srcObject as MediaStream;
         stream.getTracks().forEach(track => {
@@ -528,6 +556,7 @@ export class RealtimeChat {
         });
         this.audioEl.srcObject = null;
       }
+      this.audioEl = null;
     }
     
     // 关闭数据通道
