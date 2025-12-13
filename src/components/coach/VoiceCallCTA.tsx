@@ -20,7 +20,7 @@ export const VoiceCallCTA = ({ onVoiceChatClick }: VoiceCallCTAProps) => {
   return (
     <div className="flex flex-col items-center justify-center py-8 animate-in fade-in-50 duration-500">
       {/* 欢迎语 */}
-      <div className="text-center mb-6 animate-in fade-in-50 duration-700">
+      <div className="text-center mb-10 animate-in fade-in-50 duration-700">
         <p className="text-lg text-foreground/80">嗨，今天感觉怎么样？</p>
       </div>
 
