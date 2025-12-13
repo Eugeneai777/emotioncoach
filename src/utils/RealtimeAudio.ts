@@ -228,26 +228,43 @@ export class RealtimeChat {
         }
       };
 
-      // 添加本地音频轨道 - 先检查麦克风权限
+      // 添加本地音频轨道 - 请求麦克风权限
       let ms: MediaStream;
       try {
-        // 检查权限状态
-        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-        
-        if (permissionStatus.state === 'denied') {
-          throw new Error('MICROPHONE_DENIED');
-        }
-        
-        ms = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // 直接请求麦克风权限，不使用 permissions.query（移动端兼容性问题）
+        ms = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          } 
+        });
       } catch (micError: any) {
         console.error('Microphone access error:', micError);
         
-        if (micError.message === 'MICROPHONE_DENIED' || micError.name === 'NotAllowedError') {
-          throw new Error('麦克风权限被拒绝。请在浏览器设置中允许麦克风访问，然后刷新页面重试。');
-        } else if (micError.name === 'NotFoundError') {
+        // 根据不同错误类型给出更友好的提示
+        if (micError.name === 'NotAllowedError' || micError.name === 'PermissionDeniedError') {
+          // iOS Safari / Android Chrome 权限被拒绝
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          const tip = isIOS 
+            ? '请前往"设置 > Safari > 麦克风"允许访问，然后刷新页面重试。'
+            : '请在浏览器地址栏左侧点击锁定图标，允许麦克风权限，然后刷新页面。';
+          throw new Error(`麦克风权限被拒绝。${tip}`);
+        } else if (micError.name === 'NotFoundError' || micError.name === 'DevicesNotFoundError') {
           throw new Error('未检测到麦克风设备。请确保设备已连接并正常工作。');
+        } else if (micError.name === 'NotReadableError' || micError.name === 'TrackStartError') {
+          throw new Error('麦克风被其他应用占用，请关闭其他正在使用麦克风的应用后重试。');
+        } else if (micError.name === 'OverconstrainedError') {
+          // 约束条件不满足，尝试用基本设置重试
+          try {
+            ms = await navigator.mediaDevices.getUserMedia({ audio: true });
+          } catch {
+            throw new Error('麦克风不支持所需的音频格式，请尝试使用其他设备。');
+          }
+        } else if (micError.name === 'SecurityError') {
+          throw new Error('安全限制：请确保使用 HTTPS 访问，或在本地开发环境中使用。');
         } else {
-        throw new Error(`麦克风访问失败: ${micError.message || '未知错误'}`);
+          throw new Error(`麦克风访问失败: ${micError.message || micError.name || '未知错误'}`);
         }
       }
       
