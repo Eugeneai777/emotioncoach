@@ -511,11 +511,64 @@ export class RealtimeChat {
   }
 
   disconnect() {
+    console.log('RealtimeChat: disconnecting...');
+    
+    // 停止录音器
     this.recorder?.stop();
-    this.dc?.close();
-    this.pc?.close();
+    this.recorder = null;
+    
+    // 停止音频元素播放
+    if (this.audioEl) {
+      this.audioEl.pause();
+      if (this.audioEl.srcObject) {
+        const stream = this.audioEl.srcObject as MediaStream;
+        stream.getTracks().forEach(track => {
+          track.stop();
+          console.log('Stopped audio element track:', track.kind);
+        });
+        this.audioEl.srcObject = null;
+      }
+    }
+    
+    // 关闭数据通道
+    if (this.dc) {
+      this.dc.close();
+      this.dc = null;
+    }
+    
+    // 关闭 WebRTC 连接并停止所有轨道
+    if (this.pc) {
+      // 停止所有发送的轨道（麦克风）
+      this.pc.getSenders().forEach(sender => {
+        if (sender.track) {
+          sender.track.stop();
+          console.log('Stopped sender track:', sender.track.kind);
+        }
+      });
+      
+      // 停止所有接收的轨道（远程音频）
+      this.pc.getReceivers().forEach(receiver => {
+        if (receiver.track) {
+          receiver.track.stop();
+          console.log('Stopped receiver track:', receiver.track.kind);
+        }
+      });
+      
+      this.pc.close();
+      this.pc = null;
+    }
+    
+    // 清理音频队列
     this.audioQueue?.clear();
-    this.audioContext?.close();
+    this.audioQueue = null;
+    
+    // 关闭音频上下文
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      this.audioContext.close();
+    }
+    this.audioContext = null;
+    
     this.onStatusChange('disconnected');
+    console.log('RealtimeChat: disconnected successfully');
   }
 }
