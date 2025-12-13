@@ -53,6 +53,14 @@ export const CoachVoiceChat = ({
   const lastBilledMinuteRef = useRef(0);
   const isDeductingRef = useRef(false);  // 防止并发扣费
   const sessionIdRef = useRef(`voice_${Date.now()}`);  // 固定 session ID
+  const lastActivityRef = useRef(Date.now());  // 最后活动时间
+  const visibilityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 页面隐藏计时器
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 无活动计时器
+
+  // 保护机制常量
+  const PAGE_HIDDEN_TIMEOUT = 5 * 60 * 1000;  // 5分钟页面隐藏自动结束
+  const INACTIVITY_TIMEOUT = 3 * 60 * 1000;  // 3分钟无活动自动结束
+  const INACTIVITY_CHECK_INTERVAL = 30 * 1000;  // 每30秒检查一次
 
   const MEMBER_365_PACKAGE = {
     key: 'member365',
@@ -570,6 +578,92 @@ export const CoachVoiceChat = ({
     }
   }, [remainingQuota]);
 
+  // 更新活动时间 - 当有语音活动时重置计时器
+  useEffect(() => {
+    if (speakingStatus !== 'idle') {
+      lastActivityRef.current = Date.now();
+    }
+  }, [speakingStatus]);
+
+  // 页面可见性检测 - 页面隐藏5分钟后自动结束
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && status === 'connected') {
+        // 页面不可见，启动计时器
+        visibilityTimerRef.current = setTimeout(() => {
+          toast({
+            title: "通话已自动结束",
+            description: "检测到您长时间未查看页面，已自动挂断以节省点数",
+          });
+          endCall();
+        }, PAGE_HIDDEN_TIMEOUT);
+      } else {
+        // 页面可见，取消计时器
+        if (visibilityTimerRef.current) {
+          clearTimeout(visibilityTimerRef.current);
+          visibilityTimerRef.current = null;
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (visibilityTimerRef.current) {
+        clearTimeout(visibilityTimerRef.current);
+      }
+    };
+  }, [status]);
+
+  // 无活动检测 - 3分钟无语音活动自动结束
+  useEffect(() => {
+    if (status !== 'connected') {
+      if (inactivityTimerRef.current) {
+        clearInterval(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+      return;
+    }
+
+    // 每30秒检查一次无活动状态
+    inactivityTimerRef.current = setInterval(() => {
+      const idleTime = Date.now() - lastActivityRef.current;
+      if (idleTime > INACTIVITY_TIMEOUT) {
+        toast({
+          title: "通话已自动结束",
+          description: "检测到长时间无对话活动，已自动挂断以节省点数",
+        });
+        endCall();
+      }
+    }, INACTIVITY_CHECK_INTERVAL);
+
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearInterval(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+    };
+  }, [status]);
+
+  // 浏览器关闭前保存会话 - beforeunload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (status === 'connected' && billedMinutes > 0) {
+        // 使用 sendBeacon 尝试保存会话（可能不完整）
+        const data = JSON.stringify({
+          session_id: sessionIdRef.current,
+          duration,
+          billed_minutes: billedMinutes,
+          total_cost: billedMinutes * POINTS_PER_MINUTE
+        });
+        navigator.sendBeacon('/api/record-voice-session', data);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [status, duration, billedMinutes]);
+
   // 初始化检查
   useEffect(() => {
     const init = async () => {
@@ -593,6 +687,12 @@ export const CoachVoiceChat = ({
       chatRef.current?.disconnect();
       if (durationRef.current) {
         clearInterval(durationRef.current);
+      }
+      if (visibilityTimerRef.current) {
+        clearTimeout(visibilityTimerRef.current);
+      }
+      if (inactivityTimerRef.current) {
+        clearInterval(inactivityTimerRef.current);
       }
     };
   }, []);
