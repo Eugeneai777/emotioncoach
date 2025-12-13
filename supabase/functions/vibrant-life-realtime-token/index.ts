@@ -47,7 +47,11 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    console.log('Creating OpenAI Realtime session for Vibrant Life Coach...');
+    // 使用 Cloudflare 代理（如果配置了）
+    const OPENAI_PROXY_URL = Deno.env.get('OPENAI_PROXY_URL');
+    const baseUrl = OPENAI_PROXY_URL || 'https://api.openai.com';
+
+    console.log('Creating OpenAI Realtime session for Vibrant Life Coach via:', OPENAI_PROXY_URL ? 'proxy' : 'direct');
 
     // 有劲生活教练的人设 - 增强版四层对话
     const instructions = `你是有劲生活教练，名叫"劲老师"。你是一位温暖、智慧的心灵导师。
@@ -271,7 +275,8 @@ serve(async (req) => {
     ];
 
     // Request an ephemeral token from OpenAI
-    const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
+    const realtimeUrl = `${baseUrl}/v1/realtime/sessions`;
+    const response = await fetch(realtimeUrl, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${OPENAI_API_KEY}`,
