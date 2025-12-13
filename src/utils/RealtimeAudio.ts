@@ -182,8 +182,6 @@ export class RealtimeChat {
   private dc: RTCDataChannel | null = null;
   private audioEl: HTMLAudioElement | null = null;
   private recorder: AudioRecorder | null = null;
-  private audioContext: AudioContext | null = null;
-  private audioQueue: AudioQueue | null = null;
   private tokenEndpoint: string;
   private localStream: MediaStream | null = null;
   private isDisconnected: boolean = false;
@@ -314,9 +312,7 @@ export class RealtimeChat {
       
       await this.pc.setRemoteDescription(answer);
 
-      // 初始化音频上下文和队列
-      this.audioContext = new AudioContext({ sampleRate: 24000 });
-      this.audioQueue = new AudioQueue(this.audioContext);
+      // WebRTC 直接通过 audioEl 播放音频，不需要额外的音频处理
 
     } catch (error) {
       console.error("Error initializing chat:", error);
@@ -615,15 +611,6 @@ export class RealtimeChat {
       this.pc = null;
     }
     
-    // 清理音频队列
-    this.audioQueue?.clear();
-    this.audioQueue = null;
-    
-    // 关闭音频上下文
-    if (this.audioContext && this.audioContext.state !== 'closed') {
-      this.audioContext.close();
-    }
-    this.audioContext = null;
     
     this.onStatusChange('disconnected');
     console.log('RealtimeChat: disconnected successfully');

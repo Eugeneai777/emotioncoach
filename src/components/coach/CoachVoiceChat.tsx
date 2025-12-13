@@ -290,6 +290,12 @@ export const CoachVoiceChat = ({
 
   // 开始通话
   const startCall = async () => {
+    // 防止重复初始化
+    if (chatRef.current || status === 'connecting' || status === 'connected') {
+      console.log('Call already in progress, skipping duplicate startCall');
+      return;
+    }
+    
     try {
       setStatus('connecting');
       
