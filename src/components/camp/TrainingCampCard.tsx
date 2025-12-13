@@ -118,7 +118,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
         <Button 
           variant="ghost" 
           size="icon"
-          onClick={() => navigate("/user-manual")}
+          onClick={() => navigate(`/camp-intro/${camp.camp_type}`)}
           className="text-muted-foreground hover:text-teal-600"
         >
           <TrendingUp className="h-4 w-4" />
