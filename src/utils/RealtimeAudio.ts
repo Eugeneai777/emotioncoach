@@ -217,6 +217,8 @@ export class RealtimeChat {
       }
 
       const EPHEMERAL_KEY = tokenData.client_secret.value;
+      // 从 edge function 获取代理 URL
+      const realtimeApiUrl = tokenData.realtime_url || 'https://api.openai.com/v1/realtime';
 
       // 创建 WebRTC 连接
       this.pc = new RTCPeerConnection();
@@ -306,10 +308,10 @@ export class RealtimeChat {
       const offer = await this.pc.createOffer();
       await this.pc.setLocalDescription(offer);
 
-      // 连接到 OpenAI Realtime API
-      const baseUrl = "https://api.openai.com/v1/realtime";
+      // 连接到 OpenAI Realtime API（使用代理 URL）
       const model = "gpt-4o-realtime-preview-2024-12-17";
-      const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
+      console.log('Connecting to Realtime API via:', realtimeApiUrl);
+      const sdpResponse = await fetch(`${realtimeApiUrl}?model=${model}`, {
         method: "POST",
         body: offer.sdp,
         headers: {
