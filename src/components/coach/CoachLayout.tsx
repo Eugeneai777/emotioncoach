@@ -123,6 +123,9 @@ interface CoachLayoutProps {
   
   // Custom footer component (replaces default CoachInputFooter)
   customFooter?: ReactNode;
+  
+  // Voice Chat CTA (for vibrant life coach)
+  voiceChatCTA?: ReactNode;
 }
 
 export const CoachLayout = ({
@@ -184,7 +187,8 @@ export const CoachLayout = ({
   currentCoachKey,
   messagesEndRef: externalMessagesEndRef,
   enableStepsCollapse = false,
-  customFooter
+  customFooter,
+  voiceChatCTA
 }: CoachLayoutProps) => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -389,6 +393,7 @@ export const CoachLayout = ({
                 showDailyReminder={showDailyReminder}
                 campRecommendation={campRecommendation}
                 enableCollapse={enableStepsCollapse}
+                voiceChatCTA={voiceChatCTA}
               />
             ) : (
               <div className="space-y-4">
