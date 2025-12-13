@@ -376,97 +376,6 @@ export function SmartNotificationPreferences() {
 
       {notificationEnabled && (
         <>
-          {/* 通知频率选择 */}
-          <Card className="border-border shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg md:text-xl text-foreground">通知频率</CardTitle>
-              <CardDescription className="text-xs md:text-sm text-muted-foreground">
-                选择你希望接收通知的频率
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup value={frequency} onValueChange={(v) => handleFrequencyChange(v as typeof frequency)}>
-                <div className="space-y-3">
-                  {frequencyOptions.map((option) => {
-                    const Icon = option.icon;
-                    return (
-                      <Label
-                        key={option.value}
-                        htmlFor={`frequency-${option.value}`}
-                        className={`flex items-start space-x-3 p-3 md:p-4 border rounded-lg cursor-pointer transition-colors ${
-                          frequency === option.value
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:bg-accent"
-                        }`}
-                      >
-                        <RadioGroupItem value={option.value} id={`frequency-${option.value}`} />
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Icon className="w-4 h-4" />
-                            <span className="font-medium text-sm md:text-base">{option.label}</span>
-                          </div>
-                          <p className="text-xs md:text-sm text-muted-foreground">{option.description}</p>
-                          <div className="flex flex-wrap gap-1.5 mt-2">
-                            {option.scenarios.map((scenario, idx) => (
-                              <span
-                                key={idx}
-                                className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
-                              >
-                                {scenario}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </Label>
-                    );
-                  })}
-                </div>
-              </RadioGroup>
-            </CardContent>
-          </Card>
-
-          {/* 鼓励风格选择 */}
-          <Card className="border-border shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg md:text-xl text-foreground">鼓励风格</CardTitle>
-              <CardDescription className="text-xs md:text-sm text-muted-foreground">
-                选择你喜欢的陪伴方式
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup value={style} onValueChange={(v) => handleStyleChange(v as typeof style)}>
-                <div className="space-y-3">
-                  {styleOptions.map((option) => {
-                    const Icon = option.icon;
-                    return (
-                      <Label
-                        key={option.value}
-                        htmlFor={`style-${option.value}`}
-                        className={`flex items-start space-x-3 p-3 md:p-4 border rounded-lg cursor-pointer transition-colors ${
-                          style === option.value
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:bg-accent"
-                        }`}
-                      >
-                        <RadioGroupItem value={option.value} id={`style-${option.value}`} />
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Icon className="w-4 h-4" />
-                            <span className="font-medium text-sm md:text-base">{option.label}</span>
-                          </div>
-                          <p className="text-xs md:text-sm text-muted-foreground">{option.description}</p>
-                          <div className="mt-2 p-2 md:p-3 rounded-md bg-muted/50 border border-border">
-                            <p className="text-xs md:text-sm text-foreground italic">"{option.example}"</p>
-                          </div>
-                        </div>
-                      </Label>
-                    );
-                  })}
-                </div>
-              </RadioGroup>
-            </CardContent>
-          </Card>
-
           {/* 微信公众号模板消息 */}
           <Card className="border-border shadow-lg">
             <CardHeader>
@@ -625,6 +534,97 @@ export function SmartNotificationPreferences() {
                   </Dialog>
                 </>
               )}
+            </CardContent>
+          </Card>
+
+          {/* 通知频率选择 */}
+          <Card className="border-border shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-lg md:text-xl text-foreground">通知频率</CardTitle>
+              <CardDescription className="text-xs md:text-sm text-muted-foreground">
+                选择你希望接收通知的频率
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup value={frequency} onValueChange={(v) => handleFrequencyChange(v as typeof frequency)}>
+                <div className="space-y-3">
+                  {frequencyOptions.map((option) => {
+                    const Icon = option.icon;
+                    return (
+                      <Label
+                        key={option.value}
+                        htmlFor={`frequency-${option.value}`}
+                        className={`flex items-start space-x-3 p-3 md:p-4 border rounded-lg cursor-pointer transition-colors ${
+                          frequency === option.value
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:bg-accent"
+                        }`}
+                      >
+                        <RadioGroupItem value={option.value} id={`frequency-${option.value}`} />
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4" />
+                            <span className="font-medium text-sm md:text-base">{option.label}</span>
+                          </div>
+                          <p className="text-xs md:text-sm text-muted-foreground">{option.description}</p>
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {option.scenarios.map((scenario, idx) => (
+                              <span
+                                key={idx}
+                                className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+                              >
+                                {scenario}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </Label>
+                    );
+                  })}
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+
+          {/* 鼓励风格选择 */}
+          <Card className="border-border shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-lg md:text-xl text-foreground">鼓励风格</CardTitle>
+              <CardDescription className="text-xs md:text-sm text-muted-foreground">
+                选择你喜欢的陪伴方式
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup value={style} onValueChange={(v) => handleStyleChange(v as typeof style)}>
+                <div className="space-y-3">
+                  {styleOptions.map((option) => {
+                    const Icon = option.icon;
+                    return (
+                      <Label
+                        key={option.value}
+                        htmlFor={`style-${option.value}`}
+                        className={`flex items-start space-x-3 p-3 md:p-4 border rounded-lg cursor-pointer transition-colors ${
+                          style === option.value
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:bg-accent"
+                        }`}
+                      >
+                        <RadioGroupItem value={option.value} id={`style-${option.value}`} />
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4" />
+                            <span className="font-medium text-sm md:text-base">{option.label}</span>
+                          </div>
+                          <p className="text-xs md:text-sm text-muted-foreground">{option.description}</p>
+                          <div className="mt-2 p-2 md:p-3 rounded-md bg-muted/50 border border-border">
+                            <p className="text-xs md:text-sm text-foreground italic">"{option.example}"</p>
+                          </div>
+                        </div>
+                      </Label>
+                    );
+                  })}
+                </div>
+              </RadioGroup>
             </CardContent>
           </Card>
 
