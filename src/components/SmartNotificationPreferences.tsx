@@ -6,8 +6,16 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Bell, Moon, Leaf, Sun, Sparkles, Heart, Zap, Info, MessageSquare } from "lucide-react";
+import { Loader2, Bell, Moon, Leaf, Sun, Sparkles, Heart, Zap, Info, MessageSquare, QrCode, Copy, Check, Smartphone } from "lucide-react";
+import QRCode from "qrcode";
+
+// 检测是否在微信内置浏览器中
+const isWeChatBrowser = () => {
+  const ua = navigator.userAgent.toLowerCase();
+  return ua.includes('micromessenger');
+};
 
 export function SmartNotificationPreferences() {
   const { toast } = useToast();
@@ -27,6 +35,13 @@ export function SmartNotificationPreferences() {
   const [wechatEnabled, setWechatEnabled] = useState(false);
   const [wechatBound, setWechatBound] = useState(false);
   const [testingWechat, setTestingWechat] = useState(false);
+  
+  // 绑定弹窗状态
+  const [showBindDialog, setShowBindDialog] = useState(false);
+  const [bindQrDataUrl, setBindQrDataUrl] = useState<string>("");
+  const [bindLoading, setBindLoading] = useState(false);
+  const [settingsUrl, setSettingsUrl] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     loadPreferences();
@@ -158,20 +173,76 @@ export function SmartNotificationPreferences() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data, error } = await supabase.functions.invoke("get-wechat-bind-url", {
-      body: { redirectUri: `${window.location.origin}/wechat-oauth-callback` }
-    });
+    setBindLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("get-wechat-bind-url", {
+        body: { redirectUri: `${window.location.origin}/wechat-oauth-callback` }
+      });
 
-    if (error || !data?.url) {
+      if (error || !data?.url) {
+        toast({
+          title: "获取绑定链接失败",
+          description: "请联系管理员检查微信公众号配置",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 检测环境
+      if (isWeChatBrowser()) {
+        // 微信内直接跳转授权
+        window.location.href = data.url;
+      } else {
+        // PC/普通浏览器：显示弹窗
+        const currentSettingsUrl = `${window.location.origin}/settings?tab=notifications`;
+        setSettingsUrl(currentSettingsUrl);
+        
+        // 生成二维码
+        const qrDataUrl = await QRCode.toDataURL(currentSettingsUrl, {
+          width: 200,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#ffffff',
+          },
+        });
+        setBindQrDataUrl(qrDataUrl);
+        setShowBindDialog(true);
+      }
+    } catch (error) {
+      console.error("Error initiating WeChat bind:", error);
       toast({
-        title: "获取绑定链接失败",
-        description: "请联系管理员检查微信公众号配置",
+        title: "操作失败",
+        description: "请稍后再试",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setBindLoading(false);
     }
+  };
 
-    window.location.href = data.url;
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(settingsUrl);
+      setCopied(true);
+      toast({
+        title: "链接已复制",
+        description: "请在微信中打开此链接",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      toast({
+        title: "复制失败",
+        description: "请手动复制链接",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBindComplete = () => {
+    setShowBindDialog(false);
+    loadPreferences(); // 刷新绑定状态
   };
 
   const testWechatConnection = async () => {
@@ -451,7 +522,9 @@ export function SmartNotificationPreferences() {
                     <Button
                       variant="outline"
                       onClick={handleWechatBind}
+                      disabled={bindLoading}
                     >
+                      {bindLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                       {wechatBound ? "重新绑定微信" : "绑定微信账号"}
                     </Button>
                     {wechatBound && (
@@ -465,6 +538,91 @@ export function SmartNotificationPreferences() {
                       </Button>
                     )}
                   </div>
+
+                  {/* 绑定引导弹窗 - PC/非微信浏览器 */}
+                  <Dialog open={showBindDialog} onOpenChange={setShowBindDialog}>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <Smartphone className="w-5 h-5" />
+                          绑定微信公众号
+                        </DialogTitle>
+                        <DialogDescription>
+                          请使用微信扫码或复制链接在微信中打开
+                        </DialogDescription>
+                      </DialogHeader>
+                      
+                      <div className="space-y-6 py-4">
+                        {/* 方式一：扫码 */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <QrCode className="w-4 h-4" />
+                            方式一：微信扫码绑定
+                          </div>
+                          <div className="flex justify-center">
+                            {bindQrDataUrl && (
+                              <img 
+                                src={bindQrDataUrl} 
+                                alt="绑定二维码" 
+                                className="w-48 h-48 border rounded-lg"
+                              />
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground text-center">
+                            用微信扫描二维码，在微信中打开后点击"绑定微信账号"
+                          </p>
+                        </div>
+
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                          </div>
+                          <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">或者</span>
+                          </div>
+                        </div>
+
+                        {/* 方式二：复制链接 */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Copy className="w-4 h-4" />
+                            方式二：复制链接到微信
+                          </div>
+                          <ol className="text-xs text-muted-foreground list-decimal list-inside space-y-1">
+                            <li>复制下方链接</li>
+                            <li>发送到微信聊天（如文件传输助手）</li>
+                            <li>在微信中点击链接打开</li>
+                            <li>点击"绑定微信账号"完成绑定</li>
+                          </ol>
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={handleCopyLink}
+                          >
+                            {copied ? (
+                              <>
+                                <Check className="w-4 h-4 mr-2" />
+                                已复制
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-4 h-4 mr-2" />
+                                复制链接到剪贴板
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <Button 
+                        className="w-full" 
+                        variant="secondary"
+                        onClick={handleBindComplete}
+                      >
+                        我已在微信中完成绑定
+                      </Button>
+                    </DialogContent>
+                  </Dialog>
                 </>
               )}
             </CardContent>

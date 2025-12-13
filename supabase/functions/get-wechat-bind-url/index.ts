@@ -64,8 +64,12 @@ serve(async (req) => {
 
     console.log('Generated WeChat bind URL for user:', user.id);
 
+    // 返回两种 URL：OAuth URL（微信内使用）和设置页面 URL（用于生成二维码）
     return new Response(
-      JSON.stringify({ url: authUrl }),
+      JSON.stringify({ 
+        url: authUrl,           // 公众号 OAuth URL（微信内使用）
+        settingsUrl: redirectUri // 设置页面 URL（用于生成二维码引导）
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
