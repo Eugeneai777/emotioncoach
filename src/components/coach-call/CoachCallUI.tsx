@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { useNetworkQuality, NetworkQuality } from '@/hooks/useNetworkQuality';
+import { NetworkQualityBadge } from './NetworkQualityIndicator';
 
 interface CoachCallUIProps {
   status: 'idle' | 'calling' | 'ringing' | 'connected' | 'ended';
@@ -41,6 +43,15 @@ export function CoachCallUI({
   onToggleSpeaker
 }: CoachCallUIProps) {
   const [pulseAnim, setPulseAnim] = useState(true);
+  const { quality, rtt, startMonitoring, stopMonitoring } = useNetworkQuality();
+
+  // Start monitoring when call is active
+  useEffect(() => {
+    if (status === 'calling' || status === 'connected') {
+      startMonitoring();
+    }
+    return () => stopMonitoring();
+  }, [status, startMonitoring, stopMonitoring]);
 
   useEffect(() => {
     if (status === 'calling' || status === 'ringing') {
@@ -63,9 +74,17 @@ export function CoachCallUI({
 
   return (
     <div className="fixed inset-0 z-50 bg-gradient-to-b from-teal-900 to-slate-900 flex flex-col items-center justify-between p-8">
-      {/* 顶部状态 */}
-      <div className="text-center text-white/80 text-sm">
-        {status === 'connected' ? '通话中' : '语音通话'}
+      {/* 顶部状态和网络指示器 */}
+      <div className="flex items-center justify-between w-full">
+        <div className="w-20" /> {/* Spacer for centering */}
+        <div className="text-center text-white/80 text-sm">
+          {status === 'connected' ? '通话中' : '语音通话'}
+        </div>
+        <div className="w-20 flex justify-end">
+          {(status === 'calling' || status === 'connected') && (
+            <NetworkQualityBadge quality={quality} rtt={rtt} />
+          )}
+        </div>
       </div>
 
       {/* 中间头像和信息 */}
