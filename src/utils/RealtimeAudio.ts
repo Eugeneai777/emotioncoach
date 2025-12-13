@@ -185,8 +185,13 @@ export class RealtimeChat {
   private audioContext: AudioContext | null = null;
   private audioQueue: AudioQueue | null = null;
   private tokenEndpoint: string;
-  private localStream: MediaStream | null = null;  // 保存麦克风流以便清理
-  private isDisconnected: boolean = false;  // 防止断开后继续操作
+  private localStream: MediaStream | null = null;
+  private isDisconnected: boolean = false;
+  
+  // 保存事件处理函数引用以便移除
+  private dcMessageHandler: ((e: MessageEvent) => void) | null = null;
+  private dcOpenHandler: (() => void) | null = null;
+  private dcCloseHandler: (() => void) | null = null;
 
   constructor(
     private onMessage: (message: any) => void,
@@ -255,22 +260,32 @@ export class RealtimeChat {
       // 设置数据通道
       this.dc = this.pc.createDataChannel("oai-events");
       
-      this.dc.addEventListener("open", () => {
-        this.onStatusChange('connected');
-      });
+      // 保存事件处理函数引用
+      this.dcOpenHandler = () => {
+        if (!this.isDisconnected) {
+          this.onStatusChange('connected');
+        }
+      };
 
-      this.dc.addEventListener("close", () => {
-        this.onStatusChange('disconnected');
-      });
+      this.dcCloseHandler = () => {
+        if (!this.isDisconnected) {
+          this.onStatusChange('disconnected');
+        }
+      };
 
-      this.dc.addEventListener("message", (e) => {
+      this.dcMessageHandler = (e: MessageEvent) => {
+        if (this.isDisconnected) return;
         try {
           const event = JSON.parse(e.data);
           this.handleEvent(event);
         } catch (err) {
           console.error('Error parsing event:', err);
         }
-      });
+      };
+
+      this.dc.addEventListener("open", this.dcOpenHandler);
+      this.dc.addEventListener("close", this.dcCloseHandler);
+      this.dc.addEventListener("message", this.dcMessageHandler);
 
       // 创建并设置本地描述
       const offer = await this.pc.createOffer();
@@ -559,8 +574,21 @@ export class RealtimeChat {
       this.audioEl = null;
     }
     
-    // 关闭数据通道
+    // 关闭数据通道并移除事件监听器
     if (this.dc) {
+      // 移除所有事件监听器
+      if (this.dcMessageHandler) {
+        this.dc.removeEventListener("message", this.dcMessageHandler);
+        this.dcMessageHandler = null;
+      }
+      if (this.dcOpenHandler) {
+        this.dc.removeEventListener("open", this.dcOpenHandler);
+        this.dcOpenHandler = null;
+      }
+      if (this.dcCloseHandler) {
+        this.dc.removeEventListener("close", this.dcCloseHandler);
+        this.dcCloseHandler = null;
+      }
       this.dc.close();
       this.dc = null;
     }
