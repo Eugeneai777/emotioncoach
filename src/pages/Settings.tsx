@@ -18,7 +18,8 @@ import CampSettings from "@/components/CampSettings";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { useToast } from "@/hooks/use-toast";
 import { usePartner } from "@/hooks/usePartner";
-import { ArrowLeft } from "lucide-react";
+import { useCoachProfile } from "@/hooks/useCoachDashboard";
+import { ArrowLeft, Users } from "lucide-react";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ export default function Settings() {
   const [userId, setUserId] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const { partner, isPartner, loading: partnerLoading } = usePartner();
+  const { data: coachProfile, isLoading: coachLoading } = useCoachProfile();
   
   const defaultTab = searchParams.get("tab") || "reminders";
 
@@ -227,6 +229,31 @@ export default function Settings() {
                     <p className="text-xs md:text-sm text-muted-foreground">
                       管理员专属功能
                     </p>
+                  </div>
+                )}
+
+                {coachProfile && !coachLoading && (
+                  <div className="space-y-2">
+                    <div className="p-4 bg-teal-500/5 border border-teal-500/20 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                          <Users className="w-4 h-4 text-teal-600" />
+                          认证教练身份
+                        </span>
+                        <span className="px-2 py-1 bg-teal-500/10 text-teal-600 text-xs rounded-full">
+                          ✨ 已认证
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        {coachProfile.name} · {coachProfile.title}
+                      </p>
+                      <Button
+                        onClick={() => navigate("/coach-dashboard")}
+                        className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+                      >
+                        进入教练后台
+                      </Button>
+                    </div>
                   </div>
                 )}
 
