@@ -3010,11 +3010,13 @@ export type Database = {
           id: string
           messages: Json | null
           micro_action: string | null
+          problem_type: string | null
           see_it: Json | null
           sense_it: Json | null
           stage_selections: Json | null
           status: string | null
           summary: string | null
+          teen_context: Json | null
           transform_it: Json | null
           updated_at: string | null
           user_id: string | null
@@ -3032,11 +3034,13 @@ export type Database = {
           id?: string
           messages?: Json | null
           micro_action?: string | null
+          problem_type?: string | null
           see_it?: Json | null
           sense_it?: Json | null
           stage_selections?: Json | null
           status?: string | null
           summary?: string | null
+          teen_context?: Json | null
           transform_it?: Json | null
           updated_at?: string | null
           user_id?: string | null
@@ -3054,11 +3058,13 @@ export type Database = {
           id?: string
           messages?: Json | null
           micro_action?: string | null
+          problem_type?: string | null
           see_it?: Json | null
           sense_it?: Json | null
           stage_selections?: Json | null
           status?: string | null
           summary?: string | null
+          teen_context?: Json | null
           transform_it?: Json | null
           updated_at?: string | null
           user_id?: string | null
@@ -3086,6 +3092,107 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      parent_problem_profile: {
+        Row: {
+          created_at: string | null
+          id: string
+          intake_answers: Json | null
+          intake_completed_at: string | null
+          primary_problem_type: string
+          secondary_problem_types: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          intake_answers?: Json | null
+          intake_completed_at?: string | null
+          primary_problem_type: string
+          secondary_problem_types?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          intake_answers?: Json | null
+          intake_completed_at?: string | null
+          primary_problem_type?: string
+          secondary_problem_types?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_problem_profile_primary_problem_type_fkey"
+            columns: ["primary_problem_type"]
+            isOneToOne: false
+            referencedRelation: "parent_problem_types"
+            referencedColumns: ["type_key"]
+          },
+        ]
+      }
+      parent_problem_types: {
+        Row: {
+          coaching_direction: Json | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          intake_questions: Json | null
+          is_active: boolean | null
+          parent_common_emotions: Json | null
+          parent_pain_points: Json | null
+          stage_prompts: Json | null
+          system_prompt_modifier: string | null
+          teen_context_focus: Json | null
+          type_color: string | null
+          type_icon: string | null
+          type_key: string
+          type_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          coaching_direction?: Json | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          intake_questions?: Json | null
+          is_active?: boolean | null
+          parent_common_emotions?: Json | null
+          parent_pain_points?: Json | null
+          stage_prompts?: Json | null
+          system_prompt_modifier?: string | null
+          teen_context_focus?: Json | null
+          type_color?: string | null
+          type_icon?: string | null
+          type_key: string
+          type_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          coaching_direction?: Json | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          intake_questions?: Json | null
+          is_active?: boolean | null
+          parent_common_emotions?: Json | null
+          parent_pain_points?: Json | null
+          stage_prompts?: Json | null
+          system_prompt_modifier?: string | null
+          teen_context_focus?: Json | null
+          type_color?: string | null
+          type_icon?: string | null
+          type_key?: string
+          type_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       parent_session_tags: {
         Row: {
@@ -3144,6 +3251,48 @@ export type Database = {
           id?: string
           name?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      parent_teen_bindings: {
+        Row: {
+          binding_code: string
+          bound_at: string | null
+          code_expires_at: string
+          created_at: string | null
+          id: string
+          parent_user_id: string
+          status: string | null
+          teen_nickname: string | null
+          teen_user_id: string | null
+          unbound_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          binding_code: string
+          bound_at?: string | null
+          code_expires_at: string
+          created_at?: string | null
+          id?: string
+          parent_user_id: string
+          status?: string | null
+          teen_nickname?: string | null
+          teen_user_id?: string | null
+          unbound_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          binding_code?: string
+          bound_at?: string | null
+          code_expires_at?: string
+          created_at?: string | null
+          id?: string
+          parent_user_id?: string
+          status?: string | null
+          teen_nickname?: string | null
+          teen_user_id?: string | null
+          unbound_at?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -4281,6 +4430,108 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      teen_coaching_contexts: {
+        Row: {
+          additional_context: Json | null
+          binding_id: string
+          communication_opportunity: string | null
+          created_at: string | null
+          id: string
+          inferred_situation: string | null
+          inferred_teen_feeling: string | null
+          is_used: boolean | null
+          parent_session_id: string | null
+          parent_willing_change: string | null
+          problem_type: string | null
+          used_at: string | null
+        }
+        Insert: {
+          additional_context?: Json | null
+          binding_id: string
+          communication_opportunity?: string | null
+          created_at?: string | null
+          id?: string
+          inferred_situation?: string | null
+          inferred_teen_feeling?: string | null
+          is_used?: boolean | null
+          parent_session_id?: string | null
+          parent_willing_change?: string | null
+          problem_type?: string | null
+          used_at?: string | null
+        }
+        Update: {
+          additional_context?: Json | null
+          binding_id?: string
+          communication_opportunity?: string | null
+          created_at?: string | null
+          id?: string
+          inferred_situation?: string | null
+          inferred_teen_feeling?: string | null
+          is_used?: boolean | null
+          parent_session_id?: string | null
+          parent_willing_change?: string | null
+          problem_type?: string | null
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teen_coaching_contexts_binding_id_fkey"
+            columns: ["binding_id"]
+            isOneToOne: false
+            referencedRelation: "parent_teen_bindings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teen_coaching_contexts_parent_session_id_fkey"
+            columns: ["parent_session_id"]
+            isOneToOne: false
+            referencedRelation: "parent_coaching_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teen_coaching_contexts_problem_type_fkey"
+            columns: ["problem_type"]
+            isOneToOne: false
+            referencedRelation: "parent_problem_types"
+            referencedColumns: ["type_key"]
+          },
+        ]
+      }
+      teen_usage_logs: {
+        Row: {
+          binding_id: string | null
+          created_at: string | null
+          id: string
+          mood_indicator: string | null
+          session_duration_seconds: number | null
+          teen_user_id: string
+        }
+        Insert: {
+          binding_id?: string | null
+          created_at?: string | null
+          id?: string
+          mood_indicator?: string | null
+          session_duration_seconds?: number | null
+          teen_user_id: string
+        }
+        Update: {
+          binding_id?: string | null
+          created_at?: string | null
+          id?: string
+          mood_indicator?: string | null
+          session_duration_seconds?: number | null
+          teen_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teen_usage_logs_binding_id_fkey"
+            columns: ["binding_id"]
+            isOneToOne: false
+            referencedRelation: "parent_teen_bindings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       training_camps: {
         Row: {
