@@ -31,10 +31,10 @@ export const VoiceCallCTA = ({ onVoiceChatClick }: VoiceCallCTAProps) => {
 
   return (
     <div className={`flex flex-col items-center justify-center animate-in fade-in-50 duration-500 ${
-      hasUsedVoiceChat ? 'py-8 pb-8' : 'py-8'
+      hasUsedVoiceChat ? 'py-6 pb-4' : 'py-6'
     }`}>
       {/* 欢迎语 */}
-      <div className="text-center mb-12 animate-in fade-in-50 duration-700">
+      <div className="text-center mb-8 animate-in fade-in-50 duration-700">
         {isLoading ? (
           <Skeleton className="h-7 w-48 mx-auto" />
         ) : (
@@ -64,28 +64,31 @@ export const VoiceCallCTA = ({ onVoiceChatClick }: VoiceCallCTAProps) => {
           </>
         )}
         
-        {/* 主按钮 - 扩大到 w-56 h-56 */}
+        {/* 主按钮 - 添加按下反馈动画 */}
         <div className="relative w-56 h-56 bg-gradient-to-br from-rose-500 via-rose-400 to-pink-500 
                         rounded-full flex flex-col items-center justify-center 
                         shadow-2xl shadow-rose-500/40 
                         hover:scale-105 hover:shadow-rose-500/50 
-                        active:scale-95
-                        transition-all duration-300">
+                        active:scale-95 active:shadow-lg active:shadow-rose-500/60
+                        transition-all duration-200 ease-out
+                        group-active:from-rose-600 group-active:via-rose-500 group-active:to-pink-600">
           
-          {/* 电话图标 - 增加底部间距 */}
-          <div className="mb-5 p-4 bg-white/20 rounded-full backdrop-blur-sm">
-            <Phone className="w-10 h-10 text-white" />
+          {/* 电话图标 - 添加按下时的微动效果 */}
+          <div className="mb-5 p-4 bg-white/20 rounded-full backdrop-blur-sm
+                          group-hover:bg-white/25 group-active:bg-white/30
+                          group-active:scale-95 transition-all duration-200">
+            <Phone className="w-10 h-10 text-white group-active:scale-110 transition-transform duration-200" />
           </div>
           
-          {/* 品牌文字 - 增加行间距 */}
+          {/* 品牌文字 */}
           <span className="text-white font-bold text-2xl tracking-wide">有劲AI</span>
           <span className="text-white/90 text-base mt-2">每个人的生活教练</span>
         </div>
       </button>
       
-      {/* 操作提示 - 仅首次显示 */}
+      {/* 操作提示 - 仅首次显示，调整间距 */}
       {!hasUsedVoiceChat && (
-        <p className="mt-6 text-sm text-muted-foreground flex items-center gap-2">
+        <p className="mt-8 text-sm text-muted-foreground flex items-center gap-2">
           <span className="w-2 h-2 bg-rose-400 rounded-full animate-pulse" />
           点击开始对话
         </p>
