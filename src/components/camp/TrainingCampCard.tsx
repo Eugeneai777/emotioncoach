@@ -122,7 +122,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
           className="text-teal-600 border-teal-200 hover:bg-teal-50 hover:border-teal-400 dark:text-teal-400 dark:border-teal-700 dark:hover:bg-teal-900/30"
         >
           <TrendingUp className="h-4 w-4 mr-1" />
-          课程介绍
+          介绍
         </Button>
       </div>
     </Card>
