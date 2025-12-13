@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HumanCoachCard } from "@/components/human-coach/HumanCoachCard";
+import { CoachRecommendations } from "@/components/human-coach/CoachRecommendations";
 import { useActiveHumanCoaches } from "@/hooks/useHumanCoaches";
 import { useCoachProfile } from "@/hooks/useCoachDashboard";
 
@@ -115,6 +116,13 @@ export default function HumanCoaches() {
           ))}
         </div>
       </div>
+      
+      {/* 智能推荐 */}
+      {!searchQuery && selectedSpecialty === "全部" && (
+        <div className="container max-w-4xl mx-auto px-4 pb-4">
+          <CoachRecommendations limit={3} showTitle={true} />
+        </div>
+      )}
       
       {/* 教练列表 */}
       <div className="container max-w-4xl mx-auto px-4 pb-8">
