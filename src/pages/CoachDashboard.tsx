@@ -25,11 +25,13 @@ import { CoachIncomeManagement } from "@/components/coach-dashboard/CoachIncomeM
 import { CoachReviewManagement } from "@/components/coach-dashboard/CoachReviewManagement";
 import { CoachProfileSettings } from "@/components/coach-dashboard/CoachProfileSettings";
 import { CoachNotificationCenter } from "@/components/coach-dashboard/CoachNotificationCenter";
+import { CoachAppointmentCalendar } from "@/components/coach-dashboard/CoachAppointmentCalendar";
 import { useCoachNotifications } from "@/hooks/useCoachNotifications";
 
 const menuItems = [
   { id: 'overview', label: '数据概览', icon: LayoutDashboard },
   { id: 'notifications', label: '消息中心', icon: Bell },
+  { id: 'calendar', label: '预约日历', icon: Calendar },
   { id: 'time', label: '时间管理', icon: Calendar },
   { id: 'appointments', label: '预约管理', icon: ClipboardList },
   { id: 'income', label: '收入管理', icon: Wallet },
@@ -77,6 +79,8 @@ export default function CoachDashboard() {
         return <CoachDashboardOverview coachId={coachProfile.id} />;
       case 'notifications':
         return <CoachNotificationCenter coachId={coachProfile.id} onNavigate={setActiveTab} />;
+      case 'calendar':
+        return <CoachAppointmentCalendar coachId={coachProfile.id} />;
       case 'time':
         return <CoachTimeManagement coachId={coachProfile.id} />;
       case 'appointments':
