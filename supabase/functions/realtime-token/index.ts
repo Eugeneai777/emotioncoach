@@ -47,10 +47,15 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    console.log('Creating OpenAI Realtime session...');
+    // 使用 Cloudflare 代理（如果配置了）
+    const OPENAI_PROXY_URL = Deno.env.get('OPENAI_PROXY_URL');
+    const baseUrl = OPENAI_PROXY_URL || 'https://api.openai.com';
+    const realtimeUrl = `${baseUrl}/v1/realtime/sessions`;
+
+    console.log('Creating OpenAI Realtime session via:', OPENAI_PROXY_URL ? 'proxy' : 'direct');
 
     // Request an ephemeral token from OpenAI
-    const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
+    const response = await fetch(realtimeUrl, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${OPENAI_API_KEY}`,
