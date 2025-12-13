@@ -14,9 +14,9 @@ import { PackagesManagement } from "./PackagesManagement";
 import { CoachTemplatesManagement } from "./CoachTemplatesManagement";
 import KnowledgeBaseManagement from "./KnowledgeBaseManagement";
 import CustomerServiceManagement from "./CustomerServiceManagement";
-
 import CostMonitorDashboard from "./CostMonitorDashboard";
 import { PartnerLevelManagement } from "./PartnerLevelManagement";
+import { HumanCoachesManagement } from "./human-coaches/HumanCoachesManagement";
 
 export function AdminLayout() {
   return (
@@ -34,6 +34,7 @@ export function AdminLayout() {
               <Route path="orders" element={<OrdersTable />} />
               <Route path="partners" element={<PartnerManagement />} />
               <Route path="coaches" element={<CoachTemplatesManagement />} />
+              <Route path="human-coaches" element={<HumanCoachesManagement />} />
               <Route path="videos" element={<VideoCoursesManagement />} />
               <Route path="knowledge" element={<KnowledgeBaseManagement />} />
               <Route path="tools" element={<EnergyStudioToolsManagement />} />

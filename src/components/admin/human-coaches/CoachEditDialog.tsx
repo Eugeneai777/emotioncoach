@@ -55,7 +55,7 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
         bio: coach.bio || "",
         experience_years: coach.experience_years || 0,
         specialties: coach.specialties || [],
-        phone: coach.phone || ""
+        phone: (coach as any).phone || ""
       });
     }
   }, [coach]);

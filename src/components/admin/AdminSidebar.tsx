@@ -17,7 +17,8 @@ import {
   RefreshCw,
   Headphones,
   ChevronDown,
-  Home
+  Home,
+  UserCheck
 } from "lucide-react";
 import {
   Sidebar,
@@ -61,6 +62,7 @@ const NAV_GROUPS = [
     defaultOpen: false,
     items: [
       { key: "coaches", label: "教练模板", path: "/admin/coaches", icon: GraduationCap },
+      { key: "human-coaches", label: "真人教练", path: "/admin/human-coaches", icon: UserCheck },
       { key: "videos", label: "视频课程", path: "/admin/videos", icon: Video },
       { key: "knowledge", label: "知识库", path: "/admin/knowledge", icon: BookOpen },
       { key: "tools", label: "生活馆工具", path: "/admin/tools", icon: Wrench }

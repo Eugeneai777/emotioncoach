@@ -122,7 +122,7 @@ export function CoachApplicationDetail({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm">{coach.phone || "未填写"}</p>
+                <p className="text-sm">{(coach as any).phone || "未填写"}</p>
               </CardContent>
             </Card>
 
@@ -167,10 +167,10 @@ export function CoachApplicationDetail({
                   <span className="text-muted-foreground">申请时间</span>
                   <span>{format(new Date(coach.created_at), "yyyy年MM月dd日 HH:mm", { locale: zhCN })}</span>
                 </div>
-                {coach.admin_note && (
+                {(coach as any).admin_note && (
                   <div>
                     <Label className="text-xs text-muted-foreground">审核备注</Label>
-                    <p className="text-sm mt-1 p-2 bg-muted rounded">{coach.admin_note}</p>
+                    <p className="text-sm mt-1 p-2 bg-muted rounded">{(coach as any).admin_note}</p>
                   </div>
                 )}
               </CardContent>
