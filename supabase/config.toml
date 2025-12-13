@@ -239,3 +239,9 @@ verify_jwt = false
 
 [functions.gratitude-coach]
 verify_jwt = true
+
+[functions.create-appointment-order]
+verify_jwt = true
+
+[functions.cancel-appointment]
+verify_jwt = true

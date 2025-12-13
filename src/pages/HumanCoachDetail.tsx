@@ -10,17 +10,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CoachBadge } from "@/components/human-coach/CoachBadge";
 import { CoachRatingDisplay, MultiDimensionRating } from "@/components/human-coach/CoachRatingDisplay";
 import { ReviewCard } from "@/components/human-coach/ReviewCard";
+import { BookingDialog } from "@/components/human-coach/booking/BookingDialog";
 import { 
   useHumanCoach, 
   useCoachServices, 
   useCoachCertifications,
-  useCoachReviews 
+  useCoachReviews,
+  CoachService
 } from "@/hooks/useHumanCoaches";
 
 export default function HumanCoachDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("intro");
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<CoachService | undefined>();
   
   const { data: coach, isLoading: loadingCoach } = useHumanCoach(id);
   const { data: services = [] } = useCoachServices(id);
@@ -290,11 +294,26 @@ export default function HumanCoachDetail() {
             size="lg"
             className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 px-8"
             disabled={services.length === 0}
+            onClick={() => {
+              setSelectedService(undefined);
+              setBookingOpen(true);
+            }}
           >
             立即预约
           </Button>
         </div>
       </div>
+
+      {/* Booking Dialog */}
+      {coach && (
+        <BookingDialog
+          open={bookingOpen}
+          onOpenChange={setBookingOpen}
+          coach={coach}
+          services={services}
+          initialService={selectedService}
+        />
+      )}
     </div>
   );
 }
