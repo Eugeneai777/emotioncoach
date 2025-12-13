@@ -187,7 +187,11 @@ const FloatingVoiceButton: React.FC = () => {
         .single();
 
       if (!account || account.remaining_quota < POINTS_PER_MINUTE) {
-        // 余额不足，直接弹出365续费
+        // 余额不足，先提示再弹出支付
+        toast({
+          title: "点数不足",
+          description: `语音通话需要 ${POINTS_PER_MINUTE} 点/分钟，当前余额 ${account?.remaining_quota || 0} 点`,
+        });
         setShowPayDialog(true);
         setIsCheckingQuota(false);
         return;
