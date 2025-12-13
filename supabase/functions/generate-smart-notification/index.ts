@@ -78,7 +78,7 @@ serve(async (req) => {
     type EncouragementStyle = 'gentle' | 'cheerful' | 'motivational';
     type CompanionType = 'jing_teacher' | 'friend' | 'coach';
     type NotificationFrequency = 'minimal' | 'balanced' | 'frequent';
-    type Scenario = 'after_briefing' | 'after_story' | 'after_gratitude_analysis' | 'after_communication' | 'after_parent' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement' | 'checkin_success' | 'checkin_streak_milestone' | 'checkin_reminder' | 'checkin_streak_break_warning' | 'camp_day_complete' | 'weekly_summary';
+    type Scenario = 'after_briefing' | 'after_story' | 'after_gratitude_analysis' | 'after_communication' | 'after_parent' | 'after_vibrant_life' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement' | 'checkin_success' | 'checkin_streak_milestone' | 'checkin_reminder' | 'checkin_streak_break_warning' | 'camp_day_complete' | 'weekly_summary';
 
     const encouragementStyle = (context?.style || profile?.preferred_encouragement_style || 'gentle') as EncouragementStyle;
     const companionType = (profile?.companion_type || 'jing_teacher') as CompanionType;
@@ -122,6 +122,7 @@ serve(async (req) => {
       after_gratitude_analysis: `用户完成了感恩日记的AI分析，发现了${context?.dimensions_count || 7}个幸福维度的分布。${context?.highlight_dimension ? `其中"${context.highlight_dimension}"是主要亮点。` : ''}请肯定他们坚持记录感恩的习惯，鼓励他们继续发现生活中的微光。`,
       after_communication: `用户刚完成了一次沟通技能对话，主题是"${context?.communication_theme}"${context?.communication_difficulty ? `，难度${context.communication_difficulty}/10` : ''}。请肯定他们愿意学习和练习沟通技巧的勇气，给予实用的鼓励。`,
       after_parent: `用户刚完成了一次亲子关系对话，主题是"${context?.parent_theme}"${context?.emotion_intensity ? `，情绪强度${context.emotion_intensity}/10` : ''}。请温暖地肯定他们作为家长愿意学习和成长的努力，给予支持性的鼓励。`,
+      after_vibrant_life: `用户刚刚与有劲AI进行了一次对话${context?.user_issue_summary ? `，探讨了"${context.user_issue_summary}"` : ''}。请肯定他们主动寻求帮助的态度，温暖地鼓励他们继续探索和成长。`,
       goal_milestone: `用户在目标"${context?.goal_description || '情绪记录目标'}"上取得了${context?.progress_percentage}%的里程碑进展${context?.is_final ? '，目标已完成！' : ''}。当前进度：${context?.actual_count || 0}/${context?.target_count || 0}。${context?.is_final ? '请热烈庆祝这个成就！' : '请为他们庆祝这个阶段性成功，鼓励继续加油。'}`,
       emotion_improvement: `用户的情绪趋势正在改善！最近的平均强度从${context?.baseline_intensity}降低到${context?.current_intensity}。请给予积极的反馈。`,
       consistent_checkin: `用户已经连续${context?.streak_days}天坚持记录情绪。这是很了不起的坚持！请给予认可和鼓励。`,
@@ -257,6 +258,7 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       after_gratitude_analysis: { type: 'insight', priority: 2 },
       after_communication: { type: 'encouragement', priority: 2 },
       after_parent: { type: 'encouragement', priority: 2 },
+      after_vibrant_life: { type: 'encouragement', priority: 2 },
       goal_milestone: { type: 'celebration', priority: 4 },
       emotion_improvement: { type: 'insight', priority: 3 },
       consistent_checkin: { type: 'encouragement', priority: 3 },

@@ -46,6 +46,10 @@ const DynamicCoach = () => {
         return 'after_parent';
       case 'gratitude_coach':
         return 'after_gratitude_analysis';
+      case 'vibrant_life_sage':
+        return 'after_vibrant_life';
+      case 'story':
+        return 'after_story';
       default:
         return 'after_briefing';
     }

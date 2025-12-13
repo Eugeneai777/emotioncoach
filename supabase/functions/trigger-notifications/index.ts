@@ -266,6 +266,66 @@ serve(async (req) => {
         };
         break;
 
+      case 'after_story':
+        // 故事教练简报后
+        shouldTrigger = true;
+        scenario = 'after_story';
+        notificationContext = {
+          title: context?.title || '',
+          emotionTag: context?.emotionTag || ''
+        };
+        break;
+
+      case 'after_communication':
+        // 沟通教练简报后
+        shouldTrigger = true;
+        scenario = 'after_communication';
+        notificationContext = {
+          communication_theme: context?.communication_theme || '',
+          communication_difficulty: context?.communication_difficulty || 0
+        };
+        break;
+
+      case 'after_parent':
+        // 亲子教练简报后
+        shouldTrigger = true;
+        scenario = 'after_parent';
+        notificationContext = {
+          parent_theme: context?.parent_theme || '',
+          emotion_intensity: context?.emotion_intensity || 0
+        };
+        break;
+
+      case 'after_vibrant_life':
+        // 有劲生活教练对话后
+        shouldTrigger = true;
+        scenario = 'after_vibrant_life';
+        notificationContext = {
+          user_issue_summary: context?.user_issue_summary || ''
+        };
+        break;
+
+      case 'camp_day_complete':
+        // 训练营单日完成
+        shouldTrigger = true;
+        scenario = 'camp_day_complete';
+        notificationContext = {
+          camp_day: context?.camp_day || 0,
+          camp_name: context?.camp_name || ''
+        };
+        break;
+
+      case 'weekly_summary':
+        // 周度总结
+        shouldTrigger = true;
+        scenario = 'weekly_summary';
+        notificationContext = {
+          briefings_count: context?.briefings_count || 0,
+          checkins_count: context?.checkins_count || 0,
+          stories_count: context?.stories_count || 0
+        };
+        break;
+
       default:
         return new Response(JSON.stringify({ 
           error: "未知的触发类型" 
