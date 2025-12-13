@@ -87,12 +87,6 @@ verify_jwt = true
 [functions.trigger-notifications]
 verify_jwt = true
 
-[functions.send-wecom-notification]
-verify_jwt = false
-
-[functions.wecom-callback]
-verify_jwt = false
-
 [functions.get-wechat-access-token]
 verify_jwt = true
 
@@ -119,9 +113,6 @@ verify_jwt = true
 
 [functions.chat]
 verify_jwt = true
-
-[functions.get-wecom-access-token]
-verify_jwt = false
 
 [functions.admin-recharge]
 verify_jwt = true
