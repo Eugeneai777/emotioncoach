@@ -73,7 +73,7 @@ export const VoiceCallCTA = ({ onVoiceChatClick }: VoiceCallCTAProps) => {
       </button>
       
       {/* 操作提示 - 移到按钮外部下方 */}
-      <p className="mt-6 text-sm text-muted-foreground flex items-center gap-2">
+      <p className="mt-10 text-sm text-muted-foreground flex items-center gap-2">
         <span className="w-2 h-2 bg-rose-400 rounded-full animate-pulse" />
         点击开始对话
       </p>
