@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Phone } from 'lucide-react';
+import { usePersonalizedGreeting } from '@/hooks/usePersonalizedGreeting';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface VoiceCallCTAProps {
   onVoiceChatClick: () => void;
@@ -7,6 +9,7 @@ interface VoiceCallCTAProps {
 
 export const VoiceCallCTA = ({ onVoiceChatClick }: VoiceCallCTAProps) => {
   const [isRippling, setIsRippling] = useState(false);
+  const { greeting, isLoading } = usePersonalizedGreeting();
 
   const handleClick = () => {
     // 触发涟漪动画
@@ -21,7 +24,11 @@ export const VoiceCallCTA = ({ onVoiceChatClick }: VoiceCallCTAProps) => {
     <div className="flex flex-col items-center justify-center py-8 animate-in fade-in-50 duration-500">
       {/* 欢迎语 */}
       <div className="text-center mb-10 animate-in fade-in-50 duration-700">
-        <p className="text-lg text-foreground/80">嗨，今天感觉怎么样？</p>
+        {isLoading ? (
+          <Skeleton className="h-7 w-48 mx-auto" />
+        ) : (
+          <p className="text-lg text-foreground/80">{greeting}</p>
+        )}
       </div>
 
       {/* 大圆形品牌按钮 */}
