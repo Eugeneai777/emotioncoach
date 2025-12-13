@@ -1,5 +1,5 @@
 import { 
-  User, Wallet, Clock, Bell, Tent, ShoppingBag, LogOut, UserCircle, Handshake, Settings, Headphones, type LucideIcon 
+  User, Wallet, Clock, Bell, Tent, ShoppingBag, LogOut, Handshake, Settings, Headphones, type LucideIcon 
 } from "lucide-react";
 
 export interface MenuItemConfig {
@@ -20,7 +20,6 @@ export const hamburgerMenuItems: MenuItemConfig[] = [
   { id: 'reminders', label: '提醒设置', icon: Clock, path: '/settings?tab=reminders', group: 'settings' },
   { id: 'notifications', label: '通知偏好', icon: Bell, path: '/settings?tab=notifications', group: 'settings' },
   { id: 'camp', label: '训练营', icon: Tent, path: '/settings?tab=camp', group: 'settings' },
-  { id: 'companion', label: '情绪伙伴', icon: UserCircle, path: '/settings?tab=companion', group: 'settings' },
   
   // 产品服务分组
   { id: 'packages', label: '全部产品', icon: ShoppingBag, path: '/packages', group: 'products', groupLabel: '产品服务' },
