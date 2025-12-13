@@ -14,17 +14,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { ArrowLeft, Calendar, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppointmentCard } from "@/components/human-coach/AppointmentCard";
 import { ReviewDialog } from "@/components/human-coach/ReviewDialog";
+import { useCoachCallContext } from "@/components/coach-call/CoachCallProvider";
 import { toast } from "sonner";
 
 export default function MyAppointments() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { startCall, isInCall } = useCoachCallContext();
   const [activeTab, setActiveTab] = useState("upcoming");
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [appointmentToCancel, setAppointmentToCancel] = useState<string | null>(null);
@@ -98,6 +100,25 @@ export default function MyAppointments() {
 
   const handleReviewSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['my-appointments'] });
+  };
+
+  const handleCall = async (coachUserId: string, coachName: string, appointmentId: string) => {
+    try {
+      // 需要通过coach_id获取user_id
+      const { data: coachData } = await supabase
+        .from('human_coaches')
+        .select('user_id')
+        .eq('id', coachUserId)
+        .single();
+      
+      if (coachData?.user_id) {
+        await startCall(coachData.user_id, coachName, appointmentId);
+      } else {
+        toast.error('无法获取教练信息');
+      }
+    } catch (error: any) {
+      toast.error(error.message || '发起通话失败');
+    }
   };
 
   const filterAppointments = (status: string) => {
@@ -174,6 +195,7 @@ export default function MyAppointments() {
                       onCancel={handleCancel}
                       onJoinMeeting={handleJoinMeeting}
                       onReview={handleReview}
+                      onCall={handleCall}
                     />
                   ))}
                 </div>

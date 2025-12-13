@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, Users, Award, CheckCircle, MapPin, GraduationCap, Play, Settings } from "lucide-react";
+import { ArrowLeft, Clock, Users, Award, CheckCircle, MapPin, GraduationCap, Play, Settings, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,8 @@ import { CoachRatingDisplay, MultiDimensionRating } from "@/components/human-coa
 import { ReviewCard } from "@/components/human-coach/ReviewCard";
 import { BookingDialog } from "@/components/human-coach/booking/BookingDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useCoachCallContext } from "@/components/coach-call/CoachCallProvider";
+import { toast } from "sonner";
 import { 
   useHumanCoach, 
   useCoachServices, 
@@ -27,6 +29,7 @@ export default function HumanCoachDetail() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<CoachService | undefined>();
   const [isCurrentUserCoach, setIsCurrentUserCoach] = useState(false);
+  const { startCall, isInCall } = useCoachCallContext();
   
   const { data: coach, isLoading: loadingCoach } = useHumanCoach(id);
   const { data: services = [] } = useCoachServices(id);
@@ -318,17 +321,40 @@ export default function HumanCoachDetail() {
               </>
             )}
           </div>
-          <Button 
-            size="lg"
-            className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 px-8"
-            disabled={services.length === 0}
-            onClick={() => {
-              setSelectedService(undefined);
-              setBookingOpen(true);
-            }}
-          >
-            立即预约
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* 语音通话按钮 */}
+            {coach?.user_id && !isCurrentUserCoach && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-teal-200 text-teal-600 hover:bg-teal-50"
+                disabled={isInCall}
+                onClick={async () => {
+                  if (coach?.user_id) {
+                    try {
+                      await startCall(coach.user_id, coach.name);
+                    } catch (error: any) {
+                      toast.error(error.message || '发起通话失败');
+                    }
+                  }
+                }}
+              >
+                <Phone className="w-4 h-4 mr-1" />
+                通话
+              </Button>
+            )}
+            <Button 
+              size="lg"
+              className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 px-8"
+              disabled={services.length === 0}
+              onClick={() => {
+                setSelectedService(undefined);
+                setBookingOpen(true);
+              }}
+            >
+              立即预约
+            </Button>
+          </div>
         </div>
       </div>
 
