@@ -205,81 +205,66 @@ export class RealtimeChat {
       this.isDisconnected = false;
       this.onStatusChange('connecting');
       
+      const startTime = performance.now();
+      console.log('[WebRTC] Starting connection...');
+      
       // 创建音频元素
       this.audioEl = document.createElement("audio");
       this.audioEl.autoplay = true;
-      
-      // 获取临时令牌（使用可配置的 endpoint）
-      const { data: tokenData, error: tokenError } = await supabase.functions.invoke(this.tokenEndpoint);
+
+      // 🚀 优化：并行执行 token 获取和麦克风权限请求
+      const [tokenResult, micResult] = await Promise.all([
+        // 获取临时令牌
+        supabase.functions.invoke(this.tokenEndpoint).then(result => {
+          console.log('[WebRTC] Token fetched:', performance.now() - startTime, 'ms');
+          return result;
+        }),
+        // 同时请求麦克风权限
+        this.requestMicrophoneAccess().then(stream => {
+          console.log('[WebRTC] Microphone ready:', performance.now() - startTime, 'ms');
+          return stream;
+        })
+      ]);
+
+      const { data: tokenData, error: tokenError } = tokenResult;
       
       if (tokenError || !tokenData?.client_secret?.value) {
         throw new Error("Failed to get ephemeral token");
       }
 
       const EPHEMERAL_KEY = tokenData.client_secret.value;
-      // 从 edge function 获取代理 URL
       const realtimeApiUrl = tokenData.realtime_url || 'https://api.openai.com/v1/realtime';
 
-      // 创建 WebRTC 连接
-      this.pc = new RTCPeerConnection();
+      // 保存麦克风流
+      this.localStream = micResult;
 
-      // 设置远程音频 - 只使用 WebRTC 自动播放
+      // 创建 WebRTC 连接 - 使用优化的 ICE 配置
+      this.pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ],
+        iceCandidatePoolSize: 10, // 预分配 ICE 候选池
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require'
+      });
+
+      // 设置远程音频
       this.pc.ontrack = e => {
         if (this.audioEl && !this.isDisconnected) {
           this.audioEl.srcObject = e.streams[0];
         }
       };
 
-      // 添加本地音频轨道 - 请求麦克风权限
-      let ms: MediaStream;
-      try {
-        // 直接请求麦克风权限，不使用 permissions.query（移动端兼容性问题）
-        ms = await navigator.mediaDevices.getUserMedia({ 
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          } 
-        });
-      } catch (micError: any) {
-        console.error('Microphone access error:', micError);
-        
-        // 根据不同错误类型给出更友好的提示
-        if (micError.name === 'NotAllowedError' || micError.name === 'PermissionDeniedError') {
-          // iOS Safari / Android Chrome 权限被拒绝
-          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-          const tip = isIOS 
-            ? '请前往"设置 > Safari > 麦克风"允许访问，然后刷新页面重试。'
-            : '请在浏览器地址栏左侧点击锁定图标，允许麦克风权限，然后刷新页面。';
-          throw new Error(`麦克风权限被拒绝。${tip}`);
-        } else if (micError.name === 'NotFoundError' || micError.name === 'DevicesNotFoundError') {
-          throw new Error('未检测到麦克风设备。请确保设备已连接并正常工作。');
-        } else if (micError.name === 'NotReadableError' || micError.name === 'TrackStartError') {
-          throw new Error('麦克风被其他应用占用，请关闭其他正在使用麦克风的应用后重试。');
-        } else if (micError.name === 'OverconstrainedError') {
-          // 约束条件不满足，尝试用基本设置重试
-          try {
-            ms = await navigator.mediaDevices.getUserMedia({ audio: true });
-          } catch {
-            throw new Error('麦克风不支持所需的音频格式，请尝试使用其他设备。');
-          }
-        } else if (micError.name === 'SecurityError') {
-          throw new Error('安全限制：请确保使用 HTTPS 访问，或在本地开发环境中使用。');
-        } else {
-          throw new Error(`麦克风访问失败: ${micError.message || micError.name || '未知错误'}`);
-        }
-      }
-      
-      // 保存麦克风流以便后续清理
-      this.localStream = ms;
-      this.pc.addTrack(ms.getTracks()[0]);
+      // 添加本地音频轨道
+      this.pc.addTrack(this.localStream.getTracks()[0]);
 
       // 设置数据通道
       this.dc = this.pc.createDataChannel("oai-events");
       
-      // 保存事件处理函数引用
       this.dcOpenHandler = () => {
         if (!this.isDisconnected) {
+          console.log('[WebRTC] Data channel opened:', performance.now() - startTime, 'ms');
           this.onStatusChange('connected');
         }
       };
@@ -304,13 +289,15 @@ export class RealtimeChat {
       this.dc.addEventListener("close", this.dcCloseHandler);
       this.dc.addEventListener("message", this.dcMessageHandler);
 
-      // 创建并设置本地描述
+      // 创建 offer
       const offer = await this.pc.createOffer();
       await this.pc.setLocalDescription(offer);
+      console.log('[WebRTC] Offer created:', performance.now() - startTime, 'ms');
 
-      // 连接到 OpenAI Realtime API（使用代理 URL）
+      // 连接到 OpenAI Realtime API
       const model = "gpt-4o-realtime-preview-2024-12-17";
-      console.log('Connecting to Realtime API via:', realtimeApiUrl);
+      console.log('[WebRTC] Connecting to:', realtimeApiUrl);
+      
       const sdpResponse = await fetch(`${realtimeApiUrl}?model=${model}`, {
         method: "POST",
         body: offer.sdp,
@@ -320,7 +307,11 @@ export class RealtimeChat {
         },
       });
 
+      console.log('[WebRTC] SDP response received:', performance.now() - startTime, 'ms');
+
       if (!sdpResponse.ok) {
+        const errorText = await sdpResponse.text();
+        console.error('[WebRTC] SDP error:', errorText);
         throw new Error('Failed to connect to OpenAI Realtime API');
       }
 
@@ -330,13 +321,49 @@ export class RealtimeChat {
       };
       
       await this.pc.setRemoteDescription(answer);
-
-      // WebRTC 直接通过 audioEl 播放音频，不需要额外的音频处理
+      console.log('[WebRTC] Connection established:', performance.now() - startTime, 'ms');
 
     } catch (error) {
       console.error("Error initializing chat:", error);
       this.onStatusChange('error');
       throw error;
+    }
+  }
+
+  // 提取麦克风请求为独立方法，便于并行调用
+  private async requestMicrophoneAccess(): Promise<MediaStream> {
+    try {
+      return await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
+    } catch (micError: any) {
+      console.error('Microphone access error:', micError);
+      
+      if (micError.name === 'NotAllowedError' || micError.name === 'PermissionDeniedError') {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const tip = isIOS 
+          ? '请前往"设置 > Safari > 麦克风"允许访问，然后刷新页面重试。'
+          : '请在浏览器地址栏左侧点击锁定图标，允许麦克风权限，然后刷新页面。';
+        throw new Error(`麦克风权限被拒绝。${tip}`);
+      } else if (micError.name === 'NotFoundError' || micError.name === 'DevicesNotFoundError') {
+        throw new Error('未检测到麦克风设备。请确保设备已连接并正常工作。');
+      } else if (micError.name === 'NotReadableError' || micError.name === 'TrackStartError') {
+        throw new Error('麦克风被其他应用占用，请关闭其他正在使用麦克风的应用后重试。');
+      } else if (micError.name === 'OverconstrainedError') {
+        try {
+          return await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch {
+          throw new Error('麦克风不支持所需的音频格式，请尝试使用其他设备。');
+        }
+      } else if (micError.name === 'SecurityError') {
+        throw new Error('安全限制：请确保使用 HTTPS 访问，或在本地开发环境中使用。');
+      } else {
+        throw new Error(`麦克风访问失败: ${micError.message || micError.name || '未知错误'}`);
+      }
     }
   }
 
