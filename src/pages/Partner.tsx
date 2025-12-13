@@ -91,7 +91,7 @@ export default function Partner() {
             </div>
 
             {/* 双卡片对比 */}
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {/* 有劲合伙人卡片 */}
               <Card className="border-2 hover:border-orange-500/50 transition-all cursor-pointer"
                     onClick={() => navigate("/partner/youjin-intro")}>
@@ -152,43 +152,43 @@ export default function Partner() {
             {/* 对比表格 */}
             <Card>
               <CardHeader>
-                <CardTitle>两种合伙人有什么区别？</CardTitle>
+                <CardTitle className="text-base sm:text-lg">两种合伙人有什么区别？</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+              <CardContent className="p-0 sm:p-6">
+                <div className="overflow-x-auto -mx-0">
+                  <table className="w-full text-xs sm:text-sm min-w-[480px]">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-2">对比项</th>
-                        <th className="text-center py-2">💪 有劲合伙人</th>
-                        <th className="text-center py-2">🦋 绽放合伙人</th>
+                        <th className="text-left py-2 px-2 sm:px-4 whitespace-nowrap">对比项</th>
+                        <th className="text-center py-2 px-2 sm:px-4 whitespace-nowrap">💪 有劲合伙人</th>
+                        <th className="text-center py-2 px-2 sm:px-4 whitespace-nowrap">🦋 绽放合伙人</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr className="border-b">
-                        <td className="py-2">加入方式</td>
-                        <td className="text-center">预购体验包</td>
-                        <td className="text-center">购买合伙人套餐</td>
+                        <td className="py-2 px-2 sm:px-4 whitespace-nowrap">加入方式</td>
+                        <td className="text-center px-2 sm:px-4">预购体验包</td>
+                        <td className="text-center px-2 sm:px-4">购买合伙人套餐</td>
                       </tr>
                       <tr className="border-b">
-                        <td className="py-2">佣金比例</td>
-                        <td className="text-center">20%-50%（按预购量）</td>
-                        <td className="text-center">固定30%+10%</td>
+                        <td className="py-2 px-2 sm:px-4 whitespace-nowrap">佣金比例</td>
+                        <td className="text-center px-2 sm:px-4">20%-50%</td>
+                        <td className="text-center px-2 sm:px-4">30%+10%</td>
                       </tr>
                       <tr className="border-b">
-                        <td className="py-2">可分成产品</td>
-                        <td className="text-center">所有有劲产品</td>
-                        <td className="text-center">绽放产品</td>
+                        <td className="py-2 px-2 sm:px-4 whitespace-nowrap">可分成产品</td>
+                        <td className="text-center px-2 sm:px-4">所有有劲产品</td>
+                        <td className="text-center px-2 sm:px-4">绽放产品</td>
                       </tr>
                       <tr className="border-b">
-                        <td className="py-2">推广方式</td>
-                        <td className="text-center">兑换码/二维码</td>
-                        <td className="text-center">推广码/链接</td>
+                        <td className="py-2 px-2 sm:px-4 whitespace-nowrap">推广方式</td>
+                        <td className="text-center px-2 sm:px-4">兑换码/二维码</td>
+                        <td className="text-center px-2 sm:px-4">推广码/链接</td>
                       </tr>
                       <tr>
-                        <td className="py-2">适合人群</td>
-                        <td className="text-center">长期经营，建立私域</td>
-                        <td className="text-center">快速变现，无需囤货</td>
+                        <td className="py-2 px-2 sm:px-4 whitespace-nowrap">适合人群</td>
+                        <td className="text-center px-2 sm:px-4">长期经营</td>
+                        <td className="text-center px-2 sm:px-4">快速变现</td>
                       </tr>
                     </tbody>
                   </table>
