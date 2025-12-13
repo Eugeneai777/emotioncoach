@@ -311,7 +311,15 @@ serve(async (req) => {
     const data = await response.json();
     console.log("Vibrant Life Coach realtime session created successfully");
 
-    return new Response(JSON.stringify(data), {
+    // 返回代理 URL 给前端使用
+    const realtimeProxyUrl = OPENAI_PROXY_URL 
+      ? `${OPENAI_PROXY_URL}/v1/realtime`
+      : 'https://api.openai.com/v1/realtime';
+
+    return new Response(JSON.stringify({
+      ...data,
+      realtime_url: realtimeProxyUrl
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
