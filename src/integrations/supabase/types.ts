@@ -2477,6 +2477,7 @@ export type Database = {
       }
       human_coaches: {
         Row: {
+          admin_note: string | null
           avatar_url: string | null
           badge_type: string | null
           bio: string | null
@@ -2490,6 +2491,7 @@ export type Database = {
           is_accepting_new: boolean | null
           is_verified: boolean | null
           name: string
+          phone: string | null
           positive_rate: number | null
           rating: number | null
           rating_communication: number | null
@@ -2507,6 +2509,7 @@ export type Database = {
           verified_at: string | null
         }
         Insert: {
+          admin_note?: string | null
           avatar_url?: string | null
           badge_type?: string | null
           bio?: string | null
@@ -2520,6 +2523,7 @@ export type Database = {
           is_accepting_new?: boolean | null
           is_verified?: boolean | null
           name: string
+          phone?: string | null
           positive_rate?: number | null
           rating?: number | null
           rating_communication?: number | null
@@ -2537,6 +2541,7 @@ export type Database = {
           verified_at?: string | null
         }
         Update: {
+          admin_note?: string | null
           avatar_url?: string | null
           badge_type?: string | null
           bio?: string | null
@@ -2550,6 +2555,7 @@ export type Database = {
           is_accepting_new?: boolean | null
           is_verified?: boolean | null
           name?: string
+          phone?: string | null
           positive_rate?: number | null
           rating?: number | null
           rating_communication?: number | null
