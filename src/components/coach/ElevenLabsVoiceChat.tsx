@@ -227,6 +227,7 @@ export const ElevenLabsVoiceChat = ({
     try {
       if (!userIdRef.current || billedMinutes === 0) return;
 
+      // 保存到 voice_chat_sessions
       await supabase.from('voice_chat_sessions').insert({
         user_id: userIdRef.current,
         coach_key: 'life_coach_elevenlabs',
@@ -235,6 +236,18 @@ export const ElevenLabsVoiceChat = ({
         total_cost: billedMinutes * POINTS_PER_MINUTE,
         transcript_summary: (userTranscript + '\n' + transcript).slice(0, 500) || null
       });
+      
+      // 同时保存到 vibrant_life_sage_briefings 以便在"我的生活记录"中显示
+      const transcriptContent = (userTranscript + '\n' + transcript).trim();
+      if (transcriptContent) {
+        await supabase.from('vibrant_life_sage_briefings').insert({
+          user_id: userIdRef.current,
+          user_issue_summary: userTranscript.slice(0, 200) || '语音对话记录',
+          reasoning: `通过语音与有劲AI进行了 ${Math.ceil(duration / 60)} 分钟的对话`,
+          recommended_coach_type: 'vibrant_life_sage'
+        });
+        console.log('Vibrant life sage briefing saved');
+      }
       
       console.log('Voice chat session recorded');
     } catch (error) {
