@@ -38,6 +38,7 @@ interface PackageFeatureSetting {
   cost_per_use: number;
   free_quota: number;
   free_quota_period: string;
+  max_duration_minutes: number | null;
 }
 
 const categoryConfig: Record<string, { label: string; icon: typeof Users; color: string }> = {
@@ -155,7 +156,7 @@ const FeatureCostManagement = () => {
     onError: () => toast.error('保存失败'),
   });
 
-  const getSettingForFeature = (featureId: string): Partial<PackageFeatureSetting> => {
+  const getSettingForFeature = (featureId: string, itemKey?: string): Partial<PackageFeatureSetting> => {
     const existing = packageSettings.find(s => s.feature_id === featureId);
     const editing = editingSettings[featureId];
     return {
@@ -163,6 +164,7 @@ const FeatureCostManagement = () => {
       cost_per_use: editing?.cost_per_use ?? existing?.cost_per_use ?? 0,
       free_quota: editing?.free_quota ?? existing?.free_quota ?? 0,
       free_quota_period: editing?.free_quota_period ?? existing?.free_quota_period ?? 'per_use',
+      max_duration_minutes: editing?.max_duration_minutes ?? existing?.max_duration_minutes ?? null,
     };
   };
 
@@ -225,8 +227,9 @@ const FeatureCostManagement = () => {
   }
 
   const renderFeatureRow = (item: FeatureItem) => {
-    const setting = getSettingForFeature(item.id);
+    const setting = getSettingForFeature(item.id, item.item_key);
     const hasChanges = !!editingSettings[item.id];
+    const isVoiceFeature = item.item_key === 'realtime_voice';
     
     return (
       <TableRow key={item.id}>
@@ -281,6 +284,34 @@ const FeatureCostManagement = () => {
               <SelectItem value="one_time">一次性</SelectItem>
             </SelectContent>
           </Select>
+        </TableCell>
+        {/* 时长限制列 - 仅对 realtime_voice 显示 */}
+        <TableCell className="text-center">
+          {isVoiceFeature ? (
+            <Select
+              value={setting.max_duration_minutes?.toString() || 'unlimited'}
+              onValueChange={(value) =>
+                updateEditingSetting(item.id, 'max_duration_minutes', value === 'unlimited' ? null : parseInt(value))
+              }
+            >
+              <SelectTrigger className="w-24 mx-auto h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unlimited">不限时</SelectItem>
+                <SelectItem value="1">1分钟</SelectItem>
+                <SelectItem value="3">3分钟</SelectItem>
+                <SelectItem value="5">5分钟</SelectItem>
+                <SelectItem value="10">10分钟</SelectItem>
+                <SelectItem value="15">15分钟</SelectItem>
+                <SelectItem value="20">20分钟</SelectItem>
+                <SelectItem value="30">30分钟</SelectItem>
+                <SelectItem value="60">60分钟</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : (
+            <span className="text-muted-foreground text-xs">-</span>
+          )}
         </TableCell>
         <TableCell className="text-center">
           <Button
@@ -478,6 +509,7 @@ const FeatureCostManagement = () => {
                                               <TableHead className="text-center w-24">扣费点数</TableHead>
                                               <TableHead className="text-center w-24">免费额度</TableHead>
                                               <TableHead className="text-center w-28">额度周期</TableHead>
+                                              <TableHead className="text-center w-24">时长限制</TableHead>
                                               <TableHead className="text-center w-16">操作</TableHead>
                                             </TableRow>
                                           </TableHeader>
@@ -503,7 +535,7 @@ const FeatureCostManagement = () => {
                           </div>
                           
                           <div className="border rounded-lg overflow-hidden">
-                            <Table>
+                          <Table>
                               <TableHeader>
                                 <TableRow>
                                   <TableHead>功能</TableHead>
@@ -511,6 +543,7 @@ const FeatureCostManagement = () => {
                                   <TableHead className="text-center w-24">扣费点数</TableHead>
                                   <TableHead className="text-center w-24">免费额度</TableHead>
                                   <TableHead className="text-center w-28">额度周期</TableHead>
+                                  <TableHead className="text-center w-24">时长限制</TableHead>
                                   <TableHead className="text-center w-16">操作</TableHead>
                                 </TableRow>
                               </TableHeader>

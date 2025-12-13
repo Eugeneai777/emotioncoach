@@ -20,7 +20,7 @@ type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | '
 type SpeakingStatus = 'idle' | 'user-speaking' | 'assistant-speaking';
 
 const POINTS_PER_MINUTE = 8;
-const MAX_DURATION_MINUTES = 10;
+const DEFAULT_MAX_DURATION_MINUTES = 3; // 默认3分钟（未配置时）
 
 export const CoachVoiceChat = ({
   onClose,
@@ -46,6 +46,8 @@ export const CoachVoiceChat = ({
   const [searchKeyword, setSearchKeyword] = useState('');
   const [courseRecommendations, setCourseRecommendations] = useState<any[] | null>(null);
   const [campRecommendations, setCampRecommendations] = useState<any[] | null>(null);
+  const [maxDurationMinutes, setMaxDurationMinutes] = useState<number | null>(null);
+  const [isLoadingDuration, setIsLoadingDuration] = useState(true);
   const chatRef = useRef<RealtimeChat | null>(null);
   const durationRef = useRef<NodeJS.Timeout | null>(null);
   const lastBilledMinuteRef = useRef(0);
@@ -181,6 +183,59 @@ export const CoachVoiceChat = ({
   // 取消导航
   const cancelNavigation = () => {
     setPendingNavigation(null);
+  };
+
+  // 获取用户套餐的时长限制
+  const getMaxDurationForUser = async (): Promise<number | null> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return DEFAULT_MAX_DURATION_MINUTES;
+
+      // 获取用户最新有效订单的套餐
+      const { data: order } = await supabase
+        .from('orders')
+        .select('package_key')
+        .eq('user_id', user.id)
+        .eq('status', 'paid')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      const packageKey = order?.package_key || 'basic';
+
+      // 获取套餐ID
+      const { data: pkg } = await supabase
+        .from('packages')
+        .select('id')
+        .eq('package_key', packageKey)
+        .single();
+
+      if (!pkg) return DEFAULT_MAX_DURATION_MINUTES;
+
+      // 获取 realtime_voice 功能ID
+      const { data: feature } = await supabase
+        .from('feature_items')
+        .select('id')
+        .eq('item_key', 'realtime_voice')
+        .single();
+
+      if (!feature) return DEFAULT_MAX_DURATION_MINUTES;
+
+      // 获取该套餐对应的时长限制
+      const { data: setting } = await supabase
+        .from('package_feature_settings')
+        .select('max_duration_minutes')
+        .eq('feature_id', feature.id)
+        .eq('package_id', pkg.id)
+        .single();
+
+      // null 表示不限时，undefined/不存在则使用默认值
+      if (setting === null) return DEFAULT_MAX_DURATION_MINUTES;
+      return setting?.max_duration_minutes ?? DEFAULT_MAX_DURATION_MINUTES;
+    } catch (error) {
+      console.error('Get max duration error:', error);
+      return DEFAULT_MAX_DURATION_MINUTES;
+    }
   };
 
   // 检查余额
@@ -462,6 +517,17 @@ export const CoachVoiceChat = ({
     onClose();
   };
 
+  // 初始化时获取时长限制
+  useEffect(() => {
+    const loadDurationLimit = async () => {
+      setIsLoadingDuration(true);
+      const maxDuration = await getMaxDurationForUser();
+      setMaxDurationMinutes(maxDuration);
+      setIsLoadingDuration(false);
+    };
+    loadDurationLimit();
+  }, []);
+
   // 每分钟扣费逻辑 - 添加防并发保护
   useEffect(() => {
     if (status !== 'connected') return;
@@ -473,11 +539,11 @@ export const CoachVoiceChat = ({
       return;
     }
 
-    // 检查最大时长限制
-    if (currentMinute > MAX_DURATION_MINUTES) {
+    // 检查最大时长限制 - null 表示不限时
+    if (maxDurationMinutes !== null && currentMinute > maxDurationMinutes) {
       toast({
-        title: "已达最大时长",
-        description: `单次通话最长 ${MAX_DURATION_MINUTES} 分钟`,
+        title: "已达体验时长",
+        description: `当前套餐单次通话最长 ${maxDurationMinutes} 分钟，升级套餐可延长通话时间`,
       });
       endCall();
       return;
@@ -492,7 +558,7 @@ export const CoachVoiceChat = ({
         endCall();
       }
     });
-  }, [duration, status]);
+  }, [duration, status, maxDurationMinutes]);
 
   // 低余额警告
   useEffect(() => {
@@ -909,7 +975,7 @@ export const CoachVoiceChat = ({
       {/* 提示 */}
       <div className="absolute bottom-24 left-0 right-0 text-center">
         <p className="text-white/40 text-xs">
-          💡 直接说话即可 · {POINTS_PER_MINUTE}点/分钟 · 最长{MAX_DURATION_MINUTES}分钟
+          💡 直接说话即可 · {POINTS_PER_MINUTE}点/分钟 · {maxDurationMinutes === null ? '🎖️ 无限时' : `最长${maxDurationMinutes}分钟`}
         </p>
       </div>
     </div>
