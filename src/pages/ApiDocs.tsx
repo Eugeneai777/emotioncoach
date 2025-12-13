@@ -359,29 +359,6 @@ const apiEndpoints: ApiEndpoint[] = [
     category: "微信公众号"
   },
 
-  // 企业微信
-  {
-    name: "get-wecom-access-token",
-    description: "获取企业微信Access Token",
-    method: "POST",
-    requiresAuth: false,
-    category: "企业微信"
-  },
-  {
-    name: "wecom-callback",
-    description: "企业微信消息回调",
-    method: "POST",
-    requiresAuth: false,
-    category: "企业微信"
-  },
-  {
-    name: "send-wecom-notification",
-    description: "发送企业微信通知",
-    method: "POST",
-    requiresAuth: false,
-    category: "企业微信"
-  },
-
   // 用户账户
   {
     name: "check-quota",
