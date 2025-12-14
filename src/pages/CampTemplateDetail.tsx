@@ -313,7 +313,7 @@ const CampTemplateDetail = () => {
 
       <StartCampDialog open={showStartDialog} onOpenChange={setShowStartDialog} campTemplate={camp} onSuccess={campId => {
       setShowStartDialog(false);
-      navigate(`/camp/${campId}`);
+      navigate(`/camp-checkin/${campId}`);
     }} />
 
       <WechatPayDialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog} packageInfo={camp ? {

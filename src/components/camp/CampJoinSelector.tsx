@@ -101,7 +101,7 @@ export function CampJoinSelector({ referralId, onJoinComplete }: CampJoinSelecto
       onJoinComplete?.(camp.id);
       
       // 跳转到训练营打卡页
-      navigate(`/camp/${camp.id}/checkin`);
+      navigate(`/camp-checkin/${camp.id}`);
     } catch (error: any) {
       console.error("Join camp error:", error);
       toast.error(error.message || "加入训练营失败");

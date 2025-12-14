@@ -339,7 +339,7 @@ ${briefingData.growth_story || '暂无记录'}
             <Button
               onClick={() => {
                 if (hasJoinedParentCamp && existingParentCamp) {
-                  navigate(`/camp/${existingParentCamp.id}`);
+                  navigate(`/camp-checkin/${existingParentCamp.id}`);
                 } else {
                   handleStartCampClick();
                 }
@@ -372,7 +372,7 @@ ${briefingData.growth_story || '暂无记录'}
           open={showStartDialog}
           onOpenChange={setShowStartDialog}
           campTemplate={parentCampTemplate}
-          onSuccess={(campId) => navigate(`/camp/${campId}`)}
+          onSuccess={(campId) => navigate(`/camp-checkin/${campId}`)}
         />
       )}
       {briefing && (
