@@ -55,8 +55,8 @@ export const ParentVoiceCallCTA = ({
             <div className="absolute inset-[-28px] border-2 border-white/60 rounded-full animate-[ripple-expand_0.6s_ease-out]" />
           </>}
         
-        {/* 主按钮 - 紫粉渐变 */}
-        <div className="relative w-56 h-56 bg-gradient-to-br from-purple-500 via-purple-400 to-pink-500 
+        {/* 主按钮 - 紫粉渐变 - 响应式尺寸 */}
+        <div className="relative w-44 h-44 sm:w-56 sm:h-56 bg-gradient-to-br from-purple-500 via-purple-400 to-pink-500 
                         rounded-full flex flex-col items-center justify-center 
                         shadow-2xl shadow-purple-500/40 
                         hover:scale-105 hover:shadow-purple-500/50 
@@ -65,14 +65,14 @@ export const ParentVoiceCallCTA = ({
                         group-active:from-purple-600 group-active:via-purple-500 group-active:to-pink-600">
           
           {/* 电话图标 */}
-          <div className="mb-5 p-4 bg-white/20 rounded-full backdrop-blur-sm
+          <div className="mb-3 sm:mb-5 p-3 sm:p-4 bg-white/20 rounded-full backdrop-blur-sm
                           group-hover:bg-white/25 group-active:bg-white/30
                           group-active:scale-95 transition-all duration-200">
-            <Phone className="w-10 h-10 text-white group-active:scale-110 transition-transform duration-200" />
+            <Phone className="w-8 h-8 sm:w-10 sm:h-10 text-white group-active:scale-110 transition-transform duration-200" />
           </div>
           
           {/* 品牌文字 */}
-          <span className="text-white font-bold text-2xl tracking-wide">亲子教练</span>
+          <span className="text-white font-bold text-xl sm:text-2xl tracking-wide">亲子教练</span>
           
         </div>
       </button>

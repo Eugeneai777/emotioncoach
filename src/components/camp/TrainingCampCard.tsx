@@ -81,9 +81,9 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
     <Card className={`p-5 bg-gradient-to-br ${colors.cardBg} ${colors.borderColor} shadow-sm hover:shadow-md transition-all`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex-1">
-          <h3 className={`text-base font-semibold flex items-center gap-2 ${colors.titleColor}`}>
-            🏕️ {camp.camp_name}
+        <div className="flex-1 min-w-0">
+          <h3 className={`text-sm sm:text-base font-semibold flex items-center gap-2 ${colors.titleColor}`}>
+            🏕️ <span className="truncate">{camp.camp_name}</span>
           </h3>
         </div>
         {currentStreak > 0 && (

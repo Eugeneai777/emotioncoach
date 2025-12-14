@@ -75,8 +75,10 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
       <div
         ref={ref}
         style={{
-          width: '400px',
-          padding: '32px',
+          width: '100%',
+          maxWidth: '400px',
+          minWidth: '300px',
+          padding: '24px',
           background: themeConfig.background,
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           borderRadius: '24px',
