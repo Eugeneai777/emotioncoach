@@ -17,9 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
-import { ParentTeenBinding } from "@/components/parent-coach/ParentTeenBinding";
 import { ProblemTypeCard } from "@/components/parent-coach/ProblemTypeCard";
-import { TeenUsageStats } from "@/components/parent-coach/TeenUsageStats";
+import { TeenModeEntryCard } from "@/components/parent-coach/TeenModeEntryCard";
 import { ParentVoiceCallCTA } from "@/components/parent-coach/ParentVoiceCallCTA";
 import { ParentOnboardingGuide } from "@/components/parent-coach/ParentOnboardingGuide";
 import { IntakeOnboardingDialog } from "@/components/parent-intake/IntakeOnboardingDialog";
@@ -257,23 +256,23 @@ ${briefingData.growth_story || '暂无记录'}
   // Teen Mode Module
   const teenModeModule = (
     <div className="w-full mt-6 space-y-4">
+      {/* 双轨模式入口卡片 */}
+      <TeenModeEntryCard
+        hasActiveBinding={activeBindings && activeBindings.length > 0}
+        bindingData={activeBindings?.[0] ? {
+          teen_nickname: activeBindings[0].teen_nickname,
+          bound_at: null
+        } : undefined}
+        onGenerateCode={() => {
+          // TeenModeEntryCard 内部已有 TeenModeOnboarding
+        }}
+      />
 
       {/* Problem Type Card */}
       {existingProfile && (
         <ProblemTypeCard
           primaryType={existingProfile.primary_problem_type}
           secondaryTypes={existingProfile.secondary_problem_types as string[] | undefined}
-        />
-      )}
-
-      {/* Parent-Teen Binding */}
-      <ParentTeenBinding />
-
-      {/* Teen Usage Stats */}
-      {activeBindings && activeBindings.length > 0 && (
-        <TeenUsageStats
-          teenUserId={activeBindings[0].teen_user_id || undefined}
-          bindingId={activeBindings[0].id}
         />
       )}
     </div>
@@ -445,6 +444,7 @@ ${briefingData.growth_story || '暂无记录'}
       trainingCamp={
         <>
           {onboardingGuide}
+          {teenModeModule}
           {trainingCampModule}
         </>
       }
