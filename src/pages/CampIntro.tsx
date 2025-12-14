@@ -98,10 +98,10 @@ const CampIntro = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50/40 via-pink-50/30 to-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-card/80 backdrop-blur-md border-b">
-        <div className="container max-w-6xl mx-auto px-4 py-4">
+      <header className="sticky top-0 z-10 bg-white/60 dark:bg-card/80 backdrop-blur-md border-b">
+        <div className="container max-w-6xl mx-auto px-4 py-3">
           <Button
             variant="ghost"
             size="sm"
@@ -114,9 +114,9 @@ const CampIntro = () => {
         </div>
       </header>
 
-      <main className="container max-w-6xl mx-auto px-4 py-12 space-y-16">
+      <main className="container max-w-6xl mx-auto px-4 py-8 space-y-10">
         {/* Hero Section */}
-        <section className="text-center space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
+        <section className="text-center space-y-4 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
           {!['emotion_bloom', 'identity_bloom'].includes(campTemplate.camp_type) && (
             <div className="inline-block">
               <Badge className={`bg-gradient-to-r ${campTemplate.gradient} text-white border-0 px-4 py-1 text-sm`}>
@@ -132,7 +132,7 @@ const CampIntro = () => {
               {campTemplate.description}
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+          <div className="flex justify-center pt-2">
             <Button 
               size="lg" 
               onClick={() => {
@@ -147,28 +147,19 @@ const CampIntro = () => {
               {hasJoinedCamp ? '继续训练' : '立即加入'}
               <ArrowRight className="w-5 h-5" />
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              onClick={() => navigate("/energy-studio")}
-              className="gap-2 text-lg px-8 py-6"
-            >
-              <Sparkles className="w-5 h-5" />
-              探索更多工具
-            </Button>
           </div>
         </section>
 
         {/* Stages */}
         {campTemplate.stages && campTemplate.stages.length > 0 && (
-          <section className="space-y-8 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
-            <div className="text-center space-y-3">
-              <h2 className="text-3xl md:text-4xl font-bold">课程阶段</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <section className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl md:text-3xl font-bold">课程阶段</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
                 循序渐进，系统化成长路径
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {campTemplate.stages.map((stage: any, index: number) => (
                 <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-2">
                   <CardHeader>
@@ -206,14 +197,14 @@ const CampIntro = () => {
 
         {/* Learning Formats */}
         {campTemplate.learning_formats && campTemplate.learning_formats.length > 0 && (
-          <section className="space-y-8 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
-            <div className="text-center space-y-3">
-              <h2 className="text-3xl md:text-4xl font-bold">上课形式</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <section className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl md:text-3xl font-bold">上课形式</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
                 多样化学习体验，全方位成长支持
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {campTemplate.learning_formats.map((format: any, index: number) => (
                 <Card key={index} className="group hover:shadow-xl transition-all duration-300">
                   <CardHeader>
@@ -233,14 +224,14 @@ const CampIntro = () => {
 
         {/* Daily Practice */}
         {campTemplate.daily_practice && campTemplate.daily_practice.length > 0 && (
-          <section className="space-y-8 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
-            <div className="text-center space-y-3">
-              <h2 className="text-3xl md:text-4xl font-bold">每日练习流程</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <section className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl md:text-3xl font-bold">每日练习流程</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
                 简单高效的日常练习，轻松融入生活
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {campTemplate.daily_practice.map((practice: any, index: number) => (
                 <Card key={index} className="group hover:shadow-2xl transition-all duration-300">
                   <CardHeader>
@@ -266,17 +257,17 @@ const CampIntro = () => {
 
         {/* Benefits */}
         {campTemplate.benefits && campTemplate.benefits.length > 0 && (
-          <section className="space-y-8 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
-            <div className="text-center space-y-3">
-              <h2 className="text-3xl md:text-4xl font-bold">你将获得</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <section className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl md:text-3xl font-bold">你将获得</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
                 {['emotion_bloom', 'identity_bloom'].includes(campTemplate.camp_type) 
                   ? '实实在在的成长' 
                   : `${campTemplate.duration_days}天后，实实在在的成长`
                 }
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {campTemplate.benefits.map((benefit: string, index: number) => (
                 <Card key={index} className="group hover:shadow-lg transition-all duration-300">
                   <CardHeader>
@@ -297,14 +288,14 @@ const CampIntro = () => {
 
         {/* Target Audience */}
         {campTemplate.target_audience && campTemplate.target_audience.length > 0 && (
-          <section className="space-y-8 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
-            <div className="text-center space-y-3">
-              <h2 className="text-3xl md:text-4xl font-bold">适合加入的人</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <section className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl md:text-3xl font-bold">适合加入的人</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
                 如果你有以下困扰或期待，这个训练营就是为你设计的
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-4xl mx-auto">
               {campTemplate.target_audience.map((audience: string, index: number) => (
                 <Card 
                   key={index}
@@ -324,16 +315,16 @@ const CampIntro = () => {
 
         {/* Prerequisites */}
         {campTemplate.prerequisites && campTemplate.prerequisites.required_camp && (
-          <section className="space-y-8 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
+          <section className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
             <Card className="border-2 border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20 max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-lg">
                   <Users className="w-5 h-5" />
                   <span>报名条件</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-amber-800 dark:text-amber-300 text-base">
+                <p className="text-amber-800 dark:text-amber-300 text-sm">
                   {campTemplate.prerequisites.message}
                 </p>
               </CardContent>
@@ -342,16 +333,16 @@ const CampIntro = () => {
         )}
 
         {/* CTA Section */}
-        <section className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${campTemplate.gradient} p-12 text-center text-white animate-in fade-in-50 slide-in-from-bottom-4 duration-700`}>
+        <section className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${campTemplate.gradient} p-8 md:p-10 text-center text-white animate-in fade-in-50 slide-in-from-bottom-4 duration-700`}>
           <div className="absolute inset-0 bg-grid-white/10" />
-          <div className="relative z-10 space-y-6">
-            <h2 className="text-3xl md:text-4xl font-bold">
+          <div className="relative z-10 space-y-4">
+            <h2 className="text-2xl md:text-3xl font-bold">
               开始你的{['emotion_bloom', 'identity_bloom'].includes(campTemplate.camp_type) 
                 ? '' 
                 : `${campTemplate.duration_days}天`
               }{campTemplate.camp_name}
             </h2>
-            <p className="text-xl text-white/90 max-w-2xl mx-auto">
+            <p className="text-white/90 max-w-2xl mx-auto">
               {campTemplate.description}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
