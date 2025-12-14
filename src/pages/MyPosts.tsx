@@ -1,16 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeft, Plus, Pencil, Trash2, Heart, MessageCircle, FileText } from "lucide-react";
+import { Loader2, ArrowLeft, Plus, Pencil, Trash2, Heart, MessageCircle, FileText, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import PostDetailSheet from "@/components/community/PostDetailSheet";
 import PostComposer from "@/components/community/PostComposer";
 import PostEditDialog from "@/components/community/PostEditDialog";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,6 +55,27 @@ export default function MyPosts() {
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Handle refresh
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await loadPosts();
+    setIsRefreshing(false);
+  }, []);
+
+  // Pull to refresh
+  const {
+    containerRef,
+    pullDistance,
+    pullProgress,
+    isRefreshing: isPullRefreshing,
+    pullStyle
+  } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 80,
+    maxPull: 120
+  });
 
   useEffect(() => {
     checkAuthAndLoadPosts();
@@ -167,7 +190,15 @@ export default function MyPosts() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 relative">
+      {/* Pull to Refresh Indicator */}
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        pullProgress={pullProgress}
+        isRefreshing={isPullRefreshing}
+        threshold={80}
+      />
+      
       {/* Header */}
       <header className="border-b border-border bg-white/60 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
@@ -181,24 +212,40 @@ export default function MyPosts() {
                 我的动态
               </h1>
             </div>
-            <Button
-              size="sm"
-              onClick={() => setComposerOpen(true)}
-              className="bg-gradient-to-r from-teal-400 to-cyan-500"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              发布新动态
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleRefresh}
+                disabled={isRefreshing || isPullRefreshing}
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing || isPullRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setComposerOpen(true)}
+                className="bg-gradient-to-r from-teal-400 to-cyan-500"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                发布
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Stats */}
-      <div className="container max-w-xl mx-auto px-3 md:px-4 py-3">
-        <div className="text-sm text-muted-foreground">
-          共 {posts.length} 条动态
+      <div 
+        ref={containerRef}
+        className="h-[calc(100vh-60px)] overflow-y-auto overscroll-contain"
+        style={pullStyle}
+      >
+        {/* Stats */}
+        <div className="container max-w-xl mx-auto px-3 md:px-4 py-3">
+          <div className="text-sm text-muted-foreground">
+            共 {posts.length} 条动态
+          </div>
         </div>
-      </div>
 
       {/* Main Content */}
       <main className="container max-w-xl mx-auto px-3 md:px-4 pb-6">
@@ -310,6 +357,7 @@ export default function MyPosts() {
           </div>
         )}
       </main>
+      </div>
 
       {/* 发布动态对话框 */}
       <PostComposer
