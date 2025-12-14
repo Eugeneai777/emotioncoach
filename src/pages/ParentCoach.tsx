@@ -21,8 +21,9 @@ import { ParentTeenBinding } from "@/components/parent-coach/ParentTeenBinding";
 import { ProblemTypeCard } from "@/components/parent-coach/ProblemTypeCard";
 import { TeenUsageStats } from "@/components/parent-coach/TeenUsageStats";
 import { ParentVoiceCallCTA } from "@/components/parent-coach/ParentVoiceCallCTA";
+import { ParentOnboardingGuide } from "@/components/parent-coach/ParentOnboardingGuide";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
-import { Sparkles, Heart, Users, ClipboardList, ChevronRight } from "lucide-react";
+import { Sparkles, Heart } from "lucide-react";
 
 export default function ParentCoach() {
   const navigate = useNavigate();
@@ -215,6 +216,17 @@ ${briefingData.growth_story || '暂无记录'}
     await handleSendMessage(option);
   };
 
+  // Onboarding Guide Module
+  const onboardingGuide = (
+    <ParentOnboardingGuide
+      hasCompletedIntake={!!existingProfile}
+      hasJoinedCamp={hasJoinedParentCamp}
+      onStartIntake={() => navigate("/parent/intake")}
+      onStartCamp={() => setShowStartDialog(true)}
+      onViewCampDetails={() => navigate("/parent-camp")}
+    />
+  );
+
   // Training Camp Module
   const trainingCampModule = (
     <div className="w-full mt-6">
@@ -405,7 +417,12 @@ ${briefingData.growth_story || '暂无记录'}
           <UnifiedStageProgress coachType="parent" currentStage={session.current_stage || 0} />
         ) : undefined
       }
-      trainingCamp={trainingCampModule}
+      trainingCamp={
+        <>
+          {onboardingGuide}
+          {trainingCampModule}
+        </>
+      }
       notifications={notificationsModule}
       community={<CommunityWaterfall />}
       briefingConfirmation={briefingConfirmation}
