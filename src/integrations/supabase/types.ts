@@ -876,6 +876,7 @@ export type Database = {
           steps_title: string | null
           subtitle: string | null
           system_prompt: string | null
+          theme_config: Json | null
           title: string
           updated_at: string | null
         }
@@ -920,6 +921,7 @@ export type Database = {
           steps_title?: string | null
           subtitle?: string | null
           system_prompt?: string | null
+          theme_config?: Json | null
           title: string
           updated_at?: string | null
         }
@@ -964,6 +966,7 @@ export type Database = {
           steps_title?: string | null
           subtitle?: string | null
           system_prompt?: string | null
+          theme_config?: Json | null
           title?: string
           updated_at?: string | null
         }

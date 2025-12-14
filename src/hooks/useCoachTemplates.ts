@@ -41,6 +41,24 @@ export interface StagePrompts {
   };
 }
 
+// 主题配置接口
+export interface CoachThemeConfig {
+  backgroundGradient?: {
+    light: string;
+    dark: string;
+  };
+  stepCard?: {
+    light: string;
+    dark: string;
+  };
+  stepIcon?: {
+    light: string;
+    dark: string;
+  };
+  loaderColor?: string;
+  accentColor?: string;
+}
+
 export interface CoachTemplate {
   id: string;
   coach_key: string;
@@ -59,6 +77,8 @@ export interface CoachTemplate {
   history_label_short?: string;
   more_info_route: string | null;
   placeholder: string;
+  // 主题配置（从数据库读取）
+  theme_config?: CoachThemeConfig;
   // 基础功能开关
   enable_voice_control: boolean;
   enable_training_camp: boolean;
@@ -106,6 +126,7 @@ export function useCoachTemplates() {
         steps: (t.steps || []) as unknown as CoachStep[],
         scenarios: (t.scenarios || undefined) as unknown as CoachTemplate['scenarios'],
         stage_prompts: (t.stage_prompts || undefined) as unknown as StagePrompts,
+        theme_config: (t.theme_config || undefined) as unknown as CoachThemeConfig,
       })) as CoachTemplate[];
     },
   });
@@ -128,6 +149,7 @@ export function useActiveCoachTemplates() {
         steps: (t.steps || []) as unknown as CoachStep[],
         scenarios: (t.scenarios || undefined) as unknown as CoachTemplate['scenarios'],
         stage_prompts: (t.stage_prompts || undefined) as unknown as StagePrompts,
+        theme_config: (t.theme_config || undefined) as unknown as CoachThemeConfig,
       })) as CoachTemplate[];
     },
     staleTime: 5 * 60 * 1000, // 5分钟缓存
@@ -157,6 +179,7 @@ export function useCoachTemplate(coachKey: string) {
         steps: (data.steps || []) as unknown as CoachStep[],
         scenarios: (data.scenarios || undefined) as unknown as CoachTemplate['scenarios'],
         stage_prompts: (data.stage_prompts || undefined) as unknown as StagePrompts,
+        theme_config: (data.theme_config || undefined) as unknown as CoachThemeConfig,
       } as CoachTemplate;
     },
     staleTime: 5 * 60 * 1000,
