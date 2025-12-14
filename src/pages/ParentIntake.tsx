@@ -183,7 +183,7 @@ const ParentIntake = () => {
       // Save to database
       await saveProfile({
         primary_problem_type: types.primary,
-        secondary_problem_type: types.secondary,
+        secondary_problem_types: types.secondary ? [types.secondary] : null,
         intake_answers: answers,
       });
       
