@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import type { CampTemplate } from "@/types/trainingCamp";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
+import { CampDualTrackSection } from "@/components/camp/CampDualTrackSection";
 
 const iconMap: Record<string, any> = {
   TrendingDown, Brain, Moon, Zap, Heart, MessageCircle, Shield, Award, Users, Video, BarChart3
@@ -196,6 +197,11 @@ const CampIntro = () => {
               ))}
             </div>
           </section>
+        )}
+
+        {/* Dual Track Mode - Only for parent camps */}
+        {campTemplate.camp_type.includes('parent') && (
+          <CampDualTrackSection campType={campTemplate.camp_type} />
         )}
 
         {/* Learning Formats */}
