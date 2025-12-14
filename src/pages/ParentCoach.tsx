@@ -8,6 +8,7 @@ import { useParentCoach } from "@/hooks/useParentCoach";
 import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
+import { useParentIntake } from "@/hooks/useParentIntake";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsModule";
 import { CoachTrainingCamp } from "@/components/coach/CoachTrainingCamp";
@@ -16,7 +17,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
-import { Sparkles, Heart } from "lucide-react";
+import { ParentTeenBinding } from "@/components/parent-coach/ParentTeenBinding";
+import { ProblemTypeCard } from "@/components/parent-coach/ProblemTypeCard";
+import { TeenUsageStats } from "@/components/parent-coach/TeenUsageStats";
+import { Sparkles, Heart, Users } from "lucide-react";
 
 export default function ParentCoach() {
   const navigate = useNavigate();
@@ -47,6 +51,22 @@ export default function ParentCoach() {
 
   const { user, loading: authLoading, signOut } = useAuth();
   const { data: coachConfig } = useCoachTemplate('parent');
+  const { existingProfile, profileLoading } = useParentIntake();
+
+  // Fetch active bindings for teen usage stats
+  const { data: activeBindings } = useQuery({
+    queryKey: ['parent-teen-bindings', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase
+        .from('parent_teen_bindings')
+        .select('id, teen_user_id, teen_nickname, status')
+        .eq('parent_user_id', user.id)
+        .eq('status', 'active');
+      return data || [];
+    },
+    enabled: !!user?.id
+  });
 
   // 获取家长训练营模板
   const { data: parentCampTemplate } = useQuery({
@@ -89,6 +109,13 @@ export default function ParentCoach() {
     deleteNotification,
     triggerNotification,
   } = useSmartNotification('parent_coach');
+
+  // Redirect to intake if not completed
+  useEffect(() => {
+    if (!authLoading && !profileLoading && user && !existingProfile) {
+      navigate("/parent/intake");
+    }
+  }, [user, authLoading, profileLoading, existingProfile, navigate]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -207,6 +234,30 @@ ${briefingData.growth_story || '暂无记录'}
         campName="21天青少年困境突破营"
         campDescription="通过父母三力模型（稳定力、洞察力、修复力），21天系统提升亲子关系"
       />
+    </div>
+  );
+
+  // Teen Mode Module
+  const teenModeModule = (
+    <div className="w-full mt-6 space-y-4">
+      {/* Problem Type Card */}
+      {existingProfile && (
+        <ProblemTypeCard
+          primaryType={existingProfile.primary_problem_type}
+          secondaryTypes={existingProfile.secondary_problem_types as string[] | undefined}
+        />
+      )}
+
+      {/* Parent-Teen Binding */}
+      <ParentTeenBinding />
+
+      {/* Teen Usage Stats */}
+      {activeBindings && activeBindings.length > 0 && (
+        <TeenUsageStats
+          teenUserId={activeBindings[0].teen_user_id || undefined}
+          bindingId={activeBindings[0].id}
+        />
+      )}
     </div>
   );
 

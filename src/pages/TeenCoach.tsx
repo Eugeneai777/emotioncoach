@@ -152,6 +152,7 @@ export default function TeenCoach() {
               coachTitle="小星"
               primaryColor="violet"
               tokenEndpoint="vibrant-life-realtime-token"
+              mode="teen"
             />
           </div>
         </div>

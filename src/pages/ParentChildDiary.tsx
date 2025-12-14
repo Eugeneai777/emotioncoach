@@ -24,6 +24,10 @@ import { MusicRecommendation } from "@/components/MusicRecommendation";
 import { FrequencyMusicPlayer } from "@/components/FrequencyMusicPlayer";
 import { EmotionIntensityCard } from "@/components/EmotionIntensityMeter";
 import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
+import { CommunicationProgressCurve } from "@/components/parent-coach/CommunicationProgressCurve";
+import { TeenUsageStats } from "@/components/parent-coach/TeenUsageStats";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 
 interface ParentTag {
   id: string;
@@ -61,6 +65,22 @@ const ParentChildDiary = () => {
   const [allTags, setAllTags] = useState<ParentTag[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Fetch active bindings for teen usage stats
+  const { data: activeBindings } = useQuery({
+    queryKey: ['parent-teen-bindings-diary', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase
+        .from('parent_teen_bindings')
+        .select('id, teen_user_id, teen_nickname, status')
+        .eq('parent_user_id', user.id)
+        .eq('status', 'active');
+      return data || [];
+    },
+    enabled: !!user?.id
+  });
 
   useEffect(() => {
     checkAuthAndLoadSessions();
@@ -428,7 +448,18 @@ const ParentChildDiary = () => {
             </TabsList>
 
             <TabsContent value="list" className="space-y-3 md:space-y-4">
-              <UnifiedEmotionHeatmap 
+              {/* Communication Progress Curve */}
+              <CommunicationProgressCurve />
+
+              {/* Teen Usage Stats */}
+              {activeBindings && activeBindings.length > 0 && (
+                <TeenUsageStats
+                  teenUserId={activeBindings[0].teen_user_id || undefined}
+                  bindingId={activeBindings[0].id}
+                />
+              )}
+
+              <UnifiedEmotionHeatmap
                 briefings={sessions.map(s => ({
                   id: s.id,
                   emotion_theme: s.briefing?.emotion_theme || "亲子对话",
