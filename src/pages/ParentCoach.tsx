@@ -20,7 +20,7 @@ import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
 import { ParentTeenBinding } from "@/components/parent-coach/ParentTeenBinding";
 import { ProblemTypeCard } from "@/components/parent-coach/ProblemTypeCard";
 import { TeenUsageStats } from "@/components/parent-coach/TeenUsageStats";
-import { Sparkles, Heart, Users } from "lucide-react";
+import { Sparkles, Heart, Users, ClipboardList, ChevronRight } from "lucide-react";
 
 export default function ParentCoach() {
   const navigate = useNavigate();
@@ -110,12 +110,31 @@ export default function ParentCoach() {
     triggerNotification,
   } = useSmartNotification('parent_coach');
 
-  // Redirect to intake if not completed
-  useEffect(() => {
-    if (!authLoading && !profileLoading && user && !existingProfile) {
-      navigate("/parent/intake");
-    }
-  }, [user, authLoading, profileLoading, existingProfile, navigate]);
+  // Intake guide card instead of redirect
+  const intakeGuideCard = !existingProfile && !profileLoading && user ? (
+    <div className="w-full mb-6">
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-5 shadow-lg">
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <ClipboardList className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-purple-800 mb-1">完成问卷，获得专属教练</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+              花2分钟完成简短问卷，我们将根据你的亲子困扰，提供个性化的教练指导方向
+            </p>
+            <Button
+              onClick={() => navigate("/parent/intake")}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-md"
+            >
+              开始问卷
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -240,6 +259,9 @@ ${briefingData.growth_story || '暂无记录'}
   // Teen Mode Module
   const teenModeModule = (
     <div className="w-full mt-6 space-y-4">
+      {/* Intake Guide Card */}
+      {intakeGuideCard}
+
       {/* Problem Type Card */}
       {existingProfile && (
         <ProblemTypeCard
