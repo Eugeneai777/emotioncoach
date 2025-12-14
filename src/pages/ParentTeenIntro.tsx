@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { TeenModeOnboarding } from "@/components/parent-coach/TeenModeOnboarding";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ export default function ParentTeenIntro() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [expandedScript, setExpandedScript] = useState<number | null>(0);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const copyScript = (script: string) => {
     navigator.clipboard.writeText(script);
@@ -254,7 +256,7 @@ export default function ParentTeenIntro() {
       {/* Fixed Bottom CTA */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur border-t border-teal-100">
         <Button
-          onClick={() => navigate("/parent-coach")}
+          onClick={() => setShowOnboarding(true)}
           className="w-full h-12 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white shadow-lg"
         >
           <Link2 className="h-5 w-5 mr-2" />
@@ -262,6 +264,14 @@ export default function ParentTeenIntro() {
           <ArrowRight className="h-5 w-5 ml-2" />
         </Button>
       </div>
+
+      <TeenModeOnboarding
+        open={showOnboarding}
+        onOpenChange={setShowOnboarding}
+        onGenerateCode={() => {
+          // 生成绑定码后的回调
+        }}
+      />
     </div>
   );
 }
