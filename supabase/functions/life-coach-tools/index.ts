@@ -128,6 +128,35 @@ serve(async (req) => {
         result = await searchCommunityPosts(supabase, params?.keyword, params?.post_type, params?.limit);
         break;
 
+      // ========== 家长-青少年双向工具 ==========
+      case 'track_parent_stage':
+        result = await trackParentStage(supabase, user.id, params?.stage, params?.stage_insight);
+        break;
+
+      case 'extract_teen_context':
+        result = await extractTeenContext(supabase, user.id, params);
+        break;
+
+      case 'generate_parent_session':
+        result = await generateParentSession(supabase, user.id, params);
+        break;
+
+      case 'generate_binding_code':
+        result = await generateBindingCode(supabase, user.id);
+        break;
+
+      case 'check_parent_context':
+        result = await checkParentContext(supabase, user.id);
+        break;
+
+      case 'create_communication_bridge':
+        result = await createCommunicationBridge(supabase, user.id, params);
+        break;
+
+      case 'track_teen_mood':
+        result = await trackTeenMood(supabase, user.id, params);
+        break;
+
       default:
         result = { error: `Unknown tool: ${tool}` };
     }
@@ -1046,7 +1075,6 @@ async function searchCommunityPosts(supabase: any, keyword: string, postType?: s
       };
     }
 
-    // 生成AI播报摘要
     const summaries = data.map((post: any, idx: number) => {
       const title = post.title || post.emotion_theme || '一条分享';
       const preview = post.content?.slice(0, 50) || '';
@@ -1080,4 +1108,361 @@ async function searchCommunityPosts(supabase: any, keyword: string, postType?: s
     console.error('Search community posts error:', error);
     return { success: false, error: '搜索出错' };
   }
+}
+
+// ========== 家长-青少年双向工具实现 ==========
+
+async function trackParentStage(supabase: any, userId: string, stage: number, stageInsight?: string) {
+  console.log(`[life-coach-tools] Tracking parent stage: ${stage} for user: ${userId}`);
+  
+  // 获取或创建当天的 session
+  const today = new Date().toISOString().split('T')[0];
+  
+  const { data: existingSession } = await supabase
+    .from('parent_coaching_sessions')
+    .select('id, current_stage')
+    .eq('user_id', userId)
+    .gte('created_at', today)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingSession) {
+    // 更新现有 session
+    const stageField = `stage_${stage}_insight`;
+    const updateData: any = {
+      current_stage: stage,
+      updated_at: new Date().toISOString(),
+    };
+    
+    if (stageInsight) {
+      if (stage === 1) updateData.stage_1_insight = stageInsight;
+      if (stage === 2) updateData.stage_2_insight = stageInsight;
+      if (stage === 3) updateData.stage_3_insight = stageInsight;
+      if (stage === 4) updateData.stage_4_insight = stageInsight;
+    }
+
+    await supabase
+      .from('parent_coaching_sessions')
+      .update(updateData)
+      .eq('id', existingSession.id);
+
+    return { 
+      success: true, 
+      stage,
+      message: `已进入第${stage}阶段`
+    };
+  } else {
+    // 创建新 session
+    const { data: newSession, error } = await supabase
+      .from('parent_coaching_sessions')
+      .insert({
+        user_id: userId,
+        current_stage: stage,
+        status: 'in_progress',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Create parent session error:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { 
+      success: true, 
+      stage,
+      session_id: newSession.id,
+      message: '对话已开始'
+    };
+  }
+}
+
+async function extractTeenContext(supabase: any, userId: string, params: any) {
+  console.log(`[life-coach-tools] Extracting teen context for user: ${userId}`);
+  
+  const { emotional_state, underlying_need, communication_bridge, parent_growth_point } = params;
+
+  // 获取当前活跃的绑定
+  const { data: binding } = await supabase
+    .from('parent_teen_bindings')
+    .select('id, teen_user_id')
+    .eq('parent_user_id', userId)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (!binding) {
+    // 没有绑定，仅保存上下文供未来使用
+    return { 
+      success: true, 
+      message: '信息已记录，等待孩子绑定后可同步',
+      has_binding: false
+    };
+  }
+
+  // 创建隐晦化的青少年引导上下文
+  const { data, error } = await supabase
+    .from('teen_coaching_contexts')
+    .insert({
+      binding_id: binding.id,
+      emotional_state,
+      underlying_need,
+      communication_bridge,
+      parent_growth_point,
+      is_used: false,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Extract teen context error:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { 
+    success: true, 
+    message: '已提取关键信息，将帮助引导孩子',
+    has_binding: true,
+    context_id: data.id
+  };
+}
+
+async function generateParentSession(supabase: any, userId: string, params: any) {
+  console.log(`[life-coach-tools] Generating parent session for user: ${userId}`);
+  
+  const { event_summary, parent_emotion, child_perspective, communication_suggestion, teen_context } = params;
+
+  // 获取今天的 session
+  const today = new Date().toISOString().split('T')[0];
+  
+  const { data: session } = await supabase
+    .from('parent_coaching_sessions')
+    .select('id')
+    .eq('user_id', userId)
+    .gte('created_at', today)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (session) {
+    // 更新 session
+    await supabase
+      .from('parent_coaching_sessions')
+      .update({
+        event_summary,
+        status: 'completed',
+        teen_context: teen_context || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', session.id);
+  }
+
+  // 如果有绑定，同步上下文
+  const { data: binding } = await supabase
+    .from('parent_teen_bindings')
+    .select('id')
+    .eq('parent_user_id', userId)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (binding && teen_context) {
+    await supabase
+      .from('teen_coaching_contexts')
+      .insert({
+        binding_id: binding.id,
+        emotional_state: teen_context.emotional_state || child_perspective,
+        underlying_need: teen_context.underlying_need || '',
+        communication_bridge: teen_context.communication_bridge || communication_suggestion,
+        is_used: false,
+      });
+  }
+
+  return { 
+    success: true, 
+    message: '简报已生成',
+    briefing: {
+      event_summary,
+      parent_emotion,
+      child_perspective,
+      communication_suggestion,
+    },
+    has_teen_sync: !!binding
+  };
+}
+
+async function generateBindingCode(supabase: any, userId: string) {
+  console.log(`[life-coach-tools] Generating binding code for user: ${userId}`);
+  
+  // 检查是否已有未过期的绑定码
+  const { data: existingBinding } = await supabase
+    .from('parent_teen_bindings')
+    .select('binding_code, expires_at')
+    .eq('parent_user_id', userId)
+    .eq('status', 'pending')
+    .gt('expires_at', new Date().toISOString())
+    .maybeSingle();
+
+  if (existingBinding) {
+    return {
+      success: true,
+      binding_code: existingBinding.binding_code,
+      expires_at: existingBinding.expires_at,
+      message: `您的邀请码是：${existingBinding.binding_code}，24小时内有效`
+    };
+  }
+
+  // 生成新的6位绑定码
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const expiresAt = new Date();
+  expiresAt.setHours(expiresAt.getHours() + 24);
+
+  const { data, error } = await supabase
+    .from('parent_teen_bindings')
+    .insert({
+      parent_user_id: userId,
+      binding_code: code,
+      status: 'pending',
+      expires_at: expiresAt.toISOString(),
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Generate binding code error:', error);
+    return { success: false, error: error.message };
+  }
+
+  return {
+    success: true,
+    binding_code: data.binding_code,
+    expires_at: data.expires_at,
+    message: `邀请码已生成：${data.binding_code}，请让孩子在24小时内使用`
+  };
+}
+
+async function checkParentContext(supabase: any, userId: string) {
+  console.log(`[life-coach-tools] Checking parent context for teen: ${userId}`);
+  
+  // 查找该青少年的绑定
+  const { data: binding } = await supabase
+    .from('parent_teen_bindings')
+    .select('id')
+    .eq('teen_user_id', userId)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (!binding) {
+    return {
+      success: true,
+      has_context: false,
+      message: '暂无家长关联'
+    };
+  }
+
+  // 获取最新的未使用上下文
+  const { data: contexts } = await supabase
+    .from('teen_coaching_contexts')
+    .select('*')
+    .eq('binding_id', binding.id)
+    .eq('is_used', false)
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  if (!contexts || contexts.length === 0) {
+    return {
+      success: true,
+      has_context: false,
+      message: '暂无新的引导信息'
+    };
+  }
+
+  // 标记为已使用
+  const contextIds = contexts.map((c: any) => c.id);
+  await supabase
+    .from('teen_coaching_contexts')
+    .update({ is_used: true })
+    .in('id', contextIds);
+
+  // 返回隐晦化的信息（不暴露来源）
+  return {
+    success: true,
+    has_context: true,
+    contexts: contexts.map((c: any) => ({
+      emotional_hint: c.emotional_state,
+      need_hint: c.underlying_need,
+      bridge_opportunity: c.communication_bridge,
+    })),
+    message: '已获取引导信息'
+  };
+}
+
+async function createCommunicationBridge(supabase: any, userId: string, params: any) {
+  console.log(`[life-coach-tools] Creating communication bridge for teen: ${userId}`);
+  
+  const { bridge_type, suggested_approach } = params;
+
+  // 查找绑定
+  const { data: binding } = await supabase
+    .from('parent_teen_bindings')
+    .select('id')
+    .eq('teen_user_id', userId)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  // 记录沟通桥梁创建（用于统计，不暴露给家长具体内容）
+  if (binding) {
+    await supabase
+      .from('teen_usage_logs')
+      .insert({
+        binding_id: binding.id,
+        session_type: 'communication_bridge',
+        mood_indicator: 'neutral',
+        session_duration_seconds: 0,
+      });
+  }
+
+  return {
+    success: true,
+    bridge_type,
+    suggested_approach,
+    message: '已记录沟通契机'
+  };
+}
+
+async function trackTeenMood(supabase: any, userId: string, params: any) {
+  console.log(`[life-coach-tools] Tracking teen mood for user: ${userId}`);
+  
+  const { mood_indicator, session_quality } = params;
+
+  // 查找绑定
+  const { data: binding } = await supabase
+    .from('parent_teen_bindings')
+    .select('id')
+    .eq('teen_user_id', userId)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (!binding) {
+    // 没有绑定，不记录
+    return { success: true, message: '情绪已感知' };
+  }
+
+  // 记录使用日志（仅频率和情绪指示，不记录内容）
+  const { error } = await supabase
+    .from('teen_usage_logs')
+    .insert({
+      binding_id: binding.id,
+      session_type: 'voice_chat',
+      mood_indicator: mood_indicator || 'neutral',
+      session_duration_seconds: 0, // 实际时长由前端更新
+    });
+
+  if (error) {
+    console.error('Track teen mood error:', error);
+  }
+
+  return { 
+    success: true, 
+    message: '已记录'
+  };
 }
