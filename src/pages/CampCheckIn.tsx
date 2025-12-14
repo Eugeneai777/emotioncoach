@@ -195,7 +195,7 @@ const CampCheckIn = () => {
             variant="ghost"
             size="sm"
             className="gap-1 text-teal-700 hover:bg-teal-100/50 dark:text-teal-300"
-            onClick={() => navigate("/")}
+            onClick={() => navigate(-1)}
           >
             <ArrowLeft className="h-4 w-4" />
             返回
