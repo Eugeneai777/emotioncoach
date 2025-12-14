@@ -107,6 +107,26 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
         return;
       }
 
+      // 检查是否已有该类型的活跃训练营
+      const { data: existingCamp } = await supabase
+        .from('training_camps')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('camp_type', campTemplate.camp_type)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (existingCamp) {
+        toast({
+          title: "已有进行中的训练营",
+          description: "该类型训练营已开启，请先完成或结束后再开启新的",
+          variant: "destructive"
+        });
+        onOpenChange(false);
+        onSuccess?.(existingCamp.id);
+        return;
+      }
+
       const endDate = addDays(startDate, campTemplate.duration_days - 1);
 
       // 准备要创建的训练营记录
@@ -125,27 +145,38 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
 
       // 如果是情感绽放训练营且选择了联合报名，添加身份绽放训练营
       if (campTemplate.camp_type === 'emotion_bloom' && bundleWithIdentity) {
-        // 获取身份绽放训练营模板
-        const { data: identityTemplate } = await supabase
-          .from('camp_templates')
-          .select('*')
+        // 先检查身份绽放是否已有活跃营
+        const { data: existingIdentityCamp } = await supabase
+          .from('training_camps')
+          .select('id')
+          .eq('user_id', user.id)
           .eq('camp_type', 'identity_bloom')
-          .single();
+          .eq('status', 'active')
+          .maybeSingle();
 
-        if (identityTemplate) {
-          const identityEndDate = addDays(startDate, identityTemplate.duration_days - 1);
-          campsToCreate.push({
-            user_id: user.id,
-            camp_name: identityTemplate.camp_name,
-            camp_type: identityTemplate.camp_type,
-            duration_days: identityTemplate.duration_days,
-            start_date: format(startDate, 'yyyy-MM-dd'),
-            end_date: format(identityEndDate, 'yyyy-MM-dd'),
-            current_day: 0,
-            completed_days: 0,
-            check_in_dates: [],
-            status: 'active'
-          });
+        if (!existingIdentityCamp) {
+          // 获取身份绽放训练营模板
+          const { data: identityTemplate } = await supabase
+            .from('camp_templates')
+            .select('*')
+            .eq('camp_type', 'identity_bloom')
+            .single();
+
+          if (identityTemplate) {
+            const identityEndDate = addDays(startDate, identityTemplate.duration_days - 1);
+            campsToCreate.push({
+              user_id: user.id,
+              camp_name: identityTemplate.camp_name,
+              camp_type: identityTemplate.camp_type,
+              duration_days: identityTemplate.duration_days,
+              start_date: format(startDate, 'yyyy-MM-dd'),
+              end_date: format(identityEndDate, 'yyyy-MM-dd'),
+              current_day: 0,
+              completed_days: 0,
+              check_in_dates: [],
+              status: 'active'
+            });
+          }
         }
       }
 
@@ -154,7 +185,18 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
         .insert(campsToCreate)
         .select('id');
 
-      if (error) throw error;
+      if (error) {
+        // 处理唯一索引冲突
+        if (error.code === '23505') {
+          toast({
+            title: "已有进行中的训练营",
+            description: "该类型训练营已开启，请先完成或结束后再开启新的",
+            variant: "destructive"
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: "训练营已开启！",
