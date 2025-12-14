@@ -7,7 +7,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useParentIntake } from "@/hooks/useParentIntake";
 import { IntakeQuestionCard } from "@/components/parent-intake/IntakeQuestionCard";
 import { IntakeResultCard } from "@/components/parent-intake/IntakeResultCard";
+import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { Helmet } from "react-helmet";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const INTAKE_QUESTIONS = [
   {
@@ -91,10 +94,24 @@ const ParentIntake = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [showResult, setShowResult] = useState(false);
+  const [showStartCampDialog, setShowStartCampDialog] = useState(false);
   const [identifiedTypes, setIdentifiedTypes] = useState<{
     primary: string;
     secondary: string | null;
   } | null>(null);
+
+  // 查询训练营模板
+  const { data: campTemplate } = useQuery({
+    queryKey: ['camp-template', 'parent_emotion_21'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('camp_templates')
+        .select('*')
+        .eq('camp_type', 'parent_emotion_21')
+        .single();
+      return data;
+    }
+  });
 
   // Check if user already has profile
   useEffect(() => {
@@ -185,7 +202,11 @@ const ParentIntake = () => {
   };
 
   const handleStartCoaching = () => {
-    navigate("/parent-coach?mode=parent_teen");
+    setShowStartCampDialog(true);
+  };
+
+  const handleCampSuccess = () => {
+    navigate("/parent-coach");
   };
 
   if (authLoading) {
@@ -289,6 +310,16 @@ const ParentIntake = () => {
               </Button>
             </div>
           </footer>
+        )}
+
+        {/* Start Camp Dialog */}
+        {campTemplate && (
+          <StartCampDialog
+            open={showStartCampDialog}
+            onOpenChange={setShowStartCampDialog}
+            campTemplate={campTemplate}
+            onSuccess={handleCampSuccess}
+          />
         )}
       </div>
     </>

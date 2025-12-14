@@ -110,31 +110,7 @@ export default function ParentCoach() {
     triggerNotification,
   } = useSmartNotification('parent_coach');
 
-  // Intake guide card instead of redirect
-  const intakeGuideCard = !existingProfile && !profileLoading && user ? (
-    <div className="w-full mb-6">
-      <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-5 shadow-lg">
-        <div className="flex items-start gap-4">
-          <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-            <ClipboardList className="w-6 h-6 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-purple-800 mb-1">完成问卷，获得专属教练</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-              花2分钟完成简短问卷，我们将根据你的亲子困扰，提供个性化的教练指导方向
-            </p>
-            <Button
-              onClick={() => navigate("/parent/intake")}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-md"
-            >
-              开始问卷
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  ) : null;
+  // No intake guide card - users can chat directly without completing questionnaire
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -240,18 +216,13 @@ ${briefingData.growth_story || '暂无记录'}
   const trainingCampModule = (
     <div className="w-full mt-6">
       <CoachTrainingCamp
-        activeCamp={null}
-        onStartCamp={() => {
-          if (hasJoinedParentCamp && existingParentCamp) {
-            navigate(`/camp/${existingParentCamp.id}`);
-          } else {
-            setShowStartDialog(true);
-          }
-        }}
         onViewDetails={() => navigate("/parent-camp")}
         colorTheme="purple"
         campName="21天青少年困境突破营"
         campDescription="通过父母三力模型（稳定力、洞察力、修复力），21天系统提升亲子关系"
+        campType="parent_emotion_21"
+        requireIntake={true}
+        intakeRoute="/parent/intake"
       />
     </div>
   );
@@ -259,8 +230,6 @@ ${briefingData.growth_story || '暂无记录'}
   // Teen Mode Module
   const teenModeModule = (
     <div className="w-full mt-6 space-y-4">
-      {/* Intake Guide Card */}
-      {intakeGuideCard}
 
       {/* Problem Type Card */}
       {existingProfile && (

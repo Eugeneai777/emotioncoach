@@ -71,13 +71,33 @@ export const CoachTrainingCamp = ({
   colorTheme = "green",
   campName,
   campDescription,
-  campType
-}: CoachTrainingCampProps) => {
+  campType,
+  requireIntake = false,
+  intakeRoute = "/parent/intake"
+}: CoachTrainingCampProps & { 
+  requireIntake?: boolean; 
+  intakeRoute?: string;
+}) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [showStartDialog, setShowStartDialog] = useState(false);
   const theme = themeStyles[colorTheme];
   const IconComponent = theme.icon;
+
+  // 检查用户是否已完成入驻问卷（仅当 requireIntake 为 true 时）
+  const { data: intakeProfile } = useQuery({
+    queryKey: ['parent-intake-profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('parent_problem_profile')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user && requireIntake
+  });
 
   // 如果提供了 campType，从数据库查询训练营模板和用户训练营
   const { data: campTemplate } = useQuery({
@@ -118,6 +138,12 @@ export const CoachTrainingCamp = ({
   const displayDescription = campDescription || campTemplate?.camp_subtitle || "用21天养成习惯，获得专属徽章和成长洞察";
 
   const handleStartCamp = () => {
+    // 如果需要先完成问卷且用户未完成，跳转到问卷页面
+    if (requireIntake && !intakeProfile) {
+      navigate(intakeRoute);
+      return;
+    }
+    
     if (externalOnStartCamp) {
       externalOnStartCamp();
     } else if (activeCamp) {

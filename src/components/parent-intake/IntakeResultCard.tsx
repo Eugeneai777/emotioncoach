@@ -160,28 +160,20 @@ export const IntakeResultCard: React.FC<IntakeResultCardProps> = ({
       >
         <Button
           onClick={onStartCoaching}
-          className="w-full h-12 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-lg"
+          className="w-full h-12 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-lg"
         >
-          开始专属对话
+          🏕️ 开启训练营
           <ArrowRight className="h-5 w-5 ml-2" />
         </Button>
         
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="flex-1 border-orange-200 text-orange-700 hover:bg-orange-50"
-          >
-            <BookOpen className="h-4 w-4 mr-2" />
-            查看训练营
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1 border-orange-200 text-orange-700 hover:bg-orange-50"
-          >
-            <Users className="h-4 w-4 mr-2" />
-            邀请孩子
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          className="w-full border-purple-200 text-purple-700 hover:bg-purple-50"
+          onClick={() => window.location.href = '/parent-coach'}
+        >
+          <Users className="h-4 w-4 mr-2" />
+          先和亲子教练聊聊
+        </Button>
       </motion.div>
     </motion.div>
   );
