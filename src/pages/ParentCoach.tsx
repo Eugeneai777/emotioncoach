@@ -20,6 +20,8 @@ import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
 import { ParentTeenBinding } from "@/components/parent-coach/ParentTeenBinding";
 import { ProblemTypeCard } from "@/components/parent-coach/ProblemTypeCard";
 import { TeenUsageStats } from "@/components/parent-coach/TeenUsageStats";
+import { ParentVoiceCallCTA } from "@/components/parent-coach/ParentVoiceCallCTA";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { Sparkles, Heart, Users, ClipboardList, ChevronRight } from "lucide-react";
 
 export default function ParentCoach() {
@@ -48,6 +50,7 @@ export default function ParentCoach() {
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [showVoiceChat, setShowVoiceChat] = useState(false);
 
   const { user, loading: authLoading, signOut } = useAuth();
   const { data: coachConfig } = useCoachTemplate('parent');
@@ -361,6 +364,16 @@ ${briefingData.growth_story || '暂无记录'}
           growthStory={briefing.growthStory}
         />
       )}
+      {showVoiceChat && (
+        <CoachVoiceChat
+          onClose={() => setShowVoiceChat(false)}
+          coachEmoji={coachConfig?.emoji || "💜"}
+          coachTitle="亲子教练"
+          primaryColor="purple"
+          tokenEndpoint="vibrant-life-realtime-token"
+          mode={existingProfile ? 'parent_teen' : 'general'}
+        />
+      )}
     </>
   );
 
@@ -410,6 +423,13 @@ ${briefingData.growth_story || '暂无记录'}
         ) : undefined
       }
       enableVoiceInput={true}
+      enableStepsCollapse={true}
+      voiceChatCTA={
+        <ParentVoiceCallCTA
+          onVoiceChatClick={() => setShowVoiceChat(true)}
+          hasCompletedIntake={!!existingProfile}
+        />
+      }
       dialogs={dialogs}
     />
   );
