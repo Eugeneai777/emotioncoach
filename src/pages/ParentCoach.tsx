@@ -242,6 +242,7 @@ ${briefingData.growth_story || '暂无记录'}
   const trainingCampModule = (
     <div className="w-full mt-6">
       <CoachTrainingCamp
+        onStartCamp={handleStartCampClick}
         onViewDetails={() => navigate("/parent-camp")}
         colorTheme="purple"
         campName="21天青少年困境突破营"
