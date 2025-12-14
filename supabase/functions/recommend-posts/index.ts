@@ -311,3 +311,12 @@ serve(async (req) => {
     );
   }
 });
+
+// 添加全局错误处理，防止未捕获的异常导致500
+addEventListener("error", (event) => {
+  console.error("全局错误:", event.error);
+});
+
+addEventListener("unhandledrejection", (event) => {
+  console.error("未处理的Promise拒绝:", event.reason);
+});
