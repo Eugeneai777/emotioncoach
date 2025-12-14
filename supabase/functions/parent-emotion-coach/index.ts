@@ -156,6 +156,10 @@ serve(async (req) => {
                   type: "string",
                   description: "主题情绪,如:烦躁 · 不安 · \"还不够好\""
                 },
+                emotion_intensity: {
+                  type: "number",
+                  description: "情绪强度1-10分,1为最轻微,10为最强烈。根据父母描述的情绪状态评估"
+                },
                 emotion_tags: {
                   type: "array",
                   items: { type: "string" },
@@ -190,7 +194,7 @@ serve(async (req) => {
                   description: "1mm的松动:从今天对话中看到的亲子关系变化可能,20-30字"
                 }
               },
-              required: ["emotion_theme", "emotion_tags", "stage_1_content", "stage_2_content", "stage_3_content", "stage_4_content", "insight", "action", "growth_story"]
+              required: ["emotion_theme", "emotion_intensity", "emotion_tags", "stage_1_content", "stage_2_content", "stage_3_content", "stage_4_content", "insight", "action", "growth_story"]
             }
           }
         }
@@ -634,6 +638,7 @@ ${getStagePrompt(updatedSession?.current_stage || 0)}
               .insert({
                 conversation_id: conversationData.id,
                 emotion_theme: followUpArgs.emotion_theme,
+                emotion_intensity: followUpArgs.emotion_intensity || 5,
                 stage_1_content: followUpArgs.stage_1_content,
                 stage_2_content: followUpArgs.stage_2_content,
                 stage_3_content: followUpArgs.stage_3_content,
@@ -757,6 +762,7 @@ ${getStagePrompt(updatedSession?.current_stage || 0)}
           .insert({
             conversation_id: conversationData.id,
             emotion_theme: args.emotion_theme,
+            emotion_intensity: args.emotion_intensity || 5,
             stage_1_content: args.stage_1_content,
             stage_2_content: args.stage_2_content,
             stage_3_content: args.stage_3_content,
