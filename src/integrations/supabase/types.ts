@@ -4431,6 +4431,39 @@ export type Database = {
         }
         Relationships: []
       }
+      teen_access_tokens: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_used_at: string | null
+          parent_user_id: string
+          teen_nickname: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          parent_user_id: string
+          teen_nickname?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          parent_user_id?: string
+          teen_nickname?: string | null
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
       teen_coaching_contexts: {
         Row: {
           additional_context: Json | null

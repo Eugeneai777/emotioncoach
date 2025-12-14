@@ -8,11 +8,11 @@ import {
   Sparkles, 
   Info,
   Heart,
-  TrendingUp
+  Share2
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { TeenModeOnboarding } from "./TeenModeOnboarding";
 import { TeenUsageStats } from "./TeenUsageStats";
+import TeenInviteShareDialog from "./TeenInviteShareDialog";
 
 interface TeenModeEntryCardProps {
   hasActiveBinding: boolean;
@@ -29,7 +29,7 @@ export function TeenModeEntryCard({
   onGenerateCode 
 }: TeenModeEntryCardProps) {
   const navigate = useNavigate();
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   if (hasActiveBinding && bindingData) {
     // Show usage stats for bound teens
@@ -104,11 +104,11 @@ export function TeenModeEntryCard({
 
                 <div className="flex gap-2">
                   <Button
-                    onClick={() => setShowOnboarding(true)}
+                    onClick={() => setShowShareDialog(true)}
                     className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
                   >
-                    开始邀请
-                    <ArrowRight className="h-4 w-4 ml-1" />
+                    <Share2 className="h-4 w-4 mr-1" />
+                    生成邀请卡片
                   </Button>
                   <Button
                     variant="outline"
@@ -124,10 +124,9 @@ export function TeenModeEntryCard({
         </Card>
       </motion.div>
 
-      <TeenModeOnboarding
-        open={showOnboarding}
-        onOpenChange={setShowOnboarding}
-        onGenerateCode={onGenerateCode}
+      <TeenInviteShareDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
       />
     </>
   );
