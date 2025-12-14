@@ -7,7 +7,8 @@ import { CoachHeader } from "./CoachHeader";
 import { CoachEmptyState } from "./CoachEmptyState";
 import { CoachInputFooter } from "./CoachInputFooter";
 import { useAuth } from "@/hooks/useAuth";
-import { getCoachBackgroundGradient, getCoachLoaderColor } from "@/utils/coachThemeUtils";
+import { CoachThemeConfig } from "@/hooks/useCoachTemplates";
+import { getThemeBackgroundGradient, getThemeLoaderColor } from "@/utils/coachThemeConfig";
 import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
 
 interface Step {
@@ -40,6 +41,7 @@ interface CoachLayoutProps {
   description: string;
   gradient: string;
   primaryColor: string;
+  themeConfig?: CoachThemeConfig;
   
   // Steps configuration - can use new stepsConfig or legacy individual props
   stepsConfig?: StepsConfig;
@@ -135,6 +137,7 @@ export const CoachLayout = ({
   description,
   gradient,
   primaryColor,
+  themeConfig,
   stepsConfig,
   steps,
   stepsTitle,
@@ -303,8 +306,8 @@ export const CoachLayout = ({
 
   if (authLoading) {
     return (
-      <div className={`min-h-screen bg-gradient-to-br ${getCoachBackgroundGradient(primaryColor)} flex items-center justify-center`}>
-        <Loader2 className={`w-8 h-8 animate-spin ${getCoachLoaderColor(primaryColor)}`} />
+      <div className={`min-h-screen bg-gradient-to-br ${getThemeBackgroundGradient(primaryColor, themeConfig)} flex items-center justify-center`}>
+        <Loader2 className={`w-8 h-8 animate-spin ${getThemeLoaderColor(primaryColor, themeConfig)}`} />
       </div>
     );
   }
@@ -313,7 +316,7 @@ export const CoachLayout = ({
 
   return (
     <>
-      <div className={`min-h-screen bg-gradient-to-br ${getCoachBackgroundGradient(primaryColor)} flex flex-col`}>
+      <div className={`min-h-screen bg-gradient-to-br ${getThemeBackgroundGradient(primaryColor, themeConfig)} flex flex-col`}>
         {/* Header */}
         <CoachHeader
           emoji={emoji}
@@ -383,6 +386,7 @@ export const CoachLayout = ({
                 stepsTitle={resolvedStepsTitle}
                 stepsEmoji={resolvedStepsEmoji}
                 primaryColor={primaryColor}
+                themeConfig={themeConfig}
                 moreInfoRoute={resolvedMoreInfoRoute}
                 scenarios={scenarios}
                 extraContent={extraContent}

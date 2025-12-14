@@ -91,6 +91,7 @@ const CommunicationCoach = () => {
         description={template.description || ''}
         gradient={template.gradient || 'from-blue-500 to-indigo-500'}
         primaryColor={template.primary_color || 'blue'}
+        themeConfig={template.theme_config}
         steps={template.steps || []}
         stepsTitle={template.steps_title || '四部曲'}
         stepsEmoji={template.steps_emoji || '🎯'}

@@ -421,6 +421,7 @@ ${briefingData.growth_story || '暂无记录'}
       description={coachConfig?.description || "跟劲老师一起，化解亲子情绪困扰"}
       gradient={coachConfig?.gradient || "from-purple-500 to-pink-500"}
       primaryColor={coachConfig?.primary_color || "purple"}
+      themeConfig={coachConfig?.theme_config}
       steps={coachConfig?.steps || []}
       stepsTitle={coachConfig?.steps_title || "亲子情绪四部曲"}
       stepsEmoji={coachConfig?.steps_emoji || "💜"}

@@ -179,6 +179,7 @@ const DynamicCoach = () => {
       description={template.description || ''}
       gradient={template.gradient || 'from-rose-500 to-red-500'}
       primaryColor={template.primary_color || 'red'}
+      themeConfig={template.theme_config}
       steps={transformedSteps}
       stepsTitle={template.steps_title || '四部曲'}
       stepsEmoji={template.steps_emoji || '✨'}
