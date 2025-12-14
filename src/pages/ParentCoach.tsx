@@ -22,6 +22,7 @@ import { ProblemTypeCard } from "@/components/parent-coach/ProblemTypeCard";
 import { TeenUsageStats } from "@/components/parent-coach/TeenUsageStats";
 import { ParentVoiceCallCTA } from "@/components/parent-coach/ParentVoiceCallCTA";
 import { ParentOnboardingGuide } from "@/components/parent-coach/ParentOnboardingGuide";
+import { IntakeOnboardingDialog } from "@/components/parent-intake/IntakeOnboardingDialog";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { Sparkles, Heart } from "lucide-react";
 
@@ -49,6 +50,7 @@ export default function ParentCoach() {
   const [briefing, setBriefing] = useState<any>(null);
   const [pendingBriefing, setPendingBriefing] = useState<any>(null);
   const [showStartDialog, setShowStartDialog] = useState(false);
+  const [showOnboardingFlow, setShowOnboardingFlow] = useState(false);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [showVoiceChat, setShowVoiceChat] = useState(false);
@@ -216,13 +218,22 @@ ${briefingData.growth_story || '暂无记录'}
     await handleSendMessage(option);
   };
 
+  const handleStartCampClick = () => {
+    const hasSeenOnboarding = localStorage.getItem('parent_onboarding_seen');
+    if (hasSeenOnboarding) {
+      setShowStartDialog(true);
+    } else {
+      setShowOnboardingFlow(true);
+    }
+  };
+
   // Onboarding Guide Module
   const onboardingGuide = (
     <ParentOnboardingGuide
       hasCompletedIntake={!!existingProfile}
       hasJoinedCamp={hasJoinedParentCamp}
       onStartIntake={() => navigate("/parent/intake")}
-      onStartCamp={() => setShowStartDialog(true)}
+      onStartCamp={handleStartCampClick}
       onViewCampDetails={() => navigate("/parent-camp")}
     />
   );
@@ -386,6 +397,19 @@ ${briefingData.growth_story || '暂无记录'}
           mode={existingProfile ? 'parent_teen' : 'general'}
         />
       )}
+      <IntakeOnboardingDialog
+        open={showOnboardingFlow}
+        onOpenChange={setShowOnboardingFlow}
+        primaryType={existingProfile?.primary_problem_type || ''}
+        secondaryType={existingProfile?.secondary_problem_types?.[0] || null}
+        onStartCamp={() => {
+          localStorage.setItem('parent_onboarding_seen', 'true');
+          setShowStartDialog(true);
+        }}
+        onStartChat={() => {
+          localStorage.setItem('parent_onboarding_seen', 'true');
+        }}
+      />
     </>
   );
 
