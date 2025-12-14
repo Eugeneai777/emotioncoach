@@ -14,7 +14,33 @@ interface TrainingCampCardProps {
   onCheckIn?: () => void;
 }
 
+const getThemeColors = (campType: string) => {
+  if (campType.includes('parent') || campType.includes('teen')) {
+    return {
+      cardBg: 'from-purple-50/80 via-pink-50/50 to-rose-50/30 dark:from-purple-950/20 dark:via-pink-950/10 dark:to-rose-950/10',
+      borderColor: 'border-purple-200/40 dark:border-purple-800/30',
+      titleColor: 'text-purple-800 dark:text-purple-200',
+      accentColor: 'text-purple-600 dark:text-purple-400',
+      mutedAccent: 'text-purple-600/50 dark:text-purple-400/50',
+      progressBg: 'bg-purple-100/50 dark:bg-purple-900/30',
+      buttonGradient: 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-sm',
+      outlineButton: 'text-purple-600 border-purple-200 hover:bg-purple-50 hover:border-purple-400 dark:text-purple-400 dark:border-purple-700 dark:hover:bg-purple-900/30'
+    };
+  }
+  return {
+    cardBg: 'from-teal-50/80 via-cyan-50/50 to-blue-50/30 dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10',
+    borderColor: 'border-teal-200/40 dark:border-teal-800/30',
+    titleColor: 'text-teal-800 dark:text-teal-200',
+    accentColor: 'text-teal-600 dark:text-teal-400',
+    mutedAccent: 'text-teal-600/50 dark:text-teal-400/50',
+    progressBg: 'bg-teal-100/50 dark:bg-teal-900/30',
+    buttonGradient: 'bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shadow-sm',
+    outlineButton: 'text-teal-600 border-teal-200 hover:bg-teal-50 hover:border-teal-400 dark:text-teal-400 dark:border-teal-700 dark:hover:bg-teal-900/30'
+  };
+};
+
 export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
+  const colors = getThemeColors(camp.camp_type);
   const navigate = useNavigate();
   
   const today = getTodayInBeijing();
@@ -52,11 +78,11 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
   ];
 
   return (
-    <Card className="p-5 bg-gradient-to-br from-teal-50/80 via-cyan-50/50 to-blue-50/30 border-teal-200/40 shadow-sm hover:shadow-md transition-all dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10 dark:border-teal-800/30">
+    <Card className={`p-5 bg-gradient-to-br ${colors.cardBg} ${colors.borderColor} shadow-sm hover:shadow-md transition-all`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-base font-semibold flex items-center gap-2 text-teal-800 dark:text-teal-200">
+          <h3 className={`text-base font-semibold flex items-center gap-2 ${colors.titleColor}`}>
             🏕️ {camp.camp_name}
           </h3>
         </div>
@@ -73,7 +99,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
         <span className="text-muted-foreground">第{displayCurrentDay}天</span>
         <span className="text-muted-foreground/50">·</span>
         {hasCheckedInToday ? (
-          <span className="text-teal-600 dark:text-teal-400 flex items-center gap-1">
+          <span className={`${colors.accentColor} flex items-center gap-1`}>
             <CheckCircle2 className="h-3.5 w-3.5" />今日已打卡
           </span>
         ) : (
@@ -91,15 +117,15 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
               <span className={`text-lg transition-all duration-300 ${m.reached ? 'scale-110' : 'opacity-40 grayscale'}`}>
                 {m.icon}
               </span>
-              <span className={`text-[10px] mt-1 ${m.reached ? 'text-teal-600 dark:text-teal-400 font-medium' : 'text-muted-foreground'}`}>
+              <span className={`text-[10px] mt-1 ${m.reached ? `${colors.accentColor} font-medium` : 'text-muted-foreground'}`}>
                 {m.label}
               </span>
             </div>
           ))}
         </div>
-        <Progress value={progressPercent} className="h-2 bg-teal-100/50 dark:bg-teal-900/30" />
+        <Progress value={progressPercent} className={`h-2 ${colors.progressBg}`} />
         <div className="text-center text-xs text-muted-foreground mt-2">
-          已完成 <span className="font-semibold text-teal-600 dark:text-teal-400">{camp.completed_days}</span>/{camp.duration_days} 天 ({Math.round(progressPercent)}%)
+          已完成 <span className={`font-semibold ${colors.accentColor}`}>{camp.completed_days}</span>/{camp.duration_days} 天 ({Math.round(progressPercent)}%)
         </div>
       </div>
 
@@ -107,9 +133,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
       <div className="flex gap-2">
         <Button 
           onClick={() => navigate(`/camp-checkin/${camp.id}`)}
-          className={`flex-1 ${hasCheckedInToday 
-            ? '' 
-            : 'bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shadow-sm'}`}
+          className={`flex-1 ${hasCheckedInToday ? '' : colors.buttonGradient}`}
           variant={hasCheckedInToday ? 'outline' : 'default'}
         >
           <Calendar className="h-4 w-4 mr-2" />
@@ -119,7 +143,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
           variant="outline"
           size="sm"
           onClick={() => navigate(`/camp-intro/${camp.camp_type}`)}
-          className="text-teal-600 border-teal-200 hover:bg-teal-50 hover:border-teal-400 dark:text-teal-400 dark:border-teal-700 dark:hover:bg-teal-900/30"
+          className={colors.outlineButton}
         >
           <TrendingUp className="h-4 w-4 mr-1" />
           介绍
