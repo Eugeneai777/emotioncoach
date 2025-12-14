@@ -55,10 +55,10 @@ export const IntakeQuestionCard: React.FC<IntakeQuestionCardProps> = ({
     >
       {/* Question header */}
       <div className="text-center space-y-2">
-        <h2 className="text-xl font-semibold text-foreground">
+        <h2 className="text-lg sm:text-xl font-semibold text-foreground line-clamp-2">
           {question.question}
         </h2>
-        <p className="text-sm text-muted-foreground">{question.subtitle}</p>
+        <p className="text-xs sm:text-sm text-muted-foreground">{question.subtitle}</p>
       </div>
 
       {/* Options */}
