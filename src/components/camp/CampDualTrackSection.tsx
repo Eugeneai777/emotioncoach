@@ -48,7 +48,7 @@ export const CampDualTrackSection = ({ campType }: CampDualTrackSectionProps) =>
     <section className="space-y-8 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
       {/* Section Header */}
       <div className="text-center space-y-3">
-        <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 px-4 py-1">
+        <Badge className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-0 px-4 py-1">
           🧒 训练营专属功能
         </Badge>
         <h2 className="text-3xl md:text-4xl font-bold">让孩子也加入成长</h2>
@@ -59,10 +59,10 @@ export const CampDualTrackSection = ({ campType }: CampDualTrackSectionProps) =>
 
       {/* Core Value - Two Tracks */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-2 border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/30 dark:to-background">
+        <Card className="border-2 border-teal-200 dark:border-teal-800 bg-gradient-to-br from-teal-50 to-white dark:from-teal-950/30 dark:to-background">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+              <div className="p-3 rounded-xl bg-gradient-to-r from-teal-500 to-teal-600 text-white">
                 <Users className="w-6 h-6" />
               </div>
               <div>
@@ -77,25 +77,25 @@ export const CampDualTrackSection = ({ campType }: CampDualTrackSectionProps) =>
             </p>
             <ul className="space-y-2 text-sm">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-purple-500" />
+                <Check className="w-4 h-4 text-teal-500" />
                 <span>专业亲子教练对话</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-purple-500" />
+                <Check className="w-4 h-4 text-teal-500" />
                 <span>情绪管理工具</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-purple-500" />
+                <Check className="w-4 h-4 text-teal-500" />
                 <span>训练营每日任务</span>
               </li>
             </ul>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-pink-200 dark:border-pink-800 bg-gradient-to-br from-pink-50 to-white dark:from-pink-950/30 dark:to-background">
+        <Card className="border-2 border-cyan-200 dark:border-cyan-800 bg-gradient-to-br from-cyan-50 to-white dark:from-cyan-950/30 dark:to-background">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white">
+              <div className="p-3 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-white">
                 <Heart className="w-6 h-6" />
               </div>
               <div>
@@ -110,15 +110,15 @@ export const CampDualTrackSection = ({ campType }: CampDualTrackSectionProps) =>
             </p>
             <ul className="space-y-2 text-sm">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-pink-500" />
+                <Check className="w-4 h-4 text-cyan-500" />
                 <span>专属青少年AI伙伴</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-pink-500" />
+                <Check className="w-4 h-4 text-cyan-500" />
                 <span>对话内容完全保密</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-pink-500" />
+                <Check className="w-4 h-4 text-cyan-500" />
                 <span>懂TA的情绪支持</span>
               </li>
             </ul>
@@ -129,10 +129,10 @@ export const CampDualTrackSection = ({ campType }: CampDualTrackSectionProps) =>
       {/* Key Advantages */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { icon: MessageCircle, title: "隐性桥梁", desc: "家长洞察帮AI更懂孩子", color: "from-purple-500 to-purple-600" },
-          { icon: Lock, title: "绝对隐私", desc: "孩子对话完全保密", color: "from-pink-500 to-rose-500" },
-          { icon: Sparkles, title: "双向成长", desc: "各自成长，关系改善", color: "from-violet-500 to-purple-500" },
-          { icon: Shield, title: "专业陪伴", desc: "青少年心理特点引导", color: "from-fuchsia-500 to-pink-500" }
+          { icon: MessageCircle, title: "隐性桥梁", desc: "家长洞察帮AI更懂孩子", color: "from-teal-500 to-teal-600" },
+          { icon: Lock, title: "绝对隐私", desc: "孩子对话完全保密", color: "from-cyan-500 to-teal-500" },
+          { icon: Sparkles, title: "双向成长", desc: "各自成长，关系改善", color: "from-teal-400 to-cyan-500" },
+          { icon: Shield, title: "专业陪伴", desc: "青少年心理特点引导", color: "from-cyan-400 to-teal-500" }
         ].map((item, index) => (
           <Card key={index} className="text-center p-4 hover:shadow-lg transition-all duration-300">
             <div className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${item.color} text-white mb-3`}>
@@ -148,7 +148,7 @@ export const CampDualTrackSection = ({ campType }: CampDualTrackSectionProps) =>
       <Card className="border-2">
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-500" />
+            <Sparkles className="w-5 h-5 text-teal-500" />
             如何开启双轨模式
           </CardTitle>
         </CardHeader>
@@ -157,11 +157,11 @@ export const CampDualTrackSection = ({ campType }: CampDualTrackSectionProps) =>
             {HOW_IT_WORKS_STEPS.map((step, index) => (
               <div key={index} className="text-center space-y-2">
                 <div className="relative">
-                  <div className="w-12 h-12 mx-auto rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
+                  <div className="w-12 h-12 mx-auto rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg">
                     {index + 1}
                   </div>
                   {index < HOW_IT_WORKS_STEPS.length - 1 && (
-                    <div className="hidden md:block absolute top-1/2 left-full w-full h-0.5 bg-gradient-to-r from-purple-300 to-pink-300 -translate-y-1/2" />
+                    <div className="hidden md:block absolute top-1/2 left-full w-full h-0.5 bg-gradient-to-r from-teal-300 to-cyan-300 -translate-y-1/2" />
                   )}
                 </div>
                 <div className="text-2xl">{step.icon}</div>
@@ -174,10 +174,10 @@ export const CampDualTrackSection = ({ campType }: CampDualTrackSectionProps) =>
       </Card>
 
       {/* Invitation Scripts Preview */}
-      <Card className="border-2 border-purple-200 dark:border-purple-800">
+      <Card className="border-2 border-teal-200 dark:border-teal-800">
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-purple-500" />
+            <MessageCircle className="w-5 h-5 text-teal-500" />
             邀请话术参考
           </CardTitle>
           <p className="text-sm text-muted-foreground">
@@ -190,13 +190,13 @@ export const CampDualTrackSection = ({ campType }: CampDualTrackSectionProps) =>
               {previewScripts.map((script, index) => (
                 <div 
                   key={index}
-                  className="p-4 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border"
+                  className="p-4 rounded-lg bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/30 border"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-lg">{script.icon}</span>
-                        <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                        <span className="text-sm font-medium text-teal-600 dark:text-teal-400">
                           {script.scenario}
                         </span>
                       </div>
@@ -223,13 +223,13 @@ export const CampDualTrackSection = ({ campType }: CampDualTrackSectionProps) =>
               {INVITATION_SCRIPTS.slice(2).map((script, index) => (
                 <div 
                   key={index + 2}
-                  className="p-4 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border"
+                  className="p-4 rounded-lg bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/30 border"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-lg">{script.icon}</span>
-                        <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                        <span className="text-sm font-medium text-teal-600 dark:text-teal-400">
                           {script.scenario}
                         </span>
                       </div>
@@ -304,7 +304,7 @@ export const CampDualTrackSection = ({ campType }: CampDualTrackSectionProps) =>
         <Button
           size="lg"
           onClick={() => navigate("/parent-teen-intro")}
-          className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white shadow-lg"
+          className="gap-2 bg-gradient-to-r from-teal-500 to-cyan-500 hover:opacity-90 text-white shadow-lg"
         >
           了解双轨模式详情
           <ArrowRight className="w-5 h-5" />
