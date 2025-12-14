@@ -124,6 +124,8 @@ export const CoachTrainingCamp = ({
         .eq('user_id', user.id)
         .eq('camp_type', campType)
         .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
       return data as TrainingCamp | null;
     },
