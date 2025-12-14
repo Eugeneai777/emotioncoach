@@ -30,6 +30,8 @@ import ParentCampManual from "./pages/ParentCampManual";
 import ParentCoach from "./pages/ParentCoach";
 import ParentCoachIntro from "./pages/ParentCoachIntro";
 import ParentIntake from "./pages/ParentIntake";
+import TeenBind from "./pages/TeenBind";
+import TeenCoach from "./pages/TeenCoach";
 import CommunicationCoach from "./pages/CommunicationCoach";
 import CommunicationHistory from "./pages/CommunicationHistory";
 import CommunicationCoachIntro from "./pages/CommunicationCoachIntro";
@@ -108,6 +110,8 @@ const App = () => (
           <Route path="/parent-coach" element={<ParentCoach />} />
           <Route path="/parent-coach-intro" element={<ParentCoachIntro />} />
           <Route path="/parent/intake" element={<ParentIntake />} />
+          <Route path="/teen/bind" element={<TeenBind />} />
+          <Route path="/teen-coach" element={<TeenCoach />} />
           <Route path="/communication-coach" element={<CommunicationCoach />} />
           <Route path="/communication-history" element={<CommunicationHistory />} />
           <Route path="/communication-intro" element={<CommunicationCoachIntro />} />
