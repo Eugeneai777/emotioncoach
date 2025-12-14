@@ -3,11 +3,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { ArrowLeft, Heart, Eye, Brain, Zap, Users, MessageCircle, Target, Sparkles, BookOpen, Calendar } from "lucide-react";
 
 const ParentCoachIntro = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: coachConfig } = useCoachTemplate('parent');
 
   const handleGetStarted = () => {
     if (user) {
@@ -25,61 +27,49 @@ const ParentCoachIntro = () => {
     "不知道如何在情绪激动时保护亲子关系。"
   ];
 
-  // 四部曲步骤
-  const fourSteps = [
-    {
-      step: 1,
-      title: "觉察",
-      subtitle: "Feel it",
-      icon: Eye,
-      description: "看见自己此刻的情绪，不评判、不压抑",
-      details: [
-        "识别身体信号：心跳加速、呼吸变浅、肌肉紧绷",
-        "给情绪命名：是焦虑、愤怒、还是失望？",
-        "接纳当下状态：情绪没有对错，只是信号"
-      ],
-      color: "from-purple-400 to-purple-600"
-    },
-    {
-      step: 2,
-      title: "理解",
-      subtitle: "Understand it",
-      icon: Brain,
-      description: "理解情绪背后的需求和价值观",
-      details: [
-        "情绪背后藏着什么需求？安全感、尊重、连结？",
-        "这个情绪在保护什么重要的东西？",
-        "孩子的行为触动了我的哪个按钮？"
-      ],
-      color: "from-pink-400 to-pink-600"
-    },
-    {
-      step: 3,
-      title: "影响",
-      subtitle: "Influence it",
-      icon: Zap,
-      description: "用稳定的状态影响孩子",
-      details: [
-        "父母先稳，孩子才愿意走向你",
-        "用你的平静去安抚孩子的不安",
-        "成为孩子情绪的稳定锚点"
-      ],
-      color: "from-violet-400 to-violet-600"
-    },
-    {
-      step: 4,
-      title: "行动",
-      subtitle: "Act on it",
-      icon: Target,
-      description: "选择一个温柔的回应方式",
-      details: [
-        "用「我」开头表达感受，而非「你」开头指责",
-        "给出选择而非命令",
-        "表达期待而非批评"
-      ],
-      color: "from-fuchsia-400 to-fuchsia-600"
-    }
+  // 步骤图标和颜色映射
+  const stepIcons = [Eye, Brain, Zap, Target];
+  const stepColors = [
+    "from-purple-400 to-purple-600",
+    "from-pink-400 to-pink-600",
+    "from-violet-400 to-violet-600",
+    "from-fuchsia-400 to-fuchsia-600"
   ];
+  
+  // 详情内容（Intro页需要比数据库更丰富的说明）
+  const stepDetails = [
+    [
+      "识别身体信号：心跳加速、呼吸变浅、肌肉紧绷",
+      "给情绪命名：是焦虑、愤怒、还是失望？",
+      "接纳当下状态：情绪没有对错，只是信号"
+    ],
+    [
+      "情绪背后藏着什么需求？安全感、尊重、连结？",
+      "这个情绪在保护什么重要的东西？",
+      "孩子的行为触动了我的哪个按钮？"
+    ],
+    [
+      "父母先稳，孩子才愿意走向你",
+      "用你的平静去安抚孩子的不安",
+      "成为孩子情绪的稳定锚点"
+    ],
+    [
+      "用「我」开头表达感受，而非「你」开头指责",
+      "给出选择而非命令",
+      "表达期待而非批评"
+    ]
+  ];
+
+  // 从数据库读取步骤标题，保留详细内容
+  const fourSteps = (coachConfig?.steps as Array<{id: number; name: string; subtitle?: string; description?: string}> || []).map((step, index) => ({
+    step: index + 1,
+    title: step.name,
+    subtitle: step.subtitle || ['Feel it', 'Understand it', 'Influence it', 'Act on it'][index],
+    icon: stepIcons[index] || Eye,
+    description: step.description || '',
+    details: stepDetails[index] || [],
+    color: stepColors[index]
+  }));
 
   // 科学依据
   const scientificBasis = [
