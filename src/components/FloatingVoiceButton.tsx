@@ -8,7 +8,7 @@ import { WechatPayDialog } from '@/components/WechatPayDialog';
 import { supabase } from '@/integrations/supabase/client';
 
 // 不显示浮动按钮的路由（有劲AI页面有居中CTA，不需要浮动按钮）
-const EXCLUDED_ROUTES = ['/auth', '/wechat-auth', '/coach/vibrant_life_sage'];
+const EXCLUDED_ROUTES = ['/auth', '/wechat-auth', '/coach/vibrant_life_sage', '/parent-coach'];
 
 const POINTS_PER_MINUTE = 8;
 const MEMBER_365_PACKAGE = {
