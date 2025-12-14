@@ -137,7 +137,7 @@ const CampIntro = () => {
               size="lg" 
               onClick={() => {
                 if (hasJoinedCamp && existingCamp) {
-                  navigate(`/camp/${existingCamp.id}`);
+                  navigate(`/camp-checkin/${existingCamp.id}`);
                 } else {
                   setShowStartDialog(true);
                 }
@@ -359,7 +359,7 @@ const CampIntro = () => {
                 size="lg" 
                 onClick={() => {
                   if (hasJoinedCamp && existingCamp) {
-                    navigate(`/camp/${existingCamp.id}`);
+                    navigate(`/camp-checkin/${existingCamp.id}`);
                   } else {
                     setShowStartDialog(true);
                   }
@@ -385,7 +385,7 @@ const CampIntro = () => {
         open={showStartDialog}
         onOpenChange={setShowStartDialog}
         campTemplate={campTemplate}
-        onSuccess={(campId) => navigate(`/camp/${campId}`)}
+        onSuccess={(campId) => navigate(`/camp-checkin/${campId}`)}
       />
     </div>
   );

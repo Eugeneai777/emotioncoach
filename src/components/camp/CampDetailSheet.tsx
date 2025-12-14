@@ -99,7 +99,7 @@ export const CampDetailSheet = ({ open, onOpenChange, camp }: CampDetailSheetPro
                   size="lg" 
                   onClick={() => {
                     if (hasJoinedCamp && existingCamp) {
-                      navigate(`/camp/${existingCamp.id}`);
+                      navigate(`/camp-checkin/${existingCamp.id}`);
                     } else {
                       setShowStartDialog(true);
                     }
@@ -320,7 +320,7 @@ export const CampDetailSheet = ({ open, onOpenChange, camp }: CampDetailSheetPro
                   size="lg" 
                   onClick={() => {
                     if (hasJoinedCamp && existingCamp) {
-                      navigate(`/camp/${existingCamp.id}`);
+                      navigate(`/camp-checkin/${existingCamp.id}`);
                     } else {
                       setShowStartDialog(true);
                     }
@@ -343,7 +343,7 @@ export const CampDetailSheet = ({ open, onOpenChange, camp }: CampDetailSheetPro
         onSuccess={(campId) => {
           setShowStartDialog(false);
           onOpenChange(false);
-          navigate(`/camp/${campId}`);
+          navigate(`/camp-checkin/${campId}`);
         }}
       />
     </>

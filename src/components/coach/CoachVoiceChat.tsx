@@ -1021,7 +1021,7 @@ export const CoachVoiceChat = ({
                       clearInterval(durationRef.current);
                     }
                     recordSession().then(() => {
-                      navigate(`/camp/${camp.id}`);
+                      navigate(`/camp-checkin/${camp.id}`);
                     });
                   }}
                   className={`rounded-xl p-3 cursor-pointer transition-all w-44 flex-shrink-0 bg-gradient-to-br ${camp.gradient || 'from-amber-500/40 to-orange-500/30'} border border-white/20 hover:border-white/40`}

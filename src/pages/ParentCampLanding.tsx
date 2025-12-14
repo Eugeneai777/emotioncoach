@@ -75,7 +75,7 @@ export default function ParentCampLanding() {
           <Button 
             onClick={() => {
               if (hasJoinedCamp && existingCamp) {
-                navigate(`/camp/${existingCamp.id}`);
+                navigate(`/camp-checkin/${existingCamp.id}`);
               } else {
                 setShowStartDialog(true);
               }
@@ -880,7 +880,7 @@ export default function ParentCampLanding() {
                   size="lg"
                   onClick={() => {
                     if (hasJoinedCamp && existingCamp) {
-                      navigate(`/camp/${existingCamp.id}`);
+                      navigate(`/camp-checkin/${existingCamp.id}`);
                     } else {
                       setShowStartDialog(true);
                     }
@@ -920,7 +920,7 @@ export default function ParentCampLanding() {
       <FloatingCTA 
         onClick={() => {
           if (hasJoinedCamp && existingCamp) {
-            navigate(`/camp/${existingCamp.id}`);
+            navigate(`/camp-checkin/${existingCamp.id}`);
           } else {
             setShowStartDialog(true);
           }
@@ -940,7 +940,7 @@ export default function ParentCampLanding() {
             duration_days: campTemplate.duration_days,
             icon: campTemplate.icon
           }}
-          onSuccess={(campId) => navigate(`/camp/${campId}`)}
+          onSuccess={(campId) => navigate(`/camp-checkin/${campId}`)}
         />
       )}
     </div>
