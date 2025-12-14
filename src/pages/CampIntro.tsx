@@ -97,15 +97,17 @@ const CampIntro = () => {
     );
   }
 
+  const isParentCamp = campType?.includes('parent') || campType?.includes('teen');
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50/40 via-pink-50/30 to-background">
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white/60 dark:bg-card/80 backdrop-blur-md border-b">
+      <header className="border-b border-purple-200/50 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-6xl mx-auto px-4 py-3">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate("/camps")}
+            onClick={() => navigate(isParentCamp ? "/parent-diary" : "/camps")}
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -132,22 +134,6 @@ const CampIntro = () => {
               {campTemplate.description}
             </p>
           </div>
-          <div className="flex justify-center pt-2">
-            <Button 
-              size="lg" 
-              onClick={() => {
-                if (hasJoinedCamp && existingCamp) {
-                  navigate(`/camp-checkin/${existingCamp.id}`);
-                } else {
-                  setShowStartDialog(true);
-                }
-              }}
-              className={`gap-2 bg-gradient-to-r ${campTemplate.gradient} hover:opacity-90 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-lg px-8 py-6`}
-            >
-              {hasJoinedCamp ? '继续训练' : '立即加入'}
-              <ArrowRight className="w-5 h-5" />
-            </Button>
-          </div>
         </section>
 
         {/* Stages */}
@@ -161,7 +147,7 @@ const CampIntro = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {campTemplate.stages.map((stage: any, index: number) => (
-                <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-2">
+                <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-2 bg-white/80 border-purple-100">
                   <CardHeader>
                     <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${campTemplate.gradient} text-white text-sm font-medium mb-3 w-fit`}>
                       第{stage.stage}阶
@@ -206,7 +192,7 @@ const CampIntro = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {campTemplate.learning_formats.map((format: any, index: number) => (
-                <Card key={index} className="group hover:shadow-xl transition-all duration-300">
+                <Card key={index} className="group hover:shadow-xl transition-all duration-300 bg-white/80 border-purple-100">
                   <CardHeader>
                     <div className="space-y-3">
                       <div className="text-4xl">{format.icon}</div>
@@ -215,39 +201,6 @@ const CampIntro = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground">{format.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Daily Practice */}
-        {campTemplate.daily_practice && campTemplate.daily_practice.length > 0 && (
-          <section className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-700">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl md:text-3xl font-bold">每日练习流程</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                简单高效的日常练习，轻松融入生活
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {campTemplate.daily_practice.map((practice: any, index: number) => (
-                <Card key={index} className="group hover:shadow-2xl transition-all duration-300">
-                  <CardHeader>
-                    <div className="space-y-3">
-                      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${practice.gradient} text-white text-sm font-medium`}>
-                        <Clock className="w-4 h-4" />
-                        {practice.duration}
-                      </div>
-                      <div>
-                        <div className="text-2xl mb-2">{practice.time}</div>
-                        <CardTitle className="text-2xl">{practice.title}</CardTitle>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground leading-relaxed">{practice.content}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -269,7 +222,7 @@ const CampIntro = () => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {campTemplate.benefits.map((benefit: string, index: number) => (
-                <Card key={index} className="group hover:shadow-lg transition-all duration-300">
+                <Card key={index} className="group hover:shadow-lg transition-all duration-300 bg-white/80 border-purple-100">
                   <CardHeader>
                     <div className="flex items-start gap-4">
                       <div className={`p-3 rounded-xl bg-gradient-to-r ${campTemplate.gradient} text-white group-hover:scale-110 transition-transform duration-300`}>
@@ -299,11 +252,11 @@ const CampIntro = () => {
               {campTemplate.target_audience.map((audience: string, index: number) => (
                 <Card 
                   key={index}
-                  className="group hover:shadow-lg transition-all duration-300"
+                  className="group hover:shadow-lg transition-all duration-300 bg-white/80 border-purple-100"
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start gap-3">
-                      <Check className={`w-5 h-5 text-primary flex-shrink-0 mt-0.5`} />
+                      <Check className="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" />
                       <p className="text-sm leading-relaxed">{audience}</p>
                     </div>
                   </CardHeader>
@@ -331,46 +284,27 @@ const CampIntro = () => {
             </Card>
           </section>
         )}
-
-        {/* CTA Section */}
-        <section className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${campTemplate.gradient} p-8 md:p-10 text-center text-white animate-in fade-in-50 slide-in-from-bottom-4 duration-700`}>
-          <div className="absolute inset-0 bg-grid-white/10" />
-          <div className="relative z-10 space-y-4">
-            <h2 className="text-2xl md:text-3xl font-bold">
-              开始你的{['emotion_bloom', 'identity_bloom'].includes(campTemplate.camp_type) 
-                ? '' 
-                : `${campTemplate.duration_days}天`
-              }{campTemplate.camp_name}
-            </h2>
-            <p className="text-white/90 max-w-2xl mx-auto">
-              {campTemplate.description}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Button 
-                size="lg" 
-                onClick={() => {
-                  if (hasJoinedCamp && existingCamp) {
-                    navigate(`/camp-checkin/${existingCamp.id}`);
-                  } else {
-                    setShowStartDialog(true);
-                  }
-                }}
-                className="gap-2 bg-white text-purple-600 hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300 text-lg px-8 py-6"
-              >
-                {hasJoinedCamp ? '继续训练' : '立即开始'}
-                <Sparkles className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-        </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t py-8">
-        <div className="container max-w-6xl mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2024 有劲生活馆. 让生命绽放</p>
+      {/* Sticky Bottom CTA */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-purple-100 z-20">
+        <div className="container max-w-lg mx-auto">
+          <Button 
+            size="lg" 
+            onClick={() => {
+              if (hasJoinedCamp && existingCamp) {
+                navigate(`/camp-checkin/${existingCamp.id}`);
+              } else {
+                setShowStartDialog(true);
+              }
+            }}
+            className={`w-full gap-2 bg-gradient-to-r ${campTemplate.gradient} hover:opacity-90 text-white shadow-lg text-lg py-6`}
+          >
+            {hasJoinedCamp ? '继续训练' : '立即加入训练营'}
+            <ArrowRight className="w-5 h-5" />
+          </Button>
         </div>
-      </footer>
+      </div>
 
       <StartCampDialog
         open={showStartDialog}
