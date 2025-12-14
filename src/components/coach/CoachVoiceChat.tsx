@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { WechatPayDialog } from '@/components/WechatPayDialog';
 
+export type VoiceChatMode = 'general' | 'parent_teen' | 'teen';
+
 interface CoachVoiceChatProps {
   onClose: () => void;
   coachEmoji: string;
@@ -14,6 +16,7 @@ interface CoachVoiceChatProps {
   primaryColor?: string;
   tokenEndpoint?: string;
   userId?: string;
+  mode?: VoiceChatMode;
 }
 
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -28,7 +31,8 @@ export const CoachVoiceChat = ({
   coachTitle,
   primaryColor = 'rose',
   tokenEndpoint = 'vibrant-life-realtime-token',
-  userId
+  userId,
+  mode = 'general'
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
