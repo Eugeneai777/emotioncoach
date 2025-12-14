@@ -38,9 +38,9 @@ export default function ParentTeenIntro() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-violet-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-violet-100">
+      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-teal-100">
         <div className="flex items-center justify-between px-4 py-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
@@ -58,7 +58,7 @@ export default function ParentTeenIntro() {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-violet-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full flex items-center justify-center shadow-lg">
               <Users className="h-10 w-10 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-foreground mb-2">
@@ -75,7 +75,7 @@ export default function ParentTeenIntro() {
           <Card className="bg-white/80 backdrop-blur border-0 shadow-lg overflow-hidden">
             <CardContent className="p-6 space-y-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-violet-500" />
+                <Sparkles className="h-5 w-5 text-teal-500" />
                 什么是双轨模式？
               </h3>
               
@@ -87,7 +87,7 @@ export default function ParentTeenIntro() {
                     帮助你理解和调整情绪，学习更好的沟通方式
                   </p>
                 </div>
-                <div className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl">
                   <div className="text-2xl mb-2">🧒</div>
                   <h4 className="font-medium text-sm mb-1">青少年版</h4>
                   <p className="text-xs text-muted-foreground">
@@ -126,17 +126,17 @@ export default function ParentTeenIntro() {
 
         {/* Privacy Commitment */}
         <section className="px-4 mb-8">
-          <Card className="bg-gradient-to-br from-violet-100 to-purple-100 border-0 shadow-lg">
+          <Card className="bg-gradient-to-br from-teal-100 to-cyan-100 border-0 shadow-lg">
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-                <Shield className="h-5 w-5 text-violet-600" />
+                <Shield className="h-5 w-5 text-teal-600" />
                 隐私承诺
               </h3>
               <div className="space-y-3">
                 {PRIVACY_COMMITMENTS.map((commitment, index) => (
                   <div key={index} className="flex items-start gap-2">
-                    <div className="w-5 h-5 rounded-full bg-violet-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <EyeOff className="h-3 w-3 text-violet-600" />
+                    <div className="w-5 h-5 rounded-full bg-teal-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <EyeOff className="h-3 w-3 text-teal-600" />
                     </div>
                     <p className="text-sm text-foreground">{commitment}</p>
                   </div>
@@ -150,7 +150,7 @@ export default function ParentTeenIntro() {
         <section className="px-4 mb-8">
           <h3 className="text-lg font-semibold mb-4 px-1">如何开始？</h3>
           <div className="relative">
-            <div className="absolute left-6 top-8 bottom-8 w-0.5 bg-violet-200" />
+            <div className="absolute left-6 top-8 bottom-8 w-0.5 bg-teal-200" />
             <div className="space-y-4">
               {HOW_IT_WORKS_STEPS.map((step, index) => (
                 <motion.div
@@ -160,7 +160,7 @@ export default function ParentTeenIntro() {
                   transition={{ delay: index * 0.15 }}
                   className="flex items-start gap-4"
                 >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-md z-10">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-md z-10">
                     {step.step}
                   </div>
                   <div className="flex-1 pt-1">
@@ -176,7 +176,7 @@ export default function ParentTeenIntro() {
         {/* Invitation Scripts */}
         <section className="px-4 mb-8">
           <h3 className="text-lg font-semibold mb-4 px-1 flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-violet-500" />
+            <MessageCircle className="h-5 w-5 text-teal-500" />
             如何让孩子愿意用？
           </h3>
           <div className="space-y-3">
@@ -208,7 +208,7 @@ export default function ParentTeenIntro() {
                       exit={{ height: 0, opacity: 0 }}
                       className="px-4 pb-4 space-y-3"
                     >
-                      <div className="p-3 bg-violet-50 rounded-lg">
+                      <div className="p-3 bg-teal-50 rounded-lg">
                         <p className="text-sm text-foreground italic">"{item.script}"</p>
                       </div>
                       <div className="flex items-center justify-between">
@@ -252,10 +252,10 @@ export default function ParentTeenIntro() {
       </main>
 
       {/* Fixed Bottom CTA */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur border-t border-violet-100">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur border-t border-teal-100">
         <Button
           onClick={() => navigate("/parent-coach")}
-          className="w-full h-12 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-lg"
+          className="w-full h-12 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white shadow-lg"
         >
           <Link2 className="h-5 w-5 mr-2" />
           开始邀请孩子
