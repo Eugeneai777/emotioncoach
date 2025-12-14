@@ -32,9 +32,9 @@ export const ParentVoiceCallCTA = ({
     // 调用语音对话
     onVoiceChatClick();
   };
-  return <div className={`flex flex-col items-center justify-center animate-in fade-in-50 duration-500 ${hasUsedVoiceChat ? 'py-8 pb-6' : 'py-8'}`}>
+  return <div className={`flex flex-col items-center justify-center animate-in fade-in-50 duration-500 ${hasUsedVoiceChat ? 'pt-6 pb-4' : 'pt-6 pb-4'}`}>
       {/* 欢迎语 */}
-      <div className="text-center mb-12 animate-in fade-in-50 duration-700">
+      <div className="text-center mb-6 animate-in fade-in-50 duration-700">
         {isLoading ? <Skeleton className="h-7 w-48 mx-auto" /> : <p className="text-lg text-foreground/80">{greeting}</p>}
       </div>
 
@@ -78,12 +78,12 @@ export const ParentVoiceCallCTA = ({
       </button>
       
       {/* 模式提示 */}
-      {hasCompletedIntake && <p className="mt-8 text-sm text-purple-600 bg-purple-50 px-4 py-2 rounded-full">
+      {hasCompletedIntake && <p className="mt-6 text-sm text-purple-600 bg-purple-50 px-4 py-2 rounded-full">
           ✨ 已根据问卷定制专属对话
         </p>}
       
       {/* 操作提示 - 仅首次显示 */}
-      {!hasUsedVoiceChat && <p className="mt-10 text-sm text-muted-foreground flex items-center gap-2">
+      {!hasUsedVoiceChat && <p className="mt-6 text-sm text-muted-foreground flex items-center gap-2">
           <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
           点击开始对话
         </p>}
