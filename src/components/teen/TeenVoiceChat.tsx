@@ -9,6 +9,8 @@ interface TeenVoiceChatProps {
   accessToken: string;
   parentUserId: string;
   teenNickname?: string;
+  customGreeting?: string;
+  avatarEmoji?: string;
   onClose: () => void;
 }
 
@@ -16,6 +18,8 @@ export default function TeenVoiceChat({
   accessToken,
   parentUserId,
   teenNickname,
+  customGreeting,
+  avatarEmoji = '✨',
   onClose
 }: TeenVoiceChatProps) {
   const { toast } = useToast();
@@ -271,7 +275,7 @@ export default function TeenVoiceChat({
               } : {}}
               transition={{ duration: 0.5, repeat: isSpeaking ? Infinity : 0 }}
             >
-              <span className="text-5xl">✨</span>
+              <span className="text-5xl">{avatarEmoji}</span>
             </motion.div>
 
             {/* Status indicator */}
@@ -290,8 +294,8 @@ export default function TeenVoiceChat({
           {/* Greeting */}
           <p className="text-violet-100 text-center mb-12 max-w-xs">
             {teenNickname 
-              ? `${teenNickname}，我在听～说说你的想法吧`
-              : '我在听～说说你的想法吧'
+              ? `${teenNickname}，${customGreeting || '我在听～说说你的想法吧'}`
+              : customGreeting || '我在听～说说你的想法吧'
             }
           </p>
 

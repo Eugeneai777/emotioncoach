@@ -251,7 +251,7 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
                   `}
                   style={{
                     background: theme.background,
-                    color: theme.accent,
+                    color: theme.primary,
                   }}
                 >
                   {theme.name}
