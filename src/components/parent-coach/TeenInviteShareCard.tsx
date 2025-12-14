@@ -1,14 +1,63 @@
 import React, { forwardRef, useState, useEffect } from 'react';
 import QRCode from 'qrcode';
 
+// 主题色配置
+export const CARD_THEMES = {
+  purple: {
+    name: '梦幻紫',
+    background: 'linear-gradient(135deg, #EDE9FE 0%, #FCE7F3 50%, #DBEAFE 100%)',
+    primary: '#7C3AED',
+    secondary: '#EC4899',
+    accent: '#4C1D95',
+    qrColor: '#7C3AED',
+  },
+  ocean: {
+    name: '海洋蓝',
+    background: 'linear-gradient(135deg, #DBEAFE 0%, #CFFAFE 50%, #E0F2FE 100%)',
+    primary: '#0EA5E9',
+    secondary: '#06B6D4',
+    accent: '#0369A1',
+    qrColor: '#0EA5E9',
+  },
+  forest: {
+    name: '森林绿',
+    background: 'linear-gradient(135deg, #DCFCE7 0%, #D1FAE5 50%, #ECFDF5 100%)',
+    primary: '#10B981',
+    secondary: '#34D399',
+    accent: '#047857',
+    qrColor: '#10B981',
+  },
+  sunset: {
+    name: '日落橙',
+    background: 'linear-gradient(135deg, #FEF3C7 0%, #FED7AA 50%, #FECACA 100%)',
+    primary: '#F59E0B',
+    secondary: '#FB923C',
+    accent: '#B45309',
+    qrColor: '#F59E0B',
+  },
+  sakura: {
+    name: '樱花粉',
+    background: 'linear-gradient(135deg, #FCE7F3 0%, #FBCFE8 50%, #FAE8FF 100%)',
+    primary: '#EC4899',
+    secondary: '#F472B6',
+    accent: '#BE185D',
+    qrColor: '#EC4899',
+  },
+} as const;
+
+export type CardTheme = keyof typeof CARD_THEMES;
+
 interface TeenInviteShareCardProps {
   accessToken: string;
   teenNickname?: string;
+  theme?: CardTheme;
+  personalMessage?: string;
 }
 
 const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>(
-  ({ accessToken, teenNickname }, ref) => {
+  ({ accessToken, teenNickname, theme = 'purple', personalMessage }, ref) => {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+    const themeConfig = CARD_THEMES[theme];
 
     useEffect(() => {
       const generateQR = async () => {
@@ -17,7 +66,7 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
           const url = await QRCode.toDataURL(targetUrl, {
             width: 140,
             margin: 1,
-            color: { dark: '#7C3AED', light: '#FFFFFF' }
+            color: { dark: themeConfig.qrColor, light: '#FFFFFF' }
           });
           setQrCodeUrl(url);
         } catch (err) {
@@ -25,7 +74,7 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
         }
       };
       generateQR();
-    }, [accessToken]);
+    }, [accessToken, themeConfig.qrColor]);
 
     const features = [
       { emoji: '🔒', title: '100%隐私保护', desc: '父母完全看不到' },
@@ -41,7 +90,7 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
         style={{
           width: '600px',
           padding: '40px',
-          background: 'linear-gradient(135deg, #EDE9FE 0%, #FCE7F3 50%, #DBEAFE 100%)',
+          background: themeConfig.background,
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           borderRadius: '24px',
           boxSizing: 'border-box',
@@ -59,7 +108,7 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
           <div style={{ 
             fontSize: '28px', 
             fontWeight: '700', 
-            background: 'linear-gradient(135deg, #7C3AED, #EC4899)',
+            background: `linear-gradient(135deg, ${themeConfig.primary}, ${themeConfig.secondary})`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             marginBottom: '8px'
@@ -87,6 +136,35 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
           </div>
         </div>
 
+        {/* 个性化留言 */}
+        {personalMessage && (
+          <div style={{
+            background: 'rgba(255,255,255,0.85)',
+            borderRadius: '16px',
+            padding: '16px 20px',
+            marginBottom: '20px',
+            textAlign: 'center',
+            borderLeft: `4px solid ${themeConfig.primary}`,
+          }}>
+            <div style={{ 
+              fontSize: '13px', 
+              color: themeConfig.accent,
+              fontWeight: '500',
+              marginBottom: '6px'
+            }}>
+              💌 来自爸妈的话
+            </div>
+            <div style={{ 
+              fontSize: '15px', 
+              color: '#374151',
+              lineHeight: '1.6',
+              fontStyle: 'italic'
+            }}>
+              "{personalMessage}"
+            </div>
+          </div>
+        )}
+
         {/* 核心价值 */}
         <div style={{
           display: 'grid',
@@ -106,7 +184,7 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
               <div style={{ 
                 fontSize: '14px', 
                 fontWeight: '600', 
-                color: '#4C1D95',
+                color: themeConfig.accent,
                 marginBottom: '4px'
               }}>
                 {f.title}
@@ -131,7 +209,7 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
           <div style={{
             fontSize: '13px',
             fontWeight: '600',
-            color: '#4C1D95',
+            color: themeConfig.accent,
             marginBottom: '12px',
             textAlign: 'center'
           }}>
@@ -147,9 +225,9 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
               <span key={i} style={{
                 fontSize: '12px',
                 padding: '6px 14px',
-                background: 'linear-gradient(135deg, #F3E8FF, #FCE7F3)',
+                background: `linear-gradient(135deg, ${themeConfig.background.split(',')[0].split('(')[1]}, rgba(255,255,255,0.8))`,
                 borderRadius: '20px',
-                color: '#7C3AED'
+                color: themeConfig.primary
               }}>
                 {s}
               </span>
@@ -170,7 +248,7 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
             <div style={{
               fontSize: '18px',
               fontWeight: '700',
-              color: '#7C3AED',
+              color: themeConfig.primary,
               marginBottom: '6px'
             }}>
               扫码开始
@@ -191,9 +269,10 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
                 <span key={i} style={{
                   fontSize: '10px',
                   padding: '4px 10px',
-                  background: 'linear-gradient(135deg, #EDE9FE, #FCE7F3)',
+                  background: `linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.6))`,
+                  border: `1px solid ${themeConfig.primary}20`,
                   borderRadius: '12px',
-                  color: '#7C3AED'
+                  color: themeConfig.primary
                 }}>
                   {tag}
                 </span>
@@ -205,7 +284,7 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
               padding: '10px',
               background: 'white',
               borderRadius: '16px',
-              boxShadow: '0 4px 16px rgba(124, 58, 237, 0.15)'
+              boxShadow: `0 4px 16px ${themeConfig.primary}25`
             }}>
               <img 
                 src={qrCodeUrl} 
@@ -224,11 +303,11 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
         <div style={{
           marginTop: '20px',
           padding: '12px 16px',
-          background: 'rgba(124, 58, 237, 0.08)',
+          background: `${themeConfig.primary}12`,
           borderRadius: '12px',
           textAlign: 'center'
         }}>
-          <span style={{ fontSize: '12px', color: '#7C3AED' }}>
+          <span style={{ fontSize: '12px', color: themeConfig.primary }}>
             🔐 你说的每一句话，都只属于你自己
           </span>
         </div>
