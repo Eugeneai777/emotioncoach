@@ -7,6 +7,8 @@ import {
   DialogTitle 
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   Users, 
   Shield, 
@@ -16,10 +18,16 @@ import {
   Copy,
   Sparkles,
   EyeOff,
-  Heart
+  Heart,
+  Link2,
+  Check
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { INVITATION_SCRIPTS, PRIVACY_COMMITMENTS } from "@/config/teenModeGuidance";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { InvitationScriptCard } from "./InvitationScriptCard";
 
 interface TeenModeOnboardingProps {
   open: boolean;
@@ -42,6 +50,11 @@ const STEPS = [
     title: "如何邀请",
     icon: MessageCircle,
     gradient: "from-pink-400 to-rose-500"
+  },
+  {
+    title: "生成绑定码",
+    icon: Link2,
+    gradient: "from-violet-400 to-purple-500"
   }
 ];
 
@@ -51,19 +64,72 @@ export function TeenModeOnboarding({
   onGenerateCode 
 }: TeenModeOnboardingProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(0);
+  const [nickname, setNickname] = useState("");
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [showResult, setShowResult] = useState(false);
+
+  const generateCodeMutation = useMutation({
+    mutationFn: async (teenNickname: string) => {
+      if (!user?.id) throw new Error("请先登录");
+      
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+      
+      const { data, error } = await supabase
+        .from("parent_teen_bindings")
+        .insert({
+          parent_user_id: user.id,
+          binding_code: code,
+          teen_nickname: teenNickname || null,
+          code_expires_at: expiresAt.toISOString(),
+          status: "pending",
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["parent-teen-bindings"] });
+      setGeneratedCode(data.binding_code);
+      setShowResult(true);
+      onGenerateCode();
+      toast({ title: "绑定码生成成功", description: "有效期24小时" });
+    },
+    onError: (error) => {
+      console.error("Generate code error:", error);
+      toast({ 
+        title: "生成失败", 
+        description: "请稍后重试", 
+        variant: "destructive" 
+      });
+    },
+  });
 
   const copyScript = (script: string) => {
     navigator.clipboard.writeText(script);
     toast({ title: "话术已复制" });
   };
 
+  const copyCode = () => {
+    navigator.clipboard.writeText(generatedCode);
+    toast({ title: "绑定码已复制" });
+  };
+
   const handleNext = () => {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
+    } else if (currentStep === STEPS.length - 1 && !showResult) {
+      // 最后一步且未生成，执行生成
+      generateCodeMutation.mutate(nickname);
     } else {
-      onOpenChange(false);
-      onGenerateCode();
+      // 已生成，关闭弹窗
+      handleClose();
     }
   };
 
@@ -76,6 +142,22 @@ export function TeenModeOnboarding({
   const handleClose = () => {
     onOpenChange(false);
     setCurrentStep(0);
+    setNickname("");
+    setGeneratedCode("");
+    setShowResult(false);
+  };
+
+  const getButtonText = () => {
+    if (currentStep < STEPS.length - 1) {
+      return "下一步";
+    }
+    if (showResult) {
+      return "完成";
+    }
+    if (generateCodeMutation.isPending) {
+      return "生成中...";
+    }
+    return "生成绑定码";
   };
 
   return (
@@ -102,14 +184,14 @@ export function TeenModeOnboarding({
               })()}
             </div>
             <DialogTitle className="text-xl">
-              {STEPS[currentStep].title}
+              {showResult ? "绑定码已生成" : STEPS[currentStep].title}
             </DialogTitle>
           </div>
         </DialogHeader>
 
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentStep}
+            key={showResult ? "result" : currentStep}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -213,6 +295,60 @@ export function TeenModeOnboarding({
                 </div>
               </div>
             )}
+
+            {/* Step 4: Generate Code - Input Nickname */}
+            {currentStep === 3 && !showResult && (
+              <div className="space-y-4">
+                <p className="text-muted-foreground">
+                  给孩子起一个昵称，方便你识别（可选）
+                </p>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="nickname">孩子昵称</Label>
+                  <Input
+                    id="nickname"
+                    placeholder="例如：小明"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg">
+                  <Sparkles className="h-5 w-5 text-amber-500 flex-shrink-0" />
+                  <p className="text-sm text-amber-700">
+                    绑定码有效期24小时，过期后需重新生成
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Result - Show Generated Code */}
+            {showResult && generatedCode && (
+              <div className="space-y-4">
+                <div className="text-center p-6 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl border border-violet-100">
+                  <div className="w-12 h-12 bg-gradient-to-br from-violet-400 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Check className="h-6 w-6 text-white" />
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">孩子的绑定码</p>
+                  <div className="text-3xl font-mono font-bold tracking-widest text-violet-600 mb-3">
+                    {generatedCode}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={copyCode}
+                    className="gap-1"
+                  >
+                    <Copy className="h-4 w-4" />
+                    复制绑定码
+                  </Button>
+                </div>
+
+                <div className="max-h-[200px] overflow-y-auto">
+                  <InvitationScriptCard bindingCode={generatedCode} />
+                </div>
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
 
@@ -221,7 +357,7 @@ export function TeenModeOnboarding({
           <Button
             variant="ghost"
             onClick={handleBack}
-            disabled={currentStep === 0}
+            disabled={currentStep === 0 || showResult}
             className="gap-1"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -230,14 +366,15 @@ export function TeenModeOnboarding({
           
           <Button
             onClick={handleNext}
+            disabled={generateCodeMutation.isPending}
             className={`gap-1 ${
-              currentStep === STEPS.length - 1 
+              currentStep === STEPS.length - 1 || showResult
                 ? "bg-gradient-to-r from-violet-500 to-purple-600" 
                 : ""
             }`}
           >
-            {currentStep === STEPS.length - 1 ? "生成绑定码" : "下一步"}
-            <ArrowRight className="h-4 w-4" />
+            {getButtonText()}
+            {!showResult && <ArrowRight className="h-4 w-4" />}
           </Button>
         </div>
       </DialogContent>
