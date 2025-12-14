@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useParentIntake } from "@/hooks/useParentIntake";
 import { IntakeQuestionCard } from "@/components/parent-intake/IntakeQuestionCard";
-import { IntakeResultCard } from "@/components/parent-intake/IntakeResultCard";
+import { IntakeOnboardingFlow } from "@/components/parent-intake/IntakeOnboardingFlow";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { Helmet } from "react-helmet";
 import { useQuery } from "@tanstack/react-query";
@@ -201,8 +201,12 @@ const ParentIntake = () => {
     }
   };
 
-  const handleStartCoaching = () => {
+  const handleStartCamp = () => {
     setShowStartCampDialog(true);
+  };
+
+  const handleStartChat = () => {
+    navigate("/parent-coach");
   };
 
   const handleCampSuccess = () => {
@@ -268,11 +272,12 @@ const ParentIntake = () => {
         <main className="container max-w-lg mx-auto px-4 py-6">
           <AnimatePresence mode="wait">
             {showResult && identifiedTypes ? (
-              <IntakeResultCard
+              <IntakeOnboardingFlow
                 key="result"
                 primaryType={identifiedTypes.primary}
                 secondaryType={identifiedTypes.secondary}
-                onStartCoaching={handleStartCoaching}
+                onStartCamp={handleStartCamp}
+                onStartChat={handleStartChat}
               />
             ) : (
               <IntakeQuestionCard
