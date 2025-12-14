@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import {
   Dialog,
@@ -9,11 +9,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download, Loader2, Share2, RefreshCw } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Download, Loader2, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import TeenInviteShareCard from './TeenInviteShareCard';
+import TeenInviteShareCard, { CARD_THEMES, CardTheme } from './TeenInviteShareCard';
 
 interface TeenInviteShareDialogProps {
   open: boolean;
@@ -26,6 +27,8 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [teenNickname, setTeenNickname] = useState('');
+  const [selectedTheme, setSelectedTheme] = useState<CardTheme>('purple');
+  const [personalMessage, setPersonalMessage] = useState('');
   const exportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -40,7 +43,7 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
   };
 
   // Fetch existing token or create new one
-  const { data: accessToken, isLoading: isLoadingToken, refetch } = useQuery({
+  const { data: accessToken, isLoading: isLoadingToken } = useQuery({
     queryKey: ['teen-access-token'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -194,6 +197,13 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
     }
   };
 
+  // 预设留言选项
+  const messagePresets = [
+    '爸妈永远爱你，有心事可以和AI聊聊',
+    '无论发生什么，我们都在你身边',
+    '希望你能找到倾诉的出口，放松心情',
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -207,7 +217,7 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
         {/* Nickname input */}
         <div className="space-y-2">
           <Label htmlFor="nickname" className="text-sm text-muted-foreground">
-            孩子昵称（可选，让卡片更有温度）
+            孩子昵称（可选）
           </Label>
           <Input
             id="nickname"
@@ -219,6 +229,67 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
           />
         </div>
 
+        {/* Theme selection */}
+        <div className="space-y-2">
+          <Label className="text-sm text-muted-foreground">
+            选择主题色
+          </Label>
+          <div className="flex gap-2 flex-wrap">
+            {(Object.keys(CARD_THEMES) as CardTheme[]).map((themeKey) => {
+              const theme = CARD_THEMES[themeKey];
+              const isSelected = selectedTheme === themeKey;
+              return (
+                <button
+                  key={themeKey}
+                  onClick={() => setSelectedTheme(themeKey)}
+                  className={`
+                    px-3 py-2 rounded-lg text-sm font-medium transition-all
+                    ${isSelected 
+                      ? 'ring-2 ring-offset-2 ring-violet-500 scale-105' 
+                      : 'hover:scale-105 opacity-80 hover:opacity-100'
+                    }
+                  `}
+                  style={{
+                    background: theme.background,
+                    color: theme.accent,
+                  }}
+                >
+                  {theme.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Personal message */}
+        <div className="space-y-2">
+          <Label htmlFor="message" className="text-sm text-muted-foreground">
+            个性化留言（可选）
+          </Label>
+          <Textarea
+            id="message"
+            placeholder="写一句想对孩子说的话..."
+            value={personalMessage}
+            onChange={(e) => setPersonalMessage(e.target.value.slice(0, 50))}
+            className="border-violet-200 focus:border-violet-400 resize-none h-20"
+            maxLength={50}
+          />
+          <div className="flex items-center justify-between">
+            <div className="flex gap-2 flex-wrap">
+              {messagePresets.map((msg, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPersonalMessage(msg)}
+                  className="text-xs px-2 py-1 rounded-full bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors"
+                >
+                  {msg.slice(0, 8)}...
+                </button>
+              ))}
+            </div>
+            <span className="text-xs text-muted-foreground">{personalMessage.length}/50</span>
+          </div>
+        </div>
+
         {/* Preview */}
         {isLoadingToken ? (
           <div className="flex items-center justify-center h-48">
@@ -226,10 +297,12 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
           </div>
         ) : accessToken ? (
           <div className="flex justify-center overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-pink-50">
-            <div className="transform scale-[0.45] origin-top" style={{ marginBottom: '-55%' }}>
+            <div className="transform scale-[0.45] origin-top" style={{ marginBottom: personalMessage ? '-50%' : '-55%' }}>
               <TeenInviteShareCard 
                 accessToken={accessToken} 
                 teenNickname={teenNickname}
+                theme={selectedTheme}
+                personalMessage={personalMessage}
               />
             </div>
           </div>
@@ -242,6 +315,8 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
               ref={exportRef} 
               accessToken={accessToken}
               teenNickname={teenNickname}
+              theme={selectedTheme}
+              personalMessage={personalMessage}
             />
           )}
         </div>
