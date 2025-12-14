@@ -76,6 +76,7 @@ import HumanCoachDetail from "./pages/HumanCoachDetail";
 import MyAppointments from "./pages/MyAppointments";
 import BecomeCoach from "./pages/BecomeCoach";
 import CoachDashboard from "./pages/CoachDashboard";
+import TeenChat from "./pages/TeenChat";
 
 const queryClient = new QueryClient();
 
@@ -158,6 +159,7 @@ const App = () => (
           <Route path="/become-coach" element={<BecomeCoach />} />
           <Route path="/coach-dashboard" element={<CoachDashboard />} />
           <Route path="/coach/:coachKey" element={<DynamicCoach />} />
+          <Route path="/teen-chat/:token" element={<TeenChat />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

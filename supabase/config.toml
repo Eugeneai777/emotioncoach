@@ -248,3 +248,6 @@ verify_jwt = false
 
 [functions.generate-greeting]
 verify_jwt = true
+
+[functions.teen-realtime-token]
+verify_jwt = false
