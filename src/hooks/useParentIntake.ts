@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 interface ParentProfile {
   primary_problem_type: string;
-  secondary_problem_type: string | null;
+  secondary_problem_types: string[] | null;
   intake_answers: Record<string, string[]>;
 }
 
@@ -69,7 +69,7 @@ export const useParentIntake = () => {
         .upsert({
           user_id: user.id,
           primary_problem_type: profile.primary_problem_type,
-          secondary_problem_type: profile.secondary_problem_type,
+          secondary_problem_types: profile.secondary_problem_types,
           intake_answers: profile.intake_answers,
           updated_at: new Date().toISOString(),
         })
