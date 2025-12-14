@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
-import { Link2, Heart, Sparkles, ArrowRight } from "lucide-react";
+import { Link2, Heart, Sparkles, ArrowRight, Shield, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function TeenBind() {
   const { user } = useAuth();
@@ -16,6 +16,7 @@ export default function TeenBind() {
   const [code, setCode] = useState("");
   const [isBinding, setIsBinding] = useState(false);
   const [bindingSuccess, setBindingSuccess] = useState(false);
+  const [showFaq, setShowFaq] = useState(false);
 
   const handleBind = async () => {
     if (!code.trim()) {
@@ -97,6 +98,18 @@ export default function TeenBind() {
                 </p>
               </div>
 
+              <div className="bg-violet-50 rounded-xl p-4 text-left space-y-2">
+                <div className="flex items-start gap-2">
+                  <Shield className="h-5 w-5 text-violet-500 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-sm text-violet-700">你的隐私受保护</p>
+                    <p className="text-xs text-muted-foreground">
+                      你和AI的对话内容完全私密，家长看不到任何聊天内容
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <Button
                 onClick={() => navigate("/teen-coach")}
                 className="w-full bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
@@ -116,7 +129,7 @@ export default function TeenBind() {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md space-y-4"
       >
         <Card className="bg-white/80 backdrop-blur border-0 shadow-xl">
           <CardHeader className="text-center pb-2">
@@ -149,17 +162,66 @@ export default function TeenBind() {
               </Button>
             </div>
 
-            <div className="bg-violet-50 rounded-xl p-4 space-y-2">
+            {/* Privacy Promise */}
+            <div className="bg-violet-50 rounded-xl p-4 space-y-3">
               <div className="flex items-start gap-2">
-                <Sparkles className="h-4 w-4 text-violet-500 mt-0.5" />
-                <div className="text-sm">
-                  <span className="font-medium text-violet-700">隐私保护</span>
-                  <p className="text-muted-foreground">
-                    你的对话内容完全私密，家长只能看到经过处理的洞察
+                <Shield className="h-5 w-5 text-violet-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="font-medium text-violet-700 text-sm">隐私保护承诺</span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    你的对话内容完全私密，家长只能看到使用频率和心情趋势，绝对看不到你聊了什么
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <Sparkles className="h-5 w-5 text-pink-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="font-medium text-pink-700 text-sm">专属AI朋友</span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    这是一个懂年轻人的AI，不说教、不评判，只是陪你聊聊
                   </p>
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* FAQ Section */}
+        <Card className="bg-white/60 backdrop-blur border-0 shadow-sm">
+          <CardContent className="p-4">
+            <button
+              onClick={() => setShowFaq(!showFaq)}
+              className="w-full flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">这是什么？</span>
+              </div>
+              {showFaq ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+            
+            {showFaq && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                className="mt-3 space-y-3 text-sm text-muted-foreground"
+              >
+                <p>
+                  <strong className="text-foreground">这是有劲情绪教练的青少年模式。</strong>
+                  你的家长也在使用这个应用来学习如何更好地理解你。
+                </p>
+                <p>
+                  绑定后，你会拥有一个专属的AI朋友。它不会告诉家长你聊了什么，只会让家长知道你有在使用、心情大概怎么样。
+                </p>
+                <p>
+                  这样设计是为了让你有一个安全的倾诉空间，同时也让家长放心。
+                </p>
+              </motion.div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
