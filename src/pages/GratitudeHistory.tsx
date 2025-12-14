@@ -10,6 +10,8 @@ import { GratitudeQuickAdd } from "@/components/gratitude/GratitudeQuickAdd";
 import { GratitudeEntriesList } from "@/components/gratitude/GratitudeEntriesList";
 import { GratitudeDashboard } from "@/components/gratitude/GratitudeDashboard";
 import { Sparkles } from "lucide-react";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 
 interface GratitudeEntry {
   id: string;
@@ -33,6 +35,19 @@ const GratitudeHistory = () => {
     await loadEntries();
     setIsRefreshing(false);
   }, [user]);
+
+  // Pull to refresh
+  const {
+    containerRef,
+    pullDistance,
+    pullProgress,
+    isRefreshing: isPullRefreshing,
+    pullStyle
+  } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 80,
+    maxPull: 120
+  });
 
   // 页面聚焦时自动刷新
   useEffect(() => {
@@ -132,8 +147,20 @@ const GratitudeHistory = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="max-w-2xl mx-auto px-3 py-3 pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative">
+      {/* Pull to Refresh Indicator */}
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        pullProgress={pullProgress}
+        isRefreshing={isPullRefreshing}
+        threshold={80}
+      />
+      
+      <div 
+        ref={containerRef}
+        className="max-w-2xl mx-auto px-3 py-3 pb-20 h-screen overflow-y-auto overscroll-contain"
+        style={pullStyle}
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -150,9 +177,9 @@ const GratitudeHistory = () => {
             size="icon"
             className="h-8 w-8"
             onClick={handleRefresh}
-            disabled={isRefreshing}
+            disabled={isRefreshing || isPullRefreshing}
           >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isRefreshing || isPullRefreshing ? 'animate-spin' : ''}`} />
           </Button>
         </div>
 
