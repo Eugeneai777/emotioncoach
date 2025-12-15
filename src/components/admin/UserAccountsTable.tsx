@@ -8,12 +8,20 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { RechargeDialog } from "./RechargeDialog";
 import { UserActionMenu } from "./UserActionMenu";
+import { UserDetailDialog } from "./UserDetailDialog";
 import { CheckCircle, XCircle, Ban } from "lucide-react";
 
 export function UserAccountsTable() {
   const [search, setSearch] = useState("");
   const [rechargeDialogOpen, setRechargeDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string } | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ 
+    id: string; 
+    name: string;
+    avatarUrl?: string;
+    authProvider?: string;
+    createdAt?: string;
+  } | null>(null);
 
   const { data: accounts, isLoading, refetch } = useQuery({
     queryKey: ['admin-accounts-enhanced'],
@@ -103,7 +111,20 @@ export function UserAccountsTable() {
               const isDisabled = account.profile?.is_disabled || false;
 
               return (
-                <TableRow key={account.id} className={isDisabled ? "opacity-60" : ""}>
+                <TableRow 
+                  key={account.id} 
+                  className={`${isDisabled ? "opacity-60" : ""} cursor-pointer hover:bg-muted/50`}
+                  onClick={() => {
+                    setSelectedUser({
+                      id: account.user_id,
+                      name: displayName,
+                      avatarUrl: account.profile?.avatar_url,
+                      authProvider: authProvider,
+                      createdAt: account.profile?.created_at
+                    });
+                    setDetailDialogOpen(true);
+                  }}
+                >
                   {/* 用户信息：头像+名字+注册来源+注册时间 */}
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -193,7 +214,7 @@ export function UserAccountsTable() {
                   </TableCell>
 
                   {/* 操作 */}
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <UserActionMenu
                       userId={account.user_id}
                       userName={displayName}
@@ -216,13 +237,24 @@ export function UserAccountsTable() {
       </div>
 
       {selectedUser && (
-        <RechargeDialog
-          open={rechargeDialogOpen}
-          onOpenChange={setRechargeDialogOpen}
-          userId={selectedUser.id}
-          userName={selectedUser.name}
-          onSuccess={() => refetch()}
-        />
+        <>
+          <RechargeDialog
+            open={rechargeDialogOpen}
+            onOpenChange={setRechargeDialogOpen}
+            userId={selectedUser.id}
+            userName={selectedUser.name}
+            onSuccess={() => refetch()}
+          />
+          <UserDetailDialog
+            open={detailDialogOpen}
+            onOpenChange={setDetailDialogOpen}
+            userId={selectedUser.id}
+            userName={selectedUser.name}
+            avatarUrl={selectedUser.avatarUrl}
+            authProvider={selectedUser.authProvider}
+            createdAt={selectedUser.createdAt}
+          />
+        </>
       )}
     </div>
   );
