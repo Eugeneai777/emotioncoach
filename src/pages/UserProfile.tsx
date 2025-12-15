@@ -2,16 +2,23 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Heart, MessageCircle, Award } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Settings, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { VideoLearningProfile } from "@/components/VideoLearningProfile";
+
+interface UserProfileData {
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  mood_status: string | null;
+}
 
 interface UserPost {
   id: string;
@@ -61,13 +68,14 @@ const UserProfile = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [posts, setPosts] = useState<UserPost[]>([]);
   const [likes, setLikes] = useState<UserLike[]>([]);
   const [comments, setComments] = useState<UserComment[]>([]);
   const [achievements, setAchievements] = useState<UserAchievement[]>([]);
   const [totalLikes, setTotalLikes] = useState(0);
 
-  const isOwnProfile = session?.user?.id === userId;
+  const isOwnProfile = !userId || session?.user?.id === userId;
   const displayUserId = userId || session?.user?.id;
 
   useEffect(() => {
@@ -83,6 +91,15 @@ const UserProfile = () => {
 
     try {
       setLoading(true);
+
+      // 加载用户资料
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url, bio, mood_status")
+        .eq("id", displayUserId)
+        .single();
+
+      setProfile(profileData);
 
       // 加载用户帖子
       const { data: postsData } = await supabase
@@ -158,43 +175,88 @@ const UserProfile = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto p-6">
-        {/* 返回按钮 */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          返回
-        </Button>
+  const displayName = profile?.display_name || (isOwnProfile ? "我" : `用户${displayUserId?.slice(0, 6)}`);
+  const initials = displayName.slice(0, 2).toUpperCase();
 
-        {/* 用户信息卡片 */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <Avatar className="w-20 h-20">
-                <AvatarFallback className="text-2xl bg-primary/10">
-                  {displayUserId?.slice(0, 2).toUpperCase()}
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
+      <div className="max-w-4xl mx-auto p-4 md:p-6">
+        {/* 顶部导航 */}
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="text-muted-foreground"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            返回
+          </Button>
+          {isOwnProfile && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/settings")}
+              className="text-muted-foreground"
+            >
+              <Settings className="w-4 h-4 mr-1" />
+              编辑资料
+            </Button>
+          )}
+        </div>
+
+        {/* 用户信息卡片 - 增强版 */}
+        <Card className="mb-6 bg-white/70 backdrop-blur-sm border-0 shadow-lg overflow-hidden">
+          {/* 封面背景 */}
+          <div className="h-24 bg-gradient-to-r from-teal-400 via-cyan-400 to-blue-400" />
+          
+          <CardContent className="relative pt-0 pb-6">
+            {/* 头像 */}
+            <div className="flex flex-col items-center -mt-12 mb-4">
+              <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
+                {profile?.avatar_url ? (
+                  <AvatarImage src={profile.avatar_url} alt={displayName} />
+                ) : null}
+                <AvatarFallback className="text-2xl bg-gradient-to-br from-teal-400 to-cyan-500 text-white">
+                  {initials}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold mb-2">
-                  {isOwnProfile ? "我的主页" : `用户 ${displayUserId?.slice(0, 8)}`}
-                </h1>
-                <div className="flex gap-6 text-sm text-muted-foreground">
-                  <div>
-                    <span className="font-medium text-foreground">{posts.length}</span> 篇帖子
-                  </div>
-                  <div>
-                    <span className="font-medium text-foreground">{totalLikes}</span> 获赞
-                  </div>
-                  <div>
-                    <span className="font-medium text-foreground">{achievements.length}</span> 个成就
-                  </div>
-                </div>
+            </div>
+
+            {/* 用户名和签名 */}
+            <div className="text-center mb-4">
+              <h1 className="text-xl font-bold text-foreground mb-1">
+                {displayName}
+              </h1>
+              {profile?.bio ? (
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  {profile.bio}
+                </p>
+              ) : isOwnProfile ? (
+                <p className="text-sm text-muted-foreground/60 italic">
+                  点击"编辑资料"添加个性签名
+                </p>
+              ) : null}
+              {profile?.mood_status && (
+                <Badge variant="secondary" className="mt-2">
+                  {profile.mood_status}
+                </Badge>
+              )}
+            </div>
+
+            {/* 统计数据 */}
+            <div className="flex justify-center gap-8 pt-4 border-t border-border/50">
+              <div className="text-center">
+                <div className="text-xl font-bold text-foreground">{posts.length}</div>
+                <div className="text-xs text-muted-foreground">帖子</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-foreground">{totalLikes}</div>
+                <div className="text-xs text-muted-foreground">获赞</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-foreground">{achievements.length}</div>
+                <div className="text-xs text-muted-foreground">成就</div>
               </div>
             </div>
           </CardContent>
@@ -202,7 +264,7 @@ const UserProfile = () => {
 
         {/* 内容标签页 */}
         <Tabs defaultValue="posts" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-5 bg-white/60 backdrop-blur-sm">
             <ResponsiveTabsTrigger value="posts" label="帖子" />
             <ResponsiveTabsTrigger value="likes" label="点赞" />
             <ResponsiveTabsTrigger value="comments" label="评论" />
