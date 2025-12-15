@@ -3854,6 +3854,7 @@ export type Database = {
       profiles: {
         Row: {
           auth_provider: string | null
+          avatar_url: string | null
           camp_checkin_requirement: string | null
           camp_evening_reminder_time: string | null
           camp_late_warning_enabled: boolean | null
@@ -3906,6 +3907,7 @@ export type Database = {
         }
         Insert: {
           auth_provider?: string | null
+          avatar_url?: string | null
           camp_checkin_requirement?: string | null
           camp_evening_reminder_time?: string | null
           camp_late_warning_enabled?: boolean | null
@@ -3958,6 +3960,7 @@ export type Database = {
         }
         Update: {
           auth_provider?: string | null
+          avatar_url?: string | null
           camp_checkin_requirement?: string | null
           camp_evening_reminder_time?: string | null
           camp_late_warning_enabled?: boolean | null
