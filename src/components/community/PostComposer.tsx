@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { ProfileCompletionPrompt } from "@/components/profile/ProfileCompletionPrompt";
 import ImageUploader from "./ImageUploader";
 import { ImageStyleSelector } from "./ImageStyleSelector";
 import { Loader2, Sparkles } from "lucide-react";
@@ -28,10 +29,12 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [imageStyle, setImageStyle] = useState("warm");
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
   const { toast } = useToast();
   const { session } = useAuth();
+  const { isComplete, loading: profileLoading } = useProfileCompletion();
 
-  // 当 dialog 打开时重置表单状态
+  // 当 dialog 打开时重置表单状态并检查资料完整度
   useEffect(() => {
     if (open) {
       setPostType("share");
@@ -42,8 +45,13 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
       setImageStyle("warm");
       setSubmitting(false);
       setGeneratingImage(false);
+      
+      // 如果资料不完整，显示引导弹窗
+      if (!profileLoading && !isComplete) {
+        setShowProfilePrompt(true);
+      }
     }
-  }, [open]);
+  }, [open, isComplete, profileLoading]);
 
   const handleSubmit = async () => {
     if (!session?.user) {
@@ -143,7 +151,21 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      {/* 资料完善引导弹窗 */}
+      <ProfileCompletionPrompt
+        open={showProfilePrompt}
+        onOpenChange={setShowProfilePrompt}
+        onComplete={() => {
+          setShowProfilePrompt(false);
+        }}
+        onSkip={() => {
+          setIsAnonymous(true);
+          setShowProfilePrompt(false);
+        }}
+      />
+
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>分享到社区</DialogTitle>
@@ -257,6 +279,7 @@ const PostComposer = ({ open, onOpenChange, onSuccess }: PostComposerProps) => {
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 };
 

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
@@ -14,9 +15,11 @@ import { BillingExplanation } from "@/components/BillingExplanation";
 import { PackageSelector } from "@/components/PackageSelector";
 import CampSettings from "@/components/CampSettings";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
+import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -27,6 +30,8 @@ export default function Settings() {
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const [reminderTime, setReminderTime] = useState("20:00");
   const [displayName, setDisplayName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [bio, setBio] = useState("");
   const [autoDismissSeconds, setAutoDismissSeconds] = useState(10);
   const [timezone, setTimezone] = useState("Asia/Shanghai");
   const [userId, setUserId] = useState("");
@@ -76,7 +81,7 @@ export default function Settings() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("reminder_enabled, reminder_time, display_name, reminder_auto_dismiss_seconds, timezone")
+        .select("reminder_enabled, reminder_time, display_name, avatar_url, bio, reminder_auto_dismiss_seconds, timezone")
         .eq("id", user.id)
         .single();
 
@@ -86,6 +91,8 @@ export default function Settings() {
         setReminderEnabled(data.reminder_enabled ?? true);
         setReminderTime(data.reminder_time ?? "20:00");
         setDisplayName(data.display_name ?? "");
+        setAvatarUrl(data.avatar_url ?? null);
+        setBio(data.bio ?? "");
         setAutoDismissSeconds(data.reminder_auto_dismiss_seconds ?? 10);
         setTimezone(data.timezone ?? "Asia/Shanghai");
       }
@@ -113,6 +120,8 @@ export default function Settings() {
           reminder_enabled: reminderEnabled,
           reminder_time: reminderTime,
           display_name: displayName.trim() || null,
+          avatar_url: avatarUrl,
+          bio: bio.trim() || null,
           reminder_auto_dismiss_seconds: autoDismissSeconds,
           timezone: timezone,
         })
@@ -184,6 +193,91 @@ export default function Settings() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 md:space-y-6">
+                {/* 资料完整度进度条 */}
+                {(() => {
+                  const completedFields = [
+                    displayName?.trim(),
+                    avatarUrl,
+                  ].filter(Boolean).length;
+                  const totalFields = 2;
+                  const progress = (completedFields / totalFields) * 100;
+                  const isComplete = completedFields === totalFields;
+                  
+                  return (
+                    <div className="p-4 rounded-lg bg-secondary/30 space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium">资料完整度</span>
+                        <div className="flex items-center gap-1.5">
+                          {isComplete ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <AlertCircle className="h-4 w-4 text-amber-500" />
+                          )}
+                          <span className={cn(
+                            isComplete ? "text-green-600" : "text-amber-600"
+                          )}>
+                            {completedFields}/{totalFields}
+                          </span>
+                        </div>
+                      </div>
+                      <Progress value={progress} className="h-2" />
+                      {!isComplete && (
+                        <p className="text-xs text-muted-foreground">
+                          完善资料后，分享打卡时可以展示你的个人形象
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* 头像上传 */}
+                <div className="flex flex-col items-center py-4">
+                  <AvatarUploader
+                    currentUrl={avatarUrl}
+                    onUpload={(url) => setAvatarUrl(url)}
+                    size="lg"
+                  />
+                </div>
+
+                {/* 用户名称 */}
+                <div className="space-y-2">
+                  <Label htmlFor="display-name" className="text-xs md:text-sm text-foreground">
+                    用户昵称 <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="display-name"
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="请输入你的昵称"
+                    maxLength={20}
+                    className="border-border focus:border-primary text-sm"
+                  />
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    这个名称将在复盘报告和社区中显示
+                  </p>
+                </div>
+
+                {/* 个性签名 */}
+                <div className="space-y-2">
+                  <Label htmlFor="bio" className="text-xs md:text-sm text-foreground">
+                    个性签名（可选）
+                  </Label>
+                  <Textarea
+                    id="bio"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="一句话介绍自己..."
+                    maxLength={100}
+                    rows={2}
+                    className="border-border focus:border-primary text-sm resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground text-right">
+                    {bio.length}/100
+                  </p>
+                </div>
+
+                {/* 用户 ID */}
                 <div className="space-y-2">
                   <Label className="text-xs md:text-sm text-foreground">
                     用户 ID
@@ -210,27 +304,6 @@ export default function Settings() {
                       复制
                     </Button>
                   </div>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    你的唯一用户标识符
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="display-name" className="text-xs md:text-sm text-foreground">
-                    用户名称
-                  </Label>
-                  <Input
-                    id="display-name"
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="请输入你的名称"
-                    maxLength={50}
-                    className="border-border focus:border-primary text-sm"
-                  />
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    这个名称将在复盘报告中使用，例如"亲爱的[你的名称]"
-                  </p>
                 </div>
 
                 <TimezoneSelector value={timezone} onChange={setTimezone} />

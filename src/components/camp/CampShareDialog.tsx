@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { ProfileCompletionPrompt } from "@/components/profile/ProfileCompletionPrompt";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +52,7 @@ const CampShareDialog = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isComplete, loading: profileLoading } = useProfileCompletion();
   const [sharing, setSharing] = useState(false);
   const [customTitle, setCustomTitle] = useState(insight || "");
   const [shareContent, setShareContent] = useState("");
@@ -60,6 +63,14 @@ const CampShareDialog = ({
   const [storyCoachOpen, setStoryCoachOpen] = useState(false);
   const [hasStoryContent, setHasStoryContent] = useState(false);
   const [extractedEmotionTag, setExtractedEmotionTag] = useState<string | undefined>(undefined);
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
+
+  // 检查资料完整度
+  useEffect(() => {
+    if (open && !profileLoading && !isComplete) {
+      setShowProfilePrompt(true);
+    }
+  }, [open, isComplete, profileLoading]);
 
   const handleGenerateImage = async () => {
     if (!customTitle && !insight) {
@@ -219,7 +230,21 @@ const CampShareDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      {/* 资料完善引导弹窗 */}
+      <ProfileCompletionPrompt
+        open={showProfilePrompt}
+        onOpenChange={setShowProfilePrompt}
+        onComplete={() => {
+          setShowProfilePrompt(false);
+        }}
+        onSkip={() => {
+          setIsAnonymous(true);
+          setShowProfilePrompt(false);
+        }}
+      />
+
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -438,6 +463,7 @@ const CampShareDialog = ({
         }}
       />
     </Dialog>
+    </>
   );
 };
 

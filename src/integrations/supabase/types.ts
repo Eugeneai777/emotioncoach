@@ -3855,6 +3855,7 @@ export type Database = {
         Row: {
           auth_provider: string | null
           avatar_url: string | null
+          bio: string | null
           camp_checkin_requirement: string | null
           camp_evening_reminder_time: string | null
           camp_late_warning_enabled: boolean | null
@@ -3879,8 +3880,11 @@ export type Database = {
           is_disabled: boolean | null
           last_intensity_reminder_shown: string | null
           last_reminder_shown: string | null
+          mood_status: string | null
           notification_frequency: string | null
           preferred_encouragement_style: string | null
+          profile_completed: boolean | null
+          profile_completed_at: string | null
           reminder_auto_dismiss_seconds: number | null
           reminder_enabled: boolean | null
           reminder_time: string | null
@@ -3912,6 +3916,7 @@ export type Database = {
         Insert: {
           auth_provider?: string | null
           avatar_url?: string | null
+          bio?: string | null
           camp_checkin_requirement?: string | null
           camp_evening_reminder_time?: string | null
           camp_late_warning_enabled?: boolean | null
@@ -3936,8 +3941,11 @@ export type Database = {
           is_disabled?: boolean | null
           last_intensity_reminder_shown?: string | null
           last_reminder_shown?: string | null
+          mood_status?: string | null
           notification_frequency?: string | null
           preferred_encouragement_style?: string | null
+          profile_completed?: boolean | null
+          profile_completed_at?: string | null
           reminder_auto_dismiss_seconds?: number | null
           reminder_enabled?: boolean | null
           reminder_time?: string | null
@@ -3969,6 +3977,7 @@ export type Database = {
         Update: {
           auth_provider?: string | null
           avatar_url?: string | null
+          bio?: string | null
           camp_checkin_requirement?: string | null
           camp_evening_reminder_time?: string | null
           camp_late_warning_enabled?: boolean | null
@@ -3993,8 +4002,11 @@ export type Database = {
           is_disabled?: boolean | null
           last_intensity_reminder_shown?: string | null
           last_reminder_shown?: string | null
+          mood_status?: string | null
           notification_frequency?: string | null
           preferred_encouragement_style?: string | null
+          profile_completed?: boolean | null
+          profile_completed_at?: string | null
           reminder_auto_dismiss_seconds?: number | null
           reminder_enabled?: boolean | null
           reminder_time?: string | null
