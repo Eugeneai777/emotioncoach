@@ -3,11 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { format } from "date-fns";
 import { RechargeDialog } from "./RechargeDialog";
-import { Plus } from "lucide-react";
+import { UserActionMenu } from "./UserActionMenu";
+import { CheckCircle, XCircle, Ban } from "lucide-react";
 
 export function UserAccountsTable() {
   const [search, setSearch] = useState("");
@@ -15,8 +16,9 @@ export function UserAccountsTable() {
   const [selectedUser, setSelectedUser] = useState<{ id: string; name: string } | null>(null);
 
   const { data: accounts, isLoading, refetch } = useQuery({
-    queryKey: ['admin-accounts'],
+    queryKey: ['admin-accounts-enhanced'],
     queryFn: async () => {
+      // 获取用户账户
       const { data: accountsData, error } = await supabase
         .from('user_accounts')
         .select('*')
@@ -24,115 +26,194 @@ export function UserAccountsTable() {
 
       if (error) throw error;
 
-      // Fetch profiles and subscriptions separately
+      // 并行获取所有关联数据
       const accountsWithDetails = await Promise.all(
         (accountsData || []).map(async (account) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('display_name')
-            .eq('id', account.user_id)
-            .maybeSingle();
-
-          const { data: subscription } = await supabase
-            .from('subscriptions')
-            .select('subscription_type, status')
-            .eq('user_id', account.user_id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+          const [profileResult, subscriptionResult, wechatResult] = await Promise.all([
+            supabase
+              .from('profiles')
+              .select('display_name, avatar_url, auth_provider, created_at, is_disabled, disabled_at, disabled_reason, deleted_at')
+              .eq('id', account.user_id)
+              .maybeSingle(),
+            supabase
+              .from('subscriptions')
+              .select('subscription_type, status')
+              .eq('user_id', account.user_id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+            supabase
+              .from('wechat_user_mappings')
+              .select('nickname, subscribe_status, phone_number')
+              .eq('system_user_id', account.user_id)
+              .maybeSingle()
+          ]);
 
           return {
             ...account,
-            profile,
-            subscription
+            profile: profileResult.data,
+            subscription: subscriptionResult.data,
+            wechat: wechatResult.data
           };
         })
       );
 
-      return accountsWithDetails;
+      // 过滤已删除的账号（软删除）
+      return accountsWithDetails.filter(account => !account.profile?.deleted_at);
     }
   });
 
-  const filteredAccounts = accounts?.filter(account => 
-    account.profile?.display_name?.toLowerCase().includes(search.toLowerCase()) ||
-    account.user_id.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredAccounts = accounts?.filter(account => {
+    const searchLower = search.toLowerCase();
+    return (
+      account.profile?.display_name?.toLowerCase().includes(searchLower) ||
+      account.user_id.toLowerCase().includes(searchLower) ||
+      account.wechat?.nickname?.toLowerCase().includes(searchLower)
+    );
+  });
 
   if (isLoading) return <div>加载中...</div>;
 
   return (
     <div className="space-y-4">
       <Input
-        placeholder="搜索用户ID或显示名..."
+        placeholder="搜索用户名/微信昵称/ID..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="max-w-sm"
       />
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>用户</TableHead>
-            <TableHead>剩余额度</TableHead>
-            <TableHead>总额度</TableHead>
-            <TableHead>会员类型</TableHead>
-            <TableHead>过期时间</TableHead>
-            <TableHead>最后同步</TableHead>
-            <TableHead>操作</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredAccounts?.map((account) => (
-            <TableRow key={account.id}>
-              <TableCell>
-                <div>
-                  <div className="font-medium">{account.profile?.display_name || '未设置'}</div>
-                  <div className="text-sm text-muted-foreground">{account.user_id.slice(0, 8)}...</div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant={account.remaining_quota > 10 ? "default" : "destructive"}>
-                  {account.remaining_quota}
-                </Badge>
-              </TableCell>
-              <TableCell>{account.total_quota}</TableCell>
-              <TableCell>
-                <Badge variant="outline">
-                  {account.subscription?.subscription_type === '365' ? '365会员' 
-                   : account.subscription?.subscription_type === 'custom' ? '自定义'
-                   : '尝鲜'}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                {account.quota_expires_at 
-                  ? format(new Date(account.quota_expires_at), 'yyyy-MM-dd')
-                  : '-'}
-              </TableCell>
-              <TableCell>
-                {account.last_sync_at 
-                  ? format(new Date(account.last_sync_at), 'yyyy-MM-dd HH:mm')
-                  : '-'}
-              </TableCell>
-              <TableCell>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedUser({
-                      id: account.user_id,
-                      name: account.profile?.display_name || account.user_id.slice(0, 8)
-                    });
-                    setRechargeDialogOpen(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  充值
-                </Button>
-              </TableCell>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[280px]">用户</TableHead>
+              <TableHead className="w-[150px]">微信</TableHead>
+              <TableHead className="w-[100px]">额度</TableHead>
+              <TableHead className="w-[100px]">会员类型</TableHead>
+              <TableHead className="w-[120px]">过期时间</TableHead>
+              <TableHead className="w-[80px]">状态</TableHead>
+              <TableHead className="w-[60px]">操作</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {filteredAccounts?.map((account) => {
+              const displayName = account.profile?.display_name || '未设置';
+              const authProvider = account.profile?.auth_provider || 'email';
+              const isDisabled = account.profile?.is_disabled || false;
+
+              return (
+                <TableRow key={account.id} className={isDisabled ? "opacity-60" : ""}>
+                  {/* 用户信息：头像+名字+注册来源+注册时间 */}
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={account.profile?.avatar_url || undefined} />
+                        <AvatarFallback className="text-xs">
+                          {displayName[0]?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium truncate max-w-[120px]">{displayName}</span>
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {authProvider === 'wechat' ? '💬微信' : '📧邮箱'}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {account.profile?.created_at 
+                            ? format(new Date(account.profile.created_at), 'yyyy-MM-dd HH:mm')
+                            : '-'}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+
+                  {/* 微信信息 */}
+                  <TableCell>
+                    {account.wechat ? (
+                      <div className="text-sm">
+                        <div className="flex items-center gap-1">
+                          <span className="truncate max-w-[100px]">{account.wechat.nickname}</span>
+                          {account.wechat.subscribe_status ? (
+                            <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                          ) : (
+                            <XCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          )}
+                        </div>
+                        {account.wechat.phone_number && (
+                          <div className="text-xs text-muted-foreground">
+                            {account.wechat.phone_number}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+
+                  {/* 额度 */}
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Badge variant={account.remaining_quota > 10 ? "default" : "destructive"}>
+                        {account.remaining_quota}
+                      </Badge>
+                      <span className="text-muted-foreground text-xs">/ {account.total_quota}</span>
+                    </div>
+                  </TableCell>
+
+                  {/* 会员类型 */}
+                  <TableCell>
+                    <Badge variant="outline">
+                      {account.subscription?.subscription_type === '365' ? '365会员' 
+                       : account.subscription?.subscription_type === 'custom' ? '自定义'
+                       : '体验版'}
+                    </Badge>
+                  </TableCell>
+
+                  {/* 过期时间 */}
+                  <TableCell className="text-sm">
+                    {account.quota_expires_at 
+                      ? format(new Date(account.quota_expires_at), 'yyyy-MM-dd')
+                      : '-'}
+                  </TableCell>
+
+                  {/* 状态 */}
+                  <TableCell>
+                    {isDisabled ? (
+                      <Badge variant="destructive" className="gap-1">
+                        <Ban className="h-3 w-3" />
+                        已停用
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-green-100 text-green-700">
+                        正常
+                      </Badge>
+                    )}
+                  </TableCell>
+
+                  {/* 操作 */}
+                  <TableCell>
+                    <UserActionMenu
+                      userId={account.user_id}
+                      userName={displayName}
+                      isDisabled={isDisabled}
+                      onRecharge={() => {
+                        setSelectedUser({
+                          id: account.user_id,
+                          name: displayName
+                        });
+                        setRechargeDialogOpen(true);
+                      }}
+                      onRefresh={() => refetch()}
+                    />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
 
       {selectedUser && (
         <RechargeDialog
