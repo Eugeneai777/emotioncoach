@@ -31,11 +31,7 @@ export default function TeenCoach() {
     enabled: !!user?.id,
   });
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
+  // 游客模式：允许浏览，不强制跳转到登录页
 
   useEffect(() => {
     if (!bindingLoading && !binding && user) {
