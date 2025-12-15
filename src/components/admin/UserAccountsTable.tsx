@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { RechargeDialog } from "./RechargeDialog";
 import { UserActionMenu } from "./UserActionMenu";
 import { UserDetailDialog } from "./UserDetailDialog";
-import { CheckCircle, XCircle, Ban } from "lucide-react";
+import { Ban } from "lucide-react";
 
 export function UserAccountsTable() {
   const [search, setSearch] = useState("");
@@ -96,7 +96,6 @@ export function UserAccountsTable() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[280px]">用户</TableHead>
-              <TableHead className="w-[150px]">微信</TableHead>
               <TableHead className="w-[100px]">额度</TableHead>
               <TableHead className="w-[100px]">会员类型</TableHead>
               <TableHead className="w-[120px]">过期时间</TableHead>
@@ -141,36 +140,13 @@ export function UserAccountsTable() {
                             {authProvider === 'wechat' ? '💬微信' : '📧邮箱'}
                           </Badge>
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-sm text-foreground/70">
                           {account.profile?.created_at 
-                            ? format(new Date(account.profile.created_at), 'yyyy-MM-dd HH:mm')
+                            ? `注册于 ${format(new Date(account.profile.created_at), 'yyyy-MM-dd HH:mm')}`
                             : '-'}
                         </div>
                       </div>
                     </div>
-                  </TableCell>
-
-                  {/* 微信信息 */}
-                  <TableCell>
-                    {account.wechat ? (
-                      <div className="text-sm">
-                        <div className="flex items-center gap-1">
-                          <span className="truncate max-w-[100px]">{account.wechat.nickname}</span>
-                          {account.wechat.subscribe_status ? (
-                            <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                          ) : (
-                            <XCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          )}
-                        </div>
-                        {account.wechat.phone_number && (
-                          <div className="text-xs text-muted-foreground">
-                            {account.wechat.phone_number}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
                   </TableCell>
 
                   {/* 额度 */}
@@ -196,7 +172,7 @@ export function UserAccountsTable() {
                   <TableCell className="text-sm">
                     {account.quota_expires_at 
                       ? format(new Date(account.quota_expires_at), 'yyyy-MM-dd')
-                      : '-'}
+                      : <span className="text-green-600">永久有效</span>}
                   </TableCell>
 
                   {/* 状态 */}
