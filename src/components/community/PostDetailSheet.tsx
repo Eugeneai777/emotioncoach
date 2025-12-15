@@ -1,5 +1,5 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -74,6 +74,7 @@ const PostDetailSheet = ({
   const [deleting, setDeleting] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [authorProfile, setAuthorProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const partnerInfo = {
     isPartner,
@@ -82,6 +83,23 @@ const PostDetailSheet = ({
 
   // 获取教练空间信息
   const coachSpace = getCoachSpaceInfo(post.camp_type, post.camp_name, post.template_id);
+
+  // 获取作者资料
+  useEffect(() => {
+    const fetchAuthorProfile = async () => {
+      if (!post || post.is_anonymous) {
+        setAuthorProfile(null);
+        return;
+      }
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("id", post.user_id)
+        .maybeSingle();
+      setAuthorProfile(data);
+    };
+    fetchAuthorProfile();
+  }, [post?.user_id, post?.is_anonymous]);
 
   // 检查是否已关注
   useEffect(() => {
@@ -373,7 +391,17 @@ const PostDetailSheet = ({
       setSubmitting(false);
     }
   };
-  const displayName = post.is_anonymous ? "匿名用户" : `用户${post.user_id.slice(0, 6)}`;
+  const displayName = post.is_anonymous 
+    ? "匿名用户" 
+    : (authorProfile?.display_name || `用户${post.user_id.slice(0, 6)}`);
+  
+  // 处理头像/用户名点击跳转
+  const handleAuthorClick = () => {
+    if (!post.is_anonymous) {
+      navigate(`/user/${post.user_id}`);
+      onOpenChange(false);
+    }
+  };
   const getTypeEmoji = (type: string) => {
     const emojiMap: Record<string, string> = {
       story: "🌸",
@@ -426,13 +454,30 @@ const PostDetailSheet = ({
           <div className="p-6 pb-20">
             <SheetHeader className="mb-6">
               <div className="flex items-center gap-3 mb-2">
-                <Avatar className="w-10 h-10">
+                <Avatar 
+                  className={cn(
+                    "w-10 h-10",
+                    !post.is_anonymous && "cursor-pointer hover:opacity-80"
+                  )}
+                  onClick={handleAuthorClick}
+                >
+                  {authorProfile?.avatar_url && !post.is_anonymous && (
+                    <AvatarImage src={authorProfile.avatar_url} alt={displayName} />
+                  )}
                   <AvatarFallback className="bg-primary/10">
                     {post.is_anonymous ? "?" : displayName[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <div className="font-medium text-foreground">{displayName}</div>
+                  <div 
+                    className={cn(
+                      "font-medium text-foreground",
+                      !post.is_anonymous && "cursor-pointer hover:underline"
+                    )}
+                    onClick={handleAuthorClick}
+                  >
+                    {displayName}
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(post.created_at), {
                     addSuffix: true,

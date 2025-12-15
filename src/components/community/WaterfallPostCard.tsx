@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useCallback, memo, useEffect } from "react";
@@ -33,6 +33,8 @@ interface WaterfallPostCardProps {
       campName?: string;
       [key: string]: unknown;
     };
+    author_display_name?: string | null;
+    author_avatar_url?: string | null;
   };
   isLiked?: boolean;
   onCardClick?: (postId: string) => void;
@@ -61,7 +63,17 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
   const displayTitle = post.title || post.content || "无标题";
   
   // 显示用户名或匿名
-  const displayName = post.is_anonymous ? "匿名用户" : `用户${post.user_id.slice(0, 6)}`;
+  const displayName = post.is_anonymous 
+    ? "匿名用户" 
+    : (post.author_display_name || `用户${post.user_id.slice(0, 6)}`);
+
+  // 处理头像点击跳转
+  const handleAvatarClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!post.is_anonymous) {
+      navigate(`/user/${post.user_id}`);
+    }
+  }, [post.is_anonymous, post.user_id, navigate]);
   
   // 获取教练空间信息 - 传入 badges
   const coachSpace = getCoachSpaceInfo(
@@ -199,8 +211,17 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
 
         {/* 用户信息和点赞 */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
+          <div 
+            className={cn(
+              "flex items-center gap-1.5",
+              !post.is_anonymous && "cursor-pointer hover:opacity-80"
+            )}
+            onClick={handleAvatarClick}
+          >
             <Avatar className="w-5 h-5 ring-1 ring-teal-200/50">
+              {post.author_avatar_url && !post.is_anonymous && (
+                <AvatarImage src={post.author_avatar_url} alt={displayName} />
+              )}
               <AvatarFallback className="text-xs bg-gradient-to-br from-teal-100 to-cyan-100 text-teal-700">
                 {post.is_anonymous ? '?' : displayName[0]}
               </AvatarFallback>
