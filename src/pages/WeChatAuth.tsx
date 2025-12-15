@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, QrCode, CheckCircle2, Smartphone } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, Smartphone, Bell, Calendar, MessageCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -92,62 +92,70 @@ export default function WeChatAuth() {
     }
   };
 
-  // 关注公众号引导页面
+  // 关注公众号引导页面 - 简化设计，突出智能消息提醒
   if (mode === "follow") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 p-4">
         <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm border-0 shadow-xl">
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle2 className="h-8 w-8 text-white" />
+          <CardHeader className="text-center pb-4">
+            <div className="mx-auto w-14 h-14 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full flex items-center justify-center mb-3">
+              <CheckCircle2 className="h-7 w-7 text-white" />
             </div>
             <CardTitle className="text-xl text-foreground">
               注册成功！🎉
             </CardTitle>
-            <CardDescription className="text-base">
-              欢迎加入情绪梳理教练
+            <CardDescription>
+              开始你的情绪梳理之旅
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* 关注公众号引导 */}
-            <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-6 text-center space-y-4">
-              <div className="flex items-center justify-center gap-2 text-teal-700 font-medium">
-                <QrCode className="h-5 w-5" />
-                <span>关注公众号，获取更多福利</span>
+          <CardContent className="space-y-5">
+            {/* 核心价值：智能消息提醒 */}
+            <div className="text-center space-y-4">
+              <div className="flex items-center justify-center gap-2">
+                <Bell className="h-5 w-5 text-teal-500" />
+                <span className="text-lg font-semibold text-foreground">开启智能消息提醒</span>
               </div>
               
-              <div className="bg-white rounded-lg p-4 inline-block shadow-sm">
+              {/* 二维码 */}
+              <div className="bg-white rounded-xl p-3 inline-block shadow-sm border border-teal-100">
                 <img 
                   src={WECHAT_OFFICIAL_ACCOUNT_QR} 
                   alt="公众号二维码"
-                  className="w-40 h-40 object-contain"
+                  className="w-36 h-36 object-contain"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Crect fill='%23f0f0f0' width='160' height='160'/%3E%3Ctext fill='%23999' font-family='Arial' font-size='14' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3E公众号二维码%3C/text%3E%3C/svg%3E";
+                    (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='144' height='144' viewBox='0 0 144 144'%3E%3Crect fill='%23f0f0f0' width='144' height='144'/%3E%3Ctext fill='%23999' font-family='Arial' font-size='12' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3E公众号二维码%3C/text%3E%3C/svg%3E";
                   }}
                 />
               </div>
-              
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>扫码关注「有劲生活365」公众号</p>
-                <ul className="text-left space-y-1 pl-4">
-                  <li className="flex items-start gap-2">
-                    <span className="text-teal-500">✓</span>
-                    <span>每日情绪梳理提醒</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-teal-500">✓</span>
-                    <span>训练营打卡通知</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-teal-500">✓</span>
-                    <span>专属优惠活动</span>
-                  </li>
-                </ul>
+              <p className="text-xs text-muted-foreground">扫码关注「有劲生活365」</p>
+            </div>
+
+            {/* 简化福利说明 - 3个核心提醒功能 */}
+            <div className="bg-gradient-to-br from-teal-50/50 to-cyan-50/50 rounded-xl p-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
+                    <Bell className="h-4 w-4 text-teal-600" />
+                  </div>
+                  <span className="text-sm text-foreground">情绪梳理提醒</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center flex-shrink-0">
+                    <Calendar className="h-4 w-4 text-cyan-600" />
+                  </div>
+                  <span className="text-sm text-foreground">训练打卡提醒</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <MessageCircle className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <span className="text-sm text-foreground">专属消息通知</span>
+                </div>
               </div>
             </div>
 
             {/* 操作按钮 */}
-            <div className="space-y-3">
+            <div className="space-y-2 pt-2">
               <Button 
                 className="w-full bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 text-white"
                 onClick={() => navigate("/")}
@@ -156,10 +164,10 @@ export default function WeChatAuth() {
               </Button>
               <Button 
                 variant="ghost" 
-                className="w-full text-muted-foreground"
+                className="w-full text-muted-foreground text-sm"
                 onClick={() => navigate("/")}
               >
-                稍后关注
+                先去体验
               </Button>
             </div>
           </CardContent>
