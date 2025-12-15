@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Phone } from 'lucide-react';
+import { Phone, MessageSquare } from 'lucide-react';
 import { usePersonalizedGreeting } from '@/hooks/usePersonalizedGreeting';
 import { Skeleton } from '@/components/ui/skeleton';
 interface ParentVoiceCallCTAProps {
@@ -87,5 +87,28 @@ export const ParentVoiceCallCTA = ({
           <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
           点击开始对话
         </p>}
+
+      {/* 扣费规则提示 */}
+      <div className="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-xl p-4 border border-purple-100 dark:border-purple-800/30 max-w-sm">
+        <div className="text-sm text-purple-700 dark:text-purple-300 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Phone className="w-4 h-4" />
+              语音对话
+            </span>
+            <span className="font-semibold">8点/分钟</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              文字对话
+            </span>
+            <span className="font-semibold">1点/次</span>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2 text-center">
+          语音更自然流畅，文字更经济实惠
+        </p>
+      </div>
     </div>;
 };
