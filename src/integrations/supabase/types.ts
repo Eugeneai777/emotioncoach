@@ -3868,11 +3868,15 @@ export type Database = {
           companion_type: string | null
           conversation_style: string | null
           created_at: string
+          deleted_at: string | null
+          disabled_at: string | null
+          disabled_reason: string | null
           display_name: string | null
           has_seen_onboarding: boolean | null
           id: string
           intensity_reminder_enabled: boolean | null
           intensity_reminder_time: string | null
+          is_disabled: boolean | null
           last_intensity_reminder_shown: string | null
           last_reminder_shown: string | null
           notification_frequency: string | null
@@ -3921,11 +3925,15 @@ export type Database = {
           companion_type?: string | null
           conversation_style?: string | null
           created_at?: string
+          deleted_at?: string | null
+          disabled_at?: string | null
+          disabled_reason?: string | null
           display_name?: string | null
           has_seen_onboarding?: boolean | null
           id: string
           intensity_reminder_enabled?: boolean | null
           intensity_reminder_time?: string | null
+          is_disabled?: boolean | null
           last_intensity_reminder_shown?: string | null
           last_reminder_shown?: string | null
           notification_frequency?: string | null
@@ -3974,11 +3982,15 @@ export type Database = {
           companion_type?: string | null
           conversation_style?: string | null
           created_at?: string
+          deleted_at?: string | null
+          disabled_at?: string | null
+          disabled_reason?: string | null
           display_name?: string | null
           has_seen_onboarding?: boolean | null
           id?: string
           intensity_reminder_enabled?: boolean | null
           intensity_reminder_time?: string | null
+          is_disabled?: boolean | null
           last_intensity_reminder_shown?: string | null
           last_reminder_shown?: string | null
           notification_frequency?: string | null
