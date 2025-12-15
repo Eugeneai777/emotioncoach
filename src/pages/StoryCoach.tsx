@@ -60,15 +60,7 @@ export default function StoryCoach() {
     triggerNotification,
   } = useSmartNotification('story_coach');
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/auth");
-      }
-    };
-    checkAuth();
-  }, [navigate]);
+  // 游客模式：允许浏览，不强制跳转到登录页
 
   const handleComplete = async (data: { title: string; story: string; emotionTag?: string }) => {
     try {

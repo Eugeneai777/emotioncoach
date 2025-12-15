@@ -218,12 +218,8 @@ export const CoachLayout = ({
   const resolvedStepsEmoji = stepsConfig?.emoji || stepsEmoji || "";
   const resolvedMoreInfoRoute = stepsConfig?.introRoute || moreInfoRoute;
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
+  // 游客模式：允许浏览，不强制跳转
+  // 发送消息等交互操作由各页面通过 usePurchaseOnboarding 控制
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -304,13 +300,7 @@ export const CoachLayout = ({
     }
   }, [isPulling, pullDistance, isRefreshing, onRefresh]);
 
-  if (authLoading) {
-    return (
-      <div className={`min-h-screen bg-gradient-to-br ${getThemeBackgroundGradient(primaryColor, themeConfig)} flex items-center justify-center`}>
-        <Loader2 className={`w-8 h-8 animate-spin ${getThemeLoaderColor(primaryColor, themeConfig)}`} />
-      </div>
-    );
-  }
+  // 移除 authLoading 阻塞，允许游客直接查看内容
 
   const pullProgress = Math.min(pullDistance / threshold, 1);
 
