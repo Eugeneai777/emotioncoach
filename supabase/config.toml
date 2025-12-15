@@ -166,10 +166,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.create-wechat-order]
-verify_jwt = true
+verify_jwt = false
 
 [functions.check-order-status]
-verify_jwt = true
+verify_jwt = false
 
 [functions.wechat-pay-callback]
 verify_jwt = false
@@ -250,4 +250,7 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.teen-realtime-token]
+verify_jwt = false
+
+[functions.create-user-from-payment]
 verify_jwt = false

@@ -117,11 +117,12 @@ export default function ParentCoach() {
 
   // No intake guide card - users can chat directly without completing questionnaire
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
+  // 不再强制跳转，允许游客浏览
+  // useEffect(() => {
+  //   if (!authLoading && !user) {
+  //     navigate("/auth");
+  //   }
+  // }, [user, authLoading, navigate]);
 
   useEffect(() => {
     const initSession = async () => {
