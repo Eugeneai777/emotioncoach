@@ -120,12 +120,7 @@ const ParentIntake = () => {
     }
   }, [existingProfile, navigate]);
 
-  // Redirect if not logged in
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth?redirect=/parent/intake");
-    }
-  }, [user, authLoading, navigate]);
+  // 游客模式：允许浏览问卷，提交时检查登录状态
 
   const currentQuestion = INTAKE_QUESTIONS[currentStep];
   const isLastQuestion = currentStep === INTAKE_QUESTIONS.length - 1;

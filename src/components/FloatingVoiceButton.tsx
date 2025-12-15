@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Phone } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { CoachVoiceChat } from '@/components/coach/CoachVoiceChat';
 import { WechatPayDialog } from '@/components/WechatPayDialog';
+import { PurchaseOnboardingDialog } from '@/components/onboarding/PurchaseOnboardingDialog';
 import { supabase } from '@/integrations/supabase/client';
-
 // 不显示浮动按钮的路由（有劲AI页面有居中CTA，不需要浮动按钮）
 const EXCLUDED_ROUTES = ['/auth', '/wechat-auth', '/coach/vibrant_life_sage', '/parent-coach'];
 
@@ -27,10 +27,10 @@ interface Position {
 
 const FloatingVoiceButton: React.FC = () => {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const [showVoiceChat, setShowVoiceChat] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const [isCheckingQuota, setIsCheckingQuota] = useState(false);
   
   // 拖拽相关状态
@@ -169,11 +169,8 @@ const FloatingVoiceButton: React.FC = () => {
     if (hasMoved) return;
     
     if (!user) {
-      toast({
-        title: "请先登录",
-        description: "登录后即可使用有劲AI智能对话",
-      });
-      navigate('/auth');
+      // 未登录时弹出购买引导对话框
+      setShowPurchaseDialog(true);
       return;
     }
 
@@ -279,6 +276,17 @@ const FloatingVoiceButton: React.FC = () => {
             description: "现在可以开始智能对话了 🎉",
           });
           setShowPayDialog(false);
+          setShowVoiceChat(true);
+        }}
+      />
+
+      {/* 未登录时弹出购买引导 */}
+      <PurchaseOnboardingDialog
+        open={showPurchaseDialog}
+        onOpenChange={setShowPurchaseDialog}
+        triggerFeature="有劲AI智能对话"
+        onSuccess={() => {
+          setShowPurchaseDialog(false);
           setShowVoiceChat(true);
         }}
       />
