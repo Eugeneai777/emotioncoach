@@ -71,7 +71,8 @@ export const AccountBalance = () => {
     if (subscription?.subscription_type === 'custom') {
       return <Badge variant="secondary">自定义套餐</Badge>;
     }
-    return <Badge variant="secondary">尝鲜会员</Badge>;
+    // 没有订阅记录时，显示"体验版"
+    return <Badge variant="outline">体验版</Badge>;
   };
 
   return (
