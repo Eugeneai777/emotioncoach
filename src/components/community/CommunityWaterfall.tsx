@@ -25,6 +25,8 @@ interface Post {
   camp_type?: string;
   camp_name?: string;
   template_id?: string;
+  author_display_name?: string | null;
+  author_avatar_url?: string | null;
 }
 
 const POSTS_PER_PAGE = 10;
@@ -335,15 +337,32 @@ const CommunityWaterfall = () => {
           };
         });
         
+        // 批量获取作者资料
+        const userIds = [...new Set(processedData.map((p: any) => p.user_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .in('id', userIds);
+        
+        // 合并作者资料到帖子数据
+        const postsWithProfiles = processedData.map((post: any) => {
+          const profile = profiles?.find(p => p.id === post.user_id);
+          return {
+            ...post,
+            author_display_name: profile?.display_name,
+            author_avatar_url: profile?.avatar_url,
+          };
+        });
+        
         if (append) {
-          setPosts(prev => [...prev, ...processedData]);
+          setPosts(prev => [...prev, ...postsWithProfiles]);
         } else {
-          setPosts(processedData);
+          setPosts(postsWithProfiles);
         }
         setHasMore(data.length === POSTS_PER_PAGE);
 
         // 批量获取点赞状态
-        const postIds = processedData.map((p: Post) => p.id);
+        const postIds = postsWithProfiles.map((p: Post) => p.id);
         batchCheckLikedStatus(postIds);
       }
     } catch (error) {
@@ -451,12 +470,22 @@ const CommunityWaterfall = () => {
       // 展平 training_camps 数据
       if (data) {
         const campData = data.training_camps;
+        
+        // 获取作者资料
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .eq('id', data.user_id)
+          .single();
+        
         const processedData = {
           ...data,
           camp_type: campData?.camp_type,
           camp_name: campData?.camp_name,
           template_id: campData?.template_id,
-          training_camps: undefined
+          training_camps: undefined,
+          author_display_name: profile?.display_name,
+          author_avatar_url: profile?.avatar_url,
         };
         setSelectedPost(processedData);
       }
