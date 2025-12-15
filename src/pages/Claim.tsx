@@ -59,8 +59,9 @@ export default function Claim() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        // Redirect to auth with return URL
-        navigate(`/auth?redirect=/claim?partner=${partnerId}`);
+        // 不再跳转，显示 loading 状态提示用户先购买套餐
+        setStatus('no-partner');
+        setMessage("请先购买套餐后再领取");
         return;
       }
 

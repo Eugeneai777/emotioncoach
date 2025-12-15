@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ChatEmotionIntensityPrompt } from "@/components/ChatEmotionIntensityPrompt";
 import { EmotionAlert } from "@/components/EmotionAlert";
@@ -21,6 +21,8 @@ import { CoachLayout } from "@/components/coach/CoachLayout";
 import { useStreamChat } from "@/hooks/useStreamChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
+import { usePurchaseOnboarding } from "@/hooks/usePurchaseOnboarding";
+import { PurchaseOnboardingDialog } from "@/components/onboarding/PurchaseOnboardingDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { TrainingCamp } from "@/types/trainingCamp";
 import { Sparkles, Loader2 } from "lucide-react";
@@ -28,6 +30,9 @@ import { useToast } from "@/hooks/use-toast";
 import { getTodayInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
 
 const Index = () => {
+  const [searchParams] = useSearchParams();
+  const partnerId = searchParams.get('partner');
+  
   const [input, setInput] = useState("");
   const [showReminder, setShowReminder] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -41,6 +46,16 @@ const Index = () => {
   const [checkInSuccessData, setCheckInSuccessData] = useState<any>(null);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const { toast } = useToast();
+
+  // 购买引导
+  const {
+    showDialog: showPurchaseDialog,
+    setShowDialog: setShowPurchaseDialog,
+    triggerFeature,
+    requirePurchase,
+    handlePurchaseSuccess,
+    partnerId: hookPartnerId
+  } = usePurchaseOnboarding({ partnerId: partnerId || undefined });
   
   const { data: coachConfig } = useCoachTemplate('emotion');
 
@@ -77,14 +92,13 @@ const Index = () => {
     scrollToBottom();
   }, [messages]);
 
+  // 不再强制跳转，允许游客浏览
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    } else if (user) {
+    if (user) {
       checkOnboarding();
       loadActiveCamp();
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading]);
 
   // Listen for check-in success events
   useEffect(() => {
@@ -427,8 +441,12 @@ const Index = () => {
 
   const handleSend = async (message: string) => {
     if (!message.trim() || isLoading) return;
-    await sendMessage(message);
-    setInput("");
+    
+    // 检查是否需要购买套餐
+    requirePurchase(async () => {
+      await sendMessage(message);
+      setInput("");
+    }, '发送消息');
   };
 
   // 点击"生成简报"等特殊按钮 → 直接发送
@@ -555,6 +573,13 @@ const Index = () => {
 
   return (
     <>
+      <PurchaseOnboardingDialog
+        open={showPurchaseDialog}
+        onOpenChange={setShowPurchaseDialog}
+        partnerId={partnerId || undefined}
+        triggerFeature={triggerFeature}
+        onSuccess={handlePurchaseSuccess}
+      />
       <WelcomeOnboarding open={showOnboarding} onComplete={handleOnboardingComplete} />
       <StartCampDialog
         open={showStartCamp}
