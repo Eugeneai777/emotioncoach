@@ -30,6 +30,8 @@ interface CommunityPost {
   comments_count: number;
   shares_count: number;
   created_at: string;
+  author_display_name?: string | null;
+  author_avatar_url?: string | null;
 }
 
 const categories = [
@@ -157,7 +159,24 @@ const Community = () => {
       const { data, error } = await query;
 
       if (error) throw error;
-      setPosts(data || []);
+      
+      // 批量获取作者资料
+      if (data && data.length > 0) {
+        const userIds = [...new Set(data.map(p => p.user_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .in('id', userIds);
+        
+        const postsWithProfiles = data.map(post => ({
+          ...post,
+          author_display_name: profiles?.find(p => p.id === post.user_id)?.display_name,
+          author_avatar_url: profiles?.find(p => p.id === post.user_id)?.avatar_url,
+        }));
+        setPosts(postsWithProfiles);
+      } else {
+        setPosts([]);
+      }
     } catch (error) {
       console.error("加载帖子失败:", error);
       toast({
