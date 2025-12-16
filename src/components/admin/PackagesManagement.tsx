@@ -41,6 +41,7 @@ interface PackageFeatureSetting {
   cost_per_use: number;
   free_quota: number;
   free_quota_period: string;
+  max_duration_minutes?: number | null;
 }
 
 const categoryConfig: Record<string, { label: string; icon: typeof Users; color: string }> = {
@@ -237,6 +238,7 @@ export function PackagesManagement() {
       cost_per_use: editing?.cost_per_use ?? existing?.cost_per_use ?? 0,
       free_quota: editing?.free_quota ?? existing?.free_quota ?? 0,
       free_quota_period: editing?.free_quota_period ?? existing?.free_quota_period ?? 'per_use',
+      max_duration_minutes: editing?.max_duration_minutes ?? existing?.max_duration_minutes ?? null,
     };
   };
 
@@ -298,7 +300,7 @@ export function PackagesManagement() {
     p.package_key !== "partner"
   ) || [];
 
-  const renderFeatureRow = (item: FeatureItem) => {
+  const renderFeatureRow = (item: FeatureItem, showDuration: boolean = false) => {
     const setting = getSettingForFeature(item.id);
     const hasChanges = !!editingSettings[item.id];
     
@@ -356,6 +358,31 @@ export function PackagesManagement() {
             </SelectContent>
           </Select>
         </TableCell>
+        {showDuration && (
+          <TableCell className="text-center">
+            <Select
+              value={setting.max_duration_minutes?.toString() || 'unlimited'}
+              onValueChange={(value) =>
+                updateEditingSetting(item.id, 'max_duration_minutes', value === 'unlimited' ? null : parseInt(value))
+              }
+            >
+              <SelectTrigger className="w-24 mx-auto h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unlimited">不限时</SelectItem>
+                <SelectItem value="1">1分钟</SelectItem>
+                <SelectItem value="3">3分钟</SelectItem>
+                <SelectItem value="5">5分钟</SelectItem>
+                <SelectItem value="10">10分钟</SelectItem>
+                <SelectItem value="15">15分钟</SelectItem>
+                <SelectItem value="20">20分钟</SelectItem>
+                <SelectItem value="30">30分钟</SelectItem>
+                <SelectItem value="60">60分钟</SelectItem>
+              </SelectContent>
+            </Select>
+          </TableCell>
+        )}
         <TableCell className="text-center">
           <Button
             size="sm"
@@ -792,11 +819,12 @@ export function PackagesManagement() {
                                               <TableHead className="text-center w-24">扣费点数</TableHead>
                                               <TableHead className="text-center w-24">免费额度</TableHead>
                                               <TableHead className="text-center w-28">额度周期</TableHead>
+                                              {key === 'ai_voice' && <TableHead className="text-center w-24">时长限制</TableHead>}
                                               <TableHead className="text-center w-16">操作</TableHead>
                                             </TableRow>
                                           </TableHeader>
                                           <TableBody>
-                                            {subItems.map(item => renderFeatureRow(item))}
+                                            {subItems.map(item => renderFeatureRow(item, key === 'ai_voice'))}
                                           </TableBody>
                                         </Table>
                                       </div>
@@ -829,7 +857,7 @@ export function PackagesManagement() {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {items.map(item => renderFeatureRow(item))}
+                                {items.map(item => renderFeatureRow(item, false))}
                               </TableBody>
                             </Table>
                           </div>
