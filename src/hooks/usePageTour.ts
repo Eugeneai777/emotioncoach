@@ -5,12 +5,17 @@ import { supabase } from '@/integrations/supabase/client';
 const TOUR_STORAGE_PREFIX = 'page_tour_completed_';
 
 export const usePageTour = (pageKey: string) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [showTour, setShowTour] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // 检查引导是否已完成
   useEffect(() => {
+    // 如果 pageKey 为空或认证还在加载，不执行检查
+    if (!pageKey || authLoading) {
+      return;
+    }
+
     const checkTourStatus = async () => {
       setIsLoading(true);
       
@@ -46,7 +51,7 @@ export const usePageTour = (pageKey: string) => {
     };
 
     checkTourStatus();
-  }, [user, pageKey]);
+  }, [user, pageKey, authLoading]);
 
   // 完成引导
   const completeTour = useCallback(async () => {
@@ -80,7 +85,7 @@ export const usePageTour = (pageKey: string) => {
   }, []);
 
   return {
-    showTour,
+    showTour: !isLoading && showTour,
     isLoading,
     completeTour,
     resetTour
