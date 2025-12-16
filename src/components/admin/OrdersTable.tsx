@@ -162,7 +162,7 @@ export function OrdersTable() {
                 {order.order_id?.slice(0, 12) || order.id.slice(0, 8)}...
               </TableCell>
               <TableCell className="font-mono text-sm">{order.user_id.slice(0, 8)}...</TableCell>
-              <TableCell>{order.package_name || '-'}</TableCell>
+              <TableCell>{order.package_name === 'custom' ? '管理员充值' : (order.package_name || '-')}</TableCell>
               <TableCell>¥{order.amount}</TableCell>
               <TableCell>{getSourceBadge(order.source)}</TableCell>
               <TableCell>{getStatusBadge(order.status)}</TableCell>
