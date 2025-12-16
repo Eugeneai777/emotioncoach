@@ -4,10 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { emotionTypes, EmotionType } from "@/config/emotionReliefConfig";
 import EmotionReliefFlow from "@/components/tools/EmotionReliefFlow";
 import { useAuth } from "@/hooks/useAuth";
+import { PageTour } from "@/components/PageTour";
+import { usePageTour } from "@/hooks/usePageTour";
+import { pageTourConfig } from "@/config/pageTourConfig";
 
 const EmotionButton = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showTour, completeTour } = usePageTour('emotion_button');
   const [activeEmotion, setActiveEmotion] = useState<EmotionType | null>(null);
 
   if (activeEmotion) {
@@ -137,6 +141,7 @@ const EmotionButton = () => {
           </div>
         </div>
       </div>
+      <PageTour open={showTour} onComplete={completeTour} steps={pageTourConfig.emotion_button} pageTitle="情绪SOS按钮" />
     </div>
   );
 };

@@ -3014,6 +3014,30 @@ export type Database = {
         }
         Relationships: []
       }
+      page_tour_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          page_key: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          page_key: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          page_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       panic_sessions: {
         Row: {
           breathing_completed: boolean | null

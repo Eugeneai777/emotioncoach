@@ -24,6 +24,9 @@ import { ParentOnboardingGuide } from "@/components/parent-coach/ParentOnboardin
 import { IntakeOnboardingDialog } from "@/components/parent-intake/IntakeOnboardingDialog";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { Sparkles, Heart } from "lucide-react";
+import { PageTour } from "@/components/PageTour";
+import { usePageTour } from "@/hooks/usePageTour";
+import { pageTourConfig } from "@/config/pageTourConfig";
 
 export default function ParentCoach() {
   const navigate = useNavigate();

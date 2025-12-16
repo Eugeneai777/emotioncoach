@@ -10,6 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { PageTour } from "@/components/PageTour";
+import { usePageTour } from "@/hooks/usePageTour";
+import { pageTourConfig } from "@/config/pageTourConfig";
 
 interface CommunityPost {
   id: string;
@@ -53,6 +56,7 @@ const Community = () => {
   const { toast } = useToast();
   const { session } = useAuth();
   const navigate = useNavigate();
+  const { showTour, completeTour } = usePageTour('community');
 
   // Load emotion tags for story filter
   const loadEmotionTags = async () => {
@@ -468,6 +472,7 @@ const Community = () => {
           onOpenChange={setShowComposer}
           onSuccess={handlePostCreated}
         />
+        <PageTour open={showTour} onComplete={completeTour} steps={pageTourConfig.community} pageTitle="有劲社区" />
       </div>
     </div>
   );
