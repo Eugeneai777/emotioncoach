@@ -16,6 +16,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Plus, Edit, Trash2, Settings, Users, Tent, Wrench, BookOpen, Sparkles, ChevronDown, ChevronRight, Home, CircleDot, Brain, Mic, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PackageFeatureSettingsDialog } from "./PackageFeatureSettingsDialog";
+import FreeTrialSettings from "./FreeTrialSettings";
 
 import { Database } from "@/integrations/supabase/types";
 
@@ -391,6 +392,7 @@ export function PackagesManagement() {
           <TabsTrigger value="packages">套餐管理</TabsTrigger>
           <TabsTrigger value="features">功能开关</TabsTrigger>
           <TabsTrigger value="pricing">套餐扣费配置</TabsTrigger>
+          <TabsTrigger value="free-trial">免费试用</TabsTrigger>
         </TabsList>
 
         {/* 套餐管理 Tab */}
@@ -843,6 +845,11 @@ export function PackagesManagement() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* 免费试用配置 Tab */}
+        <TabsContent value="free-trial">
+          <FreeTrialSettings />
         </TabsContent>
       </Tabs>
 

@@ -18,6 +18,7 @@ import KnowledgeBaseManagement from "@/components/admin/KnowledgeBaseManagement"
 import CustomerServiceManagement from "@/components/admin/CustomerServiceManagement";
 import FeatureCostManagement from "@/components/admin/FeatureCostManagement";
 import CostMonitorDashboard from "@/components/admin/CostMonitorDashboard";
+import ConversionAnalytics from "@/components/admin/ConversionAnalytics";
 
 function AdminRoutes() {
   return (
@@ -33,6 +34,7 @@ function AdminRoutes() {
       <Route path="usage" element={<UsageRecordsTable />} />
       <Route path="pricing" element={<FeatureCostManagement />} />
       <Route path="cost-monitor" element={<CostMonitorDashboard />} />
+      <Route path="conversion" element={<ConversionAnalytics />} />
       <Route path="reports" element={<ReportsManagement />} />
       <Route path="packages" element={<PackagesManagement />} />
       <Route path="sync" element={<SyncStatusDashboard />} />

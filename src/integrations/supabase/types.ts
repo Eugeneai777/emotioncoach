@@ -56,6 +56,30 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       appointment_reviews: {
         Row: {
           appointment_id: string
@@ -1504,6 +1528,36 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      conversion_events: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          feature_key: string
+          id: string
+          metadata: Json | null
+          user_id: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          feature_key: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          feature_key?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+          visitor_id?: string | null
         }
         Relationships: []
       }

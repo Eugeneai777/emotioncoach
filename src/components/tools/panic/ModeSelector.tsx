@@ -8,13 +8,18 @@ type StartMode = 'cognitive' | 'breathing';
 interface ModeSelectorProps {
   onSelectMode: (mode: StartMode) => void;
   emotionType?: EmotionType;
+  remainingFree?: number;
+  freeLimit?: number;
 }
 
-const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, emotionType }) => {
+const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, emotionType, remainingFree, freeLimit }) => {
   // 使用传入的情绪类型或默认值
   const title = emotionType?.title || "你很安全";
   const subtitle = emotionType?.subtitle || "我在这里陪着你";
   const emoji = emotionType?.emoji || "🌿";
+  
+  // 显示剩余免费次数
+  const showFreeCount = remainingFree !== undefined && freeLimit !== undefined;
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10 overflow-y-auto">
@@ -54,12 +59,22 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ onSelectMode, emotionType }
       
       {/* 先做呼吸引导 - 文字链接 */}
       <button
-        className="flex items-center gap-2 text-cyan-600 hover:text-cyan-700 transition-colors mb-6"
+        className="flex items-center gap-2 text-cyan-600 hover:text-cyan-700 transition-colors mb-4"
         onClick={() => onSelectMode('breathing')}
       >
         <Wind className="w-4 h-4" />
         <span className="text-sm">先做呼吸引导</span>
       </button>
+      
+      {/* 显示剩余免费次数 */}
+      {showFreeCount && (
+        <div className="text-xs text-teal-500/70">
+          {remainingFree > 0 
+            ? `终身免费 ${freeLimit - remainingFree}/${freeLimit} 次`
+            : '免费体验已用完'
+          }
+        </div>
+      )}
     </div>
   );
 };
