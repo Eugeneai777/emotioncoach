@@ -8,11 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Phone, Sparkles, Shield, Heart } from "lucide-react";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { PageTour } from "@/components/PageTour";
+import { usePageTour } from "@/hooks/usePageTour";
+import { pageTourConfig } from "@/config/pageTourConfig";
 
 export default function TeenCoach() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false);
+  const { showTour, completeTour } = usePageTour('teen_coach');
 
   // Check if teen has active binding
   const { data: binding, isLoading: bindingLoading } = useQuery({
@@ -48,7 +52,13 @@ export default function TeenCoach() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-violet-50 via-purple-50 to-pink-50">
+    <>
+      <PageTour
+        steps={pageTourConfig.teen_coach}
+        open={showTour}
+        onComplete={completeTour}
+      />
+      <div className="min-h-screen bg-gradient-to-b from-violet-50 via-purple-50 to-pink-50">
       <div className="container max-w-lg mx-auto px-4 py-8 space-y-6">
         {/* Header */}
         <motion.div
@@ -154,6 +164,7 @@ export default function TeenCoach() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

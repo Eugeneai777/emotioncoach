@@ -21,6 +21,9 @@ import {
   useCoachReviews,
   CoachService
 } from "@/hooks/useHumanCoaches";
+import { PageTour } from "@/components/PageTour";
+import { usePageTour } from "@/hooks/usePageTour";
+import { pageTourConfig } from "@/config/pageTourConfig";
 
 export default function HumanCoachDetail() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +32,7 @@ export default function HumanCoachDetail() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<CoachService | undefined>();
   const [isCurrentUserCoach, setIsCurrentUserCoach] = useState(false);
+  const { showTour, completeTour } = usePageTour('human_coach_detail');
   const { startCall, isInCall } = useCoachCallContext();
   
   const { data: coach, isLoading: loadingCoach } = useHumanCoach(id);
@@ -77,7 +81,13 @@ export default function HumanCoachDetail() {
     : null;
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+    <>
+      <PageTour
+        steps={pageTourConfig.human_coach_detail}
+        open={showTour}
+        onComplete={completeTour}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b">
         <div className="container max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -358,6 +368,8 @@ export default function HumanCoachDetail() {
         </div>
       </div>
 
+      </div>
+
       {/* Booking Dialog */}
       {coach && (
         <BookingDialog
@@ -368,6 +380,6 @@ export default function HumanCoachDetail() {
           initialService={selectedService}
         />
       )}
-    </div>
+    </>
   );
 }

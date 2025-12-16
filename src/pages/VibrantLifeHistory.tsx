@@ -10,6 +10,9 @@ import { zhCN } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PageTour } from "@/components/PageTour";
+import { usePageTour } from "@/hooks/usePageTour";
+import { pageTourConfig } from "@/config/pageTourConfig";
 
 interface VibrantLifeBriefing {
   id: string;
@@ -40,6 +43,7 @@ const VibrantLifeHistory = () => {
   const [selectedBriefing, setSelectedBriefing] = useState<VibrantLifeBriefing | null>(null);
   const [conversationMessages, setConversationMessages] = useState<Message[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const { showTour, completeTour } = usePageTour('vibrant_life_history');
 
   const { data: briefings, isLoading } = useQuery({
     queryKey: ["vibrant-life-history"],
@@ -87,7 +91,13 @@ const VibrantLifeHistory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 via-red-50 to-background">
+    <>
+      <PageTour
+        steps={pageTourConfig.vibrant_life_history}
+        open={showTour}
+        onComplete={completeTour}
+      />
+      <div className="min-h-screen bg-gradient-to-b from-rose-50 via-red-50 to-background">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
         <div className="flex items-center gap-3 p-4">
@@ -266,7 +276,8 @@ const VibrantLifeHistory = () => {
           </ScrollArea>
         </SheetContent>
       </Sheet>
-    </div>
+      </div>
+    </>
   );
 };
 
