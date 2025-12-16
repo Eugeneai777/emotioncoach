@@ -142,27 +142,30 @@ export const CommunicationCourseRecommendations = ({
                   }}
                   onClick={() => navigate(`/camp-template/${camp.id}`)}
                 >
-                  <div className="flex items-start gap-3">
-                    {camp.icon && (
-                      <div className="text-3xl">{camp.icon}</div>
-                    )}
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h5 className="font-semibold">{camp.camp_name}</h5>
-                        <span className="text-xs text-muted-foreground">
-                          {camp.duration_days}天
-                        </span>
-                      </div>
-                      {camp.camp_subtitle && (
-                        <p className="text-sm text-muted-foreground">{camp.camp_subtitle}</p>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start gap-3">
+                      {camp.icon && (
+                        <div className="text-3xl flex-shrink-0">{camp.icon}</div>
                       )}
-                      <p className="text-xs text-muted-foreground mt-2">
-                        💡 {camp.reason}
-                      </p>
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h5 className="font-semibold break-words">{camp.camp_name}</h5>
+                          <span className="text-xs text-muted-foreground">
+                            {camp.duration_days}天
+                          </span>
+                        </div>
+                        {camp.camp_subtitle && (
+                          <p className="text-sm text-muted-foreground break-words">{camp.camp_subtitle}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-2 break-words">
+                          💡 {camp.reason}
+                        </p>
+                      </div>
                     </div>
                     <Button
                       size="sm"
                       variant="default"
+                      className="w-full"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/camp-template/${camp.id}`);

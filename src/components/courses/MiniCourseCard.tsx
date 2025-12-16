@@ -27,7 +27,7 @@ const getScoreColor = (score: number) => {
 
 export const MiniCourseCard = ({ recommendation, onWatch }: MiniCourseCardProps) => {
   return (
-    <Card className="w-56 flex-shrink-0 hover:shadow-md transition-shadow">
+    <Card className="w-56 min-w-[220px] flex-shrink-0 hover:shadow-md transition-shadow">
       <div className="p-4 space-y-3">
         {/* 匹配度徽章 */}
         <div className="flex items-center justify-between">
