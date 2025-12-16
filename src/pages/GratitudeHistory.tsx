@@ -9,9 +9,12 @@ import { GratitudeTrendChart } from "@/components/gratitude/GratitudeTrendChart"
 import { GratitudeQuickAdd } from "@/components/gratitude/GratitudeQuickAdd";
 import { GratitudeEntriesList } from "@/components/gratitude/GratitudeEntriesList";
 import { GratitudeDashboard } from "@/components/gratitude/GratitudeDashboard";
-import { Sparkles } from "lucide-react";
+import { GratitudeSyncButton } from "@/components/gratitude/GratitudeSyncButton";
+import { GratitudeRegisterPrompt } from "@/components/conversion/GratitudeRegisterPrompt";
+import { GratitudePurchasePrompt } from "@/components/conversion/GratitudePurchasePrompt";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { useLocalGratitude } from "@/hooks/useLocalGratitude";
 
 interface GratitudeEntry {
   id: string;
@@ -24,13 +27,30 @@ interface GratitudeEntry {
 const GratitudeHistory = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [entries, setEntries] = useState<GratitudeEntry[]>([]);
+  const [dbEntries, setDbEntries] = useState<GratitudeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // 手动刷新
+  // Local storage for unregistered users
+  const {
+    entries: localEntries,
+    addEntry: addLocalEntry,
+    themeStats: localThemeStats,
+    syncClickCount,
+    incrementSyncClick,
+  } = useLocalGratitude();
+
+  // Conversion prompts state
+  const [showRegisterPrompt, setShowRegisterPrompt] = useState(false);
+  const [showPurchasePrompt, setShowPurchasePrompt] = useState(false);
+
+  // Determine which entries to use
+  const entries = user ? dbEntries : localEntries;
+
+  // Manual refresh
   const handleRefresh = useCallback(async () => {
+    if (!user) return;
     setIsRefreshing(true);
     await loadEntries();
     setIsRefreshing(false);
@@ -49,8 +69,10 @@ const GratitudeHistory = () => {
     maxPull: 120
   });
 
-  // 页面聚焦时自动刷新
+  // Auto-refresh on page visibility change (only for logged-in users)
   useEffect(() => {
+    if (!user) return;
+    
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && user) {
         console.log('[GratitudeHistory] Page visible, refreshing data...');
@@ -63,8 +85,12 @@ const GratitudeHistory = () => {
   }, [user]);
 
   useEffect(() => {
-    console.log('[GratitudeHistory] Current user:', user?.id, user?.email);
-    loadEntries();
+    if (user) {
+      console.log('[GratitudeHistory] Current user:', user?.id, user?.email);
+      loadEntries();
+    } else {
+      setLoading(false);
+    }
   }, [user]);
 
   const loadEntries = async () => {
@@ -81,7 +107,7 @@ const GratitudeHistory = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setEntries(data || []);
+      setDbEntries(data || []);
     } catch (error) {
       console.error("Error loading entries:", error);
     } finally {
@@ -90,58 +116,32 @@ const GratitudeHistory = () => {
   };
 
   // Calculate theme stats
-  const themeStats: Record<string, number> = useMemo(() => {
+  const dbThemeStats: Record<string, number> = useMemo(() => {
     const stats: Record<string, number> = {};
-    entries.forEach(entry => {
+    dbEntries.forEach(entry => {
       const themes = entry.themes || [];
       themes.forEach(theme => {
         stats[theme] = (stats[theme] || 0) + 1;
       });
     });
     return stats;
-  }, [entries]);
+  }, [dbEntries]);
+
+  const themeStats = user ? dbThemeStats : localThemeStats;
 
   const handleTagClick = (themeId: string) => {
     setFilterTag(prev => prev === themeId ? null : themeId);
+  };
+
+  // Handle entry added (for local storage)
+  const handleLocalEntryAdded = () => {
+    // Entry is already added via useLocalGratitude
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
-      </div>
-    );
-  }
-
-  // 未登录状态提示
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-        <div className="max-w-2xl mx-auto p-4">
-          <div className="flex items-center gap-3 mb-6">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-xl font-bold">我的感恩日记</h1>
-              <p className="text-sm text-muted-foreground">看见日常微光，点亮内心力量</p>
-            </div>
-          </div>
-          
-          <div className="rounded-xl bg-white/60 dark:bg-gray-800/40 backdrop-blur p-8 text-center">
-            <Sparkles className="w-12 h-12 mx-auto mb-4 text-amber-500 opacity-50" />
-            <h3 className="text-lg font-medium mb-2">请先登录</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              登录后查看您的感恩记录
-            </p>
-            <Button 
-              onClick={() => navigate('/auth')}
-              className="bg-gradient-to-r from-teal-500 to-cyan-500"
-            >
-              去登录
-            </Button>
-          </div>
-        </div>
       </div>
     );
   }
@@ -172,18 +172,31 @@ const GratitudeHistory = () => {
               <p className="text-xs text-muted-foreground">看见日常微光，点亮内心力量</p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={handleRefresh}
-            disabled={isRefreshing || isPullRefreshing}
-          >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing || isPullRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
+          {user && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleRefresh}
+              disabled={isRefreshing || isPullRefreshing}
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing || isPullRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          )}
         </div>
 
         <div className="space-y-3">
+          {/* Sync Button for unregistered users */}
+          {!user && (
+            <GratitudeSyncButton
+              entryCount={localEntries.length}
+              syncClickCount={syncClickCount}
+              onSyncClick={incrementSyncClick}
+              onRegisterPrompt={() => setShowRegisterPrompt(true)}
+              onPurchasePrompt={() => setShowPurchasePrompt(true)}
+            />
+          )}
+
           {/* Stats Card */}
           <GratitudeStatsCard entries={entries} />
 
@@ -195,6 +208,7 @@ const GratitudeHistory = () => {
             themeStats={themeStats}
             onTagClick={handleTagClick}
             selectedTag={filterTag}
+            isLoggedIn={!!user}
           />
 
           {/* Entries List */}
@@ -202,15 +216,29 @@ const GratitudeHistory = () => {
             entries={entries}
             filterTag={filterTag}
             onFilterTagChange={setFilterTag}
-            onRefresh={loadEntries}
+            onRefresh={user ? loadEntries : undefined}
           />
         </div>
       </div>
 
       {/* Fixed Bottom Input */}
-      {user && (
-        <GratitudeQuickAdd userId={user.id} onAdded={loadEntries} />
-      )}
+      <GratitudeQuickAdd 
+        userId={user?.id} 
+        onAdded={user ? loadEntries : handleLocalEntryAdded}
+        onLocalAdd={!user ? addLocalEntry : undefined}
+      />
+
+      {/* Conversion Prompts */}
+      <GratitudeRegisterPrompt
+        open={showRegisterPrompt}
+        onClose={() => setShowRegisterPrompt(false)}
+        entryCount={localEntries.length}
+      />
+      <GratitudePurchasePrompt
+        open={showPurchasePrompt}
+        onClose={() => setShowPurchasePrompt(false)}
+        entryCount={localEntries.length}
+      />
     </div>
   );
 };
