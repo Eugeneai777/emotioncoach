@@ -59,8 +59,15 @@ const EmotionButton = () => {
       <div className="relative z-10 px-4 sm:px-6 pb-8">
         {/* 标题区 */}
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-teal-800 mb-2">
-            情绪按钮
+          <h1 className="text-2xl sm:text-3xl font-bold text-teal-800 mb-2 flex items-center justify-center gap-1.5">
+            情绪
+            <span className="inline-flex items-center gap-0.5">
+              <span className="text-2xl sm:text-3xl">🆘</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-red-500 font-black tracking-wider">
+                SOS
+              </span>
+            </span>
+            按钮
           </h1>
           <p className="text-teal-600/80 text-sm sm:text-base">
             选择你现在的感受，让我陪伴你

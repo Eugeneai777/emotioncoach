@@ -33,7 +33,12 @@ const SafetyButtonsGrid: React.FC = () => {
       <CardHeader className="text-center pb-3 relative z-10">
         <CardTitle className="text-lg text-slate-700 flex items-center justify-center gap-2">
           <Shield className="w-5 h-5 text-teal-500" />
-          情绪按钮
+          <span className="flex items-center gap-1">
+            情绪
+            <span className="text-base">🆘</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500 font-black text-sm tracking-wider">SOS</span>
+            按钮
+          </span>
           <Button
             variant="ghost"
             size="sm"

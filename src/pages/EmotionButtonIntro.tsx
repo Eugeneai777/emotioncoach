@@ -107,7 +107,7 @@ const EmotionButtonIntro = () => {
   // FAQ 数据
   const faqs = [
     {
-      q: "Q1：情绪按钮真的有用吗？不会只是自己骗自己吗？",
+      q: "Q1：情绪🆘SOS按钮真的有用吗？不会只是自己骗自己吗？",
       a: `有用。
 
 它整合了：
@@ -157,7 +157,7 @@ const EmotionButtonIntro = () => {
       q: "Q6：这是心理治疗吗？会不会取代医生或心理师？",
       a: `不是。
 
-情绪按钮与情绪教练：
+情绪🆘SOS按钮与情绪教练：
 • 不能取代 心理治疗或药物
 • 但可以成为你在日常生活中随时可以用的「情绪稳定工具」
 
@@ -168,7 +168,7 @@ const EmotionButtonIntro = () => {
 请一定优先寻求：
 精神科医生、临床心理师、当地心理危机热线的支持。
 
-情绪按钮，是站在他们旁边、陪你一起走路的那只手。`
+情绪🆘SOS按钮，是站在他们旁边、陪你一起走路的那只手。`
     },
   ];
 
@@ -213,11 +213,18 @@ const EmotionButtonIntro = () => {
       <main className="container max-w-4xl mx-auto px-4 py-8 space-y-12">
         {/* Hero Section */}
         <section className="text-center space-y-6 py-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 text-4xl shadow-lg shadow-teal-200">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 via-rose-500 to-red-500 text-4xl shadow-lg shadow-rose-200">
             🆘
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-            情绪按钮 · 官方介绍
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center justify-center gap-2 flex-wrap">
+            情绪
+            <span className="inline-flex items-center gap-1">
+              <span className="text-3xl md:text-4xl">🆘</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-red-500 font-black tracking-wider">
+                SOS
+              </span>
+            </span>
+            按钮 · 官方介绍
           </h1>
           <p className="text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
             当情绪太大，一秒按下，让身体稳住、让大脑回来，让你重新可以呼吸。
@@ -227,17 +234,17 @@ const EmotionButtonIntro = () => {
           </Badge>
         </section>
 
-        {/* 01 什么是情绪按钮 */}
+        {/* 01 什么是情绪SOS按钮 */}
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="text-2xl">💡</span>
-            <h2 className="text-2xl font-bold text-gray-900">01｜什么是「情绪按钮」？</h2>
+            <h2 className="text-2xl font-bold text-gray-900">01｜什么是「情绪🆘SOS按钮」？</h2>
           </div>
           
           <Card className="bg-white/70 backdrop-blur border-teal-100">
             <CardContent className="p-6 space-y-6">
               <p className="text-gray-700 leading-relaxed">
-                情绪按钮是一套基于 <span className="font-semibold text-teal-700">神经科学 + 临床心理学 + 呼吸调节学 + 认知科学</span> 的
+                情绪🆘SOS按钮是一套基于 <span className="font-semibold text-teal-700">神经科学 + 临床心理学 + 呼吸调节学 + 认知科学</span> 的
                 <br />即时情绪急救系统（Emotional First Aid System）。
               </p>
               
@@ -283,11 +290,11 @@ const EmotionButtonIntro = () => {
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="text-2xl">🧠</span>
-            <h2 className="text-2xl font-bold text-gray-900">02｜为什么情绪按钮有效？（科学依据 & 机构支持）</h2>
+            <h2 className="text-2xl font-bold text-gray-900">02｜为什么情绪🆘SOS按钮有效？（科学依据 & 机构支持）</h2>
           </div>
 
           <p className="text-gray-700 leading-relaxed">
-            情绪按钮不是「喊喊口号就好一点」的心理安慰，而是整合了多种经实证支持的方法。
+            情绪🆘SOS按钮不是「喊喊口号就好一点」的心理安慰，而是整合了多种经实证支持的方法。
           </p>
 
           {/* ⭐ 1 呼吸 */}
@@ -316,7 +323,7 @@ const EmotionButtonIntro = () => {
               </ul>
               <div className="bg-teal-50/80 rounded-xl p-4">
                 <p className="text-gray-700">
-                  情绪按钮内置了简单的 <span className="font-semibold text-teal-700">「4–6 呼吸法」</span>：<br />
+                  情绪🆘SOS按钮内置了简单的 <span className="font-semibold text-teal-700">「4–6 呼吸法」</span>：<br />
                   吸气约 4 秒，呼气约 6 秒（呼气比吸气略长），<br />
                   帮助身体从「快要打仗」状态，慢慢回到「相对安全」状态。
                 </p>
@@ -354,7 +361,7 @@ const EmotionButtonIntro = () => {
               </p>
               <div className="bg-cyan-50/80 rounded-xl p-4 space-y-3">
                 <p className="text-gray-700">
-                  所以情绪按钮不会只「播给你听」，<br />
+                  所以情绪🆘SOS按钮不会只「播给你听」，<br />
                   而是邀请你亲口说出一两句认知提醒，例如：
                 </p>
                 <div className="space-y-2">
@@ -385,7 +392,7 @@ const EmotionButtonIntro = () => {
               </p>
               <div className="bg-blue-50/80 rounded-xl p-4">
                 <p className="text-gray-700">
-                  情绪按钮中的认知提醒句，<br />
+                  情绪🆘SOS按钮中的认知提醒句，<br />
                   就是为了在你「头脑已经被最坏画面塞满」的时候，<br />
                   帮你松动、打断、重组这条恐慌回路。
                 </p>
@@ -404,7 +411,7 @@ const EmotionButtonIntro = () => {
                 当人能在混乱中完成一个小动作时，<br />
                 无力感会下降，自我掌控感会上升，而恐慌强度会明显降低。
               </p>
-              <p className="text-gray-700">因此，情绪按钮的最后一步通常会请你做一个极小、几乎不会失败的动作，例如：</p>
+              <p className="text-gray-700">因此，情绪🆘SOS按钮的最后一步通常会请你做一个极小、几乎不会失败的动作，例如：</p>
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start gap-2">
                   <span className="text-indigo-500 mt-1">•</span>
@@ -453,7 +460,7 @@ const EmotionButtonIntro = () => {
                 </div>
               </div>
               <p className="text-gray-700 font-semibold">
-                情绪按钮的设计，就是按照这条真实、自然的恢复路径来规划的。
+                情绪🆘SOS按钮的设计，就是按照这条真实、自然的恢复路径来规划的。
               </p>
             </CardContent>
           </Card>
@@ -500,7 +507,7 @@ const EmotionButtonIntro = () => {
           </div>
 
           <p className="text-gray-700 font-semibold text-center py-4">
-            情绪按钮就是沿着这条「真实的大脑路径」在工作，而不是凭感觉安慰你。
+            情绪🆘SOS按钮就是沿着这条「真实的大脑路径」在工作，而不是凭感觉安慰你。
           </p>
         </section>
 
@@ -508,21 +515,21 @@ const EmotionButtonIntro = () => {
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="text-2xl">🎯</span>
-            <h2 className="text-2xl font-bold text-gray-900">04｜为什么情绪按钮之后，一定要接上「情绪教练」？</h2>
+            <h2 className="text-2xl font-bold text-gray-900">04｜为什么情绪🆘SOS按钮之后，一定要接上「情绪教练」？</h2>
           </div>
 
           <Card className="bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200">
             <CardContent className="p-6 space-y-6">
               <p className="text-xl font-bold text-center text-teal-700">
                 一句话：<br />
-                情绪按钮负责「稳住当下」，情绪教练负责「改变未来」。
+                情绪🆘SOS按钮负责「稳住当下」，情绪教练负责「改变未来」。
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-white/80 rounded-xl p-5 space-y-3">
                   <h4 className="font-bold text-teal-700 flex items-center gap-2">
                     <Shield className="w-5 h-5" />
-                    情绪按钮做的事是：
+                    情绪🆘SOS按钮做的事是：
                   </h4>
                   <p className="text-gray-700">
                     帮你从 95 分的情绪风暴<br />
@@ -587,7 +594,7 @@ const EmotionButtonIntro = () => {
 
               <div className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-xl p-5 text-center">
                 <p className="text-lg font-bold">
-                  ✅ 所以：情绪按钮是入口，情绪教练是走完路。
+                  ✅ 所以：情绪🆘SOS按钮是入口，情绪教练是走完路。
                 </p>
                 <p className="text-xl font-bold mt-2">
                   按钮救急，教练治根。
@@ -604,7 +611,7 @@ const EmotionButtonIntro = () => {
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="text-2xl">🌬️</span>
-            <h2 className="text-2xl font-bold text-gray-900">05｜情绪按钮怎么用？（超简单 5 步）</h2>
+            <h2 className="text-2xl font-bold text-gray-900">05｜情绪🆘SOS按钮怎么用？（超简单 5 步）</h2>
           </div>
 
           <div className="space-y-4">
@@ -635,7 +642,7 @@ const EmotionButtonIntro = () => {
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="text-2xl">🧩</span>
-            <h2 className="text-2xl font-bold text-gray-900">06｜情绪按钮 + 情绪教练 = 一条完整的路</h2>
+            <h2 className="text-2xl font-bold text-gray-900">06｜情绪🆘SOS按钮 + 情绪教练 = 一条完整的路</h2>
           </div>
 
           <Card className="bg-white/70 backdrop-blur border-teal-100">
@@ -643,7 +650,7 @@ const EmotionButtonIntro = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="text-center space-y-3">
                   <div className="text-4xl">🆘</div>
-                  <h4 className="font-bold text-teal-700">情绪按钮</h4>
+                  <h4 className="font-bold text-teal-700">情绪🆘SOS按钮</h4>
                   <p className="text-gray-700">把你从情绪海啸里救上岸。</p>
                 </div>
                 <div className="text-center space-y-3">
@@ -704,7 +711,7 @@ const EmotionButtonIntro = () => {
                     请一定优先寻求专业帮助：精神科医生、临床心理师、当地心理危机热线。
                   </p>
                   <p className="text-gray-600 italic">
-                    情绪按钮，是站在他们旁边、陪你一起走路的那只手。
+                    情绪🆘SOS按钮，是站在他们旁边、陪你一起走路的那只手。
                   </p>
                 </div>
               </div>
@@ -726,7 +733,7 @@ const EmotionButtonIntro = () => {
                 <p>有情绪，不代表你脆弱，</p>
                 <p>很多时候，只是你的神经系统真的太累了。</p>
                 <p className="font-semibold text-teal-700">你不需要再一个人硬撑。</p>
-                <p>情绪按钮，帮你先稳住当下；</p>
+                <p>情绪🆘SOS按钮，帮你先稳住当下；</p>
                 <p>情绪教练，陪你一起看见与转化。</p>
                 <p className="font-semibold text-cyan-700">
                   让情绪不再是一场「风暴」，<br />
@@ -740,8 +747,8 @@ const EmotionButtonIntro = () => {
                   onClick={() => navigate("/energy-studio")}
                   className="gap-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-white hover:opacity-90"
                 >
-                  <Sparkles className="w-5 h-5" />
-                  开始使用情绪按钮
+                <Sparkles className="w-5 h-5" />
+                  开始使用情绪🆘SOS按钮
                 </Button>
                 <Button 
                   size="lg"
@@ -761,7 +768,7 @@ const EmotionButtonIntro = () => {
       {/* Footer */}
       <footer className="bg-white/60 backdrop-blur-sm border-t border-teal-100 py-6">
         <div className="container max-w-4xl mx-auto px-4 text-center text-gray-500 text-sm">
-          情绪按钮 · 当下情绪急救系统
+          情绪🆘SOS按钮 · 当下情绪急救系统
         </div>
       </footer>
 

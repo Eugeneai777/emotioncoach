@@ -58,7 +58,12 @@ export const EmotionButtonRecommendationCard = ({
           <div>
             <h3 className="font-semibold text-foreground flex items-center gap-2">
               <Heart className="w-4 h-4 text-rose-500" />
-              情绪按钮推荐
+              <span className="flex items-center gap-1">
+                情绪
+                <span className="text-sm">🆘</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500 font-black text-xs tracking-wider">SOS</span>
+                按钮推荐
+              </span>
             </h3>
             <p className="text-sm text-muted-foreground">
               针对「{recommendation.emotionChinese}」的专属疗愈

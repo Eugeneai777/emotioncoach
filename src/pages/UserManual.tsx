@@ -55,7 +55,7 @@ const UserManual = () => {
       title: "成长工具",
       description: "三大类工具助力情绪管理、自我探索与生活习惯养成",
       gradient: "from-purple-500 to-indigo-500",
-      features: ["情绪按钮（9种情绪即时疗愈）", "能量宣言卡", "呼吸练习", "感恩日记", "习惯追踪"]
+      features: ["情绪🆘SOS按钮（9种情绪即时疗愈）", "能量宣言卡", "呼吸练习", "感恩日记", "习惯追踪"]
     },
     {
       icon: Video,
@@ -129,7 +129,7 @@ const UserManual = () => {
     }
   ];
 
-  // 情绪按钮系统
+  // 情绪🆘SOS按钮系统
   const emotionButtonFeatures = [
     { number: "9", label: "种情绪类型", description: "恐慌、担心、负面、恐惧、烦躁、压力、无力、崩溃、失落" },
     { number: "288", label: "条专业认知提醒", description: "每种情绪32条，全部使用第一人称肯定语气" },
@@ -143,7 +143,7 @@ const UserManual = () => {
       emoji: "💜",
       title: "情绪工具",
       color: "purple",
-      tools: ["情绪按钮（9种情绪即时疗愈）", "能量宣言卡", "呼吸练习", "正念冥想", "频率疗愈"]
+      tools: ["情绪🆘SOS按钮（9种情绪即时疗愈）", "能量宣言卡", "呼吸练习", "正念冥想", "频率疗愈"]
     },
     {
       emoji: "💚",
@@ -170,7 +170,7 @@ const UserManual = () => {
     {
       emoji: "🛠️",
       title: "成长工具",
-      items: ["情绪工具（情绪按钮为核心）", "自我探索工具", "生活管理工具"],
+      items: ["情绪工具（情绪🆘SOS按钮为核心）", "自我探索工具", "生活管理工具"],
       color: "purple"
     },
     {
@@ -203,9 +203,9 @@ const UserManual = () => {
     },
     {
       time: "🌤 白天（随时）",
-      title: "有劲生活教练 + 情绪按钮",
+      title: "有劲生活教练 + 情绪🆘SOS按钮",
       description: "遇到情绪困扰时，选择合适的方式获得支持",
-      features: ["情绪按钮（即时缓解）", "情绪教练（深度梳理）", "语音对话（随时随地）"],
+      features: ["情绪🆘SOS按钮（即时缓解）", "情绪教练（深度梳理）", "语音对话（随时随地）"],
       gradient: "from-teal-500/10 to-cyan-500/10"
     },
     {
@@ -239,7 +239,7 @@ const UserManual = () => {
 
   // 附加功能
   const additionalFeatures = [
-    { icon: Shield, title: "情绪按钮", description: "9种情绪即时疗愈", gradient: "from-teal-500 to-cyan-500" },
+    { icon: Shield, title: "情绪🆘SOS按钮", description: "9种情绪即时疗愈", gradient: "from-teal-500 to-cyan-500" },
     { icon: Phone, title: "语音对话", description: "随时随地语音交流", gradient: "from-rose-500 to-pink-500" },
     { icon: Users, title: "真人教练", description: "一对一预约咨询", gradient: "from-purple-500 to-indigo-500" },
     { icon: Sparkles, title: "能量宣言卡", description: "开启有力量的一天", gradient: "from-orange-500 to-yellow-500" },
@@ -252,8 +252,8 @@ const UserManual = () => {
   // FAQ
   const faqs = [
     {
-      q: "情绪按钮和情绪教练有什么区别？",
-      a: "情绪按钮是即时的陪伴，适合情绪激动时快速获得认知提醒和稳定；情绪教练是深入的梳理，适合有时间时系统性地处理情绪。两者配合使用效果最佳。"
+      q: "情绪🆘SOS按钮和情绪教练有什么区别？",
+      a: "情绪🆘SOS按钮是即时的陪伴，适合情绪激动时快速获得认知提醒和稳定；情绪教练是深入的梳理，适合有时间时系统性地处理情绪。两者配合使用效果最佳。"
     },
     {
       q: "如何选择合适的教练？",
@@ -269,7 +269,7 @@ const UserManual = () => {
     },
     {
       q: "必须每天使用吗？",
-      a: "不需要强制每天使用，但持续使用效果更好。建议至少保持情绪按钮和感恩日记的使用习惯。"
+      a: "不需要强制每天使用，但持续使用效果更好。建议至少保持情绪🆘SOS按钮和感恩日记的使用习惯。"
     },
     {
       q: "训练营和自由使用有什么区别？",
@@ -415,12 +415,19 @@ const UserManual = () => {
           </Card>
         </section>
 
-        {/* 三、情绪按钮系统 */}
+        {/* 三、情绪🆘SOS按钮系统 */}
         <section className="space-y-8">
           <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">三、情绪按钮系统（核心功能）</h3>
+            <h3 className="text-3xl font-bold flex items-center justify-center gap-2 flex-wrap">
+              三、情绪
+              <span className="inline-flex items-center gap-1">
+                <span className="text-3xl">🆘</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-rose-500 to-red-500 font-black tracking-wider">SOS</span>
+              </span>
+              按钮系统（核心功能）
+            </h3>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              当情绪来袭时，情绪按钮是你最快速的支持系统
+              当情绪来袭时，情绪🆘SOS按钮是你最快速的支持系统
             </p>
           </div>
 

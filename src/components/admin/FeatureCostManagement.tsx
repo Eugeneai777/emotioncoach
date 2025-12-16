@@ -50,7 +50,7 @@ const categoryConfig: Record<string, { label: string; icon: typeof Users; color:
 
 const subCategoryConfig: Record<string, { label: string; icon: typeof Home; color: string }> = {
   studio: { label: '有劲生活馆工具', icon: Home, color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200' },
-  emotion_button: { label: '情绪按钮', icon: CircleDot, color: 'bg-teal-100 text-teal-700 dark:bg-teal-800 dark:text-teal-200' },
+  emotion_button: { label: '情绪🆘SOS按钮', icon: CircleDot, color: 'bg-teal-100 text-teal-700 dark:bg-teal-800 dark:text-teal-200' },
   ai_analysis: { label: 'AI分析工具', icon: Brain, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-800 dark:text-indigo-200' },
   ai_generation: { label: 'AI生成工具', icon: Sparkles, color: 'bg-pink-100 text-pink-700 dark:bg-pink-800 dark:text-pink-200' },
   ai_voice: { label: 'AI语音工具', icon: Mic, color: 'bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-200' },

@@ -28,38 +28,27 @@ export const FloatingEmotionSOSButton = () => {
         onMouseLeave={() => setIsHovered(false)}
         className={cn(
           "relative w-14 h-14 rounded-full",
-          "bg-gradient-to-br from-teal-400 via-cyan-500 to-blue-500",
-          "shadow-lg shadow-cyan-500/30",
+          "bg-gradient-to-br from-orange-400 via-rose-500 to-red-500",
+          "shadow-lg shadow-rose-500/30",
           "flex items-center justify-center",
           "transition-all duration-300 ease-out",
-          "hover:scale-110 hover:shadow-xl hover:shadow-cyan-500/40",
+          "hover:scale-110 hover:shadow-xl hover:shadow-rose-500/40",
           "active:scale-95",
           "group"
         )}
       >
         {/* Pulse animation rings */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 animate-ping opacity-30" />
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 animate-pulse opacity-20" />
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-400 to-rose-500 animate-ping opacity-30" />
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-400 to-rose-500 animate-pulse opacity-20" />
         
         {/* SOS Badge */}
         <div className="relative z-10 flex flex-col items-center justify-center">
-          {/* 9-grid icon representation */}
-          <div className="grid grid-cols-3 gap-0.5 mb-0.5">
-            {[...Array(9)].map((_, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "w-1.5 h-1.5 rounded-sm bg-white/90",
-                  "transition-all duration-200",
-                  isHovered && "bg-white"
-                )}
-              />
-            ))}
-          </div>
+          {/* Emergency emoji */}
+          <span className="text-xl mb-0.5">🆘</span>
           
           {/* SOS text */}
           <span className={cn(
-            "text-[10px] font-black tracking-wider text-white",
+            "text-[9px] font-black tracking-wider text-white",
             "drop-shadow-sm"
           )}>
             SOS
