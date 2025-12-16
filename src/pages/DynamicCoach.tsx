@@ -39,6 +39,19 @@ const DynamicCoach = () => {
       : null;
   const { showTour, completeTour } = usePageTour(tourKey || '');
   
+  // 智能生成 coachType：如果 coach_key 已经包含 _coach 后缀则直接使用，否则拼接
+  const getCoachTypeForNotifications = (coachKey: string | undefined, isLoading: boolean) => {
+    if (isLoading || !coachKey) return null;
+    // 如果已经以 _coach 结尾，直接使用
+    if (coachKey.endsWith('_coach')) {
+      return coachKey;
+    }
+    // 否则拼接 _coach 后缀
+    return `${coachKey}_coach`;
+  };
+
+  const coachTypeForNotifications = getCoachTypeForNotifications(template?.coach_key, templateLoading);
+
   // 智能通知
   const {
     notifications,
@@ -47,7 +60,7 @@ const DynamicCoach = () => {
     markAsRead,
     deleteNotification,
     triggerNotification,
-  } = useSmartNotification(template?.coach_key ? `${template.coach_key}_coach` : null);
+  } = useSmartNotification(coachTypeForNotifications);
 
   // 根据教练类型决定通知场景
   const getNotificationScenario = (coachKey: string) => {
