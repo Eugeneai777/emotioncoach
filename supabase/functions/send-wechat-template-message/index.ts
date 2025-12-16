@@ -400,12 +400,16 @@ serve(async (req) => {
     }
 
     // 获取用户是否启用微信通知
-    const { data: profile } = await supabaseClient
+    const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('wechat_enabled, display_name, birthday')
       .eq('id', userId)
       .single();
 
+    if (profileError) {
+      console.log(`[${scenario}] 获取用户配置失败 - userId: ${userId}, error: ${profileError.message}`);
+    }
+    console.log(`[${scenario}] 用户配置 - userId: ${userId}, profile: ${JSON.stringify(profile)}`);
     if (!profile?.wechat_enabled) {
       console.log(`[${scenario}] 用户未启用微信公众号推送 - userId: ${userId}, wechat_enabled: ${profile?.wechat_enabled}`);
       return new Response(
