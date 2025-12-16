@@ -88,13 +88,14 @@ const History = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Load briefings
+      // Load briefings - 只查询当前用户的数据
       const { data, error } = await supabase
         .from("briefings")
         .select(`
           *,
           conversations!inner(user_id)
         `)
+        .eq('conversations.user_id', user.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -155,8 +156,13 @@ const History = () => {
 
             if (defaultTag) {
               for (const b of untagged) {
-                await supabase.from("briefing_tags").insert({ briefing_id: b.id, tag_id: (defaultTag as any).id });
-                didBackfill = true;
+                const { error: insertError } = await supabase
+                  .from("briefing_tags")
+                  .insert({ briefing_id: b.id, tag_id: (defaultTag as any).id });
+                // 只有成功时才设置 didBackfill，避免 RLS 失败导致无限循环
+                if (!insertError) {
+                  didBackfill = true;
+                }
               }
             }
           }
