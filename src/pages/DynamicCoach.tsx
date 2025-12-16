@@ -18,6 +18,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { GratitudeQuickAdd } from "@/components/gratitude/GratitudeQuickAdd";
 import { Loader2 } from "lucide-react";
+import { PageTour } from "@/components/PageTour";
+import { usePageTour } from "@/hooks/usePageTour";
+import { pageTourConfig } from "@/config/pageTourConfig";
 
 const DynamicCoach = () => {
   const { coachKey } = useParams<{ coachKey: string }>();
@@ -27,6 +30,14 @@ const DynamicCoach = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: template, isLoading: templateLoading } = useCoachTemplate(coachKey || '');
+  
+  // 根据教练类型选择引导配置
+  const tourKey = coachKey === 'vibrant_life_sage' 
+    ? 'vibrant_life_coach' 
+    : coachKey === 'gratitude_coach'
+      ? 'gratitude_coach'
+      : null;
+  const { showTour, completeTour } = usePageTour(tourKey || '');
   
   // 智能通知
   const {
@@ -172,7 +183,14 @@ const DynamicCoach = () => {
 
   return (
     <>
-    <CoachLayout
+      {tourKey && pageTourConfig[tourKey] && (
+        <PageTour
+          steps={pageTourConfig[tourKey]}
+          open={showTour}
+          onComplete={completeTour}
+        />
+      )}
+      <CoachLayout
       emoji={template.emoji}
       title={template.title}
       subtitle={template.subtitle || ''}

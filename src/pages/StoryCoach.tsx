@@ -11,6 +11,9 @@ import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { toast } from "sonner";
 import { Send, BookOpen, ChevronDown, RotateCcw } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { PageTour } from "@/components/PageTour";
+import { usePageTour } from "@/hooks/usePageTour";
+import { pageTourConfig } from "@/config/pageTourConfig";
 
 const HERO_JOURNEY_STAGES = [
   {
@@ -49,6 +52,7 @@ export default function StoryCoach() {
   const [input, setInput] = useState("");
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
+  const { showTour, completeTour } = usePageTour('story_coach');
   const inputRef = useRef<HTMLTextAreaElement>(null);
   
   // 智能通知
@@ -118,7 +122,13 @@ export default function StoryCoach() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <>
+      <PageTour
+        steps={pageTourConfig.story_coach}
+        open={showTour}
+        onComplete={completeTour}
+      />
+      <div className="min-h-screen bg-background flex flex-col">
       {/* Header - 使用共享的 CoachHeader 组件 */}
       <CoachHeader
         emoji="📖"
@@ -320,6 +330,7 @@ export default function StoryCoach() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 }
