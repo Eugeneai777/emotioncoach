@@ -402,14 +402,14 @@ serve(async (req) => {
     // 获取用户是否启用微信通知
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('wechat_enabled, display_name, birthday')
+      .select('wechat_enabled, display_name')
       .eq('id', userId)
       .single();
 
     if (profileError) {
       console.log(`[${scenario}] 获取用户配置失败 - userId: ${userId}, error: ${profileError.message}`);
     }
-    console.log(`[${scenario}] 用户配置 - userId: ${userId}, profile: ${JSON.stringify(profile)}`);
+    console.log(`[${scenario}] 用户配置 - userId: ${userId}, wechat_enabled: ${profile?.wechat_enabled}`);
     if (!profile?.wechat_enabled) {
       console.log(`[${scenario}] 用户未启用微信公众号推送 - userId: ${userId}, wechat_enabled: ${profile?.wechat_enabled}`);
       return new Response(
@@ -488,13 +488,8 @@ serve(async (req) => {
     const now = new Date();
     const beijingTime = new Date(now.getTime() + (8 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
     
-    // 检查是否是用户生日
-    let isBirthday = false;
-    if (profile?.birthday) {
-      const birthday = new Date(profile.birthday);
-      isBirthday = birthday.getMonth() === beijingTime.getUTCMonth() && 
-                   birthday.getDate() === beijingTime.getUTCDate();
-    }
+    // 生日功能暂不支持（profiles表无birthday列）
+    const isBirthday = false;
     
     const messageContext: MessageContext = {
       hour: beijingTime.getUTCHours(),
