@@ -128,7 +128,7 @@ export const CoachVoiceChat = ({
         title: '🛠️ 工具推荐',
         getDesc: (r, a) => {
           const toolNames: Record<string, string> = {
-            emotion_button: '情绪🆘SOS按钮',
+            emotion_button: '情绪🆘按钮',
             breathing: '呼吸练习',
             meditation: '冥想',
             declaration_card: '宣言卡'
