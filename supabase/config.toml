@@ -254,3 +254,6 @@ verify_jwt = false
 
 [functions.create-user-from-payment]
 verify_jwt = false
+
+[functions.save-emotion-voice-briefing]
+verify_jwt = true

@@ -28,6 +28,8 @@ import { TrainingCamp } from "@/types/trainingCamp";
 import { Sparkles, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getTodayInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
+import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
+import { EmotionVoiceCallCTA } from "@/components/emotion-coach/EmotionVoiceCallCTA";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -45,6 +47,7 @@ const Index = () => {
   const [showCheckInSuccess, setShowCheckInSuccess] = useState(false);
   const [checkInSuccessData, setCheckInSuccessData] = useState<any>(null);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
+  const [showVoiceChat, setShowVoiceChat] = useState(false);
   const { toast } = useToast();
 
   // 购买引导
@@ -615,6 +618,18 @@ const Index = () => {
         />
       )}
 
+      {showVoiceChat && (
+        <CoachVoiceChat
+          onClose={() => setShowVoiceChat(false)}
+          coachEmoji={coachConfig?.emoji || "💚"}
+          coachTitle="情绪教练"
+          primaryColor="green"
+          tokenEndpoint="vibrant-life-realtime-token"
+          mode="emotion"
+          featureKey="realtime_voice_emotion"
+        />
+      )}
+
       <CoachLayout
         emoji={coachConfig?.emoji || "💚"}
         title={coachConfig?.title || "情绪觉醒教练"}
@@ -672,6 +687,11 @@ const Index = () => {
         enableStepsCollapse={true}
         enableVoiceInput={true}
         messagesEndRef={messagesEndRef}
+        voiceChatCTA={
+          <EmotionVoiceCallCTA
+            onVoiceChatClick={() => setShowVoiceChat(true)}
+          />
+        }
       />
     </>
   );

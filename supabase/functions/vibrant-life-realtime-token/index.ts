@@ -152,6 +152,72 @@ const teenTools = [
   }
 ];
 
+// 情绪教练专属工具
+const emotionTools = [
+  {
+    type: "function",
+    name: "track_emotion_stage",
+    description: "【内部使用】追踪情绪对话当前阶段(1-4)，不要告诉用户阶段信息",
+    parameters: {
+      type: "object",
+      properties: {
+        stage: { type: "number", enum: [1, 2, 3, 4], description: "当前阶段：1=觉察，2=理解，3=反应，4=转化" },
+        stage_insight: { type: "string", description: "该阶段用户的关键洞察" }
+      },
+      required: ["stage"]
+    }
+  },
+  {
+    type: "function",
+    name: "capture_emotion_event",
+    description: "捕获用户描述的情绪事件和检测到的情绪",
+    parameters: {
+      type: "object",
+      properties: {
+        event_summary: { type: "string", description: "情绪事件简要描述" },
+        detected_emotions: { 
+          type: "array", 
+          items: { type: "string" },
+          description: "检测到的情绪标签，如：焦虑、愤怒、悲伤、委屈、压力、疲惫等"
+        },
+        emotion_intensity: {
+          type: "number",
+          description: "情绪强度1-10，基于用户表达推测"
+        }
+      },
+      required: ["event_summary", "detected_emotions"]
+    }
+  },
+  {
+    type: "function",
+    name: "generate_emotion_briefing",
+    description: "完成四阶段后生成情绪简报，当用户确认想要简报时调用",
+    parameters: {
+      type: "object",
+      properties: {
+        emotion_theme: { type: "string", description: "情绪主题，简洁描述用户的核心情绪，如'工作压力引发的焦虑'" },
+        emotion_tags: { 
+          type: "array", 
+          items: { type: "string" },
+          description: "情绪标签数组，如['焦虑', '压力', '疲惫']"
+        },
+        emotion_intensity: {
+          type: "number",
+          description: "情绪强度1-10"
+        },
+        stage_1_content: { type: "string", description: "阶段1觉察：用户感受到了什么情绪" },
+        stage_2_content: { type: "string", description: "阶段2理解：情绪背后的需求是什么" },
+        stage_3_content: { type: "string", description: "阶段3反应：用户通常如何应对这种情绪" },
+        stage_4_content: { type: "string", description: "阶段4转化：用户决定采取的温柔回应方式" },
+        insight: { type: "string", description: "对话中的核心洞察，一句话总结用户的成长发现" },
+        action: { type: "string", description: "具体可执行的微行动建议" },
+        growth_story: { type: "string", description: "成长故事，用温柔的语言描述用户今天的情绪旅程" }
+      },
+      required: ["emotion_theme", "emotion_tags", "stage_1_content", "stage_2_content", "stage_3_content", "stage_4_content", "insight", "action"]
+    }
+  }
+];
+
 // 构建家长版指令
 function buildParentTeenInstructions(problemType: any, userName: string): string {
   const baseInstruction = `你是有劲亲子教练·家长版，专门帮助家长理解和改善与青春期孩子的关系。
@@ -283,6 +349,74 @@ function buildGeneralInstructions(): string {
 开场语："你好呀，我是劲老师～今天想聊点什么呢？🌿"`;
 }
 
+// 构建情绪教练指令
+function buildEmotionInstructions(userName: string): string {
+  return `你是有劲情绪教练·语音版，名叫"劲老师"。你是一位温暖、智慧的情绪陪伴者。
+
+## 用户信息
+- 称呼：${userName || '朋友'}
+
+## 核心身份
+你是用户的情绪向导，帮助他们在自然对话中完成情绪的觉察、理解、反应和转化。
+
+## 隐形四部曲引导
+你要在自然对话中，悄悄完成四个阶段的引导。**绝对不要告诉用户当前是什么阶段**，让对话像朋友聊天一样自然流动。
+
+### 阶段1：觉察（Feel it）
+- 帮助用户感受并命名当前的情绪
+- 用温柔的语气引导："我听到你说...你现在是什么感觉呢？"
+- 不评判，只是陪伴用户感受
+- 当用户能说出自己的情绪时，调用 track_emotion_stage(1) 和 capture_emotion_event
+
+### 阶段2：理解（Name it）
+- 引导用户理解这个情绪背后的需求
+- "这个情绪想告诉你什么呢？"
+- "如果这个情绪会说话，它想说什么？"
+- 当用户有所领悟时，调用 track_emotion_stage(2)
+
+### 阶段3：反应（React it）
+- 帮助用户觉察自己面对这种情绪时通常的反应模式
+- "当这种感觉来的时候，你通常会怎么做？"
+- 不评判对错，只是看见
+- 当用户描述完反应模式时，调用 track_emotion_stage(3)
+
+### 阶段4：转化（Transform it）
+- 引导用户找到一个温柔的回应方式
+- "如果可以用更温柔的方式对待自己，你想怎么做？"
+- 提供2-3个小选项供参考，但鼓励用户说出自己的想法
+- 当用户确定了行动意向时，调用 track_emotion_stage(4)
+- 然后温柔地询问："今天的对话对你有帮助吗？想不想生成一份简报，记录你的成长？"
+
+## 教练技术
+你要自然运用以下技术，但不要刻意：
+1. **镜像**：重复用户的关键词，让他们感到被听见
+2. **留白**：说完后适当停顿，给用户思考空间
+3. **假设**：用"如果..."引导用户想象不同的可能
+4. **下沉**：当发现重要线索时，温柔追问
+5. **洞察确认**：当用户有重要发现时，帮他们确认
+
+## 对话风格
+- 温柔、缓慢、有节奏，如同一杯温热的茶
+- 每次回复2-3句，简洁但温暖
+- 多用"我理解"、"我听到了"、"这很不容易"
+- 适时使用 🌿💚🌸
+- 绝不说教，绝不评判
+- 如果用户问你问题或表达疑虑，先回应他们的问题，再继续引导
+
+## 生成简报
+- 当用户同意生成简报时，调用 generate_emotion_briefing
+- 简报要真诚、个性化，反映用户今天的真实旅程
+- 不要用模板化的语言，要像在写给朋友的信
+
+## 重要提醒
+- 永远站在用户这边
+- 不要急于推进阶段，让对话自然发展
+- 如果用户想聊别的，先陪伴他们
+- 用户的每一个情绪都是有意义的
+
+开场语："你好呀，我是劲老师～今天想聊聊什么呢？不管是开心的还是不开心的，我都在这里听你说 🌿"`;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -335,10 +469,25 @@ serve(async (req) => {
     const OPENAI_PROXY_URL = Deno.env.get('OPENAI_PROXY_URL');
     const baseUrl = OPENAI_PROXY_URL || 'https://api.openai.com';
 
+    // 获取用户昵称
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .maybeSingle();
+    
+    const userName = userProfile?.display_name || '';
+
     let instructions: string;
     let tools: any[];
 
-    if (mode === 'parent_teen') {
+    if (mode === 'emotion') {
+      // 情绪教练模式
+      instructions = buildEmotionInstructions(userName);
+      tools = [...commonTools, ...emotionTools];
+
+      console.log('Emotion coach mode activated');
+    } else if (mode === 'parent_teen') {
       // 家长版：获取问题类型配置
       const { data: profile } = await supabase
         .from('parent_problem_profile')
@@ -356,14 +505,7 @@ serve(async (req) => {
         problemType = typeData;
       }
 
-      // 获取用户昵称
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('display_name')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      instructions = buildParentTeenInstructions(problemType, userProfile?.display_name || '');
+      instructions = buildParentTeenInstructions(problemType, userName);
       tools = [...commonTools, ...parentTeenTools];
 
       console.log('Parent-teen mode activated, problem type:', profile?.primary_problem_type);
