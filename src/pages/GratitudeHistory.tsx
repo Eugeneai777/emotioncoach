@@ -44,6 +44,7 @@ const GratitudeHistory = () => {
   // Conversion prompts state
   const [showRegisterPrompt, setShowRegisterPrompt] = useState(false);
   const [showPurchasePrompt, setShowPurchasePrompt] = useState(false);
+  const [purchaseRequired, setPurchaseRequired] = useState(false);
 
   // Determine which entries to use
   const entries = user ? dbEntries : localEntries;
@@ -193,7 +194,10 @@ const GratitudeHistory = () => {
               syncClickCount={syncClickCount}
               onSyncClick={incrementSyncClick}
               onRegisterPrompt={() => setShowRegisterPrompt(true)}
-              onPurchasePrompt={() => setShowPurchasePrompt(true)}
+              onPurchasePrompt={(isRequired) => {
+                setPurchaseRequired(isRequired);
+                setShowPurchasePrompt(true);
+              }}
             />
           )}
 
@@ -238,6 +242,7 @@ const GratitudeHistory = () => {
         open={showPurchasePrompt}
         onClose={() => setShowPurchasePrompt(false)}
         entryCount={localEntries.length}
+        isRequired={purchaseRequired}
       />
     </div>
   );
