@@ -26,7 +26,6 @@ const SafetyButtonsGrid: React.FC = () => {
       
       <CardHeader className="text-center pb-3 relative z-10">
         <CardTitle className="text-lg text-slate-700 flex items-center justify-center gap-2">
-          <Shield className="w-5 h-5 text-teal-500" />
           情绪🆘按钮
           <Button variant="ghost" size="sm" className="text-xs text-teal-600 hover:text-teal-700 h-6 px-2" onClick={() => navigate('/emotion-button-intro')}>
             
