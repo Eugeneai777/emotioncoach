@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { format } from "date-fns";
 
@@ -16,6 +17,8 @@ interface UnifiedOrder {
   status: string;
   source: 'wechat_pay' | 'admin_charge';
   created_at: string;
+  user_display_name?: string | null;
+  user_avatar_url?: string | null;
 }
 
 export function OrdersTable() {
@@ -66,8 +69,24 @@ export function OrdersTable() {
         })) || []),
       ];
 
+      // 获取所有唯一用户ID
+      const userIds = [...new Set(allOrders.map(o => o.user_id))];
+
+      // 批量查询 profiles 表
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', userIds);
+
+      // 合并用户资料到订单
+      const ordersWithProfiles = allOrders.map(order => ({
+        ...order,
+        user_display_name: profiles?.find(p => p.id === order.user_id)?.display_name,
+        user_avatar_url: profiles?.find(p => p.id === order.user_id)?.avatar_url,
+      }));
+
       // 按创建时间排序
-      return allOrders.sort((a, b) =>
+      return ordersWithProfiles.sort((a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
     }
@@ -76,6 +95,7 @@ export function OrdersTable() {
   const filteredOrders = orders?.filter(order => {
     const matchesSearch = 
       order.user_id.toLowerCase().includes(search.toLowerCase()) ||
+      order.user_display_name?.toLowerCase().includes(search.toLowerCase()) ||
       order.order_id?.toLowerCase().includes(search.toLowerCase()) ||
       order.package_name?.toLowerCase().includes(search.toLowerCase());
     
@@ -147,7 +167,7 @@ export function OrdersTable() {
         <TableHeader>
           <TableRow>
             <TableHead>订单ID</TableHead>
-            <TableHead>用户ID</TableHead>
+            <TableHead>用户</TableHead>
             <TableHead>套餐名</TableHead>
             <TableHead>金额</TableHead>
             <TableHead>来源</TableHead>
@@ -161,7 +181,24 @@ export function OrdersTable() {
               <TableCell className="font-mono text-sm">
                 {order.order_id?.slice(0, 12) || order.id.slice(0, 8)}...
               </TableCell>
-              <TableCell className="font-mono text-sm">{order.user_id.slice(0, 8)}...</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={order.user_avatar_url || undefined} />
+                    <AvatarFallback className="text-xs">
+                      {(order.user_display_name || order.user_id).slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">
+                      {order.user_display_name || '未设置昵称'}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {order.user_id.slice(0, 8)}...
+                    </span>
+                  </div>
+                </div>
+              </TableCell>
               <TableCell>{order.package_name === 'custom' ? '管理员充值' : (order.package_name || '-')}</TableCell>
               <TableCell>¥{order.amount}</TableCell>
               <TableCell>{getSourceBadge(order.source)}</TableCell>
