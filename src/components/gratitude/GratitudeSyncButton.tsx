@@ -105,7 +105,7 @@ export const GratitudeSyncButton = ({
     <div className="p-4 bg-gradient-to-r from-teal-50/90 to-cyan-50/90 dark:from-teal-900/30 dark:to-cyan-900/30 rounded-2xl border border-teal-200/60 dark:border-teal-700/40 shadow-sm">
       <div className="flex items-center gap-3 mb-3">
         {/* Animated Cloud Icon */}
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-lg animate-float">
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${hasEntries ? 'bg-gradient-to-br from-teal-400 to-cyan-500 animate-float' : 'bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700'}`}>
           <Cloud className="w-6 h-6 text-white" />
         </div>
         
@@ -122,35 +122,34 @@ export const GratitudeSyncButton = ({
             </>
           ) : (
             <>
-              <p className="text-sm font-semibold text-teal-800 dark:text-teal-200 flex items-center gap-1">
-                <Sparkles className="w-4 h-4" />
-                写下你的第一条感恩
+              <p className="text-sm font-semibold text-teal-800 dark:text-teal-200">
+                🔐 云端同步，永不丢失
               </p>
               <p className="text-xs text-teal-600/80 dark:text-teal-400/70 mt-0.5">
-                每天记录 3 件小事，幸福感提升 25%
+                写下感恩后即可同步，多设备随时查看
               </p>
             </>
           )}
         </div>
       </div>
 
-      {/* Sync Button */}
-      {hasEntries && (
-        <Button
-          onClick={handleSyncClick}
-          disabled={loading}
-          className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shadow-md mb-3 h-10"
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <Cloud className="w-4 h-4 mr-2" />
-              同步到云端
-            </>
-          )}
-        </Button>
-      )}
+      {/* Sync Button - Always visible, disabled when no entries */}
+      <Button
+        onClick={handleSyncClick}
+        disabled={loading || !hasEntries}
+        className={`w-full mb-3 h-10 ${hasEntries 
+          ? 'bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shadow-md' 
+          : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'}`}
+      >
+        {loading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <>
+            <Cloud className="w-4 h-4 mr-2" />
+            {hasEntries ? '同步到云端' : '写下感恩后可同步'}
+          </>
+        )}
+      </Button>
 
       {/* Value Points */}
       <div className="flex flex-wrap gap-2 justify-center">
