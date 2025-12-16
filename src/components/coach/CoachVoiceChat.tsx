@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { WechatPayDialog } from '@/components/WechatPayDialog';
 
-export type VoiceChatMode = 'general' | 'parent_teen' | 'teen';
+export type VoiceChatMode = 'general' | 'parent_teen' | 'teen' | 'emotion';
 
 interface CoachVoiceChatProps {
   onClose: () => void;
