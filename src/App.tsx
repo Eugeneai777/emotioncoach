@@ -58,8 +58,6 @@ import StoryCoachIntro from "./pages/StoryCoachIntro";
 import MyStories from "./pages/MyStories";
 import MyPosts from "./pages/MyPosts";
 import PanicHistory from "./pages/PanicHistory";
-import PanicVoiceSettings from "./pages/PanicVoiceSettings";
-import VoiceCloneSetup from "./pages/VoiceCloneSetup";
 import EmotionButtonIntro from "./pages/EmotionButtonIntro";
 import EmotionButton from "./pages/EmotionButton";
 import VibrantLifeIntro from "./pages/VibrantLifeIntro";
@@ -143,8 +141,6 @@ const App = () => (
           <Route path="/my-stories" element={<MyStories />} />
           <Route path="/my-posts" element={<MyPosts />} />
           <Route path="/panic-history" element={<PanicHistory />} />
-          <Route path="/panic-voice-settings" element={<PanicVoiceSettings />} />
-          <Route path="/voice-clone-setup" element={<VoiceCloneSetup />} />
           <Route path="/emotion-button-intro" element={<EmotionButtonIntro />} />
           <Route path="/emotion-button" element={<EmotionButton />} />
           <Route path="/vibrant-life-intro" element={<VibrantLifeIntro />} />
