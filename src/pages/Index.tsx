@@ -31,6 +31,7 @@ import { getTodayInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { EmotionVoiceCallCTA } from "@/components/emotion-coach/EmotionVoiceCallCTA";
 import { EmotionVoiceBriefingPreview } from "@/components/emotion-coach/EmotionVoiceBriefingPreview";
+import { FloatingEmotionSOSButton } from "@/components/FloatingEmotionSOSButton";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -711,6 +712,9 @@ const Index = () => {
           />
         }
       />
+      
+      {/* Floating SOS Button */}
+      <FloatingEmotionSOSButton />
     </>
   );
 };
