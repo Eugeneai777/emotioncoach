@@ -38,6 +38,7 @@ import { pageTourConfig } from "@/config/pageTourConfig";
 const Index = () => {
   const [searchParams] = useSearchParams();
   const partnerId = searchParams.get('partner');
+  const { showTour, completeTour } = usePageTour('index');
   
   const [input, setInput] = useState("");
   const [showReminder, setShowReminder] = useState(false);
@@ -584,6 +585,11 @@ const Index = () => {
 
   return (
     <>
+      <PageTour
+        steps={pageTourConfig.index}
+        open={showTour}
+        onComplete={completeTour}
+      />
       <PurchaseOnboardingDialog
         open={showPurchaseDialog}
         onOpenChange={setShowPurchaseDialog}

@@ -8,6 +8,9 @@ import { ProductComparisonTable } from "@/components/ProductComparisonTable";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { PageTour } from "@/components/PageTour";
+import { usePageTour } from "@/hooks/usePageTour";
+import { pageTourConfig } from "@/config/pageTourConfig";
 
 interface PackageInfo {
   key: string;
@@ -19,6 +22,7 @@ interface PackageInfo {
 export default function Packages() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showTour, completeTour } = usePageTour('packages');
   const [activeTab, setActiveTab] = useState<'youjin' | 'bloom'>('youjin');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<PackageInfo | null>(null);
@@ -50,7 +54,13 @@ export default function Packages() {
     window.location.reload();
   };
   const currentCategory = productCategories.find(c => c.id === activeTab);
-  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+  return <>
+    <PageTour
+      steps={pageTourConfig.packages}
+      open={showTour}
+      onComplete={completeTour}
+    />
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* 返回按钮 */}
       <div className="container max-w-7xl mx-auto px-4 pt-6">
         <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="gap-2 text-muted-foreground hover:text-foreground">
@@ -109,5 +119,6 @@ export default function Packages() {
         packageInfo={selectedPackage}
         onSuccess={handlePaymentSuccess}
       />
-    </div>;
+    </div>
+  </>;
 }
