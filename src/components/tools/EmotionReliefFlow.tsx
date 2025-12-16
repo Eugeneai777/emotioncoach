@@ -9,6 +9,8 @@ import AmbientSoundPlayer from "./panic/AmbientSoundPlayer";
 import ModeSelector from "./panic/ModeSelector";
 import SessionSummaryCard from "./panic/SessionSummaryCard";
 import { EmotionType, REMINDERS_PER_CYCLE, getStageConfig } from "@/config/emotionReliefConfig";
+import { useFreeTrialTracking } from "@/hooks/useFreeTrialTracking";
+import EmotionButtonPurchaseDialog from "@/components/conversion/EmotionButtonPurchaseDialog";
 
 interface EmotionReliefFlowProps {
   emotionType: EmotionType;
@@ -28,6 +30,13 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
   const [currentReminderIndex, setCurrentReminderIndex] = useState(0);
   const [cycleCount, setCycleCount] = useState(1);
   const [showReminderAnimation, setShowReminderAnimation] = useState(false);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
+  
+  // 免费试用追踪
+  const { usageCount, freeLimit, isLimitReached, remainingFree, incrementUsage, trackEvent } = useFreeTrialTracking({
+    featureKey: 'emotion_button',
+    defaultLimit: 5,
+  });
   
   // 会话追踪
   const sessionIdRef = useRef<string | null>(null);
@@ -137,6 +146,15 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
 
   // 选择模式
   const handleSelectMode = async (mode: StartMode) => {
+    // 增加使用次数
+    const newCount = incrementUsage();
+    
+    // 检查是否超过免费次数（但不阻断）
+    if (newCount > freeLimit) {
+      trackEvent('purchase_dialog_shown');
+      setShowPurchaseDialog(true);
+    }
+    
     await createSession();
     if (mode === 'breathing') {
       setStep('breathing');
@@ -272,8 +290,18 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
         <ModeSelector 
           onSelectMode={handleSelectMode} 
           emotionType={emotionType}
+          remainingFree={remainingFree}
+          freeLimit={freeLimit}
         />
       )}
+
+      {/* 购买引导弹窗 */}
+      <EmotionButtonPurchaseDialog
+        open={showPurchaseDialog}
+        onOpenChange={setShowPurchaseDialog}
+        usageCount={usageCount}
+        onTrackEvent={trackEvent}
+      />
 
       {/* 呼吸引导 */}
       {step === 'breathing' && (
