@@ -157,6 +157,20 @@ serve(async (req) => {
         result = await trackTeenMood(supabase, user.id, params);
         break;
 
+      // ========== 情绪语音教练简报 ==========
+      case 'generate_emotion_briefing':
+        result = await generateEmotionBriefing(supabase, user.id, params, authHeader);
+        break;
+
+      // ========== 情绪阶段追踪 ==========
+      case 'track_emotion_stage':
+        result = await trackEmotionStage(supabase, user.id, params);
+        break;
+
+      case 'capture_emotion_event':
+        result = await captureEmotionEvent(supabase, user.id, params);
+        break;
+
       default:
         result = { error: `Unknown tool: ${tool}` };
     }
@@ -1464,5 +1478,98 @@ async function trackTeenMood(supabase: any, userId: string, params: any) {
   return { 
     success: true, 
     message: '已记录'
+  };
+}
+
+// ========== 情绪语音教练简报 ==========
+
+async function generateEmotionBriefing(supabase: any, userId: string, params: any, authHeader: string) {
+  console.log(`[life-coach-tools] Generating emotion briefing for user: ${userId}`);
+  
+  const {
+    emotion_theme,
+    emotion_tags,
+    stage_1_content,
+    stage_2_content,
+    stage_3_content,
+    stage_4_content,
+    insight,
+    action,
+    emotion_intensity,
+    growth_story
+  } = params;
+
+  // 调用 save-emotion-voice-briefing Edge Function
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  
+  const response = await fetch(`${supabaseUrl}/functions/v1/save-emotion-voice-briefing`, {
+    method: 'POST',
+    headers: {
+      'Authorization': authHeader,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      emotion_theme,
+      emotion_tags,
+      stage_1_content,
+      stage_2_content,
+      stage_3_content,
+      stage_4_content,
+      insight,
+      action,
+      emotion_intensity,
+      growth_story
+    })
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || result.error) {
+    console.error('Save briefing error:', result.error);
+    return { 
+      success: false, 
+      error: result.error || '保存简报失败',
+      message: '简报保存出现问题，但你的对话内容已被记录'
+    };
+  }
+
+  return {
+    success: true,
+    action: 'briefing_saved',
+    briefing_id: result.briefing_id,
+    conversation_id: result.conversation_id,
+    briefing_data: {
+      emotion_theme,
+      emotion_tags,
+      emotion_intensity,
+      insight,
+      action,
+      growth_story
+    },
+    message: '简报已生成并保存'
+  };
+}
+
+async function trackEmotionStage(supabase: any, userId: string, params: any) {
+  console.log(`[life-coach-tools] Tracking emotion stage for user: ${userId}`, params);
+  
+  // 这是内部追踪工具，不需要存储，只是让AI知道当前阶段
+  return {
+    success: true,
+    stage: params.stage,
+    message: `已进入阶段${params.stage}`
+  };
+}
+
+async function captureEmotionEvent(supabase: any, userId: string, params: any) {
+  console.log(`[life-coach-tools] Capturing emotion event for user: ${userId}`, params);
+  
+  // 捕获情绪事件摘要，供后续简报使用
+  return {
+    success: true,
+    event_summary: params.event_summary,
+    detected_emotions: params.detected_emotions,
+    emotion_intensity: params.emotion_intensity,
+    message: '情绪事件已记录'
   };
 }
