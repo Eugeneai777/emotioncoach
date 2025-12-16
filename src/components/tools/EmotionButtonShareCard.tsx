@@ -88,16 +88,7 @@ const EmotionButtonShareCard = forwardRef<HTMLDivElement, EmotionButtonShareCard
             justifyContent: 'center',
             gap: '6px'
           }}>
-            <span>情绪</span>
-            <span style={{ fontSize: '24px' }}>🆘</span>
-            <span style={{
-              background: 'linear-gradient(to right, #F97316, #F43F5E, #EF4444)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontWeight: '900',
-              letterSpacing: '0.1em'
-            }}>SOS</span>
-            <span>按钮</span>
+            情绪🆘按钮
           </div>
           <div style={{ 
             fontSize: '14px', 

@@ -29,7 +29,7 @@ export const youjinFeatures: YoujinFeature[] = [
   { name: "有劲AI", category: "教练空间", basic: true, premium: true, tooltip: "全方位生活指导和规划" },
   
   // 成长工具
-  { name: "情绪🆘SOS按钮 (9种情绪)", category: "成长工具", basic: true, premium: true, tooltip: "9种情绪场景，288条认知提醒" },
+  { name: "情绪🆘按钮 (9种情绪)", category: "成长工具", basic: true, premium: true, tooltip: "9种情绪场景，288条认知提醒" },
   { name: "情绪工具 (5个)", category: "成长工具", basic: true, premium: true, tooltip: "能量宣言卡、呼吸练习、冥想计时器等" },
   { name: "自我探索工具", category: "成长工具", basic: true, premium: true, tooltip: "价值观探索、优势发现、愿景画布等" },
   { name: "生活管理工具", category: "成长工具", basic: true, premium: true, tooltip: "习惯追踪、能量管理、睡眠记录等" },
@@ -58,7 +58,7 @@ export const bloomFeatures: BloomFeature[] = [
   { name: "AI生活教练", category: "教练空间", identityCamp: true, emotionCamp: true, tooltip: "生活全方位指导" },
   
   // 成长工具
-  { name: "情绪🆘SOS按钮系统", category: "成长工具", identityCamp: true, emotionCamp: true, tooltip: "9种情绪，288条认知提醒" },
+  { name: "情绪🆘按钮系统", category: "成长工具", identityCamp: true, emotionCamp: true, tooltip: "9种情绪，288条认知提醒" },
   { name: "全部情绪工具", category: "成长工具", identityCamp: true, emotionCamp: true, tooltip: "全套情绪管理工具" },
   { name: "全部自我探索", category: "成长工具", identityCamp: true, emotionCamp: true, tooltip: "完整自我探索工具集" },
   { name: "全部生活管理", category: "成长工具", identityCamp: true, emotionCamp: true, tooltip: "完整生活管理工具集" },
