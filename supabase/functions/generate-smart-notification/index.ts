@@ -273,7 +273,30 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       weekly_summary: { type: 'insight', priority: 3 }
     };
 
+    // 场景到教练类型的映射
+    const scenarioCoachTypeMap: Record<Scenario, string> = {
+      after_briefing: 'emotion_coach',
+      after_story: 'story_coach',
+      after_gratitude_analysis: 'gratitude_coach',
+      after_communication: 'communication_coach',
+      after_parent: 'parent_coach',
+      after_vibrant_life: 'life_coach',
+      goal_milestone: 'emotion_coach',
+      emotion_improvement: 'emotion_coach',
+      consistent_checkin: 'emotion_coach',
+      inactivity: 'general',
+      sustained_low_mood: 'emotion_coach',
+      encouragement: 'general',
+      checkin_success: 'emotion_coach',
+      checkin_streak_milestone: 'emotion_coach',
+      checkin_reminder: 'emotion_coach',
+      checkin_streak_break_warning: 'emotion_coach',
+      camp_day_complete: 'parent_coach',
+      weekly_summary: 'general'
+    };
+
     let { type, priority } = baseNotificationTypeMap[scenarioTyped] || { type: 'encouragement', priority: 1 };
+    const coachType = scenarioCoachTypeMap[scenarioTyped] || 'general';
 
     // 根据通知频率偏好调整优先级
     if (notificationFrequency === 'frequent') {
@@ -314,7 +337,8 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
         action_type: notificationData.action_type,
         action_data: context || {},
         context: context,
-        priority: priority
+        priority: priority,
+        coach_type: coachType
       })
       .select()
       .single();
