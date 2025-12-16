@@ -22,6 +22,9 @@ import type { CampTemplate } from "@/types/trainingCamp";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { PageTour } from "@/components/PageTour";
+import { usePageTour } from "@/hooks/usePageTour";
+import { pageTourConfig } from "@/config/pageTourConfig";
 
 const campCategories = [
   {
@@ -45,6 +48,7 @@ const campCategories = [
 const CampList = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showTour, completeTour } = usePageTour('camp_list');
   const [activeCategory, setActiveCategory] = useState('youjin');
   const [sortBy, setSortBy] = useState<'popular' | 'duration' | 'newest'>('popular');
   const [payDialogOpen, setPayDialogOpen] = useState(false);

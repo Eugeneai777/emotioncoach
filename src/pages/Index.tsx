@@ -31,6 +31,9 @@ import { getTodayInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { EmotionVoiceCallCTA } from "@/components/emotion-coach/EmotionVoiceCallCTA";
 import { EmotionVoiceBriefingPreview } from "@/components/emotion-coach/EmotionVoiceBriefingPreview";
+import { PageTour } from "@/components/PageTour";
+import { usePageTour } from "@/hooks/usePageTour";
+import { pageTourConfig } from "@/config/pageTourConfig";
 
 const Index = () => {
   const [searchParams] = useSearchParams();

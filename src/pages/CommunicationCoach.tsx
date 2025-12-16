@@ -11,6 +11,9 @@ import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { PageTour } from "@/components/PageTour";
+import { usePageTour } from "@/hooks/usePageTour";
+import { pageTourConfig } from "@/config/pageTourConfig";
 
 const CommunicationCoach = () => {
   const [input, setInput] = useState("");
@@ -19,6 +22,7 @@ const CommunicationCoach = () => {
   const [difficultyConfirmed, setDifficultyConfirmed] = useState(false);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const { toast } = useToast();
+  const { showTour, completeTour } = usePageTour('communication_coach');
   const { messages, isLoading, userMessageCount, lastBriefingId, currentStage, sendMessage, resetConversation } = useCommunicationChat();
   const { data: template, isLoading: templateLoading } = useCoachTemplate('communication');
   const { notifications, loading: notificationsLoading, markAsRead, deleteNotification } = useSmartNotification('communication_coach');
@@ -149,6 +153,7 @@ const CommunicationCoach = () => {
         onDifficultyChange={setDifficulty}
         onConfirm={handleDifficultyConfirm}
       />
+      <PageTour open={showTour} onComplete={completeTour} steps={pageTourConfig.communication_coach} pageTitle="沟通教练" />
     </>
   );
 };
