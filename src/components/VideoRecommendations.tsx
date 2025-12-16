@@ -137,16 +137,17 @@ export const VideoRecommendations = ({ recommendations }: VideoRecommendationsPr
             key={rec.id}
             className="p-4 bg-background/80 backdrop-blur-sm hover:shadow-md transition-all border-border/50"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Play className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                  <h4 className="font-medium text-foreground leading-tight">
+            <div className="flex flex-col gap-3">
+              {/* 标题和内容区 */}
+              <div className="space-y-2 min-w-0">
+                <div className="flex items-start gap-2">
+                  <Play className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+                  <h4 className="font-medium text-foreground leading-tight break-words">
                     {rec.title}
                   </h4>
                 </div>
                 
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground break-words">
                   💡 {rec.reason}
                 </p>
 
@@ -164,10 +165,12 @@ export const VideoRecommendations = ({ recommendations }: VideoRecommendationsPr
                 )}
               </div>
 
-              <div className="flex gap-2 flex-shrink-0">
+              {/* 按钮区 - 移动端全宽显示 */}
+              <div className="flex gap-2 w-full">
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="flex-shrink-0"
                   onClick={() => handleToggleFavorite(rec)}
                 >
                   <Heart 
@@ -177,7 +180,7 @@ export const VideoRecommendations = ({ recommendations }: VideoRecommendationsPr
                 <Button
                   variant="default"
                   size="sm"
-                  className="gap-2"
+                  className="gap-2 flex-1"
                   onClick={() => handleWatchClick(rec)}
                 >
                   点击观看
