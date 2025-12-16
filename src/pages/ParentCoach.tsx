@@ -60,6 +60,7 @@ export default function ParentCoach() {
   const { user, loading: authLoading, signOut } = useAuth();
   const { data: coachConfig } = useCoachTemplate('parent');
   const { existingProfile, profileLoading } = useParentIntake();
+  const { showTour, completeTour } = usePageTour('parent_coach');
 
   // Fetch active bindings for teen usage stats
   const { data: activeBindings } = useQuery({
@@ -420,6 +421,11 @@ ${briefingData.growth_story || '暂无记录'}
 
   return (
     <>
+      <PageTour
+        steps={pageTourConfig.parent_coach}
+        open={showTour}
+        onComplete={completeTour}
+      />
       <CoachLayout
         emoji={coachConfig?.emoji || "💜"}
         title={coachConfig?.title || "亲子教练"}
