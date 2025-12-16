@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Loader2, Sparkles, Check, Brain, Heart, Coins, Activity, Leaf, PartyPopper, Users } from "lucide-react";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { RefreshCw, Loader2, Sparkles, Check, Brain, Heart, Coins, Activity, Leaf, PartyPopper, Users, ChevronDown } from "lucide-react";
 
 interface GratitudeSyncButtonProps {
   entryCount: number;
@@ -27,6 +29,7 @@ export const GratitudeSyncButton = ({
   isAnalyzing,
   isLoggedIn,
 }: GratitudeSyncButtonProps) => {
+  const [isValueOpen, setIsValueOpen] = useState(false);
   const hasEntries = entryCount > 0;
   const hasUnanalyzed = unanalyzedCount > 0;
   const allAnalyzed = hasEntries && !hasUnanalyzed;
@@ -125,6 +128,39 @@ export const GratitudeSyncButton = ({
           </div>
         ))}
       </div>
+
+      {/* Value Explanation Collapsible */}
+      <Collapsible open={isValueOpen} onOpenChange={setIsValueOpen}>
+        <CollapsibleTrigger className="w-full mt-3 pt-3 border-t border-teal-200/40 dark:border-teal-700/30 flex items-center justify-center gap-1 text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors">
+          <span>💡 了解七维幸福分析</span>
+          <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isValueOpen ? 'rotate-180' : ''}`} />
+        </CollapsibleTrigger>
+        
+        <CollapsibleContent>
+          <div className="mt-3 p-3 bg-white/50 dark:bg-gray-800/30 rounded-xl text-xs space-y-2">
+            <p className="text-teal-700 dark:text-teal-300">
+              AI 会分析你的每条感恩，识别属于哪个幸福维度：
+            </p>
+            <ul className="space-y-1.5 text-teal-600/90 dark:text-teal-400/80">
+              <li className="flex items-start gap-1.5">
+                <span className="text-teal-500">✦</span>
+                <span>发现你的幸福主要来自哪些维度</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="text-teal-500">✦</span>
+                <span>识别被忽略的维度（你的成长机会）</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="text-teal-500">✦</span>
+                <span>追踪幸福分布的变化趋势</span>
+              </li>
+            </ul>
+            <p className="pt-2 text-teal-500/80 dark:text-teal-500/70 italic text-center">
+              🌟 研究表明，幸福感来源越多元，心理韧性越强
+            </p>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 };
