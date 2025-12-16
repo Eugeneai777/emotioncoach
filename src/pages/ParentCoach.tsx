@@ -396,6 +396,7 @@ ${briefingData.growth_story || '暂无记录'}
           primaryColor="purple"
           tokenEndpoint="vibrant-life-realtime-token"
           mode={existingProfile ? 'parent_teen' : 'general'}
+          featureKey="realtime_voice_parent"
         />
       )}
       <IntakeOnboardingDialog

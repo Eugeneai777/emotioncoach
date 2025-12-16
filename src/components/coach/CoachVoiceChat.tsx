@@ -17,6 +17,7 @@ interface CoachVoiceChatProps {
   tokenEndpoint?: string;
   userId?: string;
   mode?: VoiceChatMode;
+  featureKey?: string; // 教练专属计费 feature_key，默认 'realtime_voice'
 }
 
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -32,7 +33,8 @@ export const CoachVoiceChat = ({
   primaryColor = 'rose',
   tokenEndpoint = 'vibrant-life-realtime-token',
   userId,
-  mode = 'general'
+  mode = 'general',
+  featureKey = 'realtime_voice'
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -224,11 +226,11 @@ export const CoachVoiceChat = ({
 
       if (!pkg) return DEFAULT_MAX_DURATION_MINUTES;
 
-      // 获取 realtime_voice 功能ID
+      // 获取对应教练的语音功能ID
       const { data: feature } = await supabase
         .from('feature_items')
         .select('id')
-        .eq('item_key', 'realtime_voice')
+        .eq('item_key', featureKey)
         .single();
 
       if (!feature) return DEFAULT_MAX_DURATION_MINUTES;
@@ -300,13 +302,13 @@ export const CoachVoiceChat = ({
       
       const { data, error } = await supabase.functions.invoke('deduct-quota', {
         body: {
-          feature_key: 'realtime_voice',
+          feature_key: featureKey,
           source: 'voice_chat',
           amount: POINTS_PER_MINUTE,  // 显式传递扣费金额
           metadata: {
             minute,
             session_id: sessionIdRef.current,  // 使用固定 session ID
-            coach_key: 'vibrant_life_sage',
+            coach_key: coachTitle,
             cost_per_minute: POINTS_PER_MINUTE
           }
         }

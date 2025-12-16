@@ -149,6 +149,7 @@ export default function TeenCoach() {
               primaryColor="violet"
               tokenEndpoint="vibrant-life-realtime-token"
               mode="teen"
+              featureKey="realtime_voice_teen"
             />
           </div>
         </div>
