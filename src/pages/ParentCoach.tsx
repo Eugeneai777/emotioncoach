@@ -24,6 +24,7 @@ import { ParentOnboardingGuide } from "@/components/parent-coach/ParentOnboardin
 import { IntakeOnboardingDialog } from "@/components/parent-intake/IntakeOnboardingDialog";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { Sparkles, Heart } from "lucide-react";
+import { FloatingEmotionSOSButton } from "@/components/FloatingEmotionSOSButton";
 
 export default function ParentCoach() {
   const navigate = useNavigate();
@@ -416,66 +417,69 @@ ${briefingData.growth_story || '暂无记录'}
   );
 
   return (
-    <CoachLayout
-      emoji={coachConfig?.emoji || "💜"}
-      title={coachConfig?.title || "亲子教练"}
-      subtitle={coachConfig?.subtitle || ""}
-      description={coachConfig?.description || "跟劲老师一起，化解亲子情绪困扰"}
-      gradient={coachConfig?.gradient || "from-purple-500 to-pink-500"}
-      primaryColor={coachConfig?.primary_color || "purple"}
-      themeConfig={coachConfig?.theme_config}
-      steps={coachConfig?.steps || []}
-      stepsTitle={coachConfig?.steps_title || "亲子情绪四部曲"}
-      stepsEmoji={coachConfig?.steps_emoji || "💜"}
-      moreInfoRoute="/parent-coach-intro"
-      historyRoute="/parent-diary"
-      historyLabel="亲子日记"
-      messages={messages.map(m => ({ ...m, role: m.role as "user" | "assistant" }))}
-      isLoading={isLoading}
-      input={input}
-      onInputChange={setInput}
-      onSend={handleSend}
-      onNewConversation={handleRestart}
-      onOptionClick={handleOptionClick}
-      placeholder="分享一件亲子互动中的小事..."
-      currentCoachKey="parent"
-      stageProgress={
-        messages.length > 0 && session ? (
-          <UnifiedStageProgress coachType="parent" currentStage={session.current_stage || 0} />
-        ) : undefined
-      }
-      trainingCamp={
-        <>
-          {onboardingGuide}
-          {teenModeModule}
-          {trainingCampModule}
-        </>
-      }
-      notifications={notificationsModule}
-      community={<CommunityWaterfall />}
-      briefingConfirmation={briefingConfirmation}
-      campRecommendation={campRecommendation}
-      scenarioChips={
-        coachConfig?.enable_scenarios && coachConfig?.scenarios ? (
-          <CoachScenarioChips
-            scenarios={coachConfig.scenarios as any[]}
-            onSelectScenario={async (prompt) => {
-              setInput("");
-              await handleSendMessage(prompt);
-            }}
-            primaryColor={coachConfig.primary_color}
+    <>
+      <CoachLayout
+        emoji={coachConfig?.emoji || "💜"}
+        title={coachConfig?.title || "亲子教练"}
+        subtitle={coachConfig?.subtitle || ""}
+        description={coachConfig?.description || "跟劲老师一起，化解亲子情绪困扰"}
+        gradient={coachConfig?.gradient || "from-purple-500 to-pink-500"}
+        primaryColor={coachConfig?.primary_color || "purple"}
+        themeConfig={coachConfig?.theme_config}
+        steps={coachConfig?.steps || []}
+        stepsTitle={coachConfig?.steps_title || "亲子情绪四部曲"}
+        stepsEmoji={coachConfig?.steps_emoji || "💜"}
+        moreInfoRoute="/parent-coach-intro"
+        historyRoute="/parent-diary"
+        historyLabel="亲子日记"
+        messages={messages.map(m => ({ ...m, role: m.role as "user" | "assistant" }))}
+        isLoading={isLoading}
+        input={input}
+        onInputChange={setInput}
+        onSend={handleSend}
+        onNewConversation={handleRestart}
+        onOptionClick={handleOptionClick}
+        placeholder="分享一件亲子互动中的小事..."
+        currentCoachKey="parent"
+        stageProgress={
+          messages.length > 0 && session ? (
+            <UnifiedStageProgress coachType="parent" currentStage={session.current_stage || 0} />
+          ) : undefined
+        }
+        trainingCamp={
+          <>
+            {onboardingGuide}
+            {teenModeModule}
+            {trainingCampModule}
+          </>
+        }
+        notifications={notificationsModule}
+        community={<CommunityWaterfall />}
+        briefingConfirmation={briefingConfirmation}
+        campRecommendation={campRecommendation}
+        scenarioChips={
+          coachConfig?.enable_scenarios && coachConfig?.scenarios ? (
+            <CoachScenarioChips
+              scenarios={coachConfig.scenarios as any[]}
+              onSelectScenario={async (prompt) => {
+                setInput("");
+                await handleSendMessage(prompt);
+              }}
+              primaryColor={coachConfig.primary_color}
+            />
+          ) : undefined
+        }
+        enableVoiceInput={true}
+        enableStepsCollapse={true}
+        voiceChatCTA={
+          <ParentVoiceCallCTA
+            onVoiceChatClick={() => setShowVoiceChat(true)}
+            hasCompletedIntake={!!existingProfile}
           />
-        ) : undefined
-      }
-      enableVoiceInput={true}
-      enableStepsCollapse={true}
-      voiceChatCTA={
-        <ParentVoiceCallCTA
-          onVoiceChatClick={() => setShowVoiceChat(true)}
-          hasCompletedIntake={!!existingProfile}
-        />
-      }
-      dialogs={dialogs}
-    />
+        }
+        dialogs={dialogs}
+      />
+      <FloatingEmotionSOSButton />
+    </>
   );
 }

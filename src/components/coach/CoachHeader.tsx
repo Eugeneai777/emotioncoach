@@ -197,7 +197,7 @@ export const CoachHeader = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Energy Studio */}
+            {/* 有劲生活馆 */}
             <Button
               size="sm"
               variant="ghost"
