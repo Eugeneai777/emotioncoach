@@ -119,7 +119,7 @@ export const performCheckIn = async (
   userId: string,
   campId: string,
   checkinType: "auto" | "manual" | "makeup" = "manual"
-): Promise<{ success: boolean; error?: string }> => {
+): Promise<{ success: boolean; error?: string; streakDays?: number }> => {
   try {
     const today = getTodayInBeijing();
 
@@ -150,6 +150,7 @@ export const performCheckIn = async (
       .eq("id", campId)
       .single();
 
+    let streakDays = 1;
     if (camp) {
       const checkInDates = Array.isArray(camp.check_in_dates)
         ? camp.check_in_dates
@@ -157,25 +158,59 @@ export const performCheckIn = async (
 
       if (!checkInDates.includes(today)) {
         checkInDates.push(today);
+        streakDays = camp.completed_days + 1;
 
         await supabase
           .from("training_camps")
           .update({
-            completed_days: camp.completed_days + 1,
+            completed_days: streakDays,
             check_in_dates: checkInDates,
             updated_at: new Date().toISOString(),
           })
           .eq("id", campId);
+      } else {
+        streakDays = camp.completed_days;
       }
     }
 
-    return { success: true };
+    // 发送打卡成功微信通知（非阻塞）
+    sendCheckInNotification(userId, streakDays).catch(err => {
+      console.log("打卡通知发送失败（非阻塞）:", err);
+    });
+
+    return { success: true, streakDays };
   } catch (error) {
     console.error("打卡失败:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "打卡失败",
     };
+  }
+};
+
+/**
+ * 发送打卡成功微信通知
+ */
+const sendCheckInNotification = async (userId: string, streakDays: number) => {
+  try {
+    const { error } = await supabase.functions.invoke("send-wechat-template-message", {
+      body: {
+        userId,
+        scenario: "checkin_success",
+        notification: {
+          id: `checkin_${Date.now()}`,
+          streakDays,
+        },
+      },
+    });
+    
+    if (error) {
+      console.log("打卡通知发送失败:", error);
+    } else {
+      console.log("打卡通知发送成功");
+    }
+  } catch (err) {
+    console.log("打卡通知发送异常:", err);
   }
 };
 
