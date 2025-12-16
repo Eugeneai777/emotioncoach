@@ -35,8 +35,10 @@ const coachTypeMap: Record<string, CoachType> = {
   'communication_coach': 'communication',
   'parent_coach': 'parent',
   'vibrant_life_coach': 'vibrant_life',
+  'life_coach': 'vibrant_life',
   'story_coach': 'story',
-  'gratitude_coach': 'gratitude'
+  'gratitude_coach': 'gratitude',
+  'general': 'vibrant_life'
 };
 
 const iconMap: Record<string, any> = {
