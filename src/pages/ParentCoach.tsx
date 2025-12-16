@@ -24,7 +24,6 @@ import { ParentOnboardingGuide } from "@/components/parent-coach/ParentOnboardin
 import { IntakeOnboardingDialog } from "@/components/parent-intake/IntakeOnboardingDialog";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { Sparkles, Heart } from "lucide-react";
-import { FloatingEmotionSOSButton } from "@/components/FloatingEmotionSOSButton";
 
 export default function ParentCoach() {
   const navigate = useNavigate();
@@ -479,7 +478,6 @@ ${briefingData.growth_story || '暂无记录'}
         }
         dialogs={dialogs}
       />
-      <FloatingEmotionSOSButton />
     </>
   );
 }
