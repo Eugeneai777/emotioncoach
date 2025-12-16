@@ -124,7 +124,7 @@ const EmotionButton = () => {
         {/* 底部提示 */}
         <div className="mt-8 sm:mt-10 text-center">
           <p className="text-teal-600/70 text-xs sm:text-sm mb-4">
-            🌿 每种情绪都有32条专属认知提醒，陪你走过四个阶段
+            🌿 不管现在多难，这股感觉会过去的。我在这里陪你。
           </p>
           
           {/* 快捷入口 */}
