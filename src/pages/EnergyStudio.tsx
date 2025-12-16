@@ -26,6 +26,7 @@ import { RelationshipTracker } from "@/components/tools/RelationshipTracker";
 import { EnergyDeclaration } from "@/components/tools/EnergyDeclaration";
 import { CoachSpaceContent } from "@/components/coach/CoachSpaceContent";
 import SafetyButtonsGrid from "@/components/tools/SafetyButtonsGrid";
+import { FloatingEmotionSOSButton } from "@/components/FloatingEmotionSOSButton";
 
 interface ToolCard {
   id: string;
@@ -278,7 +279,8 @@ const EnergyStudio = () => {
           </>}
           </>}
       </main>
-
+      
+      <FloatingEmotionSOSButton />
     </div>;
 };
 export default EnergyStudio;
