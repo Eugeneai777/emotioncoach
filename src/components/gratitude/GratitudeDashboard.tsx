@@ -11,6 +11,7 @@ import { GratitudeThemeBadge, THEME_DEFINITIONS, getThemeById } from "./Gratitud
 import { GratitudeTagDistribution } from "./GratitudeTagDistribution";
 import ReactMarkdown from "react-markdown";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
+import { GratitudeReportPaywall } from "@/components/conversion/GratitudeReportPaywall";
 
 interface DashboardData {
   reportId?: string;
@@ -32,6 +33,7 @@ interface GratitudeDashboardProps {
   themeStats: Record<string, number>;
   onTagClick?: (themeId: string) => void;
   selectedTag?: string | null;
+  isLoggedIn?: boolean;
 }
 
 // Parse AI content into sections with enhanced trend parsing
@@ -97,11 +99,12 @@ const getLowestDimensions = (themeStats: Record<string, number>, count: number =
   return sorted.slice(0, count).map(([id, value]) => ({ id, count: value }));
 };
 
-export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: GratitudeDashboardProps) => {
+export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag, isLoggedIn = true }: GratitudeDashboardProps) => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"distribution" | "report">("distribution");
   const [reportType, setReportType] = useState<"daily" | "weekly" | "monthly">("weekly");
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
   const { toast } = useToast();
   const { triggerNotification } = useSmartNotification('gratitude_coach');
 
@@ -122,7 +125,37 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
     })).sort((a, b) => b.count - a.count);
   }, [dashboardData?.themeStats, themeStats]);
 
+  // Check if user has subscription
+  const checkSubscription = async (): Promise<boolean> => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return false;
+
+      const { data } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('status', 'active')
+        .gte('end_date', new Date().toISOString().split('T')[0])
+        .maybeSingle();
+
+      return !!data;
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      return false;
+    }
+  };
+
   const generateReport = async () => {
+    // Check subscription first
+    const hasSubscription = await checkSubscription();
+    
+    if (!hasSubscription) {
+      // Show paywall
+      setShowPaywall(true);
+      return;
+    }
+
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -603,6 +636,12 @@ export const GratitudeDashboard = ({ themeStats, onTagClick, selectedTag }: Grat
           )}
         </div>
       )}
+
+      {/* Report Paywall */}
+      <GratitudeReportPaywall
+        open={showPaywall}
+        onClose={() => setShowPaywall(false)}
+      />
     </div>
   );
 };

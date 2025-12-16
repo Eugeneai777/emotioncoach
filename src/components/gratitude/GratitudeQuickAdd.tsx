@@ -7,11 +7,12 @@ import { toast } from "@/hooks/use-toast";
 import { VoiceInputButton } from "@/components/coach/VoiceInputButton";
 
 interface GratitudeQuickAddProps {
-  userId: string;
+  userId?: string;
   onAdded: () => void;
+  onLocalAdd?: (content: string) => number;
 }
 
-export const GratitudeQuickAdd = ({ userId, onAdded }: GratitudeQuickAddProps) => {
+export const GratitudeQuickAdd = ({ userId, onAdded, onLocalAdd }: GratitudeQuickAddProps) => {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,24 +22,36 @@ export const GratitudeQuickAdd = ({ userId, onAdded }: GratitudeQuickAddProps) =
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from("gratitude_entries")
-        .insert({
-          user_id: userId,
-          content: content.trim(),
-          category: "other",
-          themes: [],
-          date: new Date().toISOString().split("T")[0],
-        })
-        .select()
-        .single();
+      if (userId) {
+        // Logged in: save to database
+        const { error } = await supabase
+          .from("gratitude_entries")
+          .insert({
+            user_id: userId,
+            content: content.trim(),
+            category: "other",
+            themes: [],
+            date: new Date().toISOString().split("T")[0],
+          })
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "记录成功 ✨",
-        description: "标签将自动分析，或点击「同步分析」立即生成"
-      });
+        toast({
+          title: "记录成功 ✨",
+          description: "标签将自动分析，或点击「同步分析」立即生成"
+        });
+      } else {
+        // Not logged in: save to local storage
+        if (onLocalAdd) {
+          onLocalAdd(content.trim());
+          toast({
+            title: "记录成功 ✨",
+            description: "点击「同步」按钮可保存到云端"
+          });
+        }
+      }
 
       setContent("");
       onAdded();
