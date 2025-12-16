@@ -75,13 +75,14 @@ const TagStats = () => {
 
       if (tagsError) throw tagsError;
 
-      // 加载所有简报及其标签
+      // 加载当前用户的简报及其标签
       const { data: briefingsData, error: briefingsError } = await supabase
         .from("briefings")
         .select(`
           *,
           conversations!inner(user_id)
         `)
+        .eq('conversations.user_id', user.id)
         .order("created_at", { ascending: false });
 
       if (briefingsError) throw briefingsError;

@@ -312,10 +312,12 @@ const Goals = (): JSX.Element => {
       const startDate = new Date(goal.start_date);
       const endDate = new Date(goal.end_date);
 
-      // 获取在目标周期内创建的简报数量
+      // 获取当前用户在目标周期内创建的简报数量
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from("briefings")
         .select("id, created_at, conversations!inner(user_id)")
+        .eq('conversations.user_id', user?.id)
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString());
 
