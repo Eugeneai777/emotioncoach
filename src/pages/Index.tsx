@@ -30,6 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getTodayInBeijing, getDaysSinceStart } from "@/utils/dateUtils";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { EmotionVoiceCallCTA } from "@/components/emotion-coach/EmotionVoiceCallCTA";
+import { EmotionVoiceBriefingPreview } from "@/components/emotion-coach/EmotionVoiceBriefingPreview";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -48,6 +49,10 @@ const Index = () => {
   const [checkInSuccessData, setCheckInSuccessData] = useState<any>(null);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [showVoiceChat, setShowVoiceChat] = useState(false);
+  const [briefingPreview, setBriefingPreview] = useState<{
+    briefingId: string;
+    briefingData: any;
+  } | null>(null);
   const { toast } = useToast();
 
   // 购买引导
@@ -627,6 +632,19 @@ const Index = () => {
           tokenEndpoint="vibrant-life-realtime-token"
           mode="emotion"
           featureKey="realtime_voice_emotion"
+          onBriefingSaved={(briefingId, briefingData) => {
+            // 关闭语音对话后显示简报预览
+            setShowVoiceChat(false);
+            setBriefingPreview({ briefingId, briefingData });
+          }}
+        />
+      )}
+
+      {briefingPreview && (
+        <EmotionVoiceBriefingPreview
+          briefingId={briefingPreview.briefingId}
+          briefingData={briefingPreview.briefingData}
+          onClose={() => setBriefingPreview(null)}
         />
       )}
 

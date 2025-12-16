@@ -675,6 +675,17 @@ export class RealtimeChat {
         });
       }
 
+      // 检查是否是简报保存成功
+      if (data?.action === 'briefing_saved' && data?.briefing_id) {
+        this.onMessage({
+          type: 'briefing_saved',
+          briefing_id: data.briefing_id,
+          conversation_id: data.conversation_id,
+          briefing_data: data.briefing_data,
+          message: data.message
+        });
+      }
+
     } catch (error: any) {
       console.error('Tool execution error:', error);
       

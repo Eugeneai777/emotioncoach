@@ -9,6 +9,15 @@ import { WechatPayDialog } from '@/components/WechatPayDialog';
 
 export type VoiceChatMode = 'general' | 'parent_teen' | 'teen' | 'emotion';
 
+interface BriefingData {
+  emotion_theme: string;
+  emotion_tags?: string[];
+  emotion_intensity?: number;
+  insight?: string;
+  action?: string;
+  growth_story?: string;
+}
+
 interface CoachVoiceChatProps {
   onClose: () => void;
   coachEmoji: string;
@@ -18,6 +27,7 @@ interface CoachVoiceChatProps {
   userId?: string;
   mode?: VoiceChatMode;
   featureKey?: string; // 教练专属计费 feature_key，默认 'realtime_voice'
+  onBriefingSaved?: (briefingId: string, briefingData: BriefingData) => void;
 }
 
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -34,7 +44,8 @@ export const CoachVoiceChat = ({
   tokenEndpoint = 'vibrant-life-realtime-token',
   userId,
   mode = 'general',
-  featureKey = 'realtime_voice'
+  featureKey = 'realtime_voice',
+  onBriefingSaved
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -148,6 +159,17 @@ export const CoachVoiceChat = ({
       recommend_training_camp: {
         title: '🏕️ 训练营推荐',
         getDesc: (r) => r?.camps?.length > 0 ? `为你推荐 ${r?.camps?.length} 个训练营` : '正在搜索训练营...'
+      },
+      generate_emotion_briefing: {
+        title: '📝 正在生成简报',
+        getDesc: (r, a) => a?.emotion_theme ? `主题：${a.emotion_theme}` : '记录你的情绪旅程...'
+      },
+      track_emotion_stage: {
+        title: '🌱 阶段引导',
+        getDesc: (r, a) => {
+          const stageNames = ['觉察', '理解', '反应', '转化'];
+          return stageNames[a?.stage - 1] || '继续探索';
+        }
       }
     };
     
@@ -448,6 +470,18 @@ export const CoachVoiceChat = ({
               toast({
                 title: `🏕️ 为你推荐 ${event.camps.length} 个训练营`,
                 description: "点击卡片了解详情",
+              });
+            }
+          } else if (event.type === 'briefing_saved') {
+            // 处理简报保存成功
+            toast({
+              title: "✨ 简报已生成",
+              description: "你的情绪旅程已记录",
+            });
+            // 通知父组件
+            if (onBriefingSaved && event.briefing_id) {
+              onBriefingSaved(event.briefing_id, event.briefing_data || {
+                emotion_theme: '情绪梳理'
               });
             }
           } else if (event.type === 'tool_error' && event.requiresAuth) {
