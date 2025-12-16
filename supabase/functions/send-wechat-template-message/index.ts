@@ -365,6 +365,8 @@ serve(async (req) => {
   try {
     const { userId, scenario, notification } = await req.json();
 
+    console.log(`[${scenario}] 收到通知请求 - userId: ${userId}`);
+
     if (!userId || !scenario || !notification) {
       throw new Error('Missing required parameters');
     }
@@ -382,7 +384,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (mappingError || !mapping) {
-      console.log('用户尚未绑定微信公众号');
+      console.log(`[${scenario}] 用户尚未绑定微信公众号 - userId: ${userId}`);
       return new Response(
         JSON.stringify({ success: false, reason: 'not_bound' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -390,7 +392,7 @@ serve(async (req) => {
     }
 
     if (!mapping.subscribe_status) {
-      console.log('用户已取消关注公众号');
+      console.log(`[${scenario}] 用户已取消关注公众号 - userId: ${userId}`);
       return new Response(
         JSON.stringify({ success: false, reason: 'unsubscribed' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -405,7 +407,7 @@ serve(async (req) => {
       .single();
 
     if (!profile?.wechat_enabled) {
-      console.log('用户未启用微信公众号推送');
+      console.log(`[${scenario}] 用户未启用微信公众号推送 - userId: ${userId}, wechat_enabled: ${profile?.wechat_enabled}`);
       return new Response(
         JSON.stringify({ success: false, reason: 'disabled' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
