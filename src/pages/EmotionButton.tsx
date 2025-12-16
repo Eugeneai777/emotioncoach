@@ -132,7 +132,7 @@ const EmotionButton = () => {
               onClick={() => navigate("/energy-studio")}
               className="px-4 py-2 text-sm text-teal-700 bg-white/60 backdrop-blur-sm rounded-full hover:bg-white/80 transition-colors"
             >
-              能量工作室
+              有劲生活馆
             </button>
           </div>
         </div>
