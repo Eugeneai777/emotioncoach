@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export interface TourStep {
   icon: string;
@@ -62,6 +64,9 @@ export const PageTour: React.FC<PageTourProps> = ({
   return (
     <Dialog open={open} onOpenChange={(open) => !open && handleSkip()}>
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 border-0">
+        <VisuallyHidden>
+          <DialogTitle>{pageTitle || '页面引导'}</DialogTitle>
+        </VisuallyHidden>
         {/* Header with skip button */}
         <div className="flex justify-between items-center p-4 pb-0">
           {pageTitle && (
