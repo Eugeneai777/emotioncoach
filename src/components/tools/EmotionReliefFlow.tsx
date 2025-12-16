@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Volume2, VolumeX, ChevronRight, Phone, MessageCircle, RotateCcw, Heart, History, Wind, Loader2, Mic, Bot } from "lucide-react";
+import { X, ChevronRight, Phone, MessageCircle, RotateCcw, Heart, History, Wind } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,7 +8,6 @@ import confetti from "canvas-confetti";
 import AmbientSoundPlayer from "./panic/AmbientSoundPlayer";
 import ModeSelector from "./panic/ModeSelector";
 import SessionSummaryCard from "./panic/SessionSummaryCard";
-import { toast } from "@/hooks/use-toast";
 import { EmotionType, REMINDERS_PER_CYCLE, getStageConfig } from "@/config/emotionReliefConfig";
 
 interface EmotionReliefFlowProps {
@@ -18,12 +17,6 @@ interface EmotionReliefFlowProps {
 
 type FlowStep = 'mode-select' | 'breathing' | 'cognitive' | 'checkin' | 'complete';
 type StartMode = 'cognitive' | 'breathing';
-type VoiceSource = 'ai' | 'user';
-
-interface UserRecording {
-  reminder_index: number;
-  storage_path: string;
-}
 
 const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onClose }) => {
   const navigate = useNavigate();
@@ -33,11 +26,8 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
   const [breathCount, setBreathCount] = useState(0);
   const [breathTimer, setBreathTimer] = useState(4);
   const [currentReminderIndex, setCurrentReminderIndex] = useState(0);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [cycleCount, setCycleCount] = useState(1);
   const [showReminderAnimation, setShowReminderAnimation] = useState(false);
-  const [voiceSource, setVoiceSource] = useState<VoiceSource>('ai');
-  const [userRecordings, setUserRecordings] = useState<Map<number, string>>(new Map());
   
   // 会话追踪
   const sessionIdRef = useRef<string | null>(null);
@@ -145,146 +135,8 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
     return () => clearTimeout(timer);
   }, [currentReminderIndex]);
 
-  // ElevenLabs 语音朗读
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
-
-  const speakText = useCallback(async (text: string) => {
-    try {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      
-      setIsLoadingAudio(true);
-      setIsSpeaking(true);
-
-      const response = await supabase.functions.invoke('text-to-speech', {
-        body: { text }
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
-      const { audioContent } = response.data;
-      const byteCharacters = atob(audioContent);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const audioBlob = new Blob([byteArray], { type: 'audio/mpeg' });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-      
-      audio.onended = () => {
-        setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
-      };
-      
-      audio.onerror = () => {
-        setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      setIsLoadingAudio(false);
-      await audio.play();
-    } catch (error) {
-      console.error('TTS error:', error);
-      setIsLoadingAudio(false);
-      setIsSpeaking(false);
-      toast({
-        title: "语音播放失败",
-        description: "请稍后重试",
-        variant: "destructive"
-      });
-    }
-  }, []);
-
-  const stopSpeaking = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    setIsSpeaking(false);
-    setIsLoadingAudio(false);
-  }, []);
-
-  // 加载用户录音（按情绪类型过滤）
-  const loadUserRecordings = useCallback(async () => {
-    if (!user?.id) return;
-    
-    const { data, error } = await supabase
-      .from('user_voice_recordings')
-      .select('reminder_index, storage_path')
-      .eq('user_id', user.id)
-      .eq('emotion_type', emotionType.id);
-
-    if (!error && data) {
-      const recordingsMap = new Map<number, string>();
-      data.forEach((r: UserRecording) => {
-        recordingsMap.set(r.reminder_index, r.storage_path);
-      });
-      setUserRecordings(recordingsMap);
-    }
-  }, [user?.id, emotionType.id]);
-
-  // 播放用户录音
-  const playUserRecording = useCallback(async (reminderIndex: number) => {
-    const storagePath = userRecordings.get(reminderIndex);
-    if (!storagePath) {
-      speakText(emotionType.reminders[reminderIndex]);
-      return;
-    }
-
-    try {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-
-      setIsLoadingAudio(true);
-      setIsSpeaking(true);
-
-      const { data, error } = await supabase.storage
-        .from('voice-recordings')
-        .download(storagePath);
-
-      if (error) throw error;
-
-      const audioUrl = URL.createObjectURL(data);
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-
-      audio.onended = () => {
-        setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      audio.onerror = () => {
-        setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      setIsLoadingAudio(false);
-      await audio.play();
-    } catch (error) {
-      console.error('Error playing user recording:', error);
-      setIsLoadingAudio(false);
-      setIsSpeaking(false);
-      speakText(emotionType.reminders[reminderIndex]);
-    }
-  }, [userRecordings, speakText, emotionType.reminders]);
-
   // 选择模式
-  const handleSelectMode = async (mode: StartMode, selectedVoiceSource: VoiceSource) => {
-    setVoiceSource(selectedVoiceSource);
-    if (selectedVoiceSource === 'user') {
-      await loadUserRecordings();
-    }
+  const handleSelectMode = async (mode: StartMode) => {
     await createSession();
     if (mode === 'breathing') {
       setStep('breathing');
@@ -324,7 +176,6 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
 
   // 用户选择好了
   const handleFeelBetter = async () => {
-    stopSpeaking();
     await updateSession('feel_better');
     triggerConfetti();
     setStep('complete');
@@ -332,7 +183,6 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
 
   // 处理关闭
   const handleClose = async () => {
-    stopSpeaking();
     if (sessionIdRef.current && step !== 'complete') {
       await updateSession('exited');
     }
@@ -421,10 +271,6 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
       {step === 'mode-select' && (
         <ModeSelector 
           onSelectMode={handleSelectMode} 
-          onNavigate={(path) => {
-            handleClose();
-            navigate(path);
-          }}
           emotionType={emotionType}
         />
       )}
@@ -467,32 +313,6 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
               <p className="text-xl md:text-2xl font-medium text-slate-800 text-center leading-relaxed">
                 {emotionType.reminders[currentReminderIndex]}
               </p>
-              
-              {/* 录音状态指示 */}
-              <div className="mt-4 flex items-center justify-center">
-                {voiceSource === 'user' && userRecordings.has(currentReminderIndex) ? (
-                  <span className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full">
-                    <Mic className="w-3 h-3" />
-                    已录制 · 我的声音
-                  </span>
-                ) : voiceSource === 'user' ? (
-                  <button
-                    className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors"
-                    onClick={() => {
-                      handleClose();
-                      navigate('/panic-voice-settings');
-                    }}
-                  >
-                    <Mic className="w-3 h-3" />
-                    未录制 · 点击录制
-                  </button>
-                ) : (
-                  <span className="flex items-center gap-1.5 text-xs text-slate-500/60">
-                    <Bot className="w-3 h-3" />
-                    AI 声音
-                  </span>
-                )}
-              </div>
             </div>
           </div>
           
@@ -508,32 +328,6 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
                 title="切换到呼吸"
               >
                 <Wind className="w-6 h-6 text-slate-600" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-16 h-16 hover:bg-white/30"
-                onClick={() => {
-                  if (isSpeaking || isLoadingAudio) {
-                    stopSpeaking();
-                  } else {
-                    if (voiceSource === 'user' && userRecordings.has(currentReminderIndex)) {
-                      playUserRecording(currentReminderIndex);
-                    } else {
-                      speakText(emotionType.reminders[currentReminderIndex]);
-                    }
-                  }
-                }}
-                disabled={isLoadingAudio}
-              >
-                {isLoadingAudio ? (
-                  <Loader2 className="w-10 h-10 text-slate-600 animate-spin" />
-                ) : isSpeaking ? (
-                  <VolumeX className="w-10 h-10 text-slate-600" />
-                ) : (
-                  <Volume2 className="w-10 h-10 text-slate-600" />
-                )}
               </Button>
               
               <Button
