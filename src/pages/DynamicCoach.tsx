@@ -279,6 +279,7 @@ const DynamicCoach = () => {
         coachEmoji={template.emoji}
         coachTitle={template.title}
         primaryColor={template.primary_color || 'rose'}
+        featureKey="realtime_voice_vibrant_life"
       />
     )}
   </>
