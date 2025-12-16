@@ -580,67 +580,93 @@ serve(async (req) => {
         },
       };
     } else if (isFollowupScenario) {
-      // 智能跟进场景现在使用 WECHAT_TEMPLATE_DEFAULT (thing1, thing19, time21)
-      // 注意：WECHAT_TEMPLATE_FOLLOWUP 已停用
+      // 智能跟进场景使用经典模板格式 (first, keyword1, keyword2, keyword3, remark)
       const timeStr = `${beijingTime.getUTCFullYear()}-${String(beijingTime.getUTCMonth() + 1).padStart(2, '0')}-${String(beijingTime.getUTCDate()).padStart(2, '0')} ${String(beijingTime.getUTCHours()).padStart(2, '0')}:${String(beijingTime.getUTCMinutes()).padStart(2, '0')}`;
       
       // 检测节日/特殊日期
       const specialDay = detectSpecialDay(messageContext);
       
-      let thing19Content: string;
+      // 获取消息变体
+      const variant = selectBestVariant(scenario, messageContext, notification);
+      
+      let firstContent: string;
+      let keyword2Content: string;
+      let remarkContent: string;
       
       if (specialDay && holidayMessages[specialDay]) {
-        // 使用节日问候作为内容
+        // 使用节日问候
         const holidayMsg = holidayMessages[specialDay];
-        const greeting = replacePlaceholders(holidayMsg.first, messageContext, notification);
-        thing19Content = greeting;
+        firstContent = replacePlaceholders(holidayMsg.first, messageContext, notification);
+        keyword2Content = replacePlaceholders(variant.content, messageContext, notification);
+        remarkContent = holidayMsg.remark || variant.remark || '劲老师祝您身心愉悦 🌿';
       } else {
-        // 使用场景消息变体的内容
-        const variant = selectBestVariant(scenario, messageContext, notification);
-        thing19Content = replacePlaceholders(notification.title || variant.content, messageContext, notification);
+        // 使用场景消息变体
+        firstContent = replacePlaceholders(variant.first, messageContext, notification);
+        keyword2Content = replacePlaceholders(notification.title || variant.content, messageContext, notification);
+        remarkContent = variant.remark || '劲老师陪伴您的每一天 🌿';
       }
       
-      console.log(`Selected message for scenario ${scenario}:`, { thing19Content, specialDay });
+      console.log(`Selected message for scenario ${scenario}:`, { firstContent, keyword2Content, remarkContent, specialDay });
       
       messageData = {
-        thing1: { 
+        first: { 
+          value: firstContent,
+          color: "#173177" 
+        },
+        keyword1: { 
           value: (displayName || '用户').slice(0, 20),
           color: "#173177" 
         },
-        thing19: { 
-          value: thing19Content.slice(0, 20),
+        keyword2: { 
+          value: keyword2Content.slice(0, 20),
           color: "#173177" 
         },
-        time21: { 
+        keyword3: { 
           value: timeStr,
           color: "#173177" 
+        },
+        remark: { 
+          value: remarkContent,
+          color: "#999999" 
         },
       };
     } else {
-      // "客户跟进提醒"模板结构 (thing1, thing19, time21) - 其他默认场景
+      // 其他默认场景使用经典模板格式 (first, keyword1, keyword2, keyword3, remark)
       const timeStr = `${beijingTime.getUTCFullYear()}-${String(beijingTime.getUTCMonth() + 1).padStart(2, '0')}-${String(beijingTime.getUTCDate()).padStart(2, '0')} ${String(beijingTime.getUTCHours()).padStart(2, '0')}:${String(beijingTime.getUTCMinutes()).padStart(2, '0')}`;
       
-      // 根据场景设置thing19字段内容
-      const scenarioThing19Map: Record<string, string> = {
-        'daily_reminder': '今日情绪记录提醒',
-        'weekly_report': '本周情绪报告已生成',
-        'goal_at_risk': '目标风险提醒',
+      // 根据场景设置内容
+      const scenarioContentMap: Record<string, { first: string; content: string; remark: string }> = {
+        'daily_reminder': { first: '今日情绪记录提醒', content: '别忘了今天的情绪记录', remark: '记录是了解自己的开始 🌱' },
+        'weekly_report': { first: '本周情绪报告已生成', content: '查看您这周的情绪变化', remark: '每周回顾，持续成长 📊' },
+        'goal_at_risk': { first: '目标风险提醒', content: '您的目标进度需要关注', remark: '调整步伐，继续前行 💪' },
       };
       
-      const thing19Value = scenarioThing19Map[scenario] || notification.title || '情绪提醒';
+      const contentConfig = scenarioContentMap[scenario] || { 
+        first: notification.title || '来自劲老师的提醒', 
+        content: notification.message || '查看详情', 
+        remark: '劲老师陪伴您的每一天 🌿' 
+      };
       
       messageData = {
-        thing1: { 
+        first: { 
+          value: contentConfig.first,
+          color: "#173177" 
+        },
+        keyword1: { 
           value: (displayName || '用户').slice(0, 20),
           color: "#173177" 
         },
-        thing19: { 
-          value: thing19Value.slice(0, 20),
+        keyword2: { 
+          value: contentConfig.content.slice(0, 20),
           color: "#173177" 
         },
-        time21: { 
+        keyword3: { 
           value: timeStr,
           color: "#173177" 
+        },
+        remark: { 
+          value: contentConfig.remark,
+          color: "#999999" 
         },
       };
     }
