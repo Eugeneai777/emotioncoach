@@ -15,12 +15,14 @@ interface GratitudePurchasePromptProps {
   open: boolean;
   onClose: () => void;
   entryCount: number;
+  isRequired?: boolean; // When true, user cannot dismiss without purchasing
 }
 
 export const GratitudePurchasePrompt = ({
   open,
   onClose,
   entryCount,
+  isRequired = false,
 }: GratitudePurchasePromptProps) => {
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [socialProof, setSocialProof] = useState(1234);
@@ -39,17 +41,39 @@ export const GratitudePurchasePrompt = ({
     onClose();
   };
 
+  // Handle dialog close - prevent if isRequired
+  const handleOpenChange = (open: boolean) => {
+    if (!open && isRequired) {
+      // Don't allow closing if purchase is required
+      return;
+    }
+    onClose();
+  };
+
   return (
     <>
-      <Dialog open={open && !showPayDialog} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={open && !showPayDialog} onOpenChange={handleOpenChange}>
+        <DialogContent 
+          className="sm:max-w-md"
+          onPointerDownOutside={(e) => {
+            if (isRequired) e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            if (isRequired) e.preventDefault();
+          }}
+        >
           <DialogHeader className="text-center space-y-3">
             <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 flex items-center justify-center">
               <Crown className="w-8 h-8 text-amber-600 dark:text-amber-400" />
             </div>
-            <DialogTitle className="text-xl">解锁完整感恩体验</DialogTitle>
+            <DialogTitle className="text-xl">
+              {isRequired ? "订阅后继续同步" : "解锁完整感恩体验"}
+            </DialogTitle>
             <DialogDescription className="text-base text-muted-foreground">
-              坚持记录感恩的你，值得更好的工具
+              {isRequired 
+                ? "你的感恩值得被永久珍藏，订阅后即可同步到云端"
+                : "坚持记录感恩的你，值得更好的工具"
+              }
             </DialogDescription>
           </DialogHeader>
 
@@ -110,9 +134,11 @@ export const GratitudePurchasePrompt = ({
             >
               立即解锁
             </Button>
-            <Button variant="ghost" onClick={onClose} className="w-full">
-              暂时跳过
-            </Button>
+            {!isRequired && (
+              <Button variant="ghost" onClick={onClose} className="w-full">
+                暂时跳过
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
