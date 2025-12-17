@@ -40,7 +40,7 @@ export const GratitudeTagDistribution = ({
 }: GratitudeTagDistributionProps) => {
   const [showPhilosophy, setShowPhilosophy] = useState(false);
   
-  const { sortedThemes, total } = useMemo(() => {
+  const { sortedThemes, total, maxPercentage } = useMemo(() => {
     const total = Object.values(themeStats).reduce((sum, v) => sum + v, 0);
     
     const themes = THEME_DEFINITIONS.map(theme => ({
@@ -49,7 +49,10 @@ export const GratitudeTagDistribution = ({
       percentage: total > 0 ? ((themeStats[theme.id] || 0) / total) * 100 : 0,
     })).sort((a, b) => b.count - a.count);
     
-    return { sortedThemes: themes, total };
+    // 获取最大百分比用于相对缩放
+    const maxPercentage = themes.length > 0 ? themes[0].percentage : 0;
+    
+    return { sortedThemes: themes, total, maxPercentage };
   }, [themeStats]);
 
   if (total === 0) {
@@ -154,7 +157,10 @@ export const GratitudeTagDistribution = ({
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
-                          width: `${theme.percentage}%`,
+                          // 相对缩放：最大值占100%，其他按比例显示
+                          width: maxPercentage > 0 
+                            ? `${Math.max((theme.percentage / maxPercentage) * 100, theme.count > 0 ? 8 : 0)}%`
+                            : '0%',
                           backgroundColor: theme.color,
                         }}
                       />
