@@ -403,14 +403,22 @@ export const CoachVoiceChat = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || billedMinutes === 0) return;
 
-      // 计算 API 成本 (OpenAI Realtime API 定价)
-      // gpt-4o-realtime-preview: ~$5/M input (audio), ~$20/M output (audio)
-      const inputCostUsd = (apiUsage.inputTokens / 1_000_000) * 5;
-      const outputCostUsd = (apiUsage.outputTokens / 1_000_000) * 20;
+      // 计算通话分钟数
+      const callMinutes = Math.ceil(duration / 60);
+      
+      // 如果没有收到 token 数据，基于通话时长估算
+      // OpenAI Realtime API 约 150 audio tokens/秒，1分钟 = ~9000 tokens
+      const TOKENS_PER_MINUTE = { input: 4500, output: 4500 };
+      const inputTokens = apiUsage.inputTokens || (callMinutes * TOKENS_PER_MINUTE.input);
+      const outputTokens = apiUsage.outputTokens || (callMinutes * TOKENS_PER_MINUTE.output);
+      
+      // OpenAI Realtime API 定价: $40/M input, $80/M output (audio tokens)
+      const inputCostUsd = (inputTokens / 1_000_000) * 40;
+      const outputCostUsd = (outputTokens / 1_000_000) * 80;
       const totalCostUsd = inputCostUsd + outputCostUsd;
-      const totalCostCny = totalCostUsd * 7.2; // 汇率近似
+      const totalCostCny = totalCostUsd * 7.2;
 
-      console.log(`[VoiceChat] Session API cost: $${totalCostUsd.toFixed(4)} (¥${totalCostCny.toFixed(4)}), tokens: ${apiUsage.inputTokens} in / ${apiUsage.outputTokens} out`);
+      console.log(`[VoiceChat] Session API cost: $${totalCostUsd.toFixed(4)} (¥${totalCostCny.toFixed(4)}), tokens: ${inputTokens} in / ${outputTokens} out`);
 
       // 保存到 voice_chat_sessions (包含 API 成本)
       await supabase.from('voice_chat_sessions').insert({
@@ -420,11 +428,33 @@ export const CoachVoiceChat = ({
         billed_minutes: billedMinutes,
         total_cost: billedMinutes * POINTS_PER_MINUTE,
         transcript_summary: (userTranscript + '\n' + transcript).slice(0, 500) || null,
-        input_tokens: apiUsage.inputTokens,
-        output_tokens: apiUsage.outputTokens,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
         api_cost_usd: parseFloat(totalCostUsd.toFixed(6)),
         api_cost_cny: parseFloat(totalCostCny.toFixed(4))
       });
+      
+      // 记录到 api_cost_logs 表 (用于管理后台成本分析)
+      try {
+        await supabase.functions.invoke('log-api-cost', {
+          body: {
+            function_name: 'realtime-voice',
+            feature_key: featureKey,
+            model: 'gpt-4o-realtime-preview-2024-12-17',
+            input_tokens: inputTokens,
+            output_tokens: outputTokens,
+            metadata: {
+              session_id: sessionIdRef.current,
+              duration_seconds: duration,
+              billed_minutes: billedMinutes,
+              coach_key: coachTitle
+            }
+          }
+        });
+        console.log('[VoiceChat] API cost logged to api_cost_logs');
+      } catch (logError) {
+        console.error('[VoiceChat] Failed to log API cost:', logError);
+      }
       
       // 同时保存到 vibrant_life_sage_briefings 以便在"我的生活记录"中显示
       const transcriptContent = (userTranscript + '\n' + transcript).trim();
@@ -432,7 +462,7 @@ export const CoachVoiceChat = ({
         await supabase.from('vibrant_life_sage_briefings').insert({
           user_id: user.id,
           user_issue_summary: userTranscript.slice(0, 200) || '语音对话记录',
-          reasoning: `通过语音与有劲AI进行了 ${Math.ceil(duration / 60)} 分钟的对话`,
+          reasoning: `通过语音与有劲AI进行了 ${callMinutes} 分钟的对话`,
           recommended_coach_type: 'vibrant_life_sage'
         });
         console.log('Vibrant life sage briefing saved');

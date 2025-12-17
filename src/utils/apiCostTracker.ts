@@ -1,13 +1,24 @@
 // 模型成本配置（每1K tokens，美元）
+// OpenAI Realtime API 定价: gpt-4o-realtime $40/M input, $80/M output; mini $10/M input, $20/M output
 export const MODEL_COSTS: Record<string, { input?: number; output?: number; image?: number; minute?: number }> = {
   'google/gemini-2.5-flash': { input: 0.0001, output: 0.0003 },
   'google/gemini-2.5-flash-lite': { input: 0.00005, output: 0.00015 },
   'google/gemini-2.5-pro': { input: 0.00025, output: 0.0005 },
   'google/gemini-3-pro-preview': { input: 0.0003, output: 0.0006 },
   'google/gemini-3-pro-image-preview': { image: 0.03 },
-  'gpt-4o-realtime-preview-2024-12-17': { minute: 0.06 },
+  // OpenAI Realtime API (audio tokens): $40/M input, $80/M output → per 1K: $0.04 input, $0.08 output
+  'gpt-4o-realtime-preview-2024-12-17': { input: 0.04, output: 0.08 },
+  // OpenAI Realtime Mini API (audio tokens): $10/M input, $20/M output → per 1K: $0.01 input, $0.02 output
+  'gpt-4o-mini-realtime-preview-2024-12-17': { input: 0.01, output: 0.02 },
   'gpt-4o-mini': { input: 0.00015, output: 0.0006 },
   'gpt-4o': { input: 0.005, output: 0.015 },
+};
+
+// OpenAI Realtime API 每分钟估算 tokens (基于实际使用数据)
+// 约 150 audio tokens/秒，1分钟 = ~9000 tokens，input/output 各约 4500
+export const REALTIME_TOKENS_PER_MINUTE = {
+  input: 4500,
+  output: 4500,
 };
 
 // ElevenLabs 成本
@@ -181,11 +192,15 @@ export function estimateVoiceCost(
   return { usd, cny: usd * USD_TO_CNY };
 }
 
-// 估算实时语音成本
-export function estimateRealtimeCost(minutes: number): { usd: number; cny: number } {
-  const costs = MODEL_COSTS['gpt-4o-realtime-preview-2024-12-17'];
-  const usd = (costs?.minute || 0.06) * minutes;
-  return { usd, cny: usd * USD_TO_CNY };
+// 估算实时语音成本 (基于 token 定价)
+export function estimateRealtimeCost(minutes: number, model: string = 'gpt-4o-realtime-preview-2024-12-17'): { usd: number; cny: number; inputTokens: number; outputTokens: number } {
+  const costs = MODEL_COSTS[model] || MODEL_COSTS['gpt-4o-realtime-preview-2024-12-17'];
+  const inputTokens = Math.round(minutes * REALTIME_TOKENS_PER_MINUTE.input);
+  const outputTokens = Math.round(minutes * REALTIME_TOKENS_PER_MINUTE.output);
+  
+  // 使用 token 定价计算
+  const usd = (inputTokens * (costs.input || 0.04) + outputTokens * (costs.output || 0.08)) / 1000;
+  return { usd, cny: usd * USD_TO_CNY, inputTokens, outputTokens };
 }
 
 // 功能成本映射
@@ -209,8 +224,8 @@ export const FEATURE_COST_ESTIMATES: Record<string, { model: string; avgTokens?:
   'voice_to_text': { model: 'whisper', fixedCost: 0.006 },
   'voice_clone': { model: 'elevenlabs_clone', fixedCost: 0.30 },
   
-  // 实时语音
-  'realtime_voice': { model: 'gpt-4o-realtime-preview-2024-12-17', fixedCost: 0.06 }, // per minute
+  // 实时语音 (基于 token 估算, 每分钟约 9000 tokens)
+  'realtime_voice': { model: 'gpt-4o-realtime-preview-2024-12-17', avgTokens: { input: 4500, output: 4500 } },
 };
 
 // 功能名称映射
