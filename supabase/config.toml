@@ -255,3 +255,9 @@ verify_jwt = false
 
 [functions.save-emotion-voice-briefing]
 verify_jwt = true
+
+[functions.generate-wechat-login-qr]
+verify_jwt = false
+
+[functions.check-wechat-login-status]
+verify_jwt = false

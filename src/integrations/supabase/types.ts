@@ -5369,6 +5369,48 @@ export type Database = {
         }
         Relationships: []
       }
+      wechat_login_scenes: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          mode: string
+          openid: string | null
+          scanned_at: string | null
+          scene_str: string
+          status: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          mode?: string
+          openid?: string | null
+          scanned_at?: string | null
+          scene_str: string
+          status?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          mode?: string
+          openid?: string | null
+          scanned_at?: string | null
+          scene_str?: string
+          status?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       wechat_template_messages: {
         Row: {
           data: Json
@@ -5581,6 +5623,7 @@ export type Database = {
         Args: { p_amount: number; p_partner_id: string }
         Returns: undefined
       }
+      cleanup_expired_wechat_login_scenes: { Args: never; Returns: undefined }
       confirm_partner_commission: {
         Args: { p_amount: number; p_partner_id: string }
         Returns: undefined

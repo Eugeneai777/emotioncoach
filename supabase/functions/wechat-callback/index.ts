@@ -278,7 +278,139 @@ Deno.serve(async (req) => {
       console.log('Decrypted message:', decryptedXml);
 
       const message = parseXML(decryptedXml);
-      const { ToUserName, FromUserName, CreateTime, MsgType, Content, MsgId } = message;
+      const { ToUserName, FromUserName, CreateTime, MsgType, Content, MsgId, Event, EventKey, Ticket } = message;
+
+      console.log('Parsed message:', { MsgType, Event, EventKey });
+
+      // 处理扫码登录事件
+      if (MsgType === 'event' && (Event === 'SCAN' || Event === 'subscribe')) {
+        // EventKey 格式: login_xxx 或 qrscene_login_xxx (关注时带前缀)
+        const sceneStr = EventKey?.startsWith('qrscene_') 
+          ? EventKey.substring(8) 
+          : EventKey;
+        
+        if (sceneStr?.startsWith('login_')) {
+          console.log('Processing login scan event, sceneStr:', sceneStr);
+          
+          // 查找或创建用户
+          let { data: existingMapping } = await supabase
+            .from('wechat_user_mappings')
+            .select('system_user_id')
+            .eq('openid', FromUserName)
+            .maybeSingle();
+
+          let userId = existingMapping?.system_user_id;
+
+          // 如果用户不存在，创建新用户
+          if (!userId) {
+            // 获取微信用户信息
+            const appId = Deno.env.get('WECHAT_APP_ID');
+            const appSecret = Deno.env.get('WECHAT_APP_SECRET');
+            
+            // 获取access_token
+            const tokenResp = await fetch(
+              `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`
+            );
+            const tokenData = await tokenResp.json();
+            
+            if (tokenData.access_token) {
+              // 获取用户信息
+              const userInfoResp = await fetch(
+                `https://api.weixin.qq.com/cgi-bin/user/info?access_token=${tokenData.access_token}&openid=${FromUserName}&lang=zh_CN`
+              );
+              const userInfo = await userInfoResp.json();
+              
+              // 创建用户
+              const email = `wechat_${FromUserName.substring(0, 10)}@youjin.app`;
+              const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+                email,
+                email_confirm: true,
+                user_metadata: {
+                  display_name: userInfo.nickname || '微信用户',
+                  avatar_url: userInfo.headimgurl,
+                  wechat_openid: FromUserName,
+                }
+              });
+
+              if (!authError && authData.user) {
+                userId = authData.user.id;
+                
+                // 创建profile
+                await supabase.from('profiles').upsert({
+                  id: userId,
+                  display_name: userInfo.nickname || '微信用户',
+                  avatar_url: userInfo.headimgurl,
+                  auth_provider: 'wechat',
+                  wechat_enabled: true,
+                });
+
+                // 创建微信映射
+                await supabase.from('wechat_user_mappings').insert({
+                  openid: FromUserName,
+                  system_user_id: userId,
+                  nickname: userInfo.nickname,
+                  avatar_url: userInfo.headimgurl,
+                  subscribe_status: true,
+                });
+              }
+            }
+          }
+
+          if (userId) {
+            // 获取用户email
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('display_name')
+              .eq('id', userId)
+              .single();
+
+            // 更新登录场景状态
+            await supabase
+              .from('wechat_login_scenes')
+              .update({
+                status: 'confirmed',
+                openid: FromUserName,
+                user_id: userId,
+                user_email: `wechat_${FromUserName.substring(0, 10)}@youjin.app`,
+                confirmed_at: new Date().toISOString(),
+              })
+              .eq('scene_str', sceneStr);
+
+            console.log('Login scene confirmed for user:', userId);
+
+            // 发送成功消息给用户
+            const successMsg = buildXML({
+              ToUserName: FromUserName,
+              FromUserName: ToUserName,
+              CreateTime: Math.floor(Date.now() / 1000),
+              MsgType: 'text',
+              Content: `登录成功！欢迎回来${profile?.display_name ? '，' + profile.display_name : ''}~ 🎉\n\n请返回网页继续使用。`
+            });
+
+            const encryptedReply = await cryptor.encrypt(successMsg);
+            const replyTimestamp = String(Math.floor(Date.now() / 1000));
+            const replyNonce = Math.random().toString(36).substring(2, 15);
+            
+            const signArr = [token, replyTimestamp, replyNonce, encryptedReply].sort();
+            const signStr = signArr.join('');
+            const encoder = new TextEncoder();
+            const hashBuffer = await crypto.subtle.digest('SHA-1', encoder.encode(signStr));
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const replySignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+            const responseXml = `<xml>
+<Encrypt><![CDATA[${encryptedReply}]]></Encrypt>
+<MsgSignature><![CDATA[${replySignature}]]></MsgSignature>
+<TimeStamp>${replyTimestamp}</TimeStamp>
+<Nonce><![CDATA[${replyNonce}]]></Nonce>
+</xml>`;
+
+            return new Response(responseXml, {
+              headers: { 'Content-Type': 'application/xml' }
+            });
+          }
+        }
+      }
 
       // 查找用户映射
       const { data: mapping } = await supabase
