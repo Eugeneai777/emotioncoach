@@ -19,8 +19,9 @@ import {
 import { 
   TrendingUp, TrendingDown, AlertTriangle, Check, RefreshCw, 
   DollarSign, Activity, Users, Bell, Settings, PieChart as PieChartIcon,
-  AlertCircle, Lightbulb
+  AlertCircle, Lightbulb, Phone
 } from "lucide-react";
+import VoiceCostAnalysis from "./VoiceCostAnalysis";
 import { 
   calculateFeatureProfitability, 
   DEFAULT_FEATURE_QUOTA, 
@@ -462,6 +463,10 @@ export default function CostMonitorDashboard() {
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="trends">成本趋势</TabsTrigger>
           <TabsTrigger value="breakdown">成本分析</TabsTrigger>
+          <TabsTrigger value="voice" className="flex items-center gap-1">
+            <Phone className="h-3 w-3" />
+            语音成本
+          </TabsTrigger>
           <TabsTrigger value="profit" className="flex items-center gap-1">
             <PieChartIcon className="h-3 w-3" />
             利润分析
@@ -570,6 +575,11 @@ export default function CostMonitorDashboard() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* 语音成本分析 Tab */}
+        <TabsContent value="voice" className="space-y-4">
+          <VoiceCostAnalysis />
         </TabsContent>
 
         {/* 利润分析 Tab */}
