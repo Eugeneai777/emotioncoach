@@ -47,39 +47,43 @@ serve(async (req) => {
       );
     }
 
-    // 如果已确认登录，返回session token
+    // 如果已确认登录，返回用户信息用于前端登录
     if (scene.status === 'confirmed' && scene.user_id) {
-      // 为用户生成自定义登录token
-      const { data: authData, error: authError } = await supabase.auth.admin.generateLink({
-        type: 'magiclink',
-        email: scene.user_email || `wechat_${scene.openid}@temp.local`,
-        options: {
-          redirectTo: '/',
-        },
-      });
+      // 获取用户email
+      const { data: userData } = await supabase.auth.admin.getUserById(scene.user_id);
+      
+      if (userData?.user) {
+        // 清理已使用的场景
+        await supabase
+          .from('wechat_login_scenes')
+          .delete()
+          .eq('scene_str', sceneStr);
 
-      if (authError) {
-        console.error('生成登录链接失败:', authError);
+        // 生成一次性登录token
+        const loginToken = crypto.randomUUID();
+        
+        // 保存token用于验证
+        await supabase
+          .from('wechat_login_scenes')
+          .insert({
+            scene_str: `token_${loginToken}`,
+            mode: 'token',
+            status: 'pending',
+            user_id: scene.user_id,
+            openid: scene.openid,
+            expires_at: new Date(Date.now() + 60000).toISOString(), // 1分钟有效
+          });
+
         return new Response(
-          JSON.stringify({ status: 'error', message: '登录处理失败' }),
+          JSON.stringify({
+            status: 'confirmed',
+            userId: scene.user_id,
+            email: userData.user.email,
+            loginToken,
+          }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-
-      // 清理已使用的场景
-      await supabase
-        .from('wechat_login_scenes')
-        .delete()
-        .eq('scene_str', sceneStr);
-
-      return new Response(
-        JSON.stringify({
-          status: 'confirmed',
-          userId: scene.user_id,
-          redirectUrl: authData.properties?.action_link,
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
     }
 
     // 如果已扫码但未确认

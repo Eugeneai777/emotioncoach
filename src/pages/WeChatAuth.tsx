@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, CheckCircle2, Smartphone, Bell, Calendar, MessageCircle } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, Smartphone, Bell, Calendar, MessageCircle, RefreshCw, QrCode } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,16 +16,34 @@ const isWeChatBrowser = () => {
   return ua.includes('micromessenger');
 };
 
+// 检测是否为移动设备
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
+
 export default function WeChatAuth() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
-  const [loading, setLoading] = useState(true); // 默认loading状态
-  const [isOpenPlatform, setIsOpenPlatform] = useState<boolean | null>(null); // null表示未确定
+  const [sceneStr, setSceneStr] = useState<string>("");
+  const [loginStatus, setLoginStatus] = useState<'pending' | 'scanned' | 'confirmed' | 'expired'>('pending');
+  const [isOpenPlatform, setIsOpenPlatform] = useState<boolean | null>(null);
   const [authUrl, setAuthUrl] = useState<string>("");
-  const mode = searchParams.get("mode") || "login"; // login, register, or follow
+  const [expiresIn, setExpiresIn] = useState<number>(0);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const mode = searchParams.get("mode") || "login";
 
+  // 清理轮询
+  const clearPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  }, []);
+
+  // 处理错误参数
   useEffect(() => {
     const error = searchParams.get("wechat_error");
     if (error === "already_bound") {
@@ -36,16 +54,87 @@ export default function WeChatAuth() {
     }
   }, [searchParams, navigate]);
 
-  useEffect(() => {
-    // follow 模式不需要生成登录二维码
-    if (mode !== "follow") {
-      generateAuthUrl();
-    } else {
+  // 生成扫码登录二维码（用于网页端）
+  const generateLoginQR = useCallback(async () => {
+    setLoading(true);
+    setLoginStatus('pending');
+    clearPolling();
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-wechat-login-qr', {
+        body: { mode }
+      });
+
+      if (error || !data?.success) {
+        console.error("生成登录二维码失败:", error || data?.error);
+        toast.error(data?.error || "生成二维码失败，请稍后重试");
+        setLoading(false);
+        return;
+      }
+
+      setQrCodeUrl(data.qrCodeUrl);
+      setSceneStr(data.sceneStr);
+      setExpiresIn(data.expiresIn || 300);
+      setLoading(false);
+
+      // 开始轮询登录状态
+      startPolling(data.sceneStr, data.expiresIn || 300);
+    } catch (error) {
+      console.error("生成登录二维码失败:", error);
+      toast.error("生成二维码失败，请稍后重试");
       setLoading(false);
     }
-  }, [mode, user]);
+  }, [mode, clearPolling]);
 
-  const generateAuthUrl = async () => {
+  // 轮询登录状态
+  const startPolling = useCallback((scene: string, expireSeconds: number) => {
+    const startTime = Date.now();
+    const expireTime = startTime + expireSeconds * 1000;
+
+    pollingRef.current = setInterval(async () => {
+      // 检查是否过期
+      if (Date.now() > expireTime) {
+        setLoginStatus('expired');
+        clearPolling();
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase.functions.invoke('check-wechat-login-status', {
+          body: { sceneStr: scene }
+        });
+
+        if (error) {
+          console.error("检查登录状态失败:", error);
+          return;
+        }
+
+        if (data.status === 'confirmed') {
+          clearPolling();
+          setLoginStatus('confirmed');
+          toast.success("登录成功！");
+          
+          // 使用Supabase登录
+          if (data.userId) {
+            // 直接跳转到首页，让auth状态自动更新
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 1000);
+          }
+        } else if (data.status === 'scanned') {
+          setLoginStatus('scanned');
+        } else if (data.status === 'expired') {
+          setLoginStatus('expired');
+          clearPolling();
+        }
+      } catch (error) {
+        console.error("检查登录状态失败:", error);
+      }
+    }, 2000);
+  }, [clearPolling]);
+
+  // 生成移动端授权URL
+  const generateMobileAuthUrl = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('get-wechat-config');
@@ -62,37 +151,47 @@ export default function WeChatAuth() {
       const redirectUri = encodeURIComponent(`${appDomain}/wechat-oauth-callback`);
       const state = mode;
       
-      // 检查是开放平台网站应用还是公众号
-      const openPlatform = data.isOpenPlatform !== false;
-      setIsOpenPlatform(openPlatform);
+      setIsOpenPlatform(data.isOpenPlatform !== false);
       
-      let url: string;
-      if (openPlatform) {
-        // 开放平台网站应用 - 扫码登录（iframe方式）
-        url = `https://open.weixin.qq.com/connect/qrconnect?appid=${appid}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_login&state=${state}#wechat_redirect`;
-        setQrCodeUrl(url);
-        setLoading(false);
+      // 公众号网页授权URL
+      const url = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appid}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=${state}#wechat_redirect`;
+      setAuthUrl(url);
+      
+      // 如果在微信浏览器中，直接跳转
+      if (isWeChatBrowser()) {
+        window.location.href = url;
       } else {
-        // 公众号 - 网页授权（需要跳转，只能在微信内使用）
-        url = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appid}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=${state}#wechat_redirect`;
-        setAuthUrl(url);
-        
-        // 如果在微信浏览器中，直接跳转，不需要设置loading为false
-        if (isWeChatBrowser()) {
-          window.location.href = url;
-          // 保持loading状态，因为正在跳转
-        } else {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     } catch (error) {
       console.error("生成授权链接失败:", error);
       toast.error("生成授权链接失败");
       setLoading(false);
     }
-  };
+  }, [mode]);
 
-  // 关注公众号引导页面 - 简化设计，突出智能消息提醒
+  // 初始化
+  useEffect(() => {
+    if (mode === "follow") {
+      setLoading(false);
+      return;
+    }
+
+    // 判断设备类型
+    if (isMobileDevice()) {
+      // 移动端：使用OAuth跳转
+      generateMobileAuthUrl();
+    } else {
+      // 网页端：使用扫码登录
+      generateLoginQR();
+    }
+
+    return () => {
+      clearPolling();
+    };
+  }, [mode, generateLoginQR, generateMobileAuthUrl, clearPolling]);
+
+  // 关注公众号引导页面
   if (mode === "follow") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 p-4">
@@ -109,14 +208,12 @@ export default function WeChatAuth() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            {/* 核心价值：智能消息提醒 */}
             <div className="text-center space-y-4">
               <div className="flex items-center justify-center gap-2">
                 <Bell className="h-5 w-5 text-teal-500" />
                 <span className="text-lg font-semibold text-foreground">开启智能消息提醒</span>
               </div>
               
-              {/* 二维码 */}
               <div className="bg-white rounded-xl p-3 inline-block shadow-sm border border-teal-100">
                 <img 
                   src={WECHAT_OFFICIAL_ACCOUNT_QR} 
@@ -130,7 +227,6 @@ export default function WeChatAuth() {
               <p className="text-xs text-muted-foreground">扫码关注「有劲生活365」</p>
             </div>
 
-            {/* 简化福利说明 - 3个核心提醒功能 */}
             <div className="bg-gradient-to-br from-teal-50/50 to-cyan-50/50 rounded-xl p-4">
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
@@ -154,7 +250,6 @@ export default function WeChatAuth() {
               </div>
             </div>
 
-            {/* 操作按钮 */}
             <div className="space-y-2 pt-2">
               <Button 
                 className="w-full bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 text-white"
@@ -176,8 +271,8 @@ export default function WeChatAuth() {
     );
   }
 
-  // 加载中或正在跳转微信授权
-  if (loading || isOpenPlatform === null) {
+  // 加载中
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 p-4">
         <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm border-0 shadow-xl">
@@ -190,8 +285,8 @@ export default function WeChatAuth() {
     );
   }
 
-  // 公众号模式 - 需要在微信内打开
-  if (!isOpenPlatform && !isWeChatBrowser()) {
+  // 移动端非微信浏览器 - 提示复制链接
+  if (isMobileDevice() && !isWeChatBrowser()) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 p-4">
         <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm border-0 shadow-xl">
@@ -219,7 +314,7 @@ export default function WeChatAuth() {
               </div>
               <div className="text-center space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  公众号授权登录需要在微信内打开
+                  微信授权登录需要在微信内打开
                 </p>
                 <div className="bg-white/80 rounded-lg p-4 space-y-2">
                   <p className="text-xs text-muted-foreground">操作步骤：</p>
@@ -256,7 +351,7 @@ export default function WeChatAuth() {
     );
   }
 
-  // 开放平台模式 - PC端扫码登录
+  // 网页端 - 扫码登录
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 p-4">
       <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm border-0 shadow-xl">
@@ -274,37 +369,75 @@ export default function WeChatAuth() {
             {mode === "register" ? "微信注册" : "微信登录"}
           </CardTitle>
           <CardDescription>
-            {mode === "register" 
-              ? "使用微信扫码完成注册" 
-              : "使用微信扫码快速登录"}
+            {loginStatus === 'scanned' 
+              ? "已扫码，请在微信中确认授权" 
+              : loginStatus === 'confirmed'
+              ? "登录成功，正在跳转..."
+              : loginStatus === 'expired'
+              ? "二维码已过期，请刷新重试"
+              : "使用微信扫描下方二维码"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl">
-            {qrCodeUrl ? (
+          <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl">
+            {loginStatus === 'confirmed' ? (
               <div className="text-center space-y-4">
-                <div className="text-sm text-muted-foreground">
-                  请使用微信扫描下方二维码
+                <div className="w-20 h-20 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="h-10 w-10 text-white" />
                 </div>
-                <iframe
-                  src={qrCodeUrl}
-                  className="w-64 h-64 border-0 rounded-lg bg-white"
-                  title="微信登录二维码"
-                />
-                <div className="text-xs text-muted-foreground">
-                  扫码后请在微信中确认授权
+                <p className="text-lg font-medium text-teal-700">登录成功！</p>
+                <p className="text-sm text-muted-foreground">正在跳转...</p>
+              </div>
+            ) : loginStatus === 'expired' ? (
+              <div className="text-center space-y-4">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                  <QrCode className="h-10 w-10 text-gray-400" />
                 </div>
+                <p className="text-sm text-muted-foreground">二维码已过期</p>
+                <Button
+                  onClick={generateLoginQR}
+                  className="bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 text-white"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  刷新二维码
+                </Button>
+              </div>
+            ) : qrCodeUrl ? (
+              <div className="text-center space-y-4">
+                <div className="bg-white rounded-lg p-2 shadow-sm">
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="微信登录二维码" 
+                    className="w-48 h-48 object-contain"
+                    onError={(e) => {
+                      console.error("QR code load error");
+                      setLoginStatus('expired');
+                    }}
+                  />
+                </div>
+                {loginStatus === 'scanned' && (
+                  <div className="flex items-center justify-center gap-2 text-teal-600">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm">已扫码，等待确认...</span>
+                  </div>
+                )}
+                {loginStatus === 'pending' && (
+                  <p className="text-xs text-muted-foreground">
+                    请打开微信扫一扫
+                  </p>
+                )}
               </div>
             ) : (
               <div className="text-center space-y-4">
                 <div className="text-sm text-muted-foreground">
-                  二维码加载失败，请刷新页面重试
+                  二维码加载失败，请刷新重试
                 </div>
                 <Button
                   variant="outline"
-                  onClick={() => generateAuthUrl()}
+                  onClick={generateLoginQR}
                   className="text-teal-600 border-teal-300"
                 >
+                  <RefreshCw className="h-4 w-4 mr-2" />
                   重新加载
                 </Button>
               </div>
