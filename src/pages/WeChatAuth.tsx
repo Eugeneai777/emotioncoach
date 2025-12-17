@@ -109,19 +109,32 @@ export default function WeChatAuth() {
           return;
         }
 
-        if (data.status === 'confirmed') {
-          clearPolling();
-          setLoginStatus('confirmed');
-          toast.success("登录成功！");
-          
-          // 使用Supabase登录
-          if (data.userId) {
-            // 直接跳转到首页，让auth状态自动更新
-            setTimeout(() => {
-              window.location.href = '/';
-            }, 1000);
-          }
-        } else if (data.status === 'scanned') {
+         if (data.status === 'confirmed') {
+           clearPolling();
+           setLoginStatus('confirmed');
+
+           try {
+             if (!data?.tokenHash) {
+               throw new Error('缺少登录凭证，请重试');
+             }
+
+             const { error: verifyError } = await supabase.auth.verifyOtp({
+               token_hash: data.tokenHash,
+               type: 'magiclink',
+             });
+
+             if (verifyError) throw verifyError;
+
+             toast.success("登录成功！");
+             setTimeout(() => {
+               window.location.href = '/';
+             }, 600);
+           } catch (e) {
+             const msg = e instanceof Error ? e.message : '登录失败';
+             toast.error(`登录失败：${msg}`);
+             setLoginStatus('expired');
+           }
+         } else if (data.status === 'scanned') {
           setLoginStatus('scanned');
         } else if (data.status === 'expired') {
           setLoginStatus('expired');

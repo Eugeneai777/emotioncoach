@@ -47,44 +47,44 @@ serve(async (req) => {
       );
     }
 
-    // 如果已确认登录，返回用户信息用于前端登录
+    // 如果已确认登录，生成一次性 token_hash 让前端完成 Supabase 登录
     if (scene.status === 'confirmed' && scene.user_id) {
-      // 获取用户email
-      const { data: userData } = await supabase.auth.admin.getUserById(scene.user_id);
-      
-      if (userData?.user) {
-        // 清理已使用的场景
-        await supabase
-          .from('wechat_login_scenes')
-          .delete()
-          .eq('scene_str', sceneStr);
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(scene.user_id);
 
-        // 生成一次性登录token
-        const loginToken = crypto.randomUUID();
-        
-        // 保存token用于验证
-        await supabase
-          .from('wechat_login_scenes')
-          .insert({
-            scene_str: `token_${loginToken}`,
-            mode: 'token',
-            status: 'pending',
-            user_id: scene.user_id,
-            openid: scene.openid,
-            expires_at: new Date(Date.now() + 60000).toISOString(), // 1分钟有效
-          });
-
+      if (userError || !userData?.user?.email) {
+        console.error('Failed to get user email:', userError);
         return new Response(
-          JSON.stringify({
-            status: 'confirmed',
-            userId: scene.user_id,
-            email: userData.user.email,
-            loginToken,
-          }),
+          JSON.stringify({ status: 'expired', message: '登录信息无效，请重新扫码' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+
+      const redirectTo = `${(new URL(req.url)).origin}/`;
+      const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+        type: 'magiclink',
+        email: userData.user.email,
+        options: { redirectTo },
+      });
+
+      if (linkError || !linkData?.properties?.hashed_token) {
+        console.error('Failed to generate magic link:', linkError);
+        return new Response(
+          JSON.stringify({ status: 'expired', message: '生成登录凭证失败，请重试' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          status: 'confirmed',
+          userId: scene.user_id,
+          email: userData.user.email,
+          tokenHash: linkData.properties.hashed_token,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
 
     // 如果已扫码但未确认
     if (scene.status === 'scanned') {
