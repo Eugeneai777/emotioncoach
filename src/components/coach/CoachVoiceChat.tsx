@@ -284,6 +284,8 @@ export const CoachVoiceChat = ({
           description: "语音对话需要登录后使用",
           variant: "destructive"
         });
+        navigate('/auth');
+        onClose();
         return false;
       }
 
