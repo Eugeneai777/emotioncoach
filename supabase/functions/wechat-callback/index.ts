@@ -270,7 +270,8 @@ Deno.serve(async (req) => {
       const isValid = await cryptor.verifyMsgSignature(msgSignature, timestamp, nonce, encryptedMsg);
       if (!isValid) {
         console.error('Message signature verification failed');
-        return new Response('Invalid signature', { status: 403 });
+        // 返回success避免微信显示错误
+        return new Response('success', { headers: { 'Content-Type': 'text/plain' } });
       }
 
       // 解密消息
@@ -592,9 +593,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error('wechat-callback error:', error);
-    return new Response(
-      JSON.stringify({ error: errorMsg }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    // 始终返回success，避免微信显示"该公众号提供的服务出现故障"
+    return new Response('success', { headers: { 'Content-Type': 'text/plain' } });
   }
 });
