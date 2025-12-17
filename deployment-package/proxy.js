@@ -65,6 +65,49 @@ app.post('/wechat/token', async (req, res) => {
   }
 });
 
+// 微信二维码创建端点
+app.post('/wechat/qrcode/create', async (req, res) => {
+  try {
+    // 验证认证令牌
+    if (PROXY_AUTH_TOKEN) {
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.replace('Bearer ', '');
+      
+      if (token !== PROXY_AUTH_TOKEN) {
+        console.error(`[${new Date().toISOString()}] Unauthorized access attempt`);
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+    }
+
+    const { access_token, expire_seconds, action_name, action_info } = req.body;
+
+    if (!access_token) {
+      return res.status(400).json({ error: 'access_token is required' });
+    }
+
+    const targetUrl = `https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=${access_token}`;
+    console.log(`[${new Date().toISOString()}] 创建微信二维码, action_name: ${action_name}`);
+
+    const response = await fetch(targetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expire_seconds, action_name, action_info }),
+    });
+
+    const data = await response.json();
+
+    console.log(`[${new Date().toISOString()}] 二维码创建: ${data.ticket ? '成功' : '失败 - ' + data.errmsg}`);
+
+    res.status(response.status).json(data);
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] 二维码创建失败:`, error.message);
+    res.status(500).json({ 
+      error: 'QR code creation failed', 
+      message: error.message 
+    });
+  }
+});
+
 // 微信API代理端点
 app.post('/wechat-proxy', async (req, res) => {
   try {
