@@ -442,28 +442,35 @@ Deno.serve(async (req) => {
 
                 console.log('Login scene confirmed for user:', userId);
 
-                // 发送登录成功模板消息通知
+                // 发送登录成功模板消息通知（走后台通知函数）
                 try {
-                  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-                  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-                  
-                  const notifyResp = await fetch(`${supabaseUrl}/functions/v1/send-wechat-template-message`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${supabaseAnonKey}`,
+                  const email = `wechat_${FromUserName.substring(0, 10)}@youjin.app`;
+
+                  // 确保订阅状态为true（否则通知函数会跳过发送）
+                  await supabase.from('wechat_user_mappings').upsert(
+                    {
+                      openid: FromUserName,
+                      system_user_id: userId,
+                      subscribe_status: true,
+                      updated_at: new Date().toISOString(),
                     },
-                    body: JSON.stringify({
-                      userId: userId,
+                    { onConflict: 'openid,system_user_id' }
+                  );
+
+                  const { error: notifyError } = await supabase.functions.invoke('send-wechat-template-message', {
+                    body: {
+                      userId,
                       scenario: 'login_success',
-                    }),
+                      notification: {
+                        email,
+                      },
+                    },
                   });
-                  
-                  if (notifyResp.ok) {
-                    console.log('Login success notification sent for user:', userId);
+
+                  if (notifyError) {
+                    console.warn('Failed to send login notification:', notifyError);
                   } else {
-                    const errText = await notifyResp.text();
-                    console.warn('Failed to send login notification:', errText);
+                    console.log('Login success notification sent for user:', userId);
                   }
                 } catch (notifyErr) {
                   console.error('Error sending login notification:', notifyErr);
