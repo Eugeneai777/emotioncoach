@@ -18,6 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { PackageFeatureSettingsDialog } from "./PackageFeatureSettingsDialog";
 import FreeTrialSettings from "./FreeTrialSettings";
+import { PackageComparisonView } from "./PackageComparisonView";
 
 import { Database } from "@/integrations/supabase/types";
 
@@ -461,6 +462,7 @@ export function PackagesManagement() {
           <TabsTrigger value="packages">套餐管理</TabsTrigger>
           <TabsTrigger value="features">功能开关</TabsTrigger>
           <TabsTrigger value="pricing">套餐扣费配置</TabsTrigger>
+          <TabsTrigger value="comparison">配置对比</TabsTrigger>
           <TabsTrigger value="free-trial">免费试用</TabsTrigger>
         </TabsList>
 
@@ -928,6 +930,11 @@ export function PackagesManagement() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* 套餐配置对比 Tab */}
+        <TabsContent value="comparison">
+          <PackageComparisonView />
         </TabsContent>
 
         {/* 免费试用配置 Tab */}
