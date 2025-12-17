@@ -78,7 +78,19 @@ serve(async (req) => {
     type EncouragementStyle = 'gentle' | 'cheerful' | 'motivational';
     type CompanionType = 'jing_teacher' | 'friend' | 'coach';
     type NotificationFrequency = 'minimal' | 'balanced' | 'frequent';
-    type Scenario = 'after_briefing' | 'after_story' | 'after_gratitude_analysis' | 'after_communication' | 'after_parent' | 'after_vibrant_life' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement' | 'checkin_success' | 'checkin_streak_milestone' | 'checkin_reminder' | 'checkin_streak_break_warning' | 'camp_day_complete' | 'weekly_summary';
+    type Scenario = 'after_briefing' | 'after_story' | 'after_gratitude_analysis' | 'after_gratitude_sync' | 'after_communication' | 'after_parent' | 'after_vibrant_life' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement' | 'checkin_success' | 'checkin_streak_milestone' | 'checkin_reminder' | 'checkin_streak_break_warning' | 'camp_day_complete' | 'weekly_summary';
+
+    // 维度名称映射
+    const dimensionNames: Record<string, string> = {
+      'CREATION': '创造',
+      'RELATIONSHIPS': '关系', 
+      'MONEY': '财富',
+      'HEALTH': '健康',
+      'INNER': '内在',
+      'JOY': '体验',
+      'IMPACT': '贡献'
+    };
+    const getDimensionName = (key: string): string => dimensionNames[key] || key;
 
     const encouragementStyle = (context?.style || profile?.preferred_encouragement_style || 'gentle') as EncouragementStyle;
     const companionType = (profile?.companion_type || 'jing_teacher') as CompanionType;
@@ -120,6 +132,23 @@ serve(async (req) => {
       after_briefing: `用户刚完成了一次情绪对话。他们分享的情绪是"${context?.emotion_theme}"，强度${context?.emotion_intensity}/10。请给予温暖的肯定和鼓励。`,
       after_story: `用户刚刚创作并发布了一个成长故事"${context?.title}"${context?.emotionTag ? `，情绪标签是"${context.emotionTag}"` : ''}。请肯定他们把经历转化为故事的勇气，鼓励他们继续用英雄之旅的方法讲述自己的成长。`,
       after_gratitude_analysis: `用户完成了感恩日记的AI分析，发现了${context?.dimensions_count || 7}个幸福维度的分布。${context?.highlight_dimension ? `其中"${context.highlight_dimension}"是主要亮点。` : ''}请肯定他们坚持记录感恩的习惯，鼓励他们继续发现生活中的微光。`,
+      after_gratitude_sync: `用户刚完成感恩日记的同步分析，成功分析了${context?.analyzed_count || 0}条记录。
+${context?.top_dimension ? `主要幸福来源是"${getDimensionName(context.top_dimension)}"维度。` : ''}
+${context?.weak_dimension ? `"${getDimensionName(context.weak_dimension)}"维度还有提升空间。` : ''}
+
+请生成温暖鼓励 + 一个具体的"幸福提升小方法"：
+1. 首先肯定用户坚持记录感恩的习惯（已分析${context?.analyzed_count || 0}条）
+2. 温柔提醒他们可以查看标签分布了解幸福来源
+3. **必须**给出一个具体的2分钟内可做的"幸福小行动"建议，根据弱势维度选择：
+   - RELATIONSHIPS弱：今天给一个重要的人发一条感谢消息
+   - INNER弱：闭眼做3次深呼吸，感受此刻的平静
+   - HEALTH弱：现在站起来伸个懒腰，喝杯温水
+   - JOY弱：回忆今天让你微笑的一个小瞬间
+   - CREATION弱：花2分钟写下一个小想法或灵感
+   - MONEY弱：记录今天的一笔小收入或节省
+   - IMPACT弱：想一个明天能帮助别人的小事
+   
+这个小行动要具体、即时可做、有温度。`,
       after_communication: `用户刚完成了一次沟通技能对话，主题是"${context?.communication_theme}"${context?.communication_difficulty ? `，难度${context.communication_difficulty}/10` : ''}。请肯定他们愿意学习和练习沟通技巧的勇气，给予实用的鼓励。`,
       after_parent: `用户刚完成了一次亲子关系对话，主题是"${context?.parent_theme}"${context?.emotion_intensity ? `，情绪强度${context.emotion_intensity}/10` : ''}。请温暖地肯定他们作为家长愿意学习和成长的努力，给予支持性的鼓励。`,
       after_vibrant_life: `用户刚刚与有劲AI进行了一次对话${context?.user_issue_summary ? `，探讨了"${context.user_issue_summary}"` : ''}。请肯定他们主动寻求帮助的态度，温暖地鼓励他们继续探索和成长。`,
@@ -256,6 +285,7 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       after_briefing: { type: 'encouragement', priority: 2 },
       after_story: { type: 'celebration', priority: 3 },
       after_gratitude_analysis: { type: 'insight', priority: 2 },
+      after_gratitude_sync: { type: 'encouragement', priority: 3 },
       after_communication: { type: 'encouragement', priority: 2 },
       after_parent: { type: 'encouragement', priority: 2 },
       after_vibrant_life: { type: 'encouragement', priority: 2 },
@@ -278,6 +308,7 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       after_briefing: 'emotion_coach',
       after_story: 'story_coach',
       after_gratitude_analysis: 'gratitude_coach',
+      after_gratitude_sync: 'gratitude_coach',
       after_communication: 'communication_coach',
       after_parent: 'parent_coach',
       after_vibrant_life: 'life_coach',
