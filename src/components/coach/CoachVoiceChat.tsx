@@ -69,10 +69,45 @@ export const CoachVoiceChat = ({
   const durationRef = useRef<NodeJS.Timeout | null>(null);
   const lastBilledMinuteRef = useRef(0);
   const isDeductingRef = useRef(false);  // 防止并发扣费
-  const sessionIdRef = useRef(`voice_${Date.now()}`);  // 固定 session ID
   const lastActivityRef = useRef(Date.now());  // 最后活动时间
   const visibilityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 页面隐藏计时器
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 无活动计时器
+
+  // 断线重连保护常量
+  const RECONNECT_WINDOW = 30 * 1000;  // 30秒内重连复用session
+  const SESSION_STORAGE_KEY = 'voice_chat_session';
+
+  // 断线重连保护：检查是否有最近的session可复用
+  const getOrCreateSessionId = (): { sessionId: string; billedMinutes: number } => {
+    try {
+      const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (stored) {
+        const { sessionId, endTime, billedMinutes, featureKey: storedFeatureKey } = JSON.parse(stored);
+        const elapsed = Date.now() - endTime;
+        // 30秒内重连且是同一个教练的通话，复用session
+        if (elapsed < RECONNECT_WINDOW && storedFeatureKey === featureKey) {
+          console.log(`Reconnecting within ${elapsed}ms, reusing session ${sessionId}, billed minutes: ${billedMinutes}`);
+          return { sessionId, billedMinutes: billedMinutes || 0 };
+        }
+      }
+    } catch (e) {
+      console.error('Error reading session from localStorage:', e);
+    }
+    // 创建新session
+    return { sessionId: `voice_${Date.now()}`, billedMinutes: 0 };
+  };
+
+  const { sessionId: initialSessionId, billedMinutes: initialBilledMinutes } = getOrCreateSessionId();
+  const sessionIdRef = useRef(initialSessionId);
+
+  // 如果是重连，恢复已扣费分钟数
+  useEffect(() => {
+    if (initialBilledMinutes > 0) {
+      lastBilledMinuteRef.current = initialBilledMinutes;
+      setBilledMinutes(initialBilledMinutes);
+      console.log(`Restored billed minutes: ${initialBilledMinutes}`);
+    }
+  }, []);
 
   // 保护机制常量
   const PAGE_HIDDEN_TIMEOUT = 5 * 60 * 1000;  // 5分钟页面隐藏自动结束
@@ -559,6 +594,19 @@ export const CoachVoiceChat = ({
     chatRef.current = null;
     if (durationRef.current) {
       clearInterval(durationRef.current);
+    }
+    
+    // 保存session信息用于断线重连
+    try {
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
+        sessionId: sessionIdRef.current,
+        endTime: Date.now(),
+        billedMinutes: lastBilledMinuteRef.current,
+        featureKey
+      }));
+      console.log(`Saved session for potential reconnection: ${sessionIdRef.current}, billed: ${lastBilledMinuteRef.current}`);
+    } catch (e) {
+      console.error('Error saving session to localStorage:', e);
     }
     
     // 记录会话
