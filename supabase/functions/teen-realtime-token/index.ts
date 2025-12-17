@@ -92,7 +92,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-realtime-preview-2024-12-17",
+        model: "gpt-4o-mini-realtime-preview-2024-12-17",
         voice: "shimmer", // 温暖女声，适合青少年
         instructions: `你是一个温暖、理解、不评判的AI朋友，专门陪伴青少年倾诉心事。
 

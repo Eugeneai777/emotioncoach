@@ -62,7 +62,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-realtime-preview-2024-12-17",
+        model: "gpt-4o-mini-realtime-preview-2024-12-17",
         voice: "echo", // 温暖男声，类似 Brian
         instructions: `你是劲老师团队的智能客服助手，名叫"小劲"。你的职责是帮助用户了解和使用劲老师应用的各项功能。
 
