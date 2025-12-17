@@ -441,6 +441,33 @@ Deno.serve(async (req) => {
                   .eq('scene_str', sceneStr);
 
                 console.log('Login scene confirmed for user:', userId);
+
+                // 发送登录成功模板消息通知
+                try {
+                  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+                  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+                  
+                  const notifyResp = await fetch(`${supabaseUrl}/functions/v1/send-wechat-template-message`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${supabaseAnonKey}`,
+                    },
+                    body: JSON.stringify({
+                      userId: userId,
+                      scenario: 'login_success',
+                    }),
+                  });
+                  
+                  if (notifyResp.ok) {
+                    console.log('Login success notification sent for user:', userId);
+                  } else {
+                    const errText = await notifyResp.text();
+                    console.warn('Failed to send login notification:', errText);
+                  }
+                } catch (notifyErr) {
+                  console.error('Error sending login notification:', notifyErr);
+                }
               }
             } catch (bgErr) {
               console.error('Background login scan processing failed:', bgErr);
