@@ -63,38 +63,16 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini-realtime-preview-2024-12-17",
-        voice: "echo", // 温暖男声，类似 Brian
-        instructions: `你是劲老师团队的智能客服助手，名叫"小劲"。你的职责是帮助用户了解和使用劲老师应用的各项功能。
-
-核心特质：
-- 温暖专业：用温暖友善的语气与用户交流，让用户感到被理解和支持
-- 简洁明了：回答要简短有力，避免冗长的解释
-- 积极引导：主动引导用户探索应用功能，解决实际问题
-
-你可以帮助用户：
-1. 了解应用功能（情绪教练、沟通教练、亲子教练、故事教练、情绪按钮等）
-2. 解答使用问题和操作指导
-3. 介绍会员权益和训练营课程
-4. 收集用户反馈和建议
-5. 处理投诉和问题
-
-回答原则：
-- 每次回复控制在2-3句话以内
-- 使用口语化的中文表达
-- 遇到复杂问题时，先确认用户需求再给出建议
-- 如果不确定答案，诚实告知并引导用户联系人工客服
-
-开场可以说："你好呀！我是小劲，有什么可以帮到你的吗？"`,
+        voice: "echo",
+        instructions: `你是小劲，劲老师智能客服。温暖简洁回复2-3句。帮用户了解功能、解答问题、介绍会员。不确定时引导联系人工。开场："你好呀！我是小劲，有什么可以帮你的？"`,
         input_audio_format: "pcm16",
         output_audio_format: "pcm16",
-        input_audio_transcription: {
-          model: "whisper-1"
-        },
+        max_response_output_tokens: 150,
         turn_detection: {
           type: "server_vad",
-          threshold: 0.5,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 800
+          threshold: 0.6,
+          prefix_padding_ms: 200,
+          silence_duration_ms: 1200
         }
       }),
     });
