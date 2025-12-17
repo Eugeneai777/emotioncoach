@@ -44,6 +44,7 @@ serve(async (req) => {
     
     if (proxyUrl && proxyToken) {
       // 通过代理获取access_token
+      console.log('使用代理获取access_token, proxyUrl:', proxyUrl);
       const tokenResponse = await fetch(`${proxyUrl}/wechat/token`, {
         method: 'POST',
         headers: {
@@ -53,23 +54,26 @@ serve(async (req) => {
         body: JSON.stringify({ appid: appId, secret: appSecret }),
       });
       
-      if (!tokenResponse.ok) {
-        throw new Error('获取access_token失败');
+      const proxyTokenData = await tokenResponse.json();
+      console.log('代理返回token数据:', JSON.stringify(proxyTokenData));
+      
+      if (!tokenResponse.ok || proxyTokenData.errcode) {
+        console.error('代理获取token失败:', proxyTokenData);
+        throw new Error(`获取access_token失败: ${proxyTokenData.errmsg || tokenResponse.statusText}`);
       }
       
-      const tokenData = await tokenResponse.json();
-      accessToken = tokenData.access_token;
+      accessToken = proxyTokenData.access_token;
     } else {
       // 直接调用微信API
       const tokenResponse = await fetch(
         `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`
       );
-      const tokenData = await tokenResponse.json();
+      const directTokenData = await tokenResponse.json();
       
-      if (tokenData.errcode) {
-        throw new Error(`获取access_token失败: ${tokenData.errmsg}`);
+      if (directTokenData.errcode) {
+        throw new Error(`获取access_token失败: ${directTokenData.errmsg}`);
       }
-      accessToken = tokenData.access_token;
+      accessToken = directTokenData.access_token;
     }
 
     // 创建临时带参数二维码
