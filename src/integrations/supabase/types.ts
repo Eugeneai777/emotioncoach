@@ -5338,31 +5338,43 @@ export type Database = {
       }
       voice_chat_sessions: {
         Row: {
+          api_cost_cny: number | null
+          api_cost_usd: number | null
           billed_minutes: number
           coach_key: string
           created_at: string | null
           duration_seconds: number
           id: string
+          input_tokens: number | null
+          output_tokens: number | null
           total_cost: number
           transcript_summary: string | null
           user_id: string
         }
         Insert: {
+          api_cost_cny?: number | null
+          api_cost_usd?: number | null
           billed_minutes?: number
           coach_key: string
           created_at?: string | null
           duration_seconds?: number
           id?: string
+          input_tokens?: number | null
+          output_tokens?: number | null
           total_cost?: number
           transcript_summary?: string | null
           user_id: string
         }
         Update: {
+          api_cost_cny?: number | null
+          api_cost_usd?: number | null
           billed_minutes?: number
           coach_key?: string
           created_at?: string | null
           duration_seconds?: number
           id?: string
+          input_tokens?: number | null
+          output_tokens?: number | null
           total_cost?: number
           transcript_summary?: string | null
           user_id?: string
