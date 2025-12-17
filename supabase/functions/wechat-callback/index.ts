@@ -448,36 +448,43 @@ Deno.serve(async (req) => {
 
             console.log('Login scene confirmed for user:', userId);
 
-            // 发送成功消息给用户
-            const successMsg = buildXML({
-              ToUserName: FromUserName,
-              FromUserName: ToUserName,
-              CreateTime: Math.floor(Date.now() / 1000),
-              MsgType: 'text',
-              Content: `登录成功！欢迎回来${profile?.display_name ? '，' + profile.display_name : ''}~ 🎉\n\n请返回网页继续使用。`
-            });
+            // 尝试发送成功消息给用户（如果加密失败则静默返回success）
+            try {
+              const successMsg = buildXML({
+                ToUserName: FromUserName,
+                FromUserName: ToUserName,
+                CreateTime: Math.floor(Date.now() / 1000),
+                MsgType: 'text',
+                Content: `登录成功！欢迎回来${profile?.display_name ? '，' + profile.display_name : ''}~ 🎉\n\n请返回网页继续使用。`
+              });
 
-            const encryptedReply = await cryptor.encrypt(successMsg);
-            const replyTimestamp = String(Math.floor(Date.now() / 1000));
-            const replyNonce = Math.random().toString(36).substring(2, 15);
-            
-            const signArr = [token, replyTimestamp, replyNonce, encryptedReply].sort();
-            const signStr = signArr.join('');
-            const encoder = new TextEncoder();
-            const hashBuffer = await crypto.subtle.digest('SHA-1', encoder.encode(signStr));
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const replySignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+              const encryptedReply = await cryptor.encrypt(successMsg);
+              const replyTimestamp = String(Math.floor(Date.now() / 1000));
+              const replyNonce = Math.random().toString(36).substring(2, 15);
+              
+              const signArr = [token, replyTimestamp, replyNonce, encryptedReply].sort();
+              const signStr = signArr.join('');
+              const encoder = new TextEncoder();
+              const hashBuffer = await crypto.subtle.digest('SHA-1', encoder.encode(signStr));
+              const hashArray = Array.from(new Uint8Array(hashBuffer));
+              const replySignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-            const responseXml = `<xml>
+              const responseXml = `<xml>
 <Encrypt><![CDATA[${encryptedReply}]]></Encrypt>
 <MsgSignature><![CDATA[${replySignature}]]></MsgSignature>
 <TimeStamp>${replyTimestamp}</TimeStamp>
 <Nonce><![CDATA[${replyNonce}]]></Nonce>
 </xml>`;
 
-            return new Response(responseXml, {
-              headers: { 'Content-Type': 'application/xml' }
-            });
+              console.log('Sending encrypted reply to WeChat');
+              return new Response(responseXml, {
+                headers: { 'Content-Type': 'application/xml' }
+              });
+            } catch (replyErr) {
+              console.error('Failed to encrypt reply, returning success:', replyErr);
+              // 加密失败时返回 success，微信不会报错
+              return new Response('success', { headers: { 'Content-Type': 'text/plain' } });
+            }
           }
         }
       }
