@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Sparkles, History, ShoppingBag, Menu, RotateCcw, Target } from "lucide-react";
+import { ChevronDown, Sparkles, History, ShoppingBag, Menu, RotateCcw, Target, LogIn } from "lucide-react";
 import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
 import {
   DropdownMenu,
@@ -63,8 +63,10 @@ export const CoachHeader = ({
     checkAdminRole();
   }, [user]);
 
+  // Filter out logout item when user is not logged in
   const filteredMenuItems = hamburgerMenuItems.filter(item => {
     if (item.requireAdmin && !isAdmin) return false;
+    if (item.id === 'logout' && !user) return false; // Hide logout when not logged in
     return true;
   });
 
@@ -137,6 +139,16 @@ export const CoachHeader = ({
                     </DropdownMenuItem>
                   );
                 })}
+                {/* Show login item when user is not logged in */}
+                {!user && (
+                  <DropdownMenuItem
+                    onClick={() => navigate('/auth')}
+                    className="cursor-pointer hover:bg-accent text-primary font-medium"
+                  >
+                    <LogIn className="mr-2 h-4 w-4" />
+                    <span>登录账号</span>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 
