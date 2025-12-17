@@ -286,210 +286,178 @@ Deno.serve(async (req) => {
       // 处理扫码登录事件
       if (MsgType === 'event' && (Event === 'SCAN' || Event === 'subscribe')) {
         // EventKey 格式: login_xxx 或 qrscene_login_xxx (关注时带前缀)
-        const sceneStr = EventKey?.startsWith('qrscene_') 
-          ? EventKey.substring(8) 
+        const sceneStr = EventKey?.startsWith('qrscene_')
+          ? EventKey.substring(8)
           : EventKey;
-        
+
         if (sceneStr?.startsWith('login_')) {
           console.log('Processing login scan event, sceneStr:', sceneStr);
-          
-          // 查找或创建用户
-          const { data: mappingRows, error: mappingErr } = await supabase
-            .from('wechat_user_mappings')
-            .select('system_user_id, updated_at, created_at')
-            .eq('openid', FromUserName)
-            .order('updated_at', { ascending: false })
-            .order('created_at', { ascending: false })
-            .limit(1);
 
-          if (mappingErr) {
-            console.warn('Failed to query wechat_user_mappings (will fallback to create):', mappingErr);
-          }
+          // ✅ 微信服务器要求 5 秒内响应，否则用户端会看到“该公众号提供的服务出现故障”。
+          // 所以这里先立刻返回 success，再把耗时逻辑放到后台执行。
+          const runInBackground = async () => {
+            try {
+              // 查找或创建用户
+              const { data: mappingRows, error: mappingErr } = await supabase
+                .from('wechat_user_mappings')
+                .select('system_user_id, updated_at, created_at')
+                .eq('openid', FromUserName)
+                .order('updated_at', { ascending: false })
+                .order('created_at', { ascending: false })
+                .limit(1);
 
-          let userId = mappingRows?.[0]?.system_user_id;
-
-          // 如果用户不存在，创建新用户
-          if (!userId) {
-            // 获取微信用户信息
-            const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
-            const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
-            const wechatAppId = Deno.env.get('WECHAT_APP_ID');
-            const appSecret = Deno.env.get('WECHAT_APP_SECRET');
-            
-            let accessToken = '';
-            
-            // 通过代理获取access_token
-            if (proxyUrl && proxyToken) {
-              const baseUrl = proxyUrl.replace(/\/$/, '');
-              console.log('Getting access_token via proxy:', baseUrl);
-              
-              const tokenResp = await fetch(`${baseUrl}/wechat/token`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${proxyToken}`,
-                },
-                body: JSON.stringify({ appid: wechatAppId, secret: appSecret }),
-              });
-              
-              const tokenData = await tokenResp.json();
-              accessToken = tokenData.access_token;
-              console.log('Access token obtained:', accessToken ? 'success' : 'failed');
-            } else {
-              console.error('Proxy not configured, cannot get access_token');
-            }
-            
-            if (accessToken) {
-              // 通过代理获取用户信息
-              let userInfo: any = { nickname: '微信用户' };
-              
-              if (proxyUrl && proxyToken) {
-                const baseUrl = proxyUrl.replace(/\/$/, '');
-                const userInfoResp = await fetch(`${baseUrl}/wechat-proxy`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${proxyToken}`,
-                  },
-                  body: JSON.stringify({
-                    target_url: `https://api.weixin.qq.com/cgi-bin/user/info?access_token=${accessToken}&openid=${FromUserName}&lang=zh_CN`,
-                    method: 'GET',
-                  }),
-                });
-                
-                const userInfoData = await userInfoResp.json();
-                if (userInfoData.nickname) {
-                  userInfo = userInfoData;
-                }
-                console.log('User info obtained:', userInfo.nickname || 'default');
+              if (mappingErr) {
+                console.warn('Failed to query wechat_user_mappings (will fallback to create):', mappingErr);
               }
-              
-              // 创建/获取用户（openid 派生的 email）
-              const email = `wechat_${FromUserName.substring(0, 10)}@youjin.app`;
-              const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-                email,
-                email_confirm: true,
-                user_metadata: {
-                  display_name: userInfo.nickname || '微信用户',
-                  avatar_url: userInfo.headimgurl,
-                  wechat_openid: FromUserName,
-                },
-              });
 
-              if (!authError && authData.user) {
-                userId = authData.user.id;
-              } else if ((authError as any)?.code === 'email_exists') {
-                // email 已存在：尝试通过 admin listUsers 找回 userId（仅在极少数情况下触发）
-                const { data: listData, error: listErr } = await supabase.auth.admin.listUsers({
-                  page: 1,
-                  perPage: 1000,
-                });
+              let userId = mappingRows?.[0]?.system_user_id;
 
-                if (listErr) {
-                  console.error('Failed to list users after email_exists:', listErr);
+              // 如果用户不存在，创建新用户
+              if (!userId) {
+                // 获取微信用户信息
+                const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
+                const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
+                const wechatAppId = Deno.env.get('WECHAT_APP_ID');
+                const appSecret = Deno.env.get('WECHAT_APP_SECRET');
+
+                let accessToken = '';
+
+                // 通过代理获取access_token
+                if (proxyUrl && proxyToken) {
+                  const baseUrl = proxyUrl.replace(/\/$/, '');
+                  console.log('Getting access_token via proxy:', baseUrl);
+
+                  const tokenResp = await fetch(`${baseUrl}/wechat/token`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${proxyToken}`,
+                    },
+                    body: JSON.stringify({ appid: wechatAppId, secret: appSecret }),
+                  });
+
+                  const tokenData = await tokenResp.json();
+                  accessToken = tokenData.access_token;
+                  console.log('Access token obtained:', accessToken ? 'success' : 'failed');
                 } else {
-                  const existing = listData?.users?.find((u) => u.email === email);
-                  if (existing) userId = existing.id;
+                  console.error('Proxy not configured, cannot get access_token');
                 }
 
-                if (!userId) {
-                  console.error('Email exists but failed to resolve userId for:', email);
+                if (accessToken) {
+                  // 通过代理获取用户信息
+                  let userInfo: any = { nickname: '微信用户' };
+
+                  if (proxyUrl && proxyToken) {
+                    const baseUrl = proxyUrl.replace(/\/$/, '');
+                    const userInfoResp = await fetch(`${baseUrl}/wechat-proxy`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${proxyToken}`,
+                      },
+                      body: JSON.stringify({
+                        target_url: `https://api.weixin.qq.com/cgi-bin/user/info?access_token=${accessToken}&openid=${FromUserName}&lang=zh_CN`,
+                        method: 'GET',
+                      }),
+                    });
+
+                    const userInfoData = await userInfoResp.json();
+                    if (userInfoData.nickname) {
+                      userInfo = userInfoData;
+                    }
+                    console.log('User info obtained:', userInfo.nickname || 'default');
+                  }
+
+                  // 创建/获取用户（openid 派生的 email）
+                  const email = `wechat_${FromUserName.substring(0, 10)}@youjin.app`;
+                  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+                    email,
+                    email_confirm: true,
+                    user_metadata: {
+                      display_name: userInfo.nickname || '微信用户',
+                      avatar_url: userInfo.headimgurl,
+                      wechat_openid: FromUserName,
+                    },
+                  });
+
+                  if (!authError && authData.user) {
+                    userId = authData.user.id;
+                  } else if ((authError as any)?.code === 'email_exists') {
+                    const { data: listData, error: listErr } = await supabase.auth.admin.listUsers({
+                      page: 1,
+                      perPage: 1000,
+                    });
+
+                    if (listErr) {
+                      console.error('Failed to list users after email_exists:', listErr);
+                    } else {
+                      const existing = listData?.users?.find((u) => u.email === email);
+                      if (existing) userId = existing.id;
+                    }
+
+                    if (!userId) {
+                      console.error('Email exists but failed to resolve userId for:', email);
+                    }
+                  } else {
+                    console.error('Failed to create user:', authError);
+                  }
+
+                  if (userId) {
+                    await supabase.from('profiles').upsert({
+                      id: userId,
+                      display_name: userInfo.nickname || '微信用户',
+                      avatar_url: userInfo.headimgurl,
+                      auth_provider: 'wechat',
+                      wechat_enabled: true,
+                    });
+
+                    await supabase.from('wechat_user_mappings').upsert(
+                      {
+                        openid: FromUserName,
+                        system_user_id: userId,
+                        nickname: userInfo.nickname,
+                        avatar_url: userInfo.headimgurl,
+                        subscribe_status: true,
+                        updated_at: new Date().toISOString(),
+                      },
+                      { onConflict: 'openid,system_user_id' }
+                    );
+
+                    console.log('Resolved user for openid:', userId);
+                  }
                 }
-              } else {
-                console.error('Failed to create user:', authError);
               }
 
               if (userId) {
-                // 创建/更新 profile
-                await supabase.from('profiles').upsert({
-                  id: userId,
-                  display_name: userInfo.nickname || '微信用户',
-                  avatar_url: userInfo.headimgurl,
-                  auth_provider: 'wechat',
-                  wechat_enabled: true,
-                });
-
-                // 创建/更新微信映射（允许一微信多账号：以 (openid,system_user_id) 作为冲突键）
-                await supabase.from('wechat_user_mappings').upsert(
-                  {
+                await supabase
+                  .from('wechat_login_scenes')
+                  .update({
+                    status: 'confirmed',
                     openid: FromUserName,
-                    system_user_id: userId,
-                    nickname: userInfo.nickname,
-                    avatar_url: userInfo.headimgurl,
-                    subscribe_status: true,
-                    updated_at: new Date().toISOString(),
-                  },
-                  { onConflict: 'openid,system_user_id' }
-                );
+                    user_id: userId,
+                    user_email: `wechat_${FromUserName.substring(0, 10)}@youjin.app`,
+                    confirmed_at: new Date().toISOString(),
+                  })
+                  .eq('scene_str', sceneStr);
 
-                console.log('Resolved user for openid:', userId);
+                console.log('Login scene confirmed for user:', userId);
               }
+            } catch (bgErr) {
+              console.error('Background login scan processing failed:', bgErr);
             }
+          };
+
+          const waitUntil = (globalThis as any)?.EdgeRuntime?.waitUntil;
+          if (typeof waitUntil === 'function') {
+            waitUntil(runInBackground());
+          } else {
+            // fallback（不会阻塞返回，但可能在部分环境不保证执行完）
+            runInBackground();
           }
 
-          if (userId) {
-            // 获取用户email
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('display_name')
-              .eq('id', userId)
-              .single();
-
-            // 更新登录场景状态
-            await supabase
-              .from('wechat_login_scenes')
-              .update({
-                status: 'confirmed',
-                openid: FromUserName,
-                user_id: userId,
-                user_email: `wechat_${FromUserName.substring(0, 10)}@youjin.app`,
-                confirmed_at: new Date().toISOString(),
-              })
-              .eq('scene_str', sceneStr);
-
-            console.log('Login scene confirmed for user:', userId);
-
-            // 尝试发送成功消息给用户（如果加密失败则静默返回success）
-            try {
-              const successMsg = buildXML({
-                ToUserName: FromUserName,
-                FromUserName: ToUserName,
-                CreateTime: Math.floor(Date.now() / 1000),
-                MsgType: 'text',
-                Content: `登录成功！欢迎回来${profile?.display_name ? '，' + profile.display_name : ''}~ 🎉\n\n请返回网页继续使用。`
-              });
-
-              const encryptedReply = await cryptor.encrypt(successMsg);
-              const replyTimestamp = String(Math.floor(Date.now() / 1000));
-              const replyNonce = Math.random().toString(36).substring(2, 15);
-              
-              const signArr = [token, replyTimestamp, replyNonce, encryptedReply].sort();
-              const signStr = signArr.join('');
-              const encoder = new TextEncoder();
-              const hashBuffer = await crypto.subtle.digest('SHA-1', encoder.encode(signStr));
-              const hashArray = Array.from(new Uint8Array(hashBuffer));
-              const replySignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-              const responseXml = `<xml>
-<Encrypt><![CDATA[${encryptedReply}]]></Encrypt>
-<MsgSignature><![CDATA[${replySignature}]]></MsgSignature>
-<TimeStamp>${replyTimestamp}</TimeStamp>
-<Nonce><![CDATA[${replyNonce}]]></Nonce>
-</xml>`;
-
-              console.log('Sending encrypted reply to WeChat');
-              return new Response(responseXml, {
-                headers: { 'Content-Type': 'application/xml' }
-              });
-            } catch (replyErr) {
-              console.error('Failed to encrypt reply, returning success:', replyErr);
-              // 加密失败时返回 success，微信不会报错
-              return new Response('success', { headers: { 'Content-Type': 'text/plain' } });
-            }
-          }
+          return new Response('success', { headers: { 'Content-Type': 'text/plain' } });
         }
       }
-
       // 查找用户映射
       const { data: mapping } = await supabase
         .from('wechat_user_mappings')
