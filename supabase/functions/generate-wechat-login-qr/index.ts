@@ -47,15 +47,20 @@ serve(async (req) => {
     const getAccessToken = async (): Promise<string> => {
       if (proxyUrl && proxyToken) {
         const base = normalizeBaseUrl(proxyUrl);
+        const targetUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
         console.log('通过代理获取access_token, proxyUrl:', base);
 
-        const tokenResponse = await fetch(`${base}/wechat/token`, {
+        // 使用 /wechat-proxy 端点转发请求
+        const tokenResponse = await fetch(`${base}/wechat-proxy`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${proxyToken}`,
           },
-          body: JSON.stringify({ appid: appId, secret: appSecret }),
+          body: JSON.stringify({
+            target_url: targetUrl,
+            method: 'GET',
+          }),
         });
 
         const text = await tokenResponse.text();
