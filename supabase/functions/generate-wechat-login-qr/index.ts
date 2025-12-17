@@ -40,47 +40,51 @@ serve(async (req) => {
     console.log('生成登录二维码, sceneStr:', sceneStr, 'mode:', mode);
 
     // 获取access_token（通过代理或直接调用）
-    // 获取access_token - 优先代理，失败则直接调用
+    // 重要：微信后台通常要求“IP 白名单”。云函数出口 IP 不固定，直连会报 invalid ip。
+    // 因此：只要配置了代理，就必须强制走代理；不再回退到直连。
+    const normalizeBaseUrl = (url: string) => url.replace(/\/$/, '');
+
     const getAccessToken = async (): Promise<string> => {
-      // 尝试通过代理获取
       if (proxyUrl && proxyToken) {
+        const base = normalizeBaseUrl(proxyUrl);
+        console.log('通过代理获取access_token, proxyUrl:', base);
+
+        const tokenResponse = await fetch(`${base}/wechat/token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${proxyToken}`,
+          },
+          body: JSON.stringify({ appid: appId, secret: appSecret }),
+        });
+
+        const text = await tokenResponse.text();
+        let data: any = null;
         try {
-          console.log('尝试通过代理获取access_token');
-          const tokenResponse = await fetch(`${proxyUrl}/wechat/token`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${proxyToken}`,
-            },
-            body: JSON.stringify({ appid: appId, secret: appSecret }),
-          });
-          
-          const text = await tokenResponse.text();
-          // 检查是否是JSON响应
-          if (text.startsWith('{') || text.startsWith('[')) {
-            const data = JSON.parse(text);
-            if (data.access_token) {
-              console.log('代理获取access_token成功');
-              return data.access_token;
-            }
-          }
-          console.log('代理返回非JSON或无token，降级到直接调用');
-        } catch (e) {
-          console.log('代理调用失败，降级到直接调用:', e);
+          data = JSON.parse(text);
+        } catch {
+          throw new Error(
+            `代理获取access_token失败：返回非JSON（HTTP ${tokenResponse.status}）: ${text.slice(0, 200)}`
+          );
         }
+
+        if (!tokenResponse.ok) {
+          throw new Error(
+            `代理获取access_token失败：HTTP ${tokenResponse.status} ${tokenResponse.statusText} ${JSON.stringify(data)}`
+          );
+        }
+
+        if (data?.access_token) return data.access_token;
+        if (data?.errmsg || data?.errcode) {
+          throw new Error(`代理获取access_token失败: ${data.errmsg || data.errcode}`);
+        }
+
+        throw new Error(`代理返回异常，未包含access_token: ${JSON.stringify(data)}`);
       }
-      
-      // 直接调用微信API
-      console.log('直接调用微信API获取access_token');
-      const tokenResponse = await fetch(
-        `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`
+
+      throw new Error(
+        '未配置微信代理（WECHAT_PROXY_URL/WECHAT_PROXY_TOKEN），当前环境直连微信API会触发IP白名单限制（invalid ip）。'
       );
-      const tokenData = await tokenResponse.json();
-      
-      if (tokenData.errcode) {
-        throw new Error(`获取access_token失败: ${tokenData.errmsg}`);
-      }
-      return tokenData.access_token;
     };
 
     const accessToken = await getAccessToken();
@@ -122,11 +126,17 @@ serve(async (req) => {
       );
     }
 
-    const qrData = await qrResponse.json();
+    const qrText = await qrResponse.text();
+    let qrData: any;
+    try {
+      qrData = JSON.parse(qrText);
+    } catch {
+      throw new Error(`创建二维码失败：返回非JSON: ${qrText.slice(0, 200)}`);
+    }
     
-    if (qrData.errcode) {
+    if (!qrResponse.ok || qrData.errcode) {
       console.error('创建二维码失败:', qrData);
-      throw new Error(`创建二维码失败: ${qrData.errmsg}`);
+      throw new Error(`创建二维码失败: ${qrData.errmsg || qrResponse.statusText}`);
     }
 
     console.log('二维码创建成功, ticket:', qrData.ticket);
