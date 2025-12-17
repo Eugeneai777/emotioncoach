@@ -293,13 +293,19 @@ Deno.serve(async (req) => {
           console.log('Processing login scan event, sceneStr:', sceneStr);
           
           // 查找或创建用户
-          let { data: existingMapping } = await supabase
+          const { data: mappingRows, error: mappingErr } = await supabase
             .from('wechat_user_mappings')
-            .select('system_user_id')
+            .select('system_user_id, updated_at, created_at')
             .eq('openid', FromUserName)
-            .maybeSingle();
+            .order('updated_at', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(1);
 
-          let userId = existingMapping?.system_user_id;
+          if (mappingErr) {
+            console.warn('Failed to query wechat_user_mappings (will fallback to create):', mappingErr);
+          }
+
+          let userId = mappingRows?.[0]?.system_user_id;
 
           // 如果用户不存在，创建新用户
           if (!userId) {
@@ -357,7 +363,7 @@ Deno.serve(async (req) => {
                 console.log('User info obtained:', userInfo.nickname || 'default');
               }
               
-              // 创建用户
+              // 创建/获取用户（openid 派生的 email）
               const email = `wechat_${FromUserName.substring(0, 10)}@youjin.app`;
               const { data: authData, error: authError } = await supabase.auth.admin.createUser({
                 email,
@@ -366,13 +372,34 @@ Deno.serve(async (req) => {
                   display_name: userInfo.nickname || '微信用户',
                   avatar_url: userInfo.headimgurl,
                   wechat_openid: FromUserName,
-                }
+                },
               });
 
               if (!authError && authData.user) {
                 userId = authData.user.id;
-                
-                // 创建profile
+              } else if ((authError as any)?.code === 'email_exists') {
+                // email 已存在：尝试通过 admin listUsers 找回 userId（仅在极少数情况下触发）
+                const { data: listData, error: listErr } = await supabase.auth.admin.listUsers({
+                  page: 1,
+                  perPage: 1000,
+                });
+
+                if (listErr) {
+                  console.error('Failed to list users after email_exists:', listErr);
+                } else {
+                  const existing = listData?.users?.find((u) => u.email === email);
+                  if (existing) userId = existing.id;
+                }
+
+                if (!userId) {
+                  console.error('Email exists but failed to resolve userId for:', email);
+                }
+              } else {
+                console.error('Failed to create user:', authError);
+              }
+
+              if (userId) {
+                // 创建/更新 profile
                 await supabase.from('profiles').upsert({
                   id: userId,
                   display_name: userInfo.nickname || '微信用户',
@@ -381,18 +408,20 @@ Deno.serve(async (req) => {
                   wechat_enabled: true,
                 });
 
-                // 创建微信映射
-                await supabase.from('wechat_user_mappings').insert({
-                  openid: FromUserName,
-                  system_user_id: userId,
-                  nickname: userInfo.nickname,
-                  avatar_url: userInfo.headimgurl,
-                  subscribe_status: true,
-                });
-                
-                console.log('New user created:', userId);
-              } else {
-                console.error('Failed to create user:', authError);
+                // 创建/更新微信映射（允许一微信多账号：以 (openid,system_user_id) 作为冲突键）
+                await supabase.from('wechat_user_mappings').upsert(
+                  {
+                    openid: FromUserName,
+                    system_user_id: userId,
+                    nickname: userInfo.nickname,
+                    avatar_url: userInfo.headimgurl,
+                    subscribe_status: true,
+                    updated_at: new Date().toISOString(),
+                  },
+                  { onConflict: 'openid,system_user_id' }
+                );
+
+                console.log('Resolved user for openid:', userId);
               }
             }
           }
