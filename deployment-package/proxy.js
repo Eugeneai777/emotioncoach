@@ -27,6 +27,44 @@ app.get('/health', (req, res) => {
   });
 });
 
+// 微信access_token获取端点
+app.post('/wechat/token', async (req, res) => {
+  try {
+    // 验证认证令牌
+    if (PROXY_AUTH_TOKEN) {
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.replace('Bearer ', '');
+      
+      if (token !== PROXY_AUTH_TOKEN) {
+        console.error(`[${new Date().toISOString()}] Unauthorized access attempt`);
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+    }
+
+    const { appid, secret } = req.body;
+
+    if (!appid || !secret) {
+      return res.status(400).json({ error: 'appid and secret are required' });
+    }
+
+    const targetUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appid}&secret=${secret}`;
+    console.log(`[${new Date().toISOString()}] 获取微信access_token for appid: ${appid}`);
+
+    const response = await fetch(targetUrl);
+    const data = await response.json();
+
+    console.log(`[${new Date().toISOString()}] 微信API响应: ${data.access_token ? '成功' : '失败 - ' + data.errmsg}`);
+
+    res.status(response.status).json(data);
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] Token获取失败:`, error.message);
+    res.status(500).json({ 
+      error: 'Token request failed', 
+      message: error.message 
+    });
+  }
+});
+
 // 微信API代理端点
 app.post('/wechat-proxy', async (req, res) => {
   try {
