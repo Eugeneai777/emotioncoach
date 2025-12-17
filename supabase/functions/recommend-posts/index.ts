@@ -23,30 +23,37 @@ serve(async (req) => {
       );
     }
 
-    // Extract userId from JWT token for security
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "未授权", recommendedPostIds: [], strategy: "auth_error" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || supabaseKey);
     
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
+    // 尝试获取用户身份，未登录用户返回热门帖子
+    const authHeader = req.headers.get("Authorization");
+    let userId: string | null = null;
     
-    if (authError || !user) {
-      console.error("认证失败:", authError);
+    if (authHeader) {
+      const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || supabaseKey);
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user } } = await anonClient.auth.getUser(token);
+      userId = user?.id || null;
+    }
+    
+    // 未登录用户直接返回热门帖子
+    if (!userId) {
+      console.log("未登录用户，返回热门帖子");
+      const { data: popularPosts } = await supabase
+        .from("community_posts")
+        .select("id")
+        .order("likes_count", { ascending: false })
+        .limit(10);
+      
       return new Response(
-        JSON.stringify({ error: "认证失败", recommendedPostIds: [], strategy: "auth_error" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          recommendedPostIds: popularPosts?.map(p => p.id) || [],
+          strategy: "popular_guest"
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const userId = user.id;
+    
     console.log("开始推荐，用户ID:", userId);
     
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
