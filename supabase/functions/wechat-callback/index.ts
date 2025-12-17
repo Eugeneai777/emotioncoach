@@ -304,21 +304,58 @@ Deno.serve(async (req) => {
           // 如果用户不存在，创建新用户
           if (!userId) {
             // 获取微信用户信息
-            const appId = Deno.env.get('WECHAT_APP_ID');
+            const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
+            const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
+            const wechatAppId = Deno.env.get('WECHAT_APP_ID');
             const appSecret = Deno.env.get('WECHAT_APP_SECRET');
             
-            // 获取access_token
-            const tokenResp = await fetch(
-              `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`
-            );
-            const tokenData = await tokenResp.json();
+            let accessToken = '';
             
-            if (tokenData.access_token) {
-              // 获取用户信息
-              const userInfoResp = await fetch(
-                `https://api.weixin.qq.com/cgi-bin/user/info?access_token=${tokenData.access_token}&openid=${FromUserName}&lang=zh_CN`
-              );
-              const userInfo = await userInfoResp.json();
+            // 通过代理获取access_token
+            if (proxyUrl && proxyToken) {
+              const baseUrl = proxyUrl.replace(/\/$/, '');
+              console.log('Getting access_token via proxy:', baseUrl);
+              
+              const tokenResp = await fetch(`${baseUrl}/wechat/token`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${proxyToken}`,
+                },
+                body: JSON.stringify({ appid: wechatAppId, secret: appSecret }),
+              });
+              
+              const tokenData = await tokenResp.json();
+              accessToken = tokenData.access_token;
+              console.log('Access token obtained:', accessToken ? 'success' : 'failed');
+            } else {
+              console.error('Proxy not configured, cannot get access_token');
+            }
+            
+            if (accessToken) {
+              // 通过代理获取用户信息
+              let userInfo: any = { nickname: '微信用户' };
+              
+              if (proxyUrl && proxyToken) {
+                const baseUrl = proxyUrl.replace(/\/$/, '');
+                const userInfoResp = await fetch(`${baseUrl}/wechat-proxy`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${proxyToken}`,
+                  },
+                  body: JSON.stringify({
+                    target_url: `https://api.weixin.qq.com/cgi-bin/user/info?access_token=${accessToken}&openid=${FromUserName}&lang=zh_CN`,
+                    method: 'GET',
+                  }),
+                });
+                
+                const userInfoData = await userInfoResp.json();
+                if (userInfoData.nickname) {
+                  userInfo = userInfoData;
+                }
+                console.log('User info obtained:', userInfo.nickname || 'default');
+              }
               
               // 创建用户
               const email = `wechat_${FromUserName.substring(0, 10)}@youjin.app`;
@@ -352,6 +389,10 @@ Deno.serve(async (req) => {
                   avatar_url: userInfo.headimgurl,
                   subscribe_status: true,
                 });
+                
+                console.log('New user created:', userId);
+              } else {
+                console.error('Failed to create user:', authError);
               }
             }
           }
