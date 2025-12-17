@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,7 @@ interface StartCampDialogProps {
 }
 
 export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }: StartCampDialogProps) {
+  const navigate = useNavigate();
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
   const [bundleWithIdentity, setBundleWithIdentity] = useState(false);
@@ -104,6 +106,8 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
           description: "开启训练营需要登录账号",
           variant: "destructive"
         });
+        onOpenChange(false);
+        navigate('/auth');
         return;
       }
 
