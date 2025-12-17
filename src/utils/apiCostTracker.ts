@@ -14,11 +14,11 @@ export const MODEL_COSTS: Record<string, { input?: number; output?: number; imag
   'gpt-4o': { input: 0.005, output: 0.015 },
 };
 
-// OpenAI Realtime API 每分钟估算 tokens (基于实际使用数据)
-// 约 150 audio tokens/秒，1分钟 = ~9000 tokens，input/output 各约 4500
+// OpenAI Realtime API 每分钟估算 tokens (优化后)
+// 优化：精简prompt(-70%)、限制输出(150tokens)、优化VAD，预计降低50%
 export const REALTIME_TOKENS_PER_MINUTE = {
-  input: 4500,
-  output: 4500,
+  input: 2500,   // 精简上下文后
+  output: 2000,  // 限制输出长度后
 };
 
 // ElevenLabs 成本
