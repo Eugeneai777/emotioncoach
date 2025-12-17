@@ -130,6 +130,61 @@ serve(async (req) => {
       }
     }
 
+    // 分析成功后，触发智能通知
+    if (successCount > 0) {
+      try {
+        // 统计主要标签分布
+        const themeCount: Record<string, number> = {};
+        for (const result of results) {
+          if (result.success) {
+            // 获取该条目的标签
+            const { data: entryData } = await supabase
+              .from("gratitude_entries")
+              .select("themes")
+              .eq("id", result.entryId)
+              .single();
+            
+            if (entryData?.themes) {
+              (entryData.themes as string[]).forEach((theme: string) => {
+                themeCount[theme] = (themeCount[theme] || 0) + 1;
+              });
+            }
+          }
+        }
+        
+        // 找出最高频的维度
+        const sortedThemes = Object.entries(themeCount).sort(([,a], [,b]) => b - a);
+        const topDimension = sortedThemes[0]?.[0] || '';
+        
+        // 找出最低频/缺失的维度
+        const allDimensions = ['CREATION', 'RELATIONSHIPS', 'MONEY', 'HEALTH', 'INNER', 'JOY', 'IMPACT'];
+        const weakDimension = allDimensions.find(d => !themeCount[d] || themeCount[d] === 0) 
+          || sortedThemes[sortedThemes.length - 1]?.[0] || '';
+
+        await fetch(`${supabaseUrl}/functions/v1/trigger-notifications`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify({
+            trigger_type: 'after_gratitude_sync',
+            user_id: user.id,
+            context: {
+              analyzed_count: successCount,
+              total_entries: unanalyzedEntries.length,
+              top_dimension: topDimension,
+              weak_dimension: weakDimension,
+              dimension_count: Object.keys(themeCount).length
+            }
+          })
+        });
+        console.log("智能通知已触发");
+      } catch (notifyError) {
+        console.error("触发通知失败（不影响主流程）:", notifyError);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         message: `Analyzed ${successCount} entries`,

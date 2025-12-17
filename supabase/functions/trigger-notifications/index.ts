@@ -266,6 +266,19 @@ serve(async (req) => {
         };
         break;
 
+      case 'after_gratitude_sync':
+        // 感恩日记同步分析完成后
+        shouldTrigger = true;
+        scenario = 'after_gratitude_sync';
+        notificationContext = {
+          analyzed_count: context?.analyzed_count || 0,
+          total_entries: context?.total_entries || 0,
+          top_dimension: context?.top_dimension || '',
+          weak_dimension: context?.weak_dimension || '',
+          dimension_count: context?.dimension_count || 0
+        };
+        break;
+
       case 'after_story':
         // 故事教练简报后
         shouldTrigger = true;
