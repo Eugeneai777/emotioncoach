@@ -7,13 +7,17 @@ const corsHeaders = {
 };
 
 // 模型成本配置（每1K tokens，美元）
+// OpenAI Realtime API 定价: gpt-4o-realtime $40/M input, $80/M output; mini $10/M input, $20/M output
 const MODEL_COSTS: Record<string, { input?: number; output?: number; image?: number; minute?: number }> = {
   'google/gemini-2.5-flash': { input: 0.0001, output: 0.0003 },
   'google/gemini-2.5-flash-lite': { input: 0.00005, output: 0.00015 },
   'google/gemini-2.5-pro': { input: 0.00025, output: 0.0005 },
   'google/gemini-3-pro-preview': { input: 0.0003, output: 0.0006 },
   'google/gemini-3-pro-image-preview': { image: 0.03 },
-  'gpt-4o-realtime-preview-2024-12-17': { minute: 0.06 },
+  // OpenAI Realtime API (audio tokens): $40/M input, $80/M output → per 1K: $0.04 input, $0.08 output
+  'gpt-4o-realtime-preview-2024-12-17': { input: 0.04, output: 0.08 },
+  // OpenAI Realtime Mini API (audio tokens): $10/M input, $20/M output → per 1K: $0.01 input, $0.02 output
+  'gpt-4o-mini-realtime-preview-2024-12-17': { input: 0.01, output: 0.02 },
   'gpt-4o-mini': { input: 0.00015, output: 0.0006 },
   'gpt-4o': { input: 0.005, output: 0.015 },
 };
