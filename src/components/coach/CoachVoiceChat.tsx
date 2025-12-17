@@ -65,6 +65,8 @@ export const CoachVoiceChat = ({
   const [campRecommendations, setCampRecommendations] = useState<any[] | null>(null);
   const [maxDurationMinutes, setMaxDurationMinutes] = useState<number | null>(null);
   const [isLoadingDuration, setIsLoadingDuration] = useState(true);
+  // API 成本追踪
+  const [apiUsage, setApiUsage] = useState({ inputTokens: 0, outputTokens: 0 });
   const chatRef = useRef<RealtimeChat | null>(null);
   const durationRef = useRef<NodeJS.Timeout | null>(null);
   const lastBilledMinuteRef = useRef(0);
@@ -401,14 +403,27 @@ export const CoachVoiceChat = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || billedMinutes === 0) return;
 
-      // 保存到 voice_chat_sessions
+      // 计算 API 成本 (OpenAI Realtime API 定价)
+      // gpt-4o-realtime-preview: ~$5/M input (audio), ~$20/M output (audio)
+      const inputCostUsd = (apiUsage.inputTokens / 1_000_000) * 5;
+      const outputCostUsd = (apiUsage.outputTokens / 1_000_000) * 20;
+      const totalCostUsd = inputCostUsd + outputCostUsd;
+      const totalCostCny = totalCostUsd * 7.2; // 汇率近似
+
+      console.log(`[VoiceChat] Session API cost: $${totalCostUsd.toFixed(4)} (¥${totalCostCny.toFixed(4)}), tokens: ${apiUsage.inputTokens} in / ${apiUsage.outputTokens} out`);
+
+      // 保存到 voice_chat_sessions (包含 API 成本)
       await supabase.from('voice_chat_sessions').insert({
         user_id: user.id,
         coach_key: 'vibrant_life_sage',
         duration_seconds: duration,
         billed_minutes: billedMinutes,
         total_cost: billedMinutes * POINTS_PER_MINUTE,
-        transcript_summary: (userTranscript + '\n' + transcript).slice(0, 500) || null
+        transcript_summary: (userTranscript + '\n' + transcript).slice(0, 500) || null,
+        input_tokens: apiUsage.inputTokens,
+        output_tokens: apiUsage.outputTokens,
+        api_cost_usd: parseFloat(totalCostUsd.toFixed(6)),
+        api_cost_cny: parseFloat(totalCostCny.toFixed(4))
       });
       
       // 同时保存到 vibrant_life_sage_briefings 以便在"我的生活记录"中显示
@@ -423,7 +438,7 @@ export const CoachVoiceChat = ({
         console.log('Vibrant life sage briefing saved');
       }
       
-      console.log('Voice chat session recorded');
+      console.log('Voice chat session recorded with API cost tracking');
     } catch (error) {
       console.error('Record session error:', error);
     }
@@ -521,6 +536,13 @@ export const CoachVoiceChat = ({
                 emotion_theme: '情绪梳理'
               });
             }
+          } else if (event.type === 'usage_update' && event.usage) {
+            // 累计 API 使用量
+            setApiUsage(prev => ({
+              inputTokens: prev.inputTokens + (event.usage.input_tokens || 0),
+              outputTokens: prev.outputTokens + (event.usage.output_tokens || 0)
+            }));
+            console.log(`[VoiceChat] API usage updated: +${event.usage.input_tokens} input, +${event.usage.output_tokens} output`);
           } else if (event.type === 'tool_error' && event.requiresAuth) {
             // 认证错误，结束通话并提示
             toast({
