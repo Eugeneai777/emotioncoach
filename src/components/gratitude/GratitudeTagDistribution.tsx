@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { THEME_DEFINITIONS } from "./GratitudeThemeBadge";
-import { AlertTriangle, ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp, HelpCircle, Lightbulb, X } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -12,6 +12,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface GratitudeTagDistributionProps {
   themeStats: Record<string, number>;
@@ -31,6 +36,73 @@ const TAG_PHILOSOPHY = {
     { emoji: "🎉", name: "体验幸福", desc: "美食、旅行、音乐、电影、庆祝 — 体验丰富生命的色彩" },
     { emoji: "🤝", name: "贡献幸福", desc: "帮助别人、分享、服务、给予 — 利他行为提升意义感" },
   ],
+};
+
+// 低占比标签的改善建议
+const IMPROVEMENT_SUGGESTIONS: Record<string, { title: string; tips: string[]; action: string }> = {
+  creation: {
+    title: "提升创造幸福感",
+    tips: [
+      "记录今天学到的一个新知识或技能",
+      "回顾工作中的一个小进展或突破",
+      "写下一个让你有成就感的创意想法",
+    ],
+    action: "试试记录：今天我完成了..."
+  },
+  relationship: {
+    title: "滋养关系幸福感",
+    tips: [
+      "感谢一位今天帮助过你的人",
+      "记录与家人朋友的温馨时刻",
+      "回想一次让你感动的陪伴",
+    ],
+    action: "试试记录：今天XXX让我感到温暖..."
+  },
+  wealth: {
+    title: "觉察财富幸福感",
+    tips: [
+      "感谢今天花的每一分钱带来的价值",
+      "记录一次省钱或赚钱的小确幸",
+      "回顾你拥有的资源和保障",
+    ],
+    action: "试试记录：今天在财务上让我安心的是..."
+  },
+  health: {
+    title: "关注健康幸福感",
+    tips: [
+      "感谢身体今天为你做的一切",
+      "记录一次舒适的睡眠或运动",
+      "回顾一个健康的饮食选择",
+    ],
+    action: "试试记录：今天我的身体感觉..."
+  },
+  growth: {
+    title: "深耕内在幸福感",
+    tips: [
+      "记录一个自我觉察的时刻",
+      "回顾今天的一次情绪调节",
+      "写下一个关于自己的新发现",
+    ],
+    action: "试试记录：今天我对自己有了新的理解..."
+  },
+  experience: {
+    title: "丰富体验幸福感",
+    tips: [
+      "感谢一顿美味的餐食",
+      "记录一首歌、一部电影带来的愉悦",
+      "回想一个让你开心的小惊喜",
+    ],
+    action: "试试记录：今天我享受了..."
+  },
+  contribution: {
+    title: "增添贡献幸福感",
+    tips: [
+      "记录一次帮助他人的经历",
+      "回顾分享知识或资源的时刻",
+      "感谢自己为他人带来的价值",
+    ],
+    action: "试试记录：今天我帮助了..."
+  },
 };
 
 export const GratitudeTagDistribution = ({ 
@@ -174,7 +246,44 @@ export const GratitudeTagDistribution = ({
                     </span>
                     
                     {needsAttention && (
-                      <AlertTriangle className="w-2.5 h-2.5 text-amber-500 shrink-0" />
+                      <Popover>
+                        <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <button className="p-0.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors">
+                            <AlertTriangle className="w-2.5 h-2.5 text-amber-500 shrink-0" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent 
+                          side="left" 
+                          align="start"
+                          className="w-56 p-3"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-1.5">
+                              <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                              <span className="text-xs font-medium">
+                                {IMPROVEMENT_SUGGESTIONS[theme.id]?.title || "改善建议"}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">
+                              这个维度占比较低，试试这些方法来丰富你的幸福来源：
+                            </p>
+                            <ul className="space-y-1">
+                              {IMPROVEMENT_SUGGESTIONS[theme.id]?.tips.map((tip, i) => (
+                                <li key={i} className="flex items-start gap-1.5 text-[10px]">
+                                  <span className="text-amber-500 mt-0.5">•</span>
+                                  <span>{tip}</span>
+                                </li>
+                              ))}
+                            </ul>
+                            <div className="pt-1.5 border-t border-border/50">
+                              <p className="text-[10px] text-primary font-medium">
+                                💡 {IMPROVEMENT_SUGGESTIONS[theme.id]?.action}
+                              </p>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                     )}
                   </button>
                 </TooltipTrigger>
