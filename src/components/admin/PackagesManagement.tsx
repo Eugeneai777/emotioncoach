@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Edit, Trash2, Settings, Users, Tent, Wrench, BookOpen, Sparkles, ChevronDown, ChevronRight, Home, CircleDot, Brain, Mic, Save, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Settings, Users, Tent, Wrench, BookOpen, Sparkles, ChevronDown, ChevronRight, Home, CircleDot, Brain, Mic, Save, Loader2, AlertCircle, Copy } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { PackageFeatureSettingsDialog } from "./PackageFeatureSettingsDialog";
 import FreeTrialSettings from "./FreeTrialSettings";
@@ -217,7 +218,6 @@ export function PackagesManagement() {
       price: parseFloat(formData.get("price") as string) || null,
       original_price: parseFloat(formData.get("original_price") as string) || null,
       duration_days: parseInt(formData.get("duration_days") as string) || null,
-      ai_quota: parseInt(formData.get("ai_quota") as string) || null,
       description: formData.get("description") as string,
       is_active: formData.get("is_active") === "on",
       display_order: parseInt(formData.get("display_order") as string) || 0,
@@ -262,6 +262,43 @@ export function PackagesManagement() {
     });
   };
 
+  // Batch initialize all settings for a package
+  const batchInitializeMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedPackage) return;
+      
+      const activeFeatures = featureItems.filter(f => f.is_active);
+      const configuredFeatureIds = new Set(packageSettings.map(s => s.feature_id));
+      const unconfiguredFeatures = activeFeatures.filter(f => !configuredFeatureIds.has(f.id));
+      
+      if (unconfiguredFeatures.length === 0) {
+        toast.info('所有功能已配置完成');
+        return;
+      }
+      
+      const settingsToCreate = unconfiguredFeatures.map(f => ({
+        package_id: selectedPackage,
+        feature_id: f.id,
+        is_enabled: true,
+        cost_per_use: 1,
+        free_quota: 0,
+        free_quota_period: 'monthly',
+      }));
+      
+      const { error } = await supabase.from('package_feature_settings').insert(settingsToCreate);
+      if (error) throw error;
+      
+      return unconfiguredFeatures.length;
+    },
+    onSuccess: (count) => {
+      if (count) {
+        queryClient.invalidateQueries({ queryKey: ['package-feature-settings', selectedPackage] });
+        toast.success(`已初始化 ${count} 个功能的配置`);
+      }
+    },
+    onError: () => toast.error('批量初始化失败'),
+  });
+
   const toggleSubCategory = (subCategory: string) => {
     setExpandedSubCategories(prev => ({
       ...prev,
@@ -299,6 +336,11 @@ export function PackagesManagement() {
     !p.package_key?.includes("training") &&
     p.package_key !== "partner"
   ) || [];
+
+  // Calculate unconfigured features for the selected package
+  const unconfiguredFeatures = selectedPackage ? featureItems.filter(f => 
+    f.is_active && !packageSettings.find(s => s.feature_id === f.id)
+  ) : [];
 
   const renderFeatureRow = (item: FeatureItem, showDuration: boolean = false) => {
     const setting = getSettingForFeature(item.id);
@@ -509,12 +551,12 @@ export function PackagesManagement() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="ai_quota">AI配额</Label>
+                          <Label htmlFor="display_order">显示顺序</Label>
                           <Input
-                            id="ai_quota"
-                            name="ai_quota"
+                            id="display_order"
+                            name="display_order"
                             type="number"
-                            defaultValue={editingPackage?.ai_quota || ""}
+                            defaultValue={editingPackage?.display_order || 0}
                           />
                         </div>
                       </div>
@@ -526,24 +568,13 @@ export function PackagesManagement() {
                           defaultValue={editingPackage?.description || ""}
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="display_order">显示顺序</Label>
-                          <Input
-                            id="display_order"
-                            name="display_order"
-                            type="number"
-                            defaultValue={editingPackage?.display_order || 0}
-                          />
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="is_active"
-                            name="is_active"
-                            defaultChecked={editingPackage?.is_active ?? true}
-                          />
-                          <Label htmlFor="is_active">启用</Label>
-                        </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="is_active"
+                          name="is_active"
+                          defaultChecked={editingPackage?.is_active ?? true}
+                        />
+                        <Label htmlFor="is_active">启用</Label>
                       </div>
                     </div>
                     <DialogFooter>
@@ -564,7 +595,6 @@ export function PackagesManagement() {
                     <TableHead>产品线</TableHead>
                     <TableHead>价格</TableHead>
                     <TableHead>有效期</TableHead>
-                    <TableHead>AI配额</TableHead>
                     <TableHead>状态</TableHead>
                     <TableHead>操作</TableHead>
                   </TableRow>
@@ -580,7 +610,6 @@ export function PackagesManagement() {
                       </TableCell>
                       <TableCell>¥{pkg.price || "-"}</TableCell>
                       <TableCell>{pkg.duration_days ? `${pkg.duration_days}天` : "-"}</TableCell>
-                      <TableCell>{pkg.ai_quota === -1 ? "无限" : pkg.ai_quota || "-"}</TableCell>
                       <TableCell>
                         <Badge variant={pkg.is_active ? "default" : "secondary"}>
                           {pkg.is_active ? "启用" : "禁用"}
@@ -771,7 +800,33 @@ export function PackagesManagement() {
                       ))}
                     </SelectContent>
                   </Select>
+                  
+                  {selectedPackage && unconfiguredFeatures.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => batchInitializeMutation.mutate()}
+                      disabled={batchInitializeMutation.isPending}
+                    >
+                      {batchInitializeMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Copy className="h-4 w-4 mr-2" />
+                      )}
+                      批量初始化 ({unconfiguredFeatures.length}项)
+                    </Button>
+                  )}
                 </div>
+
+                {selectedPackage && unconfiguredFeatures.length > 0 && (
+                  <Alert variant="destructive" className="border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>有 {unconfiguredFeatures.length} 个功能未配置</AlertTitle>
+                    <AlertDescription>
+                      未配置的功能将使用默认扣费规则（1点/次）。点击"批量初始化"可一键配置所有未设置的功能。
+                    </AlertDescription>
+                  </Alert>
+                )}
 
                 {selectedPackage ? (
                   <div className="space-y-6">
