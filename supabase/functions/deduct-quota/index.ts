@@ -63,6 +63,40 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ⭐ 服务端防重复扣费：检查语音通话是否已扣过同一分钟
+    if (source === 'voice_chat' && metadata?.session_id && metadata?.minute !== undefined) {
+      const { data: existingRecord } = await supabase
+        .from('usage_records')
+        .select('id')
+        .eq('source', 'voice_chat')
+        .eq('user_id', userId)
+        .filter('metadata->>session_id', 'eq', metadata.session_id)
+        .filter('metadata->>minute', 'eq', String(metadata.minute))
+        .limit(1)
+        .maybeSingle();
+
+      if (existingRecord) {
+        console.log(`⚠️ 跳过重复扣费: session=${metadata.session_id}, minute=${metadata.minute}`);
+        // 返回成功但不扣费
+        const { data: account } = await supabase
+          .from('user_accounts')
+          .select('remaining_quota')
+          .eq('user_id', userId)
+          .single();
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            cost: 0,
+            skipped: true,
+            reason: 'duplicate_billing_prevented',
+            remaining_quota: account?.remaining_quota || 0,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // ⭐ 关键改进：显式 amount 具有最高优先级
     // 如果前端传递了 amount，直接使用它，不再查询数据库
     let useExplicitAmount = false;
