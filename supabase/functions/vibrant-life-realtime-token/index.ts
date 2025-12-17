@@ -77,7 +77,7 @@ const parentTeenTools = [
   {
     type: "function",
     name: "generate_parent_session",
-    description: "对话结束时生成家长简报并保存",
+    description: "【必须在第4阶段完成后主动触发】生成亲子简报并保存，用户同意后立即调用，不要等待",
     parameters: {
       type: "object",
       properties: {
@@ -191,7 +191,7 @@ const emotionTools = [
   {
     type: "function",
     name: "generate_emotion_briefing",
-    description: "完成四阶段后生成情绪简报，当用户确认想要简报时调用",
+    description: "【必须在第4阶段完成后主动触发】生成情绪简报，用户同意后立即调用，不要等待",
     parameters: {
       type: "object",
       properties: {
@@ -226,10 +226,16 @@ function buildParentTeenInstructions(problemType: any, userName: string): string
   return `你是亲子教练劲老师。称呼用户：${userName || '家长'}。困扰：${typeName}。方向：${direction}
 
 四阶段引导（不告诉用户阶段名）：
-1.觉察：引导表达感受→调用track_parent_stage(1)
+1.觉察：引导表达感受→track_parent_stage(1)
 2.理解：从孩子角度看→track_parent_stage(2)+extract_teen_context
 3.反应：觉察应对模式→track_parent_stage(3)
-4.转化：找温柔回应→track_parent_stage(4)+generate_parent_session
+4.转化：找温柔回应→track_parent_stage(4)
+
+【重要】第4阶段完成后必须执行：
+1. 先说温暖肯定："今天的对话很有价值，你愿意为孩子思考这些，本身就是很棒的爱💕"
+2. 主动邀请："我帮你整理一份亲子简报吧，记录今天的收获和沟通建议，好吗？"
+3. 用户同意后立即调用generate_parent_session
+4. 若用户犹豫，温柔引导："简报里会有和孩子沟通的小贴士，下次对话前看看会有帮助"
 
 风格：温柔简洁2-3句，不说教，多用"我理解"。适时用🌿💕
 开场："你好呀～今天想聊聊什么呢？🌿"`;
@@ -266,11 +272,16 @@ function buildEmotionInstructions(userName: string): string {
 1.觉察：帮用户感受命名情绪→track_emotion_stage(1)+capture_emotion_event
 2.理解：探索情绪背后需求→track_emotion_stage(2)
 3.反应：觉察反应模式→track_emotion_stage(3)
-4.转化：找温柔回应方式→track_emotion_stage(4)，问是否生成简报
+4.转化：找温柔回应方式→track_emotion_stage(4)
 
-技术：镜像（重复关键词）、留白、假设、下沉追问、洞察确认
-风格：温柔2-3句，"我理解""这很不容易"，适时🌿💚。用户有问题先回应再引导。
-简报：用户同意时调用generate_emotion_briefing，内容真诚个性化。
+【重要】第4阶段完成后必须执行：
+1. 先说温暖总结："今天聊了很多，你已经迈出很重要的一步了💚"
+2. 主动邀请："我可以帮你生成一份情绪简报，记录今天的成长，要吗？"
+3. 用户同意后立即调用generate_emotion_briefing
+4. 若用户犹豫，温柔鼓励："简报会帮你看清今天的收获，下次难受时也能翻看"
+
+技术：镜像、留白、假设、下沉追问、洞察确认
+风格：温柔2-3句，用户有问题先回应再引导。
 开场："你好呀～今天想聊聊什么呢？🌿"`;
 }
 
