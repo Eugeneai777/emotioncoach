@@ -99,10 +99,18 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
+    // 获取 custom 套餐的 package_id
+    const { data: customPackage } = await supabaseAdmin
+      .from('packages')
+      .select('id')
+      .eq('package_key', 'custom')
+      .single();
+
     // Create subscription record for tracking
     const subscriptionData: any = {
       user_id: userId,
       subscription_type: packageType,
+      package_id: packageType === 'custom' ? customPackage?.id : null,
       total_quota: quantity,
       combo_name: `管理员充值 - ${packageType}`,
       status: 'active',
