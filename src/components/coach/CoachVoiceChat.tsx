@@ -76,6 +76,7 @@ export const CoachVoiceChat = ({
   const lastActivityRef = useRef(Date.now());  // 最后活动时间
   const visibilityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 页面隐藏计时器
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 无活动计时器
+  const isInitializingRef = useRef(false);  // 🔧 防止 React 严格模式下重复初始化
 
   // 🔧 全局语音会话锁 - 防止多个组件同时发起语音
   const { acquire: acquireLock, release: releaseLock, isLocked, activeComponent } = useVoiceSessionLock('CoachVoiceChat');
@@ -481,15 +482,25 @@ export const CoachVoiceChat = ({
 
   // 开始通话
   const startCall = async () => {
+    // 🔧 防止 React 严格模式下重复初始化
+    if (isInitializingRef.current) {
+      console.log('[VoiceChat] Already initializing, skipping duplicate startCall');
+      return;
+    }
+    
     // 防止重复初始化
     if (chatRef.current || status === 'connecting' || status === 'connected') {
       console.log('Call already in progress, skipping duplicate startCall');
       return;
     }
     
+    // 立即设置初始化标志
+    isInitializingRef.current = true;
+    
     // 🔧 尝试获取全局语音会话锁
     const lockId = acquireLock();
     if (!lockId) {
+      isInitializingRef.current = false;  // 重置标志
       toast({
         title: "语音通话冲突",
         description: `已有语音会话在进行中 (${activeComponent})，请先结束当前通话`,
@@ -512,6 +523,7 @@ export const CoachVoiceChat = ({
           variant: "destructive"
         });
         setStatus('error');
+        isInitializingRef.current = false;  // 重置标志
         releaseLock();  // 释放锁
         setTimeout(onClose, 1500);
         return;
@@ -521,6 +533,7 @@ export const CoachVoiceChat = ({
       const deducted = await deductQuota(1);
       if (!deducted) {
         setStatus('error');
+        isInitializingRef.current = false;  // 重置标志
         releaseLock();  // 释放锁
         setTimeout(onClose, 1500);
         return;
@@ -637,6 +650,7 @@ export const CoachVoiceChat = ({
     } catch (error: any) {
       console.error('Failed to start call:', error);
       setStatus('error');
+      isInitializingRef.current = false;  // 🔧 出错时重置标志
       releaseLock();  // 🔧 出错时释放锁
       
       // 根据错误类型显示更具体的提示
