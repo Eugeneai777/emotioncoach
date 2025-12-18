@@ -6,6 +6,7 @@ import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { WechatPayDialog } from '@/components/WechatPayDialog';
+import { useVoiceSessionLock, forceReleaseSessionLock } from '@/hooks/useVoiceSessionLock';
 
 export type VoiceChatMode = 'general' | 'parent_teen' | 'teen' | 'emotion';
 
@@ -65,6 +66,7 @@ export const CoachVoiceChat = ({
   const [campRecommendations, setCampRecommendations] = useState<any[] | null>(null);
   const [maxDurationMinutes, setMaxDurationMinutes] = useState<number | null>(null);
   const [isLoadingDuration, setIsLoadingDuration] = useState(true);
+  const [isEnding, setIsEnding] = useState(false);  // 🔧 防止重复点击挂断
   // API 成本追踪
   const [apiUsage, setApiUsage] = useState({ inputTokens: 0, outputTokens: 0 });
   const chatRef = useRef<RealtimeChat | null>(null);
@@ -74,6 +76,9 @@ export const CoachVoiceChat = ({
   const lastActivityRef = useRef(Date.now());  // 最后活动时间
   const visibilityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 页面隐藏计时器
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 无活动计时器
+
+  // 🔧 全局语音会话锁 - 防止多个组件同时发起语音
+  const { acquire: acquireLock, release: releaseLock, isLocked, activeComponent } = useVoiceSessionLock('CoachVoiceChat');
 
   // 断线重连保护常量
   const RECONNECT_WINDOW = 30 * 1000;  // 30秒内重连复用session
@@ -482,6 +487,18 @@ export const CoachVoiceChat = ({
       return;
     }
     
+    // 🔧 尝试获取全局语音会话锁
+    const lockId = acquireLock();
+    if (!lockId) {
+      toast({
+        title: "语音通话冲突",
+        description: `已有语音会话在进行中 (${activeComponent})，请先结束当前通话`,
+        variant: "destructive"
+      });
+      onClose();
+      return;
+    }
+    
     try {
       setStatus('connecting');
       
@@ -495,6 +512,7 @@ export const CoachVoiceChat = ({
           variant: "destructive"
         });
         setStatus('error');
+        releaseLock();  // 释放锁
         setTimeout(onClose, 1500);
         return;
       }
@@ -503,6 +521,7 @@ export const CoachVoiceChat = ({
       const deducted = await deductQuota(1);
       if (!deducted) {
         setStatus('error');
+        releaseLock();  // 释放锁
         setTimeout(onClose, 1500);
         return;
       }
@@ -618,6 +637,7 @@ export const CoachVoiceChat = ({
     } catch (error: any) {
       console.error('Failed to start call:', error);
       setStatus('error');
+      releaseLock();  // 🔧 出错时释放锁
       
       // 根据错误类型显示更具体的提示
       const errorMessage = error?.message || '';
@@ -640,31 +660,58 @@ export const CoachVoiceChat = ({
     }
   };
 
-  // 结束通话
-  const endCall = async () => {
-    chatRef.current?.disconnect();
-    chatRef.current = null;
-    if (durationRef.current) {
-      clearInterval(durationRef.current);
-    }
+  // 结束通话 - 🔧 添加防重复点击和更可靠的清理
+  const endCall = async (e?: React.MouseEvent) => {
+    // 阻止事件冒泡
+    e?.stopPropagation();
+    e?.preventDefault();
     
-    // 保存session信息用于断线重连
+    // 防止重复点击
+    if (isEnding) {
+      console.log('EndCall: already ending, ignoring');
+      return;
+    }
+    setIsEnding(true);
+    console.log('EndCall: starting...');
+    
     try {
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
-        sessionId: sessionIdRef.current,
-        endTime: Date.now(),
-        billedMinutes: lastBilledMinuteRef.current,
-        featureKey
-      }));
-      console.log(`Saved session for potential reconnection: ${sessionIdRef.current}, billed: ${lastBilledMinuteRef.current}`);
-    } catch (e) {
-      console.error('Error saving session to localStorage:', e);
+      // 断开 WebRTC 连接
+      chatRef.current?.disconnect();
+      chatRef.current = null;
+      
+      // 清理计时器
+      if (durationRef.current) {
+        clearInterval(durationRef.current);
+        durationRef.current = null;
+      }
+      
+      // 保存session信息用于断线重连
+      try {
+        localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
+          sessionId: sessionIdRef.current,
+          endTime: Date.now(),
+          billedMinutes: lastBilledMinuteRef.current,
+          featureKey
+        }));
+        console.log(`Saved session for potential reconnection: ${sessionIdRef.current}, billed: ${lastBilledMinuteRef.current}`);
+      } catch (e) {
+        console.error('Error saving session to localStorage:', e);
+      }
+      
+      // 记录会话
+      await recordSession();
+      
+      // 🔧 释放全局语音会话锁
+      releaseLock();
+      
+      console.log('EndCall: completed, calling onClose');
+      onClose();
+    } catch (error) {
+      console.error('EndCall error:', error);
+      // 即使出错也要释放锁和关闭
+      releaseLock();
+      onClose();
     }
-    
-    // 记录会话
-    await recordSession();
-    
-    onClose();
   };
 
   // 初始化时获取时长限制
@@ -836,6 +883,8 @@ export const CoachVoiceChat = ({
       if (inactivityTimerRef.current) {
         clearInterval(inactivityTimerRef.current);
       }
+      // 🔧 组件卸载时释放全局语音锁
+      releaseLock();
     };
   }, []);
 
@@ -905,11 +954,16 @@ export const CoachVoiceChat = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={endCall}
+            onClick={(e) => endCall(e)}
+            disabled={isEnding}
             className="text-white/70 hover:text-white hover:bg-white/10"
           >
-            <PhoneOff className="w-4 h-4 mr-1" />
-            挂断
+            {isEnding ? (
+              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+            ) : (
+              <PhoneOff className="w-4 h-4 mr-1" />
+            )}
+            {isEnding ? '结束中...' : '挂断'}
           </Button>
         </div>
       </div>

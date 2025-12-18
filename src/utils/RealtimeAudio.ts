@@ -160,7 +160,13 @@ export class AudioRecorder {
       };
       
       this.source.connect(this.processor);
-      this.processor.connect(this.audioContext.destination);
+      
+      // 🔧 修复回声问题：创建静音增益节点，防止麦克风音频被播放到扬声器
+      // 之前直接连接到 destination 会导致用户听到自己的声音（回声）
+      const silentGain = this.audioContext.createGain();
+      silentGain.gain.value = 0;  // 完全静音
+      this.processor.connect(silentGain);
+      silentGain.connect(this.audioContext.destination);
     } catch (error) {
       console.error('Error accessing microphone:', error);
       throw error;
@@ -763,75 +769,115 @@ export class RealtimeChat {
     this.isDisconnected = true;
     console.log('RealtimeChat: disconnecting...');
     
-    // 停止录音器
-    this.recorder?.stop();
-    this.recorder = null;
+    // 🔧 增强断开可靠性：每个步骤都包裹 try-catch
     
-    // 停止本地麦克风流
-    if (this.localStream) {
-      this.localStream.getTracks().forEach(track => {
-        track.stop();
-        console.log('Stopped local stream track:', track.kind);
-      });
-      this.localStream = null;
+    // 1. 停止录音器
+    try {
+      this.recorder?.stop();
+      this.recorder = null;
+      console.log('RealtimeChat: recorder stopped');
+    } catch (e) {
+      console.error('RealtimeChat: error stopping recorder:', e);
     }
     
-    // 停止音频元素播放
-    if (this.audioEl) {
-      this.audioEl.pause();
-      this.audioEl.currentTime = 0;
-      if (this.audioEl.srcObject) {
-        const stream = this.audioEl.srcObject as MediaStream;
-        stream.getTracks().forEach(track => {
-          track.stop();
-          console.log('Stopped audio element track:', track.kind);
+    // 2. 停止本地麦克风流
+    try {
+      if (this.localStream) {
+        this.localStream.getTracks().forEach(track => {
+          try {
+            track.stop();
+            console.log('Stopped local stream track:', track.kind);
+          } catch (trackErr) {
+            console.error('Error stopping track:', trackErr);
+          }
         });
-        this.audioEl.srcObject = null;
+        this.localStream = null;
       }
-      this.audioEl = null;
+    } catch (e) {
+      console.error('RealtimeChat: error stopping local stream:', e);
     }
     
-    // 关闭数据通道并移除事件监听器
-    if (this.dc) {
-      // 移除所有事件监听器
-      if (this.dcMessageHandler) {
-        this.dc.removeEventListener("message", this.dcMessageHandler);
-        this.dcMessageHandler = null;
-      }
-      if (this.dcOpenHandler) {
-        this.dc.removeEventListener("open", this.dcOpenHandler);
-        this.dcOpenHandler = null;
-      }
-      if (this.dcCloseHandler) {
-        this.dc.removeEventListener("close", this.dcCloseHandler);
-        this.dcCloseHandler = null;
-      }
-      this.dc.close();
-      this.dc = null;
-    }
-    
-    // 关闭 WebRTC 连接并停止所有轨道
-    if (this.pc) {
-      // 停止所有发送的轨道（麦克风）
-      this.pc.getSenders().forEach(sender => {
-        if (sender.track) {
-          sender.track.stop();
-          console.log('Stopped sender track:', sender.track.kind);
+    // 3. 停止音频元素播放
+    try {
+      if (this.audioEl) {
+        this.audioEl.pause();
+        this.audioEl.currentTime = 0;
+        if (this.audioEl.srcObject) {
+          const stream = this.audioEl.srcObject as MediaStream;
+          stream.getTracks().forEach(track => {
+            try {
+              track.stop();
+              console.log('Stopped audio element track:', track.kind);
+            } catch (trackErr) {
+              console.error('Error stopping audio track:', trackErr);
+            }
+          });
+          this.audioEl.srcObject = null;
         }
-      });
-      
-      // 停止所有接收的轨道（远程音频）
-      this.pc.getReceivers().forEach(receiver => {
-        if (receiver.track) {
-          receiver.track.stop();
-          console.log('Stopped receiver track:', receiver.track.kind);
-        }
-      });
-      
-      this.pc.close();
-      this.pc = null;
+        this.audioEl = null;
+      }
+    } catch (e) {
+      console.error('RealtimeChat: error stopping audio element:', e);
     }
     
+    // 4. 关闭数据通道并移除事件监听器
+    try {
+      if (this.dc) {
+        // 移除所有事件监听器
+        if (this.dcMessageHandler) {
+          this.dc.removeEventListener("message", this.dcMessageHandler);
+          this.dcMessageHandler = null;
+        }
+        if (this.dcOpenHandler) {
+          this.dc.removeEventListener("open", this.dcOpenHandler);
+          this.dcOpenHandler = null;
+        }
+        if (this.dcCloseHandler) {
+          this.dc.removeEventListener("close", this.dcCloseHandler);
+          this.dcCloseHandler = null;
+        }
+        this.dc.close();
+        this.dc = null;
+        console.log('RealtimeChat: data channel closed');
+      }
+    } catch (e) {
+      console.error('RealtimeChat: error closing data channel:', e);
+    }
+    
+    // 5. 关闭 WebRTC 连接并停止所有轨道
+    try {
+      if (this.pc) {
+        // 停止所有发送的轨道（麦克风）
+        this.pc.getSenders().forEach(sender => {
+          if (sender.track) {
+            try {
+              sender.track.stop();
+              console.log('Stopped sender track:', sender.track.kind);
+            } catch (trackErr) {
+              console.error('Error stopping sender track:', trackErr);
+            }
+          }
+        });
+        
+        // 停止所有接收的轨道（远程音频）
+        this.pc.getReceivers().forEach(receiver => {
+          if (receiver.track) {
+            try {
+              receiver.track.stop();
+              console.log('Stopped receiver track:', receiver.track.kind);
+            } catch (trackErr) {
+              console.error('Error stopping receiver track:', trackErr);
+            }
+          }
+        });
+        
+        this.pc.close();
+        this.pc = null;
+        console.log('RealtimeChat: peer connection closed');
+      }
+    } catch (e) {
+      console.error('RealtimeChat: error closing peer connection:', e);
+    }
     
     this.onStatusChange('disconnected');
     console.log('RealtimeChat: disconnected successfully');

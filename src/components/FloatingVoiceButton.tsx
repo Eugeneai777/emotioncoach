@@ -7,6 +7,8 @@ import { CoachVoiceChat } from '@/components/coach/CoachVoiceChat';
 import { WechatPayDialog } from '@/components/WechatPayDialog';
 import { PurchaseOnboardingDialog } from '@/components/onboarding/PurchaseOnboardingDialog';
 import { supabase } from '@/integrations/supabase/client';
+import { hasActiveSession, getActiveSession } from '@/hooks/useVoiceSessionLock';
+
 // 不显示浮动按钮的路由（有劲AI页面有居中CTA，不需要浮动按钮）
 const EXCLUDED_ROUTES = ['/auth', '/wechat-auth', '/coach/vibrant_life_sage', '/parent-coach', '/'];
 
@@ -167,6 +169,16 @@ const FloatingVoiceButton: React.FC = () => {
   const handleClick = async () => {
     // 如果发生了拖拽，不触发点击
     if (hasMoved) return;
+    
+    // 🔧 检查全局语音会话锁 - 防止与其他语音组件冲突
+    if (hasActiveSession()) {
+      const session = getActiveSession();
+      toast({
+        title: "语音通话进行中",
+        description: `已有语音会话在进行 (${session.component})，请先结束当前通话`,
+      });
+      return;
+    }
     
     if (!user) {
       // 未登录时弹出购买引导对话框
