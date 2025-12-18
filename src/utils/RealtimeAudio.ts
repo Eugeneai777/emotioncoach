@@ -334,6 +334,14 @@ export class RealtimeChat {
 
   async init() {
     try {
+      // 🔧 防止重复初始化：如果已有连接，先断开
+      if (this.pc || this.dc || this.audioEl) {
+        console.log('[WebRTC] Cleaning up previous connection before init...');
+        this.disconnect();
+        // 等待一小段时间确保资源释放
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
       this.isDisconnected = false;
       this.onStatusChange('connecting');
       
