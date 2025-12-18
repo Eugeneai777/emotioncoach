@@ -542,6 +542,10 @@ export const CoachVoiceChat = ({
       const chat = new RealtimeChat(
         // onMessage
         (event) => {
+          // ✅ 任何实时事件都视为“会话仍在进行”，避免无活动误判导致突然挂断
+          // 注意：Realtime 的 VAD/转写事件在不同浏览器/网络下可能不稳定，所以这里更稳妥
+          lastActivityRef.current = Date.now();
+
           console.log('Voice event:', event.type);
           
           if (event.type === 'input_audio_buffer.speech_started') {
@@ -619,6 +623,8 @@ export const CoachVoiceChat = ({
         (newStatus) => {
           setStatus(newStatus);
           if (newStatus === 'connected') {
+            // 建连成功也算一次活动，避免刚连上就被无活动计时误杀
+            lastActivityRef.current = Date.now();
             // 开始计时
             durationRef.current = setInterval(() => {
               setDuration(prev => prev + 1);
