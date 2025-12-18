@@ -64,6 +64,13 @@ export const CoachVoiceChat = ({
   const [searchKeyword, setSearchKeyword] = useState('');
   const [courseRecommendations, setCourseRecommendations] = useState<any[] | null>(null);
   const [campRecommendations, setCampRecommendations] = useState<any[] | null>(null);
+  const [coachRecommendation, setCoachRecommendation] = useState<{
+    coach_type: string;
+    coach_name: string;
+    coach_route: string;
+    description: string;
+    reason: string;
+  } | null>(null);
   const [maxDurationMinutes, setMaxDurationMinutes] = useState<number | null>(null);
   const [isLoadingDuration, setIsLoadingDuration] = useState(true);
   const [isEnding, setIsEnding] = useState(false);  // 🔧 防止重复点击挂断
@@ -590,6 +597,19 @@ export const CoachVoiceChat = ({
                 description: "点击卡片了解详情",
               });
             }
+          } else if (event.type === 'coach_recommendation') {
+            // 处理教练推荐
+            setCoachRecommendation({
+              coach_type: event.coach_type,
+              coach_name: event.coach_name,
+              coach_route: event.coach_route,
+              description: event.description,
+              reason: event.reason
+            });
+            toast({
+              title: `🎯 为你推荐 ${event.coach_name}`,
+              description: "点击卡片了解详情",
+            });
           } else if (event.type === 'briefing_saved') {
             // 处理简报保存成功
             toast({
@@ -1277,6 +1297,48 @@ export const CoachVoiceChat = ({
               <ExternalLink className="w-3 h-3 mr-1" />
               查看全部训练营
             </Button>
+          </div>
+        )}
+
+        {/* 教练推荐卡片浮层 */}
+        {coachRecommendation && (
+          <div className="absolute bottom-40 left-4 right-4 bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🎯</span>
+                <span className="text-white/90 text-sm font-medium">为你推荐</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCoachRecommendation(null)}
+                className="text-white/50 hover:text-white hover:bg-white/10 h-6 w-6 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="bg-gradient-to-br from-primary/30 to-primary/10 rounded-xl p-4 border border-primary/20">
+              <h4 className="text-white font-medium text-lg mb-2">{coachRecommendation.coach_name}</h4>
+              <p className="text-white/70 text-sm mb-2">{coachRecommendation.description}</p>
+              <p className="text-white/60 text-xs mb-4">推荐理由：{coachRecommendation.reason}</p>
+              <Button 
+                size="sm"
+                onClick={() => {
+                  chatRef.current?.disconnect();
+                  if (durationRef.current) {
+                    clearInterval(durationRef.current);
+                  }
+                  recordSession().then(() => {
+                    navigate(coachRecommendation.coach_route);
+                  });
+                }}
+                className="w-full"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                前往 {coachRecommendation.coach_name}
+              </Button>
+            </div>
           </div>
         )}
       </div>

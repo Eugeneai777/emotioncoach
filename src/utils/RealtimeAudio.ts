@@ -663,6 +663,20 @@ export class RealtimeChat {
         args: args
       });
 
+      // 检查是否是教练推荐（显示卡片，不自动导航）
+      if (data?.action === 'show_coach_recommendation') {
+        this.onMessage({
+          type: 'coach_recommendation',
+          coach_type: data.coach_type,
+          coach_name: data.coach_name,
+          coach_route: data.coach_route,
+          description: data.description,
+          reason: data.reason,
+          message: data.message,
+          navigation: data.navigation
+        });
+      }
+
       // 检查是否是导航动作
       if (data?.action === 'navigate' && data?.path) {
         this.onMessage({
