@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -8,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Bell, Moon, Leaf, Sun, Sparkles, Heart, Zap, Info, MessageSquare, QrCode, Copy, Check, Smartphone } from "lucide-react";
+import { Loader2, Bell, Moon, Leaf, Sun, Sparkles, Heart, Zap, Info, MessageSquare, QrCode, Copy, Check, Smartphone, CheckCircle, Gift } from "lucide-react";
 import QRCode from "qrcode";
 
 // 检测是否在微信内置浏览器中
@@ -19,6 +20,7 @@ const isWeChatBrowser = () => {
 
 export function SmartNotificationPreferences() {
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [previewing, setPreviewing] = useState(false);
@@ -42,9 +44,20 @@ export function SmartNotificationPreferences() {
   const [bindLoading, setBindLoading] = useState(false);
   const [settingsUrl, setSettingsUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  
+  // 关注公众号引导弹窗
+  const [showFollowGuide, setShowFollowGuide] = useState(false);
 
   useEffect(() => {
     loadPreferences();
+    
+    // 检测是否刚完成微信绑定，显示关注引导
+    if (searchParams.get('wechat_bound') === 'success') {
+      setShowFollowGuide(true);
+      // 清除URL参数
+      searchParams.delete('wechat_bound');
+      setSearchParams(searchParams, { replace: true });
+    }
   }, []);
 
   const loadPreferences = async () => {
@@ -675,6 +688,81 @@ export function SmartNotificationPreferences() {
           </Card>
         </>
       )}
+      {/* 关注公众号引导弹窗 */}
+      <Dialog open={showFollowGuide} onOpenChange={setShowFollowGuide}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#07C160] to-[#06AD56] flex items-center justify-center">
+                <MessageSquare className="w-10 h-10 text-white" />
+              </div>
+              <DialogTitle className="text-lg">绑定成功！请关注公众号</DialogTitle>
+              <DialogDescription className="text-center">
+                关注后才能接收消息通知哦
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* 公众号二维码 */}
+            <Card className="p-4 bg-white border-border">
+              <div className="flex flex-col items-center gap-3">
+                <img 
+                  src="/wechat-official-qr.png" 
+                  alt="公众号二维码"
+                  className="w-40 h-40"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }}
+                />
+                <p className="text-sm text-muted-foreground">
+                  微信扫码关注「有劲情绪日记」
+                </p>
+              </div>
+            </Card>
+
+            {/* 关注福利 */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-center">关注后可获得：</p>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                  <Bell className="w-4 h-4 text-teal-500" />
+                  <span>打卡提醒</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                  <Gift className="w-4 h-4 text-amber-500" />
+                  <span>专属福利</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                  <MessageSquare className="w-4 h-4 text-blue-500" />
+                  <span>情绪简报</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>成长报告</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Button
+                onClick={() => setShowFollowGuide(false)}
+                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                已关注，完成设置
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setShowFollowGuide(false)}
+                className="w-full text-muted-foreground"
+              >
+                稍后关注
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

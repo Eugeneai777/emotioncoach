@@ -37,7 +37,8 @@ export default function WeChatOAuthCallback() {
         // 处理绑定成功的情况
         if (isBind && (data?.success || data?.bindSuccess)) {
           toast.success("微信账号绑定成功！");
-          navigate("/settings?tab=notifications");
+          // 首次绑定成功后引导用户关注公众号
+          navigate("/settings?tab=notifications&wechat_bound=success");
           return;
         }
 
