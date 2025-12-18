@@ -479,7 +479,7 @@ serve(async (req) => {
         tool_choice: "auto",
         input_audio_format: "pcm16",
         output_audio_format: "pcm16",
-        max_response_output_tokens: 150,
+        max_response_output_tokens: 500, // 150太小会导致AI说话被截断
         turn_detection: {
           type: "server_vad",
           threshold: 0.6,
