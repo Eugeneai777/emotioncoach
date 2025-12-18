@@ -50,15 +50,18 @@ export function SmartNotificationPreferences() {
 
   useEffect(() => {
     loadPreferences();
-    
-    // 检测是否刚完成微信绑定，显示关注引导
+  }, []);
+
+  // 单独监听URL参数变化，检测绑定成功后显示关注引导
+  useEffect(() => {
     if (searchParams.get('wechat_bound') === 'success') {
       setShowFollowGuide(true);
       // 清除URL参数
-      searchParams.delete('wechat_bound');
-      setSearchParams(searchParams, { replace: true });
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('wechat_bound');
+      setSearchParams(newParams, { replace: true });
     }
-  }, []);
+  }, [searchParams, setSearchParams]);
 
   const loadPreferences = async () => {
     try {
