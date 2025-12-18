@@ -887,6 +887,9 @@ export const CoachVoiceChat = ({
     init();
     
     return () => {
+      // 🔧 重置初始化标志，允许重新初始化（React 严格模式需要）
+      isInitializingRef.current = false;
+      
       chatRef.current?.disconnect();
       if (durationRef.current) {
         clearInterval(durationRef.current);
