@@ -315,6 +315,7 @@ export class RealtimeChat {
   private audioEl: HTMLAudioElement | null = null;
   private recorder: AudioRecorder | null = null;
   private tokenEndpoint: string;
+  private mode: string;
   private localStream: MediaStream | null = null;
   private isDisconnected: boolean = false;
   
@@ -327,9 +328,11 @@ export class RealtimeChat {
     private onMessage: (message: any) => void,
     private onStatusChange: (status: 'connecting' | 'connected' | 'disconnected' | 'error') => void,
     private onTranscript: (text: string, isFinal: boolean, role: 'user' | 'assistant') => void,
-    tokenEndpoint: string = 'realtime-token'
+    tokenEndpoint: string = 'realtime-token',
+    mode: string = 'general'
   ) {
     this.tokenEndpoint = tokenEndpoint;
+    this.mode = mode;
   }
 
   async init() {
@@ -367,8 +370,10 @@ export class RealtimeChat {
         realtimeApiUrl = cachedConfig.realtimeUrl;
         this.localStream = prewarmedStream;
         
-        const { data: tokenData, error: tokenError } = await supabase.functions.invoke(this.tokenEndpoint);
-        console.log('[WebRTC] Token fetched:', performance.now() - startTime, 'ms');
+        const { data: tokenData, error: tokenError } = await supabase.functions.invoke(this.tokenEndpoint, {
+          body: { mode: this.mode }
+        });
+        console.log('[WebRTC] Token fetched:', performance.now() - startTime, 'ms', 'mode:', this.mode);
         
         if (tokenError || !tokenData?.client_secret?.value) {
           throw new Error("Failed to get ephemeral token");
@@ -377,8 +382,8 @@ export class RealtimeChat {
       } else {
         // 并行执行 token 获取和麦克风权限请求
         const [tokenResult, micResult] = await Promise.all([
-          supabase.functions.invoke(this.tokenEndpoint).then(result => {
-            console.log('[WebRTC] Token fetched:', performance.now() - startTime, 'ms');
+          supabase.functions.invoke(this.tokenEndpoint, { body: { mode: this.mode } }).then(result => {
+            console.log('[WebRTC] Token fetched:', performance.now() - startTime, 'ms', 'mode:', this.mode);
             return result;
           }),
           prewarmedStream 

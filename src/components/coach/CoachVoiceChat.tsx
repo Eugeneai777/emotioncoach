@@ -647,7 +647,8 @@ export const CoachVoiceChat = ({
             setUserTranscript(text);
           }
         },
-        tokenEndpoint
+        tokenEndpoint,
+        mode  // 传递 mode 参数以区分不同教练
       );
 
       chatRef.current = chat;
