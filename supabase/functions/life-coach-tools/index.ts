@@ -1009,14 +1009,15 @@ function recommendCoach(coachType: string, reason: string) {
 
   return {
     success: true,
-    action: 'navigate',  // 添加导航 action
+    action: 'show_coach_recommendation',  // 显示推荐卡片，不自动导航
     coach_type: coachType,
     coach_name: coach.name,
-    path: coach.route,
-    route: coach.route,
+    coach_route: coach.route,
     description: coach.description,
     reason: reason,
-    message: `推荐你使用${coach.name}，${reason}。你可以点击界面上的链接进入。`
+    message: `推荐你使用${coach.name}，${reason}。`,
+    can_navigate: true,
+    navigation: { path: coach.route, name: coach.name }
   };
 }
 
