@@ -169,6 +169,9 @@ export function SmartNotificationPreferences() {
     }
   };
 
+  // 微信OAuth必须使用在公众号后台配置的授权域名
+  const WECHAT_OAUTH_DOMAIN = 'https://eugeneai.me';
+
   const handleWechatBind = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -177,7 +180,7 @@ export function SmartNotificationPreferences() {
     
     try {
       const { data, error } = await supabase.functions.invoke("get-wechat-bind-url", {
-        body: { redirectUri: `${window.location.origin}/wechat-oauth-callback` }
+        body: { redirectUri: `${WECHAT_OAUTH_DOMAIN}/wechat-oauth-callback` }
       });
 
       if (error || !data?.url) {
