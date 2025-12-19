@@ -323,6 +323,81 @@ export type Database = {
           },
         ]
       }
+      bloom_monthly_cashflow_summary: {
+        Row: {
+          calculated_at: string | null
+          cash_balance: number | null
+          coach_settlement_outflow: number | null
+          created_at: string | null
+          cumulative_inflow: number | null
+          cumulative_outflow: number | null
+          id: string
+          l1_commission_outflow: number | null
+          l2_commission_outflow: number | null
+          net_cashflow: number | null
+          partner_package_amount: number | null
+          partner_package_inflow: number | null
+          pending_coach_settlement: number | null
+          pending_commission: number | null
+          single_camp_amount: number | null
+          single_camp_inflow: number | null
+          total_cash_inflow: number | null
+          total_cash_outflow: number | null
+          total_commission_outflow: number | null
+          total_pending_payment: number | null
+          updated_at: string | null
+          year_month: string
+        }
+        Insert: {
+          calculated_at?: string | null
+          cash_balance?: number | null
+          coach_settlement_outflow?: number | null
+          created_at?: string | null
+          cumulative_inflow?: number | null
+          cumulative_outflow?: number | null
+          id?: string
+          l1_commission_outflow?: number | null
+          l2_commission_outflow?: number | null
+          net_cashflow?: number | null
+          partner_package_amount?: number | null
+          partner_package_inflow?: number | null
+          pending_coach_settlement?: number | null
+          pending_commission?: number | null
+          single_camp_amount?: number | null
+          single_camp_inflow?: number | null
+          total_cash_inflow?: number | null
+          total_cash_outflow?: number | null
+          total_commission_outflow?: number | null
+          total_pending_payment?: number | null
+          updated_at?: string | null
+          year_month: string
+        }
+        Update: {
+          calculated_at?: string | null
+          cash_balance?: number | null
+          coach_settlement_outflow?: number | null
+          created_at?: string | null
+          cumulative_inflow?: number | null
+          cumulative_outflow?: number | null
+          id?: string
+          l1_commission_outflow?: number | null
+          l2_commission_outflow?: number | null
+          net_cashflow?: number | null
+          partner_package_amount?: number | null
+          partner_package_inflow?: number | null
+          pending_coach_settlement?: number | null
+          pending_commission?: number | null
+          single_camp_amount?: number | null
+          single_camp_inflow?: number | null
+          total_cash_inflow?: number | null
+          total_cash_outflow?: number | null
+          total_commission_outflow?: number | null
+          total_pending_payment?: number | null
+          updated_at?: string | null
+          year_month?: string
+        }
+        Relationships: []
+      }
       bloom_monthly_profit_summary: {
         Row: {
           calculated_at: string | null
