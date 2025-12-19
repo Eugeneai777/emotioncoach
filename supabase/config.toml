@@ -207,7 +207,6 @@ verify_jwt = false
 [functions.get-wechat-bind-url]
 verify_jwt = true
 
-
 [functions.life-coach-tools]
 verify_jwt = true
 
@@ -260,4 +259,10 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.check-wechat-login-status]
+verify_jwt = false
+
+[functions.calculate-coach-settlement]
+verify_jwt = true
+
+[functions.confirm-coach-settlements]
 verify_jwt = false
