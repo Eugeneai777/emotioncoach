@@ -217,6 +217,193 @@ export type Database = {
           },
         ]
       }
+      bloom_delivery_completions: {
+        Row: {
+          assignment_id: string | null
+          camp_id: string | null
+          camp_type: string
+          coach_cost: number | null
+          coach_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          l1_commission: number | null
+          l2_commission: number | null
+          order_amount: number
+          partner_id: string | null
+          profit: number | null
+          purchase_id: string | null
+          settlement_id: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assignment_id?: string | null
+          camp_id?: string | null
+          camp_type: string
+          coach_cost?: number | null
+          coach_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          l1_commission?: number | null
+          l2_commission?: number | null
+          order_amount: number
+          partner_id?: string | null
+          profit?: number | null
+          purchase_id?: string | null
+          settlement_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assignment_id?: string | null
+          camp_id?: string | null
+          camp_type?: string
+          coach_cost?: number | null
+          coach_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          l1_commission?: number | null
+          l2_commission?: number | null
+          order_amount?: number
+          partner_id?: string | null
+          profit?: number | null
+          purchase_id?: string | null
+          settlement_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bloom_delivery_completions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "camp_coach_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_delivery_completions_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_delivery_completions_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_delivery_completions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_delivery_completions_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "user_camp_purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_delivery_completions_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "coach_settlements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bloom_monthly_profit_summary: {
+        Row: {
+          calculated_at: string | null
+          coach_cost_expense: number | null
+          confirmed_partner_count: number | null
+          confirmed_partner_revenue: number | null
+          confirmed_single_count: number | null
+          confirmed_single_revenue: number | null
+          created_at: string | null
+          cumulative_confirmed: number | null
+          cumulative_presale: number | null
+          id: string
+          l1_commission_expense: number | null
+          l2_commission_expense: number | null
+          monthly_profit: number | null
+          presale_partner_amount: number | null
+          presale_partner_count: number | null
+          presale_single_amount: number | null
+          presale_single_count: number | null
+          profit_rate: number | null
+          total_commission_expense: number | null
+          total_confirmed_revenue: number | null
+          total_expense: number | null
+          total_presale_amount: number | null
+          updated_at: string | null
+          year_month: string
+        }
+        Insert: {
+          calculated_at?: string | null
+          coach_cost_expense?: number | null
+          confirmed_partner_count?: number | null
+          confirmed_partner_revenue?: number | null
+          confirmed_single_count?: number | null
+          confirmed_single_revenue?: number | null
+          created_at?: string | null
+          cumulative_confirmed?: number | null
+          cumulative_presale?: number | null
+          id?: string
+          l1_commission_expense?: number | null
+          l2_commission_expense?: number | null
+          monthly_profit?: number | null
+          presale_partner_amount?: number | null
+          presale_partner_count?: number | null
+          presale_single_amount?: number | null
+          presale_single_count?: number | null
+          profit_rate?: number | null
+          total_commission_expense?: number | null
+          total_confirmed_revenue?: number | null
+          total_expense?: number | null
+          total_presale_amount?: number | null
+          updated_at?: string | null
+          year_month: string
+        }
+        Update: {
+          calculated_at?: string | null
+          coach_cost_expense?: number | null
+          confirmed_partner_count?: number | null
+          confirmed_partner_revenue?: number | null
+          confirmed_single_count?: number | null
+          confirmed_single_revenue?: number | null
+          created_at?: string | null
+          cumulative_confirmed?: number | null
+          cumulative_presale?: number | null
+          id?: string
+          l1_commission_expense?: number | null
+          l2_commission_expense?: number | null
+          monthly_profit?: number | null
+          presale_partner_amount?: number | null
+          presale_partner_count?: number | null
+          presale_single_amount?: number | null
+          presale_single_count?: number | null
+          profit_rate?: number | null
+          total_commission_expense?: number | null
+          total_confirmed_revenue?: number | null
+          total_expense?: number | null
+          total_presale_amount?: number | null
+          updated_at?: string | null
+          year_month?: string
+        }
+        Relationships: []
+      }
       bloom_partner_orders: {
         Row: {
           completed_at: string | null

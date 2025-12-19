@@ -19,7 +19,7 @@ import { PartnerLevelManagement } from "./PartnerLevelManagement";
 import { HumanCoachesManagement } from "./human-coaches/HumanCoachesManagement";
 import AdminBloomPartnerDelivery from "./AdminBloomPartnerDelivery";
 import AdminBloomPartnerProfit from "./AdminBloomPartnerProfit";
-
+import AdminBloomMonthlyProfit from "./AdminBloomMonthlyProfit";
 export function AdminLayout() {
   return (
     <SidebarProvider>
@@ -37,6 +37,7 @@ export function AdminLayout() {
               <Route path="partners" element={<PartnerManagement />} />
               <Route path="bloom-delivery" element={<AdminBloomPartnerDelivery />} />
               <Route path="bloom-profit" element={<AdminBloomPartnerProfit />} />
+              <Route path="bloom-monthly" element={<AdminBloomMonthlyProfit />} />
               <Route path="coaches" element={<CoachTemplatesManagement />} />
               <Route path="human-coaches" element={<HumanCoachesManagement />} />
               <Route path="videos" element={<VideoCoursesManagement />} />
