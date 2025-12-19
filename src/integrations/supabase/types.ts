@@ -336,6 +336,76 @@ export type Database = {
           },
         ]
       }
+      camp_coach_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          camp_id: string
+          coach_id: string
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          product_line: string
+          purchase_id: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          camp_id: string
+          coach_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          product_line?: string
+          purchase_id?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          camp_id?: string
+          coach_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          product_line?: string
+          purchase_id?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "camp_coach_assignments_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "camp_coach_assignments_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "camp_coach_assignments_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "user_camp_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       camp_daily_progress: {
         Row: {
           camp_id: string
@@ -472,6 +542,88 @@ export type Database = {
             columns: ["camp_id"]
             isOneToOne: false
             referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      camp_delivery_reviews: {
+        Row: {
+          assignment_id: string
+          camp_id: string
+          coach_id: string
+          coach_replied_at: string | null
+          coach_reply: string | null
+          comment: string | null
+          created_at: string | null
+          id: string
+          is_anonymous: boolean | null
+          is_visible: boolean | null
+          quick_tags: string[] | null
+          rating_communication: number | null
+          rating_helpfulness: number | null
+          rating_overall: number
+          rating_professionalism: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assignment_id: string
+          camp_id: string
+          coach_id: string
+          coach_replied_at?: string | null
+          coach_reply?: string | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          is_visible?: boolean | null
+          quick_tags?: string[] | null
+          rating_communication?: number | null
+          rating_helpfulness?: number | null
+          rating_overall: number
+          rating_professionalism?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assignment_id?: string
+          camp_id?: string
+          coach_id?: string
+          coach_replied_at?: string | null
+          coach_reply?: string | null
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          is_visible?: boolean | null
+          quick_tags?: string[] | null
+          rating_communication?: number | null
+          rating_helpfulness?: number | null
+          rating_overall?: number
+          rating_professionalism?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "camp_delivery_reviews_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "camp_coach_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "camp_delivery_reviews_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "camp_delivery_reviews_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches"
             referencedColumns: ["id"]
           },
         ]
@@ -944,6 +1096,8 @@ export type Database = {
           admin_note: string | null
           appointment_id: string
           base_rate: number
+          camp_id: string | null
+          camp_review_id: string | null
           cancel_reason: string | null
           cancelled_at: string | null
           coach_id: string
@@ -954,10 +1108,12 @@ export type Database = {
           id: string
           order_amount: number
           paid_at: string | null
+          product_line: string
           rating_at_settlement: number | null
           rating_multiplier: number
           review_id: string | null
           settlement_amount: number
+          settlement_type: string
           status: string
           updated_at: string | null
         }
@@ -965,6 +1121,8 @@ export type Database = {
           admin_note?: string | null
           appointment_id: string
           base_rate: number
+          camp_id?: string | null
+          camp_review_id?: string | null
           cancel_reason?: string | null
           cancelled_at?: string | null
           coach_id: string
@@ -975,10 +1133,12 @@ export type Database = {
           id?: string
           order_amount: number
           paid_at?: string | null
+          product_line?: string
           rating_at_settlement?: number | null
           rating_multiplier: number
           review_id?: string | null
           settlement_amount: number
+          settlement_type?: string
           status?: string
           updated_at?: string | null
         }
@@ -986,6 +1146,8 @@ export type Database = {
           admin_note?: string | null
           appointment_id?: string
           base_rate?: number
+          camp_id?: string | null
+          camp_review_id?: string | null
           cancel_reason?: string | null
           cancelled_at?: string | null
           coach_id?: string
@@ -996,10 +1158,12 @@ export type Database = {
           id?: string
           order_amount?: number
           paid_at?: string | null
+          product_line?: string
           rating_at_settlement?: number | null
           rating_multiplier?: number
           review_id?: string | null
           settlement_amount?: number
+          settlement_type?: string
           status?: string
           updated_at?: string | null
         }
@@ -1009,6 +1173,20 @@ export type Database = {
             columns: ["appointment_id"]
             isOneToOne: false
             referencedRelation: "coaching_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_settlements_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_settlements_camp_review_id_fkey"
+            columns: ["camp_review_id"]
+            isOneToOne: false
+            referencedRelation: "camp_delivery_reviews"
             referencedColumns: ["id"]
           },
           {

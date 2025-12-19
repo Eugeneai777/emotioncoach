@@ -6,6 +6,10 @@ export interface CoachSettlement {
   coach_id: string;
   appointment_id: string;
   review_id: string | null;
+  camp_id: string | null;
+  camp_review_id: string | null;
+  settlement_type: string;
+  product_line: string;
   order_amount: number;
   base_rate: number;
   rating_multiplier: number;
