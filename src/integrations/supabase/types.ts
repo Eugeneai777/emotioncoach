@@ -858,6 +858,136 @@ export type Database = {
           },
         ]
       }
+      coach_settlement_rules: {
+        Row: {
+          base_commission_rate: number
+          confirm_days: number
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          rating_2_threshold: number
+          rating_3_multiplier: number
+          rating_4_multiplier: number
+          rating_5_multiplier: number
+          rule_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_commission_rate?: number
+          confirm_days?: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          rating_2_threshold?: number
+          rating_3_multiplier?: number
+          rating_4_multiplier?: number
+          rating_5_multiplier?: number
+          rule_name?: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_commission_rate?: number
+          confirm_days?: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          rating_2_threshold?: number
+          rating_3_multiplier?: number
+          rating_4_multiplier?: number
+          rating_5_multiplier?: number
+          rule_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      coach_settlements: {
+        Row: {
+          admin_note: string | null
+          appointment_id: string
+          base_rate: number
+          cancel_reason: string | null
+          cancelled_at: string | null
+          coach_id: string
+          confirm_at: string | null
+          confirmed_at: string | null
+          created_at: string | null
+          final_rate: number
+          id: string
+          order_amount: number
+          paid_at: string | null
+          rating_at_settlement: number | null
+          rating_multiplier: number
+          review_id: string | null
+          settlement_amount: number
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          appointment_id: string
+          base_rate: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          coach_id: string
+          confirm_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          final_rate: number
+          id?: string
+          order_amount: number
+          paid_at?: string | null
+          rating_at_settlement?: number | null
+          rating_multiplier: number
+          review_id?: string | null
+          settlement_amount: number
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          appointment_id?: string
+          base_rate?: number
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          coach_id?: string
+          confirm_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          final_rate?: number
+          id?: string
+          order_amount?: number
+          paid_at?: string | null
+          rating_at_settlement?: number | null
+          rating_multiplier?: number
+          review_id?: string | null
+          settlement_amount?: number
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_settlements_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_settlements_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "human_coaches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_settlements_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_templates: {
         Row: {
           briefing_table_name: string | null
@@ -2629,6 +2759,7 @@ export type Database = {
       human_coaches: {
         Row: {
           admin_note: string | null
+          available_balance: number | null
           avatar_url: string | null
           badge_type: string | null
           bio: string | null
@@ -2642,6 +2773,7 @@ export type Database = {
           is_accepting_new: boolean | null
           is_verified: boolean | null
           name: string
+          pending_balance: number | null
           phone: string | null
           positive_rate: number | null
           rating: number | null
@@ -2651,6 +2783,7 @@ export type Database = {
           specialties: string[] | null
           status: string | null
           title: string | null
+          total_earnings: number | null
           total_reviews: number | null
           total_sessions: number | null
           training_background: string | null
@@ -2658,9 +2791,11 @@ export type Database = {
           updated_at: string | null
           user_id: string | null
           verified_at: string | null
+          withdrawn_amount: number | null
         }
         Insert: {
           admin_note?: string | null
+          available_balance?: number | null
           avatar_url?: string | null
           badge_type?: string | null
           bio?: string | null
@@ -2674,6 +2809,7 @@ export type Database = {
           is_accepting_new?: boolean | null
           is_verified?: boolean | null
           name: string
+          pending_balance?: number | null
           phone?: string | null
           positive_rate?: number | null
           rating?: number | null
@@ -2683,6 +2819,7 @@ export type Database = {
           specialties?: string[] | null
           status?: string | null
           title?: string | null
+          total_earnings?: number | null
           total_reviews?: number | null
           total_sessions?: number | null
           training_background?: string | null
@@ -2690,9 +2827,11 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           verified_at?: string | null
+          withdrawn_amount?: number | null
         }
         Update: {
           admin_note?: string | null
+          available_balance?: number | null
           avatar_url?: string | null
           badge_type?: string | null
           bio?: string | null
@@ -2706,6 +2845,7 @@ export type Database = {
           is_accepting_new?: boolean | null
           is_verified?: boolean | null
           name?: string
+          pending_balance?: number | null
           phone?: string | null
           positive_rate?: number | null
           rating?: number | null
@@ -2715,6 +2855,7 @@ export type Database = {
           specialties?: string[] | null
           status?: string | null
           title?: string | null
+          total_earnings?: number | null
           total_reviews?: number | null
           total_sessions?: number | null
           training_background?: string | null
@@ -2722,6 +2863,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           verified_at?: string | null
+          withdrawn_amount?: number | null
         }
         Relationships: []
       }
@@ -5658,11 +5800,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_coach_pending_balance: {
+        Args: { p_amount: number; p_coach_id: string }
+        Returns: undefined
+      }
       add_partner_pending_balance: {
         Args: { p_amount: number; p_partner_id: string }
         Returns: undefined
       }
       cleanup_expired_wechat_login_scenes: { Args: never; Returns: undefined }
+      confirm_coach_settlement: {
+        Args: { p_amount: number; p_coach_id: string }
+        Returns: undefined
+      }
       confirm_partner_commission: {
         Args: { p_amount: number; p_partner_id: string }
         Returns: undefined
