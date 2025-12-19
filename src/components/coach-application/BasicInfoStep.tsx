@@ -138,10 +138,12 @@ export function BasicInfoStep({ data, onChange, onNext }: BasicInfoStepProps) {
           <Input
             id="phone"
             type="tel"
+            inputMode="tel"
             placeholder="您的手机号码"
             value={data.phone}
             onChange={(e) => onChange({ ...data, phone: e.target.value })}
             maxLength={11}
+            autoComplete="tel"
           />
         </div>
 
@@ -150,6 +152,7 @@ export function BasicInfoStep({ data, onChange, onNext }: BasicInfoStepProps) {
           <Input
             id="experience"
             type="number"
+            inputMode="numeric"
             min={0}
             max={50}
             placeholder="从业年限"
@@ -185,7 +188,7 @@ export function BasicInfoStep({ data, onChange, onNext }: BasicInfoStepProps) {
                 variant={data.specialties.includes(specialty) ? "default" : "outline"}
                 size="sm"
                 onClick={() => toggleSpecialty(specialty)}
-                className="rounded-full"
+                className="rounded-full min-h-[40px] px-4"
               >
                 {specialty}
               </Button>

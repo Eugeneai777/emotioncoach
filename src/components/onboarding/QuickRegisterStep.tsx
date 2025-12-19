@@ -178,7 +178,7 @@ export function QuickRegisterStep({
         </div>
       ) : (
         /* 手机号注册 */
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="nickname">昵称（可选）</Label>
             <Input
@@ -186,25 +186,28 @@ export function QuickRegisterStep({
               placeholder="输入你的昵称"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
+              autoComplete="nickname"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="phone">手机号</Label>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Input
                 id="phone"
                 type="tel"
+                inputMode="tel"
                 placeholder="输入手机号"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 maxLength={11}
+                autoComplete="tel"
               />
               <Button
                 variant="outline"
                 onClick={sendCode}
                 disabled={isLoading || countdown > 0}
-                className="shrink-0"
+                className="shrink-0 min-w-[100px]"
               >
                 {countdown > 0 ? `${countdown}s` : '发送验证码'}
               </Button>
@@ -216,10 +219,12 @@ export function QuickRegisterStep({
               <Label htmlFor="code">验证码</Label>
               <Input
                 id="code"
+                inputMode="numeric"
                 placeholder="输入验证码"
                 value={verifyCode}
                 onChange={(e) => setVerifyCode(e.target.value)}
                 maxLength={6}
+                autoComplete="one-time-code"
               />
             </div>
           )}
