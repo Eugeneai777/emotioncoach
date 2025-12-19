@@ -266,3 +266,6 @@ verify_jwt = true
 
 [functions.confirm-coach-settlements]
 verify_jwt = false
+
+[functions.calculate-camp-settlement]
+verify_jwt = true
