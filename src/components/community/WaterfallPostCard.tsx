@@ -159,7 +159,7 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
 
   return (
     <Card 
-      className="overflow-hidden cursor-pointer hover:shadow-lg active:scale-[0.98] transition-all duration-200 group mb-3 touch-manipulation bg-white/60 backdrop-blur-sm border-white/40 hover:bg-white/80 shadow-sm hover:shadow-teal-100/50"
+      className="overflow-hidden cursor-pointer hover:shadow-lg active:scale-[0.98] transition-all duration-200 group mb-4 touch-manipulation bg-white/80 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/40 hover:bg-white/90 dark:hover:bg-gray-800/70 shadow-sm hover:shadow-teal-100/50 dark:hover:shadow-teal-900/30"
       onClick={handleClick}
     >
       {/* 图片区域 - 使用渐进式加载组件 */}
@@ -174,7 +174,7 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
           {coachSpace && (
             <div className={cn(
               "absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-medium z-10",
-              "flex items-center gap-1 backdrop-blur-md shadow-sm bg-white/70",
+              "flex items-center gap-1 backdrop-blur-md shadow-sm bg-white/80 dark:bg-gray-800/80",
               coachSpace.colorClass
             )}>
               <span>{coachSpace.emoji}</span>
@@ -183,8 +183,8 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
           )}
         </div>
       ) : (
-        <div className="relative w-full h-40 bg-gradient-to-br from-teal-100/60 via-cyan-100/40 to-blue-100/60 flex items-center justify-center">
-          <span className="text-4xl opacity-50">
+        <div className="relative w-full h-40 bg-gradient-to-br from-teal-100/60 via-cyan-100/40 to-blue-100/60 dark:from-teal-900/30 dark:via-cyan-900/20 dark:to-blue-900/30 flex items-center justify-center">
+          <span className="text-4xl opacity-60">
             {post.post_type === 'story' ? '🌸' : 
              post.post_type === 'checkin' ? '📅' :
              post.post_type === 'achievement' ? '🏆' :
@@ -194,7 +194,7 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
           {coachSpace && (
             <div className={cn(
               "absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-medium z-10",
-              "flex items-center gap-1 backdrop-blur-md shadow-sm bg-white/70",
+              "flex items-center gap-1 backdrop-blur-md shadow-sm bg-white/80 dark:bg-gray-800/80",
               coachSpace.colorClass
             )}>
               <span>{coachSpace.emoji}</span>
@@ -205,7 +205,7 @@ const WaterfallPostCard = memo(({ post, isLiked = false, onCardClick, onLikeChan
       )}
       {/* 标题区域 */}
       <div className="p-3">
-        <h3 className="text-sm font-medium text-foreground/90 line-clamp-2 mb-2 leading-relaxed">
+        <h3 className="text-sm font-medium text-foreground line-clamp-2 mb-2 leading-relaxed">
           {displayTitle}
         </h3>
 
