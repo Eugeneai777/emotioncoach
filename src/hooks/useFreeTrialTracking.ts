@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface UseFreeTrialOptions {
   featureKey: string;
@@ -20,11 +20,30 @@ const getVisitorId = (): string => {
 
 export function useFreeTrialTracking({ featureKey, defaultLimit = 5 }: UseFreeTrialOptions) {
   const { user } = useAuth();
-  const storageKey = `${featureKey}_lifetime_uses`;
+  const queryClient = useQueryClient();
   
-  const [usageCount, setUsageCount] = useState<number>(() => {
-    const stored = localStorage.getItem(storageKey);
-    return stored ? parseInt(stored, 10) : 0;
+  // 从数据库获取用户使用次数
+  const { data: usageData, isLoading: isLoadingUsage } = useQuery({
+    queryKey: ['user-feature-usage', featureKey, user?.id],
+    queryFn: async () => {
+      if (!user?.id) return { usage_count: 0 };
+      
+      const { data, error } = await supabase
+        .from('user_feature_usage')
+        .select('usage_count')
+        .eq('user_id', user.id)
+        .eq('feature_key', featureKey)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Failed to fetch usage count:', error);
+        return { usage_count: 0 };
+      }
+      
+      return data || { usage_count: 0 };
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5, // 5分钟缓存
   });
 
   // 从数据库获取免费次数配置
@@ -43,6 +62,7 @@ export function useFreeTrialTracking({ featureKey, defaultLimit = 5 }: UseFreeTr
     staleTime: 1000 * 60 * 5, // 5分钟缓存
   });
 
+  const usageCount = usageData?.usage_count ?? 0;
   const freeLimit = settings?.limit ?? defaultLimit;
   const isLimitReached = usageCount >= freeLimit;
   const remainingFree = Math.max(0, freeLimit - usageCount);
@@ -62,22 +82,50 @@ export function useFreeTrialTracking({ featureKey, defaultLimit = 5 }: UseFreeTr
     }
   }, [featureKey, user?.id, usageCount]);
 
-  // 增加使用次数
-  const incrementUsage = useCallback(() => {
-    const newCount = usageCount + 1;
-    localStorage.setItem(storageKey, newCount.toString());
-    setUsageCount(newCount);
-    
-    // 记录使用事件
-    trackEvent('feature_use', { new_count: newCount });
-    
-    // 首次达到免费上限
-    if (newCount === freeLimit) {
-      trackEvent('free_limit_reached');
+  // 增加使用次数（存储到数据库）
+  const incrementUsage = useCallback(async () => {
+    if (!user?.id) {
+      console.warn('User not logged in, cannot track usage');
+      return usageCount;
     }
+
+    const newCount = usageCount + 1;
     
-    return newCount;
-  }, [usageCount, storageKey, freeLimit, trackEvent]);
+    try {
+      // 使用 upsert 更新或插入使用记录
+      const { error } = await supabase
+        .from('user_feature_usage')
+        .upsert({
+          user_id: user.id,
+          feature_key: featureKey,
+          usage_count: newCount,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id,feature_key',
+        });
+
+      if (error) {
+        console.error('Failed to update usage count:', error);
+        return usageCount;
+      }
+
+      // 刷新缓存
+      queryClient.invalidateQueries({ queryKey: ['user-feature-usage', featureKey, user.id] });
+      
+      // 记录使用事件
+      trackEvent('feature_use', { new_count: newCount });
+      
+      // 首次达到免费上限
+      if (newCount === freeLimit) {
+        trackEvent('free_limit_reached');
+      }
+      
+      return newCount;
+    } catch (error) {
+      console.error('Failed to increment usage:', error);
+      return usageCount;
+    }
+  }, [user?.id, usageCount, featureKey, freeLimit, trackEvent, queryClient]);
 
   // 首次访问追踪
   useEffect(() => {
@@ -95,5 +143,6 @@ export function useFreeTrialTracking({ featureKey, defaultLimit = 5 }: UseFreeTr
     remainingFree,
     incrementUsage,
     trackEvent,
+    isLoading: isLoadingUsage,
   };
 }

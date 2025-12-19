@@ -147,7 +147,7 @@ const EmotionReliefFlow: React.FC<EmotionReliefFlowProps> = ({ emotionType, onCl
   // 选择模式
   const handleSelectMode = async (mode: StartMode) => {
     // 增加使用次数
-    const newCount = incrementUsage();
+    const newCount = await incrementUsage();
     
     // 检查是否超过免费次数（但不阻断）
     if (newCount > freeLimit) {
