@@ -16,7 +16,8 @@ import {
   Menu,
   X,
   Bell,
-  Phone
+  Phone,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CoachDashboardOverview } from "@/components/coach-dashboard/CoachDashboardOverview";
@@ -28,11 +29,13 @@ import { CoachProfileSettings } from "@/components/coach-dashboard/CoachProfileS
 import { CoachNotificationCenter } from "@/components/coach-dashboard/CoachNotificationCenter";
 import { CoachAppointmentCalendar } from "@/components/coach-dashboard/CoachAppointmentCalendar";
 import { CoachCallHistory } from "@/components/coach-dashboard/CoachCallHistory";
+import { CoachStudentProgress } from "@/components/coach-dashboard/CoachStudentProgress";
 import { useCoachNotifications } from "@/hooks/useCoachNotifications";
 
 const menuItems = [
   { id: 'overview', label: '数据概览', icon: LayoutDashboard },
   { id: 'notifications', label: '消息中心', icon: Bell },
+  { id: 'students', label: '学员进度', icon: Sparkles },
   { id: 'calendar', label: '预约日历', icon: Calendar },
   { id: 'time', label: '时间管理', icon: Calendar },
   { id: 'appointments', label: '预约管理', icon: ClipboardList },
@@ -82,6 +85,8 @@ export default function CoachDashboard() {
         return <CoachDashboardOverview coachId={coachProfile.id} />;
       case 'notifications':
         return <CoachNotificationCenter coachId={coachProfile.id} onNavigate={setActiveTab} />;
+      case 'students':
+        return <CoachStudentProgress coachId={coachProfile.id} />;
       case 'calendar':
         return <CoachAppointmentCalendar coachId={coachProfile.id} />;
       case 'time':
