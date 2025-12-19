@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -23,17 +24,17 @@ import {
   X, 
   Loader2, 
   Phone, 
-  Award, 
   Briefcase, 
-  FileCheck,
-  Clock
+  Clock,
+  Crown
 } from "lucide-react";
 import { CertificationReview } from "./CertificationReview";
+import { useCoachPriceTiers } from "@/hooks/useCoachPriceTiers";
 
 interface CoachApplicationDetailProps {
   coachId: string;
   onClose: () => void;
-  onApprove: (coachId: string, adminNote?: string) => void;
+  onApprove: (coachId: string, adminNote?: string, priceTierId?: string) => void;
   onReject: (coachId: string, adminNote?: string) => void;
   isPending: boolean;
 }
@@ -46,6 +47,9 @@ export function CoachApplicationDetail({
   isPending
 }: CoachApplicationDetailProps) {
   const [adminNote, setAdminNote] = useState("");
+  const [selectedTierId, setSelectedTierId] = useState<string>("");
+
+  const { data: priceTiers } = useCoachPriceTiers();
 
   const { data: coach, isLoading } = useQuery({
     queryKey: ["human-coach-detail", coachId],
@@ -65,6 +69,14 @@ export function CoachApplicationDetail({
     }
   });
 
+  const handleApprove = () => {
+    if (!selectedTierId) {
+      toast.error("请先选择收费档次");
+      return;
+    }
+    onApprove(coachId, adminNote, selectedTierId);
+  };
+
   if (isLoading) {
     return (
       <Dialog open onOpenChange={onClose}>
@@ -80,6 +92,7 @@ export function CoachApplicationDetail({
   if (!coach) return null;
 
   const isPendingStatus = coach.status === "pending";
+  const selectedTier = priceTiers?.find(t => t.id === selectedTierId);
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -203,8 +216,8 @@ export function CoachApplicationDetail({
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-primary">¥{service.price}</p>
                         <p className="text-xs text-muted-foreground">{service.duration_minutes}分钟</p>
+                        <p className="text-xs text-muted-foreground mt-1">价格待设定</p>
                       </div>
                     </div>
                   </CardContent>
@@ -215,7 +228,35 @@ export function CoachApplicationDetail({
         </Tabs>
 
         {isPendingStatus && (
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 space-y-4">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Crown className="h-4 w-4 text-amber-500" />
+                收费档次 *
+              </Label>
+              <Select value={selectedTierId} onValueChange={setSelectedTierId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="请选择收费档次" />
+                </SelectTrigger>
+                <SelectContent>
+                  {priceTiers?.map((tier) => (
+                    <SelectItem key={tier.id} value={tier.id}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{tier.tier_name}</span>
+                        <span className="text-primary font-semibold">¥{tier.price}</span>
+                        <span className="text-muted-foreground text-xs">- {tier.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedTier && (
+                <p className="text-sm text-muted-foreground">
+                  选择后，该教练的所有服务将统一定价为 <span className="text-primary font-semibold">¥{selectedTier.price}</span>
+                </p>
+              )}
+            </div>
+
             <div>
               <Label>审核备注（可选）</Label>
               <Textarea
@@ -243,8 +284,8 @@ export function CoachApplicationDetail({
                 拒绝申请
               </Button>
               <Button
-                onClick={() => onApprove(coachId, adminNote)}
-                disabled={isPending}
+                onClick={handleApprove}
+                disabled={isPending || !selectedTierId}
               >
                 {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
                 通过申请

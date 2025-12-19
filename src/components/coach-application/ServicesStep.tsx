@@ -3,7 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Plus, X, ArrowLeft, Clock, Coins } from "lucide-react";
+import { Plus, X, ArrowLeft, Clock, Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Service {
   serviceName: string;
@@ -29,7 +30,7 @@ export function ServicesStep({ data, onChange, onNext, onBack }: ServicesStepPro
         serviceName: "",
         description: "",
         durationMinutes: 60,
-        price: 0,
+        price: 0, // Will be set by admin
       },
     ]);
   };
@@ -44,16 +45,23 @@ export function ServicesStep({ data, onChange, onNext, onBack }: ServicesStepPro
 
   const isValid =
     data.length > 0 &&
-    data.every((service) => service.serviceName && service.price > 0);
+    data.every((service) => service.serviceName.trim() !== "");
 
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-xl font-semibold text-foreground">服务项目</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          设置您提供的咨询服务，包括时长和价格
+          设置您提供的咨询服务项目
         </p>
       </div>
+
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          服务价格将由平台审核后根据您的资质和经验统一设定，分为4个档次：¥2000、¥1200、¥600、¥300
+        </AlertDescription>
+      </Alert>
 
       <div className="space-y-4">
         {data.map((service, index) => (
@@ -92,52 +100,27 @@ export function ServicesStep({ data, onChange, onNext, onBack }: ServicesStepPro
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  时长（分钟）
-                </Label>
-                <select
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  value={service.durationMinutes}
-                  onChange={(e) =>
-                    updateService(index, {
-                      durationMinutes: parseInt(e.target.value),
-                    })
-                  }
-                >
-                  {DURATION_OPTIONS.map((duration) => (
-                    <option key={duration} value={duration}>
-                      {duration} 分钟
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1">
-                  <Coins className="h-4 w-4" />
-                  价格（元）*
-                </Label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={9999}
-                  placeholder="0"
-                  value={service.price || ""}
-                  onChange={(e) =>
-                    updateService(index, { price: parseFloat(e.target.value) || 0 })
-                  }
-                />
-              </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                时长（分钟）
+              </Label>
+              <select
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                value={service.durationMinutes}
+                onChange={(e) =>
+                  updateService(index, {
+                    durationMinutes: parseInt(e.target.value),
+                  })
+                }
+              >
+                {DURATION_OPTIONS.map((duration) => (
+                  <option key={duration} value={duration}>
+                    {duration} 分钟
+                  </option>
+                ))}
+              </select>
             </div>
-
-            {service.price > 0 && service.durationMinutes > 0 && (
-              <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-2 text-center">
-                每分钟 ¥{(service.price / service.durationMinutes).toFixed(2)}
-              </div>
-            )}
           </Card>
         ))}
 
@@ -153,9 +136,9 @@ export function ServicesStep({ data, onChange, onNext, onBack }: ServicesStepPro
 
       {data.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          <Coins className="h-12 w-12 mx-auto mb-3 opacity-50" />
+          <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
           <p>请添加至少一个服务项目</p>
-          <p className="text-sm">设置您提供的咨询服务和价格</p>
+          <p className="text-sm">设置您提供的咨询服务</p>
         </div>
       )}
 

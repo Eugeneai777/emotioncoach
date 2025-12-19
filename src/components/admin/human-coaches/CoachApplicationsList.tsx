@@ -38,26 +38,66 @@ export function CoachApplicationsList({ status }: CoachApplicationsListProps) {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ coachId, newStatus, adminNote }: { 
+    mutationFn: async ({ coachId, newStatus, adminNote, priceTierId }: { 
       coachId: string; 
       newStatus: "approved" | "rejected";
       adminNote?: string;
+      priceTierId?: string;
     }) => {
+      // If approving, we need a price tier
+      if (newStatus === "approved" && !priceTierId) {
+        throw new Error("审核通过必须选择收费档次");
+      }
+
+      let tierPrice: number | null = null;
+
+      // Get tier price if approving
+      if (newStatus === "approved" && priceTierId) {
+        const { data: tier, error: tierError } = await supabase
+          .from("coach_price_tiers")
+          .select("price")
+          .eq("id", priceTierId)
+          .single();
+        
+        if (tierError) throw tierError;
+        tierPrice = tier.price;
+      }
+
+      // Update coach status and price tier
+      const updateData: Record<string, unknown> = {
+        status: newStatus,
+        admin_note: adminNote,
+        updated_at: new Date().toISOString()
+      };
+
+      if (priceTierId) {
+        updateData.price_tier_id = priceTierId;
+        updateData.price_tier_set_at = new Date().toISOString();
+      }
+
       const { error } = await supabase
         .from("human_coaches")
-        .update({ 
-          status: newStatus,
-          admin_note: adminNote,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq("id", coachId);
       
       if (error) throw error;
+
+      // Sync service prices if approving
+      if (newStatus === "approved" && tierPrice !== null) {
+        const { error: servicesError } = await supabase
+          .from("coach_services")
+          .update({ price: tierPrice })
+          .eq("coach_id", coachId);
+        
+        if (servicesError) {
+          console.error("Failed to sync service prices:", servicesError);
+        }
+      }
     },
     onSuccess: (_, { newStatus }) => {
       queryClient.invalidateQueries({ queryKey: ["human-coaches"] });
       queryClient.invalidateQueries({ queryKey: ["human-coaches-stats"] });
-      toast.success(newStatus === "approved" ? "教练申请已通过" : "教练申请已拒绝");
+      toast.success(newStatus === "approved" ? "教练申请已通过，服务价格已同步" : "教练申请已拒绝");
       setSelectedCoachId(null);
     },
     onError: (error) => {
@@ -141,46 +181,24 @@ export function CoachApplicationsList({ status }: CoachApplicationsListProps) {
                 </Button>
                 
                 {status === "pending" && (
-                  <>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => updateStatusMutation.mutate({ 
-                        coachId: coach.id, 
-                        newStatus: "approved" 
-                      })}
-                      disabled={updateStatusMutation.isPending}
-                    >
-                      <Check className="h-4 w-4 mr-1" />
-                      通过
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => updateStatusMutation.mutate({ 
-                        coachId: coach.id, 
-                        newStatus: "rejected" 
-                      })}
-                      disabled={updateStatusMutation.isPending}
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      拒绝
-                    </Button>
-                  </>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedCoachId(coach.id)}
+                  >
+                    <Check className="h-4 w-4 mr-1" />
+                    审核
+                  </Button>
                 )}
                 
                 {status === "rejected" && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => updateStatusMutation.mutate({ 
-                      coachId: coach.id, 
-                      newStatus: "approved" 
-                    })}
-                    disabled={updateStatusMutation.isPending}
+                    onClick={() => setSelectedCoachId(coach.id)}
                   >
                     <Check className="h-4 w-4 mr-1" />
-                    重新通过
+                    重新审核
                   </Button>
                 )}
               </div>
@@ -193,8 +211,8 @@ export function CoachApplicationsList({ status }: CoachApplicationsListProps) {
         <CoachApplicationDetail
           coachId={selectedCoachId}
           onClose={() => setSelectedCoachId(null)}
-          onApprove={(coachId, adminNote) => 
-            updateStatusMutation.mutate({ coachId, newStatus: "approved", adminNote })
+          onApprove={(coachId, adminNote, priceTierId) => 
+            updateStatusMutation.mutate({ coachId, newStatus: "approved", adminNote, priceTierId })
           }
           onReject={(coachId, adminNote) => 
             updateStatusMutation.mutate({ coachId, newStatus: "rejected", adminNote })
