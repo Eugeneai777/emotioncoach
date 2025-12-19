@@ -20,7 +20,8 @@ import {
   Home,
   TrendingUp,
   UserCheck,
-  Flower2
+  Flower2,
+  Wallet
 } from "lucide-react";
 import {
   Sidebar,
@@ -59,7 +60,8 @@ const NAV_GROUPS = [
       { key: "bloom-delivery", label: "合伙人交付", path: "/admin/bloom-delivery", icon: Package },
       { key: "bloom-single", label: "单营交付", path: "/admin/bloom-single", icon: Flower2 },
       { key: "bloom-profit", label: "绽放利润核算", path: "/admin/bloom-profit", icon: DollarSign },
-      { key: "bloom-monthly", label: "绽放月度利润", path: "/admin/bloom-monthly", icon: TrendingUp }
+      { key: "bloom-monthly", label: "绽放月度利润", path: "/admin/bloom-monthly", icon: TrendingUp },
+      { key: "bloom-cashflow", label: "绽放月度现金流", path: "/admin/bloom-cashflow", icon: Wallet }
     ]
   },
   {

@@ -21,6 +21,7 @@ import AdminBloomPartnerDelivery from "./AdminBloomPartnerDelivery";
 import AdminBloomPartnerProfit from "./AdminBloomPartnerProfit";
 import AdminBloomMonthlyProfit from "./AdminBloomMonthlyProfit";
 import AdminBloomSingleDelivery from "./AdminBloomSingleDelivery";
+import AdminBloomMonthlyCashflow from "./AdminBloomMonthlyCashflow";
 
 export function AdminLayout() {
   return (
@@ -41,6 +42,7 @@ export function AdminLayout() {
               <Route path="bloom-single" element={<AdminBloomSingleDelivery />} />
               <Route path="bloom-profit" element={<AdminBloomPartnerProfit />} />
               <Route path="bloom-monthly" element={<AdminBloomMonthlyProfit />} />
+              <Route path="bloom-cashflow" element={<AdminBloomMonthlyCashflow />} />
               <Route path="coaches" element={<CoachTemplatesManagement />} />
               <Route path="human-coaches" element={<HumanCoachesManagement />} />
               <Route path="videos" element={<VideoCoursesManagement />} />
