@@ -277,28 +277,59 @@ export const CoachVoiceChat = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return DEFAULT_MAX_DURATION_MINUTES;
 
-      // 获取用户最新有效订单的套餐
-      const { data: order } = await supabase
-        .from('orders')
-        .select('package_key')
+      let packageId: string | null = null;
+
+      // 1. 首先检查 subscriptions 表获取有效订阅（管理员充值会创建此记录）
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('package_id')
         .eq('user_id', user.id)
-        .eq('status', 'paid')
+        .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
 
-      const packageKey = order?.package_key || 'basic';
+      if (subscription?.package_id) {
+        packageId = subscription.package_id;
+        console.log('[VoiceChat] Found active subscription with package_id:', packageId);
+      }
 
-      // 获取套餐ID
-      const { data: pkg } = await supabase
-        .from('packages')
-        .select('id')
-        .eq('package_key', packageKey)
-        .single();
+      // 2. 如果没有有效订阅，再检查 orders 表
+      if (!packageId) {
+        const { data: order } = await supabase
+          .from('orders')
+          .select('package_key')
+          .eq('user_id', user.id)
+          .eq('status', 'paid')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
 
-      if (!pkg) return DEFAULT_MAX_DURATION_MINUTES;
+        if (order?.package_key) {
+          const { data: pkg } = await supabase
+            .from('packages')
+            .select('id')
+            .eq('package_key', order.package_key)
+            .single();
+          packageId = pkg?.id || null;
+          console.log('[VoiceChat] Found order with package_key:', order.package_key);
+        }
+      }
 
-      // 获取对应教练的语音功能ID
+      // 3. 如果都没有，使用 basic 套餐
+      if (!packageId) {
+        const { data: basicPkg } = await supabase
+          .from('packages')
+          .select('id')
+          .eq('package_key', 'basic')
+          .single();
+        packageId = basicPkg?.id || null;
+        console.log('[VoiceChat] Using default basic package');
+      }
+
+      if (!packageId) return DEFAULT_MAX_DURATION_MINUTES;
+
+      // 4. 获取对应教练的语音功能ID
       const { data: feature } = await supabase
         .from('feature_items')
         .select('id')
@@ -307,13 +338,15 @@ export const CoachVoiceChat = ({
 
       if (!feature) return DEFAULT_MAX_DURATION_MINUTES;
 
-      // 获取该套餐对应的时长限制
+      // 5. 获取该套餐对应的时长限制
       const { data: setting } = await supabase
         .from('package_feature_settings')
         .select('max_duration_minutes')
         .eq('feature_id', feature.id)
-        .eq('package_id', pkg.id)
+        .eq('package_id', packageId)
         .single();
+
+      console.log('[VoiceChat] Duration setting:', setting?.max_duration_minutes, '(null = unlimited)');
 
       // null 表示不限时，undefined/不存在则使用默认值
       if (setting === null) return DEFAULT_MAX_DURATION_MINUTES;
