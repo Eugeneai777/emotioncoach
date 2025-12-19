@@ -1058,11 +1058,11 @@ export const CoachVoiceChat = ({
           )}
         </div>
 
-        {/* 教练名称 */}
-        <h2 className="text-white text-2xl font-medium mb-2">{coachTitle}</h2>
+        {/* 教练名称 - 增强可读性 */}
+        <h2 className="text-white text-2xl font-semibold mb-2 drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>{coachTitle}</h2>
         
-        {/* 状态文字 */}
-        <div className="flex items-center gap-2 text-white/60 text-sm mb-8">
+        {/* 状态文字 - 增强对比度 */}
+        <div className="flex items-center gap-2 text-white/80 text-sm mb-8 drop-shadow-md font-medium">
           {status === 'connecting' && (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -1089,18 +1089,18 @@ export const CoachVoiceChat = ({
           )}
         </div>
 
-        {/* 转录文本 */}
+        {/* 转录文本 - 增强对比度 */}
         <div className="w-full max-w-md space-y-3">
           {userTranscript && (
-            <div className="bg-white/10 rounded-2xl px-4 py-3 backdrop-blur">
-              <p className="text-white/50 text-xs mb-1">你说：</p>
-              <p className="text-white/90 text-sm">{userTranscript}</p>
+            <div className="bg-black/30 rounded-2xl px-4 py-3 backdrop-blur-md border border-white/10">
+              <p className="text-white/70 text-xs mb-1 font-medium">你说：</p>
+              <p className="text-white text-sm leading-relaxed">{userTranscript}</p>
             </div>
           )}
           {transcript && (
-            <div className={`${colors.bg}/20 rounded-2xl px-4 py-3 backdrop-blur border ${colors.border}/30`}>
-              <p className={`${colors.text}/70 text-xs mb-1`}>劲老师：</p>
-              <p className="text-white/90 text-sm">{transcript}</p>
+            <div className={`bg-black/30 rounded-2xl px-4 py-3 backdrop-blur-md border ${colors.border}/40`}>
+              <p className={`${colors.text} text-xs mb-1 font-medium`}>劲老师：</p>
+              <p className="text-white text-sm leading-relaxed">{transcript}</p>
             </div>
           )}
         </div>

@@ -647,28 +647,28 @@ const CommunityWaterfall = () => {
         onTouchStart={handleButtonTouchStart}
       >
         <div 
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity group"
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity group min-h-[44px]"
           onClick={() => navigate("/community")}
         >
-          <h2 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+          <h2 className="text-lg sm:text-xl font-bold text-foreground group-hover:text-primary transition-colors">
             🌈 有劲社区
           </h2>
-          <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded-full border border-border/50">NEW</span>
+          <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-primary/10 text-primary font-semibold rounded-full border border-primary/20">NEW</span>
           <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
         </div>
-          <Button 
-            variant="outline"
-            className="gap-1 bg-card border-border/60 hover:bg-muted hover:border-border active:scale-95 transition-all duration-150 text-foreground/90 min-h-[44px] min-w-[44px] touch-manipulation"
-            onClick={() => navigate("/my-posts")}
-          >
-            <Plus className="w-4 h-4 text-foreground/70" />
-            我的动态
-          </Button>
+        <Button 
+          variant="outline"
+          className="gap-1 bg-card border-border/60 hover:bg-muted hover:border-border active:scale-95 transition-all duration-150 text-foreground min-h-[44px] px-3 touch-manipulation font-medium"
+          onClick={() => navigate("/my-posts")}
+        >
+          <Plus className="w-4 h-4" />
+          <span className="hidden xs:inline">我的</span>动态
+        </Button>
       </div>
 
       {/* 分类标签栏 - 按钮区域独立处理触摸事件 */}
       <div 
-        className="grid grid-cols-4 gap-2 mb-4"
+        className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-4"
         onTouchStart={handleButtonTouchStart}
       >
         {categories.map((cat) => (
@@ -676,17 +676,17 @@ const CommunityWaterfall = () => {
             key={cat.value}
             variant="outline"
             className={cn(
-              "flex-1 min-h-[44px] active:scale-95 transition-all duration-150 touch-manipulation",
-                activeFilter === cat.value 
-                  ? "bg-card border-foreground text-foreground font-medium" 
-                  : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"
+              "flex-1 min-h-[48px] active:scale-95 transition-all duration-150 touch-manipulation text-sm font-medium",
+              activeFilter === cat.value 
+                ? "bg-primary/10 border-primary text-primary shadow-sm" 
+                : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"
             )}
             onClick={() => {
               setActiveFilter(cat.value);
               setSelectedEmotionTag(null); // 切换分类时重置情绪标签
             }}
           >
-            <span className="mr-1.5">{cat.emoji}</span>
+            <span className="mr-1">{cat.emoji}</span>
             {cat.label}
           </Button>
         ))}

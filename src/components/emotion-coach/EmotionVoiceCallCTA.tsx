@@ -42,22 +42,22 @@ export const EmotionVoiceCallCTA = ({
         {isLoading ? (
           <Skeleton className="h-7 w-48 mx-auto" />
         ) : (
-          <p className="text-lg text-foreground/80">{greeting}</p>
+          <p className="text-lg text-foreground font-medium drop-shadow-sm">{greeting}</p>
         )}
       </div>
 
       {/* 大圆形品牌按钮 - 翠绿色主题 */}
       <button 
         onClick={handleClick} 
-        className="relative group focus:outline-none" 
+        className="relative group focus:outline-none touch-manipulation" 
         aria-label="开始情绪教练语音对话"
       >
-        {/* 柔和光晕层 */}
-        <div className="absolute inset-[-28px] rounded-full animate-[glow_3s_ease-in-out_infinite] bg-gradient-to-r from-emerald-300/30 via-green-300/20 to-emerald-300/30" />
+        {/* 柔和光晕层 - 降低饱和度 */}
+        <div className="absolute inset-[-28px] rounded-full animate-[glow_3s_ease-in-out_infinite] bg-gradient-to-r from-emerald-300/20 via-green-300/15 to-emerald-300/20" />
         
-        {/* 外圈呼吸动画 */}
-        <div className="absolute inset-[-20px] bg-gradient-to-r from-emerald-400 to-green-400 rounded-full animate-pulse opacity-30" />
-        <div className="absolute inset-[-10px] bg-gradient-to-r from-emerald-500 to-green-500 rounded-full animate-ping opacity-20" style={{
+        {/* 外圈呼吸动画 - 降低透明度 */}
+        <div className="absolute inset-[-20px] bg-gradient-to-r from-emerald-400 to-green-400 rounded-full animate-pulse opacity-20" />
+        <div className="absolute inset-[-10px] bg-gradient-to-r from-emerald-500 to-green-500 rounded-full animate-ping opacity-15" style={{
           animationDuration: '2s'
         }} />
         
@@ -79,46 +79,46 @@ export const EmotionVoiceCallCTA = ({
                         group-active:from-emerald-600 group-active:via-emerald-500 group-active:to-green-600">
           
           {/* 电话图标 */}
-          <div className="mb-3 sm:mb-5 p-3 sm:p-4 bg-white/20 rounded-full backdrop-blur-sm
-                          group-hover:bg-white/25 group-active:bg-white/30
+          <div className="mb-3 sm:mb-5 p-3 sm:p-4 bg-white/25 rounded-full backdrop-blur-sm
+                          group-hover:bg-white/30 group-active:bg-white/35
                           group-active:scale-95 transition-all duration-200">
-            <Phone className="w-8 h-8 sm:w-10 sm:h-10 text-white group-active:scale-110 transition-transform duration-200" />
+            <Phone className="w-8 h-8 sm:w-10 sm:h-10 text-white drop-shadow-lg group-active:scale-110 transition-transform duration-200" />
           </div>
           
-          {/* 品牌文字 */}
-          <span className="text-white font-bold text-xl sm:text-2xl tracking-wide">情绪教练</span>
+          {/* 品牌文字 - 增强阴影和对比度 */}
+          <span className="text-white font-bold text-xl sm:text-2xl tracking-wide drop-shadow-lg" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>情绪教练</span>
           
         </div>
       </button>
       
-      {/* 操作提示 - 仅首次显示 */}
+      {/* 操作提示 - 增强可见性 */}
       {!hasUsedVoiceChat && (
-        <p className="mt-10 text-sm text-muted-foreground flex items-center gap-2">
-          <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+        <p className="mt-10 text-sm text-foreground font-medium flex items-center gap-2">
+          <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50" />
           点击开始对话
         </p>
       )}
 
       {/* 扣费规则提示 - 仅首次显示 */}
       {!hasUsedVoiceChat && (
-        <div className="mt-6 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30 rounded-xl p-4 border border-emerald-100 dark:border-emerald-800/30 max-w-sm">
-          <div className="text-sm text-emerald-700 dark:text-emerald-300 space-y-2">
+        <div className="mt-6 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/40 dark:to-green-950/40 rounded-xl p-4 border border-emerald-200 dark:border-emerald-700/40 max-w-sm shadow-sm">
+          <div className="text-sm text-emerald-800 dark:text-emerald-200 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-2 font-medium">
                 <Phone className="w-4 h-4" />
                 语音对话
               </span>
-              <span className="font-semibold">8点/分钟</span>
+              <span className="font-bold">8点/分钟</span>
             </div>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center justify-between cursor-help">
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-2 font-medium">
                       <MessageSquare className="w-4 h-4" />
                       文字对话
                     </span>
-                    <span className="font-semibold">1点/次</span>
+                    <span className="font-bold">1点/次</span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -127,7 +127,7 @@ export const EmotionVoiceCallCTA = ({
               </Tooltip>
             </TooltipProvider>
           </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
+          <p className="text-xs text-muted-foreground mt-3 text-center font-medium">
             语音更自然流畅，文字更经济实惠
           </p>
         </div>
