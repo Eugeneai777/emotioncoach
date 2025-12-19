@@ -240,15 +240,14 @@ export const GratitudeEntriesList = ({
                     return (
                       <div
                         key={entry.id}
-                        className="p-2 rounded-lg border-l-3 transition-all hover:shadow-sm"
+                        className="p-2.5 rounded-lg transition-all hover:shadow-sm bg-white/80 dark:bg-gray-800/60"
                         style={{
                           borderLeftWidth: "3px",
                           borderLeftColor: primaryTheme?.color || "hsl(var(--muted))",
-                          backgroundColor: primaryTheme ? `${primaryTheme.color}08` : "hsl(var(--muted)/0.05)"
                         }}
                       >
                         <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className="text-[10px] font-semibold text-primary/70">
+                          <span className="text-[10px] font-semibold text-muted-foreground">
                             #{globalIndex}
                           </span>
                           <div className="flex items-center gap-1 flex-1 min-w-0">
@@ -279,7 +278,7 @@ export const GratitudeEntriesList = ({
                             {format(new Date(entry.created_at), "HH:mm")}
                           </span>
                         </div>
-                        <p className="text-xs leading-relaxed text-foreground/90">{entry.content}</p>
+                        <p className="text-xs leading-relaxed text-foreground">{entry.content}</p>
                       </div>
                     );
                   })}
