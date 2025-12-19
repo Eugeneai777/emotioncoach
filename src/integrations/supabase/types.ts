@@ -217,6 +217,229 @@ export type Database = {
           },
         ]
       }
+      bloom_partner_orders: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          delivery_status: string | null
+          emotion_assignment_id: string | null
+          emotion_camp_id: string | null
+          emotion_completed_at: string | null
+          emotion_settlement_id: string | null
+          emotion_status: string | null
+          id: string
+          identity_assignment_id: string | null
+          identity_camp_id: string | null
+          identity_completed_at: string | null
+          identity_settlement_id: string | null
+          identity_status: string | null
+          life_assignment_id: string | null
+          life_camp_id: string | null
+          life_completed_at: string | null
+          life_settlement_id: string | null
+          life_status: string | null
+          order_amount: number
+          partner_id: string | null
+          purchase_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          delivery_status?: string | null
+          emotion_assignment_id?: string | null
+          emotion_camp_id?: string | null
+          emotion_completed_at?: string | null
+          emotion_settlement_id?: string | null
+          emotion_status?: string | null
+          id?: string
+          identity_assignment_id?: string | null
+          identity_camp_id?: string | null
+          identity_completed_at?: string | null
+          identity_settlement_id?: string | null
+          identity_status?: string | null
+          life_assignment_id?: string | null
+          life_camp_id?: string | null
+          life_completed_at?: string | null
+          life_settlement_id?: string | null
+          life_status?: string | null
+          order_amount?: number
+          partner_id?: string | null
+          purchase_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          delivery_status?: string | null
+          emotion_assignment_id?: string | null
+          emotion_camp_id?: string | null
+          emotion_completed_at?: string | null
+          emotion_settlement_id?: string | null
+          emotion_status?: string | null
+          id?: string
+          identity_assignment_id?: string | null
+          identity_camp_id?: string | null
+          identity_completed_at?: string | null
+          identity_settlement_id?: string | null
+          identity_status?: string | null
+          life_assignment_id?: string | null
+          life_camp_id?: string | null
+          life_completed_at?: string | null
+          life_settlement_id?: string | null
+          life_status?: string | null
+          order_amount?: number
+          partner_id?: string | null
+          purchase_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bloom_partner_orders_emotion_assignment_id_fkey"
+            columns: ["emotion_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "camp_coach_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_partner_orders_emotion_camp_id_fkey"
+            columns: ["emotion_camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_partner_orders_emotion_settlement_id_fkey"
+            columns: ["emotion_settlement_id"]
+            isOneToOne: false
+            referencedRelation: "coach_settlements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_partner_orders_identity_assignment_id_fkey"
+            columns: ["identity_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "camp_coach_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_partner_orders_identity_camp_id_fkey"
+            columns: ["identity_camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_partner_orders_identity_settlement_id_fkey"
+            columns: ["identity_settlement_id"]
+            isOneToOne: false
+            referencedRelation: "coach_settlements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_partner_orders_life_assignment_id_fkey"
+            columns: ["life_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "camp_coach_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_partner_orders_life_camp_id_fkey"
+            columns: ["life_camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_partner_orders_life_settlement_id_fkey"
+            columns: ["life_settlement_id"]
+            isOneToOne: false
+            referencedRelation: "coach_settlements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloom_partner_orders_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bloom_partner_profit: {
+        Row: {
+          created_at: string | null
+          emotion_coach_cost: number | null
+          finalized_at: string | null
+          id: string
+          identity_coach_cost: number | null
+          l1_commission: number | null
+          l2_commission: number | null
+          life_coach_cost: number | null
+          order_amount: number
+          order_id: string
+          profit: number | null
+          profit_rate: number | null
+          status: string | null
+          total_coach_cost: number | null
+          total_commission: number | null
+          total_cost: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          emotion_coach_cost?: number | null
+          finalized_at?: string | null
+          id?: string
+          identity_coach_cost?: number | null
+          l1_commission?: number | null
+          l2_commission?: number | null
+          life_coach_cost?: number | null
+          order_amount?: number
+          order_id: string
+          profit?: number | null
+          profit_rate?: number | null
+          status?: string | null
+          total_coach_cost?: number | null
+          total_commission?: number | null
+          total_cost?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          emotion_coach_cost?: number | null
+          finalized_at?: string | null
+          id?: string
+          identity_coach_cost?: number | null
+          l1_commission?: number | null
+          l2_commission?: number | null
+          life_coach_cost?: number | null
+          order_amount?: number
+          order_id?: string
+          profit?: number | null
+          profit_rate?: number | null
+          status?: string | null
+          total_coach_cost?: number | null
+          total_commission?: number | null
+          total_cost?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bloom_partner_profit_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "bloom_partner_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       breathing_sessions: {
         Row: {
           created_at: string | null
