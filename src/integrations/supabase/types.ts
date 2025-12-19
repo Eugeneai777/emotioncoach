@@ -767,6 +767,45 @@ export type Database = {
           },
         ]
       }
+      coach_price_tiers: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          duration_minutes: number | null
+          id: string
+          is_active: boolean | null
+          price: number
+          tier_level: number
+          tier_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          price: number
+          tier_level: number
+          tier_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          price?: number
+          tier_level?: number
+          tier_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       coach_prompt_versions: {
         Row: {
           change_note: string | null
@@ -2776,6 +2815,9 @@ export type Database = {
           pending_balance: number | null
           phone: string | null
           positive_rate: number | null
+          price_tier_id: string | null
+          price_tier_set_at: string | null
+          price_tier_set_by: string | null
           rating: number | null
           rating_communication: number | null
           rating_helpfulness: number | null
@@ -2812,6 +2854,9 @@ export type Database = {
           pending_balance?: number | null
           phone?: string | null
           positive_rate?: number | null
+          price_tier_id?: string | null
+          price_tier_set_at?: string | null
+          price_tier_set_by?: string | null
           rating?: number | null
           rating_communication?: number | null
           rating_helpfulness?: number | null
@@ -2848,6 +2893,9 @@ export type Database = {
           pending_balance?: number | null
           phone?: string | null
           positive_rate?: number | null
+          price_tier_id?: string | null
+          price_tier_set_at?: string | null
+          price_tier_set_by?: string | null
           rating?: number | null
           rating_communication?: number | null
           rating_helpfulness?: number | null
@@ -2865,7 +2913,15 @@ export type Database = {
           verified_at?: string | null
           withdrawn_amount?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "human_coaches_price_tier_id_fkey"
+            columns: ["price_tier_id"]
+            isOneToOne: false
+            referencedRelation: "coach_price_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       meditation_sessions: {
         Row: {

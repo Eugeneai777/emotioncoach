@@ -13,8 +13,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, X, Plus } from "lucide-react";
+import { Loader2, X, Plus, Crown } from "lucide-react";
+import { useCoachPriceTiers, useUpdateCoachPriceTier } from "@/hooks/useCoachPriceTiers";
 
 interface CoachEditDialogProps {
   coachId: string;
@@ -29,9 +31,13 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
     bio: "",
     experience_years: 0,
     specialties: [] as string[],
-    phone: ""
+    phone: "",
+    price_tier_id: ""
   });
   const [newSpecialty, setNewSpecialty] = useState("");
+
+  const { data: priceTiers } = useCoachPriceTiers();
+  const updatePriceTier = useUpdateCoachPriceTier(coachId);
 
   const { data: coach, isLoading } = useQuery({
     queryKey: ["human-coach-edit", coachId],
@@ -55,7 +61,8 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
         bio: coach.bio || "",
         experience_years: coach.experience_years || 0,
         specialties: coach.specialties || [],
-        phone: (coach as any).phone || ""
+        phone: (coach as any).phone || "",
+        price_tier_id: (coach as any).price_tier_id || ""
       });
     }
   }, [coach]);
@@ -88,6 +95,11 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
     }
   });
 
+  const handlePriceTierChange = async (tierId: string) => {
+    setFormData(prev => ({ ...prev, price_tier_id: tierId }));
+    await updatePriceTier.mutateAsync({ priceTierId: tierId });
+  };
+
   const addSpecialty = () => {
     if (newSpecialty.trim() && !formData.specialties.includes(newSpecialty.trim())) {
       setFormData(prev => ({
@@ -117,14 +129,48 @@ export function CoachEditDialog({ coachId, onClose }: CoachEditDialogProps) {
     );
   }
 
+  const currentTier = priceTiers?.find(t => t.id === formData.price_tier_id);
+
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>编辑教练信息</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Price Tier Selection */}
+          <div className="space-y-2 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+            <Label className="flex items-center gap-2">
+              <Crown className="h-4 w-4 text-amber-500" />
+              收费档次
+            </Label>
+            <Select 
+              value={formData.price_tier_id} 
+              onValueChange={handlePriceTierChange}
+              disabled={updatePriceTier.isPending}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="选择收费档次" />
+              </SelectTrigger>
+              <SelectContent>
+                {priceTiers?.map((tier) => (
+                  <SelectItem key={tier.id} value={tier.id}>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{tier.tier_name}</span>
+                      <span className="text-primary font-semibold">¥{tier.price}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {currentTier && (
+              <p className="text-xs text-muted-foreground">
+                {currentTier.description} · 修改后将同步更新所有服务价格
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>姓名</Label>
