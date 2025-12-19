@@ -53,7 +53,9 @@ const NAV_GROUPS = [
     items: [
       { key: "users", label: "用户账户", path: "/admin/users", icon: Users },
       { key: "orders", label: "订单管理", path: "/admin/orders", icon: ShoppingCart },
-      { key: "partners", label: "有劲合伙人", path: "/admin/partners", icon: Handshake }
+      { key: "partners", label: "有劲合伙人", path: "/admin/partners", icon: Handshake },
+      { key: "bloom-delivery", label: "绽放交付进度", path: "/admin/bloom-delivery", icon: Package },
+      { key: "bloom-profit", label: "绽放利润核算", path: "/admin/bloom-profit", icon: DollarSign }
     ]
   },
   {

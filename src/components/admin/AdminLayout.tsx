@@ -17,6 +17,8 @@ import CustomerServiceManagement from "./CustomerServiceManagement";
 import CostMonitorDashboard from "./CostMonitorDashboard";
 import { PartnerLevelManagement } from "./PartnerLevelManagement";
 import { HumanCoachesManagement } from "./human-coaches/HumanCoachesManagement";
+import AdminBloomPartnerDelivery from "./AdminBloomPartnerDelivery";
+import AdminBloomPartnerProfit from "./AdminBloomPartnerProfit";
 
 export function AdminLayout() {
   return (
@@ -33,6 +35,8 @@ export function AdminLayout() {
               <Route path="users" element={<UserAccountsTable />} />
               <Route path="orders" element={<OrdersTable />} />
               <Route path="partners" element={<PartnerManagement />} />
+              <Route path="bloom-delivery" element={<AdminBloomPartnerDelivery />} />
+              <Route path="bloom-profit" element={<AdminBloomPartnerProfit />} />
               <Route path="coaches" element={<CoachTemplatesManagement />} />
               <Route path="human-coaches" element={<HumanCoachesManagement />} />
               <Route path="videos" element={<VideoCoursesManagement />} />
