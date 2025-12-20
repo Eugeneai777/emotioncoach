@@ -214,9 +214,9 @@ export const CoachHeader = ({
               size="sm"
               variant="ghost"
               onClick={() => navigate("/awakening")}
-              className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+              className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 text-amber-600 hover:text-amber-700 hover:bg-amber-50 group"
             >
-              <Sun className="w-4 h-4" />
+              <Sun className="w-4 h-4 animate-[pulse_2s_ease-in-out_infinite] group-hover:animate-none" />
               <span className="hidden sm:inline font-medium">觉醒</span>
             </Button>
 
