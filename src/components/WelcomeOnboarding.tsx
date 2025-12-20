@@ -63,7 +63,7 @@ export const WelcomeOnboarding = ({ open, onComplete }: WelcomeOnboardingProps) 
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-md p-0 gap-0 border-border/50">
+      <DialogContent hideCloseButton className="max-w-md p-0 gap-0 border-border/50">
         <div className="p-6 md:p-8">
           <div className="flex flex-col items-center text-center space-y-4 md:space-y-6">
             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-primary/10 flex items-center justify-center">
