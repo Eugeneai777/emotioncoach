@@ -7,24 +7,19 @@ import { awakeningDimensions, AwakeningDimension } from "@/config/awakeningConfi
 import AwakeningEntryCard from "@/components/awakening/AwakeningEntryCard";
 import AwakeningDrawer from "@/components/awakening/AwakeningDrawer";
 import { Helmet } from "react-helmet";
-
 const Awakening: React.FC = () => {
   const navigate = useNavigate();
   const [selectedDimension, setSelectedDimension] = useState<AwakeningDimension | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
   const handleEntryClick = (dimension: AwakeningDimension) => {
     setSelectedDimension(dimension);
     setIsDrawerOpen(true);
   };
-
   const handleDrawerClose = () => {
     setIsDrawerOpen(false);
     setSelectedDimension(null);
   };
-
-  return (
-    <>
+  return <>
       <Helmet>
         <title>觉醒记录 - 有劲</title>
         <meta name="description" content="每天1次轻记录，帮你看见盲点与模式，给你一个最小行动" />
@@ -34,19 +29,11 @@ const Awakening: React.FC = () => {
         {/* Header */}
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-            >
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-lg font-semibold">觉醒入口</h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/awakening-journal')}
-            >
+            <Button variant="ghost" size="icon" onClick={() => navigate('/awakening-journal')}>
               <BookOpen className="h-5 w-5" />
             </Button>
           </div>
@@ -55,14 +42,14 @@ const Awakening: React.FC = () => {
         {/* Main Content */}
         <main className="max-w-lg mx-auto px-4 py-6 space-y-6">
           {/* 标题区 */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center space-y-2"
-          >
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-teal-500 bg-clip-text text-transparent">
-              觉醒入口
-            </h2>
+          <motion.div initial={{
+          opacity: 0,
+          y: -10
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} className="text-center space-y-2">
+            
             <p className="text-sm text-muted-foreground">
               每天1次轻记录 → 我帮你看见盲点与模式 → 给你一个最小行动
             </p>
@@ -70,32 +57,19 @@ const Awakening: React.FC = () => {
 
           {/* 6宫格入口 */}
           <div className="grid grid-cols-2 gap-4">
-            {awakeningDimensions.map((dimension, index) => (
-              <AwakeningEntryCard
-                key={dimension.id}
-                dimension={dimension}
-                onClick={() => handleEntryClick(dimension)}
-                index={index}
-              />
-            ))}
+            {awakeningDimensions.map((dimension, index) => <AwakeningEntryCard key={dimension.id} dimension={dimension} onClick={() => handleEntryClick(dimension)} index={index} />)}
           </div>
 
           {/* 底部说明 */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="text-center space-y-3 pt-4"
-          >
-            <p className="text-xs text-muted-foreground">
-              需要时带你进入专业教练与真人支持
-            </p>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/awakening-journal')}
-              className="text-muted-foreground hover:text-foreground"
-            >
+          <motion.div initial={{
+          opacity: 0
+        }} animate={{
+          opacity: 1
+        }} transition={{
+          delay: 0.5
+        }} className="text-center space-y-3 pt-4">
+            
+            <Button variant="ghost" size="sm" onClick={() => navigate('/awakening-journal')} className="text-muted-foreground hover:text-foreground">
               <BookOpen className="w-4 h-4 mr-2" />
               查看觉醒日记
             </Button>
@@ -103,14 +77,8 @@ const Awakening: React.FC = () => {
         </main>
 
         {/* 输入抽屉 */}
-        <AwakeningDrawer
-          dimension={selectedDimension}
-          isOpen={isDrawerOpen}
-          onClose={handleDrawerClose}
-        />
+        <AwakeningDrawer dimension={selectedDimension} isOpen={isDrawerOpen} onClose={handleDrawerClose} />
       </div>
-    </>
-  );
+    </>;
 };
-
 export default Awakening;
