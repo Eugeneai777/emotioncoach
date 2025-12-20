@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, BookOpen, Info } from "lucide-react";
+import { ArrowLeft, BookOpen, Info, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { awakeningDimensions, AwakeningDimension } from "@/config/awakeningConfig";
 import AwakeningEntryCard from "@/components/awakening/AwakeningEntryCard";
@@ -53,15 +53,26 @@ const Awakening: React.FC = () => {
             <p className="text-sm text-muted-foreground">
               每天1次轻记录 → 我帮你看见盲点与模式 → 给你一个最小行动
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/awakening-intro')}
-              className="text-amber-600 border-amber-200 hover:bg-amber-50"
-            >
-              <Info className="w-4 h-4 mr-1" />
-              了解更多
-            </Button>
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/awakening-intro')}
+                className="text-amber-600 border-amber-200 hover:bg-amber-50"
+              >
+                <Info className="w-4 h-4 mr-1" />
+                六大入口
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/transformation-flow')}
+                className="text-orange-600 border-orange-200 hover:bg-orange-50"
+              >
+                <RefreshCw className="w-4 h-4 mr-1" />
+                转化系统
+              </Button>
+            </div>
           </motion.div>
 
           {/* 6宫格入口 */}
