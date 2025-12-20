@@ -2638,6 +2638,54 @@ export type Database = {
         }
         Relationships: []
       }
+      decision_logs: {
+        Row: {
+          ai_analysis: Json | null
+          chosen_option: string | null
+          concerns: string | null
+          created_at: string
+          decision_question: string
+          id: string
+          is_resolved: boolean | null
+          option_a: string | null
+          option_b: string | null
+          outcome_note: string | null
+          resolved_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          chosen_option?: string | null
+          concerns?: string | null
+          created_at?: string
+          decision_question: string
+          id?: string
+          is_resolved?: boolean | null
+          option_a?: string | null
+          option_b?: string | null
+          outcome_note?: string | null
+          resolved_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_analysis?: Json | null
+          chosen_option?: string | null
+          concerns?: string | null
+          created_at?: string
+          decision_question?: string
+          id?: string
+          is_resolved?: boolean | null
+          option_a?: string | null
+          option_b?: string | null
+          outcome_note?: string | null
+          resolved_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       declaration_favorites: {
         Row: {
           created_at: string
