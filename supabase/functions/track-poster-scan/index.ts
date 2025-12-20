@@ -6,12 +6,55 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Simple in-memory rate limiting (per IP, 30 requests per minute)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 30;
+const RATE_WINDOW_MS = 60 * 1000; // 1 minute
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  
+  if (!entry || now > entry.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_WINDOW_MS });
+    return true;
+  }
+  
+  if (entry.count >= RATE_LIMIT) {
+    return false;
+  }
+  
+  entry.count++;
+  return true;
+}
+
+// Cleanup old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap.entries()) {
+    if (now > entry.resetTime) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, 60000);
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Rate limiting check
+    const forwardedFor = req.headers.get('x-forwarded-for') || 'unknown';
+    const clientIp = forwardedFor.split(',')[0].trim();
+    
+    if (!checkRateLimit(clientIp)) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { poster_id, partner_id, referrer } = await req.json();
 
     if (!poster_id || !partner_id) {
@@ -27,7 +70,6 @@ serve(async (req) => {
 
     // Get user agent and create IP hash (for deduplication, not storing actual IP)
     const userAgent = req.headers.get('user-agent') || '';
-    const forwardedFor = req.headers.get('x-forwarded-for') || '';
     
     // Simple hash of IP for deduplication (not storing actual IP for privacy)
     const ipHash = await crypto.subtle.digest(
@@ -49,8 +91,7 @@ serve(async (req) => {
       });
 
     if (insertError) {
-      console.error('Failed to insert scan log:', insertError);
-      // Don't fail the request, just log the error
+      // Log to server only, not exposing details
     }
 
     return new Response(
@@ -58,7 +99,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('track-poster-scan error:', error);
+    // Log to server only, not exposing details in production
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
