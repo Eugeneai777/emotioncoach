@@ -34,6 +34,7 @@ import { EmotionVoiceBriefingPreview } from "@/components/emotion-coach/EmotionV
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
+import AwakeningEntryCTA from "@/components/awakening/AwakeningEntryCTA";
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -561,7 +562,10 @@ const Index = () => {
 
   // Build camp recommendation content
   const campRecommendationContent = !activeCamp ? (
-    <div className="w-full mt-6">
+    <div className="w-full mt-6 space-y-4">
+      {/* 觉醒入口 CTA */}
+      <AwakeningEntryCTA />
+      
       <CoachTrainingCamp
         activeCamp={null}
         onStartCamp={() => setShowStartCamp(true)}
