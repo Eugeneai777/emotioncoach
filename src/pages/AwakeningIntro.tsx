@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ChevronDown, ChevronUp, Sparkles, ArrowRight } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Sparkles, ArrowRight, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet";
 
@@ -298,13 +298,21 @@ const AwakeningIntro: React.FC = () => {
 
         {/* Fixed Bottom CTA */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent">
-          <div className="max-w-lg mx-auto">
+          <div className="max-w-lg mx-auto space-y-2">
             <Button
               onClick={() => navigate('/awakening')}
               className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg"
             >
               <Sparkles className="w-5 h-5 mr-2" />
               开始我的生命觉醒
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/transformation-flow')}
+              className="w-full h-12 text-amber-600 border-amber-200 hover:bg-amber-50"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              了解转化系统
             </Button>
           </div>
         </div>
