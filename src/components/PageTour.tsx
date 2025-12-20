@@ -63,7 +63,7 @@ export const PageTour: React.FC<PageTourProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && handleSkip()}>
-      <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 border-0">
+      <DialogContent hideCloseButton className="sm:max-w-md p-0 gap-0 overflow-hidden bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 border-0">
         <VisuallyHidden>
           <DialogTitle>{pageTitle || '页面引导'}</DialogTitle>
         </VisuallyHidden>
