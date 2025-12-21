@@ -209,17 +209,6 @@ export const CoachHeader = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* 觉醒入口 */}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => navigate("/awakening")}
-              className="gap-1 text-xs md:text-sm h-10 min-h-[44px] px-2 md:px-3 text-amber-600 hover:text-amber-700 hover:bg-amber-50 group"
-            >
-              <Sun className="w-4 h-4 animate-[pulse_2s_ease-in-out_infinite] group-hover:animate-none" />
-              <span className="hidden sm:inline font-medium">觉醒</span>
-            </Button>
-
             {/* 有劲生活馆 */}
             <Button
               size="sm"
@@ -251,8 +240,20 @@ export const CoachHeader = ({
               variant="ghost"
               onClick={() => navigate("/packages")}
               className="hidden sm:flex h-10 min-h-[44px] w-10 min-w-[44px] p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
+              title="套餐"
             >
               <ShoppingBag className="w-4 h-4" />
+            </Button>
+
+            {/* 觉醒入口 - 纯图标 */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => navigate("/awakening")}
+              className="hidden sm:flex h-10 min-h-[44px] w-10 min-w-[44px] p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 group"
+              title="觉醒"
+            >
+              <Sun className="w-4 h-4 animate-[pulse_2s_ease-in-out_infinite] group-hover:animate-none" />
             </Button>
 
             {/* Notification Center */}
