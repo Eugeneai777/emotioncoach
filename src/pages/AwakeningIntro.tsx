@@ -273,28 +273,28 @@ const AwakeningIntro: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Final Statement */}
+          {/* Final Statement - 有劲AI定位卡片 */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
-            className="bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl p-5 text-center text-white"
+            className="bg-gradient-to-br from-purple-400 via-purple-500 to-blue-400 rounded-2xl p-6 text-center text-white shadow-lg"
           >
-            <p className="text-lg font-semibold mb-2">🧠 有劲AI真正的定位</p>
-            <p className="text-sm opacity-95">
-              有劲AI不是陪你聊天的AI，<br />
-              而是帮你<span className="font-bold">"看见自己 → 对齐行动 → 走出人生回路"</span>的<br />
-              <span className="text-lg font-bold">生命操作系统</span>
+            <p className="text-xl font-bold mb-3 flex items-center justify-center gap-2">
+              🧠 有劲AI真正的定位
             </p>
+            <p className="text-sm opacity-95 leading-relaxed">
+              有劲AI不是陪你聊天的AI，<br />
+              而是帮你"看见自己 → 对齐行动 → 走出人生回路"的
+            </p>
+            <p className="text-xl font-bold mt-2">生命操作系统</p>
           </motion.div>
-        </main>
 
-        {/* Fixed Bottom CTA */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent">
-          <div className="max-w-lg mx-auto space-y-2">
+          {/* CTA Buttons */}
+          <div className="space-y-3 pb-6">
             <Button
               onClick={() => navigate('/awakening')}
-              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg"
+              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg rounded-xl"
             >
               <Sparkles className="w-5 h-5 mr-2" />
               开始我的生命觉察
@@ -302,13 +302,13 @@ const AwakeningIntro: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => navigate('/transformation-flow')}
-              className="w-full h-12 text-amber-600 border-amber-200 hover:bg-amber-50"
+              className="w-full h-12 text-amber-600 border-amber-200 hover:bg-amber-50 rounded-xl bg-white"
             >
               <Layers className="w-4 h-4 mr-2" />
               了解四层支持
             </Button>
           </div>
-        </div>
+        </main>
       </div>
     </>
   );
