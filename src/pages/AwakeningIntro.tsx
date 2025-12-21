@@ -115,7 +115,7 @@ const AwakeningIntro: React.FC = () => {
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-semibold">生命觉察入口</h1>
+            <h1 className="text-lg font-semibold">六大觉察入口</h1>
             <div className="w-10" />
           </div>
         </header>
