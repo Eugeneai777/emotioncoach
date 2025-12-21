@@ -131,7 +131,7 @@ const AwakeningIntro: React.FC = () => {
             <div className="flex items-center justify-center gap-2">
               <Sparkles className="w-6 h-6 text-amber-500" />
               <h2 className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
-                有劲AI · 六大觉醒
+                有劲AI · 六大觉醒入口
               </h2>
             </div>
             
@@ -284,7 +284,7 @@ const AwakeningIntro: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
-            className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-5 text-center text-white"
+            className="bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl p-5 text-center text-white"
           >
             <p className="text-lg font-semibold mb-2">🧠 有劲AI真正的定位</p>
             <p className="text-sm opacity-95">
