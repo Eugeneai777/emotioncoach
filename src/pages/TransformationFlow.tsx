@@ -1,14 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { ArrowLeft, Sparkles, Eye, Heart, Lightbulb, Target, RefreshCw, MessageCircle, Users, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet";
-import Layer1Illustration from "@/components/support-system/Layer1Illustration";
-import Layer2Illustration from "@/components/support-system/Layer2Illustration";
-import Layer3Illustration from "@/components/support-system/Layer3Illustration";
-import Layer4Illustration from "@/components/support-system/Layer4Illustration";
-
 
 // 六大入口
 const sixEntries = [
@@ -33,12 +27,6 @@ const fiveThings = [
 const supportOptions = [
   { emoji: '🌱', title: '加入训练营', desc: '21 天陪你建立新的习惯' },
   { emoji: '🌱', title: '预约真人教练', desc: '一次把关键问题理清' },
-];
-
-// 底部承诺（精简版）
-const promises = [
-  '从这里开始就好',
-  '你不需要准备好，我们就在这里。',
 ];
 
 const TransformationFlow: React.FC = () => {
@@ -66,26 +54,17 @@ const TransformationFlow: React.FC = () => {
         {/* Main Content */}
         <main className="max-w-lg mx-auto px-4 py-6 pb-48 space-y-6">
           {/* Hero Section */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center"
-          >
+          <div className="text-center animate-fade-in">
             <div className="flex items-center justify-center gap-2">
               <Sparkles className="w-6 h-6 text-amber-500" />
               <h2 className="text-xl font-bold bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
                 有劲AI · 四层支持系统
               </h2>
             </div>
-          </motion.div>
+          </div>
 
           {/* 第一层：轻记录入口 */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-card rounded-xl border p-5 space-y-4"
-          >
+          <div className="bg-card rounded-xl border p-5 space-y-4">
             <div className="flex items-center gap-3">
               <span className="text-2xl">📝</span>
               <div>
@@ -97,20 +76,14 @@ const TransformationFlow: React.FC = () => {
               </div>
             </div>
 
-            {/* 动画插图 */}
-            <Layer1Illustration />
-
             <p className="text-sm text-muted-foreground">
               你每天只需要做一件事：写下一点点你现在的状态。
             </p>
 
             <div className="grid grid-cols-2 gap-2">
               {sixEntries.map((entry, i) => (
-                <motion.div
+                <div
                   key={i}
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.15 + i * 0.05 }}
                   className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg"
                 >
                   <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${entry.color} flex items-center justify-center text-lg shrink-0`}>
@@ -120,7 +93,7 @@ const TransformationFlow: React.FC = () => {
                     <p className="text-sm font-medium text-foreground">{entry.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{entry.desc}</p>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
 
@@ -128,21 +101,15 @@ const TransformationFlow: React.FC = () => {
               你可以只点一下，也可以只写半句话。
             </p>
 
-
             <div className="bg-amber-50 rounded-lg p-3 text-center">
               <p className="text-sm text-amber-700 font-medium">
                 📌 不需要想清楚，真实就好。
               </p>
             </div>
-          </motion.div>
+          </div>
 
           {/* 第二层：智能看见与温柔提醒 */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-card rounded-xl border p-5 space-y-4"
-          >
+          <div className="bg-card rounded-xl border p-5 space-y-4">
             <div className="flex items-center gap-3">
               <span className="text-2xl">🪞</span>
               <div>
@@ -154,20 +121,14 @@ const TransformationFlow: React.FC = () => {
               </div>
             </div>
 
-            {/* 动画插图 */}
-            <Layer2Illustration />
-
             <p className="text-sm text-muted-foreground">
               每一次记录后，有劲AI 会帮你做 5 件事：
             </p>
 
             <div className="space-y-2">
               {fiveThings.map((thing, i) => (
-                <motion.div
+                <div
                   key={i}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.25 + i * 0.05 }}
                   className="flex items-start gap-3 p-3 bg-secondary/50 rounded-lg"
                 >
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shrink-0">
@@ -177,10 +138,9 @@ const TransformationFlow: React.FC = () => {
                     <p className="text-sm font-medium text-foreground">{thing.title}</p>
                     <p className="text-xs text-muted-foreground">「{thing.desc}」</p>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
-
 
             <div className="bg-blue-50 rounded-lg p-3 space-y-1">
               <p className="text-sm text-blue-700">
@@ -190,15 +150,10 @@ const TransformationFlow: React.FC = () => {
                 如果你愿意，有劲AI 也可以帮你记得，在合适的时候温柔提醒你。
               </p>
             </div>
-          </motion.div>
+          </div>
 
           {/* 第三层：专业 AI 教练陪你深入 */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-card rounded-xl border p-5 space-y-4"
-          >
+          <div className="bg-card rounded-xl border p-5 space-y-4">
             <div className="flex items-center gap-3">
               <span className="text-2xl">🤍</span>
               <div>
@@ -210,25 +165,19 @@ const TransformationFlow: React.FC = () => {
               </div>
             </div>
 
-            {/* 动画插图 */}
-            <Layer3Illustration />
-
             <p className="text-sm text-muted-foreground">
               如果你发现：
             </p>
 
             <div className="space-y-2">
               {['这个问题反复出现', '你想更深入理一理', '你不想一个人想了'].map((text, i) => (
-                <motion.div
+                <div
                   key={i}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.35 + i * 0.05 }}
                   className="flex items-center gap-2 text-sm text-foreground"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                   {text}
-                </motion.div>
+                </div>
               ))}
             </div>
 
@@ -242,7 +191,6 @@ const TransformationFlow: React.FC = () => {
                 继续深聊
               </div>
             </div>
-
 
             <p className="text-sm text-muted-foreground text-center">
               有劲AI 会自动带你进入最适合你的专业教练，<br />
@@ -261,15 +209,10 @@ const TransformationFlow: React.FC = () => {
                 📌 理清这件事，是教练的工作。
               </p>
             </div>
-          </motion.div>
+          </div>
 
           {/* 第四层：真人教练与训练营支持 */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-card rounded-xl border p-5 space-y-4"
-          >
+          <div className="bg-card rounded-xl border p-5 space-y-4">
             <div className="flex items-center gap-3">
               <span className="text-2xl">🤝</span>
               <div>
@@ -280,9 +223,6 @@ const TransformationFlow: React.FC = () => {
                 <p className="text-sm text-muted-foreground">当你需要被真正陪一段路</p>
               </div>
             </div>
-
-            {/* 动画插图 */}
-            <Layer4Illustration />
 
             <p className="text-sm text-muted-foreground">
               有些改变，不是一次对话就能完成的。
@@ -298,16 +238,13 @@ const TransformationFlow: React.FC = () => {
                 '情绪或关系已经影响生活',
                 '你真的很想改变，但一个人有点难'
               ].map((text, i) => (
-                <motion.div
+                <div
                   key={i}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.45 + i * 0.05 }}
                   className="flex items-center gap-2 text-sm text-foreground"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-teal-400" />
                   {text}
-                </motion.div>
+                </div>
               ))}
             </div>
 
@@ -328,11 +265,8 @@ const TransformationFlow: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               {supportOptions.map((option, i) => (
-                <motion.div
+                <div
                   key={i}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.5 + i * 0.05 }}
                   className="p-4 bg-gradient-to-br from-teal-50 to-emerald-50 rounded-xl border border-teal-200/50 text-center space-y-2"
                 >
                   <div className="flex justify-center gap-2 text-lg">
@@ -340,45 +274,34 @@ const TransformationFlow: React.FC = () => {
                   </div>
                   <p className="text-sm font-medium text-foreground">{option.title}</p>
                   <p className="text-xs text-muted-foreground">{option.desc}</p>
-                </motion.div>
+                </div>
               ))}
             </div>
-
 
             <div className="bg-teal-50 rounded-lg p-3 space-y-1">
               <p className="text-sm text-teal-700">📌 没有强迫</p>
               <p className="text-sm text-teal-700">📌 没有推销</p>
               <p className="text-sm text-teal-700">📌 只在你真的需要的时候出现</p>
             </div>
-          </motion.div>
+          </div>
 
           {/* 一句话总结 */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="bg-gradient-to-r from-purple-50 via-blue-50 to-teal-50 rounded-xl p-5 text-center border border-purple-200/50"
-          >
+          <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-teal-50 rounded-xl p-5 text-center border border-purple-200/50">
             <p className="text-foreground">
               你随时可以从一个很小的记录开始，<br />
               有劲AI 会陪你走到你真正想去的地方。
             </p>
-          </motion.div>
+          </div>
 
           {/* 底部承诺 */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.55 }}
-            className="bg-gradient-to-r from-purple-500 to-teal-500 rounded-xl p-5 text-white space-y-3"
-          >
+          <div className="bg-gradient-to-r from-purple-500 to-teal-500 rounded-xl p-5 text-white space-y-3">
             <p className="text-center font-semibold text-lg">
               💛 从这里开始就好
             </p>
             <p className="text-center text-sm opacity-95">
               你不需要准备好，我们就在这里。
             </p>
-          </motion.div>
+          </div>
         </main>
 
         {/* Fixed Bottom CTA */}
