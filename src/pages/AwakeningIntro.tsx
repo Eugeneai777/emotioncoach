@@ -392,23 +392,31 @@ const AwakeningIntro: React.FC = () => {
             </h3>
             
             {/* Circular Loop Visualization */}
-            <div className="relative w-72 h-72 mx-auto">
+            <div className="relative w-80 h-80 sm:w-[420px] sm:h-[420px] mx-auto">
               {/* Center circle */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 border-2 border-amber-300/50 flex items-center justify-center shadow-inner">
-                <span className="text-2xl">🌱</span>
-              </div>
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 border-2 border-amber-300/50 flex items-center justify-center shadow-lg"
+              >
+                <span className="text-xl sm:text-2xl">🌱</span>
+              </motion.div>
               
               {/* Connecting circle */}
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 288 288">
-                <circle 
-                  cx="144" 
-                  cy="144" 
-                  r="110" 
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 420 420">
+                <motion.circle 
+                  cx="210" 
+                  cy="210" 
+                  r="150" 
                   fill="none" 
                   stroke="url(#loopGradient)" 
                   strokeWidth="2" 
-                  strokeDasharray="8 4"
-                  opacity="0.4"
+                  strokeDasharray="12 6"
+                  opacity="0.5"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 1.5, ease: "easeInOut" }}
                 />
                 <defs>
                   <linearGradient id="loopGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -422,49 +430,49 @@ const AwakeningIntro: React.FC = () => {
               {/* Nodes positioned in a circle */}
               {growthLoopNodes.map((node, index) => {
                 const angle = (index * 60 - 90) * (Math.PI / 180);
-                const radius = 110;
-                const x = 144 + radius * Math.cos(angle);
-                const y = 144 + radius * Math.sin(angle);
+                const radius = 150;
+                const x = 210 + radius * Math.cos(angle);
+                const y = 210 + radius * Math.sin(angle);
                 
                 return (
                   <motion.div
                     key={node.label}
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.6 + index * 0.1 }}
+                    transition={{ delay: 0.6 + index * 0.1, type: "spring", stiffness: 200 }}
                     className="absolute"
                     style={{
-                      left: x,
-                      top: y,
+                      left: `${(x / 420) * 100}%`,
+                      top: `${(y / 420) * 100}%`,
                       transform: 'translate(-50%, -50%)'
                     }}
                   >
-                    <div className={`flex flex-col items-center gap-1 p-2 bg-white dark:bg-gray-800 rounded-xl shadow-md border`}>
-                      <div className={`text-lg p-1.5 rounded-lg bg-gradient-to-br ${node.color}`}>
+                    <div className={`flex flex-col items-center gap-0.5 p-1.5 sm:p-2 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow`}>
+                      <div className={`text-base sm:text-lg p-1 sm:p-1.5 rounded-lg bg-gradient-to-br ${node.color}`}>
                         <span className="drop-shadow-sm">{node.emoji}</span>
                       </div>
-                      <span className="text-xs font-medium text-foreground whitespace-nowrap">{node.label}</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-foreground whitespace-nowrap">{node.label}</span>
                     </div>
                   </motion.div>
                 );
               })}
               
               {/* Arrows between nodes */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 288 288">
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 420 420">
                 {growthLoopNodes.map((_, index) => {
-                  const startAngle = (index * 60 - 90 + 15) * (Math.PI / 180);
-                  const endAngle = ((index + 1) * 60 - 90 - 15) * (Math.PI / 180);
-                  const radius = 110;
+                  const startAngle = (index * 60 - 90 + 20) * (Math.PI / 180);
+                  const endAngle = ((index + 1) * 60 - 90 - 20) * (Math.PI / 180);
+                  const radius = 150;
                   
-                  const startX = 144 + radius * Math.cos(startAngle);
-                  const startY = 144 + radius * Math.sin(startAngle);
-                  const endX = 144 + radius * Math.cos(endAngle);
-                  const endY = 144 + radius * Math.sin(endAngle);
+                  const startX = 210 + radius * Math.cos(startAngle);
+                  const startY = 210 + radius * Math.sin(startAngle);
+                  const endX = 210 + radius * Math.cos(endAngle);
+                  const endY = 210 + radius * Math.sin(endAngle);
                   
-                  const midAngle = ((index * 60 - 90 + 15) + ((index + 1) * 60 - 90 - 15)) / 2 * (Math.PI / 180);
-                  const controlRadius = radius + 20;
-                  const controlX = 144 + controlRadius * Math.cos(midAngle);
-                  const controlY = 144 + controlRadius * Math.sin(midAngle);
+                  const midAngle = ((index * 60 - 90 + 20) + ((index + 1) * 60 - 90 - 20)) / 2 * (Math.PI / 180);
+                  const controlRadius = radius + 25;
+                  const controlX = 210 + controlRadius * Math.cos(midAngle);
+                  const controlY = 210 + controlRadius * Math.sin(midAngle);
                   
                   return (
                     <motion.path
