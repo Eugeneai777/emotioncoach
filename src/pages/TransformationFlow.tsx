@@ -8,7 +8,7 @@ import Layer1Illustration from "@/components/support-system/Layer1Illustration";
 import Layer2Illustration from "@/components/support-system/Layer2Illustration";
 import Layer3Illustration from "@/components/support-system/Layer3Illustration";
 import Layer4Illustration from "@/components/support-system/Layer4Illustration";
-import { Layer1Demo, Layer2Demo, Layer3Demo, Layer4Demo } from "@/components/support-system/InteractiveDemo";
+
 
 // 六大入口
 const sixEntries = [
@@ -128,8 +128,6 @@ const TransformationFlow: React.FC = () => {
               你可以只点一下，也可以只写半句话。
             </p>
 
-            {/* 互动演示 */}
-            <Layer1Demo />
 
             <div className="bg-amber-50 rounded-lg p-3 text-center">
               <p className="text-sm text-amber-700 font-medium">
@@ -183,8 +181,6 @@ const TransformationFlow: React.FC = () => {
               ))}
             </div>
 
-            {/* 互动演示 */}
-            <Layer2Demo />
 
             <div className="bg-blue-50 rounded-lg p-3 space-y-1">
               <p className="text-sm text-blue-700">
@@ -247,8 +243,6 @@ const TransformationFlow: React.FC = () => {
               </div>
             </div>
 
-            {/* 互动演示 */}
-            <Layer3Demo />
 
             <p className="text-sm text-muted-foreground text-center">
               有劲AI 会自动带你进入最适合你的专业教练，<br />
@@ -350,8 +344,6 @@ const TransformationFlow: React.FC = () => {
               ))}
             </div>
 
-            {/* 互动演示 */}
-            <Layer4Demo />
 
             <div className="bg-teal-50 rounded-lg p-3 space-y-1">
               <p className="text-sm text-teal-700">📌 没有强迫</p>
