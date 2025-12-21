@@ -4,6 +4,11 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Sparkles, Eye, Heart, Lightbulb, Target, RefreshCw, MessageCircle, Users, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet";
+import Layer1Illustration from "@/components/support-system/Layer1Illustration";
+import Layer2Illustration from "@/components/support-system/Layer2Illustration";
+import Layer3Illustration from "@/components/support-system/Layer3Illustration";
+import Layer4Illustration from "@/components/support-system/Layer4Illustration";
+import { Layer1Demo, Layer2Demo, Layer3Demo, Layer4Demo } from "@/components/support-system/InteractiveDemo";
 
 // 六大入口
 const sixEntries = [
@@ -107,6 +112,9 @@ const TransformationFlow: React.FC = () => {
               </div>
             </div>
 
+            {/* 动画插图 */}
+            <Layer1Illustration />
+
             <p className="text-sm text-muted-foreground">
               你每天只需要做一件事：写下一点点你现在的状态。
             </p>
@@ -135,6 +143,9 @@ const TransformationFlow: React.FC = () => {
               你可以只点一下，也可以只写半句话。
             </p>
 
+            {/* 互动演示 */}
+            <Layer1Demo />
+
             <div className="bg-amber-50 rounded-lg p-3 text-center">
               <p className="text-sm text-amber-700 font-medium">
                 📌 不需要想清楚，真实就好。
@@ -160,6 +171,9 @@ const TransformationFlow: React.FC = () => {
               </div>
             </div>
 
+            {/* 动画插图 */}
+            <Layer2Illustration />
+
             <p className="text-sm text-muted-foreground">
               每一次记录后，有劲AI 会帮你做 5 件事：
             </p>
@@ -183,6 +197,9 @@ const TransformationFlow: React.FC = () => {
                 </motion.div>
               ))}
             </div>
+
+            {/* 互动演示 */}
+            <Layer2Demo />
 
             <div className="bg-blue-50 rounded-lg p-3 space-y-1">
               <p className="text-sm text-blue-700">
@@ -211,6 +228,9 @@ const TransformationFlow: React.FC = () => {
                 <p className="text-sm text-muted-foreground">当你想多聊一点时</p>
               </div>
             </div>
+
+            {/* 动画插图 */}
+            <Layer3Illustration />
 
             <p className="text-sm text-muted-foreground">
               如果你发现：
@@ -241,6 +261,9 @@ const TransformationFlow: React.FC = () => {
                 继续深聊
               </div>
             </div>
+
+            {/* 互动演示 */}
+            <Layer3Demo />
 
             <p className="text-sm text-muted-foreground text-center">
               有劲AI 会自动带你进入最适合你的专业教练，<br />
@@ -278,6 +301,9 @@ const TransformationFlow: React.FC = () => {
                 <p className="text-sm text-muted-foreground">当你需要被真正陪一段路</p>
               </div>
             </div>
+
+            {/* 动画插图 */}
+            <Layer4Illustration />
 
             <p className="text-sm text-muted-foreground">
               有些改变，不是一次对话就能完成的。
@@ -338,6 +364,9 @@ const TransformationFlow: React.FC = () => {
                 </motion.div>
               ))}
             </div>
+
+            {/* 互动演示 */}
+            <Layer4Demo />
 
             <div className="bg-teal-50 rounded-lg p-3 space-y-1">
               <p className="text-sm text-teal-700">📌 没有强迫</p>
