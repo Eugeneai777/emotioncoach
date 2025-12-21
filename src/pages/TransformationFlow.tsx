@@ -35,11 +35,10 @@ const supportOptions = [
   { emoji: '🌱', title: '预约真人教练', desc: '一次把关键问题理清' },
 ];
 
-// 底部承诺
+// 底部承诺（精简版）
 const promises = [
-  '你不需要变好，才能开始',
-  '你不需要想清楚，才能记录',
-  '你不需要一个人，才能改变',
+  '从这里开始就好',
+  '你不需要准备好，我们就在这里。',
 ];
 
 const TransformationFlow: React.FC = () => {
@@ -70,7 +69,7 @@ const TransformationFlow: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center space-y-4"
+            className="text-center"
           >
             <div className="flex items-center justify-center gap-2">
               <Sparkles className="w-6 h-6 text-amber-500" />
@@ -78,20 +77,6 @@ const TransformationFlow: React.FC = () => {
                 有劲AI · 四层支持系统
               </h2>
             </div>
-            
-            <div className="space-y-2">
-              <p className="text-xl font-medium text-foreground">
-                你不需要一次解决人生，
-              </p>
-              <p className="text-xl font-medium text-foreground">
-                只需要从此刻开始。
-              </p>
-            </div>
-
-            <p className="text-sm text-muted-foreground">
-              有劲AI 会用四层方式陪你，<br />
-              从轻轻开始，到真正改变发生。
-            </p>
           </motion.div>
 
           {/* 第一层：轻记录入口 */}
@@ -380,7 +365,7 @@ const TransformationFlow: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-xl p-5 text-center border border-amber-200/50"
+            className="bg-gradient-to-r from-purple-50 via-blue-50 to-teal-50 rounded-xl p-5 text-center border border-purple-200/50"
           >
             <p className="text-foreground">
               你随时可以从一个很小的记录开始，<br />
@@ -393,22 +378,13 @@ const TransformationFlow: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.55 }}
-            className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-5 text-white space-y-4"
+            className="bg-gradient-to-r from-purple-500 to-teal-500 rounded-xl p-5 text-white space-y-3"
           >
-            <p className="text-center font-semibold flex items-center justify-center gap-2">
-              <span>💛</span> 有劲AI 想给你的承诺
+            <p className="text-center font-semibold text-lg">
+              💛 从这里开始就好
             </p>
-            
-            <div className="space-y-2">
-              {promises.map((promise, i) => (
-                <p key={i} className="text-center text-sm opacity-95">
-                  {promise}
-                </p>
-              ))}
-            </div>
-
-            <p className="text-center text-sm font-medium pt-2 border-t border-white/20">
-              我们会在你准备好的每一步，接住你。
+            <p className="text-center text-sm opacity-95">
+              你不需要准备好，我们就在这里。
             </p>
           </motion.div>
         </main>
@@ -426,7 +402,7 @@ const TransformationFlow: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => navigate('/awakening-intro')}
-              className="w-full h-12 text-amber-600 border-amber-200 hover:bg-amber-50"
+              className="w-full h-12 text-purple-600 border-purple-200 hover:bg-purple-50"
             >
               <Lightbulb className="w-4 h-4 mr-2" />
               了解六大生命入口
