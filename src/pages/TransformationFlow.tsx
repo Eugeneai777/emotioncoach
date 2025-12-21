@@ -303,7 +303,7 @@ const TransformationFlow: React.FC = () => {
               className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg"
             >
               <Sparkles className="w-5 h-5 mr-2" />
-              体验觉醒记录
+              体验觉醒入口
             </Button>
             <Button
               variant="outline"
