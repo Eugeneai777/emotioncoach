@@ -167,7 +167,7 @@ export const CoachHeader = ({
           </div>
 
           {/* Right side */}
-          <div className="flex items-center gap-1 md:gap-2">
+          <div className="flex items-center gap-1.5 md:gap-3">
             {/* Coach Space Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -234,27 +234,27 @@ export const CoachHeader = ({
               </Button>
             )}
 
-            {/* Packages - hide on mobile */}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => navigate("/packages")}
-              className="hidden sm:flex h-10 min-h-[44px] w-10 min-w-[44px] p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
-              title="套餐"
-            >
-              <ShoppingBag className="w-4 h-4" />
-            </Button>
-
-            {/* 觉醒入口 - 纯图标 */}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => navigate("/awakening")}
-              className="hidden sm:flex h-10 min-h-[44px] w-10 min-w-[44px] p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 group"
-              title="觉醒"
-            >
-              <Sun className="w-4 h-4 animate-[pulse_2s_ease-in-out_infinite] group-hover:animate-none" />
-            </Button>
+            {/* 套餐 & 觉醒 按钮组 */}
+            <div className="hidden sm:flex items-center gap-0.5 bg-muted/30 rounded-lg p-0.5">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => navigate("/packages")}
+                className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
+                title="套餐"
+              >
+                <ShoppingBag className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => navigate("/awakening")}
+                className="h-9 w-9 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md group"
+                title="觉醒"
+              >
+                <Sun className="w-4 h-4 animate-[pulse_2s_ease-in-out_infinite] group-hover:animate-none" />
+              </Button>
+            </div>
 
             {/* Notification Center */}
             {showNotificationCenter && <SmartNotificationCenter />}
