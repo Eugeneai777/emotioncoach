@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ChevronDown, ChevronUp, Sparkles, ArrowRight, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Sparkles, ArrowRight, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet";
 
@@ -311,8 +311,8 @@ const AwakeningIntro: React.FC = () => {
               onClick={() => navigate('/transformation-flow')}
               className="w-full h-12 text-amber-600 border-amber-200 hover:bg-amber-50"
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              了解转化系统
+              <Layers className="w-4 h-4 mr-2" />
+              了解四层支持
             </Button>
           </div>
         </div>
