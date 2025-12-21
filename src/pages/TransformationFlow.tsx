@@ -293,15 +293,6 @@ const TransformationFlow: React.FC = () => {
             </p>
           </div>
 
-          {/* 底部承诺 */}
-          <div className="bg-gradient-to-r from-purple-500 to-teal-500 rounded-xl p-5 text-white space-y-3">
-            <p className="text-center font-semibold text-lg">
-              💛 从这里开始就好
-            </p>
-            <p className="text-center text-sm opacity-95">
-              你不需要准备好，我们就在这里。
-            </p>
-          </div>
         </main>
 
         {/* Fixed Bottom CTA */}
