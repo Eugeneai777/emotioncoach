@@ -241,35 +241,110 @@ const AwakeningIntro: React.FC = () => {
             ))}
           </div>
 
-          {/* Growth Loop Section */}
+          {/* Growth Loop Section - 优化版 */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="bg-card rounded-xl border p-4 space-y-4"
+            className="bg-gradient-to-br from-slate-50 to-amber-50/50 dark:from-slate-900 dark:to-amber-900/20 rounded-2xl border border-amber-200/30 dark:border-amber-700/30 p-6 shadow-md"
           >
-            <h3 className="text-center font-semibold text-foreground">🔁 六大觉察形成「生命成长闭环」</h3>
+            {/* 标题区域 */}
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <span className="text-2xl">🔁</span>
+              <h3 className="text-lg font-bold bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
+                六大觉察形成「生命成长闭环」
+              </h3>
+            </div>
             
-            <div className="flex flex-col items-center space-y-2 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1.5 bg-red-100 dark:bg-red-900/30 rounded-lg text-red-700 dark:text-red-300 font-medium">情绪觉察（负）</span>
-                <span className="text-muted-foreground">→</span>
-                <span className="px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg text-amber-700 dark:text-amber-300 font-medium">神经滋养（正）</span>
+            {/* 闭环流程 - 环形布局 */}
+            <div className="relative">
+              {/* 右侧反哺箭头 */}
+              <div className="absolute right-0 top-4 bottom-4 w-8 flex flex-col items-center justify-center">
+                <div className="h-full w-0.5 bg-gradient-to-b from-red-300 via-amber-300 to-teal-300 dark:from-red-600 dark:via-amber-600 dark:to-teal-600 rounded-full" />
+                <div className="absolute -bottom-2 text-xs text-muted-foreground whitespace-nowrap transform rotate-90 origin-center">
+                  ↺ 反哺
+                </div>
               </div>
-              <span className="text-muted-foreground">↓</span>
-              <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-700 dark:text-blue-300 font-medium">行动对齐</span>
-              <span className="text-muted-foreground">↓</span>
-              <span className="px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-700 dark:text-purple-300 font-medium">决策清晰</span>
-              <span className="text-muted-foreground">↓</span>
-              <span className="px-3 py-1.5 bg-pink-100 dark:bg-pink-900/30 rounded-lg text-pink-700 dark:text-pink-300 font-medium">关系顺畅</span>
-              <span className="text-muted-foreground">↓</span>
-              <span className="px-3 py-1.5 bg-teal-100 dark:bg-teal-900/30 rounded-lg text-teal-700 dark:text-teal-300 font-medium">意义显现</span>
-              <span className="text-muted-foreground">↺ 反哺情绪系统</span>
+
+              <div className="pr-10 space-y-3">
+                {/* 情绪觉察 */}
+                <div className="flex items-center gap-3 group">
+                  <div className="w-1 h-10 bg-gradient-to-b from-red-500 to-red-400 rounded-full" />
+                  <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-900/30 rounded-xl border border-red-200/50 dark:border-red-700/30 transition-all group-hover:shadow-sm group-hover:scale-[1.02]">
+                    <span className="text-xl">🔥</span>
+                    <span className="font-medium text-red-700 dark:text-red-300">情绪觉察（负）</span>
+                  </div>
+                </div>
+
+                <div className="pl-6 text-muted-foreground text-sm">↓</div>
+
+                {/* 神经滋养 */}
+                <div className="flex items-center gap-3 group">
+                  <div className="w-1 h-10 bg-gradient-to-b from-amber-500 to-yellow-400 rounded-full" />
+                  <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/30 rounded-xl border border-amber-200/50 dark:border-amber-700/30 transition-all group-hover:shadow-sm group-hover:scale-[1.02]">
+                    <span className="text-xl">💛</span>
+                    <span className="font-medium text-amber-700 dark:text-amber-300">神经滋养（正）</span>
+                  </div>
+                </div>
+
+                <div className="pl-6 text-muted-foreground text-sm">↓</div>
+
+                {/* 行动对齐 */}
+                <div className="flex items-center gap-3 group">
+                  <div className="w-1 h-10 bg-gradient-to-b from-blue-500 to-cyan-400 rounded-full" />
+                  <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl border border-blue-200/50 dark:border-blue-700/30 transition-all group-hover:shadow-sm group-hover:scale-[1.02]">
+                    <span className="text-xl">⚡</span>
+                    <span className="font-medium text-blue-700 dark:text-blue-300">行动对齐</span>
+                  </div>
+                </div>
+
+                <div className="pl-6 text-muted-foreground text-sm">↓</div>
+
+                {/* 决策清晰 */}
+                <div className="flex items-center gap-3 group">
+                  <div className="w-1 h-10 bg-gradient-to-b from-purple-500 to-pink-400 rounded-full" />
+                  <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-purple-50 dark:bg-purple-900/30 rounded-xl border border-purple-200/50 dark:border-purple-700/30 transition-all group-hover:shadow-sm group-hover:scale-[1.02]">
+                    <span className="text-xl">🧩</span>
+                    <span className="font-medium text-purple-700 dark:text-purple-300">决策清晰</span>
+                  </div>
+                </div>
+
+                <div className="pl-6 text-muted-foreground text-sm">↓</div>
+
+                {/* 关系顺畅 */}
+                <div className="flex items-center gap-3 group">
+                  <div className="w-1 h-10 bg-gradient-to-b from-pink-500 to-rose-400 rounded-full" />
+                  <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-pink-50 dark:bg-pink-900/30 rounded-xl border border-pink-200/50 dark:border-pink-700/30 transition-all group-hover:shadow-sm group-hover:scale-[1.02]">
+                    <span className="text-xl">🤝</span>
+                    <span className="font-medium text-pink-700 dark:text-pink-300">关系顺畅</span>
+                  </div>
+                </div>
+
+                <div className="pl-6 text-muted-foreground text-sm">↓</div>
+
+                {/* 意义显现 */}
+                <div className="flex items-center gap-3 group">
+                  <div className="w-1 h-10 bg-gradient-to-b from-teal-500 to-emerald-400 rounded-full" />
+                  <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-teal-50 dark:bg-teal-900/30 rounded-xl border border-teal-200/50 dark:border-teal-700/30 transition-all group-hover:shadow-sm group-hover:scale-[1.02]">
+                    <span className="text-xl">🌟</span>
+                    <span className="font-medium text-teal-700 dark:text-teal-300">意义显现</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="text-center space-y-1 pt-2">
-              <p className="text-sm text-muted-foreground">📌 不是6个功能</p>
-              <p className="text-sm font-medium text-foreground">📌 是 6 个觉察入口</p>
+            {/* 底部说明 */}
+            <div className="mt-6 pt-4 border-t border-amber-200/30 dark:border-amber-700/30">
+              <div className="flex items-center justify-center gap-6 text-sm">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="text-red-400">✕</span>
+                  <span>不是6个功能</span>
+                </div>
+                <div className="flex items-center gap-1.5 font-medium text-foreground">
+                  <span className="text-green-500">✓</span>
+                  <span>是 6 个觉察入口</span>
+                </div>
+              </div>
             </div>
           </motion.div>
 
