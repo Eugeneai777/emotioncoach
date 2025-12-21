@@ -140,7 +140,7 @@ const AwakeningDrawer: React.FC<AwakeningDrawerProps> = ({
             </Button>
             <div className="flex items-center gap-2">
               <span className="text-2xl">{dimension.emoji}</span>
-              <DrawerTitle className="text-xl">{dimension.title}觉醒</DrawerTitle>
+              <DrawerTitle className="text-xl">{dimension.title}觉察</DrawerTitle>
             </div>
             <DrawerDescription>
               {dimension.template}

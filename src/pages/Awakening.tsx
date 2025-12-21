@@ -21,7 +21,7 @@ const Awakening: React.FC = () => {
   };
   return <>
       <Helmet>
-        <title>觉醒记录 - 有劲</title>
+        <title>觉察记录 - 有劲</title>
         <meta name="description" content="每天1次轻记录，帮你看见盲点与模式，给你一个最小行动" />
       </Helmet>
 
@@ -32,7 +32,7 @@ const Awakening: React.FC = () => {
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-semibold">觉醒入口</h1>
+            <h1 className="text-lg font-semibold">觉察入口</h1>
             <Button variant="ghost" size="icon" onClick={() => navigate('/awakening-journal')}>
               <BookOpen className="h-5 w-5" />
             </Button>
@@ -91,7 +91,7 @@ const Awakening: React.FC = () => {
             
             <Button variant="ghost" size="sm" onClick={() => navigate('/awakening-journal')} className="text-muted-foreground hover:text-foreground">
               <BookOpen className="w-4 h-4 mr-2" />
-              查看觉醒日记
+              查看觉察日记
             </Button>
           </motion.div>
         </main>

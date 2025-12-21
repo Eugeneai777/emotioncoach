@@ -1,4 +1,4 @@
-// 觉醒记录入口配置 - 6大觉醒维度
+// 觉察记录入口配置 - 6大觉察维度
 export type AwakeningType = 'emotion' | 'gratitude' | 'action' | 'decision' | 'relation' | 'direction';
 
 export interface AwakeningDimension {

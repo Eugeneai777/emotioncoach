@@ -5,7 +5,7 @@ import { ArrowLeft, ChevronDown, ChevronUp, Sparkles, ArrowRight, Layers } from 
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet";
 
-// 六大觉醒配置
+// 六大觉察配置
 const lifeSystems = [
   {
     id: 'emotion',
@@ -104,7 +104,7 @@ const AwakeningIntro: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>六大觉醒 - 有劲AI</title>
+        <title>六大觉察 - 有劲AI</title>
         <meta name="description" content="有劲AI不是陪你聊天的AI，而是帮你看见自己、对齐行动、走出人生回路的生命操作系统" />
       </Helmet>
 
@@ -115,7 +115,7 @@ const AwakeningIntro: React.FC = () => {
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-semibold">生命觉醒入口</h1>
+            <h1 className="text-lg font-semibold">生命觉察入口</h1>
             <div className="w-10" />
           </div>
         </header>
@@ -131,7 +131,7 @@ const AwakeningIntro: React.FC = () => {
             <div className="flex items-center justify-center gap-2">
               <Sparkles className="w-6 h-6 text-amber-500" />
               <h2 className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
-                有劲AI · 六大觉醒入口
+                有劲AI · 六大觉察入口
               </h2>
             </div>
             
@@ -254,7 +254,7 @@ const AwakeningIntro: React.FC = () => {
             transition={{ delay: 0.6 }}
             className="bg-card rounded-xl border p-4 space-y-4"
           >
-            <h3 className="text-center font-semibold text-foreground">🔁 六大觉醒形成「生命成长闭环」</h3>
+            <h3 className="text-center font-semibold text-foreground">🔁 六大觉察形成「生命成长闭环」</h3>
             
             <div className="flex flex-col items-center space-y-2 text-sm">
               <div className="flex items-center gap-2">
@@ -275,7 +275,7 @@ const AwakeningIntro: React.FC = () => {
 
             <div className="text-center space-y-1 pt-2">
               <p className="text-sm text-muted-foreground">📌 不是6个功能</p>
-              <p className="text-sm font-medium text-foreground">📌 是 6 个觉醒入口</p>
+              <p className="text-sm font-medium text-foreground">📌 是 6 个觉察入口</p>
             </div>
           </motion.div>
 
@@ -303,7 +303,7 @@ const AwakeningIntro: React.FC = () => {
               className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg"
             >
               <Sparkles className="w-5 h-5 mr-2" />
-              开始我的生命觉醒
+              开始我的生命觉察
             </Button>
             <Button
               variant="outline"
