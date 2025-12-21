@@ -5,7 +5,7 @@ import { ArrowLeft, ChevronDown, ChevronUp, Sparkles, ArrowRight, Layers } from 
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet";
 
-// 六大生命输入系统配置
+// 六大觉醒配置
 const lifeSystems = [
   {
     id: 'emotion',
@@ -104,7 +104,7 @@ const AwakeningIntro: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>六大生命输入系统 - 有劲AI</title>
+        <title>六大觉醒 - 有劲AI</title>
         <meta name="description" content="有劲AI不是陪你聊天的AI，而是帮你看见自己、对齐行动、走出人生回路的生命操作系统" />
       </Helmet>
 
@@ -115,7 +115,7 @@ const AwakeningIntro: React.FC = () => {
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-semibold">生命输入系统</h1>
+            <h1 className="text-lg font-semibold">生命觉醒入口</h1>
             <div className="w-10" />
           </div>
         </header>
@@ -131,10 +131,9 @@ const AwakeningIntro: React.FC = () => {
             <div className="flex items-center justify-center gap-2">
               <Sparkles className="w-6 h-6 text-amber-500" />
               <h2 className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
-                有劲AI · 六大生命输入系统
+                有劲AI · 六大觉醒
               </h2>
             </div>
-            <p className="text-sm text-muted-foreground">Life Input System</p>
             
             <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-xl p-4 border border-amber-200/50">
               <p className="text-lg font-medium text-amber-800">
@@ -255,7 +254,7 @@ const AwakeningIntro: React.FC = () => {
             transition={{ delay: 0.6 }}
             className="bg-card rounded-xl border p-4 space-y-4"
           >
-            <h3 className="text-center font-semibold text-foreground">🔁 六大系统形成「生命成长闭环」</h3>
+            <h3 className="text-center font-semibold text-foreground">🔁 六大觉醒形成「生命成长闭环」</h3>
             
             <div className="flex flex-col items-center space-y-2 text-sm">
               <div className="flex items-center gap-2">
@@ -276,7 +275,7 @@ const AwakeningIntro: React.FC = () => {
 
             <div className="text-center space-y-1 pt-2">
               <p className="text-sm text-muted-foreground">📌 不是6个功能</p>
-              <p className="text-sm font-medium text-foreground">📌 是 6 个每天都在运作的生命模块</p>
+              <p className="text-sm font-medium text-foreground">📌 是 6 个觉醒入口</p>
             </div>
           </motion.div>
 
