@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, BookOpen, Info, RefreshCw } from "lucide-react";
+import { ArrowLeft, BookOpen, Info, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { awakeningDimensions, AwakeningDimension } from "@/config/awakeningConfig";
 import AwakeningEntryCard from "@/components/awakening/AwakeningEntryCard";
@@ -69,8 +69,8 @@ const Awakening: React.FC = () => {
                 onClick={() => navigate('/transformation-flow')}
                 className="text-orange-600 border-orange-200 hover:bg-orange-50"
               >
-                <RefreshCw className="w-4 h-4 mr-1" />
-                转化系统
+                <Layers className="w-4 h-4 mr-1" />
+                四层支持
               </Button>
             </div>
           </motion.div>
