@@ -250,7 +250,7 @@ export const CoachHeader = ({
                 variant="ghost"
                 onClick={() => navigate("/awakening")}
                 className="h-9 w-9 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md group"
-                title="觉醒"
+                title="觉察"
               >
                 <Sun className="w-4 h-4 animate-[pulse_2s_ease-in-out_infinite] group-hover:animate-none" />
               </Button>
