@@ -128,12 +128,6 @@ const AwakeningIntro: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="text-center space-y-4"
           >
-            <div className="flex items-center justify-center gap-2">
-              <Sparkles className="w-6 h-6 text-amber-500" />
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
-                有劲AI · 六大觉察入口
-              </h2>
-            </div>
             
             <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-xl p-4 border border-amber-200/50">
               <p className="text-lg font-medium text-amber-800">
