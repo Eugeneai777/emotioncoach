@@ -80,8 +80,8 @@ export function AppointmentPayDialog({
   const createAppointmentOrder = async () => {
     setStatus('loading');
     try {
-      // 统一使用native二维码支付（H5未审核通过）
-      setPayType('native');
+      const selectedPayType = isMobile && !isWechat ? 'h5' : 'native';
+      setPayType(selectedPayType);
 
       const { data, error } = await supabase.functions.invoke('create-appointment-order', {
         body: {
@@ -89,7 +89,7 @@ export function AppointmentPayDialog({
           serviceId: service.id,
           slotId: slot.id,
           userNotes,
-          payType: 'native',
+          payType: selectedPayType,
         },
       });
 
@@ -102,13 +102,15 @@ export function AppointmentPayDialog({
       setOrderNo(data.orderNo);
       setAppointmentId(data.appointmentId);
 
-      if (data.codeUrl) {
+      if (selectedPayType === 'h5' && data.h5Url) {
+        setH5PayUrl(data.h5Url);
+        setStatus('pending');
+      } else if (data.codeUrl) {
         const qrDataUrl = await QRCode.toDataURL(data.codeUrl, {
-          width: 240,
+          width: 200,
           margin: 2,
         });
         setQrCodeDataUrl(qrDataUrl);
-        setH5PayUrl(data.codeUrl); // 保存链接用于复制
         setStatus('pending');
         startPolling(data.orderNo);
       }
@@ -157,7 +159,7 @@ export function AppointmentPayDialog({
   const handleCopyLink = () => {
     if (h5PayUrl) {
       navigator.clipboard.writeText(h5PayUrl);
-      toast.success('链接已复制，请在微信中打开');
+      toast.success('支付链接已复制');
     }
   };
 
@@ -195,69 +197,35 @@ export function AppointmentPayDialog({
               </>
             )}
 
-            {status === 'pending' && qrCodeDataUrl && (
-              <div className="w-full space-y-3">
-                {/* 二维码 */}
-                <div className="flex justify-center">
-                  <div className="bg-white p-3 rounded-lg border shadow-sm">
-                    <img src={qrCodeDataUrl} alt="Payment QR Code" className="w-48 h-48" />
-                  </div>
-                </div>
-                
-                {/* 根据设备显示不同提示 */}
-                {isMobile ? (
-                  <div className="space-y-3">
-                    {/* 移动端分步指引 */}
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-100">
-                      <p className="text-sm font-medium text-green-800 mb-2">📱 手机支付步骤：</p>
-                      <div className="space-y-1.5 text-xs text-green-700">
-                        <div className="flex items-start gap-2">
-                          <span className="bg-green-500 text-white rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0 text-[10px]">1</span>
-                          <span>长按上方二维码，保存到相册</span>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <span className="bg-green-500 text-white rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0 text-[10px]">2</span>
-                          <span>打开微信「扫一扫」</span>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <span className="bg-green-500 text-white rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0 text-[10px]">3</span>
-                          <span>点击右上角「相册」，选择二维码图片</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* 复制链接备选 */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopyLink}
-                      className="w-full gap-2 text-xs"
-                    >
-                      <Copy className="h-3 w-3" />
-                      或复制链接到微信打开
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center space-y-2">
-                    <p className="text-sm text-muted-foreground">请使用微信扫码支付</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopyLink}
-                      className="gap-2 text-xs"
-                    >
-                      <Copy className="h-3 w-3" />
-                      复制链接在微信中打开
-                    </Button>
-                  </div>
-                )}
-
-                {/* 等待支付状态 */}
-                <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  等待支付中，支付后自动跳转...
+            {status === 'pending' && payType === 'native' && qrCodeDataUrl && (
+              <>
+                <img src={qrCodeDataUrl} alt="Payment QR Code" className="w-48 h-48 mb-4" />
+                <p className="text-sm text-muted-foreground text-center">
+                  请使用微信扫描二维码完成支付
                 </p>
-              </div>
+              </>
+            )}
+
+            {status === 'pending' && payType === 'h5' && (
+              <>
+                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.295.295a.319.319 0 00.165-.047l1.79-1.075a.865.865 0 01.673-.053c.854.241 1.775.37 2.73.37.266 0 .529-.013.789-.035-.213-.608-.336-1.254-.336-1.926 0-3.556 3.47-6.44 7.75-6.44.266 0 .528.012.788.035C16.75 4.57 13.052 2.188 8.691 2.188z"/>
+                    <path d="M24 14.967c0-3.455-3.47-6.26-7.75-6.26s-7.75 2.805-7.75 6.26c0 3.455 3.47 6.261 7.75 6.261.881 0 1.725-.115 2.508-.32a.743.743 0 01.578.045l1.548.933a.276.276 0 00.144.041.256.256 0 00.256-.256c0-.062-.025-.123-.041-.185l-.337-1.28a.51.51 0 01.184-.575C22.914 18.68 24 16.95 24 14.967z"/>
+                  </svg>
+                </div>
+                <p className="text-sm text-muted-foreground text-center mb-4">
+                  点击下方按钮跳转微信支付
+                </p>
+                <div className="flex gap-2 w-full">
+                  <Button onClick={handleH5Pay} className="flex-1">
+                    立即支付
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={handleCopyLink}>
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              </>
             )}
 
             {status === 'success' && (
