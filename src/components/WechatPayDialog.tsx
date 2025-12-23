@@ -86,16 +86,15 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
     }
   };
 
-  // 创建订单
+  // 创建订单 - 统一使用二维码支付，移动端也可以截图扫码
   const createOrder = async () => {
     if (!packageInfo || !user) return;
 
     setStatus('loading');
     setErrorMessage('');
 
-    // 移动端优先使用H5支付，PC端使用Native扫码
-    const selectedPayType = isMobile && !isWechat ? 'h5' : 'native';
-    setPayType(selectedPayType);
+    // 统一使用native二维码支付（H5未审核通过）
+    setPayType('native');
 
     try {
       const { data, error } = await supabase.functions.invoke('create-wechat-order', {
@@ -104,7 +103,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
           packageName: packageInfo.name,
           amount: packageInfo.price,
           userId: user.id,
-          payType: selectedPayType,
+          payType: 'native',
         },
       });
 
@@ -112,24 +111,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
       if (!data.success) throw new Error(data.error || '创建订单失败');
 
       setOrderNo(data.orderNo);
-
-      if (selectedPayType === 'h5' && data.h5Url) {
-        // H5支付
-        setH5Url(data.h5Url);
-        setPayUrl(data.h5Url);
-        setStatus('ready');
-      } else {
-        // Native扫码支付
-        setPayUrl(data.qrCodeUrl || data.payUrl);
-        // 生成二维码
-        const qrDataUrl = await QRCode.toDataURL(data.qrCodeUrl || data.payUrl, {
-          width: 200,
-          margin: 2,
-          color: { dark: '#000000', light: '#ffffff' },
-        });
-        setQrCodeDataUrl(qrDataUrl);
-        setStatus('ready');
-      }
+      setPayUrl(data.qrCodeUrl || data.payUrl);
+      
+      // 生成二维码
+      const qrDataUrl = await QRCode.toDataURL(data.qrCodeUrl || data.payUrl, {
+        width: 240,
+        margin: 2,
+        color: { dark: '#000000', light: '#ffffff' },
+      });
+      setQrCodeDataUrl(qrDataUrl);
+      setStatus('ready');
 
       // 开始轮询
       startPolling(data.orderNo);
@@ -231,100 +222,103 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
             </Card>
           )}
 
-          {/* 二维码/H5支付区域 */}
-          <div className={`flex items-center justify-center border rounded-lg bg-white ${payType === 'h5' && (status === 'ready' || status === 'polling') ? 'w-full h-32' : 'w-52 h-52'}`}>
+          {/* 二维码支付区域 */}
+          <div className="w-full">
             {status === 'loading' && (
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center justify-center h-52 gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="text-sm text-muted-foreground">
-                  {payType === 'h5' ? '正在创建订单...' : '正在生成二维码...'}
-                </span>
+                <span className="text-sm text-muted-foreground">正在生成二维码...</span>
               </div>
             )}
 
-            {(status === 'ready' || status === 'polling') && payType === 'native' && qrCodeDataUrl && (
-              <img src={qrCodeDataUrl} alt="微信支付二维码" className="w-48 h-48" />
-            )}
+            {(status === 'ready' || status === 'polling') && qrCodeDataUrl && (
+              <div className="flex flex-col items-center gap-3">
+                {/* 二维码 */}
+                <div className="bg-white p-3 rounded-lg border shadow-sm">
+                  <img src={qrCodeDataUrl} alt="微信支付二维码" className="w-48 h-48" />
+                </div>
+                
+                {/* 根据设备显示不同提示 */}
+                {isMobile ? (
+                  <div className="w-full space-y-3">
+                    {/* 移动端分步指引 */}
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-100">
+                      <p className="text-sm font-medium text-green-800 mb-2">📱 手机支付步骤：</p>
+                      <div className="space-y-1.5 text-xs text-green-700">
+                        <div className="flex items-start gap-2">
+                          <span className="bg-green-500 text-white rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0 text-[10px]">1</span>
+                          <span>长按上方二维码，保存到相册</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="bg-green-500 text-white rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0 text-[10px]">2</span>
+                          <span>打开微信「扫一扫」</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="bg-green-500 text-white rounded-full w-4 h-4 flex items-center justify-center flex-shrink-0 text-[10px]">3</span>
+                          <span>点击右上角「相册」，选择二维码图片</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* 复制链接备选 */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyLink}
+                      className="w-full gap-2 text-xs"
+                    >
+                      <Copy className="h-3 w-3" />
+                      或复制链接到微信打开
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center space-y-2">
+                    <p className="text-sm text-muted-foreground">请使用微信扫码支付</p>
+                    {payUrl && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyLink}
+                        className="gap-2 text-xs"
+                      >
+                        <Copy className="h-3 w-3" />
+                        复制链接在微信中打开
+                      </Button>
+                    )}
+                  </div>
+                )}
 
-            {(status === 'ready' || status === 'polling') && payType === 'h5' && (
-              <div className="flex flex-col items-center gap-2 text-[#07C160]">
-                <svg className="h-16 w-16" viewBox="0 0 1024 1024" fill="currentColor">
-                  <path d="M664.8 627.2c-16 8-33.6 4-41.6-12l-4-8c-8-16-4-33.6 12-41.6l176-96c16-8 33.6-4 41.6 12l4 8c8 16 4 33.6-12 41.6l-176 96zM360 627.2l-176-96c-16-8-20-25.6-12-41.6l4-8c8-16 25.6-20 41.6-12l176 96c16 8 20 25.6 12 41.6l-4 8c-8 16-25.6 20-41.6 12z"/>
-                  <path d="M512 938.4c-235.2 0-426.4-191.2-426.4-426.4S276.8 85.6 512 85.6s426.4 191.2 426.4 426.4S747.2 938.4 512 938.4z m0-789.6c-200 0-363.2 163.2-363.2 363.2S312 875.2 512 875.2s363.2-163.2 363.2-363.2S712 148.8 512 148.8z"/>
-                  <path d="M512 448c-35.2 0-64-28.8-64-64s28.8-64 64-64 64 28.8 64 64-28.8 64-64 64z"/>
-                </svg>
-                <span className="font-medium">订单已创建</span>
-                <span className="text-sm text-muted-foreground">点击下方按钮完成支付</span>
+                {/* 等待支付状态 */}
+                {status === 'polling' && (
+                  <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    等待支付中，支付后自动跳转...
+                  </p>
+                )}
               </div>
             )}
 
             {status === 'success' && (
-              <div className="flex flex-col items-center gap-2 text-green-500">
+              <div className="flex flex-col items-center justify-center h-52 gap-2 text-green-500">
                 <CheckCircle className="h-16 w-16" />
                 <span className="font-medium">支付成功</span>
               </div>
             )}
 
             {status === 'failed' && (
-              <div className="flex flex-col items-center gap-2 text-destructive">
+              <div className="flex flex-col items-center justify-center h-52 gap-2 text-destructive">
                 <XCircle className="h-12 w-12" />
                 <span className="text-sm text-center px-4">{errorMessage}</span>
               </div>
             )}
 
             {status === 'expired' && (
-              <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <div className="flex flex-col items-center justify-center h-52 gap-2 text-muted-foreground">
                 <QrCode className="h-12 w-12" />
                 <span className="text-sm">订单已过期</span>
               </div>
             )}
           </div>
-
-          {/* 状态提示 */}
-          {(status === 'ready' || status === 'polling') && (
-            <div className="text-center space-y-3">
-              {payType === 'h5' ? (
-                <>
-                  <p className="text-sm text-muted-foreground">点击下方按钮跳转微信支付</p>
-                  <Button
-                    onClick={handleH5Pay}
-                    className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    立即支付
-                  </Button>
-                  {status === 'polling' && (
-                    <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      等待支付中...
-                    </p>
-                  )}
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground">请使用微信扫码支付</p>
-                  {status === 'polling' && (
-                    <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      等待支付中...
-                    </p>
-                  )}
-                  {/* 复制链接按钮（PC端备用） */}
-                  {payUrl && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopyLink}
-                      className="gap-2 text-xs"
-                    >
-                      <Copy className="h-3 w-3" />
-                      复制链接在微信中打开
-                    </Button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
 
           {/* 操作按钮 */}
           {(status === 'failed' || status === 'expired') && (
