@@ -125,13 +125,12 @@ serve(async (req) => {
     };
 
     // H5支付需要额外的scene_info
+    // 微信支付V3 API h5_info只需要type字段
     if (isH5) {
       requestBody.scene_info = {
         payer_client_ip: '127.0.0.1', // 实际项目中应从请求头获取
         h5_info: {
-          type: 'Wap',
-          wap_url: 'https://eugeneai.me',
-          wap_name: '有劲AI'
+          type: 'Wap'
         }
       };
     }
