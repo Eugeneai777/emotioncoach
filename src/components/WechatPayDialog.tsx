@@ -67,10 +67,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
 
   // 跳转H5支付
   const handleH5Pay = () => {
-    if (!h5Url) return;
+    const url = h5Url || payUrl;
+    if (!url) {
+      toast.error('支付链接未生成，请重试');
+      return;
+    }
+    console.log('H5 Pay URL:', url);
     // H5支付完成后需要跳回的地址
     const redirectUrl = encodeURIComponent(window.location.origin + '/packages?order=' + orderNo);
-    const payUrlWithRedirect = h5Url + '&redirect_url=' + redirectUrl;
+    const payUrlWithRedirect = url + (url.includes('?') ? '&' : '?') + 'redirect_url=' + redirectUrl;
+    console.log('Redirecting to:', payUrlWithRedirect);
     window.location.href = payUrlWithRedirect;
   };
 
