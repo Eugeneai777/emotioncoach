@@ -243,21 +243,23 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
           )}
 
           {/* 二维码/H5支付区域 */}
-          <div className={`flex items-center justify-center border rounded-lg bg-white ${payType === 'h5' && (status === 'ready' || status === 'polling') ? 'w-full h-32' : 'w-52 h-52'}`}>
+          <div className={`flex items-center justify-center border rounded-lg bg-white ${(payType === 'h5' || (payType === 'native' && isMobile)) && (status === 'ready' || status === 'polling') ? 'w-full h-32' : 'w-52 h-52'}`}>
             {status === 'loading' && (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="text-sm text-muted-foreground">
-                  {payType === 'h5' ? '正在创建订单...' : '正在生成二维码...'}
+                  正在创建订单...
                 </span>
               </div>
             )}
 
-            {(status === 'ready' || status === 'polling') && payType === 'native' && qrCodeDataUrl && (
+            {/* PC端Native支付显示二维码 */}
+            {(status === 'ready' || status === 'polling') && payType === 'native' && !isMobile && qrCodeDataUrl && (
               <img src={qrCodeDataUrl} alt="微信支付二维码" className="w-48 h-48" />
             )}
 
-            {(status === 'ready' || status === 'polling') && payType === 'h5' && (
+            {/* 移动端（包括H5和Native降级）显示按钮提示 */}
+            {(status === 'ready' || status === 'polling') && (payType === 'h5' || (payType === 'native' && isMobile)) && (
               <div className="flex flex-col items-center gap-2 text-[#07C160]">
                 <svg className="h-16 w-16" viewBox="0 0 1024 1024" fill="currentColor">
                   <path d="M664.8 627.2c-16 8-33.6 4-41.6-12l-4-8c-8-16-4-33.6 12-41.6l176-96c16-8 33.6-4 41.6 12l4 8c8 16 4 33.6-12 41.6l-176 96zM360 627.2l-176-96c-16-8-20-25.6-12-41.6l4-8c8-16 25.6-20 41.6-12l176 96c16 8 20 25.6 12 41.6l-4 8c-8 16-25.6 20-41.6 12z"/>
@@ -294,33 +296,29 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
           {/* 状态提示 */}
           {(status === 'ready' || status === 'polling') && (
             <div className="text-center space-y-3">
-              {payType === 'h5' ? (
+              {/* 移动端：H5支付或Native降级都显示跳转按钮 */}
+              {isMobile && !isWechat ? (
                 <>
                   <p className="text-sm text-muted-foreground">点击下方按钮跳转微信支付</p>
-                  {!isWechat && isMobile && (
-                    <p className="text-xs text-muted-foreground">
-                      若跳转失败，请复制链接后在微信内打开
-                    </p>
-                  )}
 
-                  <Button asChild className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white">
-                    <a
-                      href={h5PayLink || '#'}
-                      target="_top"
-                      rel="noopener noreferrer"
-                      onClick={(e) => {
-                        if (!h5PayLink) {
-                          e.preventDefault();
-                          toast.error('支付链接未生成，请稍后重试');
-                        }
-                      }}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      立即支付
-                    </a>
+                  <Button
+                    className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white"
+                    onClick={() => {
+                      // Native支付的 code_url 格式为 weixin://wxpay/bizpayurl?pr=xxx
+                      // 可以直接唤起微信支付
+                      const targetUrl = h5PayLink || payUrl;
+                      if (!targetUrl) {
+                        toast.error('支付链接未生成，请稍后重试');
+                        return;
+                      }
+                      window.location.href = targetUrl;
+                    }}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    立即支付
                   </Button>
 
-                  {(h5PayLink || h5Url || payUrl) && (
+                  {(h5PayLink || payUrl) && (
                     <Button
                       type="button"
                       variant="outline"
@@ -341,6 +339,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
                   )}
                 </>
               ) : (
+                /* PC端或微信内：显示二维码扫码 */
                 <>
                   <p className="text-sm text-muted-foreground">请使用微信扫码支付</p>
                   {status === 'polling' && (
