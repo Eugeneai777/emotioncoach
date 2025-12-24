@@ -293,6 +293,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
                 <>
                   <p className="text-sm text-muted-foreground">点击下方按钮跳转微信支付</p>
                   <Button
+                    type="button"
                     onClick={handleH5Pay}
                     className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white"
                   >
@@ -318,6 +319,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
                   {/* 复制链接按钮（PC端备用） */}
                   {payUrl && (
                     <Button
+                      type="button"
                       variant="outline"
                       size="sm"
                       onClick={handleCopyLink}
@@ -334,7 +336,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
 
           {/* 操作按钮 */}
           {(status === 'failed' || status === 'expired') && (
-            <Button onClick={handleRetry} variant="outline" className="gap-2">
+            <Button type="button" onClick={handleRetry} variant="outline" className="gap-2">
               <RefreshCw className="h-4 w-4" />
               重新生成二维码
             </Button>
