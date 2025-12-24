@@ -102,13 +102,8 @@ serve(async (req) => {
     const orderNo = generateOrderNo();
     const expiredAt = new Date(Date.now() + 5 * 60 * 1000); // 5分钟后过期
 
-    // 构建微信支付请求体
-    const amountInFen = Math.round(amount * 100); // 转换为分
-    const notifyUrl = `${supabaseUrl}/functions/v1/wechat-pay-callback`;
-    
     // 根据支付类型选择不同的API和请求体
     const isH5 = payType === 'h5';
-
     const amountInFen = Math.round(amount * 100); // 转换为分
     const notifyUrl = `${supabaseUrl}/functions/v1/wechat-pay-callback`;
 
