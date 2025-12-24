@@ -31,6 +31,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [payUrl, setPayUrl] = useState<string>('');
   const [h5Url, setH5Url] = useState<string>('');
+  const [h5PayLink, setH5PayLink] = useState<string>('');
   const [orderNo, setOrderNo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [payType, setPayType] = useState<'h5' | 'native'>('h5');
@@ -61,24 +62,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
     setQrCodeDataUrl('');
     setPayUrl('');
     setH5Url('');
+    setH5PayLink('');
     setOrderNo('');
     setErrorMessage('');
   };
 
-  // 跳转H5支付
-  const handleH5Pay = () => {
-    const url = h5Url || payUrl;
-    if (!url) {
-      toast.error('支付链接未生成，请重试');
-      return;
-    }
-    console.log('H5 Pay URL:', url);
-    // H5支付完成后需要跳回的地址
-    const redirectUrl = encodeURIComponent(window.location.origin + '/packages?order=' + orderNo);
-    const payUrlWithRedirect = url + (url.includes('?') ? '&' : '?') + 'redirect_url=' + redirectUrl;
-    console.log('Redirecting to:', payUrlWithRedirect);
-    window.location.href = payUrlWithRedirect;
-  };
 
   // 复制支付链接（备用）
   const handleCopyLink = async () => {
@@ -119,10 +107,17 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
 
       setOrderNo(data.orderNo);
 
-      if (selectedPayType === 'h5' && data.h5Url) {
+      if (selectedPayType === 'h5' && (data.h5Url || data.payUrl)) {
         // H5支付
-        setH5Url(data.h5Url);
-        setPayUrl(data.h5Url);
+        const baseUrl: string = (data.h5Url || data.payUrl) as string;
+        const redirectUrl = encodeURIComponent(window.location.origin + '/packages?order=' + data.orderNo);
+        const finalUrl = baseUrl.includes('redirect_url=')
+          ? baseUrl
+          : baseUrl + (baseUrl.includes('?') ? '&' : '?') + 'redirect_url=' + redirectUrl;
+
+        setH5Url(baseUrl);
+        setPayUrl(baseUrl);
+        setH5PayLink(finalUrl);
         setStatus('ready');
       } else {
         // Native扫码支付
@@ -292,13 +287,19 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
               {payType === 'h5' ? (
                 <>
                   <p className="text-sm text-muted-foreground">点击下方按钮跳转微信支付</p>
-                  <Button
-                    type="button"
-                    onClick={handleH5Pay}
-                    className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    立即支付
+                  <Button asChild className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white">
+                    <a
+                      href={h5PayLink || '#'}
+                      onClick={(e) => {
+                        if (!h5PayLink) {
+                          e.preventDefault();
+                          toast.error('支付链接未生成，请稍后重试');
+                        }
+                      }}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      立即支付
+                    </a>
                   </Button>
                   {status === 'polling' && (
                     <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
