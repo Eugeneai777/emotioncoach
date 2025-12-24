@@ -37,6 +37,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
   const [payType, setPayType] = useState<'h5' | 'native'>('h5');
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const orderCreatedRef = useRef<boolean>(false); // 防止重复创建订单
 
   // 检测是否在微信内
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
@@ -65,6 +66,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
     setH5PayLink('');
     setOrderNo('');
     setErrorMessage('');
+    orderCreatedRef.current = false; // 重置订单创建标记
   };
 
 
@@ -206,9 +208,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
     }, 3000);
   };
 
-  // 打开对话框时创建订单
+  // 打开对话框时创建订单（只在首次打开时创建，避免从微信返回时重复创建）
   useEffect(() => {
-    if (open && packageInfo && user) {
+    if (open && packageInfo && user && !orderCreatedRef.current) {
+      orderCreatedRef.current = true;
       createOrder();
     }
     return () => {
