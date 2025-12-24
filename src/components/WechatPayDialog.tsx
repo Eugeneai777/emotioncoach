@@ -70,11 +70,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
 
   // 复制支付链接（备用）
   const handleCopyLink = async () => {
-    const url = h5Url || payUrl;
+    const url = h5PayLink || h5Url || payUrl;
     if (!url) return;
     try {
       await navigator.clipboard.writeText(url);
-      toast.success('链接已复制，请在微信中打开并支付');
+      toast.success('链接已复制，请在微信中打开完成支付');
     } catch (error) {
       toast.error('复制失败，请手动复制');
     }
@@ -287,9 +287,17 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
               {payType === 'h5' ? (
                 <>
                   <p className="text-sm text-muted-foreground">点击下方按钮跳转微信支付</p>
+                  {!isWechat && (
+                    <p className="text-xs text-muted-foreground">
+                      部分手机浏览器可能无法直接唤起微信；如未跳转，请使用下方“复制链接”在微信中打开。
+                    </p>
+                  )}
+
                   <Button asChild className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white">
                     <a
                       href={h5PayLink || '#'}
+                      target="_top"
+                      rel="noopener noreferrer"
                       onClick={(e) => {
                         if (!h5PayLink) {
                           e.preventDefault();
@@ -301,6 +309,20 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
                       立即支付
                     </a>
                   </Button>
+
+                  {(h5PayLink || h5Url || payUrl) && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyLink}
+                      className="w-full gap-2 text-xs"
+                    >
+                      <Copy className="h-3 w-3" />
+                      复制链接在微信中打开
+                    </Button>
+                  )}
+
                   {status === 'polling' && (
                     <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
                       <Loader2 className="h-3 w-3 animate-spin" />
