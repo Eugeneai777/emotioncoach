@@ -80,6 +80,27 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
     }
   };
 
+  // 尝试唤起微信（会先复制链接；微信通常不会“自动打开”剪贴板里的链接）
+  const handleOpenWechatWithLink = async () => {
+    const url = h5PayLink || h5Url || payUrl;
+    if (!url) return;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('已复制链接，正在尝试打开微信…');
+    } catch (error) {
+      toast.error('复制失败，请先手动复制链接再打开微信');
+      return;
+    }
+
+    // 只能尝试唤起微信 App；出于安全限制，无法在微信内自动打开这条链接
+    window.location.href = 'weixin://';
+
+    setTimeout(() => {
+      toast('若未唤起微信，请手动打开微信并将链接粘贴到聊天/浏览器中打开');
+    }, 1200);
+  };
+
   // 创建订单
   const createOrder = async () => {
     if (!packageInfo || !user) return;
@@ -287,11 +308,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
               {payType === 'h5' ? (
                 <>
                   <p className="text-sm text-muted-foreground">点击下方按钮跳转微信支付</p>
-                  {!isWechat && (
-                    <p className="text-xs text-muted-foreground">
-                      部分手机浏览器可能无法直接唤起微信；如未跳转，请使用下方“复制链接”在微信中打开。
-                    </p>
-                  )}
+                   {!isWechat && (
+                     <p className="text-xs text-muted-foreground">
+                       部分手机浏览器可能无法直接唤起微信；且复制到剪贴板后微信不会自动打开链接，需要在微信里粘贴后再打开。
+                     </p>
+                   )}
 
                   <Button asChild className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white">
                     <a
@@ -310,18 +331,31 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
                     </a>
                   </Button>
 
-                  {(h5PayLink || h5Url || payUrl) && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopyLink}
-                      className="w-full gap-2 text-xs"
-                    >
-                      <Copy className="h-3 w-3" />
-                      复制链接在微信中打开
-                    </Button>
-                  )}
+                   {(h5PayLink || h5Url || payUrl) && (
+                     <Button
+                       type="button"
+                       variant="outline"
+                       size="sm"
+                       onClick={handleCopyLink}
+                       className="w-full gap-2 text-xs"
+                     >
+                       <Copy className="h-3 w-3" />
+                       复制链接
+                     </Button>
+                   )}
+
+                   {isMobile && !isWechat && (h5PayLink || h5Url || payUrl) && (
+                     <Button
+                       type="button"
+                       variant="secondary"
+                       size="sm"
+                       onClick={handleOpenWechatWithLink}
+                       className="w-full gap-2 text-xs"
+                     >
+                       <ExternalLink className="h-3 w-3" />
+                       打开微信（已复制链接）
+                     </Button>
+                   )}
 
                   {status === 'polling' && (
                     <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
