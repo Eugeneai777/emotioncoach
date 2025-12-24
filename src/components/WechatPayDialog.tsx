@@ -108,7 +108,14 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
 
       setOrderNo(data.orderNo);
 
-      if (selectedPayType === 'h5' && (data.h5Url || data.payUrl)) {
+      const effectivePayType: 'h5' | 'native' = (data.actualPayType || data.payType || selectedPayType) as 'h5' | 'native';
+      setPayType(effectivePayType);
+
+      if (data.fallbackReason) {
+        toast.message(data.fallbackReason);
+      }
+
+      if (effectivePayType === 'h5' && (data.h5Url || data.payUrl)) {
         // H5支付
         const baseUrl: string = (data.h5Url || data.payUrl) as string;
         const redirectUrl = encodeURIComponent(window.location.origin + '/packages?order=' + data.orderNo);
@@ -122,9 +129,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
         setStatus('ready');
       } else {
         // Native扫码支付
-        setPayUrl(data.qrCodeUrl || data.payUrl);
+        const nativeUrl = (data.qrCodeUrl || data.payUrl) as string;
+        setPayUrl(nativeUrl);
         // 生成二维码
-        const qrDataUrl = await QRCode.toDataURL(data.qrCodeUrl || data.payUrl, {
+        const qrDataUrl = await QRCode.toDataURL(nativeUrl, {
           width: 200,
           margin: 2,
           color: { dark: '#000000', light: '#ffffff' },
