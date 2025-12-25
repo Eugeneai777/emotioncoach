@@ -141,6 +141,14 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
         setH5Url(baseUrl);
         setPayUrl(baseUrl);
         setH5PayLink(finalUrl);
+        
+        // 移动端H5支付也生成二维码，用于长按识别
+        const qrDataUrl = await QRCode.toDataURL(finalUrl, {
+          width: 200,
+          margin: 2,
+          color: { dark: '#000000', light: '#ffffff' },
+        });
+        setQrCodeDataUrl(qrDataUrl);
         setStatus('ready');
       } else {
         // Native扫码支付
@@ -257,7 +265,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
           )}
 
           {/* 二维码/H5支付区域 */}
-          <div className={`flex items-center justify-center border rounded-lg bg-white ${payType === 'h5' && (status === 'ready' || status === 'polling') ? 'w-full h-32' : 'w-52 h-52'}`}>
+          <div className="flex items-center justify-center border rounded-lg bg-white w-52 h-52">
             {status === 'loading' && (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -272,14 +280,22 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
             )}
 
             {(status === 'ready' || status === 'polling') && payType === 'h5' && (
-              <div className="flex flex-col items-center gap-2 text-[#07C160]">
-                <svg className="h-16 w-16" viewBox="0 0 1024 1024" fill="currentColor">
-                  <path d="M664.8 627.2c-16 8-33.6 4-41.6-12l-4-8c-8-16-4-33.6 12-41.6l176-96c16-8 33.6-4 41.6 12l4 8c8 16 4 33.6-12 41.6l-176 96zM360 627.2l-176-96c-16-8-20-25.6-12-41.6l4-8c8-16 25.6-20 41.6-12l176 96c16 8 20 25.6 12 41.6l-4 8c-8 16-25.6 20-41.6 12z"/>
-                  <path d="M512 938.4c-235.2 0-426.4-191.2-426.4-426.4S276.8 85.6 512 85.6s426.4 191.2 426.4 426.4S747.2 938.4 512 938.4z m0-789.6c-200 0-363.2 163.2-363.2 363.2S312 875.2 512 875.2s363.2-163.2 363.2-363.2S712 148.8 512 148.8z"/>
-                  <path d="M512 448c-35.2 0-64-28.8-64-64s28.8-64 64-64 64 28.8 64 64-28.8 64-64 64z"/>
-                </svg>
-                <span className="font-medium">订单已创建</span>
-                <span className="text-sm text-muted-foreground">点击下方按钮完成支付</span>
+              <div className="flex flex-col items-center gap-2">
+                {qrCodeDataUrl ? (
+                  <>
+                    <img src={qrCodeDataUrl} alt="微信支付二维码" className="w-48 h-48" />
+                    <span className="text-xs text-muted-foreground">长按识别二维码支付</span>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-[#07C160]">
+                    <svg className="h-16 w-16" viewBox="0 0 1024 1024" fill="currentColor">
+                      <path d="M664.8 627.2c-16 8-33.6 4-41.6-12l-4-8c-8-16-4-33.6 12-41.6l176-96c16-8 33.6-4 41.6 12l4 8c8 16 4 33.6-12 41.6l-176 96zM360 627.2l-176-96c-16-8-20-25.6-12-41.6l4-8c8-16 25.6-20 41.6-12l176 96c16 8 20 25.6 12 41.6l-4 8c-8 16-25.6 20-41.6 12z"/>
+                      <path d="M512 938.4c-235.2 0-426.4-191.2-426.4-426.4S276.8 85.6 512 85.6s426.4 191.2 426.4 426.4S747.2 938.4 512 938.4z m0-789.6c-200 0-363.2 163.2-363.2 363.2S312 875.2 512 875.2s363.2-163.2 363.2-363.2S712 148.8 512 148.8z"/>
+                      <path d="M512 448c-35.2 0-64-28.8-64-64s28.8-64 64-64 64 28.8 64 64-28.8 64-64 64z"/>
+                    </svg>
+                    <span className="font-medium">订单已创建</span>
+                  </div>
+                )}
               </div>
             )}
 
