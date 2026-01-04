@@ -17,7 +17,8 @@ serve(async (req) => {
       dominantEmotionBlock, 
       dominantBeliefBlock,
       scores,
-      healthScore 
+      healthScore,
+      followUpInsights // 新增：追问回答数据
     } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -66,7 +67,18 @@ serve(async (req) => {
 1. 分析要深入、有洞察力，而不是泛泛而谈
 2. 语言要温暖有共情，不让用户感到被批判
 3. 建议要具体可执行，不要空洞
-4. 考虑各个卡点之间的关联性和相互影响`;
+4. 考虑各个卡点之间的关联性和相互影响
+5. 如果用户提供了具体场景信息（追问回答），请在分析中结合这些场景给出更精准的建议`;
+
+    // 构建追问洞察部分
+    let followUpSection = '';
+    if (followUpInsights && followUpInsights.length > 0) {
+      followUpSection = `\n【用户提供的具体场景】\n`;
+      followUpInsights.forEach((insight: { questionId: number; questionText: string; selectedOption: string }, index: number) => {
+        followUpSection += `${index + 1}. 关于「${insight.questionText}」，用户表示这种情况主要出现在：${insight.selectedOption}\n`;
+      });
+      followUpSection += `\n请基于这些具体场景，给出更有针对性的分析和建议。`;
+    }
 
     const userPrompt = `请分析以下财富卡点测评结果：
 
@@ -83,15 +95,16 @@ serve(async (req) => {
 - 行为层：${scores.behavior}/50
 - 情绪层：${scores.emotion}/50
 - 信念层：${scores.belief}/50
+${followUpSection}
 
 请生成以下内容（必须以JSON格式返回）：
 
 {
-  "rootCauseAnalysis": "根因分析（200字内，深入分析这些卡点组合背后的深层心理根源，可能的成长经历影响）",
+  "rootCauseAnalysis": "根因分析（200字内，深入分析这些卡点组合背后的深层心理根源，可能的成长经历影响${followUpInsights?.length ? '，结合用户提供的场景' : ''}）",
   "combinedPatternInsight": "组合模式洞察（100字内，分析这几个主导卡点之间的关联性和相互强化模式）",
   "breakthroughPath": ["第一步具体行动（50字内）", "第二步具体行动（50字内）", "第三步具体行动（50字内）"],
   "avoidPitfalls": ["需要避开的坑1（30字内）", "需要避开的坑2（30字内）"],
-  "firstStep": "推荐立即执行的第一步（具体可执行，30字内）",
+  "firstStep": "推荐立即执行的第一步（具体可执行，30字内${followUpInsights?.length ? '，针对用户提到的场景' : ''}）",
   "encouragement": "个性化的鼓励语（温暖积极，针对用户的情况，50字内）"
 }
 

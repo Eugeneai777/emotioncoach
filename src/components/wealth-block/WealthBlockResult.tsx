@@ -17,7 +17,8 @@ import {
   FourPoorType,
   EmotionBlockType,
   BeliefBlockType,
-  calculateHealthScore
+  calculateHealthScore,
+  FollowUpAnswer
 } from "./wealthBlockData";
 import {
   RadarChart,
@@ -44,13 +45,14 @@ import { AIInsightCard, AIInsightData } from "./AIInsightCard";
 
 interface WealthBlockResultProps {
   result: AssessmentResult;
+  followUpInsights?: FollowUpAnswer[];
   onRetake: () => void;
   onSave?: () => void;
   isSaving?: boolean;
   isSaved?: boolean;
 }
 
-export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved }: WealthBlockResultProps) {
+export function WealthBlockResult({ result, followUpInsights, onRetake, onSave, isSaving, isSaved }: WealthBlockResultProps) {
   const navigate = useNavigate();
   const pattern = patternInfo[result.reactionPattern];
   const dominantPoor = fourPoorInfo[result.dominantPoor];
@@ -97,7 +99,13 @@ export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved 
               unworthy: result.unworthyScore,
               relationship: result.relationshipScore,
             },
-            healthScore
+            healthScore,
+            // 传递追问洞察数据
+            followUpInsights: followUpInsights?.map(f => ({
+              questionId: f.questionId,
+              questionText: f.questionText,
+              selectedOption: f.selectedOption
+            }))
           }
         });
 
