@@ -117,30 +117,37 @@ export const WealthCoachDialog = ({
     onOpenChange(false);
   };
 
-  if (!open) return null;
-
   const primaryColor = template?.primary_color || "amber";
   const themeConfig = template?.theme_config;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50"
-      >
-        {/* 背景遮罩 */}
-        <div className="absolute inset-0 bg-black/60" onClick={handleClose} />
-
-        {/* 全屏对话层 */}
+    <AnimatePresence mode="wait">
+      {open && (
         <motion.div
-          initial={{ y: "100%" }}
-          animate={{ y: 0 }}
-          exit={{ y: "100%" }}
-          transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className={`absolute inset-x-0 bottom-0 top-0 sm:top-8 sm:rounded-t-2xl overflow-hidden bg-gradient-to-br ${getThemeBackgroundGradient(primaryColor, themeConfig)} flex flex-col`}
+          key="wealth-coach-dialog"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[60]"
         >
+          {/* 背景遮罩 */}
+          <motion.div 
+            className="absolute inset-0 bg-black/60" 
+            onClick={handleClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          />
+
+          {/* 全屏对话层 */}
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            onClick={(e) => e.stopPropagation()}
+            className={`absolute inset-x-0 bottom-0 top-0 sm:top-8 sm:rounded-t-2xl overflow-hidden bg-gradient-to-br ${getThemeBackgroundGradient(primaryColor, themeConfig)} flex flex-col`}
+          >
           {/* 顶部栏 */}
           <div className="flex items-center justify-between px-4 py-3 border-b bg-background/80 backdrop-blur-sm">
             <div className="flex items-center gap-2">
@@ -229,6 +236,7 @@ export const WealthCoachDialog = ({
           />
         </motion.div>
       </motion.div>
+      )}
     </AnimatePresence>
   );
 };
