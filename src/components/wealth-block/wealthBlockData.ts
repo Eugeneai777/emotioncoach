@@ -317,7 +317,7 @@ export const beliefBlockInfo: Record<BeliefBlockType, {
       "每天写下3件你做得好的事",
       "列出你为他人创造的价值",
       "练习接受赞美和礼物",
-对自己说「我值得拥有丰盛」
+      "对自己说「我值得拥有丰盛」"
     ]
   },
   relationship: {
