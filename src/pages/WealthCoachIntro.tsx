@@ -162,10 +162,10 @@ const WealthCoachIntro = () => {
           </div>
           
           <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-4 leading-tight">
-            财富不是你不努力，
+            财富不是靠努力，
             <br />
             <span className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-              而是你在错误的层面用力
+              而是靠在正确的层面发力
             </span>
           </h1>
           
