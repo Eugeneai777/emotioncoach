@@ -1,10 +1,20 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, Heart, Brain, Share2, MessageCircle, GraduationCap, Sparkles, RotateCcw, Save } from "lucide-react";
+import { Target, Heart, Brain, Share2, MessageCircle, GraduationCap, Sparkles, RotateCcw, Save, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { AssessmentResult, blockInfo, patternInfo, fourPoorInfo } from "./wealthBlockData";
+import { 
+  AssessmentResult, 
+  blockInfo, 
+  patternInfo, 
+  fourPoorInfo, 
+  emotionBlockInfo, 
+  beliefBlockInfo,
+  FourPoorType,
+  EmotionBlockType,
+  BeliefBlockType
+} from "./wealthBlockData";
 import {
   RadarChart,
   PolarGrid,
@@ -12,13 +22,18 @@ import {
   PolarRadiusAxis,
   Radar,
   ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Cell,
 } from "recharts";
-
-const iconMap = {
-  behavior: Target,
-  emotion: Heart,
-  belief: Brain,
-};
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface WealthBlockResultProps {
   result: AssessmentResult;
@@ -30,10 +45,10 @@ interface WealthBlockResultProps {
 
 export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved }: WealthBlockResultProps) {
   const navigate = useNavigate();
-  const dominant = blockInfo[result.dominantBlock];
   const pattern = patternInfo[result.reactionPattern];
   const dominantPoor = fourPoorInfo[result.dominantPoor];
-  const DominantIcon = iconMap[result.dominantBlock];
+  const dominantEmotion = emotionBlockInfo[result.dominantEmotionBlock];
+  const dominantBelief = beliefBlockInfo[result.dominantBeliefBlock];
 
   // 四穷雷达图数据
   const fourPoorRadarData = [
@@ -43,255 +58,472 @@ export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved 
     { subject: '心穷', score: result.heartScore, fullMark: 10 },
   ];
 
-  // 三层卡点雷达图数据
+  // 情绪卡点雷达图数据
+  const emotionRadarData = [
+    { subject: '金钱焦虑', score: result.anxietyScore, fullMark: 10 },
+    { subject: '匮乏恐惧', score: result.scarcityScore, fullMark: 10 },
+    { subject: '比较自卑', score: result.comparisonScore, fullMark: 10 },
+    { subject: '羞耻厌恶', score: result.shameScore, fullMark: 10 },
+    { subject: '消费内疚', score: result.guiltScore, fullMark: 10 },
+  ];
+
+  // 信念卡点雷达图数据
+  const beliefRadarData = [
+    { subject: '匮乏感', score: result.lackScore, fullMark: 10 },
+    { subject: '线性思维', score: result.linearScore, fullMark: 10 },
+    { subject: '金钱污名', score: result.stigmaScore, fullMark: 10 },
+    { subject: '不配得感', score: result.unworthyScore, fullMark: 10 },
+    { subject: '关系恐惧', score: result.relationshipScore, fullMark: 10 },
+  ];
+
+  // 三层雷达图数据
   const layerRadarData = [
     { subject: '行为层', score: result.behaviorScore, fullMark: 50 },
     { subject: '情绪层', score: result.emotionScore, fullMark: 50 },
     { subject: '信念层', score: result.beliefScore, fullMark: 50 },
   ];
 
+  const fourPoorColors: Record<FourPoorType, string> = {
+    mouth: "#f97316",
+    hand: "#10b981",
+    eye: "#3b82f6",
+    heart: "#f43f5e",
+  };
+
+  const emotionColors: Record<EmotionBlockType, string> = {
+    anxiety: "#f97316",
+    scarcity: "#6b7280",
+    comparison: "#8b5cf6",
+    shame: "#ec4899",
+    guilt: "#14b8a6",
+  };
+
+  const beliefColors: Record<BeliefBlockType, string> = {
+    lack: "#78716c",
+    linear: "#2563eb",
+    stigma: "#dc2626",
+    unworthy: "#7c3aed",
+    relationship: "#db2777",
+  };
+
+  const totalScore = result.behaviorScore + result.emotionScore + result.beliefScore;
+
   return (
     <div className="space-y-6 pb-20">
-      {/* 四穷主导卡点卡片 */}
+      {/* 总览卡片 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
         <Card className="overflow-hidden border-0 shadow-xl">
-          <div className={cn("bg-gradient-to-br p-6 text-white", dominantPoor.color)}>
+          <div className={cn("p-6 text-white", pattern.color.replace('bg-', 'bg-gradient-to-br from-').replace('-100', '-500').replace('text-', 'to-').replace('-700', '-600'))}>
             <div className="flex items-center gap-4 mb-4">
               <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm text-4xl">
-                {dominantPoor.emoji}
+                {pattern.emoji}
               </div>
               <div>
-                <p className="text-white/80 text-sm">你的主导行为卡点</p>
-                <h2 className="text-2xl font-bold">{dominantPoor.name}</h2>
-                <p className="text-white/90 text-sm mt-1">{dominantPoor.description}</p>
+                <p className="text-white/80 text-sm">你的财富反应模式</p>
+                <h2 className="text-2xl font-bold">{pattern.name}</h2>
+                <p className="text-white/90 text-sm mt-1">总分：{totalScore}/150</p>
               </div>
             </div>
-            <p className="text-white/90 leading-relaxed text-sm">{dominantPoor.detail}</p>
+            <p className="text-white/90 leading-relaxed text-sm">{pattern.description}</p>
           </div>
           
-          <CardContent className="p-6 space-y-6">
-            {/* 核心解决方案 */}
-            <div className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-200">
-              <h4 className="font-semibold text-amber-700 mb-2 flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                核心突破方案
-              </h4>
-              <p className="text-amber-800 text-sm leading-relaxed">{dominantPoor.solution}</p>
-            </div>
-
-            {/* 四穷雷达图 */}
-            <div className="space-y-3">
-              <h3 className="font-semibold text-foreground">四穷行为卡点分布</h3>
-              <div className="h-[240px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={fourPoorRadarData}>
-                    <PolarGrid stroke="hsl(var(--border))" />
-                    <PolarAngleAxis 
-                      dataKey="subject" 
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                    />
-                    <PolarRadiusAxis 
-                      angle={90} 
-                      domain={[0, 15]} 
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                      tickCount={4}
-                    />
-                    <Radar
-                      name="得分"
-                      dataKey="score"
-                      stroke="hsl(38, 92%, 50%)"
-                      fill="hsl(38, 92%, 50%)"
-                      fillOpacity={0.4}
-                      strokeWidth={2}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* 四穷得分条形图 */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">四穷详细得分</h3>
-              <div className="space-y-3">
-                {[
-                  { type: 'mouth' as const, label: '嘴穷', score: result.mouthScore, max: 15, emoji: '👄' },
-                  { type: 'hand' as const, label: '手穷', score: result.handScore, max: 10, emoji: '✋' },
-                  { type: 'eye' as const, label: '眼穷', score: result.eyeScore, max: 15, emoji: '👁️' },
-                  { type: 'heart' as const, label: '心穷', score: result.heartScore, max: 10, emoji: '💔' },
-                ].map(item => (
-                  <div key={item.type} className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground flex items-center gap-1">
-                        <span>{item.emoji}</span>
-                        {item.label}
-                        {result.dominantPoor === item.type && (
-                          <span className="text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full">主导</span>
-                        )}
-                      </span>
-                      <span className="font-medium">{item.score}/{item.max}</span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        className={cn("h-full rounded-full", fourPoorInfo[item.type].bgColor)}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(item.score / item.max) * 100}%` }}
-                        transition={{ duration: 0.8, delay: 0.3 }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <CardContent className="p-6">
+            {/* 三层总览雷达图 */}
+            <div className="h-[200px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={layerRadarData}>
+                  <PolarGrid stroke="hsl(var(--border))" />
+                  <PolarAngleAxis 
+                    dataKey="subject" 
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                  />
+                  <PolarRadiusAxis 
+                    angle={90} 
+                    domain={[0, 50]} 
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                    tickCount={6}
+                  />
+                  <Radar
+                    name="得分"
+                    dataKey="score"
+                    stroke="hsl(280, 70%, 50%)"
+                    fill="hsl(280, 70%, 50%)"
+                    fillOpacity={0.4}
+                    strokeWidth={2}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* 三层卡点结果 */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <Card className="overflow-hidden border-0 shadow-lg">
-          <div className={cn("bg-gradient-to-br p-4 text-white", dominant.color)}>
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                <DominantIcon className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-white/80 text-xs">深层财富卡点</p>
-                <h3 className="text-lg font-bold">{dominant.emoji} {dominant.name}</h3>
-              </div>
-            </div>
-          </div>
-          
-          <CardContent className="p-5 space-y-5">
-            {/* 财富反应模式 */}
-            <div className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm", pattern.color)}>
-              <span>{pattern.emoji}</span>
-              <span className="font-medium">财富反应模式：{pattern.name}</span>
-            </div>
-            
-            {/* 三层雷达图 */}
-            <div className="space-y-3">
-              <h4 className="font-medium text-foreground text-sm">三层卡点分布</h4>
-              <div className="h-[200px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={layerRadarData}>
-                    <PolarGrid stroke="hsl(var(--border))" />
-                    <PolarAngleAxis 
-                      dataKey="subject" 
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-                    />
-                    <PolarRadiusAxis 
-                      angle={90} 
-                      domain={[0, 50]} 
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }}
-                      tickCount={6}
-                    />
-                    <Radar
-                      name="得分"
-                      dataKey="score"
-                      stroke="hsl(280, 70%, 50%)"
-                      fill="hsl(280, 70%, 50%)"
-                      fillOpacity={0.4}
-                      strokeWidth={2}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* 三层得分条形图 */}
-            <div className="space-y-3">
-              {[
-                { label: '行为层', score: result.behaviorScore, max: 50, color: 'bg-blue-500' },
-                { label: '情绪层', score: result.emotionScore, max: 50, color: 'bg-pink-500' },
-                { label: '信念层', score: result.beliefScore, max: 50, color: 'bg-purple-500' },
-              ].map(item => (
-                <div key={item.label} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{item.label}</span>
-                    <span className="font-medium">{item.score}/{item.max}</span>
-                  </div>
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                    <motion.div
-                      className={cn("h-full rounded-full", item.color)}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(item.score / item.max) * 100}%` }}
-                      transition={{ duration: 0.8, delay: 0.5 }}
-                    />
+      {/* 三层深度分析 - 手风琴 */}
+      <Accordion type="multiple" defaultValue={["behavior", "emotion", "belief"]} className="space-y-4">
+        {/* 第一层：行为层分析 */}
+        <AccordionItem value="behavior" className="border-0">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <AccordionTrigger className="hover:no-underline p-0 [&[data-state=open]>div]:rounded-b-none">
+                <div className={cn("bg-gradient-to-br p-4 text-white w-full", blockInfo.behavior.color)}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                        <Target className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-white/80 text-xs">第一层</p>
+                        <h3 className="text-lg font-bold">行为层分析（四穷模型）</h3>
+                        <p className="text-white/90 text-xs">主导卡点：{dominantPoor.name}</p>
+                      </div>
+                    </div>
+                    <div className="text-right mr-2">
+                      <span className="text-2xl font-bold">{result.behaviorScore}</span>
+                      <span className="text-white/80 text-sm">/50</span>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <CardContent className="p-5 space-y-5">
+                  {/* 主导卡点卡片 */}
+                  <div className={cn("bg-gradient-to-br p-4 text-white rounded-xl", dominantPoor.color)}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-3xl">{dominantPoor.emoji}</span>
+                      <div>
+                        <h4 className="font-bold text-lg">{dominantPoor.name}</h4>
+                        <p className="text-white/80 text-sm">{dominantPoor.description}</p>
+                      </div>
+                    </div>
+                    <p className="text-white/90 text-sm leading-relaxed mb-3">{dominantPoor.detail}</p>
+                    <div className="p-3 bg-white/20 rounded-lg">
+                      <p className="text-sm font-medium">💡 突破方案：{dominantPoor.solution}</p>
+                    </div>
+                  </div>
 
-      {/* 详细解读 */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">深度解读</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground leading-relaxed">{dominant.detail}</p>
-            
-            <div className="p-4 bg-muted/50 rounded-xl border">
-              <p className="text-sm text-muted-foreground">{pattern.description}</p>
-            </div>
+                  {/* 雷达图和条形图 */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="h-[180px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart cx="50%" cy="50%" outerRadius="65%" data={fourPoorRadarData}>
+                          <PolarGrid stroke="hsl(var(--border))" />
+                          <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                          <PolarRadiusAxis angle={90} domain={[0, 15]} tick={false} axisLine={false} />
+                          <Radar dataKey="score" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.5} strokeWidth={2} />
+                        </RadarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="h-[180px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart 
+                          data={[
+                            { name: '嘴穷', score: result.mouthScore, key: 'mouth' as FourPoorType },
+                            { name: '手穷', score: result.handScore, key: 'hand' as FourPoorType },
+                            { name: '眼穷', score: result.eyeScore, key: 'eye' as FourPoorType },
+                            { name: '心穷', score: result.heartScore, key: 'heart' as FourPoorType },
+                          ]} 
+                          layout="vertical"
+                        >
+                          <XAxis type="number" domain={[0, 15]} hide />
+                          <YAxis dataKey="name" type="category" width={40} tick={{ fontSize: 11 }} />
+                          <Bar dataKey="score" radius={[0, 4, 4, 0]}>
+                            {[
+                              { key: 'mouth' as FourPoorType },
+                              { key: 'hand' as FourPoorType },
+                              { key: 'eye' as FourPoorType },
+                              { key: 'heart' as FourPoorType },
+                            ].map((entry) => (
+                              <Cell key={entry.key} fill={fourPoorColors[entry.key]} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
 
-            {/* 核心逻辑提示 */}
-            <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-100">
-              <p className="text-sm text-purple-800 leading-relaxed">
-                <span className="font-semibold">核心逻辑：</span>财富伴随"无形价值"而来，需以利他发心，而非功利营销。扩大情感张力，对客户、家人、世界充满无分别的爱与关怀；让"爱意"贯穿行为，自然吸引他人信任与能量交换。
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+                  {/* 行动清单 */}
+                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                    <h5 className="font-semibold text-amber-700 mb-3 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      突破"{dominantPoor.name}"行动清单
+                    </h5>
+                    <ul className="space-y-2">
+                      {dominantPoor.suggestions.map((suggestion, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm text-amber-800">
+                          <span className="flex-shrink-0 w-5 h-5 bg-amber-200 text-amber-700 rounded-full flex items-center justify-center text-xs font-medium">
+                            {index + 1}
+                          </span>
+                          <span>{suggestion}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+              </AccordionContent>
+            </Card>
+          </motion.div>
+        </AccordionItem>
 
-      {/* 行动建议 */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-500" />
-              突破"{dominantPoor.name}"行动清单
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3">
-              {dominantPoor.suggestions.map((suggestion, index) => (
-                <li key={index} className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-sm font-medium">
-                    {index + 1}
-                  </span>
-                  <span className="text-muted-foreground">{suggestion}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      </motion.div>
+        {/* 第二层：情绪层分析 */}
+        <AccordionItem value="emotion" className="border-0">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <AccordionTrigger className="hover:no-underline p-0 [&[data-state=open]>div]:rounded-b-none">
+                <div className={cn("bg-gradient-to-br p-4 text-white w-full", blockInfo.emotion.color)}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                        <Heart className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-white/80 text-xs">第二层</p>
+                        <h3 className="text-lg font-bold">情绪层分析（5大情绪卡点）</h3>
+                        <p className="text-white/90 text-xs">主导卡点：{dominantEmotion.name}</p>
+                      </div>
+                    </div>
+                    <div className="text-right mr-2">
+                      <span className="text-2xl font-bold">{result.emotionScore}</span>
+                      <span className="text-white/80 text-sm">/50</span>
+                    </div>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <CardContent className="p-5 space-y-5">
+                  {/* 核心理念 */}
+                  <div className="p-3 bg-pink-50 rounded-lg border border-pink-200">
+                    <p className="text-sm text-pink-800">
+                      <span className="font-semibold">💡 核心洞见：</span>财富的本质是心理能量的流动。财富卡住=心理能量阻塞（如恐惧、匮乏、控制欲）
+                    </p>
+                  </div>
+
+                  {/* 主导卡点卡片 */}
+                  <div className={cn("bg-gradient-to-br p-4 text-white rounded-xl", dominantEmotion.color)}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-3xl">{dominantEmotion.emoji}</span>
+                      <div>
+                        <h4 className="font-bold text-lg">{dominantEmotion.name}</h4>
+                        <p className="text-white/80 text-sm">{dominantEmotion.description}</p>
+                      </div>
+                    </div>
+                    <p className="text-white/90 text-sm leading-relaxed mb-3">{dominantEmotion.detail}</p>
+                    <div className="p-3 bg-white/20 rounded-lg">
+                      <p className="text-sm font-medium">💡 突破方案：{dominantEmotion.solution}</p>
+                    </div>
+                  </div>
+
+                  {/* 雷达图和条形图 */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="h-[180px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart cx="50%" cy="50%" outerRadius="65%" data={emotionRadarData}>
+                          <PolarGrid stroke="hsl(var(--border))" />
+                          <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }} />
+                          <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
+                          <Radar dataKey="score" stroke="#ec4899" fill="#ec4899" fillOpacity={0.5} strokeWidth={2} />
+                        </RadarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="h-[180px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart 
+                          data={[
+                            { name: '焦虑', score: result.anxietyScore, key: 'anxiety' as EmotionBlockType },
+                            { name: '匮乏', score: result.scarcityScore, key: 'scarcity' as EmotionBlockType },
+                            { name: '比较', score: result.comparisonScore, key: 'comparison' as EmotionBlockType },
+                            { name: '羞耻', score: result.shameScore, key: 'shame' as EmotionBlockType },
+                            { name: '内疚', score: result.guiltScore, key: 'guilt' as EmotionBlockType },
+                          ]} 
+                          layout="vertical"
+                        >
+                          <XAxis type="number" domain={[0, 10]} hide />
+                          <YAxis dataKey="name" type="category" width={35} tick={{ fontSize: 10 }} />
+                          <Bar dataKey="score" radius={[0, 4, 4, 0]}>
+                            {[
+                              { key: 'anxiety' as EmotionBlockType },
+                              { key: 'scarcity' as EmotionBlockType },
+                              { key: 'comparison' as EmotionBlockType },
+                              { key: 'shame' as EmotionBlockType },
+                              { key: 'guilt' as EmotionBlockType },
+                            ].map((entry) => (
+                              <Cell key={entry.key} fill={emotionColors[entry.key]} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* 行动清单 */}
+                  <div className="p-4 bg-pink-50 rounded-xl border border-pink-200">
+                    <h5 className="font-semibold text-pink-700 mb-3 flex items-center gap-2">
+                      <Heart className="w-4 h-4" />
+                      情绪疗愈行动清单
+                    </h5>
+                    <ul className="space-y-2">
+                      {dominantEmotion.suggestions.map((suggestion, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm text-pink-800">
+                          <span className="flex-shrink-0 w-5 h-5 bg-pink-200 text-pink-700 rounded-full flex items-center justify-center text-xs font-medium">
+                            {index + 1}
+                          </span>
+                          <span>{suggestion}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+              </AccordionContent>
+            </Card>
+          </motion.div>
+        </AccordionItem>
+
+        {/* 第三层：信念层分析 */}
+        <AccordionItem value="belief" className="border-0">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <AccordionTrigger className="hover:no-underline p-0 [&[data-state=open]>div]:rounded-b-none">
+                <div className={cn("bg-gradient-to-br p-4 text-white w-full", blockInfo.belief.color)}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                        <Brain className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-white/80 text-xs">第三层</p>
+                        <h3 className="text-lg font-bold">信念层分析（5大信念卡点）</h3>
+                        <p className="text-white/90 text-xs">主导卡点：{dominantBelief.name}</p>
+                      </div>
+                    </div>
+                    <div className="text-right mr-2">
+                      <span className="text-2xl font-bold">{result.beliefScore}</span>
+                      <span className="text-white/80 text-sm">/50</span>
+                    </div>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <CardContent className="p-5 space-y-5">
+                  {/* 核心理念 */}
+                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <p className="text-sm text-purple-800">
+                      <span className="font-semibold">💡 离苦得乐的关键：</span>直面内在障碍，让"爱与智慧"替代"焦虑与评判"，使财富随能量流动自然显化
+                    </p>
+                  </div>
+
+                  {/* 主导卡点卡片 */}
+                  <div className={cn("bg-gradient-to-br p-4 text-white rounded-xl", dominantBelief.color)}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-3xl">{dominantBelief.emoji}</span>
+                      <div>
+                        <h4 className="font-bold text-lg">{dominantBelief.name}</h4>
+                        <p className="text-white/80 text-sm">{dominantBelief.description}</p>
+                      </div>
+                    </div>
+                    <p className="text-white/90 text-sm leading-relaxed mb-3">{dominantBelief.detail}</p>
+                    
+                    {/* 核心信念标签 */}
+                    <div className="mb-3">
+                      <p className="text-white/70 text-xs mb-2">限制性信念：</p>
+                      <div className="flex flex-wrap gap-2">
+                        {dominantBelief.coreBeliefs.map((belief, index) => (
+                          <span key={index} className="bg-white/20 px-2 py-1 rounded text-xs">
+                            "{belief}"
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="p-3 bg-white/20 rounded-lg">
+                      <p className="text-sm font-medium">💡 突破方案：{dominantBelief.solution}</p>
+                    </div>
+                  </div>
+
+                  {/* 雷达图和条形图 */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="h-[180px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart cx="50%" cy="50%" outerRadius="65%" data={beliefRadarData}>
+                          <PolarGrid stroke="hsl(var(--border))" />
+                          <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }} />
+                          <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
+                          <Radar dataKey="score" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.5} strokeWidth={2} />
+                        </RadarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="h-[180px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart 
+                          data={[
+                            { name: '匮乏', score: result.lackScore, key: 'lack' as BeliefBlockType },
+                            { name: '线性', score: result.linearScore, key: 'linear' as BeliefBlockType },
+                            { name: '污名', score: result.stigmaScore, key: 'stigma' as BeliefBlockType },
+                            { name: '不配', score: result.unworthyScore, key: 'unworthy' as BeliefBlockType },
+                            { name: '关系', score: result.relationshipScore, key: 'relationship' as BeliefBlockType },
+                          ]} 
+                          layout="vertical"
+                        >
+                          <XAxis type="number" domain={[0, 10]} hide />
+                          <YAxis dataKey="name" type="category" width={35} tick={{ fontSize: 10 }} />
+                          <Bar dataKey="score" radius={[0, 4, 4, 0]}>
+                            {[
+                              { key: 'lack' as BeliefBlockType },
+                              { key: 'linear' as BeliefBlockType },
+                              { key: 'stigma' as BeliefBlockType },
+                              { key: 'unworthy' as BeliefBlockType },
+                              { key: 'relationship' as BeliefBlockType },
+                            ].map((entry) => (
+                              <Cell key={entry.key} fill={beliefColors[entry.key]} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* 行动清单 */}
+                  <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
+                    <h5 className="font-semibold text-purple-700 mb-3 flex items-center gap-2">
+                      <Brain className="w-4 h-4" />
+                      信念重塑行动清单
+                    </h5>
+                    <ul className="space-y-2">
+                      {dominantBelief.suggestions.map((suggestion, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm text-purple-800">
+                          <span className="flex-shrink-0 w-5 h-5 bg-purple-200 text-purple-700 rounded-full flex items-center justify-center text-xs font-medium">
+                            {index + 1}
+                          </span>
+                          <span>{suggestion}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+              </AccordionContent>
+            </Card>
+          </motion.div>
+        </AccordionItem>
+      </Accordion>
 
       {/* 行动按钮 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.4 }}
         className="space-y-3"
       >
         {onSave && !isSaved && (
