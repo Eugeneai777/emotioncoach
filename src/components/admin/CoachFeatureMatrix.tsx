@@ -35,6 +35,7 @@ interface CoachFeatureMatrixProps {
   templates: CoachTemplate[];
   onMoveUp?: (index: number) => void;
   onMoveDown?: (index: number) => void;
+  onEditTemplate?: (template: CoachTemplate) => void;
 }
 
 const featureGroups = [
@@ -60,7 +61,7 @@ const featureGroups = [
   }
 ];
 
-export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFeatureMatrixProps) {
+export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown, onEditTemplate }: CoachFeatureMatrixProps) {
   const updateTemplate = useUpdateCoachTemplate();
   const createPromptVersion = useCreatePromptVersion();
   const restorePromptVersion = useRestorePromptVersion();
@@ -306,25 +307,47 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown }: CoachFea
                     <span className="text-[10px] text-muted-foreground">
                       {getEnabledCount(template)}/10
                     </span>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className={`h-6 text-xs px-2 ${template.system_prompt ? 'text-primary hover:text-primary' : 'text-muted-foreground'}`}
-                            onClick={() => handleOpenPrompt(template)}
-                          >
-                            <Bot className="h-3 w-3 mr-1" />
-                            Prompt
-                            <span className="ml-1">{templateSyncStatus.get(template.id)?.icon}</span>
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{templateSyncStatus.get(template.id)?.label}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <div className="flex items-center gap-1">
+                      {onEditTemplate && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 text-xs px-2"
+                                onClick={() => onEditTemplate(template)}
+                              >
+                                <Pencil className="h-3 w-3 mr-1" />
+                                编辑
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>编辑教练模板</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`h-6 text-xs px-2 ${template.system_prompt ? 'text-primary hover:text-primary' : 'text-muted-foreground'}`}
+                              onClick={() => handleOpenPrompt(template)}
+                            >
+                              <Bot className="h-3 w-3 mr-1" />
+                              Prompt
+                              <span className="ml-1">{templateSyncStatus.get(template.id)?.icon}</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{templateSyncStatus.get(template.id)?.label}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                   </div>
                 </TableHead>
               ))}
