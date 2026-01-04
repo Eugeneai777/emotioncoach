@@ -21,12 +21,14 @@ import { Loader2 } from "lucide-react";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
+import { MeditationAnalysisIntro } from "@/components/wealth-camp/MeditationAnalysisIntro";
 
 interface LocationState {
   initialMessage?: string;
   fromCamp?: boolean;
   campId?: string;
   dayNumber?: number;
+  meditationTitle?: string;
 }
 
 const DynamicCoach = () => {
@@ -133,6 +135,10 @@ const DynamicCoach = () => {
 
   // 处理从训练营带入的初始消息（冥想感受）
   const [hasAutoSent, setHasAutoSent] = useState(false);
+  // 是否显示冥想分析引导（来自训练营时）
+  const [showMeditationAnalysisIntro, setShowMeditationAnalysisIntro] = useState(
+    !!(locationState?.fromCamp && locationState?.initialMessage)
+  );
   
   useEffect(() => {
     if (
@@ -151,6 +157,13 @@ const DynamicCoach = () => {
       return () => clearTimeout(timer);
     }
   }, [locationState, template, hasAutoSent, messages.length, isLoading, sendMessage]);
+
+  // 当收到AI回复后，隐藏冥想分析引导
+  useEffect(() => {
+    if (messages.length > 1 && showMeditationAnalysisIntro) {
+      setShowMeditationAnalysisIntro(false);
+    }
+  }, [messages.length, showMeditationAnalysisIntro]);
 
   if (templateLoading) {
     return (
@@ -336,6 +349,12 @@ const DynamicCoach = () => {
       onVoiceChatClick={() => setShowVoiceChat(true)}
       enableVoiceInput={true}
       customFooter={gratitudeFooter}
+      loadingPlaceholder={showMeditationAnalysisIntro ? (
+        <MeditationAnalysisIntro
+          dayNumber={locationState?.dayNumber}
+          meditationTitle={locationState?.meditationTitle}
+        />
+      ) : undefined}
     />
     
     {/* OpenAI Realtime 语音对话全屏界面 */}
