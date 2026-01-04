@@ -101,6 +101,74 @@ serve(async (req) => {
       .eq('coach_key', 'wealth_coach_4_questions')
       .single();
 
+    // Fetch user wealth profile for personalization
+    const { data: wealthProfile } = await serviceClient
+      .from('user_wealth_profile')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    // Get coaching strategy based on user profile
+    const getCoachingStrategy = (profile: any) => {
+      if (!profile) return { tone: '温柔接纳', focus: '通用引导', keyQuestion: '', avoidance: '', description: '标准模式' };
+      
+      const strategy = profile.coach_strategy;
+      if (strategy && typeof strategy === 'object') {
+        return strategy;
+      }
+
+      // Fallback strategies
+      const strategies: Record<string, any> = {
+        chase: {
+          tone: '放慢节奏，帮助用户觉察急切',
+          focus: '校准行为节奏，减少用力过猛',
+          keyQuestion: '你现在感受到多少「急」或「焦」？',
+          avoidance: '避免给出太多行动建议，先稳定情绪'
+        },
+        avoid: {
+          tone: '温暖接纳，建立安全感',
+          focus: '渐进式暴露，降低门槛',
+          keyQuestion: '这个想法让你有多不舒服？',
+          avoidance: '避免推动太快，尊重边界'
+        },
+        trauma: {
+          tone: '极度温柔，提供结构化容器',
+          focus: '神经系统调节，陪伴式支持',
+          keyQuestion: '你现在身体有什么感觉？',
+          avoidance: '避免直接触碰创伤，先稳定'
+        },
+        harmony: {
+          tone: '轻松对话，巩固状态',
+          focus: '价值放大，复制成功模式',
+          keyQuestion: '今天有什么值得庆祝的？',
+          avoidance: '避免过度分析，保持流动'
+        }
+      };
+      
+      return strategies[profile.reaction_pattern] || strategies.harmony;
+    };
+
+    const coachStrategy = getCoachingStrategy(wealthProfile);
+
+    // Build personalized profile section
+    let profileSection = '';
+    if (wealthProfile) {
+      profileSection = `
+【用户财富画像】
+- 反应模式：${wealthProfile.reaction_pattern || '未知'}
+- 主导四穷类型：${wealthProfile.dominant_poor || '未知'}
+- 主导情绪卡点：${wealthProfile.dominant_emotion || '未知'}
+- 主导信念卡点：${wealthProfile.dominant_belief || '未知'}
+- 健康度：${wealthProfile.health_score || 50}/100
+
+【个性化教练策略】
+- 对话基调：${coachStrategy.tone}
+- 重点关注：${coachStrategy.focus}
+- 核心提问：${coachStrategy.keyQuestion}
+- 注意避免：${coachStrategy.avoidance}
+`;
+    }
+
     const basePrompt = coachTemplate?.system_prompt || `你好，我是劲老师，一位专业的心理教练。我的目标是引导你通过"财富教练四问法"，每天找到一个最小可进步点，从而解锁财富流动。`;
 
     // 根据对话历史分析当前阶段
@@ -153,7 +221,7 @@ serve(async (req) => {
     const systemPrompt = `${basePrompt}
 
 用户名称：${userName}
-
+${profileSection}
 ${getStageGuidance(currentStage)}
 
 【当前阶段：第${currentStage}问/共4问】
