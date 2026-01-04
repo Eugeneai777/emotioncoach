@@ -102,7 +102,7 @@ export default function WealthJournal() {
             <p className="text-sm">加入财富卡点训练营，开始记录你的财富成长之旅</p>
             <Button 
               className="mt-4" 
-              onClick={() => navigate('/camp-intro/wealth_block_21')}
+              onClick={() => navigate('/wealth-camp-intro')}
             >
               加入训练营
             </Button>
