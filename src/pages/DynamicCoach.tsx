@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useLocation } from "react-router-dom";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { CoachCommunity } from "@/components/coach/CoachCommunity";
@@ -22,8 +22,17 @@ import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
 
+interface LocationState {
+  initialMessage?: string;
+  fromCamp?: boolean;
+  campId?: string;
+  dayNumber?: number;
+}
+
 const DynamicCoach = () => {
   const { coachKey } = useParams<{ coachKey: string }>();
+  const location = useLocation();
+  const locationState = location.state as LocationState | null;
   const [input, setInput] = useState("");
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
   const [showVoiceChat, setShowVoiceChat] = useState(false);
@@ -117,6 +126,27 @@ const DynamicCoach = () => {
     undefined,
     handleBriefingGenerated
   );
+
+  // 处理从训练营带入的初始消息（冥想感受）
+  const [hasAutoSent, setHasAutoSent] = useState(false);
+  
+  useEffect(() => {
+    if (
+      locationState?.initialMessage && 
+      locationState?.fromCamp && 
+      template && 
+      !hasAutoSent && 
+      messages.length === 0 &&
+      !isLoading
+    ) {
+      setHasAutoSent(true);
+      // 延迟一点发送，确保组件已完全初始化
+      const timer = setTimeout(() => {
+        sendMessage(locationState.initialMessage!);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [locationState, template, hasAutoSent, messages.length, isLoading, sendMessage]);
 
   if (templateLoading) {
     return (

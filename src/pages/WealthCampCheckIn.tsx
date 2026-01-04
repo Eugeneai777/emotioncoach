@@ -172,7 +172,23 @@ export default function WealthCampCheckIn() {
   }, [coachingCompleted, meditationCompleted]);
 
   const handleStartCoaching = () => {
-    navigate('/coach/wealth_coach_4_questions');
+    // 获取今日冥想感受，带入教练对话
+    const todayEntry = journalEntries.find(e => e.day_number === currentDay);
+    const reflection = todayEntry?.meditation_reflection || '';
+    
+    if (reflection) {
+      // 带着冥想感受跳转到教练页，自动开始对话
+      navigate('/coach/wealth_coach_4_questions', {
+        state: { 
+          initialMessage: `今天冥想后，我的感受是：${reflection}`,
+          fromCamp: true,
+          campId: campId,
+          dayNumber: currentDay
+        }
+      });
+    } else {
+      navigate('/coach/wealth_coach_4_questions');
+    }
   };
 
   const scrollToInvite = () => {
