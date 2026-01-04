@@ -32,24 +32,40 @@ export default function WealthCampCheckIn() {
   const [meditationCompleted, setMeditationCompleted] = useState(false);
   const [coachingCompleted, setCoachingCompleted] = useState(false);
 
-  // Fetch camp data
+  // Fetch camp data - if no campId, find user's active wealth camp
   const { data: camp, isLoading: campLoading } = useQuery({
     queryKey: ['wealth-camp', campId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
+      // If campId is provided, fetch that specific camp
+      if (campId) {
+        const { data, error } = await supabase
+          .from('training_camps')
+          .select('*')
+          .eq('id', campId)
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) throw error;
+        return data;
+      }
+
+      // Otherwise, find the user's active wealth_block_21 camp
       const { data, error } = await supabase
         .from('training_camps')
         .select('*')
-        .eq('id', campId)
         .eq('user_id', user.id)
-        .single();
+        .eq('camp_type', 'wealth_block_21')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!campId,
   });
 
   // Fetch current day meditation
