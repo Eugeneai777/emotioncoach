@@ -6317,6 +6317,83 @@ export type Database = {
         }
         Relationships: []
       }
+      wealth_coach_4_questions_briefings: {
+        Row: {
+          actions_avoided: string[] | null
+          actions_performed: string[] | null
+          belief_insight: string | null
+          created_at: string
+          emotion_feeling: string | null
+          id: string
+          session_id: string | null
+          smallest_progress: string | null
+          summary: string | null
+          user_id: string
+        }
+        Insert: {
+          actions_avoided?: string[] | null
+          actions_performed?: string[] | null
+          belief_insight?: string | null
+          created_at?: string
+          emotion_feeling?: string | null
+          id?: string
+          session_id?: string | null
+          smallest_progress?: string | null
+          summary?: string | null
+          user_id: string
+        }
+        Update: {
+          actions_avoided?: string[] | null
+          actions_performed?: string[] | null
+          belief_insight?: string | null
+          created_at?: string
+          emotion_feeling?: string | null
+          id?: string
+          session_id?: string | null
+          smallest_progress?: string | null
+          summary?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_coach_4_questions_briefings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_coach_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wealth_coach_sessions: {
+        Row: {
+          created_at: string
+          current_stage: number | null
+          id: string
+          is_completed: boolean | null
+          messages: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_stage?: number | null
+          id?: string
+          is_completed?: boolean | null
+          messages?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_stage?: number | null
+          id?: string
+          is_completed?: boolean | null
+          messages?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wechat_login_scenes: {
         Row: {
           confirmed_at: string | null
