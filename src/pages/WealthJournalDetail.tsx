@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Share2 } from 'lucide-react';
+import { ArrowLeft, Star, Share2, TrendingUp, Lightbulb, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,29 +8,15 @@ import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
-function ScoreDisplay({ label, score, color }: { label: string; score?: number; color: string }) {
-  if (!score) return null;
-  
-  return (
-    <div className="flex items-center justify-between py-2">
-      <span className="text-muted-foreground">{label}</span>
-      <div className="flex items-center gap-2">
-        <div className="flex gap-0.5">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Star
-              key={i}
-              className={cn(
-                "w-4 h-4",
-                i <= score ? `fill-${color}-500 text-${color}-500` : "text-muted-foreground/30"
-              )}
-              style={{ fill: i <= score ? `var(--${color})` : undefined }}
-            />
-          ))}
-        </div>
-        <span className="font-medium">{score}/5</span>
-      </div>
-    </div>
-  );
+interface AiInsight {
+  behavior_analysis?: string;
+  emotion_analysis?: string;
+  belief_analysis?: string;
+  overall_insight?: string;
+  encouragement?: string;
+  trend_insight?: string;
+  focus_suggestion?: string;
+  summary?: string;
 }
 
 export default function WealthJournalDetail() {
@@ -72,6 +58,8 @@ export default function WealthJournalDetail() {
   const avgScore = entry.behavior_score && entry.emotion_score && entry.belief_score
     ? ((entry.behavior_score + entry.emotion_score + entry.belief_score) / 3).toFixed(1)
     : null;
+
+  const aiInsight = entry.ai_insight as AiInsight | null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20">
@@ -118,6 +106,11 @@ export default function WealthJournalDetail() {
             </CardHeader>
             <CardContent>
               <p className="text-amber-700 dark:text-amber-300">{entry.behavior_block}</p>
+              {aiInsight?.behavior_analysis && (
+                <p className="mt-2 text-sm text-amber-600 dark:text-amber-400 italic">
+                  💡 {aiInsight.behavior_analysis}
+                </p>
+              )}
             </CardContent>
           </Card>
         )}
@@ -132,6 +125,11 @@ export default function WealthJournalDetail() {
             </CardHeader>
             <CardContent>
               <p className="text-pink-700 dark:text-pink-300">{entry.emotion_block}</p>
+              {aiInsight?.emotion_analysis && (
+                <p className="mt-2 text-sm text-pink-600 dark:text-pink-400 italic">
+                  💡 {aiInsight.emotion_analysis}
+                </p>
+              )}
             </CardContent>
           </Card>
         )}
@@ -146,6 +144,11 @@ export default function WealthJournalDetail() {
             </CardHeader>
             <CardContent>
               <p className="text-violet-700 dark:text-violet-300">{entry.belief_block}</p>
+              {aiInsight?.belief_analysis && (
+                <p className="mt-2 text-sm text-violet-600 dark:text-violet-400 italic">
+                  💡 {aiInsight.belief_analysis}
+                </p>
+              )}
             </CardContent>
           </Card>
         )}
@@ -234,20 +237,53 @@ export default function WealthJournalDetail() {
           </Card>
         )}
 
-        {/* AI Insight */}
-        {entry.ai_insight && Object.keys(entry.ai_insight).length > 0 && (
+        {/* AI Insight - Enhanced Display */}
+        {aiInsight && Object.keys(aiInsight).length > 0 && (
           <Card className="bg-gradient-to-br from-cyan-50 to-sky-50 dark:from-cyan-950/30 dark:to-sky-950/30 border-cyan-200 dark:border-cyan-800">
             <CardHeader className="pb-2">
               <CardTitle className="text-cyan-800 dark:text-cyan-200 flex items-center gap-2 text-base">
                 <span>🤖</span> AI 洞察
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-cyan-700 dark:text-cyan-300">
-                {typeof entry.ai_insight === 'object' && 'summary' in entry.ai_insight 
-                  ? String(entry.ai_insight.summary)
-                  : JSON.stringify(entry.ai_insight)}
-              </p>
+            <CardContent className="space-y-4">
+              {/* Overall Insight */}
+              {aiInsight.overall_insight && (
+                <div className="flex items-start gap-2">
+                  <Lightbulb className="w-4 h-4 text-cyan-600 mt-1 shrink-0" />
+                  <p className="text-cyan-700 dark:text-cyan-300">{aiInsight.overall_insight}</p>
+                </div>
+              )}
+
+              {/* Trend Insight */}
+              {aiInsight.trend_insight && (
+                <div className="flex items-start gap-2 bg-cyan-100/50 dark:bg-cyan-900/30 p-3 rounded-lg">
+                  <TrendingUp className="w-4 h-4 text-cyan-600 mt-1 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-cyan-800 dark:text-cyan-200">趋势分析</p>
+                    <p className="text-sm text-cyan-700 dark:text-cyan-300">{aiInsight.trend_insight}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Focus Suggestion */}
+              {aiInsight.focus_suggestion && (
+                <div className="flex items-start gap-2 bg-cyan-100/50 dark:bg-cyan-900/30 p-3 rounded-lg">
+                  <Target className="w-4 h-4 text-cyan-600 mt-1 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-cyan-800 dark:text-cyan-200">关注建议</p>
+                    <p className="text-sm text-cyan-700 dark:text-cyan-300">{aiInsight.focus_suggestion}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Encouragement */}
+              {aiInsight.encouragement && (
+                <div className="bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 p-4 rounded-lg text-center">
+                  <p className="text-amber-800 dark:text-amber-200 font-medium">
+                    ✨ {aiInsight.encouragement}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

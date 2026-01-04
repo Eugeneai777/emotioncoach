@@ -89,7 +89,7 @@ serve(async (req) => {
 
     const userName = profile?.display_name || '朋友';
 
-    // Fetch system prompt from database
+    // Fetch system prompt and stage prompts from database
     const serviceClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -117,7 +117,7 @@ serve(async (req) => {
         return strategy;
       }
 
-      // Fallback strategies
+      // Fallback strategies based on reaction pattern
       const strategies: Record<string, any> = {
         chase: {
           tone: '放慢节奏，帮助用户觉察急切',
@@ -171,71 +171,105 @@ serve(async (req) => {
 
     const basePrompt = coachTemplate?.system_prompt || `你好，我是劲老师，一位专业的心理教练。我的目标是引导你通过"财富教练四问法"，每天找到一个最小可进步点，从而解锁财富流动。`;
 
-    // 根据对话历史分析当前阶段
+    // Parse stage prompts from database
+    const stagePrompts = coachTemplate?.stage_prompts as any || {};
+    const coachingTechniques = stagePrompts.coaching_techniques || '';
+
+    // Analyze current stage based on complete_stage tool calls and conversation flow
     const analyzeCurrentStage = (msgs: any[]) => {
-      const assistantMessages = msgs.filter(m => m.role === 'assistant').length;
-      if (assistantMessages < 2) return 1;
-      if (assistantMessages < 4) return 2;
-      if (assistantMessages < 6) return 3;
-      return 4;
+      // Check for complete_stage markers in conversation
+      const assistantMessages = msgs.filter(m => m.role === 'assistant');
+      let completedStages = 0;
+      
+      // Simple heuristic: count assistant responses to estimate stage
+      // Each stage typically has 2-3 exchanges
+      const totalExchanges = assistantMessages.length;
+      
+      if (totalExchanges === 0) return 0; // Opening
+      if (totalExchanges <= 2) return 1;  // Stage 1: Behavior
+      if (totalExchanges <= 4) return 2;  // Stage 2: Emotion
+      if (totalExchanges <= 6) return 3;  // Stage 3: Belief
+      if (totalExchanges <= 8) return 4;  // Stage 4: Progress
+      return 5; // Completion
     };
 
     const currentStage = analyzeCurrentStage(messages);
 
-    // Build stage-specific guidance
+    // Build stage-specific guidance from database
     const getStageGuidance = (stage: number) => {
-      switch (stage) {
-        case 1:
-          return `【第一问：行为卡点】
-你正在引导用户觉察今天在"创造财富流动"方面的行为。
-- 温柔地询问用户今天真实做了哪些行为
-- 也询问刻意回避或拖延了哪些行为
-- 不评判、不美化，只看事实
-- 哪怕什么都没做也允许说出来`;
-        case 2:
-          return `【第二问：情绪卡点】
-你正在引导用户感受身体和情绪信号。
-- 询问用户当想到要行动或分享时，身体和情绪最先出现的感受
-- 可能是紧张、抗拒、麻木、焦虑、无感等
-- 强调情绪不是对错，而是财富流动的信号灯`;
-        case 3:
-          return `【第三问：信念卡点】
-你正在帮助用户揭示情绪背后的信念。
-- 引导用户思考：如果这份情绪会说话，它背后最可能在告诉用户一句什么样的信念
-- 帮助把"模糊感受"翻译成一句清晰信念
-- 让卡点从潜意识走到意识`;
-        case 4:
-          return `【第四问：最小进步】
-你正在帮助用户设定最小可进步点。
-- 询问用户在不逼迫、不消耗自己的前提下，明天愿意为"财富流动"做的一个最小但真实的进步
-- 一定要小到不会逃避
-- 行为必须具体、可执行
-- 只做一步
-
-完成四问后，请调用 generate_wealth_briefing 工具生成财富日记。`;
-        default:
-          return '';
+      const stageKey = `stage_${stage}`;
+      const stageData = stagePrompts[stageKey];
+      
+      if (!stageData) {
+        // Fallback for missing stage data
+        return `【第${stage}阶段】继续引导用户深入探索。`;
       }
+
+      const questions = stageData.questions?.join('\n- ') || '';
+      const deepening = stageData.deepening_prompts?.join('\n- ') || '';
+      const options = stageData.option_templates?.join('、') || '';
+      const successCriteria = stageData.success_criteria || '';
+      const completionNote = stageData.completion_note || '';
+
+      return `【${stageData.name}】
+目标：${stageData.goal}
+
+参考问题（随机选择1-2个，不要全部使用）：
+- ${questions}
+
+深化引导（当用户回应模糊时使用）：
+- ${deepening}
+
+${options ? `备选选项（仅在用户第3轮仍不清晰时提供）：${options}` : ''}
+
+成功标准：${successCriteria}
+${completionNote ? `\n⚠️ ${completionNote}` : ''}`;
     };
 
     const systemPrompt = `${basePrompt}
 
 用户名称：${userName}
 ${profileSection}
+
+${coachingTechniques}
+
 ${getStageGuidance(currentStage)}
 
-【当前阶段：第${currentStage}问/共4问】
+【当前进度：第${currentStage}问/共4问】
 
-【对话风格要求】
-- 温柔、缓慢、有节奏
-- 如同温热的茶，营造安全、接纳、不评判的环境
-- 使用第一人称视角，以共情式提问引导自我觉察
-- 每次回应简洁有力，不超过100字
-- 多用开放式问题
+【对话规则】
+1. 【最高优先级】如果用户提问、表达疑虑、使用犹豫语言（"可是..."、"但是..."、"怎么办"），必须先充分回应其关切，帮助用户思考，不要急于推进阶段
+2. 每次回应简洁有力，控制在100字以内
+3. 多使用开放式问题引导用户自我觉察
+4. 营造安全、接纳、不评判的环境
+5. 用用户自己的话回应（镜像技术）
+6. 不急于推进，允许用户在每个阶段充分表达
+7. 当用户明确表达出阶段核心内容后，自然过渡到下一阶段
 
-【重要】根据对话进展自然推进阶段。当完成全部四问后，调用 generate_wealth_briefing 工具生成财富日记。`;
+【完成条件】当四问全部完成后，调用 generate_wealth_briefing 工具生成财富日记。`;
 
     const tools = [
+      {
+        type: "function",
+        function: {
+          name: "complete_stage",
+          description: "当用户明确表达出当前阶段的核心内容后调用，标记阶段完成并推进到下一阶段",
+          parameters: {
+            type: "object",
+            properties: {
+              stage_number: {
+                type: "number",
+                description: "刚完成的阶段编号（1-4）"
+              },
+              stage_summary: {
+                type: "string",
+                description: "用户在这一阶段的核心表达，20字以内"
+              }
+            },
+            required: ["stage_number", "stage_summary"]
+          }
+        }
+      },
       {
         type: "function",
         function: {

@@ -90,13 +90,39 @@ ${conversation_history.map((m: any) => `${m.role === 'user' ? '用户' : '教练
       }
     }
 
-    // Now score the journal entry
+    // Fetch recent journal entries for trend comparison
+    const { data: recentEntries } = await supabaseClient
+      .from('wealth_journal_entries')
+      .select('behavior_score, emotion_score, belief_score, created_at, day_number')
+      .eq('user_id', user_id)
+      .order('created_at', { ascending: false })
+      .limit(7);
+
+    // Build trend data for AI prompt
+    let trendSection = '';
+    if (recentEntries && recentEntries.length > 0) {
+      const trendData = recentEntries.map(e => 
+        `Day${e.day_number}: 行为${e.behavior_score || '-'} 情绪${e.emotion_score || '-'} 信念${e.belief_score || '-'}`
+      ).join('\n');
+      
+      trendSection = `
+【历史数据（最近${recentEntries.length}天）】
+${trendData}
+
+请额外输出趋势分析：
+- trend_insight: "与历史相比的趋势变化，20字以内"
+- focus_suggestion: "基于趋势的关注建议，30字以内"
+`;
+    }
+
+    // Now score the journal entry with enhanced prompt
     const scorePrompt = `作为财富教练，请根据以下财富日记内容进行三维度评分：
 
 【行为卡点】${behaviorBlock || '未记录'}
 【情绪卡点】${emotionBlock || '未记录'}
 【信念卡点】${beliefBlock || '未记录'}
 【明日进步】${smallestProgress || '未记录'}
+${trendSection}
 
 请给出1-5分的评分（1分最低，5分最高）：
 
@@ -114,7 +140,9 @@ ${conversation_history.map((m: any) => `${m.role === 'user' ? '用户' : '教练
   "emotion_analysis": "情绪分析，20字以内",
   "belief_analysis": "信念分析，20字以内",
   "overall_insight": "整体洞察，50字以内",
-  "encouragement": "鼓励的话，30字以内"
+  "encouragement": "温暖的鼓励话语，30字以内",
+  "trend_insight": "趋势分析（如有历史数据），20字以内",
+  "focus_suggestion": "关注建议（如有历史数据），30字以内"
 }`;
 
     const scoreResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -141,7 +169,7 @@ ${conversation_history.map((m: any) => `${m.role === 'user' ? '用户' : '教练
       behavior_score: 3,
       emotion_score: 3,
       belief_score: 3,
-      ai_insight: {}
+      ai_insight: {} as Record<string, any>
     };
 
     try {
@@ -153,11 +181,14 @@ ${conversation_history.map((m: any) => `${m.role === 'user' ? '用户' : '教练
           emotion_score: Math.min(5, Math.max(1, parsed.emotion_score || 3)),
           belief_score: Math.min(5, Math.max(1, parsed.belief_score || 3)),
           ai_insight: {
-            behavior_analysis: parsed.behavior_analysis,
-            emotion_analysis: parsed.emotion_analysis,
-            belief_analysis: parsed.belief_analysis,
-            overall_insight: parsed.overall_insight,
-            encouragement: parsed.encouragement,
+            behavior_analysis: parsed.behavior_analysis || '',
+            emotion_analysis: parsed.emotion_analysis || '',
+            belief_analysis: parsed.belief_analysis || '',
+            overall_insight: parsed.overall_insight || '',
+            encouragement: parsed.encouragement || '',
+            trend_insight: parsed.trend_insight || '',
+            focus_suggestion: parsed.focus_suggestion || '',
+            summary: briefing_data?.summary || '',
           }
         };
       }

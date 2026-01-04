@@ -1,7 +1,8 @@
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { ChevronRight, Star } from 'lucide-react';
+import { ChevronRight, Star, Tent } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface WealthJournalEntry {
@@ -14,6 +15,7 @@ interface WealthJournalEntry {
   behavior_score?: number;
   emotion_score?: number;
   belief_score?: number;
+  camp_id?: string | null;
   created_at: string;
 }
 
@@ -45,6 +47,8 @@ export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
     ? ((entry.behavior_score + entry.emotion_score + entry.belief_score) / 3).toFixed(1)
     : null;
 
+  const hasCamp = !!entry.camp_id;
+
   return (
     <Card 
       className={cn(
@@ -59,7 +63,7 @@ export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
         <div className="flex items-start justify-between">
           <div className="flex-1">
             {/* Header */}
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className="text-lg">📖</span>
               <span className="font-medium text-amber-800 dark:text-amber-200">
                 Day {entry.day_number}
@@ -67,6 +71,12 @@ export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
               <span className="text-xs text-muted-foreground">
                 {format(new Date(entry.created_at), 'M月d日', { locale: zhCN })}
               </span>
+              {hasCamp && (
+                <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+                  <Tent className="w-3 h-3 mr-1" />
+                  训练营
+                </Badge>
+              )}
             </div>
 
             {/* Content Preview */}
