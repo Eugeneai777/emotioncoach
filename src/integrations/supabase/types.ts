@@ -6317,6 +6317,45 @@ export type Database = {
         }
         Relationships: []
       }
+      wealth_block_assessments: {
+        Row: {
+          answers: Json
+          behavior_score: number
+          belief_score: number
+          created_at: string | null
+          dominant_block: string
+          emotion_score: number
+          id: string
+          reaction_pattern: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          answers: Json
+          behavior_score: number
+          belief_score: number
+          created_at?: string | null
+          dominant_block: string
+          emotion_score: number
+          id?: string
+          reaction_pattern: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          behavior_score?: number
+          belief_score?: number
+          created_at?: string | null
+          dominant_block?: string
+          emotion_score?: number
+          id?: string
+          reaction_pattern?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       wealth_coach_4_questions_briefings: {
         Row: {
           actions_avoided: string[] | null

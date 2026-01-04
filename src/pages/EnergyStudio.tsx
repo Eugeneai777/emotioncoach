@@ -27,7 +27,7 @@ import { FinanceTracker } from "@/components/tools/FinanceTracker";
 import { TimeManagement } from "@/components/tools/TimeManagement";
 import { RelationshipTracker } from "@/components/tools/RelationshipTracker";
 import { EnergyDeclaration } from "@/components/tools/EnergyDeclaration";
-import { WealthBlockAssessment } from "@/components/tools/WealthBlockAssessment";
+
 import { CoachSpaceContent } from "@/components/coach/CoachSpaceContent";
 import SafetyButtonsGrid from "@/components/tools/SafetyButtonsGrid";
 
@@ -115,6 +115,11 @@ const EnergyStudio = () => {
       navigate('/goals');
       return;
     }
+    // 财富卡点测评有独立页面
+    if (toolId === 'wealth-block') {
+      navigate('/wealth-block');
+      return;
+    }
     setActiveTool(toolId);
   };
   if (isLoading) {
@@ -155,8 +160,6 @@ const EnergyStudio = () => {
         return <RelationshipTracker />;
       case "declaration":
         return <EnergyDeclaration />;
-      case "wealth-block":
-        return <WealthBlockAssessment />;
       default:
         return null;
     }
