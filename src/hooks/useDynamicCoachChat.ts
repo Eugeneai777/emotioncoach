@@ -288,6 +288,51 @@ export const useDynamicCoachChat = (
             await saveBriefing(convId, briefingData);
           }
           
+          // 处理财富日记生成工具
+          if (toolCall?.function?.name === "generate_wealth_briefing") {
+            const briefingData = JSON.parse(toolCall.function.arguments);
+            
+            // 获取当前用户
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              // 计算当前天数
+              const { data: existingEntries } = await supabase
+                .from('wealth_journal_entries')
+                .select('day_number')
+                .eq('user_id', user.id)
+                .order('day_number', { ascending: false })
+                .limit(1);
+              
+              const currentDayNumber = (existingEntries?.[0]?.day_number || 0) + 1;
+              
+              // 调用日记生成 Edge Function
+              const { data: journalResult, error: journalError } = await supabase.functions.invoke('generate-wealth-journal', {
+                body: {
+                  user_id: user.id,
+                  day_number: currentDayNumber,
+                  briefing_data: briefingData,
+                  conversation_history: messages,
+                }
+              });
+              
+              if (!journalError && journalResult?.success) {
+                toast({
+                  title: "📖 财富日记已生成",
+                  description: `记录了 Day ${currentDayNumber} 的财富觉察`,
+                });
+                
+                if (onBriefingGenerated) {
+                  onBriefingGenerated({
+                    journalId: journalResult.journal?.id,
+                    ...briefingData
+                  });
+                }
+              } else {
+                console.error('生成财富日记失败:', journalError);
+              }
+            }
+          }
+          
           // 处理教练推荐工具
           if (toolCall?.function?.name === "coach_recommendation") {
             const recommendationData = JSON.parse(toolCall.function.arguments);
