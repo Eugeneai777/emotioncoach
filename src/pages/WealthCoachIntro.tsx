@@ -546,23 +546,31 @@ const WealthCoachIntro = () => {
       {/* Spacer for sticky CTA */}
       <div className="h-20" />
 
-      {/* Sticky Bottom CTA - 简化为双按钮 */}
+      {/* Sticky Bottom CTA - 三按钮：测评、训练营、邀请 */}
       <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 dark:bg-background/95 backdrop-blur-md border-t border-amber-100/50 dark:border-border z-40 shadow-lg shadow-black/5">
-        <div className="container max-w-4xl mx-auto flex gap-2.5">
+        <div className="container max-w-4xl mx-auto flex gap-2">
           <Button 
             onClick={handleStartAssessment}
             variant="outline"
-            className="flex-1 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300"
+            className="flex-1 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 px-2"
           >
-            <ClipboardCheck className="mr-1.5 h-4 w-4" />
-            测评卡点
+            <ClipboardCheck className="mr-1 h-4 w-4" />
+            测评
           </Button>
           <Button 
             onClick={handleJoinCamp}
-            className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-md shadow-amber-500/20"
+            className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-md shadow-amber-500/20 px-2"
           >
-            <Tent className="mr-1.5 h-4 w-4" />
-            加入训练营
+            <Tent className="mr-1 h-4 w-4" />
+            训练营
+          </Button>
+          <Button 
+            onClick={() => navigate("/share-invite")}
+            variant="outline"
+            className="flex-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 px-2"
+          >
+            <Users className="mr-1 h-4 w-4" />
+            邀请
           </Button>
         </div>
       </div>
