@@ -73,7 +73,8 @@ export default function WealthBlockAssessmentPage() {
 
     setIsSaving(true);
     try {
-      const { error } = await supabase
+      // Save assessment result
+      const { data: savedRecord, error } = await supabase
         .from("wealth_block_assessments")
         .insert({
           user_id: user.id,
@@ -88,9 +89,39 @@ export default function WealthBlockAssessmentPage() {
           dominant_block: currentResult.dominantBlock,
           dominant_poor: currentResult.dominantPoor,
           reaction_pattern: currentResult.reactionPattern,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Sync user wealth profile for personalized coaching
+      try {
+        const healthScore = Math.round(
+          ((5 - currentResult.behaviorScore) / 4 * 33) +
+          ((5 - currentResult.emotionScore) / 4 * 33) +
+          ((5 - currentResult.beliefScore) / 4 * 34)
+        );
+
+        await supabase.functions.invoke('sync-wealth-profile', {
+          body: {
+            user_id: user.id,
+            assessment_result: {
+              assessment_id: savedRecord?.id,
+              health_score: healthScore,
+              reaction_pattern: currentResult.reactionPattern,
+              dominant_level: currentResult.dominantBlock,
+              top_poor: currentResult.dominantPoor,
+              top_emotion: currentResult.dominantEmotionBlock || 'anxiety',
+              top_belief: currentResult.dominantBeliefBlock || 'lack',
+            }
+          }
+        });
+        console.log('✅ 用户财富画像同步成功');
+      } catch (profileError) {
+        console.error('Failed to sync wealth profile:', profileError);
+        // Don't fail the save if profile sync fails
+      }
       
       setIsSaved(true);
       toast.success("测评结果已保存");
