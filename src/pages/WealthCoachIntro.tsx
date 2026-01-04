@@ -282,7 +282,8 @@ const WealthCoachIntro = () => {
                 )}
                 
                 <Card 
-                  className={`relative bg-white/90 dark:bg-card/90 backdrop-blur border ${step.borderColor} overflow-hidden transition-all active:scale-[0.98]`}
+                  onClick={step.onClick}
+                  className={`relative bg-white/90 dark:bg-card/90 backdrop-blur border ${step.borderColor} overflow-hidden transition-all active:scale-[0.98] cursor-pointer hover:shadow-md`}
                 >
                   {step.badge && (
                     <div className="absolute top-0 right-0 px-2 py-0.5 bg-gradient-to-r from-purple-500 to-violet-500 text-white text-[10px] font-medium rounded-bl-lg">
@@ -307,14 +308,8 @@ const WealthCoachIntro = () => {
                       <p className="text-xs text-muted-foreground">{step.description}</p>
                     </div>
 
-                    {/* CTA */}
-                    <Button 
-                      onClick={step.onClick}
-                      size="sm"
-                      className={`shrink-0 bg-gradient-to-r ${step.gradient} hover:opacity-90 text-white text-xs px-3`}
-                    >
-                      {step.action}
-                    </Button>
+                    {/* Arrow indicator */}
+                    <ChevronRight className={`shrink-0 w-5 h-5 bg-gradient-to-r ${step.gradient} bg-clip-text text-amber-400`} />
                   </div>
                 </Card>
               </div>
@@ -329,7 +324,8 @@ const WealthCoachIntro = () => {
             return (
               <div key={step.step} className="relative">
                 <Card 
-                  className={`h-full bg-white/90 dark:bg-card/90 backdrop-blur border ${step.borderColor} overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 group`}
+                  onClick={step.onClick}
+                  className={`h-full bg-white/90 dark:bg-card/90 backdrop-blur border ${step.borderColor} overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 group cursor-pointer`}
                 >
                   {step.badge && (
                     <div className="absolute top-0 right-0 px-2.5 py-1 bg-gradient-to-r from-purple-500 to-violet-500 text-white text-xs font-medium rounded-bl-lg">
@@ -353,14 +349,11 @@ const WealthCoachIntro = () => {
                     <p className="text-sm text-muted-foreground mb-1">{step.subtitle}</p>
                     <p className="text-sm text-foreground/70 mb-4 flex-1">{step.description}</p>
 
-                    {/* CTA */}
-                    <Button 
-                      onClick={step.onClick}
-                      className={`w-full bg-gradient-to-r ${step.gradient} hover:opacity-90 text-white`}
-                    >
+                    {/* Action hint */}
+                    <div className={`flex items-center justify-center gap-1.5 text-sm font-medium bg-gradient-to-r ${step.gradient} bg-clip-text text-transparent`}>
                       {step.action}
-                      <ChevronRight className="ml-1 h-4 w-4" />
-                    </Button>
+                      <ChevronRight className="h-4 w-4 text-amber-500" />
+                    </div>
                   </div>
                 </Card>
 
@@ -539,35 +532,8 @@ const WealthCoachIntro = () => {
         </Card>
       </section>
 
-      {/* Final CTA */}
-      <section className="container max-w-4xl mx-auto px-4 py-6 pb-28">
-        <Card className="bg-gradient-to-r from-amber-500 to-orange-500 border-0 text-white overflow-hidden shadow-lg shadow-amber-500/20">
-          <div className="p-5 md:p-6 text-center">
-            <h3 className="text-lg md:text-xl font-bold mb-1.5">准备好开始突破了吗？</h3>
-            <p className="text-white/80 text-sm mb-4">从测评开始，找到你的财富卡点</p>
-            <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
-              <Button 
-                onClick={handleStartAssessment}
-                variant="secondary"
-                size="lg"
-                className="bg-white text-amber-600 hover:bg-white/90"
-              >
-                <ClipboardCheck className="mr-1.5 h-4 w-4" />
-                开始测评
-              </Button>
-              <Button 
-                onClick={handleJoinCamp}
-                variant="outline"
-                size="lg"
-                className="border-white/50 text-white hover:bg-white/10"
-              >
-                <Tent className="mr-1.5 h-4 w-4" />
-                加入训练营
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </section>
+      {/* Spacer for sticky CTA */}
+      <div className="h-20" />
 
       {/* Sticky Bottom CTA - 简化为双按钮 */}
       <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 dark:bg-background/95 backdrop-blur-md border-t border-amber-100/50 dark:border-border z-40 shadow-lg shadow-black/5">
