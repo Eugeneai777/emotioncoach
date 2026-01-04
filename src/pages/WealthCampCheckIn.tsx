@@ -172,7 +172,7 @@ export default function WealthCampCheckIn() {
   }, [coachingCompleted, meditationCompleted]);
 
   const handleStartCoaching = () => {
-    navigate('/wealth-coach-4');
+    navigate('/coach/wealth_coach_4_questions');
   };
 
   const scrollToInvite = () => {
