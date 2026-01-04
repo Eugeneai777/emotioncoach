@@ -171,12 +171,17 @@ export default function WealthCampCheckIn() {
     document.getElementById('invite-card')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const scrollToMeditation = () => {
+    document.getElementById('meditation-player')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const dailyTasks: DailyTask[] = [
     {
       id: 'meditation',
       title: '冥想课程',
       icon: '🧘',
       completed: meditationCompleted,
+      action: scrollToMeditation,
     },
     {
       id: 'coaching',
@@ -249,18 +254,20 @@ export default function WealthCampCheckIn() {
 
           <TabsContent value="today" className="space-y-6 mt-6">
             {/* Meditation Player */}
-            {meditation && (
-              <WealthMeditationPlayer
-                dayNumber={camp.current_day}
-                title={meditation.title}
-                description={meditation.description}
-                audioUrl={meditation.audio_url}
-                durationSeconds={meditation.duration_seconds}
-                reflectionPrompts={meditation.reflection_prompts as string[] || []}
-                onComplete={handleMeditationComplete}
-                isCompleted={meditationCompleted}
-              />
-            )}
+            <div id="meditation-player">
+              {meditation && (
+                <WealthMeditationPlayer
+                  dayNumber={camp.current_day}
+                  title={meditation.title}
+                  description={meditation.description}
+                  audioUrl={meditation.audio_url}
+                  durationSeconds={meditation.duration_seconds}
+                  reflectionPrompts={meditation.reflection_prompts as string[] || []}
+                  onComplete={handleMeditationComplete}
+                  isCompleted={meditationCompleted}
+                />
+              )}
+            </div>
 
             {/* Daily Tasks */}
             <Card>
