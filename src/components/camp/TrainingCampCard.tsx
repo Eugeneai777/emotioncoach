@@ -132,7 +132,14 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
       {/* Action Buttons */}
       <div className="flex gap-2">
         <Button 
-          onClick={() => navigate(`/camp-checkin/${camp.id}`)}
+          onClick={() => {
+            // 财富训练营使用专属打卡页
+            if (camp.camp_type === 'wealth_block_21') {
+              navigate('/wealth-camp-checkin');
+            } else {
+              navigate(`/camp-checkin/${camp.id}`);
+            }
+          }}
           className={`flex-1 ${hasCheckedInToday ? '' : colors.buttonGradient}`}
           variant={hasCheckedInToday ? 'outline' : 'default'}
         >
@@ -142,7 +149,14 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
         <Button 
           variant="outline"
           size="sm"
-          onClick={() => navigate(`/camp-intro/${camp.camp_type}`)}
+          onClick={() => {
+            // 财富训练营使用专属介绍页
+            if (camp.camp_type === 'wealth_block_21') {
+              navigate('/wealth-camp-intro');
+            } else {
+              navigate(`/camp-intro/${camp.camp_type}`);
+            }
+          }}
           className={colors.outlineButton}
         >
           <TrendingUp className="h-4 w-4 mr-1" />
