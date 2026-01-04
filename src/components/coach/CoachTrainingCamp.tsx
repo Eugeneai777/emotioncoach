@@ -14,7 +14,7 @@ interface CoachTrainingCampProps {
   onStartCamp?: () => void;
   onViewDetails?: () => void;
   onCheckIn?: () => void;
-  colorTheme?: 'green' | 'purple' | 'blue' | 'orange' | 'pink';
+  colorTheme?: 'green' | 'purple' | 'blue' | 'orange' | 'pink' | 'amber';
   campName?: string;
   campDescription?: string;
   campType?: string;
@@ -60,6 +60,14 @@ const themeStyles = {
     button: 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white',
     outline: 'border-pink-300 text-pink-600 hover:bg-pink-50 dark:border-pink-700 dark:text-pink-400',
     icon: Heart
+  },
+  amber: {
+    gradient: 'bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/10',
+    border: 'border-amber-200/50 dark:border-amber-800/30',
+    title: 'text-amber-800 dark:text-amber-200',
+    button: 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white',
+    outline: 'border-amber-300 text-amber-600 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400',
+    icon: Sparkles
   }
 };
 

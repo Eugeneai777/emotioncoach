@@ -106,6 +106,7 @@ export interface CoachTemplate {
   is_active: boolean;
   is_system: boolean;
   display_order: number;
+  training_camp_type?: string | null;
   created_at: string;
   updated_at: string;
 }

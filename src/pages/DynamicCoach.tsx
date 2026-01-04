@@ -293,7 +293,8 @@ const DynamicCoach = () => {
       trainingCamp={
         template.enable_training_camp ? (
           <CoachTrainingCamp
-            colorTheme={template.primary_color === 'purple' ? 'purple' : template.primary_color === 'blue' ? 'blue' : template.primary_color === 'orange' ? 'orange' : template.primary_color === 'pink' ? 'pink' : 'green'}
+            colorTheme={template.primary_color === 'purple' ? 'purple' : template.primary_color === 'blue' ? 'blue' : template.primary_color === 'orange' ? 'orange' : template.primary_color === 'amber' ? 'amber' : template.primary_color === 'pink' ? 'pink' : 'green'}
+            campType={template.training_camp_type ?? undefined}
           />
         ) : undefined
       }
