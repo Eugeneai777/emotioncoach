@@ -15,6 +15,7 @@ interface TrainingCampCardProps {
 }
 
 const getThemeColors = (campType: string) => {
+  // 亲子/青少年训练营 - 紫粉色系
   if (campType.includes('parent') || campType.includes('teen')) {
     return {
       cardBg: 'from-purple-50/80 via-pink-50/50 to-rose-50/30 dark:from-purple-950/20 dark:via-pink-950/10 dark:to-rose-950/10',
@@ -27,6 +28,20 @@ const getThemeColors = (campType: string) => {
       outlineButton: 'text-purple-600 border-purple-200 hover:bg-purple-50 hover:border-purple-400 dark:text-purple-400 dark:border-purple-700 dark:hover:bg-purple-900/30'
     };
   }
+  // 财富训练营 - 琥珀/橙色系
+  if (campType.includes('wealth')) {
+    return {
+      cardBg: 'from-amber-50/80 via-orange-50/50 to-yellow-50/30 dark:from-amber-950/20 dark:via-orange-950/10 dark:to-yellow-950/10',
+      borderColor: 'border-amber-200/40 dark:border-amber-800/30',
+      titleColor: 'text-amber-800 dark:text-amber-200',
+      accentColor: 'text-amber-600 dark:text-amber-400',
+      mutedAccent: 'text-amber-600/50 dark:text-amber-400/50',
+      progressBg: 'bg-amber-100/50 dark:bg-amber-900/30',
+      buttonGradient: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-sm',
+      outlineButton: 'text-amber-600 border-amber-200 hover:bg-amber-50 hover:border-amber-400 dark:text-amber-400 dark:border-amber-700 dark:hover:bg-amber-900/30'
+    };
+  }
+  // 默认 - 青绿色系
   return {
     cardBg: 'from-teal-50/80 via-cyan-50/50 to-blue-50/30 dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10',
     borderColor: 'border-teal-200/40 dark:border-teal-800/30',
