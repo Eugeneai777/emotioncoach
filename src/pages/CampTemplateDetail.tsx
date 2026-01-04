@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,6 +63,13 @@ const CampTemplateDetail = () => {
   const hasPurchased = !!purchaseRecord;
   const isFree = camp?.price === 0 || camp?.price === undefined || camp?.price === null;
   const needsPurchase = !isFree && !hasPurchased;
+
+  // 财富训练营重定向到专属介绍页
+  useEffect(() => {
+    if (camp?.camp_type === 'wealth_block_21') {
+      navigate('/wealth-camp-intro', { replace: true });
+    }
+  }, [camp, navigate]);
   const handleCTAClick = () => {
     if (needsPurchase) {
       setShowPurchaseDialog(true);
