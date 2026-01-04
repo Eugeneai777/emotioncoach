@@ -128,6 +128,9 @@ interface CoachLayoutProps {
   
   // Voice Chat CTA (for vibrant life coach)
   voiceChatCTA?: ReactNode;
+  
+  // Loading placeholder for custom loading states (e.g., meditation analysis)
+  loadingPlaceholder?: ReactNode;
 }
 
 export const CoachLayout = ({
@@ -191,7 +194,8 @@ export const CoachLayout = ({
   messagesEndRef: externalMessagesEndRef,
   enableStepsCollapse = false,
   customFooter,
-  voiceChatCTA
+  voiceChatCTA,
+  loadingPlaceholder
 }: CoachLayoutProps) => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -365,7 +369,10 @@ export const CoachLayout = ({
           }}
         >
           <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 py-4 md:py-8">
-            {messages.length === 0 ? (
+            {/* 显示自定义加载占位符（如冥想分析引导） */}
+            {messages.length === 0 && isLoading && loadingPlaceholder ? (
+              loadingPlaceholder
+            ) : messages.length === 0 ? (
               <CoachEmptyState
                 emoji={emoji}
                 title={title}
