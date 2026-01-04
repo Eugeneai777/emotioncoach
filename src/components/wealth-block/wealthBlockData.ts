@@ -624,3 +624,46 @@ export const getEmotionBlockTitle = (type: EmotionBlockType) => {
 export const getBeliefBlockTitle = (type: BeliefBlockType) => {
   return beliefBlockInfo[type].name;
 };
+
+// ===== 健康度计算与分析工具 =====
+
+// 健康区间定义
+export const healthZones = {
+  healthy: { range: [0, 40] as [number, number], label: "和谐健康区", color: "emerald", emoji: "🟢" },
+  attention: { range: [41, 70] as [number, number], label: "需要关注", color: "amber", emoji: "🟡" },
+  warning: { range: [71, 85] as [number, number], label: "需要调整", color: "orange", emoji: "🟠" },
+  risk: { range: [86, 100] as [number, number], label: "高风险区", color: "rose", emoji: "🔴" }
+};
+
+// 严重程度阈值
+export const severityThresholds = {
+  fourPoor: { low: 5, medium: 8, high: 12, max: 15 },
+  emotionBelief: { low: 3, medium: 5, high: 7, max: 10 }
+};
+
+// 计算100分制健康度（分数越低越健康，总分150转100）
+export const calculateHealthScore = (totalScore: number): number => {
+  return Math.round((totalScore / 150) * 100);
+};
+
+// 获取健康区间
+export const getHealthZone = (score: number) => {
+  if (score <= 40) return healthZones.healthy;
+  if (score <= 70) return healthZones.attention;
+  if (score <= 85) return healthZones.warning;
+  return healthZones.risk;
+};
+
+// 计算进步空间
+export const calculateProgressPotential = (score: number, maxScore: number): number => {
+  return maxScore - score;
+};
+
+// 计算严重程度
+export const calculateSeverity = (score: number, maxScore: number): 'low' | 'medium' | 'high' | 'critical' => {
+  const percentage = (score / maxScore) * 100;
+  if (percentage <= 30) return 'low';
+  if (percentage <= 50) return 'medium';
+  if (percentage <= 75) return 'high';
+  return 'critical';
+};

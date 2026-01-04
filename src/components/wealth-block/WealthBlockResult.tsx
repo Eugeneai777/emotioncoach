@@ -4,6 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Target, Heart, Brain, Share2, MessageCircle, GraduationCap, Sparkles, RotateCcw, Save, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { 
   AssessmentResult, 
   blockInfo, 
@@ -13,7 +16,8 @@ import {
   beliefBlockInfo,
   FourPoorType,
   EmotionBlockType,
-  BeliefBlockType
+  BeliefBlockType,
+  calculateHealthScore
 } from "./wealthBlockData";
 import {
   RadarChart,
@@ -34,6 +38,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { HealthScoreDashboard } from "./HealthScoreDashboard";
+import { PriorityBreakthroughMap } from "./PriorityBreakthroughMap";
+import { AIInsightCard, AIInsightData } from "./AIInsightCard";
 
 interface WealthBlockResultProps {
   result: AssessmentResult;
@@ -49,6 +56,70 @@ export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved 
   const dominantPoor = fourPoorInfo[result.dominantPoor];
   const dominantEmotion = emotionBlockInfo[result.dominantEmotionBlock];
   const dominantBelief = beliefBlockInfo[result.dominantBeliefBlock];
+
+  // AI Insight state
+  const [aiInsight, setAiInsight] = useState<AIInsightData | null>(null);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const totalScore = result.behaviorScore + result.emotionScore + result.beliefScore;
+  const healthScore = calculateHealthScore(totalScore);
+
+  // Fetch AI insight on mount
+  useEffect(() => {
+    const fetchAIInsight = async () => {
+      setIsLoadingAI(true);
+      setAiError(null);
+
+      try {
+        const { data, error } = await supabase.functions.invoke('analyze-wealth-blocks', {
+          body: {
+            reactionPattern: result.reactionPattern,
+            dominantPoor: result.dominantPoor,
+            dominantEmotionBlock: result.dominantEmotionBlock,
+            dominantBeliefBlock: result.dominantBeliefBlock,
+            scores: {
+              behavior: result.behaviorScore,
+              emotion: result.emotionScore,
+              belief: result.beliefScore,
+              mouth: result.mouthScore,
+              hand: result.handScore,
+              eye: result.eyeScore,
+              heart: result.heartScore,
+              anxiety: result.anxietyScore,
+              scarcity: result.scarcityScore,
+              comparison: result.comparisonScore,
+              shame: result.shameScore,
+              guilt: result.guiltScore,
+              lack: result.lackScore,
+              linear: result.linearScore,
+              stigma: result.stigmaScore,
+              unworthy: result.unworthyScore,
+              relationship: result.relationshipScore,
+            },
+            healthScore
+          }
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (data?.error) {
+          throw new Error(data.error);
+        }
+
+        setAiInsight(data);
+      } catch (err) {
+        console.error('AI insight error:', err);
+        setAiError("AI分析暂时不可用，您仍可查看基础分析结果");
+      } finally {
+        setIsLoadingAI(false);
+      }
+    };
+
+    fetchAIInsight();
+  }, [result, healthScore]);
 
   // 四穷雷达图数据
   const fourPoorRadarData = [
@@ -106,14 +177,21 @@ export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved 
     relationship: "#db2777",
   };
 
-  const totalScore = result.behaviorScore + result.emotionScore + result.beliefScore;
-
   return (
     <div className="space-y-6 pb-20">
+      {/* 健康度仪表盘 - 一目了然 */}
+      <HealthScoreDashboard
+        healthScore={healthScore}
+        behaviorScore={result.behaviorScore}
+        emotionScore={result.emotionScore}
+        beliefScore={result.beliefScore}
+      />
+
       {/* 财富反应模式结果卡片 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
       >
         <Card className="overflow-hidden border-0 shadow-xl">
           <div className={cn("bg-gradient-to-br p-6 text-white", pattern.color)}>
@@ -170,49 +248,39 @@ export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved 
               <p className="text-white/80 text-xs mt-1">训练营重点：{pattern.trainingFocus}</p>
             </div>
           </div>
-          
-          <CardContent className="p-5">
-            {/* 总分展示 */}
-            <div className="flex items-center justify-between mb-4 p-3 bg-muted/50 rounded-xl">
-              <span className="text-sm text-muted-foreground">测评总分</span>
-              <span className="text-lg font-bold">{totalScore}<span className="text-muted-foreground text-sm font-normal">/150</span></span>
-            </div>
-            
-            {/* 三层总览雷达图 */}
-            <div className="h-[200px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={layerRadarData}>
-                  <PolarGrid stroke="hsl(var(--border))" />
-                  <PolarAngleAxis 
-                    dataKey="subject" 
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                  />
-                  <PolarRadiusAxis 
-                    angle={90} 
-                    domain={[0, 50]} 
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                    tickCount={6}
-                  />
-                  <Radar
-                    name="得分"
-                    dataKey="score"
-                    stroke="hsl(280, 70%, 50%)"
-                    fill="hsl(280, 70%, 50%)"
-                    fillOpacity={0.4}
-                    strokeWidth={2}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
         </Card>
       </motion.div>
+
+      {/* AI 个性化洞察卡片 */}
+      <AIInsightCard
+        insight={aiInsight}
+        isLoading={isLoadingAI}
+        error={aiError}
+      />
+
+      {/* 优先突破地图 */}
+      <PriorityBreakthroughMap
+        mouthScore={result.mouthScore}
+        handScore={result.handScore}
+        eyeScore={result.eyeScore}
+        heartScore={result.heartScore}
+        anxietyScore={result.anxietyScore}
+        scarcityScore={result.scarcityScore}
+        comparisonScore={result.comparisonScore}
+        shameScore={result.shameScore}
+        guiltScore={result.guiltScore}
+        lackScore={result.lackScore}
+        linearScore={result.linearScore}
+        stigmaScore={result.stigmaScore}
+        unworthyScore={result.unworthyScore}
+        relationshipScore={result.relationshipScore}
+      />
       
       {/* 统一说明 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
+        transition={{ delay: 0.2 }}
       >
         <Card className="border-0 shadow-md bg-gradient-to-br from-slate-50 to-gray-100">
           <CardContent className="p-4">
@@ -232,13 +300,13 @@ export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved 
       </motion.div>
 
       {/* 三层深度分析 - 手风琴 */}
-      <Accordion type="multiple" defaultValue={["behavior", "emotion", "belief"]} className="space-y-4">
+      <Accordion type="multiple" defaultValue={["behavior"]} className="space-y-4">
         {/* 第一层：行为层分析 */}
         <AccordionItem value="behavior" className="border-0">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.25 }}
           >
             <Card className="overflow-hidden border-0 shadow-lg">
               <AccordionTrigger className="hover:no-underline p-0 [&[data-state=open]>div]:rounded-b-none">
@@ -346,7 +414,7 @@ export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.3 }}
           >
             <Card className="overflow-hidden border-0 shadow-lg">
               <AccordionTrigger className="hover:no-underline p-0 [&[data-state=open]>div]:rounded-b-none">
@@ -463,7 +531,7 @@ export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.35 }}
           >
             <Card className="overflow-hidden border-0 shadow-lg">
               <AccordionTrigger className="hover:no-underline p-0 [&[data-state=open]>div]:rounded-b-none">
