@@ -110,27 +110,74 @@ export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved 
 
   return (
     <div className="space-y-6 pb-20">
-      {/* 总览卡片 */}
+      {/* 财富反应模式结果卡片 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
         <Card className="overflow-hidden border-0 shadow-xl">
-          <div className={cn("p-6 text-white", pattern.color.replace('bg-', 'bg-gradient-to-br from-').replace('-100', '-500').replace('text-', 'to-').replace('-700', '-600'))}>
+          <div className={cn("bg-gradient-to-br p-6 text-white", pattern.color)}>
             <div className="flex items-center gap-4 mb-4">
               <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm text-4xl">
                 {pattern.emoji}
               </div>
               <div>
-                <p className="text-white/80 text-sm">你的财富反应模式</p>
-                <h2 className="text-2xl font-bold">{pattern.name}</h2>
-                <p className="text-white/90 text-sm mt-1">总分：{totalScore}/150</p>
+                <p className="text-white/80 text-sm">🧭 你的财富反应模式</p>
+                <h2 className="text-2xl font-bold">【{pattern.name}】</h2>
+                <p className="text-white/90 text-sm mt-1">{pattern.tagline}</p>
               </div>
             </div>
-            <p className="text-white/90 leading-relaxed text-sm">{pattern.description}</p>
+            
+            {/* 说明文字 */}
+            <div className="p-3 bg-white/15 rounded-xl mb-4">
+              <p className="text-white/95 text-sm leading-relaxed">
+                📌 这不是性格，<br/>
+                而是你在面对<span className="font-semibold">钱、机会、价格、收入</span>时的自动反应。
+              </p>
+            </div>
+            
+            {/* 你的状态 */}
+            <div className="mb-4">
+              <h4 className="text-white/90 text-sm font-semibold mb-2 flex items-center gap-2">
+                💬 你的状态
+              </h4>
+              <ul className="space-y-1.5">
+                {pattern.state.map((item, index) => (
+                  <li key={index} className="flex items-center gap-2 text-white/90 text-sm">
+                    <span className="w-1.5 h-1.5 bg-white/70 rounded-full" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            {/* 专业解读 */}
+            <div className="mb-4">
+              <h4 className="text-white/90 text-sm font-semibold mb-2 flex items-center gap-2">
+                🔍 专业解读
+              </h4>
+              <p className="text-white/90 text-sm leading-relaxed">
+                {pattern.interpretation}
+              </p>
+            </div>
+            
+            {/* 系统建议 */}
+            <div className="p-3 bg-white/20 rounded-xl">
+              <h4 className="text-white text-sm font-semibold mb-1 flex items-center gap-2">
+                💡 系统建议
+              </h4>
+              <p className="text-white/95 text-sm">{pattern.suggestion}</p>
+              <p className="text-white/80 text-xs mt-1">训练营重点：{pattern.trainingFocus}</p>
+            </div>
           </div>
           
-          <CardContent className="p-6">
+          <CardContent className="p-5">
+            {/* 总分展示 */}
+            <div className="flex items-center justify-between mb-4 p-3 bg-muted/50 rounded-xl">
+              <span className="text-sm text-muted-foreground">测评总分</span>
+              <span className="text-lg font-bold">{totalScore}<span className="text-muted-foreground text-sm font-normal">/150</span></span>
+            </div>
+            
             {/* 三层总览雷达图 */}
             <div className="h-[200px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -156,6 +203,29 @@ export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved 
                   />
                 </RadarChart>
               </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+      
+      {/* 统一说明 */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+      >
+        <Card className="border-0 shadow-md bg-gradient-to-br from-slate-50 to-gray-100">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-xl">📋</span>
+              <div>
+                <h4 className="font-semibold text-foreground mb-1">统一说明</h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  反应模式不是一生不变的标签，<br/>
+                  而是你<span className="text-foreground font-medium">此刻的状态</span>。<br/>
+                  状态改变，你与财富的关系就会改变。
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
