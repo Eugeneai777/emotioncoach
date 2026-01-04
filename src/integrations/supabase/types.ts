@@ -1734,6 +1734,7 @@ export type Database = {
           system_prompt: string | null
           theme_config: Json | null
           title: string
+          training_camp_type: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1779,6 +1780,7 @@ export type Database = {
           system_prompt?: string | null
           theme_config?: Json | null
           title: string
+          training_camp_type?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1824,6 +1826,7 @@ export type Database = {
           system_prompt?: string | null
           theme_config?: Json | null
           title?: string
+          training_camp_type?: string | null
           updated_at?: string | null
         }
         Relationships: []
