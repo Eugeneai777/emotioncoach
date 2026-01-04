@@ -302,29 +302,8 @@ ${getStageGuidance(currentStage)}
     }
 
     console.log('Chat mode:', chatMode);
-
+    
     const tools = [
-      {
-        type: "function",
-        function: {
-          name: "complete_stage",
-          description: "当用户明确表达出当前阶段的核心内容后调用，标记阶段完成并推进到下一阶段",
-          parameters: {
-            type: "object",
-            properties: {
-              stage_number: {
-                type: "number",
-                description: "刚完成的阶段编号（1-4）"
-              },
-              stage_summary: {
-                type: "string",
-                description: "用户在这一阶段的核心表达，20字以内"
-              }
-            },
-            required: ["stage_number", "stage_summary"]
-          }
-        }
-      },
       {
         type: "function",
         function: {
