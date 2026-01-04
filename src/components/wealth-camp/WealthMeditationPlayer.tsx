@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Volume2, Check, Image, Link2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, Check, Image, Link2, Copy, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import MeditationAmbientPlayer, { SoundType } from './MeditationAmbientPlayer';
 import MeditationVideoBackground, { VideoBackgroundType } from './MeditationVideoBackground';
 
@@ -20,6 +21,7 @@ interface WealthMeditationPlayerProps {
   isCompleted?: boolean;
   savedReflection?: string;
   onRedo?: () => void;
+  onStartCoaching?: () => void;
 }
 
 // 音效与背景的映射关系
@@ -55,6 +57,7 @@ export function WealthMeditationPlayer({
   isCompleted = false,
   savedReflection,
   onRedo,
+  onStartCoaching,
 }: WealthMeditationPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -66,6 +69,9 @@ export function WealthMeditationPlayer({
   const [showBackgroundOptions, setShowBackgroundOptions] = useState(false);
   const [currentSound, setCurrentSound] = useState<SoundType>(null);
   const [isAutoSync, setIsAutoSync] = useState(true);
+  const [autoJumpCountdown, setAutoJumpCountdown] = useState(3);
+  const [cancelAutoJump, setCancelAutoJump] = useState(false);
+  const [copied, setCopied] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // 当从已完成状态切换回播放器时，重置状态
@@ -182,42 +188,117 @@ export function WealthMeditationPlayer({
     { type: 'snow', label: '雪景', icon: '❄️' },
   ];
 
+  // 自动跳转倒计时
+  useEffect(() => {
+    if (!isCompleted || cancelAutoJump || !onStartCoaching) return;
+    
+    if (autoJumpCountdown > 0) {
+      const timer = setTimeout(() => setAutoJumpCountdown(c => c - 1), 1000);
+      return () => clearTimeout(timer);
+    } else {
+      onStartCoaching();
+    }
+  }, [isCompleted, autoJumpCountdown, cancelAutoJump, onStartCoaching]);
+
+  // 复制冥想感受
+  const handleCopyReflection = async () => {
+    if (!savedReflection) return;
+    
+    try {
+      await navigator.clipboard.writeText(savedReflection);
+      setCopied(true);
+      toast.success('已复制到剪贴板');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error('复制失败，请手动复制');
+    }
+  };
+
   if (isCompleted) {
     return (
       <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-amber-200 dark:border-amber-800">
         <CardContent className="p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center">
-              <Check className="w-6 h-6 text-white" />
+          {/* 成功动画 */}
+          <motion.div 
+            className="text-center"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+          >
+            <div className="w-16 h-16 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-3">
+              <Check className="w-8 h-8 text-white" />
             </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-amber-800 dark:text-amber-200">今日冥想已完成</h3>
-              <p className="text-sm text-amber-600 dark:text-amber-400">Day {dayNumber} · {title}</p>
-            </div>
-          </div>
+            <h3 className="text-lg font-semibold text-amber-800 dark:text-amber-200">冥想完成！</h3>
+            <p className="text-sm text-muted-foreground mt-1">Day {dayNumber} · {title}</p>
+          </motion.div>
           
-          {/* 显示已保存的反思摘要 */}
+          {/* 冥想感受摘要（带复制） */}
           {savedReflection && (
             <div className="bg-white/60 dark:bg-black/20 rounded-lg p-3">
-              <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">📝 我的冥想感受</p>
-              <p className="text-sm text-amber-800 dark:text-amber-200 line-clamp-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-amber-600 dark:text-amber-400">📝 我的冥想感受</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleCopyReflection}
+                  className="h-6 px-2 text-xs text-amber-600 hover:text-amber-700"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3 h-3 mr-1" />
+                      已复制
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3 mr-1" />
+                      复制
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-sm text-amber-800 dark:text-amber-200 line-clamp-2">
                 {savedReflection}
               </p>
             </div>
           )}
           
-          {/* 重新冥想按钮 */}
-          {onRedo && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRedo}
-              className="w-full border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/30"
+          {/* 主CTA：开始教练梳理 */}
+          {onStartCoaching && (
+            <Button 
+              onClick={onStartCoaching}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white py-5 text-base"
             >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              重新冥想
+              <MessageCircle className="w-5 h-5 mr-2" />
+              开始教练梳理
+              {!cancelAutoJump && autoJumpCountdown > 0 && (
+                <span className="ml-2 opacity-70">({autoJumpCountdown}s)</span>
+              )}
             </Button>
           )}
+          
+          {/* 次要操作 */}
+          <div className="flex justify-center gap-4 text-sm">
+            {!cancelAutoJump && onStartCoaching && (
+              <Button 
+                variant="link" 
+                size="sm" 
+                onClick={() => setCancelAutoJump(true)}
+                className="text-amber-600 hover:text-amber-700"
+              >
+                稍后再说
+              </Button>
+            )}
+            {onRedo && (
+              <Button 
+                variant="link" 
+                size="sm" 
+                onClick={onRedo}
+                className="text-amber-600 hover:text-amber-700"
+              >
+                <RotateCcw className="w-3 h-3 mr-1" />
+                重新冥想
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     );
