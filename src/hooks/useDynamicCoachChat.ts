@@ -58,7 +58,8 @@ export const useDynamicCoachChat = (
   briefingToolConfig?: BriefingToolConfig,
   conversationId?: string,
   onBriefingGenerated?: (briefingData: any) => void,
-  initialMode?: CoachChatMode
+  initialMode?: CoachChatMode,
+  contextData?: { dayNumber?: number; campId?: string }
 ) => {
   const [chatMode, setChatMode] = useState<CoachChatMode>(initialMode || 'standard');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -322,21 +323,16 @@ export const useDynamicCoachChat = (
             // 获取当前用户
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-              // 计算当前天数
-              const { data: existingEntries } = await supabase
-                .from('wealth_journal_entries')
-                .select('day_number')
-                .eq('user_id', user.id)
-                .order('day_number', { ascending: false })
-                .limit(1);
-              
-              const currentDayNumber = (existingEntries?.[0]?.day_number || 0) + 1;
+              // 使用传入的 dayNumber 和 campId，而非重新计算
+              const dayNumberToUse = contextData?.dayNumber || 1;
+              const campIdToUse = contextData?.campId || null;
               
               // 调用日记生成 Edge Function
               const { data: journalResult, error: journalError } = await supabase.functions.invoke('generate-wealth-journal', {
                 body: {
                   user_id: user.id,
-                  day_number: currentDayNumber,
+                  camp_id: campIdToUse,
+                  day_number: dayNumberToUse,
                   briefing_data: briefingData,
                   conversation_history: messages,
                 }
@@ -345,7 +341,7 @@ export const useDynamicCoachChat = (
               if (!journalError && journalResult?.success) {
                 toast({
                   title: "📖 财富日记已生成",
-                  description: `记录了 Day ${currentDayNumber} 的财富觉察`,
+                  description: `记录了 Day ${dayNumberToUse} 的财富觉察`,
                 });
                 
                 if (onBriefingGenerated) {

@@ -52,8 +52,13 @@ export const WealthCoachDialog = ({
     (briefingData) => {
       // 简报生成后通知训练营页面
       onCoachingComplete?.();
+      // 延迟关闭对话框，让用户看到生成成功的消息
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 2000);
     },
-    "meditation_analysis" as CoachChatMode
+    "meditation_analysis" as CoachChatMode,
+    { dayNumber, campId }
   );
 
   // 自动发送初始消息
