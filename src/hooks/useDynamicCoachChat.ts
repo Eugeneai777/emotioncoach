@@ -227,6 +227,7 @@ export const useDynamicCoachChat = (
       let assistantMessage = "";
       let toolCallBuffer = "";
       let inToolCall = false;
+      let sseBuffer = ""; // 用于处理跨 chunk 的不完整行
 
       if (reader) {
         while (true) {
@@ -234,7 +235,11 @@ export const useDynamicCoachChat = (
           if (done) break;
 
           const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n");
+          sseBuffer += chunk;
+          
+          // 按换行符分割，但保留最后一个可能不完整的行
+          const lines = sseBuffer.split("\n");
+          sseBuffer = lines.pop() || ""; // 保留最后一个可能不完整的行
 
           for (const line of lines) {
             if (!line.trim() || line.startsWith(":")) continue;
@@ -265,7 +270,8 @@ export const useDynamicCoachChat = (
                 toolCallBuffer += JSON.stringify(delta.tool_calls);
               }
             } catch (e) {
-              console.warn("解析 SSE 数据失败:", e);
+              // JSON 解析失败时静默处理，可能是不完整的数据
+              console.debug("SSE 数据解析跳过:", jsonStr?.substring(0, 50));
             }
           }
         }
