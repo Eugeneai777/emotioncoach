@@ -231,6 +231,7 @@ export function CoachTemplatesManagement() {
           templates={templates} 
           onMoveUp={handleMoveUp}
           onMoveDown={handleMoveDown}
+          onEditTemplate={handleEdit}
         />
       )}
 
