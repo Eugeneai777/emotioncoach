@@ -24,27 +24,26 @@ interface DailyTask {
 }
 
 export default function WealthCampCheckIn() {
-  const { campId } = useParams();
+  const { campId: urlCampId } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('today');
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [meditationCompleted, setMeditationCompleted] = useState(false);
   const [coachingCompleted, setCoachingCompleted] = useState(false);
-
   // Fetch camp data - if no campId, find user's active wealth camp
   const { data: camp, isLoading: campLoading } = useQuery({
-    queryKey: ['wealth-camp', campId],
+    queryKey: ['wealth-camp', urlCampId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
       // If campId is provided, fetch that specific camp
-      if (campId) {
+      if (urlCampId) {
         const { data, error } = await supabase
           .from('training_camps')
           .select('*')
-          .eq('id', campId)
+          .eq('id', urlCampId)
           .eq('user_id', user.id)
           .single();
 
@@ -67,6 +66,9 @@ export default function WealthCampCheckIn() {
       return data;
     },
   });
+
+  // Use URL campId or camp.id from query result
+  const campId = urlCampId || camp?.id;
 
   // 动态计算当前是第几天（从1开始）
   const currentDay = useMemo(() => {
