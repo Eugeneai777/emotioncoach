@@ -80,6 +80,9 @@ import Awakening from "./pages/Awakening";
 import AwakeningIntro from "./pages/AwakeningIntro";
 import TransformationFlow from "./pages/TransformationFlow";
 import WealthBlockAssessment from "./pages/WealthBlockAssessment";
+import WealthCampCheckIn from "./pages/WealthCampCheckIn";
+import WealthJournal from "./pages/WealthJournal";
+import WealthJournalDetail from "./pages/WealthJournalDetail";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -165,6 +168,9 @@ const App = () => (
           <Route path="/awakening-intro" element={<AwakeningIntro />} />
           <Route path="/transformation-flow" element={<TransformationFlow />} />
           <Route path="/wealth-block" element={<WealthBlockAssessment />} />
+          <Route path="/wealth-camp/:campId" element={<WealthCampCheckIn />} />
+          <Route path="/wealth-journal" element={<WealthJournal />} />
+          <Route path="/wealth-journal/:entryId" element={<WealthJournalDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

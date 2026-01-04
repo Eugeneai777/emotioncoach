@@ -6101,6 +6101,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_wealth_profile: {
+        Row: {
+          assessment_id: string | null
+          coach_strategy: Json | null
+          created_at: string
+          dominant_belief: string | null
+          dominant_emotion: string | null
+          dominant_poor: string | null
+          health_score: number | null
+          id: string
+          reaction_pattern: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assessment_id?: string | null
+          coach_strategy?: Json | null
+          created_at?: string
+          dominant_belief?: string | null
+          dominant_emotion?: string | null
+          dominant_poor?: string | null
+          health_score?: number | null
+          id?: string
+          reaction_pattern?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assessment_id?: string | null
+          coach_strategy?: Json | null
+          created_at?: string
+          dominant_belief?: string | null
+          dominant_emotion?: string | null
+          dominant_poor?: string | null
+          health_score?: number | null
+          id?: string
+          reaction_pattern?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vibrant_life_sage_briefings: {
         Row: {
           conversation_id: string | null
@@ -6445,6 +6487,116 @@ export type Database = {
           messages?: Json | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      wealth_journal_entries: {
+        Row: {
+          action_completion: boolean | null
+          ai_insight: Json | null
+          behavior_block: string | null
+          behavior_score: number | null
+          belief_block: string | null
+          belief_score: number | null
+          camp_id: string | null
+          created_at: string
+          day_number: number
+          emotion_block: string | null
+          emotion_score: number | null
+          id: string
+          meditation_completed: boolean | null
+          meditation_reflection: string | null
+          session_id: string | null
+          smallest_progress: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_completion?: boolean | null
+          ai_insight?: Json | null
+          behavior_block?: string | null
+          behavior_score?: number | null
+          belief_block?: string | null
+          belief_score?: number | null
+          camp_id?: string | null
+          created_at?: string
+          day_number: number
+          emotion_block?: string | null
+          emotion_score?: number | null
+          id?: string
+          meditation_completed?: boolean | null
+          meditation_reflection?: string | null
+          session_id?: string | null
+          smallest_progress?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_completion?: boolean | null
+          ai_insight?: Json | null
+          behavior_block?: string | null
+          behavior_score?: number | null
+          belief_block?: string | null
+          belief_score?: number | null
+          camp_id?: string | null
+          created_at?: string
+          day_number?: number
+          emotion_block?: string | null
+          emotion_score?: number | null
+          id?: string
+          meditation_completed?: boolean | null
+          meditation_reflection?: string | null
+          session_id?: string | null
+          smallest_progress?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_journal_entries_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wealth_meditations: {
+        Row: {
+          audio_url: string
+          created_at: string
+          day_number: number
+          description: string | null
+          duration_seconds: number
+          id: string
+          reflection_prompts: Json | null
+          title: string
+          transcript: string | null
+          updated_at: string
+        }
+        Insert: {
+          audio_url: string
+          created_at?: string
+          day_number: number
+          description?: string | null
+          duration_seconds?: number
+          id?: string
+          reflection_prompts?: Json | null
+          title: string
+          transcript?: string | null
+          updated_at?: string
+        }
+        Update: {
+          audio_url?: string
+          created_at?: string
+          day_number?: number
+          description?: string | null
+          duration_seconds?: number
+          id?: string
+          reflection_prompts?: Json | null
+          title?: string
+          transcript?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
