@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Mic, Tent, Bell, Users, MessageSquare, Activity, Clock, AlertTriangle, GraduationCap, Share2, Bot, Copy, Save, Pencil, ArrowUp, ArrowDown, History, RotateCcw, CheckCircle2, AlertCircle, Circle, Layers } from "lucide-react";
+import { Loader2, Mic, Tent, Bell, Users, MessageSquare, Activity, Clock, AlertTriangle, GraduationCap, Share2, Bot, Copy, Save, Pencil, ArrowUp, ArrowDown, History, RotateCcw, CheckCircle2, AlertCircle, Circle, Layers, Sparkles, X, Check } from "lucide-react";
 import { CoachTemplate, StagePrompts, useUpdateCoachTemplate } from "@/hooks/useCoachTemplates";
 import { usePromptVersions, useCreatePromptVersion, useRestorePromptVersion, PromptVersion } from "@/hooks/usePromptVersions";
 import { useQuery } from "@tanstack/react-query";
@@ -78,6 +78,13 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown, onEditTemp
   const [isSavingStagePrompts, setIsSavingStagePrompts] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
   const [viewingVersion, setViewingVersion] = useState<PromptVersion | null>(null);
+  
+  // AI 优化相关状态
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizeInstruction, setOptimizeInstruction] = useState('');
+  const [showOptimizeDialog, setShowOptimizeDialog] = useState(false);
+  const [optimizedPrompt, setOptimizedPrompt] = useState<string | null>(null);
+  const [optimizeType, setOptimizeType] = useState<'system' | 'stage'>('system');
 
   // Fetch versions for selected template
   const { data: versions = [], isLoading: isLoadingVersions } = usePromptVersions(selectedPrompt?.template.id);
@@ -251,6 +258,87 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown, onEditTemp
       navigator.clipboard.writeText(textToCopy);
       toast.success('已复制到剪贴板');
     }
+  };
+
+  // AI 优化功能
+  const handleOpenOptimize = (type: 'system' | 'stage') => {
+    setOptimizeType(type);
+    setOptimizeInstruction('');
+    setOptimizedPrompt(null);
+    setShowOptimizeDialog(true);
+  };
+
+  const handleOptimize = async () => {
+    if (!selectedPrompt || !optimizeInstruction.trim()) {
+      toast.error('请输入优化指令');
+      return;
+    }
+
+    const currentPrompt = optimizeType === 'system' 
+      ? selectedPrompt.editedPrompt 
+      : selectedPrompt.editedStagePrompts;
+
+    if (!currentPrompt) {
+      toast.error('当前没有可优化的 Prompt');
+      return;
+    }
+
+    setIsOptimizing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('optimize-coach-prompt', {
+        body: {
+          currentPrompt,
+          instruction: optimizeInstruction,
+          promptType: optimizeType
+        }
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      setOptimizedPrompt(data.optimizedPrompt);
+      toast.success('AI 优化完成，请查看预览');
+    } catch (error) {
+      console.error('Optimize error:', error);
+      toast.error(error instanceof Error ? error.message : 'AI 优化失败');
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
+  const handleApplyOptimized = () => {
+    if (!optimizedPrompt || !selectedPrompt) return;
+
+    if (optimizeType === 'system') {
+      setSelectedPrompt(prev => prev ? {
+        ...prev,
+        isEditing: true,
+        editedPrompt: optimizedPrompt,
+        changeNote: `[AI优化] ${optimizeInstruction}`
+      } : null);
+    } else {
+      try {
+        const parsedStagePrompts = JSON.parse(optimizedPrompt);
+        setSelectedPrompt(prev => prev ? {
+          ...prev,
+          editedStagePrompts: parsedStagePrompts
+        } : null);
+      } catch (e) {
+        toast.error('阶段提示词格式解析失败');
+        return;
+      }
+    }
+
+    setShowOptimizeDialog(false);
+    setOptimizedPrompt(null);
+    setOptimizeInstruction('');
+    toast.success('已应用 AI 优化结果');
+  };
+
+  const handleCancelOptimize = () => {
+    setShowOptimizeDialog(false);
+    setOptimizedPrompt(null);
+    setOptimizeInstruction('');
   };
 
   const getFeatureValue = (template: CoachTemplate, featureKey: string): boolean => {
@@ -517,6 +605,15 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown, onEditTemp
                         <>
                           <Button 
                             variant="outline" 
+                            size="sm"
+                            onClick={() => handleOpenOptimize('system')}
+                            disabled={!selectedPrompt.editedPrompt}
+                          >
+                            <Sparkles className="h-4 w-4 mr-1" />
+                            AI 优化
+                          </Button>
+                          <Button 
+                            variant="outline" 
                             size="sm" 
                             onClick={() => setSelectedPrompt(prev => prev ? { 
                               ...prev, 
@@ -533,10 +630,21 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown, onEditTemp
                           </Button>
                         </>
                       ) : (
-                        <Button size="sm" onClick={() => setSelectedPrompt(prev => prev ? { ...prev, isEditing: true } : null)}>
-                          <Pencil className="h-4 w-4 mr-1" />
-                          编辑
-                        </Button>
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleOpenOptimize('system')}
+                            disabled={!selectedPrompt?.editedPrompt}
+                          >
+                            <Sparkles className="h-4 w-4 mr-1" />
+                            AI 优化
+                          </Button>
+                          <Button size="sm" onClick={() => setSelectedPrompt(prev => prev ? { ...prev, isEditing: true } : null)}>
+                            <Pencil className="h-4 w-4 mr-1" />
+                            编辑
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -560,12 +668,25 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown, onEditTemp
             </TabsContent>
             
             <TabsContent value="stages" className="mt-4">
-              <StagePromptsEditor
-                stagePrompts={selectedPrompt?.editedStagePrompts}
-                onChange={(newStagePrompts) => setSelectedPrompt(prev => prev ? { ...prev, editedStagePrompts: newStagePrompts } : null)}
-                onSave={handleSaveStagePrompts}
-                isSaving={isSavingStagePrompts}
-              />
+              <div className="space-y-4">
+                <div className="flex justify-end">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleOpenOptimize('stage')}
+                    disabled={!selectedPrompt?.editedStagePrompts}
+                  >
+                    <Sparkles className="h-4 w-4 mr-1" />
+                    AI 优化阶段提示词
+                  </Button>
+                </div>
+                <StagePromptsEditor
+                  stagePrompts={selectedPrompt?.editedStagePrompts}
+                  onChange={(newStagePrompts) => setSelectedPrompt(prev => prev ? { ...prev, editedStagePrompts: newStagePrompts } : null)}
+                  onSave={handleSaveStagePrompts}
+                  isSaving={isSavingStagePrompts}
+                />
+              </div>
             </TabsContent>
             
             <TabsContent value="history" className="mt-4">
@@ -650,6 +771,105 @@ export function CoachFeatureMatrix({ templates, onMoveUp, onMoveDown, onEditTemp
               )}
             </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI 优化对话框 */}
+      <Dialog open={showOptimizeDialog} onOpenChange={setShowOptimizeDialog}>
+        <DialogContent className="max-w-4xl max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              AI 优化{optimizeType === 'system' ? '系统 Prompt' : '阶段提示词'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* 优化指令输入 */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">优化指令</label>
+              <Textarea
+                value={optimizeInstruction}
+                onChange={(e) => setOptimizeInstruction(e.target.value)}
+                placeholder="例如：让语气更温柔、增加引导用户自我觉察的问题、强化共情表达..."
+                className="min-h-[80px]"
+                disabled={isOptimizing}
+              />
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleOptimize} 
+                  disabled={isOptimizing || !optimizeInstruction.trim()}
+                >
+                  {isOptimizing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      AI 优化中...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-1" />
+                      开始优化
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* 优化结果预览 - 左右对比 */}
+            {optimizedPrompt && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-primary">优化完成 - 对比预览</span>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={handleCancelOptimize}>
+                      <X className="h-4 w-4 mr-1" />
+                      取消
+                    </Button>
+                    <Button size="sm" onClick={handleApplyOptimized}>
+                      <Check className="h-4 w-4 mr-1" />
+                      应用优化结果
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">优化前</Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {optimizeType === 'system' 
+                          ? `${selectedPrompt?.editedPrompt.length || 0} 字符`
+                          : '阶段提示词配置'
+                        }
+                      </span>
+                    </div>
+                    <ScrollArea className="h-[300px] rounded-md border p-3 bg-muted/30">
+                      <pre className="text-xs whitespace-pre-wrap font-mono">
+                        {optimizeType === 'system' 
+                          ? selectedPrompt?.editedPrompt
+                          : JSON.stringify(selectedPrompt?.editedStagePrompts, null, 2)
+                        }
+                      </pre>
+                    </ScrollArea>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="default">优化后</Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {optimizedPrompt.length} 字符
+                      </span>
+                    </div>
+                    <ScrollArea className="h-[300px] rounded-md border p-3 bg-primary/5">
+                      <pre className="text-xs whitespace-pre-wrap font-mono">
+                        {optimizedPrompt}
+                      </pre>
+                    </ScrollArea>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
