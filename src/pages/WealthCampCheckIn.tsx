@@ -31,6 +31,7 @@ export default function WealthCampCheckIn() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [meditationCompleted, setMeditationCompleted] = useState(false);
   const [coachingCompleted, setCoachingCompleted] = useState(false);
+  const [savedReflection, setSavedReflection] = useState('');
   // Fetch camp data - if no campId, find user's active wealth camp
   const { data: camp, isLoading: campLoading } = useQuery({
     queryKey: ['wealth-camp', urlCampId],
@@ -128,9 +129,14 @@ export default function WealthCampCheckIn() {
       if (todayEntry) {
         setMeditationCompleted(todayEntry.meditation_completed || false);
         setCoachingCompleted(!!todayEntry.behavior_block);
+        setSavedReflection(todayEntry.meditation_reflection || '');
       }
     }
   }, [journalEntries, camp, currentDay]);
+
+  const handleRedoMeditation = () => {
+    setMeditationCompleted(false);
+  };
 
   const handleMeditationComplete = async (reflection: string) => {
     if (!userId || !campId || !camp) return;
@@ -298,6 +304,8 @@ ${reflection}`;
                   reflectionPrompts={meditation.reflection_prompts as string[] || []}
                   onComplete={handleMeditationComplete}
                   isCompleted={meditationCompleted}
+                  savedReflection={savedReflection}
+                  onRedo={handleRedoMeditation}
                 />
               )}
             </div>
