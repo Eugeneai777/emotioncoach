@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MessageCircle, Share2, Check, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { WealthCampInviteCard } from '@/components/wealth-camp/WealthCampInviteC
 import { CheckInCelebrationDialog } from '@/components/wealth-camp/CheckInCelebrationDialog';
 import CampShareDialog from '@/components/camp/CampShareDialog';
 import { cn } from '@/lib/utils';
-
+import { getDaysSinceStart } from '@/utils/dateUtils';
 interface DailyTask {
   id: string;
   title: string;
@@ -68,20 +68,26 @@ export default function WealthCampCheckIn() {
     },
   });
 
+  // 动态计算当前是第几天（从1开始）
+  const currentDay = useMemo(() => {
+    if (!camp?.start_date) return 1;
+    return Math.max(1, getDaysSinceStart(camp.start_date) + 1);
+  }, [camp?.start_date]);
+
   // Fetch current day meditation
   const { data: meditation } = useQuery({
-    queryKey: ['wealth-meditation', camp?.current_day],
+    queryKey: ['wealth-meditation', currentDay],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('wealth_meditations')
         .select('*')
-        .eq('day_number', camp?.current_day || 1)
+        .eq('day_number', currentDay)
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
-    enabled: !!camp?.current_day,
+    enabled: !!camp,
   });
 
   // Fetch journal entries
@@ -116,13 +122,13 @@ export default function WealthCampCheckIn() {
   // Check today's progress
   useEffect(() => {
     if (journalEntries.length > 0 && camp) {
-      const todayEntry = journalEntries.find(e => e.day_number === camp.current_day);
+      const todayEntry = journalEntries.find(e => e.day_number === currentDay);
       if (todayEntry) {
         setMeditationCompleted(todayEntry.meditation_completed || false);
         setCoachingCompleted(!!todayEntry.behavior_block);
       }
     }
-  }, [journalEntries, camp]);
+  }, [journalEntries, camp, currentDay]);
 
   const handleMeditationComplete = async (reflection: string) => {
     if (!userId || !campId || !camp) return;
@@ -133,7 +139,7 @@ export default function WealthCampCheckIn() {
       .upsert({
         user_id: userId,
         camp_id: campId,
-        day_number: camp.current_day,
+        day_number: currentDay,
         meditation_completed: true,
         meditation_reflection: reflection,
       }, {
@@ -235,7 +241,7 @@ export default function WealthCampCheckIn() {
           </Button>
           <div className="flex-1">
             <h1 className="font-semibold">💰 突破财富卡点</h1>
-            <p className="text-xs text-muted-foreground">Day {camp.current_day} / {camp.duration_days}</p>
+            <p className="text-xs text-muted-foreground">Day {currentDay} / {camp.duration_days}</p>
           </div>
           <div className="text-right">
             <div className="text-lg font-bold text-amber-600">{camp.completed_days}</div>
@@ -257,7 +263,7 @@ export default function WealthCampCheckIn() {
             <div id="meditation-player">
               {meditation && (
                 <WealthMeditationPlayer
-                  dayNumber={camp.current_day}
+                  dayNumber={currentDay}
                   title={meditation.title}
                   description={meditation.description}
                   audioUrl={meditation.audio_url}
@@ -312,7 +318,7 @@ export default function WealthCampCheckIn() {
               <div id="invite-card">
                 <WealthCampInviteCard
                   campId={campId}
-                  dayNumber={camp.current_day}
+                  dayNumber={currentDay}
                   userId={userId}
                 />
               </div>
@@ -336,8 +342,8 @@ export default function WealthCampCheckIn() {
                       .toISOString()
                       .split('T')[0];
                     const isCompleted = checkInDates.includes(dateStr);
-                    const isCurrent = day === camp.current_day;
-                    const isFuture = day > camp.current_day;
+                    const isCurrent = day === currentDay;
+                    const isFuture = day > currentDay;
 
                     return (
                       <div
@@ -383,7 +389,7 @@ export default function WealthCampCheckIn() {
         onOpenChange={setShowShareDialog}
         campId={campId || ''}
         campName="21天突破财富卡点"
-        campDay={camp.current_day}
+        campDay={currentDay}
       />
 
       {/* Celebration Dialog */}
