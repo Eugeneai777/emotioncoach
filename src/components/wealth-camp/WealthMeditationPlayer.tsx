@@ -68,6 +68,16 @@ export function WealthMeditationPlayer({
   const [isAutoSync, setIsAutoSync] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  // 当从已完成状态切换回播放器时，重置状态
+  useEffect(() => {
+    if (!isCompleted) {
+      setCurrentTime(0);
+      setIsPlaying(false);
+      setShowReflection(false);
+      // 保留 hasListened，这样用户可以直接写反思
+    }
+  }, [isCompleted]);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -86,7 +96,7 @@ export function WealthMeditationPlayer({
       audio.removeEventListener('timeupdate', updateTime);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, []);
+  }, [isCompleted]);
 
   useEffect(() => {
     if (audioRef.current) {
