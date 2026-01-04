@@ -166,6 +166,9 @@ export const CoachTrainingCamp = ({
   const handleViewDetails = () => {
     if (externalOnViewDetails) {
       externalOnViewDetails();
+    } else if (campType === 'wealth_block_21') {
+      // 财富训练营直接跳转到专属介绍页
+      navigate('/wealth-camp-intro');
     } else if (campTemplate) {
       navigate(`/camp-template/${campTemplate.id}`);
     }
