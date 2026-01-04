@@ -1,10 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Layers, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, Area, AreaChart } from "recharts";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { HistoryRecord } from "./WealthBlockHistory";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface WealthBlockTrendProps {
   records: HistoryRecord[];
@@ -22,6 +23,10 @@ export function WealthBlockTrend({ records }: WealthBlockTrendProps) {
     emotion: record.emotion_score,
     belief: record.belief_score,
     total: record.behavior_score + record.emotion_score + record.belief_score,
+    mouth: record.mouth_score || 0,
+    hand: record.hand_score || 0,
+    eye: record.eye_score || 0,
+    heart: record.heart_score || 0,
   }));
 
   // 计算趋势
@@ -98,75 +103,215 @@ export function WealthBlockTrend({ records }: WealthBlockTrendProps) {
           </div>
         </div>
 
-        {/* 趋势图 */}
-        <div className="h-48">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
-              <XAxis 
-                dataKey="date" 
-                tick={{ fontSize: 12 }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis 
-                domain={[0, 50]}
-                tick={{ fontSize: 12 }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                }}
-                labelStyle={{ color: "hsl(var(--foreground))" }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="behavior" 
-                stroke="#3B82F6" 
-                strokeWidth={2}
-                dot={{ fill: "#3B82F6", r: 3 }}
-                name="行为层"
-              />
-              <Line 
-                type="monotone" 
-                dataKey="emotion" 
-                stroke="#EC4899" 
-                strokeWidth={2}
-                dot={{ fill: "#EC4899", r: 3 }}
-                name="情绪层"
-              />
-              <Line 
-                type="monotone" 
-                dataKey="belief" 
-                stroke="#8B5CF6" 
-                strokeWidth={2}
-                dot={{ fill: "#8B5CF6", r: 3 }}
-                name="信念层"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        {/* 总分趋势面积图 */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-muted-foreground">总分变化趋势</p>
+          <div className="h-32">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="totalGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis 
+                  domain={[0, 150]}
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                  }}
+                  formatter={(value: number) => [`${value} 分`, "总分"]}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="total" 
+                  stroke="#F59E0B" 
+                  strokeWidth={2}
+                  fill="url(#totalGradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        {/* 图例 */}
-        <div className="flex justify-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span className="text-xs text-muted-foreground">行为层</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-pink-500" />
-            <span className="text-xs text-muted-foreground">情绪层</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-purple-500" />
-            <span className="text-xs text-muted-foreground">信念层</span>
-          </div>
-        </div>
+        {/* 分层趋势切换 */}
+        <Tabs defaultValue="layers" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 h-9">
+            <TabsTrigger value="layers" className="text-xs gap-1">
+              <Layers className="w-3 h-3" />
+              三层得分
+            </TabsTrigger>
+            <TabsTrigger value="fourPoor" className="text-xs gap-1">
+              <Target className="w-3 h-3" />
+              四穷得分
+            </TabsTrigger>
+          </TabsList>
+
+          {/* 三层趋势图 */}
+          <TabsContent value="layers" className="mt-3">
+            <div className="h-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis 
+                    domain={[0, 50]}
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="behavior" 
+                    stroke="#3B82F6" 
+                    strokeWidth={2}
+                    dot={{ fill: "#3B82F6", r: 3 }}
+                    name="行为层"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="emotion" 
+                    stroke="#EC4899" 
+                    strokeWidth={2}
+                    dot={{ fill: "#EC4899", r: 3 }}
+                    name="情绪层"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="belief" 
+                    stroke="#8B5CF6" 
+                    strokeWidth={2}
+                    dot={{ fill: "#8B5CF6", r: 3 }}
+                    name="信念层"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex justify-center gap-4 mt-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                <span className="text-xs text-muted-foreground">行为层</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-pink-500" />
+                <span className="text-xs text-muted-foreground">情绪层</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                <span className="text-xs text-muted-foreground">信念层</span>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* 四穷趋势图 */}
+          <TabsContent value="fourPoor" className="mt-3">
+            <div className="h-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis 
+                    domain={[0, 15]}
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="mouth" 
+                    stroke="#EF4444" 
+                    strokeWidth={2}
+                    dot={{ fill: "#EF4444", r: 3 }}
+                    name="嘴穷"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="hand" 
+                    stroke="#F97316" 
+                    strokeWidth={2}
+                    dot={{ fill: "#F97316", r: 3 }}
+                    name="手穷"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="eye" 
+                    stroke="#0EA5E9" 
+                    strokeWidth={2}
+                    dot={{ fill: "#0EA5E9", r: 3 }}
+                    name="眼穷"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="heart" 
+                    stroke="#A855F7" 
+                    strokeWidth={2}
+                    dot={{ fill: "#A855F7", r: 3 }}
+                    name="心穷"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex justify-center gap-3 mt-2 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                <span className="text-xs text-muted-foreground">嘴穷</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                <span className="text-xs text-muted-foreground">手穷</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-sky-500" />
+                <span className="text-xs text-muted-foreground">眼穷</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                <span className="text-xs text-muted-foreground">心穷</span>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
