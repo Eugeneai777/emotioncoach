@@ -81,15 +81,15 @@ const WealthCoachIntro = () => {
     {
       step: 3,
       title: "每日邀请",
-      subtitle: "结构化财富累积",
-      description: "把分享变成稳定的财富来源",
+      subtitle: "邀请好友体验",
+      description: "邀请朋友做测评或参加训练营，一起突破",
       icon: Users,
       gradient: "from-emerald-500 to-teal-500",
       bgGradient: "from-emerald-50/80 to-teal-50/80",
       borderColor: "border-emerald-200/60",
       iconBg: "bg-emerald-100",
-      action: "了解详情",
-      onClick: scrollToStructureLayer,
+      action: "分享邀请",
+      onClick: () => navigate("/share-invite"),
     },
   ];
 
@@ -493,6 +493,17 @@ const WealthCoachIntro = () => {
                       <p className="text-sm font-medium text-center text-muted-foreground py-1">
                         💡 {layer.keyPoint}
                       </p>
+
+                      {/* Partner CTA for Identity Layer */}
+                      {layer.isKey && (
+                        <Button 
+                          onClick={() => navigate("/partner/youjin-intro")}
+                          className="w-full mt-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-md"
+                        >
+                          成为有劲合伙人
+                          <ChevronRight className="ml-1 h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </AccordionContent>
                 </Card>
