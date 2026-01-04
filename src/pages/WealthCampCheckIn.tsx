@@ -1,16 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MessageCircle, Share2, Check, Lock } from 'lucide-react';
+import { ArrowLeft, Check, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { WealthMeditationPlayer } from '@/components/wealth-camp/WealthMeditationPlayer';
 import { WealthProgressChart } from '@/components/wealth-camp/WealthProgressChart';
 import { WealthJournalCard } from '@/components/wealth-camp/WealthJournalCard';
 import { WealthCampInviteCard } from '@/components/wealth-camp/WealthCampInviteCard';
 import { CheckInCelebrationDialog } from '@/components/wealth-camp/CheckInCelebrationDialog';
+import { WealthCoachDialog } from '@/components/wealth-camp/WealthCoachDialog';
 import CampShareDialog from '@/components/camp/CampShareDialog';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
@@ -26,9 +27,11 @@ interface DailyTask {
 export default function WealthCampCheckIn() {
   const { campId: urlCampId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('today');
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showCoachDialog, setShowCoachDialog] = useState(false);
   const [meditationCompleted, setMeditationCompleted] = useState(false);
   const [coachingCompleted, setCoachingCompleted] = useState(false);
   const [savedReflection, setSavedReflection] = useState('');
@@ -177,33 +180,29 @@ export default function WealthCampCheckIn() {
     }
   }, [coachingCompleted, meditationCompleted]);
 
-  const handleStartCoaching = () => {
-    // 获取今日冥想感受，带入教练对话
+  // 构建冥想上下文消息
+  const getMeditationContext = () => {
     const todayEntry = journalEntries.find(e => e.day_number === currentDay);
-    const reflection = todayEntry?.meditation_reflection || '';
+    const reflection = todayEntry?.meditation_reflection || savedReflection || '';
     
     if (reflection && meditation) {
-      // 构建完整的冥想上下文
-      const meditationContext = `【今日冥想 · Day ${currentDay}】
+      return `【今日冥想 · Day ${currentDay}】
 主题：${meditation.title}
 ${meditation.description ? `简介：${meditation.description}\n` : ''}${meditation.reflection_prompts ? `引导问题：${(meditation.reflection_prompts as string[]).join('、')}\n` : ''}
 【我的冥想感受】
 ${reflection}`;
-      
-      // 带着完整上下文跳转到教练页，自动开始对话
-      navigate('/coach/wealth_coach_4_questions', {
-        state: { 
-          initialMessage: meditationContext,
-          fromCamp: true,
-          campId: campId,
-          dayNumber: currentDay,
-          meditationTitle: meditation.title,
-          meditationDescription: meditation.description
-        }
-      });
-    } else {
-      navigate('/coach/wealth_coach_4_questions');
     }
+    return '';
+  };
+
+  const handleStartCoaching = () => {
+    setShowCoachDialog(true);
+  };
+
+  const handleCoachingComplete = () => {
+    setCoachingCompleted(true);
+    // 刷新日记数据
+    queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
   };
 
   const scrollToInvite = () => {
@@ -436,6 +435,17 @@ ${reflection}`;
         totalDays={camp.duration_days || 21}
         onShare={() => setShowShareDialog(true)}
         onInvite={scrollToInvite}
+      />
+
+      {/* Coach Dialog */}
+      <WealthCoachDialog
+        open={showCoachDialog}
+        onOpenChange={setShowCoachDialog}
+        initialMessage={getMeditationContext()}
+        campId={campId || ''}
+        dayNumber={currentDay}
+        meditationTitle={meditation?.title}
+        onCoachingComplete={handleCoachingComplete}
       />
     </div>
   );
