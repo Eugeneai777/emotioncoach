@@ -79,7 +79,7 @@ import TeenChat from "./pages/TeenChat";
 import Awakening from "./pages/Awakening";
 import AwakeningIntro from "./pages/AwakeningIntro";
 import TransformationFlow from "./pages/TransformationFlow";
-
+import WealthBlockAssessment from "./pages/WealthBlockAssessment";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -164,6 +164,7 @@ const App = () => (
           <Route path="/awakening" element={<Awakening />} />
           <Route path="/awakening-intro" element={<AwakeningIntro />} />
           <Route path="/transformation-flow" element={<TransformationFlow />} />
+          <Route path="/wealth-block" element={<WealthBlockAssessment />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
