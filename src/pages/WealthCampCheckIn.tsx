@@ -10,6 +10,7 @@ import { WealthMeditationPlayer } from '@/components/wealth-camp/WealthMeditatio
 import { WealthProgressChart } from '@/components/wealth-camp/WealthProgressChart';
 import { WealthJournalCard } from '@/components/wealth-camp/WealthJournalCard';
 import { WealthCampInviteCard } from '@/components/wealth-camp/WealthCampInviteCard';
+import { CheckInCelebrationDialog } from '@/components/wealth-camp/CheckInCelebrationDialog';
 import CampShareDialog from '@/components/camp/CampShareDialog';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +28,7 @@ export default function WealthCampCheckIn() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('today');
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const [meditationCompleted, setMeditationCompleted] = useState(false);
   const [coachingCompleted, setCoachingCompleted] = useState(false);
 
@@ -126,6 +128,24 @@ export default function WealthCampCheckIn() {
       setMeditationCompleted(true);
     }
   };
+
+  // 检查今日打卡是否全部完成，触发祝贺弹窗
+  const checkAndShowCelebration = () => {
+    if (meditationCompleted && coachingCompleted) {
+      setShowCelebration(true);
+    }
+  };
+
+  // 当教练梳理完成时触发祝贺
+  useEffect(() => {
+    if (coachingCompleted && meditationCompleted) {
+      // 延迟显示，让用户看到状态更新
+      const timer = setTimeout(() => {
+        setShowCelebration(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [coachingCompleted, meditationCompleted]);
 
   const handleStartCoaching = () => {
     navigate('/wealth-coach-4');
@@ -341,6 +361,16 @@ export default function WealthCampCheckIn() {
         campId={campId || ''}
         campName="21天突破财富卡点"
         campDay={camp.current_day}
+      />
+
+      {/* Celebration Dialog */}
+      <CheckInCelebrationDialog
+        open={showCelebration}
+        onOpenChange={setShowCelebration}
+        consecutiveDays={camp.completed_days || 1}
+        totalDays={camp.duration_days || 21}
+        onShare={() => setShowShareDialog(true)}
+        onInvite={scrollToInvite}
       />
     </div>
   );
