@@ -13,7 +13,14 @@ serve(async (req) => {
   }
 
   try {
-    const { sessionId, message } = await req.json();
+    const { messages } = await req.json();
+    
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return new Response(JSON.stringify({ error: 'Messages array is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -33,49 +40,9 @@ serve(async (req) => {
       });
     }
 
-    // Get or create session
-    let session;
-    let isNewSession = false;
-    
-    if (sessionId) {
-      const { data } = await supabaseClient
-        .from('wealth_coach_sessions')
-        .select('*')
-        .eq('id', sessionId)
-        .single();
-      session = data;
-      
-      // Check if this is the first message in the session
-      const existingMessages = session?.messages || [];
-      isNewSession = existingMessages.length === 0;
-    }
-
-    if (!session) {
-      // Create new session
-      const { data: newSession, error: createError } = await supabaseClient
-        .from('wealth_coach_sessions')
-        .insert({
-          user_id: user.id,
-          current_stage: 1,
-          messages: [],
-          is_completed: false
-        })
-        .select()
-        .single();
-      
-      if (createError) {
-        console.error('Failed to create session:', createError);
-        return new Response(JSON.stringify({ error: 'Failed to create session' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      session = newSession;
-      isNewSession = true;
-    }
-    
-    // 新会话开始时扣费
-    if (isNewSession) {
+    // 新会话时扣费（只有一条用户消息时）
+    const userMessageCount = messages.filter((m: any) => m.role === 'user').length;
+    if (userMessageCount === 1) {
       try {
         const deductResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/deduct-quota`, {
           method: 'POST',
@@ -86,8 +53,7 @@ serve(async (req) => {
           body: JSON.stringify({
             feature_key: 'wealth_coach_4_questions',
             source: 'wealth_coach_session',
-            conversationId: session.id,
-            metadata: { session_id: session.id }
+            metadata: { user_id: user.id }
           })
         });
         
@@ -114,9 +80,6 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    // Load conversation history
-    const conversationHistory = session.messages || [];
-
     // Get user profile for personalization
     const { data: profile } = await supabaseClient
       .from('profiles')
@@ -139,6 +102,17 @@ serve(async (req) => {
       .single();
 
     const basePrompt = coachTemplate?.system_prompt || `你好，我是劲老师，一位专业的心理教练。我的目标是引导你通过"财富教练四问法"，每天找到一个最小可进步点，从而解锁财富流动。`;
+
+    // 根据对话历史分析当前阶段
+    const analyzeCurrentStage = (msgs: any[]) => {
+      const assistantMessages = msgs.filter(m => m.role === 'assistant').length;
+      if (assistantMessages < 2) return 1;
+      if (assistantMessages < 4) return 2;
+      if (assistantMessages < 6) return 3;
+      return 4;
+    };
+
+    const currentStage = analyzeCurrentStage(messages);
 
     // Build stage-specific guidance
     const getStageGuidance = (stage: number) => {
@@ -168,7 +142,9 @@ serve(async (req) => {
 - 询问用户在不逼迫、不消耗自己的前提下，明天愿意为"财富流动"做的一个最小但真实的进步
 - 一定要小到不会逃避
 - 行为必须具体、可执行
-- 只做一步`;
+- 只做一步
+
+完成四问后，请调用 generate_wealth_briefing 工具生成财富日记。`;
         default:
           return '';
       }
@@ -178,9 +154,9 @@ serve(async (req) => {
 
 用户名称：${userName}
 
-${getStageGuidance(session?.current_stage || 1)}
+${getStageGuidance(currentStage)}
 
-【当前阶段：第${session?.current_stage || 1}问/共4问】
+【当前阶段：第${currentStage}问/共4问】
 
 【对话风格要求】
 - 温柔、缓慢、有节奏
@@ -189,39 +165,14 @@ ${getStageGuidance(session?.current_stage || 1)}
 - 每次回应简洁有力，不超过100字
 - 多用开放式问题
 
-【重要】当用户完成当前阶段的分享后，调用 complete_stage 工具推进到下一阶段。当完成全部四问后，调用 generate_wealth_briefing 生成财富日记。`;
+【重要】根据对话进展自然推进阶段。当完成全部四问后，调用 generate_wealth_briefing 工具生成财富日记。`;
 
     const tools = [
       {
         type: "function",
         function: {
-          name: "complete_stage",
-          description: "完成当前阶段，记录用户的回答，推进到下一阶段",
-          parameters: {
-            type: "object",
-            properties: {
-              stage: {
-                type: "number",
-                description: "完成的阶段 1-4"
-              },
-              content: {
-                type: "string",
-                description: "用户在本阶段分享的核心内容"
-              },
-              reflection: {
-                type: "string",
-                description: "劲老师的温柔回应，20-30字"
-              }
-            },
-            required: ["stage", "content", "reflection"]
-          }
-        }
-      },
-      {
-        type: "function",
-        function: {
           name: "generate_wealth_briefing",
-          description: "完成四问后生成财富日记",
+          description: "完成四问后生成财富日记简报",
           parameters: {
             type: "object",
             properties: {
@@ -258,18 +209,15 @@ ${getStageGuidance(session?.current_stage || 1)}
       }
     ];
 
-    // Add user message to history
-    conversationHistory.push({ role: "user", content: message });
-
-    // Build messages array with full history
-    const messages = [
+    // Build messages array with system prompt
+    const apiMessages = [
       { role: "system", content: systemPrompt },
-      ...conversationHistory
+      ...messages
     ];
 
-    console.log('Sending to AI with history:', conversationHistory.length, 'messages');
+    console.log('Sending to AI with', messages.length, 'messages, current stage:', currentStage);
 
-    // Call AI API
+    // Call AI API with streaming
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -278,9 +226,10 @@ ${getStageGuidance(session?.current_stage || 1)}
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
-        messages,
+        messages: apiMessages,
         tools,
         temperature: 0.7,
+        stream: true,
       }),
     });
 
@@ -290,104 +239,14 @@ ${getStageGuidance(session?.current_stage || 1)}
       throw new Error(`AI API error: ${response.status}`);
     }
 
-    const data = await response.json();
-    const aiMessage = data.choices[0].message;
-
-    console.log('AI Response:', JSON.stringify(aiMessage, null, 2));
-
-    // Process tool calls
-    let updatedStage = session.current_stage;
-    let briefingData = null;
-
-    if (aiMessage.tool_calls) {
-      for (const toolCall of aiMessage.tool_calls) {
-        const args = JSON.parse(toolCall.function.arguments);
-        
-        if (toolCall.function.name === 'complete_stage') {
-          updatedStage = args.stage + 1;
-          if (updatedStage > 4) updatedStage = 4;
-          
-          console.log(`Stage ${args.stage} completed, moving to stage ${updatedStage}`);
-          
-          // Add tool call and response to history
-          conversationHistory.push({
-            role: "assistant",
-            content: aiMessage.content || null,
-            tool_calls: [toolCall]
-          });
-          conversationHistory.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: JSON.stringify({ success: true, next_stage: updatedStage })
-          });
-        }
-        
-        if (toolCall.function.name === 'generate_wealth_briefing') {
-          briefingData = args;
-          console.log('Generating wealth briefing:', briefingData);
-          
-          // Save briefing to database
-          const { error: briefingError } = await supabaseClient
-            .from('wealth_coach_4_questions_briefings')
-            .insert({
-              user_id: user.id,
-              session_id: session.id,
-              actions_performed: args.actions_performed,
-              actions_avoided: args.actions_avoided,
-              emotion_feeling: args.emotion_feeling,
-              belief_insight: args.belief_insight,
-              smallest_progress: args.smallest_progress,
-              summary: args.summary
-            });
-          
-          if (briefingError) {
-            console.error('Failed to save briefing:', briefingError);
-          }
-          
-          // Add tool call and response to history
-          conversationHistory.push({
-            role: "assistant",
-            content: aiMessage.content || null,
-            tool_calls: [toolCall]
-          });
-          conversationHistory.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: JSON.stringify({ success: true, briefing_saved: true })
-          });
-        }
-      }
-    } else {
-      // Regular message, add to history
-      conversationHistory.push({
-        role: "assistant",
-        content: aiMessage.content
-      });
-    }
-
-    // Update session
-    const { error: updateError } = await supabaseClient
-      .from('wealth_coach_sessions')
-      .update({
-        messages: conversationHistory,
-        current_stage: updatedStage,
-        is_completed: briefingData !== null,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', session.id);
-
-    if (updateError) {
-      console.error('Failed to update session:', updateError);
-    }
-
-    return new Response(JSON.stringify({
-      message: aiMessage.content,
-      sessionId: session.id,
-      currentStage: updatedStage,
-      isCompleted: briefingData !== null,
-      briefing: briefingData
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Stream the response back to the client
+    return new Response(response.body, {
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
     });
 
   } catch (error) {
