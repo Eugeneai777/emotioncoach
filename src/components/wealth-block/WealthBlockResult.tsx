@@ -5,6 +5,14 @@ import { Target, Heart, Brain, Share2, MessageCircle, GraduationCap, Sparkles, R
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { AssessmentResult, blockInfo, patternInfo } from "./wealthBlockData";
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  ResponsiveContainer,
+} from "recharts";
 
 const iconMap = {
   behavior: Target,
@@ -25,6 +33,13 @@ export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved 
   const dominant = blockInfo[result.dominantBlock];
   const pattern = patternInfo[result.reactionPattern];
   const DominantIcon = iconMap[result.dominantBlock];
+
+  // 雷达图数据
+  const radarData = [
+    { subject: '行为层', score: result.behaviorScore, fullMark: 50 },
+    { subject: '情绪层', score: result.emotionScore, fullMark: 50 },
+    { subject: '信念层', score: result.beliefScore, fullMark: 50 },
+  ];
 
   return (
     <div className="space-y-6 pb-20">
@@ -54,9 +69,39 @@ export function WealthBlockResult({ result, onRetake, onSave, isSaving, isSaved 
               <span className="font-medium">财富反应模式：{pattern.name}</span>
             </div>
             
-            {/* 三层得分 */}
+            {/* 雷达图 */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-foreground">三层卡点分布</h3>
+              <div className="h-[220px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                    <PolarGrid stroke="hsl(var(--border))" />
+                    <PolarAngleAxis 
+                      dataKey="subject" 
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    />
+                    <PolarRadiusAxis 
+                      angle={90} 
+                      domain={[0, 50]} 
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                      tickCount={6}
+                    />
+                    <Radar
+                      name="得分"
+                      dataKey="score"
+                      stroke="hsl(38, 92%, 50%)"
+                      fill="hsl(38, 92%, 50%)"
+                      fillOpacity={0.4}
+                      strokeWidth={2}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 三层得分条形图 */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">三层卡点得分</h3>
+              <h3 className="font-semibold text-foreground">详细得分</h3>
               <div className="space-y-3">
                 {[
                   { label: '行为层', score: result.behaviorScore, max: 50, color: 'bg-blue-500' },

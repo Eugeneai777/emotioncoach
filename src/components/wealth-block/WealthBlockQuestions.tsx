@@ -3,31 +3,33 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, ArrowRight, Target, Heart, Brain, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { questions, scoreLabels, getLayerTitle, calculateResult, AssessmentResult } from "./wealthBlockData";
+import { questions, scoreLabels, calculateResult, AssessmentResult } from "./wealthBlockData";
 
 interface WealthBlockQuestionsProps {
   onComplete: (result: AssessmentResult, answers: Record<number, number>) => void;
 }
 
 export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) {
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
 
-  const questionsPerPage = 10;
-  const totalPages = Math.ceil(questions.length / questionsPerPage);
-  const currentQuestions = questions.slice(
-    currentPage * questionsPerPage,
-    (currentPage + 1) * questionsPerPage
-  );
-
+  const currentQuestion = questions[currentIndex];
   const answeredCount = Object.keys(answers).length;
   const progress = (answeredCount / questions.length) * 100;
+  const isLastQuestion = currentIndex === questions.length - 1;
+  const canSubmit = answeredCount === questions.length;
 
-  const handleAnswer = (questionId: number, value: number) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
+  const handleAnswer = (value: number) => {
+    setAnswers(prev => ({ ...prev, [currentQuestion.id]: value }));
+    
+    // 自动跳转到下一题（除非是最后一题）
+    if (!isLastQuestion) {
+      setTimeout(() => {
+        setCurrentIndex(prev => prev + 1);
+      }, 300);
+    }
   };
 
   const handleSubmit = () => {
@@ -35,123 +37,122 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
     onComplete(result, answers);
   };
 
-  const canSubmit = answeredCount === questions.length;
-  const canGoNext = currentQuestions.every(q => answers[q.id] !== undefined);
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      {/* 头部 */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-700 rounded-full">
-          <TrendingUp className="w-4 h-4" />
-          <span className="text-sm font-medium">财富卡点测评</span>
+    <div className="flex flex-col min-h-[500px]">
+      {/* 进度指示 */}
+      <div className="space-y-3 mb-6">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-muted-foreground">答题进度</span>
+          <span className="text-sm font-medium text-amber-600">{currentIndex + 1} / {questions.length}</span>
         </div>
-        <h2 className="text-xl font-bold">发现阻碍你财富增长的深层卡点</h2>
-        <p className="text-sm text-muted-foreground">共30道题目，预计用时5-8分钟</p>
+        <Progress value={progress} className="h-1.5" />
       </div>
 
-      {/* 进度条 */}
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">完成进度</span>
-          <span className="font-medium">{answeredCount}/30</span>
-        </div>
-        <Progress value={progress} className="h-2" />
-      </div>
+      {/* 题目区域 */}
+      <div className="flex-1 flex flex-col justify-center">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentQuestion.id}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-amber-50/30">
+              <CardContent className="p-6 space-y-6">
+                {/* 题目文本 */}
+                <div className="text-center space-y-4">
+                  <div className="inline-flex items-center justify-center w-10 h-10 bg-amber-100 text-amber-600 rounded-full text-sm font-bold">
+                    {currentQuestion.id}
+                  </div>
+                  <p className="text-lg font-medium leading-relaxed px-2">
+                    {currentQuestion.text}
+                  </p>
+                </div>
 
-      {/* 层级标题 */}
-      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-100">
-        <div className="p-2 bg-amber-100 rounded-lg">
-          {currentPage === 0 && <Target className="w-5 h-5 text-amber-600" />}
-          {currentPage === 1 && <Heart className="w-5 h-5 text-pink-600" />}
-          {currentPage === 2 && <Brain className="w-5 h-5 text-purple-600" />}
-        </div>
-        <div>
-          <p className="font-medium">{getLayerTitle(currentQuestions[0]?.layer)}</p>
-          <p className="text-xs text-muted-foreground">
-            {currentPage === 0 && "探索你的财富行为模式"}
-            {currentPage === 1 && "觉察你对金钱的情绪反应"}
-            {currentPage === 2 && "识别你的财富限制性信念"}
-          </p>
-        </div>
-      </div>
-
-      {/* 题目列表 */}
-      <ScrollArea className="h-[400px] pr-4">
-        <div className="space-y-6">
-          <AnimatePresence mode="wait">
-            {currentQuestions.map((question, index) => (
-              <motion.div
-                key={question.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Card className={cn(
-                  "transition-all duration-300",
-                  answers[question.id] ? "border-amber-200 bg-amber-50/30" : ""
-                )}>
-                  <CardContent className="p-4 space-y-4">
-                    <p className="font-medium leading-relaxed">
-                      <span className="text-amber-600 mr-2">{question.id}.</span>
-                      {question.text}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-2">
-                      {scoreLabels.map(option => (
-                        <Button
-                          key={option.value}
-                          variant={answers[question.id] === option.value ? "default" : "outline"}
-                          size="sm"
-                          className={cn(
-                            "flex-1 min-w-[60px] transition-all",
-                            answers[question.id] === option.value 
-                              ? "bg-gradient-to-r from-amber-500 to-yellow-500 border-0 text-white" 
-                              : "hover:border-amber-300"
-                          )}
-                          onClick={() => handleAnswer(question.id, option.value)}
-                        >
+                {/* 选项列表 */}
+                <div className="space-y-3 pt-2">
+                  {scoreLabels.map(option => {
+                    const isSelected = answers[currentQuestion.id] === option.value;
+                    return (
+                      <motion.button
+                        key={option.value}
+                        whileTap={{ scale: 0.98 }}
+                        className={cn(
+                          "w-full p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-center justify-between",
+                          isSelected
+                            ? "border-amber-400 bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700"
+                            : "border-muted bg-background hover:border-amber-200 hover:bg-amber-50/30"
+                        )}
+                        onClick={() => handleAnswer(option.value)}
+                      >
+                        <span className={cn(
+                          "font-medium",
+                          isSelected ? "text-amber-700" : "text-foreground"
+                        )}>
                           {option.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      </ScrollArea>
+                        </span>
+                        {isSelected && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center"
+                          >
+                            <Check className="w-4 h-4 text-white" />
+                          </motion.div>
+                        )}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       {/* 导航按钮 */}
-      <div className="flex gap-3 pt-4 border-t">
+      <div className="flex gap-3 pt-6 mt-auto">
         <Button
           variant="outline"
-          className="flex-1"
-          disabled={currentPage === 0}
-          onClick={() => setCurrentPage(prev => prev - 1)}
+          className="flex-1 h-12"
+          disabled={currentIndex === 0}
+          onClick={handlePrev}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          上一页
+          上一题
         </Button>
         
-        {currentPage < totalPages - 1 ? (
+        {isLastQuestion ? (
           <Button
-            className="flex-1 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
-            disabled={!canGoNext}
-            onClick={() => setCurrentPage(prev => prev + 1)}
-          >
-            下一页
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        ) : (
-          <Button
-            className="flex-1 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+            className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
             disabled={!canSubmit}
             onClick={handleSubmit}
           >
             <Sparkles className="w-4 h-4 mr-2" />
             查看结果
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            className="flex-1 h-12"
+            disabled={!answers[currentQuestion.id]}
+            onClick={handleNext}
+          >
+            下一题
+            <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         )}
       </div>
