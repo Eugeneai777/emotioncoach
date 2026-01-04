@@ -13,7 +13,10 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, mode } = await req.json();
+    
+    // mode: 'standard' | 'meditation_analysis'
+    const chatMode = mode || 'standard';
     
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: 'Messages array is required' }), {
@@ -226,7 +229,56 @@ ${options ? `备选选项（仅在用户第3轮仍不清晰时提供）：${opti
 ${completionNote ? `\n⚠️ ${completionNote}` : ''}`;
     };
 
-    const systemPrompt = `${basePrompt}
+    // Build system prompt based on mode
+    let systemPrompt: string;
+    
+    if (chatMode === 'meditation_analysis') {
+      // 冥想分析模式：直接梳理3层卡点
+      const meditationAnalysisPrompt = `你是劲老师，一位专业的财富心理教练。用户刚刚完成冥想练习，分享了他的冥想感受。
+
+用户名称：${userName}
+${profileSection}
+
+【你的任务】
+用户分享了冥想后的感受，你需要：
+1. 首先共情回应用户的感受（1-2句话）
+2. 然后直接分析并呈现3层卡点结构：
+   - 🎯 行为层：从感受中识别的行为模式或习惯
+   - 💛 情绪层：感受中的情绪信号和情绪卡点
+   - 💡 信念层：可能隐藏的限制性信念
+
+【输出格式】
+Round 1：
+"我听到了你的感受...（1-2句共情回应）
+
+让我帮你梳理一下今天觉察到的3层卡点：
+
+🎯 **行为层**：...（从用户描述中提取的行为模式）
+
+💛 **情绪层**：...（感受到的情绪信号）
+
+💡 **信念层**：...（可能的限制性信念）
+
+这个分析和你的感受吻合吗？有什么想补充或调整的？"
+
+Round 2-3：
+- 根据用户反馈深化分析
+- 聚焦最核心的信念卡点
+- 引导用户设定明天的最小进步
+
+【完成条件】
+当用户确认分析并表达了明天愿意做的最小进步后，调用 generate_wealth_briefing 工具生成财富日记。
+
+【对话规则】
+1. 每次回应控制在150字以内
+2. 用温暖、接纳的语气
+3. 不急于推进，允许用户补充和调整
+4. 用用户自己的话回应（镜像技术）`;
+
+      systemPrompt = meditationAnalysisPrompt;
+    } else {
+      // 标准四问法模式
+      systemPrompt = `${basePrompt}
 
 用户名称：${userName}
 ${profileSection}
@@ -247,6 +299,9 @@ ${getStageGuidance(currentStage)}
 7. 当用户明确表达出阶段核心内容后，自然过渡到下一阶段
 
 【完成条件】当四问全部完成后，调用 generate_wealth_briefing 工具生成财富日记。`;
+    }
+
+    console.log('Chat mode:', chatMode);
 
     const tools = [
       {
@@ -317,7 +372,7 @@ ${getStageGuidance(currentStage)}
       ...messages
     ];
 
-    console.log('Sending to AI with', messages.length, 'messages, current stage:', currentStage);
+    console.log('Sending to AI with', messages.length, 'messages, mode:', chatMode, 'current stage:', currentStage);
 
     // Call AI API with streaming
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {

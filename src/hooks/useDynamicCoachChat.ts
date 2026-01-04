@@ -49,14 +49,18 @@ interface CampRecommendation {
   howToStart: string;
 }
 
+export type CoachChatMode = 'standard' | 'meditation_analysis';
+
 export const useDynamicCoachChat = (
   coachKey: string,
   edgeFunctionName: string,
   briefingTableName: string,
   briefingToolConfig?: BriefingToolConfig,
   conversationId?: string,
-  onBriefingGenerated?: (briefingData: any) => void
+  onBriefingGenerated?: (briefingData: any) => void,
+  initialMode?: CoachChatMode
 ) => {
+  const [chatMode, setChatMode] = useState<CoachChatMode>(initialMode || 'standard');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(conversationId || null);
@@ -208,6 +212,7 @@ export const useDynamicCoachChat = (
           },
           body: JSON.stringify({
             messages: [...messages, userMessage],
+            mode: chatMode,
           }),
         }
       );
@@ -446,5 +451,7 @@ export const useDynamicCoachChat = (
     setToolRecommendation,
     setEmotionButtonRecommendation,
     setCampRecommendation,
+    chatMode,
+    setChatMode,
   };
 };

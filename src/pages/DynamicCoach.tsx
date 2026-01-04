@@ -11,7 +11,7 @@ import { CoachNotificationsModule } from "@/components/coach/CoachNotificationsM
 import { CoachTrainingCamp } from "@/components/coach/CoachTrainingCamp";
 import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { VoiceCallCTA } from "@/components/coach/VoiceCallCTA";
-import { useDynamicCoachChat } from "@/hooks/useDynamicCoachChat";
+import { useDynamicCoachChat, CoachChatMode } from "@/hooks/useDynamicCoachChat";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { useToast } from "@/hooks/use-toast";
@@ -103,6 +103,9 @@ const DynamicCoach = () => {
     });
   };
 
+  // 确定对话模式：来自训练营的冥想感受使用 meditation_analysis 模式
+  const initialChatMode: CoachChatMode = locationState?.fromCamp ? 'meditation_analysis' : 'standard';
+
   const {
     messages,
     isLoading,
@@ -124,7 +127,8 @@ const DynamicCoach = () => {
     template?.briefing_table_name || '',
     template?.briefing_tool_config as any,
     undefined,
-    handleBriefingGenerated
+    handleBriefingGenerated,
+    initialChatMode
   );
 
   // 处理从训练营带入的初始消息（冥想感受）
