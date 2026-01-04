@@ -82,40 +82,33 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
                   </p>
                 </div>
 
-                {/* 选项列表 */}
-                <div className="space-y-3 pt-2">
-                  {scoreLabels.map(option => {
-                    const isSelected = answers[currentQuestion.id] === option.value;
-                    return (
-                      <motion.button
-                        key={option.value}
-                        whileTap={{ scale: 0.98 }}
-                        className={cn(
-                          "w-full p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-center justify-between",
-                          isSelected
-                            ? "border-amber-400 bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700"
-                            : "border-muted bg-background hover:border-amber-200 hover:bg-amber-50/30"
-                        )}
-                        onClick={() => handleAnswer(option.value)}
-                      >
-                        <span className={cn(
-                          "font-medium",
-                          isSelected ? "text-amber-700" : "text-foreground"
-                        )}>
-                          {option.label}
-                        </span>
-                        {isSelected && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center"
+                {/* 水平评分条 */}
+                <div className="pt-6">
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">不符合</span>
+                    <div className="flex items-center gap-2">
+                      {[1, 2, 3, 4, 5].map(value => {
+                        const isSelected = answers[currentQuestion.id] === value;
+                        return (
+                          <motion.button
+                            key={value}
+                            whileTap={{ scale: 0.9 }}
+                            whileHover={{ scale: 1.05 }}
+                            className={cn(
+                              "w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-200 touch-manipulation",
+                              isSelected
+                                ? "bg-gradient-to-br from-amber-400 to-yellow-500 text-white shadow-lg shadow-amber-200/50 scale-110"
+                                : "border-2 border-muted bg-background text-muted-foreground hover:border-amber-300 hover:text-amber-600"
+                            )}
+                            onClick={() => handleAnswer(value)}
                           >
-                            <Check className="w-4 h-4 text-white" />
-                          </motion.div>
-                        )}
-                      </motion.button>
-                    );
-                  })}
+                            {value}
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">符合</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
