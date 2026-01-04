@@ -18,6 +18,8 @@ interface WealthMeditationPlayerProps {
   reflectionPrompts: string[];
   onComplete: (reflection: string) => void;
   isCompleted?: boolean;
+  savedReflection?: string;
+  onRedo?: () => void;
 }
 
 // 音效与背景的映射关系
@@ -51,6 +53,8 @@ export function WealthMeditationPlayer({
   reflectionPrompts,
   onComplete,
   isCompleted = false,
+  savedReflection,
+  onRedo,
 }: WealthMeditationPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -171,16 +175,39 @@ export function WealthMeditationPlayer({
   if (isCompleted) {
     return (
       <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-amber-200 dark:border-amber-800">
-        <CardContent className="p-6">
+        <CardContent className="p-6 space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center">
               <Check className="w-6 h-6 text-white" />
             </div>
-            <div>
+            <div className="flex-1">
               <h3 className="font-semibold text-amber-800 dark:text-amber-200">今日冥想已完成</h3>
               <p className="text-sm text-amber-600 dark:text-amber-400">Day {dayNumber} · {title}</p>
             </div>
           </div>
+          
+          {/* 显示已保存的反思摘要 */}
+          {savedReflection && (
+            <div className="bg-white/60 dark:bg-black/20 rounded-lg p-3">
+              <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">📝 我的冥想感受</p>
+              <p className="text-sm text-amber-800 dark:text-amber-200 line-clamp-3">
+                {savedReflection}
+              </p>
+            </div>
+          )}
+          
+          {/* 重新冥想按钮 */}
+          {onRedo && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRedo}
+              className="w-full border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/30"
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              重新冥想
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
