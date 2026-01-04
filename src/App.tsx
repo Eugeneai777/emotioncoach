@@ -171,6 +171,7 @@ const App = () => (
           <Route path="/awakening-intro" element={<AwakeningIntro />} />
           <Route path="/transformation-flow" element={<TransformationFlow />} />
           <Route path="/wealth-block" element={<WealthBlockAssessment />} />
+          <Route path="/wealth-camp-checkin" element={<WealthCampCheckIn />} />
           <Route path="/wealth-camp/:campId" element={<WealthCampCheckIn />} />
           <Route path="/wealth-journal" element={<WealthJournal />} />
           <Route path="/wealth-journal/:entryId" element={<WealthJournalDetail />} />
