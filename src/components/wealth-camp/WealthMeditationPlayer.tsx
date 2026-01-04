@@ -418,28 +418,64 @@ export function WealthMeditationPlayer({
               className="border-t border-amber-200 dark:border-amber-800"
             >
               <div className="p-6">
-                <h4 className="font-medium text-amber-800 dark:text-amber-200 mb-3 flex items-center gap-2">
+                <h4 className="font-medium text-amber-800 dark:text-amber-200 mb-2 flex items-center gap-2">
                   <span>📝</span> 冥想后反思
                 </h4>
                 
-                <div className="space-y-2 mb-4">
-                  {reflectionPrompts.map((prompt, index) => (
-                    <p key={index} className="text-sm text-amber-700 dark:text-amber-300">
-                      {index + 1}. {prompt}
-                    </p>
-                  ))}
+                {/* 今日冥想主题 */}
+                <div className="bg-amber-100/50 dark:bg-amber-900/20 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    <span className="font-medium">今日主题：</span>{title}
+                  </p>
+                  {description && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{description}</p>
+                  )}
+                </div>
+
+                {/* 引导提问 */}
+                <div className="mb-4">
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
+                    选择一个角度深入分享（或自由书写）：
+                  </p>
+                  <div className="space-y-2">
+                    {reflectionPrompts.length > 0 ? (
+                      reflectionPrompts.map((prompt, index) => (
+                        <p key={index} className="text-sm text-amber-700 dark:text-amber-300 flex items-start gap-2">
+                          <span className="text-amber-500">•</span> {prompt}
+                        </p>
+                      ))
+                    ) : (
+                      <>
+                        <p className="text-sm text-amber-700 dark:text-amber-300 flex items-start gap-2">
+                          <span className="text-amber-500">•</span> 冥想中你注意到了什么身体感受？（紧绷、放松、某处不适...）
+                        </p>
+                        <p className="text-sm text-amber-700 dark:text-amber-300 flex items-start gap-2">
+                          <span className="text-amber-500">•</span> 有什么画面、记忆或想法浮现了吗？
+                        </p>
+                        <p className="text-sm text-amber-700 dark:text-amber-300 flex items-start gap-2">
+                          <span className="text-amber-500">•</span> 你对金钱的感受有什么变化？
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <Textarea
                   value={reflection}
                   onChange={(e) => setReflection(e.target.value)}
-                  placeholder="记录你的冥想感受..."
-                  className="bg-white/60 dark:bg-black/20 border-amber-200 dark:border-amber-700 min-h-[100px] resize-none"
+                  placeholder="尽量描述具体的感受，比如'我想到小时候爸爸说的一句话...' 而不是'感觉还好'。越具体，教练的梳理越有价值 ✨"
+                  className="bg-white/60 dark:bg-black/20 border-amber-200 dark:border-amber-700 min-h-[120px] resize-none"
                 />
+                
+                {/* 字数提示 */}
+                <div className="flex justify-between items-center mt-2 text-xs text-amber-600 dark:text-amber-400">
+                  <span>{reflection.length < 30 && reflection.length > 0 ? '💡 再多写一点，帮助教练更好地理解你' : ''}</span>
+                  <span>{reflection.length} 字</span>
+                </div>
 
                 <Button
                   onClick={handleComplete}
-                  disabled={!reflection.trim()}
+                  disabled={!reflection.trim() || reflection.length < 10}
                   className="w-full mt-4 bg-amber-500 hover:bg-amber-600 text-white"
                 >
                   <Check className="w-4 h-4 mr-2" />
