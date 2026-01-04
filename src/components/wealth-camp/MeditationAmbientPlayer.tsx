@@ -6,20 +6,26 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-type SoundType = 'rain' | 'ocean' | 'wind' | 'fire' | 'forest' | 'stream' | null;
+export type SoundType = 'rain' | 'ocean' | 'wind' | 'fire' | 'forest' | 'stream' | null;
 
 interface MeditationAmbientPlayerProps {
   isPlaying: boolean;
   className?: string;
   enableHighQuality?: boolean;
+  onSoundChange?: (sound: SoundType) => void;
+  currentSound?: SoundType;
 }
 
 const MeditationAmbientPlayer: React.FC<MeditationAmbientPlayerProps> = ({ 
   isPlaying,
   className,
   enableHighQuality = false,
+  onSoundChange,
+  currentSound: controlledSound,
 }) => {
-  const [currentSound, setCurrentSound] = useState<SoundType>(null);
+  const [internalSound, setInternalSound] = useState<SoundType>(null);
+  const currentSound = controlledSound !== undefined ? controlledSound : internalSound;
+  
   const [volume, setVolume] = useState(0.3);
   const [useHighQuality, setUseHighQuality] = useState(enableHighQuality);
   const [isLoadingHQ, setIsLoadingHQ] = useState(false);
@@ -35,6 +41,14 @@ const MeditationAmbientPlayer: React.FC<MeditationAmbientPlayerProps> = ({
   
   // HTML Audio ref (for high-quality audio)
   const hqAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const setCurrentSound = useCallback((sound: SoundType) => {
+    if (onSoundChange) {
+      onSoundChange(sound);
+    } else {
+      setInternalSound(sound);
+    }
+  }, [onSoundChange]);
 
   // 创建白噪音基础
   const createNoiseBuffer = useCallback((audioContext: AudioContext) => {
@@ -164,7 +178,7 @@ const MeditationAmbientPlayer: React.FC<MeditationAmbientPlayerProps> = ({
     stopSyntheticSound();
     stopHQSound();
     setCurrentSound(null);
-  }, [stopSyntheticSound, stopHQSound]);
+  }, [stopSyntheticSound, stopHQSound, setCurrentSound]);
 
   // 播放高质量音频
   const startHQSound = useCallback(async (soundType: SoundType) => {
@@ -209,11 +223,12 @@ const MeditationAmbientPlayer: React.FC<MeditationAmbientPlayerProps> = ({
     } finally {
       setIsLoadingHQ(false);
     }
-  }, [volume, toast]);
+  }, [volume, toast, setCurrentSound]);
 
   // 播放合成音效
   const startSyntheticSound = useCallback((soundType: SoundType) => {
-    stopSound();
+    stopSyntheticSound();
+    stopHQSound();
     
     if (!soundType) return;
     
@@ -240,20 +255,24 @@ const MeditationAmbientPlayer: React.FC<MeditationAmbientPlayerProps> = ({
     
     noiseNode.start();
     setCurrentSound(soundType);
-  }, [volume, configureSoundType, createNoiseBuffer, stopSound]);
+  }, [volume, configureSoundType, createNoiseBuffer, stopSyntheticSound, stopHQSound, setCurrentSound]);
 
   // 开始播放
   const startSound = useCallback((soundType: SoundType) => {
-    stopSound();
+    stopSyntheticSound();
+    stopHQSound();
     
-    if (!soundType) return;
+    if (!soundType) {
+      setCurrentSound(null);
+      return;
+    }
     
     if (useHighQuality) {
       startHQSound(soundType);
     } else {
       startSyntheticSound(soundType);
     }
-  }, [useHighQuality, startHQSound, startSyntheticSound, stopSound]);
+  }, [useHighQuality, startHQSound, startSyntheticSound, stopSyntheticSound, stopHQSound, setCurrentSound]);
 
   // 暂停/恢复
   const pauseSound = useCallback(() => {
@@ -290,14 +309,27 @@ const MeditationAmbientPlayer: React.FC<MeditationAmbientPlayerProps> = ({
     
     // 如果当前正在播放，重新加载音效
     if (currentSound) {
-      stopSound();
+      stopSyntheticSound();
+      stopHQSound();
       if (newValue) {
         startHQSound(currentSound);
       } else {
         startSyntheticSound(currentSound);
       }
     }
-  }, [useHighQuality, currentSound, stopSound, startHQSound, startSyntheticSound]);
+  }, [useHighQuality, currentSound, stopSyntheticSound, stopHQSound, startHQSound, startSyntheticSound]);
+
+  // 当 controlledSound 变化时，启动对应的声音
+  useEffect(() => {
+    if (controlledSound !== undefined) {
+      if (controlledSound === null) {
+        stopSyntheticSound();
+        stopHQSound();
+      } else if (controlledSound !== internalSound) {
+        startSound(controlledSound);
+      }
+    }
+  }, [controlledSound]);
 
   // 音量变化
   useEffect(() => {
@@ -323,9 +355,10 @@ const MeditationAmbientPlayer: React.FC<MeditationAmbientPlayerProps> = ({
   // 组件卸载时清理
   useEffect(() => {
     return () => {
-      stopSound();
+      stopSyntheticSound();
+      stopHQSound();
     };
-  }, [stopSound]);
+  }, [stopSyntheticSound, stopHQSound]);
 
   const sounds = [
     { type: 'rain' as SoundType, icon: CloudRain, label: '雨声' },

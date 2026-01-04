@@ -151,6 +151,87 @@ export default {
             "background-position": "-200% 0",
           },
         },
+        "meteor": {
+          "0%": {
+            transform: "translateY(0) translateX(0) rotate(45deg)",
+            opacity: "1",
+          },
+          "100%": {
+            transform: "translateY(300px) translateX(-300px) rotate(45deg)",
+            opacity: "0",
+          },
+        },
+        "float": {
+          "0%, 100%": {
+            transform: "translateX(0) translateY(0)",
+          },
+          "25%": {
+            transform: "translateX(10px) translateY(-5px)",
+          },
+          "50%": {
+            transform: "translateX(20px) translateY(0)",
+          },
+          "75%": {
+            transform: "translateX(10px) translateY(5px)",
+          },
+        },
+        "sway": {
+          "0%, 100%": {
+            transform: "rotate(0deg) translateX(0)",
+          },
+          "25%": {
+            transform: "rotate(1deg) translateX(2px)",
+          },
+          "75%": {
+            transform: "rotate(-1deg) translateX(-2px)",
+          },
+        },
+        "twinkle": {
+          "0%, 100%": {
+            opacity: "0.3",
+            transform: "scale(1)",
+          },
+          "50%": {
+            opacity: "1",
+            transform: "scale(1.2)",
+          },
+        },
+        "aurora": {
+          "0%, 100%": {
+            transform: "translateY(0) scaleY(1)",
+            opacity: "0.5",
+          },
+          "50%": {
+            transform: "translateY(-20px) scaleY(1.2)",
+            opacity: "0.8",
+          },
+        },
+        "snowfall": {
+          "0%": {
+            transform: "translateY(-10px) translateX(0)",
+            opacity: "0",
+          },
+          "10%": {
+            opacity: "1",
+          },
+          "90%": {
+            opacity: "1",
+          },
+          "100%": {
+            transform: "translateY(100vh) translateX(20px)",
+            opacity: "0",
+          },
+        },
+        "sun-glow": {
+          "0%, 100%": {
+            transform: "scale(1)",
+            opacity: "0.8",
+          },
+          "50%": {
+            transform: "scale(1.1)",
+            opacity: "1",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -159,6 +240,13 @@ export default {
         "rainbow-spin": "rainbow-spin 2s ease-in-out infinite",
         "rainbow-border": "rainbow-border 3s linear infinite",
         "shimmer": "shimmer 3s ease-in-out infinite",
+        "meteor": "meteor 3s linear infinite",
+        "float": "float 8s ease-in-out infinite",
+        "sway": "sway 4s ease-in-out infinite",
+        "twinkle": "twinkle 3s ease-in-out infinite",
+        "aurora": "aurora 6s ease-in-out infinite",
+        "snowfall": "snowfall 8s linear infinite",
+        "sun-glow": "sun-glow 4s ease-in-out infinite",
       },
     },
   },
