@@ -7,6 +7,30 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// 卡点类型中文名称映射
+const behaviorTypeNames: Record<string, string> = {
+  mouth: '嘴穷',
+  hand: '手穷',
+  eye: '眼穷',
+  heart: '心穷',
+};
+
+const emotionTypeNames: Record<string, string> = {
+  anxiety: '金钱焦虑',
+  scarcity: '匮乏恐惧',
+  comparison: '比较自卑',
+  shame: '羞耻厌恶',
+  guilt: '消费内疚',
+};
+
+const beliefTypeNames: Record<string, string> = {
+  lack: '匮乏感',
+  linear: '线性思维',
+  stigma: '金钱污名',
+  unworthy: '不配得感',
+  relationship: '关系恐惧',
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -40,24 +64,40 @@ serve(async (req) => {
     );
 
     // Extract content from briefing_data or conversation
-    let behaviorBlock = briefing_data?.actions_performed?.join('、') || '';
-    let emotionBlock = briefing_data?.emotion_feeling || '';
-    let beliefBlock = briefing_data?.belief_insight || '';
+    let behaviorBlock = briefing_data?.behavior_block || briefing_data?.actions_performed?.join('、') || '';
+    let emotionBlock = briefing_data?.emotion_block || briefing_data?.emotion_feeling || '';
+    let beliefBlock = briefing_data?.belief_block || briefing_data?.belief_insight || '';
     let smallestProgress = briefing_data?.smallest_progress || '';
+    
+    // 新增：获取卡点类型和行动建议
+    let behaviorType = briefing_data?.behavior_type || null;
+    let emotionType = briefing_data?.emotion_type || null;
+    let beliefType = briefing_data?.belief_type || null;
+    let actionSuggestion = briefing_data?.action_suggestion || '';
+    let summary = briefing_data?.summary || '';
 
     // If no briefing data, extract from conversation
     if (!behaviorBlock && conversation_history) {
-      const extractPrompt = `请从以下财富教练对话中提取关键信息：
+      const extractPrompt = `请从以下财富教练对话中提取关键信息，并对标到具体卡点类型：
 
 ${conversation_history.map((m: any) => `${m.role === 'user' ? '用户' : '教练'}: ${m.content}`).join('\n')}
 
 请以JSON格式返回以下信息：
 {
-  "behavior_block": "今日行为卡点（用户做了什么或回避了什么）",
-  "emotion_block": "今日情绪卡点（用户的情绪感受）",
-  "belief_block": "今日信念卡点（用户发现的限制性信念）",
+  "behavior_block": "行为卡点描述",
+  "behavior_type": "mouth/hand/eye/heart之一（四穷类型）",
+  "emotion_block": "情绪卡点描述",
+  "emotion_type": "anxiety/scarcity/comparison/shame/guilt之一（五情绪类型）",
+  "belief_block": "信念卡点描述",
+  "belief_type": "lack/linear/stigma/unworthy/relationship之一（五信念类型）",
+  "action_suggestion": "基于卡点的个性化行动建议，30字内",
   "smallest_progress": "明日最小进步承诺"
-}`;
+}
+
+卡点类型说明：
+- 行为层四穷：mouth=嘴穷（负面语言）, hand=手穷（不舍得花）, eye=眼穷（只看问题）, heart=心穷（受害者思维）
+- 情绪层五情绪：anxiety=金钱焦虑, scarcity=匮乏恐惧, comparison=比较自卑, shame=羞耻厌恶, guilt=消费内疚
+- 信念层五信念：lack=匮乏感, linear=线性思维, stigma=金钱污名, unworthy=不配得感, relationship=关系恐惧`;
 
       const extractResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -80,8 +120,12 @@ ${conversation_history.map((m: any) => `${m.role === 'user' ? '用户' : '教练
           if (jsonMatch) {
             const extracted = JSON.parse(jsonMatch[0]);
             behaviorBlock = extracted.behavior_block || '';
+            behaviorType = extracted.behavior_type || null;
             emotionBlock = extracted.emotion_block || '';
+            emotionType = extracted.emotion_type || null;
             beliefBlock = extracted.belief_block || '';
+            beliefType = extracted.belief_type || null;
+            actionSuggestion = extracted.action_suggestion || '';
             smallestProgress = extracted.smallest_progress || '';
           }
         } catch (e) {
@@ -93,7 +137,7 @@ ${conversation_history.map((m: any) => `${m.role === 'user' ? '用户' : '教练
     // Fetch recent journal entries for trend comparison
     const { data: recentEntries } = await supabaseClient
       .from('wealth_journal_entries')
-      .select('behavior_score, emotion_score, belief_score, created_at, day_number')
+      .select('behavior_score, emotion_score, belief_score, behavior_type, emotion_type, belief_type, created_at, day_number')
       .eq('user_id', user_id)
       .order('created_at', { ascending: false })
       .limit(7);
@@ -102,7 +146,7 @@ ${conversation_history.map((m: any) => `${m.role === 'user' ? '用户' : '教练
     let trendSection = '';
     if (recentEntries && recentEntries.length > 0) {
       const trendData = recentEntries.map(e => 
-        `Day${e.day_number}: 行为${e.behavior_score || '-'} 情绪${e.emotion_score || '-'} 信念${e.belief_score || '-'}`
+        `Day${e.day_number}: 行为${e.behavior_score || '-'}(${behaviorTypeNames[e.behavior_type] || '-'}) 情绪${e.emotion_score || '-'}(${emotionTypeNames[e.emotion_type] || '-'}) 信念${e.belief_score || '-'}(${beliefTypeNames[e.belief_type] || '-'})`
       ).join('\n');
       
       trendSection = `
@@ -110,7 +154,7 @@ ${conversation_history.map((m: any) => `${m.role === 'user' ? '用户' : '教练
 ${trendData}
 
 请额外输出趋势分析：
-- trend_insight: "与历史相比的趋势变化，20字以内"
+- trend_insight: "与历史相比的趋势变化，包括卡点类型的变化，20字以内"
 - focus_suggestion: "基于趋势的关注建议，30字以内"
 `;
     }
@@ -118,9 +162,10 @@ ${trendData}
     // Now score the journal entry with enhanced prompt
     const scorePrompt = `作为财富教练，请根据以下财富日记内容进行三维度评分：
 
-【行为卡点】${behaviorBlock || '未记录'}
-【情绪卡点】${emotionBlock || '未记录'}
-【信念卡点】${beliefBlock || '未记录'}
+【行为卡点】${behaviorBlock || '未记录'} (类型: ${behaviorTypeNames[behaviorType] || '未识别'})
+【情绪卡点】${emotionBlock || '未记录'} (类型: ${emotionTypeNames[emotionType] || '未识别'})
+【信念卡点】${beliefBlock || '未记录'} (类型: ${beliefTypeNames[beliefType] || '未识别'})
+【行动建议】${actionSuggestion || '未记录'}
 【明日进步】${smallestProgress || '未记录'}
 ${trendSection}
 
@@ -188,7 +233,7 @@ ${trendSection}
             encouragement: parsed.encouragement || '',
             trend_insight: parsed.trend_insight || '',
             focus_suggestion: parsed.focus_suggestion || '',
-            summary: briefing_data?.summary || '',
+            summary: summary || briefing_data?.summary || '',
           }
         };
       }
@@ -196,7 +241,58 @@ ${trendSection}
       console.error('Failed to parse scores:', e);
     }
 
-    // Upsert journal entry
+    // 构建四部曲简报内容
+    const briefingContent = {
+      title: `Day ${day_number} 财富四部曲`,
+      date: new Date().toISOString(),
+      
+      // 第一步：行为觉察
+      step1: {
+        title: "🎯 行为觉察",
+        type: behaviorType,
+        typeName: behaviorTypeNames[behaviorType] || '未识别',
+        description: behaviorBlock,
+        score: scores.behavior_score,
+        analysis: scores.ai_insight.behavior_analysis,
+      },
+      
+      // 第二步：情绪流动
+      step2: {
+        title: "💛 情绪流动",
+        type: emotionType,
+        typeName: emotionTypeNames[emotionType] || '未识别',
+        description: emotionBlock,
+        score: scores.emotion_score,
+        analysis: scores.ai_insight.emotion_analysis,
+      },
+      
+      // 第三步：信念松动
+      step3: {
+        title: "💡 信念松动",
+        type: beliefType,
+        typeName: beliefTypeNames[beliefType] || '未识别',
+        description: beliefBlock,
+        score: scores.belief_score,
+        analysis: scores.ai_insight.belief_analysis,
+      },
+      
+      // 第四步：最小进步
+      step4: {
+        title: "✨ 最小进步",
+        action: actionSuggestion,
+        tomorrow: smallestProgress,
+      },
+      
+      // 整体洞察
+      insight: {
+        overall: scores.ai_insight.overall_insight,
+        encouragement: scores.ai_insight.encouragement,
+        trend: scores.ai_insight.trend_insight,
+        suggestion: scores.ai_insight.focus_suggestion,
+      }
+    };
+
+    // Upsert journal entry with new fields
     const { data: journalEntry, error: upsertError } = await supabaseClient
       .from('wealth_journal_entries')
       .upsert({
@@ -205,9 +301,14 @@ ${trendSection}
         session_id: session_id || null,
         day_number,
         behavior_block: behaviorBlock,
+        behavior_type: behaviorType,
         emotion_block: emotionBlock,
+        emotion_type: emotionType,
         belief_block: beliefBlock,
+        belief_type: beliefType,
         smallest_progress: smallestProgress,
+        action_suggestion: actionSuggestion,
+        briefing_content: briefingContent,
         behavior_score: scores.behavior_score,
         emotion_score: scores.emotion_score,
         belief_score: scores.belief_score,
@@ -223,7 +324,7 @@ ${trendSection}
       throw upsertError;
     }
 
-    console.log('✅ 财富日记生成成功:', journalEntry.id);
+    console.log('✅ 财富日记生成成功:', journalEntry.id, '卡点类型:', behaviorType, emotionType, beliefType);
 
     return new Response(JSON.stringify({
       success: true,
@@ -233,6 +334,12 @@ ${trendSection}
         emotion: scores.emotion_score,
         belief: scores.belief_score,
       },
+      blockTypes: {
+        behavior: behaviorType,
+        emotion: emotionType,
+        belief: beliefType,
+      },
+      briefing: briefingContent,
       insight: scores.ai_insight,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
