@@ -667,3 +667,47 @@ export const calculateSeverity = (score: number, maxScore: number): 'low' | 'med
   if (percentage <= 75) return 'high';
   return 'critical';
 };
+
+// ===== AI追问相关类型 =====
+
+export interface FollowUpAnswer {
+  questionId: number;
+  questionText: string;
+  selectedOption: string;
+  customText?: string;
+  timestamp: Date;
+}
+
+export interface EnhancedAssessmentResult extends AssessmentResult {
+  followUpInsights: FollowUpAnswer[];
+}
+
+// 追问触发策略
+export const shouldAskFollowUp = (
+  score: number,
+  questionIndex: number,
+  totalFollowUps: number
+): boolean => {
+  // 规则1：只有4-5分才可能追问
+  if (score < 4) return false;
+  
+  // 规则2：最多追问5次，避免疲劳
+  if (totalFollowUps >= 5) return false;
+  
+  // 规则3：每6题最多追问1次
+  const maxFollowUpsAtIndex = Math.floor((questionIndex + 1) / 6);
+  if (totalFollowUps >= maxFollowUpsAtIndex) return false;
+  
+  // 规则4：5分更可能触发追问
+  if (score === 5) return true;
+  
+  // 规则5：4分有50%概率触发
+  return Math.random() > 0.5;
+};
+
+// 获取题目类别
+export const getQuestionCategory = (questionId: number): "behavior" | "emotion" | "belief" => {
+  if (questionId <= 10) return "behavior";
+  if (questionId <= 20) return "emotion";
+  return "belief";
+};

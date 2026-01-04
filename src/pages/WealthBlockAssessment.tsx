@@ -11,7 +11,7 @@ import { WealthBlockQuestions } from "@/components/wealth-block/WealthBlockQuest
 import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
 import { WealthBlockHistory, HistoryRecord } from "@/components/wealth-block/WealthBlockHistory";
 import { WealthBlockTrend } from "@/components/wealth-block/WealthBlockTrend";
-import { AssessmentResult, blockInfo, patternInfo } from "@/components/wealth-block/wealthBlockData";
+import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
 
 export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
@@ -21,6 +21,7 @@ export default function WealthBlockAssessmentPage() {
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "assessment");
   const [currentResult, setCurrentResult] = useState<AssessmentResult | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<Record<number, number>>({});
+  const [currentFollowUpInsights, setCurrentFollowUpInsights] = useState<FollowUpAnswer[] | undefined>(undefined);
   const [showResult, setShowResult] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -56,9 +57,10 @@ export default function WealthBlockAssessmentPage() {
     }
   };
 
-  const handleComplete = (result: AssessmentResult, answers: Record<number, number>) => {
+  const handleComplete = (result: AssessmentResult, answers: Record<number, number>, followUpInsights?: FollowUpAnswer[]) => {
     setCurrentResult(result);
     setCurrentAnswers(answers);
+    setCurrentFollowUpInsights(followUpInsights);
     setShowResult(true);
     setIsSaved(false);
   };
@@ -104,6 +106,7 @@ export default function WealthBlockAssessmentPage() {
   const handleRetake = () => {
     setCurrentResult(null);
     setCurrentAnswers({});
+    setCurrentFollowUpInsights(undefined);
     setShowResult(false);
     setIsSaved(false);
   };
@@ -203,6 +206,7 @@ export default function WealthBlockAssessmentPage() {
               {showResult && currentResult ? (
                 <WealthBlockResult
                   result={currentResult}
+                  followUpInsights={currentFollowUpInsights}
                   onRetake={handleRetake}
                   onSave={user ? handleSave : undefined}
                   isSaving={isSaving}
