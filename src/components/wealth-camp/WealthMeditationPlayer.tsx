@@ -189,7 +189,12 @@ export function WealthMeditationPlayer({
   return (
     <Card className="overflow-hidden bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-amber-200 dark:border-amber-800">
       <CardContent className="p-0">
-        <audio ref={audioRef} src={audioUrl} preload="metadata" />
+        <audio 
+          ref={audioRef} 
+          src={encodeURI(audioUrl)} 
+          preload="metadata"
+          onError={(e) => console.error('Audio load error:', e)}
+        />
         
         {/* Header */}
         <div className="p-6 pb-4">
