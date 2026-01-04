@@ -386,7 +386,7 @@ export const useDynamicCoachChat = (
             });
           }
           
-          // 处理情绪按钮推荐（最重要）
+          // 处理情绪按钮推荐
           if (toolCall?.function?.name === "emotion_button_recommendation") {
             const emotionData = JSON.parse(toolCall.function.arguments);
             setEmotionButtonRecommendation({
