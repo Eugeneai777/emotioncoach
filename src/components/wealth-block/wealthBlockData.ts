@@ -1,16 +1,26 @@
-// 题目数据
+// 四穷类型
+export type FourPoorType = "mouth" | "hand" | "eye" | "heart";
+
+// 题目数据 - 行为层按四穷分类
 export const questions = [
-  // 行为层（1-10）
-  { id: 1, layer: "behavior" as const, text: "我经常不自觉地抱怨赚钱难、环境差、机会少" },
-  { id: 2, layer: "behavior" as const, text: "我习惯先看到问题，而不是可能性" },
-  { id: 3, layer: "behavior" as const, text: "我对财务数字（收入、支出、资产）不太愿意主动了解" },
-  { id: 4, layer: "behavior" as const, text: "我时常拖延那些可能带来财富的行动（如学习理财、投资、开拓副业）" },
-  { id: 5, layer: "behavior" as const, text: "我不太敢开口谈钱（谈薪资、报价、收费）" },
-  { id: 6, layer: "behavior" as const, text: "当有机会出现时，我往往犹豫不决，错失时机" },
-  { id: 7, layer: "behavior" as const, text: "我经常买一些当时看着便宜但其实用不上的东西" },
-  { id: 8, layer: "behavior" as const, text: "我习惯性地把钱看得太紧或太松，很少在中间态度" },
-  { id: 9, layer: "behavior" as const, text: "我会因为怕麻烦而放弃一些可以带来额外收入的事" },
-  { id: 10, layer: "behavior" as const, text: "面对财务决策时，我容易冲动消费或完全逃避" },
+  // 嘴穷（1-3）- 诅咒式表达
+  { id: 1, layer: "behavior" as const, fourPoor: "mouth" as FourPoorType, text: "我经常不自觉地抱怨赚钱难、机会少、环境差" },
+  { id: 2, layer: "behavior" as const, fourPoor: "mouth" as FourPoorType, text: "我习惯用否定性语言描述财务状况（如'我没钱'、'买不起'）" },
+  { id: 3, layer: "behavior" as const, fourPoor: "mouth" as FourPoorType, text: "我很少对他人说鼓励祝福的话（如'太棒了'、'我相信你'）" },
+  
+  // 手穷（4-5）- 乞丐心态
+  { id: 4, layer: "behavior" as const, fourPoor: "hand" as FourPoorType, text: "我很少主动请客、送礼物或帮助他人" },
+  { id: 5, layer: "behavior" as const, fourPoor: "hand" as FourPoorType, text: "花钱时我总觉得是在损失，而非给予或交换价值" },
+  
+  // 眼穷（6-8）- 狭隘视角
+  { id: 6, layer: "behavior" as const, fourPoor: "eye" as FourPoorType, text: "我很难看到他人的付出和价值（如家人支持、伴侣努力）" },
+  { id: 7, layer: "behavior" as const, fourPoor: "eye" as FourPoorType, text: "我总是盯着问题和不足，而不是机会和美好" },
+  { id: 8, layer: "behavior" as const, fourPoor: "eye" as FourPoorType, text: "我习惯控制他人，很少真心认可别人的贡献" },
+  
+  // 心穷（9-10）- 受害者思维
+  { id: 9, layer: "behavior" as const, fourPoor: "heart" as FourPoorType, text: "遇到问题我第一反应是找别人的原因，觉得自己是受害者" },
+  { id: 10, layer: "behavior" as const, fourPoor: "heart" as FourPoorType, text: "我很难对客户、家人、世界充满无条件的爱与祝福" },
+  
   // 情绪层（11-20）
   { id: 11, layer: "emotion" as const, text: "一想到钱，我就会感到紧张、焦虑或压力" },
   { id: 12, layer: "emotion" as const, text: "我害怕失去已有的财富，经常担心哪天没了怎么办" },
@@ -22,6 +32,7 @@ export const questions = [
   { id: 18, layer: "emotion" as const, text: "我觉得别人成功是因为运气，而我没那么幸运" },
   { id: 19, layer: "emotion" as const, text: "我讨厌跟人因为钱产生任何冲突或不愉快" },
   { id: 20, layer: "emotion" as const, text: "在财务问题上，我时常感到无力和无望" },
+  
   // 信念层（21-30）
   { id: 21, layer: "belief" as const, text: "我觉得有钱人大多不是什么好人" },
   { id: 22, layer: "belief" as const, text: "我相信钱多了会让人变坏或者惹麻烦" },
@@ -50,9 +61,79 @@ export interface AssessmentResult {
   behaviorScore: number;
   emotionScore: number;
   beliefScore: number;
+  // 四穷得分
+  mouthScore: number;
+  handScore: number;
+  eyeScore: number;
+  heartScore: number;
   dominantBlock: BlockLayer;
+  dominantPoor: FourPoorType;
   reactionPattern: ReactionPattern;
 }
+
+// 四穷信息
+export const fourPoorInfo = {
+  mouth: {
+    name: "嘴穷",
+    emoji: "👄",
+    color: "from-orange-500 to-amber-500",
+    bgColor: "bg-orange-500",
+    description: "诅咒式表达模式",
+    detail: "你习惯用否定、抱怨的语言描述财务状况，经常说'我没钱'、'赚钱太难了'。这种语言模式会形成自我实现的预言，让财富远离你。",
+    solution: "破除'诅咒式表达'，改用情感型正向语言（如'太棒了！''我相信你'），用积极话语吸引希望与能量。",
+    suggestions: [
+      "每天对自己说3句财富肯定语",
+      "用'我正在变得富有'替代'我没钱'",
+      "对他人多说鼓励和祝福的话",
+      "记录每天说的积极话语"
+    ]
+  },
+  hand: {
+    name: "手穷",
+    emoji: "✋",
+    color: "from-emerald-500 to-teal-500",
+    bgColor: "bg-emerald-500",
+    description: "乞丐心态模式",
+    detail: "你更倾向于获取而非付出，花钱时感到损失和心疼。这种匮乏感会形成'乞丐心态'，让你难以吸引财富。",
+    solution: "拒绝'乞丐心态'，践行'舍即是得'理念：主动给予（物质/情感），因'我有'而分享，远离'匮乏感'圈层。",
+    suggestions: [
+      "每周主动请客或送小礼物一次",
+      "花钱时心中默念'我在创造价值交换'",
+      "建立'给予账户'，专门用于帮助他人",
+      "体验'舍即是得'的丰盛感"
+    ]
+  },
+  eye: {
+    name: "眼穷",
+    emoji: "👁️",
+    color: "from-blue-500 to-cyan-500",
+    bgColor: "bg-blue-500",
+    description: "狭隘视角模式",
+    detail: "你习惯盯着问题和不足，很难看到他人的付出和价值。这种狭隘视角让你'目中无人'，难以建立互利关系。",
+    solution: "放下控制欲与狭隘视角，看见他人价值与世界美好（如认可伴侣付出），破除'目中无人'的封闭状态。",
+    suggestions: [
+      "每天记录3件感恩的事",
+      "主动表扬和认可身边人的付出",
+      "遇事先看机会，再看问题",
+      "练习欣赏他人的优点和成就"
+    ]
+  },
+  heart: {
+    name: "心穷",
+    emoji: "💔",
+    color: "from-rose-500 to-pink-500",
+    bgColor: "bg-rose-500",
+    description: "受害者思维模式",
+    detail: "你常感到被动、抱怨命运不公，遇到问题第一反应是归咎他人。这种受害者思维让你心中充满怨气，难以吸引正能量。",
+    solution: "摒弃'受害者思维'，停止归咎他人，以'心中有光有爱'替代抱怨，修炼无条件和平、祝福、欢喜的心态。",
+    suggestions: [
+      "遇事先问'我能做什么'而非'谁该负责'",
+      "每天发送3条祝福给他人",
+      "练习无条件的爱与接纳",
+      "将抱怨转化为感恩和行动"
+    ]
+  }
+};
 
 export const blockInfo = {
   behavior: {
@@ -127,12 +208,29 @@ export const calculateResult = (answers: Record<number, number>): AssessmentResu
   let behaviorScore = 0;
   let emotionScore = 0;
   let beliefScore = 0;
+  
+  // 四穷得分
+  let mouthScore = 0;
+  let handScore = 0;
+  let eyeScore = 0;
+  let heartScore = 0;
 
   questions.forEach(q => {
     const score = answers[q.id] || 0;
-    if (q.layer === 'behavior') behaviorScore += score;
-    else if (q.layer === 'emotion') emotionScore += score;
-    else beliefScore += score;
+    
+    if (q.layer === 'behavior') {
+      behaviorScore += score;
+      // 计算四穷得分
+      const fourPoor = (q as { fourPoor?: FourPoorType }).fourPoor;
+      if (fourPoor === 'mouth') mouthScore += score;
+      else if (fourPoor === 'hand') handScore += score;
+      else if (fourPoor === 'eye') eyeScore += score;
+      else if (fourPoor === 'heart') heartScore += score;
+    } else if (q.layer === 'emotion') {
+      emotionScore += score;
+    } else {
+      beliefScore += score;
+    }
   });
 
   // 判断主导卡点
@@ -147,7 +245,6 @@ export const calculateResult = (answers: Record<number, number>): AssessmentResu
   // 如果差值<=5，选择更深层
   let dominantBlock = scores[0].layer;
   if (scores[0].score - scores[1].score <= 5) {
-    // 深层优先：belief > emotion > behavior
     const depthOrder = ['belief', 'emotion', 'behavior'];
     const topTwo = [scores[0].layer, scores[1].layer];
     for (const layer of depthOrder) {
@@ -158,6 +255,16 @@ export const calculateResult = (answers: Record<number, number>): AssessmentResu
     }
   }
 
+  // 判断主导穷类型
+  const poorScores = [
+    { type: 'mouth' as FourPoorType, score: mouthScore },
+    { type: 'hand' as FourPoorType, score: handScore },
+    { type: 'eye' as FourPoorType, score: eyeScore },
+    { type: 'heart' as FourPoorType, score: heartScore },
+  ];
+  poorScores.sort((a, b) => b.score - a.score);
+  const dominantPoor = poorScores[0].type;
+
   // 判断财富反应模式
   const avgScore = (behaviorScore + emotionScore + beliefScore) / 30;
   let reactionPattern: ReactionPattern;
@@ -167,7 +274,6 @@ export const calculateResult = (answers: Record<number, number>): AssessmentResu
   } else if (avgScore >= 4) {
     reactionPattern = 'trauma';
   } else {
-    // 根据行为层特征判断
     const behaviorAvg = behaviorScore / 10;
     if (behaviorAvg >= 3.5) {
       reactionPattern = 'chase';
@@ -182,7 +288,12 @@ export const calculateResult = (answers: Record<number, number>): AssessmentResu
     behaviorScore,
     emotionScore,
     beliefScore,
+    mouthScore,
+    handScore,
+    eyeScore,
+    heartScore,
     dominantBlock,
+    dominantPoor,
     reactionPattern
   };
 };
@@ -194,4 +305,8 @@ export const getLayerTitle = (layer: string) => {
     case 'belief': return '信念层';
     default: return '';
   }
+};
+
+export const getFourPoorTitle = (type: FourPoorType) => {
+  return fourPoorInfo[type].name;
 };

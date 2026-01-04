@@ -79,7 +79,12 @@ export default function WealthBlockAssessmentPage() {
           behavior_score: currentResult.behaviorScore,
           emotion_score: currentResult.emotionScore,
           belief_score: currentResult.beliefScore,
+          mouth_score: currentResult.mouthScore,
+          hand_score: currentResult.handScore,
+          eye_score: currentResult.eyeScore,
+          heart_score: currentResult.heartScore,
           dominant_block: currentResult.dominantBlock,
+          dominant_poor: currentResult.dominantPoor,
           reaction_pattern: currentResult.reactionPattern,
         });
 
@@ -126,7 +131,12 @@ export default function WealthBlockAssessmentPage() {
       behaviorScore: record.behavior_score,
       emotionScore: record.emotion_score,
       beliefScore: record.belief_score,
+      mouthScore: record.mouth_score || 0,
+      handScore: record.hand_score || 0,
+      eyeScore: record.eye_score || 0,
+      heartScore: record.heart_score || 0,
       dominantBlock: record.dominant_block,
+      dominantPoor: record.dominant_poor || 'mouth',
       reactionPattern: record.reaction_pattern,
     };
     setCurrentResult(result);

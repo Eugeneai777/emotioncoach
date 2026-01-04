@@ -7,7 +7,7 @@ import { Target, Heart, Brain, ChevronDown, ChevronUp, Trash2, Calendar, Trendin
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { blockInfo, patternInfo, BlockLayer, ReactionPattern } from "./wealthBlockData";
+import { blockInfo, patternInfo, BlockLayer, ReactionPattern, FourPoorType } from "./wealthBlockData";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +24,12 @@ export interface HistoryRecord {
   behavior_score: number;
   emotion_score: number;
   belief_score: number;
+  mouth_score?: number;
+  hand_score?: number;
+  eye_score?: number;
+  heart_score?: number;
   dominant_block: BlockLayer;
+  dominant_poor?: FourPoorType;
   reaction_pattern: ReactionPattern;
   created_at: string;
 }
