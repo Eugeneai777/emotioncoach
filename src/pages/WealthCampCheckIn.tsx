@@ -131,35 +131,39 @@ export default function WealthCampCheckIn() {
     navigate('/wealth-coach-4');
   };
 
+  const scrollToInvite = () => {
+    document.getElementById('invite-card')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const dailyTasks: DailyTask[] = [
     {
       id: 'meditation',
-      title: '每日冥想',
+      title: '冥想课程',
       icon: '🧘',
       completed: meditationCompleted,
     },
     {
       id: 'coaching',
-      title: '财富四问梳理',
+      title: '教练梳理',
       icon: '💬',
       completed: coachingCompleted,
       action: handleStartCoaching,
       locked: !meditationCompleted,
     },
     {
-      id: 'journal',
-      title: '财富日记',
-      icon: '📝',
-      completed: coachingCompleted,
-      locked: !coachingCompleted,
-    },
-    {
       id: 'share',
-      title: '分享打卡',
+      title: '打卡分享',
       icon: '📢',
       completed: false,
       action: () => setShowShareDialog(true),
       locked: !coachingCompleted,
+    },
+    {
+      id: 'invite',
+      title: '邀请好友',
+      icon: '🎁',
+      completed: false,
+      action: scrollToInvite,
     },
   ];
 
@@ -262,11 +266,13 @@ export default function WealthCampCheckIn() {
 
             {/* Invite Card */}
             {userId && (
-              <WealthCampInviteCard
-                campId={campId}
-                dayNumber={camp.current_day}
-                userId={userId}
-              />
+              <div id="invite-card">
+                <WealthCampInviteCard
+                  campId={campId}
+                  dayNumber={camp.current_day}
+                  userId={userId}
+                />
+              </div>
             )}
           </TabsContent>
 
