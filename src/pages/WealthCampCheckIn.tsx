@@ -306,6 +306,7 @@ ${reflection}`;
                   isCompleted={meditationCompleted}
                   savedReflection={savedReflection}
                   onRedo={handleRedoMeditation}
+                  onStartCoaching={handleStartCoaching}
                 />
               )}
             </div>
