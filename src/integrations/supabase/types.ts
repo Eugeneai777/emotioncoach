@@ -6324,8 +6324,13 @@ export type Database = {
           belief_score: number
           created_at: string | null
           dominant_block: string
+          dominant_poor: string | null
           emotion_score: number
+          eye_score: number | null
+          hand_score: number | null
+          heart_score: number | null
           id: string
+          mouth_score: number | null
           reaction_pattern: string
           updated_at: string | null
           user_id: string
@@ -6336,8 +6341,13 @@ export type Database = {
           belief_score: number
           created_at?: string | null
           dominant_block: string
+          dominant_poor?: string | null
           emotion_score: number
+          eye_score?: number | null
+          hand_score?: number | null
+          heart_score?: number | null
           id?: string
+          mouth_score?: number | null
           reaction_pattern: string
           updated_at?: string | null
           user_id: string
@@ -6348,8 +6358,13 @@ export type Database = {
           belief_score?: number
           created_at?: string | null
           dominant_block?: string
+          dominant_poor?: string | null
           emotion_score?: number
+          eye_score?: number | null
+          hand_score?: number | null
+          heart_score?: number | null
           id?: string
+          mouth_score?: number | null
           reaction_pattern?: string
           updated_at?: string | null
           user_id?: string
