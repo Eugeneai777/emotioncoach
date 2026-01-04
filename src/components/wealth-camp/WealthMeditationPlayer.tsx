@@ -1,12 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Volume2, Check, Image } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Play, Pause, RotateCcw, Volume2, Check, Image, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import MeditationAmbientPlayer from './MeditationAmbientPlayer';
+import MeditationAmbientPlayer, { SoundType } from './MeditationAmbientPlayer';
 import MeditationVideoBackground, { VideoBackgroundType } from './MeditationVideoBackground';
 
 interface WealthMeditationPlayerProps {
@@ -19,6 +19,28 @@ interface WealthMeditationPlayerProps {
   onComplete: (reflection: string) => void;
   isCompleted?: boolean;
 }
+
+// 音效与背景的映射关系
+const SOUND_TO_BACKGROUND_MAP: Record<NonNullable<SoundType>, VideoBackgroundType> = {
+  ocean: 'water',
+  stream: 'water',
+  rain: 'clouds',
+  forest: 'forest',
+  fire: 'fire',
+  wind: 'aurora',
+};
+
+// 背景与推荐音效的映射关系
+const BACKGROUND_TO_SOUND_MAP: Record<NonNullable<VideoBackgroundType>, SoundType> = {
+  water: 'ocean',
+  forest: 'forest',
+  fire: 'fire',
+  stars: 'wind',
+  clouds: 'rain',
+  sunset: 'ocean',
+  aurora: 'wind',
+  snow: 'wind',
+};
 
 export function WealthMeditationPlayer({
   dayNumber,
@@ -38,6 +60,8 @@ export function WealthMeditationPlayer({
   const [hasListened, setHasListened] = useState(false);
   const [videoBackground, setVideoBackground] = useState<VideoBackgroundType>(null);
   const [showBackgroundOptions, setShowBackgroundOptions] = useState(false);
+  const [currentSound, setCurrentSound] = useState<SoundType>(null);
+  const [isAutoSync, setIsAutoSync] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -102,7 +126,47 @@ export function WealthMeditationPlayer({
     onComplete(reflection);
   };
 
+  // 处理音效变化，自动同步背景
+  const handleSoundChange = useCallback((sound: SoundType) => {
+    setCurrentSound(sound);
+    if (isAutoSync && sound) {
+      const matchedBackground = SOUND_TO_BACKGROUND_MAP[sound];
+      if (matchedBackground) {
+        setVideoBackground(matchedBackground);
+      }
+    } else if (isAutoSync && !sound) {
+      // 如果关闭音效且自动同步开启，也关闭背景
+      setVideoBackground(null);
+    }
+  }, [isAutoSync]);
+
+  // 处理背景变化，自动同步音效
+  const handleBackgroundChange = useCallback((bg: VideoBackgroundType) => {
+    setVideoBackground(bg);
+    if (isAutoSync && bg) {
+      const matchedSound = BACKGROUND_TO_SOUND_MAP[bg];
+      if (matchedSound && matchedSound !== currentSound) {
+        setCurrentSound(matchedSound);
+      }
+    } else if (isAutoSync && !bg) {
+      // 如果关闭背景且自动同步开启，也关闭音效
+      setCurrentSound(null);
+    }
+  }, [isAutoSync, currentSound]);
+
   const progress = durationSeconds > 0 ? (currentTime / durationSeconds) * 100 : 0;
+
+  // 背景选项配置
+  const backgroundOptions: Array<{ type: VideoBackgroundType; label: string; icon: string }> = [
+    { type: 'water', label: '水面', icon: '💧' },
+    { type: 'forest', label: '森林', icon: '🌲' },
+    { type: 'fire', label: '篝火', icon: '🔥' },
+    { type: 'stars', label: '星空', icon: '⭐' },
+    { type: 'clouds', label: '云海', icon: '☁️' },
+    { type: 'sunset', label: '日落', icon: '🌅' },
+    { type: 'aurora', label: '极光', icon: '🌌' },
+    { type: 'snow', label: '雪景', icon: '❄️' },
+  ];
 
   if (isCompleted) {
     return (
@@ -255,12 +319,31 @@ export function WealthMeditationPlayer({
             {/* Video Background Selector */}
             <div className="mt-4 pt-4 border-t border-amber-200/50 dark:border-amber-700/50">
               <div className="flex items-center justify-between mb-2">
-                <span className={cn(
-                  "text-sm",
-                  videoBackground ? "text-white/70" : "text-muted-foreground"
-                )}>
-                  🎬 视频背景
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "text-sm",
+                    videoBackground ? "text-white/70" : "text-muted-foreground"
+                  )}>
+                    🎬 视频背景
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAutoSync(!isAutoSync)}
+                    className={cn(
+                      "h-5 px-1.5 text-[10px] rounded-full transition-all",
+                      isAutoSync 
+                        ? "bg-amber-500/20 text-amber-600 ring-1 ring-amber-500/30" 
+                        : videoBackground
+                          ? "text-white/50 hover:text-white/70"
+                          : "text-muted-foreground/50 hover:text-muted-foreground"
+                    )}
+                    title={isAutoSync ? "自动联动已开启" : "自动联动已关闭"}
+                  >
+                    <Link2 className="w-3 h-3 mr-0.5" />
+                    联动
+                  </Button>
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -283,13 +366,7 @@ export function WealthMeditationPlayer({
                     exit={{ opacity: 0, height: 0 }}
                     className="flex items-center gap-1 flex-wrap"
                   >
-                    {[
-                      { type: 'water' as VideoBackgroundType, label: '💧 水面', icon: '💧' },
-                      { type: 'forest' as VideoBackgroundType, label: '🌲 森林', icon: '🌲' },
-                      { type: 'fire' as VideoBackgroundType, label: '🔥 篝火', icon: '🔥' },
-                      { type: 'stars' as VideoBackgroundType, label: '⭐ 星空', icon: '⭐' },
-                      { type: 'clouds' as VideoBackgroundType, label: '☁️ 云海', icon: '☁️' },
-                    ].map(({ type, label, icon }) => (
+                    {backgroundOptions.map(({ type, label, icon }) => (
                       <Button
                         key={type}
                         variant="ghost"
@@ -302,10 +379,10 @@ export function WealthMeditationPlayer({
                               ? 'text-white/70 hover:text-white hover:bg-white/20'
                               : 'text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10'
                         )}
-                        onClick={() => setVideoBackground(videoBackground === type ? null : type)}
+                        onClick={() => handleBackgroundChange(videoBackground === type ? null : type)}
                       >
                         <span className="text-sm mr-1">{icon}</span>
-                        <span className="text-xs">{label.split(' ')[1]}</span>
+                        <span className="text-xs">{label}</span>
                       </Button>
                     ))}
                   </motion.div>
@@ -315,7 +392,12 @@ export function WealthMeditationPlayer({
 
             {/* Ambient Sound */}
             <div className="mt-4 pt-4 border-t border-amber-200/50 dark:border-amber-700/50">
-              <MeditationAmbientPlayer isPlaying={isPlaying} enableHighQuality />
+              <MeditationAmbientPlayer 
+                isPlaying={isPlaying} 
+                enableHighQuality 
+                currentSound={currentSound}
+                onSoundChange={handleSoundChange}
+              />
             </div>
             </div>
           </div>
