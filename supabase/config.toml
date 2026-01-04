@@ -287,3 +287,6 @@ verify_jwt = true
 
 [functions.sync-wealth-profile]
 verify_jwt = true
+
+[functions.elevenlabs-sfx]
+verify_jwt = true

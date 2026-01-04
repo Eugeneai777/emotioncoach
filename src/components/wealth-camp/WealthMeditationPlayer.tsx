@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Volume2, Check } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, Check, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import MeditationAmbientPlayer from './MeditationAmbientPlayer';
+import MeditationVideoBackground, { VideoBackgroundType } from './MeditationVideoBackground';
 
 interface WealthMeditationPlayerProps {
   dayNumber: number;
@@ -35,6 +36,8 @@ export function WealthMeditationPlayer({
   const [showReflection, setShowReflection] = useState(false);
   const [reflection, setReflection] = useState('');
   const [hasListened, setHasListened] = useState(false);
+  const [videoBackground, setVideoBackground] = useState<VideoBackgroundType>(null);
+  const [showBackgroundOptions, setShowBackgroundOptions] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -138,40 +141,55 @@ export function WealthMeditationPlayer({
 
         {/* Player */}
         <div className="px-6 pb-4">
-          <div className="bg-white/60 dark:bg-black/20 rounded-2xl p-4">
-            {/* Waveform / Progress visualization */}
-            <div className="relative h-16 mb-4 flex items-center justify-center">
-              <AnimatePresence>
-                {isPlaying && (
-                  <motion.div 
-                    className="flex items-center gap-1"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    {[...Array(5)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        className="w-1 bg-amber-500 rounded-full"
-                        animate={{
-                          height: [12, 24 + Math.random() * 16, 12],
-                        }}
-                        transition={{
-                          duration: 0.5 + Math.random() * 0.3,
-                          repeat: Infinity,
-                          delay: i * 0.1,
-                        }}
-                      />
-                    ))}
-                  </motion.div>
+          <div className="relative bg-white/60 dark:bg-black/20 rounded-2xl p-4 overflow-hidden">
+            {/* Video Background Layer */}
+            <MeditationVideoBackground
+              backgroundType={videoBackground}
+              isActive={isPlaying || videoBackground !== null}
+              className="z-0"
+            />
+            
+            {/* Content Layer */}
+            <div className="relative z-10">
+              {/* Waveform / Progress visualization */}
+              <div className="relative h-16 mb-4 flex items-center justify-center">
+                <AnimatePresence>
+                  {isPlaying && (
+                    <motion.div 
+                      className="flex items-center gap-1"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      {[...Array(5)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          className={cn(
+                            "w-1 rounded-full",
+                            videoBackground ? "bg-white" : "bg-amber-500"
+                          )}
+                          animate={{
+                            height: [12, 24 + Math.random() * 16, 12],
+                          }}
+                          transition={{
+                            duration: 0.5 + Math.random() * 0.3,
+                            repeat: Infinity,
+                            delay: i * 0.1,
+                          }}
+                        />
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {!isPlaying && (
+                  <div className={cn(
+                    "text-sm",
+                    videoBackground ? "text-white/70" : "text-amber-500/50"
+                  )}>
+                    {hasListened ? '冥想已完成，可以重新播放' : '点击播放开始冥想'}
+                  </div>
                 )}
-              </AnimatePresence>
-              {!isPlaying && (
-                <div className="text-amber-500/50 text-sm">
-                  {hasListened ? '冥想已完成，可以重新播放' : '点击播放开始冥想'}
-                </div>
-              )}
-            </div>
+              </div>
 
             {/* Controls */}
             <div className="flex items-center gap-4">
@@ -179,7 +197,11 @@ export function WealthMeditationPlayer({
                 variant="ghost"
                 size="icon"
                 onClick={restart}
-                className="text-amber-600 hover:text-amber-700 hover:bg-amber-100"
+                className={cn(
+                  videoBackground 
+                    ? "text-white/80 hover:text-white hover:bg-white/20" 
+                    : "text-amber-600 hover:text-amber-700 hover:bg-amber-100"
+                )}
               >
                 <RotateCcw className="w-5 h-5" />
               </Button>
@@ -187,9 +209,10 @@ export function WealthMeditationPlayer({
               <Button
                 onClick={togglePlay}
                 className={cn(
-                  "w-14 h-14 rounded-full",
-                  "bg-amber-500 hover:bg-amber-600 text-white",
-                  "shadow-lg shadow-amber-500/30"
+                  "w-14 h-14 rounded-full shadow-lg",
+                  videoBackground 
+                    ? "bg-white/90 hover:bg-white text-slate-800" 
+                    : "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/30"
                 )}
               >
                 {isPlaying ? (
@@ -200,7 +223,7 @@ export function WealthMeditationPlayer({
               </Button>
 
               <div className="flex items-center gap-2 flex-1">
-                <Volume2 className="w-4 h-4 text-amber-600" />
+                <Volume2 className={cn("w-4 h-4", videoBackground ? "text-white/80" : "text-amber-600")} />
                 <Slider
                   value={[volume]}
                   max={1}
@@ -220,15 +243,80 @@ export function WealthMeditationPlayer({
                 onValueChange={handleSeek}
                 className="mb-2"
               />
-              <div className="flex justify-between text-xs text-amber-600">
+              <div className={cn(
+                "flex justify-between text-xs",
+                videoBackground ? "text-white/80" : "text-amber-600"
+              )}>
                 <span>{formatTime(currentTime)}</span>
                 <span>{formatTime(durationSeconds)}</span>
               </div>
             </div>
 
+            {/* Video Background Selector */}
+            <div className="mt-4 pt-4 border-t border-amber-200/50 dark:border-amber-700/50">
+              <div className="flex items-center justify-between mb-2">
+                <span className={cn(
+                  "text-sm",
+                  videoBackground ? "text-white/70" : "text-muted-foreground"
+                )}>
+                  🎬 视频背景
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowBackgroundOptions(!showBackgroundOptions)}
+                  className={cn(
+                    "h-6 px-2 text-xs",
+                    videoBackground ? "text-white/70 hover:text-white" : "text-muted-foreground"
+                  )}
+                >
+                  <Image className="w-3 h-3 mr-1" />
+                  {showBackgroundOptions ? '收起' : '选择'}
+                </Button>
+              </div>
+              
+              <AnimatePresence>
+                {showBackgroundOptions && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="flex items-center gap-1 flex-wrap"
+                  >
+                    {[
+                      { type: 'water' as VideoBackgroundType, label: '💧 水面', icon: '💧' },
+                      { type: 'forest' as VideoBackgroundType, label: '🌲 森林', icon: '🌲' },
+                      { type: 'fire' as VideoBackgroundType, label: '🔥 篝火', icon: '🔥' },
+                      { type: 'stars' as VideoBackgroundType, label: '⭐ 星空', icon: '⭐' },
+                      { type: 'clouds' as VideoBackgroundType, label: '☁️ 云海', icon: '☁️' },
+                    ].map(({ type, label, icon }) => (
+                      <Button
+                        key={type}
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "h-8 px-2 rounded-full transition-all",
+                          videoBackground === type 
+                            ? 'bg-amber-500/20 text-amber-600 ring-1 ring-amber-500/30' 
+                            : videoBackground
+                              ? 'text-white/70 hover:text-white hover:bg-white/20'
+                              : 'text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10'
+                        )}
+                        onClick={() => setVideoBackground(videoBackground === type ? null : type)}
+                      >
+                        <span className="text-sm mr-1">{icon}</span>
+                        <span className="text-xs">{label.split(' ')[1]}</span>
+                      </Button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             {/* Ambient Sound */}
             <div className="mt-4 pt-4 border-t border-amber-200/50 dark:border-amber-700/50">
-              <MeditationAmbientPlayer isPlaying={isPlaying} />
+              <MeditationAmbientPlayer isPlaying={isPlaying} enableHighQuality />
+            </div>
             </div>
           </div>
         </div>
