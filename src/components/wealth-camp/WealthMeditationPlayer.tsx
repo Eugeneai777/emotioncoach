@@ -69,7 +69,7 @@ export function WealthMeditationPlayer({
   const [showBackgroundOptions, setShowBackgroundOptions] = useState(false);
   const [currentSound, setCurrentSound] = useState<SoundType>(null);
   const [isAutoSync, setIsAutoSync] = useState(true);
-  const [autoJumpCountdown, setAutoJumpCountdown] = useState(3);
+  const [autoJumpCountdown, setAutoJumpCountdown] = useState(30);
   const [cancelAutoJump, setCancelAutoJump] = useState(false);
   const [copied, setCopied] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
