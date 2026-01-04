@@ -57,7 +57,8 @@ export const getDefaultShareUrl = (
       'parent_emotion_21': '/parent-camp',
       'emotion_journal_21': '/camp-intro/emotion_journal_21',
       'emotion_bloom': '/camp-intro/emotion_bloom',
-      'identity_bloom': '/camp-intro/identity_bloom'
+      'identity_bloom': '/camp-intro/identity_bloom',
+      'wealth_block_21': '/wealth-camp-intro'
     };
     if (campTypeMap[post.camp_type]) {
       return `${baseUrl}${campTypeMap[post.camp_type]}`;
