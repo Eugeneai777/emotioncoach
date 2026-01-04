@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import MeditationAmbientPlayer from './MeditationAmbientPlayer';
 
 interface WealthMeditationPlayerProps {
   dayNumber: number;
@@ -223,6 +224,11 @@ export function WealthMeditationPlayer({
                 <span>{formatTime(currentTime)}</span>
                 <span>{formatTime(durationSeconds)}</span>
               </div>
+            </div>
+
+            {/* Ambient Sound */}
+            <div className="mt-4 pt-4 border-t border-amber-200/50 dark:border-amber-700/50">
+              <MeditationAmbientPlayer isPlaying={isPlaying} />
             </div>
           </div>
         </div>
