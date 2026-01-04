@@ -230,9 +230,10 @@ export const useDynamicCoachChat = (
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let assistantMessage = "";
-      let toolCallBuffer = "";
-      let inToolCall = false;
       let sseBuffer = ""; // 用于处理跨 chunk 的不完整行
+      
+      // 改进的 tool call 解析：正确处理流式 chunks
+      const toolCallsMap: Record<number, { id: string; function: { name: string; arguments: string } }> = {};
 
       if (reader) {
         while (true) {
@@ -270,9 +271,26 @@ export const useDynamicCoachChat = (
                 });
               }
 
+              // 改进的 tool call 流式解析
               if (delta?.tool_calls) {
-                inToolCall = true;
-                toolCallBuffer += JSON.stringify(delta.tool_calls);
+                for (const tc of delta.tool_calls) {
+                  const index = tc.index ?? 0;
+                  if (!toolCallsMap[index]) {
+                    toolCallsMap[index] = {
+                      id: tc.id || '',
+                      function: { name: '', arguments: '' }
+                    };
+                  }
+                  if (tc.id) {
+                    toolCallsMap[index].id = tc.id;
+                  }
+                  if (tc.function?.name) {
+                    toolCallsMap[index].function.name = tc.function.name;
+                  }
+                  if (tc.function?.arguments) {
+                    toolCallsMap[index].function.arguments += tc.function.arguments;
+                  }
+                }
               }
             } catch (e) {
               // JSON 解析失败时静默处理，可能是不完整的数据
@@ -281,26 +299,24 @@ export const useDynamicCoachChat = (
           }
         }
       }
+      
+      // 将 tool calls map 转为数组
+      const toolCalls = Object.values(toolCallsMap);
+      const hasToolCalls = toolCalls.length > 0;
 
-      // 保存最终消息
-      if (assistantMessage && convId) {
-        await saveMessage(convId, "assistant", assistantMessage);
-      }
-
-      // 处理工具调用
-      if (inToolCall && convId) {
+      // 处理工具调用 - 如果有工具调用但没有文本内容，添加默认反馈
+      if (hasToolCalls && convId) {
         try {
-          const toolCalls = JSON.parse(toolCallBuffer);
           const toolCall = toolCalls[0];
-          
-          // 处理简报工具
-          if (briefingToolConfig && toolCall?.function?.name === briefingToolConfig.tool_name) {
-            const briefingData = JSON.parse(toolCall.function.arguments);
-            await saveBriefing(convId, briefingData);
-          }
           
           // 处理财富日记生成工具
           if (toolCall?.function?.name === "generate_wealth_briefing") {
+            // 如果 AI 没有返回文本内容，添加默认完成消息
+            if (!assistantMessage) {
+              assistantMessage = "✨ 好的，让我帮你整理今天的财富觉察，正在生成财富日记...";
+              setMessages((prev) => [...prev, { role: "assistant", content: assistantMessage }]);
+            }
+            
             const briefingData = JSON.parse(toolCall.function.arguments);
             
             // 获取当前用户
@@ -342,6 +358,12 @@ export const useDynamicCoachChat = (
                 console.error('生成财富日记失败:', journalError);
               }
             }
+          }
+          
+          // 处理简报工具
+          if (briefingToolConfig && toolCall?.function?.name === briefingToolConfig.tool_name) {
+            const briefingData = JSON.parse(toolCall.function.arguments);
+            await saveBriefing(convId, briefingData);
           }
           
           // 处理教练推荐工具
@@ -409,8 +431,13 @@ export const useDynamicCoachChat = (
             });
           }
         } catch (e) {
-          console.error("处理工具调用失败:", e);
+          console.error("处理工具调用失败:", e, "工具调用数据:", toolCalls);
         }
+      }
+
+      // 保存最终消息
+      if (assistantMessage && convId) {
+        await saveMessage(convId, "assistant", assistantMessage);
       }
 
       setIsLoading(false);
