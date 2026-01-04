@@ -383,27 +383,59 @@ export const blockInfo = {
 export const patternInfo = {
   harmony: {
     name: "和谐型",
-    emoji: "☯️",
-    color: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    description: "你与金钱的关系相对健康和谐，三层卡点都较轻。继续保持觉察，可以追求更高层次的财富意识。"
+    emoji: "🟢",
+    tagline: "人与财富双向靠近",
+    color: "from-emerald-500 to-green-500",
+    bgColor: "bg-emerald-500",
+    state: [
+      "谈钱放松，不逃避也不执着",
+      "行动自然，节奏稳定"
+    ],
+    interpretation: "你与财富的关系相对顺畅，金钱更容易通过你流动和放大。",
+    suggestion: "适合价值放大、合作、合伙人角色",
+    trainingFocus: "巩固与复制状态"
   },
   chase: {
     name: "追逐型",
-    emoji: "🏃",
-    color: "bg-amber-100 text-amber-700 border-amber-200",
-    description: "你对金钱有强烈的追逐欲望，可能表现为过度工作、急于求成。需要学会放松与金钱的关系，相信丰盛会自然流向你。"
+    emoji: "🟡",
+    tagline: "人追钱，钱后退",
+    color: "from-amber-500 to-yellow-500",
+    bgColor: "bg-amber-500",
+    state: [
+      "很想赚钱，也很努力",
+      "一谈钱就急、紧、焦虑"
+    ],
+    interpretation: "你不是不行，而是长期处在「用力过猛」的状态。",
+    suggestion: "校准节奏与行为方式",
+    trainingFocus: "行为校准 + 情绪稳定"
   },
   avoid: {
     name: "逃避型",
-    emoji: "🙈",
-    color: "bg-blue-100 text-blue-700 border-blue-200",
-    description: "你倾向于回避与金钱相关的事务和话题。这种回避可能让你错失机会。需要温和地面对金钱话题，一步步建立信心。"
+    emoji: "🔵",
+    tagline: "钱靠近，你退缩",
+    color: "from-blue-500 to-indigo-500",
+    bgColor: "bg-blue-500",
+    state: [
+      "有机会却不敢接",
+      "谈价格、谈收入不舒服"
+    ],
+    interpretation: "你内在对财富存在防御，不是能力问题，而是安全感问题。",
+    suggestion: "先重建安全感，再进入行动，不适合单独硬扛",
+    trainingFocus: "安全感重建 + 渐进式暴露"
   },
   trauma: {
     name: "创伤型",
-    emoji: "💔",
-    color: "bg-rose-100 text-rose-700 border-rose-200",
-    description: "你可能有与金钱相关的创伤经历，导致深层的恐惧或焦虑。建议寻求专业支持，温柔地疗愈与金钱的关系。"
+    emoji: "🔴",
+    tagline: "钱触发强烈身心反应",
+    color: "from-rose-500 to-red-500",
+    bgColor: "bg-rose-500",
+    state: [
+      "一谈钱就紧张、冻结或逃避",
+      "身体反应明显"
+    ],
+    interpretation: "这是神经系统的自我保护反应，不是意志力问题。",
+    suggestion: "需要结构 + 陪伴式支持，训练营是必要路径",
+    trainingFocus: "神经系统调节 + 安全容器建立"
   }
 };
 
@@ -514,22 +546,35 @@ export const calculateResult = (answers: Record<number, number>): AssessmentResu
   beliefScores.sort((a, b) => b.score - a.score);
   const dominantBeliefBlock = beliefScores[0].type;
 
-  // 判断财富反应模式
-  const avgScore = (behaviorScore + emotionScore + beliefScore) / 30;
+  // 判断财富反应模式 - 按照新规则
+  // 每层10题，每题1-5分，满分50，平均化为5分制
+  const behaviorAvg = behaviorScore / 10;
+  const emotionAvg = emotionScore / 10;
+  const beliefAvg = beliefScore / 10;
+  const threeLayerAvg = (behaviorAvg + emotionAvg + beliefAvg) / 3;
+  
   let reactionPattern: ReactionPattern;
   
-  if (avgScore < 2.5) {
+  if (threeLayerAvg < 2.5) {
+    // 三层平均分较低 = 和谐型
     reactionPattern = 'harmony';
-  } else if (avgScore >= 4) {
+  } else if (emotionAvg >= 3.5 && beliefAvg >= 3.5) {
+    // 情绪和信念都高 = 创伤型（身心反应明显）
     reactionPattern = 'trauma';
+  } else if (behaviorAvg >= 3.5 && behaviorAvg >= emotionAvg) {
+    // 行为高且主动性强 = 追逐型
+    reactionPattern = 'chase';
+  } else if (emotionAvg >= 3.5) {
+    // 情绪高 + 回避倾向 = 逃避型
+    reactionPattern = 'avoid';
   } else {
-    const behaviorAvg = behaviorScore / 10;
-    if (behaviorAvg >= 3.5) {
+    // 默认根据最高层判断
+    if (behaviorAvg >= emotionAvg && behaviorAvg >= beliefAvg) {
       reactionPattern = 'chase';
-    } else if (emotionScore / 10 >= 3.5) {
+    } else if (emotionAvg >= beliefAvg) {
       reactionPattern = 'avoid';
     } else {
-      reactionPattern = 'chase';
+      reactionPattern = 'avoid';
     }
   }
 
