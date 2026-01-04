@@ -6496,16 +6496,21 @@ export type Database = {
       wealth_journal_entries: {
         Row: {
           action_completion: boolean | null
+          action_suggestion: string | null
           ai_insight: Json | null
           behavior_block: string | null
           behavior_score: number | null
+          behavior_type: string | null
           belief_block: string | null
           belief_score: number | null
+          belief_type: string | null
+          briefing_content: Json | null
           camp_id: string | null
           created_at: string
           day_number: number
           emotion_block: string | null
           emotion_score: number | null
+          emotion_type: string | null
           id: string
           meditation_completed: boolean | null
           meditation_reflection: string | null
@@ -6516,16 +6521,21 @@ export type Database = {
         }
         Insert: {
           action_completion?: boolean | null
+          action_suggestion?: string | null
           ai_insight?: Json | null
           behavior_block?: string | null
           behavior_score?: number | null
+          behavior_type?: string | null
           belief_block?: string | null
           belief_score?: number | null
+          belief_type?: string | null
+          briefing_content?: Json | null
           camp_id?: string | null
           created_at?: string
           day_number: number
           emotion_block?: string | null
           emotion_score?: number | null
+          emotion_type?: string | null
           id?: string
           meditation_completed?: boolean | null
           meditation_reflection?: string | null
@@ -6536,16 +6546,21 @@ export type Database = {
         }
         Update: {
           action_completion?: boolean | null
+          action_suggestion?: string | null
           ai_insight?: Json | null
           behavior_block?: string | null
           behavior_score?: number | null
+          behavior_type?: string | null
           belief_block?: string | null
           belief_score?: number | null
+          belief_type?: string | null
+          briefing_content?: Json | null
           camp_id?: string | null
           created_at?: string
           day_number?: number
           emotion_block?: string | null
           emotion_score?: number | null
+          emotion_type?: string | null
           id?: string
           meditation_completed?: boolean | null
           meditation_reflection?: string | null
