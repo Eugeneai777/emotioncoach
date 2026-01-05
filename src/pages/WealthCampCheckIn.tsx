@@ -40,6 +40,7 @@ export default function WealthCampCheckIn() {
   const [inviteCompleted, setInviteCompleted] = useState(false);
   const [savedReflection, setSavedReflection] = useState('');
   const [makeupDayNumber, setMakeupDayNumber] = useState<number | null>(null);
+  const [hasShownCelebration, setHasShownCelebration] = useState(false); // 防止重复显示弹窗
   const { toast } = useToast();
   // Fetch camp data - if no campId, find user's active wealth camp
   const { data: camp, isLoading: campLoading } = useQuery({
@@ -222,16 +223,24 @@ export default function WealthCampCheckIn() {
     }
   };
 
-  // 当教练梳理完成时触发祝贺
+  // 当教练梳理完成时触发祝贺（仅在本次会话中首次完成时显示）
   useEffect(() => {
-    if (coachingCompleted && meditationCompleted) {
+    if (coachingCompleted && meditationCompleted && !hasShownCelebration) {
+      // 检查是否刚完成（通过 journal 数据判断）
+      const todayEntry = journalEntries.find(e => e.day_number === currentDay);
+      // 如果页面刚加载且已有记录，说明是恢复状态而非刚完成
+      if (todayEntry?.behavior_block) {
+        // 已有记录，不是刚刚完成的，不显示弹窗
+        return;
+      }
       // 延迟显示，让用户看到状态更新
       const timer = setTimeout(() => {
         setShowCelebration(true);
+        setHasShownCelebration(true);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [coachingCompleted, meditationCompleted]);
+  }, [coachingCompleted, meditationCompleted, hasShownCelebration, journalEntries, currentDay]);
 
   // 构建冥想上下文消息
   const getMeditationContext = () => {
@@ -254,6 +263,7 @@ ${reflection}`;
 
   const handleCoachingComplete = () => {
     setCoachingCompleted(true);
+    setHasShownCelebration(false); // 重置标记，允许显示弹窗
     // 刷新日记数据
     queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
   };
