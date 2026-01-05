@@ -242,18 +242,23 @@ export default function WealthCampCheckIn() {
     }
   }, [coachingCompleted, meditationCompleted, hasShownCelebration, journalEntries, currentDay]);
 
-  // 构建冥想上下文消息
-  const getMeditationContext = () => {
-    const todayEntry = journalEntries.find(e => e.day_number === currentDay);
-    const reflection = todayEntry?.meditation_reflection || savedReflection || '';
+  // 构建冥想上下文消息（支持指定天数，用于补卡）
+  const getMeditationContext = (targetDay?: number) => {
+    const dayToUse = targetDay || currentDay;
+    const targetEntry = journalEntries.find(e => e.day_number === dayToUse);
+    const reflection = targetEntry?.meditation_reflection || (dayToUse === currentDay ? savedReflection : '') || '';
     
-    if (reflection && meditation) {
-      return `【今日冥想 · Day ${currentDay}】
-主题：${meditation.title}
-${meditation.description ? `简介：${meditation.description}\n` : ''}${meditation.reflection_prompts ? `引导问题：${(meditation.reflection_prompts as string[]).join('、')}\n` : ''}
+    if (reflection) {
+      return `【${targetDay ? '补卡' : '今日'}冥想 · Day ${dayToUse}】
 【我的冥想感受】
 ${reflection}`;
     }
+    
+    // 没有冥想记录时的补卡消息
+    if (targetDay) {
+      return `【补卡 Day ${dayToUse}】请帮我梳理这一天的财富卡点`;
+    }
+    
     return '';
   };
 
@@ -467,7 +472,7 @@ ${reflection}`;
               </div>
             )}
             <WealthCoachEmbedded
-              initialMessage={makeupDayNumber ? `【补卡 Day ${makeupDayNumber}】请帮我梳理这一天的财富卡点` : getMeditationContext()}
+              initialMessage={makeupDayNumber ? getMeditationContext(makeupDayNumber) : getMeditationContext()}
               campId={campId || ''}
               dayNumber={makeupDayNumber || currentDay}
               meditationTitle={makeupDayNumber ? undefined : meditation?.title}
