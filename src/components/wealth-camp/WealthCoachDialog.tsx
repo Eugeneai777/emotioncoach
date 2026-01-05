@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { X, Loader2, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -97,6 +97,34 @@ export const WealthCoachDialog = ({
     }
   }, [open]);
 
+  // ESC 键关闭对话框
+  useEffect(() => {
+    if (!open) return;
+    
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onOpenChange(false);
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [open, onOpenChange]);
+
+  // 防止对话框打开时页面滚动
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
     const messageToSend = input.trim();
@@ -118,9 +146,9 @@ export const WealthCoachDialog = ({
     toast.success("已开始新对话");
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     onOpenChange(false);
-  };
+  }, [onOpenChange]);
 
   const primaryColor = template?.primary_color || "amber";
   const themeConfig = template?.theme_config;
