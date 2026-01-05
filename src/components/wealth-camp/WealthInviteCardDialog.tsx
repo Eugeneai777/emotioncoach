@@ -102,42 +102,48 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     const cardRef = activeTab === 'assessment' ? assessmentCardRef : campCardRef;
     const cardName = activeTab === 'assessment' ? '财富卡点测评邀请卡' : '21天财富训练营邀请卡';
     
-    if (!cardRef.current) return;
+    if (!cardRef.current) {
+      console.error('Card ref not found');
+      toast.error('卡片未加载完成，请稍后重试');
+      return;
+    }
 
     setGenerating(true);
     try {
-      // Store original styles
-      const originalPosition = cardRef.current.style.position;
-      const originalLeft = cardRef.current.style.left;
-      const originalTop = cardRef.current.style.top;
-      const originalTransform = cardRef.current.style.transform;
+      // Clone the element to avoid transform issues
+      const originalElement = cardRef.current;
+      const clonedElement = originalElement.cloneNode(true) as HTMLElement;
+      
+      // Set up the cloned element for rendering
+      clonedElement.style.position = 'fixed';
+      clonedElement.style.left = '-9999px';
+      clonedElement.style.top = '0';
+      clonedElement.style.transform = 'none';
+      clonedElement.style.zIndex = '-9999';
+      
+      document.body.appendChild(clonedElement);
 
-      // Temporarily reset positioning for accurate capture
-      cardRef.current.style.position = 'relative';
-      cardRef.current.style.left = '0';
-      cardRef.current.style.top = '0';
-      cardRef.current.style.transform = 'none';
-
-      const canvas = await html2canvas(cardRef.current, {
+      const canvas = await html2canvas(clonedElement, {
         scale: 3,
         useCORS: true,
+        allowTaint: true,
         backgroundColor: null,
         logging: false,
       });
 
-      // Restore original styles
-      cardRef.current.style.position = originalPosition;
-      cardRef.current.style.left = originalLeft;
-      cardRef.current.style.top = originalTop;
-      cardRef.current.style.transform = originalTransform;
+      // Remove cloned element
+      document.body.removeChild(clonedElement);
 
       // Download
+      const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.download = `${cardName}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = dataUrl;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
 
-      toast.success('卡片已保存到相册');
+      toast.success('卡片已保存');
       onGenerate?.();
     } catch (error) {
       console.error('Failed to generate card:', error);
