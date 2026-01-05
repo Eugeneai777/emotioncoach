@@ -196,12 +196,6 @@ export default function WealthJournalDetail() {
               </div>
             )}
 
-            {/* AI 分析 */}
-            {aiInsight?.behavior_analysis && (
-              <p className="text-sm text-amber-600 dark:text-amber-400 italic px-1">
-                💡 {aiInsight.behavior_analysis}
-              </p>
-            )}
           </JournalLayerCard>
         )}
 
@@ -223,29 +217,14 @@ export default function WealthJournalDetail() {
               </div>
             )}
 
-            {/* 情绪信号 */}
-            {personalAwakening?.emotion_signal && (
+            {/* 情绪信号 (原内心真正需要) */}
+            {entry.emotion_need && (
               <div className="p-3 bg-pink-50/80 dark:bg-pink-900/20 rounded-lg">
                 <p className="text-xs text-pink-600 dark:text-pink-400 mb-1 flex items-center gap-1">
                   <Heart className="w-3 h-3" /> 情绪信号
                 </p>
-                <p className="text-sm text-pink-700 dark:text-pink-300">{personalAwakening.emotion_signal}</p>
-              </div>
-            )}
-
-            {/* 内心需求 */}
-            {entry.emotion_need && (
-              <div className="p-3 bg-pink-50/50 dark:bg-pink-900/10 rounded-lg">
-                <p className="text-xs text-pink-600 dark:text-pink-400 mb-1">🌸 内心真正需要</p>
                 <p className="text-sm text-pink-700 dark:text-pink-300 font-medium">{entry.emotion_need}</p>
               </div>
-            )}
-
-            {/* AI 分析 */}
-            {aiInsight?.emotion_analysis && (
-              <p className="text-sm text-pink-600 dark:text-pink-400 italic px-1">
-                💡 {aiInsight.emotion_analysis}
-              </p>
             )}
           </JournalLayerCard>
         )}
@@ -278,31 +257,6 @@ export default function WealthJournalDetail() {
               </div>
             )}
 
-            {/* 新旧信念对比 */}
-            {(entry.old_belief || entry.new_belief) && (
-              <div className="p-3 bg-violet-50/50 dark:bg-violet-900/10 rounded-lg space-y-2">
-                <p className="text-xs text-violet-600 dark:text-violet-400 mb-1">💫 信念转变</p>
-                {entry.old_belief && (
-                  <div className="flex items-start gap-2">
-                    <span className="text-red-500 shrink-0">❌</span>
-                    <p className="text-sm text-muted-foreground line-through">{entry.old_belief}</p>
-                  </div>
-                )}
-                {entry.new_belief && (
-                  <div className="flex items-start gap-2">
-                    <span className="text-green-500 shrink-0">✅</span>
-                    <p className="text-sm text-violet-800 dark:text-violet-200 font-medium">{entry.new_belief}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* AI 分析 */}
-            {aiInsight?.belief_analysis && (
-              <p className="text-sm text-violet-600 dark:text-violet-400 italic px-1">
-                💡 {aiInsight.belief_analysis}
-              </p>
-            )}
           </JournalLayerCard>
         )}
 
