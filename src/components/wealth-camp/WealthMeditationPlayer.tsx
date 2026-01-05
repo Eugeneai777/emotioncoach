@@ -69,8 +69,6 @@ export function WealthMeditationPlayer({
   const [showBackgroundOptions, setShowBackgroundOptions] = useState(false);
   const [currentSound, setCurrentSound] = useState<SoundType>(null);
   const [isAutoSync, setIsAutoSync] = useState(true);
-  const [autoJumpCountdown, setAutoJumpCountdown] = useState(30);
-  const [cancelAutoJump, setCancelAutoJump] = useState(false);
   const [copied, setCopied] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -197,17 +195,6 @@ export function WealthMeditationPlayer({
     { type: 'snow', label: '雪景', icon: '❄️' },
   ];
 
-  // 自动跳转倒计时
-  useEffect(() => {
-    if (!isCompleted || cancelAutoJump || !onStartCoaching) return;
-    
-    if (autoJumpCountdown > 0) {
-      const timer = setTimeout(() => setAutoJumpCountdown(c => c - 1), 1000);
-      return () => clearTimeout(timer);
-    } else {
-      onStartCoaching();
-    }
-  }, [isCompleted, autoJumpCountdown, cancelAutoJump, onStartCoaching]);
 
   // 复制冥想感受
   const handleCopyReflection = async () => {
@@ -278,24 +265,11 @@ export function WealthMeditationPlayer({
             >
               <MessageCircle className="w-5 h-5 mr-2" />
               开始教练梳理
-              {!cancelAutoJump && autoJumpCountdown > 0 && (
-                <span className="ml-2 opacity-70">({autoJumpCountdown}s)</span>
-              )}
             </Button>
           )}
           
           {/* 次要操作 */}
           <div className="flex justify-center gap-4 text-sm">
-            {!cancelAutoJump && onStartCoaching && (
-              <Button 
-                variant="link" 
-                size="sm" 
-                onClick={() => setCancelAutoJump(true)}
-                className="text-amber-600 hover:text-amber-700"
-              >
-                稍后再说
-              </Button>
-            )}
             {onRedo && (
               <Button 
                 variant="link" 
