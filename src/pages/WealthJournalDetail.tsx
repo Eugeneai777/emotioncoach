@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Share2, TrendingUp, Lightbulb, Target, Gift, CheckCircle2, Heart, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,8 @@ import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { JournalLayerCard } from '@/components/wealth-camp/JournalLayerCard';
-import { useToast } from '@/hooks/use-toast';
+import WealthJournalShareDialog from '@/components/wealth-camp/WealthJournalShareDialog';
+import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
 interface AiInsight {
   behavior_analysis?: string;
@@ -34,43 +36,9 @@ interface PersonalAwakening {
 export default function WealthJournalDetail() {
   const { entryId } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
-  const handleShare = async () => {
-    const shareData = {
-      title: `财富日记 · Day ${entry?.day_number}`,
-      text: entry?.new_belief 
-        ? `今日新信念：${entry.new_belief}` 
-        : '我正在参加21天财富觉醒训练营',
-      url: window.location.href,
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast({
-          title: "链接已复制",
-          description: "可以分享给好友查看",
-        });
-      }
-    } catch (error) {
-      // User cancelled or share failed, copy to clipboard as fallback
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-        toast({
-          title: "链接已复制", 
-          description: "可以分享给好友查看",
-        });
-      } catch {
-        toast({
-          title: "分享失败",
-          variant: "destructive",
-        });
-      }
-    }
-  };
+  const shareUrl = `${getPromotionDomain()}/wealth-camp-intro`;
 
   const { data: entry, isLoading } = useQuery({
     queryKey: ['wealth-journal-entry', entryId],
@@ -147,7 +115,7 @@ export default function WealthJournalDetail() {
               {format(new Date(entry.created_at), 'yyyy年M月d日 EEEE', { locale: zhCN })}
             </p>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleShare}>
+          <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)}>
             <Share2 className="w-5 h-5" />
           </Button>
         </div>
@@ -424,6 +392,21 @@ export default function WealthJournalDetail() {
           </Card>
         )}
       </div>
+
+      {/* Share Dialog */}
+      <WealthJournalShareDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        entry={{
+          day_number: entry.day_number,
+          meditation_reflection: entry.meditation_reflection,
+          behavior_block: entry.behavior_block,
+          emotion_need: entry.emotion_need,
+          new_belief: entry.new_belief,
+          personal_awakening: personalAwakening || undefined,
+        }}
+        shareUrl={shareUrl}
+      />
     </div>
   );
 }
