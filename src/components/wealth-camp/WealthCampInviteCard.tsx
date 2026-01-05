@@ -187,6 +187,8 @@ export function WealthCampInviteCard({
         <WealthInviteCardDialog
           defaultTab="camp"
           onGenerate={onInviteClick}
+          campId={campId}
+          currentDay={dayNumber}
           trigger={
             <Button
               variant="outline"

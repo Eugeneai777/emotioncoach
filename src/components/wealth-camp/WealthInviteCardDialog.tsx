@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Download, Image, Copy, Check } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
@@ -14,28 +14,89 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import WealthAssessmentShareCard from './WealthAssessmentShareCard';
 import WealthCampShareCard from './WealthCampShareCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
+import { supabase } from '@/integrations/supabase/client';
+
+interface UserInfo {
+  avatarUrl?: string;
+  displayName?: string;
+  currentDay?: number;
+  totalDays?: number;
+}
 
 interface WealthInviteCardDialogProps {
   trigger?: React.ReactNode;
   defaultTab?: 'assessment' | 'camp';
   onGenerate?: () => void;
+  campId?: string;
+  currentDay?: number;
 }
 
 const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   trigger,
   defaultTab = 'assessment',
   onGenerate,
+  campId,
+  currentDay: propCurrentDay,
 }) => {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'assessment' | 'camp'>(defaultTab);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo>({});
   
   const assessmentCardRef = useRef<HTMLDivElement>(null);
   const campCardRef = useRef<HTMLDivElement>(null);
 
   const assessmentUrl = `${getPromotionDomain()}/wealth-block`;
   const campUrl = `${getPromotionDomain()}/wealth-camp-intro`;
+
+  // Fetch user profile and camp progress
+  useEffect(() => {
+    if (!open) return;
+    
+    const fetchUserInfo = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('avatar_url, display_name')
+        .eq('id', user.id)
+        .single();
+
+      // Get camp progress if campId provided
+      let currentDay = propCurrentDay;
+      let totalDays = 21;
+
+      if (campId && !propCurrentDay) {
+        const { data: camp } = await supabase
+          .from('training_camps')
+          .select('start_date, duration_days')
+          .eq('id', campId)
+          .single();
+
+        if (camp?.start_date) {
+          const startDate = new Date(camp.start_date);
+          const today = new Date();
+          const diffTime = today.getTime() - startDate.getTime();
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          currentDay = Math.min(Math.max(1, diffDays), camp.duration_days || 21);
+          totalDays = camp.duration_days || 21;
+        }
+      }
+
+      setUserInfo({
+        avatarUrl: profile?.avatar_url || undefined,
+        displayName: profile?.display_name || '财富觉醒者',
+        currentDay: currentDay || undefined,
+        totalDays,
+      });
+    };
+
+    fetchUserInfo();
+  }, [open, campId, propCurrentDay]);
+
 
   const handleDownload = async () => {
     const cardRef = activeTab === 'assessment' ? assessmentCardRef : campCardRef;
@@ -123,7 +184,11 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           <TabsContent value="assessment" className="mt-4">
             <div className="flex justify-center">
               <div className="transform scale-[0.85] origin-top">
-                <WealthAssessmentShareCard ref={assessmentCardRef} />
+                <WealthAssessmentShareCard 
+                  ref={assessmentCardRef}
+                  avatarUrl={userInfo.avatarUrl}
+                  displayName={userInfo.displayName}
+                />
               </div>
             </div>
           </TabsContent>
@@ -131,7 +196,13 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           <TabsContent value="camp" className="mt-4">
             <div className="flex justify-center">
               <div className="transform scale-[0.85] origin-top">
-                <WealthCampShareCard ref={campCardRef} />
+                <WealthCampShareCard 
+                  ref={campCardRef}
+                  avatarUrl={userInfo.avatarUrl}
+                  displayName={userInfo.displayName}
+                  currentDay={userInfo.currentDay}
+                  totalDays={userInfo.totalDays}
+                />
               </div>
             </div>
           </TabsContent>
