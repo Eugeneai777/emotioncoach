@@ -82,14 +82,16 @@ export function WealthJourneyCalendar({
       const dayNumber = i + 1;
       const date = addDays(start, i);
       const dateStr = format(date, 'yyyy-MM-dd');
-      const isCompleted = checkInDates.includes(dateStr);
+      const entry = journalEntries.find(e => e.day_number === dayNumber);
+      // 完整打卡 = 有 behavior_type（教练梳理完成）
+      const isCompleted = !!entry?.behavior_type || checkInDates.includes(dateStr);
       const isCurrent = dayNumber === currentDay;
       const isFuture = dayNumber > currentDay;
       const isPast = dayNumber < currentDay;
+      // 可补卡 = 过去的天 + 未完成教练梳理 + 在补卡期限内
       const isMissed = isPast && !isCompleted;
-      const canMakeup = isMissed && (currentDay - dayNumber) <= makeupDaysLimit;
+      const canMakeup = isPast && !entry?.behavior_type && (currentDay - dayNumber) <= makeupDaysLimit;
       const isMilestone = MILESTONES[dayNumber as keyof typeof MILESTONES];
-      const entry = journalEntries.find(e => e.day_number === dayNumber);
       const intensity = getAwakeningIntensity(entry);
 
       return {
@@ -362,7 +364,8 @@ function DayDetailCard({ day, onViewDetail, onMakeup, onClose }: DayDetailCardPr
           </Button>
         </div>
 
-        {day.entry ? (
+        {/* 判断逻辑：有完整打卡记录(behavior_type)才显示日记，否则显示补卡 */}
+        {day.entry && day.entry.behavior_type ? (
           <div className="space-y-3">
             {/* 卡点类型标签 */}
             <div className="flex flex-wrap gap-1">
@@ -406,7 +409,7 @@ function DayDetailCard({ day, onViewDetail, onMakeup, onClose }: DayDetailCardPr
         ) : day.canMakeup ? (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              该日未打卡，可以补卡
+              {day.entry ? '冥想已完成，教练梳理未完成' : '该日未打卡'}，可以补卡
             </p>
             <Button
               variant="outline"
