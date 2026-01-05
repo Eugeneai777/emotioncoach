@@ -84,6 +84,16 @@ serve(async (req) => {
     let newBelief = briefing_data?.new_belief || null;
     let givingAction = briefing_data?.giving_action || null;
     let personalAwakening = briefing_data?.personal_awakening || null;
+    
+    // 确保 personalAwakening 是一个对象
+    if (personalAwakening && typeof personalAwakening === 'string') {
+      try {
+        personalAwakening = JSON.parse(personalAwakening);
+      } catch (e) {
+        personalAwakening = { awakening_moment: personalAwakening };
+      }
+    }
+    personalAwakening = personalAwakening || {};
 
     // If no briefing data, extract from conversation
     if (!behaviorBlock && conversation_history) {
@@ -248,6 +258,59 @@ ${trendSection}
       }
     } catch (e) {
       console.error('Failed to parse scores:', e);
+    }
+
+    // 自动生成各层觉醒时刻（如果缺失）
+    // 行为层觉醒
+    if (!personalAwakening.behavior_awakening && !personalAwakening.awakening_moment) {
+      if (responsibilityItems && Array.isArray(responsibilityItems) && responsibilityItems.length > 0) {
+        personalAwakening.behavior_awakening = `原来我可以负责：${responsibilityItems[0]}`;
+      } else if (behaviorBlock) {
+        const behaviorAwakenings: Record<string, string> = {
+          heart: '原来我可以选择看到"我能做什么"而非"谁害了我"',
+          eye: '原来我可以把注意力从问题转向机会',
+          hand: '原来我可以把消费定义为"投资自己"',
+          mouth: '原来我可以把一句抱怨换成一句感恩',
+        };
+        personalAwakening.behavior_awakening = behaviorAwakenings[behaviorType] || `原来我可以觉察到${behaviorTypeNames[behaviorType] || '行为'}模式`;
+      }
+    } else if (personalAwakening.awakening_moment && !personalAwakening.behavior_awakening) {
+      // 兼容旧数据：把 awakening_moment 复制到 behavior_awakening
+      personalAwakening.behavior_awakening = personalAwakening.awakening_moment;
+    }
+    
+    // 情绪层觉醒
+    if (!personalAwakening.emotion_awakening) {
+      if (emotionNeed) {
+        const emotionName = emotionTypeNames[emotionType] || '这份情绪';
+        personalAwakening.emotion_awakening = `原来我的${emotionName}在告诉我：我需要${emotionNeed}`;
+      } else if (emotionBlock) {
+        const emotionNeeds: Record<string, string> = {
+          anxiety: '安全感',
+          scarcity: '被保障',
+          comparison: '被认可',
+          shame: '被接纳',
+          guilt: '被允许享受',
+        };
+        const need = emotionNeeds[emotionType] || '被看见';
+        personalAwakening.emotion_awakening = `原来我的${emotionTypeNames[emotionType] || '情绪'}在告诉我：我需要${need}`;
+      }
+    }
+    
+    // 信念层觉醒
+    if (!personalAwakening.belief_awakening) {
+      if (oldBelief && newBelief) {
+        personalAwakening.belief_awakening = `原来"${oldBelief}"只是过去的保护，现在我可以选择"${newBelief}"`;
+      } else if (beliefBlock) {
+        const newBeliefs: Record<string, string> = {
+          lack: '钱是流动的能量，流出去也会流回来',
+          linear: '财富可以轻松流向我',
+          stigma: '财富让我创造更多价值',
+          unworthy: '我值得拥有丰盛',
+          relationship: '财富让我更有能力爱人',
+        };
+        personalAwakening.belief_awakening = `原来我可以选择相信：${newBeliefs[beliefType] || '我值得拥有财富'}`;
+      }
     }
 
     // 构建个性化觉醒简报内容

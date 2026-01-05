@@ -74,10 +74,20 @@ export default function WealthJournalDetail() {
   const personalAwakening = entry.personal_awakening as PersonalAwakening | null;
   const responsibilityItems = entry.responsibility_items as string[] | null;
 
-  // 获取各层的觉醒时刻 (兼容新旧字段)
+  // 获取各层的觉醒时刻 (兼容新旧字段 + 前端备用生成)
   const behaviorAwakening = personalAwakening?.behavior_awakening || personalAwakening?.awakening_moment;
-  const emotionAwakening = personalAwakening?.emotion_awakening;
-  const beliefAwakening = personalAwakening?.belief_awakening;
+  
+  // 情绪层觉醒：优先用数据库字段，否则从 emotion_need 生成
+  const emotionAwakening = personalAwakening?.emotion_awakening || 
+    (entry.emotion_need ? `原来我的情绪在告诉我：我需要${entry.emotion_need}` : undefined);
+  
+  // 信念层觉醒：优先用数据库字段，否则从 old_belief + new_belief 生成
+  const beliefAwakening = personalAwakening?.belief_awakening || 
+    (entry.old_belief && entry.new_belief 
+      ? `原来"${entry.old_belief}"只是过去的保护，现在我可以选择"${entry.new_belief}"`
+      : entry.new_belief 
+        ? `原来我可以选择相信：${entry.new_belief}` 
+        : undefined);
 
   // 判断各层是否有内容
   const hasBehaviorLayer = entry.behavior_block || personalAwakening?.behavior_experience || behaviorAwakening;
