@@ -126,6 +126,31 @@ export default function WealthCampCheckIn() {
     },
   });
 
+  // Fetch invite count from partner_referrals
+  const { data: inviteCount = 0 } = useQuery({
+    queryKey: ['wealth-camp-invite-count', userId],
+    queryFn: async () => {
+      if (!userId) return 0;
+      
+      // Check if user is a partner and count their referrals
+      const { data: partner } = await supabase
+        .from('partners')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (!partner) return 0;
+      
+      const { count } = await supabase
+        .from('partner_referrals')
+        .select('*', { count: 'exact', head: true })
+        .eq('partner_id', partner.id);
+      
+      return count || 0;
+    },
+    enabled: !!userId,
+  });
+
   // Check today's progress
   useEffect(() => {
     if (journalEntries.length > 0 && camp) {
@@ -243,7 +268,7 @@ ${reflection}`;
       id: 'invite',
       title: '邀请好友',
       icon: '🎁',
-      completed: false,
+      completed: inviteCount > 0,
       action: scrollToInvite,
     },
   ];
@@ -381,6 +406,7 @@ ${reflection}`;
                   campId={campId}
                   dayNumber={currentDay}
                   userId={userId}
+                  inviteCount={inviteCount}
                 />
               </div>
             )}
