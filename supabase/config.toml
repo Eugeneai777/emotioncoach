@@ -288,5 +288,8 @@ verify_jwt = true
 [functions.sync-wealth-profile]
 verify_jwt = true
 
+[functions.wealth_coach_4_questions-coach]
+verify_jwt = true
+
 [functions.elevenlabs-sfx]
 verify_jwt = true
