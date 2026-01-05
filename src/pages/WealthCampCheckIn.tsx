@@ -34,6 +34,7 @@ export default function WealthCampCheckIn() {
   
   const [meditationCompleted, setMeditationCompleted] = useState(false);
   const [coachingCompleted, setCoachingCompleted] = useState(false);
+  const [shareCompleted, setShareCompleted] = useState(false);
   const [savedReflection, setSavedReflection] = useState('');
   // Fetch camp data - if no campId, find user's active wealth camp
   const { data: camp, isLoading: campLoading } = useQuery({
@@ -133,6 +134,7 @@ export default function WealthCampCheckIn() {
         setMeditationCompleted(todayEntry.meditation_completed || false);
         setCoachingCompleted(!!todayEntry.behavior_block);
         setSavedReflection(todayEntry.meditation_reflection || '');
+        setShareCompleted((todayEntry as any).share_completed || false);
       }
     }
   }, [journalEntries, camp, currentDay]);
@@ -233,7 +235,7 @@ ${reflection}`;
       id: 'share',
       title: '打卡分享',
       icon: '📢',
-      completed: false,
+      completed: shareCompleted,
       action: () => setShowShareDialog(true),
       locked: !coachingCompleted,
     },
