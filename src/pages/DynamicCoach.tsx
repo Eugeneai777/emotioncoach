@@ -226,7 +226,7 @@ const DynamicCoach = () => {
 
   // 判断是否启用步骤折叠（情绪教练折叠，其他教练展开）
   // 判断是否启用步骤折叠（情绪教练和有劲生活教练折叠，其他教练展开）
-  const enableStepsCollapse = template.coach_key === 'emotion' || template.coach_key === 'vibrant_life_sage';
+  const enableStepsCollapse = template.coach_key === 'emotion' || template.coach_key === 'vibrant_life_sage' || template.coach_key === 'wealth_coach_4_questions';
 
   // 感恩教练使用 GratitudeQuickAdd 输入框
   const gratitudeFooter = template.coach_key === 'gratitude_coach' && user?.id ? (
