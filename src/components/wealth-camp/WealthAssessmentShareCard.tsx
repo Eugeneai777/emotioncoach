@@ -4,10 +4,12 @@ import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
 interface WealthAssessmentShareCardProps {
   className?: string;
+  avatarUrl?: string;
+  displayName?: string;
 }
 
 const WealthAssessmentShareCard = forwardRef<HTMLDivElement, WealthAssessmentShareCardProps>(
-  ({ className }, ref) => {
+  ({ className, avatarUrl, displayName = '财富觉醒者' }, ref) => {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
     const shareUrl = `${getPromotionDomain()}/wealth-block`;
 
@@ -62,19 +64,60 @@ const WealthAssessmentShareCard = forwardRef<HTMLDivElement, WealthAssessmentSha
           background: 'rgba(255,255,255,0.08)',
         }} />
 
+        {/* User Info */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px',
+          marginBottom: '20px',
+          position: 'relative',
+        }}>
+          <div style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            border: '2px solid rgba(255,255,255,0.6)',
+            overflow: 'hidden',
+            background: 'rgba(255,255,255,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            {avatarUrl ? (
+              <img 
+                src={avatarUrl} 
+                alt="avatar" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                crossOrigin="anonymous"
+              />
+            ) : (
+              <span style={{ fontSize: '20px' }}>👤</span>
+            )}
+          </div>
+          <div>
+            <p style={{ fontSize: '14px', fontWeight: '600', margin: 0 }}>
+              {displayName}
+            </p>
+            <p style={{ fontSize: '11px', opacity: 0.8, margin: 0 }}>
+              邀请你一起自测
+            </p>
+          </div>
+        </div>
+
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '24px', position: 'relative' }}>
-          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎯</div>
+        <div style={{ textAlign: 'center', marginBottom: '20px', position: 'relative' }}>
+          <div style={{ fontSize: '40px', marginBottom: '8px' }}>🎯</div>
           <h2 style={{
-            fontSize: '24px',
+            fontSize: '22px',
             fontWeight: '700',
-            margin: '0 0 8px 0',
+            margin: '0 0 6px 0',
             letterSpacing: '1px',
           }}>
             财富卡点自测
           </h2>
           <p style={{
-            fontSize: '14px',
+            fontSize: '13px',
             opacity: 0.9,
             margin: 0,
           }}>

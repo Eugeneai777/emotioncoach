@@ -4,10 +4,14 @@ import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
 interface WealthCampShareCardProps {
   className?: string;
+  avatarUrl?: string;
+  displayName?: string;
+  currentDay?: number;
+  totalDays?: number;
 }
 
 const WealthCampShareCard = forwardRef<HTMLDivElement, WealthCampShareCardProps>(
-  ({ className }, ref) => {
+  ({ className, avatarUrl, displayName = '财富觉醒者', currentDay, totalDays = 21 }, ref) => {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
     const shareUrl = `${getPromotionDomain()}/wealth-camp-intro`;
 
@@ -62,19 +66,79 @@ const WealthCampShareCard = forwardRef<HTMLDivElement, WealthCampShareCardProps>
           background: 'rgba(255,255,255,0.08)',
         }} />
 
+        {/* User Info with Progress */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '20px',
+          position: 'relative',
+          background: 'rgba(255,255,255,0.15)',
+          borderRadius: '12px',
+          padding: '12px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              border: '2px solid rgba(255,255,255,0.6)',
+              overflow: 'hidden',
+              background: 'rgba(255,255,255,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              {avatarUrl ? (
+                <img 
+                  src={avatarUrl} 
+                  alt="avatar" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  crossOrigin="anonymous"
+                />
+              ) : (
+                <span style={{ fontSize: '20px' }}>👤</span>
+              )}
+            </div>
+            <div>
+              <p style={{ fontSize: '14px', fontWeight: '600', margin: 0 }}>
+                {displayName}
+              </p>
+              <p style={{ fontSize: '11px', opacity: 0.8, margin: 0 }}>
+                邀请你一起加入
+              </p>
+            </div>
+          </div>
+          {currentDay && (
+            <div style={{
+              textAlign: 'center',
+              background: 'rgba(255,255,255,0.2)',
+              borderRadius: '10px',
+              padding: '6px 12px',
+            }}>
+              <div style={{ fontSize: '18px', fontWeight: '700' }}>
+                第{currentDay}天
+              </div>
+              <div style={{ fontSize: '10px', opacity: 0.8 }}>
+                /{totalDays}天
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '24px', position: 'relative' }}>
-          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🏕️</div>
+        <div style={{ textAlign: 'center', marginBottom: '16px', position: 'relative' }}>
+          <div style={{ fontSize: '36px', marginBottom: '6px' }}>🏕️</div>
           <h2 style={{
-            fontSize: '22px',
+            fontSize: '20px',
             fontWeight: '700',
-            margin: '0 0 8px 0',
+            margin: '0 0 4px 0',
             letterSpacing: '1px',
           }}>
             21天财富突破训练营
           </h2>
           <p style={{
-            fontSize: '14px',
+            fontSize: '12px',
             opacity: 0.9,
             margin: 0,
           }}>
