@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Share2, Copy, Check, Users, Gift, Star } from 'lucide-react';
+import { Share2, Copy, Check, Users, Gift, Star, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import WealthInviteCardDialog from './WealthInviteCardDialog';
 
 interface WealthCampInviteCardProps {
   campId?: string;
@@ -182,6 +183,20 @@ export function WealthCampInviteCard({
             )}
           </Button>
         </div>
+
+        <WealthInviteCardDialog
+          defaultTab="camp"
+          onGenerate={onInviteClick}
+          trigger={
+            <Button
+              variant="outline"
+              className="w-full border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 gap-2"
+            >
+              <Image className="w-4 h-4" />
+              生成邀请卡片
+            </Button>
+          }
+        />
       </CardContent>
     </Card>
   );
