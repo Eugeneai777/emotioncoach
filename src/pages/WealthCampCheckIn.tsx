@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Lock } from 'lucide-react';
+import { ArrowLeft, Check, Lock, TrendingUp, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -347,6 +347,27 @@ ${reflection}`;
 
             {/* Progress Chart */}
             <WealthProgressChart entries={journalEntries} />
+
+            {/* 觉醒进度追踪入口 */}
+            {journalEntries.length >= 3 && (
+              <Card 
+                className="cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-amber-200 dark:border-amber-800"
+                onClick={() => navigate('/wealth-awakening-progress')}
+              >
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-amber-800 dark:text-amber-200">查看觉醒进度</p>
+                      <p className="text-sm text-amber-600 dark:text-amber-400">21天信念转变可视化</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-amber-600" />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Invite Card */}
             {userId && (

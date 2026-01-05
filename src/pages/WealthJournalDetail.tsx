@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Share2, TrendingUp, Lightbulb, Target } from 'lucide-react';
+import { ArrowLeft, Star, Share2, TrendingUp, Lightbulb, Target, Gift, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +17,13 @@ interface AiInsight {
   trend_insight?: string;
   focus_suggestion?: string;
   summary?: string;
+}
+
+interface PersonalAwakening {
+  behavior_experience?: string;
+  awakening_moment?: string;
+  emotion_signal?: string;
+  belief_origin?: string;
 }
 
 export default function WealthJournalDetail() {
@@ -60,6 +67,8 @@ export default function WealthJournalDetail() {
     : null;
 
   const aiInsight = entry.ai_insight as AiInsight | null;
+  const personalAwakening = entry.personal_awakening as PersonalAwakening | null;
+  const responsibilityItems = entry.responsibility_items as string[] | null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20">
@@ -82,6 +91,98 @@ export default function WealthJournalDetail() {
       </div>
 
       <div className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
+        {/* 个人化觉醒回顾卡片 - 核心展示 */}
+        {(personalAwakening || entry.old_belief || entry.new_belief || entry.giving_action) && (
+          <Card className="bg-gradient-to-br from-amber-100 to-yellow-50 dark:from-amber-950/50 dark:to-yellow-950/30 border-amber-300 dark:border-amber-700">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-amber-800 dark:text-amber-200 flex items-center gap-2 text-base">
+                <span>📖</span> 我的觉醒时刻
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* 行为经历 */}
+              {personalAwakening?.behavior_experience && (
+                <div className="p-3 bg-amber-50/50 dark:bg-amber-900/20 rounded-lg">
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-1 flex items-center gap-1">
+                    <Target className="w-3 h-3" /> 行为经历
+                  </p>
+                  <p className="text-sm text-amber-800 dark:text-amber-200">{personalAwakening.behavior_experience}</p>
+                </div>
+              )}
+              
+              {/* 觉醒时刻 */}
+              {personalAwakening?.awakening_moment && (
+                <div className="p-3 bg-gradient-to-r from-amber-200/50 to-yellow-200/50 dark:from-amber-800/30 dark:to-yellow-800/30 rounded-lg border border-amber-300/50">
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mb-1">💡 觉醒时刻</p>
+                  <p className="text-amber-900 dark:text-amber-100 font-medium">"{personalAwakening.awakening_moment}"</p>
+                </div>
+              )}
+              
+              {/* 情绪信号与内心需求 */}
+              {(personalAwakening?.emotion_signal || entry.emotion_need) && (
+                <div className="p-3 bg-pink-50/50 dark:bg-pink-900/20 rounded-lg">
+                  <p className="text-xs text-pink-600 dark:text-pink-400 mb-1">💛 情绪信号</p>
+                  {personalAwakening?.emotion_signal && (
+                    <p className="text-sm text-pink-800 dark:text-pink-200">{personalAwakening.emotion_signal}</p>
+                  )}
+                  {entry.emotion_need && (
+                    <p className="text-sm text-pink-700 dark:text-pink-300 mt-1 italic">
+                      → 内心真正需要的是：{entry.emotion_need}
+                    </p>
+                  )}
+                </div>
+              )}
+              
+              {/* 信念对比 */}
+              {(entry.old_belief || entry.new_belief) && (
+                <div className="p-3 bg-violet-50/50 dark:bg-violet-900/20 rounded-lg space-y-2">
+                  <p className="text-xs text-violet-600 dark:text-violet-400 mb-1">💡 信念转变</p>
+                  {entry.belief_source && (
+                    <p className="text-xs text-muted-foreground">来源：{entry.belief_source}</p>
+                  )}
+                  {entry.old_belief && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-red-500 shrink-0">❌</span>
+                      <p className="text-sm text-muted-foreground line-through">{entry.old_belief}</p>
+                    </div>
+                  )}
+                  {entry.new_belief && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-green-500 shrink-0">✅</span>
+                      <p className="text-sm text-violet-800 dark:text-violet-200 font-medium">{entry.new_belief}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* 责任事项 */}
+              {responsibilityItems && responsibilityItems.length > 0 && (
+                <div className="p-3 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg">
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">✅ 我能负责的事</p>
+                  <div className="space-y-1">
+                    {responsibilityItems.map((item, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                        <p className="text-sm text-blue-800 dark:text-blue-200">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* 给予行动 */}
+              {entry.giving_action && (
+                <div className="p-3 bg-rose-50/50 dark:bg-rose-900/20 rounded-lg">
+                  <p className="text-xs text-rose-600 dark:text-rose-400 mb-1 flex items-center gap-1">
+                    <Gift className="w-3 h-3" /> 今日给予
+                  </p>
+                  <p className="text-sm text-rose-800 dark:text-rose-200 font-medium">{entry.giving_action}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Meditation Reflection */}
         {entry.meditation_reflection && (
           <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800">
