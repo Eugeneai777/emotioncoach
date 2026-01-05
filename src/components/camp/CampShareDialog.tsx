@@ -35,6 +35,7 @@ interface CampShareDialogProps {
   emotionIntensity?: number;
   insight?: string;
   action?: string;
+  onShared?: () => void;
 }
 
 const CampShareDialog = ({
@@ -48,6 +49,7 @@ const CampShareDialog = ({
   emotionIntensity,
   insight,
   action,
+  onShared,
 }: CampShareDialogProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -200,25 +202,62 @@ const CampShareDialog = ({
       
       if (campName.includes('财富')) {
         // 财富训练营使用 wealth_journal_entries 表
-        await supabase
+        // 先尝试更新，加上 user_id 条件确保只更新自己的记录
+        const { data: updateData, error: updateError } = await supabase
           .from("wealth_journal_entries")
           .update({
             share_completed: true,
             shared_at: new Date().toISOString(),
           })
           .eq("camp_id", campId)
-          .eq("day_number", campDay);
+          .eq("day_number", campDay)
+          .eq("user_id", user.id)
+          .select('id');
+
+        if (updateError) {
+          console.error("更新分享状态失败:", updateError);
+          throw new Error("分享已发布，但更新打卡状态失败");
+        }
+
+        // 如果没有更新到任何行，说明记录不存在，需要先创建
+        if (!updateData || updateData.length === 0) {
+          console.log("未找到现有记录，尝试创建新记录");
+          const { error: upsertError } = await supabase
+            .from("wealth_journal_entries")
+            .upsert({
+              user_id: user.id,
+              camp_id: campId,
+              day_number: campDay,
+              share_completed: true,
+              shared_at: new Date().toISOString(),
+            }, {
+              onConflict: 'user_id,camp_id,day_number',
+            });
+
+          if (upsertError) {
+            console.error("创建分享记录失败:", upsertError);
+            throw new Error("分享已发布，但创建打卡记录失败");
+          }
+        }
       } else {
         // 其他训练营使用 camp_daily_progress 表
-        await supabase
+        const { error: updateError } = await supabase
           .from("camp_daily_progress")
           .update({
             has_shared_to_community: true,
             shared_at: new Date().toISOString(),
           })
           .eq("camp_id", campId)
-          .eq("progress_date", today);
+          .eq("progress_date", today)
+          .eq("user_id", user.id);
+
+        if (updateError) {
+          console.error("更新分享状态失败:", updateError);
+        }
       }
+
+      // 调用回调通知父组件刷新数据
+      onShared?.();
 
       toast({
         title: "分享成功",

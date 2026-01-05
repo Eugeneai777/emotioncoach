@@ -487,6 +487,15 @@ ${reflection}`;
         campId={campId || ''}
         campName="21天突破财富卡点"
         campDay={currentDay}
+        emotionTheme={journalEntries.find(e => e.day_number === currentDay)?.emotion_type || undefined}
+        insight={typeof journalEntries.find(e => e.day_number === currentDay)?.personal_awakening === 'string' 
+          ? journalEntries.find(e => e.day_number === currentDay)?.personal_awakening as string 
+          : undefined}
+        action={journalEntries.find(e => e.day_number === currentDay)?.giving_action || undefined}
+        onShared={() => {
+          setShareCompleted(true);
+          queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
+        }}
       />
 
       {/* Celebration Dialog */}
