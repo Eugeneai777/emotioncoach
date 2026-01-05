@@ -24,6 +24,7 @@ interface CoachInputFooterProps {
   enableVoiceChat?: boolean;
   onVoiceChatClick?: () => void;
   enableVoiceInput?: boolean;
+  embedded?: boolean;
 }
 export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElement, CoachInputFooterProps>(({
   input,
@@ -43,7 +44,8 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   intensitySelector,
   enableVoiceChat = false,
   onVoiceChatClick,
-  enableVoiceInput = false
+  enableVoiceInput = false,
+  embedded = false
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
@@ -87,9 +89,15 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
 
   return (
     <footer 
-      className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-50 safe-bottom"
+      className={embedded 
+        ? "border-t border-border bg-card/98 backdrop-blur-xl"
+        : "fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-50 safe-bottom"
+      }
     >
-      <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 pt-2 pb-2">
+      <div className={embedded 
+        ? "px-3 pt-2 pb-2"
+        : "container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 pt-2 pb-2"
+      }>
         {/* Intensity Selector - 键盘弹出时隐藏 */}
         {!isFocused && intensitySelector && (
           <div className="mb-2 animate-in slide-in-from-bottom-2 duration-300">
