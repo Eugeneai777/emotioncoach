@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Share2, TrendingUp, Lightbulb, Target, Gift, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Star, Share2, TrendingUp, Lightbulb, Target, Gift, CheckCircle2, Heart, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { JournalLayerCard } from '@/components/wealth-camp/JournalLayerCard';
 
 interface AiInsight {
   behavior_analysis?: string;
@@ -21,9 +22,12 @@ interface AiInsight {
 
 interface PersonalAwakening {
   behavior_experience?: string;
-  awakening_moment?: string;
+  awakening_moment?: string;        // 行为层觉醒 (兼容旧数据)
+  behavior_awakening?: string;      // 行为层觉醒 (新字段)
   emotion_signal?: string;
+  emotion_awakening?: string;       // 情绪层觉醒 (新字段)
   belief_origin?: string;
+  belief_awakening?: string;        // 信念层觉醒 (新字段)
 }
 
 export default function WealthJournalDetail() {
@@ -70,6 +74,17 @@ export default function WealthJournalDetail() {
   const personalAwakening = entry.personal_awakening as PersonalAwakening | null;
   const responsibilityItems = entry.responsibility_items as string[] | null;
 
+  // 获取各层的觉醒时刻 (兼容新旧字段)
+  const behaviorAwakening = personalAwakening?.behavior_awakening || personalAwakening?.awakening_moment;
+  const emotionAwakening = personalAwakening?.emotion_awakening;
+  const beliefAwakening = personalAwakening?.belief_awakening;
+
+  // 判断各层是否有内容
+  const hasBehaviorLayer = entry.behavior_block || personalAwakening?.behavior_experience || behaviorAwakening;
+  const hasEmotionLayer = entry.emotion_block || personalAwakening?.emotion_signal || entry.emotion_need || emotionAwakening;
+  const hasBeliefLayer = entry.belief_block || entry.old_belief || entry.new_belief || beliefAwakening;
+  const hasTransformLayer = (responsibilityItems && responsibilityItems.length > 0) || entry.giving_action || entry.smallest_progress;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20">
       {/* Header */}
@@ -90,100 +105,8 @@ export default function WealthJournalDetail() {
         </div>
       </div>
 
-      <div className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* 个人化觉醒回顾卡片 - 核心展示 */}
-        {(personalAwakening || entry.old_belief || entry.new_belief || entry.giving_action) && (
-          <Card className="bg-gradient-to-br from-amber-100 to-yellow-50 dark:from-amber-950/50 dark:to-yellow-950/30 border-amber-300 dark:border-amber-700">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-amber-800 dark:text-amber-200 flex items-center gap-2 text-base">
-                <span>📖</span> 我的觉醒时刻
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* 行为经历 */}
-              {personalAwakening?.behavior_experience && (
-                <div className="p-3 bg-amber-50/50 dark:bg-amber-900/20 rounded-lg">
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-1 flex items-center gap-1">
-                    <Target className="w-3 h-3" /> 行为经历
-                  </p>
-                  <p className="text-sm text-amber-800 dark:text-amber-200">{personalAwakening.behavior_experience}</p>
-                </div>
-              )}
-              
-              {/* 觉醒时刻 */}
-              {personalAwakening?.awakening_moment && (
-                <div className="p-3 bg-gradient-to-r from-amber-200/50 to-yellow-200/50 dark:from-amber-800/30 dark:to-yellow-800/30 rounded-lg border border-amber-300/50">
-                  <p className="text-xs text-amber-700 dark:text-amber-300 mb-1">💡 觉醒时刻</p>
-                  <p className="text-amber-900 dark:text-amber-100 font-medium">"{personalAwakening.awakening_moment}"</p>
-                </div>
-              )}
-              
-              {/* 情绪信号与内心需求 */}
-              {(personalAwakening?.emotion_signal || entry.emotion_need) && (
-                <div className="p-3 bg-pink-50/50 dark:bg-pink-900/20 rounded-lg">
-                  <p className="text-xs text-pink-600 dark:text-pink-400 mb-1">💛 情绪信号</p>
-                  {personalAwakening?.emotion_signal && (
-                    <p className="text-sm text-pink-800 dark:text-pink-200">{personalAwakening.emotion_signal}</p>
-                  )}
-                  {entry.emotion_need && (
-                    <p className="text-sm text-pink-700 dark:text-pink-300 mt-1 italic">
-                      → 内心真正需要的是：{entry.emotion_need}
-                    </p>
-                  )}
-                </div>
-              )}
-              
-              {/* 信念对比 */}
-              {(entry.old_belief || entry.new_belief) && (
-                <div className="p-3 bg-violet-50/50 dark:bg-violet-900/20 rounded-lg space-y-2">
-                  <p className="text-xs text-violet-600 dark:text-violet-400 mb-1">💡 信念转变</p>
-                  {entry.belief_source && (
-                    <p className="text-xs text-muted-foreground">来源：{entry.belief_source}</p>
-                  )}
-                  {entry.old_belief && (
-                    <div className="flex items-start gap-2">
-                      <span className="text-red-500 shrink-0">❌</span>
-                      <p className="text-sm text-muted-foreground line-through">{entry.old_belief}</p>
-                    </div>
-                  )}
-                  {entry.new_belief && (
-                    <div className="flex items-start gap-2">
-                      <span className="text-green-500 shrink-0">✅</span>
-                      <p className="text-sm text-violet-800 dark:text-violet-200 font-medium">{entry.new_belief}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {/* 责任事项 */}
-              {responsibilityItems && responsibilityItems.length > 0 && (
-                <div className="p-3 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg">
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">✅ 我能负责的事</p>
-                  <div className="space-y-1">
-                    {responsibilityItems.map((item, index) => (
-                      <div key={index} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                        <p className="text-sm text-blue-800 dark:text-blue-200">{item}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* 给予行动 */}
-              {entry.giving_action && (
-                <div className="p-3 bg-rose-50/50 dark:bg-rose-900/20 rounded-lg">
-                  <p className="text-xs text-rose-600 dark:text-rose-400 mb-1 flex items-center gap-1">
-                    <Gift className="w-3 h-3" /> 今日给予
-                  </p>
-                  <p className="text-sm text-rose-800 dark:text-rose-200 font-medium">{entry.giving_action}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Meditation Reflection */}
+      <div className="container max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* 冥想感受 - 开篇 */}
         {entry.meditation_reflection && (
           <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800">
             <CardHeader className="pb-2">
@@ -197,78 +120,188 @@ export default function WealthJournalDetail() {
           </Card>
         )}
 
-        {/* Behavior Block */}
-        {entry.behavior_block && (
-          <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200 dark:border-amber-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-amber-800 dark:text-amber-200 flex items-center gap-2 text-base">
-                <span>🎯</span> 今日行为卡点
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-amber-700 dark:text-amber-300">{entry.behavior_block}</p>
-              {aiInsight?.behavior_analysis && (
-                <p className="mt-2 text-sm text-amber-600 dark:text-amber-400 italic">
-                  💡 {aiInsight.behavior_analysis}
+        {/* 第一层：行为层 */}
+        {hasBehaviorLayer && (
+          <JournalLayerCard
+            stepNumber={1}
+            title="行为层"
+            emoji="🎯"
+            colorScheme="amber"
+            awakeningMoment={behaviorAwakening}
+            awakeningLabel="行为觉醒时刻"
+          >
+            {/* 行为经历 */}
+            {personalAwakening?.behavior_experience && (
+              <div className="p-3 bg-amber-100/50 dark:bg-amber-900/30 rounded-lg">
+                <p className="text-xs text-amber-600 dark:text-amber-400 mb-1 flex items-center gap-1">
+                  <Target className="w-3 h-3" /> 行为经历
                 </p>
-              )}
-            </CardContent>
-          </Card>
+                <p className="text-sm text-amber-800 dark:text-amber-200">{personalAwakening.behavior_experience}</p>
+              </div>
+            )}
+            
+            {/* 行为卡点 */}
+            {entry.behavior_block && (
+              <div className="p-3 bg-amber-50/80 dark:bg-amber-900/20 rounded-lg">
+                <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">🔒 行为卡点</p>
+                <p className="text-sm text-amber-700 dark:text-amber-300">{entry.behavior_block}</p>
+              </div>
+            )}
+
+            {/* AI 分析 */}
+            {aiInsight?.behavior_analysis && (
+              <p className="text-sm text-amber-600 dark:text-amber-400 italic px-1">
+                💡 AI: {aiInsight.behavior_analysis}
+              </p>
+            )}
+          </JournalLayerCard>
         )}
 
-        {/* Emotion Block */}
-        {entry.emotion_block && (
-          <Card className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/30 border-pink-200 dark:border-pink-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-pink-800 dark:text-pink-200 flex items-center gap-2 text-base">
-                <span>💗</span> 今日情绪卡点
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-pink-700 dark:text-pink-300">{entry.emotion_block}</p>
-              {aiInsight?.emotion_analysis && (
-                <p className="mt-2 text-sm text-pink-600 dark:text-pink-400 italic">
-                  💡 {aiInsight.emotion_analysis}
+        {/* 第二层：情绪层 */}
+        {hasEmotionLayer && (
+          <JournalLayerCard
+            stepNumber={2}
+            title="情绪层"
+            emoji="💛"
+            colorScheme="pink"
+            awakeningMoment={emotionAwakening}
+            awakeningLabel="情绪觉醒时刻"
+          >
+            {/* 情绪信号 */}
+            {personalAwakening?.emotion_signal && (
+              <div className="p-3 bg-pink-100/50 dark:bg-pink-900/30 rounded-lg">
+                <p className="text-xs text-pink-600 dark:text-pink-400 mb-1 flex items-center gap-1">
+                  <Heart className="w-3 h-3" /> 情绪信号
                 </p>
-              )}
-            </CardContent>
-          </Card>
+                <p className="text-sm text-pink-800 dark:text-pink-200">{personalAwakening.emotion_signal}</p>
+              </div>
+            )}
+
+            {/* 内心需求 */}
+            {entry.emotion_need && (
+              <div className="p-3 bg-pink-50/80 dark:bg-pink-900/20 rounded-lg">
+                <p className="text-xs text-pink-600 dark:text-pink-400 mb-1">🌸 内心真正需要</p>
+                <p className="text-sm text-pink-700 dark:text-pink-300 font-medium">{entry.emotion_need}</p>
+              </div>
+            )}
+            
+            {/* 情绪卡点 */}
+            {entry.emotion_block && (
+              <div className="p-3 bg-pink-50/50 dark:bg-pink-900/10 rounded-lg">
+                <p className="text-xs text-pink-600 dark:text-pink-400 mb-1">🔒 情绪卡点</p>
+                <p className="text-sm text-pink-700 dark:text-pink-300">{entry.emotion_block}</p>
+              </div>
+            )}
+
+            {/* AI 分析 */}
+            {aiInsight?.emotion_analysis && (
+              <p className="text-sm text-pink-600 dark:text-pink-400 italic px-1">
+                💡 AI: {aiInsight.emotion_analysis}
+              </p>
+            )}
+          </JournalLayerCard>
         )}
 
-        {/* Belief Block */}
-        {entry.belief_block && (
-          <Card className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 border-violet-200 dark:border-violet-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-violet-800 dark:text-violet-200 flex items-center gap-2 text-base">
-                <span>🧠</span> 今日信念卡点
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-violet-700 dark:text-violet-300">{entry.belief_block}</p>
-              {aiInsight?.belief_analysis && (
-                <p className="mt-2 text-sm text-violet-600 dark:text-violet-400 italic">
-                  💡 {aiInsight.belief_analysis}
+        {/* 第三层：信念层 */}
+        {hasBeliefLayer && (
+          <JournalLayerCard
+            stepNumber={3}
+            title="信念层"
+            emoji="🧠"
+            colorScheme="violet"
+            awakeningMoment={beliefAwakening}
+            awakeningLabel="信念觉醒时刻"
+          >
+            {/* 信念来源 */}
+            {entry.belief_source && (
+              <div className="p-3 bg-violet-100/50 dark:bg-violet-900/30 rounded-lg">
+                <p className="text-xs text-violet-600 dark:text-violet-400 mb-1 flex items-center gap-1">
+                  <Brain className="w-3 h-3" /> 信念来源
                 </p>
-              )}
-            </CardContent>
-          </Card>
+                <p className="text-sm text-violet-800 dark:text-violet-200">{entry.belief_source}</p>
+              </div>
+            )}
+
+            {/* 新旧信念对比 */}
+            {(entry.old_belief || entry.new_belief) && (
+              <div className="p-3 bg-violet-50/80 dark:bg-violet-900/20 rounded-lg space-y-2">
+                <p className="text-xs text-violet-600 dark:text-violet-400 mb-1">💫 信念转变</p>
+                {entry.old_belief && (
+                  <div className="flex items-start gap-2">
+                    <span className="text-red-500 shrink-0">❌</span>
+                    <p className="text-sm text-muted-foreground line-through">{entry.old_belief}</p>
+                  </div>
+                )}
+                {entry.new_belief && (
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-500 shrink-0">✅</span>
+                    <p className="text-sm text-violet-800 dark:text-violet-200 font-medium">{entry.new_belief}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* 信念卡点 */}
+            {entry.belief_block && (
+              <div className="p-3 bg-violet-50/50 dark:bg-violet-900/10 rounded-lg">
+                <p className="text-xs text-violet-600 dark:text-violet-400 mb-1">🔒 信念卡点</p>
+                <p className="text-sm text-violet-700 dark:text-violet-300">{entry.belief_block}</p>
+              </div>
+            )}
+
+            {/* AI 分析 */}
+            {aiInsight?.belief_analysis && (
+              <p className="text-sm text-violet-600 dark:text-violet-400 italic px-1">
+                💡 AI: {aiInsight.belief_analysis}
+              </p>
+            )}
+          </JournalLayerCard>
         )}
 
-        {/* Smallest Progress */}
-        {entry.smallest_progress && (
-          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-green-200 dark:border-green-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-green-800 dark:text-green-200 flex items-center gap-2 text-base">
-                <span>🌱</span> 明日最小进步
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-green-700 dark:text-green-300">{entry.smallest_progress}</p>
-            </CardContent>
-          </Card>
+        {/* 第四层：转化层 */}
+        {hasTransformLayer && (
+          <JournalLayerCard
+            stepNumber={4}
+            title="转化层"
+            emoji="🌱"
+            colorScheme="emerald"
+          >
+            {/* 责任事项 */}
+            {responsibilityItems && responsibilityItems.length > 0 && (
+              <div className="p-3 bg-emerald-100/50 dark:bg-emerald-900/30 rounded-lg">
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-2">✅ 我能负责的事</p>
+                <div className="space-y-1.5">
+                  {responsibilityItems.map((item, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <p className="text-sm text-emerald-800 dark:text-emerald-200">{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* 给予行动 */}
+            {entry.giving_action && (
+              <div className="p-3 bg-emerald-50/80 dark:bg-emerald-900/20 rounded-lg">
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1">
+                  <Gift className="w-3 h-3" /> 今日给予
+                </p>
+                <p className="text-sm text-emerald-800 dark:text-emerald-200 font-medium">{entry.giving_action}</p>
+              </div>
+            )}
+            
+            {/* 最小进步 */}
+            {entry.smallest_progress && (
+              <div className="p-3 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-lg">
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">🌱 明日最小进步</p>
+                <p className="text-sm text-emerald-700 dark:text-emerald-300">{entry.smallest_progress}</p>
+              </div>
+            )}
+          </JournalLayerCard>
         )}
 
-        {/* Scores */}
+        {/* 流动度评分 */}
         {(entry.behavior_score || entry.emotion_score || entry.belief_score) && (
           <Card>
             <CardHeader className="pb-2">
@@ -338,7 +371,7 @@ export default function WealthJournalDetail() {
           </Card>
         )}
 
-        {/* AI Insight - Enhanced Display */}
+        {/* AI 洞察 */}
         {aiInsight && Object.keys(aiInsight).length > 0 && (
           <Card className="bg-gradient-to-br from-cyan-50 to-sky-50 dark:from-cyan-950/30 dark:to-sky-950/30 border-cyan-200 dark:border-cyan-800">
             <CardHeader className="pb-2">
