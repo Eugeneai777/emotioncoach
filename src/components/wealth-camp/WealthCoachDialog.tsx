@@ -162,13 +162,21 @@ export const WealthCoachDialog = ({
                 <p className="text-xs text-muted-foreground">Day {dayNumber} · 冥想梳理</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 relative z-50">
               {messages.length > 0 && (
-                <Button variant="ghost" size="icon" onClick={handleNewConversation}>
+                <Button variant="ghost" size="icon" onClick={handleNewConversation} className="pointer-events-auto">
                   <RotateCcw className="w-4 h-4" />
                 </Button>
               )}
-              <Button variant="ghost" size="icon" onClick={handleClose}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClose();
+                }}
+                className="pointer-events-auto hover:bg-destructive/10"
+              >
                 <X className="w-5 h-5" />
               </Button>
             </div>
