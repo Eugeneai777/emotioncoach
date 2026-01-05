@@ -1,5 +1,8 @@
 project_id = "vlsuzskvykddwrxbmcbu"
 
+[functions.image-proxy]
+verify_jwt = false
+
 [functions.poster-promotion-expert]
 verify_jwt = true
 
