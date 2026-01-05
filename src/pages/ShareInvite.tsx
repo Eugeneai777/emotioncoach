@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ClipboardCheck, Target, Calendar, Lightbulb, Share2 } from 'lucide-react';
+import { ArrowLeft, ClipboardCheck, Target, Calendar, Lightbulb, Share2, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import QRCode from 'qrcode';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
+import WealthInviteCardDialog from '@/components/wealth-camp/WealthInviteCardDialog';
 
 const ShareInvite = () => {
   const navigate = useNavigate();
@@ -126,15 +127,26 @@ const ShareInvite = () => {
                   <p className="text-sm text-muted-foreground">
                     {entry.description}
                   </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyLink(entry.url, entry.name)}
-                    className="w-full"
-                  >
-                    <ClipboardCheck className="h-4 w-4 mr-2" />
-                    复制链接
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyLink(entry.url, entry.name)}
+                      className="flex-1"
+                    >
+                      <ClipboardCheck className="h-4 w-4 mr-2" />
+                      复制链接
+                    </Button>
+                    <WealthInviteCardDialog
+                      defaultTab={entry.id === 'assessment' ? 'assessment' : 'camp'}
+                      trigger={
+                        <Button variant="default" size="sm" className="gap-1.5">
+                          <Image className="h-4 w-4" />
+                          生成卡片
+                        </Button>
+                      }
+                    />
+                  </div>
                 </div>
 
                 {/* Right: QR Code */}
