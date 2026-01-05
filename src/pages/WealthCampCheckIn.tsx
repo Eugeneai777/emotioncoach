@@ -472,6 +472,7 @@ ${reflection}`;
               </div>
             )}
             <WealthCoachEmbedded
+              key={`wealth-coach-${campId}-${makeupDayNumber ?? currentDay}`}
               initialMessage={makeupDayNumber ? getMeditationContext(makeupDayNumber) : getMeditationContext()}
               campId={campId || ''}
               dayNumber={makeupDayNumber || currentDay}
