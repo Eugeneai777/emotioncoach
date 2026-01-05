@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { JournalLayerCard } from '@/components/wealth-camp/JournalLayerCard';
+import { useToast } from '@/hooks/use-toast';
 
 interface AiInsight {
   behavior_analysis?: string;
@@ -33,6 +34,43 @@ interface PersonalAwakening {
 export default function WealthJournalDetail() {
   const { entryId } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleShare = async () => {
+    const shareData = {
+      title: `财富日记 · Day ${entry?.day_number}`,
+      text: entry?.new_belief 
+        ? `今日新信念：${entry.new_belief}` 
+        : '我正在参加21天财富觉醒训练营',
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "链接已复制",
+          description: "可以分享给好友查看",
+        });
+      }
+    } catch (error) {
+      // User cancelled or share failed, copy to clipboard as fallback
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "链接已复制", 
+          description: "可以分享给好友查看",
+        });
+      } catch {
+        toast({
+          title: "分享失败",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   const { data: entry, isLoading } = useQuery({
     queryKey: ['wealth-journal-entry', entryId],
@@ -109,7 +147,7 @@ export default function WealthJournalDetail() {
               {format(new Date(entry.created_at), 'yyyy年M月d日 EEEE', { locale: zhCN })}
             </p>
           </div>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={handleShare}>
             <Share2 className="w-5 h-5" />
           </Button>
         </div>
