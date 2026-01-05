@@ -35,6 +35,7 @@ export default function WealthCampCheckIn() {
   const [meditationCompleted, setMeditationCompleted] = useState(false);
   const [coachingCompleted, setCoachingCompleted] = useState(false);
   const [shareCompleted, setShareCompleted] = useState(false);
+  const [inviteCompleted, setInviteCompleted] = useState(false);
   const [savedReflection, setSavedReflection] = useState('');
   // Fetch camp data - if no campId, find user's active wealth camp
   const { data: camp, isLoading: campLoading } = useQuery({
@@ -126,30 +127,27 @@ export default function WealthCampCheckIn() {
     },
   });
 
-  // Fetch invite count from partner_referrals
-  const { data: inviteCount = 0 } = useQuery({
-    queryKey: ['wealth-camp-invite-count', userId],
-    queryFn: async () => {
-      if (!userId) return 0;
-      
-      // Check if user is a partner and count their referrals
-      const { data: partner } = await supabase
-        .from('partners')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-      
-      if (!partner) return 0;
-      
-      const { count } = await supabase
-        .from('partner_referrals')
-        .select('*', { count: 'exact', head: true })
-        .eq('partner_id', partner.id);
-      
-      return count || 0;
-    },
-    enabled: !!userId,
-  });
+  // 从 localStorage 读取邀请完成状态（点击分享/复制链接即算完成）
+  useEffect(() => {
+    if (campId && currentDay) {
+      const key = `wealth-camp-invite-${campId}-${currentDay}`;
+      const saved = localStorage.getItem(key);
+      setInviteCompleted(saved === 'true');
+    }
+  }, [campId, currentDay]);
+
+  // 处理邀请好友点击 - 点击分享/复制链接即完成
+  const handleInviteClick = () => {
+    if (campId && currentDay) {
+      const key = `wealth-camp-invite-${campId}-${currentDay}`;
+      localStorage.setItem(key, 'true');
+      setInviteCompleted(true);
+    }
+  };
+
+  const scrollToInvite = () => {
+    document.getElementById('invite-card')?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   // 双保险：查询社区帖子来确定分享状态（即使 journal 写回失败也能正确显示）
   const { data: hasSharedPost = false } = useQuery({
@@ -256,9 +254,6 @@ ${reflection}`;
     queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
   };
 
-  const scrollToInvite = () => {
-    document.getElementById('invite-card')?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   const scrollToMeditation = () => {
     document.getElementById('meditation-player')?.scrollIntoView({ behavior: 'smooth' });
@@ -292,8 +287,8 @@ ${reflection}`;
       id: 'invite',
       title: '邀请好友',
       icon: '🎁',
-      completed: inviteCount > 0,
-      action: scrollToInvite,
+      completed: inviteCompleted,
+      action: handleInviteClick,
     },
   ];
 
@@ -430,7 +425,8 @@ ${reflection}`;
                   campId={campId}
                   dayNumber={currentDay}
                   userId={userId}
-                  inviteCount={inviteCount}
+                  inviteCount={0}
+                  onInviteClick={handleInviteClick}
                 />
               </div>
             )}

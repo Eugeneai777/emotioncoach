@@ -10,6 +10,7 @@ interface WealthCampInviteCardProps {
   dayNumber: number;
   userId: string;
   inviteCount?: number;
+  onInviteClick?: () => void;
 }
 
 // 邀请奖励规则
@@ -24,7 +25,8 @@ export function WealthCampInviteCard({
   campId, 
   dayNumber, 
   userId,
-  inviteCount = 0 
+  inviteCount = 0,
+  onInviteClick
 }: WealthCampInviteCardProps) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
@@ -47,6 +49,8 @@ export function WealthCampInviteCard({
         description: "分享给好友一起突破财富卡点",
       });
       setTimeout(() => setCopied(false), 2000);
+      // 触发完成回调
+      onInviteClick?.();
     } catch (error) {
       toast({
         title: "复制失败",
@@ -64,6 +68,8 @@ export function WealthCampInviteCard({
           text: `我正在参加21天财富卡点训练营，已经坚持${dayNumber}天了！邀请你一起加入，突破财富障碍~`,
           url: inviteUrl,
         });
+        // 分享成功，触发完成回调
+        onInviteClick?.();
       } catch (error) {
         // User cancelled or share failed
         handleCopyLink();
