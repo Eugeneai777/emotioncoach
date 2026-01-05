@@ -1,0 +1,191 @@
+import { useState, useEffect, useRef } from "react";
+import { Loader2, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ChatMessage } from "@/components/ChatMessage";
+import { CoachInputFooter } from "@/components/coach/CoachInputFooter";
+import { MeditationAnalysisIntro } from "./MeditationAnalysisIntro";
+import { useDynamicCoachChat, CoachChatMode } from "@/hooks/useDynamicCoachChat";
+import { useCoachTemplate } from "@/hooks/useCoachTemplates";
+import { getThemeBackgroundGradient } from "@/utils/coachThemeConfig";
+import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
+import { toast } from "sonner";
+
+interface WealthCoachEmbeddedProps {
+  initialMessage: string;
+  campId: string;
+  dayNumber: number;
+  meditationTitle?: string;
+  onCoachingComplete?: () => void;
+}
+
+export const WealthCoachEmbedded = ({
+  initialMessage,
+  campId,
+  dayNumber,
+  meditationTitle,
+  onCoachingComplete,
+}: WealthCoachEmbeddedProps) => {
+  const coachKey = "wealth_coach_4_questions";
+  const { data: template } = useCoachTemplate(coachKey);
+  const [input, setInput] = useState("");
+  const [hasAutoSent, setHasAutoSent] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
+
+  const {
+    messages,
+    isLoading,
+    sendMessage,
+    resetConversation,
+  } = useDynamicCoachChat(
+    template?.coach_key || coachKey,
+    template?.edge_function_name || "wealth_coach_4_questions-coach",
+    template?.briefing_table_name || "wealth_coach_4_questions_briefings",
+    template?.briefing_tool_config as any,
+    undefined,
+    (briefingData) => {
+      onCoachingComplete?.();
+    },
+    "meditation_analysis" as CoachChatMode,
+    { dayNumber, campId }
+  );
+
+  // 自动发送初始消息
+  useEffect(() => {
+    if (initialMessage && template && !hasAutoSent && messages.length === 0 && !isLoading) {
+      setHasAutoSent(true);
+      setShowIntro(true);
+      const timer = setTimeout(() => {
+        sendMessage(initialMessage);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [initialMessage, template, hasAutoSent, messages.length, isLoading, sendMessage]);
+
+  // AI 回复后隐藏引导
+  useEffect(() => {
+    if (messages.length > 1 && showIntro) {
+      setShowIntro(false);
+    }
+  }, [messages.length, showIntro]);
+
+  // 自动滚动到底部
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
+    const messageToSend = input.trim();
+    setInput("");
+    await sendMessage(messageToSend);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleNewConversation = () => {
+    resetConversation();
+    setHasAutoSent(false);
+    setShowIntro(true);
+    toast.success("已开始新对话");
+  };
+
+  const primaryColor = template?.primary_color || "amber";
+  const themeConfig = template?.theme_config;
+
+  return (
+    <Card className={`overflow-hidden bg-gradient-to-br ${getThemeBackgroundGradient(primaryColor, themeConfig)}`}>
+      {/* 顶部栏 */}
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-background/80 backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{template?.emoji || "💰"}</span>
+          <div>
+            <h3 className="font-semibold text-sm">{template?.title || "财富教练"}</h3>
+            <p className="text-xs text-muted-foreground">Day {dayNumber} · 冥想梳理</p>
+          </div>
+        </div>
+        {messages.length > 0 && (
+          <Button variant="ghost" size="sm" onClick={handleNewConversation} className="gap-1">
+            <RotateCcw className="w-4 h-4" />
+            <span className="text-xs">新对话</span>
+          </Button>
+        )}
+      </div>
+
+      {/* 对话内容区 */}
+      <div
+        ref={mainRef}
+        className="h-[60vh] overflow-y-auto relative"
+      >
+        <div className="px-4 py-4">
+          {/* 冥想分析引导 */}
+          {messages.length === 0 && isLoading && showIntro ? (
+            <MeditationAnalysisIntro
+              dayNumber={dayNumber}
+              meditationTitle={meditationTitle}
+            />
+          ) : messages.length === 0 && !isLoading ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p>准备开始教练梳理...</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {messages.map((message, index) => (
+                <ChatMessage
+                  key={index}
+                  role={message.role}
+                  content={message.content}
+                  isLastMessage={index === messages.length - 1}
+                  primaryColor={primaryColor}
+                />
+              ))}
+
+              {isLoading && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">正在思考...</span>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+
+        {/* 滚动到底部按钮 */}
+        {messages.length > 0 && (
+          <ScrollToBottomButton
+            scrollRef={mainRef}
+            messagesEndRef={messagesEndRef}
+            primaryColor={primaryColor}
+          />
+        )}
+      </div>
+
+      {/* 输入区 */}
+      <div className="border-t bg-background/80 backdrop-blur-sm">
+        <CoachInputFooter
+          input={input}
+          onInputChange={setInput}
+          onSend={handleSend}
+          onKeyPress={handleKeyPress}
+          onNewConversation={handleNewConversation}
+          placeholder={template?.placeholder || "分享你的想法..."}
+          isLoading={isLoading}
+          hasMessages={messages.length > 0}
+          gradient={template?.gradient || "from-amber-500 to-orange-500"}
+          primaryColor={primaryColor}
+          messagesCount={messages.length}
+          enableVoiceInput={true}
+        />
+      </div>
+    </Card>
+  );
+};
