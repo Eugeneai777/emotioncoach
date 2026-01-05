@@ -213,6 +213,10 @@ export default function WealthCampCheckIn() {
 
     if (!error) {
       setMeditationCompleted(true);
+      // 关键：立刻把 reflection 写入本地状态，保证后续 getMeditationContext 能拿到
+      setSavedReflection(reflection);
+      // 刷新日记数据
+      queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
     }
   };
 
@@ -254,12 +258,13 @@ export default function WealthCampCheckIn() {
 ${reflection}`;
     }
     
-    // 没有冥想记录时的补卡消息
+    // 没有冥想记录时的 fallback（补卡 或 今日都要有兜底消息）
     if (targetDay) {
       return `【补卡 Day ${dayToUse}】请帮我梳理这一天的财富卡点`;
     }
     
-    return '';
+    // 今日也需要 fallback，保证教练梳理永远能启动
+    return `【今日 Day ${dayToUse}】请帮我梳理今天的财富卡点`;
   };
 
   const handleStartCoaching = () => {

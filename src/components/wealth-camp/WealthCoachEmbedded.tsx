@@ -55,6 +55,11 @@ export const WealthCoachEmbedded = ({
   // 自动发送初始消息
   useEffect(() => {
     if (initialMessage && template && !hasAutoSent && messages.length === 0 && !isLoading) {
+      console.log('[WealthCoachEmbedded] 自动发送触发:', {
+        dayNumber,
+        msgPreview: initialMessage.slice(0, 50),
+        templateKey: template.coach_key,
+      });
       setHasAutoSent(true);
       setShowIntro(true);
       const timer = setTimeout(() => {
@@ -62,7 +67,7 @@ export const WealthCoachEmbedded = ({
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [initialMessage, template, hasAutoSent, messages.length, isLoading, sendMessage]);
+  }, [initialMessage, template, hasAutoSent, messages.length, isLoading, sendMessage, dayNumber]);
 
   // AI 回复后隐藏引导
   useEffect(() => {
@@ -159,8 +164,27 @@ export const WealthCoachEmbedded = ({
               meditationTitle={meditationTitle}
             />
           ) : messages.length === 0 && !isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-12 text-muted-foreground space-y-4">
               <p>准备开始教练梳理...</p>
+              {/* 诊断面板：用于定位自动发送为何未触发 */}
+              <div className="text-xs text-left mx-auto max-w-xs p-3 bg-muted/50 rounded-lg space-y-1">
+                <p>📊 诊断信息：</p>
+                <p>Day: {dayNumber} | Camp: {campId ? '✓' : '✗'}</p>
+                <p>Template: {template ? '✓' : '加载中...'}</p>
+                <p>InitialMsg: {initialMessage ? `${initialMessage.slice(0, 40)}...` : '(空)'}</p>
+                <p>hasAutoSent: {hasAutoSent ? '✓' : '✗'} | isLoading: {isLoading ? '✓' : '✗'}</p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const msg = initialMessage || `【Day ${dayNumber}】请帮我梳理财富卡点`;
+                  console.log('[WealthCoachEmbedded] 手动发送:', msg.slice(0, 50));
+                  sendMessage(msg);
+                }}
+              >
+                手动发送启动消息
+              </Button>
             </div>
           ) : (
             <div className="space-y-4">
