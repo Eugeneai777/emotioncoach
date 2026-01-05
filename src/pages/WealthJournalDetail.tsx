@@ -77,9 +77,9 @@ export default function WealthJournalDetail() {
   // 获取各层的觉醒时刻 (兼容新旧字段 + 前端备用生成)
   const behaviorAwakening = personalAwakening?.behavior_awakening || personalAwakening?.awakening_moment;
   
-  // 情绪层觉醒：优先用数据库字段，否则从 emotion_need 生成
+  // 情绪层觉醒：优先用数据库字段，否则生成"如何获得内心需求"的指导
   const emotionAwakening = personalAwakening?.emotion_awakening || 
-    (entry.emotion_need ? `原来我的情绪在告诉我：我需要${entry.emotion_need}` : undefined);
+    (entry.emotion_need ? `原来获得${entry.emotion_need}的方式，不是紧握金钱，而是信任生命的流动` : undefined);
   
   // 信念层觉醒：优先用数据库字段，否则从 old_belief + new_belief 生成
   const beliefAwakening = personalAwakening?.belief_awakening || 
@@ -161,7 +161,7 @@ export default function WealthJournalDetail() {
             {/* AI 分析 */}
             {aiInsight?.behavior_analysis && (
               <p className="text-sm text-amber-600 dark:text-amber-400 italic px-1">
-                💡 AI: {aiInsight.behavior_analysis}
+                💡 {aiInsight.behavior_analysis}
               </p>
             )}
           </JournalLayerCard>
@@ -177,36 +177,36 @@ export default function WealthJournalDetail() {
             awakeningMoment={emotionAwakening}
             awakeningLabel="情绪觉醒时刻"
           >
+            {/* 情绪卡点 - 放到最上面 */}
+            {entry.emotion_block && (
+              <div className="p-3 bg-pink-100/50 dark:bg-pink-900/30 rounded-lg">
+                <p className="text-xs text-pink-600 dark:text-pink-400 mb-1">🔒 情绪卡点</p>
+                <p className="text-sm text-pink-800 dark:text-pink-200">{entry.emotion_block}</p>
+              </div>
+            )}
+
             {/* 情绪信号 */}
             {personalAwakening?.emotion_signal && (
-              <div className="p-3 bg-pink-100/50 dark:bg-pink-900/30 rounded-lg">
+              <div className="p-3 bg-pink-50/80 dark:bg-pink-900/20 rounded-lg">
                 <p className="text-xs text-pink-600 dark:text-pink-400 mb-1 flex items-center gap-1">
                   <Heart className="w-3 h-3" /> 情绪信号
                 </p>
-                <p className="text-sm text-pink-800 dark:text-pink-200">{personalAwakening.emotion_signal}</p>
+                <p className="text-sm text-pink-700 dark:text-pink-300">{personalAwakening.emotion_signal}</p>
               </div>
             )}
 
             {/* 内心需求 */}
             {entry.emotion_need && (
-              <div className="p-3 bg-pink-50/80 dark:bg-pink-900/20 rounded-lg">
+              <div className="p-3 bg-pink-50/50 dark:bg-pink-900/10 rounded-lg">
                 <p className="text-xs text-pink-600 dark:text-pink-400 mb-1">🌸 内心真正需要</p>
                 <p className="text-sm text-pink-700 dark:text-pink-300 font-medium">{entry.emotion_need}</p>
-              </div>
-            )}
-            
-            {/* 情绪卡点 */}
-            {entry.emotion_block && (
-              <div className="p-3 bg-pink-50/50 dark:bg-pink-900/10 rounded-lg">
-                <p className="text-xs text-pink-600 dark:text-pink-400 mb-1">🔒 情绪卡点</p>
-                <p className="text-sm text-pink-700 dark:text-pink-300">{entry.emotion_block}</p>
               </div>
             )}
 
             {/* AI 分析 */}
             {aiInsight?.emotion_analysis && (
               <p className="text-sm text-pink-600 dark:text-pink-400 italic px-1">
-                💡 AI: {aiInsight.emotion_analysis}
+                💡 {aiInsight.emotion_analysis}
               </p>
             )}
           </JournalLayerCard>
@@ -231,10 +231,18 @@ export default function WealthJournalDetail() {
                 <p className="text-sm text-violet-800 dark:text-violet-200">{entry.belief_source}</p>
               </div>
             )}
+            
+            {/* 信念卡点 - 移到信念转变上面 */}
+            {entry.belief_block && (
+              <div className="p-3 bg-violet-50/80 dark:bg-violet-900/20 rounded-lg">
+                <p className="text-xs text-violet-600 dark:text-violet-400 mb-1">🔒 信念卡点</p>
+                <p className="text-sm text-violet-700 dark:text-violet-300">{entry.belief_block}</p>
+              </div>
+            )}
 
             {/* 新旧信念对比 */}
             {(entry.old_belief || entry.new_belief) && (
-              <div className="p-3 bg-violet-50/80 dark:bg-violet-900/20 rounded-lg space-y-2">
+              <div className="p-3 bg-violet-50/50 dark:bg-violet-900/10 rounded-lg space-y-2">
                 <p className="text-xs text-violet-600 dark:text-violet-400 mb-1">💫 信念转变</p>
                 {entry.old_belief && (
                   <div className="flex items-start gap-2">
@@ -250,19 +258,11 @@ export default function WealthJournalDetail() {
                 )}
               </div>
             )}
-            
-            {/* 信念卡点 */}
-            {entry.belief_block && (
-              <div className="p-3 bg-violet-50/50 dark:bg-violet-900/10 rounded-lg">
-                <p className="text-xs text-violet-600 dark:text-violet-400 mb-1">🔒 信念卡点</p>
-                <p className="text-sm text-violet-700 dark:text-violet-300">{entry.belief_block}</p>
-              </div>
-            )}
 
             {/* AI 分析 */}
             {aiInsight?.belief_analysis && (
               <p className="text-sm text-violet-600 dark:text-violet-400 italic px-1">
-                💡 AI: {aiInsight.belief_analysis}
+                💡 {aiInsight.belief_analysis}
               </p>
             )}
           </JournalLayerCard>
