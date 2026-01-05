@@ -71,6 +71,13 @@ export const WealthCoachEmbedded = ({
     }
   }, [messages.length, showIntro]);
 
+  // dayNumber/campId 变化时重置对话（用于补卡场景）
+  useEffect(() => {
+    resetConversation();
+    setHasAutoSent(false);
+    setShowIntro(true);
+  }, [dayNumber, campId]);
+
   // 自动滚动到底部
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
