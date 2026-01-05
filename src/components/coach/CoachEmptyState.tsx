@@ -68,7 +68,27 @@ export const CoachEmptyState = ({
   voiceChatCTA
 }: CoachEmptyStateProps) => {
   const navigate = useNavigate();
-  const [isStepsExpanded, setIsStepsExpanded] = useState(!enableCollapse);
+  const storageKey = 'coach_steps_collapsed';
+  
+  // 从 localStorage 读取初始状态
+  const getInitialState = () => {
+    if (!enableCollapse) return true; // 不启用折叠时始终展开
+    const saved = localStorage.getItem(storageKey);
+    if (saved !== null) {
+      return saved === 'false'; // 存储的是折叠状态，反转为展开状态
+    }
+    return false; // 默认折叠
+  };
+
+  const [isStepsExpanded, setIsStepsExpanded] = useState(getInitialState);
+
+  // 当状态改变时保存到 localStorage
+  const handleExpandChange = (expanded: boolean) => {
+    setIsStepsExpanded(expanded);
+    if (enableCollapse) {
+      localStorage.setItem(storageKey, String(!expanded)); // 存储折叠状态
+    }
+  };
 
   // 使用统一主题配置
   const stepCardStyle = getThemeStepCardStyle(primaryColor, themeConfig);
@@ -149,7 +169,7 @@ export const CoachEmptyState = ({
         </div>
       ) : enableCollapse ? (
         /* Collapsible mode for emotion coach */
-        <Collapsible open={isStepsExpanded} onOpenChange={setIsStepsExpanded}>
+        <Collapsible open={isStepsExpanded} onOpenChange={handleExpandChange}>
           <div className={`border rounded-card-lg p-3 text-left shadow-sm hover:shadow-md transition-all duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200 ${stepCardStyle}`}>
             <div className="flex items-center justify-between">
               <CollapsibleTrigger asChild>
