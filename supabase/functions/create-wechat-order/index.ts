@@ -148,6 +148,8 @@ serve(async (req) => {
     const authorization = `WECHATPAY2-SHA256-RSA2048 mchid="${mchId}",nonce_str="${nonceStr}",timestamp="${timestamp}",serial_no="${certSerialNo}",signature="${signature}"`;
 
     let wechatResult: Record<string, unknown>;
+    let actualPayType = payType; // 实际使用的支付类型（可能降级）
+    let fallbackReason: string | undefined;
     
     // 使用代理服务器调用微信API
     if (proxyUrl && proxyToken) {
@@ -173,10 +175,68 @@ serve(async (req) => {
       const proxyResult = await proxyResponse.json();
       console.log('Proxy response:', proxyResult);
       
-      if (proxyResult.error) {
+      // 检查是否需要降级到 Native 支付
+      if (isH5 && (proxyResult.code === 'PARAM_ERROR' || proxyResult.code === 'NO_AUTH' || !proxyResult.h5_url)) {
+        console.log('H5 payment failed, falling back to Native QR code payment');
+        fallbackReason = proxyResult.message || 'H5支付不可用，已自动切换为扫码支付';
+        
+        // 重新构建 Native 支付请求
+        const nativeApiPath = '/v3/pay/transactions/native';
+        const nativeApiUrl = `https://api.mch.weixin.qq.com${nativeApiPath}`;
+        const nativeRequestBody: Record<string, unknown> = {
+          appid: appId,
+          mchid: mchId,
+          description: packageName,
+          out_trade_no: orderNo,
+          time_expire: new Date(Date.now() + 5 * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, '+08:00'),
+          notify_url: notifyUrl,
+          amount: {
+            total: amountInFen,
+            currency: 'CNY'
+          }
+        };
+        
+        // 重新签名
+        const nativeTimestamp = getTimestamp();
+        const nativeNonceStr = generateNonceStr();
+        const nativeBodyStr = JSON.stringify(nativeRequestBody);
+        const nativeSignMessage = buildSignMessage('POST', nativeApiPath, nativeTimestamp, nativeNonceStr, nativeBodyStr);
+        const nativeSignature = await signWithRSA(nativeSignMessage, privateKey);
+        const nativeAuthorization = `WECHATPAY2-SHA256-RSA2048 mchid="${mchId}",nonce_str="${nativeNonceStr}",timestamp="${nativeTimestamp}",serial_no="${certSerialNo}",signature="${nativeSignature}"`;
+        
+        console.log('Retrying with Native payment:', nativeRequestBody);
+        
+        const nativeProxyResponse = await fetch(`${proxyUrl}/wechat-proxy`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${proxyToken}`,
+          },
+          body: JSON.stringify({
+            target_url: nativeApiUrl,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': nativeAuthorization,
+            },
+            body: nativeRequestBody
+          }),
+        });
+        
+        const nativeProxyResult = await nativeProxyResponse.json();
+        console.log('Native proxy response:', nativeProxyResult);
+        
+        if (nativeProxyResult.error) {
+          throw new Error(nativeProxyResult.error);
+        }
+        wechatResult = nativeProxyResult.data || nativeProxyResult;
+        actualPayType = 'native'; // 已降级到 native
+      } else if (proxyResult.error) {
         throw new Error(proxyResult.error);
+      } else {
+        wechatResult = proxyResult.data || proxyResult;
       }
-      wechatResult = proxyResult.data || proxyResult;
     } else {
       // 直接调用微信API（可能会遇到IP白名单问题）
       console.log('Direct API call to WeChat');
@@ -198,9 +258,10 @@ serve(async (req) => {
       }
     }
 
-    // 获取支付URL
+    // 获取支付URL - 使用实际的支付类型
+    const actualIsH5 = actualPayType === 'h5';
     let payUrl: string;
-    if (isH5) {
+    if (actualIsH5) {
       // H5支付返回 h5_url
       payUrl = wechatResult.h5_url as string;
       if (!payUrl) {
@@ -233,16 +294,17 @@ serve(async (req) => {
       throw new Error('订单创建失败');
     }
 
-    console.log('Order created successfully:', orderNo);
+    console.log('Order created successfully:', orderNo, 'payType:', actualPayType, fallbackReason ? `(fallback: ${fallbackReason})` : '');
 
     return new Response(
       JSON.stringify({
         success: true,
         orderNo,
         payUrl, // 统一返回payUrl
-        qrCodeUrl: isH5 ? undefined : payUrl, // 兼容旧版本
-        h5Url: isH5 ? payUrl : undefined, // H5支付专用
-        payType,
+        qrCodeUrl: actualIsH5 ? undefined : payUrl, // 兼容旧版本
+        h5Url: actualIsH5 ? payUrl : undefined, // H5支付专用
+        payType: actualPayType, // 返回实际使用的支付类型
+        fallbackReason, // 如果发生了降级，告知原因
         expiredAt: expiredAt.toISOString(),
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
