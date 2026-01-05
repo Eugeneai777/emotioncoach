@@ -48,8 +48,11 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
       generateQR();
     }, [shareUrl]);
 
-    // Pick the best awakening moment to display
+    // Pick the best content to display (avoid duplication)
     const primaryAwakening = beliefAwakening || emotionAwakening || behaviorAwakening;
+    
+    // Check if new belief is already included in awakening to avoid repetition
+    const showNewBelief = newBelief && (!primaryAwakening || !primaryAwakening.includes(newBelief));
     
     // Truncate text helper
     const truncate = (text: string | undefined, maxLen: number) => {
@@ -82,13 +85,13 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
             )}
             <div>
               <p className="text-amber-900 font-semibold text-sm">{displayName}</p>
-              <p className="text-amber-700 text-xs">财富觉醒 · 第{dayNumber}天</p>
+              <p className="text-amber-700 text-xs">第{dayNumber}天打卡</p>
             </div>
           </div>
           
           {/* Title */}
           <div className="text-center mb-3">
-            <h2 className="text-amber-900 font-bold text-lg">📖 今日觉醒日记</h2>
+            <h2 className="text-amber-900 font-bold text-lg">📖 今日觉醒</h2>
           </div>
         </div>
 
@@ -99,7 +102,7 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
             <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-200">
               <div className="flex items-center gap-1.5 mb-1">
                 <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                <span className="text-xs font-medium text-amber-700">今日觉醒时刻</span>
+                <span className="text-xs font-medium text-amber-700">觉醒时刻</span>
               </div>
               <p className="text-sm text-amber-900 font-medium leading-relaxed">
                 {truncate(primaryAwakening, 80)}
@@ -107,8 +110,8 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
             </div>
           )}
 
-          {/* New Belief */}
-          {newBelief && (
+          {/* New Belief - only show if different from awakening */}
+          {showNewBelief && (
             <div className="flex items-start gap-2">
               <Brain className="w-4 h-4 text-violet-500 shrink-0 mt-0.5" />
               <div>
@@ -118,8 +121,8 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
             </div>
           )}
 
-          {/* Emotion Need */}
-          {emotionNeed && !newBelief && (
+          {/* Emotion Need - only show if no awakening and no belief */}
+          {emotionNeed && !primaryAwakening && !newBelief && (
             <div className="flex items-start gap-2">
               <Heart className="w-4 h-4 text-pink-500 shrink-0 mt-0.5" />
               <div>
@@ -133,8 +136,8 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
         {/* Footer with QR */}
         <div className="px-5 py-4 flex items-center justify-between">
           <div className="flex-1">
-            <p className="text-amber-900 text-xs font-medium">扫码开启你的</p>
-            <p className="text-amber-800 text-sm font-bold">21天财富觉醒之旅</p>
+            <p className="text-amber-900 text-xs font-medium">扫码加入</p>
+            <p className="text-amber-800 text-sm font-bold">突破财富卡点训练营</p>
           </div>
           {qrCodeUrl && (
             <div className="bg-white p-1.5 rounded-lg shadow-md">
@@ -145,7 +148,7 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
 
         {/* Brand */}
         <div className="bg-amber-700/20 px-5 py-2 text-center">
-          <p className="text-amber-900 text-xs font-medium">有金心理 · 财富觉醒训练营</p>
+          <p className="text-amber-900 text-xs font-medium">有劲AI · 突破财富卡点训练营</p>
         </div>
       </div>
     );
