@@ -110,14 +110,23 @@ export function WealthMeditationPlayer({
     }
   }, [volume]);
 
-  const togglePlay = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
+  const togglePlay = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+      return;
+    }
+
+    try {
+      await audio.play();
+      setIsPlaying(true);
+    } catch (err) {
+      console.error('Audio play failed:', err);
+      setIsPlaying(false);
+      toast.error('无法播放音频：请检查静音/系统媒体权限，或稍后重试');
     }
   };
 
@@ -311,7 +320,12 @@ export function WealthMeditationPlayer({
           ref={audioRef} 
           src={encodeURI(audioUrl)} 
           preload="metadata"
-          onError={(e) => console.error('Audio load error:', e)}
+          onError={() => {
+            const code = audioRef.current?.error?.code;
+            console.error('Audio load error:', { src: audioUrl, code });
+            toast.error('音频加载失败：请刷新页面后重试');
+            setIsPlaying(false);
+          }}
         />
         
         {/* Header */}
