@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -64,6 +64,12 @@ export const useDynamicCoachChat = (
   const [chatMode, setChatMode] = useState<CoachChatMode>(initialMode || 'standard');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // 用 ref 保存最新 messages，避免 sendMessage 闭包问题
+  const messagesRef = useRef<Message[]>([]);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(conversationId || null);
   const [lastBriefingId, setLastBriefingId] = useState<string | null>(null);
   const [coachRecommendation, setCoachRecommendation] = useState<CoachRecommendation | null>(null);
@@ -170,8 +176,13 @@ export const useDynamicCoachChat = (
     }
   };
 
-  const sendMessage = async (messageText: string) => {
+  const sendMessage = useCallback(async (messageText: string) => {
     if (!messageText.trim()) return;
+
+    console.log('[useDynamicCoachChat] sendMessage called', { 
+      messageText: messageText.substring(0, 50) + '...', 
+      currentMessagesCount: messagesRef.current.length 
+    });
 
     // 用户发送新消息时清除旧推荐
     setVideoRecommendation(null);
@@ -194,7 +205,13 @@ export const useDynamicCoachChat = (
     }
 
     const userMessage: Message = { role: "user", content: messageText };
-    setMessages((prev) => [...prev, userMessage]);
+    // 使用 ref 获取最新 messages，构造完整的 nextMessages
+    const currentMessages = messagesRef.current;
+    const nextMessages = [...currentMessages, userMessage];
+    
+    setMessages(nextMessages);
+    messagesRef.current = nextMessages; // 立即同步 ref
+    
     await saveMessage(convId, "user", messageText);
 
     setIsLoading(true);
@@ -212,7 +229,7 @@ export const useDynamicCoachChat = (
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            messages: [...messages, userMessage],
+            messages: nextMessages,
             mode: chatMode,
           }),
         }
@@ -446,10 +463,11 @@ export const useDynamicCoachChat = (
       });
       setIsLoading(false);
     }
-  };
+  }, [currentConversationId, chatMode, edgeFunctionName, briefingTableName, briefingToolConfig, contextData, onBriefingGenerated]);
 
-  const resetConversation = () => {
+  const resetConversation = useCallback(() => {
     setMessages([]);
+    messagesRef.current = [];
     setCurrentConversationId(null);
     setLastBriefingId(null);
     setCoachRecommendation(null);
@@ -457,7 +475,7 @@ export const useDynamicCoachChat = (
     setToolRecommendation(null);
     setEmotionButtonRecommendation(null);
     setCampRecommendation(null);
-  };
+  }, []);
 
   return {
     messages,
