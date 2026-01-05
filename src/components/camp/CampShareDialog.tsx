@@ -195,16 +195,30 @@ const CampShareDialog = ({
 
       if (error) throw error;
 
-      // 更新今日进度的分享状态
+      // 更新分享状态 - 根据训练营类型更新不同的表
       const today = getTodayInBeijing();
-      await supabase
-        .from("camp_daily_progress")
-        .update({
-          has_shared_to_community: true,
-          shared_at: new Date().toISOString(),
-        })
-        .eq("camp_id", campId)
-        .eq("progress_date", today);
+      
+      if (campName.includes('财富')) {
+        // 财富训练营使用 wealth_journal_entries 表
+        await supabase
+          .from("wealth_journal_entries")
+          .update({
+            share_completed: true,
+            shared_at: new Date().toISOString(),
+          })
+          .eq("camp_id", campId)
+          .eq("day_number", campDay);
+      } else {
+        // 其他训练营使用 camp_daily_progress 表
+        await supabase
+          .from("camp_daily_progress")
+          .update({
+            has_shared_to_community: true,
+            shared_at: new Date().toISOString(),
+          })
+          .eq("camp_id", campId)
+          .eq("progress_date", today);
+      }
 
       toast({
         title: "分享成功",

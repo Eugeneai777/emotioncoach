@@ -6522,6 +6522,8 @@ export type Database = {
           personal_awakening: Json | null
           responsibility_items: string[] | null
           session_id: string | null
+          share_completed: boolean | null
+          shared_at: string | null
           smallest_progress: string | null
           updated_at: string
           user_id: string
@@ -6554,6 +6556,8 @@ export type Database = {
           personal_awakening?: Json | null
           responsibility_items?: string[] | null
           session_id?: string | null
+          share_completed?: boolean | null
+          shared_at?: string | null
           smallest_progress?: string | null
           updated_at?: string
           user_id: string
@@ -6586,6 +6590,8 @@ export type Database = {
           personal_awakening?: Json | null
           responsibility_items?: string[] | null
           session_id?: string | null
+          share_completed?: boolean | null
+          shared_at?: string | null
           smallest_progress?: string | null
           updated_at?: string
           user_id?: string
