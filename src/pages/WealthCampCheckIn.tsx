@@ -11,7 +11,7 @@ import { WealthProgressChart } from '@/components/wealth-camp/WealthProgressChar
 import { WealthJournalCard } from '@/components/wealth-camp/WealthJournalCard';
 import { WealthCampInviteCard } from '@/components/wealth-camp/WealthCampInviteCard';
 import { CheckInCelebrationDialog } from '@/components/wealth-camp/CheckInCelebrationDialog';
-import { WealthCoachDialog } from '@/components/wealth-camp/WealthCoachDialog';
+import { WealthCoachEmbedded } from '@/components/wealth-camp/WealthCoachEmbedded';
 import CampShareDialog from '@/components/camp/CampShareDialog';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
@@ -31,7 +31,7 @@ export default function WealthCampCheckIn() {
   const [activeTab, setActiveTab] = useState('today');
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [showCoachDialog, setShowCoachDialog] = useState(false);
+  
   const [meditationCompleted, setMeditationCompleted] = useState(false);
   const [coachingCompleted, setCoachingCompleted] = useState(false);
   const [savedReflection, setSavedReflection] = useState('');
@@ -196,7 +196,7 @@ ${reflection}`;
   };
 
   const handleStartCoaching = () => {
-    setShowCoachDialog(true);
+    setActiveTab('coaching');
   };
 
   const handleCoachingComplete = () => {
@@ -284,8 +284,11 @@ ${reflection}`;
 
       <div className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="today">今日打卡</TabsTrigger>
+            <TabsTrigger value="coaching" disabled={!meditationCompleted}>
+              教练梳理
+            </TabsTrigger>
             <TabsTrigger value="calendar">日历</TabsTrigger>
             <TabsTrigger value="journal">日记回顾</TabsTrigger>
           </TabsList>
@@ -381,6 +384,16 @@ ${reflection}`;
             )}
           </TabsContent>
 
+          <TabsContent value="coaching" className="mt-6">
+            <WealthCoachEmbedded
+              initialMessage={getMeditationContext()}
+              campId={campId || ''}
+              dayNumber={currentDay}
+              meditationTitle={meditation?.title}
+              onCoachingComplete={handleCoachingComplete}
+            />
+          </TabsContent>
+
           <TabsContent value="calendar" className="mt-6">
             {/* Simple calendar view */}
             <Card>
@@ -458,16 +471,6 @@ ${reflection}`;
         onInvite={scrollToInvite}
       />
 
-      {/* Coach Dialog */}
-      <WealthCoachDialog
-        open={showCoachDialog}
-        onOpenChange={setShowCoachDialog}
-        initialMessage={getMeditationContext()}
-        campId={campId || ''}
-        dayNumber={currentDay}
-        meditationTitle={meditation?.title}
-        onCoachingComplete={handleCoachingComplete}
-      />
     </div>
   );
 }
