@@ -12,9 +12,11 @@ import { WealthJournalCard } from '@/components/wealth-camp/WealthJournalCard';
 import { WealthCampInviteCard } from '@/components/wealth-camp/WealthCampInviteCard';
 import { CheckInCelebrationDialog } from '@/components/wealth-camp/CheckInCelebrationDialog';
 import { WealthCoachEmbedded } from '@/components/wealth-camp/WealthCoachEmbedded';
+import { WealthJourneyCalendar } from '@/components/wealth-camp/WealthJourneyCalendar';
 import CampShareDialog from '@/components/camp/CampShareDialog';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
+import { useToast } from '@/hooks/use-toast';
 interface DailyTask {
   id: string;
   title: string;
@@ -443,42 +445,23 @@ ${reflection}`;
           </TabsContent>
 
           <TabsContent value="calendar" className="mt-6">
-            {/* Simple calendar view */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-7 gap-2 text-center">
-                  {['日', '一', '二', '三', '四', '五', '六'].map((day) => (
-                    <div key={day} className="text-xs text-muted-foreground py-2">
-                      {day}
-                    </div>
-                  ))}
-                  {Array.from({ length: 21 }, (_, i) => {
-                    const day = i + 1;
-                    const checkInDates = Array.isArray(camp.check_in_dates) ? camp.check_in_dates : [];
-                    const dateStr = new Date(new Date(camp.start_date).getTime() + i * 24 * 60 * 60 * 1000)
-                      .toISOString()
-                      .split('T')[0];
-                    const isCompleted = checkInDates.includes(dateStr);
-                    const isCurrent = day === currentDay;
-                    const isFuture = day > currentDay;
-
-                    return (
-                      <div
-                        key={day}
-                        className={cn(
-                          "aspect-square flex items-center justify-center rounded-lg text-sm",
-                          isCompleted && "bg-amber-500 text-white",
-                          isCurrent && !isCompleted && "ring-2 ring-amber-500",
-                          isFuture && "text-muted-foreground/50"
-                        )}
-                      >
-                        {day}
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+            <WealthJourneyCalendar
+              startDate={camp.start_date}
+              currentDay={currentDay}
+              totalDays={camp.duration_days || 21}
+              checkInDates={Array.isArray(camp.check_in_dates) ? camp.check_in_dates as string[] : []}
+              journalEntries={journalEntries}
+              makeupDaysLimit={3}
+              onDayClick={(dayNumber, dateStr, entry) => {
+                if (entry) {
+                  navigate(`/wealth-journal/${entry.id}`);
+                }
+              }}
+              onMakeupClick={(dayNumber, dateStr) => {
+                // 补卡逻辑：跳转到教练梳理标签
+                setActiveTab('coaching');
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="journal" className="mt-6 space-y-4">
