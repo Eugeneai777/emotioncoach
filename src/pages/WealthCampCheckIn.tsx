@@ -39,6 +39,8 @@ export default function WealthCampCheckIn() {
   const [shareCompleted, setShareCompleted] = useState(false);
   const [inviteCompleted, setInviteCompleted] = useState(false);
   const [savedReflection, setSavedReflection] = useState('');
+  const [makeupDayNumber, setMakeupDayNumber] = useState<number | null>(null);
+  const { toast } = useToast();
   // Fetch camp data - if no campId, find user's active wealth camp
   const { data: camp, isLoading: campLoading } = useQuery({
     queryKey: ['wealth-camp', urlCampId],
@@ -435,12 +437,42 @@ ${reflection}`;
           </TabsContent>
 
           <TabsContent value="coaching" className="mt-6">
+            {/* 补卡提示 */}
+            {makeupDayNumber && (
+              <div className="mb-4 p-3 rounded-lg bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-600">📅</span>
+                  <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                    正在补打 Day {makeupDayNumber} 的卡
+                  </span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-amber-600 hover:text-amber-800"
+                  onClick={() => setMakeupDayNumber(null)}
+                >
+                  取消补卡
+                </Button>
+              </div>
+            )}
             <WealthCoachEmbedded
-              initialMessage={getMeditationContext()}
+              initialMessage={makeupDayNumber ? `【补卡 Day ${makeupDayNumber}】请帮我梳理这一天的财富卡点` : getMeditationContext()}
               campId={campId || ''}
-              dayNumber={currentDay}
-              meditationTitle={meditation?.title}
-              onCoachingComplete={handleCoachingComplete}
+              dayNumber={makeupDayNumber || currentDay}
+              meditationTitle={makeupDayNumber ? undefined : meditation?.title}
+              onCoachingComplete={() => {
+                handleCoachingComplete();
+                if (makeupDayNumber) {
+                  toast({
+                    title: "补卡成功",
+                    description: `Day ${makeupDayNumber} 的打卡已完成`,
+                  });
+                  setMakeupDayNumber(null);
+                  // 刷新日历数据
+                  queryClient.invalidateQueries({ queryKey: ['wealth-camp', urlCampId] });
+                }
+              }}
             />
           </TabsContent>
 
@@ -458,8 +490,12 @@ ${reflection}`;
                 }
               }}
               onMakeupClick={(dayNumber, dateStr) => {
-                // 补卡逻辑：跳转到教练梳理标签
+                setMakeupDayNumber(dayNumber);
                 setActiveTab('coaching');
+                toast({
+                  title: `开始补打 Day ${dayNumber}`,
+                  description: "完成教练梳理后将记录到该日期",
+                });
               }}
             />
           </TabsContent>
