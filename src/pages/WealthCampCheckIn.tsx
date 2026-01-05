@@ -495,7 +495,8 @@ ${reflection}`;
               journalEntries={journalEntries}
               makeupDaysLimit={3}
               onDayClick={(dayNumber, dateStr, entry) => {
-                if (entry) {
+                // 仅在完整打卡（教练梳理完成）时才允许跳转详情；否则让用户走补卡
+                if (entry && (entry as any).behavior_type) {
                   navigate(`/wealth-journal/${entry.id}`);
                 }
               }}
