@@ -151,7 +151,25 @@ export default function WealthCampCheckIn() {
     enabled: !!userId,
   });
 
-  // Check today's progress
+  // 双保险：查询社区帖子来确定分享状态（即使 journal 写回失败也能正确显示）
+  const { data: hasSharedPost = false } = useQuery({
+    queryKey: ['wealth-camp-share-status', campId, currentDay, userId],
+    queryFn: async () => {
+      if (!userId || !campId) return false;
+      
+      const { count } = await supabase
+        .from('community_posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('camp_id', campId)
+        .eq('camp_day', currentDay);
+      
+      return (count || 0) > 0;
+    },
+    enabled: !!userId && !!campId && currentDay > 0,
+  });
+
+  // Check today's progress - 使用双保险判断分享状态
   useEffect(() => {
     if (journalEntries.length > 0 && camp) {
       const todayEntry = journalEntries.find(e => e.day_number === currentDay);
@@ -159,10 +177,16 @@ export default function WealthCampCheckIn() {
         setMeditationCompleted(todayEntry.meditation_completed || false);
         setCoachingCompleted(!!todayEntry.behavior_block);
         setSavedReflection(todayEntry.meditation_reflection || '');
-        setShareCompleted((todayEntry as any).share_completed || false);
+        // 双保险：journal 记录 OR 社区帖子存在，任一为真即已完成
+        setShareCompleted((todayEntry as any).share_completed || hasSharedPost);
+      } else {
+        // 即使没有 journal 记录，如果有社区帖子也算已分享
+        setShareCompleted(hasSharedPost);
       }
+    } else {
+      setShareCompleted(hasSharedPost);
     }
-  }, [journalEntries, camp, currentDay]);
+  }, [journalEntries, camp, currentDay, hasSharedPost]);
 
   const handleRedoMeditation = () => {
     setMeditationCompleted(false);
@@ -495,6 +519,7 @@ ${reflection}`;
         onShared={() => {
           setShareCompleted(true);
           queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
+          queryClient.invalidateQueries({ queryKey: ['wealth-camp-share-status', campId, currentDay, userId] });
         }}
       />
 
