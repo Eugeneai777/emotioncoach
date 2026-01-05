@@ -69,12 +69,21 @@ serve(async (req) => {
     let beliefBlock = briefing_data?.belief_block || briefing_data?.belief_insight || '';
     let smallestProgress = briefing_data?.smallest_progress || '';
     
-    // 新增：获取卡点类型和行动建议
+    // 卡点类型和行动建议
     let behaviorType = briefing_data?.behavior_type || null;
     let emotionType = briefing_data?.emotion_type || null;
     let beliefType = briefing_data?.belief_type || null;
     let actionSuggestion = briefing_data?.action_suggestion || '';
     let summary = briefing_data?.summary || '';
+    
+    // 新增：个性化觉醒数据
+    let responsibilityItems = briefing_data?.responsibility_items || null;
+    let emotionNeed = briefing_data?.emotion_need || null;
+    let beliefSource = briefing_data?.belief_source || null;
+    let oldBelief = briefing_data?.old_belief || null;
+    let newBelief = briefing_data?.new_belief || null;
+    let givingAction = briefing_data?.giving_action || null;
+    let personalAwakening = briefing_data?.personal_awakening || null;
 
     // If no briefing data, extract from conversation
     if (!behaviorBlock && conversation_history) {
@@ -241,9 +250,9 @@ ${trendSection}
       console.error('Failed to parse scores:', e);
     }
 
-    // 构建四部曲简报内容
+    // 构建个性化觉醒简报内容
     const briefingContent = {
-      title: `Day ${day_number} 财富四部曲`,
+      title: `Day ${day_number} 财富觉醒`,
       date: new Date().toISOString(),
       
       // 第一步：行为觉察
@@ -254,6 +263,7 @@ ${trendSection}
         description: behaviorBlock,
         score: scores.behavior_score,
         analysis: scores.ai_insight.behavior_analysis,
+        responsibility_items: responsibilityItems,
       },
       
       // 第二步：情绪流动
@@ -264,6 +274,7 @@ ${trendSection}
         description: emotionBlock,
         score: scores.emotion_score,
         analysis: scores.ai_insight.emotion_analysis,
+        inner_need: emotionNeed,
       },
       
       // 第三步：信念松动
@@ -274,14 +285,21 @@ ${trendSection}
         description: beliefBlock,
         score: scores.belief_score,
         analysis: scores.ai_insight.belief_analysis,
+        source: beliefSource,
+        old_belief: oldBelief,
+        new_belief: newBelief,
       },
       
-      // 第四步：最小进步
+      // 第四步：给予行动
       step4: {
-        title: "✨ 最小进步",
+        title: "🎁 给予行动",
+        giving_action: givingAction,
         action: actionSuggestion,
         tomorrow: smallestProgress,
       },
+      
+      // 个人化觉醒
+      personal_awakening: personalAwakening,
       
       // 整体洞察
       insight: {
@@ -292,7 +310,7 @@ ${trendSection}
       }
     };
 
-    // Upsert journal entry with new fields
+    // Upsert journal entry with new personalized fields
     const { data: journalEntry, error: upsertError } = await supabaseClient
       .from('wealth_journal_entries')
       .upsert({
@@ -313,6 +331,14 @@ ${trendSection}
         emotion_score: scores.emotion_score,
         belief_score: scores.belief_score,
         ai_insight: scores.ai_insight,
+        // 新增个性化字段
+        responsibility_items: responsibilityItems,
+        emotion_need: emotionNeed,
+        belief_source: beliefSource,
+        old_belief: oldBelief,
+        new_belief: newBelief,
+        giving_action: givingAction,
+        personal_awakening: personalAwakening,
       }, {
         onConflict: 'user_id,camp_id,day_number',
       })

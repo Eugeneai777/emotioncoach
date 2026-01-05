@@ -6503,17 +6503,24 @@ export type Database = {
           behavior_type: string | null
           belief_block: string | null
           belief_score: number | null
+          belief_source: string | null
           belief_type: string | null
           briefing_content: Json | null
           camp_id: string | null
           created_at: string
           day_number: number
           emotion_block: string | null
+          emotion_need: string | null
           emotion_score: number | null
           emotion_type: string | null
+          giving_action: string | null
           id: string
           meditation_completed: boolean | null
           meditation_reflection: string | null
+          new_belief: string | null
+          old_belief: string | null
+          personal_awakening: Json | null
+          responsibility_items: string[] | null
           session_id: string | null
           smallest_progress: string | null
           updated_at: string
@@ -6528,17 +6535,24 @@ export type Database = {
           behavior_type?: string | null
           belief_block?: string | null
           belief_score?: number | null
+          belief_source?: string | null
           belief_type?: string | null
           briefing_content?: Json | null
           camp_id?: string | null
           created_at?: string
           day_number: number
           emotion_block?: string | null
+          emotion_need?: string | null
           emotion_score?: number | null
           emotion_type?: string | null
+          giving_action?: string | null
           id?: string
           meditation_completed?: boolean | null
           meditation_reflection?: string | null
+          new_belief?: string | null
+          old_belief?: string | null
+          personal_awakening?: Json | null
+          responsibility_items?: string[] | null
           session_id?: string | null
           smallest_progress?: string | null
           updated_at?: string
@@ -6553,17 +6567,24 @@ export type Database = {
           behavior_type?: string | null
           belief_block?: string | null
           belief_score?: number | null
+          belief_source?: string | null
           belief_type?: string | null
           briefing_content?: Json | null
           camp_id?: string | null
           created_at?: string
           day_number?: number
           emotion_block?: string | null
+          emotion_need?: string | null
           emotion_score?: number | null
           emotion_type?: string | null
+          giving_action?: string | null
           id?: string
           meditation_completed?: boolean | null
           meditation_reflection?: string | null
+          new_belief?: string | null
+          old_belief?: string | null
+          personal_awakening?: Json | null
+          responsibility_items?: string[] | null
           session_id?: string | null
           smallest_progress?: string | null
           updated_at?: string
