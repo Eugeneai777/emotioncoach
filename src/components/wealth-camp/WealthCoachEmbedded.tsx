@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -72,11 +72,31 @@ export const WealthCoachEmbedded = ({
   }, [messages.length, showIntro]);
 
   // dayNumber/campId 变化时重置对话（用于补卡场景）
+  // 使用 ref 跳过首次 mount，避免和自动发送 effect 竞态
+  const isFirstMount = useRef(true);
+  const prevDayRef = useRef(dayNumber);
+  const prevCampRef = useRef(campId);
+  
   useEffect(() => {
-    resetConversation();
-    setHasAutoSent(false);
-    setShowIntro(true);
-  }, [dayNumber, campId]);
+    // 首次 mount 时跳过 reset
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    
+    // 只有当 dayNumber 或 campId 真正变化时才 reset
+    if (prevDayRef.current !== dayNumber || prevCampRef.current !== campId) {
+      console.log('[WealthCoachEmbedded] Day/Camp changed, resetting conversation', { 
+        from: { day: prevDayRef.current, camp: prevCampRef.current },
+        to: { day: dayNumber, camp: campId }
+      });
+      resetConversation();
+      setHasAutoSent(false);
+      setShowIntro(true);
+      prevDayRef.current = dayNumber;
+      prevCampRef.current = campId;
+    }
+  }, [dayNumber, campId, resetConversation]);
 
   // 自动滚动到底部
   useEffect(() => {
