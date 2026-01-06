@@ -55,6 +55,20 @@ export function AwakeningArchiveTab({ campId, entries, onMakeupClick }: Awakenin
     ? Math.max(1, Math.ceil((Date.now() - new Date(camp.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1)
     : 1;
 
+  // Calculate previous week averages for comparison
+  const prevWeekStats = fullEntries.length >= 7 ? (() => {
+    const lastWeekEntries = fullEntries.slice(-7);
+    const prevWeekEntries = fullEntries.slice(-14, -7);
+    if (prevWeekEntries.length === 0) return { behavior: 0, emotion: 0, belief: 0 };
+    
+    const avg = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+    return {
+      behavior: avg(prevWeekEntries.map(e => e.behavior_score ?? 0).filter(Boolean)),
+      emotion: avg(prevWeekEntries.map(e => e.emotion_score ?? 0).filter(Boolean)),
+      belief: avg(prevWeekEntries.map(e => e.belief_score ?? 0).filter(Boolean)),
+    };
+  })() : { behavior: 0, emotion: 0, belief: 0 };
+
   if (!entries || entries.length === 0) {
     return (
       <div className="text-center py-12">
@@ -67,44 +81,33 @@ export function AwakeningArchiveTab({ campId, entries, onMakeupClick }: Awakenin
 
   return (
     <div className="space-y-4">
-      {/* Section 0: Growth Comparison - 测评 vs 训练对比 */}
-      <GrowthComparisonCard
-        campId={campId}
-        currentDay={currentDay}
-        avgBehavior={stats?.avgBehavior || '0.0'}
-        avgEmotion={stats?.avgEmotion || '0.0'}
-        avgBelief={stats?.avgBelief || '0.0'}
-        dominantBehavior={typeof stats?.dominantBehavior === 'object' ? stats.dominantBehavior.name : stats?.dominantBehavior}
-        dominantEmotion={typeof stats?.dominantEmotion === 'object' ? stats.dominantEmotion.name : stats?.dominantEmotion}
-        dominantBelief={typeof stats?.dominantBelief === 'object' ? stats.dominantBelief.name : stats?.dominantBelief}
-      />
-
-      {/* Section 1: Hero Card - 成长概览 */}
+      {/* 第一层：核心数据仪表盘 - 一眼看懂 */}
       <ArchiveHeroCard
         totalDays={stats?.totalDays || 0}
         maxDays={21}
         avgBehavior={stats?.avgBehavior || '0.0'}
         avgEmotion={stats?.avgEmotion || '0.0'}
         avgBelief={stats?.avgBelief || '0.0'}
+        prevWeekBehavior={prevWeekStats.behavior}
+        prevWeekEmotion={prevWeekStats.emotion}
+        prevWeekBelief={prevWeekStats.belief}
         trendChange={stats?.trendChange || 0}
       />
 
-      {/* Section 2: Weekly Comparison - 周维度对比 */}
-      <WeeklyComparisonChart entries={entries} />
-
-      {/* Section 3: Deep Insights - Tabs */}
+      {/* 第二层：成长轨迹 - Tab切换查看详情 */}
       <Card className="shadow-sm">
         <Tabs defaultValue="chart" className="w-full">
           <CardHeader className="pb-0 pt-3 px-3">
-            <TabsList className="grid w-full grid-cols-3 h-9">
+            <TabsList className="grid w-full grid-cols-4 h-9">
               <TabsTrigger value="chart" className="text-xs">成长曲线</TabsTrigger>
-              <TabsTrigger value="calendar" className="text-xs">旅程日历</TabsTrigger>
-              <TabsTrigger value="action" className="text-xs">行动追踪</TabsTrigger>
+              <TabsTrigger value="weekly" className="text-xs">周对比</TabsTrigger>
+              <TabsTrigger value="calendar" className="text-xs">日历</TabsTrigger>
+              <TabsTrigger value="assessment" className="text-xs">测评对比</TabsTrigger>
             </TabsList>
           </CardHeader>
           <CardContent className="p-3 pt-3">
+            {/* 成长曲线 */}
             <TabsContent value="chart" className="mt-0">
-              {/* Use fullEntries from hook which has correct score fields */}
               <WealthProgressChart entries={fullEntries.map(e => ({
                 day_number: e.day_number,
                 behavior_score: e.behavior_score ?? null,
@@ -113,7 +116,13 @@ export function AwakeningArchiveTab({ campId, entries, onMakeupClick }: Awakenin
                 created_at: e.created_at,
               }))} />
             </TabsContent>
+
+            {/* 周维度对比 */}
+            <TabsContent value="weekly" className="mt-0">
+              <WeeklyComparisonChart entries={entries} className="border-0 shadow-none" />
+            </TabsContent>
             
+            {/* 旅程日历 */}
             <TabsContent value="calendar" className="mt-0">
               {camp ? (
                 <WealthJourneyCalendar
@@ -146,36 +155,62 @@ export function AwakeningArchiveTab({ campId, entries, onMakeupClick }: Awakenin
                 </div>
               )}
             </TabsContent>
-            
-            <TabsContent value="action" className="mt-0">
-              <ActionTrackingStats entries={fullEntries as any} />
+
+            {/* 测评对比 - Before/After */}
+            <TabsContent value="assessment" className="mt-0">
+              <GrowthComparisonCard
+                campId={campId}
+                currentDay={currentDay}
+                avgBehavior={stats?.avgBehavior || '0.0'}
+                avgEmotion={stats?.avgEmotion || '0.0'}
+                avgBelief={stats?.avgBelief || '0.0'}
+                dominantBehavior={typeof stats?.dominantBehavior === 'object' ? stats.dominantBehavior.name : stats?.dominantBehavior}
+                dominantEmotion={typeof stats?.dominantEmotion === 'object' ? stats.dominantEmotion.name : stats?.dominantEmotion}
+                dominantBelief={typeof stats?.dominantBelief === 'object' ? stats.dominantBelief.name : stats?.dominantBelief}
+                embedded={true}
+              />
             </TabsContent>
           </CardContent>
         </Tabs>
       </Card>
 
-      {/* Section 4: Growth Imprints - 成长印记 */}
-      {/* Profile Evolution Card - 我的财富画像 */}
-      {wealthProfile && (
-        <ProfileEvolutionCard
-          currentProfile={wealthProfile}
-          evolutionInsight={evolutionInsight}
-          stickingPoints={stats ? {
-            dominantBehavior: stats.dominantBehavior,
-            dominantEmotion: stats.dominantEmotion,
-            dominantBelief: stats.dominantBelief,
-            totalDays: stats.totalDays,
-          } : undefined}
-        />
-      )}
+      {/* 第三层：成长印记 - 收藏式设计 */}
+      <div className="space-y-4">
+        {/* 我的财富画像 */}
+        {wealthProfile && (
+          <ProfileEvolutionCard
+            currentProfile={wealthProfile}
+            evolutionInsight={evolutionInsight}
+            stickingPoints={stats ? {
+              dominantBehavior: stats.dominantBehavior,
+              dominantEmotion: stats.dominantEmotion,
+              dominantBelief: stats.dominantBelief,
+              totalDays: stats.totalDays,
+            } : undefined}
+          />
+        )}
 
-      {/* New Beliefs Collection with Favorite/Reminder - 我的新信念收集 */}
-      {stats?.uniqueNewBeliefs && stats.uniqueNewBeliefs.length > 0 && (
-        <NewBeliefsCollection 
-          beliefs={stats.uniqueNewBeliefs} 
-          campId={campId}
-        />
-      )}
+        {/* 我的新信念收集 */}
+        {stats?.uniqueNewBeliefs && stats.uniqueNewBeliefs.length > 0 && (
+          <NewBeliefsCollection 
+            beliefs={stats.uniqueNewBeliefs} 
+            campId={campId}
+          />
+        )}
+
+        {/* 行动追踪统计 */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2 pt-4 px-4">
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <span>🎯</span>
+              行动追踪
+            </h3>
+          </CardHeader>
+          <CardContent className="px-4 pb-4">
+            <ActionTrackingStats entries={fullEntries as any} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

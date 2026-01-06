@@ -27,6 +27,7 @@ interface GrowthComparisonCardProps {
   dominantBehavior?: string;
   dominantEmotion?: string;
   dominantBelief?: string;
+  embedded?: boolean; // When true, renders without Card wrapper
 }
 
 export function GrowthComparisonCard({
@@ -38,6 +39,7 @@ export function GrowthComparisonCard({
   dominantBehavior,
   dominantEmotion,
   dominantBelief,
+  embedded = false,
 }: GrowthComparisonCardProps) {
   const navigate = useNavigate();
   const { baseline, isLoading } = useAssessmentBaseline(campId);
@@ -115,6 +117,206 @@ export function GrowthComparisonCard({
     navigate('/wealth-block?reassess=true');
   };
 
+  const content = (
+    <div className={embedded ? "space-y-4" : ""}>
+      {/* Re-assessment Prompt for Day 7 and Day 21 */}
+      {shouldShowReassessmentPrompt && (
+        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg p-3">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="text-sm font-medium flex items-center gap-1.5">
+                <RefreshCw className="w-4 h-4 text-amber-600" />
+                {currentDay === 7 ? '第一周里程碑' : '训练营结业'}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {currentDay === 7 
+                  ? '完成7天训练！重新测评验证你的进步'
+                  : '恭喜完成21天训练！重新测评见证蜕变'}
+              </p>
+            </div>
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="border-amber-500/30 hover:bg-amber-500/10"
+              onClick={handleReassessment}
+            >
+              重新测评
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* T0 vs Current comparison */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* T0 Baseline */}
+        <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <ClipboardList className="w-3.5 h-3.5" />
+            <span>测评基线</span>
+            <span className="text-[10px]">({assessmentDate})</span>
+          </div>
+          <div className="text-lg font-semibold">
+            卡点指数 <span className="text-primary">{baseline.total_score}</span>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {baselinePattern}
+          </div>
+        </div>
+
+        {/* Current Status */}
+        <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-3 space-y-2 border border-primary/20">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span>当前觉醒</span>
+          </div>
+          <div className="text-lg font-semibold">
+            觉醒指数 <span className="text-primary">{awakeningIndex}</span>
+          </div>
+          <div className={`text-xs ${awakeningStatus.color}`}>
+            {awakeningStatus.label}
+          </div>
+        </div>
+      </div>
+
+      {/* Radar Chart - Before/After Comparison */}
+      {showRadar && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-medium text-muted-foreground">三层对比雷达图</div>
+            <button 
+              onClick={() => setShowRadar(false)}
+              className="text-[10px] text-muted-foreground hover:text-foreground"
+            >
+              收起
+            </button>
+          </div>
+          <div className="h-48 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                <PolarGrid stroke="hsl(var(--border))" />
+                <PolarAngleAxis 
+                  dataKey="dimension" 
+                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <PolarRadiusAxis 
+                  angle={90} 
+                  domain={[0, 100]} 
+                  tick={{ fontSize: 9 }}
+                  tickCount={5}
+                />
+                <Radar
+                  name="卡点程度"
+                  dataKey="卡点程度"
+                  stroke="hsl(var(--destructive))"
+                  fill="hsl(var(--destructive))"
+                  fillOpacity={0.2}
+                  strokeWidth={2}
+                />
+                <Radar
+                  name="觉醒程度"
+                  dataKey="觉醒程度"
+                  stroke="hsl(var(--primary))"
+                  fill="hsl(var(--primary))"
+                  fillOpacity={0.3}
+                  strokeWidth={2}
+                />
+                <Legend 
+                  wrapperStyle={{ fontSize: '11px' }}
+                  iconSize={8}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="text-[10px] text-center text-muted-foreground">
+            红色区域越小、蓝色区域越大，说明转化越显著
+          </p>
+        </div>
+      )}
+
+      {!showRadar && (
+        <button 
+          onClick={() => setShowRadar(true)}
+          className="w-full text-xs text-primary hover:underline py-1"
+        >
+          展开雷达图对比
+        </button>
+      )}
+
+      {/* Arrow connector */}
+      <div className="flex justify-center -my-1">
+        <ArrowRight className="w-4 h-4 text-muted-foreground rotate-90 sm:rotate-0" />
+      </div>
+
+      {/* Layer transformation progress */}
+      <div className="space-y-3">
+        <div className="text-xs font-medium text-muted-foreground">三层转化进度</div>
+        
+        {/* Behavior Layer */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
+              行为层
+            </span>
+            <span className="text-muted-foreground">
+              {baseline.dominantPoorName || '—'} → {dominantBehavior || '觉察中'}
+            </span>
+            <span className="font-medium text-primary">{behaviorRate}%</span>
+          </div>
+          <Progress value={behaviorRate} className="h-1.5" />
+        </div>
+
+        {/* Emotion Layer */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
+              情绪层
+            </span>
+            <span className="text-muted-foreground">
+              {baseline.dominantEmotionName || '—'} → {dominantEmotion || '觉察中'}
+            </span>
+            <span className="font-medium text-primary">{emotionRate}%</span>
+          </div>
+          <Progress value={emotionRate} className="h-1.5" />
+        </div>
+
+        {/* Belief Layer */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              信念层
+            </span>
+            <span className="text-muted-foreground">
+              {baseline.dominantBeliefName || '—'} → {dominantBelief || '觉察中'}
+            </span>
+            <span className="font-medium text-primary">{beliefRate}%</span>
+          </div>
+          <Progress value={beliefRate} className="h-1.5" />
+        </div>
+      </div>
+
+      {/* AI Insight */}
+      <div className="bg-muted/30 rounded-lg p-3 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">💬 AI洞察：</span>
+        {emotionRate >= behaviorRate && emotionRate >= beliefRate ? (
+          <span>你的情绪层转化最快，内在安定感正在增强；继续保持觉察...</span>
+        ) : behaviorRate >= emotionRate && behaviorRate >= beliefRate ? (
+          <span>你的行为层转化领先，{baseline.dominantPoorName}模式正在松动；继续实践新行为...</span>
+        ) : (
+          <span>你的信念层转化显著，新信念正在扎根；用行动巩固这份转变...</span>
+        )}
+      </div>
+    </div>
+  );
+
+  // Embedded mode: no wrapper
+  if (embedded) {
+    return content;
+  }
+
+  // Standalone mode: with Card wrapper
   return (
     <Card className="shadow-sm overflow-hidden">
       <CardHeader className="pb-2 pt-3 px-4">
@@ -127,195 +329,7 @@ export function GrowthComparisonCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-2 space-y-4">
-        {/* Re-assessment Prompt for Day 7 and Day 21 */}
-        {shouldShowReassessmentPrompt && (
-          <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg p-3">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="text-sm font-medium flex items-center gap-1.5">
-                  <RefreshCw className="w-4 h-4 text-amber-600" />
-                  {currentDay === 7 ? '第一周里程碑' : '训练营结业'}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {currentDay === 7 
-                    ? '完成7天训练！重新测评验证你的进步'
-                    : '恭喜完成21天训练！重新测评见证蜕变'}
-                </p>
-              </div>
-              <Button 
-                size="sm" 
-                variant="outline"
-                className="border-amber-500/30 hover:bg-amber-500/10"
-                onClick={handleReassessment}
-              >
-                重新测评
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* T0 vs Current comparison */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* T0 Baseline */}
-          <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <ClipboardList className="w-3.5 h-3.5" />
-              <span>测评基线</span>
-              <span className="text-[10px]">({assessmentDate})</span>
-            </div>
-            <div className="text-lg font-semibold">
-              卡点指数 <span className="text-primary">{baseline.total_score}</span>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {baselinePattern}
-            </div>
-          </div>
-
-          {/* Current Status */}
-          <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-3 space-y-2 border border-primary/20">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
-              <span>当前觉醒</span>
-            </div>
-            <div className="text-lg font-semibold">
-              觉醒指数 <span className="text-primary">{awakeningIndex}</span>
-            </div>
-            <div className={`text-xs ${awakeningStatus.color}`}>
-              {awakeningStatus.label}
-            </div>
-          </div>
-        </div>
-
-        {/* Radar Chart - Before/After Comparison */}
-        {showRadar && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-medium text-muted-foreground">三层对比雷达图</div>
-              <button 
-                onClick={() => setShowRadar(false)}
-                className="text-[10px] text-muted-foreground hover:text-foreground"
-              >
-                收起
-              </button>
-            </div>
-            <div className="h-48 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                  <PolarGrid stroke="hsl(var(--border))" />
-                  <PolarAngleAxis 
-                    dataKey="dimension" 
-                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <PolarRadiusAxis 
-                    angle={90} 
-                    domain={[0, 100]} 
-                    tick={{ fontSize: 9 }}
-                    tickCount={5}
-                  />
-                  <Radar
-                    name="卡点程度"
-                    dataKey="卡点程度"
-                    stroke="hsl(var(--destructive))"
-                    fill="hsl(var(--destructive))"
-                    fillOpacity={0.2}
-                    strokeWidth={2}
-                  />
-                  <Radar
-                    name="觉醒程度"
-                    dataKey="觉醒程度"
-                    stroke="hsl(var(--primary))"
-                    fill="hsl(var(--primary))"
-                    fillOpacity={0.3}
-                    strokeWidth={2}
-                  />
-                  <Legend 
-                    wrapperStyle={{ fontSize: '11px' }}
-                    iconSize={8}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-            <p className="text-[10px] text-center text-muted-foreground">
-              红色区域越小、蓝色区域越大，说明转化越显著
-            </p>
-          </div>
-        )}
-
-        {!showRadar && (
-          <button 
-            onClick={() => setShowRadar(true)}
-            className="w-full text-xs text-primary hover:underline py-1"
-          >
-            展开雷达图对比
-          </button>
-        )}
-
-        {/* Arrow connector */}
-        <div className="flex justify-center -my-1">
-          <ArrowRight className="w-4 h-4 text-muted-foreground rotate-90 sm:rotate-0" />
-        </div>
-
-        {/* Layer transformation progress */}
-        <div className="space-y-3">
-          <div className="text-xs font-medium text-muted-foreground">三层转化进度</div>
-          
-          {/* Behavior Layer */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
-                行为层
-              </span>
-              <span className="text-muted-foreground">
-                {baseline.dominantPoorName || '—'} → {dominantBehavior || '觉察中'}
-              </span>
-              <span className="font-medium text-primary">{behaviorRate}%</span>
-            </div>
-            <Progress value={behaviorRate} className="h-1.5" />
-          </div>
-
-          {/* Emotion Layer */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose-500" />
-                情绪层
-              </span>
-              <span className="text-muted-foreground">
-                {baseline.dominantEmotionName || '—'} → {dominantEmotion || '觉察中'}
-              </span>
-              <span className="font-medium text-primary">{emotionRate}%</span>
-            </div>
-            <Progress value={emotionRate} className="h-1.5" />
-          </div>
-
-          {/* Belief Layer */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                信念层
-              </span>
-              <span className="text-muted-foreground">
-                {baseline.dominantBeliefName || '—'} → {dominantBelief || '觉察中'}
-              </span>
-              <span className="font-medium text-primary">{beliefRate}%</span>
-            </div>
-            <Progress value={beliefRate} className="h-1.5" />
-          </div>
-        </div>
-
-        {/* AI Insight */}
-        <div className="bg-muted/30 rounded-lg p-3 text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">💬 AI洞察：</span>
-          {emotionRate >= behaviorRate && emotionRate >= beliefRate ? (
-            <span>你的情绪层转化最快，内在安定感正在增强；继续保持觉察...</span>
-          ) : behaviorRate >= emotionRate && behaviorRate >= beliefRate ? (
-            <span>你的行为层转化领先，{baseline.dominantPoorName}模式正在松动；继续实践新行为...</span>
-          ) : (
-            <span>你的信念层转化显著，新信念正在扎根；用行动巩固这份转变...</span>
-          )}
-        </div>
+        {content}
       </CardContent>
     </Card>
   );
