@@ -147,7 +147,14 @@ export default function WealthBlockAssessmentPage() {
           ((5 - currentResult.beliefScore) / 4 * 34)
         );
 
-        await supabase.functions.invoke('sync-wealth-profile', {
+        console.log('🔄 开始同步用户财富画像...', { 
+          user_id: user.id, 
+          assessment_id: savedRecord?.id,
+          health_score: healthScore,
+          reaction_pattern: currentResult.reactionPattern 
+        });
+
+        const { data: profileData, error: profileError } = await supabase.functions.invoke('sync-wealth-profile', {
           body: {
             user_id: user.id,
             assessment_result: {
@@ -161,9 +168,14 @@ export default function WealthBlockAssessmentPage() {
             }
           }
         });
-        console.log('✅ 用户财富画像同步成功');
+        
+        if (profileError) {
+          console.error('❌ 用户画像同步失败:', profileError);
+        } else {
+          console.log('✅ 用户财富画像同步成功:', profileData);
+        }
       } catch (profileError) {
-        console.error('Failed to sync wealth profile:', profileError);
+        console.error('❌ 调用 sync-wealth-profile 异常:', profileError);
         // Don't fail the save if profile sync fails
       }
       

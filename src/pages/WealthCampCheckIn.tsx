@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Lock, TrendingUp, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Check, Lock, TrendingUp, ChevronRight, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
 import { useWealthCampAnalytics } from '@/hooks/useWealthCampAnalytics';
+import { useAdaptiveWeights } from '@/hooks/useAdaptiveWeights';
 interface DailyTask {
   id: string;
   title: string;
@@ -88,6 +90,15 @@ export default function WealthCampCheckIn() {
 
   // Use URL campId or camp.id from query result
   const campId = urlCampId || camp?.id;
+  
+  // 自适应权重 - 每周自动计算训练重点
+  const { 
+    focusAreas, 
+    adjustmentReason, 
+    weekNumber, 
+    calculateWeights,
+    isLoading: weightsLoading 
+  } = useAdaptiveWeights(campId);
 
   // 动态计算当前是第几天（从1开始）
   const currentDay = useMemo(() => {
@@ -395,6 +406,26 @@ ${reflection}`;
           </TabsList>
 
           <TabsContent value="today" className="space-y-6 mt-6">
+            {/* Weekly Training Focus - 显示本周训练重点 */}
+            {adjustmentReason && focusAreas.length > 0 && (
+              <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-5 h-5 text-blue-600" />
+                    <span className="font-medium text-blue-800 dark:text-blue-200">第{weekNumber}周训练重点</span>
+                  </div>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">{adjustmentReason}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {focusAreas.map((area) => (
+                      <Badge key={area} variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                        {area}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             {/* Assessment Focus Card - 仅前3天显示 */}
             {currentDay <= 3 && (
               <AssessmentFocusCard variant="checkin" />
