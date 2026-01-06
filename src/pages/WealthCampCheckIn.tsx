@@ -18,6 +18,7 @@ import CampShareDialog from '@/components/camp/CampShareDialog';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
+import { useWealthCampAnalytics } from '@/hooks/useWealthCampAnalytics';
 interface DailyTask {
   id: string;
   title: string;
@@ -43,6 +44,8 @@ export default function WealthCampCheckIn() {
   const [makeupDayNumber, setMakeupDayNumber] = useState<number | null>(null);
   const [hasShownCelebration, setHasShownCelebration] = useState(false); // 防止重复显示弹窗
   const { toast } = useToast();
+  const { trackDayCheckin, trackShare } = useWealthCampAnalytics();
+  
   // Fetch camp data - if no campId, find user's active wealth camp
   const { data: camp, isLoading: campLoading } = useQuery({
     queryKey: ['wealth-camp', urlCampId],
@@ -148,6 +151,9 @@ export default function WealthCampCheckIn() {
       const key = `wealth-camp-invite-${campId}-${currentDay}`;
       localStorage.setItem(key, 'true');
       setInviteCompleted(true);
+      
+      // 埋点：邀请好友
+      trackShare('invite', 'clicked', false, { day_number: currentDay });
     }
   };
 
@@ -277,6 +283,11 @@ ${reflection}`;
     setHasShownCelebration(false); // 重置标记，允许显示弹窗
     // 刷新日记数据
     queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
+    
+    // 埋点：每日打卡完成 + 里程碑追踪
+    if (campId) {
+      trackDayCheckin(currentDay, campId);
+    }
   };
 
 
@@ -305,7 +316,10 @@ ${reflection}`;
       title: '打卡分享',
       icon: '📢',
       completed: shareCompleted,
-      action: () => setShowShareDialog(true),
+      action: () => {
+        trackShare('journal', 'clicked', false, { day_number: currentDay });
+        setShowShareDialog(true);
+      },
       locked: !coachingCompleted,
     },
     {
@@ -561,6 +575,8 @@ ${reflection}`;
         action={journalEntries.find(e => e.day_number === currentDay)?.giving_action || undefined}
         onShared={() => {
           setShareCompleted(true);
+          // 埋点：分享完成
+          trackShare('journal', 'completed', false, { day_number: currentDay });
           queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
           queryClient.invalidateQueries({ queryKey: ['wealth-camp-share-status', campId, currentDay, userId] });
         }}

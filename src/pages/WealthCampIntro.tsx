@@ -7,10 +7,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { AssessmentFocusCard } from "@/components/wealth-camp/AssessmentFocusCard";
+import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 
 const WealthCampIntro = () => {
   const navigate = useNavigate();
   const [showStartDialog, setShowStartDialog] = useState(false);
+  const { trackAssessmentTocamp } = useWealthCampAnalytics();
+
+  // 埋点：页面加载时追踪
+  useEffect(() => {
+    trackAssessmentTocamp('camp_intro_viewed');
+  }, []);
 
   // Check if user has already joined the camp
   const { data: existingCamp } = useQuery({
@@ -457,7 +464,10 @@ const WealthCampIntro = () => {
             </Button>
           ) : (
             <Button
-              onClick={() => setShowStartDialog(true)}
+              onClick={() => {
+                trackAssessmentTocamp('camp_join_clicked');
+                setShowStartDialog(true);
+              }}
               className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-base"
             >
               立即加入 21 天训练营
@@ -477,7 +487,10 @@ const WealthCampIntro = () => {
           icon: "💰",
           price: 0,
         }}
-        onSuccess={(campId) => navigate("/wealth-camp-checkin")}
+        onSuccess={(campId) => {
+          trackAssessmentTocamp('camp_joined', { camp_id: campId });
+          navigate("/wealth-camp-checkin");
+        }}
       />
     </div>
     </>
