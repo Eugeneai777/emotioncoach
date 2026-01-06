@@ -111,6 +111,31 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
+    // Fetch coach memory for personalized continuity
+    const { data: coachMemories } = await serviceClient
+      .from('user_coach_memory')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('importance_score', { ascending: false })
+      .limit(5);
+
+    // Build memory context for injection into prompt
+    let memoryContext = '';
+    if (coachMemories && coachMemories.length > 0) {
+      memoryContext = `\n\n【教练记忆 - 用户过往重要觉察】
+以下是用户之前分享过的重要觉察点，请在对话中自然地引用，让用户感受到"你记得我"：
+`;
+      coachMemories.forEach((m: any, index: number) => {
+        const layerLabel = m.layer === 'behavior' ? '行为层' : m.layer === 'emotion' ? '情绪层' : m.layer === 'belief' ? '信念层' : '';
+        memoryContext += `${index + 1}. ${layerLabel ? `[${layerLabel}]` : ''} ${m.content}\n`;
+      });
+      memoryContext += `
+使用方式：
+- "你之前提到过..."
+- "我记得你说过..."
+- "上次你觉察到...今天有什么新发现吗？"`;
+    }
+
     // Check yesterday's action status for personalized greeting
     const { data: recentEntries } = await serviceClient
       .from('wealth_journal_entries')
@@ -195,7 +220,11 @@ serve(async (req) => {
 - 核心提问：${coachStrategy.keyQuestion}
 - 注意避免：${coachStrategy.avoidance}
 ${actionContext}
+${memoryContext}
 `;
+    } else if (memoryContext) {
+      // Even without profile, include memories if they exist
+      profileSection = memoryContext;
     }
 
     const basePrompt = coachTemplate?.system_prompt || `你好，我是劲老师，一位专业的心理教练。我的目标是引导你通过"财富教练四问法"，每天找到一个最小可进步点，从而解锁财富流动。`;

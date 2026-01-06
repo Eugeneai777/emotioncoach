@@ -361,6 +361,19 @@ export const useDynamicCoachChat = (
                   description: `记录了 Day ${dayNumberToUse} 的财富觉察`,
                 });
                 
+                // Extract and save coach memories for future personalization
+                try {
+                  await supabase.functions.invoke('extract-coach-memory', {
+                    body: {
+                      conversation: messagesRef.current,
+                      session_id: journalResult.journal?.id,
+                    }
+                  });
+                  console.log('✅ 教练记忆提取完成');
+                } catch (memoryError) {
+                  console.error('提取教练记忆失败:', memoryError);
+                }
+                
                 if (onBriefingGenerated) {
                   onBriefingGenerated({
                     journalId: journalResult.journal?.id,

@@ -5870,6 +5870,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_coach_memory: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          importance_score: number | null
+          last_mentioned_at: string | null
+          layer: string | null
+          memory_type: string
+          mentioned_count: number | null
+          source_session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          importance_score?: number | null
+          last_mentioned_at?: string | null
+          layer?: string | null
+          memory_type: string
+          mentioned_count?: number | null
+          source_session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          importance_score?: number | null
+          last_mentioned_at?: string | null
+          layer?: string | null
+          memory_type?: string
+          mentioned_count?: number | null
+          source_session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_feature_usage: {
         Row: {
           created_at: string
