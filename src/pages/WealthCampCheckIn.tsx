@@ -560,11 +560,10 @@ ${reflection}`;
             {/* Invite Card */}
             {userId && (
               <div id="invite-card">
-                <WealthCampInviteCard
+              <WealthCampInviteCard
                   campId={campId}
                   dayNumber={currentDay}
                   userId={userId}
-                  onInviteClick={handleInviteClick}
                 />
               </div>
             )}
