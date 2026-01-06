@@ -14,6 +14,8 @@ import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { useWealthCampAnalytics } from '@/hooks/useWealthCampAnalytics';
 import { ActionCompletionDialog } from '@/components/wealth-block/ActionCompletionDialog';
 import { useToast } from '@/hooks/use-toast';
+import { CoachMemoriesCard } from '@/components/wealth-camp/CoachMemoriesCard';
+import confetti from 'canvas-confetti';
 
 interface AiInsight {
   behavior_analysis?: string;
@@ -438,6 +440,9 @@ export default function WealthJournalDetail() {
             </CardContent>
           </Card>
         )}
+
+        {/* 教练记忆档案 */}
+        <CoachMemoriesCard limit={5} showViewAll={true} />
       </div>
 
       {/* Share Dialog */}
@@ -478,6 +483,13 @@ export default function WealthJournalDetail() {
                 variant: 'destructive',
               });
             } else {
+              // 庆祝动画
+              confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+              });
+              
               toast({
                 title: '🎉 太棒了！',
                 description: '给予行动已完成，这是财富流动的开始',
