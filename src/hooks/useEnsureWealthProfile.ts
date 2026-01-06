@@ -14,6 +14,7 @@ export const useEnsureWealthProfile = () => {
     const checkAndSyncProfile = async () => {
       if (!user?.id || isChecking) return;
       
+      console.log('[useEnsureWealthProfile] 🔄 开始检查用户画像, userId:', user.id);
       setIsChecking(true);
       
       try {
@@ -25,13 +26,13 @@ export const useEnsureWealthProfile = () => {
           .maybeSingle();
         
         if (profileError) {
-          console.error('[useEnsureWealthProfile] 查询画像失败:', profileError);
+          console.error('[useEnsureWealthProfile] ❌ 查询画像失败:', profileError);
           setProfileExists(false);
           return;
         }
         
         if (existingProfile) {
-          console.log('[useEnsureWealthProfile] ✅ 用户画像已存在');
+          console.log('[useEnsureWealthProfile] ✅ 用户画像已存在, id:', existingProfile.id);
           setProfileExists(true);
           return;
         }

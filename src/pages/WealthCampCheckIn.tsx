@@ -110,14 +110,25 @@ export default function WealthCampCheckIn() {
   useEffect(() => {
     if (!campId || weightsLoading) return;
     
-    // 如果没有调整理由，说明没有权重数据，需要计算
-    const needsCalculation = !adjustmentReason || adjustmentReason === '初始阶段，均衡探索三层';
+    // 计算当前应该是第几周
+    const expectedWeek = Math.ceil(currentDay / 7);
     
-    if (needsCalculation && currentDay > 1) {
-      console.log('📊 自动计算本周训练权重...');
+    // 如果当前周数大于已保存的周数，需要重新计算
+    const needsCalculation = expectedWeek > weekNumber && currentDay > 1;
+    
+    console.log('📊 权重检查:', { 
+      currentDay, 
+      expectedWeek, 
+      savedWeek: weekNumber, 
+      needsCalculation,
+      adjustmentReason 
+    });
+    
+    if (needsCalculation) {
+      console.log('📊 触发本周训练权重计算...');
       calculateWeights();
     }
-  }, [campId, weightsLoading, adjustmentReason, currentDay, calculateWeights]);
+  }, [campId, weightsLoading, currentDay, weekNumber, calculateWeights, adjustmentReason]);
 
   // Fetch current day meditation
   const { data: meditation } = useQuery({
