@@ -2,6 +2,7 @@ import { Target, Heart, Brain, Lightbulb, Sparkles, TrendingUp } from 'lucide-re
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WealthProgressChart } from './WealthProgressChart';
 import { ProfileEvolutionCard } from './ProfileEvolutionCard';
+import { ActionTrackingStats } from './ActionTrackingStats';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
 import { useProfileEvolution } from '@/hooks/useProfileEvolution';
 
@@ -20,7 +21,7 @@ interface AwakeningArchiveTabProps {
 }
 
 export function AwakeningArchiveTab({ campId, entries }: AwakeningArchiveTabProps) {
-  const { stats } = useWealthJournalEntries({ campId });
+  const { stats, entries: fullEntries } = useWealthJournalEntries({ campId });
   const { profile: wealthProfile, evolutionInsight } = useProfileEvolution(campId);
 
   if (!entries || entries.length === 0) {
@@ -89,6 +90,9 @@ export function AwakeningArchiveTab({ campId, entries }: AwakeningArchiveTabProp
 
       {/* Growth Chart */}
       <WealthProgressChart entries={entries} />
+
+      {/* Action Tracking Stats */}
+      <ActionTrackingStats entries={fullEntries as any} />
 
       {/* Core Sticking Points */}
       {stats && (stats.dominantBehavior || stats.dominantEmotion || stats.dominantBelief) && (

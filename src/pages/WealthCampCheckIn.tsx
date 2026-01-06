@@ -56,7 +56,8 @@ export default function WealthCampCheckIn() {
   const [savedReflection, setSavedReflection] = useState('');
   const [makeupDayNumber, setMakeupDayNumber] = useState<number | null>(null);
   const [hasShownCelebration, setHasShownCelebration] = useState(false);
-  const [pendingAction, setPendingAction] = useState<{ action: string; entryId: string; dayNumber: number } | null>(null);
+  const [pendingActions, setPendingActions] = useState<Array<{ action: string; entryId: string; dayNumber: number }>>([]);
+  const [selectedPendingAction, setSelectedPendingAction] = useState<{ action: string; entryId: string; dayNumber: number } | null>(null);
   const { toast } = useToast();
   const { trackDayCheckin, trackShare } = useWealthCampAnalytics();
   
@@ -242,17 +243,16 @@ export default function WealthCampCheckIn() {
         setShareCompleted(hasSharedPost);
       }
       
-      // Check for pending actions from yesterday
-      const yesterdayEntry = journalEntries.find(e => e.day_number === currentDay - 1);
-      if (yesterdayEntry?.giving_action && !(yesterdayEntry as any).action_completed_at) {
-        setPendingAction({
-          action: yesterdayEntry.giving_action,
-          entryId: yesterdayEntry.id,
-          dayNumber: yesterdayEntry.day_number
-        });
-      } else {
-        setPendingAction(null);
-      }
+      // Check for ALL pending actions (not just yesterday)
+      const allPendingActions = journalEntries
+        .filter(e => e.giving_action && !(e as any).action_completed_at && e.day_number < currentDay)
+        .sort((a, b) => b.day_number - a.day_number) // Most recent first
+        .map(e => ({
+          action: e.giving_action!,
+          entryId: e.id,
+          dayNumber: e.day_number
+        }));
+      setPendingActions(allPendingActions);
     } else {
       setShareCompleted(hasSharedPost);
     }
@@ -523,8 +523,11 @@ ${reflection}`;
             <DailyActionCard
               dayNumber={currentDay}
               campId={campId}
-              pendingAction={pendingAction}
-              onCompletePending={() => setShowActionDialog(true)}
+              pendingActions={pendingActions}
+              onCompletePending={(action) => {
+                setSelectedPendingAction(action);
+                setShowActionDialog(true);
+              }}
             />
 
 
@@ -677,12 +680,15 @@ ${reflection}`;
       />
 
       {/* Action Completion Dialog */}
-      {pendingAction && (
+      {selectedPendingAction && (
         <ActionCompletionDialog
           open={showActionDialog}
-          onOpenChange={setShowActionDialog}
-          action={pendingAction.action}
-          journalId={pendingAction.entryId}
+          onOpenChange={(open) => {
+            setShowActionDialog(open);
+            if (!open) setSelectedPendingAction(null);
+          }}
+          action={selectedPendingAction.action}
+          journalId={selectedPendingAction.entryId}
           campId={campId}
           onComplete={async (reflection, difficulty, witnessResult) => {
             const { error } = await supabase
@@ -692,7 +698,7 @@ ${reflection}`;
                 action_reflection: reflection,
                 action_difficulty: difficulty,
               })
-              .eq('id', pendingAction.entryId);
+              .eq('id', selectedPendingAction.entryId);
 
             if (error) {
               toast({
@@ -715,8 +721,8 @@ ${reflection}`;
                       trigger_type: 'action_completion_celebration',
                       user_id: user.id,
                       context: {
-                        giving_action: pendingAction.action,
-                        day_number: pendingAction.dayNumber,
+                        giving_action: selectedPendingAction.action,
+                        day_number: selectedPendingAction.dayNumber,
                         reflection: reflection,
                         witness_message: witnessResult?.witness_statement || witnessResult?.witness_message
                       }
@@ -727,7 +733,8 @@ ${reflection}`;
                 console.error('触发庆祝通知失败:', notifyError);
               }
               
-              setPendingAction(null);
+              setSelectedPendingAction(null);
+              setPendingActions(prev => prev.filter(a => a.entryId !== selectedPendingAction.entryId));
               queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
             }
           }}
