@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { BackfillMemoriesButton } from '@/components/wealth-camp/BackfillMemoriesButton';
 
 interface AwakeningMoment {
   id: string;
@@ -261,6 +262,7 @@ export default function WealthAwakeningArchive() {
             </h1>
             <p className="text-xs text-muted-foreground">你的专属成长记录</p>
           </div>
+          <BackfillMemoriesButton />
           <Button variant="outline" size="sm" onClick={handleShare}>
             <Share2 className="w-4 h-4 mr-1" />
             分享

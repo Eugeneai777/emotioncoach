@@ -131,6 +131,8 @@ memory_type说明：
 
     const memories = parsedContent.memories || [];
     
+    console.log(`🔄 extract-coach-memory: user=${user.id}, session=${session_id}, 提取到 ${memories.length} 条`);
+    
     if (memories.length === 0) {
       return new Response(JSON.stringify({ memories: [], saved: 0 }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -142,8 +144,34 @@ memory_type说明：
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+    
+    // 查询现有记忆进行去重
+    const { data: existingMemories } = await serviceClient
+      .from('user_coach_memory')
+      .select('content')
+      .eq('user_id', user.id);
+    
+    // 过滤已存在的相似记忆（简单文本匹配）
+    const uniqueMemories = memories.filter((m: any) => {
+      const newContentPrefix = m.content.slice(0, 20);
+      const isDuplicate = existingMemories?.some((e: any) => 
+        e.content.includes(newContentPrefix) || 
+        m.content.includes(e.content.slice(0, 20))
+      );
+      if (isDuplicate) {
+        console.log(`⏭️ 跳过重复记忆: ${m.content.slice(0, 30)}...`);
+      }
+      return !isDuplicate;
+    });
+    
+    if (uniqueMemories.length === 0) {
+      console.log('ℹ️ 所有记忆已存在，无需保存');
+      return new Response(JSON.stringify({ memories: [], saved: 0, skipped: memories.length }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    const memoriesToInsert = memories.map((m: any) => ({
+    const memoriesToInsert = uniqueMemories.slice(0, 3).map((m: any) => ({
       user_id: user.id,
       content: m.content,
       memory_type: m.memory_type || 'insight',
