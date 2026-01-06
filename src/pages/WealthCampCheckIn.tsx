@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Check, Lock, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -463,24 +464,52 @@ ${reflection}`;
 
           <TabsContent value="today" className="space-y-6 mt-6">
             {/* 补卡模式提示条 */}
-            {makeupDayNumber && (
-              <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-amber-600">📅</span>
-                  <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                    正在补打 Day {makeupDayNumber}
-                  </span>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-amber-600 hover:text-amber-800"
-                  onClick={() => setMakeupDayNumber(null)}
+            <AnimatePresence>
+              {makeupDayNumber && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="relative overflow-hidden rounded-xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 p-[1px] shadow-lg shadow-amber-200/50 dark:shadow-amber-900/30"
                 >
-                  返回今日
-                </Button>
-              </div>
-            )}
+                  <div className="relative rounded-[11px] bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/80 dark:to-orange-950/80 p-4">
+                    {/* 装饰性光晕 */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-amber-200/40 to-transparent rounded-full blur-2xl" />
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-orange-200/30 to-transparent rounded-full blur-xl" />
+                    
+                    <div className="relative flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
+                          <span className="text-white text-lg">📅</span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-amber-900 dark:text-amber-100">
+                              补打 Day {makeupDayNumber}
+                            </span>
+                            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-200/80 text-amber-800 dark:bg-amber-800/50 dark:text-amber-200">
+                              补卡中
+                            </span>
+                          </div>
+                          <p className="text-xs text-amber-700/80 dark:text-amber-300/80 mt-0.5">
+                            完成冥想和教练梳理后即可补卡
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="border-amber-300 bg-white/60 hover:bg-white text-amber-700 hover:text-amber-900 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900/50 shadow-sm"
+                        onClick={() => setMakeupDayNumber(null)}
+                      >
+                        返回今日
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Mini Progress Calendar */}
             <MiniProgressCalendar
@@ -517,6 +546,7 @@ ${reflection}`;
                   description: "完成冥想和教练梳理后即可补卡",
                 });
               }}
+              activeMakeupDay={makeupDayNumber}
             />
             
             {/* Weekly Training Focus - 仅在非补卡模式下显示 */}
@@ -563,33 +593,53 @@ ${reflection}`;
               )}
             </div>
 
-            {/* 补卡模式下：冥想完成后显示嵌入式教练对话 */}
-            {makeupDayNumber && (
-              <Card className="border-amber-200 dark:border-amber-800">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">💬</span>
-                    <span className="font-medium">补卡 Day {makeupDayNumber} 教练梳理</span>
-                  </div>
-                  <WealthCoachEmbedded
-                    key={`wealth-coach-makeup-${campId}-${makeupDayNumber}`}
-                    initialMessage={getMeditationContext(makeupDayNumber)}
-                    campId={campId || ''}
-                    dayNumber={makeupDayNumber}
-                    meditationTitle={makeupMeditation?.title}
-                    onCoachingComplete={() => {
-                      handleCoachingComplete();
-                      toast({
-                        title: "补卡成功",
-                        description: `Day ${makeupDayNumber} 的打卡已完成`,
-                      });
-                      setMakeupDayNumber(null);
-                      queryClient.invalidateQueries({ queryKey: ['wealth-camp', urlCampId] });
-                    }}
-                  />
-                </CardContent>
-              </Card>
-            )}
+            {/* 补卡模式下：教练对话卡片 */}
+            <AnimatePresence>
+              {makeupDayNumber && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                >
+                  <Card className="relative overflow-hidden border-2 border-amber-200/80 dark:border-amber-700/60 bg-gradient-to-br from-white to-amber-50/50 dark:from-background dark:to-amber-950/20">
+                    {/* 装饰性渐变边角 */}
+                    <div className="absolute top-0 left-0 w-20 h-20 bg-gradient-to-br from-amber-100/80 to-transparent dark:from-amber-900/30" />
+                    <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-tl from-orange-100/60 to-transparent dark:from-orange-900/20" />
+                    
+                    <CardContent className="relative p-4">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
+                          <span className="text-white">💬</span>
+                        </div>
+                        <div>
+                          <span className="font-medium text-amber-900 dark:text-amber-100">
+                            Day {makeupDayNumber} 教练梳理
+                          </span>
+                          <p className="text-xs text-muted-foreground">完成对话后自动保存到该日期</p>
+                        </div>
+                      </div>
+                      <WealthCoachEmbedded
+                        key={`wealth-coach-makeup-${campId}-${makeupDayNumber}`}
+                        initialMessage={getMeditationContext(makeupDayNumber)}
+                        campId={campId || ''}
+                        dayNumber={makeupDayNumber}
+                        meditationTitle={makeupMeditation?.title}
+                        onCoachingComplete={() => {
+                          handleCoachingComplete();
+                          toast({
+                            title: "🎉 补卡成功",
+                            description: `Day ${makeupDayNumber} 的打卡已完成`,
+                          });
+                          setMakeupDayNumber(null);
+                          queryClient.invalidateQueries({ queryKey: ['wealth-camp', urlCampId] });
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Daily Tasks - 仅在非补卡模式下显示 */}
             {!makeupDayNumber && (
