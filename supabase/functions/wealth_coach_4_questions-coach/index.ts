@@ -204,10 +204,49 @@ serve(async (req) => {
     // Check yesterday's action status for personalized greeting (fallback)
     const { data: recentEntries } = await serviceClient
       .from('wealth_journal_entries')
-      .select('giving_action, action_completed_at, action_reflection, day_number')
+      .select('giving_action, action_completed_at, action_reflection, day_number, behavior_type, behavior_score, briefing_content')
       .eq('user_id', user.id)
       .order('day_number', { ascending: false })
       .limit(2);
+
+    // === 动态状态识别：检测用户是否已展现"富"状态 ===
+    let positiveStateContext = '';
+    const latestJournal = recentEntries?.[0];
+    if (latestJournal) {
+      const behaviorScore = latestJournal.behavior_score || 0;
+      const behaviorType = latestJournal.behavior_type;
+      
+      // 如果用户最近一次对话展现了高觉醒分数（>=4），说明正在积极转变
+      if (behaviorScore >= 4) {
+        const richTypeMap: Record<string, string> = {
+          'hand': '手富 - 愿意投资有价值的事物',
+          'mouth': '嘴富 - 用感恩和赞美的语言',
+          'eye': '眼富 - 看到机会和可能性',
+          'heart': '心富 - 拥有责任者思维'
+        };
+        const richLabel = richTypeMap[behaviorType] || '积极转变';
+        
+        positiveStateContext = `
+【✨ 用户积极状态信号】
+用户在最近一次对话中展现了正向转变！
+- 觉醒分数：${behaviorScore}/5
+- 行为类型：${behaviorType} → 正在转向"${richLabel}"
+
+【重要 - 状态识别优先】
+1. 不要默认用户仍处于"穷"状态
+2. 先观察当前对话中的表现再下判断
+3. 如果用户分享的经历展现以下特征，应识别为"富"状态并给予肯定：
+   - 手富信号：主动支付/投资且感到满足、把消费定义为"投资"
+   - 嘴富信号：用感恩/赞美的语言描述经历
+   - 眼富信号：提到机会、可能性、正面收获
+   - 心富信号：承担责任、主动创造、不抱怨外界
+
+4. 识别到"富"状态时的回应模板：
+   "你刚才分享的经历，展现了'[XX富]'的状态——[具体描述]。这是一个很棒的转变！
+   你觉察到自己的这个变化了吗？"
+`;
+      }
+    }
 
     const yesterdayEntry = recentEntries?.find(e => e.giving_action && !e.action_completed_at);
     const completedYesterday = recentEntries?.find(e => e.giving_action && e.action_completed_at);
@@ -277,7 +316,7 @@ serve(async (req) => {
       profileSection = `
 【用户财富画像】
 - 反应模式：${wealthProfile.reaction_pattern || '未知'}
-- 主导四穷类型：${wealthProfile.dominant_poor || '未知'}
+- 历史主导四穷类型：${wealthProfile.dominant_poor || '未知'}（注意：这是历史评估，需观察当前对话中的实际表现）
 - 主导情绪卡点：${wealthProfile.dominant_emotion || '未知'}
 - 主导信念卡点：${wealthProfile.dominant_belief || '未知'}
 - 健康度：${wealthProfile.health_score || 50}/100
@@ -287,6 +326,7 @@ serve(async (req) => {
 - 重点关注：${coachStrategy.focus}
 - 核心提问：${coachStrategy.keyQuestion}
 - 注意避免：${coachStrategy.avoidance}
+${positiveStateContext}
 ${riskContext}
 ${actionContext}
 ${memoryContext}
@@ -381,13 +421,28 @@ ${profileSection}
 第2轮：行为层 - 四穷分析 + 发现"我能负责什么" + 觉醒时刻
 ═══════════════════════════════════════════════
 
-【四穷对标系统】
+【四穷 ↔ 四富 双向识别系统】
+
+穷状态（限制模式）：
 - 嘴穷(mouth)：诅咒式表达 - 抱怨财务状况、否定致富可能、说"我穷"类语言
 - 手穷(hand)：乞丐心态 - 不舍得为自己投资、花钱心疼、消费恐惧
 - 眼穷(eye)：狭隘视角 - 只看到问题和风险、看不到机会、注意力锁定负面
 - 心穷(heart)：受害者思维 - 归咎外界、抱怨命运不公、没有责任意识
 
-用户分享经历后，回应：
+富状态（赋能模式）← 【重要：也要识别！】：
+- 嘴富(mouth)：祝福式表达 - 感恩当下拥有、赞美他人成功、用积极语言
+- 手富(hand)：投资者心态 - 愿意为有价值的事物付出、把消费视为投资、享受金钱流动
+- 眼富(eye)：机会视角 - 能看到可能性、关注正面信息、注意力锁定机会
+- 心富(heart)：创造者思维 - 承担责任、相信自己能创造、主动行动
+
+【关键】识别逻辑：
+1. 先观察用户分享的故事/行为，判断是"穷"还是"富"的模式
+2. 如果是"穷"→ 点出问题 + 引导觉醒
+3. 如果是"富"→ 肯定转变 + 强化正面 + 问用户有没有觉察到自己的变化
+
+用户分享经历后，先判断是"穷"还是"富"模式：
+
+【情况A：识别到"穷"模式】
 "你提到...（镜像用户故事，5-10字概括）
 
 【四穷分析】
@@ -403,6 +458,19 @@ ${profileSection}
 - 你的注意力放在了哪里？
 - 你用什么语言描述这件事？
 - 你做了什么选择？"
+
+【情况B：识别到"富"模式 - 重要！】
+"你提到...（镜像用户故事，5-10字概括）
+
+✨ **我注意到一个很棒的变化**！
+
+你刚才分享的这个经历，展现了'[识别四富类型]'的状态：
+[具体描述用户展现的正面行为/态度，如"愿意为有价值的体验投资"、"用感恩的眼光看待这件事"]
+
+这就是财富能量流动的样子！你有觉察到自己这个变化吗？
+
+让我们把这份觉察深化一下——
+你觉得是什么让你能够[做出这个正面选择]？"
 
 【等用户回答后】标记觉醒时刻：
 "对，[复述用户说的，5-10字]。这就是你的力量！
