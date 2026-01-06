@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Check, Image } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -8,14 +8,12 @@ interface WealthCampInviteCardProps {
   campId?: string;
   dayNumber: number;
   userId: string;
-  onInviteClick?: () => void;
 }
 
 export function WealthCampInviteCard({ 
   campId, 
   dayNumber, 
-  userId,
-  onInviteClick
+  userId
 }: WealthCampInviteCardProps) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
@@ -31,7 +29,6 @@ export function WealthCampInviteCard({
         description: "分享给好友一起突破财富卡点",
       });
       setTimeout(() => setCopied(false), 2000);
-      onInviteClick?.();
     } catch (error) {
       toast({
         title: "复制失败",
@@ -54,26 +51,17 @@ export function WealthCampInviteCard({
           你已完成 <strong>第 {dayNumber} 天</strong> 训练，邀请好友一起成长！
         </p>
 
-        <div className="flex gap-2">
-          <Button
-            onClick={() => onInviteClick?.()}
-            className="flex-1 bg-amber-500 hover:bg-amber-600 text-white gap-2"
-          >
-            <Image className="w-4 h-4" />
-            生成邀请卡片
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleCopyLink}
-            className="border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300"
-          >
-            {copied ? (
-              <Check className="w-4 h-4" />
-            ) : (
-              <Copy className="w-4 h-4" />
-            )}
-          </Button>
-        </div>
+        <Button
+          onClick={handleCopyLink}
+          className="w-full bg-amber-500 hover:bg-amber-600 text-white gap-2"
+        >
+          {copied ? (
+            <Check className="w-4 h-4" />
+          ) : (
+            <Copy className="w-4 h-4" />
+          )}
+          {copied ? '已复制' : '复制邀请链接'}
+        </Button>
       </CardContent>
     </Card>
   );
