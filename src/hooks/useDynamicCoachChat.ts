@@ -366,6 +366,47 @@ export const useDynamicCoachChat = (
                   description: `记录了 Day ${dayNumberToUse} 的财富觉察`,
                 });
                 
+                // 更新 training_camps 表的打卡状态
+                if (campIdToUse) {
+                  try {
+                    const today = new Date().toISOString().split('T')[0];
+                    
+                    // 获取当前训练营数据
+                    const { data: camp } = await supabase
+                      .from('training_camps')
+                      .select('completed_days, check_in_dates')
+                      .eq('id', campIdToUse)
+                      .single();
+                    
+                    if (camp) {
+                      const checkInDates = Array.isArray(camp.check_in_dates) 
+                        ? camp.check_in_dates as string[]
+                        : [];
+                      
+                      // 仅当今日尚未打卡时才更新
+                      if (!checkInDates.includes(today)) {
+                        checkInDates.push(today);
+                        
+                        await supabase
+                          .from('training_camps')
+                          .update({
+                            completed_days: (camp.completed_days || 0) + 1,
+                            check_in_dates: checkInDates,
+                            updated_at: new Date().toISOString()
+                          })
+                          .eq('id', campIdToUse);
+                        
+                        console.log('✅ [useDynamicCoachChat] 训练营打卡状态已更新:', {
+                          completed_days: (camp.completed_days || 0) + 1,
+                          today
+                        });
+                      }
+                    }
+                  } catch (campUpdateError) {
+                    console.error('❌ [useDynamicCoachChat] 更新训练营打卡状态失败:', campUpdateError);
+                  }
+                }
+                
                 // Extract and save coach memories for future personalization
                 console.log('🧠 [useDynamicCoachChat] 开始提取教练记忆...');
                 try {
