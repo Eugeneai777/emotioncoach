@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Lock, TrendingUp, ChevronRight, Target } from 'lucide-react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Check, Lock, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { WealthMeditationPlayer } from '@/components/wealth-camp/WealthMeditationPlayer';
-import { WealthProgressChart } from '@/components/wealth-camp/WealthProgressChart';
 import { WealthJournalCard } from '@/components/wealth-camp/WealthJournalCard';
 import { WealthCampInviteCard } from '@/components/wealth-camp/WealthCampInviteCard';
 import { CheckInCelebrationDialog } from '@/components/wealth-camp/CheckInCelebrationDialog';
@@ -18,14 +17,13 @@ import { AssessmentFocusCard } from '@/components/wealth-camp/AssessmentFocusCar
 import { DailyActionCard } from '@/components/wealth-camp/DailyActionCard';
 import { ActionCompletionDialog } from '@/components/wealth-block/ActionCompletionDialog';
 import CampShareDialog from '@/components/camp/CampShareDialog';
-import { ProfileEvolutionCard } from '@/components/wealth-camp/ProfileEvolutionCard';
 import { BackfillMemoriesButton } from '@/components/wealth-camp/BackfillMemoriesButton';
+import { AwakeningArchiveTab } from '@/components/wealth-camp/AwakeningArchiveTab';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
 import { useWealthCampAnalytics } from '@/hooks/useWealthCampAnalytics';
 import { useAdaptiveWeights } from '@/hooks/useAdaptiveWeights';
-import { useProfileEvolution } from '@/hooks/useProfileEvolution';
 interface DailyTask {
   id: string;
   title: string;
@@ -38,8 +36,13 @@ interface DailyTask {
 export default function WealthCampCheckIn() {
   const { campId: urlCampId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('today');
+  
+  // Handle tab from URL query parameter
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'today');
+  
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);
@@ -50,7 +53,7 @@ export default function WealthCampCheckIn() {
   const [inviteCompleted, setInviteCompleted] = useState(false);
   const [savedReflection, setSavedReflection] = useState('');
   const [makeupDayNumber, setMakeupDayNumber] = useState<number | null>(null);
-  const [hasShownCelebration, setHasShownCelebration] = useState(false); // 防止重复显示弹窗
+  const [hasShownCelebration, setHasShownCelebration] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ action: string; entryId: string; dayNumber: number } | null>(null);
   const { toast } = useToast();
   const { trackDayCheckin, trackShare } = useWealthCampAnalytics();
@@ -103,12 +106,6 @@ export default function WealthCampCheckIn() {
     isLoading: weightsLoading 
   } = useAdaptiveWeights(campId);
   
-  // 活画像演化 - 追踪用户画像变化
-  const {
-    profile: wealthProfile,
-    evolutionInsight,
-    isLoading: profileLoading,
-  } = useProfileEvolution(campId);
 
   // 动态计算当前是第几天（从1开始）
   const currentDay = useMemo(() => {
@@ -430,13 +427,14 @@ ${reflection}`;
 
       <div className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="today">今日打卡</TabsTrigger>
             <TabsTrigger value="coaching" disabled={!meditationCompleted}>
               教练梳理
             </TabsTrigger>
             <TabsTrigger value="calendar">日历</TabsTrigger>
-            <TabsTrigger value="journal">日记回顾</TabsTrigger>
+            <TabsTrigger value="archive">觉醒档案</TabsTrigger>
+            <TabsTrigger value="journal">日记</TabsTrigger>
           </TabsList>
 
           <TabsContent value="today" className="space-y-6 mt-6">
@@ -527,37 +525,6 @@ ${reflection}`;
               onCompletePending={() => setShowActionDialog(true)}
             />
 
-            {/* Progress Chart */}
-            <WealthProgressChart entries={journalEntries} />
-
-            {/* Profile Evolution Card - 画像演化对比 */}
-            {wealthProfile && journalEntries.length >= 2 && (
-              <ProfileEvolutionCard
-                currentProfile={wealthProfile}
-                evolutionInsight={evolutionInsight}
-              />
-            )}
-
-            {/* 觉醒进度追踪入口 */}
-            {journalEntries.length >= 3 && (
-              <Card 
-                className="cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-amber-200 dark:border-amber-800"
-                onClick={() => navigate('/wealth-awakening-progress')}
-              >
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-amber-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-amber-800 dark:text-amber-200">查看觉醒进度</p>
-                      <p className="text-sm text-amber-600 dark:text-amber-400">21天信念转变可视化</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-amber-600" />
-                </CardContent>
-              </Card>
-            )}
 
             {/* Invite Card */}
             {userId && (
@@ -637,6 +604,10 @@ ${reflection}`;
                 });
               }}
             />
+          </TabsContent>
+
+          <TabsContent value="archive" className="mt-6">
+            <AwakeningArchiveTab campId={campId} entries={journalEntries} />
           </TabsContent>
 
           <TabsContent value="journal" className="mt-6 space-y-4">
