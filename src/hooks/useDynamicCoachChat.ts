@@ -381,6 +381,23 @@ export const useDynamicCoachChat = (
                   } else {
                     console.log('✅ [useDynamicCoachChat] 教练记忆提取完成:', memoryResult);
                   }
+                  
+                  // Update wealth profile from journal data (活画像更新)
+                  console.log('📊 [useDynamicCoachChat] 开始更新活画像...');
+                  const { data: profileResult, error: profileError } = await supabase.functions.invoke('update-wealth-profile', {
+                    body: {
+                      user_id: user.id,
+                      camp_id: campIdToUse,
+                    }
+                  });
+                  
+                  if (profileError) {
+                    console.error('❌ [useDynamicCoachChat] 更新活画像失败:', profileError);
+                  } else if (profileResult?.updated) {
+                    console.log('✅ [useDynamicCoachChat] 活画像更新成功:', profileResult.evolution_insight || '');
+                  } else {
+                    console.log('ℹ️ [useDynamicCoachChat] 活画像无需更新:', profileResult?.reason);
+                  }
                 } catch (memoryError) {
                   console.error('❌ [useDynamicCoachChat] 提取教练记忆异常:', memoryError);
                 }

@@ -6195,11 +6195,14 @@ export type Database = {
           assessment_id: string | null
           coach_strategy: Json | null
           created_at: string
+          current_week: number | null
           dominant_belief: string | null
           dominant_emotion: string | null
           dominant_poor: string | null
           health_score: number | null
           id: string
+          last_updated_from_journal: string | null
+          profile_snapshots: Json | null
           reaction_pattern: string | null
           updated_at: string
           user_id: string
@@ -6208,11 +6211,14 @@ export type Database = {
           assessment_id?: string | null
           coach_strategy?: Json | null
           created_at?: string
+          current_week?: number | null
           dominant_belief?: string | null
           dominant_emotion?: string | null
           dominant_poor?: string | null
           health_score?: number | null
           id?: string
+          last_updated_from_journal?: string | null
+          profile_snapshots?: Json | null
           reaction_pattern?: string | null
           updated_at?: string
           user_id: string
@@ -6221,11 +6227,14 @@ export type Database = {
           assessment_id?: string | null
           coach_strategy?: Json | null
           created_at?: string
+          current_week?: number | null
           dominant_belief?: string | null
           dominant_emotion?: string | null
           dominant_poor?: string | null
           health_score?: number | null
           id?: string
+          last_updated_from_journal?: string | null
+          profile_snapshots?: Json | null
           reaction_pattern?: string | null
           updated_at?: string
           user_id?: string
