@@ -87,7 +87,9 @@ export const CoachHeader = ({
       purple: "from-purple-500 via-pink-500 to-rose-500",
       orange: "from-orange-500 via-amber-500 to-yellow-500",
       pink: "from-pink-400 via-pink-500 to-rose-500",
-      rose: "from-rose-400 via-rose-500 to-pink-500"
+      rose: "from-rose-400 via-rose-500 to-pink-500",
+      amber: "from-amber-500 via-orange-500 to-yellow-500",
+      red: "from-red-500 via-rose-500 to-pink-500"
     };
     return gradients[color] || gradients.green;
   };
@@ -99,7 +101,9 @@ export const CoachHeader = ({
       purple: "text-purple-600 hover:text-purple-600 hover:bg-purple-100",
       orange: "text-orange-600 hover:text-orange-600 hover:bg-orange-100",
       pink: "text-pink-600 hover:text-pink-600 hover:bg-pink-100",
-      rose: "text-rose-600 hover:text-rose-600 hover:bg-rose-100"
+      rose: "text-rose-600 hover:text-rose-600 hover:bg-rose-100",
+      amber: "text-amber-600 hover:text-amber-600 hover:bg-amber-100",
+      red: "text-red-600 hover:text-red-600 hover:bg-red-100"
     };
     return classes[color] || classes.green;
   };
