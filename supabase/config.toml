@@ -329,3 +329,6 @@ verify_jwt = false
 
 [functions.batch-trigger-action-reminder]
 verify_jwt = false
+
+[functions.trigger-wealth-weekly-summary]
+verify_jwt = false

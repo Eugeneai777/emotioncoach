@@ -380,6 +380,73 @@ serve(async (req) => {
         };
         break;
 
+      case 'wealth_weekly_summary':
+        // 财富周报总结
+        // 获取本周的财富日记数据
+        const weekStart = new Date();
+        weekStart.setDate(weekStart.getDate() - 7);
+        
+        const { data: weekJournals } = await supabase
+          .from('wealth_journal_entries')
+          .select('*')
+          .eq('user_id', user_id)
+          .gte('created_at', weekStart.toISOString())
+          .order('day_number', { ascending: true });
+        
+        if (weekJournals && weekJournals.length >= 3) {
+          // 获取用户画像的觉醒指数变化
+          const { data: wealthProfile } = await supabase
+            .from('user_wealth_profile')
+            .select('health_score, profile_snapshots')
+            .eq('user_id', user_id)
+            .single();
+          
+          const currentIndex = wealthProfile?.health_score || 0;
+          const lastSnapshot = (wealthProfile?.profile_snapshots as any[])?.[0];
+          const lastWeekIndex = lastSnapshot?.health_score || currentIndex;
+          
+          // 计算各维度平均分
+          const avgBehavior = weekJournals.reduce((sum, j) => sum + (j.behavior_score || 0), 0) / weekJournals.length;
+          const avgEmotion = weekJournals.reduce((sum, j) => sum + (j.emotion_score || 0), 0) / weekJournals.length;
+          const avgBelief = weekJournals.reduce((sum, j) => sum + (j.belief_score || 0), 0) / weekJournals.length;
+          
+          // 趋势判断函数
+          const getTrend = (avg: number, baseline: number) => {
+            if (avg > baseline + 0.3) return '上升';
+            if (avg < baseline - 0.3) return '下降';
+            return '稳定';
+          };
+          
+          // 收集完成的行动和新信念
+          const completedActions = weekJournals
+            .filter(j => j.action_completion && j.giving_action)
+            .map(j => j.giving_action);
+          const newBeliefs = weekJournals
+            .filter(j => j.new_belief)
+            .map(j => j.new_belief);
+          
+          shouldTrigger = true;
+          scenario = 'wealth_weekly_summary';
+          notificationContext = {
+            days_completed: weekJournals.length,
+            start_day: weekJournals[0]?.day_number || 1,
+            end_day: weekJournals[weekJournals.length - 1]?.day_number || weekJournals.length,
+            awakening_change: currentIndex - lastWeekIndex,
+            current_index: Math.round(currentIndex),
+            last_week_index: Math.round(lastWeekIndex),
+            actions_completed: completedActions.length,
+            completed_actions: completedActions,
+            avg_behavior: avgBehavior,
+            avg_emotion: avgEmotion,
+            avg_belief: avgBelief,
+            behavior_trend: getTrend(avgBehavior, 3.5),
+            emotion_trend: getTrend(avgEmotion, 3.5),
+            belief_trend: getTrend(avgBelief, 3.5),
+            new_beliefs: newBeliefs
+          };
+        }
+        break;
+
       default:
         return new Response(JSON.stringify({ 
           error: "未知的触发类型" 

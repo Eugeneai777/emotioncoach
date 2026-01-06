@@ -78,7 +78,7 @@ serve(async (req) => {
     type EncouragementStyle = 'gentle' | 'cheerful' | 'motivational';
     type CompanionType = 'jing_teacher' | 'friend' | 'coach';
     type NotificationFrequency = 'minimal' | 'balanced' | 'frequent';
-    type Scenario = 'after_briefing' | 'after_story' | 'after_gratitude_analysis' | 'after_gratitude_sync' | 'after_communication' | 'after_parent' | 'after_vibrant_life' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement' | 'checkin_success' | 'checkin_streak_milestone' | 'checkin_reminder' | 'checkin_streak_break_warning' | 'camp_day_complete' | 'weekly_summary' | 'pending_action_reminder' | 'action_completion_celebration';
+    type Scenario = 'after_briefing' | 'after_story' | 'after_gratitude_analysis' | 'after_gratitude_sync' | 'after_communication' | 'after_parent' | 'after_vibrant_life' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement' | 'checkin_success' | 'checkin_streak_milestone' | 'checkin_reminder' | 'checkin_streak_break_warning' | 'camp_day_complete' | 'weekly_summary' | 'pending_action_reminder' | 'action_completion_celebration' | 'after_wealth_coaching' | 'wealth_weekly_summary';
 
     // 维度名称映射
     const dimensionNames: Record<string, string> = {
@@ -169,7 +169,36 @@ ${context?.weak_dimension ? `"${getDimensionName(context.weak_dimension)}"维度
       camp_day_complete: `用户完成了训练营第${context?.camp_day}天的学习内容${context?.camp_name ? `（${context.camp_name}）` : ''}。请肯定他们今天的付出，鼓励明天继续坚持。`,
       weekly_summary: `这是用户的周度成长总结。本周他们记录了${context?.briefings_count || 0}次情绪简报${context?.checkins_count ? `，完成了${context.checkins_count}次打卡` : ''}${context?.stories_count ? `，创作了${context.stories_count}个故事` : ''}。请给予综合性的肯定和对下周的温柔期待。`,
       pending_action_reminder: `用户在财富训练营第${context?.day_number}天有一个未完成的给予行动："${context?.giving_action}"，已经${context?.hours_pending}小时未完成。请用温和、鼓励但不施压的方式提醒用户完成这个小小的给予行动，强调行动的意义（打破"心穷"模式、建立"给予"习惯）而非催促。提醒他们这个小行动只需要几分钟，却能带来心态的转变。`,
-      action_completion_celebration: `恭喜！用户刚刚完成了财富训练营第${context?.day_number}天的给予行动："${context?.giving_action}"${context?.witness_message ? `。AI见证语是"${context.witness_message}"` : ''}${context?.reflection ? `。用户的反思是："${context.reflection}"` : ''}。请热烈肯定用户完成这次"给予"的勇气和行动力，庆祝这个"心穷→心富"的转变时刻，强调每一次小小的给予都在重塑他们与财富的关系，鼓励继续保持这种"富足心态"的行动！`
+      action_completion_celebration: `恭喜！用户刚刚完成了财富训练营第${context?.day_number}天的给予行动："${context?.giving_action}"${context?.witness_message ? `。AI见证语是"${context.witness_message}"` : ''}${context?.reflection ? `。用户的反思是："${context.reflection}"` : ''}。请热烈肯定用户完成这次"给予"的勇气和行动力，庆祝这个"心穷→心富"的转变时刻，强调每一次小小的给予都在重塑他们与财富的关系，鼓励继续保持这种"富足心态"的行动！`,
+      after_wealth_coaching: `用户刚完成了一次财富教练对话，探索了关于财富的卡点和觉醒。
+${context?.behavior_insight ? `行为层洞察："${context.behavior_insight}"` : ''}
+${context?.emotion_insight ? `情绪层洞察："${context.emotion_insight}"` : ''}
+${context?.belief_insight ? `信念层洞察："${context.belief_insight}"` : ''}
+${context?.giving_action ? `给予行动建议："${context.giving_action}"` : ''}
+请肯定用户愿意觉察和转化财富卡点的勇气，鼓励他们继续这个"从穷到富"的内在觉醒之旅。`,
+      wealth_weekly_summary: `这是用户的财富训练营周报总结。
+
+📊 本周数据：
+- 训练天数：${context?.days_completed || 0}天（第${context?.start_day || 1}-${context?.end_day || 7}天）
+- 觉醒指数变化：${(context?.awakening_change || 0) > 0 ? '↑' : (context?.awakening_change || 0) < 0 ? '↓' : '→'}${Math.abs(context?.awakening_change || 0)}分（${context?.last_week_index || 0} → ${context?.current_index || 0}）
+
+🏃 行动完成：
+- 完成给予行动：${context?.actions_completed || 0}个
+${context?.completed_actions?.length ? `- 包括：${context.completed_actions.slice(0, 3).join('、')}` : ''}
+
+✨ 觉醒亮点：
+- 行为层平均：${context?.avg_behavior?.toFixed?.(1) || 0}分（${context?.behavior_trend || '稳定'}）
+- 情绪层平均：${context?.avg_emotion?.toFixed?.(1) || 0}分（${context?.emotion_trend || '稳定'}）
+- 信念层平均：${context?.avg_belief?.toFixed?.(1) || 0}分（${context?.belief_trend || '稳定'}）
+
+💎 新信念：
+${context?.new_beliefs?.length ? context.new_beliefs.slice(0, 2).map((b: string) => `- "${b}"`).join('\n') : '- 本周暂无新信念记录'}
+
+请生成一条温暖的周报通知：
+1. 总结本周的成长亮点（用具体数据说话）
+2. 肯定用户在最强维度上的突破
+3. 温柔提醒下周可以关注的改进方向
+4. 给予继续训练的信心和期待`
     };
 
     const styleDescriptions: Record<EncouragementStyle, string> = {
@@ -304,7 +333,9 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       camp_day_complete: { type: 'encouragement', priority: 3 },
       weekly_summary: { type: 'insight', priority: 3 },
       pending_action_reminder: { type: 'reminder', priority: 3 },
-      action_completion_celebration: { type: 'celebration', priority: 4 }
+      action_completion_celebration: { type: 'celebration', priority: 4 },
+      after_wealth_coaching: { type: 'encouragement', priority: 3 },
+      wealth_weekly_summary: { type: 'insight', priority: 4 }
     };
 
     // 场景到教练类型的映射
@@ -328,8 +359,10 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       checkin_streak_break_warning: 'emotion_coach',
       camp_day_complete: 'parent_coach',
       weekly_summary: 'general',
-      pending_action_reminder: 'wealth_coach',
-      action_completion_celebration: 'wealth_coach'
+      pending_action_reminder: 'wealth_coach_4_questions_coach',
+      action_completion_celebration: 'wealth_coach_4_questions_coach',
+      after_wealth_coaching: 'wealth_coach_4_questions_coach',
+      wealth_weekly_summary: 'wealth_coach_4_questions_coach'
     };
 
     let { type, priority } = baseNotificationTypeMap[scenarioTyped] || { type: 'encouragement', priority: 1 };
