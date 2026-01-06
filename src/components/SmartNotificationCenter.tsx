@@ -101,6 +101,12 @@ export const SmartNotificationCenter = () => {
                   AI生活教练
                 </div>
               </SelectItem>
+              <SelectItem value="wealth_coach_4_questions_coach">
+                <div className="flex items-center gap-2">
+                  <span className="text-yellow-500">💰</span>
+                  财富教练
+                </div>
+              </SelectItem>
               <SelectItem value="general">
                 <div className="flex items-center gap-2">
                   <span>📢</span>

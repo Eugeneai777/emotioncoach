@@ -184,34 +184,45 @@ export const useSmartNotification = (coachTypeFilter?: string | null) => {
 
   // 监听实时通知
   useEffect(() => {
-    loadNotifications();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    const channel = supabase
-      .channel('smart-notifications-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'smart_notifications'
-        },
-        (payload) => {
-          const newNotification = payload.new as SmartNotification;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
-          
-          // 显示toast
-          toast({
-            title: newNotification.title,
-            description: newNotification.message.substring(0, 60) + '...',
-            duration: 5000,
-          });
-        }
-      )
-      .subscribe();
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      channel = supabase
+        .channel('smart-notifications-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'smart_notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            const newNotification = payload.new as SmartNotification;
+            setNotifications(prev => [newNotification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            
+            // 显示toast
+            toast({
+              title: newNotification.title,
+              description: newNotification.message.substring(0, 60) + '...',
+              duration: 5000,
+            });
+          }
+        )
+        .subscribe();
+    };
+
+    loadNotifications();
+    setupRealtimeSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [loadNotifications, toast]);
 
