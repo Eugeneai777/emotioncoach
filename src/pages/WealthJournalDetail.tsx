@@ -4,7 +4,7 @@ import { ArrowLeft, Star, Share2, TrendingUp, Lightbulb, Target, Gift, CheckCirc
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,8 @@ import { JournalLayerCard } from '@/components/wealth-camp/JournalLayerCard';
 import WealthJournalShareDialog from '@/components/wealth-camp/WealthJournalShareDialog';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { useWealthCampAnalytics } from '@/hooks/useWealthCampAnalytics';
+import { ActionCompletionDialog } from '@/components/wealth-block/ActionCompletionDialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface AiInsight {
   behavior_analysis?: string;
@@ -37,8 +39,11 @@ interface PersonalAwakening {
 export default function WealthJournalDetail() {
   const { entryId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const { trackShare } = useWealthCampAnalytics();
+  const { toast } = useToast();
 
   const shareUrl = `${getPromotionDomain()}/wealth-camp-intro`;
 
@@ -261,11 +266,45 @@ export default function WealthJournalDetail() {
             
             {/* 给予行动 */}
             {entry.giving_action && (
-              <div className="p-3 bg-emerald-50/80 dark:bg-emerald-900/20 rounded-lg">
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1">
-                  <Gift className="w-3 h-3" /> 今日给予
-                </p>
-                <p className="text-sm text-emerald-800 dark:text-emerald-200 font-medium">{entry.giving_action}</p>
+              <div className="space-y-2">
+                <div className="p-3 bg-emerald-50/80 dark:bg-emerald-900/20 rounded-lg">
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1">
+                    <Gift className="w-3 h-3" /> 今日给予
+                  </p>
+                  <p className="text-sm text-emerald-800 dark:text-emerald-200 font-medium">{entry.giving_action}</p>
+                </div>
+                
+                {/* 行动完成状态 */}
+                {(entry as any).action_completed_at ? (
+                  <div className="p-3 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span className="text-xs text-emerald-600 font-medium">
+                        已完成 · {format(new Date((entry as any).action_completed_at), 'M月d日 HH:mm')}
+                      </span>
+                      {(entry as any).action_difficulty && (
+                        <span className="text-xs text-emerald-500">
+                          难度 {(entry as any).action_difficulty}/5
+                        </span>
+                      )}
+                    </div>
+                    {(entry as any).action_reflection && (
+                      <p className="text-sm text-emerald-700 dark:text-emerald-300 italic">
+                        💬 {(entry as any).action_reflection}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                    onClick={() => setActionDialogOpen(true)}
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    我完成了这个行动
+                  </Button>
+                )}
               </div>
             )}
             
@@ -415,6 +454,39 @@ export default function WealthJournalDetail() {
         }}
         shareUrl={shareUrl}
       />
+
+      {/* Action Completion Dialog */}
+      {entry.giving_action && (
+        <ActionCompletionDialog
+          open={actionDialogOpen}
+          onOpenChange={setActionDialogOpen}
+          action={entry.giving_action}
+          onComplete={async (reflection, difficulty) => {
+            const { error } = await supabase
+              .from('wealth_journal_entries')
+              .update({
+                action_completed_at: new Date().toISOString(),
+                action_reflection: reflection,
+                action_difficulty: difficulty,
+              })
+              .eq('id', entry.id);
+
+            if (error) {
+              toast({
+                title: '保存失败',
+                description: error.message,
+                variant: 'destructive',
+              });
+            } else {
+              toast({
+                title: '🎉 太棒了！',
+                description: '给予行动已完成，这是财富流动的开始',
+              });
+              queryClient.invalidateQueries({ queryKey: ['wealth-journal-entry', entryId] });
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

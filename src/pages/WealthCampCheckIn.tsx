@@ -14,6 +14,8 @@ import { CheckInCelebrationDialog } from '@/components/wealth-camp/CheckInCelebr
 import { WealthCoachEmbedded } from '@/components/wealth-camp/WealthCoachEmbedded';
 import { WealthJourneyCalendar } from '@/components/wealth-camp/WealthJourneyCalendar';
 import { AssessmentFocusCard } from '@/components/wealth-camp/AssessmentFocusCard';
+import { DailyActionCard } from '@/components/wealth-camp/DailyActionCard';
+import { ActionCompletionDialog } from '@/components/wealth-block/ActionCompletionDialog';
 import CampShareDialog from '@/components/camp/CampShareDialog';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
@@ -35,6 +37,7 @@ export default function WealthCampCheckIn() {
   const [activeTab, setActiveTab] = useState('today');
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showActionDialog, setShowActionDialog] = useState(false);
   
   const [meditationCompleted, setMeditationCompleted] = useState(false);
   const [coachingCompleted, setCoachingCompleted] = useState(false);
@@ -43,6 +46,7 @@ export default function WealthCampCheckIn() {
   const [savedReflection, setSavedReflection] = useState('');
   const [makeupDayNumber, setMakeupDayNumber] = useState<number | null>(null);
   const [hasShownCelebration, setHasShownCelebration] = useState(false); // 防止重复显示弹窗
+  const [pendingAction, setPendingAction] = useState<{ action: string; entryId: string; dayNumber: number } | null>(null);
   const { toast } = useToast();
   const { trackDayCheckin, trackShare } = useWealthCampAnalytics();
   
@@ -192,6 +196,18 @@ export default function WealthCampCheckIn() {
       } else {
         // 即使没有 journal 记录，如果有社区帖子也算已分享
         setShareCompleted(hasSharedPost);
+      }
+      
+      // Check for pending actions from yesterday
+      const yesterdayEntry = journalEntries.find(e => e.day_number === currentDay - 1);
+      if (yesterdayEntry?.giving_action && !(yesterdayEntry as any).action_completed_at) {
+        setPendingAction({
+          action: yesterdayEntry.giving_action,
+          entryId: yesterdayEntry.id,
+          dayNumber: yesterdayEntry.day_number
+        });
+      } else {
+        setPendingAction(null);
       }
     } else {
       setShareCompleted(hasSharedPost);
@@ -438,6 +454,14 @@ ${reflection}`;
               </CardContent>
             </Card>
 
+            {/* Daily Action Card */}
+            <DailyActionCard
+              dayNumber={currentDay}
+              campId={campId}
+              pendingAction={pendingAction}
+              onCompletePending={() => setShowActionDialog(true)}
+            />
+
             {/* Progress Chart */}
             <WealthProgressChart entries={journalEntries} />
 
@@ -591,6 +615,40 @@ ${reflection}`;
         onShare={() => setShowShareDialog(true)}
         onInvite={scrollToInvite}
       />
+
+      {/* Action Completion Dialog */}
+      {pendingAction && (
+        <ActionCompletionDialog
+          open={showActionDialog}
+          onOpenChange={setShowActionDialog}
+          action={pendingAction.action}
+          onComplete={async (reflection, difficulty) => {
+            const { error } = await supabase
+              .from('wealth_journal_entries')
+              .update({
+                action_completed_at: new Date().toISOString(),
+                action_reflection: reflection,
+                action_difficulty: difficulty,
+              })
+              .eq('id', pendingAction.entryId);
+
+            if (error) {
+              toast({
+                title: '保存失败',
+                description: error.message,
+                variant: 'destructive',
+              });
+            } else {
+              toast({
+                title: '🎉 太棒了！',
+                description: '给予行动已完成，财富能量正在流动',
+              });
+              setPendingAction(null);
+              queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
+            }
+          }}
+        />
+      )}
 
     </div>
   );
