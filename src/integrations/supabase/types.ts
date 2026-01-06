@@ -6013,6 +6013,50 @@ export type Database = {
         }
         Relationships: []
       }
+      user_favorite_beliefs: {
+        Row: {
+          belief_text: string
+          camp_id: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          is_reminder: boolean | null
+          source_day: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          belief_text: string
+          camp_id?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_reminder?: boolean | null
+          source_day?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          belief_text?: string
+          camp_id?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_reminder?: boolean | null
+          source_day?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_favorite_beliefs_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_feature_usage: {
         Row: {
           created_at: string

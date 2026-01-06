@@ -22,6 +22,7 @@ import CampShareDialog from '@/components/camp/CampShareDialog';
 import WealthInviteCardDialog from '@/components/wealth-camp/WealthInviteCardDialog';
 import { BackfillMemoriesButton } from '@/components/wealth-camp/BackfillMemoriesButton';
 import { AwakeningArchiveTab } from '@/components/wealth-camp/AwakeningArchiveTab';
+import { BeliefReminderCard } from '@/components/wealth-camp/BeliefReminderCard';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -572,6 +573,11 @@ ${reflection}`;
             {/* Assessment Focus Card - 仅前3天且非补卡模式显示 */}
             {!makeupDayNumber && currentDay <= 3 && (
               <AssessmentFocusCard variant="checkin" />
+            )}
+
+            {/* Belief Reminder Card - 冥想前展示收藏的信念提醒 */}
+            {!makeupDayNumber && !meditationCompleted && (
+              <BeliefReminderCard campId={camp.id} />
             )}
 
             {/* Meditation Player */}
