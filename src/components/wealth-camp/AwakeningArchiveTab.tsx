@@ -1,11 +1,15 @@
 import { Target, Heart, Brain, Lightbulb, Sparkles, TrendingUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WealthProgressChart } from './WealthProgressChart';
+import { WealthJourneyCalendar } from './WealthJourneyCalendar';
 import { ProfileEvolutionCard } from './ProfileEvolutionCard';
 import { ActionTrackingStats } from './ActionTrackingStats';
 import { ActionCompletionChart } from './ActionCompletionChart';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
 import { useProfileEvolution } from '@/hooks/useProfileEvolution';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 // Match WealthProgressChart's expected entry type
 interface ChartJournalEntry {
@@ -19,12 +23,34 @@ interface ChartJournalEntry {
 interface AwakeningArchiveTabProps {
   campId?: string;
   entries: ChartJournalEntry[];
+  onMakeupClick?: (dayNumber: number, dateStr: string) => void;
 }
 
-export function AwakeningArchiveTab({ campId, entries }: AwakeningArchiveTabProps) {
+export function AwakeningArchiveTab({ campId, entries, onMakeupClick }: AwakeningArchiveTabProps) {
+  const navigate = useNavigate();
   const { stats, entries: fullEntries } = useWealthJournalEntries({ campId });
   const { profile: wealthProfile, evolutionInsight } = useProfileEvolution(campId);
 
+  // Fetch camp data for calendar
+  const { data: camp } = useQuery({
+    queryKey: ['wealth-camp-for-archive', campId],
+    queryFn: async () => {
+      if (!campId) return null;
+      const { data, error } = await supabase
+        .from('training_camps')
+        .select('start_date, duration_days, check_in_dates')
+        .eq('id', campId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!campId,
+  });
+
+  // Calculate current day
+  const currentDay = camp?.start_date 
+    ? Math.max(1, Math.ceil((Date.now() - new Date(camp.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1)
+    : 1;
   if (!entries || entries.length === 0) {
     return (
       <div className="text-center py-12">
@@ -91,6 +117,40 @@ export function AwakeningArchiveTab({ campId, entries }: AwakeningArchiveTabProp
 
       {/* Growth Chart */}
       <WealthProgressChart entries={entries} />
+
+      {/* Journey Calendar - 旅程回顾 */}
+      {camp && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">21天旅程回顾</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <WealthJourneyCalendar
+              startDate={camp.start_date}
+              currentDay={currentDay}
+              totalDays={camp.duration_days || 21}
+              checkInDates={Array.isArray(camp.check_in_dates) ? camp.check_in_dates as string[] : []}
+              journalEntries={fullEntries.map(e => ({
+                id: e.id,
+                day_number: e.day_number,
+                behavior_type: e.behavior_block as string | undefined,
+                emotion_type: e.emotion_signal as string | undefined,
+                belief_type: e.old_belief as string | undefined,
+                personal_awakening: (e.behavior_awakening || e.emotion_awakening || e.belief_awakening) as string | undefined,
+                new_belief: e.new_belief as string | undefined,
+                created_at: e.created_at,
+              }))}
+              makeupDaysLimit={3}
+              onDayClick={(dayNumber, dateStr, entry) => {
+                if (entry && (entry as any).behavior_type) {
+                  navigate(`/wealth-journal/${entry.id}`);
+                }
+              }}
+              onMakeupClick={onMakeupClick}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Action Completion Rate Chart */}
       <ActionCompletionChart entries={fullEntries as any} />
