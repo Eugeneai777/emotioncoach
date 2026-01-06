@@ -1,10 +1,22 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Sparkles, ClipboardList, TrendingUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, Sparkles, ClipboardList, TrendingUp, RefreshCw } from 'lucide-react';
 import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
+import {
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
 
 interface GrowthComparisonCardProps {
   campId?: string;
@@ -27,7 +39,9 @@ export function GrowthComparisonCard({
   dominantEmotion,
   dominantBelief,
 }: GrowthComparisonCardProps) {
+  const navigate = useNavigate();
   const { baseline, isLoading } = useAssessmentBaseline(campId);
+  const [showRadar, setShowRadar] = useState(true);
 
   if (isLoading) {
     return (
@@ -50,6 +64,31 @@ export function GrowthComparisonCard({
   const avgAwakening = (parseFloat(avgBehavior) + parseFloat(avgEmotion) + parseFloat(avgBelief)) / 3;
   const awakeningIndex = Math.round(avgAwakening * 20); // Convert 1-5 to 20-100
 
+  // Normalize baseline scores for radar (assuming max score per dimension is ~30)
+  const maxBaselineScore = 30;
+  const baselineBehaviorNorm = Math.round((baseline.behavior_score / maxBaselineScore) * 100);
+  const baselineEmotionNorm = Math.round((baseline.emotion_score / maxBaselineScore) * 100);
+  const baselineBeliefNorm = Math.round((baseline.belief_score / maxBaselineScore) * 100);
+
+  // Radar chart data - showing "卡点程度" vs "觉醒程度"
+  const radarData = [
+    {
+      dimension: '行为层',
+      卡点程度: baselineBehaviorNorm,
+      觉醒程度: behaviorRate,
+    },
+    {
+      dimension: '情绪层',
+      卡点程度: baselineEmotionNorm,
+      觉醒程度: emotionRate,
+    },
+    {
+      dimension: '信念层',
+      卡点程度: baselineBeliefNorm,
+      觉醒程度: beliefRate,
+    },
+  ];
+
   // Get status labels
   const getStatusLabel = (score: number) => {
     if (score >= 80) return { label: '深度觉醒', color: 'text-emerald-600' };
@@ -69,6 +108,13 @@ export function GrowthComparisonCard({
 
   const assessmentDate = format(new Date(baseline.created_at), 'M月d日', { locale: zhCN });
 
+  // Check if user should be prompted for re-assessment (Day 7 or Day 21)
+  const shouldShowReassessmentPrompt = currentDay === 7 || currentDay === 21;
+
+  const handleReassessment = () => {
+    navigate('/wealth-block?reassess=true');
+  };
+
   return (
     <Card className="shadow-sm overflow-hidden">
       <CardHeader className="pb-2 pt-3 px-4">
@@ -81,6 +127,33 @@ export function GrowthComparisonCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-2 space-y-4">
+        {/* Re-assessment Prompt for Day 7 and Day 21 */}
+        {shouldShowReassessmentPrompt && (
+          <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="text-sm font-medium flex items-center gap-1.5">
+                  <RefreshCw className="w-4 h-4 text-amber-600" />
+                  {currentDay === 7 ? '第一周里程碑' : '训练营结业'}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {currentDay === 7 
+                    ? '完成7天训练！重新测评验证你的进步'
+                    : '恭喜完成21天训练！重新测评见证蜕变'}
+                </p>
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="border-amber-500/30 hover:bg-amber-500/10"
+                onClick={handleReassessment}
+              >
+                重新测评
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* T0 vs Current comparison */}
         <div className="grid grid-cols-2 gap-3">
           {/* T0 Baseline */}
@@ -112,6 +185,70 @@ export function GrowthComparisonCard({
             </div>
           </div>
         </div>
+
+        {/* Radar Chart - Before/After Comparison */}
+        {showRadar && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-medium text-muted-foreground">三层对比雷达图</div>
+              <button 
+                onClick={() => setShowRadar(false)}
+                className="text-[10px] text-muted-foreground hover:text-foreground"
+              >
+                收起
+              </button>
+            </div>
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                  <PolarGrid stroke="hsl(var(--border))" />
+                  <PolarAngleAxis 
+                    dataKey="dimension" 
+                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <PolarRadiusAxis 
+                    angle={90} 
+                    domain={[0, 100]} 
+                    tick={{ fontSize: 9 }}
+                    tickCount={5}
+                  />
+                  <Radar
+                    name="卡点程度"
+                    dataKey="卡点程度"
+                    stroke="hsl(var(--destructive))"
+                    fill="hsl(var(--destructive))"
+                    fillOpacity={0.2}
+                    strokeWidth={2}
+                  />
+                  <Radar
+                    name="觉醒程度"
+                    dataKey="觉醒程度"
+                    stroke="hsl(var(--primary))"
+                    fill="hsl(var(--primary))"
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                  />
+                  <Legend 
+                    wrapperStyle={{ fontSize: '11px' }}
+                    iconSize={8}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="text-[10px] text-center text-muted-foreground">
+              红色区域越小、蓝色区域越大，说明转化越显著
+            </p>
+          </div>
+        )}
+
+        {!showRadar && (
+          <button 
+            onClick={() => setShowRadar(true)}
+            className="w-full text-xs text-primary hover:underline py-1"
+          >
+            展开雷达图对比
+          </button>
+        )}
 
         {/* Arrow connector */}
         <div className="flex justify-center -my-1">
