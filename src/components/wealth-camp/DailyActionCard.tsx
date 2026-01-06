@@ -30,6 +30,8 @@ interface DailyActionCardProps {
   onActionSelect?: (action: string) => void;
   pendingActions?: PendingAction[];
   onCompletePending?: (action: PendingAction) => void;
+  onCompleteToday?: (action: string, difficulty: string) => void;
+  todayActionCompleted?: boolean;
 }
 
 export function DailyActionCard({ 
@@ -37,7 +39,9 @@ export function DailyActionCard({
   campId, 
   onActionSelect,
   pendingActions = [],
-  onCompletePending 
+  onCompletePending,
+  onCompleteToday,
+  todayActionCompleted = false
 }: DailyActionCardProps) {
   const [data, setData] = useState<DailyActionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -206,24 +210,34 @@ export function DailyActionCard({
                   {data.reason}
                 </p>
                 <div className="flex items-center gap-2 mt-3">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
-                    onClick={refreshAction}
-                    disabled={refreshing}
-                  >
-                    <RefreshCw className={cn("w-3 h-3 mr-1", refreshing && "animate-spin")} />
-                    换一个
-                  </Button>
-                  {onActionSelect && (
-                    <Button
-                      size="sm"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-xs"
-                      onClick={() => onActionSelect(data.action)}
-                    >
-                      采用此行动
-                    </Button>
+                  {todayActionCompleted ? (
+                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span className="text-sm font-medium">已完成</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
+                        onClick={refreshAction}
+                        disabled={refreshing}
+                      >
+                        <RefreshCw className={cn("w-3 h-3 mr-1", refreshing && "animate-spin")} />
+                        换一个
+                      </Button>
+                      {onCompleteToday && (
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-xs"
+                          onClick={() => onCompleteToday(data.action, data.difficulty_level)}
+                        >
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          确认完成
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

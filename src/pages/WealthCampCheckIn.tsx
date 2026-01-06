@@ -528,6 +528,32 @@ ${reflection}`;
                 setSelectedPendingAction(action);
                 setShowActionDialog(true);
               }}
+              todayActionCompleted={!!(journalEntries.find(e => e.day_number === currentDay) as any)?.action_completed_at}
+              onCompleteToday={async (action, difficulty) => {
+                // Find or prepare today's entry
+                const todayEntry = journalEntries.find(e => e.day_number === currentDay);
+                if (todayEntry) {
+                  // Update giving_action if needed, then open dialog
+                  if (!todayEntry.giving_action) {
+                    await supabase
+                      .from('wealth_journal_entries')
+                      .update({ giving_action: action })
+                      .eq('id', todayEntry.id);
+                  }
+                  setSelectedPendingAction({
+                    action,
+                    entryId: todayEntry.id,
+                    dayNumber: currentDay
+                  });
+                  setShowActionDialog(true);
+                } else {
+                  toast({
+                    title: '请先完成教练梳理',
+                    description: '完成今日的教练对话后才能记录行动完成',
+                    variant: 'destructive'
+                  });
+                }
+              }}
             />
 
 
