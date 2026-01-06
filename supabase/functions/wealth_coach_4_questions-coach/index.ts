@@ -136,7 +136,72 @@ serve(async (req) => {
 - "上次你觉察到...今天有什么新发现吗？"`;
     }
 
-    // Check yesterday's action status for personalized greeting
+    // === 预测性干预系统：评估用户风险 ===
+    let riskContext = '';
+    try {
+      // 调用风险预测函数
+      const riskResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/predict-user-risk`, {
+        method: 'POST',
+        headers: {
+          'Authorization': req.headers.get('Authorization')!,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (riskResponse.ok) {
+        const riskData = await riskResponse.json();
+        console.log('📊 用户风险评估:', riskData);
+        
+        if (riskData.risk_level === 'high') {
+          riskContext = `
+【⚠️ 高风险用户警示】
+该用户风险分数：${riskData.risk_score}/100
+风险因素：${riskData.risk_factors.join('、')}
+距离上次打卡：${riskData.days_since_last_entry} 天
+
+【开场策略调整 - 温暖关怀模式】
+- 语气要更加温暖和接纳，避免任何可能让用户感到压力的表达
+- 不要急于进入正题，先关心用户的近况
+- 开场示例："${userName}，好久不见呀～这几天还好吗？有点想你了呢"
+- 如果用户分享困难，给予充分的理解和支持
+- 降低今天的目标门槛，哪怕只是聊聊天也很好
+`;
+        } else if (riskData.risk_level === 'medium') {
+          riskContext = `
+【⚡ 中风险用户提示】
+该用户近期互动有所减少（风险分：${riskData.risk_score}/100）
+风险因素：${riskData.risk_factors.join('、') || '轻微下降'}
+
+【开场策略调整 - 关心式问候】
+- 开场时表达关心，但语气轻松不要太沉重
+- 可以问问最近生活中有什么新发现
+- 开场示例："${userName}，今天感觉怎么样？最近有什么有趣的事想分享吗？"
+`;
+        }
+        
+        // 添加未完成行动的强化提醒
+        if (riskData.pending_actions && riskData.pending_actions.length > 0) {
+          const pendingList = riskData.pending_actions
+            .map((a: any) => `"${a.giving_action}"（Day ${a.day_number}）`)
+            .join('、');
+          riskContext += `
+【🎯 未完成给予行动 - 重要！】
+用户有 ${riskData.pending_actions.length} 个待确认的给予行动：${pendingList}
+
+请在对话中适当时机温和询问完成情况，例如：
+- "对了，你之前说要[行动内容]，后来怎么样了呀？"
+- "我记得你计划做[行动内容]，有机会完成吗？"
+如果用户完成了，热烈庆祝这份给予的力量。
+如果没完成，温柔探索是什么阻碍了行动。
+`;
+        }
+      }
+    } catch (error) {
+      console.error('风险评估调用失败:', error);
+      // 不影响主流程
+    }
+
+    // Check yesterday's action status for personalized greeting (fallback)
     const { data: recentEntries } = await serviceClient
       .from('wealth_journal_entries')
       .select('giving_action, action_completed_at, action_reflection, day_number')
@@ -148,17 +213,20 @@ serve(async (req) => {
     const completedYesterday = recentEntries?.find(e => e.giving_action && e.action_completed_at);
 
     let actionContext = '';
-    if (yesterdayEntry) {
-      actionContext = `\n\n【昨日行动提醒】
+    // 只有在没有风险上下文时才使用简单的行动提醒
+    if (!riskContext) {
+      if (yesterdayEntry) {
+        actionContext = `\n\n【昨日行动提醒】
 用户昨天计划做"${yesterdayEntry.giving_action}"，但还未确认完成。
 开场时可以温和地询问："昨天你打算${yesterdayEntry.giving_action}，完成了吗？"
 如果用户说完成了，给予肯定并引导今天的觉察。
 如果用户说没完成，温柔地问："是什么阻碍了你？"作为今天探索的切入点。`;
-    } else if (completedYesterday?.action_reflection) {
-      actionContext = `\n\n【昨日行动回顾】
+      } else if (completedYesterday?.action_reflection) {
+        actionContext = `\n\n【昨日行动回顾】
 用户昨天完成了"${completedYesterday.giving_action}"
 反思：${completedYesterday.action_reflection}
 开场时可以说："我看到你昨天完成了给予行动，感觉怎么样？这种给予的体验很珍贵呢。"`;
+      }
     }
 
     // Get coaching strategy based on user profile
@@ -219,12 +287,13 @@ serve(async (req) => {
 - 重点关注：${coachStrategy.focus}
 - 核心提问：${coachStrategy.keyQuestion}
 - 注意避免：${coachStrategy.avoidance}
+${riskContext}
 ${actionContext}
 ${memoryContext}
 `;
-    } else if (memoryContext) {
-      // Even without profile, include memories if they exist
-      profileSection = memoryContext;
+    } else {
+      // Even without profile, include risk context and memories if they exist
+      profileSection = `${riskContext}${actionContext}${memoryContext}`;
     }
 
     const basePrompt = coachTemplate?.system_prompt || `你好，我是劲老师，一位专业的心理教练。我的目标是引导你通过"财富教练四问法"，每天找到一个最小可进步点，从而解锁财富流动。`;

@@ -62,25 +62,25 @@ export const useEnsureWealthProfile = () => {
         // 3. 调用 sync-wealth-profile 创建画像
         console.log('[useEnsureWealthProfile] 找到评估结果，调用 sync-wealth-profile...');
         
-        // 根据现有表结构构建画像数据
+        // 计算健康分：100 - 平均卡点分（与 WealthBlockAssessment.tsx 一致）
+        const healthScore = Math.round(
+          ((5 - assessment.behavior_score) / 4 * 33) +
+          ((5 - assessment.emotion_score) / 4 * 33) +
+          ((5 - assessment.belief_score) / 4 * 34)
+        );
+        
+        // 根据 sync-wealth-profile Edge Function 期望的结构构建数据
         const { data, error } = await supabase.functions.invoke('sync-wealth-profile', {
           body: {
             user_id: user.id,
             assessment_result: {
-              blockScores: {
-                mouth: assessment.mouth_score,
-                hand: assessment.hand_score,
-                eye: assessment.eye_score,
-                heart: assessment.heart_score,
-              },
-              layerScores: {
-                behavior: assessment.behavior_score,
-                emotion: assessment.emotion_score,
-                belief: assessment.belief_score,
-              },
-              priorityBlocks: [assessment.dominant_poor, assessment.dominant_block].filter(Boolean),
-              reactionPattern: assessment.reaction_pattern,
-              answers: assessment.answers,
+              assessment_id: assessment.id,
+              health_score: healthScore,
+              reaction_pattern: assessment.reaction_pattern || 'harmony',
+              dominant_level: assessment.dominant_block,
+              top_poor: assessment.dominant_poor,
+              top_emotion: 'anxiety', // 默认值，评估表未存储此字段
+              top_belief: 'lack',     // 默认值，评估表未存储此字段
             }
           }
         });
