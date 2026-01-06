@@ -29,6 +29,8 @@ interface WealthInviteCardDialogProps {
   onGenerate?: () => void;
   campId?: string;
   currentDay?: number;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 // Helper: Normalize avatar URL (proxy third-party domains)
@@ -116,8 +118,16 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   onGenerate,
   campId,
   currentDay: propCurrentDay,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }) => {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  // Support both controlled and uncontrolled modes
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (controlledOnOpenChange || (() => {})) : setInternalOpen;
+  
   const [activeTab, setActiveTab] = useState<'assessment' | 'camp'>(defaultTab);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);

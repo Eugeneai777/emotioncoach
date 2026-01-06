@@ -17,6 +17,7 @@ import { AssessmentFocusCard } from '@/components/wealth-camp/AssessmentFocusCar
 import { DailyActionCard } from '@/components/wealth-camp/DailyActionCard';
 import { ActionCompletionDialog } from '@/components/wealth-block/ActionCompletionDialog';
 import CampShareDialog from '@/components/camp/CampShareDialog';
+import WealthInviteCardDialog from '@/components/wealth-camp/WealthInviteCardDialog';
 import { BackfillMemoriesButton } from '@/components/wealth-camp/BackfillMemoriesButton';
 import { AwakeningArchiveTab } from '@/components/wealth-camp/AwakeningArchiveTab';
 import { cn } from '@/lib/utils';
@@ -46,6 +47,7 @@ export default function WealthCampCheckIn() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
   
   const [meditationCompleted, setMeditationCompleted] = useState(false);
   const [coachingCompleted, setCoachingCompleted] = useState(false);
@@ -385,7 +387,7 @@ ${reflection}`;
       title: '邀请好友',
       icon: '🎁',
       completed: inviteCompleted,
-      action: handleInviteClick,
+      action: () => setShowInviteDialog(true),
     },
   ];
 
@@ -533,7 +535,6 @@ ${reflection}`;
                   campId={campId}
                   dayNumber={currentDay}
                   userId={userId}
-                  inviteCount={0}
                   onInviteClick={handleInviteClick}
                 />
               </div>
@@ -662,7 +663,17 @@ ${reflection}`;
         consecutiveDays={camp.completed_days || 1}
         totalDays={camp.duration_days || 21}
         onShare={() => setShowShareDialog(true)}
-        onInvite={scrollToInvite}
+        onInvite={() => setShowInviteDialog(true)}
+      />
+
+      {/* Invite Card Dialog */}
+      <WealthInviteCardDialog
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
+        defaultTab="camp"
+        campId={campId}
+        currentDay={currentDay}
+        onGenerate={handleInviteClick}
       />
 
       {/* Action Completion Dialog */}
