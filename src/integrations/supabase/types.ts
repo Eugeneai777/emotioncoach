@@ -1113,6 +1113,53 @@ export type Database = {
           },
         ]
       }
+      camp_invite_referrals: {
+        Row: {
+          camp_id: string | null
+          camp_type: string
+          created_at: string
+          id: string
+          inviter_user_id: string
+          joined_at: string | null
+          notification_sent: boolean | null
+          notification_sent_at: string | null
+          referred_user_id: string
+          status: string
+        }
+        Insert: {
+          camp_id?: string | null
+          camp_type?: string
+          created_at?: string
+          id?: string
+          inviter_user_id: string
+          joined_at?: string | null
+          notification_sent?: boolean | null
+          notification_sent_at?: string | null
+          referred_user_id: string
+          status?: string
+        }
+        Update: {
+          camp_id?: string | null
+          camp_type?: string
+          created_at?: string
+          id?: string
+          inviter_user_id?: string
+          joined_at?: string | null
+          notification_sent?: boolean | null
+          notification_sent_at?: string | null
+          referred_user_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "camp_invite_referrals_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       camp_templates: {
         Row: {
           benefits: Json | null

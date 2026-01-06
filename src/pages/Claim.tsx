@@ -11,6 +11,8 @@ export default function Claim() {
   const navigate = useNavigate();
   const partnerId = searchParams.get("partner");
   const posterId = searchParams.get("poster");
+  const type = searchParams.get("type"); // wealth_camp for camp invites
+  const ref = searchParams.get("ref"); // inviter user id for camp invites
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'no-partner'>('loading');
   const [message, setMessage] = useState("");
@@ -43,7 +45,57 @@ export default function Claim() {
     }
   };
 
+  // Handle camp invite referral
+  const processCampInvite = async (userId: string, inviterUserId: string) => {
+    try {
+      // Check if already referred
+      const { data: existing } = await supabase
+        .from('camp_invite_referrals')
+        .select('id')
+        .eq('referred_user_id', userId)
+        .eq('inviter_user_id', inviterUserId)
+        .eq('camp_type', 'wealth_block_21')
+        .maybeSingle();
+
+      if (existing) {
+        console.log('Camp invite referral already exists');
+        return;
+      }
+
+      // Prevent self-referral
+      if (userId === inviterUserId) {
+        console.log('Cannot refer yourself');
+        return;
+      }
+
+      // Create referral record
+      const { error } = await supabase
+        .from('camp_invite_referrals')
+        .insert({
+          inviter_user_id: inviterUserId,
+          referred_user_id: userId,
+          camp_type: 'wealth_block_21',
+          status: 'pending',
+        });
+
+      if (error) {
+        console.error('Failed to create camp invite referral:', error);
+      } else {
+        console.log('Camp invite referral created successfully');
+      }
+    } catch (e) {
+      console.error('Error processing camp invite:', e);
+    }
+  };
+
   useEffect(() => {
+    // Handle camp invite type
+    if (type === 'wealth_camp' && ref) {
+      handleCampInvite();
+      return;
+    }
+    
+    // Handle partner claim
     if (!partnerId) {
       setStatus('no-partner');
       setMessage("缺少合伙人信息");
@@ -51,7 +103,29 @@ export default function Claim() {
     }
     
     claimEntry();
-  }, [partnerId]);
+  }, [partnerId, type, ref]);
+
+  const handleCampInvite = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        // Not logged in, redirect to camp intro with referral stored
+        localStorage.setItem('camp_invite_ref', ref!);
+        navigate('/wealth-camp-intro');
+        return;
+      }
+
+      // Process the referral
+      await processCampInvite(user.id, ref!);
+      
+      // Redirect to camp intro
+      navigate('/wealth-camp-intro');
+    } catch (error) {
+      console.error('Error handling camp invite:', error);
+      navigate('/wealth-camp-intro');
+    }
+  };
 
   const claimEntry = async () => {
     try {
