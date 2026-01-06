@@ -38,6 +38,8 @@ const coachTypeMap: Record<string, CoachType> = {
   'life_coach': 'vibrant_life',
   'story_coach': 'story',
   'gratitude_coach': 'gratitude',
+  'wealth_coach_4_questions_coach': 'wealth',
+  'wealth_coach': 'wealth',
   'general': 'vibrant_life'
 };
 
@@ -182,6 +184,18 @@ export const NotificationCard = ({ notification, onClick, onDelete, colorTheme =
       <p className="text-sm text-muted-foreground text-left mb-2 leading-relaxed">
         {notification.message}
       </p>
+
+      {/* Action Button */}
+      {notification.action_text && notification.action_type === 'navigate' && notification.action_data?.path && (
+        <Button 
+          size="sm" 
+          variant="outline"
+          onClick={handleAction}
+          className="w-full mt-2 text-xs"
+        >
+          {notification.action_text} →
+        </Button>
+      )}
 
       {/* Quick Actions */}
       <div className="flex items-center gap-2 pt-1">
