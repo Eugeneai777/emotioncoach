@@ -296,3 +296,6 @@ verify_jwt = true
 
 [functions.elevenlabs-sfx]
 verify_jwt = true
+
+[functions.generate-deep-followup]
+verify_jwt = true
