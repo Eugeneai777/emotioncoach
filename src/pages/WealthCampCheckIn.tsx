@@ -105,6 +105,19 @@ export default function WealthCampCheckIn() {
     if (!camp?.start_date) return 1;
     return Math.max(1, getDaysSinceStart(camp.start_date) + 1);
   }, [camp?.start_date]);
+  
+  // 自动检查并计算本周权重（如果缺失或过期）
+  useEffect(() => {
+    if (!campId || weightsLoading) return;
+    
+    // 如果没有调整理由，说明没有权重数据，需要计算
+    const needsCalculation = !adjustmentReason || adjustmentReason === '初始阶段，均衡探索三层';
+    
+    if (needsCalculation && currentDay > 1) {
+      console.log('📊 自动计算本周训练权重...');
+      calculateWeights();
+    }
+  }, [campId, weightsLoading, adjustmentReason, currentDay, calculateWeights]);
 
   // Fetch current day meditation
   const { data: meditation } = useQuery({
