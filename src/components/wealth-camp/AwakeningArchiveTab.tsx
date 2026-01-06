@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WealthProgressChart } from './WealthProgressChart';
 import { ProfileEvolutionCard } from './ProfileEvolutionCard';
 import { ActionTrackingStats } from './ActionTrackingStats';
+import { ActionCompletionChart } from './ActionCompletionChart';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
 import { useProfileEvolution } from '@/hooks/useProfileEvolution';
 
@@ -90,6 +91,9 @@ export function AwakeningArchiveTab({ campId, entries }: AwakeningArchiveTabProp
 
       {/* Growth Chart */}
       <WealthProgressChart entries={entries} />
+
+      {/* Action Completion Rate Chart */}
+      <ActionCompletionChart entries={fullEntries as any} />
 
       {/* Action Tracking Stats */}
       <ActionTrackingStats entries={fullEntries as any} />
