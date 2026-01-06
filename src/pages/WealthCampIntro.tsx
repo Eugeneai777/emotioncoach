@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
+import { AssessmentFocusCard } from "@/components/wealth-camp/AssessmentFocusCard";
 
 const WealthCampIntro = () => {
   const navigate = useNavigate();
@@ -174,6 +175,9 @@ const WealthCampIntro = () => {
             </p>
           </div>
         </section>
+
+        {/* Personalized Assessment Focus - 基于测评结果的个性化重点 */}
+        <AssessmentFocusCard variant="intro" className="mx-6" />
 
         {/* Pain Points Section */}
         <section className="px-6 py-8">

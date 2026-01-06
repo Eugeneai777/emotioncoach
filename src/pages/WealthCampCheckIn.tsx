@@ -13,6 +13,7 @@ import { WealthCampInviteCard } from '@/components/wealth-camp/WealthCampInviteC
 import { CheckInCelebrationDialog } from '@/components/wealth-camp/CheckInCelebrationDialog';
 import { WealthCoachEmbedded } from '@/components/wealth-camp/WealthCoachEmbedded';
 import { WealthJourneyCalendar } from '@/components/wealth-camp/WealthJourneyCalendar';
+import { AssessmentFocusCard } from '@/components/wealth-camp/AssessmentFocusCard';
 import CampShareDialog from '@/components/camp/CampShareDialog';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
@@ -364,6 +365,11 @@ ${reflection}`;
           </TabsList>
 
           <TabsContent value="today" className="space-y-6 mt-6">
+            {/* Assessment Focus Card - 仅前3天显示 */}
+            {currentDay <= 3 && (
+              <AssessmentFocusCard variant="checkin" />
+            )}
+
             {/* Meditation Player */}
             <div id="meditation-player">
               {meditation && (
