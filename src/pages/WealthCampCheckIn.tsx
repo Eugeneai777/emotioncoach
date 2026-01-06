@@ -684,7 +684,7 @@ ${reflection}`;
           action={pendingAction.action}
           journalId={pendingAction.entryId}
           campId={campId}
-          onComplete={async (reflection, difficulty) => {
+          onComplete={async (reflection, difficulty, witnessResult) => {
             const { error } = await supabase
               .from('wealth_journal_entries')
               .update({
@@ -705,6 +705,28 @@ ${reflection}`;
                 title: '🎉 太棒了！',
                 description: '给予行动已完成，财富能量正在流动',
               });
+              
+              // 触发行动完成庆祝通知
+              try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                  await supabase.functions.invoke('trigger-notifications', {
+                    body: {
+                      trigger_type: 'action_completion_celebration',
+                      user_id: user.id,
+                      context: {
+                        giving_action: pendingAction.action,
+                        day_number: pendingAction.dayNumber,
+                        reflection: reflection,
+                        witness_message: witnessResult?.witness_statement || witnessResult?.witness_message
+                      }
+                    }
+                  });
+                }
+              } catch (notifyError) {
+                console.error('触发庆祝通知失败:', notifyError);
+              }
+              
               setPendingAction(null);
               queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
             }

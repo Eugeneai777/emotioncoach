@@ -14,19 +14,21 @@ import { ActionWitnessCard } from './ActionWitnessCard';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 
+interface WitnessResult {
+  ai_witness?: string;
+  witness_statement?: string;
+  witness_message?: string;
+  transition_label?: string;
+  totalCount?: number;
+}
+
 interface ActionCompletionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   action: string;
   journalId?: string;
   campId?: string;
-  onComplete: (reflection: string, difficulty: number) => void;
-}
-
-interface WitnessResult {
-  ai_witness: string;
-  transition_label: string;
-  totalCount: number;
+  onComplete: (reflection: string, difficulty: number, witnessResult?: WitnessResult) => void;
 }
 
 export function ActionCompletionDialog({
@@ -70,17 +72,23 @@ export function ActionCompletionDialog({
       if (error) {
         console.error('Witness action error:', error);
         toast.error('见证记录失败，但行动已完成');
+        // Even on error, call onComplete with undefined witnessResult
+        await onComplete(reflection, difficulty, undefined);
       } else if (data?.witness) {
-        setWitnessResult({
+        const result: WitnessResult = {
           ai_witness: data.witness.ai_witness,
+          witness_statement: data.witness.ai_witness,
           transition_label: data.witness.transition_label,
           totalCount: data.totalWitnessCount || 1
-        });
+        };
+        setWitnessResult(result);
         triggerCelebration();
+        // Call the original onComplete callback with witnessResult
+        await onComplete(reflection, difficulty, result);
+      } else {
+        // No witness data, still complete the action
+        await onComplete(reflection, difficulty, undefined);
       }
-
-      // Call the original onComplete callback
-      await onComplete(reflection, difficulty);
       
     } catch (err) {
       console.error('Error completing action:', err);

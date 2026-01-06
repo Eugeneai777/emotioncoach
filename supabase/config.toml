@@ -326,3 +326,6 @@ verify_jwt = true
 
 [functions.notify-camp-invite-success]
 verify_jwt = false
+
+[functions.batch-trigger-action-reminder]
+verify_jwt = false

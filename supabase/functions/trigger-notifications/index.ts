@@ -339,6 +339,47 @@ serve(async (req) => {
         };
         break;
 
+      case 'pending_action_reminder':
+        // 未完成行动提醒
+        const { data: pendingActions } = await supabase
+          .from('wealth_journal_entries')
+          .select('giving_action, day_number, created_at')
+          .eq('user_id', user_id)
+          .not('giving_action', 'is', null)
+          .is('action_completed_at', null)
+          .order('day_number', { ascending: false })
+          .limit(1);
+        
+        if (pendingActions && pendingActions.length > 0) {
+          const action = pendingActions[0];
+          const createdAt = new Date(action.created_at);
+          const hoursSinceCreated = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
+          
+          // 行动生成超过4小时且未完成
+          if (hoursSinceCreated >= 4) {
+            shouldTrigger = true;
+            scenario = 'pending_action_reminder';
+            notificationContext = {
+              giving_action: action.giving_action,
+              day_number: action.day_number,
+              hours_pending: Math.floor(hoursSinceCreated)
+            };
+          }
+        }
+        break;
+
+      case 'action_completion_celebration':
+        // 行动完成庆祝
+        shouldTrigger = true;
+        scenario = 'action_completion_celebration';
+        notificationContext = {
+          giving_action: context?.giving_action,
+          day_number: context?.day_number,
+          reflection: context?.reflection,
+          witness_message: context?.witness_message
+        };
+        break;
+
       default:
         return new Response(JSON.stringify({ 
           error: "未知的触发类型" 
