@@ -10,6 +10,7 @@ import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { getThemeBackgroundGradient } from "@/utils/coachThemeConfig";
 import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
 import { toast } from "sonner";
+import { useEnsureWealthProfile } from "@/hooks/useEnsureWealthProfile";
 
 interface WealthCoachEmbeddedProps {
   initialMessage: string;
@@ -33,6 +34,9 @@ export const WealthCoachEmbedded = ({
   const [showIntro, setShowIntro] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
+  
+  // 确保用户画像存在
+  useEnsureWealthProfile();
 
   const {
     messages,
