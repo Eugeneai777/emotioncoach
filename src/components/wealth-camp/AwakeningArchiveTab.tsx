@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WealthProgressChart } from './WealthProgressChart';
 import { WealthJourneyCalendar } from './WealthJourneyCalendar';
@@ -8,6 +8,7 @@ import { ActionTrackingStats } from './ActionTrackingStats';
 import { ArchiveHeroCard } from './ArchiveHeroCard';
 import { NewBeliefsCollection } from './NewBeliefsCollection';
 import { WeeklyComparisonChart } from './WeeklyComparisonChart';
+import { GrowthComparisonCard } from './GrowthComparisonCard';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
 import { useProfileEvolution } from '@/hooks/useProfileEvolution';
 import { useQuery } from '@tanstack/react-query';
@@ -66,6 +67,18 @@ export function AwakeningArchiveTab({ campId, entries, onMakeupClick }: Awakenin
 
   return (
     <div className="space-y-4">
+      {/* Section 0: Growth Comparison - 测评 vs 训练对比 */}
+      <GrowthComparisonCard
+        campId={campId}
+        currentDay={currentDay}
+        avgBehavior={stats?.avgBehavior || '0.0'}
+        avgEmotion={stats?.avgEmotion || '0.0'}
+        avgBelief={stats?.avgBelief || '0.0'}
+        dominantBehavior={typeof stats?.dominantBehavior === 'object' ? stats.dominantBehavior.name : stats?.dominantBehavior}
+        dominantEmotion={typeof stats?.dominantEmotion === 'object' ? stats.dominantEmotion.name : stats?.dominantEmotion}
+        dominantBelief={typeof stats?.dominantBelief === 'object' ? stats.dominantBelief.name : stats?.dominantBelief}
+      />
+
       {/* Section 1: Hero Card - 成长概览 */}
       <ArchiveHeroCard
         totalDays={stats?.totalDays || 0}
