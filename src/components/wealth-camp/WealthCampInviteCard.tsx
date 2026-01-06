@@ -3,7 +3,6 @@ import { Copy, Check, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import WealthInviteCardDialog from './WealthInviteCardDialog';
 
 interface WealthCampInviteCardProps {
   campId?: string;
@@ -19,7 +18,6 @@ export function WealthCampInviteCard({
   onInviteClick
 }: WealthCampInviteCardProps) {
   const [copied, setCopied] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const inviteUrl = `${window.location.origin}/claim?type=wealth_camp&ref=${userId}`;
@@ -43,13 +41,6 @@ export function WealthCampInviteCard({
     }
   };
 
-  const handleOpenDialog = () => {
-    setDialogOpen(true);
-  };
-
-  const handleGenerate = () => {
-    onInviteClick?.();
-  };
 
   return (
     <Card className="bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 border-amber-200 dark:border-amber-800 overflow-hidden">
@@ -65,7 +56,7 @@ export function WealthCampInviteCard({
 
         <div className="flex gap-2">
           <Button
-            onClick={handleOpenDialog}
+            onClick={() => onInviteClick?.()}
             className="flex-1 bg-amber-500 hover:bg-amber-600 text-white gap-2"
           >
             <Image className="w-4 h-4" />
@@ -83,15 +74,6 @@ export function WealthCampInviteCard({
             )}
           </Button>
         </div>
-
-        <WealthInviteCardDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          defaultTab="camp"
-          onGenerate={handleGenerate}
-          campId={campId}
-          currentDay={dayNumber}
-        />
       </CardContent>
     </Card>
   );
