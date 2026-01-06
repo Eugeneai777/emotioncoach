@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus, Sparkles, History } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Sparkles, History, Target, Heart, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProfileSnapshot {
@@ -27,9 +27,17 @@ interface WealthProfile {
   updated_at?: string;
 }
 
+interface StickingPoints {
+  dominantBehavior?: { name: string; count: number };
+  dominantEmotion?: { name: string; count: number };
+  dominantBelief?: { name: string; count: number };
+  totalDays: number;
+}
+
 interface ProfileEvolutionCardProps {
   currentProfile: WealthProfile | null;
   evolutionInsight?: string;
+  stickingPoints?: StickingPoints;
   className?: string;
 }
 
@@ -65,6 +73,7 @@ const patternNames: Record<string, string> = {
 export function ProfileEvolutionCard({ 
   currentProfile, 
   evolutionInsight,
+  stickingPoints,
   className 
 }: ProfileEvolutionCardProps) {
   if (!currentProfile) {
@@ -132,116 +141,140 @@ export function ProfileEvolutionCard({
 
   return (
     <Card className={cn(
-      "bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 border-violet-200 dark:border-violet-800",
+      "bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-950/30 dark:to-gray-950/30 border-border/50 shadow-sm",
       className
     )}>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <History className="w-5 h-5 text-violet-600" />
-          <span className="text-violet-800 dark:text-violet-200">财富画像演化</span>
+      <CardHeader className="pb-2 pt-3 px-4">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <History className="w-4 h-4 text-violet-600" />
+          <span className="text-foreground">我的财富画像</span>
           {hasHistory && (
-            <Badge variant="secondary" className="ml-auto bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
+            <Badge variant="secondary" className="ml-auto text-xs bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
               第{currentProfile.current_week || 1}周
             </Badge>
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Health Score Comparison */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-white/60 dark:bg-white/5">
-          <div>
-            <p className="text-sm text-muted-foreground">财富健康指数</p>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-bold text-violet-700 dark:text-violet-300">{currentScore}</span>
-              {hasHistory && scoreDiff !== 0 && (
-                <span className={cn(
-                  "text-sm font-medium",
-                  scoreDiff > 0 ? "text-green-600" : "text-amber-600"
-                )}>
-                  {scoreDiff > 0 ? '+' : ''}{scoreDiff}
-                </span>
-              )}
+      <CardContent className="space-y-3 px-4 pb-4">
+        {/* Sticking Points - Integrated from Core Sticking Points */}
+        {stickingPoints && (stickingPoints.dominantBehavior || stickingPoints.dominantEmotion || stickingPoints.dominantBelief) && (
+          <div className="grid grid-cols-3 gap-2">
+            {stickingPoints.dominantBehavior && (
+              <div className="p-2.5 bg-amber-100/60 dark:bg-amber-900/20 rounded-lg">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Target className="w-3.5 h-3.5 text-amber-600" />
+                  <span className="text-xs text-amber-700 dark:text-amber-300">行为层</span>
+                </div>
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                  {stickingPoints.dominantBehavior.name}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {stickingPoints.dominantBehavior.count}次
+                </p>
+              </div>
+            )}
+            {stickingPoints.dominantEmotion && (
+              <div className="p-2.5 bg-pink-100/60 dark:bg-pink-900/20 rounded-lg">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Heart className="w-3.5 h-3.5 text-pink-600" />
+                  <span className="text-xs text-pink-700 dark:text-pink-300">情绪层</span>
+                </div>
+                <p className="text-sm font-medium text-pink-800 dark:text-pink-200">
+                  {stickingPoints.dominantEmotion.name}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {stickingPoints.dominantEmotion.count}次
+                </p>
+              </div>
+            )}
+            {stickingPoints.dominantBelief && (
+              <div className="p-2.5 bg-violet-100/60 dark:bg-violet-900/20 rounded-lg">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Brain className="w-3.5 h-3.5 text-violet-600" />
+                  <span className="text-xs text-violet-700 dark:text-violet-300">信念层</span>
+                </div>
+                <p className="text-sm font-medium text-violet-800 dark:text-violet-200">
+                  {stickingPoints.dominantBelief.name}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {stickingPoints.dominantBelief.count}次
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Health Score with Trend */}
+        <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/60 dark:bg-white/5 border border-border/30">
+          <div className="flex items-center gap-3">
+            <div className={cn("p-1.5 rounded-full", trend.bgColor)}>
+              <TrendIcon className={cn("w-4 h-4", trend.color)} />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">健康指数</p>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-lg font-bold text-foreground">{currentScore}</span>
+                {hasHistory && scoreDiff !== 0 && (
+                  <span className={cn(
+                    "text-xs font-medium",
+                    scoreDiff > 0 ? "text-green-600" : "text-amber-600"
+                  )}>
+                    {scoreDiff > 0 ? '+' : ''}{scoreDiff}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-          <div className={cn("p-2 rounded-full", trend.bgColor)}>
-            <TrendIcon className={cn("w-5 h-5", trend.color)} />
-          </div>
+          <span className={cn("text-xs px-2 py-1 rounded-full", trend.bgColor, trend.color)}>
+            {trend.label}
+          </span>
         </div>
 
-        {/* Type Changes */}
+        {/* Type Changes - Simplified */}
         {hasAnyChange && (
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground font-medium">画像变化</p>
-            <div className="grid gap-2">
-              {/* Behavior Layer */}
-              <div className="flex items-center gap-2 text-sm">
-                <span className="w-16 text-muted-foreground">行为层</span>
-                {behaviorChange ? (
-                  <>
-                    <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700 line-through opacity-60">
-                      {behaviorChange.from}
-                    </Badge>
-                    <span className="text-muted-foreground">→</span>
-                    <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-900/50 dark:text-red-300">
-                      {behaviorChange.to}
-                    </Badge>
-                  </>
-                ) : (
-                  <Badge variant="outline" className="bg-red-50/50 text-red-600/80 border-red-200/50 dark:bg-red-900/20 dark:text-red-400/80">
-                    {getCurrentTypeName(currentProfile.dominant_poor, behaviorTypeNames)}
-                  </Badge>
-                )}
+          <div className="flex flex-wrap gap-1.5">
+            {behaviorChange && (
+              <div className="flex items-center gap-1 text-xs">
+                <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 line-through opacity-60 text-xs py-0">
+                  {behaviorChange.from}
+                </Badge>
+                <span className="text-muted-foreground">→</span>
+                <Badge className="bg-amber-100 text-amber-700 border-0 dark:bg-amber-900/50 dark:text-amber-300 text-xs py-0">
+                  {behaviorChange.to}
+                </Badge>
               </div>
-
-              {/* Emotion Layer */}
-              <div className="flex items-center gap-2 text-sm">
-                <span className="w-16 text-muted-foreground">情绪层</span>
-                {emotionChange ? (
-                  <>
-                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700 line-through opacity-60">
-                      {emotionChange.from}
-                    </Badge>
-                    <span className="text-muted-foreground">→</span>
-                    <Badge className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300">
-                      {emotionChange.to}
-                    </Badge>
-                  </>
-                ) : (
-                  <Badge variant="outline" className="bg-blue-50/50 text-blue-600/80 border-blue-200/50 dark:bg-blue-900/20 dark:text-blue-400/80">
-                    {getCurrentTypeName(currentProfile.dominant_emotion, emotionTypeNames)}
-                  </Badge>
-                )}
+            )}
+            {emotionChange && (
+              <div className="flex items-center gap-1 text-xs">
+                <Badge variant="outline" className="bg-pink-50 text-pink-600 border-pink-200 dark:bg-pink-900/30 dark:text-pink-400 line-through opacity-60 text-xs py-0">
+                  {emotionChange.from}
+                </Badge>
+                <span className="text-muted-foreground">→</span>
+                <Badge className="bg-pink-100 text-pink-700 border-0 dark:bg-pink-900/50 dark:text-pink-300 text-xs py-0">
+                  {emotionChange.to}
+                </Badge>
               </div>
-
-              {/* Belief Layer */}
-              <div className="flex items-center gap-2 text-sm">
-                <span className="w-16 text-muted-foreground">信念层</span>
-                {beliefChange ? (
-                  <>
-                    <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700 line-through opacity-60">
-                      {beliefChange.from}
-                    </Badge>
-                    <span className="text-muted-foreground">→</span>
-                    <Badge className="bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300">
-                      {beliefChange.to}
-                    </Badge>
-                  </>
-                ) : (
-                  <Badge variant="outline" className="bg-purple-50/50 text-purple-600/80 border-purple-200/50 dark:bg-purple-900/20 dark:text-purple-400/80">
-                    {getCurrentTypeName(currentProfile.dominant_belief, beliefTypeNames)}
-                  </Badge>
-                )}
+            )}
+            {beliefChange && (
+              <div className="flex items-center gap-1 text-xs">
+                <Badge variant="outline" className="bg-violet-50 text-violet-600 border-violet-200 dark:bg-violet-900/30 dark:text-violet-400 line-through opacity-60 text-xs py-0">
+                  {beliefChange.from}
+                </Badge>
+                <span className="text-muted-foreground">→</span>
+                <Badge className="bg-violet-100 text-violet-700 border-0 dark:bg-violet-900/50 dark:text-violet-300 text-xs py-0">
+                  {beliefChange.to}
+                </Badge>
               </div>
-            </div>
+            )}
           </div>
         )}
 
         {/* AI Evolution Insight */}
         {evolutionInsight && (
-          <div className="p-3 rounded-lg bg-white/80 dark:bg-white/10 border border-violet-100 dark:border-violet-800">
+          <div className="p-2.5 rounded-lg bg-violet-50/50 dark:bg-violet-900/10 border border-violet-100 dark:border-violet-800/50">
             <div className="flex items-start gap-2">
-              <Sparkles className="w-4 h-4 text-violet-500 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-violet-700 dark:text-violet-300 leading-relaxed">
+              <Sparkles className="w-3.5 h-3.5 text-violet-500 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-violet-700 dark:text-violet-300 leading-relaxed">
                 {evolutionInsight}
               </p>
             </div>
@@ -249,9 +282,9 @@ export function ProfileEvolutionCard({
         )}
 
         {/* No History State */}
-        {!hasHistory && (
-          <div className="text-center py-3">
-            <p className="text-sm text-muted-foreground">
+        {!hasHistory && !stickingPoints && (
+          <div className="text-center py-2">
+            <p className="text-xs text-muted-foreground">
               继续完成训练，系统将记录你的成长轨迹
             </p>
           </div>

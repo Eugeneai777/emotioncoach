@@ -26,6 +26,7 @@ interface WealthJourneyCalendarProps {
   checkInDates: string[];
   journalEntries: JournalEntry[];
   makeupDaysLimit?: number;
+  compact?: boolean;
   onDayClick?: (dayNumber: number, dateStr: string, entry?: JournalEntry) => void;
   onMakeupClick?: (dayNumber: number, dateStr: string) => void;
 }
@@ -69,6 +70,7 @@ export function WealthJourneyCalendar({
   checkInDates,
   journalEntries,
   makeupDaysLimit = 3,
+  compact = false,
   onDayClick,
   onMakeupClick,
 }: WealthJourneyCalendarProps) {
@@ -137,33 +139,35 @@ export function WealthJourneyCalendar({
   };
 
   return (
-    <div className="space-y-4">
-      {/* 统计概览 */}
-      <div className="grid grid-cols-4 gap-2">
-        <div className="text-center p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30">
-          <div className="text-lg font-bold text-amber-600">{stats.completed}</div>
-          <div className="text-xs text-muted-foreground">已打卡</div>
-        </div>
-        <div className="text-center p-2 rounded-lg bg-orange-50 dark:bg-orange-950/30">
-          <div className="text-lg font-bold text-orange-600 flex items-center justify-center gap-1">
-            <Flame className="w-4 h-4" />
-            {stats.streak}
+    <div className={cn("space-y-4", compact && "space-y-3")}>
+      {/* 统计概览 - Hidden in compact mode */}
+      {!compact && (
+        <div className="grid grid-cols-4 gap-2">
+          <div className="text-center p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30">
+            <div className="text-lg font-bold text-amber-600">{stats.completed}</div>
+            <div className="text-xs text-muted-foreground">已打卡</div>
           </div>
-          <div className="text-xs text-muted-foreground">连续</div>
+          <div className="text-center p-2 rounded-lg bg-orange-50 dark:bg-orange-950/30">
+            <div className="text-lg font-bold text-orange-600 flex items-center justify-center gap-1">
+              <Flame className="w-4 h-4" />
+              {stats.streak}
+            </div>
+            <div className="text-xs text-muted-foreground">连续</div>
+          </div>
+          <div className="text-center p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/30">
+            <div className="text-lg font-bold text-yellow-600">{stats.avgIntensity.toFixed(1)}</div>
+            <div className="text-xs text-muted-foreground">觉醒强度</div>
+          </div>
+          <div className="text-center p-2 rounded-lg bg-red-50 dark:bg-red-950/30">
+            <div className="text-lg font-bold text-red-500">{stats.missed}</div>
+            <div className="text-xs text-muted-foreground">待补卡</div>
+          </div>
         </div>
-        <div className="text-center p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/30">
-          <div className="text-lg font-bold text-yellow-600">{stats.avgIntensity.toFixed(1)}</div>
-          <div className="text-xs text-muted-foreground">觉醒强度</div>
-        </div>
-        <div className="text-center p-2 rounded-lg bg-red-50 dark:bg-red-950/30">
-          <div className="text-lg font-bold text-red-500">{stats.missed}</div>
-          <div className="text-xs text-muted-foreground">待补卡</div>
-        </div>
-      </div>
+      )}
 
       {/* 21天旅程地图 */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-4">
+      <Card className={cn("overflow-hidden", compact && "border-0 shadow-none bg-transparent")}>
+        <CardContent className={cn("p-4", compact && "p-0")}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium flex items-center gap-2">
               <Calendar className="w-4 h-4 text-amber-500" />

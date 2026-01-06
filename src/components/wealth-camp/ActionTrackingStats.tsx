@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gift, CheckCircle2, Clock, Star, TrendingUp } from 'lucide-react';
+import { Gift, CheckCircle2, Clock, Star, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Button } from '@/components/ui/button';
 
 interface ActionEntry {
   id: string;
@@ -18,9 +20,12 @@ interface ActionEntry {
 interface ActionTrackingStatsProps {
   entries: ActionEntry[];
   showDetails?: boolean;
+  compact?: boolean;
 }
 
-export function ActionTrackingStats({ entries, showDetails = true }: ActionTrackingStatsProps) {
+export function ActionTrackingStats({ entries, showDetails = true, compact = false }: ActionTrackingStatsProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
   const stats = useMemo(() => {
     const actionsWithGiving = entries.filter(e => e.giving_action);
     const completedActions = actionsWithGiving.filter(e => e.action_completed_at);
@@ -35,12 +40,18 @@ export function ActionTrackingStats({ entries, showDetails = true }: ActionTrack
       ? Math.round((completedActions.length / actionsWithGiving.length) * 100)
       : 0;
 
+    const pieData = [
+      { name: '已完成', value: completedActions.length, color: 'hsl(152, 57.5%, 37.6%)' },
+      { name: '待完成', value: pendingActions.length, color: 'hsl(var(--muted))' },
+    ];
+
     return {
       total: actionsWithGiving.length,
       completed: completedActions.length,
       pending: pendingActions.length,
       avgDifficulty,
       completionRate,
+      pieData,
       actions: actionsWithGiving.sort((a, b) => b.day_number - a.day_number),
     };
   }, [entries]);
@@ -51,30 +62,51 @@ export function ActionTrackingStats({ entries, showDetails = true }: ActionTrack
 
   return (
     <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2 text-emerald-800 dark:text-emerald-200">
           <Gift className="w-5 h-5" />
           给予行动追踪
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-4 gap-2">
-          <div className="text-center p-2 bg-emerald-100/70 dark:bg-emerald-900/30 rounded-lg">
-            <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{stats.total}</p>
-            <p className="text-xs text-emerald-600 dark:text-emerald-400">总行动</p>
+        {/* Pie Chart + Stats Overview */}
+        <div className="flex items-center gap-4">
+          {/* Mini Pie Chart */}
+          <div className="w-20 h-20 shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={stats.pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={24}
+                  outerRadius={36}
+                  paddingAngle={2}
+                  dataKey="value"
+                  strokeWidth={0}
+                >
+                  {stats.pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-          <div className="text-center p-2 bg-green-100/70 dark:bg-green-900/30 rounded-lg">
-            <p className="text-xl font-bold text-green-700 dark:text-green-300">{stats.completed}</p>
-            <p className="text-xs text-green-600 dark:text-green-400">已完成</p>
-          </div>
-          <div className="text-center p-2 bg-amber-100/70 dark:bg-amber-900/30 rounded-lg">
-            <p className="text-xl font-bold text-amber-700 dark:text-amber-300">{stats.pending}</p>
-            <p className="text-xs text-amber-600 dark:text-amber-400">待完成</p>
-          </div>
-          <div className="text-center p-2 bg-teal-100/70 dark:bg-teal-900/30 rounded-lg">
-            <p className="text-xl font-bold text-teal-700 dark:text-teal-300">{stats.completionRate}%</p>
-            <p className="text-xs text-teal-600 dark:text-teal-400">完成率</p>
+          
+          {/* Stats */}
+          <div className="flex-1 grid grid-cols-3 gap-2">
+            <div className="text-center p-2 bg-emerald-100/70 dark:bg-emerald-900/30 rounded-lg">
+              <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{stats.completionRate}%</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400">完成率</p>
+            </div>
+            <div className="text-center p-2 bg-green-100/70 dark:bg-green-900/30 rounded-lg">
+              <p className="text-lg font-bold text-green-700 dark:text-green-300">{stats.completed}</p>
+              <p className="text-xs text-green-600 dark:text-green-400">已完成</p>
+            </div>
+            <div className="text-center p-2 bg-amber-100/70 dark:bg-amber-900/30 rounded-lg">
+              <p className="text-lg font-bold text-amber-700 dark:text-amber-300">{stats.pending}</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400">待完成</p>
+            </div>
           </div>
         </div>
 
@@ -104,61 +136,80 @@ export function ActionTrackingStats({ entries, showDetails = true }: ActionTrack
           </div>
         )}
 
-        {/* Action List */}
+        {/* Motivational Message */}
+        {stats.completionRate >= 80 && (
+          <div className="flex items-center gap-2 p-2.5 bg-emerald-100/70 dark:bg-emerald-900/30 rounded-lg">
+            <TrendingUp className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="text-xs text-emerald-700 dark:text-emerald-300">
+              太棒了！你的行动力非常强，继续保持！
+            </span>
+          </div>
+        )}
+        {stats.completionRate >= 50 && stats.completionRate < 80 && (
+          <div className="flex items-center gap-2 p-2.5 bg-amber-100/70 dark:bg-amber-900/30 rounded-lg">
+            <TrendingUp className="w-4 h-4 text-amber-600 shrink-0" />
+            <span className="text-xs text-amber-700 dark:text-amber-300">
+              你正在稳步前进，每一次行动都是觉醒的体现
+            </span>
+          </div>
+        )}
+
+        {/* Action List - Collapsible */}
         {showDetails && stats.actions.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">行动记录</p>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {stats.actions.map((action) => (
-                <div 
-                  key={action.id}
-                  className={cn(
-                    "p-3 rounded-lg border transition-colors",
-                    action.action_completed_at
-                      ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
-                      : "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
-                  )}
-                >
-                  <div className="flex items-start gap-2">
-                    {action.action_completed_at ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
-                    ) : (
-                      <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-between h-8 text-xs text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              <span>行动记录 ({stats.actions.length})</span>
+              {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </Button>
+            
+            {isExpanded && (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {stats.actions.map((action) => (
+                  <div 
+                    key={action.id}
+                    className={cn(
+                      "p-2.5 rounded-lg border transition-colors",
+                      action.action_completed_at
+                        ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                        : "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
                     )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium text-muted-foreground">
-                          Day {action.day_number}
-                        </span>
-                        {action.action_completed_at && action.action_difficulty && (
-                          <span className="text-xs text-green-600 dark:text-green-400">
-                            难度 {action.action_difficulty}/5
-                          </span>
-                        )}
-                        {action.action_completed_at && (
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date(action.action_completed_at), 'M月d日', { locale: zhCN })}
-                          </span>
-                        )}
-                      </div>
-                      <p className={cn(
-                        "text-sm",
-                        action.action_completed_at 
-                          ? "text-green-800 dark:text-green-200" 
-                          : "text-amber-800 dark:text-amber-200"
-                      )}>
-                        {action.giving_action}
-                      </p>
-                      {action.action_reflection && (
-                        <p className="text-xs text-muted-foreground mt-1 italic line-clamp-2">
-                          💬 {action.action_reflection}
-                        </p>
+                  >
+                    <div className="flex items-start gap-2">
+                      {action.action_completed_at ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+                      ) : (
+                        <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                       )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-xs font-medium text-muted-foreground">
+                            Day {action.day_number}
+                          </span>
+                          {action.action_completed_at && action.action_difficulty && (
+                            <span className="text-xs text-green-600 dark:text-green-400">
+                              难度 {action.action_difficulty}/5
+                            </span>
+                          )}
+                        </div>
+                        <p className={cn(
+                          "text-xs line-clamp-2",
+                          action.action_completed_at 
+                            ? "text-green-800 dark:text-green-200" 
+                            : "text-amber-800 dark:text-amber-200"
+                        )}>
+                          {action.giving_action}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </CardContent>
