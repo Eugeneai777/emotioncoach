@@ -101,13 +101,13 @@ export function useProfileEvolution(campId?: string): ProfileEvolution {
       const diff = currentScore - oldScore;
 
       if (diff > 10) {
-        setEvolutionInsight(`你的财富健康指数从 ${oldScore} 提升到了 ${currentScore}，进步明显！继续保持这份觉察力。`);
+        setEvolutionInsight(`你的觉醒指数从 ${oldScore} 提升到了 ${currentScore}，觉察力显著增强！继续保持这份觉醒状态。`);
       } else if (diff > 0) {
-        setEvolutionInsight(`你的财富健康指数稳步提升中，从 ${oldScore} 到 ${currentScore}。每一步都在积累改变。`);
+        setEvolutionInsight(`你的觉醒指数稳步提升中，从 ${oldScore} 到 ${currentScore}。每一次觉察都在深化转变。`);
       } else if (diff < -5) {
-        setEvolutionInsight(`最近状态有些波动，这是成长过程中的正常调整期。保持觉察，继续前进。`);
+        setEvolutionInsight(`觉醒之路会有波动，这是成长过程中的正常调整期。保持觉察，继续前进。`);
       } else {
-        setEvolutionInsight(`你的财富健康状态保持稳定，正在巩固已有的觉醒成果。`);
+        setEvolutionInsight(`你的觉醒状态保持稳定，正在巩固已有的转化成果。`);
       }
     }
   }, [profile]);

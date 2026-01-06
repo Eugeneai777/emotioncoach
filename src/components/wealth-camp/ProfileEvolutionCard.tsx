@@ -1,8 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus, Sparkles, History, Target, Heart, Brain } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Sparkles, History, Target, Heart, Brain, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ProfileSnapshot {
   week: number;
@@ -70,6 +76,14 @@ const patternNames: Record<string, string> = {
   harmony: '和谐模式'
 };
 
+// 觉醒指数分数区间说明
+const getAwakeningLevel = (score: number): { label: string; color: string; bgColor: string; description: string } => {
+  if (score >= 80) return { label: '深度觉醒', color: 'text-emerald-600', bgColor: 'bg-emerald-100 dark:bg-emerald-900/30', description: '觉察敏锐，转化能力强' };
+  if (score >= 60) return { label: '觉醒中', color: 'text-amber-600', bgColor: 'bg-amber-100 dark:bg-amber-900/30', description: '正在建立新思维模式' };
+  if (score >= 40) return { label: '初步觉醒', color: 'text-orange-600', bgColor: 'bg-orange-100 dark:bg-orange-900/30', description: '开始发现卡点' };
+  return { label: '探索期', color: 'text-slate-600', bgColor: 'bg-slate-100 dark:bg-slate-900/30', description: '尚在识别阶段' };
+};
+
 export function ProfileEvolutionCard({ 
   currentProfile, 
   evolutionInsight,
@@ -88,29 +102,29 @@ export function ProfileEvolutionCard({
   const currentScore = currentProfile.health_score || 50;
   const originalScore = firstSnapshot?.health_score || currentScore;
   const scoreDiff = currentScore - originalScore;
+  
+  // Get awakening level
+  const awakeningLevel = getAwakeningLevel(currentScore);
 
   // Determine trend icon and color
   const getTrendDisplay = () => {
     if (scoreDiff > 5) {
       return { 
         icon: TrendingUp, 
-        color: 'text-green-600', 
-        bgColor: 'bg-green-100 dark:bg-green-900/30',
+        color: 'text-emerald-600', 
         label: '持续提升' 
       };
     } else if (scoreDiff < -5) {
       return { 
         icon: TrendingDown, 
-        color: 'text-amber-600', 
-        bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+        color: 'text-orange-600', 
         label: '调整期' 
       };
     }
     return { 
       icon: Minus, 
-      color: 'text-blue-600', 
-      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-      label: '保持稳定' 
+      color: 'text-slate-500', 
+      label: '稳定' 
     };
   };
 
@@ -204,34 +218,82 @@ export function ProfileEvolutionCard({
           </div>
         )}
 
-        {/* Health Score with Trend */}
-        <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/60 dark:bg-white/5 border border-border/30">
-          <div className="flex items-center gap-3">
-            <div className={cn("p-1.5 rounded-full", trend.bgColor)}>
-              <TrendIcon className={cn("w-4 h-4", trend.color)} />
+        {/* Awakening Index with Trend */}
+        <div className="p-3 rounded-lg bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200/50 dark:border-amber-800/30">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-foreground">觉醒指数</span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[260px] p-3">
+                    <p className="text-xs mb-2 font-medium">觉醒指数衡量你对财富卡点的觉察与转化能力：</p>
+                    <ul className="text-xs space-y-1.5">
+                      <li className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span>80-100：深度觉醒</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+                        <span>60-79：觉醒中</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-orange-500 shrink-0"></span>
+                        <span>40-59：初步觉醒</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
+                        <span>20-39：探索期</span>
+                      </li>
+                    </ul>
+                    <p className="text-xs mt-2 text-muted-foreground">分数越高，代表觉醒越深。</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">健康指数</p>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-lg font-bold text-foreground">{currentScore}</span>
-                {hasHistory && scoreDiff !== 0 && (
-                  <span className={cn(
-                    "text-xs font-medium",
-                    scoreDiff > 0 ? "text-green-600" : "text-amber-600"
-                  )}>
-                    {scoreDiff > 0 ? '+' : ''}{scoreDiff}
-                  </span>
-                )}
-              </div>
+            <div className="flex items-center gap-1.5">
+              <TrendIcon className={cn("w-4 h-4", trend.color)} />
+              <span className={cn("text-xs", trend.color)}>{trend.label}</span>
             </div>
           </div>
-          <span className={cn("text-xs px-2 py-1 rounded-full", trend.bgColor, trend.color)}>
-            {trend.label}
-          </span>
+          
+          {/* Score Display */}
+          <div className="flex items-end gap-2 mb-2">
+            <span className="text-2xl font-bold text-foreground">{currentScore}</span>
+            <span className="text-sm text-muted-foreground mb-0.5">/ 100</span>
+            {hasHistory && scoreDiff !== 0 && (
+              <span className={cn(
+                "text-xs font-medium mb-1",
+                scoreDiff > 0 ? "text-emerald-600" : "text-orange-600"
+              )}>
+                {scoreDiff > 0 ? '+' : ''}{scoreDiff}
+              </span>
+            )}
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="h-2 bg-white/60 dark:bg-white/10 rounded-full overflow-hidden mb-2">
+            <div 
+              className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500"
+              style={{ width: `${currentScore}%` }}
+            />
+          </div>
+          
+          {/* Level Label */}
+          <div className="flex items-center justify-between">
+            <span className={cn("text-sm font-medium", awakeningLevel.color)}>
+              {awakeningLevel.label}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {awakeningLevel.description}
+            </span>
+          </div>
         </div>
 
         {/* Type Changes - Simplified */}
-        {hasAnyChange && (
+        {hasAnyChange && (behaviorChange || emotionChange || beliefChange) && (
           <div className="flex flex-wrap gap-1.5">
             {behaviorChange && (
               <div className="flex items-center gap-1 text-xs">
