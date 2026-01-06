@@ -13,6 +13,7 @@ import { WealthCampInviteCard } from '@/components/wealth-camp/WealthCampInviteC
 import { CheckInCelebrationDialog } from '@/components/wealth-camp/CheckInCelebrationDialog';
 import { WealthCoachEmbedded } from '@/components/wealth-camp/WealthCoachEmbedded';
 import { WealthJourneyCalendar } from '@/components/wealth-camp/WealthJourneyCalendar';
+import { MiniProgressCalendar } from '@/components/wealth-camp/MiniProgressCalendar';
 import { AssessmentFocusCard } from '@/components/wealth-camp/AssessmentFocusCard';
 import { DailyActionCard } from '@/components/wealth-camp/DailyActionCard';
 import { ActionCompletionDialog } from '@/components/wealth-block/ActionCompletionDialog';
@@ -429,17 +430,53 @@ ${reflection}`;
 
       <div className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="today">今日打卡</TabsTrigger>
             <TabsTrigger value="coaching" disabled={!meditationCompleted}>
               教练梳理
             </TabsTrigger>
-            <TabsTrigger value="calendar">日历</TabsTrigger>
             <TabsTrigger value="archive">觉醒档案</TabsTrigger>
             <TabsTrigger value="journal">日记</TabsTrigger>
           </TabsList>
 
           <TabsContent value="today" className="space-y-6 mt-6">
+            {/* Mini Progress Calendar */}
+            <MiniProgressCalendar
+              currentDay={currentDay}
+              totalDays={camp.duration_days || 21}
+              completedDays={journalEntries.filter(e => e.behavior_block).map(e => e.day_number)}
+              makeupDays={(() => {
+                const makeupLimit = 3;
+                const days: number[] = [];
+                for (let i = currentDay - 1; i >= Math.max(1, currentDay - makeupLimit); i--) {
+                  const entry = journalEntries.find(e => e.day_number === i);
+                  if (!entry?.behavior_block) {
+                    days.push(i);
+                  }
+                }
+                return days;
+              })()}
+              streak={(() => {
+                let streak = 0;
+                for (let i = currentDay - 1; i >= 1; i--) {
+                  if (journalEntries.find(e => e.day_number === i && e.behavior_block)) {
+                    streak++;
+                  } else {
+                    break;
+                  }
+                }
+                return streak;
+              })()}
+              onMakeupClick={(dayNumber) => {
+                setMakeupDayNumber(dayNumber);
+                setActiveTab('coaching');
+                toast({
+                  title: `开始补打 Day ${dayNumber}`,
+                  description: "完成教练梳理后将记录到该日期",
+                });
+              }}
+            />
+            
             {/* Weekly Training Focus - 显示本周训练重点 */}
             {adjustmentReason && focusAreas.length > 0 && (
               <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800">
@@ -610,30 +647,6 @@ ${reflection}`;
             />
           </TabsContent>
 
-          <TabsContent value="calendar" className="mt-6">
-            <WealthJourneyCalendar
-              startDate={camp.start_date}
-              currentDay={currentDay}
-              totalDays={camp.duration_days || 21}
-              checkInDates={Array.isArray(camp.check_in_dates) ? camp.check_in_dates as string[] : []}
-              journalEntries={journalEntries}
-              makeupDaysLimit={3}
-              onDayClick={(dayNumber, dateStr, entry) => {
-                // 仅在完整打卡（教练梳理完成）时才允许跳转详情；否则让用户走补卡
-                if (entry && (entry as any).behavior_type) {
-                  navigate(`/wealth-journal/${entry.id}`);
-                }
-              }}
-              onMakeupClick={(dayNumber, dateStr) => {
-                setMakeupDayNumber(dayNumber);
-                setActiveTab('coaching');
-                toast({
-                  title: `开始补打 Day ${dayNumber}`,
-                  description: "完成教练梳理后将记录到该日期",
-                });
-              }}
-            />
-          </TabsContent>
 
           <TabsContent value="archive" className="mt-6">
             <AwakeningArchiveTab campId={campId} entries={journalEntries} />
