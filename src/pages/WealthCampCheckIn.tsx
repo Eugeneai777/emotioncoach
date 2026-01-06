@@ -19,6 +19,7 @@ import { DailyActionCard } from '@/components/wealth-camp/DailyActionCard';
 import { ActionCompletionDialog } from '@/components/wealth-block/ActionCompletionDialog';
 import CampShareDialog from '@/components/camp/CampShareDialog';
 import { ProfileEvolutionCard } from '@/components/wealth-camp/ProfileEvolutionCard';
+import { BackfillMemoriesButton } from '@/components/wealth-camp/BackfillMemoriesButton';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -639,6 +640,11 @@ ${reflection}`;
           </TabsContent>
 
           <TabsContent value="journal" className="mt-6 space-y-4">
+            {/* Backfill memories button */}
+            <div className="flex justify-end">
+              <BackfillMemoriesButton />
+            </div>
+            
             {journalEntries.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <p>还没有财富日记</p>
@@ -694,6 +700,8 @@ ${reflection}`;
           open={showActionDialog}
           onOpenChange={setShowActionDialog}
           action={pendingAction.action}
+          journalId={pendingAction.entryId}
+          campId={campId}
           onComplete={async (reflection, difficulty) => {
             const { error } = await supabase
               .from('wealth_journal_entries')
