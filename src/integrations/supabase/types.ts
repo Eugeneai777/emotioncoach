@@ -6014,6 +6014,53 @@ export type Database = {
         }
         Relationships: []
       }
+      user_training_weights: {
+        Row: {
+          adjustment_reason: string | null
+          behavior_weight: number | null
+          belief_weight: number | null
+          camp_id: string | null
+          created_at: string | null
+          emotion_weight: number | null
+          focus_areas: Json | null
+          id: string
+          user_id: string
+          week_number: number
+        }
+        Insert: {
+          adjustment_reason?: string | null
+          behavior_weight?: number | null
+          belief_weight?: number | null
+          camp_id?: string | null
+          created_at?: string | null
+          emotion_weight?: number | null
+          focus_areas?: Json | null
+          id?: string
+          user_id: string
+          week_number: number
+        }
+        Update: {
+          adjustment_reason?: string | null
+          behavior_weight?: number | null
+          belief_weight?: number | null
+          camp_id?: string | null
+          created_at?: string | null
+          emotion_weight?: number | null
+          focus_areas?: Json | null
+          id?: string
+          user_id?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_training_weights_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_values: {
         Row: {
           created_at: string | null
@@ -6376,9 +6423,11 @@ export type Database = {
           heart_score: number | null
           id: string
           mouth_score: number | null
+          previous_assessment_id: string | null
           reaction_pattern: string
           updated_at: string | null
           user_id: string
+          version: number | null
         }
         Insert: {
           answers: Json
@@ -6393,9 +6442,11 @@ export type Database = {
           heart_score?: number | null
           id?: string
           mouth_score?: number | null
+          previous_assessment_id?: string | null
           reaction_pattern: string
           updated_at?: string | null
           user_id: string
+          version?: number | null
         }
         Update: {
           answers?: Json
@@ -6410,11 +6461,28 @@ export type Database = {
           heart_score?: number | null
           id?: string
           mouth_score?: number | null
+          previous_assessment_id?: string | null
           reaction_pattern?: string
           updated_at?: string | null
           user_id?: string
+          version?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wealth_block_assessments_previous_assessment_id_fkey"
+            columns: ["previous_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_changes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wealth_block_assessments_previous_assessment_id_fkey"
+            columns: ["previous_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_block_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wealth_coach_4_questions_briefings: {
         Row: {
@@ -6495,7 +6563,10 @@ export type Database = {
       }
       wealth_journal_entries: {
         Row: {
+          action_completed_at: string | null
           action_completion: boolean | null
+          action_difficulty: number | null
+          action_reflection: string | null
           action_suggestion: string | null
           ai_insight: Json | null
           behavior_block: string | null
@@ -6529,7 +6600,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          action_completed_at?: string | null
           action_completion?: boolean | null
+          action_difficulty?: number | null
+          action_reflection?: string | null
           action_suggestion?: string | null
           ai_insight?: Json | null
           behavior_block?: string | null
@@ -6563,7 +6637,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          action_completed_at?: string | null
           action_completion?: boolean | null
+          action_difficulty?: number | null
+          action_reflection?: string | null
           action_suggestion?: string | null
           ai_insight?: Json | null
           behavior_block?: string | null
@@ -6892,7 +6969,40 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      assessment_changes: {
+        Row: {
+          behavior_change_pct: number | null
+          behavior_score: number | null
+          belief_change_pct: number | null
+          belief_score: number | null
+          created_at: string | null
+          emotion_change_pct: number | null
+          emotion_score: number | null
+          id: string | null
+          prev_behavior_score: number | null
+          prev_belief_score: number | null
+          prev_emotion_score: number | null
+          previous_assessment_id: string | null
+          user_id: string | null
+          version: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_block_assessments_previous_assessment_id_fkey"
+            columns: ["previous_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_changes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wealth_block_assessments_previous_assessment_id_fkey"
+            columns: ["previous_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_block_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       add_coach_pending_balance: {
