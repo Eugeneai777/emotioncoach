@@ -311,3 +311,9 @@ verify_jwt = true
 
 [functions.extract-coach-memory]
 verify_jwt = true
+
+[functions.predict-user-risk]
+verify_jwt = true
+
+[functions.generate-knowledge-content]
+verify_jwt = true
