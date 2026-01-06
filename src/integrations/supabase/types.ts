@@ -5765,6 +5765,63 @@ export type Database = {
           },
         ]
       }
+      user_action_witness: {
+        Row: {
+          action_type: string
+          ai_witness: string
+          camp_id: string | null
+          created_at: string
+          difficulty_rating: number | null
+          id: string
+          journal_id: string | null
+          original_action: string
+          transition_label: string | null
+          user_id: string
+          user_reflection: string | null
+        }
+        Insert: {
+          action_type?: string
+          ai_witness: string
+          camp_id?: string | null
+          created_at?: string
+          difficulty_rating?: number | null
+          id?: string
+          journal_id?: string | null
+          original_action: string
+          transition_label?: string | null
+          user_id: string
+          user_reflection?: string | null
+        }
+        Update: {
+          action_type?: string
+          ai_witness?: string
+          camp_id?: string | null
+          created_at?: string
+          difficulty_rating?: number | null
+          id?: string
+          journal_id?: string | null
+          original_action?: string
+          transition_label?: string | null
+          user_id?: string
+          user_reflection?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_action_witness_camp_id_fkey"
+            columns: ["camp_id"]
+            isOneToOne: false
+            referencedRelation: "training_camps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_action_witness_journal_id_fkey"
+            columns: ["journal_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_behavior_analysis: {
         Row: {
           active_goals_count: number

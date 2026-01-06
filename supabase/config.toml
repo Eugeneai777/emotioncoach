@@ -177,6 +177,9 @@ verify_jwt = false
 [functions.wechat-pay-callback]
 verify_jwt = false
 
+[functions.witness-action]
+verify_jwt = false
+
 [functions.voice-to-text]
 verify_jwt = true
 
