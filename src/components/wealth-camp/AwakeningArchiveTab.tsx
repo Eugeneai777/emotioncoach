@@ -91,7 +91,14 @@ export function AwakeningArchiveTab({ campId, entries, onMakeupClick }: Awakenin
           </CardHeader>
           <CardContent className="p-3 pt-3">
             <TabsContent value="chart" className="mt-0">
-              <WealthProgressChart entries={entries} />
+              {/* Use fullEntries from hook which has correct score fields */}
+              <WealthProgressChart entries={fullEntries.map(e => ({
+                day_number: e.day_number,
+                behavior_score: e.behavior_score ?? null,
+                emotion_score: e.emotion_score ?? null,
+                belief_score: e.belief_score ?? null,
+                created_at: e.created_at,
+              }))} />
             </TabsContent>
             
             <TabsContent value="calendar" className="mt-0">
