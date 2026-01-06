@@ -1,0 +1,181 @@
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { Gift, RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface DailyActionData {
+  action: string;
+  reason: string;
+  difficulty_level: 'easy' | 'medium' | 'challenge';
+  reaction_pattern: string;
+  completion_stats: {
+    completed_count: number;
+    total_count: number;
+    avg_difficulty: string;
+  };
+}
+
+interface DailyActionCardProps {
+  dayNumber: number;
+  campId?: string;
+  onActionSelect?: (action: string) => void;
+  pendingAction?: {
+    action: string;
+    entryId: string;
+    dayNumber: number;
+  } | null;
+  onCompletePending?: () => void;
+}
+
+export function DailyActionCard({ 
+  dayNumber, 
+  campId, 
+  onActionSelect,
+  pendingAction,
+  onCompletePending 
+}: DailyActionCardProps) {
+  const [data, setData] = useState<DailyActionData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchAction = async () => {
+    try {
+      setLoading(true);
+      const { data: result, error } = await supabase.functions.invoke('generate-daily-action', {
+        body: { day_number: dayNumber, camp_id: campId }
+      });
+
+      if (error) throw error;
+      setData(result);
+    } catch (e) {
+      console.error('Error fetching daily action:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshAction = async () => {
+    setRefreshing(true);
+    await fetchAction();
+    setRefreshing(false);
+  };
+
+  useEffect(() => {
+    fetchAction();
+  }, [dayNumber, campId]);
+
+  const difficultyLabels = {
+    easy: { text: '入门', color: 'bg-emerald-100 text-emerald-700' },
+    medium: { text: '进阶', color: 'bg-amber-100 text-amber-700' },
+    challenge: { text: '挑战', color: 'bg-violet-100 text-violet-700' },
+  };
+
+  if (loading) {
+    return (
+      <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30">
+        <CardContent className="p-4 flex items-center justify-center">
+          <Loader2 className="w-5 h-5 animate-spin text-emerald-600" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Pending action from yesterday */}
+      {pendingAction && (
+        <Card className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-amber-200 dark:bg-amber-800 flex items-center justify-center shrink-0">
+                <Gift className="w-4 h-4 text-amber-700 dark:text-amber-300" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">
+                  Day {pendingAction.dayNumber} 待完成
+                </p>
+                <p className="font-medium text-amber-800 dark:text-amber-200">
+                  {pendingAction.action}
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2 border-amber-300 text-amber-700 hover:bg-amber-100"
+                  onClick={onCompletePending}
+                >
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  完成确认
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Today's recommended action */}
+      {data && (
+        <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-emerald-200 dark:bg-emerald-800 flex items-center justify-center shrink-0">
+                <Gift className="w-4 h-4 text-emerald-700 dark:text-emerald-300" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                    🎯 今日推荐行动
+                  </p>
+                  <span className={cn(
+                    "text-xs px-1.5 py-0.5 rounded",
+                    difficultyLabels[data.difficulty_level].color
+                  )}>
+                    {difficultyLabels[data.difficulty_level].text}
+                  </span>
+                </div>
+                <p className="font-medium text-emerald-800 dark:text-emerald-200">
+                  {data.action}
+                </p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                  {data.reason}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-xs text-emerald-600 hover:text-emerald-700"
+                    onClick={refreshAction}
+                    disabled={refreshing}
+                  >
+                    <RefreshCw className={cn("w-3 h-3 mr-1", refreshing && "animate-spin")} />
+                    换一个
+                  </Button>
+                  {onActionSelect && (
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-xs"
+                      onClick={() => onActionSelect(data.action)}
+                    >
+                      采用此行动
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Stats */}
+            {data.completion_stats.total_count > 0 && (
+              <div className="mt-3 pt-3 border-t border-emerald-200 dark:border-emerald-800">
+                <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                  📊 最近7天：完成 {data.completion_stats.completed_count}/{data.completion_stats.total_count} 个行动
+                  {data.completion_stats.avg_difficulty && ` · 平均难度 ${data.completion_stats.avg_difficulty}/5`}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

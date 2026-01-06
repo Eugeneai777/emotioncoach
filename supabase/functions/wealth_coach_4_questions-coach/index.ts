@@ -111,6 +111,31 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
+    // Check yesterday's action status for personalized greeting
+    const { data: recentEntries } = await serviceClient
+      .from('wealth_journal_entries')
+      .select('giving_action, action_completed_at, action_reflection, day_number')
+      .eq('user_id', user.id)
+      .order('day_number', { ascending: false })
+      .limit(2);
+
+    const yesterdayEntry = recentEntries?.find(e => e.giving_action && !e.action_completed_at);
+    const completedYesterday = recentEntries?.find(e => e.giving_action && e.action_completed_at);
+
+    let actionContext = '';
+    if (yesterdayEntry) {
+      actionContext = `\n\n【昨日行动提醒】
+用户昨天计划做"${yesterdayEntry.giving_action}"，但还未确认完成。
+开场时可以温和地询问："昨天你打算${yesterdayEntry.giving_action}，完成了吗？"
+如果用户说完成了，给予肯定并引导今天的觉察。
+如果用户说没完成，温柔地问："是什么阻碍了你？"作为今天探索的切入点。`;
+    } else if (completedYesterday?.action_reflection) {
+      actionContext = `\n\n【昨日行动回顾】
+用户昨天完成了"${completedYesterday.giving_action}"
+反思：${completedYesterday.action_reflection}
+开场时可以说："我看到你昨天完成了给予行动，感觉怎么样？这种给予的体验很珍贵呢。"`;
+    }
+
     // Get coaching strategy based on user profile
     const getCoachingStrategy = (profile: any) => {
       if (!profile) return { tone: '温柔接纳', focus: '通用引导', keyQuestion: '', avoidance: '', description: '标准模式' };
@@ -169,6 +194,7 @@ serve(async (req) => {
 - 重点关注：${coachStrategy.focus}
 - 核心提问：${coachStrategy.keyQuestion}
 - 注意避免：${coachStrategy.avoidance}
+${actionContext}
 `;
     }
 

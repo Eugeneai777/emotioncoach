@@ -11,6 +11,7 @@ import { WealthBlockQuestions } from "@/components/wealth-block/WealthBlockQuest
 import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
 import { WealthBlockHistory, HistoryRecord } from "@/components/wealth-block/WealthBlockHistory";
 import { WealthBlockTrend } from "@/components/wealth-block/WealthBlockTrend";
+import { AssessmentComparison } from "@/components/wealth-block/AssessmentComparison";
 import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
@@ -28,6 +29,8 @@ export default function WealthBlockAssessmentPage() {
   const [showResult, setShowResult] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [savedAssessmentId, setSavedAssessmentId] = useState<string | null>(null);
+  const [previousAssessmentId, setPreviousAssessmentId] = useState<string | null>(null);
   
   // 历史记录
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
@@ -95,7 +98,22 @@ export default function WealthBlockAssessmentPage() {
 
     setIsSaving(true);
     try {
-      // Save assessment result
+      // Get most recent assessment for linking
+      const { data: latestAssessment } = await supabase
+        .from("wealth_block_assessments")
+        .select("id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const prevId = latestAssessment?.id || null;
+      setPreviousAssessmentId(prevId);
+
+      // Calculate version number
+      const newVersion = historyRecords.length + 1;
+
+      // Save assessment result with version tracking
       const { data: savedRecord, error } = await supabase
         .from("wealth_block_assessments")
         .insert({
@@ -111,11 +129,15 @@ export default function WealthBlockAssessmentPage() {
           dominant_block: currentResult.dominantBlock,
           dominant_poor: currentResult.dominantPoor,
           reaction_pattern: currentResult.reactionPattern,
+          version: newVersion,
+          previous_assessment_id: prevId,
         })
         .select()
         .single();
 
       if (error) throw error;
+      
+      setSavedAssessmentId(savedRecord?.id || null);
 
       // Sync user wealth profile for personalized coaching
       try {
@@ -163,6 +185,8 @@ export default function WealthBlockAssessmentPage() {
     setCurrentDeepFollowUpAnswers(undefined);
     setShowResult(false);
     setIsSaved(false);
+    setSavedAssessmentId(null);
+    setPreviousAssessmentId(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -258,15 +282,25 @@ export default function WealthBlockAssessmentPage() {
               animate={{ opacity: 1, y: 0 }}
             >
               {showResult && currentResult ? (
-                <WealthBlockResult
-                  result={currentResult}
-                  followUpInsights={currentFollowUpInsights}
-                  deepFollowUpAnswers={currentDeepFollowUpAnswers}
-                  onRetake={handleRetake}
-                  onSave={user ? handleSave : undefined}
-                  isSaving={isSaving}
-                  isSaved={isSaved}
-                />
+                <div className="space-y-6">
+                  {/* Assessment Comparison - show after save if has previous */}
+                  {isSaved && savedAssessmentId && previousAssessmentId && (
+                    <AssessmentComparison
+                      currentAssessmentId={savedAssessmentId}
+                      previousAssessmentId={previousAssessmentId}
+                    />
+                  )}
+                  
+                  <WealthBlockResult
+                    result={currentResult}
+                    followUpInsights={currentFollowUpInsights}
+                    deepFollowUpAnswers={currentDeepFollowUpAnswers}
+                    onRetake={handleRetake}
+                    onSave={user ? handleSave : undefined}
+                    isSaving={isSaving}
+                    isSaved={isSaved}
+                  />
+                </div>
               ) : (
                 <WealthBlockQuestions onComplete={handleComplete} />
               )}

@@ -299,3 +299,12 @@ verify_jwt = true
 
 [functions.generate-deep-followup]
 verify_jwt = true
+
+[functions.compare-assessments]
+verify_jwt = true
+
+[functions.generate-daily-action]
+verify_jwt = true
+
+[functions.calculate-user-weights]
+verify_jwt = true
