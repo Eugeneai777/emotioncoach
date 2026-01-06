@@ -12,18 +12,23 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log('🔄 sync-wealth-profile 被调用');
+
   try {
-    const { 
-      user_id,
-      assessment_result 
-    } = await req.json();
+    const body = await req.json();
+    console.log('📦 请求体:', JSON.stringify(body));
+    
+    const { user_id, assessment_result } = body;
 
     if (!user_id || !assessment_result) {
+      console.error('❌ 缺少必填字段:', { user_id: !!user_id, assessment_result: !!assessment_result });
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    
+    console.log('✅ 参数验证通过:', { user_id, assessment_result });
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -76,26 +81,30 @@ serve(async (req) => {
     const coachStrategy = coachStrategies[reaction_pattern] || coachStrategies.harmony;
 
     // Upsert user wealth profile
+    const profileData = {
+      user_id,
+      assessment_id: assessment_id || null,
+      reaction_pattern: reaction_pattern || 'harmony',
+      dominant_poor: top_poor || null,
+      dominant_emotion: top_emotion || null,
+      dominant_belief: top_belief || null,
+      health_score: health_score || 50,
+      coach_strategy: coachStrategy,
+      updated_at: new Date().toISOString(),
+    };
+    
+    console.log('📝 准备写入 user_wealth_profile:', profileData);
+    
     const { data: profile, error: upsertError } = await supabaseClient
       .from('user_wealth_profile')
-      .upsert({
-        user_id,
-        assessment_id: assessment_id || null,
-        reaction_pattern: reaction_pattern || 'harmony',
-        dominant_poor: top_poor || null,
-        dominant_emotion: top_emotion || null,
-        dominant_belief: top_belief || null,
-        health_score: health_score || 50,
-        coach_strategy: coachStrategy,
-        updated_at: new Date().toISOString(),
-      }, {
+      .upsert(profileData, {
         onConflict: 'user_id',
       })
       .select()
       .single();
 
     if (upsertError) {
-      console.error('Failed to sync wealth profile:', upsertError);
+      console.error('❌ 写入 user_wealth_profile 失败:', upsertError);
       throw upsertError;
     }
 

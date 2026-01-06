@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Gift, RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
+import { Gift, RefreshCw, CheckCircle2, Loader2, Clock, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DailyActionData {
   action: string;
@@ -39,6 +40,7 @@ export function DailyActionCard({
   const [data, setData] = useState<DailyActionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isPendingPulsing, setIsPendingPulsing] = useState(true);
 
   const fetchAction = async () => {
     try {
@@ -65,11 +67,21 @@ export function DailyActionCard({
   useEffect(() => {
     fetchAction();
   }, [dayNumber, campId]);
+  
+  // 待完成行动的闪烁效果
+  useEffect(() => {
+    if (pendingAction) {
+      const interval = setInterval(() => {
+        setIsPendingPulsing(prev => !prev);
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [pendingAction]);
 
   const difficultyLabels = {
-    easy: { text: '入门', color: 'bg-emerald-100 text-emerald-700' },
-    medium: { text: '进阶', color: 'bg-amber-100 text-amber-700' },
-    challenge: { text: '挑战', color: 'bg-violet-100 text-violet-700' },
+    easy: { text: '入门', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' },
+    medium: { text: '进阶', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' },
+    challenge: { text: '挑战', color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300' },
   };
 
   if (loading) {
@@ -84,67 +96,95 @@ export function DailyActionCard({
 
   return (
     <div className="space-y-3">
-      {/* Pending action from yesterday */}
-      {pendingAction && (
-        <Card className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-amber-200 dark:bg-amber-800 flex items-center justify-center shrink-0">
-                <Gift className="w-4 h-4 text-amber-700 dark:text-amber-300" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">
-                  Day {pendingAction.dayNumber} 待完成
-                </p>
-                <p className="font-medium text-amber-800 dark:text-amber-200">
-                  {pendingAction.action}
-                </p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="mt-2 border-amber-300 text-amber-700 hover:bg-amber-100"
-                  onClick={onCompletePending}
-                >
-                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                  完成确认
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Pending action from yesterday - Enhanced visibility */}
+      <AnimatePresence>
+        {pendingAction && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <Card className={cn(
+              "border-2 transition-all duration-500",
+              isPendingPulsing 
+                ? "border-amber-400 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 shadow-lg shadow-amber-200/50" 
+                : "border-amber-300 bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/30"
+            )}>
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-500",
+                    isPendingPulsing 
+                      ? "bg-amber-400 dark:bg-amber-600" 
+                      : "bg-amber-200 dark:bg-amber-800"
+                  )}>
+                    <Clock className={cn(
+                      "w-5 h-5 transition-all",
+                      isPendingPulsing ? "text-white animate-pulse" : "text-amber-700 dark:text-amber-300"
+                    )} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                        ⏰ 待完成的给予行动
+                      </span>
+                      <span className="text-xs text-amber-500 dark:text-amber-500">
+                        Day {pendingAction.dayNumber}
+                      </span>
+                    </div>
+                    <p className="font-bold text-amber-800 dark:text-amber-200 text-base">
+                      {pendingAction.action}
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                      完成后记录你的感受，让财富能量流动起来 ✨
+                    </p>
+                    <Button
+                      size="sm"
+                      className="mt-3 bg-amber-500 hover:bg-amber-600 text-white font-medium w-full sm:w-auto"
+                      onClick={onCompletePending}
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                      点击确认完成
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Today's recommended action */}
       {data && (
-        <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200">
+        <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-emerald-200 dark:bg-emerald-800 flex items-center justify-center shrink-0">
-                <Gift className="w-4 h-4 text-emerald-700 dark:text-emerald-300" />
+              <div className="w-10 h-10 rounded-full bg-emerald-200 dark:bg-emerald-800 flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5 text-emerald-700 dark:text-emerald-300" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                  <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
                     🎯 今日推荐行动
                   </p>
                   <span className={cn(
-                    "text-xs px-1.5 py-0.5 rounded",
+                    "text-xs px-1.5 py-0.5 rounded font-medium",
                     difficultyLabels[data.difficulty_level].color
                   )}>
                     {difficultyLabels[data.difficulty_level].text}
                   </span>
                 </div>
-                <p className="font-medium text-emerald-800 dark:text-emerald-200">
+                <p className="font-semibold text-emerald-800 dark:text-emerald-200">
                   {data.action}
                 </p>
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
                   {data.reason}
                 </p>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-3">
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-xs text-emerald-600 hover:text-emerald-700"
+                    className="text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
                     onClick={refreshAction}
                     disabled={refreshing}
                   >
