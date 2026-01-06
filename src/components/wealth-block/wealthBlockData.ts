@@ -7,49 +7,200 @@ export type EmotionBlockType = "anxiety" | "scarcity" | "comparison" | "shame" |
 // 信念卡点类型
 export type BeliefBlockType = "lack" | "linear" | "stigma" | "unworthy" | "relationship";
 
-// 题目数据 - 行为层按四穷分类，情绪层和信念层按各自卡点分类
+// 题目数据 - 场景化设计，触发"原来我一直卡在这里"的觉醒感
+// 每道题都是一个具体场景，让用户产生画面感和代入感
 export const questions = [
   // 嘴穷（1-3）- 诅咒式表达
-  { id: 1, layer: "behavior" as const, fourPoor: "mouth" as FourPoorType, text: "我经常不自觉地抱怨赚钱难、机会少、环境差" },
-  { id: 2, layer: "behavior" as const, fourPoor: "mouth" as FourPoorType, text: "我习惯用否定性语言描述财务状况（如'我没钱'、'买不起'）" },
-  { id: 3, layer: "behavior" as const, fourPoor: "mouth" as FourPoorType, text: "我很少对他人说鼓励祝福的话（如'太棒了'、'我相信你'）" },
+  { 
+    id: 1, 
+    layer: "behavior" as const, 
+    fourPoor: "mouth" as FourPoorType, 
+    text: "朋友分享好消息时，你脱口而出的第一句话是'现在经济不好，小心点'，而不是真心祝福" 
+  },
+  { 
+    id: 2, 
+    layer: "behavior" as const, 
+    fourPoor: "mouth" as FourPoorType, 
+    text: "孩子想要什么东西时，你习惯说'我们家没钱'或'太贵了买不起'，即使其实负担得起" 
+  },
+  { 
+    id: 3, 
+    layer: "behavior" as const, 
+    fourPoor: "mouth" as FourPoorType, 
+    text: "回顾最近一周，你对家人说的鼓励祝福话（'你真棒'、'我相信你'）几乎没有超过3句" 
+  },
   
   // 手穷（4-5）- 乞丐心态
-  { id: 4, layer: "behavior" as const, fourPoor: "hand" as FourPoorType, text: "我很少主动请客、送礼物或帮助他人" },
-  { id: 5, layer: "behavior" as const, fourPoor: "hand" as FourPoorType, text: "花钱时我总觉得是在损失，而非给予或交换价值" },
+  { 
+    id: 4, 
+    layer: "behavior" as const, 
+    fourPoor: "hand" as FourPoorType, 
+    text: "聚餐结账时，你下意识希望别人先开口买单，即使这次轮到你了" 
+  },
+  { 
+    id: 5, 
+    layer: "behavior" as const, 
+    fourPoor: "hand" as FourPoorType, 
+    text: "付完款的那一刻，你心里有种'钱又少了'的失落感，而不是'我获得了价值'的满足感" 
+  },
   
   // 眼穷（6-8）- 狭隘视角
-  { id: 6, layer: "behavior" as const, fourPoor: "eye" as FourPoorType, text: "我很难看到他人的付出和价值（如家人支持、伴侣努力）" },
-  { id: 7, layer: "behavior" as const, fourPoor: "eye" as FourPoorType, text: "我总是盯着问题和不足，而不是机会和美好" },
-  { id: 8, layer: "behavior" as const, fourPoor: "eye" as FourPoorType, text: "我习惯控制他人，很少真心认可别人的贡献" },
+  { 
+    id: 6, 
+    layer: "behavior" as const, 
+    fourPoor: "eye" as FourPoorType, 
+    text: "伴侣/家人为家庭付出很多，但你很少主动说出'谢谢你'或'你辛苦了'" 
+  },
+  { 
+    id: 7, 
+    layer: "behavior" as const, 
+    fourPoor: "eye" as FourPoorType, 
+    text: "同事升职加薪、朋友创业成功，你第一反应是'他运气好'或'他有背景'，而非学习他做对了什么" 
+  },
+  { 
+    id: 8, 
+    layer: "behavior" as const, 
+    fourPoor: "eye" as FourPoorType, 
+    text: "在家庭或团队中，你更习惯指出问题和不足，很少真心说'你这个做得真好'" 
+  },
   
   // 心穷（9-10）- 受害者思维
-  { id: 9, layer: "behavior" as const, fourPoor: "heart" as FourPoorType, text: "遇到问题我第一反应是找别人的原因，觉得自己是受害者" },
-  { id: 10, layer: "behavior" as const, fourPoor: "heart" as FourPoorType, text: "我很难对客户、家人、世界充满无条件的爱与祝福" },
+  { 
+    id: 9, 
+    layer: "behavior" as const, 
+    fourPoor: "heart" as FourPoorType, 
+    text: "工作不顺、生意难做时，你心里的第一念头是'都是XX的错'（市场、老板、客户），而非'我可以做什么'" 
+  },
+  { 
+    id: 10, 
+    layer: "behavior" as const, 
+    fourPoor: "heart" as FourPoorType, 
+    text: "面对难搞的客户或家人，你很难发自内心地祝福他们好，更多是忍耐或抱怨" 
+  },
   
   // 情绪层（11-20）- 5大情绪卡点
-  { id: 11, layer: "emotion" as const, emotionBlock: "anxiety" as EmotionBlockType, text: "一想到钱，我就会感到紧张、焦虑或压力" },
-  { id: 12, layer: "emotion" as const, emotionBlock: "scarcity" as EmotionBlockType, text: "我害怕失去已有的财富，经常担心哪天没了怎么办" },
-  { id: 13, layer: "emotion" as const, emotionBlock: "comparison" as EmotionBlockType, text: "如果别人赚得比我多，我会感到嫉妒或自卑" },
-  { id: 14, layer: "emotion" as const, emotionBlock: "shame" as EmotionBlockType, text: "我觉得谈钱是件很俗气或让人不舒服的事" },
-  { id: 15, layer: "emotion" as const, emotionBlock: "guilt" as EmotionBlockType, text: "我对于自己能否真正实现财务自由，内心是怀疑的" },
-  { id: 16, layer: "emotion" as const, emotionBlock: "guilt" as EmotionBlockType, text: "当我花钱买自己喜欢的东西时，会感到内疚" },
-  { id: 17, layer: "emotion" as const, emotionBlock: "anxiety" as EmotionBlockType, text: "面对风险投资或理财决策，我通常会感到恐惧和不安" },
-  { id: 18, layer: "emotion" as const, emotionBlock: "comparison" as EmotionBlockType, text: "我觉得别人成功是因为运气，而我没那么幸运" },
-  { id: 19, layer: "emotion" as const, emotionBlock: "shame" as EmotionBlockType, text: "我讨厌跟人因为钱产生任何冲突或不愉快" },
-  { id: 20, layer: "emotion" as const, emotionBlock: "scarcity" as EmotionBlockType, text: "在财务问题上，我时常感到无力和无望" },
+  { 
+    id: 11, 
+    layer: "emotion" as const, 
+    emotionBlock: "anxiety" as EmotionBlockType, 
+    text: "夜深人静时，脑海里突然飘过房贷、账单、未来，你会心跳加速、难以入睡" 
+  },
+  { 
+    id: 12, 
+    layer: "emotion" as const, 
+    emotionBlock: "scarcity" as EmotionBlockType, 
+    text: "银行卡里明明有存款，但你还是不敢花，总觉得'万一哪天急用呢'" 
+  },
+  { 
+    id: 13, 
+    layer: "emotion" as const, 
+    emotionBlock: "comparison" as EmotionBlockType, 
+    text: "刷朋友圈看到别人晒车、晒房、晒旅行，你会有一阵说不清的烦躁或低落" 
+  },
+  { 
+    id: 14, 
+    layer: "emotion" as const, 
+    emotionBlock: "shame" as EmotionBlockType, 
+    text: "亲戚朋友问起你的收入、存款时，你会感到尴尬、想回避，觉得谈钱很俗" 
+  },
+  { 
+    id: 15, 
+    layer: "emotion" as const, 
+    emotionBlock: "guilt" as EmotionBlockType, 
+    text: "定下'5年内财务自由'的目标后，你内心有个声音说'别想了，不可能的'" 
+  },
+  { 
+    id: 16, 
+    layer: "emotion" as const, 
+    emotionBlock: "guilt" as EmotionBlockType, 
+    text: "买了自己心仪已久的东西后，快乐只维持几分钟，然后就开始后悔'不该买的'" 
+  },
+  { 
+    id: 17, 
+    layer: "emotion" as const, 
+    emotionBlock: "anxiety" as EmotionBlockType, 
+    text: "面对一个可能赚钱也可能亏钱的机会，你的第一反应是恐惧'万一亏了'，而非评估'值不值得'" 
+  },
+  { 
+    id: 18, 
+    layer: "emotion" as const, 
+    emotionBlock: "comparison" as EmotionBlockType, 
+    text: "曾经不如你的人现在混得比你好，你心里会酸酸的，觉得'凭什么是他不是我'" 
+  },
+  { 
+    id: 19, 
+    layer: "emotion" as const, 
+    emotionBlock: "shame" as EmotionBlockType, 
+    text: "该谈钱的场合（谈薪资、催账款），你会拖延、绕弯子，就是开不了口" 
+  },
+  { 
+    id: 20, 
+    layer: "emotion" as const, 
+    emotionBlock: "scarcity" as EmotionBlockType, 
+    text: "想到自己的财务状况，你会有种'怎么努力都没用'的无力感，像推不动的石头" 
+  },
   
   // 信念层（21-30）- 5大信念卡点
-  { id: 21, layer: "belief" as const, beliefBlock: "stigma" as BeliefBlockType, text: "我觉得有钱人大多不是什么好人" },
-  { id: 22, layer: "belief" as const, beliefBlock: "stigma" as BeliefBlockType, text: "我相信钱多了会让人变坏或者惹麻烦" },
-  { id: 23, layer: "belief" as const, beliefBlock: "unworthy" as BeliefBlockType, text: "我觉得自己不配拥有很多钱" },
-  { id: 24, layer: "belief" as const, beliefBlock: "linear" as BeliefBlockType, text: "我相信赚钱一定要很辛苦才行" },
-  { id: 25, layer: "belief" as const, beliefBlock: "unworthy" as BeliefBlockType, text: "我觉得追求财富是一件自私或羞耻的事" },
-  { id: 26, layer: "belief" as const, beliefBlock: "lack" as BeliefBlockType, text: "我内心深处觉得我们家注定不可能太有钱" },
-  { id: 27, layer: "belief" as const, beliefBlock: "lack" as BeliefBlockType, text: "我觉得我不够聪明/不够有能力，赚大钱不适合我" },
-  { id: 28, layer: "belief" as const, beliefBlock: "relationship" as BeliefBlockType, text: "我相信金钱会破坏亲情、友情、爱情" },
-  { id: 29, layer: "belief" as const, beliefBlock: "relationship" as BeliefBlockType, text: "我觉得即使努力了，也很难改变自己的财务状况" },
-  { id: 30, layer: "belief" as const, beliefBlock: "linear" as BeliefBlockType, text: "我认为够用就好，追求更多是贪心" },
+  { 
+    id: 21, 
+    layer: "belief" as const, 
+    beliefBlock: "stigma" as BeliefBlockType, 
+    text: "看到有钱人的新闻，你会不自觉地想'这钱肯定来路不正'或'为富不仁'" 
+  },
+  { 
+    id: 22, 
+    layer: "belief" as const, 
+    beliefBlock: "stigma" as BeliefBlockType, 
+    text: "你相信'财多身子弱''人怕出名猪怕壮'，觉得太有钱会招来麻烦或嫉妒" 
+  },
+  { 
+    id: 23, 
+    layer: "belief" as const, 
+    beliefBlock: "unworthy" as BeliefBlockType, 
+    text: "当好事降临时，你的第一反应不是开心，而是'我真的配吗'或'会不会太顺了'" 
+  },
+  { 
+    id: 24, 
+    layer: "belief" as const, 
+    beliefBlock: "linear" as BeliefBlockType, 
+    text: "你相信'不吃苦中苦，难为人上人'，轻松赚到的钱让你感觉'不踏实'" 
+  },
+  { 
+    id: 25, 
+    layer: "belief" as const, 
+    beliefBlock: "unworthy" as BeliefBlockType, 
+    text: "想到主动谈加薪或提高报价，你会觉得不好意思，怕别人觉得你'太看重钱'" 
+  },
+  { 
+    id: 26, 
+    layer: "belief" as const, 
+    beliefBlock: "lack" as BeliefBlockType, 
+    text: "回想父母对钱的态度，你发现自己无意识地复制了他们的匮乏感（如'我们家不是有钱人'）" 
+  },
+  { 
+    id: 27, 
+    layer: "belief" as const, 
+    beliefBlock: "lack" as BeliefBlockType, 
+    text: "看到别人的成功故事，你会觉得'他有天赋/资源/学历，我没有'，从而觉得自己不行" 
+  },
+  { 
+    id: 28, 
+    layer: "belief" as const, 
+    beliefBlock: "relationship" as BeliefBlockType, 
+    text: "你见过因为钱反目的亲戚朋友，所以内心深处觉得'钱多了会坏关系'" 
+  },
+  { 
+    id: 29, 
+    layer: "belief" as const, 
+    beliefBlock: "relationship" as BeliefBlockType, 
+    text: "即使你一直在努力，但心底有个声音说'命里有时终须有，命里无时莫强求'" 
+  },
+  { 
+    id: 30, 
+    layer: "belief" as const, 
+    beliefBlock: "linear" as BeliefBlockType, 
+    text: "有人建议你可以赚更多时，你会想'够用就行，何必那么累'，把'知足'当挡箭牌" 
+  },
 ];
 
 export const scoreLabels = [
