@@ -18,23 +18,25 @@ interface DailyActionData {
   };
 }
 
+interface PendingAction {
+  action: string;
+  entryId: string;
+  dayNumber: number;
+}
+
 interface DailyActionCardProps {
   dayNumber: number;
   campId?: string;
   onActionSelect?: (action: string) => void;
-  pendingAction?: {
-    action: string;
-    entryId: string;
-    dayNumber: number;
-  } | null;
-  onCompletePending?: () => void;
+  pendingActions?: PendingAction[];
+  onCompletePending?: (action: PendingAction) => void;
 }
 
 export function DailyActionCard({ 
   dayNumber, 
   campId, 
   onActionSelect,
-  pendingAction,
+  pendingActions = [],
   onCompletePending 
 }: DailyActionCardProps) {
   const [data, setData] = useState<DailyActionData | null>(null);
@@ -70,13 +72,13 @@ export function DailyActionCard({
   
   // 待完成行动的闪烁效果
   useEffect(() => {
-    if (pendingAction) {
+    if (pendingActions.length > 0) {
       const interval = setInterval(() => {
         setIsPendingPulsing(prev => !prev);
       }, 2000);
       return () => clearInterval(interval);
     }
-  }, [pendingAction]);
+  }, [pendingActions.length]);
 
   const difficultyLabels = {
     easy: { text: '入门', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' },
@@ -96,9 +98,9 @@ export function DailyActionCard({
 
   return (
     <div className="space-y-3">
-      {/* Pending action from yesterday - Enhanced visibility */}
+      {/* All pending actions - Enhanced visibility */}
       <AnimatePresence>
-        {pendingAction && (
+        {pendingActions.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -111,43 +113,66 @@ export function DailyActionCard({
                 : "border-amber-300 bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/30"
             )}>
               <CardContent className="p-4">
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-2 mb-3">
                   <div className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-500",
+                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-500",
                     isPendingPulsing 
                       ? "bg-amber-400 dark:bg-amber-600" 
                       : "bg-amber-200 dark:bg-amber-800"
                   )}>
                     <Clock className={cn(
-                      "w-5 h-5 transition-all",
+                      "w-4 h-4 transition-all",
                       isPendingPulsing ? "text-white animate-pulse" : "text-amber-700 dark:text-amber-300"
                     )} />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-                        ⏰ 待完成的给予行动
-                      </span>
-                      <span className="text-xs text-amber-500 dark:text-amber-500">
-                        Day {pendingAction.dayNumber}
-                      </span>
-                    </div>
-                    <p className="font-bold text-amber-800 dark:text-amber-200 text-base">
-                      {pendingAction.action}
-                    </p>
-                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                      完成后记录你的感受，让财富能量流动起来 ✨
-                    </p>
-                    <Button
-                      size="sm"
-                      className="mt-3 bg-amber-500 hover:bg-amber-600 text-white font-medium w-full sm:w-auto"
-                      onClick={onCompletePending}
-                    >
-                      <CheckCircle2 className="w-4 h-4 mr-1.5" />
-                      点击确认完成
-                    </Button>
-                  </div>
+                  <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+                    ⏰ 待完成的给予行动 ({pendingActions.length}个)
+                  </span>
                 </div>
+                
+                <div className="space-y-3">
+                  {pendingActions.map((pendingAction, index) => (
+                    <div 
+                      key={pendingAction.entryId}
+                      className={cn(
+                        "p-3 rounded-lg border",
+                        index === 0 
+                          ? "bg-amber-100/70 dark:bg-amber-900/40 border-amber-300 dark:border-amber-700" 
+                          : "bg-amber-50/50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs text-amber-500 dark:text-amber-500 font-medium">
+                              Day {pendingAction.dayNumber}
+                            </span>
+                            {index === 0 && (
+                              <span className="text-xs bg-amber-500 text-white px-1.5 py-0.5 rounded">
+                                最近
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-medium text-amber-800 dark:text-amber-200 text-sm">
+                            {pendingAction.action}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="bg-amber-500 hover:bg-amber-600 text-white font-medium shrink-0"
+                          onClick={() => onCompletePending?.(pendingAction)}
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-1" />
+                          完成
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-3 text-center">
+                  完成后记录你的感受，让财富能量流动起来 ✨
+                </p>
               </CardContent>
             </Card>
           </motion.div>
