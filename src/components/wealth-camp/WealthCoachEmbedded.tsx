@@ -36,7 +36,12 @@ export const WealthCoachEmbedded = ({
   const mainRef = useRef<HTMLDivElement>(null);
   
   // 确保用户画像存在
-  useEnsureWealthProfile();
+  const { profileExists, isChecking } = useEnsureWealthProfile();
+  
+  // 调试日志：画像状态
+  useEffect(() => {
+    console.log('📊 [WealthCoachEmbedded] 画像状态:', { profileExists, isChecking, dayNumber, campId });
+  }, [profileExists, isChecking, dayNumber, campId]);
 
   const {
     messages,

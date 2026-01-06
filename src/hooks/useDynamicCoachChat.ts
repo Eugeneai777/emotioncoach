@@ -356,22 +356,33 @@ export const useDynamicCoachChat = (
               });
               
               if (!journalError && journalResult?.success) {
+                console.log('📝 [useDynamicCoachChat] 日记生成成功:', { 
+                  journalId: journalResult.journal?.id, 
+                  dayNumber: dayNumberToUse 
+                });
+                
                 toast({
                   title: "📖 财富日记已生成",
                   description: `记录了 Day ${dayNumberToUse} 的财富觉察`,
                 });
                 
                 // Extract and save coach memories for future personalization
+                console.log('🧠 [useDynamicCoachChat] 开始提取教练记忆...');
                 try {
-                  await supabase.functions.invoke('extract-coach-memory', {
+                  const { data: memoryResult, error: memoryError } = await supabase.functions.invoke('extract-coach-memory', {
                     body: {
                       conversation: messagesRef.current,
                       session_id: journalResult.journal?.id,
                     }
                   });
-                  console.log('✅ 教练记忆提取完成');
+                  
+                  if (memoryError) {
+                    console.error('❌ [useDynamicCoachChat] 提取教练记忆失败:', memoryError);
+                  } else {
+                    console.log('✅ [useDynamicCoachChat] 教练记忆提取完成:', memoryResult);
+                  }
                 } catch (memoryError) {
-                  console.error('提取教练记忆失败:', memoryError);
+                  console.error('❌ [useDynamicCoachChat] 提取教练记忆异常:', memoryError);
                 }
                 
                 if (onBriefingGenerated) {
