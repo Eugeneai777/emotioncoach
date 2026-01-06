@@ -16,9 +16,10 @@ import {
   FollowUpAnswer
 } from "./wealthBlockData";
 import { FollowUpDialog, FollowUpData } from "./FollowUpDialog";
+import { DeepFollowUpDialog, DeepFollowUp, DeepFollowUpAnswer } from "./DeepFollowUpDialog";
 
 interface WealthBlockQuestionsProps {
-  onComplete: (result: AssessmentResult, answers: Record<number, number>, followUpInsights?: FollowUpAnswer[]) => void;
+  onComplete: (result: AssessmentResult, answers: Record<number, number>, followUpInsights?: FollowUpAnswer[], deepFollowUpAnswers?: DeepFollowUpAnswer[]) => void;
 }
 
 export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) {
@@ -31,6 +32,16 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
   const [followUpAnswers, setFollowUpAnswers] = useState<FollowUpAnswer[]>([]);
   const [isLoadingFollowUp, setIsLoadingFollowUp] = useState(false);
   const [pendingNextQuestion, setPendingNextQuestion] = useState(false);
+  
+  // 深度追问相关状态
+  const [showDeepFollowUp, setShowDeepFollowUp] = useState(false);
+  const [deepFollowUps, setDeepFollowUps] = useState<DeepFollowUp[]>([]);
+  const [isLoadingDeepFollowUp, setIsLoadingDeepFollowUp] = useState(false);
+  const [pendingResult, setPendingResult] = useState<{
+    result: AssessmentResult;
+    answers: Record<number, number>;
+    followUpInsights?: FollowUpAnswer[];
+  } | null>(null);
 
   const currentQuestion = questions[currentIndex];
   const answeredCount = Object.keys(answers).length;
@@ -74,6 +85,54 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
       setIsLoadingFollowUp(false);
     }
   }, [answers]);
+
+  // 生成深度追问
+  const generateDeepFollowUp = useCallback(async (result: AssessmentResult) => {
+    setIsLoadingDeepFollowUp(true);
+    setShowDeepFollowUp(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-deep-followup', {
+        body: {
+          reactionPattern: result.reactionPattern,
+          dominantPoor: result.dominantPoor,
+          dominantEmotionBlock: result.dominantEmotionBlock,
+          dominantBeliefBlock: result.dominantBeliefBlock,
+          scores: {
+            behavior: result.behaviorScore,
+            emotion: result.emotionScore,
+            belief: result.beliefScore
+          },
+          healthScore: Math.round(
+            ((50 - result.behaviorScore) / 50 * 33) +
+            ((50 - result.emotionScore) / 50 * 33) +
+            ((50 - result.beliefScore) / 50 * 34)
+          )
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.deepFollowUps && data.deepFollowUps.length > 0) {
+        setDeepFollowUps(data.deepFollowUps);
+      } else {
+        // 如果没有生成追问，直接显示结果
+        setShowDeepFollowUp(false);
+        if (pendingResult) {
+          onComplete(pendingResult.result, pendingResult.answers, pendingResult.followUpInsights, undefined);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to generate deep follow-up:', err);
+      // 出错时直接显示结果
+      setShowDeepFollowUp(false);
+      if (pendingResult) {
+        onComplete(pendingResult.result, pendingResult.answers, pendingResult.followUpInsights, undefined);
+      }
+    } finally {
+      setIsLoadingDeepFollowUp(false);
+    }
+  }, [pendingResult, onComplete]);
 
   const handleAnswer = async (value: number) => {
     setAnswers(prev => ({ ...prev, [currentQuestion.id]: value }));
@@ -129,9 +188,35 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
     }
   };
 
-  const handleSubmit = () => {
+  // 提交测评 - 先触发深度追问
+  const handleSubmit = async () => {
     const result = calculateResult(answers);
-    onComplete(result, answers, followUpAnswers.length > 0 ? followUpAnswers : undefined);
+    
+    // 保存待提交的结果
+    setPendingResult({
+      result,
+      answers,
+      followUpInsights: followUpAnswers.length > 0 ? followUpAnswers : undefined
+    });
+    
+    // 触发深度追问
+    await generateDeepFollowUp(result);
+  };
+
+  // 深度追问完成
+  const handleDeepFollowUpComplete = (deepAnswers: DeepFollowUpAnswer[]) => {
+    setShowDeepFollowUp(false);
+    if (pendingResult) {
+      onComplete(pendingResult.result, pendingResult.answers, pendingResult.followUpInsights, deepAnswers);
+    }
+  };
+
+  // 跳过深度追问
+  const handleSkipDeepFollowUp = () => {
+    setShowDeepFollowUp(false);
+    if (pendingResult) {
+      onComplete(pendingResult.result, pendingResult.answers, pendingResult.followUpInsights, undefined);
+    }
   };
 
   const handlePrev = () => {
@@ -151,6 +236,16 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
 
   return (
     <div className="flex flex-col min-h-[500px]">
+      {/* 深度追问对话框 */}
+      {showDeepFollowUp && (
+        <DeepFollowUpDialog
+          followUps={deepFollowUps}
+          onComplete={handleDeepFollowUpComplete}
+          onSkip={handleSkipDeepFollowUp}
+          isLoading={isLoadingDeepFollowUp}
+        />
+      )}
+
       {/* 进度指示 */}
       <div className="space-y-3 mb-6">
         <div className="flex justify-between items-center">

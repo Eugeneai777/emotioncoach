@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Search, Lightbulb, Target, AlertCircle, Footprints, Heart, Loader2 } from "lucide-react";
+import { Sparkles, Search, Lightbulb, Target, AlertCircle, Footprints, Heart, Loader2, Quote, Key } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface AIInsightData {
@@ -10,6 +10,10 @@ export interface AIInsightData {
   avoidPitfalls: string[];
   firstStep: string;
   encouragement: string;
+  // 新增：个性化共振字段
+  mirrorStatement?: string;
+  coreStuckPoint?: string;
+  unlockKey?: string;
 }
 
 interface AIInsightCardProps {
@@ -84,6 +88,60 @@ export function AIInsightCard({ insight, isLoading, error }: AIInsightCardProps)
         </div>
 
         <CardContent className="p-5 space-y-5">
+          {/* 共振卡片 - 镜像陈述（新增，最醒目） */}
+          {insight.mirrorStatement && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="p-5 bg-gradient-to-br from-violet-100 to-purple-100 rounded-2xl border-2 border-violet-200 relative overflow-hidden"
+            >
+              <div className="absolute top-3 left-3 opacity-20">
+                <Quote className="w-10 h-10 text-violet-600" />
+              </div>
+              <div className="relative">
+                <p className="text-lg font-medium text-violet-900 leading-relaxed pl-6">
+                  {insight.mirrorStatement}
+                </p>
+                <p className="text-xs text-violet-600 mt-3 text-right">—— 专属于你的洞察</p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* 核心卡点 + 解锁钥匙 */}
+          {(insight.coreStuckPoint || insight.unlockKey) && (
+            <div className="grid grid-cols-2 gap-3">
+              {insight.coreStuckPoint && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="p-4 bg-rose-50 rounded-xl border border-rose-200"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle className="w-4 h-4 text-rose-600" />
+                    <span className="text-xs font-semibold text-rose-700">核心卡点</span>
+                  </div>
+                  <p className="text-sm text-rose-800 font-medium">{insight.coreStuckPoint}</p>
+                </motion.div>
+              )}
+              {insight.unlockKey && (
+                <motion.div
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="p-4 bg-emerald-50 rounded-xl border border-emerald-200"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Key className="w-4 h-4 text-emerald-600" />
+                    <span className="text-xs font-semibold text-emerald-700">解锁钥匙</span>
+                  </div>
+                  <p className="text-sm text-emerald-800 font-medium">{insight.unlockKey}</p>
+                </motion.div>
+              )}
+            </div>
+          )}
+
           {/* Root Cause Analysis */}
           <div>
             <div className="flex items-center gap-2 mb-2">

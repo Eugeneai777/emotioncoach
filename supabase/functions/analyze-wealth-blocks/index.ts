@@ -18,7 +18,8 @@ serve(async (req) => {
       dominantBeliefBlock,
       scores,
       healthScore,
-      followUpInsights // 新增：追问回答数据
+      followUpInsights, // 单题追问
+      deepFollowUpAnswers // 新增：深度追问回答（用户原话）
     } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -61,23 +62,61 @@ serve(async (req) => {
                        healthScore <= 70 ? "需要关注区" :
                        healthScore <= 85 ? "需要调整区" : "高风险区";
 
-    const systemPrompt = `你是一位专业的财富心理分析师，擅长洞察人与金钱关系背后的深层心理模式。你的分析风格温暖、专业、有洞察力，能够帮助用户看到问题的根源，同时给予他们希望和可行的行动方向。
+    // 收集用户原话
+    const userOriginalWords: string[] = [];
+    
+    // 从深度追问中提取用户原话
+    if (deepFollowUpAnswers && deepFollowUpAnswers.length > 0) {
+      deepFollowUpAnswers.forEach((answer: { question: string; answer: string }) => {
+        userOriginalWords.push(`「${answer.answer}」`);
+      });
+    }
+    
+    // 从单题追问中提取
+    if (followUpInsights && followUpInsights.length > 0) {
+      followUpInsights.forEach((insight: { selectedOption: string }) => {
+        if (insight.selectedOption && insight.selectedOption !== "跳过") {
+          userOriginalWords.push(`「${insight.selectedOption}」`);
+        }
+      });
+    }
 
-请基于用户的财富卡点测评结果，生成个性化的深度解读。注意：
-1. 分析要深入、有洞察力，而不是泛泛而谈
-2. 语言要温暖有共情，不让用户感到被批判
-3. 建议要具体可执行，不要空洞
-4. 考虑各个卡点之间的关联性和相互影响
-5. 如果用户提供了具体场景信息（追问回答），请在分析中结合这些场景给出更精准的建议`;
+    const hasUserWords = userOriginalWords.length > 0;
+    const userWordsSection = hasUserWords 
+      ? `\n\n【用户的原话】（必须在结果中回馈这些词，产生共振感）\n${userOriginalWords.join('、')}`
+      : '';
 
-    // 构建追问洞察部分
+    const systemPrompt = `你是一位专业的财富心理分析师，擅长洞察人与金钱关系背后的深层心理模式。
+
+你的分析风格：
+1. 温暖、专业、有洞察力
+2. 帮助用户看到问题的根源，同时给予希望
+3. **核心要求**：必须使用用户的原话来回馈他们的感受，让他们感到被深度理解
+
+${hasUserWords ? `
+【重要】用户在追问中表达了这些词：${userOriginalWords.join('、')}
+你必须在分析中引用这些原话，例如：
+- "你说的'${userOriginalWords[0] || '...'}'其实是..."
+- "当你感到'...'时，这背后是..."
+这会让用户感到：这个结果是专门为我写的。
+` : ''}`;
+
+    // 构建深度追问部分
+    let deepFollowUpSection = '';
+    if (deepFollowUpAnswers && deepFollowUpAnswers.length > 0) {
+      deepFollowUpSection = `\n【用户深度追问回答】（这些是用户的真实表达，请在分析中回馈）\n`;
+      deepFollowUpAnswers.forEach((answer: { question: string; answer: string }, index: number) => {
+        deepFollowUpSection += `${index + 1}. 问题：「${answer.question}」\n   用户回答：「${answer.answer}」\n`;
+      });
+    }
+
+    // 构建单题追问部分
     let followUpSection = '';
     if (followUpInsights && followUpInsights.length > 0) {
-      followUpSection = `\n【用户提供的具体场景】\n`;
+      followUpSection = `\n【用户单题追问回答】\n`;
       followUpInsights.forEach((insight: { questionId: number; questionText: string; selectedOption: string }, index: number) => {
-        followUpSection += `${index + 1}. 关于「${insight.questionText}」，用户表示这种情况主要出现在：${insight.selectedOption}\n`;
+        followUpSection += `${index + 1}. 关于「${insight.questionText}」，用户表示：${insight.selectedOption}\n`;
       });
-      followUpSection += `\n请基于这些具体场景，给出更有针对性的分析和建议。`;
     }
 
     const userPrompt = `请分析以下财富卡点测评结果：
@@ -95,16 +134,19 @@ serve(async (req) => {
 - 行为层：${scores.behavior}/50
 - 情绪层：${scores.emotion}/50
 - 信念层：${scores.belief}/50
-${followUpSection}
+${deepFollowUpSection}${followUpSection}${userWordsSection}
 
 请生成以下内容（必须以JSON格式返回）：
 
 {
-  "rootCauseAnalysis": "根因分析（200字内，深入分析这些卡点组合背后的深层心理根源，可能的成长经历影响${followUpInsights?.length ? '，结合用户提供的场景' : ''}）",
+  "mirrorStatement": "镜像陈述（80字内，必须引用用户原话，让用户感觉：'这说的就是我'。格式：'你不是...，而是...'）",
+  "coreStuckPoint": "核心卡点定义（30字内，一句话精准定义用户的核心卡住点）",
+  "unlockKey": "解锁钥匙（30字内，突破这个卡点的关键）",
+  "rootCauseAnalysis": "根因分析（200字内，深入分析这些卡点组合背后的深层心理根源${hasUserWords ? '，必须引用用户原话' : ''}）",
   "combinedPatternInsight": "组合模式洞察（100字内，分析这几个主导卡点之间的关联性和相互强化模式）",
   "breakthroughPath": ["第一步具体行动（50字内）", "第二步具体行动（50字内）", "第三步具体行动（50字内）"],
   "avoidPitfalls": ["需要避开的坑1（30字内）", "需要避开的坑2（30字内）"],
-  "firstStep": "推荐立即执行的第一步（具体可执行，30字内${followUpInsights?.length ? '，针对用户提到的场景' : ''}）",
+  "firstStep": "推荐立即执行的第一步（具体可执行，30字内${hasUserWords ? '，针对用户表达的场景' : ''}）",
   "encouragement": "个性化的鼓励语（温暖积极，针对用户的情况，50字内）"
 }
 

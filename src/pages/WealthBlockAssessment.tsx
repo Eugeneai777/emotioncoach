@@ -12,6 +12,7 @@ import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
 import { WealthBlockHistory, HistoryRecord } from "@/components/wealth-block/WealthBlockHistory";
 import { WealthBlockTrend } from "@/components/wealth-block/WealthBlockTrend";
 import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
+import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 
 export default function WealthBlockAssessmentPage() {
@@ -23,6 +24,7 @@ export default function WealthBlockAssessmentPage() {
   const [currentResult, setCurrentResult] = useState<AssessmentResult | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<Record<number, number>>({});
   const [currentFollowUpInsights, setCurrentFollowUpInsights] = useState<FollowUpAnswer[] | undefined>(undefined);
+  const [currentDeepFollowUpAnswers, setCurrentDeepFollowUpAnswers] = useState<DeepFollowUpAnswer[] | undefined>(undefined);
   const [showResult, setShowResult] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -59,10 +61,16 @@ export default function WealthBlockAssessmentPage() {
     }
   };
 
-  const handleComplete = (result: AssessmentResult, answers: Record<number, number>, followUpInsights?: FollowUpAnswer[]) => {
+  const handleComplete = (
+    result: AssessmentResult, 
+    answers: Record<number, number>, 
+    followUpInsights?: FollowUpAnswer[],
+    deepFollowUpAnswers?: DeepFollowUpAnswer[]
+  ) => {
     setCurrentResult(result);
     setCurrentAnswers(answers);
     setCurrentFollowUpInsights(followUpInsights);
+    setCurrentDeepFollowUpAnswers(deepFollowUpAnswers);
     setShowResult(true);
     setIsSaved(false);
     
@@ -75,6 +83,7 @@ export default function WealthBlockAssessmentPage() {
         ((5 - result.emotionScore) / 4 * 33) +
         ((5 - result.beliefScore) / 4 * 34)
       ),
+      has_deep_followup: !!deepFollowUpAnswers && deepFollowUpAnswers.length > 0,
     });
   };
 
@@ -151,6 +160,7 @@ export default function WealthBlockAssessmentPage() {
     setCurrentResult(null);
     setCurrentAnswers({});
     setCurrentFollowUpInsights(undefined);
+    setCurrentDeepFollowUpAnswers(undefined);
     setShowResult(false);
     setIsSaved(false);
   };
@@ -251,6 +261,7 @@ export default function WealthBlockAssessmentPage() {
                 <WealthBlockResult
                   result={currentResult}
                   followUpInsights={currentFollowUpInsights}
+                  deepFollowUpAnswers={currentDeepFollowUpAnswers}
                   onRetake={handleRetake}
                   onSave={user ? handleSave : undefined}
                   isSaving={isSaving}

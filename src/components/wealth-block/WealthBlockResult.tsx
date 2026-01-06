@@ -42,17 +42,19 @@ import {
 import { HealthScoreDashboard } from "./HealthScoreDashboard";
 import { PriorityBreakthroughMap } from "./PriorityBreakthroughMap";
 import { AIInsightCard, AIInsightData } from "./AIInsightCard";
+import { DeepFollowUpAnswer } from "./DeepFollowUpDialog";
 
 interface WealthBlockResultProps {
   result: AssessmentResult;
   followUpInsights?: FollowUpAnswer[];
+  deepFollowUpAnswers?: DeepFollowUpAnswer[];
   onRetake: () => void;
   onSave?: () => void;
   isSaving?: boolean;
   isSaved?: boolean;
 }
 
-export function WealthBlockResult({ result, followUpInsights, onRetake, onSave, isSaving, isSaved }: WealthBlockResultProps) {
+export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswers, onRetake, onSave, isSaving, isSaved }: WealthBlockResultProps) {
   const navigate = useNavigate();
   const pattern = patternInfo[result.reactionPattern];
   const dominantPoor = fourPoorInfo[result.dominantPoor];
@@ -105,6 +107,12 @@ export function WealthBlockResult({ result, followUpInsights, onRetake, onSave, 
               questionId: f.questionId,
               questionText: f.questionText,
               selectedOption: f.selectedOption
+            })),
+            // 传递深度追问回答（用户原话）
+            deepFollowUpAnswers: deepFollowUpAnswers?.map(a => ({
+              question: a.question,
+              answer: a.answer,
+              targetBlock: a.targetBlock
             }))
           }
         });
