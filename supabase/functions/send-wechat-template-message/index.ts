@@ -25,6 +25,8 @@ const SYSTEM_TEMPLATE_IDS: Record<string, string> = {
   'inactivity': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
   'consistent_checkin': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
   'encouragement': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
+  // 邀请成功通知
+  'invite_success': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
   // 其他场景使用通用模板
   'default': Deno.env.get('WECHAT_TEMPLATE_DEFAULT') || '',
 };
@@ -274,6 +276,10 @@ const scenarioMessageVariants: Record<string, MessageVariant[]> = {
     { first: '周末愉快，{name}', content: '难得的休息日，好好放松吧', remark: '适当的休息是为了更好的出发 🍃', priority: 2 },
     // 默认版
     { first: '您好，{name}，这是来自劲老师的问候', content: '今天也要好好照顾自己哦', remark: '您值得被温柔以待 💝', priority: 0 },
+  ],
+  'invite_success': [
+    // 邀请成功通知
+    { first: '🎉 {name}，您的好友加入了训练营', content: '邀请成功！Ta已开启财富觉醒之旅', remark: '感谢您的分享，一起成长更有力量 💪', priority: 0 },
   ],
 };
 

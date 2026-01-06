@@ -323,3 +323,6 @@ verify_jwt = true
 
 [functions.update-wealth-profile]
 verify_jwt = true
+
+[functions.notify-camp-invite-success]
+verify_jwt = false

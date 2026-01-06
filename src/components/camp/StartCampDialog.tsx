@@ -202,6 +202,56 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
         throw error;
       }
 
+      // 处理邀请人通知 - 检查 localStorage 中存储的邀请人
+      const storedRef = localStorage.getItem('camp_invite_ref');
+      if (storedRef && campTemplate.camp_type === 'wealth_block_21') {
+        try {
+          // 确保不是自己邀请自己
+          if (storedRef !== user.id) {
+            // 检查是否已有邀请记录
+            const { data: existingRef } = await supabase
+              .from('camp_invite_referrals')
+              .select('id')
+              .eq('referred_user_id', user.id)
+              .eq('inviter_user_id', storedRef)
+              .eq('camp_type', 'wealth_block_21')
+              .maybeSingle();
+
+            if (!existingRef) {
+              // 创建邀请记录
+              await supabase
+                .from('camp_invite_referrals')
+                .insert({
+                  inviter_user_id: storedRef,
+                  referred_user_id: user.id,
+                  camp_type: 'wealth_block_21',
+                  status: 'pending',
+                });
+            }
+          }
+          localStorage.removeItem('camp_invite_ref');
+        } catch (e) {
+          console.error('Error processing stored camp invite:', e);
+        }
+      }
+
+      // 触发邀请成功通知
+      if (campTemplate.camp_type === 'wealth_block_21' && insertedCamps?.[0]?.id) {
+        try {
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-camp-invite-success`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              referred_user_id: user.id,
+              camp_id: insertedCamps[0].id,
+              camp_type: 'wealth_block_21',
+            }),
+          });
+        } catch (e) {
+          console.error('Error sending invite notification:', e);
+        }
+      }
+
       toast({
         title: "训练营已开启！",
         description: bundleWithIdentity && campTemplate.camp_type === 'emotion_bloom' 
