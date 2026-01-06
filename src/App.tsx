@@ -87,6 +87,7 @@ import WealthCoachIntro from "./pages/WealthCoachIntro";
 import ShareInvite from "./pages/ShareInvite";
 import WealthCampIntro from "./pages/WealthCampIntro";
 import WealthAwakeningProgress from "./pages/WealthAwakeningProgress";
+import WealthAwakeningArchive from "./pages/WealthAwakeningArchive";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -180,6 +181,7 @@ const App = () => (
           <Route path="/share-invite" element={<ShareInvite />} />
           <Route path="/wealth-camp-intro" element={<WealthCampIntro />} />
           <Route path="/wealth-awakening-progress" element={<WealthAwakeningProgress />} />
+          <Route path="/wealth-awakening-archive" element={<WealthAwakeningArchive />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
