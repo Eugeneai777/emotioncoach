@@ -317,3 +317,6 @@ verify_jwt = true
 
 [functions.generate-knowledge-content]
 verify_jwt = true
+
+[functions.update-wealth-profile]
+verify_jwt = true

@@ -18,11 +18,13 @@ import { AssessmentFocusCard } from '@/components/wealth-camp/AssessmentFocusCar
 import { DailyActionCard } from '@/components/wealth-camp/DailyActionCard';
 import { ActionCompletionDialog } from '@/components/wealth-block/ActionCompletionDialog';
 import CampShareDialog from '@/components/camp/CampShareDialog';
+import { ProfileEvolutionCard } from '@/components/wealth-camp/ProfileEvolutionCard';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
 import { useWealthCampAnalytics } from '@/hooks/useWealthCampAnalytics';
 import { useAdaptiveWeights } from '@/hooks/useAdaptiveWeights';
+import { useProfileEvolution } from '@/hooks/useProfileEvolution';
 interface DailyTask {
   id: string;
   title: string;
@@ -99,6 +101,13 @@ export default function WealthCampCheckIn() {
     calculateWeights,
     isLoading: weightsLoading 
   } = useAdaptiveWeights(campId);
+  
+  // 活画像演化 - 追踪用户画像变化
+  const {
+    profile: wealthProfile,
+    evolutionInsight,
+    isLoading: profileLoading,
+  } = useProfileEvolution(campId);
 
   // 动态计算当前是第几天（从1开始）
   const currentDay = useMemo(() => {
@@ -519,6 +528,14 @@ ${reflection}`;
 
             {/* Progress Chart */}
             <WealthProgressChart entries={journalEntries} />
+
+            {/* Profile Evolution Card - 画像演化对比 */}
+            {wealthProfile && journalEntries.length >= 2 && (
+              <ProfileEvolutionCard
+                currentProfile={wealthProfile}
+                evolutionInsight={evolutionInsight}
+              />
+            )}
 
             {/* 觉醒进度追踪入口 */}
             {journalEntries.length >= 3 && (
