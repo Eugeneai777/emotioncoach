@@ -141,6 +141,9 @@ export default function WealthCampCheckIn() {
     }
   }, [campId, weightsLoading, currentDay, weekNumber, calculateWeights, adjustmentReason]);
 
+  // 当前显示的天数（补卡模式下显示补卡日，否则显示今日）
+  const displayDay = makeupDayNumber || currentDay;
+
   // Fetch current day meditation
   const { data: meditation } = useQuery({
     queryKey: ['wealth-meditation', currentDay],
@@ -156,6 +159,25 @@ export default function WealthCampCheckIn() {
     },
     enabled: !!camp,
   });
+
+  // Fetch makeup day meditation (when in makeup mode)
+  const { data: makeupMeditation } = useQuery({
+    queryKey: ['wealth-meditation', makeupDayNumber],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('wealth_meditations')
+        .select('*')
+        .eq('day_number', makeupDayNumber!)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!makeupDayNumber,
+  });
+
+  // 当前显示的冥想内容
+  const displayMeditation = makeupDayNumber ? makeupMeditation : meditation;
 
   // Fetch journal entries
   const { data: journalEntries = [] } = useQuery({
@@ -440,6 +462,26 @@ ${reflection}`;
           </TabsList>
 
           <TabsContent value="today" className="space-y-6 mt-6">
+            {/* 补卡模式提示条 */}
+            {makeupDayNumber && (
+              <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-600">📅</span>
+                  <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                    正在补打 Day {makeupDayNumber}
+                  </span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-amber-600 hover:text-amber-800"
+                  onClick={() => setMakeupDayNumber(null)}
+                >
+                  返回今日
+                </Button>
+              </div>
+            )}
+
             {/* Mini Progress Calendar */}
             <MiniProgressCalendar
               currentDay={currentDay}
@@ -469,16 +511,16 @@ ${reflection}`;
               })()}
               onMakeupClick={(dayNumber) => {
                 setMakeupDayNumber(dayNumber);
-                setActiveTab('coaching');
+                // 不再切换 Tab，直接在今日打卡页面内显示补卡内容
                 toast({
                   title: `开始补打 Day ${dayNumber}`,
-                  description: "完成教练梳理后将记录到该日期",
+                  description: "完成冥想和教练梳理后即可补卡",
                 });
               }}
             />
             
-            {/* Weekly Training Focus - 显示本周训练重点 */}
-            {adjustmentReason && focusAreas.length > 0 && (
+            {/* Weekly Training Focus - 仅在非补卡模式下显示 */}
+            {!makeupDayNumber && adjustmentReason && focusAreas.length > 0 && (
               <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -497,107 +539,138 @@ ${reflection}`;
               </Card>
             )}
             
-            {/* Assessment Focus Card - 仅前3天显示 */}
-            {currentDay <= 3 && (
+            {/* Assessment Focus Card - 仅前3天且非补卡模式显示 */}
+            {!makeupDayNumber && currentDay <= 3 && (
               <AssessmentFocusCard variant="checkin" />
             )}
 
             {/* Meditation Player */}
             <div id="meditation-player">
-              {meditation && (
+              {displayMeditation && (
                 <WealthMeditationPlayer
-                  dayNumber={currentDay}
-                  title={meditation.title}
-                  description={meditation.description}
-                  audioUrl={meditation.audio_url}
-                  durationSeconds={meditation.duration_seconds}
-                  reflectionPrompts={meditation.reflection_prompts as string[] || []}
+                  dayNumber={displayDay}
+                  title={displayMeditation.title}
+                  description={displayMeditation.description}
+                  audioUrl={displayMeditation.audio_url}
+                  durationSeconds={displayMeditation.duration_seconds}
+                  reflectionPrompts={displayMeditation.reflection_prompts as string[] || []}
                   onComplete={handleMeditationComplete}
-                  isCompleted={meditationCompleted}
-                  savedReflection={savedReflection}
+                  isCompleted={makeupDayNumber ? false : meditationCompleted}
+                  savedReflection={makeupDayNumber ? '' : savedReflection}
                   onRedo={handleRedoMeditation}
                   onStartCoaching={handleStartCoaching}
                 />
               )}
             </div>
 
-            {/* Daily Tasks */}
-            <Card>
-              <CardContent className="p-4 space-y-3">
-                <h3 className="font-medium flex items-center gap-2">
-                  <span>📋</span> 今日打卡任务
-                </h3>
-                {dailyTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className={cn(
-                      "flex items-center gap-3 p-3 rounded-lg",
-                      task.completed 
-                        ? "bg-green-50 dark:bg-green-950/20" 
-                        : task.locked
-                          ? "bg-muted/30 opacity-50"
-                          : "bg-muted/50 cursor-pointer hover:bg-muted"
-                    )}
-                    onClick={task.locked ? undefined : task.action}
-                  >
-                    <span className="text-xl">{task.icon}</span>
-                    <span className="flex-1">{task.title}</span>
-                    {task.completed ? (
-                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                        <Check className="w-4 h-4 text-white" />
-                      </div>
-                    ) : task.locked ? (
-                      <Lock className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">去完成 →</span>
-                    )}
+            {/* 补卡模式下：冥想完成后显示嵌入式教练对话 */}
+            {makeupDayNumber && (
+              <Card className="border-amber-200 dark:border-amber-800">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">💬</span>
+                    <span className="font-medium">补卡 Day {makeupDayNumber} 教练梳理</span>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                  <WealthCoachEmbedded
+                    key={`wealth-coach-makeup-${campId}-${makeupDayNumber}`}
+                    initialMessage={getMeditationContext(makeupDayNumber)}
+                    campId={campId || ''}
+                    dayNumber={makeupDayNumber}
+                    meditationTitle={makeupMeditation?.title}
+                    onCoachingComplete={() => {
+                      handleCoachingComplete();
+                      toast({
+                        title: "补卡成功",
+                        description: `Day ${makeupDayNumber} 的打卡已完成`,
+                      });
+                      setMakeupDayNumber(null);
+                      queryClient.invalidateQueries({ queryKey: ['wealth-camp', urlCampId] });
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Daily Action Card */}
-            <DailyActionCard
-              dayNumber={currentDay}
-              campId={campId}
-              pendingActions={pendingActions}
-              onCompletePending={(action) => {
-                setSelectedPendingAction(action);
-                setShowActionDialog(true);
-              }}
-              todayActionCompleted={!!(journalEntries.find(e => e.day_number === currentDay) as any)?.action_completed_at}
-              onCompleteToday={async (action, difficulty) => {
-                // Find or prepare today's entry
-                const todayEntry = journalEntries.find(e => e.day_number === currentDay);
-                if (todayEntry) {
-                  // Update giving_action if needed, then open dialog
-                  if (!todayEntry.giving_action) {
-                    await supabase
-                      .from('wealth_journal_entries')
-                      .update({ giving_action: action })
-                      .eq('id', todayEntry.id);
-                  }
-                  setSelectedPendingAction({
-                    action,
-                    entryId: todayEntry.id,
-                    dayNumber: currentDay
-                  });
+            {/* Daily Tasks - 仅在非补卡模式下显示 */}
+            {!makeupDayNumber && (
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <span>📋</span> 今日打卡任务
+                  </h3>
+                  {dailyTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg",
+                        task.completed 
+                          ? "bg-green-50 dark:bg-green-950/20" 
+                          : task.locked
+                            ? "bg-muted/30 opacity-50"
+                            : "bg-muted/50 cursor-pointer hover:bg-muted"
+                      )}
+                      onClick={task.locked ? undefined : task.action}
+                    >
+                      <span className="text-xl">{task.icon}</span>
+                      <span className="flex-1">{task.title}</span>
+                      {task.completed ? (
+                        <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                          <Check className="w-4 h-4 text-white" />
+                        </div>
+                      ) : task.locked ? (
+                        <Lock className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">去完成 →</span>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Daily Action Card - 仅在非补卡模式下显示 */}
+            {!makeupDayNumber && (
+              <DailyActionCard
+                dayNumber={currentDay}
+                campId={campId}
+                pendingActions={pendingActions}
+                onCompletePending={(action) => {
+                  setSelectedPendingAction(action);
                   setShowActionDialog(true);
-                } else {
-                  toast({
-                    title: '请先完成教练梳理',
-                    description: '完成今日的教练对话后才能记录行动完成',
-                    variant: 'destructive'
-                  });
-                }
-              }}
-            />
+                }}
+                todayActionCompleted={!!(journalEntries.find(e => e.day_number === currentDay) as any)?.action_completed_at}
+                onCompleteToday={async (action, difficulty) => {
+                  // Find or prepare today's entry
+                  const todayEntry = journalEntries.find(e => e.day_number === currentDay);
+                  if (todayEntry) {
+                    // Update giving_action if needed, then open dialog
+                    if (!todayEntry.giving_action) {
+                      await supabase
+                        .from('wealth_journal_entries')
+                        .update({ giving_action: action })
+                        .eq('id', todayEntry.id);
+                    }
+                    setSelectedPendingAction({
+                      action,
+                      entryId: todayEntry.id,
+                      dayNumber: currentDay
+                    });
+                    setShowActionDialog(true);
+                  } else {
+                    toast({
+                      title: '请先完成教练梳理',
+                      description: '完成今日的教练对话后才能记录行动完成',
+                      variant: 'destructive'
+                    });
+                  }
+                }}
+              />
+            )}
 
-
-            {/* Invite Card */}
-            {userId && (
+            {/* Invite Card - 仅在非补卡模式下显示 */}
+            {!makeupDayNumber && userId && (
               <div id="invite-card">
-              <WealthCampInviteCard
+                <WealthCampInviteCard
                   campId={campId}
                   dayNumber={currentDay}
                   userId={userId}
