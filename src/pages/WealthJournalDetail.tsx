@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { JournalLayerCard } from '@/components/wealth-camp/JournalLayerCard';
 import WealthJournalShareDialog from '@/components/wealth-camp/WealthJournalShareDialog';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
+import { useWealthCampAnalytics } from '@/hooks/useWealthCampAnalytics';
 
 interface AiInsight {
   behavior_analysis?: string;
@@ -37,8 +38,15 @@ export default function WealthJournalDetail() {
   const { entryId } = useParams();
   const navigate = useNavigate();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const { trackShare } = useWealthCampAnalytics();
 
   const shareUrl = `${getPromotionDomain()}/wealth-camp-intro`;
+
+  // 处理自发分享点击（从日记详情页进入的分享是自发行为）
+  const handleOrganicShare = () => {
+    trackShare('journal', 'clicked', true, { entry_id: entryId });
+    setShareDialogOpen(true);
+  };
 
   const { data: entry, isLoading } = useQuery({
     queryKey: ['wealth-journal-entry', entryId],
@@ -115,7 +123,7 @@ export default function WealthJournalDetail() {
               {format(new Date(entry.created_at), 'yyyy年M月d日 EEEE', { locale: zhCN })}
             </p>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)}>
+          <Button variant="ghost" size="icon" onClick={handleOrganicShare}>
             <Share2 className="w-5 h-5" />
           </Button>
         </div>

@@ -12,6 +12,7 @@ import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
 import { WealthBlockHistory, HistoryRecord } from "@/components/wealth-block/WealthBlockHistory";
 import { WealthBlockTrend } from "@/components/wealth-block/WealthBlockTrend";
 import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
+import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 
 export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ export default function WealthBlockAssessmentPage() {
   // 历史记录
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const { trackAssessmentTocamp } = useWealthCampAnalytics();
 
   // 加载历史记录
   useEffect(() => {
@@ -63,6 +65,17 @@ export default function WealthBlockAssessmentPage() {
     setCurrentFollowUpInsights(followUpInsights);
     setShowResult(true);
     setIsSaved(false);
+    
+    // 埋点：测评完成
+    trackAssessmentTocamp('assessment_completed', {
+      dominant_block: result.dominantBlock,
+      dominant_poor: result.dominantPoor,
+      health_score: Math.round(
+        ((5 - result.behaviorScore) / 4 * 33) +
+        ((5 - result.emotionScore) / 4 * 33) +
+        ((5 - result.beliefScore) / 4 * 34)
+      ),
+    });
   };
 
   const handleSave = async () => {
