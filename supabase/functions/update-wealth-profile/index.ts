@@ -202,13 +202,13 @@ serve(async (req) => {
       const scoreDiff = newHealthScore - oldHealthScore;
       
       if (scoreDiff > 10) {
-        evolutionInsight = `你的财富健康指数从 ${oldHealthScore} 提升到了 ${newHealthScore}，进步明显！`;
+        evolutionInsight = `你的觉醒指数从 ${oldHealthScore} 提升到了 ${newHealthScore}，觉察力显著增强！`;
       } else if (scoreDiff > 0) {
-        evolutionInsight = `你的财富健康指数稳步提升，从 ${oldHealthScore} 到 ${newHealthScore}。`;
+        evolutionInsight = `你的觉醒指数稳步提升，从 ${oldHealthScore} 到 ${newHealthScore}。`;
       } else if (scoreDiff < -10) {
-        evolutionInsight = `最近的状态有些波动，财富健康指数从 ${oldHealthScore} 变为 ${newHealthScore}，这是调整期的正常现象。`;
+        evolutionInsight = `觉醒之路会有波动，觉醒指数从 ${oldHealthScore} 变为 ${newHealthScore}，这是调整期的正常现象。`;
       } else {
-        evolutionInsight = `你的财富健康状态保持稳定，继续保持觉察。`;
+        evolutionInsight = `你的觉醒状态保持稳定，继续保持觉察。`;
       }
 
       // Add type change insights
