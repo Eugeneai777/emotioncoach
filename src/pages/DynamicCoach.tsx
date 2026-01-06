@@ -86,6 +86,8 @@ const DynamicCoach = () => {
         return 'after_vibrant_life';
       case 'story':
         return 'after_story';
+      case 'wealth_coach_4_questions':
+        return 'after_wealth_coaching';
       default:
         return 'after_briefing';
     }
@@ -102,6 +104,11 @@ const DynamicCoach = () => {
       communication_theme: briefingData.communication_theme,
       communication_difficulty: briefingData.communication_difficulty,
       parent_theme: briefingData.parent_theme || briefingData.emotion_theme,
+      // 财富教练专属字段
+      behavior_insight: briefingData.behavior_insight,
+      emotion_insight: briefingData.emotion_insight,
+      belief_insight: briefingData.belief_insight,
+      giving_action: briefingData.giving_action,
     });
   };
 
