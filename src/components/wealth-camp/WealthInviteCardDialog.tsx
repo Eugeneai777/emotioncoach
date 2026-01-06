@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import WealthAssessmentShareCard from './WealthAssessmentShareCard';
 import WealthCampShareCard from './WealthCampShareCard';
+import WealthAwakeningShareCard from './WealthAwakeningShareCard';
+import WealthMilestoneShareCard from './WealthMilestoneShareCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -23,9 +25,19 @@ interface UserInfo {
   totalDays?: number;
 }
 
+interface AwakeningData {
+  dayNumber: number;
+  behaviorAwakening?: string;
+  emotionAwakening?: string;
+  beliefAwakening?: string;
+  newBelief?: string;
+}
+
+type CardTab = 'camp' | 'awakening' | 'milestone' | 'assessment';
+
 interface WealthInviteCardDialogProps {
   trigger?: React.ReactNode;
-  defaultTab?: 'assessment' | 'camp';
+  defaultTab?: CardTab;
   onGenerate?: () => void;
   campId?: string;
   currentDay?: number;
@@ -112,9 +124,25 @@ const isWeChatOrIOS = (): boolean => {
   return isWeChat || isIOS;
 };
 
+// Get best awakening content with priority: belief > emotion > behavior
+const getBestAwakening = (data: AwakeningData): { type: 'behavior' | 'emotion' | 'belief'; content: string } | null => {
+  if (data.beliefAwakening) return { type: 'belief', content: data.beliefAwakening };
+  if (data.newBelief) return { type: 'belief', content: data.newBelief };
+  if (data.emotionAwakening) return { type: 'emotion', content: data.emotionAwakening };
+  if (data.behaviorAwakening) return { type: 'behavior', content: data.behaviorAwakening };
+  return null;
+};
+
+const CARD_TABS = [
+  { id: 'camp' as const, label: '训练营', emoji: '🏕️' },
+  { id: 'awakening' as const, label: '今日觉醒', emoji: '✨' },
+  { id: 'milestone' as const, label: '里程碑', emoji: '🏆' },
+  { id: 'assessment' as const, label: '财富测评', emoji: '🎯' },
+];
+
 const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   trigger,
-  defaultTab = 'assessment',
+  defaultTab = 'camp',
   onGenerate,
   campId,
   currentDay: propCurrentDay,
@@ -128,13 +156,17 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? (controlledOnOpenChange || (() => {})) : setInternalOpen;
   
-  const [activeTab, setActiveTab] = useState<'assessment' | 'camp'>(defaultTab);
+  const [activeTab, setActiveTab] = useState<CardTab>(defaultTab);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo>({});
+  const [awakeningData, setAwakeningData] = useState<AwakeningData | null>(null);
+  const [selectedAwakeningType, setSelectedAwakeningType] = useState<'behavior' | 'emotion' | 'belief'>('belief');
   
   const assessmentCardRef = useRef<HTMLDivElement>(null);
   const campCardRef = useRef<HTMLDivElement>(null);
+  const awakeningCardRef = useRef<HTMLDivElement>(null);
+  const milestoneCardRef = useRef<HTMLDivElement>(null);
 
   const assessmentUrl = `${getPromotionDomain()}/wealth-block`;
   const campUrl = `${getPromotionDomain()}/wealth-camp-intro`;
@@ -175,6 +207,42 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         }
       }
 
+      // Fetch latest journal entry for awakening data
+      if (campId) {
+        const { data: latestEntry } = await supabase
+          .from('wealth_journal_entries')
+          .select('day_number, personal_awakening, new_belief, emotion_need')
+          .eq('camp_id', campId)
+          .eq('user_id', user.id)
+          .order('day_number', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (latestEntry) {
+          // personal_awakening is a JSON object with behavior_awakening, emotion_awakening, belief_awakening
+          const personalAwakening = latestEntry.personal_awakening as {
+            behavior_awakening?: string;
+            emotion_awakening?: string;
+            belief_awakening?: string;
+          } | null;
+          
+          const awakening: AwakeningData = {
+            dayNumber: latestEntry.day_number,
+            behaviorAwakening: personalAwakening?.behavior_awakening || undefined,
+            emotionAwakening: personalAwakening?.emotion_awakening || undefined,
+            beliefAwakening: personalAwakening?.belief_awakening || undefined,
+            newBelief: latestEntry.new_belief || undefined,
+          };
+          setAwakeningData(awakening);
+          
+          // Auto-select best awakening type
+          const best = getBestAwakening(awakening);
+          if (best) {
+            setSelectedAwakeningType(best.type);
+          }
+        }
+      }
+
       // Proxy third-party avatar URLs
       const proxiedAvatarUrl = getProxiedAvatarUrl(profile?.avatar_url);
 
@@ -189,10 +257,29 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     fetchUserInfo();
   }, [open, campId, propCurrentDay]);
 
+  const getActiveCardRef = () => {
+    switch (activeTab) {
+      case 'assessment': return assessmentCardRef;
+      case 'camp': return campCardRef;
+      case 'awakening': return awakeningCardRef;
+      case 'milestone': return milestoneCardRef;
+      default: return campCardRef;
+    }
+  };
+
+  const getCardName = () => {
+    switch (activeTab) {
+      case 'assessment': return '财富卡点测评邀请卡';
+      case 'camp': return '21天财富训练营邀请卡';
+      case 'awakening': return '财富觉醒分享卡';
+      case 'milestone': return '财富训练营里程碑';
+      default: return '邀请卡片';
+    }
+  };
 
   const handleDownload = async () => {
-    const cardRef = activeTab === 'assessment' ? assessmentCardRef : campCardRef;
-    const cardName = activeTab === 'assessment' ? '财富卡点测评邀请卡' : '21天财富训练营邀请卡';
+    const cardRef = getActiveCardRef();
+    const cardName = getCardName();
     
     if (!cardRef.current) {
       console.error('Card ref not found');
@@ -245,8 +332,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   };
 
   const handleShare = async () => {
-    const cardRef = activeTab === 'assessment' ? assessmentCardRef : campCardRef;
-    const cardName = activeTab === 'assessment' ? '财富卡点测评邀请卡' : '21天财富训练营邀请卡';
+    const cardRef = getActiveCardRef();
+    const cardName = getCardName();
     
     if (!cardRef.current) {
       toast.error('卡片未加载完成，请稍后重试');
@@ -319,6 +406,26 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     }
   };
 
+  // Get awakening content for selected type
+  const getSelectedAwakening = (): string | undefined => {
+    if (!awakeningData) return undefined;
+    switch (selectedAwakeningType) {
+      case 'behavior': return awakeningData.behaviorAwakening;
+      case 'emotion': return awakeningData.emotionAwakening;
+      case 'belief': return awakeningData.beliefAwakening || awakeningData.newBelief;
+      default: return undefined;
+    }
+  };
+
+  // Check which awakening types are available
+  const availableTypes = awakeningData ? {
+    behavior: !!awakeningData.behaviorAwakening,
+    emotion: !!awakeningData.emotionAwakening,
+    belief: !!(awakeningData.beliefAwakening || awakeningData.newBelief),
+  } : { behavior: false, emotion: false, belief: false };
+
+  const hasAnyAwakening = availableTypes.behavior || availableTypes.emotion || availableTypes.belief;
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -331,13 +438,16 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       </DialogTrigger>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>生成邀请卡片</DialogTitle>
+          <DialogTitle>生成分享卡片</DialogTitle>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'assessment' | 'camp')}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="assessment">财富测评</TabsTrigger>
-            <TabsTrigger value="camp">训练营</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as CardTab)}>
+          <TabsList className="grid w-full grid-cols-4">
+            {CARD_TABS.map(tab => (
+              <TabsTrigger key={tab.id} value={tab.id} className="text-xs px-2">
+                {tab.emoji} {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="assessment" className="mt-4">
@@ -365,12 +475,86 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
               </div>
             </div>
           </TabsContent>
+
+          <TabsContent value="awakening" className="mt-4">
+            {hasAnyAwakening && awakeningData ? (
+              <>
+                {/* Awakening Type Selector */}
+                <div className="flex justify-center gap-2 mb-3">
+                  {availableTypes.behavior && (
+                    <Button
+                      variant={selectedAwakeningType === 'behavior' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedAwakeningType('behavior')}
+                      className="text-xs"
+                    >
+                      🎯 行为
+                    </Button>
+                  )}
+                  {availableTypes.emotion && (
+                    <Button
+                      variant={selectedAwakeningType === 'emotion' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedAwakeningType('emotion')}
+                      className="text-xs"
+                    >
+                      💛 情绪
+                    </Button>
+                  )}
+                  {availableTypes.belief && (
+                    <Button
+                      variant={selectedAwakeningType === 'belief' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedAwakeningType('belief')}
+                      className="text-xs"
+                    >
+                      🧠 信念
+                    </Button>
+                  )}
+                </div>
+                <div className="flex justify-center">
+                  <div className="transform scale-[0.85] origin-top">
+                    <WealthAwakeningShareCard
+                      ref={awakeningCardRef}
+                      dayNumber={awakeningData.dayNumber}
+                      awakeningContent={getSelectedAwakening() || ''}
+                      awakeningType={selectedAwakeningType}
+                      shareUrl={campUrl}
+                      avatarUrl={userInfo.avatarUrl}
+                      displayName={userInfo.displayName}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="text-sm">暂无觉醒记录</p>
+                <p className="text-xs mt-1">完成今日教练对话后生成觉醒卡片</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="milestone" className="mt-4">
+            <div className="flex justify-center">
+              <div className="transform scale-[0.85] origin-top">
+                <WealthMilestoneShareCard
+                  ref={milestoneCardRef}
+                  completedDays={userInfo.currentDay || 1}
+                  totalDays={userInfo.totalDays || 21}
+                  coreInsight={awakeningData?.beliefAwakening || awakeningData?.newBelief}
+                  shareUrl={campUrl}
+                  avatarUrl={userInfo.avatarUrl}
+                  displayName={userInfo.displayName}
+                />
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
 
         <div className="flex gap-2 mt-4">
           <Button
             onClick={handleDownload}
-            disabled={generating}
+            disabled={generating || (activeTab === 'awakening' && !hasAnyAwakening)}
             className="flex-1 gap-2"
           >
             <Download className="h-4 w-4" />
@@ -378,7 +562,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </Button>
           <Button
             onClick={handleShare}
-            disabled={generating}
+            disabled={generating || (activeTab === 'awakening' && !hasAnyAwakening)}
             variant="secondary"
             className="flex-1 gap-2"
           >
