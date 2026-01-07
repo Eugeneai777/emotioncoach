@@ -178,10 +178,22 @@ export function useWealthJournalEntries(options: UseWealthJournalEntriesOptions 
     }));
   }, [entries]);
 
+  // Unified awakening index (0-100 scale) - single source of truth
+  const awakeningIndex = useMemo(() => {
+    if (!entries || entries.length === 0) return 0;
+    const avgBehavior = entries.reduce((sum, e) => sum + (e.behavior_score || 0), 0) / entries.length;
+    const avgEmotion = entries.reduce((sum, e) => sum + (e.emotion_score || 0), 0) / entries.length;
+    const avgBelief = entries.reduce((sum, e) => sum + (e.belief_score || 0), 0) / entries.length;
+    // Convert 1-5 scale to 0-100 scale: (avg - 1) / 4 * 100
+    const combinedAvg = (avgBehavior + avgEmotion + avgBelief) / 3;
+    return Math.round(((combinedAvg - 1) / 4) * 100);
+  }, [entries]);
+
   return {
     entries,
     stats,
     chartData,
+    awakeningIndex,
     isLoading,
     error,
     behaviorTypeNames,
