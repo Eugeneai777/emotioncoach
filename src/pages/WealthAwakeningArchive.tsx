@@ -213,7 +213,7 @@ export default function WealthAwakeningArchive() {
   }, [entries]);
 
   const handleShare = () => {
-    toast.success('觉醒档案分享功能即将上线');
+    toast.success('财富觉醒分享功能即将上线');
   };
 
   if (isLoading) {
@@ -232,12 +232,12 @@ export default function WealthAwakeningArchive() {
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <h1 className="font-semibold">📚 觉醒档案</h1>
+            <h1 className="font-semibold">📚 财富觉醒</h1>
           </div>
         </div>
         <div className="container max-w-2xl mx-auto px-4 py-12 text-center">
           <div className="text-6xl mb-4">📖</div>
-          <h2 className="text-xl font-semibold mb-2">你的觉醒档案正在书写</h2>
+          <h2 className="text-xl font-semibold mb-2">你的财富觉醒正在书写</h2>
           <p className="text-muted-foreground mb-6">完成教练对话后，这里将收录你的每一个觉醒时刻</p>
           <Button onClick={() => navigate('/wealth-camp-checkin')}>
             开始今日觉醒
@@ -258,7 +258,7 @@ export default function WealthAwakeningArchive() {
           <div className="flex-1">
             <h1 className="font-semibold flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
-              觉醒档案
+              财富觉醒
             </h1>
             <p className="text-xs text-muted-foreground">你的专属成长记录</p>
           </div>
