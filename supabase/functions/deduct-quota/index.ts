@@ -5,6 +5,49 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// 检查训练营权益
+async function checkCampEntitlement(supabase: any, userId: string, featureKey: string) {
+  // 1. 检查该功能是否属于某个训练营的权益
+  const { data: entitlement } = await supabase
+    .from('camp_entitlements')
+    .select('camp_type')
+    .eq('feature_key', featureKey)
+    .eq('is_free', true)
+    .maybeSingle();
+
+  if (!entitlement) return { hasCampAccess: false };
+
+  // 2. 检查用户是否有该训练营的有效购买记录
+  const { data: purchase } = await supabase
+    .from('user_camp_purchases')
+    .select('id, expires_at')
+    .eq('user_id', userId)
+    .eq('camp_type', entitlement.camp_type)
+    .eq('payment_status', 'completed')
+    .maybeSingle();
+
+  if (!purchase) return { hasCampAccess: false };
+
+  // 3. 检查是否过期（如果设置了过期时间）
+  if (purchase.expires_at && new Date(purchase.expires_at) < new Date()) {
+    return { hasCampAccess: false };
+  }
+
+  // 4. 检查用户是否有活跃的训练营
+  const { data: activeCamp } = await supabase
+    .from('training_camps')
+    .select('id, status')
+    .eq('user_id', userId)
+    .eq('camp_type', entitlement.camp_type)
+    .in('status', ['active', 'completed'])
+    .maybeSingle();
+
+  return { 
+    hasCampAccess: !!activeCamp,
+    campType: entitlement.camp_type 
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -55,6 +98,45 @@ Deno.serve(async (req) => {
     const featureKey = feature_key || legacyFeatureType;
 
     console.log(`📥 扣费请求: feature_key=${featureKey}, source=${source}, explicitAmount=${explicitAmount}, session_id=${session_id}`);
+
+    // ⭐ 训练营权益检查：在扣费前检查用户是否有训练营权益
+    const campCheck = await checkCampEntitlement(supabase, userId, featureKey);
+    if (campCheck.hasCampAccess) {
+      console.log(`🎁 训练营权益免费: ${featureKey} (${campCheck.campType})`);
+      
+      // 记录使用但不扣费
+      await supabase.from('usage_records').insert({
+        user_id: userId,
+        record_type: 'camp_entitlement',
+        amount: 0,
+        source: source || featureKey,
+        conversation_id: conversationId,
+        metadata: { 
+          feature_key: featureKey, 
+          camp_type: campCheck.campType,
+          free_by_camp: true 
+        }
+      });
+      
+      // 获取剩余额度
+      const { data: account } = await supabase
+        .from('user_accounts')
+        .select('remaining_quota')
+        .eq('user_id', userId)
+        .single();
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          cost: 0,
+          camp_entitlement: true,
+          camp_type: campCheck.campType,
+          feature_name: featureKey,
+          remaining_quota: account?.remaining_quota || 0,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (!featureKey && !explicitAmount) {
       return new Response(
