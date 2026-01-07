@@ -439,7 +439,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
                 </>
               ) : (
                 <>
-                  <p className="text-sm text-muted-foreground">请使用微信扫码支付</p>
+                  <p className="text-sm text-muted-foreground">请使用微信长按识别二维码或扫码支付</p>
                   {status === 'polling' && (
                     <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
                       <Loader2 className="h-3 w-3 animate-spin" />
