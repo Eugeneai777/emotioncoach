@@ -252,6 +252,29 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
         }
       }
 
+      // 根据训练营类型更新用户偏好教练
+      const coachTypeMap: Record<string, string> = {
+        'wealth_block_21': 'wealth',
+        'wealth_awakening_21': 'wealth',
+        'emotion_journal_21': 'emotion',
+        'emotion_bloom': 'emotion',
+        'identity_bloom': 'emotion',
+        'parent_emotion_21': 'parent',
+      };
+      
+      const preferredCoach = coachTypeMap[campTemplate.camp_type];
+      if (preferredCoach) {
+        try {
+          await supabase
+            .from('profiles')
+            .update({ preferred_coach: preferredCoach })
+            .eq('id', user.id);
+          console.log(`✅ 用户偏好教练已更新为 ${preferredCoach}`);
+        } catch (e) {
+          console.error('更新用户偏好教练失败:', e);
+        }
+      }
+
       toast({
         title: "训练营已开启！",
         description: bundleWithIdentity && campTemplate.camp_type === 'emotion_bloom' 

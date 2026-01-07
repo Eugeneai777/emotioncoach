@@ -79,13 +79,48 @@ const Auth = () => {
           }
         }
         
-        // Redirect to saved path or home
+        // Redirect to saved path or preferred coach home
         const savedRedirect = localStorage.getItem('auth_redirect');
         if (savedRedirect) {
           localStorage.removeItem('auth_redirect');
           navigate(savedRedirect);
         } else {
-          navigate("/");
+          // 查询用户偏好教练类型，智能跳转
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('preferred_coach')
+              .eq('id', session.user.id)
+              .single();
+            
+            if (profile?.preferred_coach === 'wealth') {
+              // 检查是否有活跃的财富训练营
+              const { data: activeCamp } = await supabase
+                .from('training_camps')
+                .select('id')
+                .eq('user_id', session.user.id)
+                .in('camp_type', ['wealth_block_21', 'wealth_awakening_21'])
+                .eq('status', 'active')
+                .maybeSingle();
+              
+              if (activeCamp) {
+                navigate("/wealth-camp-checkin");
+              } else {
+                navigate("/wealth-coach-intro");
+              }
+            } else if (profile?.preferred_coach === 'emotion') {
+              navigate("/");
+            } else if (profile?.preferred_coach === 'communication') {
+              navigate("/communication");
+            } else if (profile?.preferred_coach === 'parent') {
+              navigate("/parent-emotion");
+            } else {
+              navigate("/");
+            }
+          } catch (error) {
+            console.log('获取用户偏好失败，跳转默认首页:', error);
+            navigate("/");
+          }
         }
       }
     });
