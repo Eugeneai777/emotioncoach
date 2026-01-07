@@ -198,17 +198,57 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
                 <stop offset="0%" stopColor="#ef4444" stopOpacity="0.5" />
                 <stop offset="100%" stopColor="#dc2626" stopOpacity="0.8" />
               </radialGradient>
+              {/* Glow filter for core */}
+              <filter id="coreGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
             </defs>
             
-            {/* Outer Ring - Behavior Layer */}
+            {/* Ripple Waves - Outward diffusion from core */}
+            {[0, 1, 2].map((i) => (
+              <motion.circle
+                key={`ripple-${i}`}
+                cx="100" 
+                cy="100" 
+                r="38"
+                fill="none"
+                stroke="#ef4444"
+                strokeWidth="2"
+                strokeDasharray="6 4"
+                initial={{ scale: 1, opacity: 0 }}
+                animate={{ 
+                  scale: [1, 2.4], 
+                  opacity: [0.7, 0] 
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  delay: i * 1,
+                  ease: "easeOut"
+                }}
+                style={{ transformOrigin: "100px 100px" }}
+              />
+            ))}
+            
+            {/* Outer Ring - Behavior Layer with breathing */}
             <motion.circle 
               cx="100" cy="100" r="90"
               fill="none" 
               stroke="url(#behaviorGradient)" 
               strokeWidth="18"
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
+              animate={{ 
+                opacity: [0.7, 1, 0.7], 
+                scale: 1 
+              }}
+              transition={{ 
+                opacity: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+                scale: { delay: 0.2, duration: 0.5 }
+              }}
             />
             <motion.text 
               x="100" y="22" 
@@ -222,15 +262,21 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
               🚶 行为层
             </motion.text>
             
-            {/* Middle Ring - Emotion Layer */}
+            {/* Middle Ring - Emotion Layer with breathing */}
             <motion.circle 
               cx="100" cy="100" r="65"
               fill="none" 
               stroke="url(#emotionGradient)" 
               strokeWidth="18"
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
+              animate={{ 
+                opacity: [0.75, 1, 0.75], 
+                scale: 1 
+              }}
+              transition={{ 
+                opacity: { duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 },
+                scale: { delay: 0.4, duration: 0.5 }
+              }}
             />
             <motion.text 
               x="155" y="55" 
@@ -244,13 +290,21 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
               💭 情绪层
             </motion.text>
             
-            {/* Core Circle - Belief Layer */}
+            {/* Core Circle - Belief Layer with pulse */}
             <motion.circle 
               cx="100" cy="100" r="38"
               fill="url(#beliefGradient)"
+              filter="url(#coreGlow)"
               initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6, duration: 0.5 }}
+              animate={{ 
+                opacity: 1, 
+                scale: [1, 1.06, 1]
+              }}
+              transition={{ 
+                opacity: { delay: 0.6, duration: 0.5 },
+                scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+              }}
+              style={{ transformOrigin: "100px 100px" }}
             />
             <motion.text 
               x="100" y="95" 
