@@ -13,6 +13,7 @@ import { WealthBlockHistory, HistoryRecord } from "@/components/wealth-block/Wea
 import { WealthBlockTrend } from "@/components/wealth-block/WealthBlockTrend";
 import { AssessmentComparison } from "@/components/wealth-block/AssessmentComparison";
 import { AssessmentIntroCard } from "@/components/wealth-block/AssessmentIntroCard";
+import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDialog";
 import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
@@ -33,6 +34,9 @@ export default function WealthBlockAssessmentPage() {
   const [isSaved, setIsSaved] = useState(false);
   const [savedAssessmentId, setSavedAssessmentId] = useState<string | null>(null);
   const [previousAssessmentId, setPreviousAssessmentId] = useState<string | null>(null);
+  
+  // 支付相关状态
+  const [showPayDialog, setShowPayDialog] = useState(false);
   
   // 历史记录
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
@@ -300,6 +304,7 @@ export default function WealthBlockAssessmentPage() {
                   isLoggedIn={!!user}
                   onStart={() => setShowIntro(false)}
                   onLogin={() => navigate("/auth?redirect=/wealth-block")}
+                  onPay={() => setShowPayDialog(true)}
                 />
               ) : showResult && currentResult ? (
                 <div className="space-y-6">
@@ -363,6 +368,17 @@ export default function WealthBlockAssessmentPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* 支付对话框 */}
+      <AssessmentPayDialog
+        open={showPayDialog}
+        onOpenChange={setShowPayDialog}
+        onSuccess={(userId) => {
+          // 支付+注册成功，开始测评
+          setShowIntro(false);
+          setShowPayDialog(false);
+        }}
+      />
     </div>
   );
 }

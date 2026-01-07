@@ -7,6 +7,7 @@ interface AssessmentIntroCardProps {
   isLoggedIn: boolean;
   onStart: () => void;
   onLogin: () => void;
+  onPay?: () => void; // 新增：支付按钮回调
 }
 
 const statistics = {
@@ -48,7 +49,7 @@ const loginBenefits = [
   "获得AI教练个性化指导",
 ];
 
-export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin }: AssessmentIntroCardProps) {
+export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: AssessmentIntroCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -228,7 +229,7 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin }: Assessment
           </div>
           
           <Button
-            onClick={onStart}
+            onClick={onPay || onStart}
             size="lg"
             className="w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0"
           >

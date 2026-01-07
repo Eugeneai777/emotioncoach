@@ -332,3 +332,6 @@ verify_jwt = false
 
 [functions.trigger-wealth-weekly-summary]
 verify_jwt = false
+
+[functions.get-wechat-register-url]
+verify_jwt = false

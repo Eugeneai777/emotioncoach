@@ -71,12 +71,12 @@ serve(async (req) => {
   }
 
   try {
-    const { packageKey, packageName, amount, userId, payType = 'h5' } = await req.json();
+    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5' } = await req.json();
     
     console.log('Creating order:', { packageKey, packageName, amount, userId, payType });
 
-    // 验证参数
-    if (!packageKey || !packageName || !amount || !userId) {
+    // 验证参数 - userId 可选（支持游客订单）
+    if (!packageKey || !packageName || !amount) {
       throw new Error('缺少必要参数');
     }
 
