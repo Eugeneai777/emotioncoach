@@ -32,6 +32,10 @@ interface DailyActionCardProps {
   onCompletePending?: (action: PendingAction) => void;
   onCompleteToday?: (action: string, difficulty: string) => void;
   todayActionCompleted?: boolean;
+  /** 今日日记中已保存的行动（优先展示） */
+  todayJournalAction?: string | null;
+  /** 今日日记ID */
+  todayEntryId?: string | null;
 }
 
 export function DailyActionCard({ 
@@ -41,14 +45,24 @@ export function DailyActionCard({
   pendingActions = [],
   onCompletePending,
   onCompleteToday,
-  todayActionCompleted = false
+  todayActionCompleted = false,
+  todayJournalAction,
+  todayEntryId
 }: DailyActionCardProps) {
   const [data, setData] = useState<DailyActionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isPendingPulsing, setIsPendingPulsing] = useState(true);
 
+  // 如果日记中已有行动，则不需要调用 API 生成
+  const hasJournalAction = !!todayJournalAction;
+
   const fetchAction = async () => {
+    // 日记中已有行动时跳过 API 调用
+    if (hasJournalAction) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const { data: result, error } = await supabase.functions.invoke('generate-daily-action', {
@@ -72,7 +86,7 @@ export function DailyActionCard({
 
   useEffect(() => {
     fetchAction();
-  }, [dayNumber, campId]);
+  }, [dayNumber, campId, hasJournalAction]);
   
   // 待完成行动的闪烁效果
   useEffect(() => {
@@ -183,8 +197,50 @@ export function DailyActionCard({
         )}
       </AnimatePresence>
 
-      {/* Today's recommended action */}
-      {data && (
+      {/* Today's action - 优先展示日记中的行动 */}
+      {todayJournalAction ? (
+        <Card className="bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/40 dark:to-teal-900/40 border-emerald-300 dark:border-emerald-700 border-2">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-300 dark:bg-emerald-700 flex items-center justify-center shrink-0">
+                <Gift className="w-5 h-5 text-emerald-800 dark:text-emerald-200" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                    📌 今日行动
+                  </p>
+                  <span className="text-xs bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-medium">
+                    来自教练梳理
+                  </span>
+                </div>
+                <p className="font-semibold text-emerald-900 dark:text-emerald-100">
+                  {todayJournalAction}
+                </p>
+                <div className="flex items-center gap-2 mt-3">
+                  {todayActionCompleted ? (
+                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span className="text-sm font-medium">已完成</span>
+                    </div>
+                  ) : (
+                    onCompleteToday && (
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-xs"
+                        onClick={() => onCompleteToday(todayJournalAction, 'medium')}
+                      >
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                        确认完成
+                      </Button>
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : data ? (
         <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
@@ -254,7 +310,7 @@ export function DailyActionCard({
             )}
           </CardContent>
         </Card>
-      )}
+      ) : null}
     </div>
   );
 }
