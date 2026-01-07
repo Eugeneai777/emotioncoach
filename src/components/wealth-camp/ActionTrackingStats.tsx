@@ -1,11 +1,17 @@
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gift, CheckCircle2, Clock, Star, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { Gift, CheckCircle2, Clock, Star, TrendingUp, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ActionEntry {
   id: string;
@@ -66,6 +72,24 @@ export function ActionTrackingStats({ entries, showDetails = true, compact = fal
         <CardTitle className="text-base flex items-center gap-2 text-emerald-800 dark:text-emerald-200">
           <Gift className="w-5 h-5" />
           给予行动追踪
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="w-3.5 h-3.5 text-emerald-600/70 dark:text-emerald-400/70 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[280px] p-3">
+                <div className="text-xs space-y-1.5">
+                  <p className="font-medium">数据说明</p>
+                  <p className="text-muted-foreground">行动追踪记录你的「今日给予」完成情况：</p>
+                  <ul className="text-muted-foreground list-disc pl-3 space-y-0.5">
+                    <li>数据来源：每日日记中的给予行动字段</li>
+                    <li>完成率：已完成行动 / 全部行动 × 100%</li>
+                    <li>难度评分：完成时自评的执行难度（1-5分）</li>
+                  </ul>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

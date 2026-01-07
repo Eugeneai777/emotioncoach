@@ -1,10 +1,16 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, TrendingUp, Target } from 'lucide-react';
+import { Sparkles, TrendingUp, Target, HelpCircle } from 'lucide-react';
 import { useFourPoorProgress } from '@/hooks/useFourPoorProgress';
 import { fourPoorRichConfig, poorTypeKeys, PoorTypeKey } from '@/config/fourPoorConfig';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface FourPersonalityCardProps {
   campId?: string;
@@ -43,6 +49,24 @@ export function FourPersonalityCard({ campId, currentDay = 1, className }: FourP
           <h3 className="font-semibold text-sm flex items-center gap-2">
             <span>🧬</span>
             我的财富人格画像
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[280px] p-3">
+                  <div className="text-xs space-y-1.5">
+                    <p className="font-medium">数据说明</p>
+                    <p className="text-muted-foreground">四穷人格画像基于你的财富评估结果和每日觉察记录：</p>
+                    <ul className="text-muted-foreground list-disc pl-3 space-y-0.5">
+                      <li>测评分数：来自初始财富评估问卷</li>
+                      <li>当前分数：基于日记中行为层的觉察累积</li>
+                      <li>转化率：(测评分数 - 当前分数) / 测评分数 × 100%</li>
+                    </ul>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </h3>
           <Badge variant="outline" className="text-xs">
             Day {currentDay}/21

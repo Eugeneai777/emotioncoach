@@ -2,10 +2,16 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Sparkles, Star, Bell, BellOff, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, Star, Bell, BellOff, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFavoriteBeliefs } from '@/hooks/useFavoriteBeliefs';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface NewBeliefsCollectionProps {
   beliefs: string[];
@@ -61,6 +67,24 @@ export function NewBeliefsCollection({ beliefs, campId, className }: NewBeliefsC
         <CardTitle className="text-sm flex items-center gap-2 text-green-800 dark:text-green-200">
           <Sparkles className="w-4 h-4" />
           我的新信念收集
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="w-3.5 h-3.5 text-green-600/70 dark:text-green-400/70 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[280px] p-3">
+                <div className="text-xs space-y-1.5">
+                  <p className="font-medium">数据说明</p>
+                  <p className="text-muted-foreground">新信念来自每日教练梳理中你发现的积极财富信念：</p>
+                  <ul className="text-muted-foreground list-disc pl-3 space-y-0.5">
+                    <li>信念来源：每日日记的「新信念」字段</li>
+                    <li>收藏功能：星标收藏喜欢的信念</li>
+                    <li>每日提醒：设置后冥想前会展示（最多3条）</li>
+                  </ul>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <span className="ml-auto text-xs font-normal text-green-600 dark:text-green-400">
             {beliefs.length}条 · 提醒{reminderCount}/3
           </span>
