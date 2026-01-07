@@ -12,6 +12,7 @@ import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
 import { WealthBlockHistory, HistoryRecord } from "@/components/wealth-block/WealthBlockHistory";
 import { WealthBlockTrend } from "@/components/wealth-block/WealthBlockTrend";
 import { AssessmentComparison } from "@/components/wealth-block/AssessmentComparison";
+import { AssessmentIntroCard } from "@/components/wealth-block/AssessmentIntroCard";
 import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
@@ -22,6 +23,7 @@ export default function WealthBlockAssessmentPage() {
   const { user } = useAuth();
   
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "assessment");
+  const [showIntro, setShowIntro] = useState(true);
   const [currentResult, setCurrentResult] = useState<AssessmentResult | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<Record<number, number>>({});
   const [currentFollowUpInsights, setCurrentFollowUpInsights] = useState<FollowUpAnswer[] | undefined>(undefined);
@@ -293,7 +295,13 @@ export default function WealthBlockAssessmentPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              {showResult && currentResult ? (
+              {showIntro && !showResult ? (
+                <AssessmentIntroCard
+                  isLoggedIn={!!user}
+                  onStart={() => setShowIntro(false)}
+                  onLogin={() => navigate("/auth?redirect=/wealth-block")}
+                />
+              ) : showResult && currentResult ? (
                 <div className="space-y-6">
                   {/* Assessment Comparison - show after save if has previous */}
                   {isSaved && savedAssessmentId && previousAssessmentId && (

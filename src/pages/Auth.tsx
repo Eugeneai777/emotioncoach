@@ -21,14 +21,24 @@ const Auth = () => {
     // 处理推荐参数
     const urlParams = new URLSearchParams(window.location.search);
     const refCode = urlParams.get('ref');
+    const redirectTo = urlParams.get('redirect');
     if (refCode) {
       localStorage.setItem('referral_code', refCode);
+    }
+    if (redirectTo) {
+      localStorage.setItem('auth_redirect', redirectTo);
     }
 
     // 检查用户是否已登录
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/");
+        const savedRedirect = localStorage.getItem('auth_redirect');
+        if (savedRedirect) {
+          localStorage.removeItem('auth_redirect');
+          navigate(savedRedirect);
+        } else {
+          navigate("/");
+        }
       }
     });
 
@@ -68,7 +78,15 @@ const Auth = () => {
             console.error('Error processing referral:', error);
           }
         }
-        navigate("/");
+        
+        // Redirect to saved path or home
+        const savedRedirect = localStorage.getItem('auth_redirect');
+        if (savedRedirect) {
+          localStorage.removeItem('auth_redirect');
+          navigate(savedRedirect);
+        } else {
+          navigate("/");
+        }
       }
     });
 
