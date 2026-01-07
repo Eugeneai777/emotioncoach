@@ -248,7 +248,7 @@ export function AssessmentPayDialog({
               </p>
 
               {status === 'polling' && (
-                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground pb-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>等待支付中...</span>
                 </div>
