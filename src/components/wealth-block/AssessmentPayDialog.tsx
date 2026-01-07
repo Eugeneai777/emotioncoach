@@ -182,7 +182,7 @@ export function AssessmentPayDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] overflow-visible rounded-2xl p-6">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm !inset-auto !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 !bottom-auto !rounded-2xl max-h-[85vh] overflow-visible p-6">
         <DialogHeader className="pb-2">
           <DialogTitle className="text-center text-base">
             {status === 'registering' ? '完成注册' : '财富卡点测评'}
