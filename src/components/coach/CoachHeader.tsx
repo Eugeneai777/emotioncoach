@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Sparkles, History, ShoppingBag, Menu, RotateCcw, Target, LogIn, Sun } from "lucide-react";
+import { ChevronDown, Sparkles, History, ShoppingBag, Menu, RotateCcw, Target, LogIn, Lightbulb } from "lucide-react";
 import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
 import {
   DropdownMenu,
@@ -253,10 +253,10 @@ export const CoachHeader = ({
                 size="sm"
                 variant="ghost"
                 onClick={() => navigate("/awakening")}
-                className="h-9 w-9 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md group"
+                className="h-9 w-9 p-0 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-md group"
                 title="觉察"
               >
-                <Sun className="w-4 h-4 animate-[pulse_2s_ease-in-out_infinite] group-hover:animate-none" />
+                <Lightbulb className="w-4 h-4 animate-[pulse_3s_ease-in-out_infinite] group-hover:animate-none group-hover:scale-110 transition-transform" />
               </Button>
             </div>
 
