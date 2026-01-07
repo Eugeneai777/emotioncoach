@@ -346,11 +346,14 @@ export const CoachVoiceChat = ({
         .eq('package_id', packageId)
         .single();
 
-      console.log('[VoiceChat] Duration setting:', setting?.max_duration_minutes, '(null = unlimited)');
+      console.log('[VoiceChat] Duration setting:', setting, '(max_duration_minutes null = unlimited)');
 
-      // null 表示不限时，undefined/不存在则使用默认值
-      if (setting === null) return DEFAULT_MAX_DURATION_MINUTES;
-      return setting?.max_duration_minutes ?? DEFAULT_MAX_DURATION_MINUTES;
+      // 如果没有找到设置记录，使用默认值
+      if (!setting) return DEFAULT_MAX_DURATION_MINUTES;
+      
+      // max_duration_minutes 为 null 表示不限时，返回 null
+      // max_duration_minutes 有值则返回该值
+      return setting.max_duration_minutes;
     } catch (error) {
       console.error('Get max duration error:', error);
       return DEFAULT_MAX_DURATION_MINUTES;
