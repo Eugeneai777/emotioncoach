@@ -10,6 +10,7 @@ import { NewBeliefsCollection } from './NewBeliefsCollection';
 import { WeeklyComparisonChart } from './WeeklyComparisonChart';
 import { GrowthComparisonCard } from './GrowthComparisonCard';
 import { FourPersonalityCard } from './FourPersonalityCard';
+import { ReactionPatternCard } from './ReactionPatternCard';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
 import { useProfileEvolution } from '@/hooks/useProfileEvolution';
 import { useQuery } from '@tanstack/react-query';
@@ -179,6 +180,9 @@ export function AwakeningArchiveTab({ campId, entries, onMakeupClick }: Awakenin
       <div className="space-y-4">
         {/* 四穷人格画像 */}
         <FourPersonalityCard campId={campId} currentDay={currentDay} />
+
+        {/* 反应模式画像 */}
+        <ReactionPatternCard campId={campId} currentDay={currentDay} />
 
         {/* 我的财富画像 */}
         {wealthProfile && (
