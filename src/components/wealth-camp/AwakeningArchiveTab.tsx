@@ -5,7 +5,7 @@ import { WealthProgressChart } from './WealthProgressChart';
 import { WealthJourneyCalendar } from './WealthJourneyCalendar';
 import { ProfileEvolutionCard } from './ProfileEvolutionCard';
 import { ActionTrackingStats } from './ActionTrackingStats';
-import { ArchiveHeroCard } from './ArchiveHeroCard';
+import { CompactProgressHeader } from './CompactProgressHeader';
 import { NewBeliefsCollection } from './NewBeliefsCollection';
 import { WeeklyComparisonChart } from './WeeklyComparisonChart';
 import { GrowthComparisonCard } from './GrowthComparisonCard';
@@ -53,20 +53,6 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
     enabled: !!campId,
   });
 
-  // Calculate previous week averages for comparison
-  const prevWeekStats = fullEntries.length >= 7 ? (() => {
-    const lastWeekEntries = fullEntries.slice(-7);
-    const prevWeekEntries = fullEntries.slice(-14, -7);
-    if (prevWeekEntries.length === 0) return { behavior: 0, emotion: 0, belief: 0 };
-    
-    const avg = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-    return {
-      behavior: avg(prevWeekEntries.map(e => e.behavior_score ?? 0).filter(Boolean)),
-      emotion: avg(prevWeekEntries.map(e => e.emotion_score ?? 0).filter(Boolean)),
-      belief: avg(prevWeekEntries.map(e => e.belief_score ?? 0).filter(Boolean)),
-    };
-  })() : { behavior: 0, emotion: 0, belief: 0 };
-
   if (!entries || entries.length === 0) {
     return (
       <div className="text-center py-12">
@@ -79,16 +65,14 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
 
   return (
     <div className="space-y-4">
-      {/* 第一层：核心数据仪表盘 - 一眼看懂 */}
-      <ArchiveHeroCard
-        totalDays={stats?.totalDays || 0}
+      {/* 第一层：紧凑进度概览 */}
+      <CompactProgressHeader
+        currentDay={stats?.totalDays || 0}
         maxDays={21}
-        avgBehavior={stats?.avgBehavior || '0.0'}
-        avgEmotion={stats?.avgEmotion || '0.0'}
-        avgBelief={stats?.avgBelief || '0.0'}
-        prevWeekBehavior={prevWeekStats.behavior}
-        prevWeekEmotion={prevWeekStats.emotion}
-        prevWeekBelief={prevWeekStats.belief}
+        awakeningIndex={awakeningIndex}
+        avgBehavior={stats?.avgBehavior}
+        avgEmotion={stats?.avgEmotion}
+        avgBelief={stats?.avgBelief}
         trendChange={stats?.trendChange || 0}
       />
 
@@ -98,21 +82,24 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
           <CardHeader className="pb-0 pt-3 px-3">
             <TabsList className="grid w-full grid-cols-4 h-9">
               <TabsTrigger value="chart" className="text-xs">成长曲线</TabsTrigger>
+              <TabsTrigger value="assessment" className="text-xs">测评对比</TabsTrigger>
               <TabsTrigger value="weekly" className="text-xs">周对比</TabsTrigger>
               <TabsTrigger value="calendar" className="text-xs">日历</TabsTrigger>
-              <TabsTrigger value="assessment" className="text-xs">测评对比</TabsTrigger>
             </TabsList>
           </CardHeader>
           <CardContent className="p-3 pt-3">
             {/* 成长曲线 */}
             <TabsContent value="chart" className="mt-0">
-              <WealthProgressChart entries={fullEntries.map(e => ({
-                day_number: e.day_number,
-                behavior_score: e.behavior_score ?? null,
-                emotion_score: e.emotion_score ?? null,
-                belief_score: e.belief_score ?? null,
-                created_at: e.created_at,
-              }))} />
+              <WealthProgressChart 
+                entries={fullEntries.map(e => ({
+                  day_number: e.day_number,
+                  behavior_score: e.behavior_score ?? null,
+                  emotion_score: e.emotion_score ?? null,
+                  belief_score: e.belief_score ?? null,
+                  created_at: e.created_at,
+                }))} 
+                embedded={true}
+              />
             </TabsContent>
 
             {/* 周维度对比 */}
