@@ -676,7 +676,7 @@ const CommunityWaterfall = () => {
             key={cat.value}
             variant="outline"
             className={cn(
-              "flex-1 min-h-[48px] active:scale-95 transition-all duration-150 touch-manipulation text-sm font-medium",
+              "flex-1 min-h-[44px] active:scale-95 transition-all duration-150 touch-manipulation text-sm font-medium",
               activeFilter === cat.value 
                 ? "bg-primary/10 border-primary text-primary shadow-sm" 
                 : "bg-card border-border/60 hover:bg-muted hover:border-border text-foreground/80"

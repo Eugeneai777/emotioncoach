@@ -95,8 +95,8 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
       }
     >
       <div className={embedded 
-        ? "px-3 pt-2 pb-2"
-        : "container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 pt-2 pb-2"
+        ? "px-3 pt-1.5 pb-1.5"
+        : "container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 pt-1.5 pb-1.5"
       }>
         {/* Intensity Selector - 键盘弹出时隐藏 */}
         {!isFocused && intensitySelector && (

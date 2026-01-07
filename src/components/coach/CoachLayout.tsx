@@ -359,7 +359,7 @@ export const CoachLayout = ({
         {/* Main Content */}
         <main 
           ref={mainRef}
-          className="flex-1 overflow-y-auto overscroll-none scroll-container pb-32 sm:pb-36 md:pb-44"
+          className="flex-1 overflow-y-auto overscroll-none scroll-container pb-44 sm:pb-48 md:pb-52"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
