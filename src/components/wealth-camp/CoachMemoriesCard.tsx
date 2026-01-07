@@ -90,7 +90,7 @@ export const CoachMemoriesCard = ({ limit = 5, showViewAll = true }: CoachMemori
             className="w-full text-purple-600 hover:text-purple-700 hover:bg-purple-100/50"
             onClick={() => navigate('/wealth-awakening-archive')}
           >
-            查看完整觉醒档案
+            查看完整财富觉醒
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         )}

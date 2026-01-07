@@ -463,8 +463,8 @@ ${reflection}`;
             <TabsTrigger value="coaching" disabled={!meditationCompleted}>
               教练梳理
             </TabsTrigger>
-            <TabsTrigger value="archive">觉醒档案</TabsTrigger>
-            <TabsTrigger value="journal">日记</TabsTrigger>
+            <TabsTrigger value="archive">财富觉醒</TabsTrigger>
+            <TabsTrigger value="journal">财富简报</TabsTrigger>
           </TabsList>
 
           <TabsContent value="today" className="space-y-6 mt-6">
