@@ -15,6 +15,7 @@ import WealthAssessmentShareCard from './WealthAssessmentShareCard';
 import WealthCampShareCard from './WealthCampShareCard';
 import WealthAwakeningShareCard from './WealthAwakeningShareCard';
 import WealthMilestoneShareCard from './WealthMilestoneShareCard';
+import GrowthPosterCard from './GrowthPosterCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -33,7 +34,7 @@ interface AwakeningData {
   newBelief?: string;
 }
 
-type CardTab = 'camp' | 'awakening' | 'milestone' | 'assessment';
+type CardTab = 'camp' | 'awakening' | 'milestone' | 'assessment' | 'growth';
 
 interface WealthInviteCardDialogProps {
   trigger?: React.ReactNode;
@@ -135,9 +136,10 @@ const getBestAwakening = (data: AwakeningData): { type: 'behavior' | 'emotion' |
 
 const CARD_TABS = [
   { id: 'camp' as const, label: '训练营', emoji: '🏕️' },
+  { id: 'growth' as const, label: '成长海报', emoji: '📊' },
   { id: 'awakening' as const, label: '今日觉醒', emoji: '✨' },
   { id: 'milestone' as const, label: '里程碑', emoji: '🏆' },
-  { id: 'assessment' as const, label: '财富测评', emoji: '🎯' },
+  { id: 'assessment' as const, label: '测评', emoji: '🎯' },
 ];
 
 const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
@@ -167,6 +169,18 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const campCardRef = useRef<HTMLDivElement>(null);
   const awakeningCardRef = useRef<HTMLDivElement>(null);
   const milestoneCardRef = useRef<HTMLDivElement>(null);
+  const growthCardRef = useRef<HTMLDivElement>(null);
+  
+  // Growth poster specific data
+  const [growthData, setGrowthData] = useState<{
+    awakeningIndex: number;
+    avgBehavior: number;
+    avgEmotion: number;
+    avgBelief: number;
+    coreBreakthrough?: { type: 'behavior' | 'emotion' | 'belief'; title: string; content: string };
+    dominantPoor?: string;
+    transformationRate?: number;
+  } | null>(null);
 
   const assessmentUrl = `${getPromotionDomain()}/wealth-block`;
   const campUrl = `${getPromotionDomain()}/wealth-camp-intro`;
@@ -243,6 +257,68 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         }
       }
 
+      // Fetch growth data for the poster
+      if (campId) {
+        const { data: journalEntries } = await supabase
+          .from('wealth_journal_entries')
+          .select('behavior_score, emotion_score, belief_score, behavior_block, personal_awakening, new_belief')
+          .eq('camp_id', campId)
+          .eq('user_id', user.id);
+
+        if (journalEntries && journalEntries.length > 0) {
+          const validEntries = journalEntries.filter(e => e.behavior_score || e.emotion_score || e.belief_score);
+          const avgBehavior = validEntries.reduce((sum, e) => sum + (e.behavior_score || 0), 0) / (validEntries.length || 1);
+          const avgEmotion = validEntries.reduce((sum, e) => sum + (e.emotion_score || 0), 0) / (validEntries.length || 1);
+          const avgBelief = validEntries.reduce((sum, e) => sum + (e.belief_score || 0), 0) / (validEntries.length || 1);
+          const avgScore = (avgBehavior + avgEmotion + avgBelief) / 3;
+          const awakeningIndex = ((avgScore - 1) / 4) * 100;
+
+          // Find core breakthrough from personal_awakening JSON
+          const latestEntry = journalEntries[journalEntries.length - 1];
+          const awakening = latestEntry?.personal_awakening as { behavior_awakening?: string; emotion_awakening?: string; belief_awakening?: string } | null;
+          let coreBreakthrough: { type: 'behavior' | 'emotion' | 'belief'; title: string; content: string } | undefined;
+          
+          if (awakening?.belief_awakening || latestEntry?.new_belief) {
+            coreBreakthrough = {
+              type: 'belief',
+              title: '信念层突破',
+              content: (awakening?.belief_awakening || latestEntry?.new_belief) as string,
+            };
+          } else if (awakening?.emotion_awakening) {
+            coreBreakthrough = {
+              type: 'emotion',
+              title: '情绪层觉察',
+              content: awakening.emotion_awakening,
+            };
+          } else if (awakening?.behavior_awakening) {
+            coreBreakthrough = {
+              type: 'behavior',
+              title: '行为层觉察',
+              content: awakening.behavior_awakening,
+            };
+          }
+
+          // Count behavior blocks for dominant poor
+          const behaviorCounts: Record<string, number> = {};
+          journalEntries.forEach(e => {
+            if (e.behavior_block) {
+              behaviorCounts[e.behavior_block] = (behaviorCounts[e.behavior_block] || 0) + 1;
+            }
+          });
+          const dominantPoor = Object.entries(behaviorCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+
+          setGrowthData({
+            awakeningIndex: Math.max(0, Math.min(100, awakeningIndex)),
+            avgBehavior,
+            avgEmotion,
+            avgBelief,
+            coreBreakthrough,
+            dominantPoor,
+            transformationRate: Math.round(awakeningIndex * 0.6),
+          });
+        }
+      }
+
       // Proxy third-party avatar URLs
       const proxiedAvatarUrl = getProxiedAvatarUrl(profile?.avatar_url);
 
@@ -263,6 +339,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       case 'camp': return campCardRef;
       case 'awakening': return awakeningCardRef;
       case 'milestone': return milestoneCardRef;
+      case 'growth': return growthCardRef;
       default: return campCardRef;
     }
   };
@@ -273,6 +350,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       case 'camp': return '21天财富训练营邀请卡';
       case 'awakening': return '财富觉醒分享卡';
       case 'milestone': return '财富训练营里程碑';
+      case 'growth': return '财富成长海报';
       default: return '邀请卡片';
     }
   };
@@ -442,7 +520,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as CardTab)}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             {CARD_TABS.map(tab => (
               <TabsTrigger key={tab.id} value={tab.id} className="text-xs px-2">
                 {tab.emoji} {tab.label}
@@ -474,6 +552,34 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                 />
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="growth" className="mt-4">
+            {growthData ? (
+              <div className="flex justify-center">
+                <div className="transform scale-[0.75] origin-top">
+                  <GrowthPosterCard
+                    ref={growthCardRef}
+                    avatarUrl={userInfo.avatarUrl}
+                    displayName={userInfo.displayName}
+                    currentDay={userInfo.currentDay || 1}
+                    totalDays={userInfo.totalDays || 21}
+                    awakeningIndex={growthData.awakeningIndex}
+                    avgBehavior={growthData.avgBehavior}
+                    avgEmotion={growthData.avgEmotion}
+                    avgBelief={growthData.avgBelief}
+                    coreBreakthrough={growthData.coreBreakthrough}
+                    dominantPoor={growthData.dominantPoor}
+                    transformationRate={growthData.transformationRate}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="text-sm">暂无成长数据</p>
+                <p className="text-xs mt-1">完成教练对话后生成成长海报</p>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="awakening" className="mt-4">

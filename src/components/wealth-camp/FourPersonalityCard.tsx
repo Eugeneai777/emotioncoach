@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, TrendingUp, Target, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, TrendingUp, Target, HelpCircle, ChevronDown, ChevronUp, Lightbulb } from 'lucide-react';
 import { useFourPoorProgress } from '@/hooks/useFourPoorProgress';
 import { fourPoorRichConfig, poorTypeKeys, PoorTypeKey } from '@/config/fourPoorConfig';
 import { cn } from '@/lib/utils';
@@ -20,8 +20,67 @@ interface FourPersonalityCardProps {
   className?: string;
 }
 
+// AI-generated growth suggestions based on transformation progress
+const generateAISuggestions = (
+  dominantPoor: PoorTypeKey | null,
+  fastestProgress: PoorTypeKey | null,
+  transformationRates: Record<PoorTypeKey, number>,
+  currentDay: number
+): { title: string; suggestion: string; action: string } | null => {
+  if (!dominantPoor) return null;
+
+  const dominantRate = transformationRates[dominantPoor] || 0;
+  const fastestRate = fastestProgress ? transformationRates[fastestProgress] : 0;
+
+  // Determine the suggestion based on progress state
+  if (currentDay <= 7) {
+    // Early stage - focus on awareness
+    return {
+      title: '觉察期建议',
+      suggestion: `你正处于觉察初期，「${fourPoorRichConfig[dominantPoor].poorName}」是你的主要模式。这周的重点是：每当感受到匮乏感时，先停下来问自己"我现在在害怕什么？"`,
+      action: `今天尝试：当"${fourPoorRichConfig[dominantPoor].poorName}"模式出现时，用手轻触心口，对自己说"我看见你了"`,
+    };
+  } else if (currentDay <= 14) {
+    // Middle stage - focus on transformation
+    if (dominantRate < 20) {
+      return {
+        title: '深度突破建议',
+        suggestion: `你的「${fourPoorRichConfig[dominantPoor].poorName}」模式转化较慢（${dominantRate}%），这很正常——它可能是最根深蒂固的模式。试着不把它当作"敌人"，而是一个需要被理解的老朋友。`,
+        action: `写下3个"${fourPoorRichConfig[dominantPoor].poorName}"模式曾经保护过你的时刻，感谢它，然后温柔地告诉它：我现在安全了`,
+      };
+    } else {
+      return {
+        title: '巩固期建议',
+        suggestion: fastestProgress 
+          ? `太棒了！你的「${fourPoorRichConfig[fastestProgress].poorName}→${fourPoorRichConfig[fastestProgress].richName}」转化率已达${fastestRate}%。现在是强化新神经回路的关键期。`
+          : `你的整体转化进展良好，继续保持觉察。`,
+        action: fastestProgress 
+          ? `每天睡前回顾：今天我有哪个瞬间体现了"${fourPoorRichConfig[fastestProgress].richName}"的特质？把它写下来作为明天的提醒`
+          : `每天记录一个"我选择丰盛"的时刻`,
+      };
+    }
+  } else {
+    // Final stage - integration
+    const avgRate = Object.values(transformationRates).reduce((a, b) => a + b, 0) / 4;
+    if (avgRate >= 50) {
+      return {
+        title: '整合期成就',
+        suggestion: `21天旅程接近尾声，你的平均转化率已达${avgRate.toFixed(0)}%！这不是终点，而是新的开始。你已经学会了觉察自己的穷模式，这个能力将伴随你一生。`,
+        action: '写一封信给21天前的自己，告诉TA你这段旅程最大的收获',
+      };
+    } else {
+      return {
+        title: '最后冲刺建议',
+        suggestion: `还有最后几天，专注于你最想突破的一个模式。改变不需要完美，只需要比昨天多一点点觉察。`,
+        action: `选择一个你最想改变的"穷模式"，今天刻意做一件与之相反的事`,
+      };
+    }
+  }
+};
+
 export function FourPersonalityCard({ campId, currentDay = 1, className }: FourPersonalityCardProps) {
   const [showTrend, setShowTrend] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
   const {
     baselineScores,
     currentScores,
@@ -44,6 +103,14 @@ export function FourPersonalityCard({ campId, currentDay = 1, className }: FourP
 
   // Check if we have any meaningful data
   const totalAwareness = Object.values(awarenessCount).reduce((a, b) => a + b, 0);
+  
+  // Generate AI suggestions
+  const aiSuggestions = generateAISuggestions(
+    dominantPoor,
+    fastestProgress,
+    transformationRates,
+    currentDay
+  );
   
   return (
     <Card className={cn("shadow-sm overflow-hidden", className)}>
@@ -168,7 +235,6 @@ export function FourPersonalityCard({ campId, currentDay = 1, className }: FourP
           );
         })}
         
-        {/* AI Insight */}
         {/* Trend Chart Toggle */}
         {totalAwareness > 0 && (
           <div className="border-t pt-3">
@@ -198,8 +264,62 @@ export function FourPersonalityCard({ campId, currentDay = 1, className }: FourP
           </div>
         )}
 
-        {/* AI Insight */}
-        {totalAwareness > 0 && fastestProgress && (
+        {/* AI Generated Personalized Suggestions */}
+        {totalAwareness > 0 && aiSuggestions && (
+          <div className="border-t pt-3">
+            <button
+              onClick={() => setShowSuggestions(!showSuggestions)}
+              className="w-full flex items-center justify-between text-xs text-muted-foreground hover:text-foreground transition-colors mb-2"
+            >
+              <span className="flex items-center gap-1.5">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                <span className="font-medium text-foreground">AI 成长建议</span>
+              </span>
+              {showSuggestions ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </button>
+            
+            {showSuggestions && (
+              <div className="space-y-3">
+                {/* Main suggestion */}
+                <div className="p-3 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-100 dark:border-amber-800/30">
+                  <div className="flex items-start gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-medium text-amber-700 dark:text-amber-300 mb-1">
+                        {aiSuggestions.title}
+                      </p>
+                      <p className="text-xs text-amber-900/80 dark:text-amber-100/80 leading-relaxed">
+                        {aiSuggestions.suggestion}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Action step */}
+                <div className="p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-100 dark:border-emerald-800/30">
+                  <div className="flex items-start gap-2">
+                    <Target className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300 mb-1">
+                        下一步行动
+                      </p>
+                      <p className="text-xs text-emerald-900/80 dark:text-emerald-100/80 leading-relaxed">
+                        {aiSuggestions.action}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Legacy insight - keep for backward compatibility */}
+        {totalAwareness > 0 && fastestProgress && !aiSuggestions && (
           <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 border border-violet-100 dark:border-violet-800/30">
             <div className="flex items-start gap-2">
               <Sparkles className="w-4 h-4 text-violet-500 mt-0.5 flex-shrink-0" />
