@@ -1,13 +1,17 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, Heart, Brain, Share2, MessageCircle, GraduationCap, Sparkles, RotateCcw, Save, ChevronDown } from "lucide-react";
+import { Target, Heart, Brain, Share2, MessageCircle, GraduationCap, Sparkles, RotateCcw, Save, ChevronDown, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { useCampPurchase } from "@/hooks/useCampPurchase";
+import { useQueryClient } from "@tanstack/react-query";
+import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { 
   AssessmentResult, 
   blockInfo, 
@@ -59,6 +63,7 @@ interface WealthBlockResultProps {
 
 export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswers, onRetake, onSave, isSaving, isSaved }: WealthBlockResultProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const pattern = patternInfo[result.reactionPattern];
   const dominantPoor = fourPoorInfo[result.dominantPoor];
   const dominantEmotion = emotionBlockInfo[result.dominantEmotionBlock];
@@ -68,6 +73,12 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   const [aiInsight, setAiInsight] = useState<AIInsightData | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  
+  // 直接购买训练营状态
+  const [showPayDialog, setShowPayDialog] = useState(false);
+  const [showStartDialog, setShowStartDialog] = useState(false);
+  const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_21");
+  const hasPurchased = !!purchaseRecord;
 
   const totalScore = result.behaviorScore + result.emotionScore + result.beliefScore;
   const healthScore = calculateHealthScore(totalScore);
@@ -710,23 +721,45 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
           </div>
         )}
 
-        <div className="text-center mb-3 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl">
-          <p className="text-sm text-muted-foreground">基于你的测评结果，推荐参加：</p>
-          <p className="font-semibold text-amber-700 dark:text-amber-400">21天财富觉醒训练营</p>
-          <div className="flex items-center justify-center gap-2 mt-1">
-            <span className="text-muted-foreground line-through text-sm">¥399</span>
-            <span className="text-xl font-bold text-amber-600 dark:text-amber-400">¥299</span>
-            <span className="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded">限时</span>
+        {/* 训练营推荐卡片 */}
+        <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 rounded-xl border border-amber-200 dark:border-amber-800">
+          <div className="text-center mb-3">
+            <p className="text-sm text-muted-foreground">🎯 基于你的测评结果，推荐参加：</p>
+            <p className="font-semibold text-amber-700 dark:text-amber-400 text-lg">21天财富觉醒训练营</p>
+            <div className="flex items-center justify-center gap-2 mt-1">
+              <span className="text-muted-foreground line-through text-sm">¥399</span>
+              <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">¥299</span>
+              <span className="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded animate-pulse">限时</span>
+            </div>
           </div>
+          
+          {/* 直接购买/开始按钮 */}
+          {hasPurchased ? (
+            <Button 
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg h-12"
+              onClick={() => setShowStartDialog(true)}
+            >
+              <GraduationCap className="w-5 h-5 mr-2" />
+              开始训练营
+            </Button>
+          ) : (
+            <Button 
+              className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg h-12"
+              onClick={() => setShowPayDialog(true)}
+            >
+              <ShoppingCart className="w-5 h-5 mr-2" />
+              ¥299 立即购买
+            </Button>
+          )}
+          
+          <Button 
+            variant="link" 
+            className="w-full text-amber-700 dark:text-amber-400 mt-2"
+            onClick={() => navigate('/wealth-camp-intro')}
+          >
+            查看训练营详情 →
+          </Button>
         </div>
-        
-        <Button 
-          className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg h-12"
-          onClick={() => navigate('/wealth-camp-intro')}
-        >
-          <GraduationCap className="w-5 h-5 mr-2" />
-          加入21天财富觉醒训练营
-        </Button>
         
         <div className="grid grid-cols-2 gap-3">
           <WealthInviteCardDialog
@@ -752,6 +785,37 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
           <RotateCcw className="w-4 h-4 mr-2" />
           重新测评
         </Button>
+        
+        {/* 微信支付对话框 */}
+        <WechatPayDialog
+          open={showPayDialog}
+          onOpenChange={setShowPayDialog}
+          packageInfo={{
+            key: 'camp-wealth_block_21',
+            name: '财富觉醒训练营',
+            price: 299
+          }}
+          onSuccess={() => {
+            setShowPayDialog(false);
+            toast.success("购买成功！请选择开始日期");
+            refetchPurchase();
+            queryClient.invalidateQueries({ queryKey: ['camp-purchase', 'wealth_block_21'] });
+            setShowStartDialog(true);
+          }}
+        />
+        
+        {/* 开始训练营对话框 */}
+        <StartCampDialog
+          open={showStartDialog}
+          onOpenChange={setShowStartDialog}
+          campTemplate={{
+            camp_type: "wealth_block_21",
+            camp_name: "财富觉醒训练营",
+            duration_days: 21,
+            price: 299,
+            original_price: 399
+          }}
+        />
       </motion.div>
     </div>
   );
