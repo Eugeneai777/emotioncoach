@@ -91,6 +91,8 @@ import WealthAwakeningProgress from "./pages/WealthAwakeningProgress";
 import WealthAwakeningArchive from "./pages/WealthAwakeningArchive";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import YoujinPartnerTerms from "./pages/YoujinPartnerTerms";
+import BloomPartnerTerms from "./pages/BloomPartnerTerms";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -187,6 +189,8 @@ const App = () => (
           <Route path="/wealth-awakening-progress" element={<WealthAwakeningProgress />} />
           <Route path="/wealth-awakening-archive" element={<WealthAwakeningArchive />} />
           <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/terms/youjin-partner" element={<YoujinPartnerTerms />} />
+          <Route path="/terms/bloom-partner" element={<BloomPartnerTerms />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
