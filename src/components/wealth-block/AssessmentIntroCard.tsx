@@ -198,11 +198,33 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
                 <stop offset="0%" stopColor="#ef4444" stopOpacity="0.5" />
                 <stop offset="100%" stopColor="#dc2626" stopOpacity="0.8" />
               </radialGradient>
-              {/* Glow filter for core */}
-              <filter id="coreGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              {/* Enhanced Glow filter for core - multi-layer glow */}
+              <filter id="coreGlow" x="-100%" y="-100%" width="300%" height="300%">
+                {/* Inner bright glow */}
+                <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur1"/>
+                <feColorMatrix in="blur1" type="matrix" 
+                  values="1 0 0 0 0.2
+                          0 0.2 0 0 0
+                          0 0 0.1 0 0
+                          0 0 0 1 0" result="glow1"/>
+                {/* Outer soft glow */}
+                <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur2"/>
+                <feColorMatrix in="blur2" type="matrix"
+                  values="1 0 0 0 0.1
+                          0 0.15 0 0 0
+                          0 0 0.05 0 0
+                          0 0 0 0.8 0" result="glow2"/>
+                {/* Wide ambient glow */}
+                <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur3"/>
+                <feColorMatrix in="blur3" type="matrix"
+                  values="0.9 0 0 0 0
+                          0 0.1 0 0 0
+                          0 0 0 0 0
+                          0 0 0 0.5 0" result="glow3"/>
                 <feMerge>
-                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="glow3"/>
+                  <feMergeNode in="glow2"/>
+                  <feMergeNode in="glow1"/>
                   <feMergeNode in="SourceGraphic"/>
                 </feMerge>
               </filter>
