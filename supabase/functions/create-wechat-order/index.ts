@@ -275,11 +275,12 @@ serve(async (req) => {
       }
     }
 
-    // 保存订单到数据库
+    // 保存订单到数据库 - guest订单使用null作为user_id
+    const isGuest = userId === 'guest' || !userId;
     const { error: insertError } = await supabase
       .from('orders')
       .insert({
-        user_id: userId,
+        user_id: isGuest ? null : userId,
         package_key: packageKey,
         package_name: packageName,
         amount: amount,
