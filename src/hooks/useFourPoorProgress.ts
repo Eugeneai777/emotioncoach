@@ -83,9 +83,10 @@ export function useFourPoorProgress(campId?: string): FourPoorProgress {
     };
 
     entries.forEach((entry) => {
-      const blockType = entry.behavior_block as string | null | undefined;
-      if (blockType && typeof blockType === 'string') {
-        const mappedKey = behaviorBlockMapping[blockType];
+      // 使用 behavior_type 而不是 behavior_block
+      const behaviorType = entry.behavior_type as string | null | undefined;
+      if (behaviorType && typeof behaviorType === 'string') {
+        const mappedKey = behaviorBlockMapping[behaviorType];
         if (mappedKey) {
           awarenessCount[mappedKey]++;
           behaviorScoreSums[mappedKey] += entry.behavior_score ?? 3;
