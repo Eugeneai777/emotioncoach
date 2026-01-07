@@ -22,6 +22,7 @@ import AdminBloomPartnerProfit from "./AdminBloomPartnerProfit";
 import AdminBloomMonthlyProfit from "./AdminBloomMonthlyProfit";
 import AdminBloomSingleDelivery from "./AdminBloomSingleDelivery";
 import AdminBloomMonthlyCashflow from "./AdminBloomMonthlyCashflow";
+import { ConversionFunnelDashboard } from "@/components/analytics/ConversionFunnelDashboard";
 
 export function AdminLayout() {
   return (
@@ -49,6 +50,7 @@ export function AdminLayout() {
               <Route path="knowledge" element={<KnowledgeBaseManagement />} />
               <Route path="tools" element={<EnergyStudioToolsManagement />} />
               <Route path="usage" element={<UsageRecordsTable />} />
+              <Route path="funnel" element={<ConversionFunnelDashboard />} />
               <Route path="cost-monitor" element={<CostMonitorDashboard />} />
               <Route path="reports" element={<ReportsManagement />} />
               <Route path="packages" element={<PackagesManagement />} />

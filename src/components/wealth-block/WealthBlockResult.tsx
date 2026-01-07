@@ -795,11 +795,28 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
             name: '财富觉醒训练营',
             price: 299
           }}
-          onSuccess={() => {
+          onSuccess={async () => {
             setShowPayDialog(false);
             toast.success("购买成功！请选择开始日期");
             refetchPurchase();
             queryClient.invalidateQueries({ queryKey: ['camp-purchase', 'wealth_block_21'] });
+            
+            // 记录购买到 user_camp_purchases
+            try {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                await supabase.from('user_camp_purchases').insert({
+                  user_id: user.id,
+                  camp_type: 'wealth_block_21',
+                  camp_name: '财富觉醒训练营',
+                  purchase_price: 299,
+                  payment_status: 'paid'
+                });
+              }
+            } catch (err) {
+              console.error('Failed to record purchase:', err);
+            }
+            
             setShowStartDialog(true);
           }}
         />

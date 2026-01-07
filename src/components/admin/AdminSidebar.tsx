@@ -82,7 +82,7 @@ const NAV_GROUPS = [
     defaultOpen: false,
     items: [
       { key: "usage", label: "使用记录", path: "/admin/usage", icon: BarChart3 },
-      { key: "conversion", label: "转化分析", path: "/admin/conversion", icon: BarChart3 },
+      { key: "funnel", label: "转化漏斗", path: "/admin/funnel", icon: TrendingUp },
       { key: "cost-monitor", label: "成本监控", path: "/admin/cost-monitor", icon: DollarSign },
       { key: "reports", label: "举报管理", path: "/admin/reports", icon: Flag }
     ]
