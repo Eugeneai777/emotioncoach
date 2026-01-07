@@ -446,7 +446,7 @@ ${reflection}`;
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="font-semibold">💰 突破财富卡点</h1>
+            <h1 className="font-semibold">📔 我的财富日记</h1>
             <p className="text-xs text-muted-foreground">Day {currentDay} / {camp.duration_days}</p>
           </div>
           <div className="text-right">
