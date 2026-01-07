@@ -133,11 +133,11 @@ const WealthCampIntro = () => {
   return (
     <>
       <Helmet>
-        <title>21天突破财富卡点训练营 - 有劲AI</title>
+        <title>21天财富觉醒训练营 - 有劲AI</title>
         <meta name="description" content="每天15分钟，21天持续陪伴。通过财富觉察冥想、AI教练对话、打卡分享，帮你看见行为、情绪、信念上的财富卡点，走出卡住的位置。" />
-        <meta name="keywords" content="财富卡点,财富训练营,财富教练,金钱观,财富信念,有劲AI,21天训练营,财富突破,财富觉察" />
-        <meta property="og:title" content="21天突破财富卡点训练营 - 有劲AI" />
-        <meta property="og:description" content="不是逼你赚钱，而是帮你走出卡住的位置。每天15分钟，AI教练陪你突破财富障碍。" />
+        <meta name="keywords" content="财富觉醒,财富训练营,财富教练,金钱观,财富信念,有劲AI,21天训练营,财富突破,财富觉察" />
+        <meta property="og:title" content="21天财富觉醒训练营 - 有劲AI" />
+        <meta property="og:description" content="不是逼你赚钱，而是帮你走出卡住的位置。每天15分钟，AI教练陪你唤醒财富能量。" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://eugeneai.me/wealth-camp-intro" />
         <link rel="canonical" href="https://eugeneai.me/wealth-camp-intro" />
@@ -167,7 +167,7 @@ const WealthCampIntro = () => {
             </div>
             
             <h1 className="text-2xl font-bold text-foreground mb-3">
-              突破财富卡点训练营
+              财富觉醒训练营
             </h1>
             
             <p className="text-lg text-amber-700 font-medium mb-4">
@@ -435,7 +435,7 @@ const WealthCampIntro = () => {
           <div className="p-6 bg-gradient-to-br from-amber-100 via-orange-50 to-amber-50 rounded-3xl border border-amber-200">
             <div className="text-center">
               <h3 className="text-lg font-bold text-foreground mb-3">
-                《突破财富卡点训练营》
+                《财富觉醒训练营》
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 不是要求你每天完成什么，<br />
@@ -482,7 +482,7 @@ const WealthCampIntro = () => {
         onOpenChange={setShowStartDialog}
         campTemplate={{
           camp_type: "wealth_block_21",
-          camp_name: "突破财富卡点训练营",
+          camp_name: "财富觉醒训练营",
           duration_days: 21,
           icon: "💰",
           price: 0,
