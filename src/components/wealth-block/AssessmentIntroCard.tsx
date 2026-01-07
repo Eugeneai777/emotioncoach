@@ -233,12 +233,15 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
             size="lg"
             className="w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0"
           >
-            <span className="mr-2">💎</span>
-            立即测评 ¥9.9
+            立即测评 · 有劲AI
           </Button>
           
           <p className="text-xs text-slate-400">
             已有 <span className="text-amber-400 font-medium">{statistics.breakthroughUsers.toLocaleString()}</span> 人通过测评获得突破
+          </p>
+          
+          <p className="text-xs text-slate-500 pt-2 border-t border-slate-700/50">
+            💎 有劲AI · 财富教练
           </p>
         </div>
       </Card>
