@@ -143,14 +143,16 @@ serve(async (req) => {
     const newDominantEmotion = getDominant(emotionCounts);
     const newDominantBelief = getDominant(beliefCounts);
 
-    // Calculate new health score (average of three layer scores, scaled to 100)
+    // Calculate new health score (average of three layer scores, scaled to 0-100)
+    // Formula: (combinedAvg - 1) / 4 * 100 - matches frontend useWealthJournalEntries.awakeningIndex
     let newHealthScore = currentProfile.health_score || 50;
     if (validJournalCount > 0) {
       const avgBehavior = totalBehaviorScore / validJournalCount;
       const avgEmotion = totalEmotionScore / validJournalCount;
       const avgBelief = totalBeliefScore / validJournalCount;
-      // Scores are 1-5, convert to percentage (20-100 range)
-      newHealthScore = Math.round(((avgBehavior + avgEmotion + avgBelief) / 3) * 20);
+      // Scores are 1-5, convert to 0-100 scale: (avg - 1) / 4 * 100
+      const combinedAvg = (avgBehavior + avgEmotion + avgBelief) / 3;
+      newHealthScore = Math.round(((combinedAvg - 1) / 4) * 100);
     }
 
     // Calculate current week

@@ -191,6 +191,7 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
               dominantBelief: stats.dominantBelief,
               totalDays: stats.totalDays,
             } : undefined}
+            awakeningIndex={awakeningIndex}
           />
         )}
 

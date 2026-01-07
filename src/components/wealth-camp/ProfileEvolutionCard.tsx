@@ -44,6 +44,7 @@ interface ProfileEvolutionCardProps {
   currentProfile: WealthProfile | null;
   evolutionInsight?: string;
   stickingPoints?: StickingPoints;
+  awakeningIndex?: number;  // Unified awakening index from useWealthJournalEntries
   className?: string;
 }
 
@@ -88,6 +89,7 @@ export function ProfileEvolutionCard({
   currentProfile, 
   evolutionInsight,
   stickingPoints,
+  awakeningIndex,
   className 
 }: ProfileEvolutionCardProps) {
   if (!currentProfile) {
@@ -98,8 +100,8 @@ export function ProfileEvolutionCard({
   const firstSnapshot = snapshots.length > 0 ? snapshots[0]?.snapshot : null;
   const hasHistory = !!firstSnapshot;
 
-  // Calculate score difference
-  const currentScore = currentProfile.health_score || 50;
+  // Calculate score difference - prioritize awakeningIndex from hook for consistency
+  const currentScore = awakeningIndex ?? currentProfile.health_score ?? 50;
   const originalScore = firstSnapshot?.health_score || currentScore;
   const scoreDiff = currentScore - originalScore;
   
