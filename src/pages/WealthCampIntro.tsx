@@ -17,7 +17,7 @@ const WealthCampIntro = () => {
   const queryClient = useQueryClient();
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
-  const { trackAssessmentTocamp } = useWealthCampAnalytics();
+  const { trackAssessmentTocamp, trackEvent } = useWealthCampAnalytics();
   
   // 检查用户是否已购买训练营
   const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_21");
@@ -505,34 +505,45 @@ const WealthCampIntro = () => {
       {/* WeChat Pay Dialog */}
       <WechatPayDialog
         open={showPayDialog}
-        onOpenChange={setShowPayDialog}
+        onOpenChange={(open) => {
+          setShowPayDialog(open);
+          if (open) {
+            // 埋点：发起支付
+            trackEvent('payment_initiated', { metadata: { package_key: 'camp-wealth_block_21', price: 299 } });
+          }
+        }}
         packageInfo={{
           key: 'camp-wealth_block_21',
           name: '财富觉醒训练营',
           price: 299
         }}
         onSuccess={async () => {
-          setShowPayDialog(false);
-          toast.success("购买成功！请选择开始日期");
-          refetchPurchase();
-          queryClient.invalidateQueries({ queryKey: ['camp-purchase', 'wealth_block_21'] });
-          
-          // 记录购买到 user_camp_purchases
+          // 1. 首先记录购买（最重要）
           try {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-              await supabase.from('user_camp_purchases').insert({
+              const { error } = await supabase.from('user_camp_purchases').insert({
                 user_id: user.id,
                 camp_type: 'wealth_block_21',
                 camp_name: '财富觉醒训练营',
                 purchase_price: 299,
                 payment_status: 'paid'
               });
+              if (error) {
+                console.error('❌ Failed to record purchase:', error);
+              } else {
+                console.log('✅ Purchase recorded successfully');
+              }
             }
           } catch (err) {
-            console.error('Failed to record purchase:', err);
+            console.error('❌ Failed to record purchase:', err);
           }
           
+          // 2. 然后执行其他操作
+          setShowPayDialog(false);
+          toast.success("购买成功！请选择开始日期");
+          refetchPurchase();
+          queryClient.invalidateQueries({ queryKey: ['camp-purchase', 'wealth_block_21'] });
           setShowStartDialog(true);
         }}
       />

@@ -62,11 +62,11 @@ export function ConversionFunnelDashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('camp_type', 'wealth_block_21');
 
-      // 3. 365会员数（从orders表查询）
+      // 3. 365会员数（从orders表查询，包含 member365）
       const { count: memberCount } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
-        .in('package_key', ['yearly', 'yearly_365', 'package_365'])
+        .in('package_key', ['member365', 'yearly', 'yearly_365', 'package_365'])
         .eq('status', 'paid');
 
       // 4. 合伙人数

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
 import { useCampPurchase } from "@/hooks/useCampPurchase";
 import { useQueryClient } from "@tanstack/react-query";
+import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { 
   AssessmentResult, 
@@ -64,6 +65,7 @@ interface WealthBlockResultProps {
 export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswers, onRetake, onSave, isSaving, isSaved }: WealthBlockResultProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { trackEvent } = useWealthCampAnalytics();
   const pattern = patternInfo[result.reactionPattern];
   const dominantPoor = fourPoorInfo[result.dominantPoor];
   const dominantEmotion = emotionBlockInfo[result.dominantEmotionBlock];
@@ -82,6 +84,13 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
 
   const totalScore = result.behaviorScore + result.emotionScore + result.beliefScore;
   const healthScore = calculateHealthScore(totalScore);
+  
+  // 埋点：结果页访问
+  useEffect(() => {
+    trackEvent('assessment_result_viewed', {
+      metadata: { health_score: healthScore, reaction_pattern: result.reactionPattern }
+    });
+  }, []);
 
   // Fetch AI insight on mount
   useEffect(() => {
@@ -789,34 +798,45 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         {/* 微信支付对话框 */}
         <WechatPayDialog
           open={showPayDialog}
-          onOpenChange={setShowPayDialog}
+          onOpenChange={(open) => {
+            setShowPayDialog(open);
+            if (open) {
+              // 埋点：发起支付
+              trackEvent('payment_initiated', { metadata: { package_key: 'camp-wealth_block_21', price: 299 } });
+            }
+          }}
           packageInfo={{
             key: 'camp-wealth_block_21',
             name: '财富觉醒训练营',
             price: 299
           }}
           onSuccess={async () => {
-            setShowPayDialog(false);
-            toast.success("购买成功！请选择开始日期");
-            refetchPurchase();
-            queryClient.invalidateQueries({ queryKey: ['camp-purchase', 'wealth_block_21'] });
-            
-            // 记录购买到 user_camp_purchases
+            // 1. 首先记录购买（最重要）
             try {
               const { data: { user } } = await supabase.auth.getUser();
               if (user) {
-                await supabase.from('user_camp_purchases').insert({
+                const { error } = await supabase.from('user_camp_purchases').insert({
                   user_id: user.id,
                   camp_type: 'wealth_block_21',
                   camp_name: '财富觉醒训练营',
                   purchase_price: 299,
                   payment_status: 'paid'
                 });
+                if (error) {
+                  console.error('❌ Failed to record purchase:', error);
+                } else {
+                  console.log('✅ Purchase recorded successfully');
+                }
               }
             } catch (err) {
-              console.error('Failed to record purchase:', err);
+              console.error('❌ Failed to record purchase:', err);
             }
             
+            // 2. 然后执行其他操作
+            setShowPayDialog(false);
+            toast.success("购买成功！请选择开始日期");
+            refetchPurchase();
+            queryClient.invalidateQueries({ queryKey: ['camp-purchase', 'wealth_block_21'] });
             setShowStartDialog(true);
           }}
         />

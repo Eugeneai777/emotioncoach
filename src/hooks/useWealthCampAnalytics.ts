@@ -8,11 +8,13 @@ import { useCallback } from "react";
 
 export type WealthCampEventType = 
   // 测评流程
+  | 'assessment_page_viewed'    // 测评页面访问
   | 'assessment_started'        // 开始测评
   | 'assessment_completed'      // 完成测评
   | 'assessment_result_viewed'  // 查看结果
   | 'camp_intro_viewed'         // 查看训练营介绍
   | 'camp_join_clicked'         // 点击加入训练营
+  | 'payment_initiated'         // 发起支付
   | 'camp_joined'               // 成功加入训练营
   // 留存追踪
   | 'camp_day_checkin'          // 每日打卡（附带 day_number）
@@ -20,6 +22,8 @@ export type WealthCampEventType =
   | 'camp_day14_active'         // 第14天活跃
   | 'camp_day21_completed'      // 21天毕业
   | 'camp_dropped'              // 放弃（连续3天未打卡）
+  // 毕业流程
+  | 'graduate_page_viewed'      // 毕业页面访问
   // 分享追踪
   | 'share_journal_clicked'     // 点击分享日记
   | 'share_journal_completed'   // 完成分享日记
