@@ -201,7 +201,7 @@ const WealthAssessmentShareCard = forwardRef<HTMLDivElement, WealthAssessmentSha
           gap: '6px',
         }}>
           <span>💎</span>
-          <span>有劲AI · 让财富自然流动</span>
+          <span>有劲AI · 财富教练</span>
         </div>
       </div>
     );

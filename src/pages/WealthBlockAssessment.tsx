@@ -271,7 +271,8 @@ export default function WealthBlockAssessmentPage() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="font-semibold truncate">财富卡点测评</h1>
+            <p className="text-xs text-amber-600 font-medium">有劲AI · 财富教练</p>
+            <h1 className="font-semibold truncate text-sm">财富卡点测评</h1>
           </div>
           <WealthInviteCardDialog
             defaultTab="assessment"
