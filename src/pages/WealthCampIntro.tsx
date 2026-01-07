@@ -163,28 +163,28 @@ const WealthCampIntro = () => {
         </div>
       </div>
 
-      <div className="pb-28">
+      <div className="pb-24 sm:pb-28">
         {/* Hero Section */}
-        <section className="relative px-6 pt-8 pb-10 overflow-hidden">
+        <section className="relative px-4 sm:px-6 pt-6 sm:pt-8 pb-8 sm:pb-10 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-amber-400/20 via-orange-300/10 to-transparent" />
-          <div className="absolute top-4 right-4 w-32 h-32 bg-gradient-to-br from-amber-200/40 to-orange-200/40 rounded-full blur-3xl" />
+          <div className="absolute top-4 right-4 w-24 sm:w-32 h-24 sm:h-32 bg-gradient-to-br from-amber-200/40 to-orange-200/40 rounded-full blur-3xl" />
           
           <div className="relative">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium mb-4">
-              <Sparkles className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-[10px] sm:text-xs font-medium mb-3 sm:mb-4">
+              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               每天15分钟 · 21天持续陪伴
             </div>
             
-            <h1 className="text-2xl font-bold text-foreground mb-3">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2 sm:mb-3">
               财富觉醒训练营
             </h1>
             
-            <p className="text-lg text-amber-700 font-medium mb-4">
+            <p className="text-base sm:text-lg text-amber-700 font-medium mb-3 sm:mb-4">
               不是逼你赚钱，<br />
               而是帮你走出「卡住的位置」
             </p>
             
-            <p className="text-muted-foreground leading-relaxed">
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
               很多人不是赚不到钱，<br />
               而是每天都卡在同一个地方，<br />
               却从来没有被真正看见。
@@ -193,7 +193,7 @@ const WealthCampIntro = () => {
         </section>
 
         {/* Personalized Assessment Focus - 基于测评结果的个性化重点 */}
-        <AssessmentFocusCard variant="intro" className="mx-6" />
+        <AssessmentFocusCard variant="intro" className="mx-4 sm:mx-6" />
 
         {/* Pain Points Section */}
         <section className="px-6 py-8">
@@ -462,12 +462,12 @@ const WealthCampIntro = () => {
       </div>
 
       {/* Sticky Bottom CTA */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-lg border-t border-amber-100 z-20">
-        <div className="max-w-md mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 bg-white/95 backdrop-blur-lg border-t border-amber-100 z-20 safe-bottom">
+        <div className="max-w-sm sm:max-w-md mx-auto">
           {hasJoinedCamp ? (
             <Button
               onClick={() => navigate("/wealth-camp-checkin")}
-              className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-base"
+              className="w-full h-11 sm:h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-sm sm:text-base"
             >
               继续我的训练营
             </Button>
@@ -477,23 +477,23 @@ const WealthCampIntro = () => {
                 trackAssessmentTocamp('camp_join_clicked');
                 setShowStartDialog(true);
               }}
-              className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-base"
+              className="w-full h-11 sm:h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-sm sm:text-base"
             >
               开始训练营
             </Button>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-center gap-2">
-                <span className="text-muted-foreground line-through text-sm">¥399</span>
-                <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">¥299</span>
-                <span className="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded animate-pulse">限时优惠</span>
+                <span className="text-muted-foreground line-through text-xs sm:text-sm">¥399</span>
+                <span className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">¥299</span>
+                <span className="text-[10px] sm:text-xs bg-red-500 text-white px-1.5 py-0.5 rounded animate-pulse">限时优惠</span>
               </div>
               <Button
                 onClick={() => {
                   trackAssessmentTocamp('camp_join_clicked');
                   setShowPayDialog(true);
                 }}
-                className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-base"
+                className="w-full h-11 sm:h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-sm sm:text-base"
               >
                 ¥299 开启21天训练营
               </Button>

@@ -359,7 +359,7 @@ export const CoachLayout = ({
         {/* Main Content */}
         <main 
           ref={mainRef}
-          className="flex-1 overflow-y-auto overscroll-none scroll-container pb-44"
+          className="flex-1 overflow-y-auto overscroll-none scroll-container pb-32 sm:pb-36 md:pb-44"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -368,7 +368,7 @@ export const CoachLayout = ({
             transition: isPulling ? 'none' : 'transform 0.3s ease-out'
           }}
         >
-          <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 md:px-6 lg:px-8 py-4 md:py-8">
+          <div className="container max-w-sm sm:max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-8">
             {/* 显示自定义加载占位符（如冥想分析引导） */}
             {messages.length === 0 && isLoading && loadingPlaceholder ? (
               loadingPlaceholder

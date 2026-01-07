@@ -280,9 +280,9 @@ export default function WealthBlockAssessmentPage() {
     <div className="min-h-screen bg-gradient-to-b from-amber-50/50 to-background">
       {/* 品牌横幅 */}
       <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border-b border-amber-500/20">
-        <div className="container max-w-lg mx-auto px-4 py-2 flex items-center justify-center gap-2">
+        <div className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 py-2 flex items-center justify-center gap-2">
           <span className="text-amber-500">💎</span>
-          <span className="text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+          <span className="text-xs sm:text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
             有劲AI · 财富教练
           </span>
         </div>
@@ -290,21 +290,21 @@ export default function WealthBlockAssessmentPage() {
 
       {/* 导航栏 */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b">
-        <div className="container max-w-lg mx-auto px-4 h-12 flex items-center gap-3">
+        <div className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 h-11 sm:h-12 flex items-center gap-2 sm:gap-3">
           <Button
             variant="ghost"
             size="icon"
-            className="shrink-0"
+            className="shrink-0 h-8 w-8 sm:h-9 sm:w-9"
             onClick={() => navigate("/energy-studio")}
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
-          <h1 className="flex-1 font-semibold truncate">财富卡点测评</h1>
+          <h1 className="flex-1 font-semibold truncate text-sm sm:text-base">财富卡点测评</h1>
           <WealthInviteCardDialog
             defaultTab="assessment"
             trigger={
-              <Button variant="ghost" size="icon" className="shrink-0">
-                <Share2 className="w-5 h-5" />
+              <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 sm:h-9 sm:w-9">
+                <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             }
           />
@@ -312,18 +312,18 @@ export default function WealthBlockAssessmentPage() {
       </header>
 
       {/* 主内容 */}
-      <main className="container max-w-lg mx-auto px-4 py-6">
+      <main className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full mb-6">
-            <TabsTrigger value="assessment" className="flex-1 gap-2">
-              <ClipboardList className="w-4 h-4" />
-              开始测评
+          <TabsList className="w-full mb-4 sm:mb-6 h-9 sm:h-10">
+            <TabsTrigger value="assessment" className="flex-1 gap-1.5 sm:gap-2 text-xs sm:text-sm">
+              <ClipboardList className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">开始</span>测评
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex-1 gap-2">
-              <History className="w-4 h-4" />
-              历史记录
+            <TabsTrigger value="history" className="flex-1 gap-1.5 sm:gap-2 text-xs sm:text-sm">
+              <History className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">历史</span>记录
               {historyRecords.length > 0 && (
-                <span className="ml-1 text-xs bg-amber-100 text-amber-700 px-1.5 rounded-full">
+                <span className="ml-1 text-[10px] sm:text-xs bg-amber-100 text-amber-700 px-1 sm:px-1.5 rounded-full">
                   {historyRecords.length}
                 </span>
               )}
