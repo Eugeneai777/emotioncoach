@@ -44,9 +44,12 @@ export function useReactionPatternProgress(campId?: string): ReactionPatternProg
     const avgEmotionScore = entries.reduce((acc, e) => acc + (e.emotion_score || 3), 0) / entries.length;
     const emotionImprovement = Math.max(0, avgEmotionScore - 3);
 
-    // Count awakening moments
+    // Count awakening moments based on new_belief or high awareness scores
     const awakeningMomentsCount = entries.filter(e => 
-      e.behavior_awakening_moment || e.emotion_awakening_moment || e.belief_awakening_moment
+      e.new_belief || 
+      (e.behavior_score && e.behavior_score >= 4) ||
+      (e.emotion_score && e.emotion_score >= 4) ||
+      (e.belief_score && e.belief_score >= 4)
     ).length;
 
     // Calculate transformation rate
