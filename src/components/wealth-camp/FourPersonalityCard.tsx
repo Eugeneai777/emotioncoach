@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, TrendingUp, Target, HelpCircle } from 'lucide-react';
+import { Sparkles, TrendingUp, Target, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useFourPoorProgress } from '@/hooks/useFourPoorProgress';
 import { fourPoorRichConfig, poorTypeKeys, PoorTypeKey } from '@/config/fourPoorConfig';
 import { cn } from '@/lib/utils';
@@ -11,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { FourPoorTrendChart } from './FourPoorTrendChart';
 
 interface FourPersonalityCardProps {
   campId?: string;
@@ -19,6 +21,7 @@ interface FourPersonalityCardProps {
 }
 
 export function FourPersonalityCard({ campId, currentDay = 1, className }: FourPersonalityCardProps) {
+  const [showTrend, setShowTrend] = useState(false);
   const {
     baselineScores,
     currentScores,
@@ -165,6 +168,36 @@ export function FourPersonalityCard({ campId, currentDay = 1, className }: FourP
           );
         })}
         
+        {/* AI Insight */}
+        {/* Trend Chart Toggle */}
+        {totalAwareness > 0 && (
+          <div className="border-t pt-3">
+            <button
+              onClick={() => setShowTrend(!showTrend)}
+              className="w-full flex items-center justify-between text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span className="flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5" />
+                历史趋势图
+              </span>
+              {showTrend ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </button>
+            
+            {showTrend && (
+              <div className="mt-3">
+                <FourPoorTrendChart campId={campId} />
+                <p className="text-[10px] text-center text-muted-foreground mt-2">
+                  展示每日各类型觉醒深度的累积转化率
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* AI Insight */}
         {totalAwareness > 0 && fastestProgress && (
           <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 border border-violet-100 dark:border-violet-800/30">
