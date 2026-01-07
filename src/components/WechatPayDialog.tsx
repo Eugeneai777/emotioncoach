@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, CheckCircle, XCircle, QrCode, RefreshCw, ExternalLink, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
 
@@ -35,6 +37,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
   const [orderNo, setOrderNo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [payType, setPayType] = useState<'h5' | 'native'>('h5');
+  const [agreedTerms, setAgreedTerms] = useState(false);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const orderCreatedRef = useRef<boolean>(false); // 防止重复创建订单
@@ -66,7 +69,30 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
     setH5PayLink('');
     setOrderNo('');
     setErrorMessage('');
+    setAgreedTerms(false);
     orderCreatedRef.current = false; // 重置订单创建标记
+  };
+
+  // 根据套餐类型获取对应的服务条款链接
+  const getTermsLink = () => {
+    if (packageInfo?.key.includes('bloom_partner')) {
+      return '/terms/bloom-partner';
+    }
+    if (packageInfo?.key.includes('youjin_partner') || packageInfo?.key.startsWith('partner_l')) {
+      return '/terms/youjin-partner';
+    }
+    return '/terms';
+  };
+
+  // 获取条款名称
+  const getTermsName = () => {
+    if (packageInfo?.key.includes('bloom_partner')) {
+      return '《绽放合伙人服务条款》';
+    }
+    if (packageInfo?.key.includes('youjin_partner') || packageInfo?.key.startsWith('partner_l')) {
+      return '《有劲合伙人服务条款》';
+    }
+    return '《服务条款》';
   };
 
 
@@ -106,6 +132,12 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
   // 创建订单
   const createOrder = async () => {
     if (!packageInfo || !user) return;
+
+    // 验证是否同意条款
+    if (!agreedTerms) {
+      toast.error('请先阅读并同意服务条款和隐私政策');
+      return;
+    }
 
     setStatus('loading');
     setErrorMessage('');
@@ -216,16 +248,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
     }, 3000);
   };
 
-  // 打开对话框时创建订单（只在首次打开时创建，避免从微信返回时重复创建）
+  // 用户同意条款后创建订单
   useEffect(() => {
-    if (open && packageInfo && user && !orderCreatedRef.current) {
+    if (open && packageInfo && user && agreedTerms && !orderCreatedRef.current) {
       orderCreatedRef.current = true;
       createOrder();
     }
     return () => {
       clearTimers();
     };
-  }, [open, packageInfo, user]);
+  }, [open, packageInfo, user, agreedTerms]);
 
   // 关闭对话框时重置
   useEffect(() => {
@@ -262,6 +294,28 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
                 </div>
               )}
             </Card>
+          )}
+
+          {/* 服务条款同意 */}
+          {status === 'idle' && (
+            <div className="flex items-start gap-2 w-full">
+              <Checkbox
+                id="pay-terms"
+                checked={agreedTerms}
+                onCheckedChange={(checked) => setAgreedTerms(checked === true)}
+                className="mt-0.5"
+              />
+              <label htmlFor="pay-terms" className="text-xs text-muted-foreground leading-relaxed">
+                我已阅读并同意
+                <Link to={getTermsLink()} target="_blank" className="text-primary hover:underline mx-0.5">
+                  {getTermsName()}
+                </Link>
+                和
+                <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
+                  《隐私政策》
+                </Link>
+              </label>
+            </div>
           )}
 
           {/* 二维码/H5支付区域 */}
