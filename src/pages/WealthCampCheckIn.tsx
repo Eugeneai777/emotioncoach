@@ -28,6 +28,7 @@ import { getDaysSinceStart } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
 import { useWealthCampAnalytics } from '@/hooks/useWealthCampAnalytics';
 import { useAdaptiveWeights } from '@/hooks/useAdaptiveWeights';
+import { useTodayWealthJournal } from '@/hooks/useTodayWealthJournal';
 interface DailyTask {
   id: string;
   title: string;
@@ -200,6 +201,9 @@ export default function WealthCampCheckIn() {
     },
     enabled: !!campId,
   });
+
+  // 获取今日日记中的给予行动
+  const { todayAction, todayEntryId, todayActionCompleted: journalActionCompleted } = useTodayWealthJournal(journalEntries, currentDay);
 
   // Fetch user ID
   const { data: userId } = useQuery({
@@ -694,7 +698,9 @@ ${reflection}`;
                   setSelectedPendingAction(action);
                   setShowActionDialog(true);
                 }}
-                todayActionCompleted={!!(journalEntries.find(e => e.day_number === currentDay) as any)?.action_completed_at}
+                todayJournalAction={todayAction}
+                todayEntryId={todayEntryId}
+                todayActionCompleted={journalActionCompleted}
                 onCompleteToday={async (action, difficulty) => {
                   // Find or prepare today's entry
                   const todayEntry = journalEntries.find(e => e.day_number === currentDay);
