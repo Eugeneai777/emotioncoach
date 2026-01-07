@@ -1,6 +1,61 @@
+@import url("https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ========================================
+   响应式工具类
+   ======================================== */
+
+/* 响应式文字大小 */
+.text-responsive-xs {
+  @apply text-[10px] sm:text-xs;
+}
+.text-responsive-sm {
+  @apply text-xs sm:text-sm;
+}
+.text-responsive-base {
+  @apply text-sm sm:text-base;
+}
+.text-responsive-lg {
+  @apply text-base sm:text-lg md:text-xl;
+}
+.text-responsive-xl {
+  @apply text-lg sm:text-xl md:text-2xl;
+}
+.text-responsive-2xl {
+  @apply text-xl sm:text-2xl md:text-3xl;
+}
+
+/* 响应式间距 */
+.p-responsive {
+  @apply p-3 sm:p-4 md:p-6;
+}
+.p-responsive-sm {
+  @apply p-2 sm:p-3 md:p-4;
+}
+.px-responsive {
+  @apply px-3 sm:px-4 md:px-6;
+}
+.py-responsive {
+  @apply py-3 sm:py-4 md:py-6;
+}
+.gap-responsive {
+  @apply gap-2 sm:gap-3 md:gap-4;
+}
+.gap-responsive-sm {
+  @apply gap-1.5 sm:gap-2 md:gap-3;
+}
+.space-y-responsive > * + * {
+  @apply mt-3 sm:mt-4 md:mt-6;
+}
+
+/* 响应式容器内边距 */
+.container-padding {
+  @apply px-3 sm:px-4 md:px-6 lg:px-8;
+}
 
 /* 情绪按钮动画 */
 @keyframes emoji-breathe {

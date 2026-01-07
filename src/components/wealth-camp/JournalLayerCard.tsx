@@ -66,31 +66,31 @@ export function JournalLayerCard({
 
   return (
     <Card className={cn('bg-gradient-to-br', colors.card, colors.border, 'overflow-hidden')}>
-      <CardHeader className="pb-2">
-        <CardTitle className={cn('flex items-center gap-2 text-base', colors.title)}>
-          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-current/10 text-sm font-bold">
+      <CardHeader className="pb-2 p-3 sm:p-4 md:p-6">
+        <CardTitle className={cn('flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base', colors.title)}>
+          <span className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-current/10 text-xs sm:text-sm font-bold">
             {stepNumber}
           </span>
           <span>{emoji}</span>
           <span>{title}</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2 sm:space-y-3 p-3 pt-0 sm:p-4 sm:pt-0 md:p-6 md:pt-0">
         {children}
         
         {/* Awakening Moment - Highlighted Section */}
         {awakeningMoment && (
           <div className={cn(
-            'mt-4 p-4 bg-gradient-to-r rounded-xl border',
+            'mt-3 sm:mt-4 p-3 sm:p-4 bg-gradient-to-r rounded-lg sm:rounded-xl border',
             colors.awakening
           )}>
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className={cn('w-4 h-4', colors.awakeningText)} />
-              <span className={cn('text-sm font-medium', colors.awakeningText)}>
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+              <Sparkles className={cn('w-3.5 h-3.5 sm:w-4 sm:h-4', colors.awakeningText)} />
+              <span className={cn('text-xs sm:text-sm font-medium', colors.awakeningText)}>
                 ✨ {awakeningLabel}
               </span>
             </div>
-            <p className={cn('font-medium italic', colors.awakeningText)}>
+            <p className={cn('text-sm sm:text-base font-medium italic', colors.awakeningText)}>
               "{awakeningMoment}"
             </p>
           </div>
