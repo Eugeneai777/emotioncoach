@@ -40,6 +40,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { HealthScoreDashboard } from "./HealthScoreDashboard";
+import { EnhancedHealthGauge } from "./EnhancedHealthGauge";
+import { EnhancedFourPoorRadar } from "./EnhancedFourPoorRadar";
 import { PriorityBreakthroughMap } from "./PriorityBreakthroughMap";
 import { AIInsightCard, AIInsightData } from "./AIInsightCard";
 import { DeepFollowUpAnswer } from "./DeepFollowUpDialog";
@@ -195,12 +197,21 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
 
   return (
     <div className="space-y-6 pb-20">
-      {/* 健康度仪表盘 - 一目了然 */}
-      <HealthScoreDashboard
+      {/* 健康度仪表盘 - 视觉冲击力升级 */}
+      <EnhancedHealthGauge
         healthScore={healthScore}
         behaviorScore={result.behaviorScore}
         emotionScore={result.emotionScore}
         beliefScore={result.beliefScore}
+      />
+
+      {/* 四穷雷达图 - 直观展示行为卡点 */}
+      <EnhancedFourPoorRadar
+        mouthScore={result.mouthScore}
+        handScore={result.handScore}
+        eyeScore={result.eyeScore}
+        heartScore={result.heartScore}
+        dominantPoor={result.dominantPoor}
       />
 
       {/* 财富反应模式结果卡片 */}
