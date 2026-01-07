@@ -182,7 +182,7 @@ export function AssessmentPayDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm mx-auto">
         <DialogHeader>
           <DialogTitle className="text-center">
             {status === 'registering' ? '完成注册' : '财富卡点测评'}
@@ -219,7 +219,7 @@ export function AssessmentPayDialog({
                   </div>
                   <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
                     <QrCode className="w-4 h-4" />
-                    <span>请使用微信扫码支付</span>
+                    <span>请使用微信长按二维码或扫码支付</span>
                   </div>
                 </div>
               ) : (
