@@ -192,6 +192,7 @@ const CampShareDialog = ({
           day: campDay,
           campName: campName,
           campInfo: `${campName} - 第${campDay}天${badgeInfo}`,
+          ...(campName.includes('财富') && { coachType: 'wealth' }),
         },
       });
 
