@@ -27,13 +27,14 @@ interface ChartJournalEntry {
 
 interface AwakeningArchiveTabProps {
   campId?: string;
+  currentDay: number;
   entries: ChartJournalEntry[];
   onMakeupClick?: (dayNumber: number, dateStr: string) => void;
 }
 
-export function AwakeningArchiveTab({ campId, entries, onMakeupClick }: AwakeningArchiveTabProps) {
+export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick }: AwakeningArchiveTabProps) {
   const navigate = useNavigate();
-  const { stats, entries: fullEntries } = useWealthJournalEntries({ campId });
+  const { stats, entries: fullEntries, awakeningIndex } = useWealthJournalEntries({ campId });
   const { profile: wealthProfile, evolutionInsight } = useProfileEvolution(campId);
 
   // Fetch camp data for calendar
@@ -51,11 +52,6 @@ export function AwakeningArchiveTab({ campId, entries, onMakeupClick }: Awakenin
     },
     enabled: !!campId,
   });
-
-  // Calculate current day
-  const currentDay = camp?.start_date 
-    ? Math.max(1, Math.ceil((Date.now() - new Date(camp.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1)
-    : 1;
 
   // Calculate previous week averages for comparison
   const prevWeekStats = fullEntries.length >= 7 ? (() => {

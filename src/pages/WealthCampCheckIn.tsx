@@ -784,7 +784,7 @@ ${reflection}`;
 
 
           <TabsContent value="archive" className="mt-6">
-            <AwakeningArchiveTab campId={campId} entries={journalEntries} />
+            <AwakeningArchiveTab campId={campId} currentDay={currentDay} entries={journalEntries} />
           </TabsContent>
 
           <TabsContent value="journal" className="mt-6 space-y-4">
