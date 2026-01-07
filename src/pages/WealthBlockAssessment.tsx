@@ -180,6 +180,18 @@ export default function WealthBlockAssessmentPage() {
           console.error('❌ 用户画像同步失败:', profileError);
         } else {
           console.log('✅ 用户财富画像同步成功:', profileData);
+          
+          // 更新用户偏好教练为财富教练
+          const { error: prefError } = await supabase
+            .from('profiles')
+            .update({ preferred_coach: 'wealth' })
+            .eq('id', user.id);
+          
+          if (prefError) {
+            console.error('❌ 更新用户偏好教练失败:', prefError);
+          } else {
+            console.log('✅ 用户偏好教练已更新为 wealth');
+          }
         }
       } catch (profileError) {
         console.error('❌ 调用 sync-wealth-profile 异常:', profileError);
