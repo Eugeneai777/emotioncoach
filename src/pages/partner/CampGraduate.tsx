@@ -1,0 +1,297 @@
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { 
+  ArrowLeft, 
+  GraduationCap, 
+  Trophy, 
+  Users, 
+  Sparkles,
+  TrendingUp,
+  Gift,
+  CheckCircle2,
+  ArrowRight,
+  Crown,
+  Share2
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { zhCN } from "date-fns/locale";
+import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
+
+interface GraduationData {
+  campName: string;
+  completedAt: string;
+  totalDays: number;
+  journalCount: number;
+  awakeningScore: number;
+}
+
+export default function CampGraduate() {
+  const navigate = useNavigate();
+  const [graduationData, setGraduationData] = useState<GraduationData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGraduationData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          navigate('/auth');
+          return;
+        }
+
+        // 获取已完成的训练营
+        const { data: camp } = await supabase
+          .from('training_camps')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('camp_type', 'wealth_block_21')
+          .eq('status', 'completed')
+          .order('completed_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (camp) {
+          // 获取日记数量
+          const { count: journalCount } = await supabase
+            .from('wealth_journal_entries')
+            .select('*', { count: 'exact', head: true })
+            .eq('camp_id', camp.id);
+
+          // 获取最新觉醒分数 (使用behavior_score + emotion_score + belief_score 计算)
+          const { data: latestJournal } = await supabase
+            .from('wealth_journal_entries')
+            .select('behavior_score, emotion_score, belief_score')
+            .eq('camp_id', camp.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          const awakeningScore = latestJournal 
+            ? Math.round(100 - ((latestJournal.behavior_score || 0) + (latestJournal.emotion_score || 0) + (latestJournal.belief_score || 0)) / 1.5)
+            : 75;
+
+          setGraduationData({
+            campName: '财富觉醒训练营',
+            completedAt: camp.updated_at, // 使用 updated_at 作为完成时间
+            totalDays: 21,
+            journalCount: journalCount || 0,
+            awakeningScore
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching graduation data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGraduationData();
+  }, [navigate]);
+
+  const partnerBenefits = [
+    {
+      icon: <TrendingUp className="w-5 h-5" />,
+      title: "推广收益",
+      desc: "每成功推荐1位学员，获得30%佣金"
+    },
+    {
+      icon: <Users className="w-5 h-5" />,
+      title: "团队裂变",
+      desc: "发展下级合伙人，享受15%二级佣金"
+    },
+    {
+      icon: <Gift className="w-5 h-5" />,
+      title: "专属权益",
+      desc: "免费使用全部AI功能 + 专属合伙人群"
+    },
+    {
+      icon: <Crown className="w-5 h-5" />,
+      title: "荣誉认证",
+      desc: "有劲AI官方认证合伙人身份"
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-orange-50">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
+        <div className="flex items-center justify-between p-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="font-semibold">毕业生专属通道</h1>
+          <div className="w-10" />
+        </div>
+      </div>
+
+      <div className="p-4 space-y-6 pb-32">
+        {/* 毕业证书展示 */}
+        <Card className="border-0 shadow-xl overflow-hidden bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500">
+          <CardContent className="p-0">
+            <div className="p-6 text-white text-center relative">
+              {/* 装饰元素 */}
+              <div className="absolute top-4 left-4 w-16 h-16 border-2 border-white/20 rounded-full" />
+              <div className="absolute bottom-4 right-4 w-12 h-12 border-2 border-white/20 rounded-full" />
+              
+              <div className="relative z-10">
+                <div className="w-20 h-20 mx-auto mb-4 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <GraduationCap className="w-10 h-10" />
+                </div>
+                
+                <Badge className="bg-white/20 text-white border-white/30 mb-3">
+                  🎓 毕业证书
+                </Badge>
+                
+                <h2 className="text-2xl font-bold mb-2">
+                  恭喜完成21天财富觉醒训练
+                </h2>
+                
+                {graduationData && (
+                  <>
+                    <p className="text-white/80 mb-4">
+                      毕业时间：{format(new Date(graduationData.completedAt), 'yyyy年M月d日', { locale: zhCN })}
+                    </p>
+                    
+                    <div className="grid grid-cols-3 gap-4 mt-6">
+                      <div className="bg-white/20 rounded-xl p-3 backdrop-blur-sm">
+                        <p className="text-2xl font-bold">{graduationData.totalDays}</p>
+                        <p className="text-xs text-white/80">坚持天数</p>
+                      </div>
+                      <div className="bg-white/20 rounded-xl p-3 backdrop-blur-sm">
+                        <p className="text-2xl font-bold">{graduationData.journalCount}</p>
+                        <p className="text-xs text-white/80">财富日记</p>
+                      </div>
+                      <div className="bg-white/20 rounded-xl p-3 backdrop-blur-sm">
+                        <p className="text-2xl font-bold">{graduationData.awakeningScore}</p>
+                        <p className="text-xs text-white/80">觉醒指数</p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 分享毕业证书 */}
+        <WealthInviteCardDialog
+          defaultTab="milestone"
+          trigger={
+            <Button variant="outline" className="w-full h-12">
+              <Share2 className="w-4 h-4 mr-2" />
+              分享毕业证书到朋友圈
+            </Button>
+          }
+        />
+
+        {/* 你的蜕变 */}
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Trophy className="w-5 h-5 text-amber-500" />
+              <h3 className="font-semibold text-lg">你的21天蜕变</h3>
+            </div>
+            
+            <div className="space-y-3">
+              {[
+                "建立了每日觉察财富情绪的习惯",
+                "识别并开始转化限制性信念",
+                "从「四穷」模式向「四富」模式转变",
+                "学会用新视角看待金钱与自我价值"
+              ].map((item, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-muted-foreground">{item}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 下一步：成为合伙人 */}
+        <Card className="border-0 shadow-xl overflow-hidden">
+          <div className="h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500" />
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-5 h-5 text-emerald-500" />
+              <h3 className="font-semibold text-lg">你的下一步</h3>
+            </div>
+            
+            <p className="text-muted-foreground text-sm mb-4">
+              你已经亲身体验了财富觉醒的力量。现在，你可以成为<strong className="text-foreground">有劲合伙人</strong>，
+              帮助更多人开启财富觉醒之旅，同时获得可观收益。
+            </p>
+
+            {/* 合伙人权益 */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {partnerBenefits.map((benefit, index) => (
+                <div
+                  key={index}
+                  className="p-3 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl"
+                >
+                  <div className="p-2 bg-emerald-100 rounded-lg w-fit mb-2 text-emerald-600">
+                    {benefit.icon}
+                  </div>
+                  <h4 className="font-medium text-sm mb-0.5">{benefit.title}</h4>
+                  <p className="text-xs text-muted-foreground">{benefit.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* 收益预估 */}
+            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl mb-4">
+              <h4 className="font-medium text-sm text-amber-800 mb-2">💰 收益预估</h4>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">每月推荐10位学员</span>
+                  <span className="font-semibold text-amber-700">≈ ¥897/月</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">发展5位下级合伙人</span>
+                  <span className="font-semibold text-amber-700">+¥1,500/月</span>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <Button
+              onClick={() => navigate('/partner/youjin-plan')}
+              className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
+            >
+              了解有劲合伙人计划
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* 其他选择 */}
+        <div className="space-y-3">
+          <Button
+            variant="outline"
+            className="w-full h-11"
+            onClick={() => navigate('/packages')}
+          >
+            <Crown className="w-4 h-4 mr-2" />
+            升级365会员，继续深度使用
+          </Button>
+          
+          <Button
+            variant="ghost"
+            className="w-full text-muted-foreground"
+            onClick={() => navigate('/wealth-journal')}
+          >
+            查看我的财富日记
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
