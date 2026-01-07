@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
+import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 
 interface GraduationData {
   campName: string;
@@ -33,6 +34,12 @@ export default function CampGraduate() {
   const navigate = useNavigate();
   const [graduationData, setGraduationData] = useState<GraduationData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { trackEvent } = useWealthCampAnalytics();
+
+  // 页面访问埋点
+  useEffect(() => {
+    trackEvent('graduate_page_viewed');
+  }, []);
 
   useEffect(() => {
     const fetchGraduationData = async () => {
@@ -81,6 +88,9 @@ export default function CampGraduate() {
             journalCount: journalCount || 0,
             awakeningScore
           });
+          
+          // 埋点：21天毕业完成
+          trackEvent('camp_day21_completed', { metadata: { camp_id: camp.id } });
         }
       } catch (error) {
         console.error('Error fetching graduation data:', error);

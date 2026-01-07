@@ -42,10 +42,13 @@ export default function WealthBlockAssessmentPage() {
   // 历史记录
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const { trackAssessmentTocamp } = useWealthCampAnalytics();
+  const { trackAssessmentTocamp, trackEvent } = useWealthCampAnalytics();
 
-  // 加载历史记录
+  // 页面访问埋点 + 加载历史记录
   useEffect(() => {
+    // 埋点：测评页面访问
+    trackEvent('assessment_page_viewed');
+    
     if (user) {
       loadHistory();
     }
@@ -94,6 +97,10 @@ export default function WealthBlockAssessmentPage() {
         ((5 - result.beliefScore) / 4 * 34)
       ),
       has_deep_followup: !!deepFollowUpAnswers && deepFollowUpAnswers.length > 0,
+    }).then(() => {
+      console.log('✅ Assessment completion tracked');
+    }).catch((err) => {
+      console.error('❌ Failed to track assessment completion:', err);
     });
   };
 
@@ -331,7 +338,11 @@ export default function WealthBlockAssessmentPage() {
               {showIntro && !showResult ? (
                 <AssessmentIntroCard
                   isLoggedIn={!!user}
-                  onStart={() => setShowIntro(false)}
+                  onStart={() => {
+                    // 埋点：开始测评
+                    trackEvent('assessment_started');
+                    setShowIntro(false);
+                  }}
                   onLogin={() => navigate("/auth?redirect=/wealth-block")}
                   onPay={() => setShowPayDialog(true)}
                 />
