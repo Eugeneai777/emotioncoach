@@ -94,20 +94,21 @@ export function useFourPoorProgress(campId?: string): FourPoorProgress {
       }
     });
 
-    // Calculate current scores (inverse of awareness - more aware = lower score)
-    // Use average behavior score as indicator of current state
+    // Calculate current scores (residual blockage after awareness)
+    // Higher awareness depth (1-5) = more transformation = lower current score
+    // Formula: currentScore = baseline * (1 - avgAwarenessDepth / 5)
     const currentScores: Record<PoorTypeKey, number> = {
       mouth: awarenessCount.mouth > 0 
-        ? Math.max(1, baselineScores.mouth - (behaviorScoreSums.mouth / awarenessCount.mouth))
+        ? Math.max(1, baselineScores.mouth * (1 - (behaviorScoreSums.mouth / awarenessCount.mouth) / 5))
         : baselineScores.mouth,
       hand: awarenessCount.hand > 0 
-        ? Math.max(1, baselineScores.hand - (behaviorScoreSums.hand / awarenessCount.hand))
+        ? Math.max(1, baselineScores.hand * (1 - (behaviorScoreSums.hand / awarenessCount.hand) / 5))
         : baselineScores.hand,
       eye: awarenessCount.eye > 0 
-        ? Math.max(1, baselineScores.eye - (behaviorScoreSums.eye / awarenessCount.eye))
+        ? Math.max(1, baselineScores.eye * (1 - (behaviorScoreSums.eye / awarenessCount.eye) / 5))
         : baselineScores.eye,
       heart: awarenessCount.heart > 0 
-        ? Math.max(1, baselineScores.heart - (behaviorScoreSums.heart / awarenessCount.heart))
+        ? Math.max(1, baselineScores.heart * (1 - (behaviorScoreSums.heart / awarenessCount.heart) / 5))
         : baselineScores.heart,
     };
 
