@@ -11,7 +11,7 @@ import { getThemeBackgroundGradient } from "@/utils/coachThemeConfig";
 import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
 import { toast } from "sonner";
 import { useEnsureWealthProfile } from "@/hooks/useEnsureWealthProfile";
-
+import { useSmartNotification } from "@/hooks/useSmartNotification";
 interface WealthCoachEmbeddedProps {
   initialMessage: string;
   campId: string;
@@ -38,10 +38,30 @@ export const WealthCoachEmbedded = ({
   // 确保用户画像存在
   const { profileExists, isChecking } = useEnsureWealthProfile();
   
+  // 智能通知
+  const { triggerNotification } = useSmartNotification('wealth_coach');
+  
   // 调试日志：画像状态
   useEffect(() => {
     console.log('📊 [WealthCoachEmbedded] 画像状态:', { profileExists, isChecking, dayNumber, campId });
   }, [profileExists, isChecking, dayNumber, campId]);
+
+  // 简报生成后触发智能通知
+  const handleBriefingGenerated = useCallback((briefingData: any) => {
+    console.log('📬 [WealthCoachEmbedded] 触发智能通知:', briefingData);
+    
+    // 触发智能通知
+    triggerNotification('after_wealth_coaching', {
+      behavior_insight: briefingData.behavior_insight,
+      emotion_insight: briefingData.emotion_insight,
+      belief_insight: briefingData.belief_insight,
+      giving_action: briefingData.giving_action,
+      day_number: dayNumber,
+    });
+    
+    // 调用外部回调
+    onCoachingComplete?.();
+  }, [triggerNotification, dayNumber, onCoachingComplete]);
 
   const {
     messages,
@@ -54,9 +74,7 @@ export const WealthCoachEmbedded = ({
     template?.briefing_table_name || "wealth_coach_4_questions_briefings",
     template?.briefing_tool_config as any,
     undefined,
-    (briefingData) => {
-      onCoachingComplete?.();
-    },
+    handleBriefingGenerated,
     "meditation_analysis" as CoachChatMode,
     { dayNumber, campId }
   );
