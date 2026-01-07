@@ -9,6 +9,7 @@ import { ArchiveHeroCard } from './ArchiveHeroCard';
 import { NewBeliefsCollection } from './NewBeliefsCollection';
 import { WeeklyComparisonChart } from './WeeklyComparisonChart';
 import { GrowthComparisonCard } from './GrowthComparisonCard';
+import { FourPersonalityCard } from './FourPersonalityCard';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
 import { useProfileEvolution } from '@/hooks/useProfileEvolution';
 import { useQuery } from '@tanstack/react-query';
@@ -176,6 +177,9 @@ export function AwakeningArchiveTab({ campId, entries, onMakeupClick }: Awakenin
 
       {/* 第三层：成长印记 - 收藏式设计 */}
       <div className="space-y-4">
+        {/* 四穷人格画像 */}
+        <FourPersonalityCard campId={campId} currentDay={currentDay} />
+
         {/* 我的财富画像 */}
         {wealthProfile && (
           <ProfileEvolutionCard
