@@ -182,14 +182,14 @@ export function AssessmentPayDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <DialogHeader>
-          <DialogTitle className="text-center">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] overflow-visible">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-center text-base">
             {status === 'registering' ? '完成注册' : '财富卡点测评'}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="py-4">
+        <div className="py-2">
           {/* 创建订单中 */}
           {(status === 'idle' || status === 'creating') && (
             <div className="flex flex-col items-center py-8">
@@ -200,12 +200,12 @@ export function AssessmentPayDialog({
 
           {/* 等待支付 */}
           {(status === 'pending' || status === 'polling') && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* 价格展示 */}
-              <div className="text-center bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4">
-                <div className="flex items-center justify-center gap-2 mb-1">
+              <div className="text-center bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3">
+                <div className="flex items-center justify-center gap-2 mb-0.5">
                   <span className="text-muted-foreground line-through text-sm">¥99</span>
-                  <span className="text-2xl font-bold text-primary">¥9.9</span>
+                  <span className="text-xl font-bold text-primary">¥9.9</span>
                   <span className="px-1.5 py-0.5 bg-red-500 text-white text-xs rounded">限时</span>
                 </div>
                 <p className="text-xs text-muted-foreground">30道专业测评 + AI智能分析</p>
@@ -214,10 +214,10 @@ export function AssessmentPayDialog({
               {/* 二维码或H5支付 */}
               {payType === 'native' && qrCodeDataUrl ? (
                 <div className="flex flex-col items-center">
-                  <div className="bg-white p-3 rounded-lg border shadow-sm">
-                    <img src={qrCodeDataUrl} alt="支付二维码" className="w-48 h-48" />
+                  <div className="bg-white p-2 rounded-lg border shadow-sm">
+                    <img src={qrCodeDataUrl} alt="支付二维码" className="w-40 h-40" />
                   </div>
-                  <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                     <QrCode className="w-4 h-4" />
                     <span>请使用微信长按二维码或扫码支付</span>
                   </div>
