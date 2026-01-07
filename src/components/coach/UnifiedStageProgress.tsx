@@ -1,41 +1,53 @@
 import { Check } from "lucide-react";
 
-interface Stage {
+export interface StageConfig {
   id: number;
   name: string;
-  subtitle: string;
+  subtitle?: string;
+  emoji?: string;
 }
 
-const stageConfigs: Record<string, Stage[]> = {
+// 默认配置，当 template.steps 不可用时作为降级方案
+const defaultConfigs: Record<string, StageConfig[]> = {
   emotion: [
-    { id: 1, name: "觉察", subtitle: "Feel it" },
-    { id: 2, name: "理解", subtitle: "Name it" },
-    { id: 3, name: "反应", subtitle: "React it" },
-    { id: 4, name: "转化", subtitle: "Transform it" }
+    { id: 1, name: "觉察", subtitle: "Feel it", emoji: "🌱" },
+    { id: 2, name: "理解", subtitle: "Name it", emoji: "💭" },
+    { id: 3, name: "反应", subtitle: "React it", emoji: "👁️" },
+    { id: 4, name: "转化", subtitle: "Transform it", emoji: "🦋" }
   ],
   parent: [
-    { id: 1, name: "觉察", subtitle: "Feel it" },
-    { id: 2, name: "看见", subtitle: "See it" },
-    { id: 3, name: "反应", subtitle: "Sense it" },
-    { id: 4, name: "转化", subtitle: "Transform it" }
+    { id: 1, name: "觉察", subtitle: "Feel it", emoji: "🌱" },
+    { id: 2, name: "看见", subtitle: "See it", emoji: "👀" },
+    { id: 3, name: "反应", subtitle: "Sense it", emoji: "💫" },
+    { id: 4, name: "转化", subtitle: "Transform it", emoji: "🦋" }
   ],
   communication: [
-    { id: 0, name: "开场", subtitle: "倾听困境" },
-    { id: 1, name: "看见", subtitle: "澄清内心" },
-    { id: 2, name: "读懂", subtitle: "理解对方" },
-    { id: 3, name: "影响", subtitle: "新的表达" },
-    { id: 4, name: "行动", subtitle: "小小开始" }
+    { id: 0, name: "开场", subtitle: "倾听困境", emoji: "👂" },
+    { id: 1, name: "看见", subtitle: "澄清内心", emoji: "💡" },
+    { id: 2, name: "读懂", subtitle: "理解对方", emoji: "🤝" },
+    { id: 3, name: "影响", subtitle: "新的表达", emoji: "💬" },
+    { id: 4, name: "行动", subtitle: "小小开始", emoji: "🚀" }
   ]
 };
 
 interface UnifiedStageProgressProps {
-  coachType: 'emotion' | 'parent' | 'communication';
+  coachType?: 'emotion' | 'parent' | 'communication';
   currentStage: number;
   primaryColor?: string;
+  stages?: StageConfig[]; // 支持从外部传入动态配置
 }
 
-export const UnifiedStageProgress = ({ coachType, currentStage, primaryColor }: UnifiedStageProgressProps) => {
-  const stages = stageConfigs[coachType] || stageConfigs.emotion;
+export const UnifiedStageProgress = ({ 
+  coachType = 'emotion', 
+  currentStage, 
+  primaryColor,
+  stages: externalStages 
+}: UnifiedStageProgressProps) => {
+  // 优先使用外部传入的配置，否则使用默认配置
+  const stages = externalStages && externalStages.length > 0 
+    ? externalStages 
+    : (defaultConfigs[coachType] || defaultConfigs.emotion);
+  
   const isCommunication = coachType === 'communication';
   
   return (
@@ -65,6 +77,8 @@ export const UnifiedStageProgress = ({ coachType, currentStage, primaryColor }: 
                 >
                   {isCompleted ? (
                     <Check className={isCommunication ? "w-3.5 h-3.5" : "w-4 h-4 md:w-5 md:h-5"} />
+                  ) : stage.emoji ? (
+                    <span className={isCommunication ? "text-sm" : "text-base md:text-lg"}>{stage.emoji}</span>
                   ) : (
                     stage.id
                   )}
@@ -79,15 +93,17 @@ export const UnifiedStageProgress = ({ coachType, currentStage, primaryColor }: 
                   >
                     {stage.name}
                   </span>
-                  <span
-                    className={`${isCommunication ? 'text-[9px]' : 'text-[10px] md:text-xs'} transition-colors whitespace-nowrap ${
-                      isCompleted || isCurrent
-                        ? "text-muted-foreground"
-                        : "text-muted-foreground/60"
-                    }`}
-                  >
-                    {stage.subtitle}
-                  </span>
+                  {stage.subtitle && (
+                    <span
+                      className={`${isCommunication ? 'text-[9px]' : 'text-[10px] md:text-xs'} transition-colors whitespace-nowrap ${
+                        isCompleted || isCurrent
+                          ? "text-muted-foreground"
+                          : "text-muted-foreground/60"
+                      }`}
+                    >
+                      {stage.subtitle}
+                    </span>
+                  )}
                 </div>
               </div>
               {index < stages.length - 1 && (
