@@ -137,7 +137,7 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
         <div className="px-5 py-4 flex items-center justify-between">
           <div className="flex-1">
             <p className="text-amber-900 text-xs font-medium">扫码加入</p>
-            <p className="text-amber-800 text-sm font-bold">突破财富卡点训练营</p>
+            <p className="text-amber-800 text-sm font-bold">财富觉醒训练营</p>
           </div>
           {qrCodeUrl && (
             <div className="bg-white p-1.5 rounded-lg shadow-md">
@@ -148,7 +148,7 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
 
         {/* Brand */}
         <div className="bg-amber-700/20 px-5 py-2 text-center">
-          <p className="text-amber-900 text-xs font-medium">有劲AI · 突破财富卡点训练营</p>
+          <p className="text-amber-900 text-xs font-medium">有劲AI · 财富觉醒训练营</p>
         </div>
       </div>
     );

@@ -107,7 +107,7 @@ const WealthCoachIntro = () => {
         "不敢分享、不敢要价、不敢行动",
         "忙但不产出，努力却不累积"
       ],
-      solution: "把复杂的赚钱行为，简化为一个可持续动作：每天邀请1个人，进入《突破财富卡点训练营》",
+      solution: "把复杂的赚钱行为，简化为一个可持续动作：每天邀请1个人，进入《财富觉醒训练营》",
       science: {
         source: "BJ Fogg 行为模型，斯坦福大学",
         insight: "当一个行为足够简单，持续率可提高 2-3 倍"
@@ -219,7 +219,7 @@ const WealthCoachIntro = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold text-foreground">突破财富卡点</h1>
+          <h1 className="text-lg font-semibold text-foreground">财富觉醒</h1>
         </div>
       </header>
 
@@ -263,7 +263,7 @@ const WealthCoachIntro = () => {
       <section ref={threeStepsRef} className="container max-w-4xl mx-auto px-4 py-10">
         <div className="text-center mb-6">
           <h2 className="text-lg md:text-xl font-bold text-foreground mb-1.5">
-            突破财富卡点 3 部曲
+            财富觉醒 3 部曲
           </h2>
           <p className="text-sm text-muted-foreground">
             发现卡点 → 系统突破 → 持续行动

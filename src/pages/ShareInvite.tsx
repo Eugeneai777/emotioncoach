@@ -104,7 +104,7 @@ const ShareInvite = () => {
             邀请好友一起成长
           </h2>
           <p className="text-sm text-muted-foreground">
-            分享测评或训练营给朋友，一起突破财富卡点
+            分享测评或训练营给朋友，一起开启财富觉醒
           </p>
         </div>
 

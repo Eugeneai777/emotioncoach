@@ -142,7 +142,7 @@ const WealthCampShareCard = forwardRef<HTMLDivElement, WealthCampShareCardProps>
             opacity: 0.9,
             margin: 0,
           }}>
-            系统突破财富卡点
+            21天唤醒财富能量
           </p>
         </div>
 

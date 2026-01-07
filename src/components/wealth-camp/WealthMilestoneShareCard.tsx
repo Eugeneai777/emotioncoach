@@ -141,7 +141,7 @@ const WealthMilestoneShareCard = forwardRef<HTMLDivElement, WealthMilestoneShare
         <div className="px-5 py-4 flex items-center justify-between">
           <div className="flex-1">
             <p className={`${config.accentColor} text-xs font-medium`}>扫码一起挑战</p>
-            <p className={`${config.accentColor} text-sm font-bold`}>突破财富卡点训练营</p>
+            <p className={`${config.accentColor} text-sm font-bold`}>财富觉醒训练营</p>
           </div>
           {qrCodeUrl && (
             <div className="bg-white p-1.5 rounded-lg shadow-md">
@@ -152,7 +152,7 @@ const WealthMilestoneShareCard = forwardRef<HTMLDivElement, WealthMilestoneShare
 
         {/* Brand Footer */}
         <div className={`${config.bgColor} px-5 py-2 text-center`}>
-          <p className={`${config.accentColor} text-xs font-medium`}>有劲AI · 突破财富卡点训练营</p>
+          <p className={`${config.accentColor} text-xs font-medium`}>有劲AI · 财富觉醒训练营</p>
         </div>
       </div>
     );
