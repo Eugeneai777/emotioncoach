@@ -175,34 +175,154 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
         </div>
       </Card>
 
-      {/* Section 5: Assessment Structure Preview */}
-      <Card className="p-4 bg-slate-800/80 border-slate-700/50">
-        <h3 className="font-medium text-sm mb-3 text-center text-slate-200">测评结构</h3>
-        <div className="flex items-center justify-between text-center text-xs">
-          <div className="flex-1">
-            <div className="w-10 h-10 mx-auto rounded-full bg-amber-900/50 border border-amber-600/30 flex items-center justify-center mb-1.5">
-              <span className="text-lg">🚶</span>
-            </div>
-            <div className="font-medium text-amber-200">行为层</div>
-            <div className="text-slate-400">10题</div>
-          </div>
-          <ArrowRight className="w-4 h-4 text-slate-500 shrink-0" />
-          <div className="flex-1">
-            <div className="w-10 h-10 mx-auto rounded-full bg-orange-900/50 border border-orange-600/30 flex items-center justify-center mb-1.5">
-              <span className="text-lg">💭</span>
-            </div>
-            <div className="font-medium text-orange-200">情绪层</div>
-            <div className="text-slate-400">10题</div>
-          </div>
-          <ArrowRight className="w-4 h-4 text-slate-500 shrink-0" />
-          <div className="flex-1">
-            <div className="w-10 h-10 mx-auto rounded-full bg-yellow-900/50 border border-yellow-600/30 flex items-center justify-center mb-1.5">
-              <span className="text-lg">💡</span>
-            </div>
-            <div className="font-medium text-yellow-200">信念层</div>
-            <div className="text-slate-400">10题</div>
-          </div>
+      {/* Section 5: Assessment Structure - Onion Model */}
+      <Card className="p-5 bg-slate-800/80 border-slate-700/50">
+        <h3 className="font-medium text-sm mb-4 text-center text-slate-200">
+          测评结构 · 三层剥离法
+        </h3>
+        
+        {/* SVG Onion Concentric Circles */}
+        <div className="relative w-full aspect-square max-w-[240px] mx-auto">
+          <svg viewBox="0 0 200 200" className="w-full h-full">
+            {/* Gradient Definitions */}
+            <defs>
+              <radialGradient id="behaviorGradient" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="#d97706" stopOpacity="0.5" />
+              </radialGradient>
+              <radialGradient id="emotionGradient" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#f97316" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#ea580c" stopOpacity="0.6" />
+              </radialGradient>
+              <radialGradient id="beliefGradient" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#ef4444" stopOpacity="0.5" />
+                <stop offset="100%" stopColor="#dc2626" stopOpacity="0.8" />
+              </radialGradient>
+            </defs>
+            
+            {/* Outer Ring - Behavior Layer */}
+            <motion.circle 
+              cx="100" cy="100" r="90"
+              fill="none" 
+              stroke="url(#behaviorGradient)" 
+              strokeWidth="18"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            />
+            <motion.text 
+              x="100" y="22" 
+              textAnchor="middle" 
+              fontSize="10" 
+              fill="#fbbf24"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              🚶 行为层
+            </motion.text>
+            
+            {/* Middle Ring - Emotion Layer */}
+            <motion.circle 
+              cx="100" cy="100" r="65"
+              fill="none" 
+              stroke="url(#emotionGradient)" 
+              strokeWidth="18"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+            />
+            <motion.text 
+              x="155" y="55" 
+              textAnchor="middle" 
+              fontSize="10" 
+              fill="#f97316"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+            >
+              💭 情绪层
+            </motion.text>
+            
+            {/* Core Circle - Belief Layer */}
+            <motion.circle 
+              cx="100" cy="100" r="38"
+              fill="url(#beliefGradient)"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
+            />
+            <motion.text 
+              x="100" y="95" 
+              textAnchor="middle" 
+              fontSize="10" 
+              fill="#fef2f2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+            >
+              💡 信念层
+            </motion.text>
+            <motion.text 
+              x="100" y="110" 
+              textAnchor="middle" 
+              fontSize="8" 
+              fill="#fecaca"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9 }}
+            >
+              根本原因
+            </motion.text>
+          </svg>
         </div>
+        
+        {/* Legend - Three Columns */}
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          {/* Behavior Layer */}
+          <motion.div 
+            className="text-center p-2.5 rounded-lg bg-amber-950/30 border border-amber-600/20"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="text-lg mb-1">🚶</div>
+            <div className="text-xs font-medium text-amber-200">行为层</div>
+            <div className="text-[10px] text-amber-400/70">表面症状</div>
+            <div className="text-[10px] text-slate-400 mt-1">10题</div>
+          </motion.div>
+          
+          {/* Emotion Layer */}
+          <motion.div 
+            className="text-center p-2.5 rounded-lg bg-orange-950/30 border border-orange-600/20"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <div className="text-lg mb-1">💭</div>
+            <div className="text-xs font-medium text-orange-200">情绪层</div>
+            <div className="text-[10px] text-orange-400/70">内在触发</div>
+            <div className="text-[10px] text-slate-400 mt-1">10题</div>
+          </motion.div>
+          
+          {/* Belief Layer */}
+          <motion.div 
+            className="text-center p-2.5 rounded-lg bg-red-950/30 border border-red-600/20"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <div className="text-lg mb-1">💡</div>
+            <div className="text-xs font-medium text-red-200">信念层</div>
+            <div className="text-[10px] text-red-400/70">根本原因</div>
+            <div className="text-[10px] text-slate-400 mt-1">10题</div>
+          </motion.div>
+        </div>
+        
+        {/* Bottom Guide Text */}
+        <p className="text-center text-[10px] text-slate-400 mt-3">
+          由外向内 · 层层剥离 · 直达核心卡点
+        </p>
       </Card>
 
       {/* Section 6: Pricing Module */}
