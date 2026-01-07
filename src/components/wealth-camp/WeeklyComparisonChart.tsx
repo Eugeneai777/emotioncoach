@@ -1,15 +1,21 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Calendar, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { 
   ResponsiveContainer, 
   BarChart, 
   Bar, 
   XAxis, 
   YAxis, 
-  Tooltip, 
+  Tooltip as RechartsTooltip, 
   Legend,
   Cell,
   ReferenceLine
@@ -160,7 +166,7 @@ export function WeeklyComparisonChart({ entries, className }: WeeklyComparisonCh
               axisLine={false}
               tickLine={false}
             />
-            <Tooltip
+            <RechartsTooltip
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
                 const data = payload[0]?.payload as WeekData;
@@ -283,6 +289,24 @@ export function WeeklyComparisonChart({ entries, className }: WeeklyComparisonCh
         <CardTitle className="text-sm flex items-center gap-2">
           <Calendar className="w-4 h-4 text-violet-600" />
           周维度对比
+          <TooltipProvider>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[280px] p-3">
+                <div className="text-xs space-y-1.5">
+                  <p className="font-medium">数据说明</p>
+                  <p className="text-muted-foreground">周对比图展示每周三层觉醒的平均水平变化：</p>
+                  <ul className="text-muted-foreground list-disc pl-3 space-y-0.5">
+                    <li>数据分组：Day 1-7 为第1周，Day 8-14 为第2周，Day 15-21 为第3周</li>
+                    <li>评分来源：每日日记的行为/情绪/信念层评分（1-5分）</li>
+                    <li>成长亮点：识别跨周提升最显著的维度</li>
+                  </ul>
+                </div>
+              </TooltipContent>
+            </UITooltip>
+          </TooltipProvider>
           {hasMultipleWeeks && highlights.length > 0 && (
             <Badge variant="secondary" className="ml-auto text-xs bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300">
               {highlights.length}个成长亮点

@@ -2,9 +2,15 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Sparkles, Target } from 'lucide-react';
+import { Brain, Sparkles, Target, HelpCircle } from 'lucide-react';
 import { useReactionPatternProgress } from '@/hooks/useReactionPatternProgress';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ReactionPatternCardProps {
   campId?: string;
@@ -51,6 +57,24 @@ export const ReactionPatternCard: React.FC<ReactionPatternCardProps> = ({
         <CardTitle className="flex items-center gap-2 text-lg">
           <Brain className="h-5 w-5 text-primary" />
           我的财富反应模式
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[280px] p-3">
+                <div className="text-xs space-y-1.5">
+                  <p className="font-medium">数据说明</p>
+                  <p className="text-muted-foreground">反应模式来自你的财富评估结果：</p>
+                  <ul className="text-muted-foreground list-disc pl-3 space-y-0.5">
+                    <li>模式识别：基于评估问卷的行为、情绪和信念综合分析</li>
+                    <li>转化进度：基于日记中觉醒时刻的积累计算</li>
+                    <li>训练重点：针对当前模式的个性化练习建议</li>
+                  </ul>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           {currentDay && (
             <Badge variant="outline" className="ml-auto text-xs font-normal">
               Day {currentDay}/21

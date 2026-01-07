@@ -3,11 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles, ClipboardList, TrendingUp, RefreshCw } from 'lucide-react';
+import { ArrowRight, Sparkles, ClipboardList, TrendingUp, RefreshCw, HelpCircle } from 'lucide-react';
 import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Radar,
   RadarChart,
@@ -323,6 +329,24 @@ export function GrowthComparisonCard({
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-primary" />
           从测评到觉醒：我的成长轨迹
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[280px] p-3">
+                <div className="text-xs space-y-1.5">
+                  <p className="font-medium">数据说明</p>
+                  <p className="text-muted-foreground">成长对比展示测评基线与当前觉醒状态的差异：</p>
+                  <ul className="text-muted-foreground list-disc pl-3 space-y-0.5">
+                    <li>卡点指数：初始财富评估的综合得分</li>
+                    <li>觉醒指数：(平均分-1)/4×100，分数越高觉醒越深</li>
+                    <li>雷达图：红色为卡点程度，蓝色为觉醒程度</li>
+                  </ul>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <Badge variant="outline" className="ml-auto text-xs">
             Day {currentDay}
           </Badge>
