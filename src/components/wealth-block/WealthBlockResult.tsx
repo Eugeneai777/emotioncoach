@@ -5,6 +5,7 @@ import { Target, Heart, Brain, Share2, MessageCircle, GraduationCap, Sparkles, R
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
@@ -718,10 +719,15 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         </Button>
         
         <div className="grid grid-cols-2 gap-3">
-          <Button variant="outline" className="h-11">
-            <Share2 className="w-4 h-4 mr-2" />
-            分享结果
-          </Button>
+          <WealthInviteCardDialog
+            defaultTab="assessment"
+            trigger={
+              <Button variant="outline" className="h-11 w-full">
+                <Share2 className="w-4 h-4 mr-2" />
+                分享结果
+              </Button>
+            }
+          />
           <Button variant="outline" className="h-11" onClick={() => navigate('/energy-studio#coach')}>
             <MessageCircle className="w-4 h-4 mr-2" />
             与教练对话
