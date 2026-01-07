@@ -9,7 +9,7 @@ export interface CoachSpaceInfo {
 }
 
 export interface PostBadges {
-  coachType?: 'emotion' | 'communication' | 'parent' | 'vibrant_life';
+  coachType?: 'emotion' | 'communication' | 'parent' | 'vibrant_life' | 'wealth';
   coachLabel?: string;
   coachEmoji?: string;
   campName?: string;
@@ -57,6 +57,14 @@ export const getCoachSpaceInfo = (
         colorClass: 'text-rose-600 dark:text-rose-400',
         bgClass: 'bg-rose-100 dark:bg-rose-900/30',
         routePath: '/dynamic-coach'
+      },
+      wealth: {
+        name: '财富教练',
+        shortName: '财富',
+        emoji: '💰',
+        colorClass: 'text-amber-600 dark:text-amber-400',
+        bgClass: 'bg-amber-100 dark:bg-amber-900/30',
+        routePath: '/wealth-coach'
       }
     };
     return coachTypeMap[badges.coachType] || null;
@@ -98,6 +106,17 @@ export const getCoachSpaceInfo = (
       colorClass: 'text-purple-600 dark:text-purple-400',
       bgClass: 'bg-purple-100 dark:bg-purple-900/30',
       routePath: '/camp-list'
+    };
+  }
+  
+  if (campType === 'wealth_block_21' || effectiveCampName?.includes('财富') || effectiveCampName?.includes('财富卡点')) {
+    return {
+      name: '财富觉醒教练',
+      shortName: '财富',
+      emoji: '💰',
+      colorClass: 'text-amber-600 dark:text-amber-400',
+      bgClass: 'bg-amber-100 dark:bg-amber-900/30',
+      routePath: '/wealth-coach'
     };
   }
   
