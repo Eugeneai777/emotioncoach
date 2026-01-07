@@ -273,7 +273,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-md mx-auto">
         <DialogHeader>
           <DialogTitle className="text-center">微信支付</DialogTitle>
         </DialogHeader>
