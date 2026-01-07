@@ -429,7 +429,7 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
             size="lg"
             className="w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0"
           >
-            立即测评 · 有劲AI
+            ¥9.9 立即测评 · 限时特惠
           </Button>
           
           <p className="text-xs text-slate-400">
