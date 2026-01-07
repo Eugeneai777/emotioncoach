@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const HERO_JOURNEY_STAGES = [
   {
@@ -52,8 +53,35 @@ export default function StoryCoach() {
   const [input, setInput] = useState("");
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [currentNotificationIndex, setCurrentNotificationIndex] = useState(0);
+  const [footerHeight, setFooterHeight] = useState(0);
   const { showTour, completeTour } = usePageTour('story_coach');
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const footerRef = useRef<HTMLElement>(null);
+  const isMobile = useIsMobile();
+
+  // Dynamic footer height measurement
+  useEffect(() => {
+    if (!footerRef.current) return;
+    
+    const measureHeight = () => {
+      if (footerRef.current) {
+        setFooterHeight(footerRef.current.getBoundingClientRect().height);
+      }
+    };
+
+    measureHeight();
+    const resizeObserver = new ResizeObserver(measureHeight);
+    resizeObserver.observe(footerRef.current);
+
+    return () => resizeObserver.disconnect();
+  }, [showCreation]);
+
+  const getContentPaddingBottom = useCallback(() => {
+    if (footerHeight > 0) {
+      return footerHeight + 24;
+    }
+    return isMobile ? 180 : 200;
+  }, [footerHeight, isMobile]);
   
   // 智能通知
   const {
@@ -144,7 +172,10 @@ export default function StoryCoach() {
       />
 
       {/* Main Content */}
-      <main className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto overscroll-none scroll-container pb-44">
+      <main 
+        className="flex-1 container max-w-xl mx-auto px-3 md:px-4 flex flex-col overflow-y-auto overscroll-none scroll-container"
+        style={{ paddingBottom: `${getContentPaddingBottom()}px` }}
+      >
         {!showCreation ? (
           <div className="flex-1 flex flex-col items-center justify-center py-6 md:py-8 px-3 md:px-4">
             <div className="text-center space-y-3 md:space-y-4 w-full max-w-xl animate-in fade-in-50 duration-700">
@@ -264,8 +295,11 @@ export default function StoryCoach() {
       </main>
 
       {/* Fixed Footer Input Area */}
-      <footer className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20 safe-bottom">
-        <div className="container max-w-xl mx-auto px-3 md:px-4 pt-2 pb-2">
+      <footer 
+        ref={footerRef}
+        className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-20 safe-bottom"
+      >
+        <div className="container max-w-xl mx-auto px-3 md:px-4 pt-1.5 pb-1.5">
           {/* Quick Action Buttons */}
           {!showCreation && (
             <div className="mb-2 flex flex-wrap gap-2">

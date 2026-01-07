@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, RotateCcw, Phone } from "lucide-react";
-import { forwardRef, useState } from "react";
+import { forwardRef, useState, useEffect, useRef, useImperativeHandle } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { VoiceInputButton } from "./VoiceInputButton";
 
@@ -25,6 +25,7 @@ interface CoachInputFooterProps {
   onVoiceChatClick?: () => void;
   enableVoiceInput?: boolean;
   embedded?: boolean;
+  onHeightChange?: (height: number) => void;
 }
 export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElement, CoachInputFooterProps>(({
   input,
@@ -45,11 +46,36 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
   enableVoiceChat = false,
   onVoiceChatClick,
   enableVoiceInput = false,
-  embedded = false
+  embedded = false,
+  onHeightChange
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
   const isMobile = useIsMobile();
+  const footerRef = useRef<HTMLElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Forward ref to textarea
+  useImperativeHandle(ref, () => textareaRef.current as HTMLTextAreaElement);
+
+  // Measure and report footer height changes
+  useEffect(() => {
+    if (!footerRef.current || !onHeightChange) return;
+
+    const measureHeight = () => {
+      if (footerRef.current) {
+        const height = footerRef.current.getBoundingClientRect().height;
+        onHeightChange(height);
+      }
+    };
+
+    measureHeight();
+
+    const resizeObserver = new ResizeObserver(measureHeight);
+    resizeObserver.observe(footerRef.current);
+
+    return () => resizeObserver.disconnect();
+  }, [onHeightChange, isFocused, scenarioChips, intensitySelector, messagesCount]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     // 如果正在使用输入法组合，不处理回车
@@ -89,6 +115,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
 
   return (
     <footer 
+      ref={footerRef}
       className={embedded 
         ? "border-t border-border bg-card/98 backdrop-blur-xl"
         : "fixed bottom-0 left-0 right-0 border-t border-border bg-card/98 backdrop-blur-xl shadow-2xl z-50 safe-bottom"
@@ -140,7 +167,7 @@ export const CoachInputFooter = forwardRef<HTMLTextAreaElement | HTMLInputElemen
           {/* 输入框 - 移动端单行，桌面端多行 */}
           <div className="flex-1 relative">
           <Textarea
-            ref={ref as React.Ref<HTMLTextAreaElement>}
+            ref={textareaRef}
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}

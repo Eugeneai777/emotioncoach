@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { CoachThemeConfig } from "@/hooks/useCoachTemplates";
 import { getThemeBackgroundGradient, getThemeLoaderColor } from "@/utils/coachThemeConfig";
 import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Step {
   id: number;
@@ -209,6 +210,20 @@ export const CoachLayout = ({
   const input = externalInput !== undefined ? externalInput : internalInput;
   const handleInputChange = externalOnInputChange || setInternalInput;
 
+  // Dynamic footer height tracking
+  const [footerHeight, setFooterHeight] = useState(0);
+  const isMobile = useIsMobile();
+  
+  // Calculate dynamic bottom padding based on footer height
+  const getContentPaddingBottom = useCallback(() => {
+    if (footerHeight > 0) {
+      // Add extra buffer for safe area and smooth scrolling
+      return footerHeight + 24;
+    }
+    // Fallback values if height not yet measured
+    return isMobile ? 180 : 200;
+  }, [footerHeight, isMobile]);
+
   // Pull to refresh state
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -359,11 +374,12 @@ export const CoachLayout = ({
         {/* Main Content */}
         <main 
           ref={mainRef}
-          className="flex-1 overflow-y-auto overscroll-none scroll-container pb-44 sm:pb-48 md:pb-52"
+          className="flex-1 overflow-y-auto overscroll-none scroll-container"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           style={{
+            paddingBottom: `${getContentPaddingBottom()}px`,
             transform: `translateY(${pullDistance}px)`,
             transition: isPulling ? 'none' : 'transform 0.3s ease-out'
           }}
@@ -492,6 +508,7 @@ export const CoachLayout = ({
             enableVoiceChat={enableVoiceChat}
             onVoiceChatClick={onVoiceChatClick}
             enableVoiceInput={enableVoiceInput}
+            onHeightChange={setFooterHeight}
           />
         )}
       </div>

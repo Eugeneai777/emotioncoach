@@ -10,6 +10,7 @@ import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { getThemeBackgroundGradient } from "@/utils/coachThemeConfig";
 import { ScrollToBottomButton } from "@/components/ScrollToBottomButton";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface WealthCoachDialogProps {
   open: boolean;
@@ -35,8 +36,18 @@ export const WealthCoachDialog = ({
   const [input, setInput] = useState("");
   const [hasAutoSent, setHasAutoSent] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
+  const [footerHeight, setFooterHeight] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+
+  // Calculate dynamic padding
+  const getContentPaddingBottom = useCallback(() => {
+    if (footerHeight > 0) {
+      return footerHeight + 16;
+    }
+    return isMobile ? 140 : 160;
+  }, [footerHeight, isMobile]);
 
   const {
     messages,
@@ -213,7 +224,8 @@ export const WealthCoachDialog = ({
           {/* 对话内容区 */}
           <main
             ref={mainRef}
-            className="flex-1 overflow-y-auto pb-32"
+            className="flex-1 overflow-y-auto"
+            style={{ paddingBottom: `${getContentPaddingBottom()}px` }}
           >
             <div className="container max-w-xl mx-auto px-4 py-4">
               {/* 冥想分析引导 */}
@@ -274,6 +286,7 @@ export const WealthCoachDialog = ({
             primaryColor={primaryColor}
             messagesCount={messages.length}
             enableVoiceInput={true}
+            onHeightChange={setFooterHeight}
           />
         </motion.div>
       </motion.div>
