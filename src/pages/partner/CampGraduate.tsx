@@ -133,7 +133,29 @@ export default function CampGraduate() {
       </div>
 
       <div className="p-4 space-y-6 pb-32">
+        {/* 未毕业用户引导 */}
+        {!isLoading && !graduationData && (
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-amber-100 rounded-full flex items-center justify-center">
+                <GraduationCap className="w-8 h-8 text-amber-500" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">还未完成训练营</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                完成21天财富觉醒训练营后，即可解锁毕业证书和合伙人专属通道
+              </p>
+              <Button
+                onClick={() => navigate('/wealth-camp-intro')}
+                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+              >
+                了解训练营
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* 毕业证书展示 */}
+        {graduationData && (
         <Card className="border-0 shadow-xl overflow-hidden bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500">
           <CardContent className="p-0">
             <div className="p-6 text-white text-center relative">
@@ -181,6 +203,11 @@ export default function CampGraduate() {
           </CardContent>
         </Card>
 
+        )}
+
+        {/* 以下内容仅毕业用户可见 */}
+        {graduationData && (
+          <>
         {/* 分享毕业证书 */}
         <WealthInviteCardDialog
           defaultTab="milestone"
@@ -291,6 +318,8 @@ export default function CampGraduate() {
             查看我的财富日记
           </Button>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
