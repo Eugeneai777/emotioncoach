@@ -164,6 +164,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const [userInfo, setUserInfo] = useState<UserInfo>({});
   const [awakeningData, setAwakeningData] = useState<AwakeningData | null>(null);
   const [selectedAwakeningType, setSelectedAwakeningType] = useState<'behavior' | 'emotion' | 'belief'>('belief');
+  const [partnerInfo, setPartnerInfo] = useState<{ partnerId: string; partnerCode: string } | null>(null);
   
   const assessmentCardRef = useRef<HTMLDivElement>(null);
   const campCardRef = useRef<HTMLDivElement>(null);
@@ -182,8 +183,25 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     transformationRate?: number;
   } | null>(null);
 
-  const assessmentUrl = `${getPromotionDomain()}/wealth-block`;
-  const campUrl = `${getPromotionDomain()}/wealth-camp-intro`;
+  // Generate share URLs with partner tracking if available
+  const getAssessmentUrl = (): string => {
+    const baseUrl = `${getPromotionDomain()}/wealth-block`;
+    if (partnerInfo?.partnerCode) {
+      return `${baseUrl}?ref=${partnerInfo.partnerCode}`;
+    }
+    return baseUrl;
+  };
+  
+  const getCampUrl = (): string => {
+    const baseUrl = `${getPromotionDomain()}/wealth-camp-intro`;
+    if (partnerInfo?.partnerCode) {
+      return `${baseUrl}?ref=${partnerInfo.partnerCode}`;
+    }
+    return baseUrl;
+  };
+
+  const assessmentUrl = getAssessmentUrl();
+  const campUrl = getCampUrl();
 
   // Fetch user profile and camp progress
   useEffect(() => {
@@ -321,6 +339,21 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 
       // Proxy third-party avatar URLs
       const proxiedAvatarUrl = getProxiedAvatarUrl(profile?.avatar_url);
+
+      // Fetch partner info for referral tracking
+      const { data: partner } = await supabase
+        .from('partners')
+        .select('id, partner_code')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (partner) {
+        setPartnerInfo({
+          partnerId: partner.id,
+          partnerCode: partner.partner_code,
+        });
+      }
 
       setUserInfo({
         avatarUrl: proxiedAvatarUrl,
@@ -535,6 +568,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                   ref={assessmentCardRef}
                   avatarUrl={userInfo.avatarUrl}
                   displayName={userInfo.displayName}
+                  partnerInfo={partnerInfo || undefined}
                 />
               </div>
             </div>
