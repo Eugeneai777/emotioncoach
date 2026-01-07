@@ -710,12 +710,22 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
           </div>
         )}
 
+        <div className="text-center mb-3 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl">
+          <p className="text-sm text-muted-foreground">基于你的测评结果，推荐参加：</p>
+          <p className="font-semibold text-amber-700 dark:text-amber-400">21天财富觉醒训练营</p>
+          <div className="flex items-center justify-center gap-2 mt-1">
+            <span className="text-muted-foreground line-through text-sm">¥399</span>
+            <span className="text-xl font-bold text-amber-600 dark:text-amber-400">¥299</span>
+            <span className="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded">限时</span>
+          </div>
+        </div>
+        
         <Button 
           className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg h-12"
           onClick={() => navigate('/wealth-camp-intro')}
         >
           <GraduationCap className="w-5 h-5 mr-2" />
-          加入21天突破财富卡点训练营
+          加入21天财富觉醒训练营
         </Button>
         
         <div className="grid grid-cols-2 gap-3">

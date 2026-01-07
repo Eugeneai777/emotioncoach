@@ -463,15 +463,22 @@ const WealthCampIntro = () => {
               继续我的训练营
             </Button>
           ) : (
-            <Button
-              onClick={() => {
-                trackAssessmentTocamp('camp_join_clicked');
-                setShowStartDialog(true);
-              }}
-              className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-base"
-            >
-              立即加入 21 天训练营
-            </Button>
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-muted-foreground line-through text-sm">¥399</span>
+                <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">¥299</span>
+                <span className="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded animate-pulse">限时优惠</span>
+              </div>
+              <Button
+                onClick={() => {
+                  trackAssessmentTocamp('camp_join_clicked');
+                  setShowStartDialog(true);
+                }}
+                className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-base"
+              >
+                ¥299 开启21天训练营
+              </Button>
+            </div>
           )}
         </div>
       </div>
@@ -485,7 +492,9 @@ const WealthCampIntro = () => {
           camp_name: "财富觉醒训练营",
           duration_days: 21,
           icon: "💰",
-          price: 0,
+          price: 299,
+          original_price: 399,
+          price_note: "限时优惠",
         }}
         onSuccess={(campId) => {
           trackAssessmentTocamp('camp_joined', { camp_id: campId });
