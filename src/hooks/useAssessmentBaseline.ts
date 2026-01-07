@@ -12,6 +12,11 @@ export interface AssessmentBaseline {
   dominant_emotion: string | null;
   dominant_belief: string | null;
   reaction_pattern: string | null;
+  // Four poor individual scores
+  mouth_score: number;
+  hand_score: number;
+  eye_score: number;
+  heart_score: number;
 }
 
 const poorTypeNames: Record<string, string> = {
@@ -42,6 +47,13 @@ const patternNames: Record<string, string> = {
   pleasing: '讨好模式',
 };
 
+export interface FourPoorScores {
+  mouth: number;
+  hand: number;
+  eye: number;
+  heart: number;
+}
+
 export function useAssessmentBaseline(campId?: string) {
   const { data: baseline, isLoading, error } = useQuery({
     queryKey: ['assessment-baseline', campId],
@@ -52,7 +64,7 @@ export function useAssessmentBaseline(campId?: string) {
       // Get the most recent assessment for this user
       const { data, error: queryError } = await supabase
         .from('wealth_block_assessments')
-        .select('id, created_at, behavior_score, emotion_score, belief_score, dominant_poor, dominant_block, reaction_pattern')
+        .select('id, created_at, behavior_score, emotion_score, belief_score, dominant_poor, dominant_block, reaction_pattern, mouth_score, hand_score, eye_score, heart_score')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -77,10 +89,23 @@ export function useAssessmentBaseline(campId?: string) {
         dominant_emotion: data.dominant_block || null,
         dominant_belief: data.dominant_block || null,
         reaction_pattern: data.reaction_pattern || null,
+        // Add four poor scores
+        mouth_score: data.mouth_score || 0,
+        hand_score: data.hand_score || 0,
+        eye_score: data.eye_score || 0,
+        heart_score: data.heart_score || 0,
       };
     },
     enabled: true,
   });
+
+  // Calculate four poor scores object
+  const fourPoorScores: FourPoorScores | null = baseline ? {
+    mouth: baseline.mouth_score || 10,
+    hand: baseline.hand_score || 10,
+    eye: baseline.eye_score || 10,
+    heart: baseline.heart_score || 10,
+  } : null;
 
   // Format display names
   const formattedBaseline = baseline ? {
@@ -89,6 +114,7 @@ export function useAssessmentBaseline(campId?: string) {
     dominantEmotionName: baseline.dominant_emotion ? emotionTypeNames[baseline.dominant_emotion] || baseline.dominant_emotion : null,
     dominantBeliefName: baseline.dominant_belief ? beliefTypeNames[baseline.dominant_belief] || baseline.dominant_belief : null,
     reactionPatternName: baseline.reaction_pattern ? patternNames[baseline.reaction_pattern] || baseline.reaction_pattern : null,
+    fourPoorScores,
   } : null;
 
   return {
