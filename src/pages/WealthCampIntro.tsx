@@ -4,15 +4,24 @@ import { Helmet } from "react-helmet";
 import { ArrowLeft, Sparkles, Brain, MessageCircle, Share2, Gift, Heart, Target, Shield, Users, CheckCircle2, Clock, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { AssessmentFocusCard } from "@/components/wealth-camp/AssessmentFocusCard";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
+import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { useCampPurchase } from "@/hooks/useCampPurchase";
+import { toast } from "sonner";
 
 const WealthCampIntro = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [showStartDialog, setShowStartDialog] = useState(false);
+  const [showPayDialog, setShowPayDialog] = useState(false);
   const { trackAssessmentTocamp } = useWealthCampAnalytics();
+  
+  // 检查用户是否已购买训练营
+  const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_21");
+  const hasPurchased = !!purchaseRecord;
 
   // 埋点：页面加载时追踪
   useEffect(() => {
@@ -462,6 +471,16 @@ const WealthCampIntro = () => {
             >
               继续我的训练营
             </Button>
+          ) : hasPurchased ? (
+            <Button
+              onClick={() => {
+                trackAssessmentTocamp('camp_join_clicked');
+                setShowStartDialog(true);
+              }}
+              className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-base"
+            >
+              开始训练营
+            </Button>
           ) : (
             <div className="space-y-2">
               <div className="flex items-center justify-center gap-2">
@@ -472,7 +491,7 @@ const WealthCampIntro = () => {
               <Button
                 onClick={() => {
                   trackAssessmentTocamp('camp_join_clicked');
-                  setShowStartDialog(true);
+                  setShowPayDialog(true);
                 }}
                 className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-base"
               >
@@ -482,6 +501,24 @@ const WealthCampIntro = () => {
           )}
         </div>
       </div>
+
+      {/* WeChat Pay Dialog */}
+      <WechatPayDialog
+        open={showPayDialog}
+        onOpenChange={setShowPayDialog}
+        packageInfo={{
+          key: 'camp-wealth_block_21',
+          name: '财富觉醒训练营',
+          price: 299
+        }}
+        onSuccess={() => {
+          setShowPayDialog(false);
+          toast.success("购买成功！请选择开始日期");
+          refetchPurchase();
+          queryClient.invalidateQueries({ queryKey: ['camp-purchase', 'wealth_block_21'] });
+          setShowStartDialog(true);
+        }}
+      />
 
       {/* Start Camp Dialog */}
       <StartCampDialog
