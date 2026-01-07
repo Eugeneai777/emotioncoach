@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ClipboardList, History, TrendingUp } from "lucide-react";
+import { ArrowLeft, ClipboardList, History, TrendingUp, Share2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDial
 import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
+import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 
 export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
@@ -272,6 +273,14 @@ export default function WealthBlockAssessmentPage() {
           <div className="flex-1 min-w-0">
             <h1 className="font-semibold truncate">财富卡点测评</h1>
           </div>
+          <WealthInviteCardDialog
+            defaultTab="assessment"
+            trigger={
+              <Button variant="ghost" size="icon" className="shrink-0">
+                <Share2 className="w-5 h-5" />
+              </Button>
+            }
+          />
         </div>
       </header>
 
