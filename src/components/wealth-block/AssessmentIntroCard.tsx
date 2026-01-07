@@ -240,7 +240,7 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
             已有 <span className="text-amber-400 font-medium">{statistics.breakthroughUsers.toLocaleString()}</span> 人通过测评获得突破
           </p>
           
-          <p className="text-xs text-slate-500 pt-2 border-t border-slate-700/50">
+          <p className="text-xs text-amber-400/80 pt-2 border-t border-amber-500/20 text-center">
             💎 有劲AI · 财富教练
           </p>
         </div>
