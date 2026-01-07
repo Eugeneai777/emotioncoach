@@ -128,33 +128,68 @@ serve(async (req) => {
       throw new Error('订单更新失败');
     }
 
-    // 增加用户配额
-    const quota = packageQuotaMap[order.package_key] || 0;
-    if (quota > 0) {
-      // 查询用户当前配额
-      const { data: userAccount, error: accountError } = await supabase
-        .from('user_accounts')
-        .select('total_quota, used_quota')
-        .eq('user_id', order.user_id)
+    // 处理训练营购买订单（package_key 以 'camp-' 开头）
+    if (order.package_key.startsWith('camp-')) {
+      const campType = order.package_key.replace('camp-', '');
+      
+      // 获取训练营模板信息
+      const { data: campTemplate } = await supabase
+        .from('camp_templates')
+        .select('camp_name')
+        .eq('camp_type', campType)
         .single();
 
-      if (accountError) {
-        console.error('Query user account error:', accountError);
-      } else if (userAccount) {
-        // 更新用户配额
-        const newTotalQuota = (userAccount.total_quota || 0) + quota;
-        const { error: quotaError } = await supabase
-          .from('user_accounts')
-          .update({ 
-            total_quota: newTotalQuota,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', order.user_id);
+      // 创建训练营购买记录
+      const { error: purchaseError } = await supabase
+        .from('user_camp_purchases')
+        .insert({
+          user_id: order.user_id,
+          camp_type: campType,
+          camp_name: campTemplate?.camp_name || order.product_name || '训练营',
+          purchase_price: order.amount,
+          payment_method: 'wechat',
+          payment_status: 'completed',
+          transaction_id: tradeNo,
+          purchased_at: new Date().toISOString(),
+          expires_at: null // 不设置过期时间，永久有效
+        });
 
-        if (quotaError) {
-          console.error('Update quota error:', quotaError);
-        } else {
-          console.log('User quota updated:', order.user_id, '+', quota);
+      if (purchaseError) {
+        console.error('Create camp purchase error:', purchaseError);
+      } else {
+        console.log('Camp purchase recorded:', order.user_id, campType);
+      }
+      
+      // 训练营购买不增加有劲点数（训练营是独立权益）
+    } else {
+      // 非训练营订单：增加用户配额
+      const quota = packageQuotaMap[order.package_key] || 0;
+      if (quota > 0) {
+        // 查询用户当前配额
+        const { data: userAccount, error: accountError } = await supabase
+          .from('user_accounts')
+          .select('total_quota, used_quota')
+          .eq('user_id', order.user_id)
+          .single();
+
+        if (accountError) {
+          console.error('Query user account error:', accountError);
+        } else if (userAccount) {
+          // 更新用户配额
+          const newTotalQuota = (userAccount.total_quota || 0) + quota;
+          const { error: quotaError } = await supabase
+            .from('user_accounts')
+            .update({ 
+              total_quota: newTotalQuota,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', order.user_id);
+
+          if (quotaError) {
+            console.error('Update quota error:', quotaError);
+          } else {
+            console.log('User quota updated:', order.user_id, '+', quota);
+          }
         }
       }
     }

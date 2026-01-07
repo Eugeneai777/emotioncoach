@@ -16,12 +16,14 @@ import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useCampEntitlement } from "@/hooks/useCampEntitlement";
 import { GratitudeQuickAdd } from "@/components/gratitude/GratitudeQuickAdd";
 import { Loader2 } from "lucide-react";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
 import { MeditationAnalysisIntro } from "@/components/wealth-camp/MeditationAnalysisIntro";
+import { Badge } from "@/components/ui/badge";
 
 interface LocationState {
   initialMessage?: string;
@@ -41,6 +43,10 @@ const DynamicCoach = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: template, isLoading: templateLoading } = useCoachTemplate(coachKey || '');
+  
+  // 检查财富训练营权益
+  const isWealthCoach = coachKey === 'wealth_coach_4_questions';
+  const { data: campEntitlement } = useCampEntitlement(isWealthCoach ? 'wealth_block_21' : '');
   
   // 根据教练类型选择引导配置
   const tourKey = coachKey === 'vibrant_life_sage' 
@@ -260,7 +266,11 @@ const DynamicCoach = () => {
       <CoachLayout
       emoji={template.emoji}
       title={template.title}
-      subtitle={template.subtitle || ''}
+      subtitle={
+        isWealthCoach && campEntitlement?.hasAccess 
+          ? `${template.subtitle || ''} 💰 训练营会员 · 免费使用`
+          : (template.subtitle || '')
+      }
       description={template.description || ''}
       gradient={template.gradient || 'from-rose-500 to-red-500'}
       primaryColor={template.primary_color || 'red'}

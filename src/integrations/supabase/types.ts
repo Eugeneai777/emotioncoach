@@ -1113,6 +1113,30 @@ export type Database = {
           },
         ]
       }
+      camp_entitlements: {
+        Row: {
+          camp_type: string
+          created_at: string | null
+          feature_key: string
+          id: string
+          is_free: boolean | null
+        }
+        Insert: {
+          camp_type: string
+          created_at?: string | null
+          feature_key: string
+          id?: string
+          is_free?: boolean | null
+        }
+        Update: {
+          camp_type?: string
+          created_at?: string | null
+          feature_key?: string
+          id?: string
+          is_free?: boolean | null
+        }
+        Relationships: []
+      }
       camp_invite_referrals: {
         Row: {
           camp_id: string | null
