@@ -259,9 +259,19 @@ export default function WealthBlockAssessmentPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50/50 to-background">
-      {/* 头部 */}
+      {/* 品牌横幅 */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border-b border-amber-500/20">
+        <div className="container max-w-lg mx-auto px-4 py-2 flex items-center justify-center gap-2">
+          <span className="text-amber-500">💎</span>
+          <span className="text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+            有劲AI · 财富教练
+          </span>
+        </div>
+      </div>
+
+      {/* 导航栏 */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b">
-        <div className="container max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
+        <div className="container max-w-lg mx-auto px-4 h-12 flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -270,10 +280,7 @@ export default function WealthBlockAssessmentPage() {
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-amber-600 font-medium">有劲AI · 财富教练</p>
-            <h1 className="font-semibold truncate text-sm">财富卡点测评</h1>
-          </div>
+          <h1 className="flex-1 font-semibold truncate">财富卡点测评</h1>
           <WealthInviteCardDialog
             defaultTab="assessment"
             trigger={
