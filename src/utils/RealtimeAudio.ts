@@ -466,7 +466,7 @@ export class RealtimeChat {
       console.log('[WebRTC] Offer created:', performance.now() - startTime, 'ms');
 
       // 连接到 OpenAI Realtime API
-      const model = "gpt-4o-realtime-preview-2024-12-17";
+      const model = "gpt-4o-mini-realtime-preview-2024-12-17";
       console.log('[WebRTC] Connecting to:', realtimeApiUrl);
       
       const sdpResponse = await fetch(`${realtimeApiUrl}?model=${model}`, {
