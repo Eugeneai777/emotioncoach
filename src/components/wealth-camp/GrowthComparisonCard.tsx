@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles, ClipboardList, TrendingUp, RefreshCw, HelpCircle } from 'lucide-react';
 import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
+import { useFourPoorProgress } from '@/hooks/useFourPoorProgress';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +24,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import { fourPoorRichConfig } from '@/config/fourPoorConfig';
 
 interface GrowthComparisonCardProps {
   campId?: string;
@@ -48,8 +50,11 @@ export function GrowthComparisonCard({
   embedded = false,
 }: GrowthComparisonCardProps) {
   const navigate = useNavigate();
-  const { baseline, isLoading } = useAssessmentBaseline(campId);
+  const { baseline, isLoading: baselineLoading } = useAssessmentBaseline(campId);
+  const { transformationRates, isLoading: progressLoading } = useFourPoorProgress(campId);
   const [showRadar, setShowRadar] = useState(true);
+  
+  const isLoading = baselineLoading || progressLoading;
 
   if (isLoading) {
     return (
@@ -63,14 +68,21 @@ export function GrowthComparisonCard({
     return null; // Don't show if no assessment baseline
   }
 
-  // Calculate transformation rates (awakening score / 5 * 100)
+  // Use FourPoorProgress transformation rates for consistency with FourPersonalityCard
+  // Calculate average transformation rate across all four poor types
+  const avgFourPoorRate = Math.round(
+    (transformationRates.mouth + transformationRates.hand + transformationRates.eye + transformationRates.heart) / 4
+  );
+  
+  // Calculate layer-based transformation rates (awakening score / 5 * 100)
   const behaviorRate = Math.round((parseFloat(avgBehavior) / 5) * 100);
   const emotionRate = Math.round((parseFloat(avgEmotion) / 5) * 100);
   const beliefRate = Math.round((parseFloat(avgBelief) / 5) * 100);
 
-  // Calculate overall awakening index from averages
-  const avgAwakening = (parseFloat(avgBehavior) + parseFloat(avgEmotion) + parseFloat(avgBelief)) / 3;
-  const awakeningIndex = Math.round(avgAwakening * 20); // Convert 1-5 to 20-100
+  // Calculate overall awakening index - weighted blend of four poor progress and layer scores
+  const layerAwakening = (parseFloat(avgBehavior) + parseFloat(avgEmotion) + parseFloat(avgBelief)) / 3;
+  const layerIndex = Math.round(((layerAwakening - 1) / 4) * 100); // 0-100 scale
+  const awakeningIndex = Math.round((layerIndex + avgFourPoorRate) / 2); // Blend both metrics
 
   // Normalize baseline scores for radar (assuming max score per dimension is ~30)
   const maxBaselineScore = 30;
@@ -253,21 +265,102 @@ export function GrowthComparisonCard({
         <ArrowRight className="w-4 h-4 text-muted-foreground rotate-90 sm:rotate-0" />
       </div>
 
+      {/* Four Poor Transformation - Consistent with FourPersonalityCard */}
+      <div className="space-y-3">
+        <div className="text-xs font-medium text-muted-foreground">四穷转化进度</div>
+        
+        {/* Mouth */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="text-sm">{fourPoorRichConfig.mouth.poorEmoji}</span>
+              {fourPoorRichConfig.mouth.poorName}
+            </span>
+            <span className="text-muted-foreground">→</span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-sm">{fourPoorRichConfig.mouth.richEmoji}</span>
+              {fourPoorRichConfig.mouth.richName}
+            </span>
+            <span className="font-medium" style={{ color: fourPoorRichConfig.mouth.color }}>
+              {transformationRates.mouth}%
+            </span>
+          </div>
+          <Progress value={transformationRates.mouth} className="h-1.5" />
+        </div>
+
+        {/* Hand */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="text-sm">{fourPoorRichConfig.hand.poorEmoji}</span>
+              {fourPoorRichConfig.hand.poorName}
+            </span>
+            <span className="text-muted-foreground">→</span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-sm">{fourPoorRichConfig.hand.richEmoji}</span>
+              {fourPoorRichConfig.hand.richName}
+            </span>
+            <span className="font-medium" style={{ color: fourPoorRichConfig.hand.color }}>
+              {transformationRates.hand}%
+            </span>
+          </div>
+          <Progress value={transformationRates.hand} className="h-1.5" />
+        </div>
+
+        {/* Eye */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="text-sm">{fourPoorRichConfig.eye.poorEmoji}</span>
+              {fourPoorRichConfig.eye.poorName}
+            </span>
+            <span className="text-muted-foreground">→</span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-sm">{fourPoorRichConfig.eye.richEmoji}</span>
+              {fourPoorRichConfig.eye.richName}
+            </span>
+            <span className="font-medium" style={{ color: fourPoorRichConfig.eye.color }}>
+              {transformationRates.eye}%
+            </span>
+          </div>
+          <Progress value={transformationRates.eye} className="h-1.5" />
+        </div>
+
+        {/* Heart */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="text-sm">{fourPoorRichConfig.heart.poorEmoji}</span>
+              {fourPoorRichConfig.heart.poorName}
+            </span>
+            <span className="text-muted-foreground">→</span>
+            <span className="flex items-center gap-1.5">
+              <span className="text-sm">{fourPoorRichConfig.heart.richEmoji}</span>
+              {fourPoorRichConfig.heart.richName}
+            </span>
+            <span className="font-medium" style={{ color: fourPoorRichConfig.heart.color }}>
+              {transformationRates.heart}%
+            </span>
+          </div>
+          <Progress value={transformationRates.heart} className="h-1.5" />
+        </div>
+      </div>
+
       {/* Layer transformation progress */}
       <div className="space-y-3">
-        <div className="text-xs font-medium text-muted-foreground">三层转化进度</div>
+        <div className="text-xs font-medium text-muted-foreground">三层觉醒进度</div>
         
         {/* Behavior Layer */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
               行为层
             </span>
             <span className="text-muted-foreground">
               {baseline.dominantPoorName || '—'} → {dominantBehavior || '觉察中'}
             </span>
-            <span className="font-medium text-primary">{behaviorRate}%</span>
+            <span className="font-medium text-amber-600">{behaviorRate}%</span>
           </div>
           <Progress value={behaviorRate} className="h-1.5" />
         </div>
@@ -276,13 +369,13 @@ export function GrowthComparisonCard({
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-rose-500" />
+              <span className="w-2 h-2 rounded-full bg-pink-500" />
               情绪层
             </span>
             <span className="text-muted-foreground">
               {baseline.dominantEmotionName || '—'} → {dominantEmotion || '觉察中'}
             </span>
-            <span className="font-medium text-primary">{emotionRate}%</span>
+            <span className="font-medium text-pink-600">{emotionRate}%</span>
           </div>
           <Progress value={emotionRate} className="h-1.5" />
         </div>
@@ -291,13 +384,13 @@ export function GrowthComparisonCard({
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              <span className="w-2 h-2 rounded-full bg-violet-500" />
               信念层
             </span>
             <span className="text-muted-foreground">
               {baseline.dominantBeliefName || '—'} → {dominantBelief || '觉察中'}
             </span>
-            <span className="font-medium text-primary">{beliefRate}%</span>
+            <span className="font-medium text-violet-600">{beliefRate}%</span>
           </div>
           <Progress value={beliefRate} className="h-1.5" />
         </div>
