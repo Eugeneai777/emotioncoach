@@ -71,6 +71,7 @@ export const VoiceCallCTA = ({ onVoiceChatClick }: VoiceCallCTAProps) => {
                         hover:scale-105 hover:shadow-rose-500/50 
                         active:scale-95 active:shadow-lg active:shadow-rose-500/60
                         transition-all duration-200 ease-out
+                        overflow-hidden
                         group-active:from-rose-600 group-active:via-rose-500 group-active:to-pink-600">
           
           {/* 电话图标 - 添加按下时的微动效果 */}
@@ -81,8 +82,8 @@ export const VoiceCallCTA = ({ onVoiceChatClick }: VoiceCallCTAProps) => {
           </div>
           
           {/* 品牌文字 */}
-          <span className="text-white font-bold text-2xl tracking-wide">有劲AI</span>
-          <span className="text-white/90 text-base mt-2">每个人的生活教练</span>
+          <span className="text-white font-bold text-2xl tracking-wide text-center">有劲AI</span>
+          <span className="text-white/90 text-base mt-2 text-center max-w-[85%] px-2">每个人的生活教练</span>
         </div>
       </button>
       
