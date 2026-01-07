@@ -38,12 +38,16 @@ export function AssessmentPayDialog({
   // 检测是否是微信环境
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
 
-  // 创建订单
+  // 创建订单（带超时处理）
   const createOrder = async () => {
     setStatus('creating');
     setErrorMessage('');
     
     try {
+      // 添加超时控制
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+
       const { data, error } = await supabase.functions.invoke('create-wechat-order', {
         body: {
           packageKey: 'wealth_block_assessment',
@@ -54,8 +58,10 @@ export function AssessmentPayDialog({
         }
       });
 
+      clearTimeout(timeoutId);
+
       if (error) throw error;
-      if (!data.success) throw new Error(data.error || '创建订单失败');
+      if (!data?.success) throw new Error(data?.error || '创建订单失败，请稍后重试');
 
       setOrderNo(data.orderNo);
       setPayType(data.payType);
@@ -75,7 +81,10 @@ export function AssessmentPayDialog({
       startPolling(data.orderNo);
     } catch (error: any) {
       console.error('Create order error:', error);
-      setErrorMessage(error.message || '创建订单失败');
+      const msg = error.name === 'AbortError' 
+        ? '创建订单超时，请检查网络后重试' 
+        : (error.message || '创建订单失败，请稍后重试');
+      setErrorMessage(msg);
       setStatus('error');
     }
   };
