@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -14,6 +15,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [agreedTerms, setAgreedTerms] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -259,7 +261,7 @@ const Auth = () => {
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || (!isLogin && !agreedTerms)}
               className="w-full rounded-xl md:rounded-2xl h-10 md:h-12 text-sm md:text-base"
             >
               {loading ? (
@@ -271,6 +273,27 @@ const Auth = () => {
                 isLogin ? "登录" : "注册"
               )}
             </Button>
+
+            {!isLogin && (
+              <div className="flex items-start gap-2 mt-3">
+                <Checkbox
+                  id="terms"
+                  checked={agreedTerms}
+                  onCheckedChange={(checked) => setAgreedTerms(checked === true)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                  继续即表示您同意
+                  <Link to="/terms" target="_blank" className="text-primary hover:underline mx-0.5">
+                    服务条款
+                  </Link>
+                  和
+                  <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
+                    隐私政策
+                  </Link>
+                </label>
+              </div>
+            )}
           </form>
 
           <div className="relative my-4">
