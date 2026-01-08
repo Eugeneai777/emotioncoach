@@ -5,7 +5,7 @@ import { Target, BarChart3, FileText, Check, LogIn, ArrowRight, AlertTriangle, T
 import { AIComparisonCard } from "./AIComparisonCard";
 import { AssessmentFlowCard } from "./AssessmentFlowCard";
 import { AssessmentPreviewCard } from "./AssessmentPreviewCard";
-import { UpgradeHintCard } from "./UpgradeHintCard";
+
 
 interface AssessmentIntroCardProps {
   isLoggedIn: boolean;
@@ -75,7 +75,7 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
             <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 bg-clip-text text-transparent mb-1">
               财富卡点测评
             </h1>
-            <p className="text-[10px] text-slate-500">Powered by 有劲AI</p>
+            <p className="text-[10px] text-slate-500">Powered by 有劲AI · 财富教练</p>
           </motion.div>
           
           <motion.div 
@@ -101,6 +101,17 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
               📊 {statistics.totalAssessments.toLocaleString()} 人已完成测评
             </span>
           </div>
+          
+          {/* 首屏CTA按钮 */}
+          <Button
+            onClick={onPay || onStart}
+            size="lg"
+            className="w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 text-white mt-2"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            ¥9.9 开始测评
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
         </div>
       </Card>
 
@@ -423,8 +434,6 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
       {/* Section 8: Assessment Preview */}
       <AssessmentPreviewCard />
 
-      {/* Section 9: Upgrade Hint */}
-      <UpgradeHintCard />
 
       {/* Section 9: Pricing Module */}
       <Card className="p-5 bg-gradient-to-br from-amber-50 via-orange-50 to-white border-amber-300 relative overflow-hidden shadow-sm">
@@ -471,7 +480,7 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
           </p>
           
           <p className="text-xs text-slate-400 pt-2 border-t border-amber-200 text-center">
-            💎 财富卡点测评 · Powered by 有劲AI
+            💎 财富卡点测评 · Powered by 有劲AI · 财富教练
           </p>
         </div>
       </Card>
