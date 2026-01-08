@@ -680,12 +680,13 @@ serve(async (req) => {
     // 发送模板消息
     const sendUrl = `https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=${accessToken}`;
     
-    const productionUrl = Deno.env.get('VITE_PRODUCTION_URL') || 'https://eugeneai.me';
+    // 微信服务号通知使用专用链接域名
+    const wechatBaseUrl = 'https://wechat.eugenewe.net';
 
     const messageBody = {
       touser: mapping.openid,
       template_id: templateId,
-      url: `${productionUrl}/?notification=${notification.id}`,
+      url: `${wechatBaseUrl}/?notification=${notification.id}`,
       data: messageData,
     };
 
