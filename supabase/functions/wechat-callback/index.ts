@@ -297,20 +297,18 @@ Deno.serve(async (req) => {
           // 所以这里先立刻返回 success，再把耗时逻辑放到后台执行。
           const runInBackground = async () => {
             try {
-              // 查找或创建用户
-              const { data: mappingRows, error: mappingErr } = await supabase
+              // 查找已绑定的用户（一个微信只能绑定一个账号）
+              const { data: existingMapping, error: mappingErr } = await supabase
                 .from('wechat_user_mappings')
                 .select('system_user_id, updated_at, created_at')
                 .eq('openid', FromUserName)
-                .order('updated_at', { ascending: false })
-                .order('created_at', { ascending: false })
-                .limit(1);
+                .maybeSingle();
 
               if (mappingErr) {
                 console.warn('Failed to query wechat_user_mappings (will fallback to create):', mappingErr);
               }
 
-              let userId = mappingRows?.[0]?.system_user_id;
+              let userId = existingMapping?.system_user_id;
 
               // 如果用户不存在，创建新用户
               if (!userId) {
@@ -420,7 +418,7 @@ Deno.serve(async (req) => {
                         subscribe_status: true,
                         updated_at: new Date().toISOString(),
                       },
-                      { onConflict: 'openid,system_user_id' }
+                      { onConflict: 'openid' }
                     );
 
                     console.log('Resolved user for openid:', userId);
@@ -454,7 +452,7 @@ Deno.serve(async (req) => {
                       subscribe_status: true,
                       updated_at: new Date().toISOString(),
                     },
-                    { onConflict: 'openid,system_user_id' }
+                    { onConflict: 'openid' }
                   );
 
                   const { error: notifyError } = await supabase.functions.invoke('send-wechat-template-message', {
