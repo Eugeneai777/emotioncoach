@@ -36,7 +36,7 @@ serve(async (req) => {
       );
     }
 
-    // 获取请求体中的 redirectUri
+    // 获取请求体中的 redirectUri（用于提取路径）
     const { redirectUri } = await req.json();
     if (!redirectUri) {
       return new Response(
@@ -56,8 +56,14 @@ serve(async (req) => {
       );
     }
 
+    // 使用微信认证域名 wechat.eugenewe.net 替换原始域名
+    // 这样可以避免微信安全提示
+    const wechatBaseUrl = 'https://wechat.eugenewe.net';
+    const urlPath = new URL(redirectUri).pathname;
+    const wechatRedirectUri = `${wechatBaseUrl}${urlPath}`;
+    
     // 构建微信 OAuth 授权链接
-    const encodedRedirectUri = encodeURIComponent(redirectUri);
+    const encodedRedirectUri = encodeURIComponent(wechatRedirectUri);
     // 使用 bind_用户ID 作为state，便于回调时识别绑定流程和用户
     const state = `bind_${user.id}`;
     const authUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=snsapi_userinfo&state=${state}#wechat_redirect`;
