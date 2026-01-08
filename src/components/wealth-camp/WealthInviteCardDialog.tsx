@@ -563,7 +563,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 
           <TabsContent value="assessment" className="mt-4">
             <div className="flex justify-center">
-              <div className="transform scale-[0.85] origin-top">
+              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
                 <WealthAssessmentShareCard 
                   ref={assessmentCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -576,7 +576,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 
           <TabsContent value="camp" className="mt-4">
             <div className="flex justify-center">
-              <div className="transform scale-[0.85] origin-top">
+              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
                 <WealthCampShareCard 
                   ref={campCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -591,7 +591,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           <TabsContent value="growth" className="mt-4">
             {growthData ? (
               <div className="flex justify-center">
-                <div className="transform scale-[0.75] origin-top">
+              <div className="transform scale-[0.75] origin-top" style={{ marginBottom: '-25%' }}>
                   <GrowthPosterCard
                     ref={growthCardRef}
                     avatarUrl={userInfo.avatarUrl}
@@ -653,7 +653,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                   )}
                 </div>
                 <div className="flex justify-center">
-                  <div className="transform scale-[0.85] origin-top">
+                  <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
                     <WealthAwakeningShareCard
                       ref={awakeningCardRef}
                       dayNumber={awakeningData.dayNumber}
@@ -676,7 +676,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 
           <TabsContent value="milestone" className="mt-4">
             <div className="flex justify-center">
-              <div className="transform scale-[0.85] origin-top">
+              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
                 <WealthMilestoneShareCard
                   ref={milestoneCardRef}
                   completedDays={userInfo.currentDay || 1}
