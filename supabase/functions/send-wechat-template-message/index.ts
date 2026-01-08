@@ -490,9 +490,11 @@ serve(async (req) => {
     const accessToken = tokenData.access_token;
     const displayName = profile?.display_name || '用户';
 
-    // 构建消息上下文
+    // 构建消息上下文 - 使用当前发送时的北京时间
     const now = new Date();
-    const beijingTime = new Date(now.getTime() + (8 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
+    // 正确计算北京时间：UTC时间 + 8小时
+    const beijingOffset = 8 * 60 * 60 * 1000;
+    const beijingTime = new Date(now.getTime() + beijingOffset);
     
     // 生日功能暂不支持（profiles表无birthday列）
     const isBirthday = false;
@@ -542,17 +544,24 @@ serve(async (req) => {
     // 检测智能跟进场景 (first, keyword1, keyword2, keyword3, remark结构)
     const isFollowupScenario = ['after_briefing', 'emotion_improvement', 'goal_milestone', 'sustained_low_mood', 'inactivity', 'consistent_checkin', 'encouragement'].includes(scenario);
     
+    // 辅助函数：格式化北京时间为字符串
+    const formatBeijingTime = (includeSeconds = false) => {
+      const year = beijingTime.getUTCFullYear();
+      const month = String(beijingTime.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(beijingTime.getUTCDate()).padStart(2, '0');
+      const hours = String(beijingTime.getUTCHours()).padStart(2, '0');
+      const minutes = String(beijingTime.getUTCMinutes()).padStart(2, '0');
+      const seconds = String(beijingTime.getUTCSeconds()).padStart(2, '0');
+      
+      if (includeSeconds) {
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      }
+      return `${year}-${month}-${day} ${hours}:${minutes}`;
+    };
+
     if (scenario === 'login_success') {
       // 登录成功模板结构：thing3(用户名)、character_string1(账号)、time2(登录时间)
-      const loginTime = beijingTime.toLocaleString('zh-CN', { 
-        timeZone: 'Asia/Shanghai',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
+      const loginTime = formatBeijingTime(true);
       
       messageData = {
         thing3: { 
@@ -570,7 +579,7 @@ serve(async (req) => {
       };
     } else if (isCheckinScenario) {
       // "打卡成功通知"模板结构 (thing10学生姓名, thing4打卡名称, time3时间)
-      const timeStr = `${beijingTime.getUTCFullYear()}-${String(beijingTime.getUTCMonth() + 1).padStart(2, '0')}-${String(beijingTime.getUTCDate()).padStart(2, '0')} ${String(beijingTime.getUTCHours()).padStart(2, '0')}:${String(beijingTime.getUTCMinutes()).padStart(2, '0')}`;
+      const timeStr = formatBeijingTime();
       messageData = {
         thing10: { 
           value: (displayName || '用户').slice(0, 20),
@@ -587,8 +596,8 @@ serve(async (req) => {
       };
     } else if (isFollowupScenario) {
       // 智能跟进场景使用经典模板格式 (first, keyword1, keyword2, keyword3, remark)
-      const timeStr = `${beijingTime.getUTCFullYear()}-${String(beijingTime.getUTCMonth() + 1).padStart(2, '0')}-${String(beijingTime.getUTCDate()).padStart(2, '0')} ${String(beijingTime.getUTCHours()).padStart(2, '0')}:${String(beijingTime.getUTCMinutes()).padStart(2, '0')}`;
-      
+      const timeStr = formatBeijingTime();
+
       // 检测节日/特殊日期
       const specialDay = detectSpecialDay(messageContext);
       
@@ -638,8 +647,8 @@ serve(async (req) => {
       };
     } else {
       // 其他默认场景使用经典模板格式 (first, keyword1, keyword2, keyword3, remark)
-      const timeStr = `${beijingTime.getUTCFullYear()}-${String(beijingTime.getUTCMonth() + 1).padStart(2, '0')}-${String(beijingTime.getUTCDate()).padStart(2, '0')} ${String(beijingTime.getUTCHours()).padStart(2, '0')}:${String(beijingTime.getUTCMinutes()).padStart(2, '0')}`;
-      
+      const timeStr = formatBeijingTime();
+
       // 根据场景设置内容
       const scenarioContentMap: Record<string, { first: string; content: string; remark: string }> = {
         'daily_reminder': { first: '今日情绪记录提醒', content: '别忘了今天的情绪记录', remark: '记录是了解自己的开始 🌱' },
