@@ -55,12 +55,11 @@ serve(async (req) => {
 
     // 3. 创建或绑定用户
     if (openId) {
-      // 微信用户 - 检查是否已存在
+      // 微信用户 - 检查是否已存在（一个微信只能绑定一个账号）
       const { data: existingMapping } = await supabaseAdmin
         .from('wechat_user_mappings')
         .select('system_user_id')
         .eq('openid', openId)
-        .limit(1)
         .maybeSingle();
 
       if (existingMapping?.system_user_id) {
