@@ -4,20 +4,20 @@ import { Sparkles, X, Check, Brain } from "lucide-react";
 
 const comparisonItems = [
   {
-    traditional: "固定30道题，做完就结束",
-    ai: "AI智能追问，精准挖掘隐藏模式",
+    traditional: "固定题目，机械作答",
+    ai: "AI智能追问，深挖隐藏盲点",
   },
   {
-    traditional: "一次性报告，看完就忘",
-    ai: "活画像系统，持续追踪成长轨迹",
+    traditional: "一次性PDF报告",
+    ai: "四穷雷达图 + 可视化诊断",
+  },
+  {
+    traditional: "泛泛建议，不针对个人",
+    ai: "个性化突破方案",
   },
   {
     traditional: "冷冰冰的分数标签",
-    ai: "AI教练记住你，每次对话都懂你",
-  },
-  {
-    traditional: "没有后续指导",
-    ai: "21天AI陪伴，见证每个突破时刻",
+    ai: "人格故事化解读",
   },
 ];
 
@@ -68,7 +68,7 @@ export function AIComparisonCard() {
         className="mt-4 p-3 rounded-lg bg-gradient-to-r from-amber-950/50 to-violet-950/50 border border-amber-500/20"
       >
         <p className="text-xs text-center text-amber-200/90">
-          <span className="font-bold text-amber-300">有劲AI</span> = 智能诊断 + 持续陪伴 + 动态成长
+          <span className="font-bold text-amber-300">有劲AI</span> = 智能追问 + 可视诊断 + 精准方案
         </p>
       </motion.div>
     </Card>

@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Target, Lightbulb, BarChart3, Rocket, Check, LogIn, ArrowRight, AlertTriangle, TrendingDown, Shield, Sparkles, Brain, Zap } from "lucide-react";
+import { Target, BarChart3, FileText, Check, LogIn, ArrowRight, AlertTriangle, TrendingDown, Shield, Sparkles, Brain, Zap } from "lucide-react";
 import { AIComparisonCard } from "./AIComparisonCard";
-import { AIThreeLocksCard } from "./AIThreeLocksCard";
-import { AITestimonialsCard } from "./AITestimonialsCard";
+import { AssessmentFlowCard } from "./AssessmentFlowCard";
+import { AssessmentPreviewCard } from "./AssessmentPreviewCard";
+import { UpgradeHintCard } from "./UpgradeHintCard";
 
 interface AssessmentIntroCardProps {
   isLoggedIn: boolean;
@@ -35,15 +36,15 @@ const upgradedPainPoints = [
 const valuePoints = [
   { icon: Target, title: "精准定位", desc: "识别行为、情绪、信念三层卡点", color: "text-emerald-500" },
   { icon: BarChart3, title: "可视诊断", desc: "四穷雷达图 + 觉醒指数仪表盘", color: "text-cyan-500" },
-  { icon: Brain, title: "AI智能追问", desc: "根据回答动态生成5-10个深度追问，挖掘隐藏盲点", color: "text-violet-500" },
-  { icon: Rocket, title: "个性方案", desc: "匹配专属21天觉醒训练营", color: "text-amber-500" },
+  { icon: Brain, title: "AI智能追问", desc: "根据回答动态生成深度追问，挖掘隐藏盲点", color: "text-violet-500" },
+  { icon: FileText, title: "专属报告", desc: "人格故事解读 + 个性化突破建议", color: "text-amber-500" },
 ];
 
 const pricingIncludes = [
   "30道专业场景测评",
   "AI智能深度追问",
-  "四穷人格活画像",
-  "个性化突破方案",
+  "四穷雷达图诊断",
+  "个性化突破建议",
 ];
 
 const loginBenefits = [
@@ -65,17 +66,16 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl" />
         
         <div className="relative text-center space-y-3">
-          {/* Brand Slogan */}
+          {/* Brand Identity */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-2"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-full border border-amber-500/30 mb-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="text-amber-200 text-sm font-semibold">有劲AI · 财富教练</span>
-            </div>
-            <p className="text-xs text-amber-300/80">不止测评，更是你的财富觉醒搭档</p>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-amber-300 via-orange-300 to-amber-400 bg-clip-text text-transparent mb-1">
+              财富卡点测评
+            </h1>
+            <p className="text-[10px] text-slate-400">Powered by 有劲AI</p>
           </motion.div>
           
           <motion.div 
@@ -420,11 +420,14 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
         </p>
       </Card>
 
-      {/* Section 7: AI Three Locks System - NEW */}
-      <AIThreeLocksCard />
+      {/* Section 7: Assessment Flow */}
+      <AssessmentFlowCard />
 
-      {/* Section 8: User Testimonials - NEW */}
-      <AITestimonialsCard />
+      {/* Section 8: Assessment Preview */}
+      <AssessmentPreviewCard />
+
+      {/* Section 9: Upgrade Hint */}
+      <UpgradeHintCard />
 
       {/* Section 9: Pricing Module */}
       <Card className="p-5 bg-gradient-to-br from-slate-900 via-slate-800 to-amber-950/30 border-amber-500/40 relative overflow-hidden">
@@ -457,12 +460,12 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
             >
               <span className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
-                ¥9.9 开启 AI 财富诊断
+                ¥9.9 立即测评
                 <ArrowRight className="w-4 h-4" />
               </span>
             </Button>
             <p className="text-[10px] text-slate-400">
-              AI智能追问 + 活画像生成 + 个性化突破方案
+              30道题 + AI追问 + 专属报告
             </p>
           </div>
           
@@ -470,8 +473,8 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
             已有 <span className="text-amber-400 font-medium">{statistics.breakthroughUsers.toLocaleString()}</span> 人通过测评获得突破
           </p>
           
-          <p className="text-xs text-amber-400/80 pt-2 border-t border-amber-500/20 text-center">
-            💎 有劲AI · 财富教练
+          <p className="text-xs text-slate-500 pt-2 border-t border-slate-700/30 text-center">
+            💎 财富卡点测评 · Powered by 有劲AI
           </p>
         </div>
       </Card>
