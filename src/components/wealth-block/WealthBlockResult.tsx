@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, Heart, Brain, Share2, MessageCircle, Sparkles, RotateCcw, Save, ChevronDown } from "lucide-react";
+import { Target, Heart, Brain, Share2, MessageCircle, Sparkles, RotateCcw, Save, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -82,6 +82,9 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   const [showStartDialog, setShowStartDialog] = useState(false);
   const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_21");
   const hasPurchased = !!purchaseRecord;
+
+  // 控制三层展开状态
+  const [openLayers, setOpenLayers] = useState<string[]>([]);
 
   const totalScore = result.behaviorScore + result.emotionScore + result.beliefScore;
   const healthScore = calculateHealthScore(totalScore);
@@ -291,14 +294,45 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         </Card>
       </motion.div>
 
-      {/* 三层深度分析标题 */}
-      <div className="text-center py-2">
-        <h3 className="text-lg font-bold text-foreground">📊 三层深度诊断</h3>
-        <p className="text-sm text-muted-foreground">行为 → 情绪 → 信念，层层递进</p>
+      {/* 三层深度分析标题 + 展开/收起按钮 */}
+      <div className="flex items-center justify-between py-2">
+        <div>
+          <h3 className="text-lg font-bold text-foreground">📊 三层深度诊断</h3>
+          <p className="text-sm text-muted-foreground">行为 → 情绪 → 信念，层层递进</p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            if (openLayers.length === 3) {
+              setOpenLayers([]);
+            } else {
+              setOpenLayers(["behavior", "emotion", "belief"]);
+            }
+          }}
+          className="text-xs text-muted-foreground"
+        >
+          {openLayers.length === 3 ? (
+            <>
+              <ChevronUp className="w-4 h-4 mr-1" />
+              收起全部
+            </>
+          ) : (
+            <>
+              <ChevronDown className="w-4 h-4 mr-1" />
+              展开全部
+            </>
+          )}
+        </Button>
       </div>
 
       {/* 三层深度分析 - 手风琴 */}
-      <Accordion type="multiple" defaultValue={["behavior"]} className="space-y-4">
+      <Accordion 
+        type="multiple" 
+        value={openLayers}
+        onValueChange={setOpenLayers}
+        className="space-y-0"
+      >
         {/* 第一层：行为层分析 */}
         <AccordionItem value="behavior" className="border-0">
           <motion.div
@@ -406,8 +440,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
             </Card>
           </motion.div>
         </AccordionItem>
-
-        {/* 层间递进提示 */}
+        
         <LayerTransitionHint from="behavior" to="emotion" />
 
         {/* 第二层：情绪层分析 */}
@@ -526,8 +559,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
             </Card>
           </motion.div>
         </AccordionItem>
-
-        {/* 层间递进提示 */}
+        
         <LayerTransitionHint from="emotion" to="belief" />
 
         {/* 第三层：信念层分析 */}

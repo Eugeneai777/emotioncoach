@@ -32,24 +32,23 @@ export function LayerTransitionHint({ from, to }: LayerTransitionHintProps) {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
-      className="py-4"
+      className="py-2"
     >
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex items-center justify-center gap-3">
         <motion.div
-          animate={{ y: [0, 4, 0] }}
+          animate={{ y: [0, 3, 0] }}
           transition={{ duration: 1.5, repeat: Infinity }}
         >
-          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+          <ChevronDown className="w-4 h-4 text-muted-foreground" />
         </motion.div>
-        <div className="text-center px-6">
-          <p className="text-sm font-medium text-foreground">{message.text}</p>
-          <p className="text-xs text-muted-foreground mt-1">{message.subtext}</p>
+        <div className="text-center">
+          <p className="text-xs font-medium text-muted-foreground">{message.text}</p>
         </div>
         <motion.div
-          animate={{ y: [0, 4, 0] }}
+          animate={{ y: [0, 3, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, delay: 0.3 }}
         >
-          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+          <ChevronDown className="w-4 h-4 text-muted-foreground" />
         </motion.div>
       </div>
     </motion.div>
