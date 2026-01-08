@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { FollowGuideStep } from "@/components/onboarding/FollowGuideStep";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,6 +18,8 @@ const Auth = () => {
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const [agreedTerms, setAgreedTerms] = useState(false);
+  const [showFollowGuide, setShowFollowGuide] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -47,6 +51,10 @@ const Auth = () => {
     // 监听认证状态变化
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session && event === 'SIGNED_IN') {
+        // 判断是否是新注册用户（通过 created_at 判断，5秒内创建的认为是新注册）
+        const isNewUser = session.user.created_at && 
+          (new Date().getTime() - new Date(session.user.created_at).getTime()) < 5000;
+
         // 发送登录成功通知到微信公众号
         try {
           await supabase.functions.invoke('send-wechat-template-message', {
@@ -54,8 +62,8 @@ const Auth = () => {
               userId: session.user.id,
               scenario: 'login_success',
               notification: {
-                title: '登录成功',
-                message: '欢迎回来',
+                title: isNewUser ? '注册成功' : '登录成功',
+                message: isNewUser ? '欢迎加入' : '欢迎回来',
                 account: session.user.email?.replace(/(.{3}).*(@.*)/, '$1***$2') || '***',
                 email: session.user.email
               }
@@ -81,11 +89,13 @@ const Auth = () => {
           }
         }
         
-        // Redirect to saved path or preferred coach home
+        // 计算目标跳转路径
         const savedRedirect = localStorage.getItem('auth_redirect');
+        let targetRedirect = '/';
+        
         if (savedRedirect) {
           localStorage.removeItem('auth_redirect');
-          navigate(savedRedirect);
+          targetRedirect = savedRedirect;
         } else {
           // 查询用户偏好教练类型，智能跳转
           try {
@@ -106,29 +116,46 @@ const Auth = () => {
                 .maybeSingle();
               
               if (activeCamp) {
-                navigate("/wealth-camp-checkin");
+                targetRedirect = "/wealth-camp-checkin";
               } else {
-                navigate("/wealth-coach-intro");
+                targetRedirect = "/wealth-coach-intro";
               }
             } else if (profile?.preferred_coach === 'emotion') {
-              navigate("/");
+              targetRedirect = "/";
             } else if (profile?.preferred_coach === 'communication') {
-              navigate("/communication");
+              targetRedirect = "/communication";
             } else if (profile?.preferred_coach === 'parent') {
-              navigate("/parent-emotion");
+              targetRedirect = "/parent-emotion";
             } else {
-              navigate("/");
+              targetRedirect = "/";
             }
           } catch (error) {
             console.log('获取用户偏好失败，跳转默认首页:', error);
-            navigate("/");
+            targetRedirect = "/";
           }
+        }
+
+        // 如果是新注册用户，显示关注公众号引导
+        if (isNewUser) {
+          setPendingRedirect(targetRedirect);
+          setShowFollowGuide(true);
+        } else {
+          navigate(targetRedirect);
         }
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const handleFollowComplete = () => {
+    setShowFollowGuide(false);
+    if (pendingRedirect) {
+      navigate(pendingRedirect);
+    } else {
+      navigate('/');
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -322,6 +349,16 @@ const Auth = () => {
           </div>
         </div>
       </div>
+
+      {/* 新用户注册后引导关注公众号 */}
+      <Dialog open={showFollowGuide} onOpenChange={() => {}}>
+        <DialogContent hideCloseButton className="max-w-sm">
+          <FollowGuideStep 
+            onComplete={handleFollowComplete}
+            onSkip={handleFollowComplete}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
