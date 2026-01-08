@@ -1,0 +1,270 @@
+import { motion } from "framer-motion";
+import { Lock, Clock, Database, Heart, Shield, Sparkles } from "lucide-react";
+import { Card } from "@/components/ui/card";
+
+const locks = [
+  {
+    icon: Clock,
+    name: "时间锁",
+    color: "from-amber-400 to-orange-500",
+    glowColor: "rgba(251,191,36,0.4)",
+    angle: 0,
+    description: "21天追踪你的卡点变化轨迹",
+  },
+  {
+    icon: Database,
+    name: "数据锁",
+    color: "from-cyan-400 to-blue-500",
+    glowColor: "rgba(6,182,212,0.4)",
+    angle: 120,
+    description: "活画像记录你的每一次成长",
+  },
+  {
+    icon: Heart,
+    name: "关系锁",
+    color: "from-rose-400 to-pink-500",
+    glowColor: "rgba(244,63,94,0.4)",
+    angle: 240,
+    description: "AI见证并命名你的每次蜕变",
+  },
+];
+
+interface AIMoatAnimationProps {
+  compact?: boolean;
+  showLabels?: boolean;
+}
+
+export function AIMoatAnimation({ compact = false, showLabels = true }: AIMoatAnimationProps) {
+  const size = compact ? 200 : 280;
+  const orbitRadius = compact ? 65 : 95;
+  const centerSize = compact ? 70 : 100;
+  const lockSize = compact ? 40 : 56;
+  
+  return (
+    <Card className={`${compact ? 'p-4' : 'p-6'} bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border-indigo-500/30 overflow-hidden relative`}>
+      {/* Background glow effects */}
+      <div className="absolute inset-0 overflow-hidden">
+        <motion.div
+          animate={{
+            opacity: [0.3, 0.5, 0.3],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full bg-gradient-to-r from-purple-500/20 via-indigo-500/20 to-cyan-500/20 blur-3xl"
+        />
+      </div>
+      
+      {/* Header */}
+      <div className="relative z-10 flex items-center justify-center gap-2 mb-4">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        >
+          <Shield className="w-5 h-5 text-indigo-400" />
+        </motion.div>
+        <h3 className={`font-bold text-white ${compact ? 'text-sm' : 'text-base'}`}>
+          AI 三锁护城河
+        </h3>
+        <motion.div
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <Sparkles className="w-4 h-4 text-amber-400" />
+        </motion.div>
+      </div>
+      
+      {/* Main Animation Container */}
+      <div 
+        className="relative mx-auto"
+        style={{ width: size, height: size }}
+      >
+        {/* Orbital rings */}
+        {[1, 2, 3].map((ring) => (
+          <motion.div
+            key={ring}
+            className="absolute rounded-full border border-dashed"
+            style={{
+              width: orbitRadius * 2 + ring * 20,
+              height: orbitRadius * 2 + ring * 20,
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              borderColor: `rgba(139,92,246,${0.15 + ring * 0.05})`,
+            }}
+            animate={{ rotate: ring % 2 === 0 ? 360 : -360 }}
+            transition={{ duration: 30 + ring * 10, repeat: Infinity, ease: "linear" }}
+          />
+        ))}
+        
+        {/* Center core - User data */}
+        <motion.div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center"
+          style={{ width: centerSize, height: centerSize }}
+          animate={{
+            boxShadow: [
+              '0 0 20px rgba(139,92,246,0.4), 0 0 40px rgba(139,92,246,0.2)',
+              '0 0 30px rgba(139,92,246,0.6), 0 0 60px rgba(139,92,246,0.3)',
+              '0 0 20px rgba(139,92,246,0.4), 0 0 40px rgba(139,92,246,0.2)',
+            ],
+          }}
+          transition={{ duration: 3, repeat: Infinity }}
+        >
+          <div className="text-center">
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <span className={`${compact ? 'text-xl' : 'text-2xl'}`}>👤</span>
+            </motion.div>
+            <p className={`text-white font-medium ${compact ? 'text-[8px]' : 'text-[10px]'} mt-0.5`}>你的成长</p>
+          </div>
+        </motion.div>
+        
+        {/* Orbiting locks */}
+        {locks.map((lock, index) => {
+          const angleOffset = (index * 120) * (Math.PI / 180);
+          
+          return (
+            <motion.div
+              key={lock.name}
+              className="absolute"
+              style={{
+                width: lockSize,
+                height: lockSize,
+                top: '50%',
+                left: '50%',
+                marginLeft: -lockSize / 2,
+                marginTop: -lockSize / 2,
+              }}
+              animate={{
+                x: Math.cos(angleOffset) * orbitRadius,
+                y: Math.sin(angleOffset) * orbitRadius,
+              }}
+              transition={{
+                duration: 0.5,
+                ease: "easeOut",
+              }}
+            >
+              {/* Animated orbit around center */}
+              <motion.div
+                animate={{
+                  rotate: 360,
+                }}
+                transition={{
+                  duration: 20,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+                style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                }}
+              >
+                <motion.div
+                  className={`w-full h-full rounded-xl bg-gradient-to-br ${lock.color} flex items-center justify-center shadow-lg`}
+                  style={{
+                    position: 'absolute',
+                    transform: `rotate(${-index * 120}deg)`,
+                  }}
+                  animate={{
+                    boxShadow: [
+                      `0 4px 15px ${lock.glowColor}`,
+                      `0 4px 25px ${lock.glowColor}`,
+                      `0 4px 15px ${lock.glowColor}`,
+                    ],
+                  }}
+                  transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 }}
+                  whileHover={{ scale: 1.1 }}
+                >
+                  <lock.icon className="w-5 h-5 text-white" />
+                </motion.div>
+              </motion.div>
+              
+              {/* Connection line to center */}
+              <motion.div
+                className="absolute top-1/2 left-1/2 origin-left"
+                style={{
+                  width: orbitRadius - lockSize / 2,
+                  height: 2,
+                  background: `linear-gradient(90deg, transparent, ${lock.glowColor})`,
+                  transform: `rotate(${180 + lock.angle}deg)`,
+                }}
+                animate={{
+                  opacity: [0.3, 0.7, 0.3],
+                }}
+                transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
+              />
+            </motion.div>
+          );
+        })}
+        
+        {/* Data flow particles */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1.5 h-1.5 rounded-full bg-gradient-to-r from-cyan-400 to-purple-400"
+            style={{
+              top: '50%',
+              left: '50%',
+            }}
+            animate={{
+              x: [0, Math.cos((i * 60) * Math.PI / 180) * orbitRadius * 0.8, 0],
+              y: [0, Math.sin((i * 60) * Math.PI / 180) * orbitRadius * 0.8, 0],
+              opacity: [0, 1, 0],
+              scale: [0, 1, 0],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              delay: i * 0.5,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </div>
+      
+      {/* Lock Labels */}
+      {showLabels && (
+        <div className={`relative z-10 ${compact ? 'mt-3' : 'mt-5'} space-y-2`}>
+          {locks.map((lock, index) => (
+            <motion.div
+              key={lock.name}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 + index * 0.15 }}
+              className="flex items-center gap-3"
+            >
+              <div className={`p-1.5 rounded-lg bg-gradient-to-br ${lock.color}`}>
+                <Lock className="w-3 h-3 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-white font-medium text-xs">{lock.name}</span>
+                  <motion.div
+                    className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent"
+                    animate={{ scaleX: [0, 1] }}
+                    transition={{ delay: 0.5 + index * 0.15, duration: 0.5 }}
+                  />
+                </div>
+                <p className="text-slate-400 text-[10px] truncate">{lock.description}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+      
+      {/* Bottom tagline */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+        className={`relative z-10 ${compact ? 'mt-3' : 'mt-4'} text-center`}
+      >
+        <p className="text-[10px] text-slate-500">
+          三重锁定，让AI成为你不可替代的成长伙伴
+        </p>
+      </motion.div>
+    </Card>
+  );
+}

@@ -13,6 +13,7 @@ import { useCampPurchase } from "@/hooks/useCampPurchase";
 import { toast } from "sonner";
 import { AIThreeLocksCardLight } from "@/components/wealth-block/AIThreeLocksCardLight";
 import { LivingProfileCard } from "@/components/wealth-block/LivingProfileCard";
+import { AIMoatAnimation } from "@/components/wealth-block/AIMoatAnimation";
 
 const WealthCampIntro = () => {
   const navigate = useNavigate();
@@ -392,7 +393,8 @@ const WealthCampIntro = () => {
             传统训练营只给方法，有劲AI · 财富教练给你三重锁定。
           </p>
           
-          <AIThreeLocksCardLight />
+          {/* AI Moat Animation - 动态展示三锁系统 */}
+          <AIMoatAnimation compact={false} showLabels={true} />
           
           <div className="mt-4">
             <LivingProfileCard />
