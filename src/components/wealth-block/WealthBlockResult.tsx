@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, Heart, Brain, Share2, MessageCircle, GraduationCap, Sparkles, RotateCcw, Save, ChevronDown, ShoppingCart, Clock } from "lucide-react";
+import { Target, Heart, Brain, Share2, MessageCircle, Sparkles, RotateCcw, Save, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -45,12 +45,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { HealthScoreDashboard } from "./HealthScoreDashboard";
 import { EnhancedHealthGauge } from "./EnhancedHealthGauge";
 import { EnhancedFourPoorRadar } from "./EnhancedFourPoorRadar";
 import { PriorityBreakthroughMap } from "./PriorityBreakthroughMap";
 import { AIInsightCard, AIInsightData } from "./AIInsightCard";
-import { AIAnalysisValueCard } from "./AIAnalysisValueCard";
+import { LayerTransitionHint } from "./LayerTransitionHint";
+import { CampConversionCard } from "./CampConversionCard";
 import { DeepFollowUpAnswer } from "./DeepFollowUpDialog";
 
 interface WealthBlockResultProps {
@@ -227,15 +227,6 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         beliefScore={result.beliefScore}
       />
 
-      {/* 四穷雷达图 - 直观展示行为卡点 */}
-      <EnhancedFourPoorRadar
-        mouthScore={result.mouthScore}
-        handScore={result.handScore}
-        eyeScore={result.eyeScore}
-        heartScore={result.heartScore}
-        dominantPoor={result.dominantPoor}
-      />
-
       {/* 财富反应模式结果卡片 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -300,56 +291,11 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         </Card>
       </motion.div>
 
-      {/* AI 个性化洞察卡片 */}
-      <AIInsightCard
-        insight={aiInsight}
-        isLoading={isLoadingAI}
-        error={aiError}
-      />
-
-      {/* AI 分析价值说明卡片 */}
-      <AIAnalysisValueCard />
-
-      {/* 优先突破地图 */}
-      <PriorityBreakthroughMap
-        mouthScore={result.mouthScore}
-        handScore={result.handScore}
-        eyeScore={result.eyeScore}
-        heartScore={result.heartScore}
-        anxietyScore={result.anxietyScore}
-        scarcityScore={result.scarcityScore}
-        comparisonScore={result.comparisonScore}
-        shameScore={result.shameScore}
-        guiltScore={result.guiltScore}
-        lackScore={result.lackScore}
-        linearScore={result.linearScore}
-        stigmaScore={result.stigmaScore}
-        unworthyScore={result.unworthyScore}
-        relationshipScore={result.relationshipScore}
-      />
-      
-      {/* 统一说明 */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <Card className="border-0 shadow-md bg-gradient-to-br from-slate-50 to-gray-100">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <span className="text-xl">📋</span>
-              <div>
-                <h4 className="font-semibold text-foreground mb-1">统一说明</h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  反应模式不是一生不变的标签，<br/>
-                  而是你<span className="text-foreground font-medium">此刻的状态</span>。<br/>
-                  状态改变，你与财富的关系就会改变。
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+      {/* 三层深度分析标题 */}
+      <div className="text-center py-2">
+        <h3 className="text-lg font-bold text-foreground">📊 三层深度诊断</h3>
+        <p className="text-sm text-muted-foreground">行为 → 情绪 → 信念，层层递进</p>
+      </div>
 
       {/* 三层深度分析 - 手风琴 */}
       <Accordion type="multiple" defaultValue={["behavior"]} className="space-y-4">
@@ -460,6 +406,9 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
             </Card>
           </motion.div>
         </AccordionItem>
+
+        {/* 层间递进提示 */}
+        <LayerTransitionHint from="behavior" to="emotion" />
 
         {/* 第二层：情绪层分析 */}
         <AccordionItem value="emotion" className="border-0">
@@ -577,6 +526,9 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
             </Card>
           </motion.div>
         </AccordionItem>
+
+        {/* 层间递进提示 */}
+        <LayerTransitionHint from="emotion" to="belief" />
 
         {/* 第三层：信念层分析 */}
         <AccordionItem value="belief" className="border-0">
@@ -709,6 +661,39 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         </AccordionItem>
       </Accordion>
 
+      {/* AI 个性化洞察卡片 - 移到三层分析后 */}
+      <AIInsightCard
+        insight={aiInsight}
+        isLoading={isLoadingAI}
+        error={aiError}
+      />
+
+      {/* 优先突破地图 - Top 3 */}
+      <PriorityBreakthroughMap
+        mouthScore={result.mouthScore}
+        handScore={result.handScore}
+        eyeScore={result.eyeScore}
+        heartScore={result.heartScore}
+        anxietyScore={result.anxietyScore}
+        scarcityScore={result.scarcityScore}
+        comparisonScore={result.comparisonScore}
+        shameScore={result.shameScore}
+        guiltScore={result.guiltScore}
+        lackScore={result.lackScore}
+        linearScore={result.linearScore}
+        stigmaScore={result.stigmaScore}
+        unworthyScore={result.unworthyScore}
+        relationshipScore={result.relationshipScore}
+      />
+
+      {/* 训练营转化卡片 */}
+      <CampConversionCard
+        hasPurchased={hasPurchased}
+        onPurchase={() => setShowPayDialog(true)}
+        onStart={() => setShowStartDialog(true)}
+        onViewDetails={() => navigate('/wealth-camp-intro')}
+      />
+
       {/* 行动按钮 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -733,75 +718,6 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
             <span className="text-sm font-medium">测评结果已保存</span>
           </div>
         )}
-
-        {/* 训练营推荐卡片 - 增强版 */}
-        <div className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 rounded-xl border border-amber-200 dark:border-amber-800">
-          <div className="text-center mb-4">
-            <p className="text-sm text-muted-foreground">🎯 基于你的测评结果，推荐参加：</p>
-            <p className="font-semibold text-amber-700 dark:text-amber-400 text-lg">21天财富觉醒训练营</p>
-          </div>
-          
-          {/* AI护城河预览 */}
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className="text-center p-2.5 bg-amber-100/60 dark:bg-amber-900/30 rounded-lg border border-amber-200/50">
-              <Clock className="w-4 h-4 mx-auto text-amber-600 dark:text-amber-400 mb-1" />
-              <p className="text-[10px] font-medium text-amber-700 dark:text-amber-400">时间锁</p>
-              <p className="text-[9px] text-muted-foreground">21天追踪</p>
-            </div>
-            <div className="text-center p-2.5 bg-cyan-100/60 dark:bg-cyan-900/30 rounded-lg border border-cyan-200/50">
-              <Brain className="w-4 h-4 mx-auto text-cyan-600 dark:text-cyan-400 mb-1" />
-              <p className="text-[10px] font-medium text-cyan-700 dark:text-cyan-400">数据锁</p>
-              <p className="text-[9px] text-muted-foreground">活画像</p>
-            </div>
-            <div className="text-center p-2.5 bg-rose-100/60 dark:bg-rose-900/30 rounded-lg border border-rose-200/50">
-              <Heart className="w-4 h-4 mx-auto text-rose-600 dark:text-rose-400 mb-1" />
-              <p className="text-[10px] font-medium text-rose-700 dark:text-rose-400">关系锁</p>
-              <p className="text-[9px] text-muted-foreground">AI见证</p>
-            </div>
-          </div>
-          
-          {/* 活画像说明 */}
-          <div className="p-3 bg-white/80 dark:bg-white/10 rounded-lg mb-4 border border-amber-100 dark:border-amber-800/50">
-            <p className="text-xs text-center text-foreground leading-relaxed">
-              今天的测评结果是你「活画像」的 <span className="font-semibold text-amber-600 dark:text-amber-400">Day 0</span> 基准线<br/>
-              <span className="text-muted-foreground">21天后，你将清晰看见自己的成长轨迹</span>
-            </p>
-          </div>
-          
-          {/* 价格 */}
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <span className="text-muted-foreground line-through text-sm">¥399</span>
-            <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">¥299</span>
-            <span className="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded animate-pulse">限时</span>
-          </div>
-          
-          {/* 直接购买/开始按钮 */}
-          {hasPurchased ? (
-            <Button 
-              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg h-12"
-              onClick={() => setShowStartDialog(true)}
-            >
-              <GraduationCap className="w-5 h-5 mr-2" />
-              开始训练营
-            </Button>
-          ) : (
-            <Button 
-              className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg h-12"
-              onClick={() => setShowPayDialog(true)}
-            >
-              <ShoppingCart className="w-5 h-5 mr-2" />
-              ¥299 立即购买
-            </Button>
-          )}
-          
-          <Button 
-            variant="link" 
-            className="w-full text-amber-700 dark:text-amber-400 mt-2"
-            onClick={() => navigate('/wealth-camp-intro')}
-          >
-            查看训练营详情 →
-          </Button>
-        </div>
         
         <div className="grid grid-cols-2 gap-3">
           <WealthInviteCardDialog

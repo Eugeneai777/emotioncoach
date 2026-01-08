@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star, AlertTriangle, CheckCircle2, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
   fourPoorInfo, 
@@ -82,10 +82,8 @@ export function PriorityBreakthroughMap({
     return bPercentage - aPercentage;
   });
 
-  // Split into priority groups
-  const topPriority = sortedBlocks.slice(0, 2);
-  const secondPriority = sortedBlocks.slice(2, 5);
-  const healthyBlocks = sortedBlocks.filter(b => getSeverity(b.score, b.maxScore).level === 'low');
+  // Only show Top 3 priority blocks (simplified)
+  const topPriority = sortedBlocks.slice(0, 3);
 
   const categoryColors = {
     behavior: 'bg-amber-500/10 border-amber-500/30',
@@ -113,116 +111,67 @@ export function PriorityBreakthroughMap({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Top Priority */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Star className="w-4 h-4 text-amber-500" />
-              <span className="text-sm font-semibold text-amber-600">第1优先级 · 最需关注</span>
-            </div>
-            <div className="space-y-2">
-              {topPriority.map((block, index) => {
-                const severity = getSeverity(block.score, block.maxScore);
-                const progressPotential = getProgressPotential(block.score, block.maxScore);
-                return (
-                  <motion.div
-                    key={block.key}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 + index * 0.1 }}
-                    className={cn(
-                      "p-3 rounded-xl border",
-                      categoryColors[block.category]
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{block.emoji}</span>
-                        <div>
-                          <span className="font-medium">{block.name}</span>
-                          <span className={cn("ml-2 text-xs px-1.5 py-0.5 rounded", severity.color, "bg-current/10")}>
-                            {severity.label}
-                          </span>
-                        </div>
+          {/* Top 3 Priority */}
+          <div className="space-y-2">
+            {topPriority.map((block, index) => {
+              const severity = getSeverity(block.score, block.maxScore);
+              const progressPotential = getProgressPotential(block.score, block.maxScore);
+              return (
+                <motion.div
+                  key={block.key}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 + index * 0.1 }}
+                  className={cn(
+                    "p-3 rounded-xl border",
+                    categoryColors[block.category]
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-xs font-bold">
+                        {index + 1}
+                      </span>
+                      <span className="text-xl">{block.emoji}</span>
+                      <div>
+                        <span className="font-medium">{block.name}</span>
+                        <span className={cn("ml-2 text-xs px-1.5 py-0.5 rounded", severity.color, "bg-current/10")}>
+                          {severity.label}
+                        </span>
                       </div>
-                      <span className="text-sm font-semibold">{block.score}/{block.maxScore}</span>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-current opacity-50" style={{ backgroundColor: categoryColors[block.category].split(' ')[0].replace('bg-', '').replace('/10', '') }} />
-                        {categoryLabels[block.category]}层
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <TrendingUp className="w-3 h-3" />
-                        进步空间 {progressPotential}分
-                      </span>
-                    </div>
-                    {/* Progress bar */}
-                    <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        className={cn(
-                          "h-full rounded-full",
-                          severity.level === 'critical' ? "bg-rose-500" :
-                          severity.level === 'high' ? "bg-orange-500" :
-                          severity.level === 'medium' ? "bg-amber-500" : "bg-emerald-500"
-                        )}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(block.score / block.maxScore) * 100}%` }}
-                        transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-                      />
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Second Priority */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle className="w-4 h-4 text-slate-500" />
-              <span className="text-sm font-semibold text-muted-foreground">第2优先级</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {secondPriority.map((block) => {
-                const severity = getSeverity(block.score, block.maxScore);
-                return (
-                  <div 
-                    key={block.key}
-                    className="p-2 bg-muted/50 rounded-lg text-center"
-                  >
-                    <span className="text-lg">{block.emoji}</span>
-                    <p className="text-xs font-medium mt-1 truncate">{block.name}</p>
-                    <p className={cn("text-xs", severity.color)}>{block.score}/{block.maxScore}</p>
+                    <span className="text-sm font-semibold">{block.score}/{block.maxScore}</span>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{categoryLabels[block.category]}层</span>
+                    <span className="flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3" />
+                      进步空间 {progressPotential}分
+                    </span>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <motion.div
+                      className={cn(
+                        "h-full rounded-full",
+                        severity.level === 'critical' ? "bg-rose-500" :
+                        severity.level === 'high' ? "bg-orange-500" :
+                        severity.level === 'medium' ? "bg-amber-500" : "bg-emerald-500"
+                      )}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(block.score / block.maxScore) * 100}%` }}
+                      transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+                    />
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
-
-          {/* Healthy Blocks */}
-          {healthyBlocks.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span className="text-sm font-semibold text-emerald-600">相对健康区</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {healthyBlocks.slice(0, 5).map((block) => (
-                  <span 
-                    key={block.key}
-                    className="px-2 py-1 bg-emerald-50 text-emerald-700 text-xs rounded-full"
-                  >
-                    {block.emoji} {block.name}({block.score})
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Tip */}
-          <div className="p-3 bg-muted/50 rounded-lg">
-            <p className="text-xs text-muted-foreground text-center">
-              💡 建议从<span className="font-medium text-amber-600">第1优先级</span>开始，逐步突破各个卡点
+          <div className="p-3 bg-amber-50 rounded-lg border border-amber-200/50">
+            <p className="text-xs text-amber-700 text-center">
+              💡 这是你最需要关注的 <span className="font-semibold">Top 3 卡点</span>，训练营将重点突破
             </p>
           </div>
         </CardContent>
