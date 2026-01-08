@@ -277,19 +277,9 @@ export default function WealthBlockAssessmentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50/50 to-background">
-      {/* 品牌横幅 */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border-b border-amber-500/20">
-        <div className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 py-2 flex items-center justify-center gap-2">
-          <span className="text-amber-500">💎</span>
-          <span className="text-xs sm:text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-            有劲AI · 财富教练
-          </span>
-        </div>
-      </div>
-
-      {/* 导航栏 */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">
+      {/* 导航栏 - 融入暖色背景 */}
+      <header className="sticky top-0 z-50 bg-gradient-to-r from-amber-50/95 via-orange-50/95 to-amber-50/95 backdrop-blur-md border-b border-amber-200/50">
         <div className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 h-11 sm:h-12 flex items-center gap-2 sm:gap-3">
           <Button
             variant="ghost"
