@@ -83,8 +83,8 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_21");
   const hasPurchased = !!purchaseRecord;
 
-  // 控制三层展开状态
-  const [openLayers, setOpenLayers] = useState<string[]>([]);
+  // 控制三层展开状态 - 默认全部展开
+  const [openLayers, setOpenLayers] = useState<string[]>(["behavior", "emotion", "belief"]);
 
   const totalScore = result.behaviorScore + result.emotionScore + result.beliefScore;
   const healthScore = calculateHealthScore(totalScore);
@@ -331,7 +331,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         type="multiple" 
         value={openLayers}
         onValueChange={setOpenLayers}
-        className="space-y-0"
+        className="space-y-4"
       >
         {/* 第一层：行为层分析 */}
         <AccordionItem value="behavior" className="border-0">

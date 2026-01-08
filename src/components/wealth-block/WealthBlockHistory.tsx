@@ -44,6 +44,7 @@ export interface HistoryRecord {
   dominant_belief_block?: BeliefBlockType;
   reaction_pattern: ReactionPattern;
   created_at: string;
+  answers?: Record<number, number>;
 }
 
 const iconMap = {
