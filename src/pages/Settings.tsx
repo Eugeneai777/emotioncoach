@@ -16,6 +16,7 @@ import { PackageSelector } from "@/components/PackageSelector";
 import CampSettings from "@/components/CampSettings";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
+import { AccountCredentials } from "@/components/profile/AccountCredentials";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -318,6 +319,9 @@ export default function Settings() {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* 账号与密码管理 */}
+            <AccountCredentials />
           </TabsContent>
 
           <TabsContent value="account" className="space-y-6">
