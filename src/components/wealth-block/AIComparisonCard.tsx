@@ -23,10 +23,10 @@ const comparisonItems = [
 
 export function AIComparisonCard() {
   return (
-    <Card className="p-4 bg-gradient-to-br from-slate-900 via-violet-950/50 to-slate-900 border-violet-500/30">
+    <Card className="p-4 bg-white border-violet-200 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
-        <Brain className="w-4 h-4 text-violet-400" />
-        <h3 className="font-medium text-sm text-violet-200">为什么选择 AI 测评？</h3>
+        <Brain className="w-4 h-4 text-violet-600" />
+        <h3 className="font-medium text-sm text-slate-800">为什么选择 AI 测评？</h3>
       </div>
       
       <div className="space-y-3">
@@ -39,21 +39,21 @@ export function AIComparisonCard() {
             className="grid grid-cols-2 gap-2"
           >
             {/* Traditional */}
-            <div className="p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/40">
+            <div className="p-2.5 rounded-lg bg-slate-100 border border-slate-200">
               <div className="flex items-start gap-2">
-                <X className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
-                <span className="text-xs text-slate-400 line-through leading-relaxed">{item.traditional}</span>
+                <X className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                <span className="text-xs text-slate-500 line-through leading-relaxed">{item.traditional}</span>
               </div>
             </div>
             
             {/* AI */}
-            <div className="p-2.5 rounded-lg bg-gradient-to-r from-violet-900/40 to-amber-900/30 border border-violet-500/30 relative overflow-hidden">
+            <div className="p-2.5 rounded-lg bg-gradient-to-r from-violet-50 to-amber-50 border border-violet-200 relative overflow-hidden">
               <div className="absolute top-1 right-1">
-                <Sparkles className="w-3 h-3 text-amber-400/50 animate-pulse" />
+                <Sparkles className="w-3 h-3 text-amber-500/60 animate-pulse" />
               </div>
               <div className="flex items-start gap-2">
-                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                <span className="text-xs text-violet-100 leading-relaxed font-medium">{item.ai}</span>
+                <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                <span className="text-xs text-slate-700 leading-relaxed font-medium">{item.ai}</span>
               </div>
             </div>
           </motion.div>
@@ -65,10 +65,10 @@ export function AIComparisonCard() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="mt-4 p-3 rounded-lg bg-gradient-to-r from-amber-950/50 to-violet-950/50 border border-amber-500/20"
+        className="mt-4 p-3 rounded-lg bg-gradient-to-r from-amber-100 to-violet-100 border border-amber-300/50"
       >
-        <p className="text-xs text-center text-amber-200/90">
-          <span className="font-bold text-amber-300">有劲AI</span> = 智能追问 + 可视诊断 + 精准方案
+        <p className="text-xs text-center text-slate-700">
+          <span className="font-bold text-amber-600">有劲AI</span> = 智能追问 + 可视诊断 + 精准方案
         </p>
       </motion.div>
     </Card>

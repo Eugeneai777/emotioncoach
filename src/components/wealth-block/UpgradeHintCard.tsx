@@ -7,17 +7,17 @@ export function UpgradeHintCard() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.3 }}
-      className="p-3 rounded-xl bg-gradient-to-r from-slate-800/60 to-slate-800/40 border border-slate-700/30"
+      className="p-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-400/70" />
+          <Sparkles className="w-4 h-4 text-amber-500" />
           <div>
-            <p className="text-xs text-slate-300">想要持续突破？</p>
+            <p className="text-xs text-slate-700">想要持续突破？</p>
             <p className="text-[10px] text-slate-500">测评后可加入21天训练营</p>
           </div>
         </div>
-        <div className="flex items-center gap-1 text-[10px] text-slate-400">
+        <div className="flex items-center gap-1 text-[10px] text-amber-600 font-medium">
           <span>¥299</span>
           <ArrowRight className="w-3 h-3" />
         </div>
