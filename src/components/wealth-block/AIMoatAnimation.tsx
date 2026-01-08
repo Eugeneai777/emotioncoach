@@ -1,19 +1,19 @@
 import { motion } from "framer-motion";
-import { Lock, Clock, Database, Heart, Shield, Sparkles } from "lucide-react";
+import { Clock, Database, Heart, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
-const locks = [
+const trilogy = [
   {
     icon: Clock,
-    name: "时间锁",
+    name: "成长追踪",
     color: "from-amber-400 to-orange-500",
     glowColor: "rgba(251,191,36,0.4)",
     angle: 0,
-    description: "21天追踪你的卡点变化轨迹",
+    description: "21天追踪你的变化轨迹",
   },
   {
     icon: Database,
-    name: "数据锁",
+    name: "画像对比",
     color: "from-cyan-400 to-blue-500",
     glowColor: "rgba(6,182,212,0.4)",
     angle: 120,
@@ -21,11 +21,11 @@ const locks = [
   },
   {
     icon: Heart,
-    name: "关系锁",
+    name: "AI见证",
     color: "from-rose-400 to-pink-500",
     glowColor: "rgba(244,63,94,0.4)",
     angle: 240,
-    description: "AI见证并命名你的每次蜕变",
+    description: "见证并命名你的每次蜕变",
   },
 ];
 
@@ -57,19 +57,19 @@ export function AIMoatAnimation({ compact = false, showLabels = true }: AIMoatAn
       {/* Header */}
       <div className="relative z-10 flex items-center justify-center gap-2 mb-4">
         <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        >
-          <Shield className="w-5 h-5 text-indigo-400" />
-        </motion.div>
-        <h3 className={`font-bold text-white ${compact ? 'text-sm' : 'text-base'}`}>
-          AI 三锁护城河
-        </h3>
-        <motion.div
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          <Sparkles className="w-4 h-4 text-amber-400" />
+          <Sparkles className="w-5 h-5 text-amber-400" />
+        </motion.div>
+        <h3 className={`font-bold text-white ${compact ? 'text-sm' : 'text-base'}`}>
+          AI 陪伴三部曲
+        </h3>
+        <motion.div
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+        >
+          <Sparkles className="w-4 h-4 text-indigo-400" />
         </motion.div>
       </div>
       
@@ -120,13 +120,13 @@ export function AIMoatAnimation({ compact = false, showLabels = true }: AIMoatAn
           </div>
         </motion.div>
         
-        {/* Orbiting locks */}
-        {locks.map((lock, index) => {
+        {/* Orbiting items */}
+        {trilogy.map((item, index) => {
           const angleOffset = (index * 120) * (Math.PI / 180);
           
           return (
             <motion.div
-              key={lock.name}
+              key={item.name}
               className="absolute"
               style={{
                 width: lockSize,
@@ -162,22 +162,22 @@ export function AIMoatAnimation({ compact = false, showLabels = true }: AIMoatAn
                 }}
               >
                 <motion.div
-                  className={`w-full h-full rounded-xl bg-gradient-to-br ${lock.color} flex items-center justify-center shadow-lg`}
+                  className={`w-full h-full rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg`}
                   style={{
                     position: 'absolute',
                     transform: `rotate(${-index * 120}deg)`,
                   }}
                   animate={{
                     boxShadow: [
-                      `0 4px 15px ${lock.glowColor}`,
-                      `0 4px 25px ${lock.glowColor}`,
-                      `0 4px 15px ${lock.glowColor}`,
+                      `0 4px 15px ${item.glowColor}`,
+                      `0 4px 25px ${item.glowColor}`,
+                      `0 4px 15px ${item.glowColor}`,
                     ],
                   }}
                   transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 }}
                   whileHover={{ scale: 1.1 }}
                 >
-                  <lock.icon className="w-5 h-5 text-white" />
+                  <item.icon className="w-5 h-5 text-white" />
                 </motion.div>
               </motion.div>
               
@@ -187,8 +187,8 @@ export function AIMoatAnimation({ compact = false, showLabels = true }: AIMoatAn
                 style={{
                   width: orbitRadius - lockSize / 2,
                   height: 2,
-                  background: `linear-gradient(90deg, transparent, ${lock.glowColor})`,
-                  transform: `rotate(${180 + lock.angle}deg)`,
+                  background: `linear-gradient(90deg, transparent, ${item.glowColor})`,
+                  transform: `rotate(${180 + item.angle}deg)`,
                 }}
                 animate={{
                   opacity: [0.3, 0.7, 0.3],
@@ -224,30 +224,31 @@ export function AIMoatAnimation({ compact = false, showLabels = true }: AIMoatAn
         ))}
       </div>
       
-      {/* Lock Labels */}
+      {/* Labels */}
       {showLabels && (
         <div className={`relative z-10 ${compact ? 'mt-3' : 'mt-5'} space-y-2`}>
-          {locks.map((lock, index) => (
+          {trilogy.map((item, index) => (
             <motion.div
-              key={lock.name}
+              key={item.name}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 + index * 0.15 }}
               className="flex items-center gap-3"
             >
-              <div className={`p-1.5 rounded-lg bg-gradient-to-br ${lock.color}`}>
-                <Lock className="w-3 h-3 text-white" />
+              <div className={`p-1.5 rounded-lg bg-gradient-to-br ${item.color}`}>
+                <item.icon className="w-3 h-3 text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-white font-medium text-xs">{lock.name}</span>
+                  <span className="text-white font-medium text-xs">{item.name}</span>
+                  <span className="text-slate-500 text-[10px]">0{index + 1}</span>
                   <motion.div
                     className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent"
                     animate={{ scaleX: [0, 1] }}
                     transition={{ delay: 0.5 + index * 0.15, duration: 0.5 }}
                   />
                 </div>
-                <p className="text-slate-400 text-[10px] truncate">{lock.description}</p>
+                <p className="text-slate-400 text-[10px] truncate">{item.description}</p>
               </div>
             </motion.div>
           ))}
@@ -262,7 +263,7 @@ export function AIMoatAnimation({ compact = false, showLabels = true }: AIMoatAn
         className={`relative z-10 ${compact ? 'mt-3' : 'mt-4'} text-center`}
       >
         <p className="text-[10px] text-slate-500">
-          三重锁定，让AI成为你不可替代的成长伙伴
+          追踪 → 对比 → 见证，AI陪你走完每一步
         </p>
       </motion.div>
     </Card>
