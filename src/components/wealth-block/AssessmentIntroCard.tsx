@@ -1,7 +1,10 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Target, Lightbulb, BarChart3, Rocket, Check, LogIn, ArrowRight, AlertTriangle, TrendingDown, Shield, Sparkles } from "lucide-react";
+import { Target, Lightbulb, BarChart3, Rocket, Check, LogIn, ArrowRight, AlertTriangle, TrendingDown, Shield, Sparkles, Brain, Zap } from "lucide-react";
+import { AIComparisonCard } from "./AIComparisonCard";
+import { AIThreeLocksCard } from "./AIThreeLocksCard";
+import { AITestimonialsCard } from "./AITestimonialsCard";
 
 interface AssessmentIntroCardProps {
   isLoggedIn: boolean;
@@ -31,15 +34,15 @@ const upgradedPainPoints = [
 
 const valuePoints = [
   { icon: Target, title: "精准定位", desc: "识别行为、情绪、信念三层卡点", color: "text-emerald-500" },
-  { icon: BarChart3, title: "可视诊断", desc: "四穷雷达图 + 健康指数仪表盘", color: "text-cyan-500" },
-  { icon: Lightbulb, title: "AI深度分析", desc: "智能追问挖掘隐藏模式", color: "text-violet-500" },
-  { icon: Rocket, title: "个性方案", desc: "匹配专属突破训练营", color: "text-amber-500" },
+  { icon: BarChart3, title: "可视诊断", desc: "四穷雷达图 + 觉醒指数仪表盘", color: "text-cyan-500" },
+  { icon: Brain, title: "AI智能追问", desc: "根据回答动态生成5-10个深度追问，挖掘隐藏盲点", color: "text-violet-500" },
+  { icon: Rocket, title: "个性方案", desc: "匹配专属21天觉醒训练营", color: "text-amber-500" },
 ];
 
 const pricingIncludes = [
   "30道专业场景测评",
-  "AI智能深度分析报告",
-  "四穷人格画像",
+  "AI智能深度追问",
+  "四穷人格活画像",
   "个性化突破方案",
 ];
 
@@ -56,12 +59,25 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
       animate={{ opacity: 1, y: 0 }}
       className="space-y-4"
     >
-      {/* Section 1: Warning Alert Opening */}
+      {/* Section 1: Brand + Warning Alert Opening */}
       <Card className="relative overflow-hidden bg-gradient-to-br from-red-950 via-red-900 to-slate-900 border-red-500/30 p-5">
         <div className="absolute top-0 right-0 w-40 h-40 bg-red-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl" />
         
         <div className="relative text-center space-y-3">
+          {/* Brand Slogan */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-2"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-full border border-amber-500/30 mb-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span className="text-amber-200 text-sm font-semibold">有劲AI · 财富教练</span>
+            </div>
+            <p className="text-xs text-amber-300/80">不止测评，更是你的财富觉醒搭档</p>
+          </motion.div>
+          
           <motion.div 
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
@@ -146,13 +162,16 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
         </div>
       </Card>
 
-      {/* Section 4: Value Points (Green/Hope) */}
+      {/* Section 4: AI Comparison Card - NEW */}
+      <AIComparisonCard />
+
+      {/* Section 5: Value Points (Green/Hope) */}
       <Card className="p-4 bg-gradient-to-br from-emerald-950 via-teal-950 to-slate-900 border-emerald-500/30">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-emerald-400" />
+          <Zap className="w-4 h-4 text-emerald-400" />
           <h3 className="font-medium text-sm text-emerald-200">这份测评将帮你</h3>
         </div>
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="space-y-2.5">
           {valuePoints.map((point, idx) => (
             <motion.div
               key={point.title}
@@ -165,7 +184,7 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
                 <div className={`p-1.5 rounded-md bg-slate-800/80 ${point.color}`}>
                   <point.icon className="w-3.5 h-3.5" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h4 className="font-medium text-xs text-emerald-100">{point.title}</h4>
                   <p className="text-[10px] text-emerald-300/70 mt-0.5 leading-relaxed">{point.desc}</p>
                 </div>
@@ -401,13 +420,19 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
         </p>
       </Card>
 
-      {/* Section 6: Pricing Module */}
+      {/* Section 7: AI Three Locks System - NEW */}
+      <AIThreeLocksCard />
+
+      {/* Section 8: User Testimonials - NEW */}
+      <AITestimonialsCard />
+
+      {/* Section 9: Pricing Module */}
       <Card className="p-5 bg-gradient-to-br from-slate-900 via-slate-800 to-amber-950/30 border-amber-500/40 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl" />
         <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-red-500/10 rounded-full blur-xl" />
         
         <div className="relative text-center space-y-4">
-          <h3 className="font-bold text-lg text-white">解锁你的财富突破密码</h3>
+          <h3 className="font-bold text-lg text-white">开启你的财富觉醒之旅</h3>
           
           <div className="flex items-center justify-center gap-3">
             <span className="text-slate-500 line-through text-lg">¥99</span>
@@ -424,13 +449,22 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
             ))}
           </div>
           
-          <Button
-            onClick={onPay || onStart}
-            size="lg"
-            className="w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0"
-          >
-            ¥9.9 立即测评 · 限时特惠
-          </Button>
+          <div className="space-y-2">
+            <Button
+              onClick={onPay || onStart}
+              size="lg"
+              className="w-full h-14 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 flex flex-col items-center justify-center gap-0.5"
+            >
+              <span className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                ¥9.9 开启 AI 财富诊断
+                <ArrowRight className="w-4 h-4" />
+              </span>
+            </Button>
+            <p className="text-[10px] text-slate-400">
+              AI智能追问 + 活画像生成 + 个性化突破方案
+            </p>
+          </div>
           
           <p className="text-xs text-slate-400">
             已有 <span className="text-amber-400 font-medium">{statistics.breakthroughUsers.toLocaleString()}</span> 人通过测评获得突破
