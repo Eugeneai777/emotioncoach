@@ -32,7 +32,7 @@ export function LayerTransitionHint({ from, to }: LayerTransitionHintProps) {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
-      className="py-2"
+      className="py-2 my-2"
     >
       <div className="flex items-center justify-center gap-3">
         <motion.div

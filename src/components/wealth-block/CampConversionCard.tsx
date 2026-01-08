@@ -153,7 +153,7 @@ export function CampConversionCard({
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-foreground">🤖 AI陪伴三部曲</span>
               </div>
-              <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Powered by 有劲AI</span>
+              <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Powered by 有劲AI · 财富教练</span>
             </div>
             
             <div className="space-y-3">

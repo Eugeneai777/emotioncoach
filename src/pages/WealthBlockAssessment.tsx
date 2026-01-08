@@ -14,7 +14,7 @@ import { WealthBlockTrend } from "@/components/wealth-block/WealthBlockTrend";
 import { AssessmentComparison } from "@/components/wealth-block/AssessmentComparison";
 import { AssessmentIntroCard } from "@/components/wealth-block/AssessmentIntroCard";
 import { AssessmentPayDialog } from "@/components/wealth-block/AssessmentPayDialog";
-import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer } from "@/components/wealth-block/wealthBlockData";
+import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer, calculateResult } from "@/components/wealth-block/wealthBlockData";
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
@@ -245,32 +245,39 @@ export default function WealthBlockAssessmentPage() {
   };
 
   const handleViewDetail = (record: HistoryRecord) => {
-    // 将历史记录转换为结果格式并展示
-    const result: AssessmentResult = {
-      behaviorScore: record.behavior_score,
-      emotionScore: record.emotion_score,
-      beliefScore: record.belief_score,
-      mouthScore: record.mouth_score || 0,
-      handScore: record.hand_score || 0,
-      eyeScore: record.eye_score || 0,
-      heartScore: record.heart_score || 0,
-      anxietyScore: record.anxiety_score || 0,
-      scarcityScore: record.scarcity_score || 0,
-      comparisonScore: record.comparison_score || 0,
-      shameScore: record.shame_score || 0,
-      guiltScore: record.guilt_score || 0,
-      lackScore: record.lack_score || 0,
-      linearScore: record.linear_score || 0,
-      stigmaScore: record.stigma_score || 0,
-      unworthyScore: record.unworthy_score || 0,
-      relationshipScore: record.relationship_score || 0,
-      dominantBlock: record.dominant_block,
-      dominantPoor: record.dominant_poor || 'mouth',
-      dominantEmotionBlock: record.dominant_emotion_block || 'anxiety',
-      dominantBeliefBlock: record.dominant_belief_block || 'lack',
-      reactionPattern: record.reaction_pattern,
-    };
-    setCurrentResult(result);
+    // 从 answers 重新计算完整结果（包含情绪/信念细分项）
+    const answers = record.answers as Record<number, number>;
+    if (answers && Object.keys(answers).length > 0) {
+      const computed = calculateResult(answers);
+      setCurrentResult(computed);
+    } else {
+      // 兜底：如果没有 answers，使用旧逻辑
+      const result: AssessmentResult = {
+        behaviorScore: record.behavior_score,
+        emotionScore: record.emotion_score,
+        beliefScore: record.belief_score,
+        mouthScore: record.mouth_score || 0,
+        handScore: record.hand_score || 0,
+        eyeScore: record.eye_score || 0,
+        heartScore: record.heart_score || 0,
+        anxietyScore: 0,
+        scarcityScore: 0,
+        comparisonScore: 0,
+        shameScore: 0,
+        guiltScore: 0,
+        lackScore: 0,
+        linearScore: 0,
+        stigmaScore: 0,
+        unworthyScore: 0,
+        relationshipScore: 0,
+        dominantBlock: record.dominant_block,
+        dominantPoor: record.dominant_poor || 'mouth',
+        dominantEmotionBlock: 'anxiety',
+        dominantBeliefBlock: 'lack',
+        reactionPattern: record.reaction_pattern,
+      };
+      setCurrentResult(result);
+    }
     setShowResult(true);
     setIsSaved(true);
     setActiveTab("assessment");
