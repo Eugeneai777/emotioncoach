@@ -192,15 +192,31 @@ ${deepFollowUpSection}${followUpSection}${userWordsSection}
       throw new Error("AI返回内容为空");
     }
 
-    // Parse JSON from response (handle possible markdown code blocks)
+    // Parse JSON from response (handle possible markdown code blocks and formatting issues)
     let parsedContent;
     try {
       // Remove potential markdown code blocks
-      const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      let jsonStr = content.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
+      
+      // Fix common JSON issues: trailing commas before ] or }
+      jsonStr = jsonStr.replace(/,(\s*[\]\}])/g, '$1');
+      
       parsedContent = JSON.parse(jsonStr);
     } catch (parseError) {
       console.error("Failed to parse AI response:", content);
-      throw new Error("AI响应格式解析失败");
+      
+      // Try to extract JSON from the response using regex as fallback
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          let extracted = jsonMatch[0].replace(/,(\s*[\]\}])/g, '$1');
+          parsedContent = JSON.parse(extracted);
+        } catch {
+          throw new Error("AI响应格式解析失败");
+        }
+      } else {
+        throw new Error("AI响应格式解析失败");
+      }
     }
 
     return new Response(JSON.stringify(parsedContent), {
