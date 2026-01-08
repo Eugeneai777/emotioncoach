@@ -16,6 +16,7 @@ import WealthCampShareCard from './WealthCampShareCard';
 import WealthAwakeningShareCard from './WealthAwakeningShareCard';
 import WealthMilestoneShareCard from './WealthMilestoneShareCard';
 import GrowthPosterCard from './GrowthPosterCard';
+import AIAnalysisShareCard from '@/components/wealth-block/AIAnalysisShareCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -34,7 +35,7 @@ interface AwakeningData {
   newBelief?: string;
 }
 
-type CardTab = 'camp' | 'awakening' | 'milestone' | 'assessment' | 'growth';
+type CardTab = 'camp' | 'awakening' | 'milestone' | 'assessment' | 'growth' | 'aianalysis';
 
 interface WealthInviteCardDialogProps {
   trigger?: React.ReactNode;
@@ -135,6 +136,7 @@ const getBestAwakening = (data: AwakeningData): { type: 'behavior' | 'emotion' |
 };
 
 const CARD_TABS = [
+  { id: 'aianalysis' as const, label: 'AI分析', emoji: '🤖' },
   { id: 'camp' as const, label: '训练营', emoji: '🏕️' },
   { id: 'growth' as const, label: '成长海报', emoji: '📊' },
   { id: 'awakening' as const, label: '今日觉醒', emoji: '✨' },
@@ -171,6 +173,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const awakeningCardRef = useRef<HTMLDivElement>(null);
   const milestoneCardRef = useRef<HTMLDivElement>(null);
   const growthCardRef = useRef<HTMLDivElement>(null);
+  const aiAnalysisCardRef = useRef<HTMLDivElement>(null);
   
   // Growth poster specific data
   const [growthData, setGrowthData] = useState<{
@@ -373,6 +376,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       case 'awakening': return awakeningCardRef;
       case 'milestone': return milestoneCardRef;
       case 'growth': return growthCardRef;
+      case 'aianalysis': return aiAnalysisCardRef;
       default: return campCardRef;
     }
   };
@@ -384,6 +388,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       case 'awakening': return '财富觉醒分享卡';
       case 'milestone': return '财富训练营里程碑';
       case 'growth': return '财富成长海报';
+      case 'aianalysis': return 'AI智能分析报告';
       default: return '邀请卡片';
     }
   };
@@ -553,13 +558,26 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as CardTab)}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             {CARD_TABS.map(tab => (
-              <TabsTrigger key={tab.id} value={tab.id} className="text-xs px-2">
-                {tab.emoji} {tab.label}
+              <TabsTrigger key={tab.id} value={tab.id} className="text-[10px] px-1">
+                {tab.emoji}
               </TabsTrigger>
             ))}
           </TabsList>
+
+          <TabsContent value="aianalysis" className="mt-4">
+            <div className="flex justify-center">
+              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+                <AIAnalysisShareCard 
+                  ref={aiAnalysisCardRef}
+                  avatarUrl={userInfo.avatarUrl}
+                  displayName={userInfo.displayName}
+                  partnerInfo={partnerInfo || undefined}
+                />
+              </div>
+            </div>
+          </TabsContent>
 
           <TabsContent value="assessment" className="mt-4">
             <div className="flex justify-center">
