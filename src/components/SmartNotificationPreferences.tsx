@@ -37,6 +37,7 @@ export function SmartNotificationPreferences() {
   const [wechatEnabled, setWechatEnabled] = useState(false);
   const [wechatBound, setWechatBound] = useState(false);
   const [testingWechat, setTestingWechat] = useState(false);
+  const [unbinding, setUnbinding] = useState(false);
   
   // 绑定弹窗状态
   const [showBindDialog, setShowBindDialog] = useState(false);
@@ -47,6 +48,9 @@ export function SmartNotificationPreferences() {
   
   // 关注公众号引导弹窗
   const [showFollowGuide, setShowFollowGuide] = useState(false);
+  
+  // 解绑确认弹窗
+  const [showUnbindConfirm, setShowUnbindConfirm] = useState(false);
 
   useEffect(() => {
     loadPreferences();
@@ -264,6 +268,40 @@ export function SmartNotificationPreferences() {
     loadPreferences(); // 刷新绑定状态
   };
 
+  // 解除微信绑定
+  const handleUnbindWechat = async () => {
+    setUnbinding(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("用户未登录");
+
+      // 删除微信映射记录
+      const { error } = await supabase
+        .from("wechat_user_mappings")
+        .delete()
+        .eq("system_user_id", user.id);
+
+      if (error) throw error;
+
+      setWechatBound(false);
+      setShowUnbindConfirm(false);
+      
+      toast({
+        title: "解绑成功",
+        description: "微信账号已解除绑定，您将不再收到公众号通知",
+      });
+    } catch (error) {
+      console.error("Error unbinding WeChat:", error);
+      toast({
+        title: "解绑失败",
+        description: error instanceof Error ? error.message : "请稍后再试",
+        variant: "destructive",
+      });
+    } finally {
+      setUnbinding(false);
+    }
+  };
+
   const testWechatConnection = async () => {
     setTestingWechat(true);
     try {
@@ -446,7 +484,7 @@ export function SmartNotificationPreferences() {
                     </Alert>
                   )}
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       onClick={handleWechatBind}
@@ -456,16 +494,53 @@ export function SmartNotificationPreferences() {
                       {wechatBound ? "重新绑定微信" : "绑定微信账号"}
                     </Button>
                     {wechatBound && (
-                      <Button
-                        variant="outline"
-                        onClick={testWechatConnection}
-                        disabled={testingWechat}
-                      >
-                        {testingWechat && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                        测试推送
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={testWechatConnection}
+                          disabled={testingWechat}
+                        >
+                          {testingWechat && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                          测试推送
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setShowUnbindConfirm(true)}
+                        >
+                          解除绑定
+                        </Button>
+                      </>
                     )}
                   </div>
+
+                  {/* 解绑确认弹窗 */}
+                  <Dialog open={showUnbindConfirm} onOpenChange={setShowUnbindConfirm}>
+                    <DialogContent className="sm:max-w-sm">
+                      <DialogHeader>
+                        <DialogTitle>确认解除绑定</DialogTitle>
+                        <DialogDescription>
+                          解除绑定后，您将不再收到微信公众号的通知推送。确定要继续吗？
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex justify-end gap-2 pt-4">
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowUnbindConfirm(false)}
+                        >
+                          取消
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={handleUnbindWechat}
+                          disabled={unbinding}
+                        >
+                          {unbinding && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                          确认解绑
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
 
                   {/* 绑定引导弹窗 - PC/非微信浏览器 */}
                   <Dialog open={showBindDialog} onOpenChange={setShowBindDialog}>
