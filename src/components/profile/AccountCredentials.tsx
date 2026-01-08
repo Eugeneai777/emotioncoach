@@ -71,15 +71,24 @@ export function AccountCredentials() {
 
     setEmailSaving(true);
     try {
+      // 直接更新邮箱，Supabase会自动检查唯一性
+      // 直接更新邮箱，Supabase会自动检查唯一性
       const { error } = await supabase.auth.updateUser({
         email: newEmail,
       });
 
-      if (error) throw error;
+      if (error) {
+        // 处理邮箱已存在的错误
+        if (error.message.includes('already') || error.message.includes('exists') || error.message.includes('taken')) {
+          throw new Error("该邮箱已被其他账号使用");
+        }
+        throw error;
+      }
 
+      setUserEmail(newEmail);
       toast({
-        title: "验证邮件已发送",
-        description: "请查收新邮箱中的验证链接完成更换",
+        title: "邮箱已更新",
+        description: "新邮箱已生效 ✉️",
       });
       setShowEmailDialog(false);
       setNewEmail("");
@@ -239,7 +248,7 @@ export function AccountCredentials() {
               </DialogTitle>
               <DialogDescription>
                 {userEmail 
-                  ? "更换后需要验证新邮箱才能生效" 
+                  ? "请输入新的邮箱地址" 
                   : "设置邮箱后可使用邮箱密码登录"
                 }
               </DialogDescription>
@@ -277,7 +286,7 @@ export function AccountCredentials() {
                 </Button>
                 <Button onClick={handleUpdateEmail} disabled={emailSaving || !newEmail}>
                   {emailSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  发送验证邮件
+                  确认更新
                 </Button>
               </div>
             </div>
