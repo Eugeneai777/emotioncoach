@@ -11,6 +11,8 @@ import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
 import { useCampPurchase } from "@/hooks/useCampPurchase";
 import { toast } from "sonner";
+import { AIThreeLocksCardLight } from "@/components/wealth-block/AIThreeLocksCardLight";
+import { LivingProfileCard } from "@/components/wealth-block/LivingProfileCard";
 
 const WealthCampIntro = () => {
   const navigate = useNavigate();
@@ -378,6 +380,29 @@ const WealthCampIntro = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* AI 护城河 Section */}
+        <section className="px-6 py-8 bg-gradient-to-b from-indigo-50/30 to-white">
+          <h2 className="text-lg font-bold text-foreground mb-2">
+            为什么AI财富教练不可替代？
+          </h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            传统训练营只给方法，有劲AI · 财富教练给你三重锁定。
+          </p>
+          
+          <AIThreeLocksCardLight />
+          
+          <div className="mt-4">
+            <LivingProfileCard />
+          </div>
+          
+          <div className="mt-4 p-3 bg-white/80 rounded-xl border border-indigo-100 text-center">
+            <p className="text-xs text-muted-foreground">
+              🔒 这就是为什么用了有劲AI · 财富教练的人<br/>
+              <span className="text-indigo-600 font-medium">很难再回到传统的自我提升方式</span>
+            </p>
           </div>
         </section>
 

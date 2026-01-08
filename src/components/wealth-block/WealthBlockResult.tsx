@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, Heart, Brain, Share2, MessageCircle, GraduationCap, Sparkles, RotateCcw, Save, ChevronDown, ShoppingCart } from "lucide-react";
+import { Target, Heart, Brain, Share2, MessageCircle, GraduationCap, Sparkles, RotateCcw, Save, ChevronDown, ShoppingCart, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -50,6 +50,7 @@ import { EnhancedHealthGauge } from "./EnhancedHealthGauge";
 import { EnhancedFourPoorRadar } from "./EnhancedFourPoorRadar";
 import { PriorityBreakthroughMap } from "./PriorityBreakthroughMap";
 import { AIInsightCard, AIInsightData } from "./AIInsightCard";
+import { AIAnalysisValueCard } from "./AIAnalysisValueCard";
 import { DeepFollowUpAnswer } from "./DeepFollowUpDialog";
 
 interface WealthBlockResultProps {
@@ -305,6 +306,9 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         isLoading={isLoadingAI}
         error={aiError}
       />
+
+      {/* AI 分析价值说明卡片 */}
+      <AIAnalysisValueCard />
 
       {/* 优先突破地图 */}
       <PriorityBreakthroughMap
@@ -730,16 +734,45 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
           </div>
         )}
 
-        {/* 训练营推荐卡片 */}
-        <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 rounded-xl border border-amber-200 dark:border-amber-800">
-          <div className="text-center mb-3">
+        {/* 训练营推荐卡片 - 增强版 */}
+        <div className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 rounded-xl border border-amber-200 dark:border-amber-800">
+          <div className="text-center mb-4">
             <p className="text-sm text-muted-foreground">🎯 基于你的测评结果，推荐参加：</p>
             <p className="font-semibold text-amber-700 dark:text-amber-400 text-lg">21天财富觉醒训练营</p>
-            <div className="flex items-center justify-center gap-2 mt-1">
-              <span className="text-muted-foreground line-through text-sm">¥399</span>
-              <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">¥299</span>
-              <span className="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded animate-pulse">限时</span>
+          </div>
+          
+          {/* AI护城河预览 */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="text-center p-2.5 bg-amber-100/60 dark:bg-amber-900/30 rounded-lg border border-amber-200/50">
+              <Clock className="w-4 h-4 mx-auto text-amber-600 dark:text-amber-400 mb-1" />
+              <p className="text-[10px] font-medium text-amber-700 dark:text-amber-400">时间锁</p>
+              <p className="text-[9px] text-muted-foreground">21天追踪</p>
             </div>
+            <div className="text-center p-2.5 bg-cyan-100/60 dark:bg-cyan-900/30 rounded-lg border border-cyan-200/50">
+              <Brain className="w-4 h-4 mx-auto text-cyan-600 dark:text-cyan-400 mb-1" />
+              <p className="text-[10px] font-medium text-cyan-700 dark:text-cyan-400">数据锁</p>
+              <p className="text-[9px] text-muted-foreground">活画像</p>
+            </div>
+            <div className="text-center p-2.5 bg-rose-100/60 dark:bg-rose-900/30 rounded-lg border border-rose-200/50">
+              <Heart className="w-4 h-4 mx-auto text-rose-600 dark:text-rose-400 mb-1" />
+              <p className="text-[10px] font-medium text-rose-700 dark:text-rose-400">关系锁</p>
+              <p className="text-[9px] text-muted-foreground">AI见证</p>
+            </div>
+          </div>
+          
+          {/* 活画像说明 */}
+          <div className="p-3 bg-white/80 dark:bg-white/10 rounded-lg mb-4 border border-amber-100 dark:border-amber-800/50">
+            <p className="text-xs text-center text-foreground leading-relaxed">
+              今天的测评结果是你「活画像」的 <span className="font-semibold text-amber-600 dark:text-amber-400">Day 0</span> 基准线<br/>
+              <span className="text-muted-foreground">21天后，你将清晰看见自己的成长轨迹</span>
+            </p>
+          </div>
+          
+          {/* 价格 */}
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <span className="text-muted-foreground line-through text-sm">¥399</span>
+            <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">¥299</span>
+            <span className="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded animate-pulse">限时</span>
           </div>
           
           {/* 直接购买/开始按钮 */}
