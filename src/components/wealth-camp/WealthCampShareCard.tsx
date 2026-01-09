@@ -11,7 +11,7 @@ interface WealthCampShareCardProps {
 }
 
 const WealthCampShareCard = forwardRef<HTMLDivElement, WealthCampShareCardProps>(
-  ({ className, avatarUrl, displayName = '财富觉醒者', currentDay, totalDays = 21 }, ref) => {
+  ({ className, avatarUrl, displayName = '财富觉醒者', currentDay, totalDays = 7 }, ref) => {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
     const shareUrl = `${getPromotionDomain()}/wealth-camp-intro`;
 
@@ -135,14 +135,14 @@ const WealthCampShareCard = forwardRef<HTMLDivElement, WealthCampShareCardProps>
             margin: '0 0 4px 0',
             letterSpacing: '1px',
           }}>
-            21天财富突破训练营
+            7天财富突破训练营
           </h2>
           <p style={{
             fontSize: '12px',
             opacity: 0.9,
             margin: 0,
           }}>
-            21天唤醒财富能量
+            7天唤醒财富能量
           </p>
         </div>
 
@@ -190,7 +190,7 @@ const WealthCampShareCard = forwardRef<HTMLDivElement, WealthCampShareCardProps>
               扫码加入训练营
             </p>
             <p style={{ fontSize: '12px', opacity: 0.7, margin: 0 }}>
-              21天突破财富障碍
+              7天突破财富障碍
             </p>
           </div>
         </div>

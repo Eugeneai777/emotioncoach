@@ -33,9 +33,9 @@ interface WealthJourneyCalendarProps {
 
 // 里程碑配置
 const MILESTONES = {
-  7: { label: '行为觉醒', icon: '🎯', color: 'from-blue-400 to-cyan-500' },
-  14: { label: '情绪觉醒', icon: '💛', color: 'from-amber-400 to-yellow-500' },
-  21: { label: '信念觉醒', icon: '✨', color: 'from-purple-400 to-pink-500' },
+  3: { label: '行为觉醒', icon: '🎯', color: 'from-blue-400 to-cyan-500' },
+  5: { label: '情绪觉醒', icon: '💛', color: 'from-amber-400 to-yellow-500' },
+  7: { label: '信念觉醒', icon: '✨', color: 'from-purple-400 to-pink-500' },
 };
 
 // 根据卡点类型获取觉醒强度（热力图颜色）
@@ -165,13 +165,13 @@ export function WealthJourneyCalendar({
         </div>
       )}
 
-      {/* 21天旅程地图 */}
+      {/* 7天旅程地图 */}
       <Card className={cn("overflow-hidden", compact && "border-0 shadow-none bg-transparent")}>
         <CardContent className={cn("p-4", compact && "p-0")}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium flex items-center gap-2">
               <Calendar className="w-4 h-4 text-amber-500" />
-              21天觉醒旅程
+              7天觉醒旅程
             </h3>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <span className="w-3 h-3 rounded bg-amber-100" />

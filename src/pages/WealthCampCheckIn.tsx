@@ -85,12 +85,12 @@ export default function WealthCampCheckIn() {
         return data;
       }
 
-      // Otherwise, find the user's active wealth_block_21 camp
+      // Otherwise, find the user's active wealth camp (support both old and new identifiers)
       const { data, error } = await supabase
         .from('training_camps')
         .select('*')
         .eq('user_id', user.id)
-        .eq('camp_type', 'wealth_block_21')
+        .in('camp_type', ['wealth_block_7', 'wealth_block_21'])
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)

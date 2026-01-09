@@ -204,7 +204,7 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
 
       // 处理邀请人通知 - 检查 localStorage 中存储的邀请人
       const storedRef = localStorage.getItem('camp_invite_ref');
-      if (storedRef && campTemplate.camp_type === 'wealth_block_21') {
+      if (storedRef && (campTemplate.camp_type === 'wealth_block_7' || campTemplate.camp_type === 'wealth_block_21')) {
         try {
           // 确保不是自己邀请自己
           if (storedRef !== user.id) {
@@ -214,7 +214,7 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
               .select('id')
               .eq('referred_user_id', user.id)
               .eq('inviter_user_id', storedRef)
-              .eq('camp_type', 'wealth_block_21')
+              .in('camp_type', ['wealth_block_7', 'wealth_block_21'])
               .maybeSingle();
 
             if (!existingRef) {
@@ -224,7 +224,7 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
                 .insert({
                   inviter_user_id: storedRef,
                   referred_user_id: user.id,
-                  camp_type: 'wealth_block_21',
+                  camp_type: 'wealth_block_7',
                   status: 'pending',
                 });
             }
@@ -236,7 +236,7 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
       }
 
       // 触发邀请成功通知
-      if (campTemplate.camp_type === 'wealth_block_21' && insertedCamps?.[0]?.id) {
+      if ((campTemplate.camp_type === 'wealth_block_7' || campTemplate.camp_type === 'wealth_block_21') && insertedCamps?.[0]?.id) {
         try {
           await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-camp-invite-success`, {
             method: 'POST',
@@ -244,7 +244,7 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
             body: JSON.stringify({
               referred_user_id: user.id,
               camp_id: insertedCamps[0].id,
-              camp_type: 'wealth_block_21',
+              camp_type: campTemplate.camp_type,
             }),
           });
         } catch (e) {
@@ -254,9 +254,9 @@ export function StartCampDialog({ open, onOpenChange, campTemplate, onSuccess }:
 
       // 根据训练营类型更新用户偏好教练
       const coachTypeMap: Record<string, string> = {
+        'wealth_block_7': 'wealth',
         'wealth_block_21': 'wealth',
         'wealth_awakening_21': 'wealth',
-        'emotion_journal_21': 'emotion',
         'emotion_bloom': 'emotion',
         'identity_bloom': 'emotion',
         'parent_emotion_21': 'parent',

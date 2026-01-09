@@ -18,7 +18,7 @@ export function WealthCampInviteCard({
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
-  const inviteUrl = `${window.location.origin}/claim?type=wealth_camp&ref=${userId}`;
+  const inviteUrl = `${window.location.origin}/claim?type=wealth_camp_7&ref=${userId}`;
 
   const handleCopyLink = async () => {
     try {

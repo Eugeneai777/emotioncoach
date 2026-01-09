@@ -60,7 +60,7 @@ export function ConversionFunnelDashboard() {
       const { count: campJoinedCount } = await supabase
         .from('user_camp_purchases')
         .select('*', { count: 'exact', head: true })
-        .eq('camp_type', 'wealth_block_21');
+        .in('camp_type', ['wealth_block_7', 'wealth_block_21']);
 
       // 3. 365会员数（从orders表查询，包含 member365）
       const { count: memberCount } = await supabase

@@ -109,7 +109,7 @@ export const getCoachSpaceInfo = (
     };
   }
   
-  if (campType === 'wealth_block_21' || effectiveCampName?.includes('财富') || effectiveCampName?.includes('财富卡点')) {
+  if (campType === 'wealth_block_7' || campType === 'wealth_block_21' || effectiveCampName?.includes('财富') || effectiveCampName?.includes('财富卡点')) {
     return {
       name: '财富觉醒教练',
       shortName: '财富',

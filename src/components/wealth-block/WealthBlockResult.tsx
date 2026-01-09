@@ -81,7 +81,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   // 直接购买训练营状态
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [showStartDialog, setShowStartDialog] = useState(false);
-  const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_21");
+  const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_7");
   const hasPurchased = !!purchaseRecord;
 
   // 控制三层展开状态 - 默认全部展开
@@ -741,11 +741,11 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
             setShowPayDialog(open);
             if (open) {
               // 埋点：发起支付
-              trackEvent('payment_initiated', { metadata: { package_key: 'camp-wealth_block_21', price: 299 } });
+              trackEvent('payment_initiated', { metadata: { package_key: 'camp-wealth_block_7', price: 299 } });
             }
           }}
           packageInfo={{
-            key: 'camp-wealth_block_21',
+            key: 'camp-wealth_block_7',
             name: '财富觉醒训练营',
             price: 299
           }}
@@ -756,7 +756,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
               if (user) {
                 const { error } = await supabase.from('user_camp_purchases').insert({
                   user_id: user.id,
-                  camp_type: 'wealth_block_21',
+                  camp_type: 'wealth_block_7',
                   camp_name: '财富觉醒训练营',
                   purchase_price: 299,
                   payment_status: 'paid'
@@ -775,7 +775,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
             setShowPayDialog(false);
             toast.success("购买成功！请选择开始日期");
             refetchPurchase();
-            queryClient.invalidateQueries({ queryKey: ['camp-purchase', 'wealth_block_21'] });
+            queryClient.invalidateQueries({ queryKey: ['camp-purchase', 'wealth_block_7'] });
             setShowStartDialog(true);
           }}
         />
@@ -785,9 +785,9 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
           open={showStartDialog}
           onOpenChange={setShowStartDialog}
           campTemplate={{
-            camp_type: "wealth_block_21",
+            camp_type: "wealth_block_7",
             camp_name: "财富觉醒训练营",
-            duration_days: 21,
+            duration_days: 7,
             price: 299,
             original_price: 399
           }}

@@ -129,7 +129,7 @@ export function GrowthComparisonCard({
   const assessmentDate = format(new Date(baseline.created_at), 'M月d日', { locale: zhCN });
 
   // Check if user should be prompted for re-assessment (Day 7 or Day 21)
-  const shouldShowReassessmentPrompt = currentDay === 7 || currentDay === 21;
+  const shouldShowReassessmentPrompt = currentDay === 3 || currentDay === 7;
 
   const handleReassessment = () => {
     navigate('/wealth-block?reassess=true');
@@ -144,12 +144,12 @@ export function GrowthComparisonCard({
             <div className="space-y-1">
               <div className="text-sm font-medium flex items-center gap-1.5">
                 <RefreshCw className="w-4 h-4 text-amber-600" />
-                {currentDay === 7 ? '第一周里程碑' : '训练营结业'}
+                {currentDay === 3 ? '第3天里程碑' : '训练营结业'}
               </div>
               <p className="text-xs text-muted-foreground">
-                {currentDay === 7 
-                  ? '完成7天训练！重新测评验证你的进步'
-                  : '恭喜完成21天训练！重新测评见证蜕变'}
+                {currentDay === 3 
+                  ? '完成3天训练！重新测评验证你的进步'
+                  : '恭喜完成7天训练！重新测评见证蜕变'}
               </p>
             </div>
             <Button 

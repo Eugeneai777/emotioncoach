@@ -65,8 +65,8 @@ const generateAISuggestions = (
     if (avgRate >= 50) {
       return {
         title: '整合期成就',
-        suggestion: `21天旅程接近尾声，你的平均转化率已达${avgRate.toFixed(0)}%！这不是终点，而是新的开始。你已经学会了觉察自己的穷模式，这个能力将伴随你一生。`,
-        action: '写一封信给21天前的自己，告诉TA你这段旅程最大的收获',
+        suggestion: `7天旅程接近尾声，你的平均转化率已达${avgRate.toFixed(0)}%！这不是终点，而是新的开始。你已经学会了觉察自己的穷模式，这个能力将伴随你一生。`,
+        action: '写一封信给7天前的自己，告诉TA你这段旅程最大的收获',
       };
     } else {
       return {
@@ -139,7 +139,7 @@ export function FourPersonalityCard({ campId, currentDay = 1, className }: FourP
             </TooltipProvider>
           </h3>
           <Badge variant="outline" className="text-xs">
-            Day {currentDay}/21
+            Day {currentDay}/7
           </Badge>
         </div>
       </CardHeader>

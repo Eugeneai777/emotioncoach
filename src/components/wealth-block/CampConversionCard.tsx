@@ -62,7 +62,7 @@ const trilogy = [
     color: "from-amber-500 to-orange-500",
     bgColor: "bg-gradient-to-br from-amber-50 to-orange-50",
     borderColor: "border-amber-200",
-    description: "21天持续追踪你的变化轨迹",
+    description: "7天持续追踪你的变化轨迹",
     detail: "每日行为数据化记录"
   },
   {
@@ -72,7 +72,7 @@ const trilogy = [
     color: "from-cyan-500 to-blue-500",
     bgColor: "bg-gradient-to-br from-cyan-50 to-blue-50",
     borderColor: "border-cyan-200",
-    description: "Day 1 vs Day 21 活画像",
+    description: "Day 1 vs Day 7 活画像",
     detail: "见证你的真实蜕变"
   },
   {
@@ -91,7 +91,7 @@ const comparisonItems = [
   { 
     icon: TrendingUp,
     without: "信息会遗忘，行动难持续",
-    with: "21天持续追踪，建立新习惯"
+    with: "7天持续追踪，建立新习惯"
   },
   {
     icon: Users,
@@ -106,7 +106,7 @@ const comparisonItems = [
 ];
 
 const campFeatures = [
-  "21天财富教练1对1对话",
+  "7天财富教练1对1对话",
   "每日个性化行动推荐",
   "活画像实时更新",
   "行为蜕变命名系统"
@@ -154,7 +154,7 @@ function PricingSection({
           className="w-full bg-amber-500 hover:bg-amber-600 text-white h-12 text-base font-semibold rounded-lg"
           onClick={onStart}
         >
-          开始21天训练营
+          开始7天训练营
         </Button>
       ) : (
         <Button 
@@ -254,7 +254,7 @@ export function CampConversionCard({
               <div className="flex-1">
                 <h4 className="font-semibold text-foreground text-sm mb-1">活画像 · Day 0 基准线</h4>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  今天的测评结果将成为你「活画像」的起点。加入训练营后，<span className="text-amber-600 font-medium">每天的对话都会更新你的画像</span>，21天后你将清晰看见自己的成长轨迹。
+                  今天的测评结果将成为你「活画像」的起点。加入训练营后，<span className="text-amber-600 font-medium">每天的对话都会更新你的画像</span>，7天后你将清晰看见自己的成长轨迹。
                 </p>
               </div>
             </div>
@@ -306,7 +306,7 @@ export function CampConversionCard({
           {/* 训练营核心价值 - 简化版 */}
           <div className="p-4 bg-gradient-to-br from-muted/40 to-muted/20 rounded-xl border border-border/50">
             <p className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
-              ✨ 21天训练营带给你
+              ✨ 7天训练营带给你
             </p>
             <div className="grid grid-cols-2 gap-3">
               {trilogy.map((item, idx) => (

@@ -111,7 +111,7 @@ const Auth = () => {
                 .from('training_camps')
                 .select('id')
                 .eq('user_id', session.user.id)
-                .in('camp_type', ['wealth_block_21', 'wealth_awakening_21'])
+                .in('camp_type', ['wealth_block_7', 'wealth_block_21', 'wealth_awakening_21'])
                 .eq('status', 'active')
                 .maybeSingle();
               
