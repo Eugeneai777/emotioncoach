@@ -55,7 +55,7 @@ export default function CampGraduate() {
           .from('training_camps')
           .select('*')
           .eq('user_id', user.id)
-          .eq('camp_type', 'wealth_block_21')
+          .in('camp_type', ['wealth_block_7', 'wealth_block_21'])
           .eq('status', 'completed')
           .order('completed_at', { ascending: false })
           .limit(1)

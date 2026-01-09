@@ -66,7 +66,7 @@ const CampTemplateDetail = () => {
 
   // 财富训练营重定向到专属介绍页
   useEffect(() => {
-    if (camp?.camp_type === 'wealth_block_21') {
+    if (camp?.camp_type === 'wealth_block_7' || camp?.camp_type === 'wealth_block_21') {
       navigate('/wealth-camp-intro', { replace: true });
     }
   }, [camp, navigate]);

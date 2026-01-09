@@ -113,7 +113,7 @@ const GrowthPosterCard = forwardRef<HTMLDivElement, GrowthPosterCardProps>(({
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 16, fontWeight: 600, color: '#78350f' }}>{displayName}</div>
-          <div style={{ fontSize: 12, color: '#92400e', marginTop: 2 }}>21天财富训练营</div>
+          <div style={{ fontSize: 12, color: '#92400e', marginTop: 2 }}>7天财富训练营</div>
         </div>
         <div style={{
           background: 'white',

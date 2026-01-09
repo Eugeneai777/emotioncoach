@@ -12,31 +12,31 @@ interface WealthMilestoneShareCardProps {
 }
 
 const getMilestoneConfig = (days: number) => {
-  if (days >= 21) {
+  if (days >= 7) {
     return {
       badge: '🏆',
       title: '完成挑战',
-      subtitle: '21天财富觉醒之旅圆满结束',
+      subtitle: '7天财富觉醒之旅圆满结束',
       gradient: 'from-yellow-200 via-amber-200 to-yellow-300',
       accentColor: 'text-amber-800',
       bgColor: 'bg-amber-100',
     };
   }
-  if (days >= 14) {
+  if (days >= 5) {
     return {
       badge: '🥈',
-      title: '坚持14天',
+      title: '坚持5天',
       subtitle: '财富觉醒之旅已过半',
       gradient: 'from-slate-200 via-gray-200 to-slate-300',
       accentColor: 'text-slate-700',
       bgColor: 'bg-slate-100',
     };
   }
-  if (days >= 7) {
+  if (days >= 3) {
     return {
       badge: '🥉',
-      title: '坚持7天',
-      subtitle: '第一周财富觉醒达成',
+      title: '坚持3天',
+      subtitle: '第一阶段财富觉醒达成',
       gradient: 'from-orange-200 via-amber-100 to-orange-200',
       accentColor: 'text-orange-800',
       bgColor: 'bg-orange-100',

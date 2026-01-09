@@ -239,8 +239,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           const today = new Date();
           const diffTime = today.getTime() - startDate.getTime();
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-          currentDay = Math.min(Math.max(1, diffDays), camp.duration_days || 21);
-          totalDays = camp.duration_days || 21;
+          currentDay = Math.min(Math.max(1, diffDays), camp.duration_days || 7);
+          totalDays = camp.duration_days || 7;
         }
       }
 
@@ -387,7 +387,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const getCardName = () => {
     switch (activeTab) {
       case 'assessment': return '财富卡点测评邀请卡';
-      case 'camp': return '21天财富训练营邀请卡';
+      case 'camp': return '7天财富训练营邀请卡';
       case 'awakening': return '财富觉醒分享卡';
       case 'milestone': return '财富训练营里程碑';
       case 'growth': return '财富成长海报';

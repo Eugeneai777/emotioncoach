@@ -46,7 +46,7 @@ const DynamicCoach = () => {
   
   // 检查财富训练营权益
   const isWealthCoach = coachKey === 'wealth_coach_4_questions';
-  const { data: campEntitlement } = useCampEntitlement(isWealthCoach ? 'wealth_block_21' : '');
+  const { data: campEntitlement } = useCampEntitlement(isWealthCoach ? 'wealth_block_7' : '');
   
   // 根据教练类型选择引导配置
   const tourKey = coachKey === 'vibrant_life_sage' 

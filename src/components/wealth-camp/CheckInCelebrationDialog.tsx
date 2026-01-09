@@ -66,7 +66,8 @@ export function CheckInCelebrationDialog({
 
   const getMilestoneMessage = () => {
     if (consecutiveDays === 7) return '👑 7天训练营完美毕业！';
-    if (consecutiveDays === 3) return '🏆 中程里程碑达成！';
+    if (consecutiveDays === 5) return '🏆 中程里程碑达成！';
+    if (consecutiveDays === 3) return '🎉 3天坚持达成！';
     if (consecutiveDays === 1) return '🎉 开启觉醒之旅！';
     return '🌟 今日打卡成功！';
   };
@@ -78,9 +79,9 @@ export function CheckInCelebrationDialog({
   const getEncouragement = () => {
     if (consecutiveDays === 1) return '迈出改变的第一步，你已经超越了99%的人！';
     if (consecutiveDays <= 3) return '坚持的力量正在积累，继续加油！';
-    if (consecutiveDays <= 7) return '一周的坚持让习惯开始形成！';
-    if (consecutiveDays <= 14) return '两周的训练，你的财富思维正在重塑！';
-    return '21天的蜕变，你已经成为全新的自己！';
+    if (consecutiveDays <= 5) return '你的财富思维正在重塑！';
+    if (consecutiveDays <= 7) return '7天的蜕变，你已经成为全新的自己！';
+    return '训练营完成，继续保持觉察！';
   };
 
   return (

@@ -23,7 +23,7 @@ const WealthCampIntro = () => {
   const { trackAssessmentTocamp, trackEvent } = useWealthCampAnalytics();
   
   // 检查用户是否已购买训练营
-  const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_21");
+  const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_7");
   const hasPurchased = !!purchaseRecord;
 
   // 埋点：页面加载时追踪
@@ -42,7 +42,7 @@ const WealthCampIntro = () => {
         .from("training_camps")
         .select("*")
         .eq("user_id", user.id)
-        .eq("camp_type", "wealth_block_21")
+        .eq("camp_type", "wealth_block_7")
         .in("status", ["active", "paused"])
         .maybeSingle();
 
@@ -536,11 +536,11 @@ const WealthCampIntro = () => {
           setShowPayDialog(open);
           if (open) {
             // 埋点：发起支付
-            trackEvent('payment_initiated', { metadata: { package_key: 'camp-wealth_block_21', price: 299 } });
+            trackEvent('payment_initiated', { metadata: { package_key: 'camp-wealth_block_7', price: 299 } });
           }
         }}
         packageInfo={{
-          key: 'camp-wealth_block_21',
+          key: 'camp-wealth_block_7',
           name: '财富觉醒训练营',
           price: 299
         }}
@@ -551,7 +551,7 @@ const WealthCampIntro = () => {
             if (user) {
               const { error } = await supabase.from('user_camp_purchases').insert({
                 user_id: user.id,
-                camp_type: 'wealth_block_21',
+                camp_type: 'wealth_block_7',
                 camp_name: '财富觉醒训练营',
                 purchase_price: 299,
                 payment_status: 'paid'
@@ -570,7 +570,7 @@ const WealthCampIntro = () => {
           setShowPayDialog(false);
           toast.success("购买成功！请选择开始日期");
           refetchPurchase();
-          queryClient.invalidateQueries({ queryKey: ['camp-purchase', 'wealth_block_21'] });
+          queryClient.invalidateQueries({ queryKey: ['camp-purchase', 'wealth_block_7'] });
           setShowStartDialog(true);
         }}
       />
@@ -580,7 +580,7 @@ const WealthCampIntro = () => {
         open={showStartDialog}
         onOpenChange={setShowStartDialog}
         campTemplate={{
-          camp_type: "wealth_block_21",
+          camp_type: "wealth_block_7",
           camp_name: "财富觉醒训练营",
           duration_days: 7,
           icon: "💰",

@@ -54,7 +54,7 @@ export default function Claim() {
         .select('id')
         .eq('referred_user_id', userId)
         .eq('inviter_user_id', inviterUserId)
-        .eq('camp_type', 'wealth_block_21')
+        .in('camp_type', ['wealth_block_7', 'wealth_block_21'])
         .maybeSingle();
 
       if (existing) {
@@ -74,7 +74,7 @@ export default function Claim() {
         .insert({
           inviter_user_id: inviterUserId,
           referred_user_id: userId,
-          camp_type: 'wealth_block_21',
+          camp_type: 'wealth_block_7',
           status: 'pending',
         });
 

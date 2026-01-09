@@ -149,7 +149,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
         <Button 
           onClick={() => {
             // 财富训练营使用专属打卡页
-            if (camp.camp_type === 'wealth_block_21') {
+            if (camp.camp_type === 'wealth_block_7' || camp.camp_type === 'wealth_block_21') {
               navigate('/wealth-camp-checkin');
             } else {
               navigate(`/camp-checkin/${camp.id}`);
@@ -166,7 +166,7 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
           size="sm"
           onClick={() => {
             // 财富训练营使用专属介绍页
-            if (camp.camp_type === 'wealth_block_21') {
+            if (camp.camp_type === 'wealth_block_7' || camp.camp_type === 'wealth_block_21') {
               navigate('/wealth-camp-intro');
             } else {
               navigate(`/camp-intro/${camp.camp_type}`);
