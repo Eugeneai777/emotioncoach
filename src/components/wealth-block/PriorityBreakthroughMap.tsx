@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Crown, Medal, Award, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
   fourPoorInfo, 
@@ -97,25 +97,39 @@ export function PriorityBreakthroughMap({
     belief: '信念'
   };
 
+  const rankIcons = [
+    <Crown className="w-3.5 h-3.5" />,
+    <Medal className="w-3.5 h-3.5" />,
+    <Award className="w-3.5 h-3.5" />
+  ];
+
+  const rankColors = [
+    'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30',
+    'bg-gradient-to-br from-slate-300 to-slate-400 text-slate-700 shadow-md',
+    'bg-gradient-to-br from-amber-600 to-amber-700 text-amber-100 shadow-md'
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
     >
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="pb-3">
+      <Card className="border-0 shadow-lg overflow-hidden">
+        <CardHeader className="pb-3 bg-gradient-to-r from-muted/50 to-transparent">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <span>🗺️</span>
+            <Target className="w-5 h-5 text-amber-500" />
             <span>你的突破优先级</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 pt-2">
           {/* Top 3 Priority */}
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {topPriority.map((block, index) => {
               const severity = getSeverity(block.score, block.maxScore);
               const progressPotential = getProgressPotential(block.score, block.maxScore);
+              const isFirst = index === 0;
+              
               return (
                 <motion.div
                   key={block.key}
@@ -123,44 +137,51 @@ export function PriorityBreakthroughMap({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 + index * 0.1 }}
                   className={cn(
-                    "p-3 rounded-xl border",
-                    categoryColors[block.category]
+                    "p-3 rounded-xl border transition-all",
+                    categoryColors[block.category],
+                    isFirst && "ring-2 ring-amber-400/50 bg-gradient-to-r from-amber-50/50 to-transparent"
                   )}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-xs font-bold">
-                        {index + 1}
-                      </span>
+                    <div className="flex items-center gap-2.5">
+                      <motion.div 
+                        className={cn(
+                          "w-7 h-7 rounded-full flex items-center justify-center",
+                          rankColors[index]
+                        )}
+                        whileHover={{ scale: 1.1 }}
+                      >
+                        {rankIcons[index]}
+                      </motion.div>
                       <span className="text-xl">{block.emoji}</span>
                       <div>
-                        <span className="font-medium">{block.name}</span>
+                        <span className="font-semibold">{block.name}</span>
                         <span className={cn("ml-2 text-xs px-1.5 py-0.5 rounded", severity.color, "bg-current/10")}>
                           {severity.label}
                         </span>
                       </div>
                     </div>
-                    <span className="text-sm font-semibold">{block.score}/{block.maxScore}</span>
+                    <span className="text-sm font-bold tabular-nums">{block.score}/{block.maxScore}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{categoryLabels[block.category]}层</span>
-                    <span className="flex items-center gap-1">
+                    <span className="px-1.5 py-0.5 bg-muted/50 rounded">{categoryLabels[block.category]}层</span>
+                    <span className="flex items-center gap-1 text-emerald-600">
                       <TrendingUp className="w-3 h-3" />
                       进步空间 {progressPotential}分
                     </span>
                   </div>
-                  {/* Progress bar */}
-                  <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
+                  {/* Progress bar with gradient */}
+                  <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
                     <motion.div
                       className={cn(
-                        "h-full rounded-full",
-                        severity.level === 'critical' ? "bg-rose-500" :
-                        severity.level === 'high' ? "bg-orange-500" :
-                        severity.level === 'medium' ? "bg-amber-500" : "bg-emerald-500"
+                        "h-full rounded-full bg-gradient-to-r",
+                        severity.level === 'critical' ? "from-rose-400 to-rose-600" :
+                        severity.level === 'high' ? "from-orange-400 to-orange-600" :
+                        severity.level === 'medium' ? "from-amber-400 to-amber-600" : "from-emerald-400 to-emerald-600"
                       )}
                       initial={{ width: 0 }}
                       animate={{ width: `${(block.score / block.maxScore) * 100}%` }}
-                      transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+                      transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
                     />
                   </div>
                 </motion.div>
@@ -169,7 +190,7 @@ export function PriorityBreakthroughMap({
           </div>
 
           {/* Tip - 强化转化引导 */}
-          <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+          <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200/50">
             <p className="text-xs text-amber-700 text-center font-medium">
               🎯 训练营将<span className="text-amber-900 font-bold">重点突破</span>这 3 个卡点，21天见证蜕变
             </p>

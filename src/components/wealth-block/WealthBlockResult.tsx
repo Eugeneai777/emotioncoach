@@ -221,7 +221,13 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   };
 
   return (
-    <div className="space-y-5 pb-20">
+    <div className="space-y-4 pb-20 relative">
+      {/* 背景装饰 */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] -z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,hsl(var(--primary)/0.4),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,hsl(var(--accent)/0.4),transparent_50%)]" />
+      </div>
+      
       {/* 健康度仪表盘 - 视觉冲击力升级 */}
       <EnhancedHealthGauge
         healthScore={healthScore}
@@ -230,56 +236,52 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         beliefScore={result.beliefScore}
       />
 
-      {/* 财富反应模式结果卡片 */}
+      {/* 分隔装饰 */}
+      <div className="flex items-center gap-4 py-1">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        <span className="text-xs text-muted-foreground">✧</span>
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      </div>
+
+      {/* 财富反应模式结果卡片 - 精简版 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
       >
         <Card className="overflow-hidden border-0 shadow-xl">
-          <div className={cn("bg-gradient-to-br p-6 text-white", pattern.color)}>
+          <div className={cn("bg-gradient-to-br p-5 text-white", pattern.color)}>
+            {/* 头部 */}
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm text-4xl">
-                {pattern.emoji}
+              <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
+                <span className="text-4xl">{pattern.emoji}</span>
               </div>
-              <div>
-                <p className="text-white/80 text-sm">🧭 你的财富反应模式</p>
+              <div className="flex-1">
+                <p className="text-white/80 text-xs">🧭 你的财富反应模式</p>
                 <h2 className="text-2xl font-bold">【{pattern.name}】</h2>
-                <p className="text-white/90 text-sm mt-1">{pattern.tagline}</p>
+                <p className="text-white/90 text-sm mt-0.5">{pattern.tagline}</p>
               </div>
             </div>
             
             {/* 说明文字 */}
-            <div className="p-3 bg-white/15 rounded-xl mb-4">
+            <div className="p-3 bg-white/15 rounded-xl mb-3">
               <p className="text-white/95 text-sm leading-relaxed">
-                📌 这不是性格，<br/>
-                而是你在面对<span className="font-semibold">钱、机会、价格、收入</span>时的自动反应。
+                📌 这不是性格，而是你在面对<span className="font-semibold">钱、机会、价格、收入</span>时的自动反应。
               </p>
             </div>
             
-            {/* 你的状态 */}
-            <div className="mb-4">
-              <h4 className="text-white/90 text-sm font-semibold mb-2 flex items-center gap-2">
+            {/* 你的状态 - 标签式布局 */}
+            <div className="mb-3">
+              <h4 className="text-white/90 text-xs font-semibold mb-2 flex items-center gap-1">
                 💬 你的状态
               </h4>
-              <ul className="space-y-1.5">
+              <div className="flex flex-wrap gap-2">
                 {pattern.state.map((item, index) => (
-                  <li key={index} className="flex items-center gap-2 text-white/90 text-sm">
-                    <span className="w-1.5 h-1.5 bg-white/70 rounded-full" />
+                  <span key={index} className="bg-white/20 px-2.5 py-1 rounded-full text-xs text-white/95 backdrop-blur-sm">
                     {item}
-                  </li>
+                  </span>
                 ))}
-              </ul>
-            </div>
-            
-            {/* 专业解读 */}
-            <div className="mb-4">
-              <h4 className="text-white/90 text-sm font-semibold mb-2 flex items-center gap-2">
-                🔍 专业解读
-              </h4>
-              <p className="text-white/90 text-sm leading-relaxed">
-                {pattern.interpretation}
-              </p>
+              </div>
             </div>
             
             {/* 系统建议 */}
@@ -288,7 +290,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                 💡 系统建议
               </h4>
               <p className="text-white/95 text-sm">{pattern.suggestion}</p>
-              <p className="text-white/80 text-xs mt-1">训练营重点：{pattern.trainingFocus}</p>
+              <p className="text-white/80 text-xs mt-1 opacity-80">训练营重点：{pattern.trainingFocus}</p>
             </div>
           </div>
         </Card>
@@ -331,7 +333,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         type="multiple" 
         value={openLayers}
         onValueChange={setOpenLayers}
-        className="space-y-5"
+        className="space-y-4"
       >
         {/* 第一层：行为层分析 */}
         <AccordionItem value="behavior" className="border-0">
