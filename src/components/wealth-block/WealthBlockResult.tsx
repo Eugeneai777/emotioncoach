@@ -51,6 +51,7 @@ import { PriorityBreakthroughMap } from "./PriorityBreakthroughMap";
 import { AIInsightData } from "./AIInsightCard";
 import { LayerTransitionHint } from "./LayerTransitionHint";
 import { CampConversionCard } from "./CampConversionCard";
+import { CampPersonalizedCard } from "./CampPersonalizedCard";
 import { DeepFollowUpAnswer } from "./DeepFollowUpDialog";
 
 interface WealthBlockResultProps {
@@ -648,6 +649,17 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         </AccordionItem>
       </Accordion>
 
+      {/* 训练营个性化推荐卡片 - 紧跟诊断之后 */}
+      <CampPersonalizedCard
+        dominantPoor={result.dominantPoor}
+        dominantEmotion={result.dominantEmotionBlock}
+        dominantBelief={result.dominantBeliefBlock}
+        healthScore={healthScore}
+        onPurchase={() => setShowPayDialog(true)}
+        onViewDetails={() => navigate('/wealth-camp-intro')}
+        hasPurchased={hasPurchased}
+      />
+
       {/* 优先突破地图 - Top 3 */}
       <PriorityBreakthroughMap
         mouthScore={result.mouthScore}
@@ -666,15 +678,17 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         relationshipScore={result.relationshipScore}
       />
 
-      {/* 训练营转化卡片 - 融入AI洞察 */}
-      <CampConversionCard
-        hasPurchased={hasPurchased}
-        onPurchase={() => setShowPayDialog(true)}
-        onStart={() => setShowStartDialog(true)}
-        onViewDetails={() => navigate('/wealth-camp-intro')}
-        aiInsight={aiInsight}
-        isLoadingAI={isLoadingAI}
-      />
+      {/* 训练营AI洞察转化卡片 - 已购买用户或需要AI洞察时显示 */}
+      {(hasPurchased || aiInsight || isLoadingAI) && (
+        <CampConversionCard
+          hasPurchased={hasPurchased}
+          onPurchase={() => setShowPayDialog(true)}
+          onStart={() => setShowStartDialog(true)}
+          onViewDetails={() => navigate('/wealth-camp-intro')}
+          aiInsight={aiInsight}
+          isLoadingAI={isLoadingAI}
+        />
+      )}
 
       {/* 行动按钮 */}
       <motion.div
