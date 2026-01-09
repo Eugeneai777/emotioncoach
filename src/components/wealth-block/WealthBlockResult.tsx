@@ -331,7 +331,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         type="multiple" 
         value={openLayers}
         onValueChange={setOpenLayers}
-        className="space-y-4"
+        className="space-y-6"
       >
         {/* 第一层：行为层分析 */}
         <AccordionItem value="behavior" className="border-0">
@@ -418,22 +418,11 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                     </div>
                   </div>
 
-                  {/* 行动清单 */}
-                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-                    <h5 className="font-semibold text-amber-700 mb-3 flex items-center gap-2">
-                      <Sparkles className="w-4 h-4" />
-                      突破"{dominantPoor.name}"行动清单
-                    </h5>
-                    <ul className="space-y-2">
-                      {dominantPoor.suggestions.map((suggestion, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm text-amber-800">
-                          <span className="flex-shrink-0 w-5 h-5 bg-amber-200 text-amber-700 rounded-full flex items-center justify-center text-xs font-medium">
-                            {index + 1}
-                          </span>
-                          <span>{suggestion}</span>
-                        </li>
-                      ))}
-                    </ul>
+                  {/* 核心洞见 */}
+                  <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <p className="text-sm text-amber-800">
+                      <span className="font-semibold">💡 核心洞见：</span>行为模式是冰山一角，背后是情绪与信念的驱动。改变行为，需先看见行为背后的能量模式。
+                    </p>
                   </div>
                 </CardContent>
               </AccordionContent>
@@ -473,13 +462,6 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
               </AccordionTrigger>
               <AccordionContent>
                 <CardContent className="p-5 space-y-5">
-                  {/* 核心理念 */}
-                  <div className="p-3 bg-pink-50 rounded-lg border border-pink-200">
-                    <p className="text-sm text-pink-800">
-                      <span className="font-semibold">💡 核心洞见：</span>财富的本质是心理能量的流动。财富卡住=心理能量阻塞（如恐惧、匮乏、控制欲）
-                    </p>
-                  </div>
-
                   {/* 主导卡点卡片 */}
                   <div className={cn("bg-gradient-to-br p-4 text-white rounded-xl", dominantEmotion.color)}>
                     <div className="flex items-center gap-3 mb-3">
@@ -537,22 +519,11 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                     </div>
                   </div>
 
-                  {/* 行动清单 */}
-                  <div className="p-4 bg-pink-50 rounded-xl border border-pink-200">
-                    <h5 className="font-semibold text-pink-700 mb-3 flex items-center gap-2">
-                      <Heart className="w-4 h-4" />
-                      情绪疗愈行动清单
-                    </h5>
-                    <ul className="space-y-2">
-                      {dominantEmotion.suggestions.map((suggestion, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm text-pink-800">
-                          <span className="flex-shrink-0 w-5 h-5 bg-pink-200 text-pink-700 rounded-full flex items-center justify-center text-xs font-medium">
-                            {index + 1}
-                          </span>
-                          <span>{suggestion}</span>
-                        </li>
-                      ))}
-                    </ul>
+                  {/* 核心洞见 */}
+                  <div className="p-3 bg-pink-50 rounded-lg border border-pink-200">
+                    <p className="text-sm text-pink-800">
+                      <span className="font-semibold">💡 核心洞见：</span>财富的本质是心理能量的流动。财富卡住=心理能量阻塞（如恐惧、匮乏、控制欲）
+                    </p>
                   </div>
                 </CardContent>
               </AccordionContent>
@@ -592,13 +563,6 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
               </AccordionTrigger>
               <AccordionContent>
                 <CardContent className="p-5 space-y-5">
-                  {/* 核心理念 */}
-                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                    <p className="text-sm text-purple-800">
-                      <span className="font-semibold">💡 离苦得乐的关键：</span>直面内在障碍，让"爱与智慧"替代"焦虑与评判"，使财富随能量流动自然显化
-                    </p>
-                  </div>
-
                   {/* 主导卡点卡片 */}
                   <div className={cn("bg-gradient-to-br p-4 text-white rounded-xl", dominantBelief.color)}>
                     <div className="flex items-center gap-3 mb-3">
@@ -669,22 +633,11 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                     </div>
                   </div>
 
-                  {/* 行动清单 */}
-                  <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
-                    <h5 className="font-semibold text-purple-700 mb-3 flex items-center gap-2">
-                      <Brain className="w-4 h-4" />
-                      信念重塑行动清单
-                    </h5>
-                    <ul className="space-y-2">
-                      {dominantBelief.suggestions.map((suggestion, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm text-purple-800">
-                          <span className="flex-shrink-0 w-5 h-5 bg-purple-200 text-purple-700 rounded-full flex items-center justify-center text-xs font-medium">
-                            {index + 1}
-                          </span>
-                          <span>{suggestion}</span>
-                        </li>
-                      ))}
-                    </ul>
+                  {/* 核心洞见 */}
+                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <p className="text-sm text-purple-800">
+                      <span className="font-semibold">💡 核心洞见：</span>直面内在障碍，让"爱与智慧"替代"焦虑与评判"，使财富随能量流动自然显化
+                    </p>
                   </div>
                 </CardContent>
               </AccordionContent>
