@@ -138,13 +138,8 @@ export function WealthMeditationPlayer({
   // 背景选项配置
   const backgroundOptions: Array<{ type: VideoBackgroundType; label: string; icon: string }> = [
     { type: 'water', label: '水面', icon: '💧' },
-    { type: 'forest', label: '森林', icon: '🌲' },
-    { type: 'fire', label: '篝火', icon: '🔥' },
     { type: 'stars', label: '星空', icon: '⭐' },
-    { type: 'clouds', label: '云海', icon: '☁️' },
-    { type: 'sunset', label: '日落', icon: '🌅' },
     { type: 'aurora', label: '极光', icon: '🌌' },
-    { type: 'snow', label: '雪景', icon: '❄️' },
   ];
 
 
