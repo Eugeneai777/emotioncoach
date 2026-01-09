@@ -57,18 +57,22 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
       transition={{ duration: 0.5 }}
     >
       <Card className="overflow-hidden border-0 shadow-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           {/* Header */}
           <div className="text-center mb-2">
-            <h2 className="text-white font-bold text-lg flex items-center justify-center gap-2">
-              <span className="text-2xl">💰</span>
+            <h2 className="text-white font-bold text-base sm:text-lg flex items-center justify-center gap-2">
+              <span className="text-xl sm:text-2xl">💰</span>
               财富心理健康度
             </h2>
           </div>
 
-          {/* Gauge Display */}
-          <div className="relative flex justify-center py-4">
-            <svg width="200" height="120" viewBox="0 0 200 120">
+          {/* Gauge Display - Responsive */}
+          <div className="relative flex justify-center py-2 sm:py-4">
+            <svg 
+              className="w-[160px] h-[96px] sm:w-[200px] sm:h-[120px] md:w-[240px] md:h-[144px]" 
+              viewBox="0 0 200 120"
+              preserveAspectRatio="xMidYMid meet"
+            >
               {/* Background arc */}
               <path
                 d="M 20 100 A 80 80 0 0 1 180 100"
@@ -130,7 +134,6 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
               
               {/* Scale labels */}
               <text x="15" y="115" fill="rgba(255,255,255,0.5)" fontSize="10">0</text>
-              <text x="95" y="25" fill="rgba(255,255,255,0.5)" fontSize="10">50</text>
               <text x="178" y="115" fill="rgba(255,255,255,0.5)" fontSize="10">100</text>
             </svg>
             
@@ -142,7 +145,7 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
                 transition={{ delay: 0.8 }}
                 className="flex flex-col items-center"
               >
-                <span className={cn("text-4xl font-bold", getScoreColor(healthScore))}>
+                <span className={cn("text-3xl sm:text-4xl md:text-5xl font-bold", getScoreColor(healthScore))}>
                   {healthScore}
                 </span>
               </motion.div>
@@ -170,7 +173,7 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
           </motion.div>
 
           {/* Three Layer Breakdown */}
-          <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
             {layers.map((layer, idx) => (
               <motion.div
                 key={layer.name}
@@ -179,19 +182,19 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
                 transition={{ delay: 0.8 + idx * 0.1 }}
                 className="relative"
               >
-                <div className="bg-slate-800/80 rounded-xl p-3 text-center border border-slate-700/50">
-                  <div className="text-2xl mb-1">{layer.emoji}</div>
-                  <div className="text-slate-400 text-xs mb-1">{layer.name}层</div>
+                <div className="bg-slate-800/80 rounded-lg sm:rounded-xl p-2 sm:p-3 text-center border border-slate-700/50">
+                  <div className="text-lg sm:text-2xl mb-0.5 sm:mb-1">{layer.emoji}</div>
+                  <div className="text-slate-400 text-[10px] sm:text-xs mb-0.5 sm:mb-1">{layer.name}层</div>
                   <div className={cn(
-                    "text-lg font-bold",
+                    "text-sm sm:text-lg font-bold",
                     layer.score / layer.max <= 0.4 ? "text-emerald-400" :
                     layer.score / layer.max <= 0.7 ? "text-amber-400" : "text-rose-400"
                   )}>
                     {layer.score}
-                    <span className="text-slate-500 text-xs font-normal">/{layer.max}</span>
+                    <span className="text-slate-500 text-[10px] sm:text-xs font-normal">/{layer.max}</span>
                   </div>
                   {/* Mini progress bar */}
-                  <div className="h-1.5 bg-slate-700 rounded-full mt-2 overflow-hidden">
+                  <div className="h-1 sm:h-1.5 bg-slate-700 rounded-full mt-1.5 sm:mt-2 overflow-hidden">
                     <motion.div
                       className={cn("h-full rounded-full bg-gradient-to-r", layer.color)}
                       initial={{ width: 0 }}
