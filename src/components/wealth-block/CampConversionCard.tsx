@@ -127,7 +127,7 @@ function PricingSection({
   const { minutes, seconds, isExpired } = useCountdown(30);
   
   return (
-    <div className="text-center space-y-3 pt-2">
+    <div className="text-center space-y-2 pt-2">
       {/* 价格展示 - 一行式 */}
       <div className="flex items-baseline justify-center gap-2">
         <span className="text-sm text-muted-foreground">
@@ -195,7 +195,7 @@ export function CampConversionCard({
     >
       <Card className="overflow-hidden border-0 shadow-2xl">
         {/* Header with animated gradient */}
-        <div className="relative bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-6 text-white overflow-hidden">
+        <div className="relative bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-4 text-white overflow-hidden">
           {/* Animated background particles */}
           <div className="absolute inset-0 opacity-20">
             {[...Array(5)].map((_, i) => (
@@ -236,7 +236,7 @@ export function CampConversionCard({
           </div>
         </div>
 
-        <div className="p-5 space-y-6">
+        <div className="p-4 space-y-4">
           {/* Day 0 活画像说明 */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
