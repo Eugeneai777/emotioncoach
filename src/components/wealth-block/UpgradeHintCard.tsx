@@ -14,7 +14,7 @@ export function UpgradeHintCard() {
           <Sparkles className="w-4 h-4 text-amber-500" />
           <div>
             <p className="text-xs text-slate-700">想要持续突破？</p>
-            <p className="text-[10px] text-slate-500">测评后可加入21天训练营</p>
+            <p className="text-[10px] text-slate-500">测评后可加入7天训练营</p>
           </div>
         </div>
         <div className="flex items-center gap-1 text-[10px] text-amber-600 font-medium">

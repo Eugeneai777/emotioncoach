@@ -145,10 +145,10 @@ const WealthCampIntro = () => {
   return (
     <>
       <Helmet>
-        <title>21天财富觉醒训练营 - 有劲AI</title>
-        <meta name="description" content="每天15分钟，21天持续陪伴。通过财富觉察冥想、AI教练对话、打卡分享，帮你看见行为、情绪、信念上的财富卡点，走出卡住的位置。" />
-        <meta name="keywords" content="财富觉醒,财富训练营,财富教练,金钱观,财富信念,有劲AI,21天训练营,财富突破,财富觉察" />
-        <meta property="og:title" content="21天财富觉醒训练营 - 有劲AI" />
+        <title>7天财富觉醒训练营 - 有劲AI</title>
+        <meta name="description" content="每天15分钟，7天集中突破。通过财富觉察冥想、AI教练对话、打卡分享，帮你看见行为、情绪、信念上的财富卡点，走出卡住的位置。" />
+        <meta name="keywords" content="财富觉醒,财富训练营,财富教练,金钱观,财富信念,有劲AI,7天训练营,财富突破,财富觉察" />
+        <meta property="og:title" content="7天财富觉醒训练营 - 有劲AI" />
         <meta property="og:description" content="不是逼你赚钱，而是帮你走出卡住的位置。每天15分钟，AI教练陪你唤醒财富能量。" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://eugeneai.me/wealth-camp-intro" />
@@ -161,7 +161,7 @@ const WealthCampIntro = () => {
           <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-amber-700">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <span className="text-sm text-amber-600 font-medium">21天训练营</span>
+          <span className="text-sm text-amber-600 font-medium">7天训练营</span>
           <div className="w-9" />
         </div>
       </div>
@@ -175,7 +175,7 @@ const WealthCampIntro = () => {
           <div className="relative">
             <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-[10px] sm:text-xs font-medium mb-3 sm:mb-4">
               <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              每天15分钟 · 21天持续陪伴
+              每天15分钟 · 7天集中突破
             </div>
             
             <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2 sm:mb-3">
@@ -522,7 +522,7 @@ const WealthCampIntro = () => {
                 }}
                 className="w-full h-11 sm:h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-sm sm:text-base"
               >
-                ¥299 开启21天训练营
+                ¥299 开启7天训练营
               </Button>
             </div>
           )}
@@ -582,7 +582,7 @@ const WealthCampIntro = () => {
         campTemplate={{
           camp_type: "wealth_block_21",
           camp_name: "财富觉醒训练营",
-          duration_days: 21,
+          duration_days: 7,
           icon: "💰",
           price: 299,
           original_price: 399,

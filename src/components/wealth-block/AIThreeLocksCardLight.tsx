@@ -11,7 +11,7 @@ const trilogy = [
     bgColor: "bg-amber-50",
     borderColor: "border-amber-200",
     iconColor: "text-amber-600",
-    description: "21天持续追踪你的变化轨迹",
+    description: "7天持续追踪你的变化轨迹",
     example: "\"焦虑指数从 78 降到 42\"",
   },
   {
@@ -23,7 +23,7 @@ const trilogy = [
     borderColor: "border-cyan-200",
     iconColor: "text-cyan-600",
     description: "活画像每周更新，见证蜕变",
-    example: "\"Day 1 的你 vs Day 21 的你\"",
+    example: "\"Day 1 的你 vs Day 7 的你\"",
   },
   {
     icon: Heart,
