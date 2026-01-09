@@ -1,7 +1,37 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, Database, Heart, Sparkles, ShoppingCart, GraduationCap, Check, X, ArrowRight, TrendingUp, Users, Zap, Camera, Target, Loader2 } from "lucide-react";
+
+// 倒计时 Hook
+function useCountdown(targetMinutes: number = 30) {
+  const [timeLeft, setTimeLeft] = useState(() => {
+    // 从 sessionStorage 读取或初始化
+    const saved = sessionStorage.getItem('camp_countdown_end');
+    if (saved) {
+      const endTime = parseInt(saved, 10);
+      const remaining = Math.max(0, endTime - Date.now());
+      return Math.floor(remaining / 1000);
+    }
+    // 首次访问，设置倒计时结束时间
+    const endTime = Date.now() + targetMinutes * 60 * 1000;
+    sessionStorage.setItem('camp_countdown_end', endTime.toString());
+    return targetMinutes * 60;
+  });
+
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+    const timer = setInterval(() => {
+      setTimeLeft(prev => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  return { minutes, seconds, isExpired: timeLeft <= 0 };
+}
 
 interface AIInsightData {
   rootCauseAnalysis: string;
@@ -81,6 +111,73 @@ const campFeatures = [
   "活画像实时更新",
   "行为蜕变命名系统"
 ];
+
+// 价格区域组件（包含倒计时）
+function PricingSection({ 
+  hasPurchased, 
+  onPurchase, 
+  onStart, 
+  onViewDetails 
+}: { 
+  hasPurchased: boolean; 
+  onPurchase: () => void; 
+  onStart: () => void; 
+  onViewDetails: () => void;
+}) {
+  const { minutes, seconds, isExpired } = useCountdown(30);
+  
+  return (
+    <div className="text-center space-y-3 pt-2">
+      {/* 价格展示 - 一行式 */}
+      <div className="flex items-baseline justify-center gap-2">
+        <span className="text-sm text-muted-foreground">
+          原价 <span className="line-through">¥399</span>
+        </span>
+        <span className="text-2xl font-bold text-amber-600">¥299</span>
+        <span className="text-xs text-muted-foreground">省¥100</span>
+      </div>
+      
+      {/* 微妙倒计时 - 仅在未过期时显示 */}
+      {!isExpired && !hasPurchased && (
+        <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <Clock className="w-3 h-3" />
+          <span>优惠剩余</span>
+          <span className="font-mono tabular-nums text-amber-600 font-medium">
+            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+          </span>
+        </div>
+      )}
+      
+      {/* CTA按钮 - 简洁版 */}
+      {hasPurchased ? (
+        <Button 
+          className="w-full bg-amber-500 hover:bg-amber-600 text-white h-12 text-base font-semibold rounded-lg"
+          onClick={onStart}
+        >
+          开始21天训练营
+        </Button>
+      ) : (
+        <Button 
+          className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg h-12 text-base font-semibold rounded-lg"
+          onClick={onPurchase}
+        >
+          ¥299 立即加入
+        </Button>
+      )}
+      
+      {/* 社会证明 - 极简 */}
+      <p className="text-xs text-muted-foreground">2,847人已参与</p>
+      
+      <Button 
+        variant="ghost" 
+        className="text-muted-foreground text-xs hover:text-foreground"
+        onClick={onViewDetails}
+      >
+        查看完整介绍 <ArrowRight className="w-3 h-3 ml-1" />
+      </Button>
+    </div>
+  );
+}
 
 export function CampConversionCard({ 
   hasPurchased, 
@@ -236,44 +333,12 @@ export function CampConversionCard({
           </div>
 
           {/* 价格和CTA - 简化版 */}
-          <div className="text-center space-y-3 pt-2">
-            {/* 价格展示 - 一行式 */}
-            <div className="flex items-baseline justify-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                原价 <span className="line-through">¥399</span>
-              </span>
-              <span className="text-2xl font-bold text-amber-600">¥299</span>
-              <span className="text-xs text-muted-foreground">省¥100</span>
-            </div>
-            
-            {/* CTA按钮 - 简洁版 */}
-            {hasPurchased ? (
-              <Button 
-                className="w-full bg-amber-500 hover:bg-amber-600 text-white h-12 text-base font-semibold rounded-lg"
-                onClick={onStart}
-              >
-                开始21天训练营
-              </Button>
-            ) : (
-              <Button 
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg h-12 text-base font-semibold rounded-lg"
-                onClick={onPurchase}
-              >
-                ¥299 立即加入
-              </Button>
-            )}
-            
-            {/* 社会证明 - 极简 */}
-            <p className="text-xs text-muted-foreground">2,847人已参与</p>
-            
-            <Button 
-              variant="ghost" 
-              className="text-muted-foreground text-xs hover:text-foreground"
-              onClick={onViewDetails}
-            >
-              查看完整介绍 <ArrowRight className="w-3 h-3 ml-1" />
-            </Button>
-          </div>
+          <PricingSection 
+            hasPurchased={hasPurchased}
+            onPurchase={onPurchase}
+            onStart={onStart}
+            onViewDetails={onViewDetails}
+          />
         </div>
       </Card>
     </motion.div>
