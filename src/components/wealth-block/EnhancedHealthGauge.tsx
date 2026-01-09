@@ -137,31 +137,27 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
               <text x="178" y="115" fill="rgba(255,255,255,0.5)" fontSize="10">100</text>
             </svg>
             
-            {/* Center score display */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-                className="flex flex-col items-center"
-              >
-                <span 
-                  className={cn("text-3xl sm:text-4xl md:text-5xl font-bold tabular-nums", getScoreColor(healthScore))}
-                  style={{ textShadow: '0 0 20px currentColor' }}
-                >
-                  {healthScore}
-                </span>
-              </motion.div>
-            </div>
           </div>
 
-          {/* Zone Status */}
+          {/* Score + Zone Status - 合并显示，避免重叠 */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
             className="text-center mb-6"
           >
+            {/* 分数显示 - 移到仪表盘下方 */}
+            <div className="mb-3">
+              <span 
+                className={cn("text-4xl sm:text-5xl font-bold tabular-nums", getScoreColor(healthScore))}
+                style={{ textShadow: '0 0 20px currentColor' }}
+              >
+                {healthScore}
+              </span>
+              <span className="text-lg text-slate-400 ml-1">分</span>
+            </div>
+            
+            {/* Zone 徽章 */}
             <div className={cn(
               "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold",
               zone.color === "emerald" && "bg-emerald-500/20 text-emerald-400",
