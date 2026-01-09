@@ -145,7 +145,6 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
                 <span className={cn("text-4xl font-bold", getScoreColor(healthScore))}>
                   {healthScore}
                 </span>
-                <span className="text-slate-400 text-sm">/ 100</span>
               </motion.div>
             </div>
           </div>
