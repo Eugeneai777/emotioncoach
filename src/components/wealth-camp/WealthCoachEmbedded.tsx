@@ -39,7 +39,7 @@ export const WealthCoachEmbedded = ({
   const { profileExists, isChecking } = useEnsureWealthProfile();
   
   // 智能通知
-  const { triggerNotification } = useSmartNotification('wealth_coach');
+  const { triggerNotification } = useSmartNotification('wealth_coach_4_questions_coach');
   
   // 调试日志：画像状态
   useEffect(() => {
