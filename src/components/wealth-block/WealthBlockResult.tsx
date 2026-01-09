@@ -221,7 +221,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   };
 
   return (
-    <div className="space-y-4 pb-20 relative">
+    <div className="space-y-3 pb-20 relative">
       {/* 背景装饰 */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,hsl(var(--primary)/0.4),transparent_50%)]" />
@@ -250,7 +250,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         transition={{ delay: 0.05 }}
       >
         <Card className="overflow-hidden border-0 shadow-xl">
-          <div className={cn("bg-gradient-to-br p-5 text-white", pattern.color)}>
+          <div className={cn("bg-gradient-to-br p-4 text-white", pattern.color)}>
             {/* 头部 */}
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
@@ -333,7 +333,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         type="multiple" 
         value={openLayers}
         onValueChange={setOpenLayers}
-        className="space-y-4"
+        className="space-y-3"
       >
         {/* 第一层：行为层分析 */}
         <AccordionItem value="behavior" className="border-0">
