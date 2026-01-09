@@ -21,7 +21,7 @@ const getPersonalizedTitle = (dominantPoor: FourPoorType, healthScore: number): 
   if (healthScore <= 40) {
     return `你的财富能量很健康！训练营帮你更进一步`;
   } else if (healthScore <= 70) {
-    return `你的「${poorInfo.name}」模式，21天可以这样突破 ↓`;
+    return `你的「${poorInfo.name}」模式，7天可以这样突破 ↓`;
   } else {
     return `别担心，你的「${poorInfo.name}」卡点，我们一起化解 ↓`;
   }
@@ -110,7 +110,7 @@ export function CampPersonalizedCard({
           {/* 价值密度数据 */}
           <div className="grid grid-cols-3 gap-2">
             <div className="p-3 bg-white/80 rounded-xl text-center shadow-sm">
-              <p className="text-xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">21</p>
+              <p className="text-xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">7</p>
               <p className="text-[10px] text-muted-foreground">天集中突破</p>
             </div>
             <div className="p-3 bg-white/80 rounded-xl text-center shadow-sm">
