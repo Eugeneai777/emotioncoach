@@ -351,9 +351,35 @@ export class RealtimeChat {
       const startTime = performance.now();
       console.log('[WebRTC] Starting connection...');
       
-      // 创建音频元素
+      // 创建音频元素 - iOS Safari 需要特殊处理
       this.audioEl = document.createElement("audio");
       this.audioEl.autoplay = true;
+      (this.audioEl as any).playsInline = true;  // iOS 必须设置
+      this.audioEl.setAttribute('playsinline', '');  // 兼容性写法
+      this.audioEl.setAttribute('webkit-playsinline', '');  // 旧版 iOS 兼容
+      
+      // 🔧 iOS Safari 音频解锁：先播放静音音频来激活 AudioContext
+      // 这解决了 iOS 上有文字但无语音的问题
+      try {
+        // 创建一个极短的静音 WAV 数据
+        const silentWav = new Uint8Array([
+          0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x41, 0x56, 0x45,
+          0x66, 0x6D, 0x74, 0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+          0x44, 0xAC, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00, 0x02, 0x00, 0x10, 0x00,
+          0x64, 0x61, 0x74, 0x61, 0x00, 0x00, 0x00, 0x00
+        ]);
+        const silentBlob = new Blob([silentWav], { type: 'audio/wav' });
+        const silentUrl = URL.createObjectURL(silentBlob);
+        this.audioEl.src = silentUrl;
+        await this.audioEl.play().catch(() => {
+          console.log('[WebRTC] Silent audio unlock failed, continuing anyway');
+        });
+        this.audioEl.src = '';  // 清空 src，准备接收 WebRTC 流
+        URL.revokeObjectURL(silentUrl);
+        console.log('[WebRTC] iOS audio context unlocked');
+      } catch (e) {
+        console.log('[WebRTC] Audio unlock skipped:', e);
+      }
 
       // 🚀 优化1：检查配置缓存（realtime_url 可按天缓存）
       const cachedConfig = getCachedConfig(this.tokenEndpoint);
