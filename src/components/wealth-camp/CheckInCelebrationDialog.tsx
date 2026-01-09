@@ -11,6 +11,8 @@ interface CheckInCelebrationDialogProps {
   totalDays: number;
   onShare: () => void;
   onInvite: () => void;
+  todayIndex?: number;
+  yesterdayIndex?: number;
 }
 
 export function CheckInCelebrationDialog({
@@ -20,6 +22,8 @@ export function CheckInCelebrationDialog({
   totalDays,
   onShare,
   onInvite,
+  todayIndex,
+  yesterdayIndex,
 }: CheckInCelebrationDialogProps) {
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -61,12 +65,15 @@ export function CheckInCelebrationDialog({
   }, [open]);
 
   const getMilestoneMessage = () => {
-    if (consecutiveDays === 7) return '🎉 一周坚持达成！';
-    if (consecutiveDays === 14) return '🏆 两周挑战完成！';
-    if (consecutiveDays === 21) return '👑 21天训练营完美毕业！';
-    if (consecutiveDays % 7 === 0) return `✨ ${consecutiveDays}天里程碑！`;
+    if (consecutiveDays === 7) return '👑 7天训练营完美毕业！';
+    if (consecutiveDays === 3) return '🏆 中程里程碑达成！';
+    if (consecutiveDays === 1) return '🎉 开启觉醒之旅！';
     return '🌟 今日打卡成功！';
   };
+
+  const trendChange = todayIndex !== undefined && yesterdayIndex !== undefined 
+    ? todayIndex - yesterdayIndex 
+    : null;
 
   const getEncouragement = () => {
     if (consecutiveDays === 1) return '迈出改变的第一步，你已经超越了99%的人！';
@@ -100,9 +107,38 @@ export function CheckInCelebrationDialog({
             </p>
           </div>
 
+          {/* Today vs Yesterday Comparison */}
+          {todayIndex !== undefined && (
+            <div className="grid grid-cols-2 gap-3 w-full">
+              <div className="bg-muted/50 rounded-xl p-3 text-center">
+                <p className="text-xs text-muted-foreground mb-1">昨日觉醒</p>
+                <p className="text-2xl font-bold text-muted-foreground">
+                  {yesterdayIndex ?? '--'}
+                </p>
+              </div>
+              <div className="bg-amber-100 dark:bg-amber-900/30 rounded-xl p-3 text-center">
+                <p className="text-xs text-amber-700 dark:text-amber-300 mb-1">今日觉醒</p>
+                <div className="flex items-center justify-center gap-1">
+                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                    {todayIndex}
+                  </p>
+                  {trendChange !== null && trendChange !== 0 && (
+                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
+                      trendChange > 0 
+                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                        : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
+                    }`}>
+                      {trendChange > 0 ? '+' : ''}{trendChange}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 连续打卡天数 */}
-          <div className="bg-amber-100 dark:bg-amber-900/30 rounded-2xl px-8 py-4 space-y-1">
-            <div className="text-4xl font-bold text-amber-600 dark:text-amber-400">
+          <div className="bg-amber-100 dark:bg-amber-900/30 rounded-2xl px-8 py-3 space-y-1">
+            <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">
               {consecutiveDays}
             </div>
             <div className="text-sm text-amber-700 dark:text-amber-300">

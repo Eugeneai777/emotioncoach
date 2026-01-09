@@ -74,6 +74,9 @@ export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
   const avgScore = entry.behavior_score && entry.emotion_score && entry.belief_score
     ? ((entry.behavior_score + entry.emotion_score + entry.belief_score) / 3).toFixed(1)
     : null;
+  
+  // Calculate awakening index (0-100)
+  const awakeningIndex = avgScore ? Math.round(((parseFloat(avgScore) - 1) / 4) * 100) : null;
 
   const hasCamp = !!entry.camp_id;
   const hasBlockTypes = entry.behavior_type || entry.emotion_type || entry.belief_type;
@@ -118,7 +121,7 @@ export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
                 )}
                 {entry.emotion_type && emotionTypeInfo[entry.emotion_type] && (
                   <Badge variant="outline" className={cn("text-xs", emotionTypeInfo[entry.emotion_type].color)}>
-                    💛 {emotionTypeInfo[entry.emotion_type].name}
+                    💭 {emotionTypeInfo[entry.emotion_type].name}
                   </Badge>
                 )}
                 {entry.belief_type && beliefTypeInfo[entry.belief_type] && (
@@ -143,29 +146,51 @@ export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
               )}
             </div>
 
-            {/* Scores */}
-            <div className="flex items-center gap-4 text-xs">
-              <div className="flex items-center gap-1">
-                <span className="text-muted-foreground">行为</span>
-                <ScoreStars score={entry.behavior_score} />
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-muted-foreground">情绪</span>
-                <ScoreStars score={entry.emotion_score} />
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-muted-foreground">信念</span>
-                <ScoreStars score={entry.belief_score} />
+            {/* Three Layer Color Bars - Unified with Report */}
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1">
+                <div 
+                  className="w-8 h-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500"
+                  style={{ opacity: (entry.behavior_score || 0) / 5 }}
+                  title={`行为: ${entry.behavior_score || 0}`}
+                />
+                <div 
+                  className="w-8 h-1.5 rounded-full bg-gradient-to-r from-pink-400 to-rose-500"
+                  style={{ opacity: (entry.emotion_score || 0) / 5 }}
+                  title={`情绪: ${entry.emotion_score || 0}`}
+                />
+                <div 
+                  className="w-8 h-1.5 rounded-full bg-gradient-to-r from-violet-400 to-purple-500"
+                  style={{ opacity: (entry.belief_score || 0) / 5 }}
+                  title={`信念: ${entry.belief_score || 0}`}
+                />
               </div>
             </div>
           </div>
 
-          {/* Average Score & Arrow */}
-          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-            {avgScore && (
-              <div className="text-center">
-                <div className="text-xl font-bold text-amber-600">{avgScore}</div>
-                <div className="text-xs text-muted-foreground">综合</div>
+          {/* Mini Awakening Index Circle */}
+          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+            {awakeningIndex !== null && (
+              <div className="relative w-12 h-12">
+                <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                  <circle 
+                    cx="18" cy="18" r="16" 
+                    fill="none" 
+                    stroke="hsl(var(--muted))" 
+                    strokeWidth="3"
+                  />
+                  <circle 
+                    cx="18" cy="18" r="16"
+                    fill="none"
+                    stroke={awakeningIndex <= 40 ? "#10b981" : awakeningIndex <= 70 ? "#f59e0b" : "#f43f5e"}
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeDasharray={`${awakeningIndex} 100`}
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-amber-600 dark:text-amber-400">
+                  {awakeningIndex}
+                </span>
               </div>
             )}
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
