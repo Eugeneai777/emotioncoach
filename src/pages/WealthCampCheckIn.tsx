@@ -62,6 +62,10 @@ export default function WealthCampCheckIn() {
   const [hasShownCelebration, setHasShownCelebration] = useState(false);
   const [pendingActions, setPendingActions] = useState<Array<{ action: string; entryId: string; dayNumber: number }>>([]);
   const [selectedPendingAction, setSelectedPendingAction] = useState<{ action: string; entryId: string; dayNumber: number } | null>(null);
+  
+  // 补卡模式专用状态：保存补卡冥想笔记和完成状态
+  const [makeupReflection, setMakeupReflection] = useState('');
+  const [makeupMeditationDone, setMakeupMeditationDone] = useState(false);
   const { toast } = useToast();
   const { trackDayCheckin, trackShare } = useWealthCampAnalytics();
   
@@ -294,13 +298,16 @@ export default function WealthCampCheckIn() {
   const handleMeditationComplete = async (reflection: string) => {
     if (!userId || !campId || !camp) return;
 
+    // 关键修复：根据补卡模式决定保存到哪一天
+    const targetDay = makeupDayNumber || currentDay;
+
     // Save meditation completion
     const { error } = await supabase
       .from('wealth_journal_entries')
       .upsert({
         user_id: userId,
         camp_id: campId,
-        day_number: currentDay,
+        day_number: targetDay,
         meditation_completed: true,
         meditation_reflection: reflection,
       }, {
@@ -308,9 +315,15 @@ export default function WealthCampCheckIn() {
       });
 
     if (!error) {
-      setMeditationCompleted(true);
-      // 关键：立刻把 reflection 写入本地状态，保证后续 getMeditationContext 能拿到
-      setSavedReflection(reflection);
+      if (makeupDayNumber) {
+        // 补卡模式：保存到补卡专用状态
+        setMakeupReflection(reflection);
+        setMakeupMeditationDone(true);
+      } else {
+        // 今日模式：保存到今日状态
+        setMeditationCompleted(true);
+        setSavedReflection(reflection);
+      }
       // 刷新日记数据
       queryClient.invalidateQueries({ queryKey: ['wealth-journal-entries', campId] });
     }
@@ -346,7 +359,19 @@ export default function WealthCampCheckIn() {
   const getMeditationContext = (targetDay?: number) => {
     const dayToUse = targetDay || currentDay;
     const targetEntry = journalEntries.find(e => e.day_number === dayToUse);
-    const reflection = targetEntry?.meditation_reflection || (dayToUse === currentDay ? savedReflection : '') || '';
+    
+    // 修复：补卡模式优先使用本地状态 makeupReflection
+    let reflection = '';
+    if (targetDay && makeupDayNumber === targetDay) {
+      // 补卡模式：优先使用刚保存的本地状态
+      reflection = makeupReflection || targetEntry?.meditation_reflection || '';
+    } else if (dayToUse === currentDay) {
+      // 今日模式
+      reflection = targetEntry?.meditation_reflection || savedReflection || '';
+    } else {
+      // 历史数据
+      reflection = targetEntry?.meditation_reflection || '';
+    }
     
     if (reflection) {
       return `【${targetDay ? '补卡' : '今日'}冥想 · Day ${dayToUse}】
@@ -544,6 +569,9 @@ ${reflection}`;
                 return streak;
               })()}
               onMakeupClick={(dayNumber) => {
+                // 重置补卡冥想状态
+                setMakeupMeditationDone(false);
+                setMakeupReflection('');
                 setMakeupDayNumber(dayNumber);
                 // 不再切换 Tab，直接在今日打卡页面内显示补卡内容
                 toast({
@@ -603,9 +631,9 @@ ${reflection}`;
               )}
             </div>
 
-            {/* 补卡模式下：教练对话卡片 */}
+            {/* 补卡模式下：教练对话卡片 - 仅在冥想完成后显示 */}
             <AnimatePresence>
-              {makeupDayNumber && (
+              {makeupDayNumber && makeupMeditationDone && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -630,7 +658,7 @@ ${reflection}`;
                         </div>
                       </div>
                       <WealthCoachEmbedded
-                        key={`wealth-coach-makeup-${campId}-${makeupDayNumber}`}
+                        key={`wealth-coach-makeup-${campId}-${makeupDayNumber}-${makeupReflection.slice(0,20)}`}
                         initialMessage={getMeditationContext(makeupDayNumber)}
                         campId={campId || ''}
                         dayNumber={makeupDayNumber}
@@ -642,6 +670,8 @@ ${reflection}`;
                             description: `Day ${makeupDayNumber} 的打卡已完成`,
                           });
                           setMakeupDayNumber(null);
+                          setMakeupMeditationDone(false);
+                          setMakeupReflection('');
                           queryClient.invalidateQueries({ queryKey: ['wealth-camp', urlCampId] });
                         }}
                       />
