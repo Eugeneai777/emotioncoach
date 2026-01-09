@@ -145,7 +145,10 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
                 transition={{ delay: 0.8 }}
                 className="flex flex-col items-center"
               >
-                <span className={cn("text-3xl sm:text-4xl md:text-5xl font-bold", getScoreColor(healthScore))}>
+                <span 
+                  className={cn("text-3xl sm:text-4xl md:text-5xl font-bold tabular-nums", getScoreColor(healthScore))}
+                  style={{ textShadow: '0 0 20px currentColor' }}
+                >
                   {healthScore}
                 </span>
               </motion.div>
@@ -180,13 +183,13 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 + idx * 0.1 }}
-                className="relative"
+                className="relative group"
               >
-                <div className="bg-slate-800/80 rounded-lg sm:rounded-xl p-2 sm:p-3 text-center border border-slate-700/50">
+                <div className="bg-slate-800/80 rounded-lg sm:rounded-xl p-2 sm:p-3 text-center border border-slate-700/50 transition-all group-hover:border-slate-600 group-hover:bg-slate-800">
                   <div className="text-lg sm:text-2xl mb-0.5 sm:mb-1">{layer.emoji}</div>
                   <div className="text-slate-400 text-[10px] sm:text-xs mb-0.5 sm:mb-1">{layer.name}层</div>
                   <div className={cn(
-                    "text-sm sm:text-lg font-bold",
+                    "text-sm sm:text-lg font-bold tabular-nums",
                     layer.score / layer.max <= 0.4 ? "text-emerald-400" :
                     layer.score / layer.max <= 0.7 ? "text-amber-400" : "text-rose-400"
                   )}>
