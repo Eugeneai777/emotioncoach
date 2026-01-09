@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Volume2, Check, Image, Copy, MessageCircle } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, Check, Copy, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,8 +42,7 @@ export function WealthMeditationPlayer({
   const [showReflection, setShowReflection] = useState(false);
   const [reflection, setReflection] = useState('');
   const [hasListened, setHasListened] = useState(false);
-  const [videoBackground, setVideoBackground] = useState<VideoBackgroundType>(null);
-  const [showBackgroundOptions, setShowBackgroundOptions] = useState(false);
+  const videoBackground: VideoBackgroundType = 'water'; // 默认水面背景
   const [copied, setCopied] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -128,19 +127,7 @@ export function WealthMeditationPlayer({
     onComplete(reflection);
   };
 
-  // 处理背景变化
-  const handleBackgroundChange = (bg: VideoBackgroundType) => {
-    setVideoBackground(bg);
-  };
-
   const progress = durationSeconds > 0 ? (currentTime / durationSeconds) * 100 : 0;
-
-  // 背景选项配置
-  const backgroundOptions: Array<{ type: VideoBackgroundType; label: string; icon: string }> = [
-    { type: 'water', label: '水面', icon: '💧' },
-    { type: 'stars', label: '星空', icon: '⭐' },
-    { type: 'aurora', label: '极光', icon: '🌌' },
-  ];
 
 
   // 复制冥想感受
@@ -372,61 +359,6 @@ export function WealthMeditationPlayer({
                 <span>{formatTime(currentTime)}</span>
                 <span>{formatTime(durationSeconds)}</span>
               </div>
-            </div>
-
-            {/* Video Background Selector */}
-            <div className="mt-4 pt-4 border-t border-amber-200/50 dark:border-amber-700/50">
-              <div className="flex items-center justify-between mb-2">
-                <span className={cn(
-                  "text-sm",
-                  videoBackground ? "text-white/70" : "text-muted-foreground"
-                )}>
-                  🎬 视频背景
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowBackgroundOptions(!showBackgroundOptions)}
-                  className={cn(
-                    "h-6 px-2 text-xs",
-                    videoBackground ? "text-white/70 hover:text-white" : "text-muted-foreground"
-                  )}
-                >
-                  <Image className="w-3 h-3 mr-1" />
-                  {showBackgroundOptions ? '收起' : '选择'}
-                </Button>
-              </div>
-              
-              <AnimatePresence>
-                {showBackgroundOptions && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="flex items-center gap-1 flex-wrap"
-                  >
-                    {backgroundOptions.map(({ type, label, icon }) => (
-                      <Button
-                        key={type}
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          "h-8 px-2 rounded-full transition-all",
-                          videoBackground === type 
-                            ? 'bg-amber-500/20 text-amber-600 ring-1 ring-amber-500/30' 
-                            : videoBackground
-                              ? 'text-white/70 hover:text-white hover:bg-white/20'
-                              : 'text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10'
-                        )}
-                        onClick={() => handleBackgroundChange(videoBackground === type ? null : type)}
-                      >
-                        <span className="text-sm mr-1">{icon}</span>
-                        <span className="text-xs">{label}</span>
-                      </Button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
 
             </div>
