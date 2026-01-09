@@ -48,7 +48,7 @@ import {
 import { EnhancedHealthGauge } from "./EnhancedHealthGauge";
 import { EnhancedFourPoorRadar } from "./EnhancedFourPoorRadar";
 import { PriorityBreakthroughMap } from "./PriorityBreakthroughMap";
-import { AIInsightCard, AIInsightData } from "./AIInsightCard";
+import { AIInsightData } from "./AIInsightCard";
 import { LayerTransitionHint } from "./LayerTransitionHint";
 import { CampConversionCard } from "./CampConversionCard";
 import { DeepFollowUpAnswer } from "./DeepFollowUpDialog";
@@ -221,7 +221,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   };
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-5 pb-20">
       {/* 健康度仪表盘 - 视觉冲击力升级 */}
       <EnhancedHealthGauge
         healthScore={healthScore}
@@ -331,7 +331,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         type="multiple" 
         value={openLayers}
         onValueChange={setOpenLayers}
-        className="space-y-6"
+        className="space-y-5"
       >
         {/* 第一层：行为层分析 */}
         <AccordionItem value="behavior" className="border-0">
@@ -362,7 +362,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <CardContent className="p-5 space-y-5">
+                <CardContent className="p-4 space-y-4">
                   {/* 主导卡点卡片 */}
                   <div className={cn("bg-gradient-to-br p-4 text-white rounded-xl", dominantPoor.color)}>
                     <div className="flex items-center gap-3 mb-3">
@@ -419,7 +419,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                   </div>
 
                   {/* 核心洞见 */}
-                  <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                  <div className="p-3 bg-amber-50 rounded-lg border-l-4 border-l-amber-500 border border-amber-200">
                     <p className="text-sm text-amber-800">
                       <span className="font-semibold">💡 核心洞见：</span>行为模式是冰山一角，背后是情绪与信念的驱动。改变行为，需先看见行为背后的能量模式。
                     </p>
@@ -461,7 +461,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <CardContent className="p-5 space-y-5">
+                <CardContent className="p-4 space-y-4">
                   {/* 主导卡点卡片 */}
                   <div className={cn("bg-gradient-to-br p-4 text-white rounded-xl", dominantEmotion.color)}>
                     <div className="flex items-center gap-3 mb-3">
@@ -520,7 +520,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                   </div>
 
                   {/* 核心洞见 */}
-                  <div className="p-3 bg-pink-50 rounded-lg border border-pink-200">
+                  <div className="p-3 bg-pink-50 rounded-lg border-l-4 border-l-pink-500 border border-pink-200">
                     <p className="text-sm text-pink-800">
                       <span className="font-semibold">💡 核心洞见：</span>财富的本质是心理能量的流动。财富卡住=心理能量阻塞（如恐惧、匮乏、控制欲）
                     </p>
@@ -562,7 +562,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <CardContent className="p-5 space-y-5">
+                <CardContent className="p-4 space-y-4">
                   {/* 主导卡点卡片 */}
                   <div className={cn("bg-gradient-to-br p-4 text-white rounded-xl", dominantBelief.color)}>
                     <div className="flex items-center gap-3 mb-3">
@@ -634,7 +634,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                   </div>
 
                   {/* 核心洞见 */}
-                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="p-3 bg-purple-50 rounded-lg border-l-4 border-l-purple-500 border border-purple-200">
                     <p className="text-sm text-purple-800">
                       <span className="font-semibold">💡 核心洞见：</span>直面内在障碍，让"爱与智慧"替代"焦虑与评判"，使财富随能量流动自然显化
                     </p>
@@ -645,13 +645,6 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
           </motion.div>
         </AccordionItem>
       </Accordion>
-
-      {/* AI 个性化洞察卡片 - 移到三层分析后 */}
-      <AIInsightCard
-        insight={aiInsight}
-        isLoading={isLoadingAI}
-        error={aiError}
-      />
 
       {/* 优先突破地图 - Top 3 */}
       <PriorityBreakthroughMap
@@ -671,12 +664,14 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         relationshipScore={result.relationshipScore}
       />
 
-      {/* 训练营转化卡片 */}
+      {/* 训练营转化卡片 - 融入AI洞察 */}
       <CampConversionCard
         hasPurchased={hasPurchased}
         onPurchase={() => setShowPayDialog(true)}
         onStart={() => setShowStartDialog(true)}
         onViewDetails={() => navigate('/wealth-camp-intro')}
+        aiInsight={aiInsight}
+        isLoadingAI={isLoadingAI}
       />
 
       {/* 行动按钮 */}
