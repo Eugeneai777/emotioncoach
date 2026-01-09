@@ -335,6 +335,75 @@ export class RealtimeChat {
     this.mode = mode;
   }
 
+  // 🔧 iOS Safari / 微信小程序 音频解锁
+  // 解决移动端有文字但无语音的问题
+  private async unlockAudio(audioEl: HTMLAudioElement): Promise<void> {
+    const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    console.log(`[WebRTC] Audio unlock - isWechat: ${isWechat}, isIOS: ${isIOS}`);
+
+    try {
+      // 方法1: 微信 JSSDK 音频解锁（如果可用）
+      if (isWechat && typeof (window as any).WeixinJSBridge !== 'undefined') {
+        await new Promise<void>((resolve) => {
+          (window as any).WeixinJSBridge.invoke('getNetworkType', {}, () => {
+            // 通过调用微信 API 来激活 webview 的音频权限
+            console.log('[WebRTC] WeChat JSBridge audio unlock triggered');
+            resolve();
+          });
+        });
+      }
+
+      // 方法2: 创建并播放静音音频来解锁 AudioContext
+      const silentWav = new Uint8Array([
+        0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x41, 0x56, 0x45,
+        0x66, 0x6D, 0x74, 0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+        0x44, 0xAC, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00, 0x02, 0x00, 0x10, 0x00,
+        0x64, 0x61, 0x74, 0x61, 0x00, 0x00, 0x00, 0x00
+      ]);
+      const silentBlob = new Blob([silentWav], { type: 'audio/wav' });
+      const silentUrl = URL.createObjectURL(silentBlob);
+      
+      audioEl.src = silentUrl;
+      audioEl.volume = 0.01;  // 微信需要非零音量才能真正激活
+      
+      // 尝试播放，忽略错误（某些环境可能仍会失败，但后续 WebRTC 流可能仍能工作）
+      await audioEl.play().catch((e) => {
+        console.log('[WebRTC] Silent audio play failed:', e.message);
+      });
+      
+      // 恢复设置
+      audioEl.pause();
+      audioEl.src = '';
+      audioEl.volume = 1;
+      URL.revokeObjectURL(silentUrl);
+      
+      // 方法3: 额外创建 AudioContext 来确保音频系统激活
+      if (isIOS || isWechat) {
+        try {
+          const tempContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const oscillator = tempContext.createOscillator();
+          const gainNode = tempContext.createGain();
+          gainNode.gain.value = 0;  // 静音
+          oscillator.connect(gainNode);
+          gainNode.connect(tempContext.destination);
+          oscillator.start(0);
+          oscillator.stop(0.001);
+          // 不要立即关闭，让它保持一小段时间
+          setTimeout(() => tempContext.close(), 100);
+          console.log('[WebRTC] AudioContext unlock successful');
+        } catch (e) {
+          console.log('[WebRTC] AudioContext unlock skipped:', e);
+        }
+      }
+      
+      console.log('[WebRTC] Audio unlock completed');
+    } catch (e) {
+      console.log('[WebRTC] Audio unlock error (continuing anyway):', e);
+    }
+  }
+
   async init() {
     try {
       // 🔧 防止重复初始化：如果已有连接，先断开
@@ -358,28 +427,9 @@ export class RealtimeChat {
       this.audioEl.setAttribute('playsinline', '');  // 兼容性写法
       this.audioEl.setAttribute('webkit-playsinline', '');  // 旧版 iOS 兼容
       
-      // 🔧 iOS Safari 音频解锁：先播放静音音频来激活 AudioContext
-      // 这解决了 iOS 上有文字但无语音的问题
-      try {
-        // 创建一个极短的静音 WAV 数据
-        const silentWav = new Uint8Array([
-          0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x41, 0x56, 0x45,
-          0x66, 0x6D, 0x74, 0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
-          0x44, 0xAC, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00, 0x02, 0x00, 0x10, 0x00,
-          0x64, 0x61, 0x74, 0x61, 0x00, 0x00, 0x00, 0x00
-        ]);
-        const silentBlob = new Blob([silentWav], { type: 'audio/wav' });
-        const silentUrl = URL.createObjectURL(silentBlob);
-        this.audioEl.src = silentUrl;
-        await this.audioEl.play().catch(() => {
-          console.log('[WebRTC] Silent audio unlock failed, continuing anyway');
-        });
-        this.audioEl.src = '';  // 清空 src，准备接收 WebRTC 流
-        URL.revokeObjectURL(silentUrl);
-        console.log('[WebRTC] iOS audio context unlocked');
-      } catch (e) {
-        console.log('[WebRTC] Audio unlock skipped:', e);
-      }
+      // 🔧 iOS Safari / 微信小程序 音频解锁
+      // 这解决了 iOS/微信 上有文字但无语音的问题
+      await this.unlockAudio(this.audioEl);
 
       // 🚀 优化1：检查配置缓存（realtime_url 可按天缓存）
       const cachedConfig = getCachedConfig(this.tokenEndpoint);
