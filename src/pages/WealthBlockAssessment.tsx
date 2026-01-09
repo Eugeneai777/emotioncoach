@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, ClipboardList, History, TrendingUp, Share2 } from "lucide-react";
@@ -283,8 +284,36 @@ export default function WealthBlockAssessmentPage() {
     setActiveTab("assessment");
   };
 
+  // 分享配置
+  const shareTitle = "财富卡点测评 - 发现阻碍财富流动的隐藏模式";
+  const shareDescription = "3分钟AI深度诊断，找出你行为、情绪、信念层的财富卡点，获取专属突破路径。";
+  const shareImage = "https://wechat.eugenewe.net/og-wealth-block.png";
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">
+      {/* SEO & 微信分享 Meta Tags */}
+      <Helmet>
+        <title>{shareTitle}</title>
+        <meta name="description" content={shareDescription} />
+        <meta name="keywords" content="财富卡点,财富测评,金钱心理,财富信念,有劲AI,财富教练,财富诊断" />
+        
+        {/* Open Graph / 微信分享 */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={shareTitle} />
+        <meta property="og:description" content={shareDescription} />
+        <meta property="og:image" content={shareImage} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/wealth-block" />
+        <meta property="og:site_name" content="有劲AI · 财富教练" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={shareTitle} />
+        <meta name="twitter:description" content={shareDescription} />
+        <meta name="twitter:image" content={shareImage} />
+      </Helmet>
+
       {/* 导航栏 - 融入暖色背景 */}
       <header className="sticky top-0 z-50 bg-gradient-to-r from-amber-50/95 via-orange-50/95 to-amber-50/95 backdrop-blur-md border-b border-amber-200/50">
         <div className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 h-11 sm:h-12 flex items-center gap-2 sm:gap-3">
