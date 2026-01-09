@@ -631,14 +631,69 @@ ${reflection}`;
               )}
             </div>
 
+            {/* 补卡模式：冥想完成过渡提示 */}
+            <AnimatePresence>
+              {makeupDayNumber && makeupMeditationDone && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="relative"
+                >
+                  {/* 过渡流程指示器 */}
+                  <div className="flex items-center justify-center gap-3 py-4">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700"
+                    >
+                      <motion.span
+                        initial={{ rotate: -180, opacity: 0 }}
+                        animate={{ rotate: 0, opacity: 1 }}
+                        transition={{ delay: 0.4, duration: 0.4 }}
+                        className="text-green-600 dark:text-green-400"
+                      >
+                        ✓
+                      </motion.span>
+                      <span className="text-sm font-medium text-green-700 dark:text-green-300">冥想完成</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: 32 }}
+                      transition={{ delay: 0.5, duration: 0.3 }}
+                      className="h-0.5 bg-gradient-to-r from-green-400 to-amber-400 rounded-full"
+                    />
+                    
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.7, type: "spring", stiffness: 200 }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-400 dark:border-amber-600 shadow-md shadow-amber-200/50 dark:shadow-amber-900/30"
+                    >
+                      <motion.span
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ delay: 0.9, duration: 0.4 }}
+                      >
+                        💬
+                      </motion.span>
+                      <span className="text-sm font-medium text-amber-700 dark:text-amber-300">开始教练梳理</span>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* 补卡模式下：教练对话卡片 - 仅在冥想完成后显示 */}
             <AnimatePresence>
               {makeupDayNumber && makeupMeditationDone && (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
+                  transition={{ duration: 0.5, delay: 0.8, ease: "easeOut" }}
                 >
                   <Card className="relative overflow-hidden border-2 border-amber-200/80 dark:border-amber-700/60 bg-gradient-to-br from-white to-amber-50/50 dark:from-background dark:to-amber-950/20">
                     {/* 装饰性渐变边角 */}
