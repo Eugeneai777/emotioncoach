@@ -5,7 +5,8 @@ import { WealthProgressChart } from './WealthProgressChart';
 import { WealthJourneyCalendar } from './WealthJourneyCalendar';
 import { ProfileEvolutionCard } from './ProfileEvolutionCard';
 import { ActionTrackingStats } from './ActionTrackingStats';
-import { CompactProgressHeader } from './CompactProgressHeader';
+import { JournalHealthGauge } from './JournalHealthGauge';
+import { TodayAwakeningSnapshot } from './TodayAwakeningSnapshot';
 import { NewBeliefsCollection } from './NewBeliefsCollection';
 import { WeeklyComparisonChart } from './WeeklyComparisonChart';
 import { GrowthComparisonCard } from './GrowthComparisonCard';
@@ -63,18 +64,33 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
     );
   }
 
+  // Get latest entry for today's snapshot
+  const latestEntry = fullEntries.length > 0 ? fullEntries[fullEntries.length - 1] : null;
+
+  // Calculate consecutive days (simplified - could be enhanced with actual check-in data)
+  const consecutiveDays = stats?.totalDays || 0;
+
   return (
     <div className="space-y-4">
-      {/* 第一层：紧凑进度概览 */}
-      <CompactProgressHeader
-        currentDay={stats?.totalDays || 0}
-        maxDays={21}
+      {/* 第一层：统一觉醒仪表盘 - 与测评报告风格一致 */}
+      <JournalHealthGauge
         awakeningIndex={awakeningIndex}
-        avgBehavior={stats?.avgBehavior}
-        avgEmotion={stats?.avgEmotion}
-        avgBelief={stats?.avgBelief}
+        behaviorScore={parseFloat(stats?.avgBehavior || '0')}
+        emotionScore={parseFloat(stats?.avgEmotion || '0')}
+        beliefScore={parseFloat(stats?.avgBelief || '0')}
         trendChange={stats?.trendChange || 0}
+        currentDay={currentDay}
+        totalDays={camp?.duration_days || 7}
+        consecutiveDays={consecutiveDays}
       />
+
+      {/* 第二层：今日觉醒快照 */}
+      {latestEntry && (
+        <TodayAwakeningSnapshot 
+          entry={latestEntry} 
+          onClick={() => navigate(`/wealth-journal/${latestEntry.id}`)}
+        />
+      )}
 
       {/* 第二层：成长轨迹 - Tab切换查看详情 */}
       <Card className="shadow-sm">
