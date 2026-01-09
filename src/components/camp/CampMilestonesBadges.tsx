@@ -26,27 +26,19 @@ export function CampMilestonesBadges({
     },
     { 
       icon: "⭐", 
-      label: "一周勇士", 
-      description: "连续打卡7天",
-      reached: milestone7Reached,
-      daysNeeded: 7,
-      daysLeft: Math.max(0, 7 - completedDays)
-    },
-    { 
-      icon: "🌟", 
-      label: "半程达人", 
-      description: "完成14天",
-      reached: milestone14Reached,
-      daysNeeded: 14,
-      daysLeft: Math.max(0, 14 - completedDays)
+      label: "中程达人", 
+      description: "完成第3天",
+      reached: completedDays >= 3,
+      daysNeeded: 3,
+      daysLeft: Math.max(0, 3 - completedDays)
     },
     { 
       icon: "🏆", 
-      label: "习惯大师", 
+      label: "财富觉醒师", 
       description: "毕业啦！",
-      reached: milestone21Completed,
-      daysNeeded: 21,
-      daysLeft: Math.max(0, 21 - completedDays)
+      reached: milestone21Completed || completedDays >= 7,
+      daysNeeded: 7,
+      daysLeft: Math.max(0, 7 - completedDays)
     }
   ];
 
@@ -56,7 +48,7 @@ export function CampMilestonesBadges({
         🏅 成就徽章
       </h4>
       
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {milestones.map((milestone, idx) => (
           <Card 
             key={idx}

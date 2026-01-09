@@ -18,7 +18,7 @@ export function PartnerStats({ partner }: PartnerStatsProps) {
     {
       title: "待确认",
       value: `¥${partner.pending_balance.toFixed(2)}`,
-      description: "21天后可提现",
+      description: "7天后可提现",
       icon: Clock,
       color: "text-amber-600"
     },
