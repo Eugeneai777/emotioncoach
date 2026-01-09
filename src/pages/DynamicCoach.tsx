@@ -349,7 +349,7 @@ const DynamicCoach = () => {
             onIndexChange={setCurrentNotificationIndex}
             onMarkAsRead={markAsRead}
             onDelete={deleteNotification}
-            colorTheme={template.primary_color === 'purple' ? 'purple' : template.primary_color === 'blue' ? 'blue' : template.primary_color === 'pink' ? 'pink' : 'green'}
+            colorTheme={template.primary_color === 'purple' ? 'purple' : template.primary_color === 'blue' ? 'blue' : template.primary_color === 'pink' ? 'pink' : template.primary_color === 'amber' ? 'amber' : 'green'}
             coachLabel={template.title}
           />
         ) : undefined
