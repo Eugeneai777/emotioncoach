@@ -235,70 +235,43 @@ export function CampConversionCard({
             </div>
           </div>
 
-          {/* 价格和CTA - 增强版 */}
-          <div className="text-center space-y-4 pt-2">
-            {/* 价格展示 */}
-            <div className="relative">
-              <div className="flex items-baseline justify-center gap-2">
-                <span className="text-lg text-muted-foreground line-through">¥399</span>
-                <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
-                  ¥299
-                </span>
-              </div>
-              <motion.div
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="inline-block mt-1"
-              >
-                <span className="text-xs bg-gradient-to-r from-red-500 to-rose-500 text-white px-3 py-1 rounded-full shadow-lg">
-                  🔥 限时特惠 省100元
-                </span>
-              </motion.div>
+          {/* 价格和CTA - 简化版 */}
+          <div className="text-center space-y-3 pt-2">
+            {/* 价格展示 - 一行式 */}
+            <div className="flex items-baseline justify-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                原价 <span className="line-through">¥399</span>
+              </span>
+              <span className="text-2xl font-bold text-amber-600">¥299</span>
+              <span className="text-xs text-muted-foreground">省¥100</span>
             </div>
             
-            {/* CTA按钮 */}
+            {/* CTA按钮 - 简洁版 */}
             {hasPurchased ? (
               <Button 
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-xl h-14 text-lg font-bold rounded-xl"
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white h-12 text-base font-semibold rounded-lg"
                 onClick={onStart}
               >
-                <GraduationCap className="w-6 h-6 mr-2" />
                 开始21天训练营
               </Button>
             ) : (
-              <motion.div
-                animate={{ scale: [1, 1.02, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="relative"
+              <Button 
+                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg h-12 text-base font-semibold rounded-lg"
+                onClick={onPurchase}
               >
-                {/* Glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl blur-lg opacity-50" />
-                <Button 
-                  className="relative w-full bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:via-orange-600 hover:to-rose-600 text-white shadow-2xl h-16 text-xl font-bold rounded-xl"
-                  onClick={onPurchase}
-                >
-                  <ShoppingCart className="w-6 h-6 mr-2" />
-                  ¥299 立即开始蜕变
-                </Button>
-              </motion.div>
+                ¥299 立即加入
+              </Button>
             )}
             
-            {/* 社会证明 */}
-            <div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Users className="w-3 h-3" />
-                已有 2,847 人完成训练
-              </span>
-              <span>•</span>
-              <span>好评率 98%</span>
-            </div>
+            {/* 社会证明 - 极简 */}
+            <p className="text-xs text-muted-foreground">2,847人已参与</p>
             
             <Button 
               variant="ghost" 
-              className="text-muted-foreground text-sm hover:text-foreground"
+              className="text-muted-foreground text-xs hover:text-foreground"
               onClick={onViewDetails}
             >
-              查看训练营完整介绍 <ArrowRight className="w-4 h-4 ml-1" />
+              查看完整介绍 <ArrowRight className="w-3 h-3 ml-1" />
             </Button>
           </div>
         </div>
