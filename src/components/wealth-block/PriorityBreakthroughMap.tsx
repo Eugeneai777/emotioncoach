@@ -168,10 +168,10 @@ export function PriorityBreakthroughMap({
             })}
           </div>
 
-          {/* Tip */}
-          <div className="p-3 bg-amber-50 rounded-lg border border-amber-200/50">
-            <p className="text-xs text-amber-700 text-center">
-              💡 这是你最需要关注的 <span className="font-semibold">Top 3 卡点</span>，训练营将重点突破
+          {/* Tip - 强化转化引导 */}
+          <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+            <p className="text-xs text-amber-700 text-center font-medium">
+              🎯 训练营将<span className="text-amber-900 font-bold">重点突破</span>这 3 个卡点，21天见证蜕变
             </p>
           </div>
         </CardContent>

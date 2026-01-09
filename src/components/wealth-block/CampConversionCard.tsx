@@ -1,13 +1,27 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, Database, Heart, Sparkles, ShoppingCart, GraduationCap, Check, X, ArrowRight, TrendingUp, Users, Zap, Camera } from "lucide-react";
+import { Clock, Database, Heart, Sparkles, ShoppingCart, GraduationCap, Check, X, ArrowRight, TrendingUp, Users, Zap, Camera, Target, Loader2 } from "lucide-react";
+
+interface AIInsightData {
+  rootCauseAnalysis: string;
+  combinedPatternInsight: string;
+  breakthroughPath: string[];
+  avoidPitfalls: string[];
+  firstStep: string;
+  encouragement: string;
+  mirrorStatement?: string;
+  coreStuckPoint?: string;
+  unlockKey?: string;
+}
 
 interface CampConversionCardProps {
   hasPurchased: boolean;
   onPurchase: () => void;
   onStart: () => void;
   onViewDetails: () => void;
+  aiInsight?: AIInsightData | null;
+  isLoadingAI?: boolean;
 }
 
 const trilogy = [
@@ -72,7 +86,9 @@ export function CampConversionCard({
   hasPurchased, 
   onPurchase, 
   onStart, 
-  onViewDetails 
+  onViewDetails,
+  aiInsight,
+  isLoadingAI
 }: CampConversionCardProps) {
   return (
     <motion.div
@@ -146,6 +162,49 @@ export function CampConversionCard({
               </div>
             </div>
           </motion.div>
+
+          {/* AI 专属诊断摘要 - 融入训练营转化 */}
+          {isLoadingAI && (
+            <div className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl border border-violet-200">
+              <div className="flex items-center justify-center gap-2 text-violet-600">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">AI正在分析你的专属突破路径...</span>
+              </div>
+            </div>
+          )}
+          
+          {aiInsight && !isLoadingAI && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl border border-violet-200"
+            >
+              {/* 镜像陈述 */}
+              {aiInsight.mirrorStatement && (
+                <p className="text-sm text-violet-800 font-medium mb-3 leading-relaxed italic">
+                  "{aiInsight.mirrorStatement}"
+                </p>
+              )}
+              
+              {/* 3步突破路径 */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-violet-700 flex items-center gap-1">
+                  <Target className="w-3 h-3" /> 你的3步突破路径
+                </p>
+                {aiInsight.breakthroughPath.slice(0, 3).map((step, i) => (
+                  <div key={i} className="flex items-start gap-2 text-xs text-violet-700">
+                    <span className="w-4 h-4 rounded-full bg-violet-500 text-white flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">{i + 1}</span>
+                    <span>{step}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* 过渡文案 */}
+              <p className="mt-3 text-xs text-center text-violet-600 font-medium">
+                👇 训练营将带你一步步实现这个路径
+              </p>
+            </motion.div>
+          )}
 
           {/* AI陪伴三部曲 - 增强版 */}
           <div>

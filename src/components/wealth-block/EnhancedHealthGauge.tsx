@@ -205,13 +205,13 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
             ))}
           </div>
 
-          {/* Zone Legend */}
-          <div className="flex justify-center gap-2 flex-wrap text-xs">
+          {/* Zone Legend - 紧凑版 */}
+          <div className="flex justify-center gap-1 flex-wrap text-[10px]">
             {healthZones.map((z, i) => (
               <div 
                 key={i} 
                 className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-full",
+                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full",
                   zone.range[0] === z.range[0] ? "bg-slate-700" : "bg-transparent"
                 )}
               >
@@ -221,11 +221,12 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
             ))}
           </div>
 
-          {/* Tip */}
-          <div className="mt-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
-            <p className="text-slate-400 text-xs text-center">
-              💡 分数越<span className="text-emerald-400 font-medium">低</span>代表越健康
-              · 分数越<span className="text-rose-400 font-medium">高</span>代表卡点越严重
+          {/* Tip - 精简版 */}
+          <div className="mt-3 text-center">
+            <p className="text-slate-500 text-[10px]">
+              分数<span className="text-emerald-400">↓</span>=健康
+              <span className="mx-2">·</span>
+              分数<span className="text-rose-400">↑</span>=需关注
             </p>
           </div>
         </CardContent>
