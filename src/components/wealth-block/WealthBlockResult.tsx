@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, Heart, Brain, Share2, MessageCircle, Sparkles, RotateCcw, Save, ChevronDown, ChevronUp } from "lucide-react";
+import { Target, Heart, Brain, Share2, Sparkles, RotateCcw, Save, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
@@ -699,21 +699,15 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
           </div>
         )}
         
-        <div className="grid grid-cols-2 gap-3">
-          <WealthInviteCardDialog
-            defaultTab="assessment"
-            trigger={
-              <Button variant="outline" className="h-11 w-full">
-                <Share2 className="w-4 h-4 mr-2" />
-                分享结果
-              </Button>
-            }
-          />
-          <Button variant="outline" className="h-11" onClick={() => navigate('/energy-studio#coach')}>
-            <MessageCircle className="w-4 h-4 mr-2" />
-            与教练对话
-          </Button>
-        </div>
+        <WealthInviteCardDialog
+          defaultTab="aianalysis"
+          trigger={
+            <Button className="w-full h-12 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white shadow-lg">
+              <Share2 className="w-5 h-5 mr-2" />
+              分享我的AI测评报告
+            </Button>
+          }
+        />
         
         <Button 
           variant="ghost" 
