@@ -6,8 +6,15 @@ import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
 import { useEnsureAwakeningProgress } from '@/hooks/useEnsureAwakeningProgress';
 import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
 import { awakeningLevels, calculateDailyPotentialPoints } from '@/config/awakeningLevelConfig';
-import { Gamepad2, TrendingUp, Zap, Target, Loader2, ArrowRight } from 'lucide-react';
+import { Gamepad2, TrendingUp, Zap, Target, Loader2, ArrowRight, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import AwakeningRulesDialog from './AwakeningRulesDialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface GameProgressCardProps {
   currentDayNumber?: number;
@@ -79,6 +86,16 @@ export const GameProgressCard = ({ currentDayNumber = 1 }: GameProgressCardProps
   }
 
   const dailyPotential = calculateDailyPotentialPoints(currentDayNumber);
+  
+  // 根据觉醒值确定状态
+  const getAwakeningStatus = (score: number) => {
+    if (score >= 80) return { color: 'text-emerald-400', label: '高度觉醒', emoji: '🟢' };
+    if (score >= 60) return { color: 'text-amber-400', label: '稳步觉醒', emoji: '🟡' };
+    if (score >= 40) return { color: 'text-orange-400', label: '初步觉醒', emoji: '🟠' };
+    return { color: 'text-rose-400', label: '觉醒起步', emoji: '🔴' };
+  };
+  
+  const currentStatus = getAwakeningStatus(progress.current_awakening);
 
   return (
     <motion.div
@@ -91,13 +108,71 @@ export const GameProgressCard = ({ currentDayNumber = 1 }: GameProgressCardProps
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
         
         <CardHeader className="pb-2 relative z-10">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Gamepad2 className="h-5 w-5 text-amber-400" />
-            我的财富觉醒之旅
+          <CardTitle className="flex items-center justify-between text-lg">
+            <div className="flex items-center gap-2">
+              <Gamepad2 className="h-5 w-5 text-amber-400" />
+              我的财富觉醒之旅
+            </div>
+            <AwakeningRulesDialog 
+              trigger={
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-white hover:bg-slate-700">
+                  <Info className="h-4 w-4" />
+                </Button>
+              }
+            />
           </CardTitle>
         </CardHeader>
         
-        <CardContent className="space-y-6 relative z-10">
+        <CardContent className="space-y-4 relative z-10">
+          {/* 快捷数据标签 */}
+          <TooltipProvider>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${awakeningGrowth >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                    📈 成长 {awakeningGrowth >= 0 ? '+' : ''}{awakeningGrowth}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">从觉醒起点 {progress.baseline_awakening} 提升到当前 {progress.current_awakening}</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400">
+                    🔥 今日 +{dailyPotential}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">完成今日所有任务可获得的积分</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-violet-500/20 text-violet-400">
+                    🎯 目标 80+
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">达到80分即为高度觉醒状态</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-slate-700/50 ${currentStatus.color}`}>
+                    {currentStatus.emoji} {currentStatus.label}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">当前觉醒状态: {progress.current_awakening} 分</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
+          
           {/* 觉醒起点 vs 当前觉醒 */}
           <div className="flex items-center justify-between">
             <div className="text-center">
@@ -121,7 +196,7 @@ export const GameProgressCard = ({ currentDayNumber = 1 }: GameProgressCardProps
             <div className="text-center">
               <div className="text-xs text-slate-400 mb-1">当前觉醒</div>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-emerald-400">{progress.current_awakening}</span>
+                <span className={`text-3xl font-bold ${currentStatus.color}`}>{progress.current_awakening}</span>
                 {awakeningGrowth > 0 && (
                   <span className="text-sm text-amber-400">(+{awakeningGrowth}🔥)</span>
                 )}
@@ -216,6 +291,16 @@ export const GameProgressCard = ({ currentDayNumber = 1 }: GameProgressCardProps
               <span className="text-yellow-400 font-medium">+{dailyPotential}分</span>
             </div>
           </div>
+          
+          {/* 当前等级解锁条件 */}
+          {currentLevel?.unlockCondition && (
+            <div className="pt-2 border-t border-slate-700/50">
+              <div className="text-xs text-slate-500 flex items-center gap-1">
+                <span className="text-amber-400">✓</span>
+                <span>已达成: {currentLevel.unlockCondition}</span>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </motion.div>
