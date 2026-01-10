@@ -574,7 +574,13 @@ ${reflection}`;
               )}
             </AnimatePresence>
 
-            {/* 1. 可折叠觉醒仪表盘 - 全生命周期日历 + GameProgressCard */}
+            {/* ========== 根据用户模式差异化排序卡片 ========== */}
+            
+            {/* Active 模式：仪表盘 → 任务清单 → 冥想 → AI建议 → 邀请 */}
+            {/* Graduate 模式：仪表盘 → 任务清单 → 每日挑战 → 合伙人转化 → 冥想 → AI建议 → 邀请 */}
+            {/* Partner 模式：仪表盘 → 任务清单 → 每日挑战 → 冥想 → AI建议 → 邀请 */}
+
+            {/* 1. 觉醒仪表盘 - 所有模式都优先显示 */}
             {!makeupDayNumber && (
               <AwakeningDashboard
                 currentDay={currentDay}
@@ -601,7 +607,7 @@ ${reflection}`;
               />
             )}
 
-            {/* 2. 今日任务清单 */}
+            {/* 2. 今日任务清单 - 所有模式都在第二位 */}
             {!makeupDayNumber && (
               <TodayTaskHub
                 meditationCompleted={meditationCompleted}
@@ -638,7 +644,7 @@ ${reflection}`;
               />
             )}
 
-            {/* Daily Challenge for Graduate/Partner mode */}
+            {/* ===== Graduate/Partner 模式：每日挑战优先于冥想 ===== */}
             {isPostCampMode && !makeupDayNumber && (
               <div id="daily-challenge-section">
                 <DailyChallengeCard 
@@ -647,12 +653,12 @@ ${reflection}`;
               </div>
             )}
 
-            {/* Partner Conversion Card for Graduates */}
+            {/* ===== Graduate 模式：合伙人转化卡片紧随挑战 ===== */}
             {userCampMode === 'graduate' && !makeupDayNumber && (
               <PartnerConversionCard variant="full" />
             )}
 
-            {/* 3. 冥想播放器 */}
+            {/* 3. 冥想播放器 - Active模式在第3位，Graduate/Partner模式在挑战后 */}
             <div id="meditation-player">
               {displayMeditation && (
                 <WealthMeditationPlayer
