@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { GoalMilestoneCard } from './GoalMilestoneCard';
-import { AwakeningLevel } from '@/config/awakeningLevelConfig';
-import { ChevronRight } from 'lucide-react';
+import { AwakeningLevel, awakeningLevels } from '@/config/awakeningLevelConfig';
+import { ChevronRight, Target } from 'lucide-react';
 
 interface GoalCarouselProps {
   currentPoints: number;
@@ -65,19 +65,14 @@ export const GoalCarousel = ({
 
   // 4. 更远的等级目标 (如果有)
   if (nextLevel && nextLevel.level < 6) {
-    const futureLevel = {
-      4: { level: 4, name: '信念转化者', icon: '⭐', minPoints: 700 },
-      5: { level: 5, name: '财富觉醒师', icon: '🌟', minPoints: 1500 },
-      6: { level: 6, name: '觉醒大师', icon: '👑', minPoints: 5000 },
-    }[nextLevel.level + 1];
-    
-    if (futureLevel) {
+    const futureLevelData = awakeningLevels.find(l => l.level === nextLevel.level + 1);
+    if (futureLevelData) {
       goals.push({
-        icon: futureLevel.icon,
-        title: `Lv.${futureLevel.level} ${futureLevel.name}`,
+        icon: futureLevelData.icon,
+        title: `Lv.${futureLevelData.level} ${futureLevelData.name}`,
         subtitle: '远期目标',
         current: currentPoints,
-        target: futureLevel.minPoints,
+        target: futureLevelData.minPoints,
         unit: '积分',
         colorClass: 'text-slate-400',
       });
@@ -90,26 +85,45 @@ export const GoalCarousel = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.5 }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5, duration: 0.4 }}
       className="space-y-2"
     >
-      {/* 标题 */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs text-slate-400">
-          <span className="text-amber-400">📍</span>
-          <span>下一目标</span>
+      {/* 标题 - 带动画 */}
+      <motion.div 
+        className="flex items-center justify-between"
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.55 }}
+      >
+        <div className="flex items-center gap-2 text-xs">
+          <motion.div
+            animate={{ 
+              scale: [1, 1.1, 1],
+              rotate: [0, 5, -5, 0]
+            }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+          >
+            <Target className="h-3.5 w-3.5 text-amber-400" />
+          </motion.div>
+          <span className="text-slate-300 font-medium">下一目标</span>
+          <span className="text-slate-500">·</span>
+          <span className="text-slate-500">{goals.length} 个待完成</span>
         </div>
-        <div className="flex items-center gap-0.5 text-xs text-slate-500">
-          <span>滑动查看</span>
+        <motion.div 
+          className="flex items-center gap-0.5 text-xs text-slate-500"
+          animate={{ x: [0, 3, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
+        >
+          <span>滑动</span>
           <ChevronRight className="h-3 w-3" />
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* 可滚动目标卡片 */}
       <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-2 pb-2">
+        <div className="flex gap-3 pb-2 pr-4">
           {goals.map((goal, index) => (
             <GoalMilestoneCard
               key={`${goal.title}-${index}`}
@@ -124,7 +138,7 @@ export const GoalCarousel = ({
             />
           ))}
         </div>
-        <ScrollBar orientation="horizontal" className="h-1" />
+        <ScrollBar orientation="horizontal" className="h-1 bg-slate-700/50" />
       </ScrollArea>
     </motion.div>
   );
