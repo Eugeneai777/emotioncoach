@@ -38,6 +38,7 @@ interface GrowthComparisonCardProps {
   dominantBehavior?: string;
   dominantEmotion?: string;
   dominantBelief?: string;
+  currentAwakeningIndex?: number; // External authoritative awakening index (0-100)
   embedded?: boolean;
 }
 
@@ -66,6 +67,7 @@ export function GrowthComparisonCard({
   avgBehavior,
   avgEmotion,
   avgBelief,
+  currentAwakeningIndex: externalAwakeningIndex,
   embedded = false,
 }: GrowthComparisonCardProps) {
   const navigate = useNavigate();
@@ -89,9 +91,10 @@ export function GrowthComparisonCard({
   const emotionRate = Math.round((parseFloat(avgEmotion) / 5) * 100);
   const beliefRate = Math.round((parseFloat(avgBelief) / 5) * 100);
 
-  // Overall awakening index
+  // Overall awakening index - prioritize external authoritative value
   const layerAwakening = (parseFloat(avgBehavior) + parseFloat(avgEmotion) + parseFloat(avgBelief)) / 3;
-  const awakeningIndex = Math.round(((layerAwakening - 1) / 4) * 100);
+  const calculatedAwakeningIndex = Math.round(((layerAwakening - 1) / 4) * 100);
+  const awakeningIndex = externalAwakeningIndex ?? calculatedAwakeningIndex;
 
   // Build layer comparison data
   const layers: LayerComparison[] = [
@@ -376,8 +379,8 @@ export function GrowthComparisonCard({
                 <div className="text-xs space-y-1.5">
                   <p className="font-medium">数据说明</p>
                   <ul className="text-muted-foreground list-disc pl-3 space-y-0.5">
-                    <li>Day 0：首次测评的觉醒起点</li>
-                    <li>Day {currentDay}：当前觉醒指数</li>
+                    <li>Day 0：训练营觉醒基准（系统同步）</li>
+                    <li>Day {currentDay}：系统当前觉醒分（与总览一致）</li>
                     <li>三层对比：每层的起点→当前变化</li>
                   </ul>
                 </div>
