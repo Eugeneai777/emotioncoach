@@ -216,8 +216,14 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
                           {challenge.challenge_description}
                         </p>
                       )}
+                      {/* 显示AI推荐理由 */}
+                      {challenge.recommendation_reason && !challenge.is_completed && (
+                        <div className="flex items-center gap-1 mt-1.5 text-xs text-amber-600 dark:text-amber-400">
+                          <span>💡 {challenge.recommendation_reason}</span>
+                        </div>
+                      )}
                       {/* 显示目标四穷维度 */}
-                      {poorTypeInfo && !challenge.is_completed && (
+                      {poorTypeInfo && !challenge.is_completed && !challenge.recommendation_reason && (
                         <div className="flex items-center gap-1 mt-1.5">
                           <span className="text-xs text-muted-foreground">🎯 目标突破：</span>
                           <Badge variant="outline" className="text-xs py-0 h-5">
