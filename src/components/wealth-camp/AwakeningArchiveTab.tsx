@@ -1,24 +1,22 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { WealthProgressChart } from './WealthProgressChart';
-import { ProfileEvolutionCard } from './ProfileEvolutionCard';
 import { ActionTrackingStats } from './ActionTrackingStats';
 import { JournalHealthGauge } from './JournalHealthGauge';
-import { TodayAwakeningSnapshot } from './TodayAwakeningSnapshot';
+import { GrowthHighlightsCard } from './GrowthHighlightsCard';
 import { NewBeliefsCollection } from './NewBeliefsCollection';
 import { WeeklyComparisonChart } from './WeeklyComparisonChart';
 import { GrowthComparisonCard } from './GrowthComparisonCard';
-import { FourPersonalityCard } from './FourPersonalityCard';
-import { ReactionPatternCard } from './ReactionPatternCard';
-import { CampSummaryReport } from './CampSummaryReport';
+import { CombinedPersonalityCard } from './CombinedPersonalityCard';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
-import { useProfileEvolution } from '@/hooks/useProfileEvolution';
 import { useCampSummary } from '@/hooks/useCampSummary';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, Loader2 } from 'lucide-react';
+import { Trophy, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 
 // Match WealthProgressChart's expected entry type
 interface ChartJournalEntry {
@@ -38,8 +36,8 @@ interface AwakeningArchiveTabProps {
 
 export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick }: AwakeningArchiveTabProps) {
   const navigate = useNavigate();
+  const [actionsOpen, setActionsOpen] = useState(false);
   const { stats, entries: fullEntries, awakeningIndex, peakIndex, currentAvg } = useWealthJournalEntries({ campId });
-  const { profile: wealthProfile, evolutionInsight } = useProfileEvolution(campId);
 
   // Camp summary - auto-generate for Day 7+ completion
   const { summary: campSummary, loading: summaryLoading, generating, generateSummary } = useCampSummary(
@@ -88,11 +86,20 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
     );
   }
 
-  // Get latest entry for today's snapshot
-  const latestEntry = fullEntries.length > 0 ? fullEntries[fullEntries.length - 1] : null;
-
-  // Calculate consecutive days (simplified - could be enhanced with actual check-in data)
+  // Calculate stats for highlights
   const consecutiveDays = stats?.totalDays || 0;
+  const beliefsCount = stats?.uniqueNewBeliefs?.length || 0;
+  const givingActionsCount = stats?.givingActions?.length || 0;
+  
+  // Calculate awakening change from first to latest
+  const awakeningChange = awakeningIndex && peakIndex 
+    ? Math.round(awakeningIndex - (fullEntries[0]?.behavior_score || 0) * 20)
+    : 0;
+  
+  // Action completion rate (simplified)
+  const actionCompletionRate = givingActionsCount > 0 
+    ? Math.min(100, Math.round((givingActionsCount / consecutiveDays) * 100)) 
+    : 0;
 
   return (
     <div className="space-y-4">
@@ -143,7 +150,7 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
         </Card>
       )}
 
-      {/* 第一层：统一觉醒仪表盘 - 与测评报告风格一致 */}
+      {/* 第一层：统一觉醒仪表盘 */}
       <JournalHealthGauge
         awakeningIndex={awakeningIndex}
         behaviorScore={parseFloat(stats?.avgBehavior || '0')}
@@ -157,15 +164,17 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
         currentAvg={currentAvg}
       />
 
-      {/* 第二层：今日觉醒快照 */}
-      {latestEntry && (
-        <TodayAwakeningSnapshot 
-          entry={latestEntry} 
-          onClick={() => navigate(`/wealth-journal/${latestEntry.id}`)}
-        />
-      )}
+      {/* 成长亮点 - 横向滚动 */}
+      <GrowthHighlightsCard
+        consecutiveDays={consecutiveDays}
+        awakeningChange={awakeningChange}
+        beliefsCount={beliefsCount}
+        actionCompletionRate={actionCompletionRate}
+        givingActionsCount={givingActionsCount}
+        peakAwakening={peakIndex}
+      />
 
-      {/* 第二层：成长轨迹 - Tab切换查看详情（日历已移至顶部可折叠组件） */}
+      {/* 第二层：成长可视化 - Tab切换 */}
       <Card className="shadow-sm">
         <Tabs defaultValue="chart" className="w-full">
           <CardHeader className="pb-0 pt-3 px-3">
@@ -213,30 +222,12 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
         </Tabs>
       </Card>
 
-      {/* 第三层：成长印记 - 收藏式设计 */}
-      <div className="space-y-4">
-        {/* 四穷人格画像 */}
-        <FourPersonalityCard campId={campId} currentDay={currentDay} />
+      {/* 第三层：成长印记 - 可折叠卡片组 */}
+      <div className="space-y-3">
+        {/* 财富人格 - 合并四穷+反应模式，默认折叠 */}
+        <CombinedPersonalityCard campId={campId} currentDay={currentDay} />
 
-        {/* 反应模式画像 */}
-        <ReactionPatternCard campId={campId} currentDay={currentDay} />
-
-        {/* 我的财富画像 */}
-        {wealthProfile && (
-          <ProfileEvolutionCard
-            currentProfile={wealthProfile}
-            evolutionInsight={evolutionInsight}
-            stickingPoints={stats ? {
-              dominantBehavior: stats.dominantBehavior,
-              dominantEmotion: stats.dominantEmotion,
-              dominantBelief: stats.dominantBelief,
-              totalDays: stats.totalDays,
-            } : undefined}
-            awakeningIndex={awakeningIndex}
-          />
-        )}
-
-        {/* 我的新信念收集 */}
+        {/* 信念宝库 - 默认展开 */}
         {stats?.uniqueNewBeliefs && stats.uniqueNewBeliefs.length > 0 && (
           <NewBeliefsCollection 
             beliefs={stats.uniqueNewBeliefs} 
@@ -244,17 +235,35 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
           />
         )}
 
-        {/* 行动追踪统计 */}
+        {/* 行动足迹 - 可折叠 */}
         <Card className="shadow-sm">
-          <CardHeader className="pb-2 pt-4 px-4">
-            <h3 className="font-semibold text-sm flex items-center gap-2">
-              <span>🎯</span>
-              行动追踪
-            </h3>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <ActionTrackingStats entries={fullEntries as any} />
-          </CardContent>
+          <Collapsible open={actionsOpen} onOpenChange={setActionsOpen}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="pb-2 pt-4 px-4 cursor-pointer hover:bg-muted/30 transition-colors">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-sm flex items-center gap-2">
+                    <span>🎯</span>
+                    行动足迹
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    {givingActionsCount > 0 && (
+                      <span className="text-xs text-muted-foreground">{givingActionsCount} 次给予</span>
+                    )}
+                    {actionsOpen ? (
+                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="px-4 pb-4 border-t">
+                <ActionTrackingStats entries={fullEntries as any} />
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
         </Card>
       </div>
     </div>
