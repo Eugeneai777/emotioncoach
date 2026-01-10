@@ -33,6 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useWealthCampAnalytics } from '@/hooks/useWealthCampAnalytics';
 import { useAdaptiveWeights } from '@/hooks/useAdaptiveWeights';
 import { useTodayWealthJournal } from '@/hooks/useTodayWealthJournal';
+import { useCampSummary } from '@/hooks/useCampSummary';
 
 interface DailyTask {
   id: string;
@@ -406,7 +407,14 @@ ${reflection}`;
     setActiveTab('coaching');
   };
 
-  const handleCoachingComplete = () => {
+  // Camp summary hook - auto-generate on Day 7 completion
+  const { summary: campSummary, generateSummary } = useCampSummary(
+    campId || null, 
+    // Auto-generate when currentDay >= 7 and completed_days >= 7
+    currentDay >= 7 && (camp?.completed_days || 0) >= 6
+  );
+
+  const handleCoachingComplete = async () => {
     setCoachingCompleted(true);
     setHasShownCelebration(false); // 重置标记，允许显示弹窗
     // 刷新日记数据
@@ -415,6 +423,18 @@ ${reflection}`;
     // 埋点：每日打卡完成 + 里程碑追踪
     if (campId) {
       trackDayCheckin(currentDay, campId);
+    }
+    
+    // 检查是否完成了第7天 - 自动生成总结报告
+    const dayJustCompleted = makeupDayNumber || currentDay;
+    const completedDays = (camp?.completed_days || 0) + 1;
+    
+    if (dayJustCompleted === 7 || completedDays >= 7) {
+      console.log('🎓 Day 7 completed - triggering camp summary generation');
+      // 延迟生成，确保日记数据已保存
+      setTimeout(() => {
+        generateSummary();
+      }, 2000);
     }
   };
 
