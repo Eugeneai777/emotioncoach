@@ -1,13 +1,27 @@
 import { useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserAchievements } from './useUserAchievements';
+import { toast } from '@/hooks/use-toast';
+import { achievements as achievementConfig } from '@/config/awakeningLevelConfig';
+import confetti from 'canvas-confetti';
+
+// Fire celebration confetti
+const fireCelebrationConfetti = () => {
+  confetti({
+    particleCount: 80,
+    spread: 70,
+    origin: { y: 0.6, x: 0.5 },
+    colors: ['#f59e0b', '#ef4444', '#8b5cf6', '#10b981', '#3b82f6'],
+  });
+};
 
 export const useAchievementChecker = () => {
   const { earnAchievement, hasAchievement, userAchievements } = useUserAchievements();
   const [checking, setChecking] = useState(false);
   const [newlyEarned, setNewlyEarned] = useState<string[]>([]);
+  const [showCelebration, setShowCelebration] = useState(false);
 
-  const checkAndAwardAchievements = useCallback(async () => {
+  const checkAndAwardAchievements = useCallback(async (showToast = true) => {
     setChecking(true);
     const earned: string[] = [];
     
@@ -153,6 +167,28 @@ export const useAchievementChecker = () => {
       }
 
       setNewlyEarned(earned);
+      
+      // Show celebration if achievements were earned
+      if (earned.length > 0 && showToast) {
+        setShowCelebration(true);
+        
+        // Fire confetti
+        fireCelebrationConfetti();
+        
+        // Show toast for each achievement
+        earned.forEach((key, index) => {
+          const achievement = achievementConfig.find(a => a.key === key);
+          if (achievement) {
+            setTimeout(() => {
+              toast({
+                title: `🎉 成就解锁：${achievement.name}`,
+                description: achievement.description,
+              });
+            }, index * 500);
+          }
+        });
+      }
+      
       return earned;
     } catch (error) {
       console.error('Error checking achievements:', error);
@@ -162,10 +198,16 @@ export const useAchievementChecker = () => {
     }
   }, [earnAchievement, hasAchievement]);
 
+  const closeCelebration = useCallback(() => {
+    setShowCelebration(false);
+  }, []);
+
   return {
     checkAndAwardAchievements,
     checking,
     newlyEarned,
+    showCelebration,
+    closeCelebration,
   };
 };
 
