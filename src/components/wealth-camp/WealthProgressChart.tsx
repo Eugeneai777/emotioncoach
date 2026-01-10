@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { layerScoreToStars } from '@/config/wealthStyleConfig';
+import { blockScoreToAwakeningStars } from '@/config/wealthStyleConfig';
 
 interface JournalEntry {
   day_number: number;
@@ -35,13 +35,14 @@ const DIMENSION_CONFIG = {
 export function WealthProgressChart({ entries, embedded = false, baseline }: WealthProgressChartProps) {
   const [activeDimension, setActiveDimension] = useState<DimensionKey>('behavior');
 
-  // Convert Day 0 assessment scores (0-50) to 1-5 star scale
+  // Convert Day 0 assessment BLOCK scores (0-50, higher = more blocked) 
+  // to AWAKENING stars (1-5, higher = more awakened) using inverse conversion
   const baselineValues = useMemo(() => {
     if (!baseline) return null;
     return {
-      behavior: layerScoreToStars(baseline.behavior_score, 50),
-      emotion: layerScoreToStars(baseline.emotion_score, 50),
-      belief: layerScoreToStars(baseline.belief_score, 50),
+      behavior: blockScoreToAwakeningStars(baseline.behavior_score, 50),
+      emotion: blockScoreToAwakeningStars(baseline.emotion_score, 50),
+      belief: blockScoreToAwakeningStars(baseline.belief_score, 50),
     };
   }, [baseline]);
 

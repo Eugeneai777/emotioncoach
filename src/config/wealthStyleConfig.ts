@@ -75,11 +75,25 @@ export const starScoreToAwakening = (starAvg: number): number => {
 /**
  * Convert layer score (0-50 from assessment) to 1-5 stars
  * For unified display across assessment and journal
+ * NOTE: This treats higher score as higher stars (direct conversion)
  */
 export const layerScoreToStars = (layerScore: number, maxScore: number = 50): number => {
   // Convert 0-50 to 1-5 stars
   const normalized = (layerScore / maxScore) * 4 + 1;
   return Math.min(5, Math.max(1, Math.round(normalized * 10) / 10));
+};
+
+/**
+ * Convert layer BLOCK score (0-50, higher = more blocked) to 1-5 AWAKENING stars
+ * This is the INVERSE conversion: higher block score = lower awakening stars
+ * Used for Day 0 baseline comparison in charts
+ */
+export const blockScoreToAwakeningStars = (layerScore: number, maxScore: number = 50): number => {
+  // First convert to awakening percentage (0-100, higher = better)
+  const awakeningPercent = 100 - (layerScore / maxScore) * 100;
+  // Then convert to 1-5 stars: 0% → 1 star, 100% → 5 stars
+  const stars = (awakeningPercent / 100) * 4 + 1;
+  return Math.round(stars * 10) / 10;
 };
 
 /**
