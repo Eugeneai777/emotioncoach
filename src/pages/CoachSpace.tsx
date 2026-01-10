@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Bell } from "lucide-react";
+import { ArrowLeft, Bell, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
@@ -20,9 +20,14 @@ const CoachSpace = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="font-semibold text-lg">教练空间</h1>
-          <Button variant="ghost" size="icon" onClick={() => navigate('/notifications')}>
-            <Bell className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/coach-space-intro')}>
+              <Info className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/notifications')}>
+              <Bell className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </header>
 
