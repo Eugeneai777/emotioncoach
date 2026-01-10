@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import confetti from 'canvas-confetti';
+import { achievements as achievementConfig } from '@/config/awakeningLevelConfig';
 
 interface Message {
   role: "user" | "assistant";
@@ -78,6 +80,69 @@ export const useDynamicCoachChat = (
   const [emotionButtonRecommendation, setEmotionButtonRecommendation] = useState<EmotionButtonRecommendation | null>(null);
   const [campRecommendation, setCampRecommendation] = useState<CampRecommendation | null>(null);
 
+  // Inline achievement checker to avoid hook dependency issues
+  const checkAndAwardAchievementsInline = async (userId: string, dayNumber: number): Promise<string[]> => {
+    const earned: string[] = [];
+    
+    try {
+      // Get user's existing achievements
+      const { data: existingAchievements } = await supabase
+        .from('user_achievements')
+        .select('achievement_type')
+        .eq('user_id', userId);
+      
+      const hasAchievement = (key: string) => 
+        existingAchievements?.some(a => a.achievement_type === key) || false;
+      
+      const earnAchievement = async (key: string) => {
+        const achievement = achievementConfig.find(a => a.key === key);
+        if (!achievement) return;
+        
+        await supabase.from('user_achievements').insert({
+          user_id: userId,
+          achievement_type: key,
+          achievement_name: achievement.name,
+          icon: achievement.icon,
+          achievement_description: achievement.description,
+        });
+      };
+
+      // Check milestone achievements based on day number
+      if (dayNumber >= 1 && !hasAchievement('day1_complete')) {
+        await earnAchievement('day1_complete');
+        earned.push('day1_complete');
+      }
+      if (dayNumber >= 3 && !hasAchievement('day3_halfway')) {
+        await earnAchievement('day3_halfway');
+        earned.push('day3_halfway');
+      }
+      if (dayNumber >= 7 && !hasAchievement('camp_graduate')) {
+        await earnAchievement('camp_graduate');
+        earned.push('camp_graduate');
+      }
+
+      // Check streak achievements - count journal entries
+      const { count: journalCount } = await supabase
+        .from('wealth_journal_entries')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+      
+      if (journalCount && journalCount >= 3 && !hasAchievement('streak_3')) {
+        await earnAchievement('streak_3');
+        earned.push('streak_3');
+      }
+      if (journalCount && journalCount >= 7 && !hasAchievement('streak_7')) {
+        await earnAchievement('streak_7');
+        earned.push('streak_7');
+      }
+
+      console.log('🏆 [Achievement Check] Earned achievements:', earned);
+      return earned;
+    } catch (error) {
+      console.error('Achievement check error:', error);
+      return [];
+    }
+  };
   useEffect(() => {
     if (conversationId) {
       loadConversation(conversationId);
@@ -452,6 +517,36 @@ export const useDynamicCoachChat = (
                   }
                 } catch (memoryError) {
                   console.error('❌ [useDynamicCoachChat] 提取教练记忆异常:', memoryError);
+                }
+                
+                // 🎉 成就检查：日记保存后立即检查并授予成就
+                console.log('🏆 [useDynamicCoachChat] 开始检查成就...');
+                try {
+                  const earnedAchievements = await checkAndAwardAchievementsInline(user.id, dayNumberToUse);
+                  if (earnedAchievements.length > 0) {
+                    // Fire confetti celebration
+                    confetti({
+                      particleCount: 100,
+                      spread: 70,
+                      origin: { y: 0.6, x: 0.5 },
+                      colors: ['#f59e0b', '#ef4444', '#8b5cf6', '#10b981'],
+                    });
+                    
+                    // Show toast for each earned achievement
+                    earnedAchievements.forEach((key, index) => {
+                      const achievement = achievementConfig.find(a => a.key === key);
+                      if (achievement) {
+                        setTimeout(() => {
+                          toast({
+                            title: `🎉 成就解锁：${achievement.name}`,
+                            description: achievement.description,
+                          });
+                        }, index * 800);
+                      }
+                    });
+                  }
+                } catch (achievementError) {
+                  console.error('❌ [useDynamicCoachChat] 成就检查异常:', achievementError);
                 }
                 
                 if (onBriefingGenerated) {

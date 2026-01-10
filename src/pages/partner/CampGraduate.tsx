@@ -28,6 +28,7 @@ import { useCampSummary } from "@/hooks/useCampSummary";
 import { useAssessmentBaseline } from "@/hooks/useAssessmentBaseline";
 import { GraduateContinueCard } from "@/components/wealth-camp/GraduateContinueCard";
 import { AchievementBadgeWall } from "@/components/wealth-camp/AchievementBadgeWall";
+import { AchievementCelebration } from "@/components/wealth-camp/AchievementCelebration";
 import { useAwakeningProgress } from "@/hooks/useAwakeningProgress";
 import { useAchievementChecker } from "@/hooks/useAchievementChecker";
 import { 
@@ -122,7 +123,7 @@ export default function CampGraduate() {
   const { progress: awakeningProgress, currentLevel } = useAwakeningProgress();
   
   // Achievement checker - auto award achievements on page load
-  const { checkAndAwardAchievements, checking: checkingAchievements, newlyEarned } = useAchievementChecker();
+  const { checkAndAwardAchievements, checking: checkingAchievements, newlyEarned, showCelebration, closeCelebration } = useAchievementChecker();
 
   // 页面访问埋点 + 成就检查
   useEffect(() => {
@@ -246,6 +247,15 @@ export default function CampGraduate() {
   const layerGrowth = getLayerGrowth();
 
   return (
+    <>
+      {/* Achievement Celebration Modal */}
+      {showCelebration && newlyEarned.length > 0 && (
+        <AchievementCelebration 
+          achievementKeys={newlyEarned} 
+          onClose={closeCelebration} 
+        />
+      )}
+      
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-orange-50">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
@@ -580,5 +590,6 @@ export default function CampGraduate() {
         )}
       </div>
     </div>
+    </>
   );
 }
