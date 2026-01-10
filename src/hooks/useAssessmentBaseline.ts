@@ -1,5 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { 
+  blockScoreToAwakening, 
+  layerScoreToAwakeningPercent,
+  layerScoreToStars 
+} from '@/config/wealthStyleConfig';
 
 export interface AssessmentBaseline {
   id: string;
@@ -17,6 +22,14 @@ export interface AssessmentBaseline {
   hand_score: number;
   eye_score: number;
   heart_score: number;
+  // UNIFIED: Awakening conversions (0-100, higher = better)
+  awakeningStart: number;           // Overall awakening start point
+  behaviorAwakening: number;        // Behavior layer awakening %
+  emotionAwakening: number;         // Emotion layer awakening %
+  beliefAwakening: number;          // Belief layer awakening %
+  behaviorStars: number;            // Behavior as 1-5 stars
+  emotionStars: number;             // Emotion as 1-5 stars
+  beliefStars: number;              // Belief as 1-5 stars
 }
 
 const poorTypeNames: Record<string, string> = {
@@ -75,25 +88,48 @@ export function useAssessmentBaseline(campId?: string) {
         throw queryError;
       }
 
-      // Calculate total score from individual scores
-      const totalScore = (data.behavior_score || 0) + (data.emotion_score || 0) + (data.belief_score || 0);
+      // Calculate total score from individual scores (0-150 range, each layer 0-50)
+      const behaviorScore = data.behavior_score || 0;
+      const emotionScore = data.emotion_score || 0;
+      const beliefScore = data.belief_score || 0;
+      const totalScore = behaviorScore + emotionScore + beliefScore;
+      
+      // Convert to 0-100 block score (higher = more blocked)
+      const healthScore = Math.round((totalScore / 150) * 100);
+      
+      // UNIFIED CONVERSIONS: Convert to awakening metrics (higher = better)
+      const awakeningStart = blockScoreToAwakening(healthScore);
+      const behaviorAwakening = layerScoreToAwakeningPercent(behaviorScore, 50);
+      const emotionAwakening = layerScoreToAwakeningPercent(emotionScore, 50);
+      const beliefAwakening = layerScoreToAwakeningPercent(beliefScore, 50);
+      const behaviorStars = layerScoreToStars(behaviorScore, 50);
+      const emotionStars = layerScoreToStars(emotionScore, 50);
+      const beliefStars = layerScoreToStars(beliefScore, 50);
 
       return {
         id: data.id,
         created_at: data.created_at || '',
-        behavior_score: data.behavior_score || 0,
-        emotion_score: data.emotion_score || 0,
-        belief_score: data.belief_score || 0,
-        total_score: totalScore,
+        behavior_score: behaviorScore,
+        emotion_score: emotionScore,
+        belief_score: beliefScore,
+        total_score: healthScore,
         dominant_poor: data.dominant_poor || null,
         dominant_emotion: data.dominant_block || null,
         dominant_belief: data.dominant_block || null,
         reaction_pattern: data.reaction_pattern || null,
-        // Add four poor scores
+        // Four poor scores
         mouth_score: data.mouth_score || 0,
         hand_score: data.hand_score || 0,
         eye_score: data.eye_score || 0,
         heart_score: data.heart_score || 0,
+        // UNIFIED: Awakening conversions
+        awakeningStart,
+        behaviorAwakening,
+        emotionAwakening,
+        beliefAwakening,
+        behaviorStars,
+        emotionStars,
+        beliefStars,
       };
     },
     enabled: true,
