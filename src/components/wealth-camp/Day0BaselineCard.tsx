@@ -1,11 +1,13 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Eye, Brain, Heart } from 'lucide-react';
+import { MapPin, Eye, Brain, Heart, ExternalLink, FileText } from 'lucide-react';
 import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
 import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { getAwakeningColor } from '@/config/wealthStyleConfig';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 // 主导卡点类型映射
 const dominantTypeLabels: Record<string, { name: string; emoji: string }> = {
@@ -25,9 +27,11 @@ const patternLabels: Record<string, string> = {
 
 interface Day0BaselineCardProps {
   onClick?: () => void;
+  showReportLink?: boolean;
 }
 
-export const Day0BaselineCard = ({ onClick }: Day0BaselineCardProps) => {
+export const Day0BaselineCard = ({ onClick, showReportLink = true }: Day0BaselineCardProps) => {
+  const navigate = useNavigate();
   const { progress } = useAwakeningProgress();
   const { baseline } = useAssessmentBaseline();
 
@@ -64,7 +68,12 @@ export const Day0BaselineCard = ({ onClick }: Day0BaselineCardProps) => {
               <div className="p-1.5 rounded-full bg-amber-100">
                 <MapPin className="h-4 w-4 text-amber-600" />
               </div>
-              <span className="font-semibold text-amber-900">我的觉醒起点</span>
+              <div>
+                <span className="font-semibold text-amber-900">我的觉醒起点</span>
+                <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-amber-200/60 text-amber-700 rounded-full">
+                  来自财富测评
+                </span>
+              </div>
             </div>
             {baselineDate && (
               <span className="text-xs text-amber-600/70">
@@ -142,9 +151,27 @@ export const Day0BaselineCard = ({ onClick }: Day0BaselineCardProps) => {
             </div>
           </div>
 
-          {/* 提示文字 */}
-          <div className="text-xs text-amber-600/70 text-center pt-2 border-t border-amber-200/50">
-            💡 这是你的起点，每一步成长都在这里可见
+          {/* 提示文字 + 查看报告链接 */}
+          <div className="pt-2 border-t border-amber-200/50 space-y-2">
+            <div className="text-xs text-amber-600/70 text-center">
+              💡 这是你的起点，每一步成长都在这里可见
+            </div>
+            
+            {showReportLink && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/wealth-block?view=history');
+                }}
+                className="w-full h-7 text-xs text-amber-700 hover:text-amber-800 hover:bg-amber-100/50"
+              >
+                <FileText className="w-3 h-3 mr-1.5" />
+                查看完整测评报告
+                <ExternalLink className="w-3 h-3 ml-1" />
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
