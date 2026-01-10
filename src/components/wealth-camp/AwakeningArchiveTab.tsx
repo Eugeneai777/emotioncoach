@@ -15,9 +15,10 @@ import { CombinedPersonalityCard } from './CombinedPersonalityCard';
 import { JournalTimelineView } from './JournalTimelineView';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
 import { useCampSummary } from '@/hooks/useCampSummary';
+import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, Loader2, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { Trophy, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 
 // Match WealthProgressChart's expected entry type
 interface ChartJournalEntry {
@@ -39,6 +40,7 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
   const navigate = useNavigate();
   const [actionsOpen, setActionsOpen] = useState(false);
   const { stats, entries: fullEntries, awakeningIndex, peakIndex, currentAvg } = useWealthJournalEntries({ campId });
+  const { baseline } = useAssessmentBaseline();
 
   // Camp summary - auto-generate for Day 7+ completion
   const { summary: campSummary, loading: summaryLoading, generating, generateSummary } = useCampSummary(
@@ -187,6 +189,11 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
                   created_at: e.created_at,
                 }))} 
                 embedded={true}
+                baseline={baseline ? {
+                  behavior_score: baseline.behavior_score,
+                  emotion_score: baseline.emotion_score,
+                  belief_score: baseline.belief_score,
+                } : null}
               />
             </TabsContent>
 
