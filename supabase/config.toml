@@ -338,3 +338,6 @@ verify_jwt = false
 
 [functions.generate-daily-challenges]
 verify_jwt = false
+
+[functions.generate-camp-summary]
+verify_jwt = false

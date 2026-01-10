@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { WealthProgressChart } from './WealthProgressChart';
 import { WealthJourneyCalendar } from './WealthJourneyCalendar';
 import { ProfileEvolutionCard } from './ProfileEvolutionCard';
@@ -12,10 +13,13 @@ import { WeeklyComparisonChart } from './WeeklyComparisonChart';
 import { GrowthComparisonCard } from './GrowthComparisonCard';
 import { FourPersonalityCard } from './FourPersonalityCard';
 import { ReactionPatternCard } from './ReactionPatternCard';
+import { CampSummaryReport } from './CampSummaryReport';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
 import { useProfileEvolution } from '@/hooks/useProfileEvolution';
+import { useCampSummary } from '@/hooks/useCampSummary';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Trophy, Loader2 } from 'lucide-react';
 
 // Match WealthProgressChart's expected entry type
 interface ChartJournalEntry {
@@ -38,6 +42,12 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
   const { stats, entries: fullEntries, awakeningIndex, peakIndex, currentAvg } = useWealthJournalEntries({ campId });
   const { profile: wealthProfile, evolutionInsight } = useProfileEvolution(campId);
 
+  // Camp summary - auto-generate for Day 7+ completion
+  const { summary: campSummary, loading: summaryLoading, generating, generateSummary } = useCampSummary(
+    campId || null,
+    currentDay >= 7 && entries.length >= 5 // Auto-generate if Day 7+ and has enough entries
+  );
+
   // Fetch camp data for calendar
   const { data: camp } = useQuery({
     queryKey: ['wealth-camp-for-archive', campId],
@@ -52,6 +62,21 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
       return data;
     },
     enabled: !!campId,
+  });
+
+  // Fetch user profile for summary display
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile-for-summary'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .single();
+      return data;
+    },
   });
 
   if (!entries || entries.length === 0) {
@@ -72,6 +97,53 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
 
   return (
     <div className="space-y-4">
+      {/* 7天总结报告入口/展示 */}
+      {currentDay >= 7 && (
+        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                  <Trophy className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-amber-900">7天成长报告</h3>
+                  <p className="text-xs text-amber-700">
+                    {campSummary ? '查看你的完整成长记录' : '生成你的专属成长总结'}
+                  </p>
+                </div>
+              </div>
+              {campSummary ? (
+                <Button 
+                  size="sm" 
+                  variant="secondary"
+                  className="bg-amber-100 hover:bg-amber-200 text-amber-800"
+                  onClick={() => navigate(`/partner/graduate?campId=${campId}`)}
+                >
+                  查看报告
+                </Button>
+              ) : (
+                <Button 
+                  size="sm" 
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                  onClick={() => generateSummary()}
+                  disabled={generating}
+                >
+                  {generating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      生成中
+                    </>
+                  ) : (
+                    '生成报告'
+                  )}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* 第一层：统一觉醒仪表盘 - 与测评报告风格一致 */}
       <JournalHealthGauge
         awakeningIndex={awakeningIndex}
