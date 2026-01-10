@@ -14,6 +14,7 @@ import { GrowthComparisonCard } from './GrowthComparisonCard';
 import { CombinedPersonalityCard } from './CombinedPersonalityCard';
 import { JournalTimelineView } from './JournalTimelineView';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
+import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
 import { useCampSummary } from '@/hooks/useCampSummary';
 import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
 import { useQuery } from '@tanstack/react-query';
@@ -42,6 +43,8 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
   const { stats, entries: fullEntries, awakeningIndex, peakIndex, currentAvg } = useWealthJournalEntries({ campId });
   // IMPORTANT: Pass campId to ensure consistent cache key across all components
   const { baseline } = useAssessmentBaseline(campId);
+  // Get authoritative current awakening from progress (same as GameProgressCard)
+  const { progress } = useAwakeningProgress();
 
   // Camp summary - auto-generate for Day 7+ completion
   const { summary: campSummary, loading: summaryLoading, generating, generateSummary } = useCampSummary(
@@ -240,6 +243,7 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
                 dominantBehavior={typeof stats?.dominantBehavior === 'object' ? stats.dominantBehavior.name : stats?.dominantBehavior}
                 dominantEmotion={typeof stats?.dominantEmotion === 'object' ? stats.dominantEmotion.name : stats?.dominantEmotion}
                 dominantBelief={typeof stats?.dominantBelief === 'object' ? stats.dominantBelief.name : stats?.dominantBelief}
+                currentAwakeningIndex={progress?.current_awakening}
                 embedded={true}
               />
             </TabsContent>
