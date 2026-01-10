@@ -381,33 +381,18 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
               </motion.div>
             </div>
 
-            {/* 当前等级进度 */}
-            {nextLevel && (
+            {/* 简化：用文字直接显示距离下一等级的积分 */}
+            {nextLevel && pointsToNext > 0 && (
               <motion.div 
-                className="space-y-1"
+                className="text-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7 }}
               >
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">
-                    Lv.{currentLevel?.level} → Lv.{nextLevel.level} {nextLevel.name}
-                  </span>
-                  <span className="text-amber-400 font-medium">{levelProgress}%</span>
-                </div>
-                <div className="relative">
-                  <Progress 
-                    value={levelProgress} 
-                    className="h-1.5 bg-slate-700"
-                  />
-                  {/* 进度条流光 */}
-                  <motion.div
-                    className="absolute top-0 left-0 h-full w-8 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none"
-                    initial={{ x: '-100%' }}
-                    animate={{ x: `${levelProgress}%` }}
-                    transition={{ duration: 1, delay: 1 }}
-                  />
-                </div>
+                <span className="text-xs text-slate-400">
+                  距 <span className="text-amber-400 font-medium">Lv.{nextLevel.level} {nextLevel.name}</span> 还需 
+                  <span className="text-amber-400 font-bold mx-1">{pointsToNext}</span>积分
+                </span>
               </motion.div>
             )}
           </div>
