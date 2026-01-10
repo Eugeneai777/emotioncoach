@@ -74,7 +74,7 @@ export function StudentTimeline({
           type: 'started_camp',
           date: joinedCampAt,
           title: '开始训练营',
-          description: '开始21天情绪管理训练营',
+          description: '开始财富觉醒训练营',
           icon: <Calendar className="w-3.5 h-3.5" />,
           color: 'bg-orange-500'
         });
@@ -83,46 +83,76 @@ export function StudentTimeline({
       // 4. 获取训练营里程碑
       const { data: camp } = await supabase
         .from('training_camps')
-        .select('milestone_7_reached, milestone_14_reached, milestone_21_completed, current_day, updated_at')
+        .select('camp_type, milestone_7_reached, milestone_14_reached, milestone_21_completed, current_day, updated_at')
         .eq('user_id', studentId)
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
 
       if (camp) {
+        // 判断是否为7天财富训练营
+        const isWealthCamp7 = camp.camp_type === 'wealth_block_7' || camp.camp_type === 'wealth_block_21';
+        
         // 使用 updated_at 作为近似时间（数据库没有单独的达成时间字段）
-        if (camp.milestone_7_reached) {
-          timelineEvents.push({
-            id: 'milestone_7',
-            type: 'milestone',
-            date: camp.updated_at || joinedCampAt || registeredAt,
-            title: '完成第7天',
-            description: '达成首周里程碑',
-            icon: <Flag className="w-3.5 h-3.5" />,
-            color: 'bg-amber-500'
-          });
-        }
-        if (camp.milestone_14_reached) {
-          timelineEvents.push({
-            id: 'milestone_14',
-            type: 'milestone',
-            date: camp.updated_at || joinedCampAt || registeredAt,
-            title: '完成第14天',
-            description: '达成两周里程碑',
-            icon: <Flag className="w-3.5 h-3.5" />,
-            color: 'bg-amber-500'
-          });
-        }
-        if (camp.milestone_21_completed) {
-          timelineEvents.push({
-            id: 'milestone_21',
-            type: 'milestone',
-            date: camp.updated_at || joinedCampAt || registeredAt,
-            title: '完成21天训练营',
-            description: '恭喜毕业！',
-            icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-            color: 'bg-green-500'
-          });
+        if (isWealthCamp7) {
+          // 7天财富训练营：Day 3 + Day 7 里程碑
+          if (camp.current_day >= 3) {
+            timelineEvents.push({
+              id: 'milestone_3',
+              type: 'milestone',
+              date: camp.updated_at || joinedCampAt || registeredAt,
+              title: '完成第3天',
+              description: '达成中期里程碑',
+              icon: <Flag className="w-3.5 h-3.5" />,
+              color: 'bg-amber-500'
+            });
+          }
+          if (camp.milestone_7_reached || camp.milestone_21_completed) {
+            timelineEvents.push({
+              id: 'milestone_7_graduate',
+              type: 'milestone',
+              date: camp.updated_at || joinedCampAt || registeredAt,
+              title: '完成7天训练营',
+              description: '🎓 恭喜毕业！',
+              icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+              color: 'bg-green-500'
+            });
+          }
+        } else {
+          // 其他21天训练营：Day 7 / Day 14 / Day 21 里程碑
+          if (camp.milestone_7_reached) {
+            timelineEvents.push({
+              id: 'milestone_7',
+              type: 'milestone',
+              date: camp.updated_at || joinedCampAt || registeredAt,
+              title: '完成第7天',
+              description: '达成首周里程碑',
+              icon: <Flag className="w-3.5 h-3.5" />,
+              color: 'bg-amber-500'
+            });
+          }
+          if (camp.milestone_14_reached) {
+            timelineEvents.push({
+              id: 'milestone_14',
+              type: 'milestone',
+              date: camp.updated_at || joinedCampAt || registeredAt,
+              title: '完成第14天',
+              description: '达成两周里程碑',
+              icon: <Flag className="w-3.5 h-3.5" />,
+              color: 'bg-amber-500'
+            });
+          }
+          if (camp.milestone_21_completed) {
+            timelineEvents.push({
+              id: 'milestone_21',
+              type: 'milestone',
+              date: camp.updated_at || joinedCampAt || registeredAt,
+              title: '完成21天训练营',
+              description: '恭喜毕业！',
+              icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+              color: 'bg-green-500'
+            });
+          }
         }
       }
 
