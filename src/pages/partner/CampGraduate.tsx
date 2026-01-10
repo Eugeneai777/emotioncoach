@@ -26,6 +26,7 @@ import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDia
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 import { useCampSummary } from "@/hooks/useCampSummary";
 import { useAssessmentBaseline } from "@/hooks/useAssessmentBaseline";
+import { GraduateContinueCard } from "@/components/wealth-camp/GraduateContinueCard";
 import { 
   LineChart, 
   Line, 
@@ -556,81 +557,11 @@ export default function CampGraduate() {
           </CardContent>
         </Card>
 
-        {/* 下一步：成为合伙人 */}
-        <Card className="border-0 shadow-xl overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500" />
-          <CardContent className="p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-5 h-5 text-emerald-500" />
-              <h3 className="font-semibold text-lg">你的下一步</h3>
-            </div>
-            
-            <p className="text-muted-foreground text-sm mb-4">
-              你已经亲身体验了财富觉醒的力量。现在，你可以成为<strong className="text-foreground">有劲合伙人</strong>，
-              帮助更多人开启财富觉醒之旅，同时获得可观收益。
-            </p>
-
-            {/* 合伙人权益 */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              {partnerBenefits.map((benefit, index) => (
-                <div
-                  key={index}
-                  className="p-3 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl"
-                >
-                  <div className="p-2 bg-emerald-100 rounded-lg w-fit mb-2 text-emerald-600">
-                    {benefit.icon}
-                  </div>
-                  <h4 className="font-medium text-sm mb-0.5">{benefit.title}</h4>
-                  <p className="text-xs text-muted-foreground">{benefit.desc}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* 收益预估 */}
-            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl mb-4">
-              <h4 className="font-medium text-sm text-amber-800 mb-2">💰 收益预估</h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">每月推荐10位学员</span>
-                  <span className="font-semibold text-amber-700">≈ ¥897/月</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">发展5位下级合伙人</span>
-                  <span className="font-semibold text-amber-700">+¥1,500/月</span>
-                </div>
-              </div>
-            </div>
-
-            {/* CTA */}
-            <Button
-              onClick={() => navigate('/partner/youjin-plan')}
-              className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
-            >
-              了解有劲合伙人计划
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* 其他选择 */}
-        <div className="space-y-3">
-          <Button
-            variant="outline"
-            className="w-full h-11"
-            onClick={() => navigate('/packages')}
-          >
-            <Crown className="w-4 h-4 mr-2" />
-            升级365会员，继续深度使用
-          </Button>
-          
-          <Button
-            variant="ghost"
-            className="w-full text-muted-foreground"
-            onClick={() => navigate('/wealth-camp-checkin')}
-          >
-            返回财富日记
-          </Button>
-        </div>
+        {/* 下一步：目标导向续航卡片 */}
+        <GraduateContinueCard 
+          awakeningGrowth={campSummary?.awakening_growth ?? 0}
+          isPartner={false}
+        />
           </>
         )}
       </div>
