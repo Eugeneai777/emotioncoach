@@ -17,6 +17,7 @@ export interface DailyChallenge {
   is_ai_generated: boolean;
   created_at: string;
   target_poor_type: 'mouth' | 'hand' | 'eye' | 'heart' | null; // 关联的四穷维度
+  recommendation_reason: string | null; // AI推荐理由
 }
 
 export const useDailyChallenges = (targetDate?: Date) => {

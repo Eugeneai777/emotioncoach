@@ -2779,6 +2779,7 @@ export type Database = {
           is_ai_generated: boolean | null
           is_completed: boolean | null
           points_reward: number | null
+          recommendation_reason: string | null
           target_date: string
           target_poor_type: string | null
           user_id: string
@@ -2795,6 +2796,7 @@ export type Database = {
           is_ai_generated?: boolean | null
           is_completed?: boolean | null
           points_reward?: number | null
+          recommendation_reason?: string | null
           target_date: string
           target_poor_type?: string | null
           user_id: string
@@ -2811,6 +2813,7 @@ export type Database = {
           is_ai_generated?: boolean | null
           is_completed?: boolean | null
           points_reward?: number | null
+          recommendation_reason?: string | null
           target_date?: string
           target_poor_type?: string | null
           user_id?: string
