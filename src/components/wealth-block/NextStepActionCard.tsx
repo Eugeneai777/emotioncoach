@@ -220,7 +220,7 @@ export function NextStepActionCard({
 
           {/* 底部信息 - 移动端换行处理 */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-0 text-[9px] sm:text-[10px] text-muted-foreground">
-            <span>2,847人已参与 · 7天无效全额退款</span>
+            <span>2,847人已参与</span>
             {onViewDetails && (
               <Button 
                 variant="ghost" 
