@@ -1,4 +1,3 @@
-import { GameProgressCard } from './GameProgressCard';
 import { CollapsibleProgressCalendar } from './CollapsibleProgressCalendar';
 import { cn } from '@/lib/utils';
 import { UserCampMode } from '@/hooks/useUserCampMode';
@@ -55,9 +54,6 @@ export function AwakeningDashboard({
         cycleWeek={cycleWeek}
         postCampCheckinDates={postCampCheckinDates}
       />
-      
-      {/* 游戏化进度卡片 */}
-      <GameProgressCard currentDayNumber={currentDay} streak={streak} />
     </div>
   );
 }

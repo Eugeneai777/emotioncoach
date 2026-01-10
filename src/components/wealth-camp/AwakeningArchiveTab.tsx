@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { WealthProgressChart } from './WealthProgressChart';
 import { ActionTrackingStats } from './ActionTrackingStats';
-import { JournalHealthGauge } from './JournalHealthGauge';
 import { GrowthHighlightsCard } from './GrowthHighlightsCard';
+import { GameProgressCard } from './GameProgressCard';
 import { NewBeliefsCollection } from './NewBeliefsCollection';
 import { WeeklyComparisonChart } from './WeeklyComparisonChart';
 import { GrowthComparisonCard } from './GrowthComparisonCard';
@@ -151,19 +151,8 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
         </Card>
       )}
 
-      {/* 第一层：统一觉醒仪表盘 */}
-      <JournalHealthGauge
-        awakeningIndex={awakeningIndex}
-        behaviorScore={parseFloat(stats?.avgBehavior || '0')}
-        emotionScore={parseFloat(stats?.avgEmotion || '0')}
-        beliefScore={parseFloat(stats?.avgBelief || '0')}
-        trendChange={stats?.trendChange || 0}
-        currentDay={currentDay}
-        totalDays={camp?.duration_days || 7}
-        consecutiveDays={consecutiveDays}
-        peakIndex={peakIndex}
-        currentAvg={currentAvg}
-      />
+      {/* 我的财富觉醒之旅 - 游戏化进度卡片 */}
+      <GameProgressCard currentDayNumber={currentDay} streak={consecutiveDays} />
 
       {/* 成长亮点 - 横向滚动 */}
       <GrowthHighlightsCard
