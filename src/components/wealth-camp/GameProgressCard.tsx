@@ -150,7 +150,7 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
               transition={{ delay: 0.1 }}
             >
               <Gamepad2 className="h-5 w-5 text-amber-400" />
-              我的财富觉醒之旅
+              我的觉醒旅程
             </motion.div>
             <AwakeningRulesDialog 
               trigger={
