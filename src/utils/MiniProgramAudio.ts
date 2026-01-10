@@ -433,6 +433,15 @@ export class MiniProgramAudioClient {
             if (this.audioPlayer) {
               this.audioPlayer.src = tempPath;
               this.audioPlayer.play();
+              
+              // 播放结束后删除临时文件，避免存储累积
+              this.audioPlayer.onEnded(() => {
+                fs.unlink({
+                  filePath: tempPath,
+                  success: () => {},
+                  fail: () => {}
+                });
+              });
             }
           },
           fail: (err: { errMsg?: string }) => {
@@ -497,10 +506,31 @@ export class MiniProgramAudioClient {
   /**
    * Web 环境下使用 Web Audio API 播放 PCM
    */
+  /**
+   * Base64 转 ArrayBuffer（兼容 Web 和小程序）
+   */
+  private base64ToArrayBuffer(base64: string): ArrayBuffer | null {
+    try {
+      // 优先使用小程序 API
+      if (window.wx?.base64ToArrayBuffer) {
+        return window.wx.base64ToArrayBuffer(base64);
+      }
+      // Web 环境降级
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    } catch (error) {
+      console.error('[MiniProgramAudio] base64ToArrayBuffer error:', error);
+      return null;
+    }
+  }
+
   private playPCMWithWebAudio(base64Audio: string): void {
     try {
-      const wx = window.wx;
-      const arrayBuffer = wx?.base64ToArrayBuffer?.(base64Audio);
+      const arrayBuffer = this.base64ToArrayBuffer(base64Audio);
       
       if (!arrayBuffer) {
         this.isPlaying = false;
