@@ -90,39 +90,96 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
             </span>
           </motion.div>
           
-          {/* 共鸣式提问 */}
+          {/* 共鸣式提问 - 逐字显示 */}
           <motion.h2 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-lg text-slate-600 font-normal"
-          >
-            你有没有这种感觉？
-          </motion.h2>
-          
-          {/* 核心痛点 - 大字强调 */}
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-2xl sm:text-3xl font-bold text-slate-800 leading-relaxed"
-          >
-            <p>赚钱这件事</p>
-            <p>
-              好像被<span className="text-red-500">「隐形刹车」</span>卡住了
-            </p>
-          </motion.div>
-          
-          {/* 接纳式副文案 */}
-          <motion.p 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-slate-500 text-sm leading-relaxed"
+            transition={{ delay: 0.1 }}
+            className="text-lg text-slate-600 font-normal flex justify-center"
           >
-            不是你不够努力<br />
-            是有个东西，一直在<span className="text-red-500 font-medium">暗中拖你后腿</span>
-          </motion.p>
+            {"你有没有这种感觉？".split("").map((char, i) => (
+              <motion.span
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 + i * 0.05 }}
+              >
+                {char}
+              </motion.span>
+            ))}
+          </motion.h2>
+          
+          {/* 核心痛点 - 大字强调 + 关键词闪烁 */}
+          <div className="text-2xl sm:text-3xl font-bold text-slate-800 leading-relaxed">
+            <motion.p
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5, type: "spring", stiffness: 100 }}
+            >
+              赚钱这件事
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.7, type: "spring", stiffness: 100 }}
+            >
+              好像被
+              <motion.span 
+                className="text-red-500 inline-block"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: [1, 1.05, 1],
+                  textShadow: [
+                    "0 0 0px rgba(239,68,68,0)",
+                    "0 0 20px rgba(239,68,68,0.6)",
+                    "0 0 0px rgba(239,68,68,0)"
+                  ]
+                }}
+                transition={{ 
+                  opacity: { delay: 0.9, duration: 0.3 },
+                  scale: { delay: 1.2, duration: 1.5, repeat: Infinity, repeatDelay: 2 },
+                  textShadow: { delay: 1.2, duration: 1.5, repeat: Infinity, repeatDelay: 2 }
+                }}
+              >
+                「隐形刹车」
+              </motion.span>
+              卡住了
+            </motion.p>
+          </div>
+          
+          {/* 接纳式副文案 - 渐入 + 关键词高亮 */}
+          <div className="text-slate-500 text-sm leading-relaxed">
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.1 }}
+            >
+              不是你不够努力
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.3 }}
+            >
+              是有个东西，一直在
+              <motion.span 
+                className="text-red-500 font-medium inline-block"
+                animate={{ 
+                  scale: [1, 1.03, 1],
+                  opacity: [1, 0.8, 1]
+                }}
+                transition={{ 
+                  delay: 1.8,
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatDelay: 1
+                }}
+              >
+                暗中拖你后腿
+              </motion.span>
+            </motion.p>
+          </div>
           
           {/* 首屏CTA按钮 */}
           <Button
