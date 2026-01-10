@@ -47,11 +47,8 @@ import {
 } from "@/components/ui/accordion";
 import { EnhancedHealthGauge } from "./EnhancedHealthGauge";
 import { EnhancedFourPoorRadar } from "./EnhancedFourPoorRadar";
-import { PriorityBreakthroughMap } from "./PriorityBreakthroughMap";
 import { AIInsightData } from "./AIInsightCard";
 import { LayerTransitionHint } from "./LayerTransitionHint";
-import { CampConversionCard } from "./CampConversionCard";
-import { CampPersonalizedCard } from "./CampPersonalizedCard";
 import { DeepFollowUpAnswer } from "./DeepFollowUpDialog";
 import { AwakeningJourneyPreview } from "./AwakeningJourneyPreview";
 import { NextStepActionCard } from "./NextStepActionCard";
@@ -86,8 +83,8 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_7");
   const hasPurchased = !!purchaseRecord;
 
-  // 控制三层展开状态 - 默认全部展开
-  const [openLayers, setOpenLayers] = useState<string[]>(["behavior", "emotion", "belief"]);
+  // 控制三层展开状态 - 默认全部折叠
+  const [openLayers, setOpenLayers] = useState<string[]>([]);
 
   const totalScore = result.behaviorScore + result.emotionScore + result.beliefScore;
   const healthScore = calculateHealthScore(totalScore);
@@ -659,48 +656,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         </AccordionItem>
       </Accordion>
 
-      {/* 训练营个性化推荐卡片 - 紧跟诊断之后 */}
-      <CampPersonalizedCard
-        dominantPoor={result.dominantPoor}
-        dominantEmotion={result.dominantEmotionBlock}
-        dominantBelief={result.dominantBeliefBlock}
-        healthScore={healthScore}
-        onPurchase={() => setShowPayDialog(true)}
-        onViewDetails={() => navigate('/wealth-camp-intro')}
-        hasPurchased={hasPurchased}
-      />
-
-      {/* 优先突破地图 - Top 3 */}
-      <PriorityBreakthroughMap
-        mouthScore={result.mouthScore}
-        handScore={result.handScore}
-        eyeScore={result.eyeScore}
-        heartScore={result.heartScore}
-        anxietyScore={result.anxietyScore}
-        scarcityScore={result.scarcityScore}
-        comparisonScore={result.comparisonScore}
-        shameScore={result.shameScore}
-        guiltScore={result.guiltScore}
-        lackScore={result.lackScore}
-        linearScore={result.linearScore}
-        stigmaScore={result.stigmaScore}
-        unworthyScore={result.unworthyScore}
-        relationshipScore={result.relationshipScore}
-      />
-
-      {/* 训练营AI洞察转化卡片 - 已购买用户或需要AI洞察时显示 */}
-      {(hasPurchased || aiInsight || isLoadingAI) && (
-        <CampConversionCard
-          hasPurchased={hasPurchased}
-          onPurchase={() => setShowPayDialog(true)}
-          onStart={() => setShowStartDialog(true)}
-          onViewDetails={() => navigate('/wealth-camp-intro')}
-          aiInsight={aiInsight}
-          isLoadingAI={isLoadingAI}
-        />
-      )}
-
-      {/* 下一步行动路径卡片 */}
+      {/* 统一行动区：合并CTA */}
       <NextStepActionCard
         isSaved={isSaved || false}
         isSaving={isSaving}
@@ -710,6 +666,12 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         onSave={onSave}
         onPurchase={() => setShowPayDialog(true)}
         onStartCamp={() => setShowStartDialog(true)}
+        dominantPoor={result.dominantPoor}
+        dominantEmotion={result.dominantEmotionBlock}
+        dominantBelief={result.dominantBeliefBlock}
+        aiInsight={aiInsight}
+        isLoadingAI={isLoadingAI}
+        onViewDetails={() => navigate('/wealth-camp-intro')}
       />
 
       {/* 分享和重测按钮 */}
