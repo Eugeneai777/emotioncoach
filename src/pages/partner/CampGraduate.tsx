@@ -27,6 +27,8 @@ import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 import { useCampSummary } from "@/hooks/useCampSummary";
 import { useAssessmentBaseline } from "@/hooks/useAssessmentBaseline";
 import { GraduateContinueCard } from "@/components/wealth-camp/GraduateContinueCard";
+import { AchievementBadgeWall } from "@/components/wealth-camp/AchievementBadgeWall";
+import { useAwakeningProgress } from "@/hooks/useAwakeningProgress";
 import { 
   LineChart, 
   Line, 
@@ -114,6 +116,9 @@ export default function CampGraduate() {
   
   // Get baseline for comparison
   const { baseline } = useAssessmentBaseline(graduationData?.campId || urlCampId || undefined);
+  
+  // Get awakening progress for level info
+  const { progress: awakeningProgress, currentLevel } = useAwakeningProgress();
 
   // 页面访问埋点
   useEffect(() => {
@@ -519,6 +524,9 @@ export default function CampGraduate() {
             </CardContent>
           </Card>
         )}
+
+        {/* 成就徽章墙 */}
+        <AchievementBadgeWall showUnlocked={true} />
 
         {/* 分享毕业证书 */}
         <WealthInviteCardDialog
