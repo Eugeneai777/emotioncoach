@@ -67,7 +67,7 @@ const WealthCoachIntro = () => {
     },
     {
       step: 2,
-      title: "7天训练营",
+      title: "财富觉醒训练营",
       subtitle: "五层同频突破",
       description: "AI教练 + 社群共振 + 每日实践",
       icon: Tent,

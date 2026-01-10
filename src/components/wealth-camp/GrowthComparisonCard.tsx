@@ -144,7 +144,7 @@ export function GrowthComparisonCard({
               <p className="text-xs text-muted-foreground">
                 {currentDay === 3 
                   ? '完成3天训练！重新测评验证你的进步'
-                  : '恭喜完成7天训练！重新测评见证蜕变'}
+                  : '恭喜完成财富觉醒训练营！重新测评见证蜕变'}
               </p>
             </div>
             <Button 

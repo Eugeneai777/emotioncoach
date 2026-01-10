@@ -103,7 +103,7 @@ export function TrainingCampDetail() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           返回
         </Button>
-        <h1 className="text-2xl font-bold">{camp?.camp_type?.includes('wealth') ? '7天训练营' : '21天训练营'}</h1>
+        <h1 className="text-2xl font-bold">{camp?.camp_type?.includes('wealth') ? '财富觉醒训练营' : '21天训练营'}</h1>
         <div className="w-20" /> {/* Spacer for centering */}
       </div>
 

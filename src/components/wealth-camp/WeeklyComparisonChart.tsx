@@ -298,7 +298,7 @@ export function WeeklyComparisonChart({ entries, className }: WeeklyComparisonCh
               <TooltipContent side="top" className="max-w-[280px] p-3">
                 <div className="text-xs space-y-1.5">
                   <p className="font-medium">数据说明</p>
-                  <p className="text-muted-foreground">阶段对比图展示7天训练营三层觉醒的变化：</p>
+                  <p className="text-muted-foreground">阶段对比图展示财富觉醒训练营三层觉醒的变化：</p>
                   <ul className="text-muted-foreground list-disc pl-3 space-y-0.5">
                     <li>数据分组：Day 1-3 为上半程，Day 4-7 为下半程</li>
                     <li>评分来源：每日日记的行为/情绪/信念层评分（1-5分）</li>

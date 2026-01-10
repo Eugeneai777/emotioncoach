@@ -205,7 +205,7 @@ export function NextStepActionCard({
               onClick={onStartCamp}
               className="w-full h-10 sm:h-12 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg font-bold text-sm sm:text-base"
             >
-              开始7天训练营
+              开始财富觉醒训练营
               <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-2" />
             </Button>
           ) : (

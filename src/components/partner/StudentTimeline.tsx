@@ -112,7 +112,7 @@ export function StudentTimeline({
               id: 'milestone_7_graduate',
               type: 'milestone',
               date: camp.updated_at || joinedCampAt || registeredAt,
-              title: '完成7天训练营',
+              title: '完成财富觉醒训练营',
               description: '🎓 恭喜毕业！',
               icon: <CheckCircle2 className="w-3.5 h-3.5" />,
               color: 'bg-green-500'

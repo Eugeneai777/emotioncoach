@@ -17,7 +17,7 @@ const transitionMessages: Record<string, { text: string; subtext: string }> = {
   },
   'belief-action': {
     text: '改变信念，才能从根本转化模式',
-    subtext: '7天训练营帮你重塑财富信念系统'
+    subtext: '财富觉醒训练营帮你重塑财富信念系统'
   }
 };
 
