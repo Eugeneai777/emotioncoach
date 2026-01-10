@@ -39,6 +39,31 @@ const AwakeningRulesDialog: React.FC<AwakeningRulesDialogProps> = ({ trigger }) 
               觉醒指数统一使用 0-100 分制，分数越高代表财富意识越觉醒
             </div>
             
+            {/* 转换示例 - 帮助用户理解 */}
+            <div className="p-3 rounded-lg bg-gradient-to-r from-rose-50 via-amber-50 to-emerald-50 dark:from-rose-950/30 dark:via-amber-950/30 dark:to-emerald-950/30 border border-amber-200/50">
+              <div className="text-xs font-medium text-muted-foreground mb-2">📌 转换示例</div>
+              <div className="flex items-center justify-center gap-2">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-rose-600">55</div>
+                  <div className="text-[10px] text-muted-foreground">卡点分数</div>
+                  <div className="text-[10px] text-rose-500/70">越低越好</div>
+                </div>
+                <div className="flex flex-col items-center px-3">
+                  <span className="text-muted-foreground text-xs">→</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">100 - 55</span>
+                  <span className="text-muted-foreground text-xs">→</span>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-emerald-600">45</div>
+                  <div className="text-[10px] text-muted-foreground">觉醒起点</div>
+                  <div className="text-[10px] text-emerald-500/70">越高越好</div>
+                </div>
+              </div>
+              <div className="text-center mt-2 text-[10px] text-muted-foreground">
+                卡点分 + 觉醒分 = 100（互为补数）
+              </div>
+            </div>
+            
             <div className="space-y-2">
               <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3 border border-amber-200/50">
                 <div className="flex items-center gap-2 mb-1">
@@ -48,8 +73,9 @@ const AwakeningRulesDialog: React.FC<AwakeningRulesDialogProps> = ({ trigger }) 
                 <p className="text-xs text-muted-foreground">
                   来自财富卡点测评。将卡点分（越高越阻塞）转换为觉醒分（越高越好）
                 </p>
-                <div className="mt-2 text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1 font-mono">
-                  觉醒起点 = 100 - (卡点总分 ÷ 300 × 100)
+                <div className="mt-2 text-xs bg-white/50 dark:bg-black/20 rounded px-2 py-1">
+                  <div className="font-mono">觉醒起点 = 100 - 卡点分数</div>
+                  <div className="text-muted-foreground mt-1">卡点分数 = (三层原始分之和 ÷ 150) × 100</div>
                 </div>
               </div>
               
