@@ -84,10 +84,10 @@ const WealthCoachIntro = () => {
       subtitle: "开启事业发展",
       description: "分发体验包，建立用户关系，获得持续分成",
       icon: Handshake,
-      gradient: "from-orange-500 to-amber-500",
-      bgGradient: "from-orange-50/80 to-amber-50/80",
-      borderColor: "border-orange-200/60",
-      iconBg: "bg-orange-100",
+      gradient: "from-emerald-500 to-teal-500",
+      bgGradient: "from-emerald-50/80 to-teal-50/80",
+      borderColor: "border-emerald-200/60",
+      iconBg: "bg-emerald-100",
       action: "了解合伙人",
       onClick: () => navigate("/partner/youjin-intro"),
     },
@@ -567,7 +567,7 @@ const WealthCoachIntro = () => {
           <Button 
             onClick={() => navigate("/partner/youjin-intro")}
             variant="outline"
-            className="flex-1 border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-300 px-2"
+            className="flex-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 px-2"
           >
             <Handshake className="mr-1 h-4 w-4" />
             合伙人
