@@ -341,3 +341,6 @@ verify_jwt = false
 
 [functions.generate-camp-summary]
 verify_jwt = false
+
+[functions.miniprogram-voice-relay]
+verify_jwt = false
