@@ -410,22 +410,24 @@ export class MiniProgramAudioClient {
       const wx = window.wx;
       
       if (wx?.getFileSystemManager && wx?.env?.USER_DATA_PATH) {
-        // 小程序环境：写入临时文件后播放
+        // 小程序环境：将 PCM 转换为 WAV 格式后播放
         const fs = wx.getFileSystemManager();
-        const arrayBuffer = wx.base64ToArrayBuffer?.(base64Audio);
+        const pcmBuffer = wx.base64ToArrayBuffer?.(base64Audio);
         
-        if (!arrayBuffer) {
+        if (!pcmBuffer) {
           console.error('[MiniProgramAudio] Failed to convert base64 to ArrayBuffer');
           this.isPlaying = false;
           this.playNextInQueue();
           return;
         }
         
-        const tempPath = `${wx.env.USER_DATA_PATH}/audio_${Date.now()}.pcm`;
+        // PCM 转 WAV：添加 44 字节的 WAV 头
+        const wavBuffer = this.pcmToWav(pcmBuffer, 24000, 1, 16);
+        const tempPath = `${wx.env.USER_DATA_PATH}/audio_${Date.now()}.wav`;
         
         fs.writeFile({
           filePath: tempPath,
-          data: arrayBuffer,
+          data: wavBuffer,
           encoding: 'binary',
           success: () => {
             if (this.audioPlayer) {
@@ -439,20 +441,99 @@ export class MiniProgramAudioClient {
             this.playNextInQueue();
           }
         });
-      } else if (wx?.base64ToArrayBuffer) {
-        // Web 环境降级：使用 Blob URL
-        const arrayBuffer = wx.base64ToArrayBuffer(base64Audio);
-        const blob = new Blob([arrayBuffer], { type: 'audio/pcm' });
-        const url = URL.createObjectURL(blob);
-        this.audioPlayer.src = url;
-        this.audioPlayer.play();
       } else {
-        console.error('[MiniProgramAudio] No audio playback method available');
-        this.isPlaying = false;
-        this.playNextInQueue();
+        // Web 环境降级：使用 Web Audio API 播放 PCM
+        this.playPCMWithWebAudio(base64Audio);
       }
     } catch (error) {
       console.error('[MiniProgramAudio] Error playing audio:', error);
+      this.isPlaying = false;
+      this.playNextInQueue();
+    }
+  }
+
+  /**
+   * 将 PCM 数据转换为 WAV 格式
+   * 添加 44 字节的 WAV 文件头
+   */
+  private pcmToWav(pcmData: ArrayBuffer, sampleRate: number, numChannels: number, bitsPerSample: number): ArrayBuffer {
+    const dataLength = pcmData.byteLength;
+    const buffer = new ArrayBuffer(44 + dataLength);
+    const view = new DataView(buffer);
+
+    // RIFF chunk descriptor
+    this.writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + dataLength, true);
+    this.writeString(view, 8, 'WAVE');
+
+    // fmt sub-chunk
+    this.writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
+    view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * numChannels * bitsPerSample / 8, true); // ByteRate
+    view.setUint16(32, numChannels * bitsPerSample / 8, true); // BlockAlign
+    view.setUint16(34, bitsPerSample, true);
+
+    // data sub-chunk
+    this.writeString(view, 36, 'data');
+    view.setUint32(40, dataLength, true);
+
+    // Write PCM data
+    const pcmView = new Uint8Array(pcmData);
+    const wavView = new Uint8Array(buffer);
+    wavView.set(pcmView, 44);
+
+    return buffer;
+  }
+
+  private writeString(view: DataView, offset: number, string: string): void {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  }
+
+  /**
+   * Web 环境下使用 Web Audio API 播放 PCM
+   */
+  private playPCMWithWebAudio(base64Audio: string): void {
+    try {
+      const wx = window.wx;
+      const arrayBuffer = wx?.base64ToArrayBuffer?.(base64Audio);
+      
+      if (!arrayBuffer) {
+        this.isPlaying = false;
+        this.playNextInQueue();
+        return;
+      }
+
+      // 使用 AudioContext 播放 PCM
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const sampleRate = 24000;
+      const numChannels = 1;
+      
+      // 将 PCM16 转换为 Float32
+      const pcmData = new Int16Array(arrayBuffer);
+      const floatData = new Float32Array(pcmData.length);
+      for (let i = 0; i < pcmData.length; i++) {
+        floatData[i] = pcmData[i] / 32768.0;
+      }
+
+      const audioBuffer = audioContext.createBuffer(numChannels, floatData.length, sampleRate);
+      audioBuffer.getChannelData(0).set(floatData);
+
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioContext.destination);
+      source.onended = () => {
+        this.isPlaying = false;
+        this.playNextInQueue();
+        audioContext.close();
+      };
+      source.start();
+    } catch (error) {
+      console.error('[MiniProgramAudio] Web Audio playback error:', error);
       this.isPlaying = false;
       this.playNextInQueue();
     }
