@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { wealthLayerColors } from "@/config/wealthStyleConfig";
+import { wealthLayerColors, starScoreToAwakening } from "@/config/wealthStyleConfig";
 import { JournalEntry } from "@/hooks/useWealthJournalEntries";
 import { ChevronRight } from "lucide-react";
 
@@ -44,10 +44,11 @@ function MiniLayerCard({ emoji, label, content, score, colorKey, awakening }: Mi
 }
 
 export function TodayAwakeningSnapshot({ entry, onClick }: TodayAwakeningSnapshotProps) {
-  // Calculate average score
+  // Calculate awakening index (0-100) using unified conversion
   const avgScore = entry.behavior_score && entry.emotion_score && entry.belief_score
-    ? ((entry.behavior_score + entry.emotion_score + entry.belief_score) / 3).toFixed(1)
+    ? (entry.behavior_score + entry.emotion_score + entry.belief_score) / 3
     : null;
+  const awakeningIndex = avgScore ? starScoreToAwakening(avgScore) : null;
 
   return (
     <motion.div
@@ -72,8 +73,8 @@ export function TodayAwakeningSnapshot({ entry, onClick }: TodayAwakeningSnapsho
               <span className="font-medium text-sm">今日觉醒 · Day {entry.day_number}</span>
             </div>
             <div className="flex items-center gap-1">
-              {avgScore && (
-                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">{avgScore}</span>
+              {awakeningIndex !== null && (
+                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">觉醒 {awakeningIndex}</span>
               )}
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </div>
