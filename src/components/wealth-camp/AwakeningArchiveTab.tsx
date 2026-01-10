@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { WealthProgressChart } from './WealthProgressChart';
@@ -14,9 +16,12 @@ import { JournalTimelineView } from './JournalTimelineView';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
 import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
 import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
+import { useCampSummary } from '@/hooks/useCampSummary';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trophy, ArrowRight } from 'lucide-react';
+import { format } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
 
 // Match WealthProgressChart's expected entry type
 interface ChartJournalEntry {
@@ -35,12 +40,15 @@ interface AwakeningArchiveTabProps {
 }
 
 export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick }: AwakeningArchiveTabProps) {
+  const navigate = useNavigate();
   const [actionsOpen, setActionsOpen] = useState(false);
   const { stats, entries: fullEntries, awakeningIndex, peakIndex, currentAvg } = useWealthJournalEntries({ campId });
   // IMPORTANT: Pass campId to ensure consistent cache key across all components
   const { baseline } = useAssessmentBaseline(campId);
   // Get authoritative current awakening from progress (same as GameProgressCard)
   const { progress } = useAwakeningProgress();
+  // Get graduation report data
+  const { summary: campSummary } = useCampSummary(campId || null, false);
 
   // Fetch camp data for calendar
   const { data: camp } = useQuery({
@@ -100,6 +108,43 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
 
   return (
     <div className="space-y-4">
+      {/* 毕业成就卡片 - 仅当已生成报告时显示 */}
+      {campSummary && (
+        <Card className="shadow-sm overflow-hidden border-emerald-200/50 bg-gradient-to-br from-emerald-50 to-teal-50/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
+                  <Trophy className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-emerald-800">🎓 训练营毕业证书</h3>
+                  <p className="text-xs text-emerald-600/80">
+                    {campSummary.generated_at 
+                      ? format(new Date(campSummary.generated_at), 'yyyy年M月d日', { locale: zhCN }) + ' 毕业'
+                      : '已完成7天训练营'}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold text-emerald-600">
+                  +{campSummary.awakening_growth || 0}
+                </div>
+                <div className="text-xs text-emerald-600/70">觉醒成长</div>
+              </div>
+            </div>
+            <Button 
+              onClick={() => navigate('/partner/graduate')}
+              className="w-full mt-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
+              size="sm"
+            >
+              查看完整报告
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* 我的财富觉醒之旅 - 游戏化进度卡片 */}
       <GameProgressCard currentDayNumber={currentDay} streak={consecutiveDays} />
 
