@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import WealthInviteCardDialog from './WealthInviteCardDialog';
+import { cn } from '@/lib/utils';
+import { taskCardStyles, cardBaseStyles } from '@/config/cardStyleConfig';
 
 interface WealthCampInviteCardProps {
   campId?: string;
@@ -42,14 +44,25 @@ export function WealthCampInviteCard({
 
 
   return (
-    <Card className="bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 border-amber-200 dark:border-amber-800 overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-amber-800 dark:text-amber-200 flex items-center gap-2 text-base">
+    <Card className={cn(
+      "overflow-hidden",
+      cardBaseStyles.container,
+      taskCardStyles.invite.container
+    )}>
+      <CardHeader className={cn(
+        "pb-2",
+        taskCardStyles.invite.header,
+        taskCardStyles.invite.headerBorder
+      )}>
+        <CardTitle className={cn(
+          "flex items-center gap-2 text-base",
+          taskCardStyles.invite.headerText
+        )}>
           <span>🎁</span> 邀请好友一起突破
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-amber-700 dark:text-amber-300">
+        <p className="text-sm text-violet-700 dark:text-violet-300">
           你已完成 <strong>第 {dayNumber} 天</strong> 训练，邀请好友一起成长！
         </p>
 
@@ -57,7 +70,7 @@ export function WealthCampInviteCard({
           <Button
             onClick={handleCopyLink}
             variant="outline"
-            className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50 gap-2"
+            className="flex-1 border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30 gap-2"
           >
             {copied ? (
               <Check className="w-4 h-4" />
@@ -69,7 +82,7 @@ export function WealthCampInviteCard({
 
           <Button
             onClick={() => setShowShareDialog(true)}
-            className="flex-1 bg-amber-500 hover:bg-amber-600 text-white gap-2"
+            className={cn("flex-1 text-white gap-2", taskCardStyles.invite.badge, "hover:bg-violet-600")}
           >
             <Image className="w-4 h-4" />
             生成邀请卡片

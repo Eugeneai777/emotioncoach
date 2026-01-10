@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Check, Lock, ChevronRight, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { taskCardStyles, cardBaseStyles } from '@/config/cardStyleConfig';
 
 export type UserMode = 'active' | 'graduate' | 'partner';
 
@@ -102,22 +103,30 @@ export function TodayTaskHub({
   const modeLabel = getModeLabel();
 
   return (
-    <Card className={cn("shadow-sm", className)}>
-      <CardContent className="p-4 space-y-3">
-        {/* Header */}
+    <Card className={cn(
+      cardBaseStyles.container,
+      taskCardStyles.primary.container,
+      className
+    )}>
+      {/* Header with gradient */}
+      <div className={cn(
+        "px-4 py-3 rounded-t-xl",
+        taskCardStyles.primary.header,
+        taskCardStyles.primary.headerBorder
+      )}>
         <div className="flex items-center justify-between">
-          <h3 className="font-medium flex items-center gap-2">
+          <h3 className={cn("font-medium flex items-center gap-2", taskCardStyles.primary.headerText)}>
             <span>📋</span> 
             今日任务 
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm opacity-70">
               ({completedCount}/{tasks.length})
             </span>
             {modeLabel && (
               <span className={cn(
                 "text-xs px-2 py-0.5 rounded-full",
                 userMode === 'partner' 
-                  ? "bg-emerald-100 text-emerald-700" 
-                  : "bg-amber-100 text-amber-700"
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" 
+                  : "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"
               )}>
                 {modeLabel}
               </span>
@@ -125,10 +134,13 @@ export function TodayTaskHub({
           </h3>
           <div className="flex items-center gap-1 text-sm">
             <Zap className="w-4 h-4 text-amber-500" />
-            <span className="text-amber-600 font-medium">+{earnedPoints}</span>
+            <span className="text-amber-600 dark:text-amber-400 font-medium">+{earnedPoints}</span>
             <span className="text-muted-foreground">/{totalPoints}分</span>
           </div>
         </div>
+      </div>
+
+      <CardContent className="p-4 space-y-3">
 
         {/* Task List */}
         <div className="space-y-2">
