@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { WealthProgressChart } from './WealthProgressChart';
-import { WealthJourneyCalendar } from './WealthJourneyCalendar';
 import { ProfileEvolutionCard } from './ProfileEvolutionCard';
 import { ActionTrackingStats } from './ActionTrackingStats';
 import { JournalHealthGauge } from './JournalHealthGauge';
@@ -166,15 +165,14 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
         />
       )}
 
-      {/* 第二层：成长轨迹 - Tab切换查看详情 */}
+      {/* 第二层：成长轨迹 - Tab切换查看详情（日历已移至顶部可折叠组件） */}
       <Card className="shadow-sm">
         <Tabs defaultValue="chart" className="w-full">
           <CardHeader className="pb-0 pt-3 px-3">
-            <TabsList className="grid w-full grid-cols-4 h-9">
+            <TabsList className="grid w-full grid-cols-3 h-9">
               <TabsTrigger value="chart" className="text-xs">成长曲线</TabsTrigger>
               <TabsTrigger value="assessment" className="text-xs">测评对比</TabsTrigger>
               <TabsTrigger value="weekly" className="text-xs">周对比</TabsTrigger>
-              <TabsTrigger value="calendar" className="text-xs">日历</TabsTrigger>
             </TabsList>
           </CardHeader>
           <CardContent className="p-3 pt-3">
@@ -195,40 +193,6 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
             {/* 周维度对比 */}
             <TabsContent value="weekly" className="mt-0">
               <WeeklyComparisonChart entries={entries} className="border-0 shadow-none" />
-            </TabsContent>
-            
-            {/* 旅程日历 */}
-            <TabsContent value="calendar" className="mt-0">
-              {camp ? (
-                <WealthJourneyCalendar
-                  startDate={camp.start_date}
-                  currentDay={currentDay}
-                  totalDays={camp.duration_days || 7}
-                  checkInDates={Array.isArray(camp.check_in_dates) ? camp.check_in_dates as string[] : []}
-                  journalEntries={fullEntries.map(e => ({
-                    id: e.id,
-                    day_number: e.day_number,
-                    behavior_type: e.behavior_block as string | undefined,
-                    emotion_type: e.emotion_signal as string | undefined,
-                    belief_type: e.old_belief as string | undefined,
-                    personal_awakening: (e.behavior_awakening || e.emotion_awakening || e.belief_awakening) as string | undefined,
-                    new_belief: e.new_belief as string | undefined,
-                    created_at: e.created_at,
-                  }))}
-                  makeupDaysLimit={3}
-                  compact={true}
-                  onDayClick={(dayNumber, dateStr, entry) => {
-                    if (entry && (entry as any).behavior_type) {
-                      navigate(`/wealth-journal/${entry.id}`);
-                    }
-                  }}
-                  onMakeupClick={onMakeupClick}
-                />
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  加载日历中...
-                </div>
-              )}
             </TabsContent>
 
             {/* 测评对比 - Before/After */}
