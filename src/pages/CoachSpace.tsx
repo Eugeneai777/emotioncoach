@@ -4,7 +4,7 @@ import { ArrowLeft, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
-import { MobileCoachCard } from "@/components/coach/MobileCoachCard";
+import { EnhancedCoachCard } from "@/components/coach/EnhancedCoachCard";
 import { HumanCoachEntry } from "@/components/coach/HumanCoachEntry";
 
 const CoachSpace = () => {
@@ -27,33 +27,33 @@ const CoachSpace = () => {
       </header>
 
       {/* 欢迎语 */}
-      <div className="px-4 py-6 text-center">
+      <div className="px-4 py-4 text-center">
         <motion.div 
           initial={{ opacity: 0, y: 10 }} 
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
           <h2 className="text-2xl font-bold text-slate-800">✨ 选择你的专属教练</h2>
-          <p className="text-slate-500 mt-2">开启今天的成长之旅</p>
+          <p className="text-slate-500 mt-1">开启今天的成长之旅</p>
         </motion.div>
       </div>
 
-      {/* AI教练网格 */}
-      <section className="px-4 pb-6">
+      {/* AI教练列表 - 单列 */}
+      <section className="px-4 pb-4">
         <h3 className="text-sm font-medium text-slate-500 mb-3 flex items-center gap-2">
           <span>🤖</span> AI 智能教练
         </h3>
         
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-3">
             {[1, 2, 3, 4].map(i => (
-              <Skeleton key={i} className="aspect-square rounded-2xl" />
+              <Skeleton key={i} className="h-24 rounded-xl" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-3">
             {templates?.map((coach, index) => (
-              <MobileCoachCard key={coach.id} coach={coach} index={index} />
+              <EnhancedCoachCard key={coach.id} coach={coach} index={index} />
             ))}
           </div>
         )}
