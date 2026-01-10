@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import AwakeningRulesDialog from './AwakeningRulesDialog';
 import { LevelMilestoneTooltip } from './LevelMilestoneTooltip';
 import { GoalCarousel } from './GoalCarousel';
+import AwakeningStatusBar from './AwakeningStatusBar';
 import {
   Tooltip,
   TooltipContent,
@@ -107,15 +108,15 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
 
   const dailyPotential = calculateDailyPotentialPoints(currentDayNumber);
   
-  // 根据觉醒值确定状态
-  const getAwakeningStatus = (score: number) => {
-    if (score >= 80) return { color: 'text-emerald-400', bgColor: 'bg-emerald-500/20', label: '高度觉醒', emoji: '🟢' };
-    if (score >= 60) return { color: 'text-amber-400', bgColor: 'bg-amber-500/20', label: '稳步觉醒', emoji: '🟡' };
-    if (score >= 40) return { color: 'text-orange-400', bgColor: 'bg-orange-500/20', label: '初步觉醒', emoji: '🟠' };
-    return { color: 'text-rose-400', bgColor: 'bg-rose-500/20', label: '觉醒起步', emoji: '🔴' };
+  // 获取当前状态颜色（用于觉醒值显示）
+  const getAwakeningStatusColor = (score: number) => {
+    if (score >= 80) return 'text-emerald-400';
+    if (score >= 60) return 'text-amber-400';
+    if (score >= 40) return 'text-orange-400';
+    return 'text-rose-400';
   };
   
-  const currentStatus = getAwakeningStatus(progress.current_awakening);
+  const currentStatusColor = getAwakeningStatusColor(progress.current_awakening);
 
   // 计算等级进度线的位置
   const getLevelTrackProgress = () => {
@@ -187,13 +188,11 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                   <p className="text-xs">达到80分即为高度觉醒状态</p>
                 </TooltipContent>
               </Tooltip>
-
-              {/* 当前状态用颜色直接体现 */}
-              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${currentStatus.bgColor} ${currentStatus.color}`}>
-                {currentStatus.emoji} {currentStatus.label}
-              </div>
             </motion.div>
           </TooltipProvider>
+          
+          {/* 觉醒状态进度条 - 显示4个状态和当前位置 */}
+          <AwakeningStatusBar currentScore={progress.current_awakening} />
           
           {/* 觉醒起点 vs 当前觉醒 - 带数字动画 */}
           <motion.div 
@@ -247,7 +246,7 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
               <div className="flex items-baseline gap-1">
                 <AnimatedNumber 
                   value={progress.current_awakening} 
-                  className={`text-3xl font-bold ${currentStatus.color}`}
+                  className={`text-3xl font-bold ${currentStatusColor}`}
                 />
                 {awakeningGrowth > 0 && (
                   <motion.span 
