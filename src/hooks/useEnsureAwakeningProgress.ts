@@ -100,10 +100,11 @@ export const useEnsureAwakeningProgress = () => {
         }
         
         // 3. Calculate baseline awakening (inverted health score)
+        // Note: Each layer scores 0-50, total max is 150
         const totalScore = (assessment.behavior_score || 0) + 
                            (assessment.emotion_score || 0) + 
                            (assessment.belief_score || 0);
-        const healthScore = Math.round((totalScore / 300) * 100);
+        const healthScore = Math.round((totalScore / 150) * 100);
         const baselineAwakening = 100 - healthScore;
         
         // 4. Get journal entries
