@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 
-const SYNC_STORAGE_KEY = 'awakening_sync_complete';
+// Version 2: Fixed calculation formula (/150 instead of /300)
+const SYNC_STORAGE_KEY = 'awakening_sync_complete_v2';
 
 /**
  * Hook to ensure awakening progress exists for users who have completed assessment
