@@ -23,12 +23,17 @@ import WealthInviteCardDialog from '@/components/wealth-camp/WealthInviteCardDia
 import { BackfillMemoriesButton } from '@/components/wealth-camp/BackfillMemoriesButton';
 import { AwakeningArchiveTab } from '@/components/wealth-camp/AwakeningArchiveTab';
 import { BeliefReminderCard } from '@/components/wealth-camp/BeliefReminderCard';
+import { GameProgressCard } from '@/components/wealth-camp/GameProgressCard';
+import { Day0BaselineCard } from '@/components/wealth-camp/Day0BaselineCard';
+import { DailyChallengeCard } from '@/components/wealth-camp/DailyChallengeCard';
+import { AchievementBadges } from '@/components/wealth-camp/AchievementBadges';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
 import { useWealthCampAnalytics } from '@/hooks/useWealthCampAnalytics';
 import { useAdaptiveWeights } from '@/hooks/useAdaptiveWeights';
 import { useTodayWealthJournal } from '@/hooks/useTodayWealthJournal';
+
 interface DailyTask {
   id: string;
   title: string;
@@ -615,6 +620,21 @@ ${reflection}`;
             {/* Assessment Focus Card - 仅前3天且非补卡模式显示 */}
             {!makeupDayNumber && currentDay <= 3 && (
               <AssessmentFocusCard variant="checkin" />
+            )}
+
+            {/* 游戏化进度卡片 - 展示觉醒之旅进度 */}
+            {!makeupDayNumber && (
+              <GameProgressCard currentDayNumber={currentDay} />
+            )}
+
+            {/* Day 0 基线卡片 - 展示觉醒起点 */}
+            {!makeupDayNumber && currentDay === 1 && (
+              <Day0BaselineCard />
+            )}
+
+            {/* 每日挑战卡片 */}
+            {!makeupDayNumber && campId && (
+              <DailyChallengeCard />
             )}
 
             {/* Belief Reminder Card - 冥想前展示收藏的信念提醒 */}
