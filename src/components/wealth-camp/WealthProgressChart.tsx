@@ -16,17 +16,16 @@ interface WealthProgressChartProps {
   embedded?: boolean;
 }
 
-type DimensionKey = 'all' | 'behavior' | 'emotion' | 'belief';
+type DimensionKey = 'behavior' | 'emotion' | 'belief';
 
 const DIMENSION_CONFIG = {
-  all: { label: '综合', color: '#10b981' },
   behavior: { label: '行为', color: '#d97706' },
   emotion: { label: '情绪', color: '#ec4899' },
   belief: { label: '信念', color: '#8b5cf6' },
 };
 
 export function WealthProgressChart({ entries, embedded = false }: WealthProgressChartProps) {
-  const [activeDimension, setActiveDimension] = useState<DimensionKey>('all');
+  const [activeDimension, setActiveDimension] = useState<DimensionKey>('behavior');
 
   const chartData = useMemo(() => {
     // 找出最大天数（最多7天）
@@ -114,10 +113,9 @@ export function WealthProgressChart({ entries, embedded = false }: WealthProgres
   }
 
   // Determine which lines to show based on active dimension
-  const showAll = activeDimension === 'all';
-  const showBehavior = showAll || activeDimension === 'behavior';
-  const showEmotion = showAll || activeDimension === 'emotion';
-  const showBelief = showAll || activeDimension === 'belief';
+  const showBehavior = activeDimension === 'behavior';
+  const showEmotion = activeDimension === 'emotion';
+  const showBelief = activeDimension === 'belief';
 
   const chartContent = (
     <>
@@ -129,9 +127,6 @@ export function WealthProgressChart({ entries, embedded = false }: WealthProgres
           onValueChange={(v) => v && setActiveDimension(v as DimensionKey)}
           className="bg-muted/50 p-1 rounded-lg"
         >
-          <ToggleGroupItem value="all" className="text-xs px-3 data-[state=on]:bg-emerald-100 data-[state=on]:text-emerald-700">
-            综合
-          </ToggleGroupItem>
           <ToggleGroupItem value="behavior" className="text-xs px-3 data-[state=on]:bg-amber-100 data-[state=on]:text-amber-700">
             行为
           </ToggleGroupItem>
@@ -144,8 +139,8 @@ export function WealthProgressChart({ entries, embedded = false }: WealthProgres
         </ToggleGroup>
       </div>
 
-      {/* Dimension Stats (when specific dimension selected) */}
-      {!showAll && dimensionStats && (
+      {/* Dimension Stats */}
+      {dimensionStats && (
         <div className="flex justify-center gap-4 mb-3 text-xs">
           <div className="flex items-center gap-1">
             <span className="text-muted-foreground">平均:</span>
@@ -192,39 +187,14 @@ export function WealthProgressChart({ entries, embedded = false }: WealthProgres
           />
           {!embedded && <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />}
           
-          {/* 综合觉醒分 - 主曲线 */}
-          {showAll && (
-            <Line 
-              type="monotone" 
-              dataKey="综合觉醒" 
-              stroke="#10b981" 
-              strokeWidth={3}
-              dot={(props: { cx?: number; cy?: number; payload?: { hasData?: boolean } }) => {
-                const { cx, cy, payload } = props;
-                if (!cx || !cy) return null;
-                // 未打卡的天用空心圆
-                if (!payload?.hasData) {
-                  return (
-                    <circle cx={cx} cy={cy} r={4} fill="transparent" stroke="#10b981" strokeWidth={2} strokeDasharray="2 2" />
-                  );
-                }
-                return (
-                  <circle cx={cx} cy={cy} r={4} fill="#10b981" stroke="#fff" strokeWidth={2} />
-                );
-              }}
-              activeDot={{ r: 6, strokeWidth: 2 }}
-              connectNulls={false}
-            />
-          )}
-          
           {/* 行为层 */}
           {showBehavior && (
             <Line 
               type="monotone" 
               dataKey="行为流动度" 
               stroke="#d97706" 
-              strokeWidth={showAll ? 2 : 3}
-              dot={{ fill: '#d97706', r: showAll ? 3 : 5 }}
+              strokeWidth={3}
+              dot={{ fill: '#d97706', r: 5 }}
               strokeOpacity={1}
             />
           )}
@@ -235,8 +205,8 @@ export function WealthProgressChart({ entries, embedded = false }: WealthProgres
               type="monotone" 
               dataKey="情绪流动度" 
               stroke="#ec4899" 
-              strokeWidth={showAll ? 2 : 3}
-              dot={{ fill: '#ec4899', r: showAll ? 3 : 5 }}
+              strokeWidth={3}
+              dot={{ fill: '#ec4899', r: 5 }}
               strokeOpacity={1}
             />
           )}
@@ -247,8 +217,8 @@ export function WealthProgressChart({ entries, embedded = false }: WealthProgres
               type="monotone" 
               dataKey="信念松动度" 
               stroke="#8b5cf6" 
-              strokeWidth={showAll ? 2 : 3}
-              dot={{ fill: '#8b5cf6', r: showAll ? 3 : 5 }}
+              strokeWidth={3}
+              dot={{ fill: '#8b5cf6', r: 5 }}
               strokeOpacity={1}
             />
           )}
@@ -258,12 +228,6 @@ export function WealthProgressChart({ entries, embedded = false }: WealthProgres
       {/* Score Legend - only in embedded mode */}
       {embedded && (
         <div className="flex flex-wrap justify-center gap-3 mt-2 text-[10px] text-muted-foreground">
-          {showAll && (
-            <div className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span>综合</span>
-            </div>
-          )}
           {showBehavior && (
             <div className="flex items-center gap-1">
               <div className="w-2.5 h-2.5 rounded-full bg-amber-600" />
