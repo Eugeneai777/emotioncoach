@@ -88,7 +88,7 @@ const WealthCoachIntro = () => {
       bgGradient: "from-emerald-50/80 to-teal-50/80",
       borderColor: "border-emerald-200/60",
       iconBg: "bg-emerald-100",
-      action: "了解合伙人",
+      action: "成为合伙人",
       onClick: () => navigate("/partner/youjin-intro"),
     },
   ];
