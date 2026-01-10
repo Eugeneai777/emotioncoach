@@ -65,7 +65,7 @@ export function CheckInCelebrationDialog({
   }, [open]);
 
   const getMilestoneMessage = () => {
-    if (consecutiveDays === 7) return '👑 7天训练营完美毕业！';
+    if (consecutiveDays === 7) return '👑 财富觉醒训练营完美毕业！';
     if (consecutiveDays === 5) return '🏆 中程里程碑达成！';
     if (consecutiveDays === 3) return '🎉 3天坚持达成！';
     if (consecutiveDays === 1) return '🎉 开启觉醒之旅！';

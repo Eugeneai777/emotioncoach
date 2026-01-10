@@ -55,8 +55,8 @@ export const awakeningLevels: AwakeningLevel[] = [
     name: '信念转化者',
     icon: '⭐',
     minPoints: 700,
-    description: '完成7天训练，信念开始松动',
-    unlockCondition: '完成7天训练营',
+    description: '完成财富觉醒训练营，信念开始松动',
+    unlockCondition: '完成财富觉醒训练营',
   },
   {
     level: 5,
@@ -96,7 +96,7 @@ export const achievements: Achievement[] = [
   { key: 'first_awakening', name: '觉醒起点', icon: '🎯', description: '完成首次财富测评', category: 'milestone' },
   { key: 'day1_complete', name: '第一步', icon: '👣', description: '完成Day 1训练', category: 'milestone' },
   { key: 'day3_halfway', name: '中途不弃', icon: '💪', description: '完成Day 3训练', category: 'milestone' },
-  { key: 'camp_graduate', name: '7天觉醒者', icon: '🎓', description: '完成7天训练营', category: 'milestone' },
+  { key: 'camp_graduate', name: '7天觉醒者', icon: '🎓', description: '完成财富觉醒训练营', category: 'milestone' },
   { key: 'became_partner', name: '觉醒引路人', icon: '🤝', description: '成为有劲合伙人', category: 'milestone' },
   
   // 连续打卡成就

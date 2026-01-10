@@ -50,7 +50,7 @@ const pricingIncludes = [
 
 const loginBenefits = [
   "查看历史趋势变化",
-  "解锁7天训练营",
+  "解锁财富觉醒训练营",
   "获得AI教练个性化指导",
 ];
 
