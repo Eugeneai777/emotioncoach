@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
   ArrowLeft, Activity, Heart, Brain, User, Network, Sparkles, 
-  CheckCircle2, ArrowRight, ClipboardCheck, Tent, Users, 
+  CheckCircle2, ArrowRight, ClipboardCheck, Tent, Handshake, 
   ChevronRight, ChevronDown, Layers
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -67,7 +67,7 @@ const WealthCoachIntro = () => {
     },
     {
       step: 2,
-      title: "21天训练营",
+      title: "7天训练营",
       subtitle: "五层同频突破",
       description: "AI教练 + 社群共振 + 每日实践",
       icon: Tent,
@@ -80,16 +80,16 @@ const WealthCoachIntro = () => {
     },
     {
       step: 3,
-      title: "每日邀请",
-      subtitle: "邀请好友体验",
-      description: "邀请朋友做测评或参加训练营，一起突破",
-      icon: Users,
-      gradient: "from-emerald-500 to-teal-500",
-      bgGradient: "from-emerald-50/80 to-teal-50/80",
-      borderColor: "border-emerald-200/60",
-      iconBg: "bg-emerald-100",
-      action: "分享邀请",
-      onClick: () => navigate("/share-invite"),
+      title: "有劲合伙人",
+      subtitle: "开启事业发展",
+      description: "分发体验包，建立用户关系，获得持续分成",
+      icon: Handshake,
+      gradient: "from-orange-500 to-amber-500",
+      bgGradient: "from-orange-50/80 to-amber-50/80",
+      borderColor: "border-orange-200/60",
+      iconBg: "bg-orange-100",
+      action: "了解合伙人",
+      onClick: () => navigate("/partner/youjin-intro"),
     },
   ];
 
@@ -266,7 +266,7 @@ const WealthCoachIntro = () => {
             财富觉醒 3 部曲
           </h2>
           <p className="text-sm text-muted-foreground">
-            发现卡点 → 系统突破 → 持续行动
+            觉察卡点 → 系统突破 → 事业发展
           </p>
         </div>
 
@@ -384,7 +384,7 @@ const WealthCoachIntro = () => {
                   训练营如何实现突破？
                 </h3>
                 <p className="text-sm text-muted-foreground mb-3">
-                  21天训练营通过<span className="text-amber-600 dark:text-amber-400 font-medium">「五层同频」</span>方法，从行为到结构，全方位打通你的财富通道
+                  7天训练营通过<span className="text-amber-600 dark:text-amber-400 font-medium">「五层同频」</span>方法，从行为到结构，全方位打通你的财富通道
                 </p>
                 
                 {/* 五层预览小卡片 */}
@@ -565,12 +565,12 @@ const WealthCoachIntro = () => {
             训练营
           </Button>
           <Button 
-            onClick={() => navigate("/share-invite")}
+            onClick={() => navigate("/partner/youjin-intro")}
             variant="outline"
-            className="flex-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 px-2"
+            className="flex-1 border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-300 px-2"
           >
-            <Users className="mr-1 h-4 w-4" />
-            邀请
+            <Handshake className="mr-1 h-4 w-4" />
+            合伙人
           </Button>
         </div>
       </div>
