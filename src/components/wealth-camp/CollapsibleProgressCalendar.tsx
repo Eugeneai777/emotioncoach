@@ -292,10 +292,20 @@ export function CollapsibleProgressCalendar({
               >
                 <div className="border-t border-amber-200 dark:border-amber-800 pt-4 space-y-4">
                   {isPostCampMode ? (
-                    // Post-camp: Multi-week view
+                    // Post-camp: Multi-week view with staggered animations
                     <div className="space-y-3">
-                      {weeksData.map((week) => (
-                        <div key={week.weekNumber} className="space-y-2">
+                      {weeksData.map((week, weekIndex) => (
+                        <motion.div 
+                          key={week.weekNumber} 
+                          className="space-y-2"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ 
+                            duration: 0.3, 
+                            delay: weekIndex * 0.1,
+                            ease: 'easeOut'
+                          }}
+                        >
                           <div className="flex items-center justify-between text-xs">
                             <span className="text-amber-700 dark:text-amber-300">
                               第{week.weekNumber}周（{week.label}）
@@ -306,8 +316,15 @@ export function CollapsibleProgressCalendar({
                           </div>
                           <div className="flex gap-2">
                             {week.days.map((day, i) => (
-                              <div
+                              <motion.div
                                 key={i}
+                                initial={{ scale: 0.5, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ 
+                                  duration: 0.2, 
+                                  delay: weekIndex * 0.1 + i * 0.03,
+                                  ease: 'easeOut'
+                                }}
                                 className={cn(
                                   "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all",
                                   day.isCompleted && "bg-amber-500 text-white",
@@ -316,10 +333,10 @@ export function CollapsibleProgressCalendar({
                                 )}
                               >
                                 {day.dayNumber}
-                              </div>
+                              </motion.div>
                             ))}
                           </div>
-                        </div>
+                        </motion.div>
                       ))}
                       
                       {/* Stats summary */}
