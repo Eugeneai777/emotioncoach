@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useDailyChallenges, DailyChallenge } from '@/hooks/useDailyChallenges';
 import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
 import { challengeTypes, challengeDifficulties } from '@/config/awakeningLevelConfig';
+import { fourPoorRichConfig, PoorTypeKey } from '@/config/fourPoorConfig';
 import { Target, Zap, Check, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -77,8 +78,20 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
         action: `完成挑战: ${challenge.challenge_title}`,
       });
 
+      // 刷新四穷进度（因为挑战完成会影响觉察计数）
+      queryClient.invalidateQueries({ queryKey: ['challenge-poor-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['four-poor-progress'] });
+
+      const poorTypeInfo = challenge.target_poor_type 
+        ? fourPoorRichConfig[challenge.target_poor_type]
+        : null;
+
       toast.success(`+${challenge.points_reward} 积分！`, {
-        description: result.leveledUp ? `🎉 升级到 ${result.newLevel.name}！` : '继续加油！',
+        description: result.leveledUp 
+          ? `🎉 升级到 ${result.newLevel.name}！` 
+          : poorTypeInfo 
+            ? `${poorTypeInfo.poorEmoji} ${poorTypeInfo.poorName} 觉察 +1` 
+            : '继续加油！',
       });
 
       onPointsEarned?.(challenge.points_reward);
@@ -153,6 +166,9 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
               color: 'text-gray-500',
             };
             const difficultyInfo = challengeDifficulties[challenge.difficulty as keyof typeof challengeDifficulties] || challengeDifficulties.medium;
+            const poorTypeInfo = challenge.target_poor_type 
+              ? fourPoorRichConfig[challenge.target_poor_type as PoorTypeKey]
+              : null;
             const isExpanded = expandedId === challenge.id;
 
             return (
@@ -199,6 +215,15 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
                         <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
                           {challenge.challenge_description}
                         </p>
+                      )}
+                      {/* 显示目标四穷维度 */}
+                      {poorTypeInfo && !challenge.is_completed && (
+                        <div className="flex items-center gap-1 mt-1.5">
+                          <span className="text-xs text-muted-foreground">🎯 目标突破：</span>
+                          <Badge variant="outline" className="text-xs py-0 h-5">
+                            {poorTypeInfo.poorEmoji} {poorTypeInfo.poorName} → {poorTypeInfo.richEmoji} {poorTypeInfo.richName}
+                          </Badge>
+                        </div>
                       )}
                     </div>
 

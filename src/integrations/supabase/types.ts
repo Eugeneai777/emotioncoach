@@ -2780,6 +2780,7 @@ export type Database = {
           is_completed: boolean | null
           points_reward: number | null
           target_date: string
+          target_poor_type: string | null
           user_id: string
         }
         Insert: {
@@ -2795,6 +2796,7 @@ export type Database = {
           is_completed?: boolean | null
           points_reward?: number | null
           target_date: string
+          target_poor_type?: string | null
           user_id: string
         }
         Update: {
@@ -2810,6 +2812,7 @@ export type Database = {
           is_completed?: boolean | null
           points_reward?: number | null
           target_date?: string
+          target_poor_type?: string | null
           user_id?: string
         }
         Relationships: []

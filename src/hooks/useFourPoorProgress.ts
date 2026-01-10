@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useWealthJournalEntries } from './useWealthJournalEntries';
 import { useAssessmentBaseline } from './useAssessmentBaseline';
 import { PoorTypeKey, poorTypeKeys } from '@/config/fourPoorConfig';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface FourPoorProgress {
   // T0 baseline scores from assessment (higher = more blocked)
@@ -25,12 +27,19 @@ export interface FourPoorProgress {
     eye: number;
     heart: number;
   };
-  // Count of times each type was identified
+  // Count of times each type was identified (with breakdown)
   awarenessCount: {
     mouth: number;
     hand: number;
     eye: number;
     heart: number;
+  };
+  // Breakdown by source: journal entries vs challenges
+  awarenessBreakdown: {
+    mouth: { journal: number; challenge: number };
+    hand: { journal: number; challenge: number };
+    eye: { journal: number; challenge: number };
+    heart: { journal: number; challenge: number };
   };
   // Which type is most blocked (needs most work)
   dominantPoor: PoorTypeKey | null;
@@ -57,6 +66,25 @@ export function useFourPoorProgress(campId?: string): FourPoorProgress {
   const { baseline, isLoading: baselineLoading } = useAssessmentBaseline(campId);
   const { entries, isLoading: entriesLoading } = useWealthJournalEntries({ campId });
 
+  // 获取已完成挑战的四穷关联
+  const { data: challengeProgress, isLoading: challengeLoading } = useQuery({
+    queryKey: ['challenge-poor-progress'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('daily_challenges')
+        .select('target_poor_type')
+        .eq('user_id', user.id)
+        .eq('is_completed', true)
+        .not('target_poor_type', 'is', null);
+      
+      if (error) throw error;
+      return data as { target_poor_type: PoorTypeKey }[];
+    },
+  });
+
   const progress = useMemo(() => {
     // Default baseline scores (scale 1-5 per type, total could be up to 15-20 per dimension)
     const baselineScores = {
@@ -67,7 +95,15 @@ export function useFourPoorProgress(campId?: string): FourPoorProgress {
     };
 
     // Count awareness for each type from journal entries
-    const awarenessCount: Record<PoorTypeKey, number> = {
+    const journalCounts: Record<PoorTypeKey, number> = {
+      mouth: 0,
+      hand: 0,
+      eye: 0,
+      heart: 0,
+    };
+
+    // Count awareness from challenges
+    const challengeCounts: Record<PoorTypeKey, number> = {
       mouth: 0,
       hand: 0,
       eye: 0,
@@ -88,11 +124,34 @@ export function useFourPoorProgress(campId?: string): FourPoorProgress {
       if (behaviorType && typeof behaviorType === 'string') {
         const mappedKey = behaviorBlockMapping[behaviorType];
         if (mappedKey) {
-          awarenessCount[mappedKey]++;
+          journalCounts[mappedKey]++;
           behaviorScoreSums[mappedKey] += entry.behavior_score ?? 3;
         }
       }
     });
+
+    // 累加挑战带来的觉察
+    challengeProgress?.forEach((c) => {
+      if (c.target_poor_type) {
+        challengeCounts[c.target_poor_type]++;
+      }
+    });
+
+    // 合并计数
+    const awarenessCount: Record<PoorTypeKey, number> = {
+      mouth: journalCounts.mouth + challengeCounts.mouth,
+      hand: journalCounts.hand + challengeCounts.hand,
+      eye: journalCounts.eye + challengeCounts.eye,
+      heart: journalCounts.heart + challengeCounts.heart,
+    };
+
+    // 来源明细
+    const awarenessBreakdown = {
+      mouth: { journal: journalCounts.mouth, challenge: challengeCounts.mouth },
+      hand: { journal: journalCounts.hand, challenge: challengeCounts.hand },
+      eye: { journal: journalCounts.eye, challenge: challengeCounts.eye },
+      heart: { journal: journalCounts.heart, challenge: challengeCounts.heart },
+    };
 
     // Calculate current scores (residual blockage after awareness)
     // Higher awareness depth (1-5) = more transformation = lower current score
@@ -150,13 +209,14 @@ export function useFourPoorProgress(campId?: string): FourPoorProgress {
       currentScores,
       transformationRates,
       awarenessCount,
+      awarenessBreakdown,
       dominantPoor,
       fastestProgress,
     };
-  }, [baseline, entries]);
+  }, [baseline, entries, challengeProgress]);
 
   return {
     ...progress,
-    isLoading: baselineLoading || entriesLoading,
+    isLoading: baselineLoading || entriesLoading || challengeLoading,
   };
 }
