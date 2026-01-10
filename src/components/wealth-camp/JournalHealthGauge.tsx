@@ -13,6 +13,8 @@ interface JournalHealthGaugeProps {
   currentDay: number;
   totalDays: number;
   consecutiveDays?: number;
+  peakIndex?: number;    // 最佳表现（峰值）
+  currentAvg?: number;   // 当前均值
 }
 
 export function JournalHealthGauge({
@@ -24,6 +26,8 @@ export function JournalHealthGauge({
   currentDay,
   totalDays,
   consecutiveDays = 0,
+  peakIndex,
+  currentAvg,
 }: JournalHealthGaugeProps) {
   const zone = getHealthZone(awakeningIndex);
   const radius = 80;
@@ -161,6 +165,20 @@ export function JournalHealthGauge({
               <span>{zone.emoji}</span>
               <span>{zone.label}</span>
             </div>
+            
+            {/* 双指标：当前均值 vs 最佳表现 */}
+            {peakIndex !== undefined && currentAvg !== undefined && peakIndex !== currentAvg && (
+              <div className="flex justify-center gap-4 mt-2 text-[10px]">
+                <div className="flex items-center gap-1 text-slate-400">
+                  <span>📊 当前均值</span>
+                  <span className="font-medium text-slate-300">{currentAvg}</span>
+                </div>
+                <div className="flex items-center gap-1 text-slate-400">
+                  <span>🏆 最佳表现</span>
+                  <span className="font-medium text-emerald-400">{peakIndex}</span>
+                </div>
+              </div>
+            )}
           </motion.div>
 
           {/* Three Layer Scores - Star Display */}

@@ -29,28 +29,35 @@ export function WealthProgressChart({ entries, embedded = false }: WealthProgres
   const [activeDimension, setActiveDimension] = useState<DimensionKey>('all');
 
   const chartData = useMemo(() => {
-    return entries
-      .filter(e => e.behavior_score || e.emotion_score || e.belief_score)
-      .sort((a, b) => a.day_number - b.day_number)
-      .map(entry => {
-        const behavior = entry.behavior_score || 0;
-        const emotion = entry.emotion_score || 0;
-        const belief = entry.belief_score || 0;
-        const validScores = [behavior, emotion, belief].filter(s => s > 0);
-        const composite = validScores.length > 0 
-          ? Math.round((validScores.reduce((a, b) => a + b, 0) / validScores.length) * 10) / 10 
-          : 0;
-        
-        return {
-          day: `Day ${entry.day_number}`,
-          dayNum: entry.day_number,
-          行为流动度: behavior,
-          情绪流动度: emotion,
-          信念松动度: belief,
-          综合觉醒: composite,
-        };
-      })
-      .slice(-14);
+    // 找出最大天数（最多7天）
+    const maxDay = Math.max(...entries.map(e => e.day_number), 1);
+    const totalDays = Math.min(maxDay, 7);
+    
+    // 为所有天生成数据，未打卡的天显示0
+    return Array.from({ length: totalDays }, (_, i) => {
+      const dayNum = i + 1;
+      const entry = entries.find(e => e.day_number === dayNum);
+      
+      const behavior = entry?.behavior_score ?? 0;
+      const emotion = entry?.emotion_score ?? 0;
+      const belief = entry?.belief_score ?? 0;
+      const hasData = behavior > 0 || emotion > 0 || belief > 0;
+      
+      const validScores = [behavior, emotion, belief].filter(s => s > 0);
+      const composite = validScores.length > 0 
+        ? Math.round((validScores.reduce((a, b) => a + b, 0) / validScores.length) * 10) / 10 
+        : 0;
+      
+      return {
+        day: `Day ${dayNum}`,
+        dayNum,
+        行为流动度: behavior,
+        情绪流动度: emotion,
+        信念松动度: belief,
+        综合觉醒: composite,
+        hasData, // 标记是否有实际打卡数据
+      };
+    });
   }, [entries]);
 
   // Calculate dimension-specific stats
@@ -192,8 +199,21 @@ export function WealthProgressChart({ entries, embedded = false }: WealthProgres
               dataKey="综合觉醒" 
               stroke="#10b981" 
               strokeWidth={3}
-              dot={{ fill: '#10b981', r: 4, strokeWidth: 2, stroke: '#fff' }}
+              dot={(props: { cx?: number; cy?: number; payload?: { hasData?: boolean } }) => {
+                const { cx, cy, payload } = props;
+                if (!cx || !cy) return null;
+                // 未打卡的天用空心圆
+                if (!payload?.hasData) {
+                  return (
+                    <circle cx={cx} cy={cy} r={4} fill="transparent" stroke="#10b981" strokeWidth={2} strokeDasharray="2 2" />
+                  );
+                }
+                return (
+                  <circle cx={cx} cy={cy} r={4} fill="#10b981" stroke="#fff" strokeWidth={2} />
+                );
+              }}
               activeDot={{ r: 6, strokeWidth: 2 }}
+              connectNulls={false}
             />
           )}
           

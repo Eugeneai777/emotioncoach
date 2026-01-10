@@ -207,21 +207,22 @@ export function FourPersonalityCard({ campId, currentDay = 1, className }: FourP
                 />
               </div>
               
-              {/* Stats row */}
+              {/* Stats row - 使用"成长值"语义，与进度条方向一致 */}
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <span>测评 {baseline.toFixed(0)}分</span>
+                  <span className="text-muted-foreground">起点</span>
                   <span>→</span>
-                  <span className="text-foreground">当前 {current.toFixed(0)}分</span>
-                  {improvement > 0 && (
-                    <span className="text-emerald-600 dark:text-emerald-400 flex items-center">
+                  {improvement > 0 ? (
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center">
                       <TrendingUp className="w-3 h-3 mr-0.5" />
-                      ↓{improvement.toFixed(0)}
+                      成长 +{improvement.toFixed(0)}
                     </span>
+                  ) : (
+                    <span className="text-muted-foreground">觉察中...</span>
                   )}
                 </div>
-                <span className="font-medium" style={{ color: config.color }}>
-                  转化 {rate}%
+                <span className="font-semibold" style={{ color: config.color }}>
+                  {rate}%
                 </span>
               </div>
               
