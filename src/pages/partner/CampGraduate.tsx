@@ -106,9 +106,9 @@ export default function CampGraduate() {
   const { trackEvent } = useWealthCampAnalytics();
   
   // Get camp summary data
-  const { summary: campSummary, loading: summaryLoading } = useCampSummary(
-    graduationData?.campId || urlCampId || null, 
-    false
+  const { summary: campSummary, loading: summaryLoading, generating, generateSummary } = useCampSummary(
+    graduationData?.campId || urlCampId || null,
+    true
   );
   
   // Get baseline for comparison

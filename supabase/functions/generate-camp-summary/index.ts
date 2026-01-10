@@ -16,25 +16,27 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { userId, campId } = await req.json();
+    const { userId, campId, force } = await req.json();
 
     if (!userId) {
       throw new Error('Missing userId');
     }
 
-    // Check if summary already exists
-    const { data: existingSummary } = await supabase
-      .from('camp_summaries')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('camp_id', campId)
-      .single();
+    // Check if summary already exists (unless force regenerate)
+    if (!force) {
+      const { data: existingSummary } = await supabase
+        .from('camp_summaries')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('camp_id', campId)
+        .single();
 
-    if (existingSummary) {
-      return new Response(
-        JSON.stringify({ success: true, summary: existingSummary, cached: true }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (existingSummary) {
+        return new Response(
+          JSON.stringify({ success: true, summary: existingSummary, cached: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Get user's journal entries for this camp
