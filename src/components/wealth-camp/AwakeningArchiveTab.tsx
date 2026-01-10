@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { WealthProgressChart } from './WealthProgressChart';
 import { ActionTrackingStats } from './ActionTrackingStats';
@@ -15,11 +13,10 @@ import { CombinedPersonalityCard } from './CombinedPersonalityCard';
 import { JournalTimelineView } from './JournalTimelineView';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
 import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
-import { useCampSummary } from '@/hooks/useCampSummary';
 import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 // Match WealthProgressChart's expected entry type
 interface ChartJournalEntry {
@@ -38,19 +35,12 @@ interface AwakeningArchiveTabProps {
 }
 
 export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick }: AwakeningArchiveTabProps) {
-  const navigate = useNavigate();
   const [actionsOpen, setActionsOpen] = useState(false);
   const { stats, entries: fullEntries, awakeningIndex, peakIndex, currentAvg } = useWealthJournalEntries({ campId });
   // IMPORTANT: Pass campId to ensure consistent cache key across all components
   const { baseline } = useAssessmentBaseline(campId);
   // Get authoritative current awakening from progress (same as GameProgressCard)
   const { progress } = useAwakeningProgress();
-
-  // Camp summary - auto-generate for Day 7+ completion
-  const { summary: campSummary, loading: summaryLoading, generating, generateSummary } = useCampSummary(
-    campId || null,
-    currentDay >= 7 && entries.length >= 5 // Auto-generate if Day 7+ and has enough entries
-  );
 
   // Fetch camp data for calendar
   const { data: camp } = useQuery({
@@ -110,53 +100,6 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
 
   return (
     <div className="space-y-4">
-      {/* 7天总结报告入口/展示 */}
-      {currentDay >= 7 && (
-        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                  <Trophy className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-amber-900">7天成长报告</h3>
-                  <p className="text-xs text-amber-700">
-                    {campSummary ? '查看你的完整成长记录' : '生成你的专属成长总结'}
-                  </p>
-                </div>
-              </div>
-              {campSummary ? (
-                <Button 
-                  size="sm" 
-                  variant="secondary"
-                  className="bg-amber-100 hover:bg-amber-200 text-amber-800"
-                  onClick={() => navigate(`/partner/graduate?campId=${campId}`)}
-                >
-                  查看报告
-                </Button>
-              ) : (
-                <Button 
-                  size="sm" 
-                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                  onClick={() => generateSummary()}
-                  disabled={generating}
-                >
-                  {generating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                      生成中
-                    </>
-                  ) : (
-                    '生成报告'
-                  )}
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* 我的财富觉醒之旅 - 游戏化进度卡片 */}
       <GameProgressCard currentDayNumber={currentDay} streak={consecutiveDays} />
 

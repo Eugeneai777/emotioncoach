@@ -638,9 +638,20 @@ ${reflection}`;
                     setShowActionDialog(true);
                   }
                 }}
+                onGraduationClick={() => {
+                  if (campSummary) {
+                    navigate(`/partner/graduate?campId=${campId}`);
+                  } else {
+                    generateSummary();
+                    toast({ title: '正在生成毕业报告...' });
+                  }
+                }}
                 userMode={taskHubMode}
                 cycleWeek={cycleWeek}
                 cycleMeditationDay={cycleMeditationDay}
+                currentDay={currentDay}
+                hasGraduationReport={!!campSummary}
+                graduationReportViewed={false}
               />
             )}
 
