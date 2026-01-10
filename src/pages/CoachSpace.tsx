@@ -1,11 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Bell, Info } from "lucide-react";
+import { Bell, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useActiveCoachTemplates } from "@/hooks/useCoachTemplates";
 import { EnhancedCoachCard } from "@/components/coach/EnhancedCoachCard";
 import { HumanCoachEntry } from "@/components/coach/HumanCoachEntry";
+import PageHeader from "@/components/PageHeader";
 
 const CoachSpace = () => {
   const navigate = useNavigate();
@@ -13,23 +14,20 @@ const CoachSpace = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white pb-[env(safe-area-inset-bottom)]">
-      {/* 极简顶部 */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="flex items-center justify-between px-4 py-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="font-semibold text-lg">教练空间</h1>
-          <div className="flex items-center gap-1">
+      {/* 通用顶部 Header */}
+      <PageHeader
+        title="教练空间"
+        rightActions={
+          <>
             <Button variant="ghost" size="icon" onClick={() => navigate('/coach-space-intro')}>
               <Info className="w-5 h-5" />
             </Button>
             <Button variant="ghost" size="icon" onClick={() => navigate('/notifications')}>
               <Bell className="w-5 h-5" />
             </Button>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* 欢迎语 */}
       <div className="px-4 py-4 text-center">
