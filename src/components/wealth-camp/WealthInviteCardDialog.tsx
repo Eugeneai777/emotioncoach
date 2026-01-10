@@ -17,6 +17,7 @@ import WealthAwakeningShareCard from './WealthAwakeningShareCard';
 import WealthMilestoneShareCard from './WealthMilestoneShareCard';
 import GraduationShareCard from './GraduationShareCard';
 import EnhancedGrowthPosterCard from './EnhancedGrowthPosterCard';
+import AchievementShareCard from './AchievementShareCard';
 import AIAnalysisShareCard from '@/components/wealth-block/AIAnalysisShareCard';
 import AssessmentValueShareCard from '@/components/wealth-block/AssessmentValueShareCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
@@ -39,7 +40,7 @@ interface AwakeningData {
   newBelief?: string;
 }
 
-type CardTab = 'camp' | 'awakening' | 'milestone' | 'assessment' | 'growth' | 'aianalysis' | 'value';
+type CardTab = 'camp' | 'awakening' | 'milestone' | 'assessment' | 'growth' | 'aianalysis' | 'value' | 'achievement';
 
 interface WealthInviteCardDialogProps {
   trigger?: React.ReactNode;
@@ -146,6 +147,7 @@ const CARD_TABS = [
   { id: 'value' as const, label: '测评价值', emoji: '🎁' },
   { id: 'camp' as const, label: '训练营', emoji: '🏕️' },
   { id: 'growth' as const, label: '成长海报', emoji: '📊' },
+  { id: 'achievement' as const, label: '成就墙', emoji: '🏅' },
   { id: 'awakening' as const, label: '今日觉醒', emoji: '✨' },
   { id: 'milestone' as const, label: '里程碑', emoji: '🏆' },
 ];
@@ -188,6 +190,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const growthCardRef = useRef<HTMLDivElement>(null);
   const aiAnalysisCardRef = useRef<HTMLDivElement>(null);
   const valueCardRef = useRef<HTMLDivElement>(null);
+  const achievementCardRef = useRef<HTMLDivElement>(null);
   
   // Growth poster specific data
   const [growthData, setGrowthData] = useState<{
@@ -472,6 +475,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       case 'growth': return growthCardRef;
       case 'aianalysis': return aiAnalysisCardRef;
       case 'value': return valueCardRef;
+      case 'achievement': return achievementCardRef;
       default: return campCardRef;
     }
   };
@@ -485,6 +489,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       case 'growth': return '财富成长海报';
       case 'aianalysis': return 'AI智能分析报告';
       case 'value': return '财富测评价值卡';
+      case 'achievement': return '财富觉醒成就墙';
       default: return '邀请卡片';
     }
   };
@@ -654,7 +659,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as CardTab)}>
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             {CARD_TABS.map(tab => (
               <TabsTrigger key={tab.id} value={tab.id} className="text-[10px] px-1">
                 {tab.emoji}
@@ -741,6 +746,18 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                 <p className="text-xs mt-1">完成教练对话后生成成长海报</p>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="achievement" className="mt-4">
+            <div className="flex justify-center">
+              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+                <AchievementShareCard 
+                  ref={achievementCardRef}
+                  avatarUrl={userInfo.avatarUrl}
+                  displayName={userInfo.displayName}
+                />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="awakening" className="mt-4">
