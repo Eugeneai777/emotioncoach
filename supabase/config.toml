@@ -335,3 +335,6 @@ verify_jwt = false
 
 [functions.get-wechat-register-url]
 verify_jwt = false
+
+[functions.generate-daily-challenges]
+verify_jwt = false
