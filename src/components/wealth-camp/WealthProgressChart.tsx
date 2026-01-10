@@ -77,34 +77,33 @@ export function WealthProgressChart({ entries, embedded = false, baseline }: Wea
     });
   }, [entries]);
 
-  // Calculate dimension-specific stats
+  // Calculate dimension-specific stats with baseline comparison
   const dimensionStats = useMemo(() => {
-    if (chartData.length < 2) return null;
+    if (chartData.length === 0) return null;
     
-    const first = chartData[0];
-    const last = chartData[chartData.length - 1];
+    const dataWithValues = chartData.filter(d => d.hasData);
+    if (dataWithValues.length === 0) return null;
     
-    const getChange = (key: string) => {
-      const firstVal = first[key as keyof typeof first] as number || 0;
-      const lastVal = last[key as keyof typeof last] as number || 0;
-      return lastVal - firstVal;
+    const getStats = (key: '行为流动度' | '情绪流动度' | '信念松动度', baselineKey: 'behavior' | 'emotion' | 'belief') => {
+      const values = dataWithValues.map(d => d[key] as number).filter(v => v > 0);
+      const avg = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+      const peak = values.length > 0 ? Math.max(...values) : 0;
+      const peakDay = dataWithValues.find(d => d[key] === peak)?.dayNum || 0;
+      const baselineVal = baselineValues?.[baselineKey] || 0;
+      const vsBaseline = avg - baselineVal;
+      const daysAboveBaseline = baselineValues 
+        ? dataWithValues.filter(d => (d[key] as number) > baselineVal).length 
+        : 0;
+      
+      return { avg, peak, peakDay, vsBaseline, daysAboveBaseline, totalDays: dataWithValues.length };
     };
     
     return {
-      behavior: { 
-        change: getChange('行为流动度'),
-        avg: chartData.reduce((sum, d) => sum + (d.行为流动度 || 0), 0) / chartData.length,
-      },
-      emotion: {
-        change: getChange('情绪流动度'),
-        avg: chartData.reduce((sum, d) => sum + (d.情绪流动度 || 0), 0) / chartData.length,
-      },
-      belief: {
-        change: getChange('信念松动度'),
-        avg: chartData.reduce((sum, d) => sum + (d.信念松动度 || 0), 0) / chartData.length,
-      },
+      behavior: getStats('行为流动度', 'behavior'),
+      emotion: getStats('情绪流动度', 'emotion'),
+      belief: getStats('信念松动度', 'belief'),
     };
-  }, [chartData]);
+  }, [chartData, baselineValues]);
 
   if (chartData.length === 0) {
     if (embedded) {
@@ -157,21 +156,39 @@ export function WealthProgressChart({ entries, embedded = false, baseline }: Wea
         </ToggleGroup>
       </div>
 
-      {/* Dimension Stats */}
+      {/* Growth Trend Indicator */}
       {dimensionStats && (
-        <div className="flex justify-center gap-4 mb-3 text-xs">
-          <div className="flex items-center gap-1">
-            <span className="text-muted-foreground">平均:</span>
-            <span className="font-medium" style={{ color: DIMENSION_CONFIG[activeDimension].color }}>
-              {dimensionStats[activeDimension as 'behavior' | 'emotion' | 'belief'].avg.toFixed(1)}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-muted-foreground">变化:</span>
-            <span className={`font-medium ${dimensionStats[activeDimension as 'behavior' | 'emotion' | 'belief'].change >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-              {dimensionStats[activeDimension as 'behavior' | 'emotion' | 'belief'].change >= 0 ? '+' : ''}
-              {dimensionStats[activeDimension as 'behavior' | 'emotion' | 'belief'].change.toFixed(1)}
-            </span>
+        <div className="bg-muted/30 rounded-lg p-2 mb-3">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs">
+            {/* vs Baseline */}
+            {baselineValues && (
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground">vs 基准:</span>
+                <span className={`font-semibold ${dimensionStats[activeDimension].vsBaseline >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {dimensionStats[activeDimension].vsBaseline >= 0 ? '+' : ''}
+                  {dimensionStats[activeDimension].vsBaseline.toFixed(1)}
+                </span>
+              </div>
+            )}
+            {/* Peak */}
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground">⭐ 峰值:</span>
+              <span className="font-semibold" style={{ color: DIMENSION_CONFIG[activeDimension].color }}>
+                {dimensionStats[activeDimension].peak.toFixed(1)}
+              </span>
+              <span className="text-muted-foreground text-[10px]">
+                (Day {dimensionStats[activeDimension].peakDay})
+              </span>
+            </div>
+            {/* Days Above Baseline */}
+            {baselineValues && (
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground">🎯 突破天数:</span>
+                <span className="font-semibold text-emerald-600">
+                  {dimensionStats[activeDimension].daysAboveBaseline}/{dimensionStats[activeDimension].totalDays}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -205,39 +222,115 @@ export function WealthProgressChart({ entries, embedded = false, baseline }: Wea
           />
           {!embedded && <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />}
           
-          {/* 行为层 */}
+          {/* 行为层 - Custom dots for breakthrough & no-data */}
           {showBehavior && (
             <Line 
               type="monotone" 
               dataKey="行为流动度" 
               stroke="#d97706" 
               strokeWidth={3}
-              dot={{ fill: '#d97706', r: 5 }}
               strokeOpacity={1}
+              dot={(props: any) => {
+                const { cx, cy, payload } = props;
+                if (!payload.hasData) {
+                  // 未打卡：空心虚线圆
+                  return (
+                    <circle 
+                      key={`behavior-${payload.dayNum}`}
+                      cx={cx} cy={cy} r={5} 
+                      fill="none" 
+                      stroke="#d1d5db" 
+                      strokeWidth={2}
+                      strokeDasharray="3 2"
+                    />
+                  );
+                }
+                const isBreakthrough = baselineValues && payload.行为流动度 > baselineValues.behavior;
+                return (
+                  <circle 
+                    key={`behavior-${payload.dayNum}`}
+                    cx={cx} cy={cy} 
+                    r={isBreakthrough ? 7 : 5} 
+                    fill={isBreakthrough ? '#10b981' : '#d97706'}
+                    stroke={isBreakthrough ? '#059669' : 'none'}
+                    strokeWidth={isBreakthrough ? 2 : 0}
+                  />
+                );
+              }}
             />
           )}
           
-          {/* 情绪层 */}
+          {/* 情绪层 - Custom dots for breakthrough & no-data */}
           {showEmotion && (
             <Line 
               type="monotone" 
               dataKey="情绪流动度" 
               stroke="#ec4899" 
               strokeWidth={3}
-              dot={{ fill: '#ec4899', r: 5 }}
               strokeOpacity={1}
+              dot={(props: any) => {
+                const { cx, cy, payload } = props;
+                if (!payload.hasData) {
+                  return (
+                    <circle 
+                      key={`emotion-${payload.dayNum}`}
+                      cx={cx} cy={cy} r={5} 
+                      fill="none" 
+                      stroke="#d1d5db" 
+                      strokeWidth={2}
+                      strokeDasharray="3 2"
+                    />
+                  );
+                }
+                const isBreakthrough = baselineValues && payload.情绪流动度 > baselineValues.emotion;
+                return (
+                  <circle 
+                    key={`emotion-${payload.dayNum}`}
+                    cx={cx} cy={cy} 
+                    r={isBreakthrough ? 7 : 5} 
+                    fill={isBreakthrough ? '#10b981' : '#ec4899'}
+                    stroke={isBreakthrough ? '#059669' : 'none'}
+                    strokeWidth={isBreakthrough ? 2 : 0}
+                  />
+                );
+              }}
             />
           )}
           
-          {/* 信念层 */}
+          {/* 信念层 - Custom dots for breakthrough & no-data */}
           {showBelief && (
             <Line 
               type="monotone" 
               dataKey="信念松动度" 
               stroke="#8b5cf6" 
               strokeWidth={3}
-              dot={{ fill: '#8b5cf6', r: 5 }}
               strokeOpacity={1}
+              dot={(props: any) => {
+                const { cx, cy, payload } = props;
+                if (!payload.hasData) {
+                  return (
+                    <circle 
+                      key={`belief-${payload.dayNum}`}
+                      cx={cx} cy={cy} r={5} 
+                      fill="none" 
+                      stroke="#d1d5db" 
+                      strokeWidth={2}
+                      strokeDasharray="3 2"
+                    />
+                  );
+                }
+                const isBreakthrough = baselineValues && payload.信念松动度 > baselineValues.belief;
+                return (
+                  <circle 
+                    key={`belief-${payload.dayNum}`}
+                    cx={cx} cy={cy} 
+                    r={isBreakthrough ? 7 : 5} 
+                    fill={isBreakthrough ? '#10b981' : '#8b5cf6'}
+                    stroke={isBreakthrough ? '#059669' : 'none'}
+                    strokeWidth={isBreakthrough ? 2 : 0}
+                  />
+                );
+              }}
             />
           )}
 
@@ -290,24 +383,18 @@ export function WealthProgressChart({ entries, embedded = false, baseline }: Wea
       {/* Score Legend - only in embedded mode */}
       {embedded && (
         <div className="flex flex-wrap justify-center gap-3 mt-2 text-[10px] text-muted-foreground">
-          {showBehavior && (
-            <div className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 rounded-full bg-amber-600" />
-              <span>行为</span>
-            </div>
-          )}
-          {showEmotion && (
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-pink-500" />
-              <span>情绪</span>
-            </div>
-          )}
-          {showBelief && (
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-violet-500" />
-              <span>信念</span>
-            </div>
-          )}
+          <div className="flex items-center gap-1">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+            <span>突破基准</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: DIMENSION_CONFIG[activeDimension].color }} />
+            <span>常规</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2.5 h-2.5 rounded-full border-2 border-dashed border-gray-300 bg-transparent" />
+            <span>未打卡</span>
+          </div>
         </div>
       )}
     </>
