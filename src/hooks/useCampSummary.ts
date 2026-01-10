@@ -79,7 +79,7 @@ export function useCampSummary(campId: string | null, shouldGenerate: boolean = 
     }
   };
 
-  const generateSummary = async (userId?: string) => {
+  const generateSummary = async (userId?: string, options?: { force?: boolean }) => {
     setGenerating(true);
     try {
       let uid = userId;
@@ -93,7 +93,7 @@ export function useCampSummary(campId: string | null, shouldGenerate: boolean = 
       }
 
       const { data, error } = await supabase.functions.invoke('generate-camp-summary', {
-        body: { userId: uid, campId }
+        body: { userId: uid, campId, force: options?.force === true }
       });
 
       if (error) throw error;
