@@ -78,29 +78,51 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
             <p className="text-[10px] text-slate-500">Powered by 有劲AI · 财富教练</p>
           </motion.div>
           
+          {/* 社交证明置顶 */}
           <motion.div 
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-100 rounded-full border border-red-300"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100/80 rounded-full border border-amber-200"
           >
-            <AlertTriangle className="w-4 h-4 text-red-500" />
-            <span className="text-red-600 text-sm font-medium">警示数据</span>
+            <BarChart3 className="w-4 h-4 text-amber-600" />
+            <span className="text-amber-700 text-sm font-medium">
+              {statistics.totalAssessments.toLocaleString()} 人已找到答案
+            </span>
           </motion.div>
           
-          <h2 className="text-2xl font-bold text-slate-800">
-            <span className="text-red-500">87%</span> 的人被「财富卡点」困扰
-          </h2>
+          {/* 共鸣式提问 */}
+          <motion.h2 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-lg text-slate-600 font-normal"
+          >
+            你有没有这种感觉？
+          </motion.h2>
           
-          <p className="text-slate-600 text-sm leading-relaxed">
+          {/* 核心痛点 - 大字强调 */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-2xl sm:text-3xl font-bold text-slate-800 leading-relaxed"
+          >
+            <p>赚钱这件事</p>
+            <p>
+              好像被<span className="text-red-500">「隐形刹车」</span>卡住了
+            </p>
+          </motion.div>
+          
+          {/* 接纳式副文案 */}
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-slate-500 text-sm leading-relaxed"
+          >
             不是你不够努力<br />
-            是有东西在<span className="text-red-500 font-medium">暗中拖住你</span>
-          </p>
-          
-          <div className="flex items-center justify-center gap-2 text-xs text-slate-500 pt-1">
-            <span className="px-2 py-1 bg-amber-100 rounded-full border border-amber-200">
-              📊 {statistics.totalAssessments.toLocaleString()} 人已完成测评
-            </span>
-          </div>
+            是有个东西，一直在<span className="text-red-500 font-medium">暗中拖你后腿</span>
+          </motion.p>
           
           {/* 首屏CTA按钮 */}
           <Button
