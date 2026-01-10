@@ -208,15 +208,16 @@ serve(async (req) => {
       return prompt;
     };
 
-    // Get user preferences
+    // Get user preferences and display name
     const { data: profile } = await supabaseClient
       .from('profiles')
-      .select('companion_type, conversation_style')
+      .select('companion_type, conversation_style, display_name')
       .eq('id', user.id)
       .single();
 
     const companionType = profile?.companion_type || 'jing_teacher';
     const conversationStyle = profile?.conversation_style || 'gentle';
+    const userName = profile?.display_name || '朋友';
 
     const companions: Record<string, { name: string; icon: string }> = {
       jing_teacher: { name: '劲老师', icon: '🌿' },
@@ -240,6 +241,57 @@ serve(async (req) => {
       .eq('coach_key', 'emotion')
       .single();
 
+    // Fetch coach memory for personalized continuity (情绪教练记忆)
+    const { data: coachMemories } = await serviceClient
+      .from('user_coach_memory')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('coach_type', 'emotion')
+      .order('importance_score', { ascending: false })
+      .limit(5);
+
+    // Fetch last session for conversation continuity
+    const { data: lastSession } = await serviceClient
+      .from('emotion_coaching_sessions')
+      .select('session_summary, key_insight, created_at')
+      .eq('user_id', user.id)
+      .eq('status', 'completed')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    // Build memory context for injection into prompt
+    let memoryContext = '';
+    if (coachMemories && coachMemories.length > 0) {
+      memoryContext = `\n\n【教练记忆 - 用户过往重要觉察】
+以下是${userName}之前分享过的重要觉察点，请在对话中自然地引用：
+`;
+      coachMemories.forEach((m: any, index: number) => {
+        memoryContext += `${index + 1}. ${m.content}\n`;
+      });
+      memoryContext += `
+使用方式：
+- "你之前提到过..."
+- "我记得你说过..."
+- "上次你觉察到...今天有什么新发现吗？"`;
+    }
+
+    // Build last session continuity context
+    let continuityContext = '';
+    if (lastSession?.session_summary) {
+      const daysSince = Math.floor((Date.now() - new Date(lastSession.created_at).getTime()) / 86400000);
+      continuityContext = `\n\n【上次对话连接】
+距离上次对话：${daysSince}天
+上次对话摘要：${lastSession.session_summary}
+${lastSession.key_insight ? `上次核心觉察：${lastSession.key_insight}` : ''}
+
+开场建议：
+${daysSince < 3 ? `- "${userName}，继续我们上次的话题..."` : ''}
+${daysSince >= 3 && daysSince <= 7 ? `- "${userName}，上次我们聊到${lastSession.session_summary}，这几天有什么新发现吗？"` : ''}
+${daysSince > 7 ? `- "${userName}，好久不见呀～还记得上次你说${lastSession.key_insight || lastSession.session_summary}吗？"` : ''}
+`;
+    }
+
     const basePrompt = coachTemplate?.system_prompt || '';
     const stagePrompts = coachTemplate?.stage_prompts || null;
     
@@ -248,6 +300,13 @@ serve(async (req) => {
     
     // Build complete system prompt with dynamic stage info and round tracking
     const systemPrompt = `${basePrompt}
+
+【用户信息】
+用户名称：${userName}
+在对话中使用用户名称来增加亲切感，如"${userName}，我感受到..."
+
+${memoryContext}
+${continuityContext}
 
 【当前阶段:${session?.current_stage || 0}/4】
 ${buildStagePrompt(session?.current_stage || 0, stageRounds, stagePrompts, preferenceHint)}

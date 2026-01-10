@@ -122,6 +122,22 @@ serve(async (req) => {
       .eq('user_id', userId)
       .eq('is_active', true);
 
+    // 获取用户记忆用于个性化通知
+    const { data: userMemories } = await supabase
+      .from('user_coach_memory')
+      .select('content, memory_type')
+      .eq('user_id', userId)
+      .order('importance_score', { ascending: false })
+      .limit(3);
+
+    // 构建记忆上下文
+    let memoryHint = '';
+    if (userMemories && userMemories.length > 0) {
+      memoryHint = `\n用户最近的觉察（可在通知中自然引用）：
+${userMemories.map((m: any, i: number) => `- ${m.content}`).join('\n')}
+如果合适，可以在消息中引用用户的觉察："记得你说过..."，让用户感受到被记住。`;
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -230,7 +246,7 @@ ${context?.new_beliefs?.length ? context.new_beliefs.slice(0, 2).map((b: string)
 用户最近情绪：${recentBriefings?.map(b => `${b.emotion_theme}(${b.emotion_intensity}/10)`).join('、') || '暂无数据'}
 
 用户活跃目标数：${activeGoals?.length || 0}
-
+${memoryHint}
 ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的示例通知。' : ''}
 
 请生成一条温暖、个性化的通知消息，以JSON格式返回：

@@ -33,11 +33,11 @@ const layerColors: Record<string, string> = {
   belief: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300',
 };
 
-export const useCoachMemories = (limit?: number) => {
+export const useCoachMemories = (limit?: number, coachType?: string) => {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: ['coach-memories', user?.id, limit],
+    queryKey: ['coach-memories', user?.id, limit, coachType],
     queryFn: async () => {
       if (!user?.id) return [];
       
@@ -47,6 +47,11 @@ export const useCoachMemories = (limit?: number) => {
         .eq('user_id', user.id)
         .order('importance_score', { ascending: false })
         .order('created_at', { ascending: false });
+      
+      // 按教练类型筛选（如果指定）
+      if (coachType) {
+        query = query.eq('coach_type', coachType);
+      }
       
       if (limit) {
         query = query.limit(limit);

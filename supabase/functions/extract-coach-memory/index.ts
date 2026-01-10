@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { conversation, session_id } = await req.json();
+    const { conversation, session_id, coach_type = 'wealth' } = await req.json();
 
     if (!conversation || !Array.isArray(conversation)) {
       return new Response(JSON.stringify({ error: 'Conversation array is required' }), {
@@ -21,6 +21,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    
+    console.log(`🧠 extract-coach-memory: coach_type=${coach_type}`);
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -145,11 +147,12 @@ memory_type说明：
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
     
-    // 查询现有记忆进行去重
+    // 查询现有记忆进行去重（按教练类型）
     const { data: existingMemories } = await serviceClient
       .from('user_coach_memory')
       .select('content')
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .eq('coach_type', coach_type);
     
     // 过滤已存在的相似记忆（简单文本匹配）
     const uniqueMemories = memories.filter((m: any) => {
@@ -178,6 +181,7 @@ memory_type说明：
       layer: m.layer || null,
       source_session_id: session_id || null,
       importance_score: Math.min(10, Math.max(1, m.importance_score || 5)),
+      coach_type: coach_type,
     }));
 
     const { data: savedMemories, error: insertError } = await serviceClient

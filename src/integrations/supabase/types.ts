@@ -2929,7 +2929,9 @@ export type Database = {
           current_stage: number | null
           event_summary: string | null
           id: string
+          key_insight: string | null
           messages: Json | null
+          session_summary: string | null
           stage_1_insight: string | null
           stage_2_insight: string | null
           stage_3_insight: string | null
@@ -2944,7 +2946,9 @@ export type Database = {
           current_stage?: number | null
           event_summary?: string | null
           id?: string
+          key_insight?: string | null
           messages?: Json | null
+          session_summary?: string | null
           stage_1_insight?: string | null
           stage_2_insight?: string | null
           stage_3_insight?: string | null
@@ -2959,7 +2963,9 @@ export type Database = {
           current_stage?: number | null
           event_summary?: string | null
           id?: string
+          key_insight?: string | null
           messages?: Json | null
+          session_summary?: string | null
           stage_1_insight?: string | null
           stage_2_insight?: string | null
           stage_3_insight?: string | null
@@ -4174,11 +4180,13 @@ export type Database = {
           event_description: string | null
           feel_it: Json | null
           id: string
+          key_insight: string | null
           messages: Json | null
           micro_action: string | null
           problem_type: string | null
           see_it: Json | null
           sense_it: Json | null
+          session_summary: string | null
           stage_selections: Json | null
           status: string | null
           summary: string | null
@@ -4198,11 +4206,13 @@ export type Database = {
           event_description?: string | null
           feel_it?: Json | null
           id?: string
+          key_insight?: string | null
           messages?: Json | null
           micro_action?: string | null
           problem_type?: string | null
           see_it?: Json | null
           sense_it?: Json | null
+          session_summary?: string | null
           stage_selections?: Json | null
           status?: string | null
           summary?: string | null
@@ -4222,11 +4232,13 @@ export type Database = {
           event_description?: string | null
           feel_it?: Json | null
           id?: string
+          key_insight?: string | null
           messages?: Json | null
           micro_action?: string | null
           problem_type?: string | null
           see_it?: Json | null
           sense_it?: Json | null
+          session_summary?: string | null
           stage_selections?: Json | null
           status?: string | null
           summary?: string | null
@@ -6171,6 +6183,7 @@ export type Database = {
       }
       user_coach_memory: {
         Row: {
+          coach_type: string | null
           content: string
           created_at: string | null
           id: string
@@ -6183,6 +6196,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          coach_type?: string | null
           content: string
           created_at?: string | null
           id?: string
@@ -6195,6 +6209,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          coach_type?: string | null
           content?: string
           created_at?: string | null
           id?: string
