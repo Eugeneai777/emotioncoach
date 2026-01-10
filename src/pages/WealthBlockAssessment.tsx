@@ -329,7 +329,7 @@ export default function WealthBlockAssessmentPage() {
           {/* AI教练专区入口按钮 */}
           <Button
             variant="ghost"
-            onClick={() => navigate("/energy-studio")}
+              onClick={() => navigate("/coach-space")}
             className="flex-1 h-8 sm:h-9 px-3 sm:px-4 rounded-full 
                        bg-gradient-to-r from-amber-400 to-orange-400 
                        hover:from-amber-500 hover:to-orange-500 
