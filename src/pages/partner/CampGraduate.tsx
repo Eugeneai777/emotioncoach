@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,15 +14,31 @@ import {
   CheckCircle2,
   ArrowRight,
   Crown,
-  Share2
+  Share2,
+  Eye,
+  Heart,
+  Lightbulb
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
+import { useCampSummary } from "@/hooks/useCampSummary";
+import { useAssessmentBaseline } from "@/hooks/useAssessmentBaseline";
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  ResponsiveContainer, 
+  Area,
+  ComposedChart,
+  ReferenceLine
+} from 'recharts';
 
 interface GraduationData {
+  campId: string;
   campName: string;
   completedAt: string;
   totalDays: number;
@@ -30,11 +46,73 @@ interface GraduationData {
   awakeningScore: number;
 }
 
+// Three-layer growth bar component
+function GrowthLayerBar({ 
+  label, 
+  emoji,
+  baseline, 
+  current, 
+  colorClass,
+  bgClass 
+}: { 
+  label: string;
+  emoji: string;
+  baseline: number; 
+  current: number;
+  colorClass: string;
+  bgClass: string;
+}) {
+  const growth = current - baseline;
+  const growthPercent = baseline > 0 ? Math.round((growth / baseline) * 100) : 0;
+  
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-sm">
+        <span className="flex items-center gap-1.5">
+          <span>{emoji}</span>
+          <span className="font-medium">{label}</span>
+        </span>
+        <span className={`text-xs font-medium ${growth > 0 ? 'text-emerald-600' : 'text-muted-foreground'}`}>
+          {growth > 0 ? `+${growth.toFixed(0)}%` : `${growth.toFixed(0)}%`}
+        </span>
+      </div>
+      <div className="relative h-3 bg-muted/50 rounded-full overflow-hidden">
+        {/* Baseline marker */}
+        <div 
+          className="absolute top-0 h-full w-0.5 bg-gray-400 z-10"
+          style={{ left: `${Math.min(baseline, 100)}%` }}
+        />
+        {/* Current progress */}
+        <div 
+          className={`h-full rounded-full transition-all duration-500 ${bgClass}`}
+          style={{ width: `${Math.min(current, 100)}%` }}
+        />
+      </div>
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>Day 0: {baseline.toFixed(0)}%</span>
+        <span>毕业: {current.toFixed(0)}%</span>
+      </div>
+    </div>
+  );
+}
+
 export default function CampGraduate() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const urlCampId = searchParams.get('campId');
+  
   const [graduationData, setGraduationData] = useState<GraduationData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { trackEvent } = useWealthCampAnalytics();
+  
+  // Get camp summary data
+  const { summary: campSummary, loading: summaryLoading } = useCampSummary(
+    graduationData?.campId || urlCampId || null, 
+    false
+  );
+  
+  // Get baseline for comparison
+  const { baseline } = useAssessmentBaseline(graduationData?.campId || urlCampId || undefined);
 
   // 页面访问埋点
   useEffect(() => {
@@ -82,14 +160,15 @@ export default function CampGraduate() {
             : 75;
 
           setGraduationData({
+            campId: camp.id,
             campName: '财富觉醒训练营',
-            completedAt: camp.updated_at, // 使用 updated_at 作为完成时间
+            completedAt: camp.updated_at,
             totalDays: 7,
             journalCount: journalCount || 0,
             awakeningScore
           });
           
-          // 埋点：21天毕业完成
+          // 埋点：毕业完成
           trackEvent('camp_day21_completed', { metadata: { camp_id: camp.id } });
         }
       } catch (error) {
@@ -125,6 +204,35 @@ export default function CampGraduate() {
     }
   ];
 
+  // Prepare daily chart data from camp summary
+  const chartData = campSummary?.daily_scores?.map((item) => ({
+    day: `D${item.day}`,
+    score: item.score,
+  })) || [];
+
+  // Calculate three-layer growth data
+  const getLayerGrowth = () => {
+    if (!baseline || !campSummary) return null;
+    
+    // Convert 1-5 scores to percentage (assuming current scores from summary)
+    const baselineBehavior = Math.round(((baseline.behavior_score - 1) / 4) * 100);
+    const baselineEmotion = Math.round(((baseline.emotion_score - 1) / 4) * 100);
+    const baselineBelief = Math.round(((baseline.belief_score - 1) / 4) * 100);
+    
+    // Use growth data from summary to calculate current
+    const behaviorGrowth = campSummary.behavior_growth || 0;
+    const emotionGrowth = campSummary.emotion_growth || 0;
+    const beliefGrowth = campSummary.belief_growth || 0;
+    
+    return {
+      behavior: { baseline: baselineBehavior, current: baselineBehavior + behaviorGrowth },
+      emotion: { baseline: baselineEmotion, current: baselineEmotion + emotionGrowth },
+      belief: { baseline: baselineBelief, current: baselineBelief + beliefGrowth },
+    };
+  };
+  
+  const layerGrowth = getLayerGrowth();
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-orange-50">
       {/* Header */}
@@ -137,7 +245,7 @@ export default function CampGraduate() {
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="font-semibold">毕业生专属通道</h1>
+          <h1 className="font-semibold">毕业成长报告</h1>
           <div className="w-10" />
         </div>
       </div>
@@ -205,8 +313,8 @@ export default function CampGraduate() {
               
               <div className="relative z-10 py-4">
                 {/* 毕业帽图标 - 带动画 */}
-                <div className="w-24 h-24 mx-auto mb-4 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm animate-bounce" style={{ animationDuration: '3s' }}>
-                  <GraduationCap className="w-12 h-12" />
+                <div className="w-20 h-20 mx-auto mb-4 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <GraduationCap className="w-10 h-10" />
                 </div>
                 
                 <Badge className="bg-white/20 text-white border-white/30 mb-3 text-sm px-4 py-1">
@@ -220,23 +328,29 @@ export default function CampGraduate() {
                 
                 {graduationData && (
                   <>
-                    <p className="text-white/70 text-sm mb-6">
+                    <p className="text-white/70 text-sm mb-4">
                       毕业时间：{format(new Date(graduationData.completedAt), 'yyyy年M月d日', { locale: zhCN })}
                     </p>
                     
                     {/* 成就数据卡片 */}
                     <div className="grid grid-cols-3 gap-3 mb-4">
-                      <div className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
-                        <p className="text-3xl font-bold">{graduationData.totalDays}</p>
+                      <div className="bg-white/15 rounded-2xl p-3 backdrop-blur-sm border border-white/10">
+                        <p className="text-2xl font-bold">{graduationData.totalDays}</p>
                         <p className="text-xs text-white/70 mt-1">坚持天数</p>
                       </div>
-                      <div className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
-                        <p className="text-3xl font-bold">{graduationData.journalCount}</p>
+                      <div className="bg-white/15 rounded-2xl p-3 backdrop-blur-sm border border-white/10">
+                        <p className="text-2xl font-bold">{graduationData.journalCount}</p>
                         <p className="text-xs text-white/70 mt-1">财富日记</p>
                       </div>
-                      <div className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
-                        <p className="text-3xl font-bold">{graduationData.awakeningScore}</p>
-                        <p className="text-xs text-white/70 mt-1">觉醒指数</p>
+                      <div className="bg-white/15 rounded-2xl p-3 backdrop-blur-sm border border-white/10">
+                        <p className="text-2xl font-bold">
+                          {campSummary?.awakening_growth != null 
+                            ? `+${campSummary.awakening_growth}` 
+                            : graduationData.awakeningScore}
+                        </p>
+                        <p className="text-xs text-white/70 mt-1">
+                          {campSummary?.awakening_growth != null ? '觉醒成长' : '觉醒指数'}
+                        </p>
                       </div>
                     </div>
                     
@@ -257,13 +371,163 @@ export default function CampGraduate() {
         {/* 以下内容仅毕业用户可见 */}
         {graduationData && (
           <>
+        {/* 觉醒曲线可视化 */}
+        {chartData.length > 0 && (
+          <Card className="border-0 shadow-lg overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-5 h-5 text-amber-500" />
+                <h3 className="font-semibold text-lg">7天觉醒曲线</h3>
+                {campSummary?.awakening_growth != null && campSummary.awakening_growth > 0 && (
+                  <Badge className="bg-emerald-100 text-emerald-700 border-0 ml-auto">
+                    +{campSummary.awakening_growth} 成长
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                    <defs>
+                      <linearGradient id="graduateGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis 
+                      dataKey="day" 
+                      axisLine={false} 
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: '#9ca3af' }}
+                    />
+                    <YAxis 
+                      domain={[0, 100]}
+                      axisLine={false} 
+                      tickLine={false}
+                      tick={{ fontSize: 10, fill: '#9ca3af' }}
+                    />
+                    {baseline?.awakeningStart != null && (
+                      <ReferenceLine 
+                        y={baseline.awakeningStart} 
+                        stroke="#9ca3af" 
+                        strokeDasharray="4 4"
+                        label={{ value: 'Day 0', position: 'right', fontSize: 10, fill: '#9ca3af' }}
+                      />
+                    )}
+                    <Area 
+                      type="monotone" 
+                      dataKey="score" 
+                      stroke="none"
+                      fill="url(#graduateGradient)" 
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="score" 
+                      stroke="#f59e0b" 
+                      strokeWidth={2.5}
+                      dot={{ r: 4, fill: '#f59e0b', strokeWidth: 2, stroke: 'white' }}
+                      activeDot={{ r: 6, fill: '#f59e0b' }}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+              
+              {/* Start/End comparison */}
+              <div className="flex justify-between items-center mt-4 pt-4 border-t text-sm">
+                <div className="text-center">
+                  <div className="text-muted-foreground text-xs">起点</div>
+                  <div className="font-semibold text-lg">{campSummary?.start_awakening ?? baseline?.awakeningStart ?? '--'}</div>
+                </div>
+                <ArrowRight className="w-5 h-5 text-amber-500" />
+                <div className="text-center">
+                  <div className="text-muted-foreground text-xs">终点</div>
+                  <div className="font-semibold text-lg text-amber-600">{campSummary?.end_awakening ?? graduationData.awakeningScore}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 三层成长对比 */}
+        {layerGrowth && (
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="w-5 h-5 text-violet-500" />
+                <h3 className="font-semibold text-lg">三层突破成长</h3>
+              </div>
+              
+              <div className="space-y-5">
+                <GrowthLayerBar 
+                  label="行为层" 
+                  emoji="🎯"
+                  baseline={layerGrowth.behavior.baseline}
+                  current={layerGrowth.behavior.current}
+                  colorClass="text-amber-600"
+                  bgClass="bg-gradient-to-r from-amber-400 to-orange-400"
+                />
+                <GrowthLayerBar 
+                  label="情绪层" 
+                  emoji="💗"
+                  baseline={layerGrowth.emotion.baseline}
+                  current={layerGrowth.emotion.current}
+                  colorClass="text-pink-600"
+                  bgClass="bg-gradient-to-r from-pink-400 to-rose-400"
+                />
+                <GrowthLayerBar 
+                  label="信念层" 
+                  emoji="💡"
+                  baseline={layerGrowth.belief.baseline}
+                  current={layerGrowth.belief.current}
+                  colorClass="text-violet-600"
+                  bgClass="bg-gradient-to-r from-violet-400 to-purple-400"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* AI教练寄语 */}
+        {campSummary?.ai_coach_message && (
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-semibold text-amber-800">AI教练寄语</span>
+              </div>
+              <p className="text-amber-900/80 leading-relaxed text-sm">
+                {campSummary.ai_coach_message}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 核心突破 */}
+        {campSummary?.biggest_breakthrough && (
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Trophy className="w-5 h-5 text-amber-500" />
+                <h3 className="font-semibold">核心突破</h3>
+              </div>
+              <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-100">
+                <p className="text-amber-900/80 italic">"{campSummary.biggest_breakthrough}"</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* 分享毕业证书 */}
         <WealthInviteCardDialog
           defaultTab="milestone"
+          campId={graduationData?.campId}
+          currentDay={7}
           trigger={
-            <Button variant="outline" className="w-full h-12">
+            <Button className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
               <Share2 className="w-4 h-4 mr-2" />
-              分享毕业证书到朋友圈
+              分享我的毕业成就
             </Button>
           }
         />
@@ -362,9 +626,9 @@ export default function CampGraduate() {
           <Button
             variant="ghost"
             className="w-full text-muted-foreground"
-            onClick={() => navigate('/wealth-journal')}
+            onClick={() => navigate('/wealth-camp-checkin')}
           >
-            查看我的财富日记
+            返回财富日记
           </Button>
         </div>
           </>
