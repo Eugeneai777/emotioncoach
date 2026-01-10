@@ -94,6 +94,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import YoujinPartnerTerms from "./pages/YoujinPartnerTerms";
 import BloomPartnerTerms from "./pages/BloomPartnerTerms";
 import CoachSpace from "./pages/CoachSpace";
+import CoachSpaceIntro from "./pages/CoachSpaceIntro";
 
 const queryClient = new QueryClient();
 
@@ -121,6 +122,7 @@ const App = () => (
           <Route path="/deployment-package" element={<DeploymentPackage />} />
           <Route path="/energy-studio" element={<EnergyStudio />} />
           <Route path="/coach-space" element={<CoachSpace />} />
+          <Route path="/coach-space-intro" element={<CoachSpaceIntro />} />
           <Route path="/energy-studio-intro" element={<EnergyStudioIntro />} />
           <Route path="/community" element={<Community />} />
           <Route path="/camps" element={<CampList />} />
