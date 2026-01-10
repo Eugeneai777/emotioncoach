@@ -93,37 +93,36 @@ serve(async (req) => {
       baselineAwakening = Math.round(100 - (totalScore / 150 * 100));
     }
 
-    // Calculate current awakening using latest entry or weighted average
-    let currentAwakening = baselineAwakening;
-    if (dailyScores.length > 0) {
-      // Use weighted average giving more weight to recent days
-      const weights = dailyScores.map((_, i) => i + 1); // 1, 2, 3, ...
-      const totalWeight = weights.reduce((a, b) => a + b, 0);
-      currentAwakening = Math.round(
-        dailyScores.reduce((sum, d, i) => sum + d.score * weights[i], 0) / totalWeight
-      );
-    }
-
+    // Use current_awakening from progress table (single source of truth)
+    const currentAwakening = progress?.current_awakening ?? baselineAwakening;
     const awakeningGrowth = currentAwakening - baselineAwakening;
 
-    // Calculate dimension-specific growth
-    const behaviorScores = entries?.map(e => e.behavior_score || 0) || [];
-    const emotionScores = entries?.map(e => e.emotion_score || 0) || [];
-    const beliefScores = entries?.map(e => e.belief_score || 0) || [];
+    // Calculate dimension-specific growth using same unified scale
+    // Journal entries are 1-5, convert to 0-100: ((avg - 1) / 4) * 100
+    // Baseline is 0-50 blockage score, convert to 0-100 awakening: 100 - (score / 50 * 100)
+    const behaviorScores = entries?.filter(e => e.behavior_score != null).map(e => e.behavior_score) || [];
+    const emotionScores = entries?.filter(e => e.emotion_score != null).map(e => e.emotion_score) || [];
+    const beliefScores = entries?.filter(e => e.belief_score != null).map(e => e.belief_score) || [];
 
+    // Convert journal 1-5 to 0-100 awakening percentage
     const avgBehavior = behaviorScores.length > 0 
-      ? Math.round(behaviorScores.reduce((a, b) => a + b, 0) / behaviorScores.length * 20)
-      : 0;
+      ? Math.round(((behaviorScores.reduce((a, b) => a + b, 0) / behaviorScores.length) - 1) / 4 * 100)
+      : 50;
     const avgEmotion = emotionScores.length > 0
-      ? Math.round(emotionScores.reduce((a, b) => a + b, 0) / emotionScores.length * 20)
-      : 0;
+      ? Math.round(((emotionScores.reduce((a, b) => a + b, 0) / emotionScores.length) - 1) / 4 * 100)
+      : 50;
     const avgBelief = beliefScores.length > 0
-      ? Math.round(beliefScores.reduce((a, b) => a + b, 0) / beliefScores.length * 20)
-      : 0;
+      ? Math.round(((beliefScores.reduce((a, b) => a + b, 0) / beliefScores.length) - 1) / 4 * 100)
+      : 50;
 
-    const behaviorGrowth = avgBehavior - (progress?.baseline_behavior || 50);
-    const emotionGrowth = avgEmotion - (progress?.baseline_emotion || 50);
-    const beliefGrowth = avgBelief - (progress?.baseline_belief || 50);
+    // Convert baseline 0-50 blockage to 0-100 awakening for comparison
+    const baselineBehaviorAwakening = 100 - Math.round((progress?.baseline_behavior ?? 25) / 50 * 100);
+    const baselineEmotionAwakening = 100 - Math.round((progress?.baseline_emotion ?? 25) / 50 * 100);
+    const baselineBeliefAwakening = 100 - Math.round((progress?.baseline_belief ?? 25) / 50 * 100);
+
+    const behaviorGrowth = avgBehavior - baselineBehaviorAwakening;
+    const emotionGrowth = avgEmotion - baselineEmotionAwakening;
+    const beliefGrowth = avgBelief - baselineBeliefAwakening;
 
     // Determine focus areas based on entries
     const focusAreas = determineFocusAreas(entries || [], assessment);
@@ -146,31 +145,36 @@ serve(async (req) => {
       focusAreas
     );
 
-    // Save summary to database
-    const { data: summary, error: insertError } = await supabase
+    // Save summary to database using upsert to handle force regeneration
+    const summaryData = {
+      user_id: userId,
+      camp_id: campId,
+      start_awakening: baselineAwakening,
+      end_awakening: currentAwakening,
+      awakening_growth: awakeningGrowth,
+      behavior_growth: behaviorGrowth,
+      emotion_growth: emotionGrowth,
+      belief_growth: beliefGrowth,
+      daily_scores: dailyScores,
+      biggest_breakthrough: biggestBreakthrough,
+      focus_areas: focusAreas,
+      achievements_unlocked: achievements,
+      ai_coach_message: aiMessage,
+      generated_at: new Date().toISOString()
+    };
+
+    const { data: summary, error: upsertError } = await supabase
       .from('camp_summaries')
-      .insert({
-        user_id: userId,
-        camp_id: campId,
-        start_awakening: baselineAwakening,
-        end_awakening: currentAwakening,
-        awakening_growth: awakeningGrowth,
-        behavior_growth: behaviorGrowth,
-        emotion_growth: emotionGrowth,
-        belief_growth: beliefGrowth,
-        daily_scores: dailyScores,
-        biggest_breakthrough: biggestBreakthrough,
-        focus_areas: focusAreas,
-        achievements_unlocked: achievements,
-        ai_coach_message: aiMessage,
-        generated_at: new Date().toISOString()
+      .upsert(summaryData, { 
+        onConflict: 'user_id,camp_id',
+        ignoreDuplicates: false 
       })
       .select()
       .single();
 
-    if (insertError) {
-      console.error('Error inserting summary:', insertError);
-      throw insertError;
+    if (upsertError) {
+      console.error('Error upserting summary:', upsertError);
+      throw upsertError;
     }
 
     return new Response(
