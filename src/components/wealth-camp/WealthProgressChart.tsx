@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { layerScoreToStars } from '@/config/wealthStyleConfig';
 
 interface JournalEntry {
   day_number: number;
@@ -11,9 +12,16 @@ interface JournalEntry {
   created_at: string;
 }
 
+interface BaselineData {
+  behavior_score: number;
+  emotion_score: number;
+  belief_score: number;
+}
+
 interface WealthProgressChartProps {
   entries: JournalEntry[];
   embedded?: boolean;
+  baseline?: BaselineData | null;
 }
 
 type DimensionKey = 'behavior' | 'emotion' | 'belief';
@@ -24,8 +32,18 @@ const DIMENSION_CONFIG = {
   belief: { label: '信念', color: '#8b5cf6' },
 };
 
-export function WealthProgressChart({ entries, embedded = false }: WealthProgressChartProps) {
+export function WealthProgressChart({ entries, embedded = false, baseline }: WealthProgressChartProps) {
   const [activeDimension, setActiveDimension] = useState<DimensionKey>('behavior');
+
+  // Convert Day 0 assessment scores (0-50) to 1-5 star scale
+  const baselineValues = useMemo(() => {
+    if (!baseline) return null;
+    return {
+      behavior: layerScoreToStars(baseline.behavior_score, 50),
+      emotion: layerScoreToStars(baseline.emotion_score, 50),
+      belief: layerScoreToStars(baseline.belief_score, 50),
+    };
+  }, [baseline]);
 
   const chartData = useMemo(() => {
     // 找出最大天数（最多7天）
@@ -220,6 +238,50 @@ export function WealthProgressChart({ entries, embedded = false }: WealthProgres
               strokeWidth={3}
               dot={{ fill: '#8b5cf6', r: 5 }}
               strokeOpacity={1}
+            />
+          )}
+
+          {/* Day 0 基准线 */}
+          {baselineValues && showBehavior && (
+            <ReferenceLine 
+              y={baselineValues.behavior} 
+              stroke="#9ca3af" 
+              strokeDasharray="6 4"
+              strokeWidth={1.5}
+              label={{ 
+                value: `Day 0: ${baselineValues.behavior.toFixed(1)}`,
+                position: 'insideTopRight',
+                fill: '#6b7280',
+                fontSize: 10,
+              }}
+            />
+          )}
+          {baselineValues && showEmotion && (
+            <ReferenceLine 
+              y={baselineValues.emotion} 
+              stroke="#9ca3af" 
+              strokeDasharray="6 4"
+              strokeWidth={1.5}
+              label={{ 
+                value: `Day 0: ${baselineValues.emotion.toFixed(1)}`,
+                position: 'insideTopRight',
+                fill: '#6b7280',
+                fontSize: 10,
+              }}
+            />
+          )}
+          {baselineValues && showBelief && (
+            <ReferenceLine 
+              y={baselineValues.belief} 
+              stroke="#9ca3af" 
+              strokeDasharray="6 4"
+              strokeWidth={1.5}
+              label={{ 
+                value: `Day 0: ${baselineValues.belief.toFixed(1)}`,
+                position: 'insideTopRight',
+                fill: '#6b7280',
+                fontSize: 10,
+              }}
             />
           )}
         </LineChart>
