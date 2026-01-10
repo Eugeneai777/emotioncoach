@@ -341,66 +341,20 @@ export function GrowthComparisonCard({
         </div>
       </div>
 
-      {/* Layer transformation progress */}
-      <div className="space-y-3">
-        <div className="text-xs font-medium text-muted-foreground">三层觉醒进度</div>
-        
-        {/* Behavior Layer */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-500" />
-              行为层
-            </span>
-            <span className="text-muted-foreground">
-              {baseline.dominantPoorName || '—'} → {dominantBehavior || '觉察中'}
-            </span>
-            <span className="font-medium text-amber-600">{behaviorRate}%</span>
-          </div>
-          <Progress value={behaviorRate} className="h-1.5" />
+      {/* AI Insight - 简化版 */}
+      <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-lg p-3 border border-amber-200/50">
+        <div className="text-xs space-y-1">
+          <span className="font-medium text-amber-800 dark:text-amber-200">💬 成长小结</span>
+          <p className="text-amber-700 dark:text-amber-300">
+            {avgFourPoorRate >= 60 ? (
+              <>你的财富能量正在快速转化！保持每日觉察，新模式正在稳固。</>
+            ) : avgFourPoorRate >= 30 ? (
+              <>觉察之旅已启程，{baseline.dominantPoorName}模式开始松动。每一天的练习都在累积改变。</>
+            ) : (
+              <>种子已经种下，持续觉察会带来意想不到的转变。相信这个过程。</>
+            )}
+          </p>
         </div>
-
-        {/* Emotion Layer */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-pink-500" />
-              情绪层
-            </span>
-            <span className="text-muted-foreground">
-              {baseline.dominantEmotionName || '—'} → {dominantEmotion || '觉察中'}
-            </span>
-            <span className="font-medium text-pink-600">{emotionRate}%</span>
-          </div>
-          <Progress value={emotionRate} className="h-1.5" />
-        </div>
-
-        {/* Belief Layer */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-violet-500" />
-              信念层
-            </span>
-            <span className="text-muted-foreground">
-              {baseline.dominantBeliefName || '—'} → {dominantBelief || '觉察中'}
-            </span>
-            <span className="font-medium text-violet-600">{beliefRate}%</span>
-          </div>
-          <Progress value={beliefRate} className="h-1.5" />
-        </div>
-      </div>
-
-      {/* AI Insight */}
-      <div className="bg-muted/30 rounded-lg p-3 text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">💬 AI洞察：</span>
-        {emotionRate >= behaviorRate && emotionRate >= beliefRate ? (
-          <span>你的情绪层转化最快，内在安定感正在增强；继续保持觉察...</span>
-        ) : behaviorRate >= emotionRate && behaviorRate >= beliefRate ? (
-          <span>你的行为层转化领先，{baseline.dominantPoorName}模式正在松动；继续实践新行为...</span>
-        ) : (
-          <span>你的信念层转化显著，新信念正在扎根；用行动巩固这份转变...</span>
-        )}
       </div>
     </div>
   );
