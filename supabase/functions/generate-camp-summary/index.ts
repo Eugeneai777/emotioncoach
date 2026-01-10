@@ -78,16 +78,29 @@ serve(async (req) => {
       date: entry.created_at
     })) || [];
 
-    // Calculate growth metrics
-    const baselineAwakening = progress?.baseline_awakening || (assessment ? 100 - Math.round((
-      (assessment.behavior_score || 50) + 
-      (assessment.emotion_score || 50) + 
-      (assessment.belief_score || 50)
-    ) / 3) : 50);
+    // Calculate growth metrics - PRIORITY: use baseline_awakening from progress table
+    let baselineAwakening = 50; // default fallback
+    
+    if (progress?.baseline_awakening !== null && progress?.baseline_awakening !== undefined) {
+      // Priority 1: Use synced baseline from user_awakening_progress
+      baselineAwakening = progress.baseline_awakening;
+    } else if (assessment) {
+      // Priority 2: Calculate from assessment scores (1-5 scale to awakening)
+      // Formula: awakening_start = 100 - blockage_score, blockage = total_score / 150 * 100
+      const totalScore = (assessment.behavior_score || 50) + (assessment.emotion_score || 50) + (assessment.belief_score || 50);
+      baselineAwakening = Math.round(100 - (totalScore / 150 * 100));
+    }
 
-    const currentAwakening = dailyScores.length > 0 
-      ? Math.round(dailyScores.reduce((sum, d) => sum + d.score, 0) / dailyScores.length)
-      : baselineAwakening;
+    // Calculate current awakening using latest entry or weighted average
+    let currentAwakening = baselineAwakening;
+    if (dailyScores.length > 0) {
+      // Use weighted average giving more weight to recent days
+      const weights = dailyScores.map((_, i) => i + 1); // 1, 2, 3, ...
+      const totalWeight = weights.reduce((a, b) => a + b, 0);
+      currentAwakening = Math.round(
+        dailyScores.reduce((sum, d, i) => sum + d.score * weights[i], 0) / totalWeight
+      );
+    }
 
     const awakeningGrowth = currentAwakening - baselineAwakening;
 

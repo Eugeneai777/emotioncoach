@@ -345,7 +345,7 @@ export default function CampGraduate() {
                       <div className="bg-white/15 rounded-2xl p-3 backdrop-blur-sm border border-white/10">
                         <p className="text-2xl font-bold">
                           {campSummary?.awakening_growth != null 
-                            ? `+${campSummary.awakening_growth}` 
+                            ? (campSummary.awakening_growth >= 0 ? `+${campSummary.awakening_growth}` : campSummary.awakening_growth)
                             : graduationData.awakeningScore}
                         </p>
                         <p className="text-xs text-white/70 mt-1">
@@ -378,9 +378,9 @@ export default function CampGraduate() {
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-5 h-5 text-amber-500" />
                 <h3 className="font-semibold text-lg">7天觉醒曲线</h3>
-                {campSummary?.awakening_growth != null && campSummary.awakening_growth > 0 && (
-                  <Badge className="bg-emerald-100 text-emerald-700 border-0 ml-auto">
-                    +{campSummary.awakening_growth} 成长
+                {campSummary?.awakening_growth != null && (
+                  <Badge className={`border-0 ml-auto ${campSummary.awakening_growth >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
+                    {campSummary.awakening_growth >= 0 ? `+${campSummary.awakening_growth}` : campSummary.awakening_growth} 成长
                   </Badge>
                 )}
               </div>
