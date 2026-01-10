@@ -183,10 +183,22 @@ export function AchievementBadgeWall({ showUnlocked = true, compact = false }: A
         })}
 
         {earnedCount === 0 && (
-          <div className="text-center py-6">
-            <div className="text-4xl mb-2">🎯</div>
-            <p className="text-muted-foreground text-sm">完成训练营任务，解锁专属成就徽章！</p>
-          </div>
+          <motion.div 
+            className="text-center py-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <motion.div 
+              className="text-4xl mb-3"
+              animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+            >
+              🔓
+            </motion.div>
+            <p className="text-muted-foreground text-sm mb-1">正在检查你的成就...</p>
+            <p className="text-xs text-muted-foreground/70">完成训练营任务，解锁专属徽章！</p>
+          </motion.div>
         )}
       </CardContent>
     </Card>
