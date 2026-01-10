@@ -8,6 +8,7 @@ import { WealthProgressChart } from './WealthProgressChart';
 import { ActionTrackingStats } from './ActionTrackingStats';
 import { GrowthHighlightsCard } from './GrowthHighlightsCard';
 import { GameProgressCard } from './GameProgressCard';
+import { CompactAchievementGrid } from './CompactAchievementGrid';
 import { NewBeliefsCollection } from './NewBeliefsCollection';
 import { WeeklyComparisonChart } from './WeeklyComparisonChart';
 import { GrowthComparisonCard } from './GrowthComparisonCard';
@@ -147,6 +148,9 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
 
       {/* 我的财富觉醒之旅 - 游戏化进度卡片 */}
       <GameProgressCard currentDayNumber={currentDay} streak={consecutiveDays} />
+
+      {/* 成就徽章墙 - 紧凑多彩网格 */}
+      <CompactAchievementGrid />
 
       {/* 成长亮点 - 横向滚动 */}
       <GrowthHighlightsCard
