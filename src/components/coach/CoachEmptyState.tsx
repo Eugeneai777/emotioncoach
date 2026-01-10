@@ -10,7 +10,7 @@ import {
   getThemeTextColor,
   getThemeSecondaryTextColor 
 } from "@/utils/coachThemeConfig";
-
+import { WealthTrilogyCard } from "@/components/wealth-camp/WealthTrilogyCard";
 interface Step {
   id: number;
   emoji?: string;
@@ -166,6 +166,11 @@ export const CoachEmptyState = ({
       {showDailyReminder && dailyReminderContent ? (
         <div className="bg-card border border-border rounded-card-lg p-card text-left shadow-md hover:shadow-lg transition-shadow duration-300 animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
           {dailyReminderContent}
+        </div>
+      ) : primaryColor === 'amber' ? (
+        /* Wealth Coach: Special Trilogy Card */
+        <div className="animate-in fade-in-50 slide-in-from-bottom-6 duration-700 delay-200">
+          <WealthTrilogyCard />
         </div>
       ) : enableCollapse ? (
         /* Collapsible mode for emotion coach */
