@@ -940,7 +940,7 @@ ${reflection}`;
         open={showShareDialog}
         onOpenChange={setShowShareDialog}
         campId={campId || ''}
-        campName="21天财富觉醒"
+        campName={`${camp?.duration_days || 7}天财富觉醒`}
         campDay={currentDay}
         emotionTheme={journalEntries.find(e => e.day_number === currentDay)?.emotion_type || undefined}
         insight={typeof journalEntries.find(e => e.day_number === currentDay)?.personal_awakening === 'string' 

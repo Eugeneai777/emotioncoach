@@ -181,7 +181,7 @@ export default function WealthAwakeningProgress() {
           </Button>
           <div className="flex-1">
             <h1 className="font-semibold">✨ 财富觉醒进度</h1>
-            <p className="text-xs text-muted-foreground">21天信念转变追踪</p>
+            <p className="text-xs text-muted-foreground">7天信念转变追踪</p>
           </div>
         </div>
       </div>
@@ -193,7 +193,7 @@ export default function WealthAwakeningProgress() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-amber-100 text-sm">觉醒天数</p>
-                <p className="text-4xl font-bold">{stats?.totalDays}<span className="text-lg font-normal">/21天</span></p>
+                <p className="text-4xl font-bold">{stats?.totalDays}<span className="text-lg font-normal">/7天</span></p>
               </div>
               <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
                 <Sparkles className="w-8 h-8" />

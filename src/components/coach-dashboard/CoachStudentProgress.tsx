@@ -192,7 +192,7 @@ export function CoachStudentProgress({ coachId }: CoachStudentProgressProps) {
                           <div className="mt-3">
                             <div className="flex items-center justify-between text-sm mb-1">
                               <span className="text-muted-foreground">
-                                第 {student.camp?.current_day || 1} 天 / 共 {student.camp?.duration_days || 21} 天
+                                第 {student.camp?.current_day || 1} 天 / 共 {student.camp?.duration_days || 7} 天
                               </span>
                               <span className="font-medium">{completionRate}%</span>
                             </div>
@@ -324,7 +324,7 @@ export function CoachStudentProgress({ coachId }: CoachStudentProgressProps) {
                       <div>
                         <span className="text-muted-foreground">当前进度</span>
                         <p className="font-medium">
-                          第 {selectedStudent.camp?.current_day || 1} 天 / {selectedStudent.camp?.duration_days || 21} 天
+                          第 {selectedStudent.camp?.current_day || 1} 天 / {selectedStudent.camp?.duration_days || 7} 天
                         </p>
                       </div>
                       <div>

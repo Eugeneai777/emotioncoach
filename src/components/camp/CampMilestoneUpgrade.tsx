@@ -24,7 +24,7 @@ export function CampMilestoneUpgrade({
       icon: Sparkles,
       title: "恭喜完成3天！",
       subtitle: "你已经迈出了坚实的第一步",
-      message: "继续坚持，21天后你会看到明显的变化",
+      message: "继续坚持，你会看到明显的变化",
       ctaText: "了解365会员",
       ctaAction: () => navigate("/packages"),
       showPartner: false,
@@ -56,7 +56,7 @@ export function CampMilestoneUpgrade({
     21: {
       icon: Gift,
       title: "🎊 恭喜毕业！",
-      subtitle: "21天财富觉醒训练营完美收官",
+      subtitle: "训练营完美收官",
       message: "你已经建立了良好的情绪管理习惯！继续保持，或者成为有劲合伙人，帮助更多人",
       ctaText: "查看毕业生专属通道",
       ctaAction: () => navigate("/partner/graduate"),
