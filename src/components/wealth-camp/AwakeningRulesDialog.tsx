@@ -110,7 +110,7 @@ const AwakeningRulesDialog: React.FC<AwakeningRulesDialogProps> = ({ trigger }) 
           {/* 觉醒目标 */}
           <TabsContent value="goals" className="space-y-3 mt-4">
             <div className="text-sm text-muted-foreground mb-3">
-              7天训练营的目标是提升觉醒指数，达到更高的财富意识状态
+              财富觉醒训练营的目标是提升觉醒指数，达到更高的财富意识状态
             </div>
             
             <div className="space-y-2">
