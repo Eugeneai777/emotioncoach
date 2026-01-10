@@ -64,6 +64,7 @@ export function CombinedPersonalityCard({ campId, currentDay = 1, className }: C
   const {
     transformationRates,
     awarenessCount,
+    awarenessBreakdown,
     dominantPoor,
     isLoading: fourPoorLoading,
   } = useFourPoorProgress(campId);
@@ -94,6 +95,7 @@ export function CombinedPersonalityCard({ campId, currentDay = 1, className }: C
   // 获取主导人格配置
   const dominantConfig = dominantPoor ? fourPoorRichConfig[dominantPoor as PoorTypeKey] : null;
   const dominantAwarenessCount = dominantPoor ? awarenessCount[dominantPoor as PoorTypeKey] : 0;
+  const dominantBreakdown = dominantPoor ? awarenessBreakdown[dominantPoor as PoorTypeKey] : { journal: 0, challenge: 0 };
   const dominantRate = dominantPoor ? transformationRates[dominantPoor as PoorTypeKey] : 0;
   const dominantMilestone = getAwarenessMilestone(dominantAwarenessCount);
   const dominantSemantic = getProgressSemantic(dominantRate);
@@ -170,16 +172,21 @@ export function CombinedPersonalityCard({ campId, currentDay = 1, className }: C
                 <ColoredProgressBar value={dominantRate} />
               </div>
 
-              {/* 里程碑系统 */}
+              {/* 里程碑系统 - 显示来源明细 */}
               <div className="flex items-center justify-between text-xs">
                 <span className="flex items-center gap-1">
                   <span>{dominantMilestone.emoji}</span>
                   <span className="text-muted-foreground">{dominantMilestone.label}</span>
                   <span className="font-medium">· 觉察 {dominantAwarenessCount} 次</span>
+                  {dominantAwarenessCount > 0 && (
+                    <span className="text-muted-foreground text-[10px]">
+                      (📖{dominantBreakdown.journal} + 🎯{dominantBreakdown.challenge})
+                    </span>
+                  )}
                 </span>
                 {dominantMilestone.next && dominantMilestone.nextCount && (
                   <span className="text-muted-foreground">
-                    再{dominantMilestone.nextCount - dominantAwarenessCount}次 → {dominantMilestone.next}
+                    +{dominantMilestone.nextCount - dominantAwarenessCount}次 → {dominantMilestone.next}
                   </span>
                 )}
               </div>
@@ -214,11 +221,12 @@ export function CombinedPersonalityCard({ campId, currentDay = 1, className }: C
                 四穷转化详情
               </p>
               
-              {poorTypeKeys.map((key, index) => {
+            {poorTypeKeys.map((key, index) => {
                 const config = fourPoorRichConfig[key];
                 const rate = transformationRates[key];
                 const semantic = getProgressSemantic(rate);
                 const count = awarenessCount[key];
+                const breakdown = awarenessBreakdown[key];
                 const isDominant = key === dominantPoor;
                 const milestone = getAwarenessMilestone(count);
 
@@ -254,12 +262,17 @@ export function CombinedPersonalityCard({ campId, currentDay = 1, className }: C
                     {/* 彩色进度条 */}
                     <ColoredProgressBar value={rate} className="h-1.5" />
 
-                    {/* 里程碑 */}
+                    {/* 里程碑 - 显示来源明细 */}
                     <div className="flex items-center justify-between text-[10px]">
                       <span className="flex items-center gap-1 text-muted-foreground">
                         <span>{milestone.emoji}</span>
                         <span>{milestone.label}</span>
                         <span className="text-foreground">· {count}次觉察</span>
+                        {count > 0 && (
+                          <span className="text-muted-foreground">
+                            (📖{breakdown.journal}+🎯{breakdown.challenge})
+                          </span>
+                        )}
                       </span>
                       {milestone.next && milestone.nextCount && (
                         <span className="text-muted-foreground">
