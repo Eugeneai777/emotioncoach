@@ -66,6 +66,7 @@ export default function WealthCampCheckIn() {
   // 补卡模式专用状态：保存补卡冥想笔记和完成状态
   const [makeupReflection, setMakeupReflection] = useState('');
   const [makeupMeditationDone, setMakeupMeditationDone] = useState(false);
+  const [lastCompletedMakeupDay, setLastCompletedMakeupDay] = useState<number | null>(null);
   const { toast } = useToast();
   const { trackDayCheckin, trackShare } = useWealthCampAnalytics();
   
@@ -226,6 +227,14 @@ export default function WealthCampCheckIn() {
       setInviteCompleted(saved === 'true');
     }
   }, [campId, currentDay]);
+
+  // 补卡成功后 5 秒自动清除成功提示
+  useEffect(() => {
+    if (lastCompletedMakeupDay) {
+      const timer = setTimeout(() => setLastCompletedMakeupDay(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [lastCompletedMakeupDay]);
 
   // 处理邀请好友点击 - 点击分享/复制链接即完成
   const handleInviteClick = () => {
@@ -719,11 +728,13 @@ ${reflection}`;
                         dayNumber={makeupDayNumber}
                         meditationTitle={makeupMeditation?.title}
                         onCoachingComplete={() => {
+                          const completedDay = makeupDayNumber;
                           handleCoachingComplete();
                           toast({
                             title: "🎉 补卡成功",
-                            description: `Day ${makeupDayNumber} 的打卡已完成`,
+                            description: `Day ${completedDay} 的打卡已完成`,
                           });
+                          setLastCompletedMakeupDay(completedDay);
                           setMakeupDayNumber(null);
                           setMakeupMeditationDone(false);
                           setMakeupReflection('');
@@ -732,6 +743,33 @@ ${reflection}`;
                       />
                     </CardContent>
                   </Card>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* 补卡成功提示条 */}
+            <AnimatePresence>
+              {lastCompletedMakeupDay && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3 }}
+                  className="p-4 rounded-xl bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 border border-green-300 dark:border-green-700 shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-md">
+                      <span className="text-white text-lg">✓</span>
+                    </div>
+                    <div className="flex-1">
+                      <span className="font-semibold text-green-800 dark:text-green-200">
+                        🎉 Day {lastCompletedMakeupDay} 补卡成功！
+                      </span>
+                      <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">
+                        继续完成今日 Day {currentDay} 的打卡任务吧
+                      </p>
+                    </div>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
