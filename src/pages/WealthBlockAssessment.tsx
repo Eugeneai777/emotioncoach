@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ClipboardList, History, TrendingUp, Share2 } from "lucide-react";
+import { ArrowLeft, ClipboardList, History, TrendingUp, Share2, Sparkles, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -316,7 +316,7 @@ export default function WealthBlockAssessmentPage() {
 
       {/* 导航栏 - 融入暖色背景 */}
       <header className="sticky top-0 z-50 bg-gradient-to-r from-amber-50/95 via-orange-50/95 to-amber-50/95 backdrop-blur-md border-b border-amber-200/50">
-        <div className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 h-11 sm:h-12 flex items-center gap-2 sm:gap-3">
+        <div className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 h-12 sm:h-14 flex items-center justify-between gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -325,7 +325,23 @@ export default function WealthBlockAssessmentPage() {
           >
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
-          <h1 className="flex-1 font-semibold truncate text-sm sm:text-base">财富卡点测评</h1>
+          
+          {/* AI教练专区入口按钮 */}
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/energy-studio")}
+            className="flex-1 h-8 sm:h-9 px-3 sm:px-4 rounded-full 
+                       bg-gradient-to-r from-amber-400 to-orange-400 
+                       hover:from-amber-500 hover:to-orange-500 
+                       text-white shadow-md hover:shadow-lg 
+                       transition-all duration-200 hover:scale-[1.02]
+                       flex items-center justify-center gap-1.5 sm:gap-2"
+          >
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm font-medium">点击进入AI教练专区</span>
+            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </Button>
+          
           <WealthInviteCardDialog
             defaultTab="assessment"
             trigger={
@@ -338,23 +354,8 @@ export default function WealthBlockAssessmentPage() {
       </header>
 
       {/* 主内容 */}
-      <main className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <main className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full mb-4 sm:mb-6 h-9 sm:h-10">
-            <TabsTrigger value="assessment" className="flex-1 gap-1.5 sm:gap-2 text-xs sm:text-sm">
-              <ClipboardList className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">开始</span>测评
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex-1 gap-1.5 sm:gap-2 text-xs sm:text-sm">
-              <History className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">历史</span>记录
-              {historyRecords.length > 0 && (
-                <span className="ml-1 text-[10px] sm:text-xs bg-amber-100 text-amber-700 px-1 sm:px-1.5 rounded-full">
-                  {historyRecords.length}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
 
           <TabsContent value="assessment" className="mt-0">
             <motion.div
@@ -432,6 +433,42 @@ export default function WealthBlockAssessmentPage() {
               )}
             </motion.div>
           </TabsContent>
+          {/* 底部固定Tab导航 */}
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-amber-50 via-white to-amber-50 border-t border-amber-200/50 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]">
+            <div className="container max-w-sm sm:max-w-lg mx-auto px-3 py-2">
+              <TabsList className="w-full h-11 sm:h-12 bg-white/80 rounded-xl shadow-inner">
+                <TabsTrigger 
+                  value="assessment" 
+                  className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg transition-all duration-200
+                             data-[state=active]:bg-gradient-to-r 
+                             data-[state=active]:from-amber-500 
+                             data-[state=active]:to-orange-500 
+                             data-[state=active]:text-white 
+                             data-[state=active]:shadow-md"
+                >
+                  <ClipboardList className="w-4 h-4" />
+                  开始测评
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="history" 
+                  className="flex-1 gap-1.5 text-xs sm:text-sm rounded-lg transition-all duration-200
+                             data-[state=active]:bg-gradient-to-r 
+                             data-[state=active]:from-amber-500 
+                             data-[state=active]:to-orange-500 
+                             data-[state=active]:text-white 
+                             data-[state=active]:shadow-md"
+                >
+                  <History className="w-4 h-4" />
+                  历史记录
+                  {historyRecords.length > 0 && (
+                    <span className="ml-1 bg-red-500 text-white text-[10px] px-1.5 rounded-full">
+                      {historyRecords.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
         </Tabs>
       </main>
 
