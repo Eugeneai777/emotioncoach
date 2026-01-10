@@ -381,10 +381,10 @@ const WealthCoachIntro = () => {
               </div>
               <div className="flex-1">
                 <h3 className="text-base font-bold text-foreground mb-1">
-                  训练营如何实现突破？
+                  有劲AI财富教练如何帮你突破？
                 </h3>
                 <p className="text-sm text-muted-foreground mb-3">
-                  7天训练营通过<span className="text-amber-600 dark:text-amber-400 font-medium">「五层同频」</span>方法，从行为到结构，全方位打通你的财富通道
+                  通过<span className="text-amber-600 dark:text-amber-400 font-medium">「五层同频」</span>方法，从行为到结构，全方位打通你的财富通道
                 </p>
                 
                 {/* 五层预览小卡片 */}
