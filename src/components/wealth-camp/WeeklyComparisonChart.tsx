@@ -49,7 +49,7 @@ export function WeeklyComparisonChart({ entries, className }: WeeklyComparisonCh
     // Group entries by phase (1-3: Phase 1, 4-7: Phase 2) for 7-day camp
     const weeks: Record<number, JournalEntry[]> = { 1: [], 2: [] };
     
-    entries.forEach(entry => {
+    (entries || []).forEach(entry => {
       if (entry.day_number <= 3) {
         weeks[1].push(entry);
       } else if (entry.day_number <= 7) {
@@ -58,14 +58,16 @@ export function WeeklyComparisonChart({ entries, className }: WeeklyComparisonCh
     });
 
     // Calculate averages for each week
-    const calculateAvg = (weekEntries: JournalEntry[], key: 'behavior_score' | 'emotion_score' | 'belief_score') => {
+    const calculateAvg = (weekEntries: JournalEntry[] | undefined, key: 'behavior_score' | 'emotion_score' | 'belief_score') => {
+      if (!weekEntries || weekEntries.length === 0) return 0;
       const scores = weekEntries.map(e => e[key]).filter((s): s is number => s !== null && s > 0);
       return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
     };
 
-    const weekLabels = ['第1周', '第2周', '第3周'];
-    const weeklyData: WeekData[] = [1, 2, 3].map(weekNum => {
-      const weekEntries = weeks[weekNum];
+    // Only use 2 phases for 7-day camp (Day 1-3 and Day 4-7)
+    const weekLabels = ['上半程', '下半程'];
+    const weeklyData: WeekData[] = [1, 2].map(weekNum => {
+      const weekEntries = weeks[weekNum] || [];
       const behavior = calculateAvg(weekEntries, 'behavior_score');
       const emotion = calculateAvg(weekEntries, 'emotion_score');
       const belief = calculateAvg(weekEntries, 'belief_score');
@@ -231,7 +233,7 @@ export function WeeklyComparisonChart({ entries, className }: WeeklyComparisonCh
       )}
 
       {/* Weekly Summary Cards */}
-      <div className="grid grid-cols-3 gap-2 pt-2">
+      <div className="grid grid-cols-2 gap-2 pt-2">
         {weeklyData.map((week) => {
           const prevWeek = weeklyData.find(w => w.weekNum === week.weekNum - 1);
           const change = prevWeek && prevWeek.entryCount > 0 && week.entryCount > 0
