@@ -219,7 +219,7 @@ const WealthCoachIntro = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold text-foreground">财富觉醒</h1>
+          <h1 className="text-lg font-semibold text-foreground">财富教练</h1>
         </div>
       </header>
 
