@@ -4,7 +4,7 @@ import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface CompactProgressHeaderProps {
   currentDay: number;
-  maxDays: number;
+  maxDays?: number;
   awakeningIndex: number;
   avgBehavior?: string;
   avgEmotion?: string;
@@ -14,7 +14,7 @@ interface CompactProgressHeaderProps {
 
 export function CompactProgressHeader({
   currentDay,
-  maxDays,
+  maxDays = 7,
   awakeningIndex,
   avgBehavior = '0.0',
   avgEmotion = '0.0',
