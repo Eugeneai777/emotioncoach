@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { taskCardStyles, cardBaseStyles } from '@/config/cardStyleConfig';
 
 interface DailyChallengeCardProps {
   onPointsEarned?: (points: number) => void;
@@ -115,18 +117,26 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
   }
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2 bg-gradient-to-r from-amber-50 to-orange-50">
+    <Card className={cn(
+      "overflow-hidden",
+      cardBaseStyles.container,
+      taskCardStyles.challenge.container
+    )}>
+      <CardHeader className={cn(
+        "pb-2",
+        taskCardStyles.challenge.header,
+        taskCardStyles.challenge.headerBorder
+      )}>
         <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-amber-600" />
+          <div className={cn("flex items-center gap-2", taskCardStyles.challenge.headerText)}>
+            <Target className={cn("h-5 w-5", taskCardStyles.challenge.icon)} />
             <span>今日觉醒挑战</span>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-white">
+            <Badge variant="secondary" className="bg-white/80 dark:bg-slate-800/80">
               {completedCount}/{challenges.length}
             </Badge>
-            <Badge className="bg-amber-500">
+            <Badge className={taskCardStyles.challenge.badge}>
               <Zap className="h-3 w-3 mr-1" />
               {earnedPoints}/{totalPoints}
             </Badge>

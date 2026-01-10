@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Gift, RefreshCw, CheckCircle2, Loader2, Clock, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { taskCardStyles, cardBaseStyles } from '@/config/cardStyleConfig';
 
 interface DailyActionData {
   action: string;
@@ -106,9 +107,9 @@ export function DailyActionCard({
 
   if (loading) {
     return (
-      <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30">
+      <Card className={cn(cardBaseStyles.container, taskCardStyles.action.container)}>
         <CardContent className="p-4 flex items-center justify-center">
-          <Loader2 className="w-5 h-5 animate-spin text-emerald-600" />
+          <Loader2 className={cn("w-5 h-5 animate-spin", taskCardStyles.action.icon)} />
         </CardContent>
       </Card>
     );
@@ -199,7 +200,10 @@ export function DailyActionCard({
 
       {/* Today's action - 优先展示日记中的行动 */}
       {todayJournalAction ? (
-        <Card className="bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/40 dark:to-teal-900/40 border-emerald-300 dark:border-emerald-700 border-2">
+        <Card className={cn(
+          cardBaseStyles.container,
+          "bg-gradient-to-br from-emerald-100/80 to-teal-100/60 dark:from-emerald-900/40 dark:to-teal-900/30 border-2 border-emerald-300 dark:border-emerald-700"
+        )}>
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-emerald-300 dark:bg-emerald-700 flex items-center justify-center shrink-0">
@@ -207,7 +211,7 @@ export function DailyActionCard({
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                  <p className={cn("text-xs font-semibold", taskCardStyles.action.headerText)}>
                     📌 今日行动
                   </p>
                   <span className="text-xs bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-medium">
@@ -219,7 +223,7 @@ export function DailyActionCard({
                 </p>
                 <div className="flex items-center gap-2 mt-3">
                   {todayActionCompleted ? (
-                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                    <div className={cn("flex items-center gap-1.5", taskCardStyles.action.icon)}>
                       <CheckCircle2 className="w-4 h-4" />
                       <span className="text-sm font-medium">已完成</span>
                     </div>
@@ -227,7 +231,7 @@ export function DailyActionCard({
                     onCompleteToday && (
                       <Button
                         size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-xs"
+                        className={cn(taskCardStyles.action.badge, "hover:bg-emerald-600 text-xs text-white")}
                         onClick={() => onCompleteToday(todayJournalAction, 'medium')}
                       >
                         <CheckCircle2 className="w-3 h-3 mr-1" />
@@ -241,7 +245,7 @@ export function DailyActionCard({
           </CardContent>
         </Card>
       ) : data ? (
-        <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-emerald-200 dark:border-emerald-800">
+        <Card className={cn(cardBaseStyles.container, taskCardStyles.action.container)}>
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-emerald-200 dark:bg-emerald-800 flex items-center justify-center shrink-0">
