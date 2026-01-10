@@ -15,7 +15,7 @@ import WealthAssessmentShareCard from './WealthAssessmentShareCard';
 import WealthCampShareCard from './WealthCampShareCard';
 import WealthAwakeningShareCard from './WealthAwakeningShareCard';
 import WealthMilestoneShareCard from './WealthMilestoneShareCard';
-import GrowthPosterCard from './GrowthPosterCard';
+import EnhancedGrowthPosterCard from './EnhancedGrowthPosterCard';
 import AIAnalysisShareCard from '@/components/wealth-block/AIAnalysisShareCard';
 import AssessmentValueShareCard from '@/components/wealth-block/AssessmentValueShareCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
@@ -184,12 +184,12 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   // Growth poster specific data
   const [growthData, setGrowthData] = useState<{
     awakeningIndex: number;
-    avgBehavior: number;
-    avgEmotion: number;
-    avgBelief: number;
+    awakeningChange: number;
+    chartData: { day: number; value: number; hasData: boolean }[];
     coreBreakthrough?: { type: 'behavior' | 'emotion' | 'belief'; title: string; content: string };
-    dominantPoor?: string;
-    transformationRate?: number;
+    aiMessage?: string;
+    consecutiveDays: number;
+    peakIndex?: number;
   } | null>(null);
 
   // Generate share URLs with partner tracking if available
@@ -306,17 +306,40 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       if (campId) {
         const { data: journalEntries } = await supabase
           .from('wealth_journal_entries')
-          .select('behavior_score, emotion_score, belief_score, behavior_block, personal_awakening, new_belief')
+          .select('day_number, behavior_score, emotion_score, belief_score, behavior_block, personal_awakening, new_belief')
           .eq('camp_id', campId)
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .order('day_number', { ascending: true });
 
         if (journalEntries && journalEntries.length > 0) {
+          // Calculate awakening index for each day
+          const chartData = journalEntries.map(e => {
+            const scores = [e.behavior_score, e.emotion_score, e.belief_score].filter(s => s && s > 0) as number[];
+            const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+            const awakeningValue = ((avg - 1) / 4) * 100;
+            return {
+              day: e.day_number,
+              value: Math.max(0, Math.min(100, awakeningValue)),
+              hasData: scores.length > 0,
+            };
+          });
+
+          // Calculate current awakening index
           const validEntries = journalEntries.filter(e => e.behavior_score || e.emotion_score || e.belief_score);
           const avgBehavior = validEntries.reduce((sum, e) => sum + (e.behavior_score || 0), 0) / (validEntries.length || 1);
           const avgEmotion = validEntries.reduce((sum, e) => sum + (e.emotion_score || 0), 0) / (validEntries.length || 1);
           const avgBelief = validEntries.reduce((sum, e) => sum + (e.belief_score || 0), 0) / (validEntries.length || 1);
           const avgScore = (avgBehavior + avgEmotion + avgBelief) / 3;
-          const awakeningIndex = ((avgScore - 1) / 4) * 100;
+          const currentAwakeningIndex = ((avgScore - 1) / 4) * 100;
+
+          // Calculate change from first entry
+          const firstValidIdx = chartData.findIndex(d => d.hasData);
+          const awakeningChange = firstValidIdx >= 0 && chartData.length > firstValidIdx + 1
+            ? chartData[chartData.length - 1].value - chartData[firstValidIdx].value
+            : 0;
+
+          // Find peak awakening
+          const peakIndex = Math.max(...chartData.filter(d => d.hasData).map(d => d.value));
 
           // Find core breakthrough from personal_awakening JSON
           const latestEntry = journalEntries[journalEntries.length - 1];
@@ -343,23 +366,25 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             };
           }
 
-          // Count behavior blocks for dominant poor
-          const behaviorCounts: Record<string, number> = {};
-          journalEntries.forEach(e => {
-            if (e.behavior_block) {
-              behaviorCounts[e.behavior_block] = (behaviorCounts[e.behavior_block] || 0) + 1;
-            }
-          });
-          const dominantPoor = Object.entries(behaviorCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+          // Generate AI message based on progress
+          const userName = profile?.display_name || '财富觉醒者';
+          let aiMessage: string | undefined;
+          if (currentAwakeningIndex >= 70) {
+            aiMessage = `${userName}，你的觉醒之旅令人振奋！持续保持这份觉察力，让财富自然流动。`;
+          } else if (currentAwakeningIndex >= 50) {
+            aiMessage = `${userName}，你正在稳步成长！每一次觉察都是蜕变的种子。`;
+          } else if (validEntries.length >= 3) {
+            aiMessage = `${userName}，坚持就是胜利！你已经迈出了改变的第一步。`;
+          }
 
           setGrowthData({
-            awakeningIndex: Math.max(0, Math.min(100, awakeningIndex)),
-            avgBehavior,
-            avgEmotion,
-            avgBelief,
+            awakeningIndex: Math.max(0, Math.min(100, currentAwakeningIndex)),
+            awakeningChange: Math.round(awakeningChange),
+            chartData,
             coreBreakthrough,
-            dominantPoor,
-            transformationRate: Math.round(awakeningIndex * 0.6),
+            aiMessage,
+            consecutiveDays: validEntries.length,
+            peakIndex: peakIndex > 0 ? peakIndex : undefined,
           });
         }
       }
@@ -648,20 +673,20 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           <TabsContent value="growth" className="mt-4">
             {growthData ? (
               <div className="flex justify-center">
-              <div className="transform scale-[0.75] origin-top" style={{ marginBottom: '-25%' }}>
-                  <GrowthPosterCard
+              <div className="transform scale-[0.72] origin-top" style={{ marginBottom: '-28%' }}>
+                  <EnhancedGrowthPosterCard
                     ref={growthCardRef}
                     avatarUrl={userInfo.avatarUrl}
                     displayName={userInfo.displayName}
                     currentDay={userInfo.currentDay || 1}
                     totalDays={userInfo.totalDays || 7}
                     awakeningIndex={growthData.awakeningIndex}
-                    avgBehavior={growthData.avgBehavior}
-                    avgEmotion={growthData.avgEmotion}
-                    avgBelief={growthData.avgBelief}
+                    awakeningChange={growthData.awakeningChange}
+                    chartData={growthData.chartData}
                     coreBreakthrough={growthData.coreBreakthrough}
-                    dominantPoor={growthData.dominantPoor}
-                    transformationRate={growthData.transformationRate}
+                    aiMessage={growthData.aiMessage}
+                    consecutiveDays={growthData.consecutiveDays}
+                    peakIndex={growthData.peakIndex}
                   />
                 </div>
               </div>

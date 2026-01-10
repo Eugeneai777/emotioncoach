@@ -12,11 +12,12 @@ import { NewBeliefsCollection } from './NewBeliefsCollection';
 import { WeeklyComparisonChart } from './WeeklyComparisonChart';
 import { GrowthComparisonCard } from './GrowthComparisonCard';
 import { CombinedPersonalityCard } from './CombinedPersonalityCard';
+import { JournalTimelineView } from './JournalTimelineView';
 import { useWealthJournalEntries } from '@/hooks/useWealthJournalEntries';
 import { useCampSummary } from '@/hooks/useCampSummary';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trophy, Loader2, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 
 // Match WealthProgressChart's expected entry type
 interface ChartJournalEntry {
@@ -178,10 +179,11 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
       <Card className="shadow-sm">
         <Tabs defaultValue="chart" className="w-full">
           <CardHeader className="pb-0 pt-3 px-3">
-            <TabsList className="grid w-full grid-cols-3 h-9">
-              <TabsTrigger value="chart" className="text-xs">成长曲线</TabsTrigger>
-              <TabsTrigger value="assessment" className="text-xs">测评对比</TabsTrigger>
-              <TabsTrigger value="weekly" className="text-xs">周对比</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 h-9">
+              <TabsTrigger value="chart" className="text-xs">📈 曲线</TabsTrigger>
+              <TabsTrigger value="timeline" className="text-xs">📅 时间轴</TabsTrigger>
+              <TabsTrigger value="assessment" className="text-xs">🔄 对比</TabsTrigger>
+              <TabsTrigger value="weekly" className="text-xs">📊 周报</TabsTrigger>
             </TabsList>
           </CardHeader>
           <CardContent className="p-3 pt-3">
@@ -196,6 +198,26 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
                   created_at: e.created_at,
                 }))} 
                 embedded={true}
+              />
+            </TabsContent>
+
+            {/* 历史日记时间轴 */}
+            <TabsContent value="timeline" className="mt-0">
+              <JournalTimelineView 
+                entries={fullEntries.map(e => ({
+                  id: e.id,
+                  day_number: e.day_number,
+                  behavior_score: e.behavior_score ?? null,
+                  emotion_score: e.emotion_score ?? null,
+                  belief_score: e.belief_score ?? null,
+                  behavior_block: (e.behavior_block as string) || null,
+                  emotion_need: (e.emotion_need as string) || null,
+                  new_belief: e.new_belief || null,
+                  giving_action: e.giving_action || null,
+                  personal_awakening: e.personal_awakening as any,
+                  created_at: e.created_at,
+                }))} 
+                className="border-0 shadow-none"
               />
             </TabsContent>
 
