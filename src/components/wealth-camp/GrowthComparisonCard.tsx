@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles, ClipboardList, TrendingUp, RefreshCw, HelpCircle } from 'lucide-react';
+import { Sparkles, ClipboardList, TrendingUp, RefreshCw, HelpCircle, ChevronDown, ChevronUp, Eye, Heart, Lightbulb } from 'lucide-react';
 import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
-import { useFourPoorProgress } from '@/hooks/useFourPoorProgress';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +14,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Radar,
   RadarChart,
   PolarGrid,
@@ -24,7 +27,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { fourPoorRichConfig } from '@/config/fourPoorConfig';
+import { cn } from '@/lib/utils';
 
 interface GrowthComparisonCardProps {
   campId?: string;
@@ -35,8 +38,27 @@ interface GrowthComparisonCardProps {
   dominantBehavior?: string;
   dominantEmotion?: string;
   dominantBelief?: string;
-  embedded?: boolean; // When true, renders without Card wrapper
+  embedded?: boolean;
 }
+
+interface LayerComparison {
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  colorClass: string;
+  bgClass: string;
+  baseline: number;
+  current: number;
+  growth: number;
+}
+
+// 语义化进度描述
+const getGrowthSemantic = (growth: number) => {
+  if (growth >= 30) return { emoji: '🚀', label: '飞速成长', color: 'text-emerald-600' };
+  if (growth >= 15) return { emoji: '📈', label: '稳步提升', color: 'text-green-600' };
+  if (growth >= 5) return { emoji: '🌱', label: '初见成效', color: 'text-amber-600' };
+  if (growth > 0) return { emoji: '✨', label: '开始萌芽', color: 'text-orange-600' };
+  return { emoji: '💪', label: '继续加油', color: 'text-muted-foreground' };
+};
 
 export function GrowthComparisonCard({
   campId,
@@ -44,19 +66,13 @@ export function GrowthComparisonCard({
   avgBehavior,
   avgEmotion,
   avgBelief,
-  dominantBehavior,
-  dominantEmotion,
-  dominantBelief,
   embedded = false,
 }: GrowthComparisonCardProps) {
   const navigate = useNavigate();
   const { baseline, isLoading: baselineLoading } = useAssessmentBaseline(campId);
-  const { transformationRates, isLoading: progressLoading } = useFourPoorProgress(campId);
-  const [showRadar, setShowRadar] = useState(true);
-  
-  const isLoading = baselineLoading || progressLoading;
+  const [showRadar, setShowRadar] = useState(false);
 
-  if (isLoading) {
+  if (baselineLoading) {
     return (
       <Card className="shadow-sm animate-pulse">
         <CardContent className="p-4 h-48" />
@@ -65,46 +81,62 @@ export function GrowthComparisonCard({
   }
 
   if (!baseline) {
-    return null; // Don't show if no assessment baseline
+    return null;
   }
 
-  // Use FourPoorProgress transformation rates for consistency with FourPersonalityCard
-  // Calculate average transformation rate across all four poor types
-  const avgFourPoorRate = Math.round(
-    (transformationRates.mouth + transformationRates.hand + transformationRates.eye + transformationRates.heart) / 4
-  );
-  
-  // Calculate layer-based transformation rates (awakening score / 5 * 100)
+  // Calculate layer-based rates (1-5 star to 0-100%)
   const behaviorRate = Math.round((parseFloat(avgBehavior) / 5) * 100);
   const emotionRate = Math.round((parseFloat(avgEmotion) / 5) * 100);
   const beliefRate = Math.round((parseFloat(avgBelief) / 5) * 100);
 
-  // Calculate overall awakening index - weighted blend of four poor progress and layer scores
+  // Overall awakening index
   const layerAwakening = (parseFloat(avgBehavior) + parseFloat(avgEmotion) + parseFloat(avgBelief)) / 3;
-  const layerIndex = Math.round(((layerAwakening - 1) / 4) * 100); // 0-100 scale
-  const awakeningIndex = Math.round((layerIndex + avgFourPoorRate) / 2); // Blend both metrics
+  const awakeningIndex = Math.round(((layerAwakening - 1) / 4) * 100);
 
-  // Use unified awakening percentages from baseline (already converted in useAssessmentBaseline)
-  // Radar chart data - showing "觉醒起点" vs "当前觉醒" (both using positive awakening scale)
-  const radarData = [
+  // Build layer comparison data
+  const layers: LayerComparison[] = [
     {
-      dimension: '行为层',
-      觉醒起点: baseline.behaviorAwakening ?? 0,
-      当前觉醒: behaviorRate,
+      name: '行为层',
+      icon: Eye,
+      colorClass: 'bg-amber-500',
+      bgClass: 'bg-amber-100 dark:bg-amber-900/30',
+      baseline: baseline.behaviorAwakening ?? 0,
+      current: behaviorRate,
+      growth: behaviorRate - (baseline.behaviorAwakening ?? 0),
     },
     {
-      dimension: '情绪层',
-      觉醒起点: baseline.emotionAwakening ?? 0,
-      当前觉醒: emotionRate,
+      name: '情绪层',
+      icon: Heart,
+      colorClass: 'bg-rose-500',
+      bgClass: 'bg-rose-100 dark:bg-rose-900/30',
+      baseline: baseline.emotionAwakening ?? 0,
+      current: emotionRate,
+      growth: emotionRate - (baseline.emotionAwakening ?? 0),
     },
     {
-      dimension: '信念层',
-      觉醒起点: baseline.beliefAwakening ?? 0,
-      当前觉醒: beliefRate,
+      name: '信念层',
+      icon: Lightbulb,
+      colorClass: 'bg-violet-500',
+      bgClass: 'bg-violet-100 dark:bg-violet-900/30',
+      baseline: baseline.beliefAwakening ?? 0,
+      current: beliefRate,
+      growth: beliefRate - (baseline.beliefAwakening ?? 0),
     },
   ];
 
-  // Get status labels
+  // Calculate growth insight
+  const fastestLayer = layers.reduce((a, b) => a.growth > b.growth ? a : b);
+  const needsWorkLayer = layers.reduce((a, b) => a.current < b.current ? a : b);
+  const totalGrowth = awakeningIndex - (baseline.awakeningStart ?? 0);
+
+  // Radar chart data
+  const radarData = layers.map(l => ({
+    dimension: l.name,
+    觉醒起点: l.baseline,
+    当前觉醒: l.current,
+  }));
+
+  // Status labels
   const getStatusLabel = (score: number) => {
     if (score >= 80) return { label: '深度觉醒', color: 'text-emerald-600' };
     if (score >= 60) return { label: '觉醒中', color: 'text-amber-600' };
@@ -112,18 +144,11 @@ export function GrowthComparisonCard({
     return { label: '探索期', color: 'text-muted-foreground' };
   };
 
-  const getPatternLabel = (score: number) => {
-    if (score >= 70) return '追逐模式';
-    if (score >= 50) return '焦虑模式';
-    return '回避模式';
-  };
-
   const awakeningStatus = getStatusLabel(awakeningIndex);
-  const baselinePattern = baseline.reactionPatternName || getPatternLabel(baseline.total_score);
-
+  const baselineStatus = getStatusLabel(baseline.awakeningStart ?? 0);
   const assessmentDate = format(new Date(baseline.created_at), 'M月d日', { locale: zhCN });
 
-  // Check if user should be prompted for re-assessment (Day 7 or Day 21)
+  // Re-assessment prompt
   const shouldShowReassessmentPrompt = currentDay === 3 || currentDay === 7;
 
   const handleReassessment = () => {
@@ -132,7 +157,7 @@ export function GrowthComparisonCard({
 
   const content = (
     <div className={embedded ? "space-y-4" : ""}>
-      {/* Re-assessment Prompt for Day 7 and Day 21 */}
+      {/* Re-assessment Prompt */}
       {shouldShowReassessmentPrompt && (
         <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-lg p-3">
           <div className="flex items-center justify-between">
@@ -159,218 +184,189 @@ export function GrowthComparisonCard({
         </div>
       )}
 
-      {/* T0 vs Current comparison */}
+      {/* T0 vs Current comparison - simplified */}
       <div className="grid grid-cols-2 gap-3">
         {/* T0 Baseline */}
-        <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+        <div className="bg-muted/50 rounded-lg p-3 space-y-1.5">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <ClipboardList className="w-3.5 h-3.5" />
-            <span>觉醒起点</span>
-            <span className="text-[10px]">({assessmentDate})</span>
+            <span>Day 0</span>
           </div>
-          <div className="text-lg font-semibold">
-            起点指数 <span className="text-emerald-600">{baseline.awakeningStart}</span>
+          <div className="text-2xl font-bold tabular-nums">
+            {baseline.awakeningStart ?? 0}
           </div>
-          <div className="text-xs text-muted-foreground">
-            {baselinePattern}
+          <div className={cn("text-xs", baselineStatus.color)}>
+            {baselineStatus.label}
+          </div>
+          <div className="text-[10px] text-muted-foreground">
+            {assessmentDate} 测评
           </div>
         </div>
 
         {/* Current Status */}
-        <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-3 space-y-2 border border-primary/20">
+        <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-3 space-y-1.5 border border-primary/20">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span>当前觉醒</span>
+            <span>Day {currentDay}</span>
           </div>
-          <div className="text-lg font-semibold">
-            觉醒指数 <span className="text-primary">{awakeningIndex}</span>
+          <div className="text-2xl font-bold tabular-nums text-primary">
+            {awakeningIndex}
           </div>
-          <div className={`text-xs ${awakeningStatus.color}`}>
+          <div className={cn("text-xs", awakeningStatus.color)}>
             {awakeningStatus.label}
           </div>
+          {totalGrowth > 0 && (
+            <div className="text-[10px] text-emerald-600 font-medium">
+              +{totalGrowth} 成长
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Radar Chart - Before/After Comparison */}
-      {showRadar && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="text-xs font-medium text-muted-foreground">三层对比雷达图</div>
-            <button 
-              onClick={() => setShowRadar(false)}
-              className="text-[10px] text-muted-foreground hover:text-foreground"
-            >
-              收起
-            </button>
-          </div>
-          <div className="h-48 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                <PolarGrid stroke="hsl(var(--border))" />
-                <PolarAngleAxis 
-                  dataKey="dimension" 
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                />
-                <PolarRadiusAxis 
-                  angle={90} 
-                  domain={[0, 100]} 
-                  tick={{ fontSize: 9 }}
-                  tickCount={5}
-                />
-                <Radar
-                  name="觉醒起点"
-                  dataKey="觉醒起点"
-                  stroke="hsl(var(--muted-foreground))"
-                  fill="hsl(var(--muted-foreground))"
-                  fillOpacity={0.2}
-                  strokeWidth={2}
-                />
-                <Radar
-                  name="当前觉醒"
-                  dataKey="当前觉醒"
-                  stroke="hsl(var(--primary))"
-                  fill="hsl(var(--primary))"
-                  fillOpacity={0.3}
-                  strokeWidth={2}
-                />
-                <Legend 
-                  wrapperStyle={{ fontSize: '11px' }}
-                  iconSize={8}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-          <p className="text-[10px] text-center text-muted-foreground">
-            灰色为觉醒起点，蓝色为当前觉醒，蓝色区域越大说明成长越显著
-          </p>
-        </div>
-      )}
-
-      {!showRadar && (
-        <button 
-          onClick={() => setShowRadar(true)}
-          className="w-full text-xs text-primary hover:underline py-1"
-        >
-          展开雷达图对比
-        </button>
-      )}
-
-      {/* Arrow connector */}
-      <div className="flex justify-center -my-1">
-        <ArrowRight className="w-4 h-4 text-muted-foreground rotate-90 sm:rotate-0" />
-      </div>
-
-      {/* Four Poor Transformation - Consistent with FourPersonalityCard */}
+      {/* Three Layer Before/After Comparison */}
       <div className="space-y-3">
-        <div className="text-xs font-medium text-muted-foreground">四穷转化进度</div>
+        <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+          三层成长对比
+          <span className="text-[10px] text-muted-foreground/70">灰色=起点 · 彩色=当前</span>
+        </div>
         
-        {/* Mouth */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5">
-              <span className="text-sm">{fourPoorRichConfig.mouth.poorEmoji}</span>
-              {fourPoorRichConfig.mouth.poorName}
-            </span>
-            <span className="text-muted-foreground">→</span>
-            <span className="flex items-center gap-1.5">
-              <span className="text-sm">{fourPoorRichConfig.mouth.richEmoji}</span>
-              {fourPoorRichConfig.mouth.richName}
-            </span>
-            <span className="font-medium" style={{ color: fourPoorRichConfig.mouth.color }}>
-              {transformationRates.mouth}%
-            </span>
-          </div>
-          <Progress value={transformationRates.mouth} className="h-1.5" />
-        </div>
+        {layers.map((layer) => {
+          const growthSemantic = getGrowthSemantic(layer.growth);
+          const Icon = layer.icon;
+          
+          return (
+            <div key={layer.name} className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Icon className="w-3.5 h-3.5" />
+                  {layer.name}
+                </span>
+                <span className={cn("font-medium flex items-center gap-1", growthSemantic.color)}>
+                  {layer.growth > 0 && growthSemantic.emoji}
+                  {layer.growth > 0 ? `+${layer.growth}%` : `${layer.growth}%`}
+                </span>
+              </div>
+              
+              {/* Dual progress bar */}
+              <div className="relative h-3 bg-muted/30 rounded-full overflow-hidden">
+                {/* Baseline marker - dashed line */}
+                <div 
+                  className="absolute top-0 h-full border-r-2 border-dashed border-muted-foreground/50 z-10"
+                  style={{ left: `${Math.min(layer.baseline, 100)}%` }}
+                />
+                {/* Baseline fill - grey */}
+                <div 
+                  className="absolute top-0 h-full bg-muted-foreground/20 rounded-full"
+                  style={{ width: `${layer.baseline}%` }}
+                />
+                {/* Current fill - colored */}
+                <div 
+                  className={cn("absolute top-0 h-full rounded-full transition-all duration-500", layer.colorClass)}
+                  style={{ width: `${layer.current}%` }}
+                />
+              </div>
+              
+              {/* Labels */}
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>起点 {layer.baseline}%</span>
+                <span className={layer.current > layer.baseline ? 'text-foreground font-medium' : ''}>
+                  当前 {layer.current}%
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
-        {/* Hand */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5">
-              <span className="text-sm">{fourPoorRichConfig.hand.poorEmoji}</span>
-              {fourPoorRichConfig.hand.poorName}
-            </span>
-            <span className="text-muted-foreground">→</span>
-            <span className="flex items-center gap-1.5">
-              <span className="text-sm">{fourPoorRichConfig.hand.richEmoji}</span>
-              {fourPoorRichConfig.hand.richName}
-            </span>
-            <span className="font-medium" style={{ color: fourPoorRichConfig.hand.color }}>
-              {transformationRates.hand}%
-            </span>
-          </div>
-          <Progress value={transformationRates.hand} className="h-1.5" />
+      {/* Growth Insight Summary */}
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-lg p-3 border border-emerald-200/50 space-y-2">
+        <div className="text-xs font-medium text-emerald-800 dark:text-emerald-200 flex items-center gap-1.5">
+          ✨ 成长亮点
         </div>
-
-        {/* Eye */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5">
-              <span className="text-sm">{fourPoorRichConfig.eye.poorEmoji}</span>
-              {fourPoorRichConfig.eye.poorName}
-            </span>
-            <span className="text-muted-foreground">→</span>
-            <span className="flex items-center gap-1.5">
-              <span className="text-sm">{fourPoorRichConfig.eye.richEmoji}</span>
-              {fourPoorRichConfig.eye.richName}
-            </span>
-            <span className="font-medium" style={{ color: fourPoorRichConfig.eye.color }}>
-              {transformationRates.eye}%
-            </span>
-          </div>
-          <Progress value={transformationRates.eye} className="h-1.5" />
-        </div>
-
-        {/* Heart */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5">
-              <span className="text-sm">{fourPoorRichConfig.heart.poorEmoji}</span>
-              {fourPoorRichConfig.heart.poorName}
-            </span>
-            <span className="text-muted-foreground">→</span>
-            <span className="flex items-center gap-1.5">
-              <span className="text-sm">{fourPoorRichConfig.heart.richEmoji}</span>
-              {fourPoorRichConfig.heart.richName}
-            </span>
-            <span className="font-medium" style={{ color: fourPoorRichConfig.heart.color }}>
-              {transformationRates.heart}%
-            </span>
-          </div>
-          <Progress value={transformationRates.heart} className="h-1.5" />
+        <div className="text-xs text-emerald-700 dark:text-emerald-300 space-y-1">
+          {fastestLayer.growth > 0 ? (
+            <p>
+              🎯 <strong>{fastestLayer.name}</strong>成长最快，已提升{fastestLayer.growth}%！
+              {getGrowthSemantic(fastestLayer.growth).label}
+            </p>
+          ) : (
+            <p>🌱 觉察之旅刚刚开始，每天的练习都在积累改变的力量</p>
+          )}
+          {needsWorkLayer.current < 50 && needsWorkLayer.name !== fastestLayer.name && (
+            <p className="text-emerald-600/80 dark:text-emerald-400/80">
+              💡 <strong>{needsWorkLayer.name}</strong>是深层突破的关键，持续觉察会有惊喜
+            </p>
+          )}
         </div>
       </div>
 
-      {/* AI Insight - 简化版 */}
-      <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-lg p-3 border border-amber-200/50">
-        <div className="text-xs space-y-1">
-          <span className="font-medium text-amber-800 dark:text-amber-200">💬 成长小结</span>
-          <p className="text-amber-700 dark:text-amber-300">
-            {avgFourPoorRate >= 60 ? (
-              <>你的财富能量正在快速转化！保持每日觉察，新模式正在稳固。</>
-            ) : avgFourPoorRate >= 30 ? (
-              <>觉察之旅已启程，{baseline.dominantPoorName}模式开始松动。每一天的练习都在累积改变。</>
-            ) : (
-              <>种子已经种下，持续觉察会带来意想不到的转变。相信这个过程。</>
-            )}
-          </p>
-        </div>
-      </div>
+      {/* Collapsible Radar Chart */}
+      <Collapsible open={showRadar} onOpenChange={setShowRadar}>
+        <CollapsibleTrigger className="w-full flex items-center justify-center gap-1 text-xs text-primary hover:underline py-1">
+          {showRadar ? (
+            <>收起雷达图 <ChevronUp className="w-3 h-3" /></>
+          ) : (
+            <>展开雷达图对比 <ChevronDown className="w-3 h-3" /></>
+          )}
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="space-y-2 mt-2">
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                  <PolarGrid stroke="hsl(var(--border))" />
+                  <PolarAngleAxis 
+                    dataKey="dimension" 
+                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <PolarRadiusAxis 
+                    angle={90} 
+                    domain={[0, 100]} 
+                    tick={{ fontSize: 9 }}
+                    tickCount={5}
+                  />
+                  <Radar
+                    name="觉醒起点"
+                    dataKey="觉醒起点"
+                    stroke="hsl(var(--muted-foreground))"
+                    fill="hsl(var(--muted-foreground))"
+                    fillOpacity={0.2}
+                    strokeWidth={2}
+                  />
+                  <Radar
+                    name="当前觉醒"
+                    dataKey="当前觉醒"
+                    stroke="hsl(var(--primary))"
+                    fill="hsl(var(--primary))"
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                  />
+                  <Legend 
+                    wrapperStyle={{ fontSize: '11px' }}
+                    iconSize={8}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="text-[10px] text-center text-muted-foreground">
+              灰色区域为觉醒起点，蓝色区域为当前觉醒
+            </p>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 
-  // Embedded mode: no wrapper
   if (embedded) {
     return content;
   }
 
-  // Standalone mode: with Card wrapper
   return (
     <Card className="shadow-sm overflow-hidden">
       <CardHeader className="pb-2 pt-3 px-4">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-primary" />
-          从测评到觉醒：我的成长轨迹
+          成长对比
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -379,11 +375,10 @@ export function GrowthComparisonCard({
               <TooltipContent side="top" className="max-w-[280px] p-3">
                 <div className="text-xs space-y-1.5">
                   <p className="font-medium">数据说明</p>
-                  <p className="text-muted-foreground">成长对比展示觉醒起点与当前觉醒状态的差异：</p>
                   <ul className="text-muted-foreground list-disc pl-3 space-y-0.5">
-                    <li>觉醒起点：测评转换后的初始觉醒分数 (100-卡点分)</li>
-                    <li>觉醒指数：(平均分-1)/4×100，分数越高觉醒越深</li>
-                    <li>雷达图：灰色为觉醒起点，蓝色为当前觉醒</li>
+                    <li>Day 0：首次测评的觉醒起点</li>
+                    <li>Day {currentDay}：当前觉醒指数</li>
+                    <li>三层对比：每层的起点→当前变化</li>
                   </ul>
                 </div>
               </TooltipContent>
