@@ -33,6 +33,7 @@ interface TodayTaskHubProps {
   onInviteClick: () => void;
   onChallengeClick?: () => void;
   onActionClick?: () => void;
+  onGraduationClick?: () => void;
   hasChallenge?: boolean;
   hasAction?: boolean;
   className?: string;
@@ -40,6 +41,10 @@ interface TodayTaskHubProps {
   userMode?: UserMode;
   cycleWeek?: number;
   cycleMeditationDay?: number;
+  // Graduation report
+  currentDay?: number;
+  hasGraduationReport?: boolean;
+  graduationReportViewed?: boolean;
 }
 
 export function TodayTaskHub({
@@ -55,12 +60,16 @@ export function TodayTaskHub({
   onInviteClick,
   onChallengeClick,
   onActionClick,
+  onGraduationClick,
   hasChallenge = false,
   hasAction = false,
   className,
   userMode = 'active',
   cycleWeek = 1,
   cycleMeditationDay = 1,
+  currentDay = 1,
+  hasGraduationReport = false,
+  graduationReportViewed = false,
 }: TodayTaskHubProps) {
   
   // Build tasks based on user mode
@@ -78,10 +87,14 @@ export function TodayTaskHub({
     onInviteClick,
     onChallengeClick,
     onActionClick,
+    onGraduationClick,
     hasChallenge,
     hasAction,
     cycleWeek,
     cycleMeditationDay,
+    currentDay,
+    hasGraduationReport,
+    graduationReportViewed,
   });
 
   const completedCount = tasks.filter(t => t.completed).length;
@@ -243,10 +256,14 @@ function buildTaskList({
   onInviteClick,
   onChallengeClick,
   onActionClick,
+  onGraduationClick,
   hasChallenge,
   hasAction,
   cycleWeek,
   cycleMeditationDay,
+  currentDay,
+  hasGraduationReport,
+  graduationReportViewed,
 }: {
   userMode: UserMode;
   meditationCompleted: boolean;
@@ -261,14 +278,18 @@ function buildTaskList({
   onInviteClick: () => void;
   onChallengeClick?: () => void;
   onActionClick?: () => void;
+  onGraduationClick?: () => void;
   hasChallenge: boolean;
   hasAction: boolean;
   cycleWeek: number;
   cycleMeditationDay: number;
+  currentDay: number;
+  hasGraduationReport: boolean;
+  graduationReportViewed: boolean;
 }): Task[] {
   // Active mode (7-day training camp)
   if (userMode === 'active') {
-    return [
+    const baseTasks: Task[] = [
       {
         id: 'meditation',
         title: '冥想课程',
@@ -333,6 +354,23 @@ function buildTaskList({
         action: onInviteClick,
       },
     ];
+    
+    // Add graduation task at top when Day >= 7
+    if (currentDay >= 7 && onGraduationClick) {
+      const graduationTask: Task = {
+        id: 'graduation',
+        title: hasGraduationReport ? '查看毕业报告' : '🎓 生成毕业报告',
+        description: hasGraduationReport ? '查看你的7天成长总结' : '完成训练营，生成专属成长报告',
+        icon: '🎓',
+        completed: graduationReportViewed,
+        points: hasGraduationReport ? 0 : 30,
+        action: onGraduationClick,
+        highlight: !hasGraduationReport,
+      };
+      return [graduationTask, ...baseTasks];
+    }
+    
+    return baseTasks;
   }
 
   // Graduate mode (completed camp, not partner)
