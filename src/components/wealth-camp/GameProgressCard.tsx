@@ -7,12 +7,14 @@ import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
 import { useEnsureAwakeningProgress } from '@/hooks/useEnsureAwakeningProgress';
 import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
 import { awakeningLevels, calculateDailyPotentialPoints } from '@/config/awakeningLevelConfig';
+import { cardBaseStyles } from '@/config/cardStyleConfig';
 import { Gamepad2, TrendingUp, Loader2, ArrowRight, Info, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AwakeningRulesDialog from './AwakeningRulesDialog';
 import { LevelMilestoneTooltip } from './LevelMilestoneTooltip';
 import { GoalCarousel } from './GoalCarousel';
 import AwakeningStatusBar from './AwakeningStatusBar';
+import { cn } from '@/lib/utils';
 import {
   Tooltip,
   TooltipContent,
@@ -133,10 +135,12 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white border-0 overflow-hidden relative">
+      <Card className={cn(
+        cardBaseStyles.container,
+        "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white border-0 overflow-hidden relative"
+      )}>
         {/* 装饰性背景 */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
-        
         <CardHeader className="pb-2 relative z-10">
           <CardTitle className="flex items-center justify-between text-lg">
             <motion.div 

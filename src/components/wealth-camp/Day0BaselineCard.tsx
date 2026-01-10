@@ -8,6 +8,8 @@ import { zhCN } from 'date-fns/locale';
 import { getAwakeningColor } from '@/config/wealthStyleConfig';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { cardBaseStyles } from '@/config/cardStyleConfig';
 
 // 主导卡点类型映射
 const dominantTypeLabels: Record<string, { name: string; emoji: string }> = {
@@ -58,7 +60,10 @@ export const Day0BaselineCard = ({ onClick, showReportLink = true }: Day0Baselin
       transition={{ duration: 0.4 }}
     >
       <Card 
-        className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200/50 cursor-pointer hover:shadow-md transition-shadow"
+        className={cn(
+          cardBaseStyles.container,
+          "bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20 border-amber-200/50 dark:border-amber-800/40 cursor-pointer"
+        )}
         onClick={onClick}
       >
         <CardContent className="p-4 space-y-4">

@@ -42,6 +42,8 @@ interface WealthInviteCardDialogProps {
   trigger?: React.ReactNode;
   defaultTab?: CardTab;
   onGenerate?: () => void;
+  /** Callback when user has viewed the dialog for 3+ seconds (for task completion) */
+  onViewComplete?: () => void;
   campId?: string;
   currentDay?: number;
   open?: boolean;
@@ -149,12 +151,14 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   trigger,
   defaultTab = 'camp',
   onGenerate,
+  onViewComplete,
   campId,
   currentDay: propCurrentDay,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [viewCompleted, setViewCompleted] = useState(false);
   
   // Support both controlled and uncontrolled modes
   const isControlled = controlledOpen !== undefined;
@@ -208,10 +212,28 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const assessmentUrl = getAssessmentUrl();
   const campUrl = getCampUrl();
 
+  // 3-second view completion timer for task tracking
+  useEffect(() => {
+    if (!open || viewCompleted) return;
+    
+    const timer = setTimeout(() => {
+      setViewCompleted(true);
+      onViewComplete?.();
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [open, viewCompleted, onViewComplete]);
+
+  // Reset viewCompleted when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setViewCompleted(false);
+    }
+  }, [open]);
+
   // Fetch user profile and camp progress
   useEffect(() => {
     if (!open) return;
-    
     const fetchUserInfo = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;

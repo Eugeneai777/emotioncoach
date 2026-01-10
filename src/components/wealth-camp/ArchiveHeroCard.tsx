@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Target, Heart, Brain, TrendingUp, TrendingDown, Sparkles, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScoreStars, getAwakeningLevel } from '@/components/ui/score-stars';
+import { cardBaseStyles } from '@/config/cardStyleConfig';
 import {
   Tooltip,
   TooltipContent,
@@ -74,7 +75,8 @@ export function ArchiveHeroCard({
 
   return (
     <Card className={cn(
-      "bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 text-white border-0 shadow-lg overflow-hidden",
+      cardBaseStyles.container,
+      "bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 text-white border-0 overflow-hidden",
       className
     )}>
       <CardContent className="p-5">

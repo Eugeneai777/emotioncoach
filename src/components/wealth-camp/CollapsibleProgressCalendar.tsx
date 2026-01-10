@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, Flame, Calendar, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cardBaseStyles } from '@/config/cardStyleConfig';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -187,10 +188,11 @@ export function CollapsibleProgressCalendar({
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded} className={className}>
       <div className={cn(
-        "rounded-xl border transition-all duration-300",
+        cardBaseStyles.container,
+        "transition-all duration-300",
         activeMakeupDay 
           ? "bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 border-amber-300 dark:border-amber-700 shadow-md"
-          : "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200 dark:border-amber-800"
+          : "bg-gradient-to-br from-amber-50/80 to-orange-50/60 dark:from-amber-950/30 dark:to-orange-950/20 border-amber-200/60 dark:border-amber-800/40"
       )}>
         {/* Collapsed Header - Always visible */}
         <CollapsibleTrigger asChild>
