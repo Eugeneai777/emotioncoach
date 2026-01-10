@@ -35,7 +35,7 @@ interface AwakeningArchiveTabProps {
 
 export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick }: AwakeningArchiveTabProps) {
   const navigate = useNavigate();
-  const { stats, entries: fullEntries, awakeningIndex } = useWealthJournalEntries({ campId });
+  const { stats, entries: fullEntries, awakeningIndex, peakIndex, currentAvg } = useWealthJournalEntries({ campId });
   const { profile: wealthProfile, evolutionInsight } = useProfileEvolution(campId);
 
   // Fetch camp data for calendar
@@ -82,6 +82,8 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
         currentDay={currentDay}
         totalDays={camp?.duration_days || 7}
         consecutiveDays={consecutiveDays}
+        peakIndex={peakIndex}
+        currentAvg={currentAvg}
       />
 
       {/* 第二层：今日觉醒快照 */}

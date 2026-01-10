@@ -178,15 +178,40 @@ export function useWealthJournalEntries(options: UseWealthJournalEntriesOptions 
     }));
   }, [entries]);
 
-  // Unified awakening index (0-100 scale) - single source of truth
-  const awakeningIndex = useMemo(() => {
-    if (!entries || entries.length === 0) return 0;
-    const avgBehavior = entries.reduce((sum, e) => sum + (e.behavior_score || 0), 0) / entries.length;
-    const avgEmotion = entries.reduce((sum, e) => sum + (e.emotion_score || 0), 0) / entries.length;
-    const avgBelief = entries.reduce((sum, e) => sum + (e.belief_score || 0), 0) / entries.length;
-    // Convert 1-5 scale to 0-100 scale: (avg - 1) / 4 * 100
-    const combinedAvg = (avgBehavior + avgEmotion + avgBelief) / 3;
-    return Math.round(((combinedAvg - 1) / 4) * 100);
+  // Unified awakening index (0-100 scale) - 使用"最佳3天"计算，让用户感受到进步被记住
+  const { awakeningIndex, peakIndex, currentAvg } = useMemo(() => {
+    if (!entries || entries.length === 0) return { awakeningIndex: 0, peakIndex: 0, currentAvg: 0 };
+    
+    // 计算每天的综合分（只计算有数据的天）
+    const dailyScores = entries
+      .filter(e => (e.behavior_score || 0) > 0 || (e.emotion_score || 0) > 0 || (e.belief_score || 0) > 0)
+      .map(e => {
+        const b = e.behavior_score || 0;
+        const em = e.emotion_score || 0;
+        const be = e.belief_score || 0;
+        const validScores = [b, em, be].filter(s => s > 0);
+        return validScores.length > 0 ? validScores.reduce((a, b) => a + b, 0) / validScores.length : 0;
+      });
+    
+    if (dailyScores.length === 0) return { awakeningIndex: 0, peakIndex: 0, currentAvg: 0 };
+    
+    // 方案：最佳3天平均（展示潜力峰值，避免单日波动导致"倒退"感）
+    const sortedScores = [...dailyScores].sort((a, b) => b - a);
+    const bestDays = sortedScores.slice(0, Math.min(3, sortedScores.length));
+    const peakAvg = bestDays.reduce((a, b) => a + b, 0) / bestDays.length;
+    
+    // 当前平均值（用于对比显示）
+    const currentAvgScore = dailyScores.reduce((a, b) => a + b, 0) / dailyScores.length;
+    
+    // 使用峰值作为主要指数（让用户感受到进步被记住）
+    const peakIndexValue = Math.round(((peakAvg - 1) / 4) * 100);
+    const currentAvgIndex = Math.round(((currentAvgScore - 1) / 4) * 100);
+    
+    return { 
+      awakeningIndex: peakIndexValue, // 主指数使用峰值
+      peakIndex: peakIndexValue,
+      currentAvg: currentAvgIndex 
+    };
   }, [entries]);
 
   return {
@@ -194,6 +219,8 @@ export function useWealthJournalEntries(options: UseWealthJournalEntriesOptions 
     stats,
     chartData,
     awakeningIndex,
+    peakIndex,
+    currentAvg,
     isLoading,
     error,
     behaviorTypeNames,
