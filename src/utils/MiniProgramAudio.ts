@@ -16,7 +16,15 @@ declare global {
         getEnv: (callback: (res: { miniprogram: boolean }) => void) => void;
       };
       getRecorderManager?: () => any;
-      createInnerAudioContext?: () => any;
+      createInnerAudioContext?: () => {
+        src: string;
+        obeyMuteSwitch: boolean;
+        play: () => void;
+        stop: () => void;
+        onEnded: (callback: () => void) => void;
+        offEnded: () => void;
+        onError: (callback: (error: any) => void) => void;
+      };
       authorize?: (options: any) => void;
       canIUse?: (api: string) => boolean;
       arrayBufferToBase64?: (buffer: ArrayBuffer) => string;
@@ -30,7 +38,11 @@ declare global {
           fail?: (err: { errMsg?: string }) => void;
         }) => void;
         readFile: (options: any) => void;
-        unlink: (options: any) => void;
+        unlink: (options: {
+          filePath: string;
+          success?: () => void;
+          fail?: (err: { errMsg?: string }) => void;
+        }) => void;
       };
       env?: {
         USER_DATA_PATH: string;
@@ -319,17 +331,14 @@ export class MiniProgramAudioClient {
     const wx = window.wx;
     if (!wx?.createInnerAudioContext) {
       console.warn('[MiniProgramAudio] wx.createInnerAudioContext not available');
+      // Web 环境不需要 audioPlayer，使用 Web Audio API
       return;
     }
 
     this.audioPlayer = wx.createInnerAudioContext();
     this.audioPlayer.obeyMuteSwitch = false; // 不受静音开关影响
 
-    this.audioPlayer.onEnded(() => {
-      this.isPlaying = false;
-      this.playNextInQueue();
-    });
-
+    // 注意：onEnded 在 playNextInQueue 中动态绑定，这里只绑定错误处理
     this.audioPlayer.onError((error: any) => {
       console.error('[MiniProgramAudio] Audio player error:', error);
       this.isPlaying = false;
@@ -393,7 +402,7 @@ export class MiniProgramAudioClient {
   }
 
   private playNextInQueue(): void {
-    if (this.audioQueue.length === 0 || !this.audioPlayer) {
+    if (this.audioQueue.length === 0) {
       this.isPlaying = false;
       return;
     }
@@ -409,7 +418,7 @@ export class MiniProgramAudioClient {
     try {
       const wx = window.wx;
       
-      if (wx?.getFileSystemManager && wx?.env?.USER_DATA_PATH) {
+      if (wx?.getFileSystemManager && wx?.env?.USER_DATA_PATH && this.audioPlayer) {
         // 小程序环境：将 PCM 转换为 WAV 格式后播放
         const fs = wx.getFileSystemManager();
         const pcmBuffer = wx.base64ToArrayBuffer?.(base64Audio);
@@ -425,23 +434,30 @@ export class MiniProgramAudioClient {
         const wavBuffer = this.pcmToWav(pcmBuffer, 24000, 1, 16);
         const tempPath = `${wx.env.USER_DATA_PATH}/audio_${Date.now()}.wav`;
         
+        // 先清理之前的事件监听器，避免重复绑定
+        this.audioPlayer.offEnded();
+        
         fs.writeFile({
           filePath: tempPath,
           data: wavBuffer,
           encoding: 'binary',
           success: () => {
             if (this.audioPlayer) {
-              this.audioPlayer.src = tempPath;
-              this.audioPlayer.play();
-              
-              // 播放结束后删除临时文件，避免存储累积
+              // 绑定播放结束事件
               this.audioPlayer.onEnded(() => {
+                // 删除临时文件
                 fs.unlink({
                   filePath: tempPath,
                   success: () => {},
                   fail: () => {}
                 });
+                // 继续播放队列
+                this.isPlaying = false;
+                this.playNextInQueue();
               });
+              
+              this.audioPlayer.src = tempPath;
+              this.audioPlayer.play();
             }
           },
           fail: (err: { errMsg?: string }) => {
