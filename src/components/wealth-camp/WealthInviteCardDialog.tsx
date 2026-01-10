@@ -15,11 +15,14 @@ import WealthAssessmentShareCard from './WealthAssessmentShareCard';
 import WealthCampShareCard from './WealthCampShareCard';
 import WealthAwakeningShareCard from './WealthAwakeningShareCard';
 import WealthMilestoneShareCard from './WealthMilestoneShareCard';
+import GraduationShareCard from './GraduationShareCard';
 import EnhancedGrowthPosterCard from './EnhancedGrowthPosterCard';
 import AIAnalysisShareCard from '@/components/wealth-block/AIAnalysisShareCard';
 import AssessmentValueShareCard from '@/components/wealth-block/AssessmentValueShareCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
+import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
+import { useUserAchievements } from '@/hooks/useUserAchievements';
 
 interface UserInfo {
   avatarUrl?: string;
@@ -173,10 +176,15 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const [selectedAwakeningType, setSelectedAwakeningType] = useState<'behavior' | 'emotion' | 'belief'>('belief');
   const [partnerInfo, setPartnerInfo] = useState<{ partnerId: string; partnerCode: string } | null>(null);
   
+  // Get awakening progress for graduation card
+  const { progress: awakeningProgress, currentLevel } = useAwakeningProgress();
+  const { userAchievements } = useUserAchievements();
+  
   const assessmentCardRef = useRef<HTMLDivElement>(null);
   const campCardRef = useRef<HTMLDivElement>(null);
   const awakeningCardRef = useRef<HTMLDivElement>(null);
   const milestoneCardRef = useRef<HTMLDivElement>(null);
+  const graduationCardRef = useRef<HTMLDivElement>(null);
   const growthCardRef = useRef<HTMLDivElement>(null);
   const aiAnalysisCardRef = useRef<HTMLDivElement>(null);
   const valueCardRef = useRef<HTMLDivElement>(null);
@@ -190,6 +198,18 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     aiMessage?: string;
     consecutiveDays: number;
     peakIndex?: number;
+  } | null>(null);
+  
+  // Camp summary data for graduation card
+  const [campSummaryData, setCampSummaryData] = useState<{
+    startAwakening?: number;
+    endAwakening?: number;
+    awakeningGrowth?: number;
+    behaviorGrowth?: number;
+    emotionGrowth?: number;
+    beliefGrowth?: number;
+    biggest_breakthrough?: string;
+    ai_coach_message?: string;
   } | null>(null);
 
   // Generate share URLs with partner tracking if available
@@ -389,6 +409,29 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         }
       }
 
+      // Fetch camp summary for graduation card
+      if (campId) {
+        const { data: summary } = await supabase
+          .from('camp_summaries')
+          .select('start_awakening, end_awakening, awakening_growth, behavior_growth, emotion_growth, belief_growth, biggest_breakthrough, ai_coach_message')
+          .eq('camp_id', campId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (summary) {
+          setCampSummaryData({
+            startAwakening: summary.start_awakening ?? undefined,
+            endAwakening: summary.end_awakening ?? undefined,
+            awakeningGrowth: summary.awakening_growth ?? undefined,
+            behaviorGrowth: summary.behavior_growth ?? undefined,
+            emotionGrowth: summary.emotion_growth ?? undefined,
+            beliefGrowth: summary.belief_growth ?? undefined,
+            biggest_breakthrough: summary.biggest_breakthrough ?? undefined,
+            ai_coach_message: summary.ai_coach_message ?? undefined,
+          });
+        }
+      }
+
       // Proxy third-party avatar URLs
       const proxiedAvatarUrl = getProxiedAvatarUrl(profile?.avatar_url);
 
@@ -423,7 +466,9 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       case 'assessment': return assessmentCardRef;
       case 'camp': return campCardRef;
       case 'awakening': return awakeningCardRef;
-      case 'milestone': return milestoneCardRef;
+      case 'milestone': 
+        // Use graduation card ref for Day 7+ users
+        return (userInfo.currentDay || 1) >= 7 ? graduationCardRef : milestoneCardRef;
       case 'growth': return growthCardRef;
       case 'aianalysis': return aiAnalysisCardRef;
       case 'value': return valueCardRef;
@@ -436,7 +481,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       case 'assessment': return '财富卡点测评邀请卡';
       case 'camp': return '7天财富训练营邀请卡';
       case 'awakening': return '财富觉醒分享卡';
-      case 'milestone': return '财富训练营里程碑';
+      case 'milestone': return (userInfo.currentDay || 1) >= 7 ? '财富觉醒毕业证书' : '财富训练营里程碑';
       case 'growth': return '财富成长海报';
       case 'aianalysis': return 'AI智能分析报告';
       case 'value': return '财富测评价值卡';
@@ -758,16 +803,44 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 
           <TabsContent value="milestone" className="mt-4">
             <div className="flex justify-center">
-              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
-                <WealthMilestoneShareCard
-                  ref={milestoneCardRef}
-                  completedDays={userInfo.currentDay || 1}
-                  totalDays={userInfo.totalDays || 7}
-                  coreInsight={awakeningData?.beliefAwakening || awakeningData?.newBelief}
-                  shareUrl={campUrl}
-                  avatarUrl={userInfo.avatarUrl}
-                  displayName={userInfo.displayName}
-                />
+              <div className="transform scale-[0.8] origin-top" style={{ marginBottom: '-20%' }}>
+                {/* Show enhanced graduation card for Day 7+ users */}
+                {(userInfo.currentDay || 1) >= 7 ? (
+                  <GraduationShareCard
+                    ref={graduationCardRef}
+                    displayName={userInfo.displayName}
+                    avatarUrl={userInfo.avatarUrl}
+                    shareUrl={campUrl}
+                    totalDays={userInfo.totalDays || 7}
+                    journalCount={userInfo.currentDay || 7}
+                    awakeningGrowth={campSummaryData?.awakeningGrowth ?? (awakeningProgress?.current_awakening ?? 0) - (awakeningProgress?.baseline_awakening ?? 0)}
+                    startAwakening={campSummaryData?.startAwakening ?? awakeningProgress?.baseline_awakening ?? 45}
+                    endAwakening={campSummaryData?.endAwakening ?? awakeningProgress?.current_awakening ?? 78}
+                    consecutiveStreak={awakeningProgress?.consecutive_days ?? 0}
+                    behaviorGrowth={campSummaryData?.behaviorGrowth ?? 0}
+                    emotionGrowth={campSummaryData?.emotionGrowth ?? 0}
+                    beliefGrowth={campSummaryData?.beliefGrowth ?? 0}
+                    currentLevel={currentLevel?.level ?? 4}
+                    levelName={currentLevel?.name ?? '信念转化者'}
+                    levelIcon={currentLevel?.icon ?? '⭐'}
+                    totalPoints={awakeningProgress?.total_points ?? 0}
+                    earnedAchievements={userAchievements?.map(a => ({ 
+                      icon: a.achievement_icon || '🏆', 
+                      name: a.achievement_name 
+                    })) || []}
+                    coreBreakthrough={campSummaryData?.biggest_breakthrough}
+                  />
+                ) : (
+                  <WealthMilestoneShareCard
+                    ref={milestoneCardRef}
+                    completedDays={userInfo.currentDay || 1}
+                    totalDays={userInfo.totalDays || 7}
+                    coreInsight={awakeningData?.beliefAwakening || awakeningData?.newBelief}
+                    shareUrl={campUrl}
+                    avatarUrl={userInfo.avatarUrl}
+                    displayName={userInfo.displayName}
+                  />
+                )}
               </div>
             </div>
           </TabsContent>
