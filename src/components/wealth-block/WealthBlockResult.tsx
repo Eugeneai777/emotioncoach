@@ -221,7 +221,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   };
 
   return (
-    <div className="space-y-3 pb-20 relative">
+    <div className="space-y-2.5 sm:space-y-3 pb-16 sm:pb-20 relative px-0.5">
       {/* 背景装饰 */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,hsl(var(--primary)/0.4),transparent_50%)]" />
@@ -245,47 +245,47 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
       />
 
       {/* 分隔装饰 */}
-      <div className="flex items-center gap-4 py-1">
+      <div className="flex items-center gap-3 sm:gap-4 py-0.5 sm:py-1">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-        <span className="text-xs text-muted-foreground">✧</span>
+        <span className="text-[10px] sm:text-xs text-muted-foreground">✧</span>
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       </div>
 
-      {/* 财富反应模式结果卡片 - 精简版 */}
+      {/* 财富反应模式结果卡片 - 移动端优化 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
       >
         <Card className="overflow-hidden border-0 shadow-xl">
-          <div className={cn("bg-gradient-to-br p-4 text-white", pattern.color)}>
-            {/* 头部 */}
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
-                <span className="text-4xl">{pattern.emoji}</span>
+          <div className={cn("bg-gradient-to-br p-3 sm:p-4 text-white", pattern.color)}>
+            {/* 头部 - 移动端紧凑 */}
+            <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+              <div className="p-2 sm:p-3 bg-white/20 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+                <span className="text-3xl sm:text-4xl">{pattern.emoji}</span>
               </div>
-              <div className="flex-1">
-                <p className="text-white/80 text-xs">🧭 你的财富反应模式</p>
-                <h2 className="text-2xl font-bold">【{pattern.name}】</h2>
-                <p className="text-white/90 text-sm mt-0.5">{pattern.tagline}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-white/80 text-[10px] sm:text-xs">🧭 你的财富反应模式</p>
+                <h2 className="text-xl sm:text-2xl font-bold truncate">【{pattern.name}】</h2>
+                <p className="text-white/90 text-xs sm:text-sm mt-0.5 line-clamp-1">{pattern.tagline}</p>
               </div>
             </div>
             
             {/* 说明文字 */}
-            <div className="p-3 bg-white/15 rounded-xl mb-3">
-              <p className="text-white/95 text-sm leading-relaxed">
+            <div className="p-2.5 sm:p-3 bg-white/15 rounded-lg sm:rounded-xl mb-2.5 sm:mb-3">
+              <p className="text-white/95 text-xs sm:text-sm leading-relaxed">
                 📌 这不是性格，而是你在面对<span className="font-semibold">钱、机会、价格、收入</span>时的自动反应。
               </p>
             </div>
             
-            {/* 你的状态 - 标签式布局 */}
-            <div className="mb-3">
-              <h4 className="text-white/90 text-xs font-semibold mb-2 flex items-center gap-1">
+            {/* 你的状态 - 标签式布局，移动端换行 */}
+            <div className="mb-2.5 sm:mb-3">
+              <h4 className="text-white/90 text-[10px] sm:text-xs font-semibold mb-1.5 sm:mb-2 flex items-center gap-1">
                 💬 你的状态
               </h4>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {pattern.state.map((item, index) => (
-                  <span key={index} className="bg-white/20 px-2.5 py-1 rounded-full text-xs text-white/95 backdrop-blur-sm">
+                  <span key={index} className="bg-white/20 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs text-white/95 backdrop-blur-sm">
                     {item}
                   </span>
                 ))}
@@ -293,22 +293,22 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
             </div>
             
             {/* 系统建议 */}
-            <div className="p-3 bg-white/20 rounded-xl">
-              <h4 className="text-white text-sm font-semibold mb-1 flex items-center gap-2">
+            <div className="p-2.5 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl">
+              <h4 className="text-white text-xs sm:text-sm font-semibold mb-1 flex items-center gap-2">
                 💡 系统建议
               </h4>
-              <p className="text-white/95 text-sm">{pattern.suggestion}</p>
-              <p className="text-white/80 text-xs mt-1 opacity-80">训练营重点：{pattern.trainingFocus}</p>
+              <p className="text-white/95 text-xs sm:text-sm">{pattern.suggestion}</p>
+              <p className="text-white/80 text-[10px] sm:text-xs mt-1 opacity-80">训练营重点：{pattern.trainingFocus}</p>
             </div>
           </div>
         </Card>
       </motion.div>
 
-      {/* 三层深度分析标题 + 展开/收起按钮 */}
-      <div className="flex items-center justify-between py-2">
+      {/* 三层深度分析标题 + 展开/收起按钮 - 移动端优化 */}
+      <div className="flex items-center justify-between py-1.5 sm:py-2">
         <div>
-          <h3 className="text-lg font-bold text-foreground">📊 三层深度诊断</h3>
-          <p className="text-sm text-muted-foreground">行为 → 情绪 → 信念，层层递进</p>
+          <h3 className="text-base sm:text-lg font-bold text-foreground">📊 三层深度诊断</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">行为 → 情绪 → 信念，层层递进</p>
         </div>
         <Button
           variant="ghost"
@@ -320,17 +320,17 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
               setOpenLayers(["behavior", "emotion", "belief"]);
             }
           }}
-          className="text-xs text-muted-foreground"
+          className="text-[10px] sm:text-xs text-muted-foreground h-7 sm:h-8 px-2 sm:px-3"
         >
           {openLayers.length === 3 ? (
             <>
-              <ChevronUp className="w-4 h-4 mr-1" />
-              收起全部
+              <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
+              收起
             </>
           ) : (
             <>
-              <ChevronDown className="w-4 h-4 mr-1" />
-              展开全部
+              <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
+              展开
             </>
           )}
         </Button>

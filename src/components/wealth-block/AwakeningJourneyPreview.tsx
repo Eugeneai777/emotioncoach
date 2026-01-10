@@ -48,30 +48,30 @@ export function AwakeningJourneyPreview({
       transition={{ delay: 0.15 }}
     >
       <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-amber-50/80 via-orange-50/60 to-rose-50/40 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-rose-950/10">
-        <CardContent className="p-4 space-y-4">
+        <CardContent className="p-3 sm:p-4 space-y-3">
           {/* 头部 - 简化 */}
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-full bg-amber-100 dark:bg-amber-900/50">
-              <MapPin className="h-4 w-4 text-amber-600" />
+              <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600" />
             </div>
-            <h3 className="font-bold text-foreground text-sm">📍 你的财富觉醒起点</h3>
+            <h3 className="font-bold text-foreground text-xs sm:text-sm">📍 你的财富觉醒起点</h3>
           </div>
 
-          {/* 觉醒旅程：起点突出 + 目标虚化 */}
-          <div className="flex items-center gap-3">
+          {/* 觉醒旅程：起点突出 + 目标虚化 - 移动端优化 */}
+          <div className="flex items-center justify-between gap-2 sm:gap-3">
             {/* 起点 - 突出强调 */}
             <motion.div 
-              className="relative flex-1 bg-white dark:bg-white/10 rounded-2xl p-4 text-center border-2 border-amber-400 dark:border-amber-500 shadow-lg"
+              className="relative flex-1 max-w-[120px] sm:max-w-none bg-white dark:bg-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center border-2 border-amber-400 dark:border-amber-500 shadow-lg"
               animate={{ 
-                boxShadow: ['0 0 0 0 rgba(251, 191, 36, 0)', '0 0 0 8px rgba(251, 191, 36, 0.15)', '0 0 0 0 rgba(251, 191, 36, 0)']
+                boxShadow: ['0 0 0 0 rgba(251, 191, 36, 0)', '0 0 0 6px rgba(251, 191, 36, 0.15)', '0 0 0 0 rgba(251, 191, 36, 0)']
               }}
               transition={{ duration: 2.5, repeat: Infinity }}
             >
-              <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full shadow">
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-amber-500 text-white text-[9px] sm:text-[10px] font-bold rounded-full shadow whitespace-nowrap">
                 现在
               </div>
               <motion.div 
-                className="text-4xl font-bold tabular-nums"
+                className="text-3xl sm:text-4xl font-bold tabular-nums"
                 style={{ color: getAwakeningColor(awakeningStart) }}
                 initial={{ scale: 0.8 }}
                 animate={{ scale: 1 }}
@@ -79,43 +79,43 @@ export function AwakeningJourneyPreview({
               >
                 {awakeningStart}
               </motion.div>
-              <div className="text-xs text-muted-foreground font-medium">觉醒起点</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground font-medium">觉醒起点</div>
             </motion.div>
             
             {/* 箭头 */}
-            <ArrowRight className="w-5 h-5 text-muted-foreground/50 flex-shrink-0" />
+            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground/50 flex-shrink-0" />
             
             {/* 7天目标 - 虚化 */}
-            <div className="relative bg-white/40 dark:bg-white/5 rounded-xl p-3 text-center border border-dashed border-emerald-300 dark:border-emerald-600/50">
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-emerald-500/80 text-white text-[9px] font-medium rounded-full">
+            <div className="relative bg-white/40 dark:bg-white/5 rounded-lg sm:rounded-xl p-2 sm:p-3 text-center border border-dashed border-emerald-300 dark:border-emerald-600/50 flex-shrink-0">
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 sm:px-2 py-0.5 bg-emerald-500/80 text-white text-[8px] sm:text-[9px] font-medium rounded-full whitespace-nowrap">
                 7天后
               </div>
-              <div className="text-xl font-bold text-emerald-600/80 mt-1">{day7Target}+</div>
-              <div className="text-[10px] text-muted-foreground/70">目标</div>
+              <div className="text-lg sm:text-xl font-bold text-emerald-600/80 mt-1">{day7Target}+</div>
+              <div className="text-[9px] sm:text-[10px] text-muted-foreground/70">目标</div>
             </div>
             
             {/* 毕业目标 - 更虚化 */}
-            <div className="relative bg-white/30 dark:bg-white/5 rounded-xl p-3 text-center border border-dashed border-violet-300/60 dark:border-violet-600/30">
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-violet-500/60 text-white text-[9px] font-medium rounded-full whitespace-nowrap">
+            <div className="relative bg-white/30 dark:bg-white/5 rounded-lg sm:rounded-xl p-2 sm:p-3 text-center border border-dashed border-violet-300/60 dark:border-violet-600/30 flex-shrink-0">
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 sm:px-2 py-0.5 bg-violet-500/60 text-white text-[8px] sm:text-[9px] font-medium rounded-full whitespace-nowrap">
                 毕业
               </div>
-              <div className="flex items-center justify-center gap-1 mt-1">
-                <Target className="w-3 h-3 text-violet-400" />
-                <span className="text-lg font-bold text-violet-500/70">{graduateTarget}+</span>
+              <div className="flex items-center justify-center gap-0.5 sm:gap-1 mt-1">
+                <Target className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-violet-400" />
+                <span className="text-base sm:text-lg font-bold text-violet-500/70">{graduateTarget}+</span>
               </div>
-              <div className="text-[10px] text-muted-foreground/60">高觉醒</div>
+              <div className="text-[9px] sm:text-[10px] text-muted-foreground/60">高觉醒</div>
             </div>
           </div>
 
           {/* 三层基线 - 进度条简洁版 */}
-          <div className="space-y-2">
+          <div className="space-y-1.5 sm:space-y-2">
             {layers.map((layer) => (
-              <div key={layer.name} className="flex items-center gap-2">
-                <div className={cn("p-1 rounded", layer.bgColor, "dark:bg-opacity-30")}>
-                  <layer.icon className="w-3 h-3 text-foreground/70" />
+              <div key={layer.name} className="flex items-center gap-1.5 sm:gap-2">
+                <div className={cn("p-0.5 sm:p-1 rounded", layer.bgColor, "dark:bg-opacity-30")}>
+                  <layer.icon className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-foreground/70" />
                 </div>
-                <span className="text-xs text-muted-foreground w-8">{layer.name}</span>
-                <div className="flex-1 h-2 bg-muted/30 rounded-full overflow-hidden">
+                <span className="text-[10px] sm:text-xs text-muted-foreground w-6 sm:w-8">{layer.name}</span>
+                <div className="flex-1 h-1.5 sm:h-2 bg-muted/30 rounded-full overflow-hidden">
                   <motion.div
                     className={cn("h-full rounded-full", layer.color)}
                     initial={{ width: 0 }}
@@ -123,13 +123,13 @@ export function AwakeningJourneyPreview({
                     transition={{ delay: 0.4, duration: 0.6, ease: 'easeOut' }}
                   />
                 </div>
-                <span className="text-xs font-medium text-foreground/70 w-8 text-right">{layer.value}%</span>
+                <span className="text-[10px] sm:text-xs font-medium text-foreground/70 w-7 sm:w-8 text-right">{layer.value}%</span>
               </div>
             ))}
           </div>
 
           {/* 底部提示 - 极简 */}
-          <p className="text-[10px] text-muted-foreground/70 text-center">
+          <p className="text-[9px] sm:text-[10px] text-muted-foreground/70 text-center">
             💡 分数越高=觉醒越深，7天训练营助你突破卡点
           </p>
         </CardContent>
