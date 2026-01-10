@@ -18,10 +18,13 @@ import WealthInviteCardDialog from '@/components/wealth-camp/WealthInviteCardDia
 import { BackfillMemoriesButton } from '@/components/wealth-camp/BackfillMemoriesButton';
 import { AwakeningArchiveTab } from '@/components/wealth-camp/AwakeningArchiveTab';
 import { AwakeningDashboard } from '@/components/wealth-camp/AwakeningDashboard';
-import { TodayTaskHub } from '@/components/wealth-camp/TodayTaskHub';
+import { TodayTaskHub, UserMode } from '@/components/wealth-camp/TodayTaskHub';
 import { AIInsightZone } from '@/components/wealth-camp/AIInsightZone';
 import { Day0BaselineCard } from '@/components/wealth-camp/Day0BaselineCard';
 import AwakeningOnboardingDialog from '@/components/wealth-camp/AwakeningOnboardingDialog';
+import GraduateOnboardingDialog from '@/components/wealth-camp/GraduateOnboardingDialog';
+import { PartnerConversionCard } from '@/components/wealth-camp/PartnerConversionCard';
+import { DailyChallengeCard } from '@/components/wealth-camp/DailyChallengeCard';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -30,6 +33,8 @@ import { useAdaptiveWeights } from '@/hooks/useAdaptiveWeights';
 import { useTodayWealthJournal } from '@/hooks/useTodayWealthJournal';
 import { useCampSummary } from '@/hooks/useCampSummary';
 import { useFavoriteBeliefs } from '@/hooks/useFavoriteBeliefs';
+import { useUserCampMode } from '@/hooks/useUserCampMode';
+import { usePartner } from '@/hooks/usePartner';
 
 export default function WealthCampCheckIn() {
   const { campId: urlCampId } = useParams();
@@ -62,6 +67,26 @@ export default function WealthCampCheckIn() {
   const [lastCompletedMakeupDay, setLastCompletedMakeupDay] = useState<number | null>(null);
   const { toast } = useToast();
   const { trackDayCheckin, trackShare } = useWealthCampAnalytics();
+  
+  // User mode detection (active, graduate, partner)
+  const { mode: userCampMode, cycleMeditationDay, cycleWeek, listenCount, isLoading: modeLoading } = useUserCampMode();
+  const { isPartner } = usePartner();
+  const [challengeCompleted, setChallengeCompleted] = useState(false);
+  const [showGraduateOnboarding, setShowGraduateOnboarding] = useState(false);
+  
+  // Show graduate onboarding for first-time graduates
+  useEffect(() => {
+    if (userCampMode === 'graduate' || userCampMode === 'partner') {
+      const seen = localStorage.getItem('wealth_graduate_onboarding_seen');
+      if (!seen) {
+        setShowGraduateOnboarding(true);
+      }
+    }
+  }, [userCampMode]);
+  
+  // Determine UserMode for TodayTaskHub
+  const taskHubMode: UserMode = userCampMode === 'partner' ? 'partner' : userCampMode === 'graduate' ? 'graduate' : 'active';
+  const isPostCampMode = userCampMode === 'graduate' || userCampMode === 'partner';
   
   // Fetch camp data
   const { data: camp, isLoading: campLoading } = useQuery({
@@ -545,8 +570,10 @@ ${reflection}`;
                 coachingCompleted={coachingCompleted}
                 shareCompleted={shareCompleted}
                 inviteCompleted={inviteCompleted}
+                challengeCompleted={challengeCompleted}
                 actionCompleted={journalActionCompleted}
                 hasAction={!!todayAction}
+                hasChallenge={isPostCampMode}
                 onMeditationClick={scrollToMeditation}
                 onCoachingClick={handleStartCoaching}
                 onShareClick={() => {
@@ -554,6 +581,9 @@ ${reflection}`;
                   setShowShareDialog(true);
                 }}
                 onInviteClick={() => setShowInviteDialog(true)}
+                onChallengeClick={() => {
+                  document.getElementById('daily-challenge-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 onActionClick={() => {
                   if (todayEntryId && todayAction) {
                     setSelectedPendingAction({
@@ -564,7 +594,24 @@ ${reflection}`;
                     setShowActionDialog(true);
                   }
                 }}
+                userMode={taskHubMode}
+                cycleWeek={cycleWeek}
+                cycleMeditationDay={cycleMeditationDay}
               />
+            )}
+
+            {/* Daily Challenge for Graduate/Partner mode */}
+            {isPostCampMode && !makeupDayNumber && (
+              <div id="daily-challenge-section">
+                <DailyChallengeCard 
+                  onPointsEarned={() => setChallengeCompleted(true)} 
+                />
+              </div>
+            )}
+
+            {/* Partner Conversion Card for Graduates */}
+            {userCampMode === 'graduate' && !makeupDayNumber && (
+              <PartnerConversionCard variant="full" />
             )}
 
             {/* 3. 冥想播放器 */}
@@ -838,6 +885,12 @@ ${reflection}`;
       )}
 
       <AwakeningOnboardingDialog />
+      {showGraduateOnboarding && (
+        <GraduateOnboardingDialog 
+          open={showGraduateOnboarding} 
+          onOpenChange={setShowGraduateOnboarding} 
+        />
+      )}
     </div>
   );
 }

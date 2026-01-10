@@ -3,6 +3,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Check, Lock, ChevronRight, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+export type UserMode = 'active' | 'graduate' | 'partner';
+
 interface Task {
   id: string;
   title: string;
@@ -14,6 +16,7 @@ interface Task {
   points: number;
   action?: () => void;
   highlight?: boolean;
+  optional?: boolean;
 }
 
 interface TodayTaskHubProps {
@@ -32,6 +35,10 @@ interface TodayTaskHubProps {
   hasChallenge?: boolean;
   hasAction?: boolean;
   className?: string;
+  // New props for graduate/partner mode
+  userMode?: UserMode;
+  cycleWeek?: number;
+  cycleMeditationDay?: number;
 }
 
 export function TodayTaskHub({
@@ -50,76 +57,49 @@ export function TodayTaskHub({
   hasChallenge = false,
   hasAction = false,
   className,
+  userMode = 'active',
+  cycleWeek = 1,
+  cycleMeditationDay = 1,
 }: TodayTaskHubProps) {
-  const tasks: Task[] = [
-    {
-      id: 'meditation',
-      title: '冥想课程',
-      description: '开启今日觉醒',
-      icon: '🧘',
-      completed: meditationCompleted,
-      points: 10,
-      action: onMeditationClick,
-    },
-    {
-      id: 'coaching',
-      title: '教练梳理',
-      description: '深度财富对话',
-      icon: '💬',
-      completed: coachingCompleted,
-      locked: !meditationCompleted,
-      lockReason: '完成冥想后解锁',
-      points: 20,
-      action: onCoachingClick,
-      highlight: meditationCompleted && !coachingCompleted,
-    },
-    ...(hasChallenge ? [{
-      id: 'challenge',
-      title: '每日挑战',
-      description: 'AI 定制成长任务',
-      icon: '🎯',
-      completed: challengeCompleted,
-      locked: !coachingCompleted,
-      lockReason: '完成教练后解锁',
-      points: 15,
-      action: onChallengeClick,
-    }] : []),
-    ...(hasAction ? [{
-      id: 'action',
-      title: '给予行动',
-      description: '践行财富能量',
-      icon: '💝',
-      completed: actionCompleted,
-      locked: !coachingCompleted,
-      lockReason: '待教练梳理生成',
-      points: 10,
-      action: onActionClick,
-    }] : []),
-    {
-      id: 'share',
-      title: '打卡分享',
-      description: '记录成长时刻',
-      icon: '📢',
-      completed: shareCompleted,
-      locked: !coachingCompleted,
-      lockReason: '完成教练后解锁',
-      points: 5,
-      action: onShareClick,
-    },
-    {
-      id: 'invite',
-      title: '邀请好友',
-      description: '分享成长之旅',
-      icon: '🎁',
-      completed: inviteCompleted,
-      points: 5,
-      action: onInviteClick,
-    },
-  ];
+  
+  // Build tasks based on user mode
+  const tasks: Task[] = buildTaskList({
+    userMode,
+    meditationCompleted,
+    coachingCompleted,
+    shareCompleted,
+    inviteCompleted,
+    challengeCompleted,
+    actionCompleted,
+    onMeditationClick,
+    onCoachingClick,
+    onShareClick,
+    onInviteClick,
+    onChallengeClick,
+    onActionClick,
+    hasChallenge,
+    hasAction,
+    cycleWeek,
+    cycleMeditationDay,
+  });
 
   const completedCount = tasks.filter(t => t.completed).length;
   const totalPoints = tasks.reduce((sum, t) => sum + t.points, 0);
   const earnedPoints = tasks.filter(t => t.completed).reduce((sum, t) => sum + t.points, 0);
+
+  // Mode-specific header
+  const getModeLabel = () => {
+    switch (userMode) {
+      case 'graduate':
+        return '毕业生模式';
+      case 'partner':
+        return '合伙人模式';
+      default:
+        return null;
+    }
+  };
+
+  const modeLabel = getModeLabel();
 
   return (
     <Card className={cn("shadow-sm", className)}>
@@ -132,6 +112,16 @@ export function TodayTaskHub({
             <span className="text-sm text-muted-foreground">
               ({completedCount}/{tasks.length})
             </span>
+            {modeLabel && (
+              <span className={cn(
+                "text-xs px-2 py-0.5 rounded-full",
+                userMode === 'partner' 
+                  ? "bg-emerald-100 text-emerald-700" 
+                  : "bg-amber-100 text-amber-700"
+              )}>
+                {modeLabel}
+              </span>
+            )}
           </h3>
           <div className="flex items-center gap-1 text-sm">
             <Zap className="w-4 h-4 text-amber-500" />
@@ -174,7 +164,12 @@ export function TodayTaskHub({
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm">{task.title}</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm">{task.title}</span>
+                  {task.optional && (
+                    <span className="text-xs text-muted-foreground">(可选)</span>
+                  )}
+                </div>
                 <div className="text-xs text-muted-foreground truncate">
                   {task.locked ? task.lockReason : task.description}
                 </div>
@@ -219,4 +214,207 @@ export function TodayTaskHub({
       </CardContent>
     </Card>
   );
+}
+
+// Helper function to build task list based on mode
+function buildTaskList({
+  userMode,
+  meditationCompleted,
+  coachingCompleted,
+  shareCompleted,
+  inviteCompleted,
+  challengeCompleted,
+  actionCompleted,
+  onMeditationClick,
+  onCoachingClick,
+  onShareClick,
+  onInviteClick,
+  onChallengeClick,
+  onActionClick,
+  hasChallenge,
+  hasAction,
+  cycleWeek,
+  cycleMeditationDay,
+}: {
+  userMode: UserMode;
+  meditationCompleted: boolean;
+  coachingCompleted: boolean;
+  shareCompleted: boolean;
+  inviteCompleted: boolean;
+  challengeCompleted: boolean;
+  actionCompleted: boolean;
+  onMeditationClick: () => void;
+  onCoachingClick: () => void;
+  onShareClick: () => void;
+  onInviteClick: () => void;
+  onChallengeClick?: () => void;
+  onActionClick?: () => void;
+  hasChallenge: boolean;
+  hasAction: boolean;
+  cycleWeek: number;
+  cycleMeditationDay: number;
+}): Task[] {
+  // Active mode (7-day training camp)
+  if (userMode === 'active') {
+    return [
+      {
+        id: 'meditation',
+        title: '冥想课程',
+        description: '开启今日觉醒',
+        icon: '🧘',
+        completed: meditationCompleted,
+        points: 10,
+        action: onMeditationClick,
+      },
+      {
+        id: 'coaching',
+        title: '教练梳理',
+        description: '深度财富对话',
+        icon: '💬',
+        completed: coachingCompleted,
+        locked: !meditationCompleted,
+        lockReason: '完成冥想后解锁',
+        points: 20,
+        action: onCoachingClick,
+        highlight: meditationCompleted && !coachingCompleted,
+      },
+      ...(hasChallenge ? [{
+        id: 'challenge',
+        title: '每日挑战',
+        description: 'AI 定制成长任务',
+        icon: '🎯',
+        completed: challengeCompleted,
+        locked: !coachingCompleted,
+        lockReason: '完成教练后解锁',
+        points: 15,
+        action: onChallengeClick,
+      }] : []),
+      ...(hasAction ? [{
+        id: 'action',
+        title: '给予行动',
+        description: '践行财富能量',
+        icon: '💝',
+        completed: actionCompleted,
+        locked: !coachingCompleted,
+        lockReason: '待教练梳理生成',
+        points: 10,
+        action: onActionClick,
+      }] : []),
+      {
+        id: 'share',
+        title: '打卡分享',
+        description: '记录成长时刻',
+        icon: '📢',
+        completed: shareCompleted,
+        locked: !coachingCompleted,
+        lockReason: '完成教练后解锁',
+        points: 5,
+        action: onShareClick,
+      },
+      {
+        id: 'invite',
+        title: '邀请好友',
+        description: '分享成长之旅',
+        icon: '🎁',
+        completed: inviteCompleted,
+        points: 5,
+        action: onInviteClick,
+      },
+    ];
+  }
+
+  // Graduate mode (completed camp, not partner)
+  if (userMode === 'graduate') {
+    return [
+      {
+        id: 'meditation',
+        title: `循环冥想 Day ${cycleMeditationDay}`,
+        description: `第${cycleWeek}周 · 第${cycleWeek}次聆听`,
+        icon: '🧘',
+        completed: meditationCompleted,
+        points: 5,
+        action: onMeditationClick,
+        optional: true,
+      },
+      {
+        id: 'challenge',
+        title: '每日挑战',
+        description: 'AI 定制觉醒任务',
+        icon: '🎯',
+        completed: challengeCompleted,
+        points: 15,
+        action: onChallengeClick,
+        highlight: !challengeCompleted,
+      },
+      {
+        id: 'share',
+        title: '打卡分享',
+        description: '记录持续成长',
+        icon: '📢',
+        completed: shareCompleted,
+        points: 5,
+        action: onShareClick,
+      },
+      {
+        id: 'invite',
+        title: '邀请好友',
+        description: '分享觉醒之旅',
+        icon: '🎁',
+        completed: inviteCompleted,
+        points: 5,
+        action: onInviteClick,
+      },
+    ];
+  }
+
+  // Partner mode (completed camp + is partner)
+  return [
+    {
+      id: 'meditation',
+      title: `循环冥想 Day ${cycleMeditationDay}`,
+      description: `第${cycleWeek}周 · 第${cycleWeek}次聆听`,
+      icon: '🧘',
+      completed: meditationCompleted,
+      points: 5,
+      action: onMeditationClick,
+      optional: true,
+    },
+    {
+      id: 'challenge',
+      title: '每日挑战',
+      description: 'AI 专属成长任务',
+      icon: '🎯',
+      completed: challengeCompleted,
+      points: 20,
+      action: onChallengeClick,
+      highlight: !challengeCompleted,
+    },
+    ...(hasAction ? [{
+      id: 'action',
+      title: '给予行动',
+      description: '践行财富能量',
+      icon: '💝',
+      completed: actionCompleted,
+      points: 10,
+      action: onActionClick,
+    }] : []),
+    {
+      id: 'share',
+      title: '打卡分享',
+      description: '影响更多人',
+      icon: '📢',
+      completed: shareCompleted,
+      points: 5,
+      action: onShareClick,
+    },
+    {
+      id: 'invite',
+      title: '邀请好友',
+      description: '发展你的团队',
+      icon: '🎁',
+      completed: inviteCompleted,
+      points: 10,
+      action: onInviteClick,
+    },
+  ];
 }

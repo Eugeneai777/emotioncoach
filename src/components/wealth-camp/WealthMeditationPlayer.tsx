@@ -21,7 +21,12 @@ interface WealthMeditationPlayerProps {
   savedReflection?: string;
   onRedo?: () => void;
   onStartCoaching?: () => void;
+  // Cycle mode props
+  isCycleMode?: boolean;
+  cycleWeek?: number;
+  listenCount?: number;
 }
+
 
 export function WealthMeditationPlayer({
   dayNumber,
@@ -35,7 +40,11 @@ export function WealthMeditationPlayer({
   savedReflection,
   onRedo,
   onStartCoaching,
+  isCycleMode = false,
+  cycleWeek = 1,
+  listenCount = 1,
 }: WealthMeditationPlayerProps) {
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(0.8);
@@ -240,11 +249,25 @@ export function WealthMeditationPlayer({
         <div className="p-6 pb-4">
           <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm mb-2">
             <span className="text-2xl">🧘</span>
-            <span>今日冥想 · Day {dayNumber}</span>
+            {isCycleMode ? (
+              <span>
+                循环冥想 · 第{cycleWeek}周 Day {dayNumber}
+                <span className="ml-2 text-xs bg-amber-100 dark:bg-amber-900/50 px-2 py-0.5 rounded-full">
+                  第{listenCount}次聆听
+                </span>
+              </span>
+            ) : (
+              <span>今日冥想 · Day {dayNumber}</span>
+            )}
           </div>
           <h3 className="text-xl font-semibold text-amber-900 dark:text-amber-100">{title}</h3>
           {description && (
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">{description}</p>
+          )}
+          {isCycleMode && listenCount > 1 && (
+            <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-2 italic">
+              ✨ 每次重复聆听，都能觉察到新的感受
+            </p>
           )}
         </div>
 
