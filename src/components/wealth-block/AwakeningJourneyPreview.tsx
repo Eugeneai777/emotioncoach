@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, ArrowRight, Target, Eye, Heart, Brain, Sparkles } from 'lucide-react';
+import { MapPin, ArrowRight, Target, Eye, Heart, Brain } from 'lucide-react';
 import { getAwakeningColor } from '@/config/wealthStyleConfig';
+import { cn } from '@/lib/utils';
 
 interface AwakeningJourneyPreviewProps {
-  healthScore: number; // 卡点分数 (0-100)
+  healthScore: number;
   behaviorScore: number;
   emotionScore: number;
   beliefScore: number;
@@ -25,23 +26,20 @@ export function AwakeningJourneyPreview({
   // 毕业目标：80+ 高度觉醒
   const graduateTarget = 80;
   
-  // 三层星级计算 (0-50 -> 1-5星)
-  const getStars = (score: number, max: number = 50) => {
-    const awakening = 100 - (score / max * 100);
-    return Math.round((awakening / 100) * 4 + 1);
+  // 三层觉醒百分比计算 (0-50分 -> 0-100%觉醒)
+  const getAwakeningPercent = (score: number, max: number = 50) => {
+    return Math.round(100 - (score / max * 100));
   };
   
-  const behaviorStars = getStars(behaviorScore);
-  const emotionStars = getStars(emotionScore);
-  const beliefStars = getStars(beliefScore);
+  const behaviorAwakening = getAwakeningPercent(behaviorScore);
+  const emotionAwakening = getAwakeningPercent(emotionScore);
+  const beliefAwakening = getAwakeningPercent(beliefScore);
 
-  const renderStars = (count: number) => {
-    return Array(5).fill(0).map((_, i) => (
-      <span key={i} className={i < count ? 'text-amber-400' : 'text-muted/30'}>
-        ⭐
-      </span>
-    ));
-  };
+  const layers = [
+    { name: '行为', icon: Eye, color: 'bg-amber-500', bgColor: 'bg-amber-100', value: behaviorAwakening },
+    { name: '情绪', icon: Heart, color: 'bg-pink-500', bgColor: 'bg-pink-100', value: emotionAwakening },
+    { name: '信念', icon: Brain, color: 'bg-violet-500', bgColor: 'bg-violet-100', value: beliefAwakening },
+  ];
 
   return (
     <motion.div
@@ -49,127 +47,91 @@ export function AwakeningJourneyPreview({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15 }}
     >
-      <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 dark:from-amber-950/30 dark:via-orange-950/30 dark:to-rose-950/30">
+      <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-amber-50/80 via-orange-50/60 to-rose-50/40 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-rose-950/10">
         <CardContent className="p-4 space-y-4">
-          {/* 头部 */}
+          {/* 头部 - 简化 */}
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-full bg-amber-100 dark:bg-amber-900/50">
               <MapPin className="h-4 w-4 text-amber-600" />
             </div>
-            <div>
-              <h3 className="font-bold text-foreground">📍 你的财富觉醒起点</h3>
-              <p className="text-xs text-muted-foreground">这组数据将同步到财富日记，成为你的 Day 0</p>
-            </div>
+            <h3 className="font-bold text-foreground text-sm">📍 你的财富觉醒起点</h3>
           </div>
 
-          {/* 觉醒旅程：起点 → 7天 → 毕业 */}
-          <div className="grid grid-cols-3 gap-2">
-            {/* 起点 */}
-            <div className="relative bg-white/60 dark:bg-white/10 rounded-xl p-3 text-center border-2 border-amber-300 dark:border-amber-600">
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full">
+          {/* 觉醒旅程：起点突出 + 目标虚化 */}
+          <div className="flex items-center gap-3">
+            {/* 起点 - 突出强调 */}
+            <motion.div 
+              className="relative flex-1 bg-white dark:bg-white/10 rounded-2xl p-4 text-center border-2 border-amber-400 dark:border-amber-500 shadow-lg"
+              animate={{ 
+                boxShadow: ['0 0 0 0 rgba(251, 191, 36, 0)', '0 0 0 8px rgba(251, 191, 36, 0.15)', '0 0 0 0 rgba(251, 191, 36, 0)']
+              }}
+              transition={{ duration: 2.5, repeat: Infinity }}
+            >
+              <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full shadow">
                 现在
               </div>
-              <div 
-                className="text-2xl font-bold mt-1"
+              <motion.div 
+                className="text-4xl font-bold tabular-nums"
                 style={{ color: getAwakeningColor(awakeningStart) }}
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3, type: 'spring' }}
               >
                 {awakeningStart}
-              </div>
-              <div className="text-xs text-muted-foreground">觉醒起点</div>
-            </div>
+              </motion.div>
+              <div className="text-xs text-muted-foreground font-medium">觉醒起点</div>
+            </motion.div>
             
-            {/* 7天目标 */}
-            <div className="relative bg-white/40 dark:bg-white/5 rounded-xl p-3 text-center">
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-emerald-500 text-white text-[10px] font-bold rounded-full">
+            {/* 箭头 */}
+            <ArrowRight className="w-5 h-5 text-muted-foreground/50 flex-shrink-0" />
+            
+            {/* 7天目标 - 虚化 */}
+            <div className="relative bg-white/40 dark:bg-white/5 rounded-xl p-3 text-center border border-dashed border-emerald-300 dark:border-emerald-600/50">
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-emerald-500/80 text-white text-[9px] font-medium rounded-full">
                 7天后
               </div>
-              <div className="flex items-center justify-center gap-1 mt-1">
-                <ArrowRight className="w-3 h-3 text-emerald-500" />
-                <span 
-                  className="text-2xl font-bold"
-                  style={{ color: getAwakeningColor(day7Target) }}
-                >
-                  {day7Target}+
-                </span>
-              </div>
-              <div className="text-xs text-muted-foreground">中期目标</div>
+              <div className="text-xl font-bold text-emerald-600/80 mt-1">{day7Target}+</div>
+              <div className="text-[10px] text-muted-foreground/70">目标</div>
             </div>
             
-            {/* 毕业目标 */}
-            <div className="relative bg-white/40 dark:bg-white/5 rounded-xl p-3 text-center">
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-violet-500 text-white text-[10px] font-bold rounded-full whitespace-nowrap">
-                持续觉醒
+            {/* 毕业目标 - 更虚化 */}
+            <div className="relative bg-white/30 dark:bg-white/5 rounded-xl p-3 text-center border border-dashed border-violet-300/60 dark:border-violet-600/30">
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-violet-500/60 text-white text-[9px] font-medium rounded-full whitespace-nowrap">
+                毕业
               </div>
               <div className="flex items-center justify-center gap-1 mt-1">
-                <Target className="w-3 h-3 text-violet-500" />
-                <span 
-                  className="text-2xl font-bold"
-                  style={{ color: getAwakeningColor(graduateTarget) }}
-                >
-                  {graduateTarget}+
-                </span>
+                <Target className="w-3 h-3 text-violet-400" />
+                <span className="text-lg font-bold text-violet-500/70">{graduateTarget}+</span>
               </div>
-              <div className="text-xs text-muted-foreground">毕业目标</div>
+              <div className="text-[10px] text-muted-foreground/60">高觉醒</div>
             </div>
           </div>
 
-          {/* 进度箭头装饰 */}
-          <div className="flex items-center justify-center gap-2 -my-2">
-            <div className="flex-1 h-0.5 bg-gradient-to-r from-amber-300 via-emerald-300 to-violet-300 rounded-full" />
+          {/* 三层基线 - 进度条简洁版 */}
+          <div className="space-y-2">
+            {layers.map((layer) => (
+              <div key={layer.name} className="flex items-center gap-2">
+                <div className={cn("p-1 rounded", layer.bgColor, "dark:bg-opacity-30")}>
+                  <layer.icon className="w-3 h-3 text-foreground/70" />
+                </div>
+                <span className="text-xs text-muted-foreground w-8">{layer.name}</span>
+                <div className="flex-1 h-2 bg-muted/30 rounded-full overflow-hidden">
+                  <motion.div
+                    className={cn("h-full rounded-full", layer.color)}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${layer.value}%` }}
+                    transition={{ delay: 0.4, duration: 0.6, ease: 'easeOut' }}
+                  />
+                </div>
+                <span className="text-xs font-medium text-foreground/70 w-8 text-right">{layer.value}%</span>
+              </div>
+            ))}
           </div>
 
-          {/* 三层基线对标 */}
-          <div className="bg-white/70 dark:bg-white/10 rounded-xl p-3 space-y-2">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span className="text-xs font-semibold text-foreground">三层基线（与日记同步）</span>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-2 text-center">
-              {/* 行为层 */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-center gap-1 text-amber-600">
-                  <Eye className="w-3 h-3" />
-                  <span className="text-xs font-medium">行为</span>
-                </div>
-                <div className="flex justify-center gap-0.5 text-[10px]">
-                  {renderStars(behaviorStars)}
-                </div>
-              </div>
-              
-              {/* 情绪层 */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-center gap-1 text-pink-600">
-                  <Heart className="w-3 h-3" />
-                  <span className="text-xs font-medium">情绪</span>
-                </div>
-                <div className="flex justify-center gap-0.5 text-[10px]">
-                  {renderStars(emotionStars)}
-                </div>
-              </div>
-              
-              {/* 信念层 */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-center gap-1 text-violet-600">
-                  <Brain className="w-3 h-3" />
-                  <span className="text-xs font-medium">信念</span>
-                </div>
-                <div className="flex justify-center gap-0.5 text-[10px]">
-                  {renderStars(beliefStars)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 公式说明 */}
-          <div className="text-center p-2 bg-white/50 dark:bg-white/5 rounded-lg">
-            <p className="text-[11px] text-muted-foreground">
-              💡 觉醒起点 = 100 - 卡点分数（{healthScore}）= <span className="font-bold text-amber-600">{awakeningStart}</span>
-            </p>
-            <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-              分数越高代表财富意识越觉醒，7天训练营帮你突破卡点
-            </p>
-          </div>
+          {/* 底部提示 - 极简 */}
+          <p className="text-[10px] text-muted-foreground/70 text-center">
+            💡 分数越高=觉醒越深，7天训练营助你突破卡点
+          </p>
         </CardContent>
       </Card>
     </motion.div>
