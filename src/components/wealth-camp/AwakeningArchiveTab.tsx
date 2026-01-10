@@ -98,9 +98,9 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
   const beliefsCount = stats?.uniqueNewBeliefs?.length || 0;
   const givingActionsCount = stats?.givingActions?.length || 0;
   
-  // Calculate awakening change from first to latest
-  const awakeningChange = awakeningIndex && peakIndex 
-    ? Math.round(awakeningIndex - (fullEntries[0]?.behavior_score || 0) * 20)
+  // Calculate awakening change: current_awakening - baseline (same as GameProgressCard)
+  const awakeningChange = progress?.current_awakening && baseline?.awakeningStart != null
+    ? progress.current_awakening - baseline.awakeningStart
     : 0;
   
   // Action completion rate (simplified)
