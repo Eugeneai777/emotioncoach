@@ -54,6 +54,17 @@ export function TrainingCampDetail() {
   const getNextMilestone = () => {
     if (!camp) return null;
     
+    // 财富训练营是7天，其他训练营是21天
+    const isWealthCamp = camp.camp_type?.includes('wealth');
+    
+    if (isWealthCamp) {
+      if (!camp.milestone_7_reached) {
+        return { name: "7天毕业", daysNeeded: 7 - camp.completed_days, icon: "🏆" };
+      }
+      return null;
+    }
+    
+    // 其他21天训练营
     if (!camp.milestone_7_reached) {
       return { name: "一周勇士", daysNeeded: 7 - camp.completed_days, icon: "⭐" };
     }
@@ -92,7 +103,7 @@ export function TrainingCampDetail() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           返回
         </Button>
-        <h1 className="text-2xl font-bold">21天训练营</h1>
+        <h1 className="text-2xl font-bold">{camp?.camp_type?.includes('wealth') ? '7天训练营' : '21天训练营'}</h1>
         <div className="w-20" /> {/* Spacer for centering */}
       </div>
 

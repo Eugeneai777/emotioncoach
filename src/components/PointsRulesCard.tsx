@@ -68,6 +68,7 @@ const detailedRules = [
     { name: "AI生成图片", cost: 5 },
   ]},
   { category: "训练营", items: [
+    { name: "7天财富觉醒训练营", cost: 5, note: "一次性" },
     { name: "21天情绪日记训练营", cost: 5, note: "一次性" },
     { name: "21天青少年困境突破营", cost: 5, note: "一次性" },
   ]},

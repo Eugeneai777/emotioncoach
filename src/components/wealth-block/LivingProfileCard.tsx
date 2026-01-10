@@ -13,7 +13,7 @@ const features = [
   {
     icon: GitCompare,
     title: "可视对比",
-    description: "第1天 vs 第21天，清晰看见自己的变化",
+    description: "第1天 vs 第7天，清晰看见自己的变化",
     color: "text-blue-600",
     bgColor: "bg-blue-100",
   },

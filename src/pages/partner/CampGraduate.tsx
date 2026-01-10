@@ -84,7 +84,7 @@ export default function CampGraduate() {
           setGraduationData({
             campName: '财富觉醒训练营',
             completedAt: camp.updated_at, // 使用 updated_at 作为完成时间
-            totalDays: 21,
+            totalDays: 7,
             journalCount: journalCount || 0,
             awakeningScore
           });
@@ -152,7 +152,7 @@ export default function CampGraduate() {
               </div>
               <h3 className="font-semibold text-lg mb-2">还未完成训练营</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                完成21天财富觉醒训练营后，即可解锁毕业证书和合伙人专属通道
+                完成7天财富觉醒训练营后，即可解锁毕业证书和合伙人专属通道
               </p>
               <Button
                 onClick={() => navigate('/wealth-camp-intro')}
@@ -183,7 +183,7 @@ export default function CampGraduate() {
                 </Badge>
                 
                 <h2 className="text-2xl font-bold mb-2">
-                  恭喜完成21天财富觉醒训练
+                  恭喜完成7天财富觉醒训练
                 </h2>
                 
                 {graduationData && (
@@ -234,7 +234,7 @@ export default function CampGraduate() {
           <CardContent className="p-5">
             <div className="flex items-center gap-2 mb-4">
               <Trophy className="w-5 h-5 text-amber-500" />
-              <h3 className="font-semibold text-lg">你的21天蜕变</h3>
+              <h3 className="font-semibold text-lg">你的7天蜕变</h3>
             </div>
             
             <div className="space-y-3">
