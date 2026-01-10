@@ -3,12 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock } from 'lucide-react';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
+import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@/utils/MiniProgramAudio';
+import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo } from '@/utils/platform';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { WechatPayDialog } from '@/components/WechatPayDialog';
 import { useVoiceSessionLock, forceReleaseSessionLock } from '@/hooks/useVoiceSessionLock';
 
 export type VoiceChatMode = 'general' | 'parent_teen' | 'teen' | 'emotion';
+
+// 统一的音频客户端接口
+interface AudioClient {
+  connect?: () => Promise<void>;
+  init?: () => Promise<void>;
+  disconnect: () => void;
+  startRecording?: () => void;
+  stopRecording?: () => void;
+}
 
 interface BriefingData {
   emotion_theme: string;
@@ -76,7 +87,7 @@ export const CoachVoiceChat = ({
   const [isEnding, setIsEnding] = useState(false);  // 🔧 防止重复点击挂断
   // API 成本追踪
   const [apiUsage, setApiUsage] = useState({ inputTokens: 0, outputTokens: 0 });
-  const chatRef = useRef<RealtimeChat | null>(null);
+  const chatRef = useRef<AudioClient | null>(null);
   const durationRef = useRef<NodeJS.Timeout | null>(null);
   const lastBilledMinuteRef = useRef(0);
   const isDeductingRef = useRef(false);  // 防止并发扣费
@@ -84,6 +95,7 @@ export const CoachVoiceChat = ({
   const visibilityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 页面隐藏计时器
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 无活动计时器
   const isInitializingRef = useRef(false);  // 🔧 防止 React 严格模式下重复初始化
+  const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);  // 是否使用小程序模式
 
   // 🔧 全局语音会话锁 - 防止多个组件同时发起语音
   const { acquire: acquireLock, release: releaseLock, isLocked, activeComponent } = useVoiceSessionLock('CoachVoiceChat');
@@ -523,219 +535,153 @@ export const CoachVoiceChat = ({
     }
   };
 
-  // 开始通话
+  // 通用的消息处理函数
+  const handleVoiceMessage = (event: any) => {
+    lastActivityRef.current = Date.now();
+    console.log('Voice event:', event.type);
+    
+    if (event.type === 'input_audio_buffer.speech_started' || event.type === 'speech_started') {
+      setSpeakingStatus('user-speaking');
+    } else if (event.type === 'input_audio_buffer.speech_stopped' || event.type === 'speech_stopped') {
+      setSpeakingStatus('idle');
+    } else if (event.type === 'response.audio.delta' || event.type === 'audio_output') {
+      setSpeakingStatus('assistant-speaking');
+    } else if (event.type === 'response.done') {
+      setSpeakingStatus('idle');
+    } else if (event.type === 'tool_executed') {
+      handleToolExecuted(event.tool, event.result, event.args);
+    } else if (event.type === 'navigation_request') {
+      handleNavigation(event.path, event.name);
+    } else if (event.type === 'search_results') {
+      setSearchKeyword(event.keyword || '');
+      setSearchResults(event.posts || []);
+      if (event.posts?.length > 0) {
+        toast({ title: `🔍 找到 ${event.posts.length} 条关于"${event.keyword}"的分享`, description: "点击卡片查看详情" });
+      }
+    } else if (event.type === 'course_recommendations') {
+      setCourseRecommendations(event.courses || []);
+      if (event.courses?.length > 0) {
+        toast({ title: `📚 找到 ${event.courses.length} 个${event.topic ? '关于"' + event.topic + '"的' : ''}课程`, description: "点击卡片开始学习" });
+      }
+    } else if (event.type === 'camp_recommendations') {
+      setCampRecommendations(event.camps || []);
+      if (event.camps?.length > 0) {
+        toast({ title: `🏕️ 为你推荐 ${event.camps.length} 个训练营`, description: "点击卡片了解详情" });
+      }
+    } else if (event.type === 'coach_recommendation') {
+      setCoachRecommendation({ coach_type: event.coach_type, coach_name: event.coach_name, coach_route: event.coach_route, description: event.description, reason: event.reason });
+      toast({ title: `🎯 为你推荐 ${event.coach_name}`, description: "点击卡片了解详情" });
+    } else if (event.type === 'briefing_saved') {
+      toast({ title: "✨ 简报已生成", description: "你的情绪旅程已记录" });
+      if (onBriefingSaved && event.briefing_id) {
+        onBriefingSaved(event.briefing_id, event.briefing_data || { emotion_theme: '情绪梳理' });
+      }
+    } else if ((event.type === 'usage_update' || event.type === 'usage') && event.usage) {
+      setApiUsage(prev => ({ inputTokens: prev.inputTokens + (event.usage.input_tokens || 0), outputTokens: prev.outputTokens + (event.usage.output_tokens || 0) }));
+    } else if (event.type === 'tool_error' && event.requiresAuth) {
+      toast({ title: "登录已过期", description: "请重新登录后再试", variant: "destructive" });
+      endCall();
+    }
+  };
+
+  // 通用的状态变更处理函数
+  const handleStatusChange = (newStatus: ConnectionStatus | MiniProgramStatus) => {
+    const mappedStatus: ConnectionStatus = newStatus === 'disconnected' ? 'disconnected' : newStatus === 'connecting' ? 'connecting' : newStatus === 'connected' ? 'connected' : newStatus === 'error' ? 'error' : 'idle';
+    setStatus(mappedStatus);
+    if (mappedStatus === 'connected') {
+      lastActivityRef.current = Date.now();
+      durationRef.current = setInterval(() => setDuration(prev => prev + 1), 1000);
+    } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
+      if (durationRef.current) clearInterval(durationRef.current);
+    }
+  };
+
+  // 通用的转录处理函数
+  const handleTranscript = (text: string, isFinal: boolean, role: 'user' | 'assistant') => {
+    if (role === 'assistant') {
+      setTranscript(isFinal ? text : prev => prev + text);
+    } else if (role === 'user' && isFinal) {
+      setUserTranscript(text);
+    }
+  };
+
+  // 开始通话 - 双轨切换
   const startCall = async () => {
-    // 🔧 防止 React 严格模式下重复初始化
-    if (isInitializingRef.current) {
-      console.log('[VoiceChat] Already initializing, skipping duplicate startCall');
-      return;
-    }
-    
-    // 防止重复初始化
-    if (chatRef.current || status === 'connecting' || status === 'connected') {
-      console.log('Call already in progress, skipping duplicate startCall');
-      return;
-    }
-    
-    // 立即设置初始化标志
+    if (isInitializingRef.current) return;
+    if (chatRef.current || status === 'connecting' || status === 'connected') return;
     isInitializingRef.current = true;
     
-    // 🔧 尝试获取全局语音会话锁
     const lockId = acquireLock();
     if (!lockId) {
-      isInitializingRef.current = false;  // 重置标志
-      toast({
-        title: "语音通话冲突",
-        description: `已有语音会话在进行中 (${activeComponent})，请先结束当前通话`,
-        variant: "destructive"
-      });
+      isInitializingRef.current = false;
+      toast({ title: "语音通话冲突", description: `已有语音会话在进行中 (${activeComponent})，请先结束当前通话`, variant: "destructive" });
       onClose();
       return;
     }
     
     try {
       setStatus('connecting');
-      
-      // 刷新 session 确保 token 有效
       const { error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
-        console.error('Session refresh failed:', refreshError);
-        toast({
-          title: "登录已过期",
-          description: "请重新登录后再试",
-          variant: "destructive"
-        });
+        toast({ title: "登录已过期", description: "请重新登录后再试", variant: "destructive" });
         setStatus('error');
-        isInitializingRef.current = false;  // 重置标志
-        releaseLock();  // 释放锁
+        isInitializingRef.current = false;
+        releaseLock();
         setTimeout(onClose, 1500);
         return;
       }
       
-      // 预扣第一分钟
       const deducted = await deductQuota(1);
       if (!deducted) {
         setStatus('error');
-        isInitializingRef.current = false;  // 重置标志
-        releaseLock();  // 释放锁
+        isInitializingRef.current = false;
+        releaseLock();
         setTimeout(onClose, 1500);
         return;
       }
 
-      const chat = new RealtimeChat(
-        // onMessage
-        (event) => {
-          // ✅ 任何实时事件都视为“会话仍在进行”，避免无活动误判导致突然挂断
-          // 注意：Realtime 的 VAD/转写事件在不同浏览器/网络下可能不稳定，所以这里更稳妥
-          lastActivityRef.current = Date.now();
+      // 🔧 双轨切换：检测平台并选择合适的音频客户端
+      const platformInfo = getPlatformInfo();
+      console.log('[VoiceChat] Platform info:', platformInfo);
 
-          console.log('Voice event:', event.type);
-          
-          if (event.type === 'input_audio_buffer.speech_started') {
-            setSpeakingStatus('user-speaking');
-          } else if (event.type === 'input_audio_buffer.speech_stopped') {
-            setSpeakingStatus('idle');
-          } else if (event.type === 'response.audio.delta') {
-            setSpeakingStatus('assistant-speaking');
-          } else if (event.type === 'response.done') {
-            setSpeakingStatus('idle');
-          } else if (event.type === 'tool_executed') {
-            // 工具执行完成，显示 toast
-            handleToolExecuted(event.tool, event.result, event.args);
-          } else if (event.type === 'navigation_request') {
-            // 处理页面导航请求
-            handleNavigation(event.path, event.name);
-          } else if (event.type === 'search_results') {
-            // 处理搜索结果
-            setSearchKeyword(event.keyword || '');
-            setSearchResults(event.posts || []);
-            if (event.posts?.length > 0) {
-              toast({
-                title: `🔍 找到 ${event.posts.length} 条关于"${event.keyword}"的分享`,
-                description: "点击卡片查看详情",
-              });
-            }
-          } else if (event.type === 'course_recommendations') {
-            // 处理课程推荐
-            setCourseRecommendations(event.courses || []);
-            if (event.courses?.length > 0) {
-              toast({
-                title: `📚 找到 ${event.courses.length} 个${event.topic ? '关于"' + event.topic + '"的' : ''}课程`,
-                description: "点击卡片开始学习",
-              });
-            }
-          } else if (event.type === 'camp_recommendations') {
-            // 处理训练营推荐
-            setCampRecommendations(event.camps || []);
-            if (event.camps?.length > 0) {
-              toast({
-                title: `🏕️ 为你推荐 ${event.camps.length} 个训练营`,
-                description: "点击卡片了解详情",
-              });
-            }
-          } else if (event.type === 'coach_recommendation') {
-            // 处理教练推荐
-            setCoachRecommendation({
-              coach_type: event.coach_type,
-              coach_name: event.coach_name,
-              coach_route: event.coach_route,
-              description: event.description,
-              reason: event.reason
-            });
-            toast({
-              title: `🎯 为你推荐 ${event.coach_name}`,
-              description: "点击卡片了解详情",
-            });
-          } else if (event.type === 'briefing_saved') {
-            // 处理简报保存成功
-            toast({
-              title: "✨ 简报已生成",
-              description: "你的情绪旅程已记录",
-            });
-            // 通知父组件
-            if (onBriefingSaved && event.briefing_id) {
-              onBriefingSaved(event.briefing_id, event.briefing_data || {
-                emotion_theme: '情绪梳理'
-              });
-            }
-          } else if (event.type === 'usage_update' && event.usage) {
-            // 累计 API 使用量
-            setApiUsage(prev => ({
-              inputTokens: prev.inputTokens + (event.usage.input_tokens || 0),
-              outputTokens: prev.outputTokens + (event.usage.output_tokens || 0)
-            }));
-            console.log(`[VoiceChat] API usage updated: +${event.usage.input_tokens} input, +${event.usage.output_tokens} output`);
-          } else if (event.type === 'tool_error' && event.requiresAuth) {
-            // 认证错误，结束通话并提示
-            toast({
-              title: "登录已过期",
-              description: "请重新登录后再试",
-              variant: "destructive"
-            });
-            endCall();
-          }
-        },
-        // onStatusChange
-        (newStatus) => {
-          setStatus(newStatus);
-          if (newStatus === 'connected') {
-            // 建连成功也算一次活动，避免刚连上就被无活动计时误杀
-            lastActivityRef.current = Date.now();
-            // 开始计时
-            durationRef.current = setInterval(() => {
-              setDuration(prev => prev + 1);
-            }, 1000);
-          } else if (newStatus === 'disconnected' || newStatus === 'error') {
-            if (durationRef.current) {
-              clearInterval(durationRef.current);
-            }
-          }
-        },
-        // onTranscript
-        (text, isFinal, role) => {
-          if (role === 'assistant') {
-            if (isFinal) {
-              setTranscript(text);
-            } else {
-              setTranscript(prev => prev + text);
-            }
-          } else if (role === 'user' && isFinal) {
-            setUserTranscript(text);
-          }
-        },
-        tokenEndpoint,
-        mode  // 传递 mode 参数以区分不同教练
-      );
-
-      chatRef.current = chat;
-      await chat.init();
-
+      if (platformInfo.recommendedVoiceMethod === 'websocket') {
+        console.log('[VoiceChat] Using MiniProgram WebSocket relay mode');
+        setUseMiniProgramMode(true);
+        const miniProgramClient = new MiniProgramAudioClient({
+          onMessage: handleVoiceMessage,
+          onStatusChange: handleStatusChange,
+          onTranscript: handleTranscript,
+          onUsageUpdate: (usage) => setApiUsage(prev => ({ inputTokens: prev.inputTokens + usage.input_tokens, outputTokens: prev.outputTokens + usage.output_tokens })),
+          tokenEndpoint,
+          mode
+        });
+        chatRef.current = miniProgramClient;
+        await miniProgramClient.connect();
+        miniProgramClient.startRecording();
+      } else if (platformInfo.recommendedVoiceMethod === 'webrtc') {
+        console.log('[VoiceChat] Using WebRTC direct connection mode');
+        setUseMiniProgramMode(false);
+        const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode);
+        chatRef.current = chat;
+        await chat.init();
+      } else {
+        throw new Error('当前环境不支持语音通话，请使用微信或浏览器访问');
+      }
     } catch (error: any) {
       console.error('Failed to start call:', error);
       setStatus('error');
-      isInitializingRef.current = false;  // 🔧 出错时重置标志
-      releaseLock();  // 🔧 出错时释放锁
-      
-      // 根据错误类型显示更具体的提示
+      isInitializingRef.current = false;
+      releaseLock();
       const errorMessage = error?.message || '';
-      let title = "连接失败";
-      let description = "无法建立语音连接，请稍后重试";
-      
-      if (errorMessage.includes('麦克风权限被拒绝') || errorMessage.includes('麦克风')) {
-        title = "麦克风权限不足";
-        description = errorMessage;
-      } else if (errorMessage.includes('ephemeral token')) {
-        title = "服务连接失败";
-        description = "语音服务暂时不可用，请稍后重试";
-      }
-      
-      toast({
-        title,
-        description,
-        variant: "destructive"
-      });
+      let title = "连接失败", description = "无法建立语音连接，请稍后重试";
+      if (errorMessage.includes('麦克风')) { title = "麦克风权限不足"; description = errorMessage; }
+      else if (errorMessage.includes('ephemeral token')) { title = "服务连接失败"; description = "语音服务暂时不可用，请稍后重试"; }
+      else if (errorMessage.includes('不支持语音')) { title = "环境不支持"; description = errorMessage; }
+      else if (errorMessage.includes('Recording permission denied')) { title = "录音权限被拒绝"; description = "请在小程序设置中允许录音权限"; }
+      toast({ title, description, variant: "destructive" });
     }
   };
+
 
   // 结束通话 - 🔧 添加防重复点击和更可靠的清理
   const endCall = async (e?: React.MouseEvent) => {
