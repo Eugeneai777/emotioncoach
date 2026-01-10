@@ -72,7 +72,7 @@ export function AITestimonialsCard() {
         className="mt-3 text-center"
       >
         <p className="text-[10px] text-slate-500">
-          来自已完成21天训练的真实用户
+          来自已完成7天训练的真实用户
         </p>
       </motion.div>
     </Card>

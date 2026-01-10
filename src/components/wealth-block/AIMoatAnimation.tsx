@@ -9,7 +9,7 @@ const trilogy = [
     color: "from-amber-400 to-orange-500",
     glowColor: "rgba(251,191,36,0.4)",
     angle: 0,
-    description: "21天追踪你的变化轨迹",
+    description: "7天追踪你的变化轨迹",
   },
   {
     icon: Database,

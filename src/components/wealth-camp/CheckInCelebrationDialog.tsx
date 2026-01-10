@@ -91,7 +91,7 @@ export function CheckInCelebrationDialog({
           {/* 动态大图标 */}
           <div className="relative">
             <div className="text-7xl animate-bounce">
-              {consecutiveDays >= 21 ? '👑' : consecutiveDays >= 14 ? '🏆' : consecutiveDays >= 7 ? '🎉' : '🌟'}
+              {consecutiveDays >= 7 ? '👑' : consecutiveDays >= 3 ? '🏆' : '🌟'}
             </div>
             <div className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">
               Day {consecutiveDays}

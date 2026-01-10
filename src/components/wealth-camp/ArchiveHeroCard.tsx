@@ -26,7 +26,7 @@ interface ArchiveHeroCardProps {
 
 export function ArchiveHeroCard({
   totalDays,
-  maxDays = 21,
+  maxDays = 7,
   avgBehavior,
   avgEmotion,
   avgBelief,

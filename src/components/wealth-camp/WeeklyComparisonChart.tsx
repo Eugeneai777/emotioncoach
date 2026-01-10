@@ -46,13 +46,14 @@ interface WeekData {
 
 export function WeeklyComparisonChart({ entries, className }: WeeklyComparisonChartProps) {
   const { weeklyData, highlights } = useMemo(() => {
-    // Group entries by week (1-7: Week 1, 8-14: Week 2, 15-21: Week 3)
-    const weeks: Record<number, JournalEntry[]> = { 1: [], 2: [], 3: [] };
+    // Group entries by phase (1-3: Phase 1, 4-7: Phase 2) for 7-day camp
+    const weeks: Record<number, JournalEntry[]> = { 1: [], 2: [] };
     
     entries.forEach(entry => {
-      const weekNum = Math.ceil(entry.day_number / 7);
-      if (weekNum >= 1 && weekNum <= 3) {
-        weeks[weekNum].push(entry);
+      if (entry.day_number <= 3) {
+        weeks[1].push(entry);
+      } else if (entry.day_number <= 7) {
+        weeks[2].push(entry);
       }
     });
 
@@ -297,9 +298,9 @@ export function WeeklyComparisonChart({ entries, className }: WeeklyComparisonCh
               <TooltipContent side="top" className="max-w-[280px] p-3">
                 <div className="text-xs space-y-1.5">
                   <p className="font-medium">数据说明</p>
-                  <p className="text-muted-foreground">周对比图展示每周三层觉醒的平均水平变化：</p>
+                  <p className="text-muted-foreground">阶段对比图展示7天训练营三层觉醒的变化：</p>
                   <ul className="text-muted-foreground list-disc pl-3 space-y-0.5">
-                    <li>数据分组：Day 1-7 为第1周，Day 8-14 为第2周，Day 15-21 为第3周</li>
+                    <li>数据分组：Day 1-3 为上半程，Day 4-7 为下半程</li>
                     <li>评分来源：每日日记的行为/情绪/信念层评分（1-5分）</li>
                     <li>成长亮点：识别跨周提升最显著的维度</li>
                   </ul>

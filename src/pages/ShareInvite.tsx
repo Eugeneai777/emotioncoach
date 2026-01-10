@@ -65,7 +65,7 @@ const ShareInvite = () => {
     },
     {
       id: 'camp',
-      name: '21天财富训练营',
+      name: '7天财富觉醒训练营',
       description: '邀请朋友加入系统训练',
       url: campUrl,
       qrCode: campQR,

@@ -553,7 +553,7 @@ ${reflection}`;
             {/* Mini Progress Calendar */}
             <MiniProgressCalendar
               currentDay={currentDay}
-              totalDays={camp.duration_days || 21}
+              totalDays={camp.duration_days || 7}
               completedDays={journalEntries.filter(e => e.behavior_block).map(e => e.day_number)}
               makeupDays={(() => {
                 const makeupLimit = 3;
@@ -961,7 +961,7 @@ ${reflection}`;
         open={showCelebration}
         onOpenChange={setShowCelebration}
         consecutiveDays={camp.completed_days || 1}
-        totalDays={camp.duration_days || 21}
+        totalDays={camp.duration_days || 7}
         onShare={() => setShowShareDialog(true)}
         onInvite={() => setShowInviteDialog(true)}
       />
