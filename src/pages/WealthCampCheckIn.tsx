@@ -107,7 +107,8 @@ export default function WealthCampCheckIn() {
         return data;
       }
 
-      const { data, error } = await supabase
+      // 优先查找 active 训练营
+      let { data, error } = await supabase
         .from('training_camps')
         .select('*')
         .eq('user_id', user.id)
@@ -116,6 +117,22 @@ export default function WealthCampCheckIn() {
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      // 如果没有 active，查找最近的 completed 训练营（毕业用户）
+      if (!data && !error) {
+        const completedResult = await supabase
+          .from('training_camps')
+          .select('*')
+          .eq('user_id', user.id)
+          .in('camp_type', ['wealth_block_7', 'wealth_block_21'])
+          .eq('status', 'completed')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (completedResult.error) throw completedResult.error;
+        data = completedResult.data;
+      }
 
       if (error) throw error;
       return data;
