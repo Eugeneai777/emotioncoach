@@ -665,7 +665,15 @@ export const CoachVoiceChat = ({
         chatRef.current = chat;
         await chat.init();
       } else {
-        throw new Error('当前环境不支持语音通话，请使用微信或浏览器访问');
+        // 环境不支持语音通话
+        if (platformInfo.platform === 'miniprogram') {
+          toast({
+            title: "语音功能暂不可用",
+            description: "请复制链接到微信或浏览器中打开使用语音功能",
+            variant: "destructive"
+          });
+        }
+        throw new Error('当前环境不支持语音通话');
       }
     } catch (error: any) {
       console.error('Failed to start call:', error);
