@@ -19,7 +19,7 @@ interface CampModeResult {
 export function useUserCampMode(): CampModeResult {
   const { isPartner, loading: partnerLoading } = usePartner();
 
-  // Fetch camp data
+  // Fetch camp data with graduation detection
   const { data: campData, isLoading: campLoading } = useQuery({
     queryKey: ['user-camp-mode'],
     queryFn: async () => {
@@ -38,6 +38,23 @@ export function useUserCampMode(): CampModeResult {
         .maybeSingle();
 
       if (activeCamp) {
+        // 备用毕业检测：检查是否实际完成7天
+        const { count: journalCount } = await supabase
+          .from('wealth_journal_entries')
+          .select('*', { count: 'exact', head: true })
+          .eq('camp_id', activeCamp.id)
+          .not('behavior_block', 'is', null);
+
+        // 如果已完成7天但status还是active，自动更新并返回completed状态
+        if (journalCount && journalCount >= 7) {
+          await supabase
+            .from('training_camps')
+            .update({ status: 'completed', updated_at: new Date().toISOString() })
+            .eq('id', activeCamp.id);
+          
+          return { camp: activeCamp, status: 'completed' };
+        }
+
         return { camp: activeCamp, status: 'active' };
       }
 
