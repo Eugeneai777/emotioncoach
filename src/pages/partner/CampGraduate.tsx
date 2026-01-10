@@ -29,6 +29,7 @@ import { useAssessmentBaseline } from "@/hooks/useAssessmentBaseline";
 import { GraduateContinueCard } from "@/components/wealth-camp/GraduateContinueCard";
 import { AchievementBadgeWall } from "@/components/wealth-camp/AchievementBadgeWall";
 import { useAwakeningProgress } from "@/hooks/useAwakeningProgress";
+import { useAchievementChecker } from "@/hooks/useAchievementChecker";
 import { 
   LineChart, 
   Line, 
@@ -119,10 +120,15 @@ export default function CampGraduate() {
   
   // Get awakening progress for level info
   const { progress: awakeningProgress, currentLevel } = useAwakeningProgress();
+  
+  // Achievement checker - auto award achievements on page load
+  const { checkAndAwardAchievements, checking: checkingAchievements, newlyEarned } = useAchievementChecker();
 
-  // 页面访问埋点
+  // 页面访问埋点 + 成就检查
   useEffect(() => {
     trackEvent('graduate_page_viewed');
+    // 页面加载时检查并补发所有应得成就
+    checkAndAwardAchievements();
   }, []);
 
   useEffect(() => {
