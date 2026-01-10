@@ -82,6 +82,7 @@ export function WealthCampInviteCard({
           defaultTab="camp"
           campId={campId}
           currentDay={dayNumber}
+          trigger={<span className="hidden" />}
         />
       </CardContent>
     </Card>
