@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, Heart, Brain, Share2, Sparkles, RotateCcw, Save, ChevronDown, ChevronUp } from "lucide-react";
+import { Target, Heart, Brain, Share2, Sparkles, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
@@ -53,6 +53,8 @@ import { LayerTransitionHint } from "./LayerTransitionHint";
 import { CampConversionCard } from "./CampConversionCard";
 import { CampPersonalizedCard } from "./CampPersonalizedCard";
 import { DeepFollowUpAnswer } from "./DeepFollowUpDialog";
+import { AwakeningJourneyPreview } from "./AwakeningJourneyPreview";
+import { NextStepActionCard } from "./NextStepActionCard";
 
 interface WealthBlockResultProps {
   result: AssessmentResult;
@@ -231,6 +233,14 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
       
       {/* 健康度仪表盘 - 视觉冲击力升级 */}
       <EnhancedHealthGauge
+        healthScore={healthScore}
+        behaviorScore={result.behaviorScore}
+        emotionScore={result.emotionScore}
+        beliefScore={result.beliefScore}
+      />
+
+      {/* 觉醒起点 + 目标锚点卡片 */}
+      <AwakeningJourneyPreview
         healthScore={healthScore}
         behaviorScore={result.behaviorScore}
         emotionScore={result.emotionScore}
@@ -690,31 +700,25 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         />
       )}
 
-      {/* 行动按钮 */}
+      {/* 下一步行动路径卡片 */}
+      <NextStepActionCard
+        isSaved={isSaved || false}
+        isSaving={isSaving}
+        hasPurchased={hasPurchased}
+        awakeningStart={100 - healthScore}
+        day7Target={Math.min(100 - healthScore + 20, 95)}
+        onSave={onSave}
+        onPurchase={() => setShowPayDialog(true)}
+        onStartCamp={() => setShowStartDialog(true)}
+      />
+
+      {/* 分享和重测按钮 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
         className="space-y-3"
       >
-        {onSave && !isSaved && (
-          <Button 
-            className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg h-12"
-            onClick={onSave}
-            disabled={isSaving}
-          >
-            <Save className="w-5 h-5 mr-2" />
-            {isSaving ? "保存中..." : "保存测评结果"}
-          </Button>
-        )}
-        
-        {isSaved && (
-          <div className="flex items-center justify-center gap-2 text-emerald-600 py-2">
-            <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-medium">测评结果已保存</span>
-          </div>
-        )}
-        
         <WealthInviteCardDialog
           defaultTab="aianalysis"
           trigger={
