@@ -64,7 +64,7 @@ const EnergyStudio = () => {
     id: "coach" as const,
     label: "教练空间",
     emoji: "🎯",
-    route: null
+    route: "/coach-space"
   }, {
     id: "tools" as const,
     label: "成长工具",
