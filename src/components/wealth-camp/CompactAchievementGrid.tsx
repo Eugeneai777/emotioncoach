@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUserAchievements } from '@/hooks/useUserAchievements';
-import { Trophy, Lock, Sparkles, Target } from 'lucide-react';
+import { Trophy, Lock, Sparkles, Target, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import WealthInviteCardDialog from './WealthInviteCardDialog';
 
 // Category color mapping for unlocked achievements
 const categoryStyles: Record<string, { bg: string; border: string; gradient: string }> = {
@@ -48,6 +50,7 @@ interface CompactAchievementGridProps {
 export function CompactAchievementGrid({ className }: CompactAchievementGridProps) {
   const { getAchievementsWithStatus, earnedCount, totalCount, isLoading } = useUserAchievements();
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   
   const allAchievements = getAchievementsWithStatus();
   const progressPercent = totalCount > 0 ? Math.round((earnedCount / totalCount) * 100) : 0;
@@ -81,11 +84,23 @@ export function CompactAchievementGrid({ className }: CompactAchievementGridProp
             <Trophy className="w-4 h-4 text-amber-500" />
             成就徽章
           </span>
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-bold bg-gradient-to-r from-amber-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
-              {earnedCount}
-            </span>
-            <span className="text-xs text-muted-foreground">/ {totalCount}</span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-bold bg-gradient-to-r from-amber-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
+                {earnedCount}
+              </span>
+              <span className="text-xs text-muted-foreground">/ {totalCount}</span>
+            </div>
+            {earnedCount > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 w-7 p-0"
+                onClick={() => setShowShareDialog(true)}
+              >
+                <Share2 className="w-4 h-4 text-muted-foreground" />
+              </Button>
+            )}
           </div>
         </div>
         {/* Rainbow gradient progress bar */}
@@ -273,6 +288,13 @@ export function CompactAchievementGrid({ className }: CompactAchievementGridProp
           </motion.div>
         )}
       </CardContent>
+
+      {/* Share Dialog */}
+      <WealthInviteCardDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        defaultTab="achievement"
+      />
     </Card>
   );
 }

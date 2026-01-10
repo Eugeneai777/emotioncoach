@@ -19,6 +19,7 @@ import { BackfillMemoriesButton } from '@/components/wealth-camp/BackfillMemorie
 import { AwakeningArchiveTab } from '@/components/wealth-camp/AwakeningArchiveTab';
 import { AwakeningDashboard } from '@/components/wealth-camp/AwakeningDashboard';
 import { TodayTaskHub, UserMode } from '@/components/wealth-camp/TodayTaskHub';
+import { AchievementMilestoneHint } from '@/components/wealth-camp/AchievementMilestoneHint';
 import { AIInsightZone } from '@/components/wealth-camp/AIInsightZone';
 import { Day0BaselineCard } from '@/components/wealth-camp/Day0BaselineCard';
 import AwakeningOnboardingDialog from '@/components/wealth-camp/AwakeningOnboardingDialog';
@@ -652,6 +653,14 @@ ${reflection}`;
                 currentDay={currentDay}
                 hasGraduationReport={!!campSummary}
                 graduationReportViewed={false}
+              />
+            )}
+
+            {/* 成就里程碑提示 - 显示即将解锁的成就 */}
+            {!makeupDayNumber && (
+              <AchievementMilestoneHint 
+                campId={campId} 
+                currentDay={currentDay} 
               />
             )}
 
