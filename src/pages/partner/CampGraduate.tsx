@@ -164,47 +164,87 @@ export default function CampGraduate() {
           </Card>
         )}
 
-        {/* 毕业证书展示 */}
+        {/* 毕业证书展示 - 7天专属样式 */}
         {graduationData && (
-        <Card className="border-0 shadow-xl overflow-hidden bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500">
-          <CardContent className="p-0">
+        <Card className="border-0 shadow-xl overflow-hidden relative">
+          {/* 动态背景 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500">
+            {/* 动画光晕效果 */}
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute top-0 left-1/4 w-64 h-64 bg-white/20 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-rose-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+            </div>
+          </div>
+          
+          <CardContent className="p-0 relative">
             <div className="p-6 text-white text-center relative">
-              {/* 装饰元素 */}
-              <div className="absolute top-4 left-4 w-16 h-16 border-2 border-white/20 rounded-full" />
-              <div className="absolute bottom-4 right-4 w-12 h-12 border-2 border-white/20 rounded-full" />
+              {/* 装饰边框 */}
+              <div className="absolute inset-4 border-2 border-white/20 rounded-2xl pointer-events-none" />
               
-              <div className="relative z-10">
-                <div className="w-20 h-20 mx-auto mb-4 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <GraduationCap className="w-10 h-10" />
+              {/* 角落装饰 */}
+              <div className="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2 border-white/40 rounded-tl-lg" />
+              <div className="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2 border-white/40 rounded-tr-lg" />
+              <div className="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2 border-white/40 rounded-bl-lg" />
+              <div className="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2 border-white/40 rounded-br-lg" />
+              
+              {/* 飘落的星星动画 */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {[...Array(6)].map((_, i) => (
+                  <Sparkles
+                    key={i}
+                    className="absolute w-4 h-4 text-white/40 animate-bounce"
+                    style={{
+                      left: `${15 + i * 15}%`,
+                      top: `${10 + (i % 3) * 25}%`,
+                      animationDelay: `${i * 0.3}s`,
+                      animationDuration: '2s'
+                    }}
+                  />
+                ))}
+              </div>
+              
+              <div className="relative z-10 py-4">
+                {/* 毕业帽图标 - 带动画 */}
+                <div className="w-24 h-24 mx-auto mb-4 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm animate-bounce" style={{ animationDuration: '3s' }}>
+                  <GraduationCap className="w-12 h-12" />
                 </div>
                 
-                <Badge className="bg-white/20 text-white border-white/30 mb-3">
-                  🎓 毕业证书
+                <Badge className="bg-white/20 text-white border-white/30 mb-3 text-sm px-4 py-1">
+                  🎓 7天财富觉醒 · 毕业证书
                 </Badge>
                 
-                <h2 className="text-2xl font-bold mb-2">
-                  恭喜完成7天财富觉醒训练
+                <h2 className="text-2xl font-bold mb-1 tracking-wide">
+                  财富觉醒之旅
                 </h2>
+                <p className="text-white/80 text-lg mb-2">荣誉毕业证书</p>
                 
                 {graduationData && (
                   <>
-                    <p className="text-white/80 mb-4">
+                    <p className="text-white/70 text-sm mb-6">
                       毕业时间：{format(new Date(graduationData.completedAt), 'yyyy年M月d日', { locale: zhCN })}
                     </p>
                     
-                    <div className="grid grid-cols-3 gap-4 mt-6">
-                      <div className="bg-white/20 rounded-xl p-3 backdrop-blur-sm">
-                        <p className="text-2xl font-bold">{graduationData.totalDays}</p>
-                        <p className="text-xs text-white/80">坚持天数</p>
+                    {/* 成就数据卡片 */}
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
+                        <p className="text-3xl font-bold">{graduationData.totalDays}</p>
+                        <p className="text-xs text-white/70 mt-1">坚持天数</p>
                       </div>
-                      <div className="bg-white/20 rounded-xl p-3 backdrop-blur-sm">
-                        <p className="text-2xl font-bold">{graduationData.journalCount}</p>
-                        <p className="text-xs text-white/80">财富日记</p>
+                      <div className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
+                        <p className="text-3xl font-bold">{graduationData.journalCount}</p>
+                        <p className="text-xs text-white/70 mt-1">财富日记</p>
                       </div>
-                      <div className="bg-white/20 rounded-xl p-3 backdrop-blur-sm">
-                        <p className="text-2xl font-bold">{graduationData.awakeningScore}</p>
-                        <p className="text-xs text-white/80">觉醒指数</p>
+                      <div className="bg-white/15 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
+                        <p className="text-3xl font-bold">{graduationData.awakeningScore}</p>
+                        <p className="text-xs text-white/70 mt-1">觉醒指数</p>
                       </div>
+                    </div>
+                    
+                    {/* 认证标识 */}
+                    <div className="flex items-center justify-center gap-2 text-white/60 text-xs">
+                      <span className="w-12 h-px bg-white/30" />
+                      <span>有劲AI · 财富教练认证</span>
+                      <span className="w-12 h-px bg-white/30" />
                     </div>
                   </>
                 )}
@@ -212,7 +252,6 @@ export default function CampGraduate() {
             </div>
           </CardContent>
         </Card>
-
         )}
 
         {/* 以下内容仅毕业用户可见 */}

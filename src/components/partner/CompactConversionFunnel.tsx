@@ -52,6 +52,7 @@ export function CompactConversionFunnel({ partnerId, onClick }: CompactConversio
     }
   };
 
+  // 转化漏斗节点：体验 → Day3 → Day7 → 365 → 合伙人
   const funnelSteps = [
     { label: "体验", value: stats.total, icon: Users, color: "text-blue-500", bg: "bg-blue-100" },
     { label: "入群", value: stats.joinedGroup, icon: UserCheck, color: "text-orange-500", bg: "bg-orange-100" },
