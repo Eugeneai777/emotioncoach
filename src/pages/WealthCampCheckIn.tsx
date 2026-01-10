@@ -541,7 +541,7 @@ ${reflection}`;
               )}
             </AnimatePresence>
 
-            {/* 1. 觉醒仪表盘 - 合并 GameProgressCard + MiniProgressCalendar */}
+            {/* 1. 可折叠觉醒仪表盘 - 全生命周期日历 + GameProgressCard */}
             {!makeupDayNumber && (
               <AwakeningDashboard
                 currentDay={currentDay}
@@ -560,6 +560,10 @@ ${reflection}`;
                 }}
                 activeMakeupDay={makeupDayNumber}
                 justCompletedDay={lastCompletedMakeupDay}
+                userMode={userCampMode}
+                daysSinceGraduation={userCampMode !== 'active' ? Math.max(0, currentDay - 7) : 0}
+                cycleMeditationDay={cycleMeditationDay}
+                cycleWeek={cycleWeek}
               />
             )}
 
