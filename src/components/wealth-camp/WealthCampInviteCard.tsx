@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import WealthInviteCardDialog from './WealthInviteCardDialog';
 
 interface WealthCampInviteCardProps {
   campId?: string;
@@ -16,6 +17,7 @@ export function WealthCampInviteCard({
   userId
 }: WealthCampInviteCardProps) {
   const [copied, setCopied] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const { toast } = useToast();
 
   const inviteUrl = `${window.location.origin}/claim?type=wealth_camp_7&ref=${userId}`;
@@ -51,17 +53,36 @@ export function WealthCampInviteCard({
           你已完成 <strong>第 {dayNumber} 天</strong> 训练，邀请好友一起成长！
         </p>
 
-        <Button
-          onClick={handleCopyLink}
-          className="w-full bg-amber-500 hover:bg-amber-600 text-white gap-2"
-        >
-          {copied ? (
-            <Check className="w-4 h-4" />
-          ) : (
-            <Copy className="w-4 h-4" />
-          )}
-          {copied ? '已复制' : '复制邀请链接'}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleCopyLink}
+            variant="outline"
+            className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50 gap-2"
+          >
+            {copied ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <Copy className="w-4 h-4" />
+            )}
+            {copied ? '已复制' : '复制链接'}
+          </Button>
+
+          <Button
+            onClick={() => setShowShareDialog(true)}
+            className="flex-1 bg-amber-500 hover:bg-amber-600 text-white gap-2"
+          >
+            <Image className="w-4 h-4" />
+            生成邀请卡片
+          </Button>
+        </div>
+
+        <WealthInviteCardDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          defaultTab="camp"
+          campId={campId}
+          currentDay={dayNumber}
+        />
       </CardContent>
     </Card>
   );
