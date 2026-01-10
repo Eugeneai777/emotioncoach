@@ -953,6 +953,9 @@ ${reflection}`;
           </TabsContent>
 
           <TabsContent value="journal" className="mt-6 space-y-4">
+            {/* Day 0 基线卡片 - 在财富简报列表顶部显示测评结果延续 */}
+            <Day0BaselineCard onClick={() => navigate('/wealth-block?tab=report')} />
+            
             {/* Backfill memories button */}
             <div className="flex justify-end">
               <BackfillMemoriesButton />
