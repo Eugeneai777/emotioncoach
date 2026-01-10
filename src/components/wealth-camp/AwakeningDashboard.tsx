@@ -27,8 +27,8 @@ export function AwakeningDashboard({
 }: AwakeningDashboardProps) {
   return (
     <div className={cn("space-y-4", className)}>
-      {/* 游戏化进度卡片 - 保留用户指定设计 */}
-      <GameProgressCard currentDayNumber={currentDay} />
+      {/* 游戏化进度卡片 - 传入streak和currentDay */}
+      <GameProgressCard currentDayNumber={currentDay} streak={streak} />
       
       {/* 7天进度日历 - 内嵌到仪表盘下方 */}
       <MiniProgressCalendar
