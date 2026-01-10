@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Flame } from "lucide-react";
-import { wealthLayerColors, getHealthZone, getGaugeColor, getScoreColor } from "@/config/wealthStyleConfig";
+import { wealthLayerColors, getAwakeningZone, getAwakeningColor, getAwakeningTextColor } from "@/config/wealthStyleConfig";
 
 interface JournalHealthGaugeProps {
   awakeningIndex: number;
@@ -29,7 +29,7 @@ export function JournalHealthGauge({
   peakIndex,
   currentAvg,
 }: JournalHealthGaugeProps) {
-  const zone = getHealthZone(awakeningIndex);
+  const zone = getAwakeningZone(awakeningIndex);
   const radius = 80;
   const strokeWidth = 12;
   const circumference = Math.PI * radius;
@@ -91,7 +91,7 @@ export function JournalHealthGauge({
               <motion.path
                 d="M 20 100 A 80 80 0 0 1 180 100"
                 fill="none"
-                stroke={getGaugeColor(awakeningIndex)}
+                stroke={getAwakeningColor(awakeningIndex)}
                 strokeWidth={strokeWidth}
                 strokeLinecap="round"
                 initial={{ pathLength: 0 }}
@@ -120,7 +120,7 @@ export function JournalHealthGauge({
                   strokeLinecap="round"
                 />
                 <circle cx="100" cy="100" r="6" fill="white" />
-                <circle cx="100" cy="100" r="3" fill={getGaugeColor(awakeningIndex)} />
+                <circle cx="100" cy="100" r="3" fill={getAwakeningColor(awakeningIndex)} />
               </motion.g>
               
               {/* Scale labels */}
@@ -138,7 +138,7 @@ export function JournalHealthGauge({
           >
             <div className="flex items-center justify-center gap-2 mb-1">
               <span 
-                className={cn("text-3xl font-bold tabular-nums", getScoreColor(awakeningIndex))}
+                className={cn("text-3xl font-bold tabular-nums", getAwakeningTextColor(awakeningIndex))}
                 style={{ textShadow: '0 0 20px currentColor' }}
               >
                 {awakeningIndex}

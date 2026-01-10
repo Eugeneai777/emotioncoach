@@ -4,6 +4,7 @@ import { ChevronRight, Star, Tent } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { getAwakeningColor, starScoreToAwakening } from '@/config/wealthStyleConfig';
 
 // 卡点类型映射
 const behaviorTypeInfo: Record<string, { name: string; color: string }> = {
@@ -72,11 +73,11 @@ function ScoreStars({ score }: { score?: number }) {
 
 export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
   const avgScore = entry.behavior_score && entry.emotion_score && entry.belief_score
-    ? ((entry.behavior_score + entry.emotion_score + entry.belief_score) / 3).toFixed(1)
+    ? (entry.behavior_score + entry.emotion_score + entry.belief_score) / 3
     : null;
   
-  // Calculate awakening index (0-100)
-  const awakeningIndex = avgScore ? Math.round(((parseFloat(avgScore) - 1) / 4) * 100) : null;
+  // Calculate awakening index (0-100) using unified conversion function
+  const awakeningIndex = avgScore ? starScoreToAwakening(avgScore) : null;
 
   const hasCamp = !!entry.camp_id;
   const hasBlockTypes = entry.behavior_type || entry.emotion_type || entry.belief_type;
@@ -182,7 +183,7 @@ export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
                   <circle 
                     cx="18" cy="18" r="16"
                     fill="none"
-                    stroke={awakeningIndex <= 40 ? "#10b981" : awakeningIndex <= 70 ? "#f59e0b" : "#f43f5e"}
+                    stroke={getAwakeningColor(awakeningIndex)}
                     strokeWidth="3"
                     strokeLinecap="round"
                     strokeDasharray={`${awakeningIndex} 100`}

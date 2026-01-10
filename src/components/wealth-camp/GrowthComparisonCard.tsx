@@ -84,28 +84,23 @@ export function GrowthComparisonCard({
   const layerIndex = Math.round(((layerAwakening - 1) / 4) * 100); // 0-100 scale
   const awakeningIndex = Math.round((layerIndex + avgFourPoorRate) / 2); // Blend both metrics
 
-  // Normalize baseline scores for radar (assuming max score per dimension is ~30)
-  const maxBaselineScore = 30;
-  const baselineBehaviorNorm = Math.round((baseline.behavior_score / maxBaselineScore) * 100);
-  const baselineEmotionNorm = Math.round((baseline.emotion_score / maxBaselineScore) * 100);
-  const baselineBeliefNorm = Math.round((baseline.belief_score / maxBaselineScore) * 100);
-
-  // Radar chart data - showing "卡点程度" vs "觉醒程度"
+  // Use unified awakening percentages from baseline (already converted in useAssessmentBaseline)
+  // Radar chart data - showing "觉醒起点" vs "当前觉醒" (both using positive awakening scale)
   const radarData = [
     {
       dimension: '行为层',
-      卡点程度: baselineBehaviorNorm,
-      觉醒程度: behaviorRate,
+      觉醒起点: baseline.behaviorAwakening ?? 0,
+      当前觉醒: behaviorRate,
     },
     {
       dimension: '情绪层',
-      卡点程度: baselineEmotionNorm,
-      觉醒程度: emotionRate,
+      觉醒起点: baseline.emotionAwakening ?? 0,
+      当前觉醒: emotionRate,
     },
     {
       dimension: '信念层',
-      卡点程度: baselineBeliefNorm,
-      觉醒程度: beliefRate,
+      觉醒起点: baseline.beliefAwakening ?? 0,
+      当前觉醒: beliefRate,
     },
   ];
 
@@ -170,11 +165,11 @@ export function GrowthComparisonCard({
         <div className="bg-muted/50 rounded-lg p-3 space-y-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <ClipboardList className="w-3.5 h-3.5" />
-            <span>测评基线</span>
+            <span>觉醒起点</span>
             <span className="text-[10px]">({assessmentDate})</span>
           </div>
           <div className="text-lg font-semibold">
-            卡点指数 <span className="text-primary">{baseline.total_score}</span>
+            起点指数 <span className="text-emerald-600">{baseline.awakeningStart}</span>
           </div>
           <div className="text-xs text-muted-foreground">
             {baselinePattern}
@@ -223,16 +218,16 @@ export function GrowthComparisonCard({
                   tickCount={5}
                 />
                 <Radar
-                  name="卡点程度"
-                  dataKey="卡点程度"
-                  stroke="hsl(var(--destructive))"
-                  fill="hsl(var(--destructive))"
+                  name="觉醒起点"
+                  dataKey="觉醒起点"
+                  stroke="hsl(var(--muted-foreground))"
+                  fill="hsl(var(--muted-foreground))"
                   fillOpacity={0.2}
                   strokeWidth={2}
                 />
                 <Radar
-                  name="觉醒程度"
-                  dataKey="觉醒程度"
+                  name="当前觉醒"
+                  dataKey="当前觉醒"
                   stroke="hsl(var(--primary))"
                   fill="hsl(var(--primary))"
                   fillOpacity={0.3}
@@ -246,7 +241,7 @@ export function GrowthComparisonCard({
             </ResponsiveContainer>
           </div>
           <p className="text-[10px] text-center text-muted-foreground">
-            红色区域越小、蓝色区域越大，说明转化越显著
+            灰色为觉醒起点，蓝色为当前觉醒，蓝色区域越大说明成长越显著
           </p>
         </div>
       )}
@@ -430,11 +425,11 @@ export function GrowthComparisonCard({
               <TooltipContent side="top" className="max-w-[280px] p-3">
                 <div className="text-xs space-y-1.5">
                   <p className="font-medium">数据说明</p>
-                  <p className="text-muted-foreground">成长对比展示测评基线与当前觉醒状态的差异：</p>
+                  <p className="text-muted-foreground">成长对比展示觉醒起点与当前觉醒状态的差异：</p>
                   <ul className="text-muted-foreground list-disc pl-3 space-y-0.5">
-                    <li>卡点指数：初始财富评估的综合得分</li>
+                    <li>觉醒起点：测评转换后的初始觉醒分数 (100-卡点分)</li>
                     <li>觉醒指数：(平均分-1)/4×100，分数越高觉醒越深</li>
-                    <li>雷达图：红色为卡点程度，蓝色为觉醒程度</li>
+                    <li>雷达图：灰色为觉醒起点，蓝色为当前觉醒</li>
                   </ul>
                 </div>
               </TooltipContent>
