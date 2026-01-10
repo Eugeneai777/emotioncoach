@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getAwakeningColor, starScoreToAwakening } from '@/config/wealthStyleConfig';
+import { cardBaseStyles } from '@/config/cardStyleConfig';
 
 // 卡点类型映射
 const behaviorTypeInfo: Record<string, { name: string; color: string }> = {
@@ -85,10 +86,11 @@ export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
   return (
     <Card 
       className={cn(
-        "cursor-pointer transition-all hover:shadow-md",
-        "bg-gradient-to-br from-amber-50/50 to-yellow-50/50",
-        "dark:from-amber-950/20 dark:to-yellow-950/20",
-        "border-amber-100 dark:border-amber-900"
+        cardBaseStyles.container,
+        "cursor-pointer",
+        "bg-gradient-to-br from-amber-50/60 to-yellow-50/40",
+        "dark:from-amber-950/20 dark:to-yellow-950/15",
+        "border-amber-100/80 dark:border-amber-900/40"
       )}
       onClick={onClick}
     >

@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, ChevronUp, Lightbulb, Target, Bell, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { cardBaseStyles } from '@/config/cardStyleConfig';
 
 interface AIInsightZoneProps {
   weekNumber?: number;
@@ -47,9 +48,10 @@ export function AIInsightZone({
 
   return (
     <Card className={cn(
-      "shadow-sm transition-all duration-300",
+      cardBaseStyles.container,
+      "transition-all duration-300",
       isExpanded 
-        ? "bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-950/30 dark:to-indigo-950/30 border-violet-200 dark:border-violet-800"
+        ? "bg-gradient-to-br from-violet-50/80 to-indigo-50/60 dark:from-violet-950/30 dark:to-indigo-950/20 border-violet-200/50 dark:border-violet-800/40"
         : "bg-background/80",
       className
     )}>

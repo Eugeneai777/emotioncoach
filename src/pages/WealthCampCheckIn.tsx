@@ -251,11 +251,16 @@ export default function WealthCampCheckIn() {
   }, [lastCompletedMakeupDay]);
 
   const handleInviteClick = () => {
+    setShowInviteDialog(true);
+  };
+
+  // Called after user views the invite dialog for 3+ seconds
+  const handleInviteViewComplete = () => {
     if (campId && currentDay) {
       const key = `wealth-camp-invite-${campId}-${currentDay}`;
       localStorage.setItem(key, 'true');
       setInviteCompleted(true);
-      trackShare('invite', 'clicked', false, { day_number: currentDay });
+      trackShare('invite', 'completed', false, { day_number: currentDay });
     }
   };
 
@@ -842,7 +847,7 @@ ${reflection}`;
         defaultTab="camp"
         campId={campId}
         currentDay={currentDay}
-        onGenerate={handleInviteClick}
+        onViewComplete={handleInviteViewComplete}
         trigger={<span className="hidden" />}
       />
 

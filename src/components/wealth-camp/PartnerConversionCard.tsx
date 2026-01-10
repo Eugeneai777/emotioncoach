@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowRight, Gift, TrendingUp, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { cardBaseStyles } from '@/config/cardStyleConfig';
 
 interface PartnerConversionCardProps {
   variant?: 'compact' | 'full';
@@ -25,7 +26,8 @@ export function PartnerConversionCard({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className={cn(
-          "p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200",
+          cardBaseStyles.container,
+          "p-3 bg-gradient-to-br from-emerald-50/80 to-teal-50/60 dark:from-emerald-950/30 dark:to-teal-950/20 border border-emerald-200/50 dark:border-emerald-800/40",
           className
         )}
       >
@@ -59,7 +61,8 @@ export function PartnerConversionCard({
       transition={{ delay: 0.2 }}
     >
       <Card className={cn(
-        "overflow-hidden border-0 shadow-lg",
+        cardBaseStyles.container,
+        "overflow-hidden border-0",
         className
       )}>
         <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-500" />
