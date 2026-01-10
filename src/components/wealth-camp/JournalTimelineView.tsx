@@ -4,7 +4,6 @@ import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
@@ -14,8 +13,8 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Star,
-  Sparkles
+  Sparkles,
+  Tag
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { JournalEntryDetailDialog } from './JournalEntryDetailDialog';
@@ -40,13 +39,129 @@ interface JournalEntry {
 
 type DimensionFilter = 'all' | 'behavior' | 'emotion' | 'belief';
 
+// Emotion tags extracted from entries
+const EMOTION_TAGS = [
+  { key: 'anxiety', label: '焦虑', emoji: '😰', keywords: ['焦虑', '担心', '紧张', '害怕', '恐惧'] },
+  { key: 'joy', label: '喜悦', emoji: '😊', keywords: ['开心', '喜悦', '快乐', '满足', '幸福'] },
+  { key: 'sadness', label: '低落', emoji: '😔', keywords: ['低落', '难过', '悲伤', '失望', '沮丧'] },
+  { key: 'anger', label: '愤怒', emoji: '😤', keywords: ['愤怒', '生气', '烦躁', '不满', '恼火'] },
+  { key: 'confusion', label: '迷茫', emoji: '😕', keywords: ['迷茫', '困惑', '纠结', '犹豫', '矛盾'] },
+  { key: 'calm', label: '平静', emoji: '😌', keywords: ['平静', '放松', '安心', '释然', '淡定'] },
+];
+
 interface JournalTimelineViewProps {
   entries: JournalEntry[];
   className?: string;
 }
 
+// Mini trend curve component
+function MiniTrendCurve({ entries }: { entries: JournalEntry[] }) {
+  // Get last 7 entries sorted by day_number ascending
+  const recentEntries = useMemo(() => {
+    return [...entries]
+      .sort((a, b) => a.day_number - b.day_number)
+      .slice(-7);
+  }, [entries]);
+
+  if (recentEntries.length < 2) return null;
+
+  // Calculate awakening index for each entry
+  const dataPoints = recentEntries.map(entry => {
+    const scores = [entry.behavior_score, entry.emotion_score, entry.belief_score]
+      .filter(s => s && s > 0) as number[];
+    const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+    return Math.round(((avg - 1) / 4) * 100);
+  });
+
+  const maxVal = Math.max(...dataPoints, 100);
+  const minVal = Math.min(...dataPoints, 0);
+  const range = maxVal - minVal || 1;
+
+  // Calculate SVG path
+  const width = 100;
+  const height = 32;
+  const padding = 4;
+  const effectiveWidth = width - padding * 2;
+  const effectiveHeight = height - padding * 2;
+
+  const points = dataPoints.map((val, i) => ({
+    x: padding + (i / (dataPoints.length - 1)) * effectiveWidth,
+    y: padding + effectiveHeight - ((val - minVal) / range) * effectiveHeight,
+  }));
+
+  const pathD = points.reduce((path, point, i) => {
+    if (i === 0) return `M ${point.x} ${point.y}`;
+    
+    // Smooth curve using quadratic bezier
+    const prev = points[i - 1];
+    const midX = (prev.x + point.x) / 2;
+    return `${path} Q ${midX} ${prev.y} ${midX} ${(prev.y + point.y) / 2} T ${point.x} ${point.y}`;
+  }, '');
+
+  // Calculate trend
+  const firstVal = dataPoints[0];
+  const lastVal = dataPoints[dataPoints.length - 1];
+  const trendUp = lastVal > firstVal;
+  const trendChange = lastVal - firstVal;
+
+  return (
+    <div className="flex items-center gap-3 px-3 py-2 bg-muted/30 rounded-lg">
+      <div className="flex-1">
+        <div className="text-xs text-muted-foreground mb-1">近{recentEntries.length}日成长趋势</div>
+        <svg width={width} height={height} className="overflow-visible">
+          {/* Gradient fill under curve */}
+          <defs>
+            <linearGradient id="trendGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={trendUp ? 'rgb(16, 185, 129)' : 'rgb(249, 115, 22)'} stopOpacity="0.3" />
+              <stop offset="100%" stopColor={trendUp ? 'rgb(16, 185, 129)' : 'rgb(249, 115, 22)'} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          
+          {/* Area fill */}
+          <path
+            d={`${pathD} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`}
+            fill="url(#trendGradient)"
+          />
+          
+          {/* Line */}
+          <path
+            d={pathD}
+            fill="none"
+            stroke={trendUp ? 'rgb(16, 185, 129)' : 'rgb(249, 115, 22)'}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          
+          {/* End point dot */}
+          <circle
+            cx={points[points.length - 1].x}
+            cy={points[points.length - 1].y}
+            r="3"
+            fill={trendUp ? 'rgb(16, 185, 129)' : 'rgb(249, 115, 22)'}
+          />
+        </svg>
+      </div>
+      
+      {/* Trend indicator */}
+      <div className="text-right">
+        <div className={cn(
+          "text-lg font-bold tabular-nums",
+          trendUp ? "text-emerald-600" : "text-orange-600"
+        )}>
+          {trendUp ? '+' : ''}{trendChange}
+        </div>
+        <div className="text-[10px] text-muted-foreground">
+          {trendUp ? '📈 持续成长' : trendChange === 0 ? '➡️ 保持稳定' : '💪 继续加油'}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function JournalTimelineView({ entries, className }: JournalTimelineViewProps) {
   const [filter, setFilter] = useState<DimensionFilter>('all');
+  const [emotionTag, setEmotionTag] = useState<string | null>(null);
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -55,29 +170,75 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
     return [...entries].sort((a, b) => b.day_number - a.day_number);
   }, [entries]);
 
-  // Filter entries based on dimension with significant content
-  const filteredEntries = useMemo(() => {
-    if (filter === 'all') return sortedEntries;
+  // Detect emotion tags present in entries
+  const presentEmotionTags = useMemo(() => {
+    const tagCounts = new Map<string, number>();
     
-    return sortedEntries.filter(entry => {
-      switch (filter) {
-        case 'behavior':
-          return (entry.behavior_score && entry.behavior_score > 0) || 
-                 entry.behavior_block || 
-                 entry.personal_awakening?.behavior_awakening;
-        case 'emotion':
-          return (entry.emotion_score && entry.emotion_score > 0) || 
-                 entry.emotion_need || 
-                 entry.personal_awakening?.emotion_awakening;
-        case 'belief':
-          return (entry.belief_score && entry.belief_score > 0) || 
-                 entry.new_belief || 
-                 entry.personal_awakening?.belief_awakening;
-        default:
-          return true;
-      }
+    entries.forEach(entry => {
+      const allText = [
+        entry.emotion_need,
+        entry.personal_awakening?.emotion_awakening,
+        entry.behavior_block,
+        entry.new_belief,
+      ].filter(Boolean).join(' ');
+      
+      EMOTION_TAGS.forEach(tag => {
+        if (tag.keywords.some(keyword => allText.includes(keyword))) {
+          tagCounts.set(tag.key, (tagCounts.get(tag.key) || 0) + 1);
+        }
+      });
     });
-  }, [sortedEntries, filter]);
+    
+    return EMOTION_TAGS
+      .filter(tag => tagCounts.has(tag.key))
+      .map(tag => ({ ...tag, count: tagCounts.get(tag.key) || 0 }))
+      .sort((a, b) => b.count - a.count);
+  }, [entries]);
+
+  // Filter entries based on dimension and emotion tag
+  const filteredEntries = useMemo(() => {
+    let result = sortedEntries;
+    
+    // Dimension filter
+    if (filter !== 'all') {
+      result = result.filter(entry => {
+        switch (filter) {
+          case 'behavior':
+            return (entry.behavior_score && entry.behavior_score > 0) || 
+                   entry.behavior_block || 
+                   entry.personal_awakening?.behavior_awakening;
+          case 'emotion':
+            return (entry.emotion_score && entry.emotion_score > 0) || 
+                   entry.emotion_need || 
+                   entry.personal_awakening?.emotion_awakening;
+          case 'belief':
+            return (entry.belief_score && entry.belief_score > 0) || 
+                   entry.new_belief || 
+                   entry.personal_awakening?.belief_awakening;
+          default:
+            return true;
+        }
+      });
+    }
+    
+    // Emotion tag filter
+    if (emotionTag) {
+      const tagConfig = EMOTION_TAGS.find(t => t.key === emotionTag);
+      if (tagConfig) {
+        result = result.filter(entry => {
+          const allText = [
+            entry.emotion_need,
+            entry.personal_awakening?.emotion_awakening,
+            entry.behavior_block,
+            entry.new_belief,
+          ].filter(Boolean).join(' ');
+          return tagConfig.keywords.some(keyword => allText.includes(keyword));
+        });
+      }
+    }
+    
+    return result;
+  }, [sortedEntries, filter, emotionTag]);
 
   const getScoreColor = (score: number | null) => {
     if (!score || score === 0) return 'text-muted-foreground';
@@ -104,7 +265,6 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
   };
 
   const getHighlightContent = (entry: JournalEntry): string | null => {
-    // Priority: new_belief > belief_awakening > emotion_awakening > behavior_awakening
     if (entry.new_belief) return entry.new_belief;
     if (entry.personal_awakening?.belief_awakening) return entry.personal_awakening.belief_awakening;
     if (entry.personal_awakening?.emotion_awakening) return entry.personal_awakening.emotion_awakening;
@@ -117,6 +277,18 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
     if (scores.length === 0) return 0;
     const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
     return Math.round(((avg - 1) / 4) * 100);
+  };
+
+  // Detect emotion tags in a single entry
+  const getEntryEmotionTags = (entry: JournalEntry) => {
+    const allText = [
+      entry.emotion_need,
+      entry.personal_awakening?.emotion_awakening,
+    ].filter(Boolean).join(' ');
+    
+    return EMOTION_TAGS.filter(tag => 
+      tag.keywords.some(keyword => allText.includes(keyword))
+    ).slice(0, 2); // Max 2 tags per entry
   };
 
   const handleEntryClick = (entry: JournalEntry) => {
@@ -139,8 +311,8 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
   return (
     <>
       <Card className={cn("shadow-sm", className)}>
-        <CardHeader className="pb-3 pt-4 px-4">
-          <div className="flex items-center justify-between">
+        <CardHeader className="pb-2 pt-4 px-4">
+          <div className="flex items-center justify-between mb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Calendar className="w-4 h-4 text-amber-600" />
               觉醒时间轴
@@ -148,8 +320,11 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
             </CardTitle>
           </div>
           
+          {/* Mini Trend Curve */}
+          <MiniTrendCurve entries={entries} />
+          
           {/* Dimension Filter */}
-          <div className="pt-2">
+          <div className="pt-3">
             <ToggleGroup 
               type="single" 
               value={filter} 
@@ -183,10 +358,49 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
+          
+          {/* Emotion Tag Filter */}
+          {presentEmotionTags.length > 0 && (
+            <div className="pt-2">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Tag className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground">情绪标签筛选</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setEmotionTag(null)}
+                  className={cn(
+                    "px-2 py-0.5 rounded-full text-xs transition-colors",
+                    emotionTag === null 
+                      ? "bg-slate-200 text-slate-700" 
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  全部
+                </button>
+                {presentEmotionTags.map(tag => (
+                  <button
+                    key={tag.key}
+                    onClick={() => setEmotionTag(emotionTag === tag.key ? null : tag.key)}
+                    className={cn(
+                      "px-2 py-0.5 rounded-full text-xs transition-colors flex items-center gap-1",
+                      emotionTag === tag.key 
+                        ? "bg-pink-100 text-pink-700" 
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    <span>{tag.emoji}</span>
+                    <span>{tag.label}</span>
+                    <span className="text-[10px] opacity-60">({tag.count})</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </CardHeader>
 
         <CardContent className="px-2 pb-3">
-          <ScrollArea className="h-[360px] pr-2">
+          <ScrollArea className="h-[320px] pr-2">
             <div className="space-y-1 pl-2">
               <AnimatePresence mode="popLayout">
                 {filteredEntries.map((entry, index) => {
@@ -194,6 +408,7 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
                   const trend = getScoreTrend(entry, prevEntry);
                   const highlight = getHighlightContent(entry);
                   const awakeningIndex = getAwakeningIndex(entry);
+                  const entryTags = getEntryEmotionTags(entry);
                   
                   return (
                     <motion.div
@@ -228,14 +443,27 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
                           {/* Content */}
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              {/* Header: Day + Date + Trend */}
-                              <div className="flex items-center gap-2 mb-1">
+                              {/* Header: Day + Date + Trend + Emotion Tags */}
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <span className="font-semibold text-sm">Day {entry.day_number}</span>
                                 <span className="text-xs text-muted-foreground">
                                   {format(new Date(entry.created_at), 'M/d', { locale: zhCN })}
                                 </span>
                                 {trend && (
                                   <trend.icon className={cn("w-3 h-3", trend.color)} />
+                                )}
+                                {/* Entry emotion tags */}
+                                {entryTags.length > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    {entryTags.map(tag => (
+                                      <span 
+                                        key={tag.key} 
+                                        className="text-[10px] px-1.5 py-0.5 rounded-full bg-pink-50 text-pink-600"
+                                      >
+                                        {tag.emoji} {tag.label}
+                                      </span>
+                                    ))}
+                                  </div>
                                 )}
                               </div>
 
@@ -295,7 +523,13 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
 
               {filteredEntries.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground text-sm">
-                  <p>该维度暂无记录</p>
+                  <p>该筛选条件下暂无记录</p>
+                  <button 
+                    onClick={() => { setFilter('all'); setEmotionTag(null); }}
+                    className="text-xs text-amber-600 mt-2 hover:underline"
+                  >
+                    清除筛选
+                  </button>
                 </div>
               )}
             </div>
