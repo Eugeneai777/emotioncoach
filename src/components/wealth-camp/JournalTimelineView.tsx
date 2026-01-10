@@ -49,13 +49,21 @@ const EMOTION_TAGS = [
   { key: 'calm', label: '平静', emoji: '😌', keywords: ['平静', '放松', '安心', '释然', '淡定'] },
 ];
 
+interface BaselineData {
+  behavior_score?: number;
+  emotion_score?: number;
+  belief_score?: number;
+  awakeningStart?: number;
+}
+
 interface JournalTimelineViewProps {
   entries: JournalEntry[];
+  baseline?: BaselineData | null;
   className?: string;
 }
 
-// Mini trend curve component
-function MiniTrendCurve({ entries }: { entries: JournalEntry[] }) {
+// Mini trend curve component - now shows vs Day 0 baseline
+function MiniTrendCurve({ entries, baseline }: { entries: JournalEntry[]; baseline?: BaselineData | null }) {
   // Get last 7 entries sorted by day_number ascending
   const recentEntries = useMemo(() => {
     return [...entries]
@@ -98,11 +106,11 @@ function MiniTrendCurve({ entries }: { entries: JournalEntry[] }) {
     return `${path} Q ${midX} ${prev.y} ${midX} ${(prev.y + point.y) / 2} T ${point.x} ${point.y}`;
   }, '');
 
-  // Calculate trend
-  const firstVal = dataPoints[0];
-  const lastVal = dataPoints[dataPoints.length - 1];
-  const trendUp = lastVal > firstVal;
-  const trendChange = lastVal - firstVal;
+  // Calculate trend vs Day 0 baseline
+  const latestAwakening = dataPoints[dataPoints.length - 1];
+  const baselineAwakening = baseline?.awakeningStart ?? dataPoints[0];
+  const vsBaseline = latestAwakening - baselineAwakening;
+  const trendUp = vsBaseline > 0;
 
   return (
     <div className="flex items-center gap-3 px-3 py-2 bg-muted/30 rounded-lg">
@@ -143,23 +151,23 @@ function MiniTrendCurve({ entries }: { entries: JournalEntry[] }) {
         </svg>
       </div>
       
-      {/* Trend indicator */}
+      {/* Trend indicator - now shows vs Day 0 */}
       <div className="text-right">
         <div className={cn(
           "text-lg font-bold tabular-nums",
-          trendUp ? "text-emerald-600" : "text-orange-600"
+          trendUp ? "text-emerald-600" : vsBaseline === 0 ? "text-slate-600" : "text-orange-600"
         )}>
-          {trendUp ? '+' : ''}{trendChange}
+          {vsBaseline > 0 ? '+' : ''}{vsBaseline}
         </div>
         <div className="text-[10px] text-muted-foreground">
-          {trendUp ? '📈 持续成长' : trendChange === 0 ? '➡️ 保持稳定' : '💪 继续加油'}
+          vs Day 0 起点
         </div>
       </div>
     </div>
   );
 }
 
-export function JournalTimelineView({ entries, className }: JournalTimelineViewProps) {
+export function JournalTimelineView({ entries, baseline, className }: JournalTimelineViewProps) {
   const [filter, setFilter] = useState<DimensionFilter>('all');
   const [emotionTag, setEmotionTag] = useState<string | null>(null);
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
@@ -264,12 +272,37 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
     return { icon: Minus, color: 'text-muted-foreground', label: '持平' };
   };
 
-  const getHighlightContent = (entry: JournalEntry): string | null => {
+  // Get highlight content based on filter
+  const getHighlightContent = (entry: JournalEntry, currentFilter: DimensionFilter): string | null => {
+    if (currentFilter === 'behavior') {
+      return entry.behavior_block || entry.personal_awakening?.behavior_awakening || null;
+    }
+    if (currentFilter === 'emotion') {
+      return entry.emotion_need || entry.personal_awakening?.emotion_awakening || null;
+    }
+    if (currentFilter === 'belief') {
+      return entry.new_belief || entry.personal_awakening?.belief_awakening || null;
+    }
+    // Default priority for 'all'
     if (entry.new_belief) return entry.new_belief;
     if (entry.personal_awakening?.belief_awakening) return entry.personal_awakening.belief_awakening;
     if (entry.personal_awakening?.emotion_awakening) return entry.personal_awakening.emotion_awakening;
     if (entry.personal_awakening?.behavior_awakening) return entry.personal_awakening.behavior_awakening;
     return null;
+  };
+
+  // Get highlight styles based on filter
+  const getHighlightStyles = (currentFilter: DimensionFilter): string => {
+    switch (currentFilter) {
+      case 'behavior':
+        return 'bg-amber-50 border-l-2 border-amber-400';
+      case 'emotion':
+        return 'bg-pink-50 border-l-2 border-pink-400';
+      case 'belief':
+        return 'bg-violet-50 border-l-2 border-violet-400';
+      default:
+        return '';
+    }
   };
 
   const getAwakeningIndex = (entry: JournalEntry): number => {
@@ -321,7 +354,7 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
           </div>
           
           {/* Mini Trend Curve */}
-          <MiniTrendCurve entries={entries} />
+          <MiniTrendCurve entries={entries} baseline={baseline} />
           
           {/* Dimension Filter */}
           <div className="pt-3">
@@ -357,6 +390,12 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
                 💡 信念
               </ToggleGroupItem>
             </ToggleGroup>
+            {/* Filter count badge */}
+            {filter !== 'all' && (
+              <Badge variant="outline" className="ml-2 text-xs">
+                {filteredEntries.length}/{entries.length}
+              </Badge>
+            )}
           </div>
           
           {/* Emotion Tag Filter */}
@@ -406,7 +445,8 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
                 {filteredEntries.map((entry, index) => {
                   const prevEntry = sortedEntries.find(e => e.day_number === entry.day_number - 1);
                   const trend = getScoreTrend(entry, prevEntry);
-                  const highlight = getHighlightContent(entry);
+                  const highlight = getHighlightContent(entry, filter);
+                  const highlightStyles = getHighlightStyles(filter);
                   const awakeningIndex = getAwakeningIndex(entry);
                   const entryTags = getEntryEmotionTags(entry);
                   
@@ -500,11 +540,23 @@ export function JournalTimelineView({ entries, className }: JournalTimelineViewP
                                 </div>
                               </div>
 
-                              {/* Highlight content preview */}
+                              {/* Highlight content preview - enhanced for dimension filter */}
                               {highlight && (
-                                <div className="flex items-start gap-1.5">
-                                  <Sparkles className="w-3 h-3 text-amber-500 mt-0.5 shrink-0" />
-                                  <p className="text-xs text-muted-foreground line-clamp-2">
+                                <div className={cn(
+                                  "flex items-start gap-1.5 rounded-md p-1.5 -mx-1.5",
+                                  highlightStyles
+                                )}>
+                                  <Sparkles className={cn(
+                                    "w-3 h-3 mt-0.5 shrink-0",
+                                    filter === 'behavior' ? "text-amber-500" :
+                                    filter === 'emotion' ? "text-pink-500" :
+                                    filter === 'belief' ? "text-violet-500" :
+                                    "text-amber-500"
+                                  )} />
+                                  <p className={cn(
+                                    "text-xs line-clamp-2",
+                                    filter !== 'all' ? "text-foreground" : "text-muted-foreground"
+                                  )}>
                                     {highlight}
                                   </p>
                                 </div>

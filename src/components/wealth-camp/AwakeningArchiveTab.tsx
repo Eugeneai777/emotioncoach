@@ -213,6 +213,12 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
                   personal_awakening: e.personal_awakening as any,
                   created_at: e.created_at,
                 }))} 
+                baseline={baseline ? {
+                  behavior_score: baseline.behavior_score,
+                  emotion_score: baseline.emotion_score,
+                  belief_score: baseline.belief_score,
+                  awakeningStart: baseline.awakeningStart,
+                } : null}
                 className="border-0 shadow-none"
               />
             </TabsContent>
