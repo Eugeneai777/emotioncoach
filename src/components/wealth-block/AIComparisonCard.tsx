@@ -26,7 +26,7 @@ export function AIComparisonCard() {
     <Card className="p-4 bg-white border-violet-200 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
         <Brain className="w-4 h-4 text-violet-600" />
-        <h3 className="font-medium text-sm text-slate-800">为什么选择 AI 测评？</h3>
+        <h3 className="font-medium text-sm text-slate-800">为什么选择有劲AI测评？</h3>
       </div>
       
       <div className="space-y-3">
