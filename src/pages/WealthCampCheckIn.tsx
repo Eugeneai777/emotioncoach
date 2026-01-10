@@ -791,7 +791,7 @@ ${reflection}`;
           <TabsContent value="archive" className="mt-6 space-y-4">
             <Tabs defaultValue="awakening" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="awakening">财富觉醒</TabsTrigger>
+                <TabsTrigger value="awakening">财富旅程</TabsTrigger>
                 <TabsTrigger value="briefing">财富简报</TabsTrigger>
               </TabsList>
 
