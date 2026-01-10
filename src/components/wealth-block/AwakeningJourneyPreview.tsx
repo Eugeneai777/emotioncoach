@@ -130,7 +130,7 @@ export function AwakeningJourneyPreview({
 
           {/* 底部提示 - 极简 */}
           <p className="text-[9px] sm:text-[10px] text-muted-foreground/70 text-center">
-            💡 分数越高=觉醒越深，7天训练营助你突破卡点
+            💡 分数越高=觉醒越深，财富觉醒训练营助你突破卡点
           </p>
         </CardContent>
       </Card>

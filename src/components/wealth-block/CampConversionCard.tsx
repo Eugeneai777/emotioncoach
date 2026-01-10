@@ -154,7 +154,7 @@ function PricingSection({
           className="w-full bg-amber-500 hover:bg-amber-600 text-white h-12 text-base font-semibold rounded-lg"
           onClick={onStart}
         >
-          开始7天训练营
+          开始财富觉醒训练营
         </Button>
       ) : (
         <Button 
@@ -306,7 +306,7 @@ export function CampConversionCard({
           {/* 训练营核心价值 - 简化版 */}
           <div className="p-4 bg-gradient-to-br from-muted/40 to-muted/20 rounded-xl border border-border/50">
             <p className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
-              ✨ 7天训练营带给你
+              ✨ 财富觉醒训练营带给你
             </p>
             <div className="grid grid-cols-2 gap-3">
               {trilogy.map((item, idx) => (

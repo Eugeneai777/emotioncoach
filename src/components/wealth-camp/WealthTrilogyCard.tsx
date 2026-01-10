@@ -27,7 +27,7 @@ const trilogySteps = [
     step: 2,
     emoji: "✨",
     title: "觉醒",
-    subtitle: "7天训练营",
+    subtitle: "财富觉醒训练营",
     description: "AI教练 + 社群共振 + 每日实践",
     icon: Tent,
     gradient: "from-amber-500 to-orange-500",

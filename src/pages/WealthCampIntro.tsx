@@ -161,7 +161,7 @@ const WealthCampIntro = () => {
           <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-amber-700">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <span className="text-sm text-amber-600 font-medium">7天训练营</span>
+          <span className="text-sm text-amber-600 font-medium">财富觉醒训练营</span>
           <div className="w-9" />
         </div>
       </div>
@@ -522,7 +522,7 @@ const WealthCampIntro = () => {
                 }}
                 className="w-full h-11 sm:h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium text-sm sm:text-base"
               >
-                ¥299 开启7天训练营
+                ¥299 开启财富觉醒训练营
               </Button>
             </div>
           )}
