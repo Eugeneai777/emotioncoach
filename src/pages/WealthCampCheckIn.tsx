@@ -443,6 +443,17 @@ ${reflection}`;
     return s;
   }, [currentDay, journalEntries]);
 
+  // Calculate post-camp checkin dates for graduates/partners
+  const postCampCheckinDates = useMemo(() => {
+    if (userCampMode === 'active' || !journalEntries || !camp) return [];
+    
+    // For post-camp users, count entries beyond day 7
+    return journalEntries
+      .filter(entry => entry.day_number > 7 && entry.behavior_block)
+      .map(entry => entry.created_at?.split('T')[0] || '')
+      .filter(Boolean);
+  }, [userCampMode, journalEntries, camp]);
+
   if (campLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -586,6 +597,7 @@ ${reflection}`;
                 daysSinceGraduation={userCampMode !== 'active' ? Math.max(0, currentDay - 7) : 0}
                 cycleMeditationDay={cycleMeditationDay}
                 cycleWeek={cycleWeek}
+                postCampCheckinDates={postCampCheckinDates}
               />
             )}
 

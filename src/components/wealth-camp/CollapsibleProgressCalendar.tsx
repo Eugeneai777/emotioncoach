@@ -99,22 +99,26 @@ export function CollapsibleProgressCalendar({
       })),
     });
     
-    // Post-camp weeks
-    for (let w = 2; w <= cycleWeek; w++) {
+    // Ensure we always display at least the current week (cycleWeek + 1 represents "post-camp week number")
+    // When cycleWeek = 1, we're in the first post-camp week, so display Week 2
+    const displayWeeks = Math.max(cycleWeek + 1, 2);
+    
+    // Post-camp weeks (Week 2 onwards = 持续觉醒)
+    for (let w = 2; w <= displayWeeks; w++) {
       const weekDays: typeof weeks[0]['days'] = [];
-      const weekStartDay = (w - 2) * 7 + 1;
+      const weekStartDayIndex = (w - 2) * 7; // Day index relative to post-graduation (0-indexed)
       
       for (let d = 1; d <= 7; d++) {
-        const dayIndex = weekStartDay + d - 1;
-        const isToday = w === cycleWeek && d === cycleMeditationDay;
-        const isCompleted = postCampCheckinDates.some(date => {
-          // Simple check - in real implementation, map dates to day indices
-          return dayIndex <= postCampCheckinDates.length;
-        });
+        const dayIndex = weekStartDayIndex + d; // 1-indexed day count since graduation
+        const isCurrentWeek = w === displayWeeks;
+        const isToday = isCurrentWeek && d === cycleMeditationDay;
+        
+        // Check completion: use postCampCheckinDates length as indicator
+        const isCompleted = dayIndex <= postCampCheckinDates.length;
         
         weekDays.push({
           dayNumber: d,
-          isCompleted: dayIndex <= postCampCheckinDates.length,
+          isCompleted,
           isCurrent: isToday,
           isToday,
         });
@@ -122,7 +126,7 @@ export function CollapsibleProgressCalendar({
       
       weeks.push({
         weekNumber: w,
-        label: '持续觉醒',
+        label: w === displayWeeks ? '本周' : '持续觉醒',
         completedCount: weekDays.filter(d => d.isCompleted).length,
         days: weekDays,
       });
@@ -237,29 +241,38 @@ export function CollapsibleProgressCalendar({
             
             {/* Mini dots preview (collapsed state) */}
             {!isExpanded && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {isPostCampMode ? (
-                  // Show current week for post-camp
-                  Array.from({ length: 7 }, (_, i) => {
-                    const dayInWeek = i + 1;
-                    const isToday = dayInWeek === cycleMeditationDay;
-                    const isCompleted = dayInWeek < cycleMeditationDay || 
-                      postCampCheckinDates.length >= ((cycleWeek - 1) * 7 + dayInWeek);
-                    
-                    return (
-                      <div
-                        key={i}
-                        className={cn(
-                          "w-3 h-3 rounded-full transition-all",
-                          isCompleted && "bg-amber-500 dark:bg-amber-400",
-                          isToday && !isCompleted && "bg-amber-300 ring-2 ring-amber-500 ring-offset-1",
-                          !isCompleted && !isToday && "bg-muted/40"
-                        )}
-                      />
-                    );
-                  })
-                ) : (
-                  campDots.map(dot => renderDot(dot))
+              <div className="mt-3 space-y-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {isPostCampMode ? (
+                    // Show current week for post-camp
+                    Array.from({ length: 7 }, (_, i) => {
+                      const dayInWeek = i + 1;
+                      const isToday = dayInWeek === cycleMeditationDay;
+                      const daysSinceGradStart = (cycleWeek) * 7 + dayInWeek - 7; // Approximate
+                      const isCompleted = daysSinceGradStart <= postCampCheckinDates.length && dayInWeek < cycleMeditationDay;
+                      
+                      return (
+                        <div
+                          key={i}
+                          className={cn(
+                            "w-3 h-3 rounded-full transition-all",
+                            isCompleted && "bg-amber-500 dark:bg-amber-400",
+                            isToday && !isCompleted && "bg-amber-300 ring-2 ring-amber-500 ring-offset-1",
+                            !isCompleted && !isToday && "bg-muted/40"
+                          )}
+                        />
+                      );
+                    })
+                  ) : (
+                    campDots.map(dot => renderDot(dot))
+                  )}
+                </div>
+                
+                {/* Post-camp hint to expand */}
+                {isPostCampMode && (
+                  <div className="text-xs text-amber-600/70 dark:text-amber-400/70">
+                    第{cycleWeek + 1}周 · 点击查看完整历史
+                  </div>
                 )}
               </div>
             )}
