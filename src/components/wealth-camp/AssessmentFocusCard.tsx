@@ -153,7 +153,7 @@ export function AssessmentFocusCard({ variant = "intro", className }: Assessment
         })}
         
         <p className="text-xs text-center text-muted-foreground pt-2">
-          21天训练将帮助你逐层觉醒，突破这些卡点
+          7天训练将帮助你逐层觉醒，突破这些卡点
         </p>
       </div>
     </div>

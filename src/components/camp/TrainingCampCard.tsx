@@ -85,12 +85,26 @@ export function TrainingCampCard({ camp, onCheckIn }: TrainingCampCardProps) {
     }
   }
 
-  const getMilestones = () => [
-    { icon: "🌱", label: "启程", reached: camp.completed_days >= 1, position: 0 },
-    { icon: "⭐", label: "一周", reached: camp.milestone_7_reached, position: (7 / camp.duration_days) * 100 },
-    { icon: "🌟", label: "半程", reached: camp.milestone_14_reached, position: (14 / camp.duration_days) * 100 },
-    { icon: "🏆", label: "毕业", reached: camp.milestone_21_completed, position: 100 }
-  ];
+  const getMilestones = () => {
+    // 财富训练营是7天，里程碑为 Day 1 / Day 3 / Day 7
+    const isWealthCamp = camp.camp_type?.includes('wealth');
+    
+    if (isWealthCamp) {
+      return [
+        { icon: "🌱", label: "启程", reached: camp.completed_days >= 1, position: 0 },
+        { icon: "⭐", label: "中期", reached: camp.completed_days >= 3, position: 43 },
+        { icon: "🏆", label: "毕业", reached: camp.milestone_7_reached, position: 100 }
+      ];
+    }
+    
+    // 其他21天训练营
+    return [
+      { icon: "🌱", label: "启程", reached: camp.completed_days >= 1, position: 0 },
+      { icon: "⭐", label: "一周", reached: camp.milestone_7_reached, position: (7 / camp.duration_days) * 100 },
+      { icon: "🌟", label: "半程", reached: camp.milestone_14_reached, position: (14 / camp.duration_days) * 100 },
+      { icon: "🏆", label: "毕业", reached: camp.milestone_21_completed, position: 100 }
+    ];
+  };
 
   return (
     <Card className={`p-5 bg-gradient-to-br ${colors.cardBg} ${colors.borderColor} shadow-sm hover:shadow-md transition-all`}>

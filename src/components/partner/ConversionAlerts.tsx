@@ -142,10 +142,13 @@ export function ConversionAlerts({ partnerId }: ConversionAlertsProps) {
         });
       }
 
-      // 3. 即将毕业 (Day 18+)
+      // 3. 即将毕业 (Day 5+ 或 Day 18+，根据训练营类型)
       const nearGraduation = referrals.filter(r => {
         const camp = campMap.get(r.referred_user_id);
-        return camp && camp.status === 'active' && camp.current_day >= 18 && !camp.milestone_21_completed;
+        if (!camp || camp.status !== 'active') return false;
+        // 财富训练营7天，其他21天
+        const isNearGrad = camp.current_day >= 5 && !camp.milestone_7_reached;
+        return isNearGrad;
       });
 
       if (nearGraduation.length > 0) {
@@ -153,14 +156,14 @@ export function ConversionAlerts({ partnerId }: ConversionAlertsProps) {
           type: 'near_graduation',
           priority: 'low',
           title: '即将毕业',
-          description: `${nearGraduation.length}位学员即将完成21天训练营`,
+          description: `${nearGraduation.length}位学员即将完成训练营`,
           students: nearGraduation.map(r => ({
             id: r.referred_user_id,
             name: profileMap.get(r.referred_user_id) || '未知用户',
             campDay: campMap.get(r.referred_user_id)?.current_day || 0
           })),
           action: '准备毕业祝贺和转化话术',
-          script: '恭喜你即将完成21天训练营！这段时间的坚持真的很棒 🎉 想继续深入成长的话，365会员可以解锁更多功能哦~',
+          script: '恭喜你即将完成训练营！这段时间的坚持真的很棒 🎉 想继续深入成长的话，365会员可以解锁更多功能哦~',
           icon: <GraduationCap className="w-4 h-4" />,
           color: 'border-green-200 bg-green-50/50'
         });

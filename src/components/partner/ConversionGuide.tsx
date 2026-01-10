@@ -10,7 +10,7 @@ export function ConversionGuide() {
       emoji: "🎟️",
       name: "兑换体验",
       color: "text-blue-600 bg-blue-100",
-      definition: "用户通过你的兑换码/推广链接注册，开始免费体验21天训练营",
+      definition: "用户通过你的兑换码/推广链接注册，开始免费体验训练营",
       metric: "兑换人数",
       action: "多渠道分享推广码，扩大触达面"
     },
@@ -30,7 +30,7 @@ export function ConversionGuide() {
       color: "text-green-600 bg-green-100",
       definition: "用户升级为365会员，解锁全部功能和1000次AI对话",
       metric: "购买转化率",
-      action: "训练营Day7/14/21关键节点引导转化"
+      action: "训练营关键节点引导转化"
     },
     {
       icon: <Handshake className="w-4 h-4" />,
@@ -45,23 +45,21 @@ export function ConversionGuide() {
 
   const timeline = [
     { day: "Day 0", event: "兑换注册", note: "立即", highlight: false },
-    { day: "Day 1-3", event: "加入学员群", note: "黄金72小时", highlight: true },
-    { day: "Day 7", event: "第一个里程碑", note: "首次转化窗口", highlight: true },
-    { day: "Day 14", event: "第二个里程碑", note: "中期转化窗口", highlight: true },
-    { day: "Day 21", event: "训练营毕业", note: "最佳转化时机", highlight: true },
-    { day: "Day 22+", event: "持续跟进", note: "长尾转化", highlight: false }
+    { day: "Day 1-2", event: "加入学员群", note: "黄金48小时", highlight: true },
+    { day: "Day 3", event: "中期里程碑", note: "首次转化窗口", highlight: true },
+    { day: "Day 7", event: "训练营毕业", note: "最佳转化时机", highlight: true },
+    { day: "Day 8+", event: "持续跟进", note: "长尾转化", highlight: false }
   ];
 
   const tips = {
     highPriority: [
-      { trigger: "注册后48小时未加群", action: "私信提醒，发送群二维码" },
-      { trigger: "Day 5-7 打卡活跃但未购买", action: "强调365会员的额外价值" },
-      { trigger: "Day 21 毕业但未转化", action: "发送毕业祝贺 + 限时优惠" }
+      { trigger: "注册后24小时未加群", action: "私信提醒，发送群二维码" },
+      { trigger: "Day 3-5 打卡活跃但未购买", action: "强调365会员的额外价值" },
+      { trigger: "Day 7 毕业但未转化", action: "发送毕业祝贺 + 限时优惠" }
     ],
     bestTiming: [
-      "Day 7 里程碑达成后",
-      "Day 14 里程碑达成后",
-      "Day 21 训练营毕业时",
+      "Day 3 中期里程碑达成后",
+      "Day 7 训练营毕业时",
       "用户主动咨询产品问题时"
     ]
   };
