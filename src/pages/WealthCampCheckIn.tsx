@@ -843,6 +843,7 @@ ${reflection}`;
         campId={campId}
         currentDay={currentDay}
         onGenerate={handleInviteClick}
+        trigger={<span className="hidden" />}
       />
 
       {selectedPendingAction && (
