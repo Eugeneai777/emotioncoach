@@ -40,7 +40,8 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
   const navigate = useNavigate();
   const [actionsOpen, setActionsOpen] = useState(false);
   const { stats, entries: fullEntries, awakeningIndex, peakIndex, currentAvg } = useWealthJournalEntries({ campId });
-  const { baseline } = useAssessmentBaseline();
+  // IMPORTANT: Pass campId to ensure consistent cache key across all components
+  const { baseline } = useAssessmentBaseline(campId);
 
   // Camp summary - auto-generate for Day 7+ completion
   const { summary: campSummary, loading: summaryLoading, generating, generateSummary } = useCampSummary(
