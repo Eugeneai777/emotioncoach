@@ -8,6 +8,37 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
+// 扩展 Window 接口以支持小程序 API（与 platform.ts 保持一致）
+declare global {
+  interface Window {
+    wx?: {
+      miniProgram?: {
+        getEnv: (callback: (res: { miniprogram: boolean }) => void) => void;
+      };
+      getRecorderManager?: () => any;
+      createInnerAudioContext?: () => any;
+      authorize?: (options: any) => void;
+      canIUse?: (api: string) => boolean;
+      arrayBufferToBase64?: (buffer: ArrayBuffer) => string;
+      base64ToArrayBuffer?: (base64: string) => ArrayBuffer;
+      getFileSystemManager?: () => {
+        writeFile: (options: {
+          filePath: string;
+          data: ArrayBuffer | string;
+          encoding?: string;
+          success?: () => void;
+          fail?: (err: { errMsg?: string }) => void;
+        }) => void;
+        readFile: (options: any) => void;
+        unlink: (options: any) => void;
+      };
+      env?: {
+        USER_DATA_PATH: string;
+      };
+    };
+  }
+}
+
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 export interface MiniProgramAudioConfig {
@@ -124,7 +155,7 @@ export class MiniProgramAudioClient {
       numberOfChannels: 1, // 单声道
       encodeBitRate: 48000,
       format: 'PCM', // PCM 格式
-      frameSize: 1, // 每帧 1KB，用于实时传输
+      frameSize: 3, // 每帧 3KB，平衡延迟和网络开销
     });
   }
 
@@ -363,23 +394,67 @@ export class MiniProgramAudioClient {
 
   private playNextInQueue(): void {
     if (this.audioQueue.length === 0 || !this.audioPlayer) {
+      this.isPlaying = false;
       return;
     }
 
     const base64Audio = this.audioQueue.shift();
-    if (!base64Audio) return;
+    if (!base64Audio) {
+      this.isPlaying = false;
+      return;
+    }
 
     this.isPlaying = true;
 
-    // 将 Base64 转为 Blob URL 播放
-    const wx = window.wx;
-    if (wx?.base64ToArrayBuffer) {
-      const arrayBuffer = wx.base64ToArrayBuffer(base64Audio);
-      const blob = new Blob([arrayBuffer], { type: 'audio/pcm' });
-      const url = URL.createObjectURL(blob);
+    try {
+      const wx = window.wx;
       
-      this.audioPlayer.src = url;
-      this.audioPlayer.play();
+      if (wx?.getFileSystemManager && wx?.env?.USER_DATA_PATH) {
+        // 小程序环境：写入临时文件后播放
+        const fs = wx.getFileSystemManager();
+        const arrayBuffer = wx.base64ToArrayBuffer?.(base64Audio);
+        
+        if (!arrayBuffer) {
+          console.error('[MiniProgramAudio] Failed to convert base64 to ArrayBuffer');
+          this.isPlaying = false;
+          this.playNextInQueue();
+          return;
+        }
+        
+        const tempPath = `${wx.env.USER_DATA_PATH}/audio_${Date.now()}.pcm`;
+        
+        fs.writeFile({
+          filePath: tempPath,
+          data: arrayBuffer,
+          encoding: 'binary',
+          success: () => {
+            if (this.audioPlayer) {
+              this.audioPlayer.src = tempPath;
+              this.audioPlayer.play();
+            }
+          },
+          fail: (err: { errMsg?: string }) => {
+            console.error('[MiniProgramAudio] Failed to write audio file:', err);
+            this.isPlaying = false;
+            this.playNextInQueue();
+          }
+        });
+      } else if (wx?.base64ToArrayBuffer) {
+        // Web 环境降级：使用 Blob URL
+        const arrayBuffer = wx.base64ToArrayBuffer(base64Audio);
+        const blob = new Blob([arrayBuffer], { type: 'audio/pcm' });
+        const url = URL.createObjectURL(blob);
+        this.audioPlayer.src = url;
+        this.audioPlayer.play();
+      } else {
+        console.error('[MiniProgramAudio] No audio playback method available');
+        this.isPlaying = false;
+        this.playNextInQueue();
+      }
+    } catch (error) {
+      console.error('[MiniProgramAudio] Error playing audio:', error);
+      this.isPlaying = false;
+      this.playNextInQueue();
     }
   }
 

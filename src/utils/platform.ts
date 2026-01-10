@@ -16,6 +16,22 @@ declare global {
       canIUse?: (api: string) => boolean;
       arrayBufferToBase64?: (buffer: ArrayBuffer) => string;
       base64ToArrayBuffer?: (base64: string) => ArrayBuffer;
+      // 小程序文件系统 API
+      getFileSystemManager?: () => {
+        writeFile: (options: {
+          filePath: string;
+          data: ArrayBuffer | string;
+          encoding?: string;
+          success?: () => void;
+          fail?: (err: { errMsg?: string }) => void;
+        }) => void;
+        readFile: (options: any) => void;
+        unlink: (options: any) => void;
+      };
+      // 小程序环境变量
+      env?: {
+        USER_DATA_PATH: string;
+      };
     };
   }
 }
