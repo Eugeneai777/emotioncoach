@@ -589,6 +589,7 @@ ${reflection}`;
                 });
               }}
               activeMakeupDay={makeupDayNumber}
+              justCompletedDay={lastCompletedMakeupDay}
             />
             
             {/* Weekly Training Focus - 仅在非补卡模式下显示 */}
