@@ -225,7 +225,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 
       // Get camp progress if campId provided
       let currentDay = propCurrentDay;
-      let totalDays = 21;
+      let totalDays = 7;
 
       if (campId && !propCurrentDay) {
         const { data: camp } = await supabase
@@ -632,7 +632,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                     avatarUrl={userInfo.avatarUrl}
                     displayName={userInfo.displayName}
                     currentDay={userInfo.currentDay || 1}
-                    totalDays={userInfo.totalDays || 21}
+                    totalDays={userInfo.totalDays || 7}
                     awakeningIndex={growthData.awakeningIndex}
                     avgBehavior={growthData.avgBehavior}
                     avgEmotion={growthData.avgEmotion}
@@ -715,7 +715,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                 <WealthMilestoneShareCard
                   ref={milestoneCardRef}
                   completedDays={userInfo.currentDay || 1}
-                  totalDays={userInfo.totalDays || 21}
+                  totalDays={userInfo.totalDays || 7}
                   coreInsight={awakeningData?.beliefAwakening || awakeningData?.newBelief}
                   shareUrl={campUrl}
                   avatarUrl={userInfo.avatarUrl}

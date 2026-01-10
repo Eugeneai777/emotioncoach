@@ -77,7 +77,7 @@ export const ReactionPatternCard: React.FC<ReactionPatternCardProps> = ({
           </TooltipProvider>
           {currentDay && (
             <Badge variant="outline" className="ml-auto text-xs font-normal">
-              Day {currentDay}/21
+              Day {currentDay}/7
             </Badge>
           )}
         </CardTitle>

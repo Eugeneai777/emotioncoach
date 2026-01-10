@@ -131,7 +131,7 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
                 <WealthJourneyCalendar
                   startDate={camp.start_date}
                   currentDay={currentDay}
-                  totalDays={camp.duration_days || 21}
+                  totalDays={camp.duration_days || 7}
                   checkInDates={Array.isArray(camp.check_in_dates) ? camp.check_in_dates as string[] : []}
                   journalEntries={fullEntries.map(e => ({
                     id: e.id,
