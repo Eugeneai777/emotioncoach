@@ -27,6 +27,7 @@ import { GameProgressCard } from '@/components/wealth-camp/GameProgressCard';
 import { Day0BaselineCard } from '@/components/wealth-camp/Day0BaselineCard';
 import { DailyChallengeCard } from '@/components/wealth-camp/DailyChallengeCard';
 import { AchievementBadges } from '@/components/wealth-camp/AchievementBadges';
+import AwakeningOnboardingDialog from '@/components/wealth-camp/AwakeningOnboardingDialog';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -1077,6 +1078,9 @@ ${reflection}`;
           }}
         />
       )}
+
+      {/* 首次用户引导弹窗 */}
+      <AwakeningOnboardingDialog />
 
     </div>
   );
