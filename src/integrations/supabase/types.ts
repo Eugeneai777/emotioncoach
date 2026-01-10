@@ -1184,6 +1184,60 @@ export type Database = {
           },
         ]
       }
+      camp_summaries: {
+        Row: {
+          achievements_unlocked: string[] | null
+          ai_coach_message: string | null
+          awakening_growth: number | null
+          behavior_growth: number | null
+          belief_growth: number | null
+          biggest_breakthrough: string | null
+          camp_id: string | null
+          daily_scores: Json | null
+          emotion_growth: number | null
+          end_awakening: number | null
+          focus_areas: string[] | null
+          generated_at: string | null
+          id: string
+          start_awakening: number | null
+          user_id: string
+        }
+        Insert: {
+          achievements_unlocked?: string[] | null
+          ai_coach_message?: string | null
+          awakening_growth?: number | null
+          behavior_growth?: number | null
+          belief_growth?: number | null
+          biggest_breakthrough?: string | null
+          camp_id?: string | null
+          daily_scores?: Json | null
+          emotion_growth?: number | null
+          end_awakening?: number | null
+          focus_areas?: string[] | null
+          generated_at?: string | null
+          id?: string
+          start_awakening?: number | null
+          user_id: string
+        }
+        Update: {
+          achievements_unlocked?: string[] | null
+          ai_coach_message?: string | null
+          awakening_growth?: number | null
+          behavior_growth?: number | null
+          belief_growth?: number | null
+          biggest_breakthrough?: string | null
+          camp_id?: string | null
+          daily_scores?: Json | null
+          emotion_growth?: number | null
+          end_awakening?: number | null
+          focus_areas?: string[] | null
+          generated_at?: string | null
+          id?: string
+          start_awakening?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       camp_templates: {
         Row: {
           benefits: Json | null
@@ -2709,6 +2763,54 @@ export type Database = {
           ticket_type?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      daily_challenges: {
+        Row: {
+          challenge_description: string | null
+          challenge_title: string
+          challenge_type: string
+          completed_at: string | null
+          completion_reflection: string | null
+          created_at: string | null
+          difficulty: string | null
+          id: string
+          is_ai_generated: boolean | null
+          is_completed: boolean | null
+          points_reward: number | null
+          target_date: string
+          user_id: string
+        }
+        Insert: {
+          challenge_description?: string | null
+          challenge_title: string
+          challenge_type: string
+          completed_at?: string | null
+          completion_reflection?: string | null
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          is_completed?: boolean | null
+          points_reward?: number | null
+          target_date: string
+          user_id: string
+        }
+        Update: {
+          challenge_description?: string | null
+          challenge_title?: string
+          challenge_type?: string
+          completed_at?: string | null
+          completion_reflection?: string | null
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          is_completed?: boolean | null
+          points_reward?: number | null
+          target_date?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -5895,6 +5997,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_awakening_progress: {
+        Row: {
+          baseline_awakening: number | null
+          baseline_behavior: number | null
+          baseline_belief: number | null
+          baseline_created_at: string | null
+          baseline_dominant_type: string | null
+          baseline_emotion: number | null
+          baseline_reaction_pattern: string | null
+          became_partner_at: string | null
+          camp_completed_at: string | null
+          consecutive_days: number | null
+          created_at: string | null
+          current_awakening: number | null
+          current_level: number | null
+          id: string
+          total_challenges_completed: number | null
+          total_giving_actions: number | null
+          total_points: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          baseline_awakening?: number | null
+          baseline_behavior?: number | null
+          baseline_belief?: number | null
+          baseline_created_at?: string | null
+          baseline_dominant_type?: string | null
+          baseline_emotion?: number | null
+          baseline_reaction_pattern?: string | null
+          became_partner_at?: string | null
+          camp_completed_at?: string | null
+          consecutive_days?: number | null
+          created_at?: string | null
+          current_awakening?: number | null
+          current_level?: number | null
+          id?: string
+          total_challenges_completed?: number | null
+          total_giving_actions?: number | null
+          total_points?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          baseline_awakening?: number | null
+          baseline_behavior?: number | null
+          baseline_belief?: number | null
+          baseline_created_at?: string | null
+          baseline_dominant_type?: string | null
+          baseline_emotion?: number | null
+          baseline_reaction_pattern?: string | null
+          became_partner_at?: string | null
+          camp_completed_at?: string | null
+          consecutive_days?: number | null
+          created_at?: string | null
+          current_awakening?: number | null
+          current_level?: number | null
+          id?: string
+          total_challenges_completed?: number | null
+          total_giving_actions?: number | null
+          total_points?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_behavior_analysis: {
         Row: {
