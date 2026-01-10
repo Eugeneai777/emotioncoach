@@ -1,23 +1,77 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
+import { useEnsureAwakeningProgress } from '@/hooks/useEnsureAwakeningProgress';
+import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
 import { awakeningLevels, calculateDailyPotentialPoints } from '@/config/awakeningLevelConfig';
-import { Gamepad2, TrendingUp, Zap, Target } from 'lucide-react';
+import { Gamepad2, TrendingUp, Zap, Target, Loader2, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface GameProgressCardProps {
   currentDayNumber?: number;
 }
 
 export const GameProgressCard = ({ currentDayNumber = 1 }: GameProgressCardProps) => {
+  const navigate = useNavigate();
   const { progress, currentLevel, nextLevel, levelProgress, pointsToNext, awakeningGrowth } = useAwakeningProgress();
+  const { isSyncing, syncComplete } = useEnsureAwakeningProgress();
+  const { baseline } = useAssessmentBaseline();
 
-  if (!progress) {
+  // 正在同步中
+  if (isSyncing) {
     return (
       <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0">
         <CardContent className="p-6">
-          <div className="text-center text-slate-400">
-            完成财富测评开启你的觉醒之旅
+          <div className="flex items-center justify-center gap-2 text-slate-400">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>正在同步你的觉醒数据...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // 没有进度数据
+  if (!progress) {
+    // 检查是否有测评数据
+    if (baseline) {
+      // 有测评但没有进度，等待同步或刷新
+      return (
+        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0">
+          <CardContent className="p-6">
+            <div className="text-center space-y-3">
+              <div className="text-slate-400">数据同步中，请稍后...</div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => window.location.reload()}
+                className="bg-transparent border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                刷新页面
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    // 没有测评，引导去做测评
+    return (
+      <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0">
+        <CardContent className="p-6">
+          <div className="text-center space-y-4">
+            <div className="text-slate-300">
+              完成财富测评开启你的觉醒之旅
+            </div>
+            <Button 
+              onClick={() => navigate('/wealth-block')}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+            >
+              开始测评
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
           </div>
         </CardContent>
       </Card>

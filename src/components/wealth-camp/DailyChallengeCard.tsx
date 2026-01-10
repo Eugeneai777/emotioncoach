@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,19 +8,56 @@ import { Badge } from '@/components/ui/badge';
 import { useDailyChallenges, DailyChallenge } from '@/hooks/useDailyChallenges';
 import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
 import { challengeTypes, challengeDifficulties } from '@/config/awakeningLevelConfig';
-import { Target, Zap, Check, ChevronRight, Sparkles } from 'lucide-react';
+import { Target, Zap, Check, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
 
 interface DailyChallengeCardProps {
   onPointsEarned?: (points: number) => void;
 }
 
 export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) => {
+  const queryClient = useQueryClient();
   const { challenges, isLoading, completedCount, totalPoints, earnedPoints, completeChallenge } = useDailyChallenges();
   const { addPoints } = useAwakeningProgress();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [reflection, setReflection] = useState('');
   const [completing, setCompleting] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  // 自动生成今日挑战
+  useEffect(() => {
+    const generateChallenges = async () => {
+      if (isLoading || generating) return;
+      if (challenges && challenges.length > 0) return; // 已有挑战
+
+      setGenerating(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const response = await supabase.functions.invoke('generate-daily-challenges', {
+          body: { targetDate: format(new Date(), 'yyyy-MM-dd') },
+        });
+
+        if (response.error) {
+          console.error('Error generating challenges:', response.error);
+          return;
+        }
+
+        // 刷新挑战列表
+        queryClient.invalidateQueries({ queryKey: ['daily-challenges'] });
+      } catch (error) {
+        console.error('Failed to generate challenges:', error);
+      } finally {
+        setGenerating(false);
+      }
+    };
+
+    generateChallenges();
+  }, [isLoading, challenges, generating, queryClient]);
 
   const handleComplete = async (challenge: DailyChallenge) => {
     if (completing) return;
@@ -52,13 +89,13 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
     }
   };
 
-  if (isLoading) {
+  if (isLoading || generating) {
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-muted rounded w-1/3" />
-            <div className="h-16 bg-muted rounded" />
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>{generating ? '正在生成今日挑战...' : '加载中...'}</span>
           </div>
         </CardContent>
       </Card>
