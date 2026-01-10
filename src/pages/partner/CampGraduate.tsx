@@ -135,7 +135,7 @@ export default function CampGraduate() {
           .eq('user_id', user.id)
           .in('camp_type', ['wealth_block_7', 'wealth_block_21'])
           .eq('status', 'completed')
-          .order('completed_at', { ascending: false })
+          .order('updated_at', { ascending: false })
           .limit(1)
           .single();
 
