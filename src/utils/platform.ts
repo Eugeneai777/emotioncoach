@@ -11,7 +11,15 @@ declare global {
         getEnv: (callback: (res: { miniprogram: boolean }) => void) => void;
       };
       getRecorderManager?: () => any;
-      createInnerAudioContext?: () => any;
+      createInnerAudioContext?: () => {
+        src: string;
+        obeyMuteSwitch: boolean;
+        play: () => void;
+        stop: () => void;
+        onEnded: (callback: () => void) => void;
+        offEnded: () => void;
+        onError: (callback: (error: any) => void) => void;
+      };
       authorize?: (options: any) => void;
       canIUse?: (api: string) => boolean;
       arrayBufferToBase64?: (buffer: ArrayBuffer) => string;
@@ -26,7 +34,11 @@ declare global {
           fail?: (err: { errMsg?: string }) => void;
         }) => void;
         readFile: (options: any) => void;
-        unlink: (options: any) => void;
+        unlink: (options: {
+          filePath: string;
+          success?: () => void;
+          fail?: (err: { errMsg?: string }) => void;
+        }) => void;
       };
       // 小程序环境变量
       env?: {

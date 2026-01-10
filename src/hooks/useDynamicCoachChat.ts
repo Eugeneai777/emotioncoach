@@ -408,12 +408,23 @@ export const useDynamicCoachChat = (
                 }
                 
                 // Extract and save coach memories for future personalization
-                console.log('🧠 [useDynamicCoachChat] 开始提取教练记忆...');
+                // Map coachKey to coach_type for memory segmentation
+                const coachTypeMap: Record<string, string> = {
+                  'wealth_coach_4_questions': 'wealth',
+                  'emotion': 'emotion',
+                  'parent': 'parent',
+                  'vibrant_life_sage': 'vibrant_life',
+                  'gratitude': 'gratitude',
+                };
+                const coachTypeForMemory = coachTypeMap[coachKey] || 'wealth';
+                
+                console.log('🧠 [useDynamicCoachChat] 开始提取教练记忆...', { coachType: coachTypeForMemory });
                 try {
                   const { data: memoryResult, error: memoryError } = await supabase.functions.invoke('extract-coach-memory', {
                     body: {
                       conversation: messagesRef.current,
                       session_id: journalResult.journal?.id,
+                      coach_type: coachTypeForMemory,
                     }
                   });
                   

@@ -362,6 +362,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Get user display name
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .single();
+    
+    const userName = profile?.display_name || '朋友';
     
     const { data: coachTemplate } = await serviceClient
       .from('coach_templates')
@@ -369,10 +378,68 @@ serve(async (req) => {
       .eq('coach_key', 'parent')
       .single();
 
+    // Fetch coach memory for personalized continuity (亲子教练记忆)
+    const { data: coachMemories } = await serviceClient
+      .from('user_coach_memory')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('coach_type', 'parent')
+      .order('importance_score', { ascending: false })
+      .limit(5);
+
+    // Fetch last session for conversation continuity
+    const { data: lastSession } = await serviceClient
+      .from('parent_coaching_sessions')
+      .select('session_summary, key_insight, created_at')
+      .eq('user_id', user.id)
+      .eq('status', 'completed')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    // Build memory context
+    let memoryContext = '';
+    if (coachMemories && coachMemories.length > 0) {
+      memoryContext = `\n\n【教练记忆 - 用户过往亲子觉察】
+以下是${userName}之前分享过的重要觉察点：
+`;
+      coachMemories.forEach((m: any, index: number) => {
+        memoryContext += `${index + 1}. ${m.content}\n`;
+      });
+      memoryContext += `
+使用方式：
+- "你之前提到过..."
+- "我记得你说过..."
+- "上次你觉察到...今天有什么新发现吗？"`;
+    }
+
+    // Build last session continuity context
+    let continuityContext = '';
+    if (lastSession?.session_summary) {
+      const daysSince = Math.floor((Date.now() - new Date(lastSession.created_at).getTime()) / 86400000);
+      continuityContext = `\n\n【上次对话连接】
+距离上次对话：${daysSince}天
+上次对话摘要：${lastSession.session_summary}
+${lastSession.key_insight ? `上次核心觉察：${lastSession.key_insight}` : ''}
+
+开场建议：
+${daysSince < 3 ? `- "${userName}，继续我们上次的话题..."` : ''}
+${daysSince >= 3 && daysSince <= 7 ? `- "${userName}，上次我们聊到${lastSession.session_summary}，这几天和孩子相处有什么新发现吗？"` : ''}
+${daysSince > 7 ? `- "${userName}，好久不见呀～还记得上次我们聊到的亲子时刻吗？"` : ''}
+`;
+    }
+
     const basePrompt = coachTemplate?.system_prompt || '';
     
     // Build complete system prompt with dynamic stage info
     const systemPrompt = `${basePrompt}
+
+【用户信息】
+用户名称：${userName}
+在对话中使用用户名称来增加亲切感，如"${userName}，我能感受到你对孩子的爱..."
+
+${memoryContext}
+${continuityContext}
 
 【当前阶段:${session?.current_stage || 0}/4】
 ${getStagePrompt(session?.current_stage || 0)}`;

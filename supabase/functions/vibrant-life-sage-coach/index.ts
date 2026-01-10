@@ -71,8 +71,17 @@ serve(async (req) => {
       }
     }
 
+    // 获取用户信息
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .single();
+
+    const userName = profile?.display_name || '朋友';
+
     // 从数据库加载系统提示词和实时产品信息
-    const [templateRes, packagesRes, coachesRes, campsRes, toolsRes] = await Promise.all([
+    const [templateRes, packagesRes, coachesRes, campsRes, toolsRes, memoriesRes] = await Promise.all([
       supabase
         .from('coach_templates')
         .select('system_prompt')
@@ -98,7 +107,26 @@ serve(async (req) => {
         .select('tool_id, title, description, category')
         .eq('is_available', true)
         .order('display_order'),
+      // 获取用户教练记忆
+      supabase
+        .from('user_coach_memory')
+        .select('content, memory_type')
+        .eq('user_id', user.id)
+        .eq('coach_type', 'vibrant_life')
+        .order('importance_score', { ascending: false })
+        .limit(5),
     ]);
+
+    // Build memory context
+    let memoryContext = '';
+    if (memoriesRes.data && memoriesRes.data.length > 0) {
+      memoryContext = `\n\n【我记得你 - 过往觉察】
+${memoriesRes.data.map((m: any, i: number) => `${i + 1}. ${m.content}`).join('\n')}
+
+使用方式：
+- 自然地引用："你之前提到过..."
+- 建立连接："我记得你说过..."`;
+    }
 
     // 构建实时产品信息
     const packagesInfo = packagesRes.data?.map(p => 
@@ -140,7 +168,14 @@ ${toolsInfo}
 `;
 
     const basePrompt = templateRes.data?.system_prompt || `你是劲老师，一位温暖的生活教练。帮助用户探索问题、找到方向。`;
-    const systemPrompt = basePrompt + productKnowledge;
+    const systemPrompt = `${basePrompt}
+
+【用户信息】
+用户名称：${userName}
+在对话中使用用户名称来增加亲切感，如"${userName}，我很高兴你来找我聊聊..."
+
+${memoryContext}
+${productKnowledge}`;
 
     // 定义推荐工具
     const tools = [
