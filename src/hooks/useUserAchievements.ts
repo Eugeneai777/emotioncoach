@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { achievements as allAchievements } from '@/config/awakeningLevelConfig';
 
@@ -34,6 +34,8 @@ const mapDbToAchievement = (db: DbAchievement): UserAchievement => ({
 });
 
 export const useUserAchievements = () => {
+  const queryClient = useQueryClient();
+  
   const { data: userAchievements, isLoading, error } = useQuery({
     queryKey: ['user-achievements'],
     queryFn: async () => {
@@ -50,6 +52,34 @@ export const useUserAchievements = () => {
       return (data as DbAchievement[]).map(mapDbToAchievement);
     },
   });
+
+  // 获得成就
+  const earnAchievementMutation = useMutation({
+    mutationFn: async (achievementKey: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const achievement = allAchievements.find(a => a.key === achievementKey);
+      if (!achievement) throw new Error('Achievement not found');
+
+      const { error } = await supabase
+        .from('user_achievements')
+        .insert({
+          user_id: user.id,
+          achievement_type: achievementKey,
+          achievement_name: achievement.name,
+          icon: achievement.icon,
+          achievement_description: achievement.description,
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-achievements'] });
+    },
+  });
+
+  const earnAchievement = (key: string) => earnAchievementMutation.mutateAsync(key);
 
   // 检查是否已获得某成就
   const hasAchievement = (key: string) => {
