@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
@@ -14,40 +14,43 @@ export const useEnsureAwakeningProgress = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [syncComplete, setSyncComplete] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   
-  // Use refs to prevent re-renders and infinite loops
+  // Use ref to prevent multiple sync attempts (not for state tracking)
   const syncAttemptedRef = useRef(false);
-  const isSyncingRef = useRef(false);
-  const currentUserIdRef = useRef<string | null>(null);
+  const lastUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const syncAwakeningProgress = async () => {
-      // Guard: no user
-      if (!user?.id) {
-        return;
-      }
-      
-      // Guard: user changed, reset refs
-      if (currentUserIdRef.current !== user.id) {
-        currentUserIdRef.current = user.id;
-        syncAttemptedRef.current = false;
-        isSyncingRef.current = false;
-      }
-      
-      // Guard: already attempted or syncing
-      if (syncAttemptedRef.current || isSyncingRef.current) {
-        return;
-      }
-      
-      // Check localStorage for this user
-      const storedUserId = localStorage.getItem(SYNC_STORAGE_KEY);
-      if (storedUserId === user.id) {
-        setSyncComplete(true);
-        return;
-      }
-      
+    // Guard: no user
+    if (!user?.id) {
+      return;
+    }
+    
+    // Guard: user changed, reset attempt flag
+    if (lastUserIdRef.current !== user.id) {
+      lastUserIdRef.current = user.id;
+      syncAttemptedRef.current = false;
+      setSyncComplete(false);
+    }
+    
+    // Guard: already attempted for this user
+    if (syncAttemptedRef.current) {
+      return;
+    }
+    
+    // Check localStorage first (synchronous check)
+    const storedUserId = localStorage.getItem(SYNC_STORAGE_KEY);
+    if (storedUserId === user.id) {
+      setSyncComplete(true);
       syncAttemptedRef.current = true;
-      isSyncingRef.current = true;
+      return;
+    }
+    
+    // Mark as attempted immediately to prevent re-runs
+    syncAttemptedRef.current = true;
+
+    const syncAwakeningProgress = async () => {
+      setIsSyncing(true);
       
       try {
         // 1. Check if awakening progress already exists
@@ -60,14 +63,15 @@ export const useEnsureAwakeningProgress = () => {
         if (progressError) {
           console.error('Error checking awakening progress:', progressError);
           syncAttemptedRef.current = false; // Allow retry
+          setIsSyncing(false);
           return;
         }
         
-        // If progress exists, mark complete and save to localStorage
+        // If progress exists, mark complete
         if (existingProgress) {
           localStorage.setItem(SYNC_STORAGE_KEY, user.id);
           setSyncComplete(true);
-          isSyncingRef.current = false;
+          setIsSyncing(false);
           return;
         }
         
@@ -82,7 +86,8 @@ export const useEnsureAwakeningProgress = () => {
         
         if (assessmentError) {
           console.error('Error fetching assessment:', assessmentError);
-          syncAttemptedRef.current = false; // Allow retry
+          syncAttemptedRef.current = false;
+          setIsSyncing(false);
           return;
         }
         
@@ -90,7 +95,7 @@ export const useEnsureAwakeningProgress = () => {
         if (!assessment) {
           localStorage.setItem(SYNC_STORAGE_KEY, user.id);
           setSyncComplete(true);
-          isSyncingRef.current = false;
+          setIsSyncing(false);
           return;
         }
         
@@ -99,45 +104,32 @@ export const useEnsureAwakeningProgress = () => {
                            (assessment.emotion_score || 0) + 
                            (assessment.belief_score || 0);
         const healthScore = Math.round((totalScore / 300) * 100);
-        const baselineAwakening = 100 - healthScore; // Higher awakening = better
+        const baselineAwakening = 100 - healthScore;
         
-        // 4. Get journal entries to calculate current awakening and points
-        const { data: journalEntries, error: journalError } = await supabase
+        // 4. Get journal entries
+        const { data: journalEntries } = await supabase
           .from('wealth_journal_entries')
           .select('behavior_score, emotion_score, belief_score')
           .eq('user_id', user.id)
           .order('day_number', { ascending: false });
         
-        if (journalError) {
-          console.error('Error fetching journal entries:', journalError);
-        }
-        
-        // Calculate current awakening from best journal entries or use baseline
+        // Calculate current awakening
         let currentAwakening = baselineAwakening;
-        let totalPoints = 10; // Starting points for completing assessment
+        let totalPoints = 10;
         
         if (journalEntries && journalEntries.length > 0) {
-          // Calculate awakening from journal entries (average of behavior, emotion, belief scores)
           const awakeningScores = journalEntries.map(entry => {
-            const avgScore = (
-              (entry.behavior_score || 3) + 
-              (entry.emotion_score || 3) + 
-              (entry.belief_score || 3)
-            ) / 3;
-            // Convert 1-5 scale to 0-100
+            const avgScore = ((entry.behavior_score || 3) + (entry.emotion_score || 3) + (entry.belief_score || 3)) / 3;
             return Math.round((avgScore - 1) / 4 * 100);
           });
           
-          // Use the best 3 days (peak performance model)
           const sortedScores = [...awakeningScores].sort((a, b) => b - a);
           const topScores = sortedScores.slice(0, 3);
           currentAwakening = Math.round(topScores.reduce((a, b) => a + b, 0) / topScores.length);
-          
-          // Calculate points: 20 per meditation, 20 per briefing, 15 per action
-          totalPoints += journalEntries.length * 55; // Approximate points per day
+          totalPoints += journalEntries.length * 55;
         }
         
-        // Calculate level based on points
+        // Calculate level
         const levelThresholds = [0, 50, 150, 300, 500, 800];
         let currentLevel = 1;
         for (let i = 0; i < levelThresholds.length; i++) {
@@ -146,7 +138,7 @@ export const useEnsureAwakeningProgress = () => {
           }
         }
         
-        // 5. Create awakening progress record
+        // 5. Create progress record
         const { error: insertError } = await supabase
           .from('user_awakening_progress')
           .insert({
@@ -162,32 +154,27 @@ export const useEnsureAwakeningProgress = () => {
         
         if (insertError) {
           console.error('Error creating awakening progress:', insertError);
-          syncAttemptedRef.current = false; // Allow retry
+          syncAttemptedRef.current = false;
+          setIsSyncing(false);
           return;
         }
         
         console.log('✅ Synced awakening progress for user:', user.id);
         
-        // Invalidate queries to refresh UI
         queryClient.invalidateQueries({ queryKey: ['awakening-progress'] });
-        
-        // Mark complete and save to localStorage
         localStorage.setItem(SYNC_STORAGE_KEY, user.id);
         setSyncComplete(true);
         
       } catch (error) {
         console.error('Error syncing awakening progress:', error);
-        syncAttemptedRef.current = false; // Allow retry on error
+        syncAttemptedRef.current = false;
       } finally {
-        isSyncingRef.current = false;
+        setIsSyncing(false);
       }
     };
 
     syncAwakeningProgress();
   }, [user?.id, queryClient]);
 
-  return { 
-    isSyncing: isSyncingRef.current && !syncComplete, 
-    syncComplete 
-  };
+  return { isSyncing, syncComplete };
 };
