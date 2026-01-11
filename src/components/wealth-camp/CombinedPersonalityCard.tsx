@@ -267,15 +267,21 @@ export function CombinedPersonalityCard({
                         <TooltipContent 
                           side="bottom" 
                           align="start"
-                          className="max-w-[280px] p-3 text-xs bg-popover text-popover-foreground border shadow-lg z-50"
+                          className="max-w-[300px] p-3 text-xs bg-popover text-popover-foreground border shadow-lg z-50"
                         >
                           <div className="space-y-2">
-                            <p className="font-semibold text-foreground">📊 四种财富反应模式</p>
-                            <div className="space-y-1.5 text-muted-foreground">
-                              <p>🟢 <span className="text-emerald-600 dark:text-emerald-400 font-medium">和谐型</span>：人与财富双向靠近</p>
-                              <p>🟡 <span className="text-amber-600 dark:text-amber-400 font-medium">追逐型</span>：人追钱，钱后退</p>
-                              <p>🔵 <span className="text-blue-600 dark:text-blue-400 font-medium">逃避型</span>：钱靠近，你退缩</p>
-                              <p>🔴 <span className="text-rose-600 dark:text-rose-400 font-medium">创伤型</span>：钱触发强烈身心反应</p>
+                            <p className="font-semibold text-foreground">📊 四种模式 → 转化目标</p>
+                            <div className="space-y-1 text-muted-foreground text-[11px]">
+                              <p>🟢 <span className="text-emerald-600 dark:text-emerald-400 font-medium">和谐型</span> → ✨ 丰盛型</p>
+                              <p>🟡 <span className="text-amber-600 dark:text-amber-400 font-medium">追逐型</span> → 🧘 从容型</p>
+                              <p>🔵 <span className="text-blue-600 dark:text-blue-400 font-medium">逃避型</span> → 🤗 迎接型</p>
+                              <p>🔴 <span className="text-rose-600 dark:text-rose-400 font-medium">创伤型</span> → 💚 疗愈型</p>
+                            </div>
+                            <div className="pt-2 border-t border-border">
+                              <p className="font-semibold text-foreground">💡 转化理念</p>
+                              <p className="text-muted-foreground mt-1 leading-relaxed">
+                                不是"变成另一种人"，而是<span className="text-foreground font-medium">成为最好的自己</span>。接纳原有模式，让它为你所用。
+                              </p>
                             </div>
                             <div className="pt-2 border-t border-border">
                               <p className="font-semibold text-foreground">🎯 转化率计算</p>
