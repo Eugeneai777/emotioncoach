@@ -71,9 +71,9 @@ serve(async (req) => {
   }
 
   try {
-    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5' } = await req.json();
+    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5', needCloudQr = false } = await req.json();
     
-    console.log('Creating order:', { packageKey, packageName, amount, userId, payType });
+    console.log('Creating order:', { packageKey, packageName, amount, userId, payType, needCloudQr });
 
     // 验证参数 - userId 可选（支持游客订单）
     if (!packageKey || !packageName || !amount) {
@@ -261,6 +261,8 @@ serve(async (req) => {
     // 获取支付URL - 使用实际的支付类型
     const actualIsH5 = actualPayType === 'h5';
     let payUrl: string;
+    let cloudQrUrl: string | undefined;
+    
     if (actualIsH5) {
       // H5支付返回 h5_url
       payUrl = wechatResult.h5_url as string;
@@ -272,6 +274,16 @@ serve(async (req) => {
       payUrl = wechatResult.code_url as string;
       if (!payUrl) {
         throw new Error('未获取到支付二维码');
+      }
+      
+      // 如果需要云端二维码URL（用于小程序长按识别）
+      // 使用QR API生成可直接访问的二维码图片URL
+      if (needCloudQr && payUrl) {
+        // 使用多个可靠的QR code API服务
+        const encodedUrl = encodeURIComponent(payUrl);
+        // 主选：使用 qrserver.com API（免费、稳定、无需注册）
+        cloudQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedUrl}`;
+        console.log('Generated cloud QR URL for mini-program:', cloudQrUrl);
       }
     }
 
@@ -295,7 +307,7 @@ serve(async (req) => {
       throw new Error('订单创建失败');
     }
 
-    console.log('Order created successfully:', orderNo, 'payType:', actualPayType, fallbackReason ? `(fallback: ${fallbackReason})` : '');
+    console.log('Order created successfully:', orderNo, 'payType:', actualPayType, fallbackReason ? `(fallback: ${fallbackReason})` : '', cloudQrUrl ? '(with cloudQrUrl)' : '');
 
     return new Response(
       JSON.stringify({
@@ -304,6 +316,7 @@ serve(async (req) => {
         payUrl, // 统一返回payUrl
         qrCodeUrl: actualIsH5 ? undefined : payUrl, // 兼容旧版本
         h5Url: actualIsH5 ? payUrl : undefined, // H5支付专用
+        cloudQrUrl, // 云端二维码URL，用于小程序长按识别
         payType: actualPayType, // 返回实际使用的支付类型
         fallbackReason, // 如果发生了降级，告知原因
         expiredAt: expiredAt.toISOString(),
