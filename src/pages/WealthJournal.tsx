@@ -6,7 +6,7 @@ export default function WealthJournal() {
 
   // Redirect to check-in page with journal tab
   useEffect(() => {
-    navigate('/wealth-camp-checkin?tab=journal', { replace: true });
+    navigate('/wealth-camp-checkin?tab=archive', { replace: true });
   }, [navigate]);
 
   return (

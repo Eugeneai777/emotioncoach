@@ -45,8 +45,10 @@ export default function WealthCampCheckIn() {
   const queryClient = useQueryClient();
   
   // Handle tab from URL query parameter - 优化为3个Tab
+  // 兼容旧的 journal Tab 值，映射到 archive
   const tabFromUrl = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState(tabFromUrl || 'today');
+  const normalizedTab = tabFromUrl === 'journal' ? 'archive' : tabFromUrl;
+  const [activeTab, setActiveTab] = useState(normalizedTab || 'today');
   
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
