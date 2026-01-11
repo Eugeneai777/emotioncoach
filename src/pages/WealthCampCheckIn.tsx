@@ -19,12 +19,11 @@ import WealthInviteCardDialog from '@/components/wealth-camp/WealthInviteCardDia
 import { BackfillMemoriesButton } from '@/components/wealth-camp/BackfillMemoriesButton';
 import { AwakeningArchiveTab } from '@/components/wealth-camp/AwakeningArchiveTab';
 import { AwakeningDashboard } from '@/components/wealth-camp/AwakeningDashboard';
-import { TodayTaskHub, UserMode } from '@/components/wealth-camp/TodayTaskHub';
+import { UnifiedTaskCenter, UserMode } from '@/components/wealth-camp/UnifiedTaskCenter';
 import { Day0BaselineCard } from '@/components/wealth-camp/Day0BaselineCard';
 import AwakeningOnboardingDialog from '@/components/wealth-camp/AwakeningOnboardingDialog';
 import GraduateOnboardingDialog from '@/components/wealth-camp/GraduateOnboardingDialog';
 import { PartnerConversionCard } from '@/components/wealth-camp/PartnerConversionCard';
-import { UnifiedChallengeCenter } from '@/components/wealth-camp/UnifiedChallengeCenter';
 import { GapReminderCard } from '@/components/wealth-camp/GapReminderCard';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
@@ -627,17 +626,15 @@ ${reflection}`;
               />
             )}
 
-            {/* 2. 今日任务清单 - 所有模式都在第二位 */}
+            {/* 2. 统一任务中心 - 包含所有任务和挑战 */}
             {!makeupDayNumber && (
-              <TodayTaskHub
+              <UnifiedTaskCenter
                 meditationCompleted={meditationCompleted}
                 coachingCompleted={coachingCompleted}
                 shareCompleted={shareCompleted}
                 inviteCompleted={inviteCompleted}
-                challengeCompleted={challengeCompleted}
                 actionCompleted={journalActionCompleted}
                 hasAction={!!todayAction}
-                hasChallenge={isPostCampMode}
                 onMeditationClick={scrollToMeditation}
                 onCoachingClick={handleStartCoaching}
                 onShareClick={() => {
@@ -645,9 +642,6 @@ ${reflection}`;
                   setShowShareDialog(true);
                 }}
                 onInviteClick={() => setShowInviteDialog(true)}
-                onChallengeClick={() => {
-                  document.getElementById('daily-challenge-section')?.scrollIntoView({ behavior: 'smooth' });
-                }}
                 onActionClick={() => {
                   if (todayEntryId && todayAction) {
                     setSelectedPendingAction({
@@ -672,24 +666,15 @@ ${reflection}`;
                 currentDay={currentDay}
                 hasGraduationReport={!!campSummary}
                 graduationReportViewed={false}
+                campId={campId}
+                focusAreas={focusAreas}
+                reminderBeliefs={reminderBeliefs?.map(b => b.belief_text) || []}
+                weekNumber={weekNumber}
+                onChallengeCompleted={() => setChallengeCompleted(true)}
               />
             )}
 
-            {/* ===== 统一挑战中心：合并成就推荐 + AI建议 + 每日挑战 ===== */}
-            {isPostCampMode && !makeupDayNumber && (
-              <div id="daily-challenge-section">
-                <UnifiedChallengeCenter 
-                  campId={campId}
-                  currentDay={currentDay}
-                  focusAreas={focusAreas}
-                  reminderBeliefs={reminderBeliefs?.map(b => b.belief_text) || []}
-                  weekNumber={weekNumber}
-                  onPointsEarned={() => setChallengeCompleted(true)} 
-                />
-              </div>
-            )}
-
-            {/* ===== Graduate 模式：合伙人转化卡片紧随挑战 ===== */}
+            {/* ===== Graduate 模式：合伙人转化卡片 ===== */}
             {userCampMode === 'graduate' && !makeupDayNumber && (
               <PartnerConversionCard variant="full" />
             )}
