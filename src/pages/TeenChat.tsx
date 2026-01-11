@@ -7,6 +7,7 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TeenVoiceChat from '@/components/teen/TeenVoiceChat';
 import TeenPersonalization from '@/components/teen/TeenPersonalization';
+import { Helmet } from "react-helmet";
 
 interface PersonalizationData {
   nickname: string;
@@ -143,6 +144,16 @@ export default function TeenChat() {
   const avatarEmoji = personalization?.avatar ? getAvatarEmoji(personalization.avatar) : '✨';
 
   return (
+    <>
+      <Helmet>
+        <title>有劲AI · 懂你版</title>
+        <meta name="description" content="专属青少年的AI朋友，私密安全的倾诉空间" />
+        <meta property="og:title" content="有劲AI｜懂你版" />
+        <meta property="og:description" content="不说教、不评判，24小时陪伴你的AI朋友" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/teen-chat" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
     <div className="min-h-screen bg-gradient-to-b from-violet-50 via-purple-50 to-pink-50">
       {/* Header */}
       <div className="text-center pt-10 px-6">
@@ -214,5 +225,6 @@ export default function TeenChat() {
         </p>
       </div>
     </div>
+    </>
   );
 }

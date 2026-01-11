@@ -13,6 +13,7 @@ import { SupportCampCard } from "@/components/customer-support/SupportCampCard";
 import { SupportNavigationCard } from "@/components/customer-support/SupportNavigationCard";
 import { PointsRulesCard } from "@/components/PointsRulesCard";
 import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
+import { Helmet } from "react-helmet";
 
 interface Navigation {
   page_type: string;
@@ -126,6 +127,16 @@ const CustomerSupport = () => {
   };
 
   return (
+    <>
+      <Helmet>
+        <title>客服中心 - 有劲AI</title>
+        <meta name="description" content="有问题？随时联系我们" />
+        <meta property="og:title" content="有劲AI客服中心" />
+        <meta property="og:description" content="7x24小时在线AI客服，随时为你解答" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/support" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
     <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
       {/* Header - 使用统一的PageHeader */}
       <PageHeader title="有劲AI客服" />
@@ -257,6 +268,7 @@ const CustomerSupport = () => {
       {/* Floating Feedback Button */}
       <FeedbackFloatingButton className="bottom-24 right-4" />
     </div>
+    </>
   );
 };
 
