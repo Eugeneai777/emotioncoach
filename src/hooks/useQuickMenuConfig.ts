@@ -24,7 +24,7 @@ export const coachPages = [
   { path: '/coach-space', label: '教练空间', icon: 'Users', color: 'bg-rose-500' },
   { path: '/coach/emotion', label: '情绪教练', icon: 'Heart', color: 'bg-pink-500' },
   { path: '/parent-coach', label: '亲子教练', icon: 'Baby', color: 'bg-sky-500' },
-  { path: '/coach/wealth', label: '财富教练', icon: 'Coins', color: 'bg-amber-500' },
+  { path: '/coach/wealth_coach_4_questions', label: '财富教练', icon: 'Coins', color: 'bg-amber-500' },
   { path: '/coach/vibrant_life', label: '有劲生活', icon: 'Sparkles', color: 'bg-violet-500' },
   { path: '/teen-coach', label: '青少年教练', icon: 'Gamepad2', color: 'bg-cyan-500' },
   { path: '/wealth-camp-checkin', label: '财富日记', icon: 'BookOpen', color: 'bg-orange-500' },
@@ -68,6 +68,25 @@ export const useQuickMenuConfig = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
+  const normalizeConfig = (raw: QuickMenuConfig): QuickMenuConfig => {
+    const legacyPathMap: Record<string, string> = {
+      // Wealth coach legacy paths
+      '/wealth-coach': '/coach/wealth_coach_4_questions',
+      '/coach/wealth': '/coach/wealth_coach_4_questions',
+      // Awakening legacy paths (if ever persisted)
+      '/wealth-block': '/awakening',
+    };
+
+    const normalizePath = (path: string) => legacyPathMap[path] ?? path;
+
+    return {
+      ...raw,
+      homePagePath: normalizePath(raw.homePagePath),
+      customSlot1: { ...raw.customSlot1, path: normalizePath(raw.customSlot1.path) },
+      customSlot2: { ...raw.customSlot2, path: normalizePath(raw.customSlot2.path) },
+    };
+  };
+
   // Load config from database or localStorage
   useEffect(() => {
     const loadConfig = async () => {
@@ -86,11 +105,11 @@ export const useQuickMenuConfig = () => {
             loadFromLocalStorage();
           } else if (data) {
             // Database config exists
-            const dbConfig: QuickMenuConfig = {
+            const dbConfig: QuickMenuConfig = normalizeConfig({
               homePagePath: data.home_page_path,
               customSlot1: data.custom_slot_1 as unknown as MenuItemConfig,
               customSlot2: data.custom_slot_2 as unknown as MenuItemConfig,
-            };
+            });
             setConfig(dbConfig);
             // Also update localStorage for offline access
             localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(dbConfig));
@@ -122,7 +141,7 @@ export const useQuickMenuConfig = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        const mergedConfig = { ...defaultConfig, ...parsed };
+        const mergedConfig = normalizeConfig({ ...defaultConfig, ...parsed });
         setConfig(mergedConfig);
         return mergedConfig;
       } catch (e) {
