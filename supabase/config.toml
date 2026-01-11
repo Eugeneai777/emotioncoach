@@ -344,3 +344,6 @@ verify_jwt = false
 
 [functions.miniprogram-voice-relay]
 verify_jwt = false
+
+[functions.refund-failed-voice-call]
+verify_jwt = true

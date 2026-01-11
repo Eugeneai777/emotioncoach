@@ -605,6 +605,40 @@ export const CoachVoiceChat = ({
     }
   };
 
+  // 🔧 退还预扣点数（连接失败时调用）
+  const refundPreDeductedQuota = async (reason: string) => {
+    // 只有当预扣了第一分钟点数时才需要退还
+    if (lastBilledMinuteRef.current >= 1) {
+      try {
+        console.log(`[VoiceChat] Refunding ${POINTS_PER_MINUTE} points, reason: ${reason}`);
+        const { data, error } = await supabase.functions.invoke('refund-failed-voice-call', {
+          body: {
+            amount: POINTS_PER_MINUTE,
+            session_id: sessionIdRef.current,
+            reason,
+            feature_key: featureKey
+          }
+        });
+        
+        if (error) {
+          console.error('[VoiceChat] Refund failed:', error);
+        } else if (data?.success) {
+          console.log(`[VoiceChat] Refund successful: ${data.refunded_amount} points returned`);
+          setRemainingQuota(data.remaining_quota);
+          // 重置已扣费分钟
+          lastBilledMinuteRef.current = 0;
+          setBilledMinutes(0);
+          toast({
+            title: "点数已退还",
+            description: `${POINTS_PER_MINUTE} 点已退还到您的账户`,
+          });
+        }
+      } catch (e) {
+        console.error('[VoiceChat] Refund error:', e);
+      }
+    }
+  };
+
   // 开始通话 - 双轨切换
   const startCall = async () => {
     if (isInitializingRef.current) return;
@@ -631,6 +665,7 @@ export const CoachVoiceChat = ({
         return;
       }
       
+      // 🔧 预扣第一分钟点数
       const deducted = await deductQuota(1);
       if (!deducted) {
         setStatus('error');
@@ -665,7 +700,7 @@ export const CoachVoiceChat = ({
         chatRef.current = chat;
         await chat.init();
       } else {
-        // 环境不支持语音通话
+        // 环境不支持语音通话 - 退还预扣点数
         if (platformInfo.platform === 'miniprogram') {
           toast({
             title: "语音功能暂不可用",
@@ -673,14 +708,22 @@ export const CoachVoiceChat = ({
             variant: "destructive"
           });
         }
+        await refundPreDeductedQuota('environment_not_supported');
         throw new Error('当前环境不支持语音通话');
       }
     } catch (error: any) {
       console.error('Failed to start call:', error);
+      
+      // 🔧 连接失败时退还预扣点数
+      const errorMessage = error?.message || '';
+      if (!errorMessage.includes('环境不支持')) {
+        // 如果不是环境不支持（已在上面退还），则在这里退还
+        await refundPreDeductedQuota('connection_failed');
+      }
+      
       setStatus('error');
       isInitializingRef.current = false;
       releaseLock();
-      const errorMessage = error?.message || '';
       let title = "连接失败", description = "无法建立语音连接，请稍后重试";
       if (errorMessage.includes('麦克风')) { title = "麦克风权限不足"; description = errorMessage; }
       else if (errorMessage.includes('ephemeral token')) { title = "服务连接失败"; description = "语音服务暂时不可用，请稍后重试"; }

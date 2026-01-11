@@ -34,6 +34,7 @@ export default function TeenVoiceChat({
   const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const billingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastBilledMinuteRef = useRef<number>(0);
+  const isPreDeductedRef = useRef<boolean>(false);
 
   // Billing - deduct from parent's account
   const deductQuota = useCallback(async (amount: number) => {
@@ -53,15 +54,52 @@ export default function TeenVoiceChat({
     }
   }, [parentUserId]);
 
+  // 🔧 Refund pre-deducted quota on connection failure
+  const refundPreDeductedQuota = useCallback(async (reason: string) => {
+    if (!isPreDeductedRef.current) return;
+    
+    try {
+      console.log(`[TeenVoiceChat] Refunding 8 points, reason: ${reason}`);
+      const { data, error } = await supabase.functions.invoke('refund-failed-voice-call', {
+        body: {
+          amount: 8,
+          session_id: `teen_${Date.now()}`,
+          reason,
+          feature_key: 'teen_realtime_voice'
+        }
+      });
+      
+      if (error) {
+        console.error('[TeenVoiceChat] Refund failed:', error);
+      } else if (data?.success) {
+        console.log(`[TeenVoiceChat] Refund successful: ${data.refunded_amount} points returned`);
+        isPreDeductedRef.current = false;
+        toast({
+          title: "点数已退还",
+          description: "8 点已退还到账户",
+        });
+      }
+    } catch (e) {
+      console.error('[TeenVoiceChat] Refund error:', e);
+    }
+  }, [toast]);
+
   // Initialize WebRTC connection
   const initConnection = useCallback(async () => {
     try {
+      // 🔧 Pre-deduct first minute (8 points) before connecting
+      await deductQuota(8);
+      isPreDeductedRef.current = true;
+      lastBilledMinuteRef.current = 0;
+      
       // Get ephemeral token from edge function
       const { data, error } = await supabase.functions.invoke('teen-realtime-token', {
         body: { access_token: accessToken }
       });
 
       if (error || !data?.client_secret?.value) {
+        // Connection failed - refund pre-deducted quota
+        await refundPreDeductedQuota('token_fetch_failed');
         throw new Error(data?.error || '无法建立连接');
       }
 
@@ -83,13 +121,21 @@ export default function TeenVoiceChat({
       };
 
       // Add local audio track
-      const ms = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
+      let ms;
+      try {
+        ms = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+      } catch (micError) {
+        // Microphone access failed - refund
+        await refundPreDeductedQuota('microphone_access_denied');
+        throw new Error('麦克风权限被拒绝');
+      }
+      
       pc.addTrack(ms.getTracks()[0]);
 
       // Set up data channel
@@ -122,11 +168,8 @@ export default function TeenVoiceChat({
           setDuration(prev => prev + 1);
         }, 1000);
 
-        // Initial deduction (8 points for first minute)
-        deductQuota(8);
-        lastBilledMinuteRef.current = 0;
-
-        // Billing timer - deduct 8 points per minute
+        // First minute already deducted in pre-deduction
+        // Billing timer - deduct 8 points per minute starting from minute 2
         billingTimerRef.current = setInterval(() => {
           const currentMinute = Math.floor(duration / 60);
           if (currentMinute > lastBilledMinuteRef.current) {
@@ -152,6 +195,8 @@ export default function TeenVoiceChat({
       });
 
       if (!sdpResponse.ok) {
+        // WebRTC connection failed - refund
+        await refundPreDeductedQuota('webrtc_connection_failed');
         throw new Error('连接失败');
       }
 
@@ -168,7 +213,7 @@ export default function TeenVoiceChat({
       setErrorMessage(err instanceof Error ? err.message : '连接失败');
       setStatus('error');
     }
-  }, [accessToken, deductQuota, duration]);
+  }, [accessToken, deductQuota, refundPreDeductedQuota, duration]);
 
   // End call
   const endCall = useCallback(() => {
