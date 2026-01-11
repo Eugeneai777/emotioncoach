@@ -742,6 +742,12 @@ export const CoachVoiceChat = ({
       return false;
     }
 
+    // 🔧 只处理第一分钟的退款（后续分钟用户已实际使用）
+    if (lastBilledMinuteRef.current > 1) {
+      console.log('[VoiceChat] Multiple minutes billed, no short call refund');
+      return false;
+    }
+
     let refundAmount = 0;
     let refundReason = '';
 
@@ -796,7 +802,7 @@ export const CoachVoiceChat = ({
     }
   };
 
-  // 结束通话 - 🔧 添加防重复点击、短通话退款和更可靠的清理
+  // 结束通话 - 🔧 添加防重复点击、短通话退款、0时长退款和更可靠的清理
   const endCall = async (e?: React.MouseEvent) => {
     // 阻止事件冒泡
     e?.stopPropagation();
@@ -821,9 +827,16 @@ export const CoachVoiceChat = ({
         durationRef.current = null;
       }
       
-      // 🔧 短通话退款检查
-      if (status === 'connected' && duration > 0) {
-        await refundShortCall(duration);
+      // 🔧 退款逻辑优化
+      if (lastBilledMinuteRef.current > 0) {
+        if (duration === 0) {
+          // 🔧 修复：预扣了点数但通话从未真正开始（duration=0），全额退款
+          console.log('[VoiceChat] Call never started (duration=0), refunding pre-deducted quota');
+          await refundPreDeductedQuota('call_never_started');
+        } else if (duration > 0 && lastBilledMinuteRef.current === 1) {
+          // 🔧 短通话退款检查：只有扣了第一分钟时才检查
+          await refundShortCall(duration);
+        }
       }
       
       // 保存session信息用于断线重连
