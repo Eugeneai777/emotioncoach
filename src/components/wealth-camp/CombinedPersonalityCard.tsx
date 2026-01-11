@@ -141,13 +141,10 @@ export function CombinedPersonalityCard({
     );
   }
   
-  // Get dominant block info
-  const dominantPoor = baseline.dominant_poor ? 
-    fourPoorInfo[baseline.dominant_poor as FourPoorType] : fourPoorInfo.mouth;
-  const dominantEmotion = baseline.dominant_emotion ? 
-    emotionBlockInfo[baseline.dominant_emotion as EmotionBlockType] : emotionBlockInfo.anxiety;
-  const dominantBelief = baseline.dominant_belief ? 
-    beliefBlockInfo[baseline.dominant_belief as BeliefBlockType] : beliefBlockInfo.lack;
+  // Get dominant block info (with safe fallbacks for unexpected enum values)
+  const dominantPoor = (baseline.dominant_poor && fourPoorInfo[baseline.dominant_poor as FourPoorType]) || fourPoorInfo.mouth;
+  const dominantEmotion = (baseline.dominant_emotion && emotionBlockInfo[baseline.dominant_emotion as EmotionBlockType]) || emotionBlockInfo.anxiety;
+  const dominantBelief = (baseline.dominant_belief && beliefBlockInfo[baseline.dominant_belief as BeliefBlockType]) || beliefBlockInfo.lack;
 
   // Build radar data
   const fourPoorRadarData = [
