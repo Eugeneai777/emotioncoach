@@ -35,6 +35,7 @@ import { useCampSummary } from '@/hooks/useCampSummary';
 import { useFavoriteBeliefs } from '@/hooks/useFavoriteBeliefs';
 import { useUserCampMode } from '@/hooks/useUserCampMode';
 import { usePartner } from '@/hooks/usePartner';
+import { useAchievementChecker } from '@/hooks/useAchievementChecker';
 
 export default function WealthCampCheckIn() {
   const { campId: urlCampId } = useParams();
@@ -81,6 +82,7 @@ export default function WealthCampCheckIn() {
     isLoading: modeLoading 
   } = useUserCampMode();
   const { isPartner } = usePartner();
+  const { checkAndAwardAchievements } = useAchievementChecker();
   const [challengeCompleted, setChallengeCompleted] = useState(false);
   const [showGraduateOnboarding, setShowGraduateOnboarding] = useState(false);
   
@@ -418,6 +420,11 @@ ${reflection}`;
         generateSummary();
       }, 2000);
     }
+    
+    // 延迟检测成就，确保数据已更新
+    setTimeout(() => {
+      checkAndAwardAchievements();
+    }, 1000);
   };
 
   const scrollToMeditation = () => {

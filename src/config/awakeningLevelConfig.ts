@@ -90,33 +90,55 @@ export const pointsRules: PointsRule[] = [
   { action: '学员完成训练营', basePoints: 100 },
 ];
 
-// 成就徽章定义
+// 成就徽章定义 - 与 achievementPathConfig 同步
 export const achievements: Achievement[] = [
   // 里程碑成就
-  { key: 'first_awakening', name: '觉醒起点', icon: '🎯', description: '完成首次财富测评', category: 'milestone' },
-  { key: 'day1_complete', name: '第一步', icon: '👣', description: '完成Day 1训练', category: 'milestone' },
-  { key: 'day3_halfway', name: '中途不弃', icon: '💪', description: '完成Day 3训练', category: 'milestone' },
-  { key: 'camp_graduate', name: '7天觉醒者', icon: '🎓', description: '完成财富觉醒训练营', category: 'milestone' },
-  { key: 'became_partner', name: '觉醒引路人', icon: '🤝', description: '成为有劲合伙人', category: 'milestone' },
+  { key: 'first_awakening', name: '觉醒起点', icon: '🎯', description: '完成财富测评', category: 'milestone' },
+  { key: 'day1_complete', name: '第一步', icon: '👣', description: '完成Day 1打卡', category: 'milestone' },
+  { key: 'day2_complete', name: '初见曙光', icon: '🌟', description: '完成Day 2打卡', category: 'milestone' },
+  { key: 'day3_complete', name: '中途不弃', icon: '💪', description: '完成Day 3打卡', category: 'milestone' },
+  { key: 'day5_complete', name: '习惯养成', icon: '🔄', description: '完成Day 5打卡', category: 'milestone' },
+  { key: 'camp_graduate', name: '7天觉醒者', icon: '🎓', description: '完成训练营毕业', category: 'milestone' },
+  { key: 'post_camp_3', name: '持续觉醒', icon: '🔁', description: '毕业后继续打卡3天', category: 'milestone' },
+  { key: 'day14_complete', name: '进阶学员', icon: '📈', description: '累计打卡14天', category: 'milestone' },
+  { key: 'become_partner', name: '觉醒引路人', icon: '🤝', description: '成为有劲合伙人', category: 'milestone' },
+  { key: 'day30_complete', name: '资深觉醒者', icon: '⭐', description: '累计打卡30天', category: 'milestone' },
   
   // 连续打卡成就
+  { key: 'streak_1', name: '首日坚持', icon: '🔥', description: '连续打卡1天', category: 'streak' },
+  { key: 'streak_2', name: '两日连续', icon: '🔥', description: '连续打卡2天', category: 'streak' },
   { key: 'streak_3', name: '三日坚持', icon: '🔥', description: '连续打卡3天', category: 'streak' },
+  { key: 'streak_5', name: '五日不断', icon: '🔥', description: '连续打卡5天', category: 'streak' },
   { key: 'streak_7', name: '周周精进', icon: '🔥', description: '连续打卡7天', category: 'streak' },
+  { key: 'streak_10', name: '十日如一', icon: '🔥', description: '连续打卡10天', category: 'streak' },
   { key: 'streak_14', name: '两周如一', icon: '🔥', description: '连续打卡14天', category: 'streak' },
+  { key: 'streak_21', name: '三周坚守', icon: '🔥', description: '连续打卡21天', category: 'streak' },
   { key: 'streak_30', name: '月月觉醒', icon: '🔥', description: '连续打卡30天', category: 'streak' },
+  { key: 'streak_60', name: '永续之火', icon: '🔥', description: '连续打卡60天', category: 'streak' },
   
   // 成长突破成就
-  { key: 'behavior_breakthrough', name: '行为突破者', icon: '🏃', description: '行为层得分≥4', category: 'growth' },
-  { key: 'emotion_breakthrough', name: '情绪突破者', icon: '💗', description: '情绪层得分≥4', category: 'growth' },
-  { key: 'belief_breakthrough', name: '信念突破者', icon: '💎', description: '信念层得分≥4', category: 'growth' },
-  { key: 'all_layer_master', name: '三层通达', icon: '✨', description: '单日全层满分', category: 'growth' },
+  { key: 'behavior_awareness', name: '行为觉察', icon: '🏃', description: '行为层评分达3分', category: 'growth' },
+  { key: 'behavior_breakthrough', name: '行为突破者', icon: '🏃', description: '行为层评分达4分', category: 'growth' },
+  { key: 'emotion_awareness', name: '情绪觉察', icon: '💗', description: '情绪层评分达3分', category: 'growth' },
+  { key: 'emotion_breakthrough', name: '情绪突破者', icon: '💗', description: '情绪层评分达4分', category: 'growth' },
+  { key: 'belief_awareness', name: '信念觉察', icon: '💎', description: '信念层评分达3分', category: 'growth' },
+  { key: 'belief_breakthrough', name: '信念突破者', icon: '💎', description: '信念层评分达4分', category: 'growth' },
+  { key: 'dual_layer', name: '双层协调', icon: '✨', description: '任意两层同时达4分', category: 'growth' },
+  { key: 'triple_perfect', name: '三层通达', icon: '✨', description: '单日三层均达5分', category: 'growth' },
+  { key: 'awakening_70', name: '觉醒进阶', icon: '🌈', description: '觉醒指数达到70+', category: 'growth' },
   { key: 'awakening_80', name: '高度觉醒', icon: '🌈', description: '觉醒指数达到80+', category: 'growth' },
   
   // 社交影响成就
-  { key: 'first_share', name: '分享先锋', icon: '📢', description: '首次分享觉醒故事', category: 'social' },
-  { key: 'first_invite', name: '邀请达人', icon: '💌', description: '成功邀请首位学员', category: 'social' },
-  { key: 'team_5', name: '小团队长', icon: '👥', description: '邀请5位学员', category: 'social' },
-  { key: 'team_10', name: '觉醒导师', icon: '🎖️', description: '邀请10位学员', category: 'social' },
+  { key: 'first_share', name: '首次分享', icon: '📢', description: '首次分享成长卡片', category: 'social' },
+  { key: 'share_5', name: '分享达人', icon: '📢', description: '累计分享5次', category: 'social' },
+  { key: 'invite_1', name: '首位邀请', icon: '💌', description: '成功邀请1人加入', category: 'social' },
+  { key: 'invite_3', name: '邀请达人', icon: '💌', description: '成功邀请3人加入', category: 'social' },
+  { key: 'invite_5', name: '小团队长', icon: '👥', description: '成功邀请5人加入', category: 'social' },
+  { key: 'invite_7', name: '团队建设者', icon: '👥', description: '成功邀请7人加入', category: 'social' },
+  { key: 'invite_10', name: '觉醒导师', icon: '🎖️', description: '成功邀请10人加入', category: 'social' },
+  { key: 'graduated_1', name: '资深导师', icon: '🎖️', description: '邀请1人完成训练营', category: 'social' },
+  { key: 'graduated_3', name: '金牌导师', icon: '🏆', description: '邀请3人完成训练营', category: 'social' },
+  { key: 'graduated_5', name: '觉醒大师', icon: '👑', description: '邀请5人完成训练营', category: 'social' },
 ];
 
 // 获取当前等级信息
