@@ -95,11 +95,11 @@ export function GapReminderCard({
               <>
                 每一次回归都是新的开始。
                 <br />
-                今日回归，继续第 <span className="font-semibold">{cycleRound}</span> 轮 Day <span className="font-semibold">{cycleDayInRound}</span>
+                今日回归，继续第 <span className="font-semibold">{cycleRound + 1}</span> 轮 Day <span className="font-semibold">{cycleDayInRound}</span>
               </>
             ) : (
               <>
-                今日回归，继续第 <span className="font-semibold">{cycleRound}</span> 轮 Day <span className="font-semibold">{cycleDayInRound}</span>
+                今日回归，继续第 <span className="font-semibold">{cycleRound + 1}</span> 轮 Day <span className="font-semibold">{cycleDayInRound}</span>
               </>
             )}
           </p>
