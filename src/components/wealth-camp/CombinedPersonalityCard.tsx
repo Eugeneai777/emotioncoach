@@ -495,7 +495,7 @@ export function CombinedPersonalityCard({
                         <ResponsiveContainer width="100%" height="100%">
                           <RadarChart cx="50%" cy="50%" outerRadius="60%" data={fourPoorRadarData}>
                             <PolarGrid stroke="hsl(var(--border))" />
-                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--foreground))', fontSize: 8 }} />
+                            <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 8 }} />
                             <PolarRadiusAxis angle={90} domain={[0, 15]} tick={false} axisLine={false} />
                             {/* Day 0 基线 - 灰色虚线 */}
                             <Radar 
@@ -680,7 +680,7 @@ export function CombinedPersonalityCard({
                         <ResponsiveContainer width="100%" height="100%">
                           <RadarChart cx="50%" cy="50%" outerRadius="60%" data={emotionRadarData}>
                             <PolarGrid stroke="hsl(var(--border))" />
-                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--foreground))', fontSize: 7 }} />
+<PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 7 }} />
                             <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
                             {/* Day 0 基线 - 灰色虚线 */}
                             <Radar 
@@ -875,7 +875,7 @@ export function CombinedPersonalityCard({
                         <ResponsiveContainer width="100%" height="100%">
                           <RadarChart cx="50%" cy="50%" outerRadius="60%" data={beliefRadarData}>
                             <PolarGrid stroke="hsl(var(--border))" />
-                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--foreground))', fontSize: 7 }} />
+                            <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 7 }} />
                             <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
                             {/* Day 0 基线 - 灰色虚线 */}
                             <Radar 
