@@ -12,6 +12,7 @@ import { SupportPackageCard } from "@/components/customer-support/SupportPackage
 import { SupportCampCard } from "@/components/customer-support/SupportCampCard";
 import { SupportNavigationCard } from "@/components/customer-support/SupportNavigationCard";
 import { PointsRulesCard } from "@/components/PointsRulesCard";
+import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 
 interface Navigation {
   page_type: string;
@@ -252,6 +253,9 @@ const CustomerSupport = () => {
           </div>
         </div>
       </div>
+      
+      {/* Floating Feedback Button */}
+      <FeedbackFloatingButton className="bottom-24 right-4" />
     </div>
   );
 };
