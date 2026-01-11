@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Sparkles, Info } from "lucide-react";
+import { ArrowLeft, Sparkles, Info, Home } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import * as Icons from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { categories, getCategoryConfig } from "@/config/energyStudioTools";
@@ -172,27 +173,17 @@ const EnergyStudio = () => {
   };
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       {/* Header with gradient background */}
-      <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
-        <div className="container max-w-6xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="gap-2 hover:bg-background/80">
-              <ArrowLeft className="w-4 h-4" />
-              返回
-            </Button>
-            <div className="flex-1 text-center">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
-                有劲生活馆
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">探索更好的自己 · 享受有劲生活</p>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => navigate("/user-manual")} className="gap-2">
-              <Info className="w-4 h-4" />
-              <span className="hidden sm:inline">使用指南</span>
-              <span className="sm:hidden">指南</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <PageHeader 
+        title="有劲生活馆"
+        className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10"
+        rightActions={
+          <Button variant="outline" size="sm" onClick={() => navigate("/user-manual")} className="gap-2">
+            <Info className="w-4 h-4" />
+            <span className="hidden sm:inline">使用指南</span>
+            <span className="sm:hidden">指南</span>
+          </Button>
+        }
+      />
 
       {/* Main Content */}
       <main className="container max-w-6xl mx-auto px-4 py-8">

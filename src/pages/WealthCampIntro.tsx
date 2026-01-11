@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import { ArrowLeft, Sparkles, Brain, MessageCircle, Share2, Gift, Heart, Target, Shield, Users, CheckCircle2, Clock, Zap } from "lucide-react";
+import { ArrowLeft, Sparkles, Brain, MessageCircle, Share2, Gift, Heart, Target, Shield, Users, CheckCircle2, Clock, Zap, Home } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -155,16 +156,11 @@ const WealthCampIntro = () => {
         <link rel="canonical" href="https://eugeneai.me/wealth-camp-intro" />
       </Helmet>
       <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-amber-100">
-        <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-amber-700">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <span className="text-sm text-amber-600 font-medium">财富觉醒训练营</span>
-          <div className="w-9" />
-        </div>
-      </div>
+      {/* Header - 使用统一的PageHeader */}
+      <PageHeader 
+        title="财富觉醒训练营"
+        className="bg-white/80 border-amber-100"
+      />
 
       <div className="pb-24 sm:pb-28">
         {/* Hero Section */}

@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Home } from 'lucide-react';
+import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -474,22 +475,17 @@ ${reflection}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
-        <div className="container max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="font-semibold">💰 我的财富日记</h1>
-            <p className="text-xs text-muted-foreground">Day {currentDay} / {camp.duration_days}</p>
-          </div>
+      {/* Header - 使用统一的PageHeader，在此页面Home键会自动隐藏 */}
+      <PageHeader 
+        title={`💰 我的财富日记 Day ${currentDay}/${camp.duration_days}`}
+        showBack={false}
+        rightActions={
           <div className="text-right">
             <div className="text-lg font-bold text-amber-600">{camp.completed_days}</div>
             <div className="text-xs text-muted-foreground">已完成</div>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <div className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* 优化为3个Tab */}
