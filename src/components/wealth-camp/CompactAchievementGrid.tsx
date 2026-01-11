@@ -240,72 +240,86 @@ export function CompactAchievementGrid({ className }: CompactAchievementGridProp
       </div>
 
       <CardContent className="p-2.5 space-y-2">
-        {/* 🎯 下一个目标卡片 */}
-        {globalNextAchievement && nextPath && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={cn(
-              "p-3 rounded-xl border-2",
-              nextPath.theme.bgActive,
-              nextPath.theme.border
-            )}
-          >
-            <div className="flex items-start gap-3">
-              {/* 大图标 */}
-              <motion.div
-                className={cn(
-                  "w-12 h-12 rounded-xl flex items-center justify-center text-2xl",
-                  "bg-gradient-to-br from-white/80 to-white/40 dark:from-slate-800/80 dark:to-slate-700/40",
-                  "border-2", nextPath.theme.border
-                )}
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                {globalNextAchievement.achievement.icon}
-              </motion.div>
-              
-              {/* 信息 */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <Target className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground">下一个目标</span>
-                </div>
-                <p className="font-bold text-sm truncate">
-                  {globalNextAchievement.achievement.name}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {globalNextAchievement.achievement.description}
-                </p>
-                
-                {/* 进度条 */}
-                <div className="mt-2 space-y-1">
-                  <div className="h-2 bg-white/50 dark:bg-slate-900/50 rounded-full overflow-hidden">
-                    <motion.div
-                      className={cn("h-full bg-gradient-to-r", nextPath.theme.gradient)}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${globalNextAchievement.progress}%` }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className={cn("font-semibold", nextPath.theme.text)}>
-                      {globalNextAchievement.remainingText}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {globalNextAchievement.progress}%
-                    </span>
-                  </div>
-                </div>
-                
-                {/* 行动提示 */}
-                <p className="mt-1.5 text-[11px] text-muted-foreground flex items-center gap-1">
-                  💡 {globalNextAchievement.achievement.dailyTaskHint}
-                </p>
+        {/* 🎯 四路径目标卡片 - 2x2网格 */}
+        <div className="grid grid-cols-2 gap-2">
+          {paths.map((path, index) => (
+            <motion.div
+              key={path.key}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className={cn(
+                "p-2.5 rounded-xl border",
+                path.nextAchievement 
+                  ? [path.theme.bgActive, path.theme.border]
+                  : "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800"
+              )}
+            >
+              {/* 路径标题 */}
+              <div className="flex items-center gap-1 mb-1.5">
+                <span className="text-xs">{path.icon}</span>
+                <span className="text-[10px] font-medium text-muted-foreground">{path.title}</span>
+                <span className={cn("text-[9px] ml-auto", path.theme.text)}>
+                  {path.earnedCount}/{path.totalCount}
+                </span>
               </div>
-            </div>
-          </motion.div>
-        )}
+              
+              {path.nextAchievement ? (
+                <>
+                  {/* 成就信息 */}
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <motion.span 
+                      className="text-lg"
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+                    >
+                      {path.nextAchievement.icon}
+                    </motion.span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold truncate">
+                        {path.nextAchievement.name}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* 进度条 */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex-1 h-1.5 bg-white/50 dark:bg-slate-900/50 rounded-full overflow-hidden">
+                        <motion.div
+                          className={cn("h-full bg-gradient-to-r", path.theme.gradient)}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${path.nextAchievement.progress}%` }}
+                          transition={{ duration: 0.8, ease: "easeOut" }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-medium text-muted-foreground">
+                        {path.nextAchievement.progress}%
+                      </span>
+                    </div>
+                    <p className={cn("text-[10px] font-semibold", path.theme.text)}>
+                      {path.nextAchievement.remainingText}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                /* 已完成状态 */
+                <div className="flex flex-col items-center justify-center py-2">
+                  <motion.span 
+                    className="text-xl"
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }}
+                  >
+                    🎉
+                  </motion.span>
+                  <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                    已全部解锁
+                  </span>
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
 
         {/* 分享按钮 */}
         <Button
