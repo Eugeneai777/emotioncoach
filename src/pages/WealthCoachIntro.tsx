@@ -5,8 +5,9 @@ import { Card } from "@/components/ui/card";
 import { 
   ArrowLeft, Activity, Heart, Brain, User, Network, Sparkles, 
   CheckCircle2, ArrowRight, ClipboardCheck, Tent, Handshake, 
-  ChevronRight, ChevronDown, Layers
+  ChevronRight, ChevronDown, Layers, Home
 } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Accordion,
@@ -208,20 +209,11 @@ const WealthCoachIntro = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50/50 via-white to-orange-50/30 dark:from-amber-950/10 dark:via-background dark:to-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-background/80 backdrop-blur-md border-b border-amber-100/50 dark:border-border">
-        <div className="container max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="shrink-0"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-semibold text-foreground">财富教练</h1>
-        </div>
-      </header>
+      {/* Header - 使用统一的PageHeader */}
+      <PageHeader 
+        title="财富教练"
+        className="bg-white/80 dark:bg-background/80 border-amber-100/50 dark:border-border"
+      />
 
       {/* Hero Section - 更简洁 */}
       <section className="relative overflow-hidden">

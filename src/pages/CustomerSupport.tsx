@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Home } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -125,20 +126,8 @@ const CustomerSupport = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-border/50">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="shrink-0"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-semibold">有劲AI客服</h1>
-        </div>
-      </div>
+      {/* Header - 使用统一的PageHeader */}
+      <PageHeader title="有劲AI客服" />
 
       <div className="max-w-2xl mx-auto px-4 py-4 flex flex-col h-[calc(100vh-60px)]">
         {/* Quick Options */}

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Home } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -61,18 +62,11 @@ export default function Packages() {
       onComplete={completeTour}
     />
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* 返回按钮 */}
-      <div className="container max-w-7xl mx-auto px-4 pt-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="gap-2 text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="w-4 h-4" />
-          返回首页
-        </Button>
-      </div>
+      <PageHeader title="会员套餐" />
 
       <div className="container max-w-7xl mx-auto px-4 py-4 space-y-6">
         {/* 标题区域 */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">会员套餐</h1>
           <p className="text-muted-foreground">
             选择适合您的产品
           </p>

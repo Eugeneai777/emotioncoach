@@ -18,7 +18,8 @@ import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { AccountCredentials } from "@/components/profile/AccountCredentials";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertCircle, Home } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 
@@ -156,18 +157,9 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-healing-cream via-healing-warmWhite to-healing-lightGreen/10">
+      <PageHeader title="设置" />
+      
       <div className="container max-w-2xl mx-auto px-3 md:px-4 py-4 md:py-8">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-          className="mb-4 md:mb-6 text-healing-forestGreen hover:text-healing-sage text-xs md:text-sm"
-          size="sm"
-        >
-          <ArrowLeft className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5 md:mr-2" />
-          返回
-        </Button>
-
-        <h1 className="text-xl md:text-3xl font-bold text-foreground mb-4 md:mb-6">设置</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className={cn(

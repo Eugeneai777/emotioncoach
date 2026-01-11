@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ClipboardList, History, TrendingUp, Share2, Sparkles, ChevronRight } from "lucide-react";
+import { ArrowLeft, ClipboardList, History, TrendingUp, Share2, Sparkles, ChevronRight, Home } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -314,44 +315,39 @@ export default function WealthBlockAssessmentPage() {
         <meta name="twitter:image" content={shareImage} />
       </Helmet>
 
-      {/* 导航栏 - 融入暖色背景 */}
-      <header className="sticky top-0 z-50 bg-gradient-to-r from-amber-50/95 via-orange-50/95 to-amber-50/95 backdrop-blur-md border-b border-amber-200/50">
-        <div className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 h-12 sm:h-14 flex items-center justify-between gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="shrink-0 h-8 w-8 sm:h-9 sm:w-9"
-            onClick={() => navigate("/energy-studio")}
-          >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          </Button>
-          
-          {/* AI教练专区入口按钮 */}
-          <Button
-            variant="ghost"
+      {/* 导航栏 - 使用统一的PageHeader组件 */}
+      <PageHeader 
+        title=""
+        className="bg-gradient-to-r from-amber-50/95 via-orange-50/95 to-amber-50/95 border-b border-amber-200/50"
+        rightActions={
+          <div className="flex items-center gap-1">
+            {/* AI教练专区入口按钮 */}
+            <Button
+              variant="ghost"
               onClick={() => navigate("/coach-space")}
-            className="flex-1 h-8 sm:h-9 px-3 sm:px-4 rounded-full 
-                       bg-gradient-to-r from-amber-400 to-orange-400 
-                       hover:from-amber-500 hover:to-orange-500 
-                       text-white shadow-md hover:shadow-lg 
-                       transition-all duration-200 hover:scale-[1.02]
-                       flex items-center justify-center gap-1.5 sm:gap-2"
-          >
-            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span className="text-xs sm:text-sm font-medium">点击进入AI教练专区</span>
-            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          </Button>
-          
-          <WealthInviteCardDialog
-            defaultTab="assessment"
-            trigger={
-              <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 sm:h-9 sm:w-9">
-                <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
-              </Button>
-            }
-          />
-        </div>
-      </header>
+              className="h-8 sm:h-9 px-3 sm:px-4 rounded-full 
+                         bg-gradient-to-r from-amber-400 to-orange-400 
+                         hover:from-amber-500 hover:to-orange-500 
+                         text-white shadow-md hover:shadow-lg 
+                         transition-all duration-200 hover:scale-[1.02]
+                         flex items-center justify-center gap-1.5 sm:gap-2"
+            >
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="text-xs sm:text-sm font-medium">AI教练</span>
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </Button>
+            
+            <WealthInviteCardDialog
+              defaultTab="assessment"
+              trigger={
+                <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 sm:h-9 sm:w-9">
+                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                </Button>
+              }
+            />
+          </div>
+        }
+      />
 
       {/* 主内容 */}
       <main className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24">

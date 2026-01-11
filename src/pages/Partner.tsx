@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ResponsiveTabsTrigger } from "@/components/ui/responsive-tabs-trigger";
-import { ArrowLeft, Copy, Share2, Users, TrendingUp, Wallet, Clock, Gift, Sparkles } from "lucide-react";
+import { ArrowLeft, Copy, Share2, Users, TrendingUp, Wallet, Clock, Gift, Sparkles, Home } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import { toast } from "sonner";
 import { PartnerStats } from "@/components/partner/PartnerStats";
 import { ReferralList } from "@/components/partner/ReferralList";
@@ -56,19 +57,10 @@ export default function Partner() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-orange-50">
-      <div className="container max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Header - 简化版 */}
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/")}
-            className="gap-2 -ml-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            返回
-          </Button>
-          {isPartner && (
+      <PageHeader 
+        title="合伙人中心"
+        rightActions={
+          isPartner && (
             <Button
               variant="outline"
               size="sm"
@@ -78,8 +70,11 @@ export default function Partner() {
               <Gift className="w-4 h-4" />
               权益
             </Button>
-          )}
-        </div>
+          )
+        }
+      />
+      
+      <div className="container max-w-4xl mx-auto px-4 py-6 space-y-6">
 
         {/* Non-Partner View - 双合伙人介绍 */}
         {!isPartner && (
