@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -140,6 +141,15 @@ const VibrantLifeIntro = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-teal-50/30 to-cyan-50/50 relative overflow-hidden">
+      <Helmet>
+        <title>有劲生活教练 - 有劲AI</title>
+        <meta name="description" content="24小时在你身边的AI生活教练" />
+        <meta property="og:title" content="有劲AI生活教练" />
+        <meta property="og:description" content="懂情绪、懂方法、懂结构、懂成长，比你更懂你的第二个自己" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/vibrant-life-intro" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       {/* 装饰性背景元素 */}
       <div className="absolute top-20 left-0 w-72 h-72 bg-teal-200/20 rounded-full blur-3xl" />
       <div className="absolute top-96 right-0 w-96 h-96 bg-cyan-200/20 rounded-full blur-3xl" />

@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet";
 import { Bell, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +15,15 @@ const CoachSpace = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white pb-[env(safe-area-inset-bottom)]">
+      <Helmet>
+        <title>教练空间 - 有劲AI</title>
+        <meta name="description" content="选择你的专属AI教练，开启成长之旅" />
+        <meta property="og:title" content="有劲AI教练空间" />
+        <meta property="og:description" content="7位专业AI教练，24小时陪伴你成长" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/coach-space" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       {/* 通用顶部 Header */}
       <PageHeader
         title="教练空间"

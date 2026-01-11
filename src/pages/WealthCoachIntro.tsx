@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useRef, useState } from "react";
+import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
@@ -209,6 +210,15 @@ const WealthCoachIntro = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50/50 via-white to-orange-50/30 dark:from-amber-950/10 dark:via-background dark:to-background">
+      <Helmet>
+        <title>财富教练 - 有劲AI</title>
+        <meta name="description" content="财富不是靠努力，而是靠在正确层面发力" />
+        <meta property="og:title" content="有劲AI财富教练｜5层同频突破" />
+        <meta property="og:description" content="3步突破·5层同频·21天见效，从行为到结构全面打通财富通道" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/wealth-coach-intro" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       {/* Header - 使用统一的PageHeader */}
       <PageHeader 
         title="财富教练"
