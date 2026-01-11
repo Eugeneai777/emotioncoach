@@ -735,7 +735,7 @@ function buildBaseTasks({
       });
     }
 
-    // Required tasks
+    // 1. Meditation - Required first
     tasks.push({
       id: 'meditation',
       title: '冥想课程',
@@ -747,21 +747,35 @@ function buildBaseTasks({
       category: 'required',
     });
 
+    // 2. Share - Second priority
     tasks.push({
-      id: 'coaching',
-      title: '教练梳理',
-      description: '深度财富对话',
-      icon: '💬',
-      completed: coachingCompleted,
+      id: 'share',
+      title: '打卡分享',
+      description: '记录成长时刻',
+      icon: '📢',
+      completed: shareCompleted,
       locked: !meditationCompleted,
       lockReason: '完成冥想后解锁',
-      points: 20,
-      action: onCoachingClick,
-      highlight: meditationCompleted && !coachingCompleted,
+      points: 5,
+      action: onShareClick,
       category: 'required',
     });
 
-    // Optional action task
+    // 3. AI Challenges are shown in the UI section between required and optional
+
+    // 4. Invite - After AI challenges
+    tasks.push({
+      id: 'invite',
+      title: '邀请好友',
+      description: '分享成长之旅',
+      icon: '🎁',
+      completed: inviteCompleted,
+      points: 5,
+      action: onInviteClick,
+      category: 'optional',
+    });
+
+    // Optional action task (if has giving action from coaching)
     if (hasAction) {
       tasks.push({
         id: 'action',
@@ -777,36 +791,27 @@ function buildBaseTasks({
       });
     }
 
-    // Optional tasks
+    // Coaching task - moved to optional since AI challenges are now primary
     tasks.push({
-      id: 'share',
-      title: '打卡分享',
-      description: '记录成长时刻',
-      icon: '📢',
-      completed: shareCompleted,
-      locked: !coachingCompleted,
-      lockReason: '完成教练后解锁',
-      points: 5,
-      action: onShareClick,
-      category: 'optional',
-    });
-
-    tasks.push({
-      id: 'invite',
-      title: '邀请好友',
-      description: '分享成长之旅',
-      icon: '🎁',
-      completed: inviteCompleted,
-      points: 5,
-      action: onInviteClick,
+      id: 'coaching',
+      title: '教练梳理',
+      description: '深度财富对话',
+      icon: '💬',
+      completed: coachingCompleted,
+      locked: !meditationCompleted,
+      lockReason: '完成冥想后解锁',
+      points: 20,
+      action: onCoachingClick,
+      highlight: meditationCompleted && !coachingCompleted,
       category: 'optional',
     });
 
     return tasks;
   }
 
-  // Graduate mode
+  // Graduate mode - Order: 1.冥想 2.打卡分享 3.AI挑战(UI) 4.邀请好友
   if (userMode === 'graduate') {
+    // 1. Meditation
     tasks.push({
       id: 'meditation',
       title: `循环冥想 Day ${cycleMeditationDay}`,
@@ -815,10 +820,10 @@ function buildBaseTasks({
       completed: meditationCompleted,
       points: 5,
       action: onMeditationClick,
-      optional: true,
-      category: 'optional',
+      category: 'required',
     });
 
+    // 2. Share
     tasks.push({
       id: 'share',
       title: '打卡分享',
@@ -827,9 +832,12 @@ function buildBaseTasks({
       completed: shareCompleted,
       points: 5,
       action: onShareClick,
-      category: 'optional',
+      category: 'required',
     });
 
+    // 3. AI Challenges shown in UI section
+
+    // 4. Invite
     tasks.push({
       id: 'invite',
       title: '邀请好友',
@@ -844,7 +852,8 @@ function buildBaseTasks({
     return tasks;
   }
 
-  // Partner mode
+  // Partner mode - Order: 1.冥想 2.打卡分享 3.AI挑战(UI) 4.邀请好友
+  // 1. Meditation
   tasks.push({
     id: 'meditation',
     title: `循环冥想 Day ${cycleMeditationDay}`,
@@ -853,10 +862,36 @@ function buildBaseTasks({
     completed: meditationCompleted,
     points: 5,
     action: onMeditationClick,
-    optional: true,
+    category: 'required',
+  });
+
+  // 2. Share
+  tasks.push({
+    id: 'share',
+    title: '打卡分享',
+    description: '影响更多人',
+    icon: '📢',
+    completed: shareCompleted,
+    points: 5,
+    action: onShareClick,
+    category: 'required',
+  });
+
+  // 3. AI Challenges shown in UI section
+
+  // 4. Invite
+  tasks.push({
+    id: 'invite',
+    title: '邀请好友',
+    description: '发展你的团队',
+    icon: '🎁',
+    completed: inviteCompleted,
+    points: 10,
+    action: onInviteClick,
     category: 'optional',
   });
 
+  // Optional: Giving action (for partners)
   if (hasAction) {
     tasks.push({
       id: 'action',
@@ -869,28 +904,6 @@ function buildBaseTasks({
       category: 'optional',
     });
   }
-
-  tasks.push({
-    id: 'share',
-    title: '打卡分享',
-    description: '影响更多人',
-    icon: '📢',
-    completed: shareCompleted,
-    points: 5,
-    action: onShareClick,
-    category: 'optional',
-  });
-
-  tasks.push({
-    id: 'invite',
-    title: '邀请好友',
-    description: '发展你的团队',
-    icon: '🎁',
-    completed: inviteCompleted,
-    points: 10,
-    action: onInviteClick,
-    category: 'optional',
-  });
 
   return tasks;
 }
