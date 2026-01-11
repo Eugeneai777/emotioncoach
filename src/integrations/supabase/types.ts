@@ -2768,6 +2768,7 @@ export type Database = {
       }
       daily_challenges: {
         Row: {
+          ai_insight_source: string | null
           challenge_description: string | null
           challenge_title: string
           challenge_type: string
@@ -2778,6 +2779,8 @@ export type Database = {
           id: string
           is_ai_generated: boolean | null
           is_completed: boolean | null
+          linked_belief: string | null
+          linked_focus_area: string | null
           points_reward: number | null
           recommendation_reason: string | null
           target_date: string
@@ -2785,6 +2788,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_insight_source?: string | null
           challenge_description?: string | null
           challenge_title: string
           challenge_type: string
@@ -2795,6 +2799,8 @@ export type Database = {
           id?: string
           is_ai_generated?: boolean | null
           is_completed?: boolean | null
+          linked_belief?: string | null
+          linked_focus_area?: string | null
           points_reward?: number | null
           recommendation_reason?: string | null
           target_date: string
@@ -2802,6 +2808,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_insight_source?: string | null
           challenge_description?: string | null
           challenge_title?: string
           challenge_type?: string
@@ -2812,6 +2819,8 @@ export type Database = {
           id?: string
           is_ai_generated?: boolean | null
           is_completed?: boolean | null
+          linked_belief?: string | null
+          linked_focus_area?: string | null
           points_reward?: number | null
           recommendation_reason?: string | null
           target_date?: string

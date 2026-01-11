@@ -309,13 +309,27 @@ export function UnifiedChallengeCenter({
                           {challenge.challenge_description}
                         </p>
                       )}
-                      {/* AI推荐理由 */}
+                      {/* AI推荐理由 - 根据来源显示不同样式 */}
                       {challenge.recommendation_reason && !challenge.is_completed && (
-                        <div className="flex items-center gap-1 mt-1.5 text-xs text-amber-600 dark:text-amber-400">
-                          <span>💡 {challenge.recommendation_reason}</span>
+                        <div className="flex items-center gap-1 mt-1.5">
+                          <span className={cn(
+                            "text-xs",
+                            challenge.ai_insight_source === 'keyword' && "text-rose-600 dark:text-rose-400",
+                            challenge.ai_insight_source === 'belief' && "text-violet-600 dark:text-violet-400",
+                            challenge.ai_insight_source === 'focus' && "text-blue-600 dark:text-blue-400",
+                            challenge.ai_insight_source === 'pattern' && "text-emerald-600 dark:text-emerald-400",
+                            (!challenge.ai_insight_source || challenge.ai_insight_source === 'layer') && "text-amber-600 dark:text-amber-400"
+                          )}>
+                            {challenge.recommendation_reason}
+                          </span>
+                          {challenge.linked_belief && (
+                            <Badge variant="outline" className="text-[10px] h-4 px-1 bg-violet-50 text-violet-600 border-violet-200 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-800">
+                              💎 信念
+                            </Badge>
+                          )}
                         </div>
                       )}
-                      {/* 目标四穷维度 */}
+                      {/* 目标四穷维度 - 仅在没有推荐理由时显示 */}
                       {poorTypeInfo && !challenge.is_completed && !challenge.recommendation_reason && (
                         <div className="flex items-center gap-1 mt-1.5">
                           <span className="text-xs text-muted-foreground">🎯 目标：</span>

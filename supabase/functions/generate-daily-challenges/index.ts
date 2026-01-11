@@ -18,13 +18,14 @@ const challengeTypes = {
 // 四穷类型映射
 type PoorType = 'mouth' | 'hand' | 'eye' | 'heart';
 type Difficulty = 'easy' | 'medium' | 'hard';
+type InsightSource = 'keyword' | 'belief' | 'focus' | 'pattern' | 'layer';
 
 interface ChallengeTemplate {
   title: string;
   description: string;
   points: number;
   targetPoor: PoorType;
-  baseDifficulty?: Difficulty; // 基础难度
+  baseDifficulty?: Difficulty;
 }
 
 interface FourPoorProgress {
@@ -39,11 +40,51 @@ interface PriorityWeight {
   reason: string;
 }
 
+interface UserProfile {
+  focusAreas: string[];
+  layerWeights: {
+    behavior: number;
+    emotion: number;
+    belief: number;
+  };
+  adjustmentReason: string;
+  reactionPattern: string | null;
+  dominantPoor: string | null;
+  recentKeywords: string[];
+  savedBeliefs: string[];
+  streak: number;
+}
+
+interface ReasonContext {
+  poorType: PoorType;
+  recentKeyword?: string;
+  savedBelief?: string;
+  focusArea?: string;
+  reactionPattern?: string;
+  layerFocus?: string;
+}
+
 // 根据难度调整积分
 const difficultyPointMultiplier: Record<Difficulty, number> = {
   easy: 0.7,
   medium: 1.0,
   hard: 1.5,
+};
+
+// 四穷类型中文名称
+const poorTypeNames: Record<PoorType, string> = {
+  mouth: '嘴穷',
+  hand: '手穷',
+  eye: '眼穷',
+  heart: '心穷',
+};
+
+// 反应模式中文名称
+const patternNames: Record<string, string> = {
+  chase: '追逐型',
+  avoid: '回避型',
+  trauma: '创伤型',
+  harmony: '和谐型',
 };
 
 // 基于用户画像的挑战库 - 按难度分类
@@ -142,24 +183,158 @@ const genericChallenges: Record<string, ChallengeTemplate[]> = {
   ],
 };
 
-// 四穷类型中文名称
-const poorTypeNames: Record<PoorType, string> = {
-  mouth: '嘴穷',
-  hand: '手穷',
-  eye: '眼穷',
-  heart: '心穷',
-};
+// ============= 用户画像获取 =============
+
+async function getUserProfile(
+  supabaseClient: any,
+  userId: string
+): Promise<UserProfile> {
+  // 1. 获取训练权重和重点
+  const { data: weights } = await supabaseClient
+    .from('user_training_weights')
+    .select('focus_areas, behavior_weight, emotion_weight, belief_weight, adjustment_reason')
+    .eq('user_id', userId)
+    .order('week_number', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  // 2. 获取反应模式
+  const { data: assessment } = await supabaseClient
+    .from('wealth_block_assessments')
+    .select('reaction_pattern, dominant_poor')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  // 3. 获取最近3天日记关键词
+  const threeDaysAgo = new Date();
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+  
+  const { data: recentJournals } = await supabaseClient
+    .from('wealth_journal_entries')
+    .select('behavior_block, emotion_block, belief_block')
+    .eq('user_id', userId)
+    .gte('entry_date', threeDaysAgo.toISOString().split('T')[0])
+    .order('created_at', { ascending: false })
+    .limit(3);
+
+  // 4. 获取收藏的信念
+  const { data: beliefs } = await supabaseClient
+    .from('user_favorite_beliefs')
+    .select('belief_text')
+    .eq('user_id', userId)
+    .limit(3);
+
+  // 5. 获取连续打卡天数
+  const { data: progressData } = await supabaseClient
+    .from('user_awakening_progress')
+    .select('current_streak')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  // 提取日记关键词
+  const extractKeywords = (journals: any[]): string[] => {
+    if (!journals) return [];
+    const keywords: string[] = [];
+    journals.forEach(j => {
+      if (j.behavior_block) keywords.push(j.behavior_block);
+      if (j.emotion_block) keywords.push(j.emotion_block);
+      if (j.belief_block) keywords.push(j.belief_block);
+    });
+    return keywords.slice(0, 5); // 最多5个关键词
+  };
+
+  return {
+    focusAreas: (weights?.focus_areas as string[]) || [],
+    layerWeights: {
+      behavior: weights?.behavior_weight ?? 0.33,
+      emotion: weights?.emotion_weight ?? 0.33,
+      belief: weights?.belief_weight ?? 0.34,
+    },
+    adjustmentReason: weights?.adjustment_reason || '',
+    reactionPattern: assessment?.reaction_pattern || null,
+    dominantPoor: assessment?.dominant_poor || null,
+    recentKeywords: extractKeywords(recentJournals),
+    savedBeliefs: beliefs?.map((b: any) => b.belief_text) || [],
+    streak: progressData?.current_streak || 0,
+  };
+}
+
+// ============= 个性化推荐理由生成 =============
+
+function generatePersonalizedReason(context: ReasonContext): { reason: string; source: InsightSource } {
+  const { poorType, recentKeyword, savedBelief, focusArea, reactionPattern, layerFocus } = context;
+  
+  // 优先级1：用户日记关键词
+  if (recentKeyword) {
+    return {
+      reason: `🎯 你最近提到"${recentKeyword}"，试着从行动中找到突破`,
+      source: 'keyword',
+    };
+  }
+  
+  // 优先级2：收藏的信念
+  if (savedBelief) {
+    const shortBelief = savedBelief.length > 15 ? savedBelief.slice(0, 15) + '...' : savedBelief;
+    return {
+      reason: `💎 验证你收藏的信念："${shortBelief}"`,
+      source: 'belief',
+    };
+  }
+  
+  // 优先级3：本周训练重点
+  if (focusArea) {
+    return {
+      reason: `📌 本周重点：${focusArea}`,
+      source: 'focus',
+    };
+  }
+  
+  // 优先级4：三层权重
+  if (layerFocus) {
+    return {
+      reason: `⚖️ 你的${layerFocus}层需要更多关注`,
+      source: 'layer',
+    };
+  }
+  
+  // 优先级5：反应模式
+  if (reactionPattern && patternNames[reactionPattern]) {
+    const patternTips: Record<string, string> = {
+      chase: '放慢脚步，觉察内在驱动力',
+      avoid: '面对而非回避，小步前进',
+      trauma: '温柔以待，觉察情绪波动',
+      harmony: '保持平衡，深化觉察',
+    };
+    return {
+      reason: `🌊 ${patternNames[reactionPattern]}：${patternTips[reactionPattern] || '持续觉察'}`,
+      source: 'pattern',
+    };
+  }
+  
+  // 默认理由
+  return {
+    reason: `🌱 ${poorTypeNames[poorType]}觉察练习`,
+    source: 'layer',
+  };
+}
+
+// ============= 获取主导层 =============
+
+function getDominantLayer(weights: { behavior: number; emotion: number; belief: number }): string {
+  const { behavior, emotion, belief } = weights;
+  if (behavior >= emotion && behavior >= belief) return '行为';
+  if (emotion >= behavior && emotion >= belief) return '情绪';
+  return '信念';
+}
 
 // ============= 智能推荐核心算法 =============
 
-/**
- * 获取用户四穷进度数据
- */
 async function getUserFourPoorProgress(
   supabaseClient: any,
   userId: string
 ): Promise<FourPoorProgress> {
-  // 1. 获取用户 baseline (从 wealth_block_assessments)
   const { data: assessment } = await supabaseClient
     .from('wealth_block_assessments')
     .select('mouth_score, hand_score, eye_score, heart_score')
@@ -168,13 +343,11 @@ async function getUserFourPoorProgress(
     .limit(1)
     .maybeSingle();
 
-  // 2. 获取日记觉察次数 (按 behavior_type)
   const { data: journalEntries } = await supabaseClient
     .from('wealth_journal_entries')
     .select('behavior_type')
     .eq('user_id', userId);
 
-  // 3. 获取已完成挑战的觉察次数 (按 target_poor_type)
   const { data: completedChallenges } = await supabaseClient
     .from('daily_challenges')
     .select('target_poor_type')
@@ -182,7 +355,6 @@ async function getUserFourPoorProgress(
     .eq('is_completed', true)
     .not('target_poor_type', 'is', null);
 
-  // 计算 baseline 分数 (默认值10)
   const baselineScores: Record<PoorType, number> = {
     mouth: assessment?.mouth_score ?? 10,
     hand: assessment?.hand_score ?? 10,
@@ -190,10 +362,8 @@ async function getUserFourPoorProgress(
     heart: assessment?.heart_score ?? 10,
   };
 
-  // 计算觉察次数 (日记 + 挑战)
   const awarenessCount: Record<PoorType, number> = { mouth: 0, hand: 0, eye: 0, heart: 0 };
   
-  // 统计日记觉察
   journalEntries?.forEach((entry: any) => {
     const type = entry.behavior_type as PoorType;
     if (type && awarenessCount[type] !== undefined) {
@@ -201,7 +371,6 @@ async function getUserFourPoorProgress(
     }
   });
   
-  // 统计挑战觉察
   completedChallenges?.forEach((challenge: any) => {
     const type = challenge.target_poor_type as PoorType;
     if (type && awarenessCount[type] !== undefined) {
@@ -209,7 +378,6 @@ async function getUserFourPoorProgress(
     }
   });
 
-  // 计算转化率 (觉察次数 * 5，最大100)
   const transformationRates: Record<PoorType, number> = {
     mouth: Math.min(awarenessCount.mouth * 5, 100),
     hand: Math.min(awarenessCount.hand * 5, 100),
@@ -220,10 +388,6 @@ async function getUserFourPoorProgress(
   return { baselineScores, awarenessCount, transformationRates };
 }
 
-/**
- * 计算挑战推荐优先级权重
- * 公式: 基线分×0.4 + (100-转化率)×0.3 + 觉察惩罚×0.3
- */
 function calculatePriorityWeights(progress: FourPoorProgress): PriorityWeight[] {
   const weights: PriorityWeight[] = [];
   const poorTypes: PoorType[] = ['mouth', 'hand', 'eye', 'heart'];
@@ -233,12 +397,9 @@ function calculatePriorityWeights(progress: FourPoorProgress): PriorityWeight[] 
     const rate = progress.transformationRates[type] || 0;
     const count = progress.awarenessCount[type] || 0;
 
-    // 觉察惩罚：觉察越少，权重越高（最多额外30分）
     const awarenessPenalty = Math.max(0, 30 - count * 3);
-
     const score = (baseline * 0.4) + ((100 - rate) * 0.3) + (awarenessPenalty * 0.3);
 
-    // 生成推荐理由
     let reason = '';
     if (count === 0) {
       reason = `${poorTypeNames[type]}尚未练习，需要开始突破`;
@@ -253,17 +414,14 @@ function calculatePriorityWeights(progress: FourPoorProgress): PriorityWeight[] 
     weights.push({ type, score, reason });
   });
 
-  // 按分数降序排序
   return weights.sort((a, b) => b.score - a.score);
 }
 
-/**
- * 根据用户历史完成率动态调整难度
- */
 async function getDynamicDifficulty(
   supabaseClient: any,
-  userId: string
-): Promise<{ primary: Difficulty; secondary: Difficulty }> {
+  userId: string,
+  streak: number
+): Promise<{ primary: Difficulty; secondary: Difficulty; pointsMultiplier: number }> {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -275,36 +433,40 @@ async function getDynamicDifficulty(
 
   const total = history?.length || 0;
   const completed = history?.filter((h: any) => h.is_completed).length || 0;
-  const rate = total > 0 ? completed / total : 0.5; // 默认50%完成率
+  const rate = total > 0 ? completed / total : 0.5;
 
-  // 根据完成率调整难度
+  // 连续打卡激励
+  let pointsMultiplier = 1.0;
+  if (streak >= 7) {
+    pointsMultiplier = 1.3; // 连续7天+，积分×1.3
+  } else if (streak >= 3) {
+    pointsMultiplier = 1.2; // 连续3天+，积分×1.2
+  }
+
   if (rate >= 0.8) {
-    return { primary: 'hard', secondary: 'medium' };
+    return { primary: 'hard', secondary: 'medium', pointsMultiplier };
   }
   if (rate >= 0.5) {
-    return { primary: 'medium', secondary: 'easy' };
+    return { primary: 'medium', secondary: 'easy', pointsMultiplier };
   }
-  return { primary: 'easy', secondary: 'easy' };
+  return { primary: 'easy', secondary: 'easy', pointsMultiplier };
 }
 
-/**
- * 根据难度筛选挑战
- */
 function filterChallengesByDifficulty(
   challenges: ChallengeTemplate[],
   targetDifficulty: Difficulty
 ): ChallengeTemplate[] {
   const filtered = challenges.filter(c => c.baseDifficulty === targetDifficulty);
-  // 如果没有匹配的难度，返回所有挑战
   return filtered.length > 0 ? filtered : challenges;
 }
 
-/**
- * 调整挑战积分
- */
-function adjustChallengePoints(challenge: ChallengeTemplate, targetDifficulty: Difficulty): number {
-  const multiplier = difficultyPointMultiplier[targetDifficulty];
-  return Math.round(challenge.points * multiplier);
+function adjustChallengePoints(
+  challenge: ChallengeTemplate,
+  targetDifficulty: Difficulty,
+  pointsMultiplier: number
+): number {
+  const difficultyMult = difficultyPointMultiplier[targetDifficulty];
+  return Math.round(challenge.points * difficultyMult * pointsMultiplier);
 }
 
 serve(async (req: Request) => {
@@ -317,13 +479,11 @@ serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing authorization header');
     }
 
-    // Get user from JWT
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
       authHeader.replace('Bearer ', '')
     );
@@ -332,7 +492,7 @@ serve(async (req: Request) => {
       throw new Error('Unauthorized');
     }
 
-    const { targetDate } = await req.json();
+    const { targetDate, focusAreas: inputFocusAreas, weekNumber: inputWeekNumber } = await req.json();
     const dateStr = targetDate || new Date().toISOString().split('T')[0];
 
     // Check if challenges already exist for today
@@ -349,6 +509,15 @@ serve(async (req: Request) => {
       );
     }
 
+    // ============= 获取用户完整画像 =============
+    const userProfile = await getUserProfile(supabaseClient, user.id);
+    console.log('User profile:', userProfile);
+
+    // 合并前端传入的 focusAreas
+    const effectiveFocusAreas = inputFocusAreas?.length > 0 
+      ? inputFocusAreas 
+      : userProfile.focusAreas;
+
     // ============= 智能推荐算法开始 =============
 
     // 1. 获取用户四穷进度
@@ -359,39 +528,45 @@ serve(async (req: Request) => {
     const priorityList = calculatePriorityWeights(progress);
     console.log('Priority weights:', priorityList);
 
-    // 3. 获取动态难度
-    const difficulty = await getDynamicDifficulty(supabaseClient, user.id);
+    // 3. 获取动态难度（含连续打卡激励）
+    const difficulty = await getDynamicDifficulty(supabaseClient, user.id, userProfile.streak);
     console.log('Dynamic difficulty:', difficulty);
 
-    // 4. 获取最近完成的挑战标题（避免重复）
+    // 4. 获取最近完成的挑战（避免重复）
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     const { data: recentChallenges } = await supabaseClient
       .from('daily_challenges')
-      .select('challenge_title')
+      .select('challenge_title, challenge_type, target_poor_type')
       .eq('user_id', user.id)
       .eq('is_completed', true)
       .gte('completed_at', sevenDaysAgo.toISOString());
 
     const recentTitles = new Set(recentChallenges?.map((c: any) => c.challenge_title) || []);
+    const recentCombos = new Set(
+      recentChallenges?.map((c: any) => `${c.challenge_type}-${c.target_poor_type}`) || []
+    );
+
+    // 5. 获取主导层
+    const dominantLayer = getDominantLayer(userProfile.layerWeights);
 
     // Helper function to pick a random non-repeated challenge
     const pickChallenge = (
       challenges: ChallengeTemplate[],
       type: string,
       targetDifficulty: Difficulty,
-      recommendReason: string
+      reasonContext: ReasonContext,
+      linkedFocusArea?: string,
+      linkedBelief?: string
     ) => {
-      // 先按难度筛选
       const difficultyFiltered = filterChallengesByDifficulty(challenges, targetDifficulty);
-      
-      // 再排除最近完成的
       const available = difficultyFiltered.filter(c => !recentTitles.has(c.title));
       const pool = available.length > 0 ? available : difficultyFiltered;
       
       const challenge = pool[Math.floor(Math.random() * pool.length)];
-      const adjustedPoints = adjustChallengePoints(challenge, targetDifficulty);
+      const adjustedPoints = adjustChallengePoints(challenge, targetDifficulty, difficulty.pointsMultiplier);
+      const { reason, source } = generatePersonalizedReason(reasonContext);
 
       return {
         user_id: user.id,
@@ -403,7 +578,10 @@ serve(async (req: Request) => {
         target_date: dateStr,
         is_ai_generated: true,
         target_poor_type: challenge.targetPoor,
-        recommendation_reason: recommendReason, // 推荐理由
+        recommendation_reason: reason,
+        linked_focus_area: linkedFocusArea || null,
+        linked_belief: linkedBelief || null,
+        ai_insight_source: source,
       };
     };
 
@@ -411,31 +589,72 @@ serve(async (req: Request) => {
 
     // ============= 智能挑战组合策略 =============
 
-    // 挑战1：重点突破挑战 (60%权重) - 从优先级最高的维度选择 giving
+    // 挑战1：重点突破挑战 - 基于用户画像个性化
     const primaryType = priorityList[0].type;
-    const primaryReason = priorityList[0].reason;
     const primaryChallenges = challengeLibrary[primaryType];
-    challengesToCreate.push(
-      pickChallenge(primaryChallenges.giving, 'giving', difficulty.primary, `🎯 重点突破: ${primaryReason}`)
-    );
-
-    // 挑战2：平衡发展挑战 (25%权重) - 从次优先维度选择 awareness
-    const secondaryType = priorityList[1].type;
-    const secondaryReason = priorityList[1].reason;
-    const secondaryChallenges = challengeLibrary[secondaryType];
-    challengesToCreate.push(
-      pickChallenge(secondaryChallenges.awareness, 'awareness', difficulty.secondary, `⚖️ 平衡发展: ${secondaryReason}`)
-    );
-
-    // 挑战3：社交分享挑战 (15%权重) - 从 share/gratitude/abundance 中选择
-    const randomTypes = ['share', 'gratitude', 'abundance'];
-    const randomType = randomTypes[Math.floor(Math.random() * randomTypes.length)];
+    const primaryContext: ReasonContext = {
+      poorType: primaryType,
+      recentKeyword: userProfile.recentKeywords[0],
+      savedBelief: userProfile.savedBeliefs[0],
+      focusArea: effectiveFocusAreas[0],
+      reactionPattern: userProfile.reactionPattern || undefined,
+    };
     challengesToCreate.push(
       pickChallenge(
-        genericChallenges[randomType],
-        randomType,
-        'medium', // 社交挑战固定中等难度
-        '🌟 社交激励: 分享传递正能量'
+        primaryChallenges.giving,
+        'giving',
+        difficulty.primary,
+        primaryContext,
+        effectiveFocusAreas[0],
+        userProfile.savedBeliefs[0]
+      )
+    );
+
+    // 挑战2：平衡发展挑战 - 次优先维度
+    const secondaryType = priorityList[1].type;
+    const secondaryChallenges = challengeLibrary[secondaryType];
+    const secondaryContext: ReasonContext = {
+      poorType: secondaryType,
+      recentKeyword: userProfile.recentKeywords[1],
+      focusArea: effectiveFocusAreas[1],
+      layerFocus: dominantLayer,
+    };
+    challengesToCreate.push(
+      pickChallenge(
+        secondaryChallenges.awareness,
+        'awareness',
+        difficulty.secondary,
+        secondaryContext,
+        effectiveFocusAreas[1]
+      )
+    );
+
+    // 挑战3：根据完成率和连续打卡决定类型
+    let thirdType: string;
+    let thirdReason: ReasonContext;
+    
+    const completionRate = progress.transformationRates[priorityList[0].type] / 100;
+    
+    if (userProfile.streak >= 3 && completionRate >= 0.7) {
+      // 高完成率 + 连续打卡：社交分享挑战
+      thirdType = 'share';
+      thirdReason = { poorType: 'mouth', reactionPattern: userProfile.reactionPattern || undefined };
+    } else if (completionRate >= 0.4) {
+      // 中完成率：感恩类挑战
+      thirdType = 'gratitude';
+      thirdReason = { poorType: 'heart', savedBelief: userProfile.savedBeliefs[1] };
+    } else {
+      // 低完成率：简单富足思维挑战
+      thirdType = 'abundance';
+      thirdReason = { poorType: 'eye', focusArea: effectiveFocusAreas[0] };
+    }
+    
+    challengesToCreate.push(
+      pickChallenge(
+        genericChallenges[thirdType],
+        thirdType,
+        userProfile.streak >= 3 ? 'medium' : 'easy',
+        thirdReason
       )
     );
 
@@ -457,12 +676,21 @@ serve(async (req: Request) => {
         challenges: inserted,
         count: inserted?.length || 0,
         algorithm: {
+          userProfile: {
+            reactionPattern: userProfile.reactionPattern,
+            dominantLayer,
+            focusAreas: effectiveFocusAreas.slice(0, 2),
+            streak: userProfile.streak,
+            hasBeliefs: userProfile.savedBeliefs.length > 0,
+            hasKeywords: userProfile.recentKeywords.length > 0,
+          },
           priorityList: priorityList.map(p => ({ type: p.type, score: Math.round(p.score) })),
           difficulty,
-          progress: {
-            awarenessCount: progress.awarenessCount,
-            transformationRates: progress.transformationRates,
-          },
+          selectionReasons: challengesToCreate.map(c => ({
+            title: c.challenge_title,
+            source: c.ai_insight_source,
+            reason: c.recommendation_reason,
+          })),
         },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
