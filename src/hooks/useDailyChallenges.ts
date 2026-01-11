@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 
+export type ChallengeSource = 'ai_generated' | 'coach_action' | 'user_created';
+
 export interface DailyChallenge {
   id: string;
   user_id: string;
@@ -21,6 +23,8 @@ export interface DailyChallenge {
   linked_focus_area: string | null; // 关联的本周训练重点
   linked_belief: string | null; // 关联的收藏信念
   ai_insight_source: 'keyword' | 'belief' | 'focus' | 'pattern' | 'layer' | null; // 推荐理由来源
+  source: ChallengeSource; // 挑战来源
+  journal_entry_id: string | null; // 关联的日记ID（仅coach_action类型）
 }
 
 export const useDailyChallenges = (targetDate?: Date) => {
