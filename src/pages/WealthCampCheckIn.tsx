@@ -832,8 +832,6 @@ ${reflection}`;
               </TabsContent>
 
               <TabsContent value="briefing" className="space-y-4">
-                <Day0BaselineCard onClick={() => navigate('/wealth-block?tab=report')} />
-                
                 <div className="flex justify-end">
                   <BackfillMemoriesButton />
                 </div>
