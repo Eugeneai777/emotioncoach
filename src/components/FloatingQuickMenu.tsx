@@ -327,7 +327,7 @@ export const FloatingQuickMenu = () => {
         {isExpanded ? (
             <X className="w-6 h-6 text-white" />
           ) : (
-            <Rocket className="w-6 h-6 text-white" />
+            <span className="text-2xl">🚀</span>
           )}
         </motion.div>
       </div>
