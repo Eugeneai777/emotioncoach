@@ -3,7 +3,7 @@ import { useUserAchievements } from './useUserAchievements';
 import { useAwakeningProgress } from './useAwakeningProgress';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { achievementPaths, AchievementNode, AchievementPath } from '@/config/achievementPathConfig';
+import { achievementPaths, AchievementNode, AchievementPath, getGlobalNextAchievement } from '@/config/achievementPathConfig';
 
 export interface AchievementProgressNode extends AchievementNode {
   earned: boolean;
@@ -20,6 +20,15 @@ export interface AchievementPathProgress extends Omit<AchievementPath, 'achievem
   earnedCount: number;
   totalCount: number;
   nextAchievement: AchievementProgressNode | null;
+}
+
+export interface GlobalNextAchievement {
+  achievement: AchievementNode;
+  pathKey: string;
+  pathTitle: string;
+  progress: number;
+  remaining: number;
+  remainingText: string;
 }
 
 export function useAchievementProgress() {
@@ -66,6 +75,7 @@ export function useAchievementProgress() {
     // 社交数据 (暂时用 0，需要从 partner_referrals 获取)
     const shareCount = 0; // TODO: 从实际分享记录获取
     const referralCount = 0; // TODO: 从 partner_referrals 获取
+    const graduatedReferrals = 0; // TODO: 从 partner_referrals 获取已毕业的
 
     return {
       journalDays,
@@ -77,6 +87,7 @@ export function useAchievementProgress() {
       awakeningIndex,
       shareCount,
       referralCount,
+      graduatedReferrals,
     };
   }, [entries, awakeningProgress]);
 
@@ -114,6 +125,11 @@ export function useAchievementProgress() {
                 currentValues.emotionScore,
                 currentValues.beliefScore
               );
+            } else if (achievement.unlockCondition.field === 'any_two') {
+              // 双层协调：取第二高的分数
+              const scores = [currentValues.behaviorScore, currentValues.emotionScore, currentValues.beliefScore];
+              const sortedScores = [...scores].sort((a, b) => b - a);
+              current = sortedScores[1];
             }
             break;
           case 'awakening':
@@ -124,6 +140,9 @@ export function useAchievementProgress() {
             break;
           case 'referrals':
             current = currentValues.referralCount;
+            break;
+          case 'graduated_referrals':
+            current = currentValues.graduatedReferrals;
             break;
         }
 
@@ -147,6 +166,7 @@ export function useAchievementProgress() {
             remainingText = remaining > 0 ? `还差 ${remaining} 次` : '已达成';
             break;
           case 'referrals':
+          case 'graduated_referrals':
             remainingText = remaining > 0 ? `还差 ${remaining} 人` : '已达成';
             break;
         }
@@ -181,26 +201,11 @@ export function useAchievementProgress() {
   const totalCount = pathsWithProgress.reduce((sum, p) => sum + p.totalCount, 0);
   const overallProgress = totalCount > 0 ? Math.round((totalEarned / totalCount) * 100) : 0;
 
-  // 终极目标进度 (Lv6)
-  const ultimateGoalProgress = useMemo(() => {
-    const graduatedStudents = 0; // TODO: 从实际数据获取
-    const targetStudents = 5;
-    const targetPoints = 5000;
-
-    return {
-      students: {
-        current: graduatedStudents,
-        target: targetStudents,
-        progress: Math.round((graduatedStudents / targetStudents) * 100),
-      },
-      points: {
-        current: currentValues.totalPoints,
-        target: targetPoints,
-        progress: Math.round((currentValues.totalPoints / targetPoints) * 100),
-      },
-      isCompleted: graduatedStudents >= targetStudents && currentValues.totalPoints >= targetPoints,
-    };
-  }, [currentValues.totalPoints]);
+  // 全局下一个最接近的成就
+  const globalNextAchievement = useMemo((): GlobalNextAchievement | null => {
+    const earnedKeys = userAchievements?.map(a => a.achievement_key) || [];
+    return getGlobalNextAchievement(currentValues, earnedKeys);
+  }, [currentValues, userAchievements]);
 
   return {
     paths: pathsWithProgress,
@@ -208,7 +213,7 @@ export function useAchievementProgress() {
     totalEarned,
     totalCount,
     overallProgress,
-    ultimateGoalProgress,
+    globalNextAchievement,
     currentValues,
   };
 }
