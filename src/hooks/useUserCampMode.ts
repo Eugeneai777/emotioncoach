@@ -118,7 +118,10 @@ export function useUserCampMode(): CampModeResult {
       const daysSinceGraduation = Math.max(0, Math.floor((today.getTime() - graduationDate.getTime()) / (1000 * 60 * 60 * 24)));
       
       // 计算循环冥想日 (1-7)
-      const cycleMeditationDay = (daysSinceGraduation % 7) + 1;
+      // 毕业后第1天应该是Day 1，第7天应该是Day 7，第8天应该是Day 1
+      const cycleMeditationDay = daysSinceGraduation === 0 
+        ? 7 // 毕业当天仍显示 Day 7
+        : ((daysSinceGraduation - 1) % 7) + 1; // 毕业后从 Day 1 开始
       
       // 计算第几周
       const cycleWeek = Math.floor(daysSinceGraduation / 7) + 1;
