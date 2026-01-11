@@ -23,7 +23,9 @@ import {
   BookOpen,
   List,
   ArrowDownCircle,
-  ArrowUpCircle
+  ArrowUpCircle,
+  ShoppingCart,
+  CreditCard
 } from "lucide-react";
 
 interface UsageRecord {
@@ -33,6 +35,16 @@ interface UsageRecord {
   source: string;
   created_at: string;
   metadata: Record<string, unknown> | null;
+}
+
+interface PurchaseRecord {
+  id: string;
+  source: 'wechat_pay' | 'admin_charge' | 'camp_purchase';
+  order_id?: string;
+  package_name?: string;
+  amount: number;
+  status: string;
+  created_at: string;
 }
 
 interface UserDetailDialogProps {
@@ -191,6 +203,94 @@ export function UserDetailDialog({
     enabled: open && !!userId
   });
 
+  // 购买记录查询
+  const { data: purchaseRecords, isLoading: isLoadingPurchases } = useQuery({
+    queryKey: ['user-purchase-records', userId],
+    queryFn: async () => {
+      // 并行查询三个来源
+      const [ordersResult, subscriptionsResult, campPurchasesResult] = await Promise.all([
+        // 微信支付订单
+        supabase
+          .from('orders')
+          .select('id, order_no, package_name, amount, status, created_at')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        // 管理员充值
+        supabase
+          .from('subscriptions')
+          .select('id, combo_name, combo_amount, status, created_at')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        // 训练营购买
+        supabase
+          .from('user_camp_purchases')
+          .select('id, camp_type, camp_name, purchase_price, payment_status, purchased_at')
+          .eq('user_id', userId)
+          .order('purchased_at', { ascending: false })
+          .limit(50)
+      ]);
+
+      const records: PurchaseRecord[] = [];
+
+      // 合并微信支付订单
+      ordersResult.data?.forEach(order => {
+        records.push({
+          id: order.id,
+          source: 'wechat_pay',
+          order_id: order.order_no,
+          package_name: order.package_name,
+          amount: order.amount || 0,
+          status: order.status || 'pending',
+          created_at: order.created_at || new Date().toISOString()
+        });
+      });
+
+      // 合并管理员充值
+      subscriptionsResult.data?.forEach(sub => {
+        records.push({
+          id: sub.id,
+          source: 'admin_charge',
+          package_name: sub.combo_name,
+          amount: sub.combo_amount || 0,
+          status: sub.status,
+          created_at: sub.created_at
+        });
+      });
+
+      // 合并训练营购买
+      campPurchasesResult.data?.forEach(camp => {
+        records.push({
+          id: camp.id,
+          source: 'camp_purchase',
+          package_name: camp.camp_name || getCampTypeName(camp.camp_type),
+          amount: camp.purchase_price || 0,
+          status: camp.payment_status || 'pending',
+          created_at: camp.purchased_at || new Date().toISOString()
+        });
+      });
+
+      // 按时间排序
+      return records.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    },
+    enabled: open && !!userId
+  });
+
+  // 获取训练营类型名称
+  const getCampTypeName = (type: string) => {
+    const typeMap: Record<string, string> = {
+      'wealth_block_7': '财富觉醒训练营',
+      'wealth_block_21': '财富觉醒训练营',
+      'emotion_camp': '情绪训练营',
+      'parent_camp': '亲子训练营',
+      'partner_package': '合伙人套餐'
+    };
+    return typeMap[type] || type;
+  };
+
   // 获取 record_type 的中文名称
   const getRecordTypeName = (type: string) => {
     const typeMap: Record<string, string> = {
@@ -264,9 +364,10 @@ export function UserDetailDialog({
           </div>
         ) : (
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="overview">📊 统计概览</TabsTrigger>
-              <TabsTrigger value="records">📋 使用记录</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="overview">📊 概览</TabsTrigger>
+              <TabsTrigger value="records">📋 使用</TabsTrigger>
+              <TabsTrigger value="purchases">🛒 购买</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4 mt-4">
@@ -424,6 +525,90 @@ export function UserDetailDialog({
                   <Card>
                     <CardContent className="pt-4 text-center text-muted-foreground">
                       暂无使用记录
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="purchases" className="mt-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <ShoppingCart className="h-4 w-4" />
+                    购买记录
+                  </h4>
+                </div>
+
+                {isLoadingPurchases ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-muted-foreground">加载中...</div>
+                  </div>
+                ) : purchaseRecords && purchaseRecords.length > 0 ? (
+                  <ScrollArea className="h-[400px] pr-4">
+                    <div className="space-y-2">
+                      {purchaseRecords.map((record) => (
+                        <Card key={record.id} className="overflow-hidden">
+                          <CardContent className="p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-full ${
+                                  record.source === 'wechat_pay' 
+                                    ? 'bg-green-100 text-green-600'
+                                    : record.source === 'admin_charge'
+                                    ? 'bg-blue-100 text-blue-600'
+                                    : 'bg-amber-100 text-amber-600'
+                                }`}>
+                                  <CreditCard className="h-4 w-4" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-sm">
+                                      {record.package_name || '未知套餐'}
+                                    </span>
+                                    <Badge variant="outline" className="text-xs">
+                                      {record.source === 'wechat_pay' ? '微信支付' : 
+                                       record.source === 'admin_charge' ? '管理员充值' : '训练营'}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    {format(new Date(record.created_at), 'yyyy-MM-dd HH:mm:ss')}
+                                  </p>
+                                  {record.order_id && (
+                                    <p className="text-xs text-muted-foreground">
+                                      订单号: {record.order_id.slice(0, 16)}...
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-lg font-bold text-primary">
+                                  ¥{record.amount.toFixed(2)}
+                                </div>
+                                <Badge 
+                                  variant={
+                                    record.status === 'completed' || record.status === 'active' 
+                                      ? 'default' 
+                                      : record.status === 'pending' 
+                                      ? 'secondary' 
+                                      : 'destructive'
+                                  }
+                                  className="text-xs"
+                                >
+                                  {record.status === 'completed' || record.status === 'active' ? '已完成' :
+                                   record.status === 'pending' ? '待支付' : record.status}
+                                </Badge>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <Card>
+                    <CardContent className="pt-4 text-center text-muted-foreground">
+                      暂无购买记录
                     </CardContent>
                   </Card>
                 )}
