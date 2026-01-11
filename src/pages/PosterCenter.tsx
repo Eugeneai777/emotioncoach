@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Helmet } from "react-helmet";
 import { useAuth } from '@/hooks/useAuth';
 import { usePartner } from '@/hooks/usePartner';
 import { Button } from '@/components/ui/button';
@@ -581,6 +582,15 @@ export default function PosterCenter() {
   // Main selection view
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      <Helmet>
+        <title>海报工坊 - 有劲AI</title>
+        <meta name="description" content="一键生成专业推广海报" />
+        <meta property="og:title" content="有劲AI海报工坊" />
+        <meta property="og:description" content="AI智能生成，快速创作吸睛海报" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/poster-center" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b px-4 py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">

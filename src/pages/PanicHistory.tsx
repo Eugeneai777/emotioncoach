@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -146,6 +147,15 @@ const PanicHistory: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      <Helmet>
+        <title>缓解历史分析 - 有劲AI</title>
+        <meta name="description" content="追踪你的情绪缓解进展" />
+        <meta property="og:title" content="有劲AI｜缓解历史分析" />
+        <meta property="og:description" content="查看情绪急救使用记录与效果分析" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/panic-history" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-10">
         <div className="container max-w-4xl mx-auto px-4 py-4">

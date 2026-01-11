@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -128,6 +129,15 @@ export default function MyStories() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>我的故事广场 - 有劲AI</title>
+        <meta name="description" content="记录你的成长故事" />
+        <meta property="og:title" content="有劲AI｜我的故事广场" />
+        <meta property="og:description" content="用故事记录成长，用分享传递力量" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/my-stories" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-xl mx-auto px-3 md:px-4 py-3 md:py-4">
