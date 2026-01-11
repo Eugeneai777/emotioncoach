@@ -286,8 +286,8 @@ export default function WealthBlockAssessmentPage() {
   };
 
   // 分享配置
-  const shareTitle = "财富卡点测评 - 发现阻碍财富流动的隐藏模式";
-  const shareDescription = "3分钟AI深度诊断，找出你行为、情绪、信念层的财富卡点，获取专属突破路径。";
+  const shareTitle = "AI财富卡点测评｜找出你的隐形刹车";
+  const shareDescription = "¥9.9深度诊断30个场景，3层AI追问定位卡点，生成专属突破路径。测一次，清醒一辈子。";
   const shareImage = "https://wechat.eugenewe.net/og-wealth-block.png";
 
   return (
