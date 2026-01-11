@@ -7,9 +7,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useDailyChallenges, DailyChallenge } from '@/hooks/useDailyChallenges';
 import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
+import { useSmartAchievementRecommendation } from '@/hooks/useSmartAchievementRecommendation';
+import { useAchievementChecker } from '@/hooks/useAchievementChecker';
 import { challengeTypes, challengeDifficulties } from '@/config/awakeningLevelConfig';
 import { fourPoorRichConfig, PoorTypeKey } from '@/config/fourPoorConfig';
-import { Target, Zap, Check, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
+import { 
+  Target, Zap, Check, ChevronRight, Sparkles, Loader2, 
+  Lightbulb, Trophy, ArrowRight
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -17,14 +22,35 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { taskCardStyles, cardBaseStyles } from '@/config/cardStyleConfig';
 
-interface DailyChallengeCardProps {
+interface UnifiedChallengeCenterProps {
+  campId?: string;
+  currentDay?: number;
+  focusAreas?: string[];
+  reminderBeliefs?: string[];
+  weekNumber?: number;
   onPointsEarned?: (points: number) => void;
+  className?: string;
 }
 
-export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) => {
+export function UnifiedChallengeCenter({
+  campId,
+  currentDay = 1,
+  focusAreas = [],
+  reminderBeliefs = [],
+  weekNumber = 1,
+  onPointsEarned,
+  className,
+}: UnifiedChallengeCenterProps) {
   const queryClient = useQueryClient();
   const { challenges, isLoading, completedCount, totalPoints, earnedPoints, completeChallenge } = useDailyChallenges();
   const { addPoints } = useAwakeningProgress();
+  const { topRecommendation, isLoading: recommendationLoading } = useSmartAchievementRecommendation({
+    campId,
+    currentDay,
+    maxRecommendations: 1,
+  });
+  const { checkAndAwardAchievements } = useAchievementChecker();
+  
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [reflection, setReflection] = useState('');
   const [completing, setCompleting] = useState(false);
@@ -34,7 +60,7 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
   useEffect(() => {
     const generateChallenges = async () => {
       if (isLoading || generating) return;
-      if (challenges && challenges.length > 0) return; // 已有挑战
+      if (challenges && challenges.length > 0) return;
 
       setGenerating(true);
       try {
@@ -42,7 +68,11 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
         if (!session) return;
 
         const response = await supabase.functions.invoke('generate-daily-challenges', {
-          body: { targetDate: format(new Date(), 'yyyy-MM-dd') },
+          body: { 
+            targetDate: format(new Date(), 'yyyy-MM-dd'),
+            focusAreas,
+            weekNumber,
+          },
         });
 
         if (response.error) {
@@ -50,7 +80,6 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
           return;
         }
 
-        // 刷新挑战列表
         queryClient.invalidateQueries({ queryKey: ['daily-challenges'] });
       } catch (error) {
         console.error('Failed to generate challenges:', error);
@@ -60,7 +89,7 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
     };
 
     generateChallenges();
-  }, [isLoading, challenges, generating, queryClient]);
+  }, [isLoading, challenges, generating, queryClient, focusAreas, weekNumber]);
 
   const handleComplete = async (challenge: DailyChallenge) => {
     if (completing) return;
@@ -78,9 +107,15 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
         action: `完成挑战: ${challenge.challenge_title}`,
       });
 
-      // 刷新四穷进度（因为挑战完成会影响觉察计数）
+      // 刷新四穷进度
       queryClient.invalidateQueries({ queryKey: ['challenge-poor-progress'] });
       queryClient.invalidateQueries({ queryKey: ['four-poor-progress'] });
+      
+      // 检查成就解锁
+      await checkAndAwardAchievements(true);
+      
+      // 刷新智能推荐
+      queryClient.invalidateQueries({ queryKey: ['smart-achievement-recommendations'] });
 
       const poorTypeInfo = challenge.target_poor_type 
         ? fourPoorRichConfig[challenge.target_poor_type]
@@ -106,7 +141,7 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
 
   if (isLoading || generating) {
     return (
-      <Card>
+      <Card className={className}>
         <CardContent className="p-6">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -119,7 +154,7 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
 
   if (!challenges || challenges.length === 0) {
     return (
-      <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+      <Card className={cn("bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200", className)}>
         <CardContent className="p-6 text-center">
           <div className="text-4xl mb-2">🎯</div>
           <p className="text-muted-foreground">今日暂无挑战</p>
@@ -129,11 +164,14 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
     );
   }
 
+  const allCompleted = completedCount === challenges.length && challenges.length > 0;
+
   return (
     <Card className={cn(
       "overflow-hidden",
       cardBaseStyles.container,
-      taskCardStyles.challenge.container
+      taskCardStyles.challenge.container,
+      className
     )}>
       <CardHeader className={cn(
         "pb-2",
@@ -143,7 +181,7 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
         <CardTitle className="flex items-center justify-between">
           <div className={cn("flex items-center gap-2", taskCardStyles.challenge.headerText)}>
             <Target className={cn("h-5 w-5", taskCardStyles.challenge.icon)} />
-            <span>今日觉醒挑战</span>
+            <span>今日挑战</span>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="bg-white/80 dark:bg-slate-800/80">
@@ -158,6 +196,59 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
       </CardHeader>
 
       <CardContent className="p-4 space-y-3">
+        {/* TOP 1 成就目标提示 */}
+        {topRecommendation && !allCompleted && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3 rounded-lg bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 dark:from-amber-950/30 dark:via-orange-950/30 dark:to-amber-950/30 border border-amber-200/50 dark:border-amber-800/50"
+          >
+            <div className="flex items-center gap-3">
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-lg shadow-md"
+              >
+                {topRecommendation.icon}
+              </motion.div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <Trophy className="w-3.5 h-3.5 text-amber-600" />
+                  <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                    TOP 1 目标
+                  </span>
+                  <Badge variant="outline" className="text-[10px] h-4 px-1.5 bg-amber-100/50 text-amber-700 border-amber-300">
+                    {topRecommendation.progressPercent}%
+                  </Badge>
+                </div>
+                <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                  {topRecommendation.name}
+                </p>
+                <div className="flex items-center gap-1.5 mt-1 text-[10px] text-amber-600 dark:text-amber-400">
+                  <ArrowRight className="w-2.5 h-2.5" />
+                  <span>{topRecommendation.primaryAction}</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* 本周训练重点 AI 提示 */}
+        {focusAreas.length > 0 && !allCompleted && (
+          <div className="px-3 py-2 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/50">
+            <div className="flex items-center gap-2 text-xs text-blue-700 dark:text-blue-300">
+              <Lightbulb className="w-3.5 h-3.5" />
+              <span>本周重点：</span>
+              {focusAreas.slice(0, 2).map((area, i) => (
+                <Badge key={i} variant="secondary" className="text-[10px] bg-blue-100/80 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                  {area}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 挑战列表 */}
         <AnimatePresence>
           {challenges.map((challenge, index) => {
             const typeInfo = challengeTypes[challenge.challenge_type as keyof typeof challengeTypes] || {
@@ -177,13 +268,12 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className={`
-                  border rounded-lg overflow-hidden transition-all
-                  ${challenge.is_completed 
-                    ? 'bg-emerald-50 border-emerald-200' 
-                    : 'bg-white border-slate-200 hover:border-amber-300'
-                  }
-                `}
+                className={cn(
+                  "border rounded-lg overflow-hidden transition-all",
+                  challenge.is_completed 
+                    ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800" 
+                    : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700"
+                )}
               >
                 <div
                   className="p-3 cursor-pointer"
@@ -208,7 +298,10 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
                           {difficultyInfo.name}
                         </Badge>
                       </div>
-                      <h4 className={`font-medium ${challenge.is_completed ? 'text-emerald-700' : ''}`}>
+                      <h4 className={cn(
+                        "font-medium",
+                        challenge.is_completed ? 'text-emerald-700 dark:text-emerald-300' : ''
+                      )}>
                         {challenge.challenge_title}
                       </h4>
                       {challenge.challenge_description && !isExpanded && (
@@ -216,16 +309,16 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
                           {challenge.challenge_description}
                         </p>
                       )}
-                      {/* 显示AI推荐理由 */}
+                      {/* AI推荐理由 */}
                       {challenge.recommendation_reason && !challenge.is_completed && (
                         <div className="flex items-center gap-1 mt-1.5 text-xs text-amber-600 dark:text-amber-400">
                           <span>💡 {challenge.recommendation_reason}</span>
                         </div>
                       )}
-                      {/* 显示目标四穷维度 */}
+                      {/* 目标四穷维度 */}
                       {poorTypeInfo && !challenge.is_completed && !challenge.recommendation_reason && (
                         <div className="flex items-center gap-1 mt-1.5">
-                          <span className="text-xs text-muted-foreground">🎯 目标突破：</span>
+                          <span className="text-xs text-muted-foreground">🎯 目标：</span>
                           <Badge variant="outline" className="text-xs py-0 h-5">
                             {poorTypeInfo.poorEmoji} {poorTypeInfo.poorName} → {poorTypeInfo.richEmoji} {poorTypeInfo.richName}
                           </Badge>
@@ -239,7 +332,10 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
                       </Badge>
                       {!challenge.is_completed && (
                         <ChevronRight 
-                          className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                          className={cn(
+                            "h-4 w-4 text-muted-foreground transition-transform",
+                            isExpanded && "rotate-90"
+                          )}
                         />
                       )}
                     </div>
@@ -254,9 +350,9 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="border-t border-slate-100"
+                      className="border-t border-slate-100 dark:border-slate-800"
                     >
-                      <div className="p-3 space-y-3 bg-slate-50/50">
+                      <div className="p-3 space-y-3 bg-slate-50/50 dark:bg-slate-900/50">
                         {challenge.challenge_description && (
                           <p className="text-sm text-muted-foreground">
                             {challenge.challenge_description}
@@ -299,19 +395,36 @@ export const DailyChallengeCard = ({ onPointsEarned }: DailyChallengeCardProps) 
           })}
         </AnimatePresence>
 
+        {/* 收藏的信念提醒 */}
+        {reminderBeliefs.length > 0 && !allCompleted && (
+          <div className="p-3 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/50">
+            <div className="flex items-start gap-2 text-xs">
+              <Lightbulb className="w-3.5 h-3.5 text-amber-600 mt-0.5" />
+              <div className="space-y-1">
+                <span className="font-medium text-amber-700 dark:text-amber-300">信念提醒</span>
+                {reminderBeliefs.slice(0, 2).map((belief, i) => (
+                  <p key={i} className="text-amber-600/80 dark:text-amber-400/80 italic">
+                    "{belief}"
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 全部完成提示 */}
-        {completedCount === challenges.length && challenges.length > 0 && (
+        {allCompleted && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg"
+            className="text-center py-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-lg"
           >
             <div className="text-2xl mb-1">🎉</div>
-            <p className="text-emerald-700 font-medium">今日挑战全部完成！</p>
-            <p className="text-xs text-emerald-600">获得 {earnedPoints} 积分</p>
+            <p className="text-emerald-700 dark:text-emerald-300 font-medium">今日挑战全部完成！</p>
+            <p className="text-xs text-emerald-600 dark:text-emerald-400">获得 {earnedPoints} 积分</p>
           </motion.div>
         )}
       </CardContent>
     </Card>
   );
-};
+}
