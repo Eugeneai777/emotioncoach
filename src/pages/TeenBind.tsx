@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
 import { Link2, Heart, Sparkles, ArrowRight, Shield, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Helmet } from "react-helmet";
 
 export default function TeenBind() {
   const { user } = useAuth();
@@ -125,6 +126,16 @@ export default function TeenBind() {
   }
 
   return (
+    <>
+      <Helmet>
+        <title>绑定家长 - 有劲AI</title>
+        <meta name="description" content="与家长建立连接，开启专属AI陪伴" />
+        <meta property="og:title" content="有劲AI｜青少年绑定" />
+        <meta property="og:description" content="输入家长的绑定码，开启你的专属AI朋友" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/teen/bind" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
     <div className="min-h-screen bg-gradient-to-b from-violet-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
       <motion.div
         initial={{ y: 20, opacity: 0 }}
@@ -226,5 +237,6 @@ export default function TeenBind() {
         </Card>
       </motion.div>
     </div>
+    </>
   );
 }
