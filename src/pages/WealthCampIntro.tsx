@@ -153,7 +153,7 @@ const WealthCampIntro = () => {
         <meta property="og:description" content="¥299·每天15分钟AI教练对话+冥想觉察，帮你看见行为、情绪、信念层的财富卡点。已有500+人完成蜕变。" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://wechat.eugenewe.net/wealth-camp-intro" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-wealth-camp.png" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:site_name" content="有劲AI · 财富教练" />
         <link rel="canonical" href="https://wechat.eugenewe.net/wealth-camp-intro" />
       </Helmet>
