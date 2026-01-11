@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`💰 Refund request: user=${refundUserId}, amount=${amount}, session=${session_id}, reason=${reason}`);
+    console.log(`💰 Refund request: user=${refundUserId}, amount=${amount}, session=${session_id}, reason=${reason}, feature_key=${feature_key}`);
 
     // 使用 service_role 执行退款
     const supabase = createClient(
@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
     }
 
     // 记录退款到 usage_records
-    await supabase.from('usage_records').insert({
+    const { error: usageError } = await supabase.from('usage_records').insert({
       user_id: refundUserId,
       record_type: 'refund',
       amount: -amount, // 负数表示退还
@@ -125,9 +125,16 @@ Deno.serve(async (req) => {
         feature_key: feature_key || 'realtime_voice',
         refund_type: 'pre_deduction_refund',
         authenticated_by: authenticatedUserId, // 记录是谁发起的退款
-        target_user: refundUserId
+        target_user: refundUserId,
+        refund_timestamp: new Date().toISOString()
       }
     });
+
+    if (usageError) {
+      console.warn('⚠️ Failed to record refund in usage_records:', usageError.message);
+    } else {
+      console.log('📝 Refund recorded in usage_records');
+    }
 
     console.log(`✅ Refund successful: ${amount} points returned, new balance: ${result.new_remaining_quota}`);
 
