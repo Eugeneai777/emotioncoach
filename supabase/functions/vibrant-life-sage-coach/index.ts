@@ -304,7 +304,7 @@ ${productKnowledge}`;
         type: "function",
         function: {
           name: "tool_recommendation",
-          description: "根据用户需求，推荐有劲生活馆能量工作室的实用工具。",
+          description: "根据用户需求，推荐有劲生活馆的实用工具。",
           parameters: {
             type: "object",
             properties: {

@@ -79,13 +79,24 @@ export const useQuickMenuConfig = () => {
       '/wealth-block': '/awakening',
     };
 
+    const legacyLabelMap: Record<string, string> = {
+      '能量工作室': '有劲生活馆',
+    };
+
     const normalizePath = (path: string) => legacyPathMap[path] ?? path;
+    const normalizeLabel = (label: string) => legacyLabelMap[label] ?? label;
+
+    const normalizeSlot = (slot: MenuItemConfig): MenuItemConfig => ({
+      ...slot,
+      path: normalizePath(slot.path),
+      label: normalizeLabel(slot.label),
+    });
 
     return {
       ...raw,
       homePagePath: normalizePath(raw.homePagePath),
-      customSlot1: { ...raw.customSlot1, path: normalizePath(raw.customSlot1.path) },
-      customSlot2: { ...raw.customSlot2, path: normalizePath(raw.customSlot2.path) },
+      customSlot1: normalizeSlot(raw.customSlot1),
+      customSlot2: normalizeSlot(raw.customSlot2),
     };
   };
 
