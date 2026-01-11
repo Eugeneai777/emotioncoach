@@ -5,6 +5,35 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const PROXY_AUTH_TOKEN = process.env.PROXY_AUTH_TOKEN;
 
+// 🔒 SECURITY: Mandatory authentication - server refuses to start without token
+if (!PROXY_AUTH_TOKEN) {
+  console.error('='.repeat(60));
+  console.error('❌ SECURITY ERROR: PROXY_AUTH_TOKEN is required');
+  console.error('='.repeat(60));
+  console.error('The WeChat API proxy server cannot start without authentication.');
+  console.error('');
+  console.error('To fix this:');
+  console.error('  1. Generate a secure token: openssl rand -hex 32');
+  console.error('  2. Set environment variable: export PROXY_AUTH_TOKEN=<your-token>');
+  console.error('  3. Or add to .env file: PROXY_AUTH_TOKEN=<your-token>');
+  console.error('');
+  console.error('See deployment-package/README.md for more details.');
+  console.error('='.repeat(60));
+  process.exit(1);
+}
+
+// 🔒 SECURITY: Validate token strength (minimum 32 characters)
+if (PROXY_AUTH_TOKEN.length < 32) {
+  console.error('='.repeat(60));
+  console.error('❌ SECURITY ERROR: PROXY_AUTH_TOKEN is too weak');
+  console.error('='.repeat(60));
+  console.error('Token must be at least 32 characters for security.');
+  console.error('');
+  console.error('Generate a secure token: openssl rand -hex 32');
+  console.error('='.repeat(60));
+  process.exit(1);
+}
+
 // 启用CORS和JSON解析
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -27,20 +56,21 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 微信access_token获取端点
-app.post('/wechat/token', async (req, res) => {
-  try {
-    // 验证认证令牌
-    if (PROXY_AUTH_TOKEN) {
-      const authHeader = req.headers.authorization;
-      const token = authHeader?.replace('Bearer ', '');
-      
-      if (token !== PROXY_AUTH_TOKEN) {
-        console.error(`[${new Date().toISOString()}] Unauthorized access attempt`);
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-    }
+// 🔒 Authentication middleware - always enforced (token is mandatory at startup)
+const authenticateRequest = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.replace('Bearer ', '');
+  
+  if (token !== PROXY_AUTH_TOKEN) {
+    console.error(`[${new Date().toISOString()}] Unauthorized access attempt from ${req.ip}`);
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+};
 
+// 微信access_token获取端点
+app.post('/wechat/token', authenticateRequest, async (req, res) => {
+  try {
     const { appid, secret } = req.body;
 
     if (!appid || !secret) {
@@ -66,19 +96,8 @@ app.post('/wechat/token', async (req, res) => {
 });
 
 // 微信二维码创建端点
-app.post('/wechat/qrcode/create', async (req, res) => {
+app.post('/wechat/qrcode/create', authenticateRequest, async (req, res) => {
   try {
-    // 验证认证令牌
-    if (PROXY_AUTH_TOKEN) {
-      const authHeader = req.headers.authorization;
-      const token = authHeader?.replace('Bearer ', '');
-      
-      if (token !== PROXY_AUTH_TOKEN) {
-        console.error(`[${new Date().toISOString()}] Unauthorized access attempt`);
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-    }
-
     const { access_token, expire_seconds, action_name, action_info } = req.body;
 
     if (!access_token) {
@@ -109,19 +128,8 @@ app.post('/wechat/qrcode/create', async (req, res) => {
 });
 
 // 微信API代理端点
-app.post('/wechat-proxy', async (req, res) => {
+app.post('/wechat-proxy', authenticateRequest, async (req, res) => {
   try {
-    // 验证认证令牌
-    if (PROXY_AUTH_TOKEN) {
-      const authHeader = req.headers.authorization;
-      const token = authHeader?.replace('Bearer ', '');
-      
-      if (token !== PROXY_AUTH_TOKEN) {
-        console.error(`[${new Date().toISOString()}] Unauthorized access attempt`);
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-    }
-
     const { target_url, method = 'GET', headers = {}, body } = req.body;
 
     if (!target_url) {
@@ -175,12 +183,13 @@ app.use((err, req, res, next) => {
 // 启动服务器
 app.listen(PORT, '0.0.0.0', () => {
   console.log('='.repeat(60));
-  console.log('WeChat API Proxy Server');
+  console.log('🔒 WeChat API Proxy Server (Secured)');
   console.log('='.repeat(60));
   console.log(`Status: Running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
   console.log(`Proxy endpoint: http://localhost:${PORT}/wechat-proxy`);
-  console.log(`Authentication: ${PROXY_AUTH_TOKEN ? 'ENABLED' : 'DISABLED (⚠️  Not secure!)'}`);
+  console.log(`Authentication: ENABLED ✅`);
+  console.log(`Token length: ${PROXY_AUTH_TOKEN.length} characters`);
   console.log(`Started at: ${new Date().toISOString()}`);
   console.log('='.repeat(60));
 });
