@@ -173,19 +173,20 @@ export default function WealthCampCheckIn() {
 
   const displayDay = makeupDayNumber || currentDay;
 
-  // Fetch meditations
+  // Fetch meditations - 使用循环天数（毕业用户）或当前天数（活跃用户）
+  const meditationDayNumber = isPostCampMode ? cycleMeditationDay : currentDay;
   const { data: meditation } = useQuery({
-    queryKey: ['wealth-meditation', currentDay],
+    queryKey: ['wealth-meditation', meditationDayNumber],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('wealth_meditations')
         .select('*')
-        .eq('day_number', currentDay)
+        .eq('day_number', meditationDayNumber)
         .single();
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
-    enabled: !!camp,
+    enabled: !!camp && meditationDayNumber >= 1 && meditationDayNumber <= 7,
   });
 
   const { data: makeupMeditation } = useQuery({
