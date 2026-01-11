@@ -1,9 +1,52 @@
 /**
  * 平台环境检测工具
  * 用于区分网页浏览器和微信小程序环境，实现语音方案双轨切换
- * 
- * 类型声明位于 src/types/wechat.d.ts
  */
+
+declare global {
+  interface Window {
+    __wxjs_environment?: string;
+    wx?: {
+      miniProgram?: {
+        getEnv: (callback: (res: { miniprogram: boolean }) => void) => void;
+      };
+      getRecorderManager?: () => any;
+      createInnerAudioContext?: () => {
+        src: string;
+        obeyMuteSwitch: boolean;
+        play: () => void;
+        stop: () => void;
+        onEnded: (callback: () => void) => void;
+        offEnded: () => void;
+        onError: (callback: (error: any) => void) => void;
+      };
+      authorize?: (options: any) => void;
+      canIUse?: (api: string) => boolean;
+      arrayBufferToBase64?: (buffer: ArrayBuffer) => string;
+      base64ToArrayBuffer?: (base64: string) => ArrayBuffer;
+      // 小程序文件系统 API
+      getFileSystemManager?: () => {
+        writeFile: (options: {
+          filePath: string;
+          data: ArrayBuffer | string;
+          encoding?: string;
+          success?: () => void;
+          fail?: (err: { errMsg?: string }) => void;
+        }) => void;
+        readFile: (options: any) => void;
+        unlink: (options: {
+          filePath: string;
+          success?: () => void;
+          fail?: (err: { errMsg?: string }) => void;
+        }) => void;
+      };
+      // 小程序环境变量
+      env?: {
+        USER_DATA_PATH: string;
+      };
+    };
+  }
+}
 
 /**
  * 检测是否在微信小程序 WebView 环境中

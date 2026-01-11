@@ -3,18 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CheckCircle, XCircle, QrCode, RefreshCw, ExternalLink, Copy, Smartphone } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, QrCode, RefreshCw, ExternalLink, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
-import { 
-  isInMiniProgramWebView, 
-  requestMiniProgramPayment,
-  navigateToMiniProgramPayPage 
-} from '@/utils/miniprogramBridge';
 
 interface PackageInfo {
   key: string;
@@ -30,7 +25,7 @@ interface WechatPayDialogProps {
   onSuccess: () => void;
 }
 
-type PaymentStatus = 'idle' | 'loading' | 'ready' | 'polling' | 'success' | 'failed' | 'expired' | 'miniprogram';
+type PaymentStatus = 'idle' | 'loading' | 'ready' | 'polling' | 'success' | 'failed' | 'expired';
 
 export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: WechatPayDialogProps) {
   const { user } = useAuth();
@@ -41,7 +36,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
   const [h5PayLink, setH5PayLink] = useState<string>('');
   const [orderNo, setOrderNo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [payType, setPayType] = useState<'h5' | 'native' | 'miniprogram'>('h5');
+  const [payType, setPayType] = useState<'h5' | 'native'>('h5');
   const [agreedTerms, setAgreedTerms] = useState(false);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -51,8 +46,6 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
   // 检测是否在移动端
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  // 检测是否在小程序 WebView 中
-  const isMiniProgram = isInMiniProgramWebView();
 
   // 清理定时器
   const clearTimers = () => {
@@ -149,13 +142,6 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
     setStatus('loading');
     setErrorMessage('');
 
-    // 小程序环境使用小程序原生支付
-    if (isMiniProgram) {
-      setPayType('miniprogram');
-      await createOrderForMiniProgram();
-      return;
-    }
-
     // 移动端优先使用H5支付，PC端使用Native扫码
     const selectedPayType = isMobile && !isWechat ? 'h5' : 'native';
     setPayType(selectedPayType);
@@ -223,79 +209,6 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
       setErrorMessage(error.message || '创建订单失败');
       setStatus('failed');
     }
-  };
-
-  // 小程序环境创建订单
-  const createOrderForMiniProgram = async () => {
-    if (!packageInfo || !user) return;
-
-    try {
-      // 先创建订单获取订单号
-      const { data, error } = await supabase.functions.invoke('create-wechat-order', {
-        body: {
-          packageKey: packageInfo.key,
-          packageName: packageInfo.name,
-          amount: packageInfo.price,
-          userId: user.id,
-          payType: 'miniprogram', // 标记为小程序支付
-        },
-      });
-
-      if (error) throw error;
-      if (!data.success) throw new Error(data.error || '创建订单失败');
-
-      setOrderNo(data.orderNo);
-      setStatus('miniprogram');
-
-      // 向小程序发送支付请求
-      const sent = requestMiniProgramPayment({
-        orderNo: data.orderNo,
-        amount: packageInfo.price,
-        packageName: packageInfo.name,
-        packageKey: packageInfo.key,
-        userId: user.id,
-      });
-
-      if (sent) {
-        toast.info('已发送支付请求到小程序，请在小程序中完成支付');
-        // 开始轮询支付状态
-        startPolling(data.orderNo);
-
-        // 设置5分钟超时
-        timeoutRef.current = setTimeout(() => {
-          clearTimers();
-          setStatus('expired');
-        }, 5 * 60 * 1000);
-      } else {
-        // 如果消息发送失败，尝试跳转到小程序支付页面
-        const navigated = navigateToMiniProgramPayPage({
-          orderNo: data.orderNo,
-          amount: packageInfo.price,
-          packageName: packageInfo.name,
-          packageKey: packageInfo.key,
-        });
-
-        if (!navigated) {
-          throw new Error('无法调起小程序支付，请稍后重试');
-        }
-      }
-    } catch (error: any) {
-      console.error('MiniProgram order error:', error);
-      setErrorMessage(error.message || '创建订单失败');
-      setStatus('failed');
-    }
-  };
-
-  // 手动触发跳转到小程序支付页面
-  const handleMiniProgramPayment = () => {
-    if (!packageInfo || !orderNo) return;
-
-    navigateToMiniProgramPayPage({
-      orderNo,
-      amount: packageInfo.price,
-      packageName: packageInfo.name,
-      packageKey: packageInfo.key,
-    });
   };
 
   // 开始轮询订单状态
@@ -460,36 +373,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
                 <span className="text-sm">订单已过期</span>
               </div>
             )}
-
-            {status === 'miniprogram' && (
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-16 h-16 bg-[#07C160] rounded-full flex items-center justify-center">
-                  <Smartphone className="h-8 w-8 text-white" />
-                </div>
-                <span className="font-medium text-[#07C160]">等待小程序支付</span>
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              </div>
-            )}
           </div>
 
           {/* 状态提示 */}
-          {status === 'miniprogram' && (
-            <div className="text-center space-y-3">
-              <p className="text-sm text-muted-foreground">请在小程序中完成支付</p>
-              <Button
-                onClick={handleMiniProgramPayment}
-                className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white"
-              >
-                <Smartphone className="h-4 w-4" />
-                打开支付页面
-              </Button>
-              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                等待支付结果...
-              </p>
-            </div>
-          )}
-
           {(status === 'ready' || status === 'polling') && (
             <div className="text-center space-y-3">
               {payType === 'h5' ? (
