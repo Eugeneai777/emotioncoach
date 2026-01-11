@@ -11,10 +11,7 @@ import {
   Zap,
   Star,
   Gift,
-  CheckCircle2,
-  Calculator,
-  ArrowRight,
-  Flame
+  CheckCircle2
 } from "lucide-react";
 import { useLayerProgress } from "@/hooks/useLayerProgress";
 import { useAssessmentBaseline } from "@/hooks/useAssessmentBaseline";
@@ -22,7 +19,7 @@ import { useFourPoorProgress } from "@/hooks/useFourPoorProgress";
 import { getPatternConfig, reactionPatternConfig } from "@/config/reactionPatternConfig";
 import { useReactionPatternProgress } from "@/hooks/useReactionPatternProgress";
 import { useWealthJournalEntries } from "@/hooks/useWealthJournalEntries";
-import { getBreakthroughSuggestions, getNextBreakthrough } from "@/config/breakthroughSuggestions";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -115,18 +112,8 @@ export function CombinedPersonalityCard({
   const { stats } = useWealthJournalEntries({ campId });
   
   const [openLayers, setOpenLayers] = useState<string[]>([]);
-  const [showCalculation, setShowCalculation] = useState(false);
-  
   
   const isLoading = layersLoading || baselineLoading || patternLoading;
-  
-  // Calculate emotion and awakening contributions for display
-  const emotionContribution = Math.min(40, (emotionImprovement || 0) * 20);
-  const awakeningContribution = Math.min(60, (awakeningMomentsCount || 0) * 5);
-  
-  // Get dynamic breakthrough suggestions based on pattern and progress
-  const breakthroughSuggestions = getBreakthroughSuggestions(patternKey, transformationRate, []);
-  const nextBreakthrough = getNextBreakthrough(patternKey, transformationRate, []);
 
   if (isLoading) {
     return (
@@ -278,17 +265,6 @@ export function CombinedPersonalityCard({
                 </div>
               </div>
               
-              {/* 系统建议 */}
-              <div className="p-2 bg-white/20 rounded-lg mb-2">
-                <h4 className="text-white text-xs font-semibold mb-1 flex items-center gap-1.5">
-                  💡 系统建议
-                </h4>
-                <p className="text-white/95 text-xs">{pattern.suggestion}</p>
-                <p className="text-white/80 text-[10px] mt-1">
-                  训练重点：{pattern.trainingFocus}
-                </p>
-              </div>
-              
               {/* 转化进度 */}
               <div className="pt-2 border-t border-white/20">
                 <div className="flex items-center justify-between text-xs mb-1.5">
@@ -308,95 +284,10 @@ export function CombinedPersonalityCard({
                   />
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-white/70 mt-1">
-                  <span>Day 0: {Math.max(0, transformationRate - 20)}%</span>
+                  <span>起点</span>
                   <span className="text-white font-medium">当前: {transformationRate}%</span>
                 </div>
-                
-                {/* 计算方式可折叠区 */}
-                <Collapsible open={showCalculation} onOpenChange={setShowCalculation}>
-                  <CollapsibleTrigger className="text-[10px] text-white/70 flex items-center gap-1 mt-2 hover:text-white/90 transition-colors">
-                    <Calculator className="w-3 h-3" />
-                    <span>计算方式</span>
-                    <ChevronDown className={cn("w-3 h-3 transition-transform", showCalculation && "rotate-180")} />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mt-2 p-2 bg-white/10 rounded-lg text-[10px] space-y-1.5"
-                    >
-                      <p className="text-white/90 font-medium">转化进度 = 情绪贡献 + 觉醒时刻贡献</p>
-                      <div className="text-white/80 space-y-0.5 pl-2">
-                        <p className="flex items-center gap-2">
-                          <span>• 情绪改善：</span>
-                          <span className="text-white">+{(emotionImprovement || 0).toFixed(1)}★</span>
-                          <span>→ 贡献 {Math.round(emotionContribution)}%</span>
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <span>• 觉醒时刻：</span>
-                          <span className="text-white">{awakeningMomentsCount || 0} 次</span>
-                          <span>→ 贡献 {Math.round(awakeningContribution)}%</span>
-                        </p>
-                        <p className="text-white font-medium pt-1 border-t border-white/20">
-                          = {transformationRate}%
-                        </p>
-                      </div>
-                      <div className="pt-1.5 border-t border-white/20">
-                        <p className="text-white/90 flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          每日教练梳理 + 新信念记录 可快速累积觉醒时刻
-                        </p>
-                      </div>
-                    </motion.div>
-                  </CollapsibleContent>
-                </Collapsible>
               </div>
-              
-              {/* 智能突破建议 - 仅当有进展时显示 */}
-              {nextBreakthrough && transformationRate > 0 && (
-                <div className="mt-2 p-2 bg-white/15 rounded-lg border border-white/30">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <h5 className="text-[10px] text-white/90 font-medium flex items-center gap-1">
-                      <Flame className="w-3 h-3" />
-                      今日突破任务
-                    </h5>
-                    <Badge variant="outline" className="text-[8px] h-4 px-1.5 bg-white/20 text-white border-white/40">
-                      {nextBreakthrough.difficulty === 'easy' ? '入门' : nextBreakthrough.difficulty === 'medium' ? '进阶' : '挑战'}
-                      +{nextBreakthrough.points}分
-                    </Badge>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-lg">{nextBreakthrough.emoji}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-white font-medium">{nextBreakthrough.title}</p>
-                      <p className="text-[10px] text-white/80 mt-0.5 line-clamp-2">{nextBreakthrough.description}</p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full mt-2 h-7 text-[10px] bg-white/20 hover:bg-white/30 text-white"
-                    onClick={() => handleNavigateToTask('challenge')}
-                  >
-                    开始挑战 <ArrowRight className="w-3 h-3 ml-1" />
-                  </Button>
-                </div>
-              )}
-              
-              {/* 更多突破建议预览 */}
-              {breakthroughSuggestions.length > 1 && (
-                <div className="mt-1.5 flex flex-wrap gap-1">
-                  {breakthroughSuggestions.slice(1, 3).map(s => (
-                    <span key={s.id} className="text-[9px] text-white/70 bg-white/10 px-1.5 py-0.5 rounded-full">
-                      {s.emoji} {s.title}
-                    </span>
-                  ))}
-                  {breakthroughSuggestions.length > 3 && (
-                    <span className="text-[9px] text-white/50">+{breakthroughSuggestions.length - 3}个...</span>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </motion.div>
