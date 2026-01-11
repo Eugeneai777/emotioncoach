@@ -40,9 +40,22 @@ export function useReactionPatternProgress(campId?: string): ReactionPatternProg
       };
     }
 
-    // Calculate average emotion score improvement (baseline is 3)
-    const avgEmotionScore = entries.reduce((acc, e) => acc + (e.emotion_score || 3), 0) / entries.length;
-    const emotionImprovement = Math.max(0, avgEmotionScore - 3);
+    // Calculate emotion improvement using best 3 days (aligned with awakening index)
+    const emotionScores = entries
+      .filter(e => e.emotion_score && e.emotion_score > 0)
+      .map(e => e.emotion_score as number);
+
+    let emotionImprovement = 0;
+    if (emotionScores.length > 0) {
+      // Use best 3 days average to represent peak potential
+      const sortedEmotionScores = [...emotionScores].sort((a, b) => b - a);
+      const bestEmotionDays = sortedEmotionScores.slice(0, Math.min(3, sortedEmotionScores.length));
+      const peakEmotionAvg = bestEmotionDays.reduce((a, b) => a + b, 0) / bestEmotionDays.length;
+      
+      // Baseline is 2.5 (midpoint of 1-4 range for "blocked" state)
+      // Improvement = (peakAvg - 2.5), max improvement when reaching 5
+      emotionImprovement = Math.max(0, peakEmotionAvg - 2.5);
+    }
 
     // Count awakening moments based on new_belief or high awareness scores
     const awakeningMomentsCount = entries.filter(e => 
@@ -53,8 +66,9 @@ export function useReactionPatternProgress(campId?: string): ReactionPatternProg
     ).length;
 
     // Calculate transformation rate
-    // Based on: emotion improvement (max +2 = 40%) + awakening moments (each 5%, max 60%)
-    const emotionContribution = Math.min(40, emotionImprovement * 20);
+    // Emotion: each +0.5 above 2.5 = 8% contribution (max 40% when avg reaches 5)
+    // Awakening: each moment = 5% (max 60%)
+    const emotionContribution = Math.min(40, emotionImprovement * 16);
     const awakeningContribution = Math.min(60, awakeningMomentsCount * 5);
     const transformationRate = Math.min(100, Math.round(emotionContribution + awakeningContribution));
 
