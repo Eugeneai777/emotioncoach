@@ -299,7 +299,7 @@ export const FloatingQuickMenu = () => {
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center cursor-pointer select-none
             ${isExpanded 
               ? 'bg-slate-600' 
-              : 'bg-gradient-to-br from-amber-400 to-orange-500'
+              : 'bg-gradient-to-br from-rose-400 to-pink-500'
             }
             ${isDragging ? 'scale-110' : ''}
             transition-all duration-200`}
@@ -312,7 +312,7 @@ export const FloatingQuickMenu = () => {
           animate={!isExpanded && !isDragging ? {
             boxShadow: [
               '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-              '0 4px 20px -1px rgba(251, 191, 36, 0.4)',
+              '0 4px 20px -1px rgba(244, 114, 182, 0.4)',
               '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
             ],
           } : {}}
