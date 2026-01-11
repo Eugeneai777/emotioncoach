@@ -112,8 +112,20 @@ export function CombinedPersonalityCard({
   const { stats } = useWealthJournalEntries({ campId });
   
   const [openLayers, setOpenLayers] = useState<string[]>([]);
+  const [patternExpanded, setPatternExpanded] = useState(false);
   
   const isLoading = layersLoading || baselineLoading || patternLoading;
+  
+  // Get milestone message based on transformation rate
+  const getMilestoneMessage = (rate: number) => {
+    if (rate >= 100) return { emoji: "🎊", text: "完美蜕变！你已完成模式转化", color: "text-emerald-300" };
+    if (rate >= 75) return { emoji: "🌟", text: "即将突破！再接再厉", color: "text-amber-300" };
+    if (rate >= 50) return { emoji: "💪", text: "突破半程！继续保持", color: "text-sky-300" };
+    if (rate >= 25) return { emoji: "🌱", text: "初见成效！觉醒正在发生", color: "text-green-300" };
+    return { emoji: "🚀", text: "觉醒启程，每一步都算数", color: "text-white/80" };
+  };
+  
+  const milestoneMessage = getMilestoneMessage(transformationRate);
 
   if (isLoading) {
     return (
@@ -230,7 +242,10 @@ export function CombinedPersonalityCard({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
         >
-          <div className={cn("rounded-xl overflow-hidden", pattern.color)}>
+          <div 
+            className={cn("rounded-xl overflow-hidden cursor-pointer transition-all", pattern.color)}
+            onClick={() => setPatternExpanded(!patternExpanded)}
+          >
             <div className="bg-gradient-to-br p-3 text-white">
               {/* 头部 */}
               <div className="flex items-center gap-3 mb-3">
@@ -242,6 +257,10 @@ export function CombinedPersonalityCard({
                   <h2 className="text-lg font-bold">【{pattern.name}】</h2>
                   <p className="text-white/90 text-xs mt-0.5">{pattern.tagline}</p>
                 </div>
+                <ChevronDown className={cn(
+                  "w-5 h-5 text-white/70 transition-transform duration-300",
+                  patternExpanded && "rotate-180"
+                )} />
               </div>
               
               {/* 说明文字 */}
@@ -251,23 +270,75 @@ export function CombinedPersonalityCard({
                 </p>
               </div>
               
-              {/* 你的状态 */}
-              <div className="mb-2">
-                <h4 className="text-white/90 text-[10px] font-semibold mb-1.5 flex items-center gap-1">
-                  💬 你的状态
-                </h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {pattern.state.map((item, index) => (
-                    <span key={index} className="bg-white/20 px-2 py-0.5 rounded-full text-[10px] text-white/95">
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
+              {/* 展开区域 - 详细解读 */}
+              <Collapsible open={patternExpanded}>
+                <CollapsibleContent>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="space-y-2 mb-3"
+                  >
+                    {/* 模式深度解读 */}
+                    <div className="p-2.5 bg-white/10 rounded-lg border border-white/20">
+                      <h5 className="text-xs font-semibold mb-1.5 flex items-center gap-1.5">
+                        <Brain className="w-3.5 h-3.5" />
+                        模式深度解读
+                      </h5>
+                      <p className="text-[11px] text-white/90 leading-relaxed">
+                        {pattern.interpretation}
+                      </p>
+                    </div>
+                    
+                    {/* 转化路径说明 */}
+                    <div className="p-2.5 bg-white/10 rounded-lg border border-white/20">
+                      <h5 className="text-xs font-semibold mb-1.5 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        转化路径
+                      </h5>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-white/15 rounded-full">
+                          <span>{pattern.emoji}</span>
+                          <span className="text-[10px]">{pattern.name}</span>
+                        </div>
+                        <div className="flex-1 h-px bg-gradient-to-r from-white/40 via-white/60 to-white/40 relative">
+                          <motion.div 
+                            className="absolute inset-y-0 left-0 bg-white/80"
+                            style={{ width: `${transformationRate}%` }}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${transformationRate}%` }}
+                            transition={{ duration: 0.8 }}
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/30 rounded-full border border-emerald-400/50">
+                          <span>{safePatternConfig.transformation.toEmoji}</span>
+                          <span className="text-[10px]">{safePatternConfig.transformation.toName}</span>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-white/80 leading-relaxed">
+                        从{pattern.name}转化为{safePatternConfig.transformation.toName}，需要持续的觉察和练习。每一次情绪记录、每一个新信念，都是转化的一步。
+                      </p>
+                    </div>
+                    
+                    {/* 你的状态 */}
+                    <div className="p-2.5 bg-white/10 rounded-lg border border-white/20">
+                      <h5 className="text-xs font-semibold mb-1.5 flex items-center gap-1.5">
+                        💬 你的状态标签
+                      </h5>
+                      <div className="flex flex-wrap gap-1.5">
+                        {pattern.state.map((item, index) => (
+                          <span key={index} className="bg-white/20 px-2 py-0.5 rounded-full text-[10px] text-white/95">
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                </CollapsibleContent>
+              </Collapsible>
               
-              {/* 转化进度 */}
+              {/* 转化进度 - 增强版 */}
               <div className="pt-2 border-t border-white/20">
-                <div className="flex items-center justify-between text-xs mb-1.5">
+                <div className="flex items-center justify-between text-xs mb-2">
                   <span className="text-white/80">🎯 转化进度</span>
                   <span className="flex items-center gap-2">
                     <span className="text-white/60">{safePatternConfig.transformation.from}</span>
@@ -275,19 +346,83 @@ export function CombinedPersonalityCard({
                     <span className="font-semibold">{safePatternConfig.transformation.toName} {safePatternConfig.transformation.toEmoji}</span>
                   </span>
                 </div>
-                <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full bg-white/80"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min(100, transformationRate)}%` }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
-                  />
+                
+                {/* 里程碑进度条 */}
+                <div className="relative">
+                  {/* 里程碑标记 */}
+                  <div className="absolute -top-1 left-0 right-0 flex justify-between px-0">
+                    {[0, 25, 50, 75, 100].map((milestone) => (
+                      <div 
+                        key={milestone} 
+                        className="flex flex-col items-center"
+                        style={{ width: milestone === 0 || milestone === 100 ? 'auto' : '0' }}
+                      >
+                        <div className={cn(
+                          "w-2 h-2 rounded-full border-2 transition-all",
+                          transformationRate >= milestone 
+                            ? "bg-white border-white shadow-[0_0_6px_rgba(255,255,255,0.6)]" 
+                            : "bg-white/30 border-white/50"
+                        )}>
+                          {transformationRate >= milestone && milestone > 0 && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: [1, 1.5, 1] }}
+                              transition={{ duration: 0.5 }}
+                              className="absolute inset-0 rounded-full bg-white/30"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* 进度条 */}
+                  <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden mt-3">
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-white/60 via-white/80 to-white"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(100, transformationRate)}%` }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                    />
+                  </div>
+                  
+                  {/* 里程碑数字 */}
+                  <div className="flex justify-between text-[8px] text-white/50 mt-0.5 px-0">
+                    <span>0%</span>
+                    <span>25%</span>
+                    <span>50%</span>
+                    <span>75%</span>
+                    <span>100%</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-[10px] text-white/70 mt-1">
-                  <span>起点</span>
-                  <span className="text-white font-medium">当前: {transformationRate}%</span>
-                </div>
+                
+                {/* 动态祝贺提示 */}
+                <motion.div 
+                  className={cn("flex items-center justify-center gap-1.5 mt-2 py-1.5 rounded-lg bg-white/10", milestoneMessage.color)}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <span>{milestoneMessage.emoji}</span>
+                  <span className="text-[11px] font-medium">{milestoneMessage.text}</span>
+                  <span className="text-white font-bold ml-1">{transformationRate}%</span>
+                </motion.div>
               </div>
+              
+              {/* 收起时显示的状态标签 */}
+              {!patternExpanded && (
+                <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                  {pattern.state.slice(0, 3).map((item, index) => (
+                    <span key={index} className="bg-white/20 px-2 py-0.5 rounded-full text-[10px] text-white/95">
+                      {item}
+                    </span>
+                  ))}
+                  {pattern.state.length > 3 && (
+                    <span className="text-[10px] text-white/60">+{pattern.state.length - 3}</span>
+                  )}
+                  <span className="text-[10px] text-white/60 ml-auto">点击展开详情</span>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
