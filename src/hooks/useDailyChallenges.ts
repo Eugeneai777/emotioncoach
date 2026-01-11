@@ -18,6 +18,9 @@ export interface DailyChallenge {
   created_at: string;
   target_poor_type: 'mouth' | 'hand' | 'eye' | 'heart' | null; // 关联的四穷维度
   recommendation_reason: string | null; // AI推荐理由
+  linked_focus_area: string | null; // 关联的本周训练重点
+  linked_belief: string | null; // 关联的收藏信念
+  ai_insight_source: 'keyword' | 'belief' | 'focus' | 'pattern' | 'layer' | null; // 推荐理由来源
 }
 
 export const useDailyChallenges = (targetDate?: Date) => {
