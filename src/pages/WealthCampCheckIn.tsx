@@ -831,8 +831,8 @@ ${reflection}`;
                 />
               </TabsContent>
 
-              <TabsContent value="briefing" className="space-y-2">
-                <div className="flex justify-end mb-2">
+              <TabsContent value="briefing" className="space-y-4">
+                <div className="flex justify-end">
                   <BackfillMemoriesButton />
                 </div>
                 
@@ -842,15 +842,13 @@ ${reflection}`;
                     <p className="text-sm">完成财富梳理后自动生成</p>
                   </div>
                 ) : (
-                  <div className="bg-card rounded-xl border divide-y divide-border/50">
-                    {journalEntries.map((entry) => (
-                      <WealthJournalCard
-                        key={entry.id}
-                        entry={entry}
-                        onClick={() => navigate(`/wealth-journal/${entry.id}`)}
-                      />
-                    ))}
-                  </div>
+                  journalEntries.map((entry) => (
+                    <WealthJournalCard
+                      key={entry.id}
+                      entry={entry}
+                      onClick={() => navigate(`/wealth-journal/${entry.id}`)}
+                    />
+                  ))
                 )}
               </TabsContent>
             </Tabs>
