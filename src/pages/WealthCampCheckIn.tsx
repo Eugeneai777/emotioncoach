@@ -24,6 +24,7 @@ import { Day0BaselineCard } from '@/components/wealth-camp/Day0BaselineCard';
 import AwakeningOnboardingDialog from '@/components/wealth-camp/AwakeningOnboardingDialog';
 import GraduateOnboardingDialog from '@/components/wealth-camp/GraduateOnboardingDialog';
 import { PartnerConversionCard } from '@/components/wealth-camp/PartnerConversionCard';
+import { NextGoalsRow } from '@/components/wealth-camp/NextGoalsRow';
 import { GapReminderCard } from '@/components/wealth-camp/GapReminderCard';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
@@ -679,6 +680,11 @@ ${reflection}`;
                 weekNumber={weekNumber}
                 onChallengeCompleted={() => setChallengeCompleted(true)}
               />
+            )}
+
+            {/* 🎯 目标卡片 - 紧随任务清单 */}
+            {!makeupDayNumber && (
+              <NextGoalsRow />
             )}
 
             {/* ===== Graduate 模式：合伙人转化卡片 ===== */}
