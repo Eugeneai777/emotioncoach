@@ -62,6 +62,10 @@ export function RechargeDialog({ open, onOpenChange, userId, userName, onSuccess
       }
 
       toast.success(`成功为 ${userName} 充值 ${amount} 额度`);
+      
+      if (data?.warning) {
+        toast.warning(data.warning);
+      }
       onSuccess();
       onOpenChange(false);
       setQuantity("100");

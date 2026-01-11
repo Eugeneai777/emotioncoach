@@ -112,6 +112,7 @@ serve(async (req) => {
       subscription_type: packageType,
       package_id: packageType === 'custom' ? customPackage?.id : null,
       total_quota: quantity,
+      combo_amount: quantity, // 确保金额字段有值
       combo_name: `管理员充值 - ${packageType}`,
       status: 'active',
       start_date: new Date().toISOString(),
@@ -123,13 +124,14 @@ serve(async (req) => {
       subscriptionData.end_date = endDate.toISOString();
     }
 
+    let subscriptionWarning = null;
     const { error: subscriptionError } = await supabaseAdmin
       .from('subscriptions')
       .insert(subscriptionData);
 
     if (subscriptionError) {
       console.error('Subscription record error:', subscriptionError);
-      // Don't fail the whole operation if subscription tracking fails
+      subscriptionWarning = `订阅记录创建失败: ${subscriptionError.message}`;
     }
 
     console.log(`Admin ${user.id} recharged ${quantity} for user ${userId}. Notes: ${notes || 'none'}`);
@@ -141,7 +143,8 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         newTotalQuota,
-        newRemainingQuota 
+        newRemainingQuota,
+        warning: subscriptionWarning
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
