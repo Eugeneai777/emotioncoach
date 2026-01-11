@@ -12,10 +12,15 @@ interface AwakeningDashboardProps {
   activeMakeupDay?: number | null;
   justCompletedDay?: number | null;
   className?: string;
-  // Post-camp mode props
+  // Post-camp mode props - 基于实际打卡次数
   userMode?: UserCampMode;
-  daysSinceGraduation?: number;
+  postGraduationCheckIns?: number;
+  cycleRound?: number;
+  cycleDayInRound?: number;
   cycleMeditationDay?: number;
+  daysSinceLastCheckIn?: number;
+  // Legacy fields for backward compatibility
+  daysSinceGraduation?: number;
   cycleWeek?: number;
   postCampCheckinDates?: string[];
 }
@@ -31,8 +36,12 @@ export function AwakeningDashboard({
   justCompletedDay,
   className,
   userMode = 'active',
-  daysSinceGraduation = 0,
+  postGraduationCheckIns = 0,
+  cycleRound = 1,
+  cycleDayInRound = 1,
   cycleMeditationDay = 1,
+  daysSinceLastCheckIn = 0,
+  daysSinceGraduation = 0,
   cycleWeek = 1,
   postCampCheckinDates = [],
 }: AwakeningDashboardProps) {
@@ -49,8 +58,12 @@ export function AwakeningDashboard({
         onMakeupClick={onMakeupClick}
         activeMakeupDay={activeMakeupDay}
         justCompletedDay={justCompletedDay}
-        daysSinceGraduation={daysSinceGraduation}
+        postGraduationCheckIns={postGraduationCheckIns}
+        cycleRound={cycleRound}
+        cycleDayInRound={cycleDayInRound}
         cycleMeditationDay={cycleMeditationDay}
+        daysSinceLastCheckIn={daysSinceLastCheckIn}
+        daysSinceGraduation={daysSinceGraduation}
         cycleWeek={cycleWeek}
         postCampCheckinDates={postCampCheckinDates}
       />

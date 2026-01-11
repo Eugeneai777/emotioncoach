@@ -9,17 +9,23 @@ interface CampModeResult {
   mode: UserCampMode;
   camp: any | null;
   isLoading: boolean;
-  // Graduate/Partner mode specific
+  // Graduate/Partner mode specific - 基于实际打卡次数
+  postGraduationCheckIns: number; // 毕业后总打卡次数
+  cycleRound: number; // 第几轮 (每7次打卡为1轮)
+  cycleDayInRound: number; // 本轮第几天 (1-7)
+  cycleMeditationDay: number; // 今天应该做的冥想日 (1-7)
+  daysSinceLastCheckIn: number; // 距离上次打卡的天数（用于断档提醒）
+  lastCheckInDate: string | null; // 上次打卡日期
+  // Legacy fields for backward compatibility
   daysSinceGraduation: number;
-  cycleMeditationDay: number; // 1-7 循环
   cycleWeek: number;
-  listenCount: number; // 第几次聆听同一天的冥想
+  listenCount: number;
 }
 
 export function useUserCampMode(): CampModeResult {
   const { isPartner, loading: partnerLoading } = usePartner();
 
-  // Fetch camp data with graduation detection
+  // Fetch camp data with graduation detection and post-graduation check-ins
   const { data: campData, isLoading: campLoading } = useQuery({
     queryKey: ['user-camp-mode'],
     queryFn: async () => {
@@ -52,10 +58,12 @@ export function useUserCampMode(): CampModeResult {
             .update({ status: 'completed', updated_at: new Date().toISOString() })
             .eq('id', activeCamp.id);
           
-          return { camp: activeCamp, status: 'completed' };
+          // 查询毕业后的打卡记录
+          const postGradData = await fetchPostGraduationData(user.id, activeCamp.id, new Date().toISOString());
+          return { camp: activeCamp, status: 'completed', ...postGradData };
         }
 
-        return { camp: activeCamp, status: 'active' };
+        return { camp: activeCamp, status: 'active', postGraduationCheckIns: 0, lastCheckInDate: null };
       }
 
       // 检查是否有已完成的训练营
@@ -70,7 +78,9 @@ export function useUserCampMode(): CampModeResult {
         .maybeSingle();
 
       if (completedCamp) {
-        return { camp: completedCamp, status: 'completed' };
+        // 查询毕业后的打卡记录
+        const postGradData = await fetchPostGraduationData(user.id, completedCamp.id, completedCamp.updated_at);
+        return { camp: completedCamp, status: 'completed', ...postGradData };
       }
 
       return null;
@@ -80,76 +90,124 @@ export function useUserCampMode(): CampModeResult {
   const result = useMemo(() => {
     const isLoading = campLoading || partnerLoading;
     
+    const defaultResult: CampModeResult = {
+      mode: 'none',
+      camp: null,
+      isLoading,
+      postGraduationCheckIns: 0,
+      cycleRound: 1,
+      cycleDayInRound: 1,
+      cycleMeditationDay: 1,
+      daysSinceLastCheckIn: 0,
+      lastCheckInDate: null,
+      daysSinceGraduation: 0,
+      cycleWeek: 1,
+      listenCount: 1,
+    };
+    
     if (isLoading || !campData) {
-      return {
-        mode: 'none' as UserCampMode,
-        camp: null,
-        isLoading,
-        daysSinceGraduation: 0,
-        cycleMeditationDay: 1,
-        cycleWeek: 1,
-        listenCount: 1,
-      };
+      return defaultResult;
     }
 
-    const { camp, status } = campData;
+    const { camp, status, postGraduationCheckIns = 0, lastCheckInDate = null } = campData;
 
     // Active camp
     if (status === 'active') {
       return {
+        ...defaultResult,
         mode: 'active' as UserCampMode,
         camp,
         isLoading: false,
-        daysSinceGraduation: 0,
         cycleMeditationDay: 0,
         cycleWeek: 0,
         listenCount: 0,
       };
     }
 
-    // Completed camp
+    // Completed camp - 基于实际打卡次数计算轮次
     if (status === 'completed') {
-      // 计算毕业后的天数
+      // 计算毕业后的日历天数（用于向后兼容）
       const graduationDate = new Date(camp.updated_at);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       graduationDate.setHours(0, 0, 0, 0);
-      
       const daysSinceGraduation = Math.max(0, Math.floor((today.getTime() - graduationDate.getTime()) / (1000 * 60 * 60 * 24)));
       
-      // 计算循环冥想日 (1-7)
-      // 毕业后第1天应该是Day 1，第7天应该是Day 7，第8天应该是Day 1
-      const cycleMeditationDay = daysSinceGraduation === 0 
-        ? 7 // 毕业当天仍显示 Day 7
-        : ((daysSinceGraduation - 1) % 7) + 1; // 毕业后从 Day 1 开始
+      // 基于实际打卡次数计算轮次
+      // 训练营7天 + 毕业后打卡次数
+      const totalPostCampCheckins = postGraduationCheckIns;
       
-      // 计算第几周
-      const cycleWeek = Math.floor(daysSinceGraduation / 7) + 1;
+      // 轮次计算：每7次打卡为1轮
+      // 第1轮：打卡1-7次，第2轮：打卡8-14次，etc.
+      const cycleRound = totalPostCampCheckins === 0 
+        ? 1 
+        : Math.ceil(totalPostCampCheckins / 7);
       
-      // 计算第几次聆听
-      const listenCount = cycleWeek;
+      // 本轮第几天：基于打卡次数
+      // 如果打卡0次，显示本轮Day 1
+      // 如果打卡1次，本轮Day 2（下一个要做的）
+      const cycleDayInRound = totalPostCampCheckins === 0
+        ? 1
+        : ((totalPostCampCheckins) % 7) + 1;
+      
+      // 今天应该做的冥想日
+      const cycleMeditationDay = cycleDayInRound > 7 ? 1 : cycleDayInRound;
+      
+      // 计算距离上次打卡的天数
+      let daysSinceLastCheckIn = 0;
+      if (lastCheckInDate) {
+        const lastDate = new Date(lastCheckInDate);
+        lastDate.setHours(0, 0, 0, 0);
+        daysSinceLastCheckIn = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+      } else {
+        // 如果没有毕业后打卡记录，使用毕业日期计算
+        daysSinceLastCheckIn = daysSinceGraduation;
+      }
+
+      // 向后兼容的 cycleWeek 和 listenCount
+      const cycleWeek = cycleRound;
+      const listenCount = cycleRound;
 
       return {
         mode: isPartner ? 'partner' as UserCampMode : 'graduate' as UserCampMode,
         camp,
         isLoading: false,
-        daysSinceGraduation,
+        postGraduationCheckIns: totalPostCampCheckins,
+        cycleRound,
+        cycleDayInRound,
         cycleMeditationDay,
+        daysSinceLastCheckIn,
+        lastCheckInDate,
+        daysSinceGraduation,
         cycleWeek,
         listenCount,
       };
     }
 
-    return {
-      mode: 'none' as UserCampMode,
-      camp: null,
-      isLoading: false,
-      daysSinceGraduation: 0,
-      cycleMeditationDay: 1,
-      cycleWeek: 1,
-      listenCount: 1,
-    };
+    return defaultResult;
   }, [campData, campLoading, partnerLoading, isPartner]);
 
   return result;
+}
+
+// Helper function to fetch post-graduation check-in data
+async function fetchPostGraduationData(userId: string, campId: string, graduationDateStr: string) {
+  const graduationDate = new Date(graduationDateStr);
+  graduationDate.setHours(0, 0, 0, 0);
+  
+  // 查询毕业后的日记条目（day_number > 7 或 created_at > graduation date）
+  const { data: postGradEntries } = await supabase
+    .from('wealth_journal_entries')
+    .select('created_at, day_number')
+    .eq('camp_id', campId)
+    .eq('user_id', userId)
+    .gt('day_number', 7)
+    .order('created_at', { ascending: false });
+  
+  const postGraduationCheckIns = postGradEntries?.length || 0;
+  const lastCheckInDate = postGradEntries && postGradEntries.length > 0 
+    ? postGradEntries[0].created_at 
+    : null;
+  
+  return { postGraduationCheckIns, lastCheckInDate };
 }

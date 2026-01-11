@@ -27,6 +27,7 @@ import AwakeningOnboardingDialog from '@/components/wealth-camp/AwakeningOnboard
 import GraduateOnboardingDialog from '@/components/wealth-camp/GraduateOnboardingDialog';
 import { PartnerConversionCard } from '@/components/wealth-camp/PartnerConversionCard';
 import { DailyChallengeCard } from '@/components/wealth-camp/DailyChallengeCard';
+import { GapReminderCard } from '@/components/wealth-camp/GapReminderCard';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -70,8 +71,18 @@ export default function WealthCampCheckIn() {
   const { toast } = useToast();
   const { trackDayCheckin, trackShare } = useWealthCampAnalytics();
   
-  // User mode detection (active, graduate, partner)
-  const { mode: userCampMode, cycleMeditationDay, cycleWeek, listenCount, isLoading: modeLoading } = useUserCampMode();
+  // User mode detection (active, graduate, partner) - 基于实际打卡次数
+  const { 
+    mode: userCampMode, 
+    cycleMeditationDay, 
+    cycleRound, 
+    cycleDayInRound,
+    postGraduationCheckIns,
+    daysSinceLastCheckIn,
+    cycleWeek, 
+    listenCount, 
+    isLoading: modeLoading 
+  } = useUserCampMode();
   const { isPartner } = usePartner();
   const [challengeCompleted, setChallengeCompleted] = useState(false);
   const [showGraduateOnboarding, setShowGraduateOnboarding] = useState(false);
@@ -597,10 +608,24 @@ ${reflection}`;
                 activeMakeupDay={makeupDayNumber}
                 justCompletedDay={lastCompletedMakeupDay}
                 userMode={userCampMode}
-                daysSinceGraduation={userCampMode !== 'active' ? Math.max(0, currentDay - 7) : 0}
+                postGraduationCheckIns={postGraduationCheckIns}
+                cycleRound={cycleRound}
+                cycleDayInRound={cycleDayInRound}
                 cycleMeditationDay={cycleMeditationDay}
+                daysSinceLastCheckIn={daysSinceLastCheckIn}
+                daysSinceGraduation={userCampMode !== 'active' ? Math.max(0, currentDay - 7) : 0}
                 cycleWeek={cycleWeek}
                 postCampCheckinDates={postCampCheckinDates}
+              />
+            )}
+              
+            {/* 断档提醒卡片 - 只在毕业后且有间断时显示 */}
+            {!makeupDayNumber && isPostCampMode && daysSinceLastCheckIn > 1 && (
+              <GapReminderCard
+                daysSinceLastCheckIn={daysSinceLastCheckIn}
+                cycleRound={cycleRound}
+                cycleDayInRound={cycleDayInRound}
+                onContinueClick={scrollToMeditation}
               />
             )}
 

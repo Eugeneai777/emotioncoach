@@ -27,9 +27,14 @@ interface CollapsibleProgressCalendarProps {
   onMakeupClick: (dayNumber: number) => void;
   activeMakeupDay?: number | null;
   justCompletedDay?: number | null;
-  // Post-camp cycle data
-  daysSinceGraduation?: number;
+  // Post-camp cycle data - 基于实际打卡次数
+  postGraduationCheckIns?: number;
+  cycleRound?: number;
+  cycleDayInRound?: number;
   cycleMeditationDay?: number;
+  daysSinceLastCheckIn?: number;
+  // Legacy fields for backward compatibility
+  daysSinceGraduation?: number;
   cycleWeek?: number;
   postCampCheckinDates?: string[];
   className?: string;
@@ -45,8 +50,12 @@ export function CollapsibleProgressCalendar({
   onMakeupClick,
   activeMakeupDay,
   justCompletedDay,
-  daysSinceGraduation = 0,
+  postGraduationCheckIns = 0,
+  cycleRound = 1,
+  cycleDayInRound = 1,
   cycleMeditationDay = 1,
+  daysSinceLastCheckIn = 0,
+  daysSinceGraduation = 0,
   cycleWeek = 1,
   postCampCheckinDates = [],
   className,
@@ -67,73 +76,76 @@ export function CollapsibleProgressCalendar({
   const isPostCampMode = userMode === 'graduate' || userMode === 'partner';
   const completedCount = completedDays.length;
   const totalCheckins = isPostCampMode 
-    ? completedCount + postCampCheckinDates.length 
+    ? completedCount + postGraduationCheckIns 
     : completedCount;
 
-  // Generate week data for post-camp mode
-  const weeksData = useMemo(() => {
+  // Generate round data for post-camp mode (基于实际打卡次数)
+  const roundsData = useMemo(() => {
     if (!isPostCampMode) return [];
     
-    const weeks: Array<{
-      weekNumber: number;
+    const rounds: Array<{
+      roundNumber: number;
       label: string;
       completedCount: number;
+      isCurrentRound: boolean;
       days: Array<{
         dayNumber: number;
         isCompleted: boolean;
         isCurrent: boolean;
         isToday: boolean;
+        isGap: boolean; // 是否为断档日
       }>;
     }> = [];
     
-    // Week 1: Training camp (always 7 days)
-    weeks.push({
-      weekNumber: 1,
+    // Round 0: Training camp (always 7 days) - 显示为"训练营"
+    rounds.push({
+      roundNumber: 0,
       label: '训练营',
       completedCount: Math.min(completedDays.length, 7),
+      isCurrentRound: false,
       days: Array.from({ length: 7 }, (_, i) => ({
         dayNumber: i + 1,
         isCompleted: completedDays.includes(i + 1),
         isCurrent: false,
         isToday: false,
+        isGap: false,
       })),
     });
     
-    // Ensure we always display at least the current week (cycleWeek + 1 represents "post-camp week number")
-    // When cycleWeek = 1, we're in the first post-camp week, so display Week 2
-    const displayWeeks = Math.max(cycleWeek + 1, 2);
+    // 基于实际打卡次数生成轮次
+    // cycleRound 表示当前是第几轮 (1-based)
+    const displayRounds = Math.max(cycleRound, 1);
     
-    // Post-camp weeks (Week 2 onwards = 持续觉醒)
-    for (let w = 2; w <= displayWeeks; w++) {
-      const weekDays: typeof weeks[0]['days'] = [];
-      const weekStartDayIndex = (w - 2) * 7; // Day index relative to post-graduation (0-indexed)
+    for (let r = 1; r <= displayRounds; r++) {
+      const roundDays: typeof rounds[0]['days'] = [];
+      const roundStartCheckIn = (r - 1) * 7; // 本轮起始的打卡次数 (0-indexed)
+      const isCurrentRound = r === cycleRound;
       
       for (let d = 1; d <= 7; d++) {
-        const dayIndex = weekStartDayIndex + d; // 1-indexed day count since graduation
-        const isCurrentWeek = w === displayWeeks;
-        const isToday = isCurrentWeek && d === cycleMeditationDay;
+        const checkInIndex = roundStartCheckIn + d; // 第几次打卡 (1-indexed)
+        const isCompleted = checkInIndex <= postGraduationCheckIns;
+        const isToday = isCurrentRound && d === cycleDayInRound;
         
-        // Check completion: use postCampCheckinDates length as indicator
-        const isCompleted = dayIndex <= postCampCheckinDates.length;
-        
-        weekDays.push({
+        roundDays.push({
           dayNumber: d,
           isCompleted,
           isCurrent: isToday,
           isToday,
+          isGap: false, // 基于打卡次数，不存在断档概念在日历格子里
         });
       }
       
-      weeks.push({
-        weekNumber: w,
-        label: w === displayWeeks ? '本周' : '持续觉醒',
-        completedCount: weekDays.filter(d => d.isCompleted).length,
-        days: weekDays,
+      rounds.push({
+        roundNumber: r,
+        label: isCurrentRound ? '本轮' : `第${r}轮`,
+        completedCount: roundDays.filter(d => d.isCompleted).length,
+        isCurrentRound,
+        days: roundDays,
       });
     }
     
-    return weeks;
-  }, [isPostCampMode, completedDays, cycleWeek, cycleMeditationDay, postCampCheckinDates]);
+    return rounds;
+  }, [isPostCampMode, completedDays, cycleRound, cycleDayInRound, postGraduationCheckIns]);
 
   // Generate dots for camp mode
   const campDots = useMemo(() => {
@@ -205,7 +217,7 @@ export function CollapsibleProgressCalendar({
               <div className="flex items-center gap-4">
                 {isPostCampMode ? (
                   <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                    持续觉醒 · 第{daysSinceGraduation + 1}天
+                    第{cycleRound}轮 · Day {cycleDayInRound}
                   </span>
                 ) : (
                   <span className={cn(
@@ -244,12 +256,14 @@ export function CollapsibleProgressCalendar({
               <div className="mt-3 space-y-2">
                 <div className="flex flex-wrap gap-1.5">
                   {isPostCampMode ? (
-                    // Show current week for post-camp
+                    // Show current round progress for post-camp
                     Array.from({ length: 7 }, (_, i) => {
-                      const dayInWeek = i + 1;
-                      const isToday = dayInWeek === cycleMeditationDay;
-                      const daysSinceGradStart = (cycleWeek) * 7 + dayInWeek - 7; // Approximate
-                      const isCompleted = daysSinceGradStart <= postCampCheckinDates.length && dayInWeek < cycleMeditationDay;
+                      const dayInRound = i + 1;
+                      const isToday = dayInRound === cycleDayInRound;
+                      // 基于实际打卡次数计算完成状态
+                      const roundStartCheckIn = (cycleRound - 1) * 7;
+                      const checkInIndex = roundStartCheckIn + dayInRound;
+                      const isCompleted = checkInIndex <= postGraduationCheckIns;
                       
                       return (
                         <div
@@ -271,7 +285,7 @@ export function CollapsibleProgressCalendar({
                 {/* Post-camp hint to expand */}
                 {isPostCampMode && (
                   <div className="text-xs text-amber-600/70 dark:text-amber-400/70">
-                    第{cycleWeek + 1}周 · 点击查看完整历史
+                    第{cycleRound}轮 · 点击查看完整历史
                   </div>
                 )}
               </div>
@@ -292,37 +306,41 @@ export function CollapsibleProgressCalendar({
               >
                 <div className="border-t border-amber-200 dark:border-amber-800 pt-4 space-y-4">
                   {isPostCampMode ? (
-                    // Post-camp: Multi-week view with staggered animations
+                    // Post-camp: Multi-round view with staggered animations
                     <div className="space-y-3">
-                      {weeksData.map((week, weekIndex) => (
+                      {roundsData.map((round, roundIndex) => (
                         <motion.div 
-                          key={week.weekNumber} 
+                          key={round.roundNumber} 
                           className="space-y-2"
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ 
                             duration: 0.3, 
-                            delay: weekIndex * 0.1,
+                            delay: roundIndex * 0.1,
                             ease: 'easeOut'
                           }}
                         >
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-amber-700 dark:text-amber-300">
-                              第{week.weekNumber}周（{week.label}）
+                            <span className={cn(
+                              "text-amber-700 dark:text-amber-300",
+                              round.isCurrentRound && "font-semibold"
+                            )}>
+                              {round.roundNumber === 0 ? '训练营' : `第${round.roundNumber}轮`}
+                              {round.isCurrentRound && round.roundNumber > 0 && ' · 进行中'}
                             </span>
                             <span className="text-amber-600 dark:text-amber-400">
-                              ⭐ {week.completedCount}/7
+                              ⭐ {round.completedCount}/7
                             </span>
                           </div>
                           <div className="flex gap-2">
-                            {week.days.map((day, i) => (
+                            {round.days.map((day, i) => (
                               <motion.div
                                 key={i}
                                 initial={{ scale: 0.5, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 transition={{ 
                                   duration: 0.2, 
-                                  delay: weekIndex * 0.1 + i * 0.03,
+                                  delay: roundIndex * 0.1 + i * 0.03,
                                   ease: 'easeOut'
                                 }}
                                 className={cn(
@@ -339,11 +357,16 @@ export function CollapsibleProgressCalendar({
                         </motion.div>
                       ))}
                       
-                      {/* Stats summary */}
+                      {/* Stats summary with gap reminder */}
                       <div className="pt-2 border-t border-amber-200/50 dark:border-amber-700/50">
                         <div className="flex items-center justify-between text-xs text-amber-700 dark:text-amber-300">
                           <span>总打卡：{totalCheckins}次</span>
-                          <span>当前连续：{streak}天</span>
+                          <span>
+                            {daysSinceLastCheckIn > 1 
+                              ? <span className="text-rose-600 dark:text-rose-400">已间断{daysSinceLastCheckIn}天</span>
+                              : `当前连续：${streak}天`
+                            }
+                          </span>
                         </div>
                       </div>
                     </div>
