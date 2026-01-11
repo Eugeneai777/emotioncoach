@@ -4,7 +4,6 @@ import { ChevronRight, Star, Tent } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { getAwakeningColor, starScoreToAwakening } from '@/config/wealthStyleConfig';
 import { cardBaseStyles } from '@/config/cardStyleConfig';
 
 // 卡点类型映射
@@ -73,13 +72,6 @@ function ScoreStars({ score }: { score?: number }) {
 }
 
 export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
-  const avgScore = entry.behavior_score && entry.emotion_score && entry.belief_score
-    ? (entry.behavior_score + entry.emotion_score + entry.belief_score) / 3
-    : null;
-  
-  // Calculate awakening index (0-100) using unified conversion function
-  const awakeningIndex = avgScore ? starScoreToAwakening(avgScore) : null;
-
   const hasCamp = !!entry.camp_id;
   const hasBlockTypes = entry.behavior_type || entry.emotion_type || entry.belief_type;
 
@@ -171,31 +163,8 @@ export function WealthJournalCard({ entry, onClick }: WealthJournalCardProps) {
             </div>
           </div>
 
-          {/* Mini Awakening Index Circle */}
-          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-            {awakeningIndex !== null && (
-              <div className="relative w-12 h-12">
-                <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                  <circle 
-                    cx="18" cy="18" r="16" 
-                    fill="none" 
-                    stroke="hsl(var(--muted))" 
-                    strokeWidth="3"
-                  />
-                  <circle 
-                    cx="18" cy="18" r="16"
-                    fill="none"
-                    stroke={getAwakeningColor(awakeningIndex)}
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeDasharray={`${awakeningIndex} 100`}
-                  />
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-amber-600 dark:text-amber-400">
-                  {awakeningIndex}
-                </span>
-              </div>
-            )}
+          {/* Arrow */}
+          <div className="flex items-center flex-shrink-0 ml-3">
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </div>
         </div>
