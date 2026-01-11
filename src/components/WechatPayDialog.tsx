@@ -348,14 +348,29 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
 
             {(status === 'ready' || status === 'polling') && payType === 'native' && (qrCodeDataUrl || cloudQrUrl) && (
               <div className="flex flex-col items-center gap-1">
-                {/* 移动端使用云端URL支持长按识别；PC端使用base64 */}
-                <img 
-                  src={(isMobile || isMiniProgram) && cloudQrUrl ? cloudQrUrl : qrCodeDataUrl} 
-                  alt="微信支付二维码" 
-                  className="w-48 h-48"
-                />
-                {(isMobile || isMiniProgram) && (
-                  <span className="text-xs text-muted-foreground mt-1">长按二维码识别支付</span>
+                {/* 小程序WebView不支持长按识别普通二维码，显示提示 */}
+                {isMiniProgram ? (
+                  <div className="flex flex-col items-center gap-2 text-center p-4">
+                    <div className="text-4xl">📋</div>
+                    <span className="text-sm text-muted-foreground">
+                      小程序内无法长按识别二维码
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      请复制链接到微信聊天中打开
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    {/* 移动端浏览器使用云端URL支持长按识别；PC端使用base64 */}
+                    <img 
+                      src={isMobile && cloudQrUrl ? cloudQrUrl : qrCodeDataUrl} 
+                      alt="微信支付二维码" 
+                      className="w-48 h-48"
+                    />
+                    {isMobile && (
+                      <span className="text-xs text-muted-foreground mt-1">长按二维码识别支付</span>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -466,7 +481,33 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
                 </>
               ) : (
                 <>
-                  <p className="text-sm text-muted-foreground">请使用微信长按二维码或扫码支付</p>
+                  {isMiniProgram ? (
+                    <>
+                      <p className="text-sm text-muted-foreground">请复制下方链接到微信聊天中打开支付</p>
+                      {payUrl && (
+                        <Button
+                          type="button"
+                          variant="default"
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(payUrl);
+                              toast.success('链接已复制，请粘贴到微信聊天中打开');
+                            } catch {
+                              toast.error('复制失败');
+                            }
+                          }}
+                          className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white"
+                        >
+                          <Copy className="h-4 w-4" />
+                          复制支付链接
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {isMobile ? '长按二维码识别支付' : '请使用微信扫描二维码支付'}
+                    </p>
+                  )}
                   {status === 'polling' && (
                     <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
                       <Loader2 className="h-3 w-3 animate-spin" />
