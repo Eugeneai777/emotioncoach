@@ -515,8 +515,6 @@ export const getGlobalNextAchievement = (
 
   for (const path of achievementPaths) {
     for (const achievement of path.achievements) {
-      if (earnedKeys.includes(achievement.key)) continue;
-
       let current = 0;
       const target = achievement.unlockCondition.target;
 
@@ -538,7 +536,7 @@ export const getGlobalNextAchievement = (
             current = Math.min(currentValues.behaviorScore, currentValues.emotionScore, currentValues.beliefScore);
           } else if (achievement.unlockCondition.field === 'any_two') {
             const scores = [currentValues.behaviorScore, currentValues.emotionScore, currentValues.beliefScore];
-            const sortedScores = scores.sort((a, b) => b - a);
+            const sortedScores = [...scores].sort((a, b) => b - a);
             current = sortedScores[1]; // Second highest
           }
           break;
@@ -558,6 +556,10 @@ export const getGlobalNextAchievement = (
 
       const progress = Math.min(100, Math.round((current / target) * 100));
       const remaining = Math.max(0, target - current);
+      
+      // 修复：跳过已记录的成就 或 进度已达100%的成就
+      const isCompleted = earnedKeys.includes(achievement.key) || progress >= 100;
+      if (isCompleted) continue;
 
       // 选择进度最高的（最接近完成的）
       if (progress > highestProgress) {
