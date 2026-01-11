@@ -32,7 +32,7 @@ export interface GlobalNextAchievement {
 }
 
 export function useAchievementProgress() {
-  const { userAchievements, hasAchievement, isLoading: achievementsLoading } = useUserAchievements();
+  const { userAchievements, hasAchievement, earnAchievement, isLoading: achievementsLoading } = useUserAchievements();
   const { progress: awakeningProgress, isLoading: progressLoading } = useAwakeningProgress();
 
   // 获取财富日志条目
@@ -201,7 +201,6 @@ export function useAchievementProgress() {
 
   // 自动补录缺失的成就（条件已满足但未写入数据库）
   const backfillTriggeredRef = useRef(false);
-  const { earnAchievement } = useUserAchievements();
   
   useEffect(() => {
     if (isLoading || backfillTriggeredRef.current) return;
