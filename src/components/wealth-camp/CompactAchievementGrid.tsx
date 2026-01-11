@@ -69,8 +69,9 @@ function AchievementNodeItem({
   };
   showLevel?: boolean;
 }) {
-  const isEarned = achievement.earned;
-  const isNext = achievement.isNext;
+  // 修复：同时考虑数据库记录和实际进度
+  const isCompleted = achievement.earned || achievement.progress >= 100;
+  const isNext = !isCompleted && achievement.isNext;
 
   return (
     <Tooltip>
@@ -84,13 +85,13 @@ function AchievementNodeItem({
           <div
             className={cn(
               "w-7 h-7 rounded-lg flex items-center justify-center text-sm relative overflow-hidden transition-all duration-300",
-              isEarned && [theme.bgActive, 'border', theme.border, 'shadow-sm'],
-              !isEarned && !isNext && [theme.bgLocked, 'border border-dashed border-muted-foreground/20'],
+              isCompleted && [theme.bgActive, 'border', theme.border, 'shadow-sm'],
+              !isCompleted && !isNext && [theme.bgLocked, 'border border-dashed border-muted-foreground/20'],
               isNext && ['border-2 border-dashed', theme.border, 'bg-gradient-to-br from-white/50 to-white/30 dark:from-slate-800/50 dark:to-slate-700/30']
             )}
           >
             {/* 已完成的光效 */}
-            {isEarned && (
+            {isCompleted && (
               <motion.div
                 className={cn("absolute inset-0 bg-gradient-to-tr opacity-30", theme.gradient)}
                 animate={{ opacity: [0.2, 0.4, 0.2] }}
@@ -110,14 +111,14 @@ function AchievementNodeItem({
             {/* 图标 */}
             <span className={cn(
               "relative z-10 transition-all duration-300 text-xs",
-              !isEarned && !isNext && "grayscale opacity-30",
+              !isCompleted && !isNext && "grayscale opacity-30",
               isNext && "grayscale-0 opacity-80"
             )}>
               {achievement.icon}
             </span>
 
             {/* 已完成徽章 */}
-            {isEarned && (
+            {isCompleted && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -131,7 +132,7 @@ function AchievementNodeItem({
             {showLevel && achievement.mappedLevel && (
               <div className={cn(
                 "absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[6px] font-bold px-0.5 rounded",
-                isEarned ? "bg-amber-500 text-white" : "bg-muted text-muted-foreground"
+                isCompleted ? "bg-amber-500 text-white" : "bg-muted text-muted-foreground"
               )}>
                 L{achievement.mappedLevel}
               </div>
@@ -146,8 +147,8 @@ function AchievementNodeItem({
             <span className="font-semibold text-sm">{achievement.name}</span>
           </div>
           <p className="text-xs text-muted-foreground">{achievement.description}</p>
-          <div className="pt-1 border-t border-border/50">
-            {isEarned ? (
+        <div className="pt-1 border-t border-border/50">
+            {isCompleted ? (
               <span className="text-xs text-emerald-500 font-medium">✓ 已解锁</span>
             ) : (
               <div className="space-y-0.5">

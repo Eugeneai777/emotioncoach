@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { useUserAchievements } from './useUserAchievements';
 import { useAwakeningProgress } from './useAwakeningProgress';
 import { useQuery } from '@tanstack/react-query';
@@ -147,7 +147,9 @@ export function useAchievementProgress() {
         }
 
         const progress = Math.min(100, Math.round((current / target) * 100));
-        const isNext = !earned && !foundNext;
+        // 修复：同时考虑数据库记录和实际进度来判断是否已完成
+        const isCompleted = earned || progress >= 100;
+        const isNext = !isCompleted && !foundNext;
         if (isNext) foundNext = true;
 
         // 生成剩余提示文本
@@ -183,7 +185,8 @@ export function useAchievementProgress() {
         };
       });
 
-      const earnedCount = achievementsWithProgress.filter(a => a.earned).length;
+      // 修复：使用 isCompleted 判断（earned 或 progress >= 100）
+      const earnedCount = achievementsWithProgress.filter(a => a.earned || a.progress >= 100).length;
       const nextAchievement = achievementsWithProgress.find(a => a.isNext) || null;
 
       return {
@@ -195,6 +198,30 @@ export function useAchievementProgress() {
       };
     });
   }, [currentValues, hasAchievement, userAchievements]);
+
+  // 自动补录缺失的成就（条件已满足但未写入数据库）
+  const backfillTriggeredRef = useRef(false);
+  const { earnAchievement } = useUserAchievements();
+  
+  useEffect(() => {
+    if (isLoading || backfillTriggeredRef.current) return;
+    
+    const missingAchievements = pathsWithProgress.flatMap(path =>
+      path.achievements.filter(a => !a.earned && a.progress >= 100)
+    );
+    
+    if (missingAchievements.length > 0) {
+      backfillTriggeredRef.current = true;
+      console.log('[Achievement] 自动补录缺失成就:', missingAchievements.map(a => a.key));
+      
+      // 按顺序补录成就
+      missingAchievements.forEach(achievement => {
+        earnAchievement(achievement.key).catch(err => {
+          console.error('[Achievement] 补录失败:', achievement.key, err);
+        });
+      });
+    }
+  }, [pathsWithProgress, isLoading, earnAchievement]);
 
   // 总体统计
   const totalEarned = pathsWithProgress.reduce((sum, p) => sum + p.earnedCount, 0);
