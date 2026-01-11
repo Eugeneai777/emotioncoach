@@ -71,6 +71,7 @@ import CustomerSupport from "./pages/CustomerSupport";
 import { TrainingCampDetail } from "./components/camp/TrainingCampDetail";
 import { Navigate } from "react-router-dom";
 import FloatingVoiceButton from "./components/FloatingVoiceButton";
+import { FloatingQuickMenu } from "./components/FloatingQuickMenu";
 import HumanCoaches from "./pages/HumanCoaches";
 import HumanCoachDetail from "./pages/HumanCoachDetail";
 import MyAppointments from "./pages/MyAppointments";
@@ -106,6 +107,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <FloatingVoiceButton />
+          <FloatingQuickMenu />
           <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
