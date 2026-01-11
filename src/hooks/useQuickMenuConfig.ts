@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const CONFIG_STORAGE_KEY = 'floatingQuickMenuConfig';
 
@@ -48,49 +50,166 @@ export const defaultConfig: QuickMenuConfig = {
 };
 
 export const useQuickMenuConfig = () => {
+  const { user } = useAuth();
   const [config, setConfig] = useState<QuickMenuConfig>(defaultConfig);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  // Load saved config
+  // Load config from database or localStorage
   useEffect(() => {
+    const loadConfig = async () => {
+      if (user) {
+        // Try to load from database for logged-in users
+        try {
+          const { data, error } = await supabase
+            .from('user_quick_menu_config')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (error) {
+            console.error('Failed to load quick menu config from database:', error);
+            // Fall back to localStorage
+            loadFromLocalStorage();
+          } else if (data) {
+            // Database config exists
+            const dbConfig: QuickMenuConfig = {
+              homePagePath: data.home_page_path,
+              customSlot1: data.custom_slot_1 as unknown as MenuItemConfig,
+              customSlot2: data.custom_slot_2 as unknown as MenuItemConfig,
+            };
+            setConfig(dbConfig);
+            // Also update localStorage for offline access
+            localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(dbConfig));
+          } else {
+            // No database config, check localStorage and sync
+            const localConfig = loadFromLocalStorage();
+            if (localConfig) {
+              // Sync localStorage config to database
+              syncToDatabase(localConfig);
+            }
+          }
+        } catch (e) {
+          console.error('Error loading config:', e);
+          loadFromLocalStorage();
+        }
+      } else {
+        // Not logged in, use localStorage only
+        loadFromLocalStorage();
+      }
+      setIsLoaded(true);
+    };
+
+    loadConfig();
+  }, [user]);
+
+  // Load from localStorage
+  const loadFromLocalStorage = (): QuickMenuConfig | null => {
     const saved = localStorage.getItem(CONFIG_STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setConfig({ ...defaultConfig, ...parsed });
+        const mergedConfig = { ...defaultConfig, ...parsed };
+        setConfig(mergedConfig);
+        return mergedConfig;
       } catch (e) {
         console.error('Failed to parse saved quick menu config');
       }
     }
-    setIsLoaded(true);
-  }, []);
+    setConfig(defaultConfig);
+    return null;
+  };
 
-  // Save config
-  const saveConfig = (newConfig: QuickMenuConfig) => {
+  // Sync config to database
+  const syncToDatabase = async (configToSync: QuickMenuConfig) => {
+    if (!user || isSyncing) return;
+
+    setIsSyncing(true);
+    try {
+      // Check if record exists first
+      const { data: existing } = await supabase
+        .from('user_quick_menu_config')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      let error;
+      if (existing) {
+        // Update existing record
+        const result = await supabase
+          .from('user_quick_menu_config')
+          .update({
+            home_page_path: configToSync.homePagePath,
+            custom_slot_1: JSON.parse(JSON.stringify(configToSync.customSlot1)),
+            custom_slot_2: JSON.parse(JSON.stringify(configToSync.customSlot2)),
+          })
+          .eq('user_id', user.id);
+        error = result.error;
+      } else {
+        // Insert new record - use raw SQL approach to avoid type issues
+        const result = await supabase.rpc('insert_quick_menu_config' as never, {
+          p_user_id: user.id,
+          p_home_page_path: configToSync.homePagePath,
+          p_custom_slot_1: JSON.parse(JSON.stringify(configToSync.customSlot1)),
+          p_custom_slot_2: JSON.parse(JSON.stringify(configToSync.customSlot2)),
+        } as never);
+        error = result.error;
+        
+        // Fallback: if RPC doesn't exist, try direct insert with type cast
+        if (error?.message?.includes('function') || error?.code === '42883') {
+          const insertResult = await supabase
+            .from('user_quick_menu_config')
+            .insert([{
+              user_id: user.id,
+              home_page_path: configToSync.homePagePath,
+              custom_slot_1: JSON.parse(JSON.stringify(configToSync.customSlot1)),
+              custom_slot_2: JSON.parse(JSON.stringify(configToSync.customSlot2)),
+            }] as never);
+          error = insertResult.error;
+        }
+      }
+
+      if (error) {
+        console.error('Failed to sync config to database:', error);
+      }
+    } catch (e) {
+      console.error('Error syncing config:', e);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Save config (to both localStorage and database)
+  const saveConfig = async (newConfig: QuickMenuConfig) => {
     setConfig(newConfig);
     localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(newConfig));
+
+    if (user) {
+      await syncToDatabase(newConfig);
+    }
   };
 
   // Update home path
-  const updateHomePath = (path: string) => {
+  const updateHomePath = async (path: string) => {
     const newConfig = { ...config, homePagePath: path };
-    saveConfig(newConfig);
+    await saveConfig(newConfig);
   };
 
   // Update custom slot
-  const updateCustomSlot = (slot: 'customSlot1' | 'customSlot2', item: MenuItemConfig) => {
+  const updateCustomSlot = async (slot: 'customSlot1' | 'customSlot2', item: MenuItemConfig) => {
     const newConfig = { ...config, [slot]: item };
-    saveConfig(newConfig);
+    await saveConfig(newConfig);
   };
 
   // Reset to defaults
-  const resetToDefaults = () => {
-    saveConfig(defaultConfig);
+  const resetToDefaults = async () => {
+    await saveConfig(defaultConfig);
   };
 
   return {
     config,
     isLoaded,
+    isSyncing,
     saveConfig,
     updateHomePath,
     updateCustomSlot,
