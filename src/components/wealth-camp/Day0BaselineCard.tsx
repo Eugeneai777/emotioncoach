@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Eye, Brain, Heart, ExternalLink, FileText } from 'lucide-react';
+import { MapPin, ExternalLink, FileText } from 'lucide-react';
 import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
 import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
 import { format } from 'date-fns';
@@ -87,72 +87,28 @@ export const Day0BaselineCard = ({ onClick, showReportLink = true }: Day0Baselin
             )}
           </div>
 
-          {/* 觉醒起点分数 */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-amber-700">觉醒起点</span>
-              <span 
-                className="text-2xl font-bold"
-                style={{ color: getAwakeningColor(baselineAwakening) }}
-              >
-                {baselineAwakening}/100
-              </span>
-            </div>
-            <div className="h-2 rounded-full bg-amber-100 overflow-hidden">
-              <motion.div 
-                className="h-full rounded-full"
-                style={{ 
-                  backgroundColor: getAwakeningColor(baselineAwakening),
-                  width: `${baselineAwakening}%`
-                }}
-                initial={{ width: 0 }}
-                animate={{ width: `${baselineAwakening}%` }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
-              />
-            </div>
-          </div>
-
-          {/* 主导卡点和反应模式 */}
-          <div className="grid grid-cols-2 gap-3">
-            {dominantInfo && (
-              <div className="bg-white/60 rounded-lg p-2.5">
-                <div className="text-xs text-amber-600 mb-1">主导卡点</div>
+          {/* 核心信息 - 简化展示 */}
+          <div className="flex items-center justify-between py-2">
+            <div className="flex items-center gap-4">
+              {dominantInfo && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-lg">{dominantInfo.emoji}</span>
-                  <span className="text-sm font-medium text-amber-900">{dominantInfo.name}</span>
+                  <span className="text-sm text-amber-800">{dominantInfo.name}</span>
                 </div>
-              </div>
-            )}
-            {patternLabel && (
-              <div className="bg-white/60 rounded-lg p-2.5">
-                <div className="text-xs text-amber-600 mb-1">反应模式</div>
-                <div className="text-sm font-medium text-amber-900">{patternLabel}</div>
-              </div>
-            )}
-          </div>
-
-          {/* 三层起点 */}
-          <div className="space-y-2">
-            <div className="text-xs text-amber-600 font-medium">三层起点</div>
-            <div className="grid grid-cols-3 gap-2">
-              <LayerScore 
-                icon={<Eye className="h-3 w-3" />}
-                label="行为" 
-                score={baselineBehavior} 
-                color="text-amber-600"
-              />
-              <LayerScore 
-                icon={<Heart className="h-3 w-3" />}
-                label="情绪" 
-                score={baselineEmotion} 
-                color="text-pink-600"
-              />
-              <LayerScore 
-                icon={<Brain className="h-3 w-3" />}
-                label="信念" 
-                score={baselineBelief} 
-                color="text-violet-600"
-              />
+              )}
+              {patternLabel && (
+                <div className="text-sm text-amber-700">{patternLabel}</div>
+              )}
+            </div>
+            <div className="text-right">
+              <span className="text-xs text-amber-600/70">觉醒起点</span>
+              <span 
+                className="ml-2 text-lg font-bold"
+                style={{ color: getAwakeningColor(baselineAwakening) }}
+              >
+                {baselineAwakening}
+              </span>
+              <span className="text-xs text-amber-600/50">分</span>
             </div>
           </div>
 
@@ -181,37 +137,5 @@ export const Day0BaselineCard = ({ onClick, showReportLink = true }: Day0Baselin
         </CardContent>
       </Card>
     </motion.div>
-  );
-};
-
-interface LayerScoreProps {
-  icon: React.ReactNode;
-  label: string;
-  score: number;
-  color: string;
-}
-
-const LayerScore = ({ icon, label, score, color }: LayerScoreProps) => {
-  // 转换为星级 (0-100 -> 1-5)
-  const stars = Math.round((score / 100) * 4 + 1);
-  
-  return (
-    <div className="bg-white/60 rounded-lg p-2 text-center">
-      <div className={`flex items-center justify-center gap-1 ${color} mb-1`}>
-        {icon}
-        <span className="text-xs font-medium">{label}</span>
-      </div>
-      <div className="flex justify-center gap-0.5">
-        {[1, 2, 3, 4, 5].map(i => (
-          <span 
-            key={i} 
-            className={`text-xs ${i <= stars ? 'text-amber-400' : 'text-gray-300'}`}
-          >
-            ⭐
-          </span>
-        ))}
-      </div>
-      <div className="text-xs text-muted-foreground mt-0.5">{score}%</div>
-    </div>
   );
 };
