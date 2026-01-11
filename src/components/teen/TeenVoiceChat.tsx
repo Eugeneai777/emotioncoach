@@ -84,13 +84,21 @@ export default function TeenVoiceChat({
     }
   }, [toast]);
 
+  // 🔧 使用 ref 追踪最新的 duration，解决闭包问题
+  const durationRef = useRef(0);
+  
+  // 保持 durationRef 与 duration 同步
+  useEffect(() => {
+    durationRef.current = duration;
+  }, [duration]);
+
   // Initialize WebRTC connection
   const initConnection = useCallback(async () => {
     try {
       // 🔧 Pre-deduct first minute (8 points) before connecting
       await deductQuota(8);
       isPreDeductedRef.current = true;
-      lastBilledMinuteRef.current = 0;
+      lastBilledMinuteRef.current = 1; // 🔧 修正：预扣后设为1，表示第1分钟已扣
       
       // Get ephemeral token from edge function
       const { data, error } = await supabase.functions.invoke('teen-realtime-token', {
@@ -169,14 +177,15 @@ export default function TeenVoiceChat({
         }, 1000);
 
         // First minute already deducted in pre-deduction
-        // Billing timer - deduct 8 points per minute starting from minute 2
+        // 🔧 修复：使用 durationRef.current 获取最新的 duration 值
         billingTimerRef.current = setInterval(() => {
-          const currentMinute = Math.floor(duration / 60);
+          const currentMinute = Math.floor(durationRef.current / 60) + 1; // 第几分钟
           if (currentMinute > lastBilledMinuteRef.current) {
+            console.log(`[TeenVoiceChat] Billing minute ${currentMinute}, duration: ${durationRef.current}s`);
             deductQuota(8);
             lastBilledMinuteRef.current = currentMinute;
           }
-        }, 60000);
+        }, 10000); // 每10秒检查一次，更精确
       });
 
       // Create and set local description
@@ -213,16 +222,64 @@ export default function TeenVoiceChat({
       setErrorMessage(err instanceof Error ? err.message : '连接失败');
       setStatus('error');
     }
-  }, [accessToken, deductQuota, refundPreDeductedQuota, duration]);
+  }, [accessToken, deductQuota, refundPreDeductedQuota]);
+
+  // 🔧 短通话退款函数
+  const refundShortCall = useCallback(async (durationSeconds: number) => {
+    if (!isPreDeductedRef.current) return;
+
+    let refundAmount = 0;
+    let refundReason = '';
+
+    // 10秒内：全额退款
+    if (durationSeconds < 10) {
+      refundAmount = 8;
+      refundReason = 'call_too_short_under_10s';
+    } 
+    // 10-30秒：半额退款
+    else if (durationSeconds < 30) {
+      refundAmount = 4;
+      refundReason = 'call_short_10_to_30s';
+    }
+
+    if (refundAmount === 0) return;
+
+    try {
+      console.log(`[TeenVoiceChat] Short call refund: ${refundAmount} points, duration: ${durationSeconds}s`);
+      const { data, error } = await supabase.functions.invoke('refund-failed-voice-call', {
+        body: {
+          amount: refundAmount,
+          session_id: `teen_${Date.now()}`,
+          reason: refundReason,
+          feature_key: 'teen_realtime_voice'
+        }
+      });
+
+      if (!error && data?.success) {
+        toast({
+          title: "短通话退款",
+          description: `通话时长较短，已退还 ${refundAmount} 点`,
+        });
+      }
+    } catch (e) {
+      console.error('[TeenVoiceChat] Short call refund error:', e);
+    }
+  }, [toast]);
 
   // End call
-  const endCall = useCallback(() => {
+  const endCall = useCallback(async () => {
     // Clear timers
     if (durationTimerRef.current) {
       clearInterval(durationTimerRef.current);
     }
     if (billingTimerRef.current) {
       clearInterval(billingTimerRef.current);
+    }
+
+    // 🔧 短通话退款检查
+    const finalDuration = durationRef.current;
+    if (isPreDeductedRef.current && finalDuration > 0) {
+      await refundShortCall(finalDuration);
     }
 
     // Close connections
@@ -234,7 +291,7 @@ export default function TeenVoiceChat({
     }
 
     setStatus('ended');
-  }, []);
+  }, [refundShortCall]);
 
   // Initialize on mount
   useEffect(() => {
