@@ -459,14 +459,24 @@ export const CoachVoiceChat = ({
     }
   };
 
-  // 记录会话
-  const recordSession = async () => {
+  // 记录会话 - 🔧 修复：使用 Ref 替代 State 避免延迟问题
+  const recordSession = async (finalDuration?: number, finalBilledMinutes?: number) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user || billedMinutes === 0) return;
+      
+      // 🔧 使用传入的值或 Ref 值，避免 state 延迟
+      const actualDuration = finalDuration ?? durationValueRef.current;
+      const actualBilledMinutes = finalBilledMinutes ?? lastBilledMinuteRef.current;
+      
+      console.log(`[VoiceChat] recordSession - actualDuration: ${actualDuration}, actualBilledMinutes: ${actualBilledMinutes}`);
+      
+      if (!user || actualBilledMinutes === 0) {
+        console.log('[VoiceChat] recordSession skipped: no user or no billed minutes');
+        return;
+      }
 
       // 计算通话分钟数
-      const callMinutes = Math.ceil(duration / 60);
+      const callMinutes = Math.ceil(actualDuration / 60) || 1;
       
       // 如果没有收到 token 数据，基于通话时长估算
       // OpenAI Realtime API 约 150 audio tokens/秒，1分钟 = ~9000 tokens
@@ -482,13 +492,13 @@ export const CoachVoiceChat = ({
 
       console.log(`[VoiceChat] Session API cost: $${totalCostUsd.toFixed(4)} (¥${totalCostCny.toFixed(4)}), tokens: ${inputTokens} in / ${outputTokens} out`);
 
-      // 保存到 voice_chat_sessions (包含 API 成本)
+      // 保存到 voice_chat_sessions (包含 API 成本) - 🔧 使用 actualDuration 和 actualBilledMinutes
       await supabase.from('voice_chat_sessions').insert({
         user_id: user.id,
         coach_key: 'vibrant_life_sage',
-        duration_seconds: duration,
-        billed_minutes: billedMinutes,
-        total_cost: billedMinutes * POINTS_PER_MINUTE,
+        duration_seconds: actualDuration,
+        billed_minutes: actualBilledMinutes,
+        total_cost: actualBilledMinutes * POINTS_PER_MINUTE,
         transcript_summary: (userTranscript + '\n' + transcript).slice(0, 500) || null,
         input_tokens: inputTokens,
         output_tokens: outputTokens,
@@ -612,37 +622,55 @@ export const CoachVoiceChat = ({
     }
   };
 
-  // 🔧 退还预扣点数（连接失败时调用）
-  const refundPreDeductedQuota = async (reason: string) => {
+  // 🔧 退还预扣点数（连接失败时调用）- 增强日志
+  const refundPreDeductedQuota = async (reason: string): Promise<boolean> => {
+    const currentBilledMinute = lastBilledMinuteRef.current;
+    console.log(`[VoiceChat] 🔄 refundPreDeductedQuota called - currentBilledMinute: ${currentBilledMinute}, reason: ${reason}`);
+    
     // 只有当预扣了第一分钟点数时才需要退还
-    if (lastBilledMinuteRef.current >= 1) {
-      try {
-        console.log(`[VoiceChat] Refunding ${POINTS_PER_MINUTE} points, reason: ${reason}`);
-        const { data, error } = await supabase.functions.invoke('refund-failed-voice-call', {
-          body: {
-            amount: POINTS_PER_MINUTE,
-            session_id: sessionIdRef.current,
-            reason,
-            feature_key: featureKey
-          }
-        });
-        
-        if (error) {
-          console.error('[VoiceChat] Refund failed:', error);
-        } else if (data?.success) {
-          console.log(`[VoiceChat] Refund successful: ${data.refunded_amount} points returned`);
-          setRemainingQuota(data.remaining_quota);
-          // 重置已扣费分钟
-          lastBilledMinuteRef.current = 0;
-          setBilledMinutes(0);
-          toast({
-            title: "点数已退还",
-            description: `${POINTS_PER_MINUTE} 点已退还到您的账户`,
-          });
-        }
-      } catch (e) {
-        console.error('[VoiceChat] Refund error:', e);
+    if (currentBilledMinute < 1) {
+      console.log('[VoiceChat] ⏭️ Skip refund: no pre-deduction (currentBilledMinute < 1)');
+      return false;
+    }
+    
+    try {
+      const requestBody = {
+        amount: POINTS_PER_MINUTE,
+        session_id: sessionIdRef.current,
+        reason,
+        feature_key: featureKey
+      };
+      console.log(`[VoiceChat] 📡 Sending refund request:`, JSON.stringify(requestBody));
+      
+      const { data, error } = await supabase.functions.invoke('refund-failed-voice-call', {
+        body: requestBody
+      });
+      
+      console.log('[VoiceChat] 📦 Refund response:', JSON.stringify({ data, error }));
+      
+      if (error) {
+        console.error('[VoiceChat] ❌ Refund API error:', error);
+        return false;
       }
+      
+      if (data?.success) {
+        console.log(`[VoiceChat] ✅ Refund successful: ${data.refunded_amount} points returned, new balance: ${data.remaining_quota}`);
+        setRemainingQuota(data.remaining_quota);
+        // 重置已扣费分钟
+        lastBilledMinuteRef.current = 0;
+        setBilledMinutes(0);
+        toast({
+          title: "点数已退还",
+          description: `${POINTS_PER_MINUTE} 点已退还到您的账户`,
+        });
+        return true;
+      } else {
+        console.warn('[VoiceChat] ⚠️ Refund response without success:', data);
+        return false;
+      }
+    } catch (e) {
+      console.error('[VoiceChat] 💥 Refund exception:', e);
+      return false;
     }
   };
 
@@ -741,17 +769,20 @@ export const CoachVoiceChat = ({
   };
 
 
-  // 🔧 短通话退款函数
+  // 🔧 短通话退款函数 - 增强日志
   const refundShortCall = async (durationSeconds: number): Promise<boolean> => {
+    const currentBilledMinute = lastBilledMinuteRef.current;
+    console.log(`[VoiceChat] 🔄 refundShortCall called - durationSeconds: ${durationSeconds}, currentBilledMinute: ${currentBilledMinute}`);
+    
     // 只有在真正扣费了的情况下才处理
-    if (lastBilledMinuteRef.current === 0) {
-      console.log('[VoiceChat] No billing to refund for short call');
+    if (currentBilledMinute === 0) {
+      console.log('[VoiceChat] ⏭️ Skip short call refund: no billing (currentBilledMinute === 0)');
       return false;
     }
 
     // 🔧 只处理第一分钟的退款（后续分钟用户已实际使用）
-    if (lastBilledMinuteRef.current > 1) {
-      console.log('[VoiceChat] Multiple minutes billed, no short call refund');
+    if (currentBilledMinute > 1) {
+      console.log('[VoiceChat] ⏭️ Skip short call refund: multiple minutes billed');
       return false;
     }
 
@@ -762,49 +793,62 @@ export const CoachVoiceChat = ({
     if (durationSeconds < 10) {
       refundAmount = POINTS_PER_MINUTE;
       refundReason = 'call_too_short_under_10s';
+      console.log(`[VoiceChat] 📊 Short call < 10s: full refund (${refundAmount} points)`);
     } 
     // 10-30秒：半额退款（可能是快速测试）
     else if (durationSeconds < 30) {
       refundAmount = Math.floor(POINTS_PER_MINUTE / 2);
       refundReason = 'call_short_10_to_30s';
+      console.log(`[VoiceChat] 📊 Short call 10-30s: half refund (${refundAmount} points)`);
     }
     // 超过30秒：不退款
     else {
-      console.log('[VoiceChat] Call duration >= 30s, no refund');
+      console.log('[VoiceChat] ⏭️ Call duration >= 30s, no refund needed');
       return false;
     }
 
-    if (refundAmount === 0) return false;
+    if (refundAmount === 0) {
+      console.log('[VoiceChat] ⏭️ Calculated refund amount is 0, skipping');
+      return false;
+    }
 
     try {
-      console.log(`[VoiceChat] Short call refund: ${refundAmount} points, duration: ${durationSeconds}s, reason: ${refundReason}`);
+      const requestBody = {
+        amount: refundAmount,
+        session_id: sessionIdRef.current,
+        reason: refundReason,
+        feature_key: featureKey
+      };
+      console.log(`[VoiceChat] 📡 Sending short call refund request:`, JSON.stringify(requestBody));
+      
       const { data, error } = await supabase.functions.invoke('refund-failed-voice-call', {
-        body: {
-          amount: refundAmount,
-          session_id: sessionIdRef.current,
-          reason: refundReason,
-          feature_key: featureKey
-        }
+        body: requestBody
       });
 
+      console.log('[VoiceChat] 📦 Short call refund response:', JSON.stringify({ data, error }));
+
       if (error) {
-        console.error('[VoiceChat] Short call refund failed:', error);
+        console.error('[VoiceChat] ❌ Short call refund API error:', error);
         return false;
       }
 
       if (data?.success) {
         setRemainingQuota(data.remaining_quota);
+        // 🔧 更新 lastBilledMinuteRef 以反映退款后的状态
+        lastBilledMinuteRef.current = 0;
+        setBilledMinutes(0);
         toast({
           title: "短通话退款",
           description: `通话时长较短，已退还 ${refundAmount} 点`,
         });
-        console.log(`[VoiceChat] Short call refunded ${refundAmount} points`);
+        console.log(`[VoiceChat] ✅ Short call refunded ${refundAmount} points, new balance: ${data.remaining_quota}`);
         return true;
+      } else {
+        console.warn('[VoiceChat] ⚠️ Short call refund response without success:', data);
+        return false;
       }
-
-      return false;
     } catch (e) {
-      console.error('[VoiceChat] Short call refund error:', e);
+      console.error('[VoiceChat] 💥 Short call refund exception:', e);
       return false;
     }
   };
@@ -836,18 +880,23 @@ export const CoachVoiceChat = ({
       
       // 🔧 退款逻辑优化 - 使用 durationValueRef 避免 state 延迟问题
       const finalDuration = durationValueRef.current;
-      console.log(`[VoiceChat] EndCall - finalDuration: ${finalDuration}, lastBilledMinute: ${lastBilledMinuteRef.current}`);
+      const finalBilledMinutes = lastBilledMinuteRef.current;
+      console.log(`[VoiceChat] 🔚 EndCall - finalDuration: ${finalDuration}s, finalBilledMinutes: ${finalBilledMinutes}`);
       
-      if (lastBilledMinuteRef.current > 0) {
+      let refundApplied = false;
+      if (finalBilledMinutes > 0) {
         if (finalDuration === 0) {
           // 🔧 修复：预扣了点数但通话从未真正开始（duration=0），全额退款
-          console.log('[VoiceChat] Call never started (duration=0), refunding pre-deducted quota');
-          await refundPreDeductedQuota('call_never_started');
-        } else if (finalDuration > 0 && lastBilledMinuteRef.current === 1) {
+          console.log('[VoiceChat] 🔄 Call never started (duration=0), attempting full refund');
+          refundApplied = await refundPreDeductedQuota('call_never_started');
+        } else if (finalDuration > 0 && finalBilledMinutes === 1) {
           // 🔧 短通话退款检查：只有扣了第一分钟时才检查
-          await refundShortCall(finalDuration);
+          console.log('[VoiceChat] 🔄 Checking short call refund eligibility');
+          refundApplied = await refundShortCall(finalDuration);
         }
       }
+      
+      console.log(`[VoiceChat] 📊 Refund applied: ${refundApplied}, proceeding to record session`);
       
       // 保存session信息用于断线重连
       try {
@@ -862,8 +911,11 @@ export const CoachVoiceChat = ({
         console.error('Error saving session to localStorage:', e);
       }
       
-      // 记录会话
-      await recordSession();
+      // 记录会话 - 🔧 传入最终值，确保使用正确的 duration 和 billedMinutes
+      // 如果已退款，使用退款后的值（0）；否则使用最终值
+      const sessionDuration = refundApplied ? 0 : finalDuration;
+      const sessionBilledMinutes = refundApplied ? 0 : finalBilledMinutes;
+      await recordSession(sessionDuration, sessionBilledMinutes);
       
       // 🔧 释放全局语音会话锁
       releaseLock();

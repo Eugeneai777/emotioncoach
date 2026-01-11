@@ -54,35 +54,54 @@ export default function TeenVoiceChat({
     }
   }, [parentUserId]);
 
-  // 🔧 Refund pre-deducted quota on connection failure
+  // 🔧 Refund pre-deducted quota on connection failure - 增强日志
   // 🔧 重要：退款到父账户（parentUserId），而非当前登录用户
-  const refundPreDeductedQuota = useCallback(async (reason: string) => {
-    if (!isPreDeductedRef.current) return;
+  const refundPreDeductedQuota = useCallback(async (reason: string): Promise<boolean> => {
+    const currentBilledMinute = lastBilledMinuteRef.current;
+    console.log(`[TeenVoiceChat] 🔄 refundPreDeductedQuota called - isPreDeducted: ${isPreDeductedRef.current}, currentBilledMinute: ${currentBilledMinute}, reason: ${reason}`);
+    
+    if (!isPreDeductedRef.current) {
+      console.log('[TeenVoiceChat] ⏭️ Skip refund: not pre-deducted');
+      return false;
+    }
     
     try {
-      console.log(`[TeenVoiceChat] Refunding 8 points to parent ${parentUserId}, reason: ${reason}`);
+      const requestBody = {
+        amount: 8,
+        session_id: `teen_${Date.now()}`,
+        reason,
+        feature_key: 'teen_realtime_voice',
+        target_user_id: parentUserId  // 🔧 退款到父账户
+      };
+      console.log(`[TeenVoiceChat] 📡 Sending refund request to parent ${parentUserId}:`, JSON.stringify(requestBody));
+      
       const { data, error } = await supabase.functions.invoke('refund-failed-voice-call', {
-        body: {
-          amount: 8,
-          session_id: `teen_${Date.now()}`,
-          reason,
-          feature_key: 'teen_realtime_voice',
-          target_user_id: parentUserId  // 🔧 退款到父账户
-        }
+        body: requestBody
       });
       
+      console.log('[TeenVoiceChat] 📦 Refund response:', JSON.stringify({ data, error }));
+      
       if (error) {
-        console.error('[TeenVoiceChat] Refund failed:', error);
-      } else if (data?.success) {
-        console.log(`[TeenVoiceChat] Refund successful: ${data.refunded_amount} points returned to parent`);
+        console.error('[TeenVoiceChat] ❌ Refund API error:', error);
+        return false;
+      }
+      
+      if (data?.success) {
+        console.log(`[TeenVoiceChat] ✅ Refund successful: ${data.refunded_amount} points returned to parent, new balance: ${data.remaining_quota}`);
         isPreDeductedRef.current = false;
+        lastBilledMinuteRef.current = 0;
         toast({
           title: "点数已退还",
           description: "8 点已退还到账户",
         });
+        return true;
+      } else {
+        console.warn('[TeenVoiceChat] ⚠️ Refund response without success:', data);
+        return false;
       }
     } catch (e) {
-      console.error('[TeenVoiceChat] Refund error:', e);
+      console.error('[TeenVoiceChat] 💥 Refund exception:', e);
+      return false;
     }
   }, [toast, parentUserId]);
 
@@ -226,15 +245,21 @@ export default function TeenVoiceChat({
     }
   }, [accessToken, deductQuota, refundPreDeductedQuota]);
 
-  // 🔧 短通话退款函数
+  // 🔧 短通话退款函数 - 增强日志
   // 🔧 重要：退款到父账户（parentUserId）
-  const refundShortCall = useCallback(async (durationSeconds: number) => {
-    if (!isPreDeductedRef.current) return;
+  const refundShortCall = useCallback(async (durationSeconds: number): Promise<boolean> => {
+    const currentBilledMinute = lastBilledMinuteRef.current;
+    console.log(`[TeenVoiceChat] 🔄 refundShortCall called - durationSeconds: ${durationSeconds}, currentBilledMinute: ${currentBilledMinute}, isPreDeducted: ${isPreDeductedRef.current}`);
+    
+    if (!isPreDeductedRef.current) {
+      console.log('[TeenVoiceChat] ⏭️ Skip short call refund: not pre-deducted');
+      return false;
+    }
 
     // 只处理第一分钟的退款（后续分钟用户已实际使用）
-    if (lastBilledMinuteRef.current > 1) {
-      console.log('[TeenVoiceChat] Multiple minutes billed, no short call refund');
-      return;
+    if (currentBilledMinute > 1) {
+      console.log('[TeenVoiceChat] ⏭️ Skip short call refund: multiple minutes billed');
+      return false;
     }
 
     let refundAmount = 0;
@@ -244,39 +269,64 @@ export default function TeenVoiceChat({
     if (durationSeconds < 10) {
       refundAmount = 8;
       refundReason = 'call_too_short_under_10s';
+      console.log(`[TeenVoiceChat] 📊 Short call < 10s: full refund (${refundAmount} points)`);
     } 
     // 10-30秒：半额退款
     else if (durationSeconds < 30) {
       refundAmount = 4;
       refundReason = 'call_short_10_to_30s';
+      console.log(`[TeenVoiceChat] 📊 Short call 10-30s: half refund (${refundAmount} points)`);
+    } else {
+      console.log('[TeenVoiceChat] ⏭️ Call duration >= 30s, no refund needed');
+      return false;
     }
 
-    if (refundAmount === 0) return;
+    if (refundAmount === 0) {
+      console.log('[TeenVoiceChat] ⏭️ Calculated refund amount is 0, skipping');
+      return false;
+    }
 
     try {
-      console.log(`[TeenVoiceChat] Short call refund: ${refundAmount} points to parent ${parentUserId}, duration: ${durationSeconds}s`);
+      const requestBody = {
+        amount: refundAmount,
+        session_id: `teen_${Date.now()}`,
+        reason: refundReason,
+        feature_key: 'teen_realtime_voice',
+        target_user_id: parentUserId  // 🔧 退款到父账户
+      };
+      console.log(`[TeenVoiceChat] 📡 Sending short call refund to parent ${parentUserId}:`, JSON.stringify(requestBody));
+      
       const { data, error } = await supabase.functions.invoke('refund-failed-voice-call', {
-        body: {
-          amount: refundAmount,
-          session_id: `teen_${Date.now()}`,
-          reason: refundReason,
-          feature_key: 'teen_realtime_voice',
-          target_user_id: parentUserId  // 🔧 退款到父账户
-        }
+        body: requestBody
       });
 
-      if (!error && data?.success) {
+      console.log('[TeenVoiceChat] 📦 Short call refund response:', JSON.stringify({ data, error }));
+
+      if (error) {
+        console.error('[TeenVoiceChat] ❌ Short call refund API error:', error);
+        return false;
+      }
+
+      if (data?.success) {
+        isPreDeductedRef.current = false;
+        lastBilledMinuteRef.current = 0;
         toast({
           title: "短通话退款",
           description: `通话时长较短，已退还 ${refundAmount} 点`,
         });
+        console.log(`[TeenVoiceChat] ✅ Short call refunded ${refundAmount} points to parent, new balance: ${data.remaining_quota}`);
+        return true;
+      } else {
+        console.warn('[TeenVoiceChat] ⚠️ Short call refund response without success:', data);
+        return false;
       }
     } catch (e) {
-      console.error('[TeenVoiceChat] Short call refund error:', e);
+      console.error('[TeenVoiceChat] 💥 Short call refund exception:', e);
+      return false;
     }
   }, [toast, parentUserId]);
 
-  // End call
+  // End call - 🔧 增强日志
   const endCall = useCallback(async () => {
     // Clear timers
     if (durationTimerRef.current) {
@@ -286,15 +336,19 @@ export default function TeenVoiceChat({
       clearInterval(billingTimerRef.current);
     }
 
-    // 🔧 退款逻辑优化
+    // 🔧 退款逻辑优化 - 使用 durationRef 确保获取最新值
     const finalDuration = durationRef.current;
+    const finalBilledMinute = lastBilledMinuteRef.current;
+    console.log(`[TeenVoiceChat] 🔚 EndCall - finalDuration: ${finalDuration}s, finalBilledMinute: ${finalBilledMinute}, isPreDeducted: ${isPreDeductedRef.current}`);
+    
     if (isPreDeductedRef.current) {
       if (finalDuration === 0) {
         // 🔧 修复：预扣了点数但通话从未真正开始，全额退款
-        console.log('[TeenVoiceChat] Call never started (duration=0), refunding pre-deducted quota');
+        console.log('[TeenVoiceChat] 🔄 Call never started (duration=0), attempting full refund');
         await refundPreDeductedQuota('call_never_started');
       } else if (finalDuration > 0) {
         // 🔧 短通话退款检查
+        console.log('[TeenVoiceChat] 🔄 Checking short call refund eligibility');
         await refundShortCall(finalDuration);
       }
     }
