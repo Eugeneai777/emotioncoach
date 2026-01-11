@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { UnifiedStageProgress } from "@/components/coach/UnifiedStageProgress";
@@ -88,6 +89,15 @@ const CommunicationCoach = () => {
 
   return (
     <>
+      <Helmet>
+        <title>卡内基沟通教练 - 有劲AI</title>
+        <meta name="description" content="四步沟通模型，让关系更顺畅" />
+        <meta property="og:title" content="有劲AI卡内基沟通教练" />
+        <meta property="og:description" content="说得更清晰、关系更顺畅、对方更愿意听" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/communication-coach" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       <CoachLayout
         emoji={template.emoji}
         title={template.title}

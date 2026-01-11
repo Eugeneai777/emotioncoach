@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import { TeenModeOnboarding } from "@/components/parent-coach/TeenModeOnboarding";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,6 +42,15 @@ export default function ParentTeenIntro() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
+      <Helmet>
+        <title>双轨模式介绍 - 有劲AI</title>
+        <meta name="description" content="让孩子也有一个安全角落" />
+        <meta property="og:title" content="有劲AI｜亲子教练双轨模式" />
+        <meta property="og:description" content="家长和孩子各自拥有专属AI陪伴，在安全空间中成长" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/parent/teen-intro" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-teal-100">
         <div className="flex items-center justify-between px-4 py-3">
