@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useQuickMenuConfig } from '@/hooks/useQuickMenuConfig';
 import { QuickMenuSettingsDialog } from '@/components/QuickMenuSettingsDialog';
-
+import FeedbackDialog from '@/components/FeedbackDialog';
 const POSITION_STORAGE_KEY = 'floatingQuickMenuPosition';
 const EXCLUDED_ROUTES = ['/auth', '/login', '/register', '/onboarding'];
 
@@ -31,6 +31,7 @@ export const FloatingQuickMenu = () => {
   
   const [isExpanded, setIsExpanded] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [position, setPosition] = useState<Position>({ x: 20, y: window.innerHeight - 200 });
   const [isDragging, setIsDragging] = useState(false);
   const [hasMoved, setHasMoved] = useState(false);
@@ -217,9 +218,13 @@ export const FloatingQuickMenu = () => {
   };
 
   // Handle menu item click
-  const handleMenuItemClick = (path: string) => {
+  const handleMenuItemClick = (id: string, path: string) => {
     setIsExpanded(false);
-    navigate(path);
+    if (id === 'feedback') {
+      setShowFeedbackDialog(true);
+    } else {
+      navigate(path);
+    }
   };
 
   // Check if should hide on current route
@@ -259,7 +264,7 @@ export const FloatingQuickMenu = () => {
                   return (
                     <motion.button
                       key={item.id}
-                      onClick={() => handleMenuItemClick(item.path)}
+                      onClick={() => handleMenuItemClick(item.id, item.path)}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-left transition-colors
@@ -338,6 +343,12 @@ export const FloatingQuickMenu = () => {
         onOpenChange={setShowSettings}
         config={config}
         onSave={saveConfig}
+      />
+
+      {/* Feedback Dialog */}
+      <FeedbackDialog
+        open={showFeedbackDialog}
+        onOpenChange={setShowFeedbackDialog}
       />
     </>
   );
