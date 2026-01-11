@@ -304,7 +304,7 @@ export const FloatingQuickMenu = () => {
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center cursor-pointer select-none
             ${isExpanded 
               ? 'bg-slate-600' 
-              : 'bg-gradient-to-br from-sky-100 to-sky-200'
+              : 'bg-gradient-to-br from-sky-50/80 to-sky-100/80'
             }
             ${isDragging ? 'scale-110' : ''}
             transition-all duration-200`}
@@ -316,9 +316,9 @@ export const FloatingQuickMenu = () => {
           whileTap={{ scale: 0.95 }}
           animate={!isExpanded && !isDragging ? {
             boxShadow: [
-              '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-              '0 4px 20px -1px rgba(186, 230, 253, 0.4)',
-              '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              '0 4px 6px -1px rgba(0, 0, 0, 0.08)',
+              '0 4px 15px -1px rgba(186, 230, 253, 0.3)',
+              '0 4px 6px -1px rgba(0, 0, 0, 0.08)',
             ],
           } : {}}
           transition={{
@@ -332,7 +332,7 @@ export const FloatingQuickMenu = () => {
         {isExpanded ? (
             <X className="w-6 h-6 text-white" />
           ) : (
-            <span className="text-2xl">🚀</span>
+            <span className="text-2xl" style={{ transform: 'rotate(-45deg)' }}>🚀</span>
           )}
         </motion.div>
       </div>
