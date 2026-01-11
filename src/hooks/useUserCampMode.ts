@@ -134,14 +134,17 @@ export function useUserCampMode(): CampModeResult {
       const daysSinceGraduation = Math.max(0, Math.floor((today.getTime() - graduationDate.getTime()) / (1000 * 60 * 60 * 24)));
       
       // 基于实际打卡次数计算轮次
-      // 训练营7天 + 毕业后打卡次数
+      // 训练营7天 = 第1轮，毕业后开始第2轮
       const totalPostCampCheckins = postGraduationCheckIns;
       
-      // 轮次计算：每7次打卡为1轮
-      // 第1轮：打卡1-7次，第2轮：打卡8-14次，etc.
+      // 轮次计算：训练营是第1轮，毕业后从第2轮开始
+      // 毕业后每7次打卡进入下一轮
+      // 打卡0次 → 第2轮（刚毕业）
+      // 打卡1-7次 → 第2轮
+      // 打卡8-14次 → 第3轮，etc.
       const cycleRound = totalPostCampCheckins === 0 
-        ? 1 
-        : Math.ceil(totalPostCampCheckins / 7);
+        ? 2 
+        : Math.ceil(totalPostCampCheckins / 7) + 1;
       
       // 本轮第几天：基于打卡次数
       // 如果打卡0次，显示本轮Day 1
