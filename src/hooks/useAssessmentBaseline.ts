@@ -14,10 +14,10 @@ export interface AssessmentBaseline {
   emotion_score: number;
   belief_score: number;
   total_score: number;
-  dominant_poor: string | null;
-  dominant_emotion: string | null;
-  dominant_belief: string | null;
-  reaction_pattern: string | null;
+  dominant_poor: string;
+  dominant_emotion: string;
+  dominant_belief: string;
+  reaction_pattern: string;
   // Four poor individual scores
   mouth_score: number;
   hand_score: number;
@@ -85,7 +85,7 @@ export function useAssessmentBaseline(campId?: string) {
       // PRIORITY 2: Fallback to first assessment (true Day 0)
       const { data: assessmentData, error: queryError } = await supabase
         .from('wealth_block_assessments')
-        .select('id, created_at, behavior_score, emotion_score, belief_score, dominant_poor, dominant_block, reaction_pattern, mouth_score, hand_score, eye_score, heart_score')
+        .select('id, created_at, behavior_score, emotion_score, belief_score, dominant_poor, dominant_block, reaction_pattern, mouth_score, hand_score, eye_score, heart_score, answers')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true }) // Get FIRST assessment, not latest
         .limit(1)
@@ -135,6 +135,43 @@ export function useAssessmentBaseline(campId?: string) {
       const emotionStars = blockScoreToAwakeningStars(emotionScore, 50);
       const beliefStars = blockScoreToAwakeningStars(beliefScore, 50);
 
+      // Calculate dominant emotion and belief types from answers if available
+      let dominantEmotionType: string = 'anxiety';
+      let dominantBeliefType: string = 'lack';
+      
+      if (assessmentData.answers && typeof assessmentData.answers === 'object') {
+        const answers = assessmentData.answers as Record<string, number>;
+        
+        // Emotion types mapping (questions 11-20)
+        const emotionScores: Record<string, number> = {
+          anxiety: (answers['11'] || 0) + (answers['17'] || 0),
+          scarcity: (answers['12'] || 0) + (answers['20'] || 0),
+          comparison: (answers['13'] || 0) + (answers['18'] || 0),
+          shame: (answers['14'] || 0) + (answers['19'] || 0),
+          guilt: (answers['15'] || 0) + (answers['16'] || 0),
+        };
+        
+        // Belief types mapping (questions 21-30)
+        const beliefScores: Record<string, number> = {
+          lack: (answers['22'] || 0) + (answers['26'] || 0),
+          linear: (answers['24'] || 0) + (answers['30'] || 0),
+          stigma: (answers['21'] || 0) + (answers['27'] || 0),
+          unworthy: (answers['23'] || 0) + (answers['28'] || 0),
+          relationship: (answers['25'] || 0) + (answers['29'] || 0),
+        };
+        
+        // Find dominant types
+        dominantEmotionType = Object.entries(emotionScores).reduce(
+          (max, [key, val]) => val > (emotionScores[max] || 0) ? key : max, 
+          'anxiety'
+        );
+        
+        dominantBeliefType = Object.entries(beliefScores).reduce(
+          (max, [key, val]) => val > (beliefScores[max] || 0) ? key : max, 
+          'lack'
+        );
+      }
+
       return {
         id: assessmentData.id,
         created_at: createdAt,
@@ -142,10 +179,10 @@ export function useAssessmentBaseline(campId?: string) {
         emotion_score: emotionScore,
         belief_score: beliefScore,
         total_score: healthScore,
-        dominant_poor: assessmentData.dominant_poor || null,
-        dominant_emotion: assessmentData.dominant_block || null,
-        dominant_belief: assessmentData.dominant_block || null,
-        reaction_pattern: assessmentData.reaction_pattern || null,
+        dominant_poor: assessmentData.dominant_poor || 'mouth',
+        dominant_emotion: dominantEmotionType,
+        dominant_belief: dominantBeliefType,
+        reaction_pattern: assessmentData.reaction_pattern || 'harmony',
         // Four poor scores (from first assessment)
         mouth_score: assessmentData.mouth_score || 0,
         hand_score: assessmentData.hand_score || 0,
