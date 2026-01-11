@@ -466,7 +466,7 @@ function TaskItem({ task, index }: { task: BaseTask; index: number }) {
   );
 }
 
-// Challenge Item Component
+// Challenge Item Component - Unified with TaskItem layout
 function ChallengeItem({
   challenge,
   index,
@@ -498,95 +498,68 @@ function ChallengeItem({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      className={cn(
-        "border rounded-lg overflow-hidden transition-all",
-        challenge.is_completed 
-          ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800" 
-          : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700"
-      )}
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className="overflow-hidden"
     >
+      {/* Main Row - Same as TaskItem */}
       <div
-        className="p-3 cursor-pointer"
+        className={cn(
+          "flex items-center gap-3 p-3 rounded-lg transition-all",
+          challenge.is_completed 
+            ? "bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800" 
+            : "bg-muted/50 cursor-pointer hover:bg-muted"
+        )}
         onClick={() => !challenge.is_completed && onExpand()}
       >
-        <div className="flex items-start gap-3">
-          <div className={`mt-0.5 ${challenge.is_completed ? 'text-emerald-500' : ''}`}>
-            {challenge.is_completed ? (
-              <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                <Check className="h-3 w-3 text-white" />
-              </div>
-            ) : (
-              <Checkbox checked={false} disabled className="mt-0.5" />
-            )}
-          </div>
+        {/* Icon Area - Same size as TaskItem */}
+        <div className={cn(
+          "w-9 h-9 rounded-lg flex items-center justify-center text-lg",
+          challenge.is_completed 
+            ? "bg-emerald-100 dark:bg-emerald-900/50" 
+            : "bg-amber-100 dark:bg-amber-900/50"
+        )}>
+          {typeInfo.icon}
+        </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg">{typeInfo.icon}</span>
-              <span className={`text-xs ${typeInfo.color}`}>{typeInfo.name}</span>
-              <Badge className={`text-xs ${difficultyInfo.color}`}>
-                {difficultyInfo.name}
-              </Badge>
-            </div>
-            <h4 className={cn(
-              "font-medium",
-              challenge.is_completed ? 'text-emerald-700 dark:text-emerald-300' : ''
-            )}>
-              {challenge.challenge_title}
-            </h4>
-            {challenge.challenge_description && !isExpanded && (
-              <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
-                {challenge.challenge_description}
-              </p>
-            )}
-            {/* AI Recommendation Reason */}
-            {challenge.recommendation_reason && !challenge.is_completed && (
-              <div className="flex items-center gap-1 mt-1.5">
-                <span className={cn(
-                  "text-xs",
-                  challenge.ai_insight_source === 'keyword' && "text-rose-600 dark:text-rose-400",
-                  challenge.ai_insight_source === 'belief' && "text-violet-600 dark:text-violet-400",
-                  challenge.ai_insight_source === 'focus' && "text-blue-600 dark:text-blue-400",
-                  challenge.ai_insight_source === 'pattern' && "text-emerald-600 dark:text-emerald-400",
-                  (!challenge.ai_insight_source || challenge.ai_insight_source === 'layer') && "text-amber-600 dark:text-amber-400"
-                )}>
-                  {challenge.recommendation_reason}
-                </span>
-                {challenge.linked_belief && (
-                  <Badge variant="outline" className="text-[10px] h-4 px-1 bg-violet-50 text-violet-600 border-violet-200 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-800">
-                    💎 信念
-                  </Badge>
-                )}
-              </div>
-            )}
-            {/* Target Poor Type */}
-            {poorTypeInfo && !challenge.is_completed && !challenge.recommendation_reason && (
-              <div className="flex items-center gap-1 mt-1.5">
-                <span className="text-xs text-muted-foreground">🎯 目标：</span>
-                <Badge variant="outline" className="text-xs py-0 h-5">
-                  {poorTypeInfo.poorEmoji} {poorTypeInfo.poorName} → {poorTypeInfo.richEmoji} {poorTypeInfo.richName}
-                </Badge>
-              </div>
-            )}
-          </div>
-
+        {/* Content Area */}
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="shrink-0">
-              +{challenge.points_reward}分
+            <span className="font-medium text-sm">{typeInfo.name}</span>
+            <Badge className={cn(
+              "text-[10px] h-4 px-1.5",
+              difficultyInfo.color
+            )}>
+              {difficultyInfo.name}
             </Badge>
-            {!challenge.is_completed && (
-              <ChevronRight 
-                className={cn(
-                  "h-4 w-4 text-muted-foreground transition-transform",
-                  isExpanded && "rotate-90"
-                )}
-              />
-            )}
+          </div>
+          <div className="text-xs text-muted-foreground truncate">
+            {challenge.challenge_title}
           </div>
         </div>
+
+        {/* Points Badge */}
+        <div className={cn(
+          "px-2 py-0.5 rounded-full text-xs font-medium",
+          challenge.is_completed 
+            ? "bg-emerald-200/50 text-emerald-700 dark:bg-emerald-800/50 dark:text-emerald-300"
+            : "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"
+        )}>
+          +{challenge.points_reward}分
+        </div>
+
+        {/* Status Icon */}
+        {challenge.is_completed ? (
+          <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+            <Check className="w-4 h-4 text-white" />
+          </div>
+        ) : (
+          <ChevronRight className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform",
+            isExpanded && "rotate-90"
+          )} />
+        )}
       </div>
 
       {/* Expanded Details */}
@@ -597,15 +570,45 @@ function ChallengeItem({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-t border-slate-100 dark:border-slate-800"
+            className="overflow-hidden"
           >
-            <div className="p-3 space-y-3 bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="p-3 mt-1 space-y-3 bg-slate-50/50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
+              {/* Description */}
               {challenge.challenge_description && (
                 <p className="text-sm text-muted-foreground">
                   {challenge.challenge_description}
                 </p>
               )}
 
+              {/* AI Recommendation Reason */}
+              {challenge.recommendation_reason && (
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-amber-500" />
+                  <span className={cn(
+                    "text-xs",
+                    challenge.ai_insight_source === 'keyword' && "text-rose-600 dark:text-rose-400",
+                    challenge.ai_insight_source === 'belief' && "text-violet-600 dark:text-violet-400",
+                    challenge.ai_insight_source === 'focus' && "text-blue-600 dark:text-blue-400",
+                    challenge.ai_insight_source === 'pattern' && "text-emerald-600 dark:text-emerald-400",
+                    (!challenge.ai_insight_source || challenge.ai_insight_source === 'layer') && "text-amber-600 dark:text-amber-400"
+                  )}>
+                    {challenge.recommendation_reason}
+                  </span>
+                </div>
+              )}
+
+              {/* Target Poor Type */}
+              {poorTypeInfo && (
+                <div className="flex items-center gap-1.5">
+                  <Target className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">目标：</span>
+                  <Badge variant="outline" className="text-xs py-0 h-5">
+                    {poorTypeInfo.poorEmoji} {poorTypeInfo.poorName} → {poorTypeInfo.richEmoji} {poorTypeInfo.richName}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Reflection Input */}
               <div className="space-y-2">
                 <label className="text-xs text-muted-foreground">
                   完成感想 (可选)
@@ -619,6 +622,7 @@ function ChallengeItem({
                 />
               </div>
 
+              {/* Complete Button */}
               <Button 
                 className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                 onClick={onComplete}
