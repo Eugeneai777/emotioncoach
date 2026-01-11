@@ -1,15 +1,11 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { WealthProgressChart } from './WealthProgressChart';
-import { ActionTrackingStats } from './ActionTrackingStats';
 import { GrowthHighlightsCard } from './GrowthHighlightsCard';
 import { GameProgressCard } from './GameProgressCard';
 import { CompactAchievementGrid } from './CompactAchievementGrid';
-import { NewBeliefsCollection } from './NewBeliefsCollection';
 import { WeeklyComparisonChart } from './WeeklyComparisonChart';
 import { GrowthComparisonCard } from './GrowthComparisonCard';
 import { CombinedPersonalityCard } from './CombinedPersonalityCard';
@@ -20,7 +16,7 @@ import { useAssessmentBaseline } from '@/hooks/useAssessmentBaseline';
 import { useCampSummary } from '@/hooks/useCampSummary';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ChevronDown, ChevronUp, Trophy, ArrowRight } from 'lucide-react';
+import { Trophy, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
@@ -42,7 +38,6 @@ interface AwakeningArchiveTabProps {
 
 export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick }: AwakeningArchiveTabProps) {
   const navigate = useNavigate();
-  const [actionsOpen, setActionsOpen] = useState(false);
   const { stats, entries: fullEntries, awakeningIndex, peakIndex, currentAvg } = useWealthJournalEntries({ campId });
   // IMPORTANT: Pass campId to ensure consistent cache key across all components
   const { baseline } = useAssessmentBaseline(campId);
@@ -248,44 +243,6 @@ export function AwakeningArchiveTab({ campId, currentDay, entries, onMakeupClick
         {/* 财富人格 - 合并四穷+反应模式，默认折叠 */}
         <CombinedPersonalityCard campId={campId} currentDay={currentDay} />
 
-        {/* 信念宝库 - 默认展开 */}
-        {stats?.uniqueNewBeliefs && stats.uniqueNewBeliefs.length > 0 && (
-          <NewBeliefsCollection 
-            beliefs={stats.uniqueNewBeliefs} 
-            campId={campId}
-          />
-        )}
-
-        {/* 行动足迹 - 可折叠 */}
-        <Card className="shadow-sm">
-          <Collapsible open={actionsOpen} onOpenChange={setActionsOpen}>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="pb-2 pt-4 px-4 cursor-pointer hover:bg-muted/30 transition-colors">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm flex items-center gap-2">
-                    <span>🎯</span>
-                    行动足迹
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    {givingActionsCount > 0 && (
-                      <span className="text-xs text-muted-foreground">{givingActionsCount} 次给予</span>
-                    )}
-                    {actionsOpen ? (
-                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent className="px-4 pb-4 border-t">
-                <ActionTrackingStats entries={fullEntries as any} />
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
       </div>
     </div>
   );

@@ -1,13 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { 
   Target, 
   Heart, 
   Brain, 
-  TrendingUp, 
   ChevronDown, 
-  ChevronUp,
   ExternalLink,
   Sparkles,
   Zap,
@@ -15,10 +13,7 @@ import {
   Gift,
   CheckCircle2,
   Calculator,
-  Clock,
   ArrowRight,
-  LineChart,
-  Trophy,
   Flame
 } from "lucide-react";
 import { useLayerProgress } from "@/hooks/useLayerProgress";
@@ -27,12 +22,10 @@ import { useFourPoorProgress } from "@/hooks/useFourPoorProgress";
 import { getPatternConfig, reactionPatternConfig } from "@/config/reactionPatternConfig";
 import { useReactionPatternProgress } from "@/hooks/useReactionPatternProgress";
 import { useWealthJournalEntries } from "@/hooks/useWealthJournalEntries";
-import { useGrowthHistory } from "@/hooks/useGrowthHistory";
 import { getBreakthroughSuggestions, getNextBreakthrough } from "@/config/breakthroughSuggestions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import {
   Accordion,
@@ -57,15 +50,7 @@ import {
   XAxis,
   YAxis,
   Cell,
-  LineChart as RechartsLineChart,
-  Line,
-  Area,
-  AreaChart,
-  Tooltip,
-  CartesianGrid,
-  ReferenceLine,
 } from "recharts";
-import { fourPoorRichConfig } from "@/config/fourPoorConfig";
 import {
   fourPoorInfo,
   emotionBlockInfo,
@@ -128,11 +113,10 @@ export function CombinedPersonalityCard({
   } = useReactionPatternProgress(campId);
   const { awarenessCount, awarenessBreakdown, transformationRates } = useFourPoorProgress(campId);
   const { stats } = useWealthJournalEntries({ campId });
-  const { timeline } = useGrowthHistory(campId);
   
   const [openLayers, setOpenLayers] = useState<string[]>([]);
   const [showCalculation, setShowCalculation] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  
   
   const isLoading = layersLoading || baselineLoading || patternLoading;
   
@@ -143,24 +127,6 @@ export function CombinedPersonalityCard({
   // Get dynamic breakthrough suggestions based on pattern and progress
   const breakthroughSuggestions = getBreakthroughSuggestions(patternKey, transformationRate, []);
   const nextBreakthrough = getNextBreakthrough(patternKey, transformationRate, []);
-  
-  // Prepare historical growth chart data
-  const historyChartData = timeline ? [
-    { 
-      name: 'Day 0', 
-      行为: timeline.baseline.behaviorStars, 
-      情绪: timeline.baseline.emotionStars, 
-      信念: timeline.baseline.beliefStars,
-      觉醒: timeline.baseline.awakeningScore 
-    },
-    ...timeline.periods.map(p => ({
-      name: p.shortLabel,
-      行为: p.behaviorAvg,
-      情绪: p.emotionAvg,
-      信念: p.beliefAvg,
-      觉醒: p.awakeningScore,
-    }))
-  ] : [];
 
   if (isLoading) {
     return (
@@ -387,8 +353,8 @@ export function CombinedPersonalityCard({
                 </Collapsible>
               </div>
               
-              {/* 智能突破建议 - 动态生成 */}
-              {nextBreakthrough && (
+              {/* 智能突破建议 - 仅当有进展时显示 */}
+              {nextBreakthrough && transformationRate > 0 && (
                 <div className="mt-2 p-2 bg-white/15 rounded-lg border border-white/30">
                   <div className="flex items-center justify-between mb-1.5">
                     <h5 className="text-[10px] text-white/90 font-medium flex items-center gap-1">
@@ -518,7 +484,7 @@ export function CombinedPersonalityCard({
                             layout="vertical"
                           >
                             <XAxis type="number" domain={[0, 15]} hide />
-                            <YAxis dataKey="name" type="category" width={35} tick={{ fontSize: 9 }} />
+                            <YAxis dataKey="name" type="category" width={35} tick={{ fontSize: 9, fill: 'hsl(var(--foreground))' }} />
                             <Bar dataKey="score" radius={[0, 4, 4, 0]}>
                               {(['mouth', 'hand', 'eye', 'heart'] as const).map((key) => (
                                 <Cell key={key} fill={fourPoorColors[key]} />
@@ -576,18 +542,13 @@ export function CombinedPersonalityCard({
                           行动足迹 
                           <span className="text-emerald-600 dark:text-emerald-400">({stats.givingActions.length}次给予)</span>
                         </h5>
-                        <div className="space-y-1 max-h-20 overflow-y-auto">
-                          {stats.givingActions.slice(0, 3).map((action, i) => (
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                          {stats.givingActions.map((action, i) => (
                             <div key={i} className="flex items-center gap-2 text-[10px] text-emerald-700 dark:text-emerald-300">
                               <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" />
                               <span className="truncate">"{action}"</span>
                             </div>
                           ))}
-                          {stats.givingActions.length > 3 && (
-                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 pl-5">
-                              还有 {stats.givingActions.length - 3} 次...
-                            </p>
-                          )}
                         </div>
                       </div>
                     )}
@@ -677,7 +638,7 @@ export function CombinedPersonalityCard({
                             layout="vertical"
                           >
                             <XAxis type="number" domain={[0, 10]} hide />
-                            <YAxis dataKey="name" type="category" width={30} tick={{ fontSize: 8 }} />
+                            <YAxis dataKey="name" type="category" width={30} tick={{ fontSize: 8, fill: 'hsl(var(--foreground))' }} />
                             <Bar dataKey="score" radius={[0, 4, 4, 0]}>
                               {(['anxiety', 'scarcity', 'comparison', 'shame', 'guilt'] as const).map((key) => (
                                 <Cell key={key} fill={emotionColors[key]} />
@@ -727,11 +688,19 @@ export function CombinedPersonalityCard({
                       </div>
                     </div>
 
-                    {/* 核心洞见 */}
-                    <div className="p-2 bg-pink-50 dark:bg-pink-900/20 rounded-lg border-l-2 border-pink-500">
-                      <p className="text-xs text-pink-800 dark:text-pink-200">
-                        <span className="font-semibold">💡</span> 财富的本质是心理能量的流动。财富卡住=心理能量阻塞
-                      </p>
+                    {/* 觉醒改善数据 */}
+                    <div className="p-2 bg-pink-50 dark:bg-pink-900/20 rounded-lg border border-pink-200/50">
+                      <h5 className="text-xs font-medium text-pink-800 dark:text-pink-300 flex items-center gap-1 mb-1">
+                        <Sparkles className="w-3 h-3" />
+                        觉醒改善
+                      </h5>
+                      <div className="space-y-1 text-[10px] text-pink-700 dark:text-pink-300">
+                        <p>💗 情绪流动度：{emotionLayer?.currentStars?.toFixed(1)}★ (Day 0: {emotionLayer?.baselineStars?.toFixed(1)}★)</p>
+                        {emotionLayer && emotionLayer.growthStars > 0 && (
+                          <p className="text-emerald-600 font-medium">✨ 觉醒提升：+{emotionLayer.growthStars.toFixed(1)}★</p>
+                        )}
+                        <p className="text-muted-foreground mt-1">💡 财富的本质是心理能量的流动</p>
+                      </div>
                     </div>
 
                     {/* 下一步行动 */}
@@ -832,7 +801,7 @@ export function CombinedPersonalityCard({
                             layout="vertical"
                           >
                             <XAxis type="number" domain={[0, 10]} hide />
-                            <YAxis dataKey="name" type="category" width={30} tick={{ fontSize: 8 }} />
+                            <YAxis dataKey="name" type="category" width={30} tick={{ fontSize: 8, fill: 'hsl(var(--foreground))' }} />
                             <Bar dataKey="score" radius={[0, 4, 4, 0]}>
                               {(['lack', 'linear', 'stigma', 'unworthy', 'relationship'] as const).map((key) => (
                                 <Cell key={key} fill={beliefColors[key]} />
@@ -890,18 +859,13 @@ export function CombinedPersonalityCard({
                           我的新信念收集 
                           <span className="text-green-600 dark:text-green-400">({stats.uniqueNewBeliefs.length}条)</span>
                         </h5>
-                        <div className="space-y-1 max-h-20 overflow-y-auto">
-                          {stats.uniqueNewBeliefs.slice(0, 3).map((belief, i) => (
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                          {stats.uniqueNewBeliefs.map((belief, i) => (
                             <div key={i} className="flex items-center gap-2 text-[10px] text-green-700 dark:text-green-300">
                               <Star className="w-3 h-3 text-amber-500 fill-amber-500 flex-shrink-0" />
                               <span className="truncate">"{belief}"</span>
                             </div>
                           ))}
-                          {stats.uniqueNewBeliefs.length > 3 && (
-                            <p className="text-[10px] text-green-600 dark:text-green-400 pl-5">
-                              还有 {stats.uniqueNewBeliefs.length - 3} 条...
-                            </p>
-                          )}
                         </div>
                       </div>
                     )}
@@ -928,152 +892,6 @@ export function CombinedPersonalityCard({
             </motion.div>
           </AccordionItem>
         </Accordion>
-
-        {/* 历史对比 - 成长轨迹 */}
-        <Collapsible open={showHistory} onOpenChange={setShowHistory}>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="rounded-xl border overflow-hidden">
-              <CollapsibleTrigger className="w-full p-3 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 flex items-center justify-between hover:bg-indigo-100/50 dark:hover:bg-indigo-900/30 transition-colors">
-                <h4 className="text-sm font-semibold text-indigo-800 dark:text-indigo-200 flex items-center gap-2">
-                  <LineChart className="w-4 h-4" />
-                  成长轨迹
-                  {timeline && timeline.totalGrowth > 0 && (
-                    <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 text-[10px] ml-1">
-                      +{timeline.totalGrowth}%
-                    </Badge>
-                  )}
-                </h4>
-                <ChevronDown className={cn(
-                  "w-4 h-4 text-indigo-600 transition-transform",
-                  showHistory && "rotate-180"
-                )} />
-              </CollapsibleTrigger>
-              
-              <CollapsibleContent>
-                <AnimatePresence>
-                  {showHistory && timeline && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="p-3 space-y-3 bg-white dark:bg-gray-900"
-                    >
-                      {/* 成长曲线图 */}
-                      {historyChartData.length > 1 && (
-                        <div className="h-36">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={historyChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                              <YAxis tick={{ fontSize: 10 }} domain={[0, 5]} />
-                              <Tooltip 
-                                formatter={(value: number) => [`${value.toFixed(1)}★`, '']}
-                                contentStyle={{ fontSize: 10 }}
-                              />
-                              <Area type="monotone" dataKey="行为" stroke="#f59e0b" fill="#fef3c7" strokeWidth={2} />
-                              <Area type="monotone" dataKey="情绪" stroke="#ec4899" fill="#fce7f3" strokeWidth={2} />
-                              <Area type="monotone" dataKey="信念" stroke="#8b5cf6" fill="#ede9fe" strokeWidth={2} />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        </div>
-                      )}
-                      
-                      {/* 图例 */}
-                      <div className="flex justify-center gap-3 text-[10px]">
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span>行为</span>
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-pink-500"></span>情绪</span>
-                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-500"></span>信念</span>
-                      </div>
-                      
-                      {/* Day 0 vs 当前 对比 */}
-                      {timeline.baselineVsCurrent && (
-                        <div className="p-2 bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-indigo-900/30 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <h5 className="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              Day 0 vs 当前
-                            </h5>
-                            {timeline.baselineVsCurrent.awakeningDelta > 0 && (
-                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-0.5">
-                                <TrendingUp className="w-3 h-3" />
-                                觉醒 +{timeline.baselineVsCurrent.awakeningDelta}%
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* 三层对比条 */}
-                          <div className="space-y-1.5">
-                            {[
-                              { label: '行为', baseline: timeline.baseline.behaviorStars, current: timeline.current.behaviorStars, color: 'amber' },
-                              { label: '情绪', baseline: timeline.baseline.emotionStars, current: timeline.current.emotionStars, color: 'pink' },
-                              { label: '信念', baseline: timeline.baseline.beliefStars, current: timeline.current.beliefStars, color: 'violet' },
-                            ].map(item => (
-                              <div key={item.label} className="flex items-center gap-2">
-                                <span className="text-[10px] text-gray-500 w-8">{item.label}</span>
-                                <div className="flex-1 flex items-center gap-1">
-                                  <span className="text-[9px] text-gray-400">{item.baseline.toFixed(1)}★</span>
-                                  <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden relative">
-                                    {/* Baseline mark */}
-                                    <div 
-                                      className="absolute top-0 bottom-0 w-0.5 bg-gray-400 z-10"
-                                      style={{ left: `${((item.baseline - 1) / 4) * 100}%` }}
-                                    />
-                                    {/* Current bar */}
-                                    <div 
-                                      className={cn(
-                                        "h-full rounded-full",
-                                        item.color === 'amber' && "bg-amber-500",
-                                        item.color === 'pink' && "bg-pink-500",
-                                        item.color === 'violet' && "bg-violet-500",
-                                      )}
-                                      style={{ width: `${((item.current - 1) / 4) * 100}%` }}
-                                    />
-                                  </div>
-                                  <span className={cn(
-                                    "text-[9px] font-medium",
-                                    item.color === 'amber' && "text-amber-600",
-                                    item.color === 'pink' && "text-pink-600",
-                                    item.color === 'violet' && "text-violet-600",
-                                  )}>
-                                    {item.current.toFixed(1)}★
-                                    {item.current > item.baseline && (
-                                      <span className="text-emerald-500 ml-0.5">↑</span>
-                                    )}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                          
-                          {/* 洞察 */}
-                          <div className="mt-2 p-1.5 bg-white/60 dark:bg-white/10 rounded text-[10px] text-indigo-700 dark:text-indigo-300">
-                            💡 {timeline.baselineVsCurrent.insight}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* 峰值统计 */}
-                      <div className="flex items-center justify-between p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <Trophy className="w-4 h-4 text-amber-600" />
-                          <span className="text-xs text-amber-800 dark:text-amber-200">峰值觉醒</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-sm font-bold text-amber-700 dark:text-amber-300">{timeline.peakAwakening}%</span>
-                          <span className="text-[10px] text-amber-600 dark:text-amber-400 ml-1">@{timeline.peakPeriodLabel}</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </CollapsibleContent>
-            </div>
-          </motion.div>
-        </Collapsible>
 
         {/* 底部核心洞见 */}
         <motion.div
