@@ -174,36 +174,39 @@ export function CombinedPersonalityCard({
   const dominantEmotion = (baseline.dominant_emotion && emotionBlockInfo[baseline.dominant_emotion as EmotionBlockType]) || emotionBlockInfo.anxiety;
   const dominantBelief = (baseline.dominant_belief && beliefBlockInfo[baseline.dominant_belief as BeliefBlockType]) || beliefBlockInfo.lack;
 
-  // Build radar data
-  const fourPoorRadarData = [
-    { subject: '嘴穷', score: baseline.mouth_score || 0, fullMark: 15 },
-    { subject: '手穷', score: baseline.hand_score || 0, fullMark: 10 },
-    { subject: '眼穷', score: baseline.eye_score || 0, fullMark: 15 },
-    { subject: '心穷', score: baseline.heart_score || 0, fullMark: 10 },
-  ];
-
-  // Emotion radar - approximate from baseline
-  const emotionRadarData = [
-    { subject: '金钱焦虑', score: Math.round((baseline.emotion_score || 25) / 5), fullMark: 10 },
-    { subject: '匮乏恐惧', score: Math.round((baseline.emotion_score || 25) / 5), fullMark: 10 },
-    { subject: '比较自卑', score: Math.round((baseline.emotion_score || 25) / 6), fullMark: 10 },
-    { subject: '羞耻厌恶', score: Math.round((baseline.emotion_score || 25) / 6), fullMark: 10 },
-    { subject: '消费内疚', score: Math.round((baseline.emotion_score || 25) / 7), fullMark: 10 },
-  ];
-
-  // Belief radar - approximate from baseline
-  const beliefRadarData = [
-    { subject: '匮乏感', score: Math.round((baseline.belief_score || 20) / 5), fullMark: 10 },
-    { subject: '线性思维', score: Math.round((baseline.belief_score || 20) / 5), fullMark: 10 },
-    { subject: '金钱污名', score: Math.round((baseline.belief_score || 20) / 5), fullMark: 10 },
-    { subject: '不配得感', score: Math.round((baseline.belief_score || 20) / 6), fullMark: 10 },
-    { subject: '关系恐惧', score: Math.round((baseline.belief_score || 20) / 7), fullMark: 10 },
-  ];
-
-  // Get layer data
+  // Get layer data first for growth calculations
   const behaviorLayer = layers.find(l => l.key === 'behavior');
   const emotionLayer = layers.find(l => l.key === 'emotion');
   const beliefLayer = layers.find(l => l.key === 'belief');
+
+  // Build radar data with baseline and current for growth animation
+  const behaviorGrowthFactor = (behaviorLayer?.currentStars || 0) / 5; // 0-1 scale
+  const fourPoorRadarData = [
+    { subject: '嘴穷', baseline: baseline.mouth_score || 0, current: Math.max(0, (baseline.mouth_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: 15 },
+    { subject: '手穷', baseline: baseline.hand_score || 0, current: Math.max(0, (baseline.hand_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: 10 },
+    { subject: '眼穷', baseline: baseline.eye_score || 0, current: Math.max(0, (baseline.eye_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: 15 },
+    { subject: '心穷', baseline: baseline.heart_score || 0, current: Math.max(0, (baseline.heart_score || 0) * (1 - behaviorGrowthFactor * 0.3)), fullMark: 10 },
+  ];
+
+  // Emotion radar - approximate from baseline with growth
+  const emotionGrowthFactor = (emotionLayer?.currentStars || 0) / 5;
+  const emotionRadarData = [
+    { subject: '金钱焦虑', baseline: Math.round((baseline.emotion_score || 25) / 5), current: Math.max(0, Math.round((baseline.emotion_score || 25) / 5) * (1 - emotionGrowthFactor * 0.3)), fullMark: 10 },
+    { subject: '匮乏恐惧', baseline: Math.round((baseline.emotion_score || 25) / 5), current: Math.max(0, Math.round((baseline.emotion_score || 25) / 5) * (1 - emotionGrowthFactor * 0.3)), fullMark: 10 },
+    { subject: '比较自卑', baseline: Math.round((baseline.emotion_score || 25) / 6), current: Math.max(0, Math.round((baseline.emotion_score || 25) / 6) * (1 - emotionGrowthFactor * 0.3)), fullMark: 10 },
+    { subject: '羞耻厌恶', baseline: Math.round((baseline.emotion_score || 25) / 6), current: Math.max(0, Math.round((baseline.emotion_score || 25) / 6) * (1 - emotionGrowthFactor * 0.3)), fullMark: 10 },
+    { subject: '消费内疚', baseline: Math.round((baseline.emotion_score || 25) / 7), current: Math.max(0, Math.round((baseline.emotion_score || 25) / 7) * (1 - emotionGrowthFactor * 0.3)), fullMark: 10 },
+  ];
+
+  // Belief radar - approximate from baseline with growth
+  const beliefGrowthFactor = (beliefLayer?.currentStars || 0) / 5;
+  const beliefRadarData = [
+    { subject: '匮乏感', baseline: Math.round((baseline.belief_score || 20) / 5), current: Math.max(0, Math.round((baseline.belief_score || 20) / 5) * (1 - beliefGrowthFactor * 0.3)), fullMark: 10 },
+    { subject: '线性思维', baseline: Math.round((baseline.belief_score || 20) / 5), current: Math.max(0, Math.round((baseline.belief_score || 20) / 5) * (1 - beliefGrowthFactor * 0.3)), fullMark: 10 },
+    { subject: '金钱污名', baseline: Math.round((baseline.belief_score || 20) / 5), current: Math.max(0, Math.round((baseline.belief_score || 20) / 5) * (1 - beliefGrowthFactor * 0.3)), fullMark: 10 },
+    { subject: '不配得感', baseline: Math.round((baseline.belief_score || 20) / 6), current: Math.max(0, Math.round((baseline.belief_score || 20) / 6) * (1 - beliefGrowthFactor * 0.3)), fullMark: 10 },
+    { subject: '关系恐惧', baseline: Math.round((baseline.belief_score || 20) / 7), current: Math.max(0, Math.round((baseline.belief_score || 20) / 7) * (1 - beliefGrowthFactor * 0.3)), fullMark: 10 },
+  ];
 
   const handleViewReport = () => {
     navigate('/wealth-block?view=history');
@@ -488,17 +491,49 @@ export function CombinedPersonalityCard({
 
                     {/* 雷达图和条形图 */}
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="h-[140px]">
+                      <div className="h-[160px]">
                         <ResponsiveContainer width="100%" height="100%">
-                          <RadarChart cx="50%" cy="50%" outerRadius="65%" data={fourPoorRadarData}>
+                          <RadarChart cx="50%" cy="50%" outerRadius="60%" data={fourPoorRadarData}>
                             <PolarGrid stroke="hsl(var(--border))" />
-                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 8 }} />
+                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--foreground))', fontSize: 8 }} />
                             <PolarRadiusAxis angle={90} domain={[0, 15]} tick={false} axisLine={false} />
-                            <Radar dataKey="score" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.5} strokeWidth={2} />
+                            {/* Day 0 基线 - 灰色虚线 */}
+                            <Radar 
+                              name="Day 0 基线" 
+                              dataKey="baseline" 
+                              stroke="#9ca3af" 
+                              strokeDasharray="3 3"
+                              fill="#9ca3af" 
+                              fillOpacity={0.15} 
+                              strokeWidth={1} 
+                            />
+                            {/* 当前状态 - 主色动画 */}
+                            <Radar 
+                              name="当前" 
+                              dataKey="current" 
+                              stroke="#f59e0b" 
+                              fill="#f59e0b" 
+                              fillOpacity={0.5} 
+                              strokeWidth={2}
+                              isAnimationActive={true}
+                              animationDuration={1000}
+                              animationEasing="ease-out"
+                            />
                           </RadarChart>
                         </ResponsiveContainer>
+                        {/* 图例 */}
+                        <div className="flex items-center justify-center gap-3 -mt-2 text-[9px]">
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-0.5 border-t border-dashed border-gray-400" />
+                            <span className="text-muted-foreground">Day 0</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-1.5 bg-amber-500 rounded-sm" />
+                            <span className="text-foreground font-medium">当前</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="h-[140px]">
+                      <div className="h-[160px]">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart 
                             data={[
@@ -641,25 +676,57 @@ export function CombinedPersonalityCard({
 
                     {/* 雷达图和条形图 */}
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="h-[140px]">
+                      <div className="h-[160px]">
                         <ResponsiveContainer width="100%" height="100%">
-                          <RadarChart cx="50%" cy="50%" outerRadius="65%" data={emotionRadarData}>
+                          <RadarChart cx="50%" cy="50%" outerRadius="60%" data={emotionRadarData}>
                             <PolarGrid stroke="hsl(var(--border))" />
-                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 7 }} />
+                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--foreground))', fontSize: 7 }} />
                             <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
-                            <Radar dataKey="score" stroke="#ec4899" fill="#ec4899" fillOpacity={0.5} strokeWidth={2} />
+                            {/* Day 0 基线 - 灰色虚线 */}
+                            <Radar 
+                              name="Day 0 基线" 
+                              dataKey="baseline" 
+                              stroke="#9ca3af" 
+                              strokeDasharray="3 3"
+                              fill="#9ca3af" 
+                              fillOpacity={0.15} 
+                              strokeWidth={1} 
+                            />
+                            {/* 当前状态 - 主色动画 */}
+                            <Radar 
+                              name="当前" 
+                              dataKey="current" 
+                              stroke="#ec4899" 
+                              fill="#ec4899" 
+                              fillOpacity={0.5} 
+                              strokeWidth={2}
+                              isAnimationActive={true}
+                              animationDuration={1000}
+                              animationEasing="ease-out"
+                            />
                           </RadarChart>
                         </ResponsiveContainer>
+                        {/* 图例 */}
+                        <div className="flex items-center justify-center gap-3 -mt-2 text-[9px]">
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-0.5 border-t border-dashed border-gray-400" />
+                            <span className="text-muted-foreground">Day 0</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-1.5 bg-pink-500 rounded-sm" />
+                            <span className="text-foreground font-medium">当前</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="h-[140px]">
+                      <div className="h-[160px]">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart 
                             data={[
-                              { name: '焦虑', score: emotionRadarData[0].score, key: 'anxiety' },
-                              { name: '匮乏', score: emotionRadarData[1].score, key: 'scarcity' },
-                              { name: '比较', score: emotionRadarData[2].score, key: 'comparison' },
-                              { name: '羞耻', score: emotionRadarData[3].score, key: 'shame' },
-                              { name: '内疚', score: emotionRadarData[4].score, key: 'guilt' },
+                              { name: '焦虑', score: emotionRadarData[0].baseline, key: 'anxiety' },
+                              { name: '匮乏', score: emotionRadarData[1].baseline, key: 'scarcity' },
+                              { name: '比较', score: emotionRadarData[2].baseline, key: 'comparison' },
+                              { name: '羞耻', score: emotionRadarData[3].baseline, key: 'shame' },
+                              { name: '内疚', score: emotionRadarData[4].baseline, key: 'guilt' },
                             ]} 
                             layout="vertical"
                           >
@@ -804,25 +871,57 @@ export function CombinedPersonalityCard({
 
                     {/* 雷达图和条形图 */}
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="h-[140px]">
+                      <div className="h-[160px]">
                         <ResponsiveContainer width="100%" height="100%">
-                          <RadarChart cx="50%" cy="50%" outerRadius="65%" data={beliefRadarData}>
+                          <RadarChart cx="50%" cy="50%" outerRadius="60%" data={beliefRadarData}>
                             <PolarGrid stroke="hsl(var(--border))" />
-                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 7 }} />
+                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--foreground))', fontSize: 7 }} />
                             <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
-                            <Radar dataKey="score" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.5} strokeWidth={2} />
+                            {/* Day 0 基线 - 灰色虚线 */}
+                            <Radar 
+                              name="Day 0 基线" 
+                              dataKey="baseline" 
+                              stroke="#9ca3af" 
+                              strokeDasharray="3 3"
+                              fill="#9ca3af" 
+                              fillOpacity={0.15} 
+                              strokeWidth={1} 
+                            />
+                            {/* 当前状态 - 主色动画 */}
+                            <Radar 
+                              name="当前" 
+                              dataKey="current" 
+                              stroke="#8b5cf6" 
+                              fill="#8b5cf6" 
+                              fillOpacity={0.5} 
+                              strokeWidth={2}
+                              isAnimationActive={true}
+                              animationDuration={1000}
+                              animationEasing="ease-out"
+                            />
                           </RadarChart>
                         </ResponsiveContainer>
+                        {/* 图例 */}
+                        <div className="flex items-center justify-center gap-3 -mt-2 text-[9px]">
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-0.5 border-t border-dashed border-gray-400" />
+                            <span className="text-muted-foreground">Day 0</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-1.5 bg-violet-500 rounded-sm" />
+                            <span className="text-foreground font-medium">当前</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="h-[140px]">
+                      <div className="h-[160px]">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart 
                             data={[
-                              { name: '匮乏', score: beliefRadarData[0].score, key: 'lack' },
-                              { name: '线性', score: beliefRadarData[1].score, key: 'linear' },
-                              { name: '污名', score: beliefRadarData[2].score, key: 'stigma' },
-                              { name: '不配', score: beliefRadarData[3].score, key: 'unworthy' },
-                              { name: '关系', score: beliefRadarData[4].score, key: 'relationship' },
+                              { name: '匮乏', score: beliefRadarData[0].baseline, key: 'lack' },
+                              { name: '线性', score: beliefRadarData[1].baseline, key: 'linear' },
+                              { name: '污名', score: beliefRadarData[2].baseline, key: 'stigma' },
+                              { name: '不配', score: beliefRadarData[3].baseline, key: 'unworthy' },
+                              { name: '关系', score: beliefRadarData[4].baseline, key: 'relationship' },
                             ]} 
                             layout="vertical"
                           >
