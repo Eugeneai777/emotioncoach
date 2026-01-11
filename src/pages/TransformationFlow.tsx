@@ -37,6 +37,10 @@ const TransformationFlow: React.FC = () => {
       <Helmet>
         <title>四层支持系统 - 有劲AI</title>
         <meta name="description" content="有劲AI用四层方式陪你，从轻轻开始，到真正改变发生" />
+        <meta property="og:title" content="有劲AI四层支持系统" />
+        <meta property="og:description" content="从觉察→理解→行动→转化，AI教练陪你走完成长闭环" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/transformation-flow" />
+        <meta property="og:site_name" content="有劲AI" />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-background to-orange-50/30">
