@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
-import { isWeChatMiniProgram } from '@/utils/platform';
 
 interface PackageInfo {
   key: string;
@@ -47,10 +46,6 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
   // 检测是否在移动端
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  // 检测是否在小程序 WebView 中
-  const isMiniProgram = isWeChatMiniProgram();
-  // 云端二维码URL（用于小程序长按识别）
-  const [cloudQrUrl, setCloudQrUrl] = useState<string>('');
 
   // 清理定时器
   const clearTimers = () => {
@@ -69,7 +64,6 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
     clearTimers();
     setStatus('idle');
     setQrCodeDataUrl('');
-    setCloudQrUrl('');
     setPayUrl('');
     setH5Url('');
     setH5PayLink('');
@@ -149,8 +143,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
     setErrorMessage('');
 
     // 移动端优先使用H5支付，PC端使用Native扫码
-    // 小程序WebView内使用native二维码（支持长按识别）
-    const selectedPayType = (isMobile && !isWechat && !isMiniProgram) ? 'h5' : 'native';
+    const selectedPayType = isMobile && !isWechat ? 'h5' : 'native';
     setPayType(selectedPayType);
 
     try {
@@ -161,8 +154,6 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
           amount: packageInfo.price,
           userId: user.id,
           payType: selectedPayType,
-          // 移动端都需要云端二维码URL（用于长按识别）
-          needCloudQr: isMobile || isMiniProgram,
         },
       });
 
@@ -193,22 +184,14 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
         setStatus('ready');
       } else {
         // Native扫码支付
-        const qrCodeUrl = data.qrCodeUrl || data.payUrl;
-        setPayUrl(qrCodeUrl);
-        
-        // 生成本地base64二维码
-        const qrDataUrl = await QRCode.toDataURL(qrCodeUrl, {
+        setPayUrl(data.qrCodeUrl || data.payUrl);
+        // 生成二维码
+        const qrDataUrl = await QRCode.toDataURL(data.qrCodeUrl || data.payUrl, {
           width: 200,
           margin: 2,
           color: { dark: '#000000', light: '#ffffff' },
         });
         setQrCodeDataUrl(qrDataUrl);
-        
-        // 小程序环境：使用云端二维码URL（支持长按识别）
-        if (isMiniProgram && data.cloudQrUrl) {
-          setCloudQrUrl(data.cloudQrUrl);
-        }
-        
         setStatus('ready');
       }
 
@@ -346,33 +329,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
               </div>
             )}
 
-            {(status === 'ready' || status === 'polling') && payType === 'native' && (qrCodeDataUrl || cloudQrUrl) && (
-              <div className="flex flex-col items-center gap-1">
-                {/* 小程序WebView不支持长按识别普通二维码，显示提示 */}
-                {isMiniProgram ? (
-                  <div className="flex flex-col items-center gap-2 text-center p-4">
-                    <div className="text-4xl">📋</div>
-                    <span className="text-sm text-muted-foreground">
-                      小程序内无法长按识别二维码
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      请复制链接到微信聊天中打开
-                    </span>
-                  </div>
-                ) : (
-                  <>
-                    {/* 移动端浏览器使用云端URL支持长按识别；PC端使用base64 */}
-                    <img 
-                      src={isMobile && cloudQrUrl ? cloudQrUrl : qrCodeDataUrl} 
-                      alt="微信支付二维码" 
-                      className="w-48 h-48"
-                    />
-                    {isMobile && (
-                      <span className="text-xs text-muted-foreground mt-1">长按二维码识别支付</span>
-                    )}
-                  </>
-                )}
-              </div>
+            {(status === 'ready' || status === 'polling') && payType === 'native' && qrCodeDataUrl && (
+              <img src={qrCodeDataUrl} alt="微信支付二维码" className="w-48 h-48" />
             )}
 
             {(status === 'ready' || status === 'polling') && payType === 'h5' && (
@@ -481,33 +439,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
                 </>
               ) : (
                 <>
-                  {isMiniProgram ? (
-                    <>
-                      <p className="text-sm text-muted-foreground">请复制下方链接到微信聊天中打开支付</p>
-                      {payUrl && (
-                        <Button
-                          type="button"
-                          variant="default"
-                          onClick={async () => {
-                            try {
-                              await navigator.clipboard.writeText(payUrl);
-                              toast.success('链接已复制，请粘贴到微信聊天中打开');
-                            } catch {
-                              toast.error('复制失败');
-                            }
-                          }}
-                          className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white"
-                        >
-                          <Copy className="h-4 w-4" />
-                          复制支付链接
-                        </Button>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      {isMobile ? '长按二维码识别支付' : '请使用微信扫描二维码支付'}
-                    </p>
-                  )}
+                  <p className="text-sm text-muted-foreground">请使用微信长按二维码或扫码支付</p>
                   {status === 'polling' && (
                     <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
                       <Loader2 className="h-3 w-3 animate-spin" />
