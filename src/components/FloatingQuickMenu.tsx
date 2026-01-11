@@ -59,7 +59,7 @@ export const FloatingQuickMenu = () => {
       id: 'awakening', 
       icon: iconMap['Sparkles'], 
       label: '觉醒', 
-      path: '/wealth-block', 
+      path: '/awakening', 
       color: 'bg-purple-500',
     },
     { 
