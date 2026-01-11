@@ -20,13 +20,11 @@ import { BackfillMemoriesButton } from '@/components/wealth-camp/BackfillMemorie
 import { AwakeningArchiveTab } from '@/components/wealth-camp/AwakeningArchiveTab';
 import { AwakeningDashboard } from '@/components/wealth-camp/AwakeningDashboard';
 import { TodayTaskHub, UserMode } from '@/components/wealth-camp/TodayTaskHub';
-import { AchievementMilestoneHint } from '@/components/wealth-camp/AchievementMilestoneHint';
-import { AIInsightZone } from '@/components/wealth-camp/AIInsightZone';
 import { Day0BaselineCard } from '@/components/wealth-camp/Day0BaselineCard';
 import AwakeningOnboardingDialog from '@/components/wealth-camp/AwakeningOnboardingDialog';
 import GraduateOnboardingDialog from '@/components/wealth-camp/GraduateOnboardingDialog';
 import { PartnerConversionCard } from '@/components/wealth-camp/PartnerConversionCard';
-import { DailyChallengeCard } from '@/components/wealth-camp/DailyChallengeCard';
+import { UnifiedChallengeCenter } from '@/components/wealth-camp/UnifiedChallengeCenter';
 import { GapReminderCard } from '@/components/wealth-camp/GapReminderCard';
 import { cn } from '@/lib/utils';
 import { getDaysSinceStart } from '@/utils/dateUtils';
@@ -677,18 +675,15 @@ ${reflection}`;
               />
             )}
 
-            {/* 成就里程碑提示 - 显示即将解锁的成就 */}
-            {!makeupDayNumber && (
-              <AchievementMilestoneHint 
-                campId={campId} 
-                currentDay={currentDay} 
-              />
-            )}
-
-            {/* ===== Graduate/Partner 模式：每日挑战优先于冥想 ===== */}
+            {/* ===== 统一挑战中心：合并成就推荐 + AI建议 + 每日挑战 ===== */}
             {isPostCampMode && !makeupDayNumber && (
               <div id="daily-challenge-section">
-                <DailyChallengeCard 
+                <UnifiedChallengeCenter 
+                  campId={campId}
+                  currentDay={currentDay}
+                  focusAreas={focusAreas}
+                  reminderBeliefs={reminderBeliefs?.map(b => b.belief_text) || []}
+                  weekNumber={weekNumber}
                   onPointsEarned={() => setChallengeCompleted(true)} 
                 />
               </div>
@@ -766,15 +761,7 @@ ${reflection}`;
               )}
             </AnimatePresence>
 
-            {/* 4. AI 建议区 - 可折叠 */}
-            {!makeupDayNumber && (
-              <AIInsightZone
-                weekNumber={weekNumber}
-                focusAreas={focusAreas}
-                adjustmentReason={adjustmentReason}
-                reminderBeliefs={reminderBeliefs?.map(b => b.belief_text) || []}
-              />
-            )}
+            {/* AI 建议已整合到 UnifiedChallengeCenter */}
 
             {/* 5. 邀请好友 */}
             {!makeupDayNumber && userId && (
