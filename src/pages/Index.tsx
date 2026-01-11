@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { ChatEmotionIntensityPrompt } from "@/components/ChatEmotionIntensityPrompt";
 import { EmotionAlert } from "@/components/EmotionAlert";
@@ -484,9 +485,20 @@ const Index = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50/80 via-teal-50/50 to-green-50/30 dark:from-emerald-950/20 dark:via-teal-950/10 dark:to-green-950/10 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
-      </div>
+      <>
+        <Helmet>
+          <title>情绪教练 - 有劲AI</title>
+          <meta name="description" content="AI情绪教练，陪你觉察、理解、转化情绪" />
+          <meta property="og:title" content="有劲AI情绪教练" />
+          <meta property="og:description" content="4阶段情绪对话，帮你从失控到平静" />
+          <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+          <meta property="og:url" content="https://wechat.eugenewe.net/" />
+          <meta property="og:site_name" content="有劲AI" />
+        </Helmet>
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50/80 via-teal-50/50 to-green-50/30 dark:from-emerald-950/20 dark:via-teal-950/10 dark:to-green-950/10 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+        </div>
+      </>
     );
   }
 

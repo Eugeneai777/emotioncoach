@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Helmet } from "react-helmet";
 import { ArrowLeft, Home } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -477,9 +478,20 @@ ${reflection}`;
 
   if (campLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
-      </div>
+      <>
+        <Helmet>
+          <title>财富日记 - 有劲AI</title>
+          <meta name="description" content="每天15分钟，觉察财富卡点，开启觉醒之旅" />
+          <meta property="og:title" content="有劲AI财富日记" />
+          <meta property="og:description" content="AI教练陪伴，每日觉察打卡，见证你的成长蜕变" />
+          <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+          <meta property="og:url" content="https://wechat.eugenewe.net/wealth-camp-checkin" />
+          <meta property="og:site_name" content="有劲AI" />
+        </Helmet>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+        </div>
+      </>
     );
   }
 

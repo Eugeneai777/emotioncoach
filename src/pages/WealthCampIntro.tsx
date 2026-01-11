@@ -154,7 +154,7 @@ const WealthCampIntro = () => {
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://wechat.eugenewe.net/wealth-camp-intro" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:site_name" content="有劲AI · 财富教练" />
+        <meta property="og:site_name" content="有劲AI" />
         <link rel="canonical" href="https://wechat.eugenewe.net/wealth-camp-intro" />
       </Helmet>
       <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">

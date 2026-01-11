@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { ArrowLeft, Heart, Eye, Brain, Zap, Users, MessageCircle, Target, Sparkles, BookOpen, Calendar } from "lucide-react";
@@ -131,6 +132,15 @@ const ParentCoachIntro = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>亲子情绪教练 - 有劲AI</title>
+        <meta name="description" content="父母先稳，孩子才愿意走向你" />
+        <meta property="og:title" content="有劲AI亲子教练" />
+        <meta property="og:description" content="亲子情绪四部曲，从觉察到行动，重建温暖的亲子关系" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/parent-coach-intro" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center">

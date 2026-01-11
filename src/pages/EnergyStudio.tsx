@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -172,6 +173,15 @@ const EnergyStudio = () => {
     return getCategoryConfig(category)?.description || "";
   };
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+      <Helmet>
+        <title>能量工作室 - 有劲AI</title>
+        <meta name="description" content="多种情绪工具，随时调节你的能量状态" />
+        <meta property="og:title" content="有劲AI能量工作室" />
+        <meta property="og:description" content="情绪急救、情绪日记、冥想引导等多种工具" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/energy-studio" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       {/* Header with gradient background */}
       <PageHeader 
         title="有劲生活馆"

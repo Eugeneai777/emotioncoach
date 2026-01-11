@@ -306,7 +306,7 @@ export default function WealthBlockAssessmentPage() {
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:url" content="https://wechat.eugenewe.net/wealth-block" />
-        <meta property="og:site_name" content="有劲AI · 财富教练" />
+        <meta property="og:site_name" content="有劲AI" />
         
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
