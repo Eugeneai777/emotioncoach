@@ -3,8 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, MessageCircle, Sparkles, Package, Users, Settings, 
-  Zap, X, BookOpen, ClipboardCheck, Handshake, Sunrise, 
-  MessagesSquare, Edit3, Star
+  Rocket, X, BookOpen, ClipboardCheck, Handshake, Sunrise, 
+  MessagesSquare, Edit3, Star, Heart, Baby, Coins, Gamepad2
 } from 'lucide-react';
 import { useQuickMenuConfig } from '@/hooks/useQuickMenuConfig';
 import { QuickMenuSettingsDialog } from '@/components/QuickMenuSettingsDialog';
@@ -21,6 +21,7 @@ interface Position {
 const iconMap: Record<string, React.ElementType> = {
   Home, MessageCircle, Sparkles, Package, Users, Settings,
   BookOpen, ClipboardCheck, Handshake, Sunrise, MessagesSquare, Star,
+  Heart, Baby, Coins, Gamepad2, Rocket,
 };
 
 export const FloatingQuickMenu = () => {
@@ -247,10 +248,10 @@ export const FloatingQuickMenu = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 20 }}
               transition={{ duration: 0.2, type: 'spring', stiffness: 300, damping: 25 }}
-              className="absolute bottom-14 left-0 bg-background/95 backdrop-blur-md rounded-xl shadow-xl border border-border p-3 min-w-[180px]"
+              className="absolute bottom-14 left-0 bg-background/95 backdrop-blur-md rounded-xl shadow-xl border border-border p-3 min-w-[200px]"
             >
-              {/* Menu Grid */}
-              <div className="grid grid-cols-2 gap-2">
+              {/* Menu List - Vertical Layout */}
+              <div className="flex flex-col gap-1">
                 {menuItems.map((item) => {
                   const Icon = item.icon;
                   const isCurrentPage = location.pathname === item.path;
@@ -259,9 +260,9 @@ export const FloatingQuickMenu = () => {
                     <motion.button
                       key={item.id}
                       onClick={() => handleMenuItemClick(item.path)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-left transition-colors
                         ${isCurrentPage 
                           ? 'bg-primary/10 text-primary' 
                           : 'hover:bg-muted'
@@ -269,10 +270,10 @@ export const FloatingQuickMenu = () => {
                         ${item.isCustom ? 'border border-dashed border-muted-foreground/30' : ''}
                       `}
                     >
-                      <div className={`w-7 h-7 rounded-full ${item.color} flex items-center justify-center flex-shrink-0`}>
+                      <div className={`w-8 h-8 rounded-full ${item.color} flex items-center justify-center flex-shrink-0`}>
                         <Icon className="w-4 h-4 text-white" />
                       </div>
-                      <span className="text-sm font-medium truncate">{item.label}</span>
+                      <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>
                     </motion.button>
                   );
                 })}
@@ -323,10 +324,10 @@ export const FloatingQuickMenu = () => {
             },
           }}
         >
-          {isExpanded ? (
+        {isExpanded ? (
             <X className="w-6 h-6 text-white" />
           ) : (
-            <Zap className="w-6 h-6 text-white" />
+            <Rocket className="w-6 h-6 text-white" />
           )}
         </motion.div>
       </div>

@@ -18,8 +18,19 @@ export interface QuickMenuConfig {
   customSlot2: MenuItemConfig;
 }
 
-export const availablePages = [
+// Coach pages - can be set as home page
+export const coachPages = [
   { path: '/coach-space', label: '教练空间', icon: 'Users', color: 'bg-rose-500' },
+  { path: '/emotion-coach', label: '情绪教练', icon: 'Heart', color: 'bg-pink-500' },
+  { path: '/parent-coach', label: '亲子教练', icon: 'Baby', color: 'bg-sky-500' },
+  { path: '/wealth-coach', label: '财富教练', icon: 'Coins', color: 'bg-amber-500' },
+  { path: '/vibrant-life-coach', label: '有劲生活', icon: 'Sparkles', color: 'bg-violet-500' },
+  { path: '/teen-coach', label: '青少年教练', icon: 'Gamepad2', color: 'bg-cyan-500' },
+];
+
+// All available pages for custom slots
+export const availablePages = [
+  ...coachPages,
   { path: '/wealth-camp-checkin', label: '财富日记', icon: 'BookOpen', color: 'bg-amber-500' },
   { path: '/wealth-block', label: '财富测评', icon: 'ClipboardCheck', color: 'bg-purple-500' },
   { path: '/customer-support', label: '给予建议', icon: 'MessageCircle', color: 'bg-blue-500' },
