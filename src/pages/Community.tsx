@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
+import { Helmet } from "react-helmet";
 
 interface CommunityPost {
   id: string;
@@ -303,6 +304,15 @@ const Community = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>有劲社区 - 有劲AI</title>
+        <meta name="description" content="分享成长·见证蜕变" />
+        <meta property="og:title" content="有劲AI社区" />
+        <meta property="og:description" content="分享成长故事，见证彼此蜕变" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/community" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

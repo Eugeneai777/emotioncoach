@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { Helmet } from "react-helmet";
 
 const childTypes = [
   { emoji: '🌧️', label: '抑郁 / 情绪低落', value: 'depression' },
@@ -65,6 +66,15 @@ export default function ParentCampLanding() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-emerald-50/20 to-background">
+      <Helmet>
+        <title>21天青少年困境突破营 - 有劲AI</title>
+        <meta name="description" content="教你看懂孩子的情绪，让孩子愿意重新靠近你" />
+        <meta property="og:title" content="有劲AI亲子训练营｜21天青少年困境突破" />
+        <meta property="og:description" content="父母先稳，孩子才愿意走向你。21天系统化亲子情绪训练" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/parent-camp" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       {/* 导航栏 */}
       <nav className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">

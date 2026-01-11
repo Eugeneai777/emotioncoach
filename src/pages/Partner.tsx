@@ -15,6 +15,7 @@ import { ReferralList } from "@/components/partner/ReferralList";
 import { CommissionHistory } from "@/components/partner/CommissionHistory";
 import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
 import { YoujinPartnerDashboard } from "@/components/partner/YoujinPartnerDashboard";
+import { Helmet } from "react-helmet";
 
 export default function Partner() {
   const navigate = useNavigate();
@@ -57,6 +58,15 @@ export default function Partner() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-orange-50">
+      <Helmet>
+        <title>合伙人中心 - 有劲AI</title>
+        <meta name="description" content="管理你的推广数据、佣金收益和学员列表" />
+        <meta property="og:title" content="有劲AI合伙人中心" />
+        <meta property="og:description" content="推广有劲AI，获得持续分成收入" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/partner" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       <PageHeader 
         title="合伙人中心"
         rightActions={
