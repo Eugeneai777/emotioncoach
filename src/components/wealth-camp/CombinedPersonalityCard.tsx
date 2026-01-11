@@ -10,13 +10,18 @@ import {
   ChevronUp,
   ExternalLink,
   Sparkles,
-  Zap
+  Zap,
+  Star,
+  Gift,
+  CheckCircle2,
+  Calculator
 } from "lucide-react";
 import { useLayerProgress } from "@/hooks/useLayerProgress";
 import { useAssessmentBaseline } from "@/hooks/useAssessmentBaseline";
 import { useFourPoorProgress } from "@/hooks/useFourPoorProgress";
 import { getPatternConfig, reactionPatternConfig } from "@/config/reactionPatternConfig";
 import { useReactionPatternProgress } from "@/hooks/useReactionPatternProgress";
+import { useWealthJournalEntries } from "@/hooks/useWealthJournalEntries";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +31,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   RadarChart,
   PolarGrid,
@@ -92,12 +102,24 @@ export function CombinedPersonalityCard({
   const navigate = useNavigate();
   const { layers, overall, isLoading: layersLoading } = useLayerProgress(campId);
   const { baseline, isLoading: baselineLoading } = useAssessmentBaseline(campId);
-  const { transformationRate, patternConfig, isLoading: patternLoading } = useReactionPatternProgress(campId);
+  const { 
+    transformationRate, 
+    patternConfig, 
+    emotionImprovement, 
+    awakeningMomentsCount,
+    isLoading: patternLoading 
+  } = useReactionPatternProgress(campId);
   const { awarenessCount, awarenessBreakdown, transformationRates } = useFourPoorProgress(campId);
+  const { stats } = useWealthJournalEntries({ campId });
   
   const [openLayers, setOpenLayers] = useState<string[]>([]);
+  const [showCalculation, setShowCalculation] = useState(false);
   
   const isLoading = layersLoading || baselineLoading || patternLoading;
+  
+  // Calculate emotion and awakening contributions for display
+  const emotionContribution = Math.min(40, (emotionImprovement || 0) * 20);
+  const awakeningContribution = Math.min(60, (awakeningMomentsCount || 0) * 5);
 
   if (isLoading) {
     return (
@@ -176,11 +198,6 @@ export function CombinedPersonalityCard({
   const behaviorLayer = layers.find(l => l.key === 'behavior');
   const emotionLayer = layers.find(l => l.key === 'emotion');
   const beliefLayer = layers.find(l => l.key === 'belief');
-
-  // Calculate score changes (block score: lower = better)
-  const behaviorChange = baseline.behavior_score - (behaviorLayer?.currentStars ? (5 - behaviorLayer.currentStars) * 10 : baseline.behavior_score);
-  const emotionChange = baseline.emotion_score - (emotionLayer?.currentStars ? (5 - emotionLayer.currentStars) * 10 : baseline.emotion_score);
-  const beliefChange = baseline.belief_score - (beliefLayer?.currentStars ? (5 - beliefLayer.currentStars) * 10 : baseline.belief_score);
 
   const handleViewReport = () => {
     navigate('/wealth-block?view=history');
@@ -287,6 +304,46 @@ export function CombinedPersonalityCard({
                   <span>Day 0: {Math.max(0, transformationRate - 20)}%</span>
                   <span className="text-white font-medium">当前: {transformationRate}%</span>
                 </div>
+                
+                {/* 计算方式可折叠区 */}
+                <Collapsible open={showCalculation} onOpenChange={setShowCalculation}>
+                  <CollapsibleTrigger className="text-[10px] text-white/70 flex items-center gap-1 mt-2 hover:text-white/90 transition-colors">
+                    <Calculator className="w-3 h-3" />
+                    <span>计算方式</span>
+                    <ChevronDown className={cn("w-3 h-3 transition-transform", showCalculation && "rotate-180")} />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-2 p-2 bg-white/10 rounded-lg text-[10px] space-y-1.5"
+                    >
+                      <p className="text-white/90 font-medium">转化进度 = 情绪贡献 + 觉醒时刻贡献</p>
+                      <div className="text-white/80 space-y-0.5 pl-2">
+                        <p className="flex items-center gap-2">
+                          <span>• 情绪改善：</span>
+                          <span className="text-white">+{(emotionImprovement || 0).toFixed(1)}★</span>
+                          <span>→ 贡献 {Math.round(emotionContribution)}%</span>
+                        </p>
+                        <p className="flex items-center gap-2">
+                          <span>• 觉醒时刻：</span>
+                          <span className="text-white">{awakeningMomentsCount || 0} 次</span>
+                          <span>→ 贡献 {Math.round(awakeningContribution)}%</span>
+                        </p>
+                        <p className="text-white font-medium pt-1 border-t border-white/20">
+                          = {transformationRate}%
+                        </p>
+                      </div>
+                      <div className="pt-1.5 border-t border-white/20">
+                        <p className="text-white/90 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          每日教练梳理 + 新信念记录 可快速累积觉醒时刻
+                        </p>
+                      </div>
+                    </motion.div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
               
               {/* 智能规划提示 */}
@@ -394,25 +451,68 @@ export function CombinedPersonalityCard({
                       </div>
                     </div>
 
-                    {/* 成长对比 */}
-                    <div className="p-2 bg-muted/50 rounded-lg">
-                      <div className="flex items-center justify-between text-xs mb-1">
+                    {/* 成长对比 - 统一星级显示 */}
+                    <div className="p-2 bg-muted/50 rounded-lg space-y-2">
+                      <div className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">📊 成长对比</span>
-                        {behaviorChange !== 0 && (
-                          <span className={cn(
-                            "font-medium",
-                            behaviorChange > 0 ? "text-emerald-600" : "text-muted-foreground"
-                          )}>
-                            {behaviorChange > 0 ? `-${behaviorChange}分 ↓ 行为改善` : "持续练习中"}
+                        {behaviorLayer && behaviorLayer.growthStars > 0 && (
+                          <span className="font-medium text-emerald-600">
+                            +{behaviorLayer.growthStars.toFixed(1)}★ 行为觉醒
                           </span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 text-xs">
-                        <span className="text-muted-foreground">Day 0: {baseline.behavior_score}分</span>
+                        <span className="text-muted-foreground">Day 0: {behaviorLayer?.baselineStars?.toFixed(1)}★</span>
                         <span>→</span>
-                        <span className="font-medium">当前: {behaviorLayer?.currentStars?.toFixed(1)}★</span>
+                        <span className="font-medium text-amber-700">当前: {behaviorLayer?.currentStars?.toFixed(1)}★</span>
+                      </div>
+                      {/* 可视化双进度条 */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <div className="h-1.5 bg-muted rounded-full">
+                            <div 
+                              className="h-full bg-gray-300 rounded-full transition-all"
+                              style={{ width: `${behaviorLayer?.baselinePercent || 0}%` }}
+                            />
+                          </div>
+                          <p className="text-[9px] text-muted-foreground mt-0.5">Day 0 ({behaviorLayer?.baselinePercent || 0}%)</p>
+                        </div>
+                        <span className="text-muted-foreground text-xs">→</span>
+                        <div className="flex-1">
+                          <div className="h-1.5 bg-muted rounded-full">
+                            <div 
+                              className="h-full bg-amber-500 rounded-full transition-all"
+                              style={{ width: `${behaviorLayer?.currentPercent || 0}%` }}
+                            />
+                          </div>
+                          <p className="text-[9px] text-amber-700 mt-0.5 font-medium">当前 ({behaviorLayer?.currentPercent || 0}%)</p>
+                        </div>
                       </div>
                     </div>
+
+                    {/* 行动足迹嵌入 */}
+                    {stats?.givingActions && stats.givingActions.length > 0 && (
+                      <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200/50">
+                        <h5 className="text-xs font-medium text-emerald-800 dark:text-emerald-300 flex items-center gap-1 mb-2">
+                          <Gift className="w-3 h-3" />
+                          行动足迹 
+                          <span className="text-emerald-600 dark:text-emerald-400">({stats.givingActions.length}次给予)</span>
+                        </h5>
+                        <div className="space-y-1 max-h-20 overflow-y-auto">
+                          {stats.givingActions.slice(0, 3).map((action, i) => (
+                            <div key={i} className="flex items-center gap-2 text-[10px] text-emerald-700 dark:text-emerald-300">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" />
+                              <span className="truncate">"{action}"</span>
+                            </div>
+                          ))}
+                          {stats.givingActions.length > 3 && (
+                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 pl-5">
+                              还有 {stats.givingActions.length - 3} 次...
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {/* 下一步行动 */}
                     <Button
@@ -510,23 +610,42 @@ export function CombinedPersonalityCard({
                       </div>
                     </div>
 
-                    {/* 成长对比 */}
-                    <div className="p-2 bg-muted/50 rounded-lg">
-                      <div className="flex items-center justify-between text-xs mb-1">
+                    {/* 成长对比 - 统一星级显示 */}
+                    <div className="p-2 bg-muted/50 rounded-lg space-y-2">
+                      <div className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">📊 成长对比</span>
-                        {emotionChange !== 0 && (
-                          <span className={cn(
-                            "font-medium",
-                            emotionChange > 0 ? "text-emerald-600" : "text-muted-foreground"
-                          )}>
-                            {emotionChange > 0 ? `-${emotionChange}分 ↓ 情绪舒缓` : "持续练习中"}
+                        {emotionLayer && emotionLayer.growthStars > 0 && (
+                          <span className="font-medium text-emerald-600">
+                            +{emotionLayer.growthStars.toFixed(1)}★ 情绪舒缓
                           </span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 text-xs">
-                        <span className="text-muted-foreground">Day 0: {baseline.emotion_score}分</span>
+                        <span className="text-muted-foreground">Day 0: {emotionLayer?.baselineStars?.toFixed(1)}★</span>
                         <span>→</span>
-                        <span className="font-medium">当前: {emotionLayer?.currentStars?.toFixed(1)}★</span>
+                        <span className="font-medium text-pink-700">当前: {emotionLayer?.currentStars?.toFixed(1)}★</span>
+                      </div>
+                      {/* 可视化双进度条 */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <div className="h-1.5 bg-muted rounded-full">
+                            <div 
+                              className="h-full bg-gray-300 rounded-full transition-all"
+                              style={{ width: `${emotionLayer?.baselinePercent || 0}%` }}
+                            />
+                          </div>
+                          <p className="text-[9px] text-muted-foreground mt-0.5">Day 0 ({emotionLayer?.baselinePercent || 0}%)</p>
+                        </div>
+                        <span className="text-muted-foreground text-xs">→</span>
+                        <div className="flex-1">
+                          <div className="h-1.5 bg-muted rounded-full">
+                            <div 
+                              className="h-full bg-pink-500 rounded-full transition-all"
+                              style={{ width: `${emotionLayer?.currentPercent || 0}%` }}
+                            />
+                          </div>
+                          <p className="text-[9px] text-pink-700 mt-0.5 font-medium">当前 ({emotionLayer?.currentPercent || 0}%)</p>
+                        </div>
                       </div>
                     </div>
 
@@ -646,25 +765,68 @@ export function CombinedPersonalityCard({
                       </div>
                     </div>
 
-                    {/* 成长对比 */}
-                    <div className="p-2 bg-muted/50 rounded-lg">
-                      <div className="flex items-center justify-between text-xs mb-1">
+                    {/* 成长对比 - 统一星级显示 */}
+                    <div className="p-2 bg-muted/50 rounded-lg space-y-2">
+                      <div className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">📊 成长对比</span>
-                        {beliefChange !== 0 && (
-                          <span className={cn(
-                            "font-medium",
-                            beliefChange > 0 ? "text-emerald-600" : "text-muted-foreground"
-                          )}>
-                            {beliefChange > 0 ? `-${beliefChange}分 ↓ 信念松动` : "持续练习中"}
+                        {beliefLayer && beliefLayer.growthStars > 0 && (
+                          <span className="font-medium text-emerald-600">
+                            +{beliefLayer.growthStars.toFixed(1)}★ 信念松动
                           </span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 text-xs">
-                        <span className="text-muted-foreground">Day 0: {baseline.belief_score}分</span>
+                        <span className="text-muted-foreground">Day 0: {beliefLayer?.baselineStars?.toFixed(1)}★</span>
                         <span>→</span>
-                        <span className="font-medium">当前: {beliefLayer?.currentStars?.toFixed(1)}★</span>
+                        <span className="font-medium text-violet-700">当前: {beliefLayer?.currentStars?.toFixed(1)}★</span>
+                      </div>
+                      {/* 可视化双进度条 */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <div className="h-1.5 bg-muted rounded-full">
+                            <div 
+                              className="h-full bg-gray-300 rounded-full transition-all"
+                              style={{ width: `${beliefLayer?.baselinePercent || 0}%` }}
+                            />
+                          </div>
+                          <p className="text-[9px] text-muted-foreground mt-0.5">Day 0 ({beliefLayer?.baselinePercent || 0}%)</p>
+                        </div>
+                        <span className="text-muted-foreground text-xs">→</span>
+                        <div className="flex-1">
+                          <div className="h-1.5 bg-muted rounded-full">
+                            <div 
+                              className="h-full bg-violet-500 rounded-full transition-all"
+                              style={{ width: `${beliefLayer?.currentPercent || 0}%` }}
+                            />
+                          </div>
+                          <p className="text-[9px] text-violet-700 mt-0.5 font-medium">当前 ({beliefLayer?.currentPercent || 0}%)</p>
+                        </div>
                       </div>
                     </div>
+
+                    {/* 新信念收集嵌入 */}
+                    {stats?.uniqueNewBeliefs && stats.uniqueNewBeliefs.length > 0 && (
+                      <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200/50">
+                        <h5 className="text-xs font-medium text-green-800 dark:text-green-300 flex items-center gap-1 mb-2">
+                          <Sparkles className="w-3 h-3" />
+                          我的新信念收集 
+                          <span className="text-green-600 dark:text-green-400">({stats.uniqueNewBeliefs.length}条)</span>
+                        </h5>
+                        <div className="space-y-1 max-h-20 overflow-y-auto">
+                          {stats.uniqueNewBeliefs.slice(0, 3).map((belief, i) => (
+                            <div key={i} className="flex items-center gap-2 text-[10px] text-green-700 dark:text-green-300">
+                              <Star className="w-3 h-3 text-amber-500 fill-amber-500 flex-shrink-0" />
+                              <span className="truncate">"{belief}"</span>
+                            </div>
+                          ))}
+                          {stats.uniqueNewBeliefs.length > 3 && (
+                            <p className="text-[10px] text-green-600 dark:text-green-400 pl-5">
+                              还有 {stats.uniqueNewBeliefs.length - 3} 条...
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {/* 核心洞见 */}
                     <div className="p-2 bg-violet-50 dark:bg-violet-900/20 rounded-lg border-l-2 border-violet-500">
