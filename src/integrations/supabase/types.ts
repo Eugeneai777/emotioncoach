@@ -6396,6 +6396,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_quick_menu_config: {
+        Row: {
+          created_at: string
+          custom_slot_1: Json
+          custom_slot_2: Json
+          home_page_path: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_slot_1?: Json
+          custom_slot_2?: Json
+          home_page_path?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_slot_1?: Json
+          custom_slot_2?: Json
+          home_page_path?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
