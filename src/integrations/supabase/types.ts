@@ -7478,6 +7478,14 @@ export type Database = {
         Args: { p_amount: number; p_partner_id: string }
         Returns: undefined
       }
+      add_user_quota: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: {
+          message: string
+          new_remaining_quota: number
+          success: boolean
+        }[]
+      }
       cleanup_expired_wechat_login_scenes: { Args: never; Returns: undefined }
       confirm_coach_settlement: {
         Args: { p_amount: number; p_coach_id: string }
