@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Sparkles, ArrowDown } from "lucide-react";
+import { Helmet } from "react-helmet";
 import {
   Accordion,
   AccordionContent,
@@ -209,6 +210,15 @@ const StoryCoachIntro = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>说好故事教练 - 有劲AI</title>
+        <meta name="description" content="英雄之旅×向导觉醒，用科学方法把经历变成动人故事" />
+        <meta property="og:title" content="有劲AI说好故事教练" />
+        <meta property="og:description" content="用科学方法，把你的经历变成动人的成长故事" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/story-coach-intro" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       {/* Hero Banner - 优化版 */}
       <section className="relative overflow-hidden min-h-[85vh] flex items-center">
         {/* 增强的装饰背景 */}

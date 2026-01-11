@@ -17,6 +17,7 @@ import { CommunicationComparison } from "@/components/communication/Communicatio
 import { CommunicationReview } from "@/components/communication/CommunicationReview";
 import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
 import { FrequencyMusicPlayer } from "@/components/FrequencyMusicPlayer";
+import { Helmet } from "react-helmet";
 
 interface CommunicationTag {
   id: string;
@@ -368,6 +369,15 @@ export default function CommunicationHistory() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>沟通日记 - 有劲AI</title>
+        <meta name="description" content="记录沟通，提升表达能力" />
+        <meta property="og:title" content="有劲AI沟通日记" />
+        <meta property="og:description" content="四步沟通法记录，让关系更顺畅" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/communication-history" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4 space-y-2 md:space-y-3">
           <div className="flex items-center justify-between gap-2">

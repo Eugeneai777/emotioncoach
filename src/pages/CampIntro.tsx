@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -101,6 +102,15 @@ const CampIntro = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white pb-24">
+      <Helmet>
+        <title>{campTemplate?.camp_name || '训练营'} - 有劲AI</title>
+        <meta name="description" content={campTemplate?.description || '系统化训练营，助你成长蜕变'} />
+        <meta property="og:title" content={`有劲AI｜${campTemplate?.camp_name || '训练营'}`} />
+        <meta property="og:description" content={campTemplate?.description || '科学方法，系统训练，见证成长'} />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content={`https://wechat.eugenewe.net/camp/${campType}`} />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       {/* Header */}
       <header className="border-b border-purple-200/50 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-6xl mx-auto px-4 py-3">

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, TrendingUp, Users, DollarSign, Gift, CheckCircle, HelpCircle, Sparkles, ShoppingCart } from "lucide-react";
+import { Helmet } from "react-helmet";
 import { toast } from "sonner";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
 const PartnerIntro = () => {
@@ -62,6 +63,15 @@ const PartnerIntro = () => {
     navigate("/partner");
   };
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+      <Helmet>
+        <title>绽放合伙人计划 - 有劲AI</title>
+        <meta name="description" content="开启你的情绪觉醒事业之旅" />
+        <meta property="og:title" content="有劲AI绽放合伙人计划" />
+        <meta property="og:description" content="直推30%+二级10%永久佣金，推广有劲，获得持续收益" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/partner-intro" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
       {/* Header */}
       <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
         <div className="container max-w-5xl mx-auto px-4 py-4">
