@@ -8,6 +8,9 @@ import { TrainingCamp } from "@/types/trainingCamp";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { GraduateContinueCard } from "@/components/wealth-camp/GraduateContinueCard";
+import { PartnerConversionCard } from "@/components/wealth-camp/PartnerConversionCard";
+import { usePartner } from "@/hooks/usePartner";
 
 interface CoachTrainingCampProps {
   activeCamp?: TrainingCamp | null;
@@ -88,6 +91,7 @@ export const CoachTrainingCamp = ({
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isPartner } = usePartner();
   const [showStartDialog, setShowStartDialog] = useState(false);
   const theme = themeStyles[colorTheme];
   const IconComponent = theme.icon;
@@ -140,6 +144,25 @@ export const CoachTrainingCamp = ({
     enabled: !!user && !!campType
   });
 
+  // 查询已完成的训练营（毕业用户）
+  const { data: completedCamp } = useQuery({
+    queryKey: ['user-completed-camp', campType, user?.id],
+    queryFn: async () => {
+      if (!user || !campType) return null;
+      const { data } = await supabase
+        .from('training_camps')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('camp_type', campType)
+        .eq('status', 'completed')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data as TrainingCamp | null;
+    },
+    enabled: !!user && !!campType && !userCamp
+  });
+
   // 使用外部传入的 activeCamp 或查询到的 userCamp
   const activeCamp = externalActiveCamp !== undefined ? externalActiveCamp : userCamp;
   
@@ -176,6 +199,18 @@ export const CoachTrainingCamp = ({
 
   // 如果使用 campType 但模板未加载，不渲染
   if (campType && !campTemplate) return null;
+
+  // 已完成训练营（毕业用户）- 显示继续卡片和合伙人转化
+  if (!activeCamp && completedCamp) {
+    return (
+      <div className="w-full space-y-4 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+        <GraduateContinueCard isPartner={isPartner} />
+        {!isPartner && (
+          <PartnerConversionCard variant="compact" context="sidebar" />
+        )}
+      </div>
+    );
+  }
 
   if (!activeCamp) {
     return (
