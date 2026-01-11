@@ -161,8 +161,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
           amount: packageInfo.price,
           userId: user.id,
           payType: selectedPayType,
-          // 告知后端需要生成云端二维码URL（用于小程序长按识别）
-          needCloudQr: isMiniProgram,
+          // 移动端都需要云端二维码URL（用于长按识别）
+          needCloudQr: isMobile || isMiniProgram,
         },
       });
 
@@ -348,15 +348,13 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
 
             {(status === 'ready' || status === 'polling') && payType === 'native' && (qrCodeDataUrl || cloudQrUrl) && (
               <div className="flex flex-col items-center gap-1">
-                {/* 小程序环境使用云端URL，支持长按识别；其他环境使用base64 */}
+                {/* 移动端使用云端URL支持长按识别；PC端使用base64 */}
                 <img 
-                  src={isMiniProgram && cloudQrUrl ? cloudQrUrl : qrCodeDataUrl} 
+                  src={(isMobile || isMiniProgram) && cloudQrUrl ? cloudQrUrl : qrCodeDataUrl} 
                   alt="微信支付二维码" 
                   className="w-48 h-48"
-                  // 关键：确保小程序WebView可以长按识别
-                  data-preview-src={isMiniProgram && cloudQrUrl ? cloudQrUrl : undefined}
                 />
-                {isMiniProgram && (
+                {(isMobile || isMiniProgram) && (
                   <span className="text-xs text-muted-foreground mt-1">长按二维码识别支付</span>
                 )}
               </div>
