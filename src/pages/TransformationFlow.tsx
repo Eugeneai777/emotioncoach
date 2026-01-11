@@ -39,6 +39,7 @@ const TransformationFlow: React.FC = () => {
         <meta name="description" content="有劲AI用四层方式陪你，从轻轻开始，到真正改变发生" />
         <meta property="og:title" content="有劲AI四层支持系统" />
         <meta property="og:description" content="从觉察→理解→行动→转化，AI教练陪你走完成长闭环" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/transformation-flow" />
         <meta property="og:site_name" content="有劲AI" />
       </Helmet>
