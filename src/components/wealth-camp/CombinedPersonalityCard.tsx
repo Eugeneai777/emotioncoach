@@ -10,8 +10,15 @@ import {
   Zap,
   Star,
   Gift,
-  CheckCircle2
+  CheckCircle2,
+  HelpCircle
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useLayerProgress } from "@/hooks/useLayerProgress";
 import { useAssessmentBaseline } from "@/hooks/useAssessmentBaseline";
 import { useFourPoorProgress } from "@/hooks/useFourPoorProgress";
@@ -248,7 +255,42 @@ export function CombinedPersonalityCard({
                   <span className="text-2xl">{pattern.emoji}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white/80 text-[10px]">🧭 你的财富反应模式</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-white/80 text-[10px]">🧭 你的财富反应模式</p>
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="text-white/60 hover:text-white/90 transition-colors">
+                            <HelpCircle className="w-3 h-3" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent 
+                          side="bottom" 
+                          align="start"
+                          className="max-w-[280px] p-3 text-xs bg-popover text-popover-foreground border shadow-lg z-50"
+                        >
+                          <div className="space-y-2">
+                            <p className="font-semibold text-foreground">📊 四种财富反应模式</p>
+                            <div className="space-y-1.5 text-muted-foreground">
+                              <p>🟢 <span className="text-emerald-600 dark:text-emerald-400 font-medium">和谐型</span>：人与财富双向靠近</p>
+                              <p>🟡 <span className="text-amber-600 dark:text-amber-400 font-medium">追逐型</span>：人追钱，钱后退</p>
+                              <p>🔵 <span className="text-blue-600 dark:text-blue-400 font-medium">逃避型</span>：钱靠近，你退缩</p>
+                              <p>🔴 <span className="text-rose-600 dark:text-rose-400 font-medium">创伤型</span>：钱触发强烈身心反应</p>
+                            </div>
+                            <div className="pt-2 border-t border-border">
+                              <p className="font-semibold text-foreground">🎯 转化率计算</p>
+                              <p className="text-muted-foreground mt-1">
+                                情绪峰值（40%）+ 觉醒时刻（60%）
+                              </p>
+                              <p className="text-muted-foreground text-[10px] mt-1">
+                                基于最佳3天情绪分 + 高分/新信念天数
+                              </p>
+                            </div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <h2 className="text-lg font-bold">【{pattern.name}】</h2>
                   <p className="text-white/90 text-xs mt-0.5">{pattern.tagline}</p>
                 </div>
