@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Share2, ChevronRight, Sparkles, Target, ChevronDown } from 'lucide-react';
+import { Share2, ChevronRight, Sparkles, Target, ChevronDown, Eye, Medal } from 'lucide-react';
 import { useAchievementProgress, AchievementProgressNode } from '@/hooks/useAchievementProgress';
 import WealthInviteCardDialog from './WealthInviteCardDialog';
 import {
@@ -17,7 +17,41 @@ interface CompactAchievementGridProps {
   className?: string;
 }
 
-// 成就节点组件
+// 进度点组件 - 简化展示
+function ProgressDotsSimple({ 
+  earnedCount, 
+  totalCount, 
+  theme,
+  size = 'sm'
+}: { 
+  earnedCount: number; 
+  totalCount: number; 
+  theme: { gradient: string };
+  size?: 'sm' | 'md';
+}) {
+  const dotSize = size === 'md' ? 'w-2 h-2' : 'w-1.5 h-1.5';
+  
+  return (
+    <div className="flex items-center gap-0.5">
+      {Array.from({ length: totalCount }).map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: i * 0.02 }}
+          className={cn(
+            dotSize, "rounded-full transition-all duration-300",
+            i < earnedCount 
+              ? cn("bg-gradient-to-r shadow-sm", theme.gradient) 
+              : "bg-muted-foreground/20 border border-muted-foreground/10"
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
+// 成就节点组件 - 详细展示
 function AchievementNodeItem({ 
   achievement, 
   index,
@@ -49,7 +83,7 @@ function AchievementNodeItem({
         >
           <div
             className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center text-sm relative overflow-hidden transition-all duration-300",
+              "w-7 h-7 rounded-lg flex items-center justify-center text-sm relative overflow-hidden transition-all duration-300",
               isEarned && [theme.bgActive, 'border', theme.border, 'shadow-sm'],
               !isEarned && !isNext && [theme.bgLocked, 'border border-dashed border-muted-foreground/20'],
               isNext && ['border-2 border-dashed', theme.border, 'bg-gradient-to-br from-white/50 to-white/30 dark:from-slate-800/50 dark:to-slate-700/30']
@@ -66,23 +100,16 @@ function AchievementNodeItem({
             
             {/* 下一个目标的脉冲效果 */}
             {isNext && (
-              <>
-                <motion.div
-                  className={cn("absolute inset-0 rounded-lg bg-gradient-to-tr", theme.gradient)}
-                  animate={{ opacity: [0.1, 0.25, 0.1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                />
-                <motion.div
-                  className={cn("absolute -inset-1 rounded-lg bg-gradient-to-tr opacity-20", theme.gradient)}
-                  animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0, 0.2] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-              </>
+              <motion.div
+                className={cn("absolute inset-0 rounded-lg bg-gradient-to-tr", theme.gradient)}
+                animate={{ opacity: [0.1, 0.25, 0.1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
             )}
 
             {/* 图标 */}
             <span className={cn(
-              "relative z-10 transition-all duration-300",
+              "relative z-10 transition-all duration-300 text-xs",
               !isEarned && !isNext && "grayscale opacity-30",
               isNext && "grayscale-0 opacity-80"
             )}>
@@ -94,16 +121,16 @@ function AchievementNodeItem({
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full flex items-center justify-center shadow-sm"
+                className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full flex items-center justify-center shadow-sm"
               >
-                <span className="text-[7px] text-white">✓</span>
+                <span className="text-[6px] text-white">✓</span>
               </motion.div>
             )}
 
             {/* 等级标签 */}
             {showLevel && achievement.mappedLevel && (
               <div className={cn(
-                "absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] font-bold px-0.5 rounded",
+                "absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[6px] font-bold px-0.5 rounded",
                 isEarned ? "bg-amber-500 text-white" : "bg-muted text-muted-foreground"
               )}>
                 L{achievement.mappedLevel}
@@ -117,11 +144,6 @@ function AchievementNodeItem({
           <div className="flex items-center gap-1.5">
             <span className="text-base">{achievement.icon}</span>
             <span className="font-semibold text-sm">{achievement.name}</span>
-            {achievement.mappedLevel && (
-              <span className="text-[10px] px-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded">
-                Lv{achievement.mappedLevel}
-              </span>
-            )}
           </div>
           <p className="text-xs text-muted-foreground">{achievement.description}</p>
           <div className="pt-1 border-t border-border/50">
@@ -147,33 +169,6 @@ function AchievementNodeItem({
         </div>
       </TooltipContent>
     </Tooltip>
-  );
-}
-
-// 进度点组件
-function ProgressDots({ 
-  earnedCount, 
-  totalCount, 
-  theme 
-}: { 
-  earnedCount: number; 
-  totalCount: number; 
-  theme: { gradient: string } 
-}) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: totalCount }).map((_, i) => (
-        <div
-          key={i}
-          className={cn(
-            "w-1.5 h-1.5 rounded-full transition-colors",
-            i < earnedCount 
-              ? cn("bg-gradient-to-r", theme.gradient) 
-              : "bg-muted-foreground/20"
-          )}
-        />
-      ))}
-    </div>
   );
 }
 
@@ -350,7 +345,7 @@ export function CompactAchievementGrid({ className }: CompactAchievementGridProp
                   <div className="flex items-center gap-2">
                     <span className="text-sm">{path.icon}</span>
                     <span className="text-xs font-medium">{path.title}</span>
-                    <ProgressDots 
+                    <ProgressDotsSimple 
                       earnedCount={path.earnedCount} 
                       totalCount={path.totalCount} 
                       theme={path.theme}

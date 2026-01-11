@@ -1,53 +1,69 @@
-import React, { forwardRef } from 'react';
-import { Sparkles } from 'lucide-react';
-import { useUserAchievements } from '@/hooks/useUserAchievements';
-import { achievements as allAchievementsDef } from '@/config/awakeningLevelConfig';
+import React, { forwardRef, useState } from 'react';
+import { Sparkles, ChevronRight } from 'lucide-react';
+import { useAchievementProgress } from '@/hooks/useAchievementProgress';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
-// Journey map: key milestones in order
-const journeyMilestones = [
-  { key: 'first_awakening', icon: '🎯', name: '觉醒起点' },
-  { key: 'day1_complete', icon: '👣', name: '第一步' },
-  { key: 'day3_halfway', icon: '💪', name: '中途不弃' },
-  { key: 'camp_graduate', icon: '🎓', name: '7天觉醒者' },
-  { key: 'became_partner', icon: '🤝', name: '觉醒引路人' },
-];
-
-// Category styling
-const categoryStyles: Record<string, { bg: string; border: string }> = {
-  milestone: { bg: 'from-amber-400/90 to-orange-400/90', border: 'border-amber-300/50' },
-  streak: { bg: 'from-orange-400/90 to-red-400/90', border: 'border-orange-300/50' },
-  growth: { bg: 'from-violet-400/90 to-purple-400/90', border: 'border-violet-300/50' },
-  social: { bg: 'from-emerald-400/90 to-teal-400/90', border: 'border-emerald-300/50' },
-};
-
-const categoryLabels: Record<string, string> = {
-  milestone: '里程碑',
-  streak: '坚持',
-  growth: '成长',
-  social: '社交',
+// Path theme colors for share card
+const pathThemes = {
+  milestone: { 
+    bg: 'from-amber-400/90 to-orange-400/90', 
+    border: 'border-amber-300/50',
+    icon: '🎯',
+    name: '里程碑之路'
+  },
+  streak: { 
+    bg: 'from-orange-400/90 to-red-400/90', 
+    border: 'border-orange-300/50',
+    icon: '🔥',
+    name: '坚持之路'
+  },
+  growth: { 
+    bg: 'from-violet-400/90 to-purple-400/90', 
+    border: 'border-violet-300/50',
+    icon: '🌟',
+    name: '成长之路'
+  },
+  social: { 
+    bg: 'from-emerald-400/90 to-teal-400/90', 
+    border: 'border-emerald-300/50',
+    icon: '💫',
+    name: '社交之路'
+  },
 };
 
 interface AchievementShareCardProps {
   avatarUrl?: string;
   displayName?: string;
   className?: string;
+  selectedPath?: string | null; // 'milestone' | 'streak' | 'growth' | 'social' | null (all)
+  onPathChange?: (path: string | null) => void;
+  showPathSelector?: boolean;
 }
 
 const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProps>(
-  ({ avatarUrl, displayName = '财富觉醒者', className }, ref) => {
-    const { getAchievementsWithStatus, earnedCount, totalCount, getAchievementsByCategory } = useUserAchievements();
-    const allAchievements = getAchievementsWithStatus();
-    const byCategory = getAchievementsByCategory();
+  ({ avatarUrl, displayName = '财富觉醒者', className, selectedPath = null, onPathChange, showPathSelector = false }, ref) => {
+    const { paths, totalEarned, totalCount, overallProgress, globalNextAchievement } = useAchievementProgress();
     
-    // Find next milestone to unlock
-    const nextMilestone = journeyMilestones.find(m => {
-      const achievement = allAchievements.find(a => a.key === m.key);
-      return achievement && !achievement.earned;
-    });
+    // 根据选择的路径过滤成就
+    const filteredPaths = selectedPath 
+      ? paths.filter(p => p.key === selectedPath)
+      : paths;
+    
+    const displayEarnedCount = selectedPath 
+      ? filteredPaths[0]?.earnedCount || 0 
+      : totalEarned;
+    
+    const displayTotalCount = selectedPath 
+      ? filteredPaths[0]?.totalCount || 0 
+      : totalCount;
+    
+    const displayProgress = displayTotalCount > 0 
+      ? Math.round((displayEarnedCount / displayTotalCount) * 100) 
+      : 0;
 
     // Check if user has no achievements
-    const hasNoAchievements = earnedCount === 0;
+    const hasNoAchievements = totalEarned === 0;
 
     return (
       <div
@@ -62,9 +78,13 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
         {/* Header */}
         <div className="relative px-5 pt-5 pb-4">
           {/* Decorative sparkles */}
-          <div className="absolute top-3 right-3 text-amber-400/30">
-            <Sparkles className="w-5 h-5 animate-pulse" />
-          </div>
+          <motion.div 
+            className="absolute top-3 right-3 text-amber-400/30"
+            animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
+            transition={{ duration: 3, repeat: Infinity }}
+          >
+            <Sparkles className="w-5 h-5" />
+          </motion.div>
           
           {/* User info */}
           <div className="flex items-center gap-3 mb-4">
@@ -80,7 +100,7 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
             <div>
               <div className="text-white font-bold text-sm">{displayName}</div>
               <div className="text-amber-400/80 text-xs flex items-center gap-1">
-                🏆 财富觉醒成就墙
+                🏅 {selectedPath ? pathThemes[selectedPath as keyof typeof pathThemes]?.name : '财富觉醒成就墙'}
               </div>
             </div>
           </div>
@@ -89,22 +109,56 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
           <div className="flex items-center gap-3">
             <div className="flex-1 bg-slate-700/50 rounded-lg p-2.5 text-center">
               <div className="text-xl font-bold bg-gradient-to-r from-amber-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
-                {earnedCount}
+                {displayEarnedCount}
               </div>
               <div className="text-[10px] text-slate-400">已解锁</div>
             </div>
             <div className="flex-1 bg-slate-700/50 rounded-lg p-2.5 text-center">
-              <div className="text-xl font-bold text-slate-300">{totalCount}</div>
+              <div className="text-xl font-bold text-slate-300">{displayTotalCount}</div>
               <div className="text-[10px] text-slate-400">全部</div>
             </div>
             <div className="flex-1 bg-slate-700/50 rounded-lg p-2.5 text-center">
               <div className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                {totalCount > 0 ? Math.round((earnedCount / totalCount) * 100) : 0}%
+                {displayProgress}%
               </div>
               <div className="text-[10px] text-slate-400">完成度</div>
             </div>
           </div>
         </div>
+
+        {/* Path Selector (only show in edit mode, not in final render) */}
+        {showPathSelector && onPathChange && (
+          <div className="px-5 pb-3">
+            <div className="text-[10px] text-slate-400 mb-2">选择展示路径：</div>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => onPathChange(null)}
+                className={cn(
+                  "px-2 py-1 rounded-md text-[10px] transition-all",
+                  !selectedPath 
+                    ? "bg-gradient-to-r from-amber-400 to-orange-400 text-white" 
+                    : "bg-slate-700/50 text-slate-400 hover:bg-slate-600/50"
+                )}
+              >
+                全部成就
+              </button>
+              {Object.entries(pathThemes).map(([key, theme]) => (
+                <button
+                  key={key}
+                  onClick={() => onPathChange(key)}
+                  className={cn(
+                    "px-2 py-1 rounded-md text-[10px] transition-all flex items-center gap-1",
+                    selectedPath === key 
+                      ? `bg-gradient-to-r ${theme.bg} text-white` 
+                      : "bg-slate-700/50 text-slate-400 hover:bg-slate-600/50"
+                  )}
+                >
+                  {theme.icon} {theme.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Content Area */}
         <div className="px-5 pb-4">
@@ -117,12 +171,12 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
               
               {/* Visual journey path */}
               <div className="relative py-3">
-                <div className="flex items-center justify-between relative">
-                  {journeyMilestones.map((milestone, index) => (
-                    <div key={milestone.key} className="relative flex flex-col items-center">
+                <div className="grid grid-cols-5 gap-1">
+                  {paths[0]?.achievements.slice(0, 5).map((ach, index) => (
+                    <div key={ach.key} className="relative flex flex-col items-center">
                       {/* Connector line */}
-                      {index < journeyMilestones.length - 1 && (
-                        <div className="absolute top-4 left-[50%] w-[calc(100%+8px)] h-[2px] border-t-2 border-dashed border-slate-600/50" />
+                      {index < 4 && (
+                        <div className="absolute top-4 left-[50%] w-full h-[2px] border-t-2 border-dashed border-slate-600/50" />
                       )}
                       
                       {/* Milestone dot */}
@@ -130,12 +184,12 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
                         "w-8 h-8 rounded-full flex items-center justify-center text-base relative z-10",
                         "bg-slate-700/80 border-2 border-dashed border-slate-500/50"
                       )}>
-                        <span className="grayscale opacity-50">{milestone.icon}</span>
+                        <span className="grayscale opacity-50">{ach.icon}</span>
                       </div>
                       
                       {/* Label */}
-                      <div className="mt-1.5 text-[9px] text-slate-500 text-center w-12 leading-tight">
-                        {milestone.name}
+                      <div className="mt-1.5 text-[8px] text-slate-500 text-center w-12 leading-tight truncate">
+                        {ach.name}
                       </div>
                     </div>
                   ))}
@@ -143,10 +197,10 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
               </div>
 
               {/* Next step hint */}
-              {nextMilestone && (
+              {globalNextAchievement && (
                 <div className="mt-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
                   <span className="text-amber-400 text-xs">
-                    🎯 下一步：{nextMilestone.name}
+                    🎯 下一步：{globalNextAchievement.achievement.icon} {globalNextAchievement.achievement.name}
                   </span>
                 </div>
               )}
@@ -154,33 +208,49 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
           ) : (
             // Achievement Display Mode (when has achievements)
             <div className="space-y-2.5">
-              {(['milestone', 'streak', 'growth', 'social'] as const).map((category) => {
-                const achievements = byCategory[category];
-                const earnedInCategory = achievements.filter(a => a.earned);
+              {filteredPaths.map((path) => {
+                const earnedAchievements = path.achievements.filter(a => a.earned);
                 
-                if (earnedInCategory.length === 0) return null;
+                if (earnedAchievements.length === 0) return null;
                 
-                const styles = categoryStyles[category];
+                const theme = pathThemes[path.key as keyof typeof pathThemes];
                 
                 return (
-                  <div key={category}>
+                  <div key={path.key}>
                     <div className="text-[10px] text-slate-400 mb-1.5 flex items-center gap-1">
                       <span className={cn(
                         "w-1.5 h-1.5 rounded-full bg-gradient-to-r",
-                        styles.bg
+                        theme.bg
                       )} />
-                      {categoryLabels[category]} ({earnedInCategory.length}/{achievements.length})
+                      {theme.name} ({earnedAchievements.length}/{path.totalCount})
                     </div>
+                    
+                    {/* Progress dots */}
+                    <div className="flex items-center gap-0.5 mb-2">
+                      {path.achievements.map((ach, i) => (
+                        <div
+                          key={i}
+                          className={cn(
+                            "w-2 h-2 rounded-full transition-colors",
+                            ach.earned 
+                              ? `bg-gradient-to-r ${theme.bg}` 
+                              : "bg-slate-700/50 border border-slate-600/50"
+                          )}
+                        />
+                      ))}
+                    </div>
+                    
+                    {/* Earned achievements */}
                     <div className="flex flex-wrap gap-1.5">
-                      {earnedInCategory.map((ach) => (
+                      {earnedAchievements.map((ach) => (
                         <div
                           key={ach.key}
                           className={cn(
                             "px-2 py-1 rounded-md flex items-center gap-1",
                             "bg-gradient-to-r",
-                            styles.bg,
+                            theme.bg,
                             "border",
-                            styles.border
+                            theme.border
                           )}
                         >
                           <span className="text-sm">{ach.icon}</span>
@@ -193,13 +263,33 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
               })}
 
               {/* Next goal if not all complete */}
-              {earnedCount < totalCount && nextMilestone && (
-                <div className="mt-2 p-2 rounded-lg bg-slate-700/30 border border-slate-600/30 text-center">
-                  <span className="text-slate-400 text-[10px]">
-                    🎯 下一个目标：
-                    <span className="text-amber-400 ml-1">{nextMilestone.icon} {nextMilestone.name}</span>
-                  </span>
-                </div>
+              {totalEarned < totalCount && globalNextAchievement && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 p-2.5 rounded-lg bg-slate-700/30 border border-slate-600/30"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400 text-[10px]">🎯 下一个目标：</span>
+                      <span className="text-amber-400 text-xs font-medium">
+                        {globalNextAchievement.achievement.icon} {globalNextAchievement.achievement.name}
+                      </span>
+                    </div>
+                    <ChevronRight className="w-3 h-3 text-slate-500" />
+                  </div>
+                  {/* Mini progress */}
+                  <div className="mt-1.5 h-1 bg-slate-700/50 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-amber-400 to-orange-400"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${globalNextAchievement.progress}%` }}
+                    />
+                  </div>
+                  <div className="mt-1 text-[9px] text-slate-500 text-right">
+                    {globalNextAchievement.remainingText}
+                  </div>
+                </motion.div>
               )}
             </div>
           )}
