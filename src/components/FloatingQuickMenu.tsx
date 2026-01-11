@@ -88,13 +88,16 @@ export const FloatingQuickMenu = () => {
     },
   ];
 
-  // Load saved position
+  // Load saved position with boundary check
   useEffect(() => {
     const saved = localStorage.getItem(POSITION_STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setPosition(parsed);
+        // Ensure position is within current viewport bounds
+        const safeX = Math.max(10, Math.min(window.innerWidth - 60, parsed.x));
+        const safeY = Math.max(100, Math.min(window.innerHeight - 80, parsed.y));
+        setPosition({ x: safeX, y: safeY });
       } catch (e) {
         console.error('Failed to parse saved position');
       }
