@@ -104,8 +104,12 @@ const AwakeningIntro: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>六大觉察 - 有劲AI</title>
-        <meta name="description" content="有劲AI不是陪你聊天的AI，而是帮你看见自己、对齐行动、走出人生回路的生命操作系统" />
+        <title>六大觉察入口 - 有劲AI</title>
+        <meta name="description" content="有劲AI帮你看见自己、对齐行动、走出人生回路" />
+        <meta property="og:title" content="有劲AI六大觉察入口" />
+        <meta property="og:description" content="情绪、关系、金钱、身体、成长、创造——每天1次轻记录，看见盲点与模式" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/awakening-intro" />
+        <meta property="og:site_name" content="有劲AI" />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-background to-orange-50/30">
