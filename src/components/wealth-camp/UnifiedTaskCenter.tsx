@@ -288,41 +288,6 @@ export function UnifiedTaskCenter({
       </CardHeader>
 
       <CardContent className="p-4 space-y-4">
-        {/* TOP 1 Achievement Goal */}
-        {topRecommendation && !allCompleted && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-3 rounded-lg bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 dark:from-amber-950/30 dark:via-orange-950/30 dark:to-amber-950/30 border border-amber-200/50 dark:border-amber-800/50"
-          >
-            <div className="flex items-center gap-3">
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-lg shadow-md"
-              >
-                {topRecommendation.icon}
-              </motion.div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <Trophy className="w-3.5 h-3.5 text-amber-600" />
-                  <span className="text-xs font-medium text-amber-700 dark:text-amber-300">TOP 1 目标</span>
-                  <Badge variant="outline" className="text-[10px] h-4 px-1.5 bg-amber-100/50 text-amber-700 border-amber-300">
-                    {topRecommendation.progressPercent}%
-                  </Badge>
-                </div>
-                <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
-                  {topRecommendation.name}
-                </p>
-                <div className="flex items-center gap-1.5 mt-1 text-[10px] text-amber-600 dark:text-amber-400">
-                  <ArrowRight className="w-2.5 h-2.5" />
-                  <span>{topRecommendation.primaryAction}</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
         {/* Weekly Focus Hint - for post-camp users */}
         {isPostCampMode && focusAreas.length > 0 && !allCompleted && (
           <div className="px-3 py-2 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/50">
