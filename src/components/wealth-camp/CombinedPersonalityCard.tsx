@@ -430,20 +430,22 @@ export function CombinedPersonalityCard({
           </div>
         </motion.div>
 
-        {/* 分隔线 */}
-        <div className="flex items-center gap-3 py-1">
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-          <span className="text-[10px] text-muted-foreground font-medium">三层深度分析</span>
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-        </div>
+        {/* 三层深度分析（深色面板） */}
+        <div className="dark rounded-xl border border-border/50 bg-background p-2">
+          {/* 分隔线 */}
+          <div className="flex items-center gap-3 py-1">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+            <span className="text-[10px] text-muted-foreground font-medium">三层深度分析</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+          </div>
 
-        {/* 三层深度分析 - 手风琴 */}
-        <Accordion
-          type="multiple"
-          value={openLayers}
-          onValueChange={setOpenLayers}
-          className="space-y-2"
-        >
+          {/* 三层深度分析 - 手风琴 */}
+          <Accordion
+            type="multiple"
+            value={openLayers}
+            onValueChange={setOpenLayers}
+            className="space-y-2"
+          >
           {/* 第一层：行为层 */}
           <AccordionItem value="behavior" className="border-0">
             <motion.div
@@ -569,7 +571,7 @@ export function CombinedPersonalityCard({
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-muted-foreground">Day 0: {behaviorLayer?.baselineStars?.toFixed(1)}★</span>
                         <span>→</span>
-                        <span className="font-medium text-amber-700">当前: {behaviorLayer?.currentStars?.toFixed(1)}★</span>
+                        <span className="font-medium text-amber-700 dark:text-amber-300">当前: {behaviorLayer?.currentStars?.toFixed(1)}★</span>
                       </div>
                       {/* 可视化双进度条 */}
                       <div className="flex items-center gap-2">
@@ -590,7 +592,7 @@ export function CombinedPersonalityCard({
                               style={{ width: `${behaviorLayer?.currentPercent || 0}%` }}
                             />
                           </div>
-                          <p className="text-[9px] text-amber-700 mt-0.5 font-medium">当前 ({behaviorLayer?.currentPercent || 0}%)</p>
+                          <p className="text-[9px] text-amber-700 dark:text-amber-300 mt-0.5 font-medium">当前 ({behaviorLayer?.currentPercent || 0}%)</p>
                         </div>
                       </div>
                     </div>
@@ -618,7 +620,7 @@ export function CombinedPersonalityCard({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-xs h-8 text-amber-700 hover:text-amber-800 hover:bg-amber-50"
+                      className="w-full text-xs h-8 text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-900/20"
                       onClick={() => handleNavigateToTask('coaching')}
                     >
                       📌 {behaviorLayer?.nextStep} →
@@ -680,7 +682,7 @@ export function CombinedPersonalityCard({
                         <ResponsiveContainer width="100%" height="100%">
                           <RadarChart cx="50%" cy="50%" outerRadius="60%" data={emotionRadarData}>
                             <PolarGrid stroke="hsl(var(--border))" />
-<PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 7 }} />
+                            <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 7 }} />
                             <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
                             {/* Day 0 基线 - 灰色虚线 */}
                             <Radar 
@@ -755,7 +757,7 @@ export function CombinedPersonalityCard({
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-muted-foreground">Day 0: {emotionLayer?.baselineStars?.toFixed(1)}★</span>
                         <span>→</span>
-                        <span className="font-medium text-pink-700">当前: {emotionLayer?.currentStars?.toFixed(1)}★</span>
+                        <span className="font-medium text-pink-700 dark:text-pink-300">当前: {emotionLayer?.currentStars?.toFixed(1)}★</span>
                       </div>
                       {/* 可视化双进度条 */}
                       <div className="flex items-center gap-2">
@@ -776,7 +778,7 @@ export function CombinedPersonalityCard({
                               style={{ width: `${emotionLayer?.currentPercent || 0}%` }}
                             />
                           </div>
-                          <p className="text-[9px] text-pink-700 mt-0.5 font-medium">当前 ({emotionLayer?.currentPercent || 0}%)</p>
+                          <p className="text-[9px] text-pink-700 dark:text-pink-300 mt-0.5 font-medium">当前 ({emotionLayer?.currentPercent || 0}%)</p>
                         </div>
                       </div>
                     </div>
@@ -800,7 +802,7 @@ export function CombinedPersonalityCard({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-xs h-8 text-pink-700 hover:text-pink-800 hover:bg-pink-50"
+                      className="w-full text-xs h-8 text-pink-700 dark:text-pink-300 hover:text-pink-800 dark:hover:text-pink-200 hover:bg-pink-50 dark:hover:bg-pink-900/20"
                       onClick={() => handleNavigateToTask('meditation')}
                     >
                       📌 {emotionLayer?.nextStep} →
@@ -950,7 +952,7 @@ export function CombinedPersonalityCard({
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-muted-foreground">Day 0: {beliefLayer?.baselineStars?.toFixed(1)}★</span>
                         <span>→</span>
-                        <span className="font-medium text-violet-700">当前: {beliefLayer?.currentStars?.toFixed(1)}★</span>
+                        <span className="font-medium text-violet-700 dark:text-violet-300">当前: {beliefLayer?.currentStars?.toFixed(1)}★</span>
                       </div>
                       {/* 可视化双进度条 */}
                       <div className="flex items-center gap-2">
@@ -971,7 +973,7 @@ export function CombinedPersonalityCard({
                               style={{ width: `${beliefLayer?.currentPercent || 0}%` }}
                             />
                           </div>
-                          <p className="text-[9px] text-violet-700 mt-0.5 font-medium">当前 ({beliefLayer?.currentPercent || 0}%)</p>
+                          <p className="text-[9px] text-violet-700 dark:text-violet-300 mt-0.5 font-medium">当前 ({beliefLayer?.currentPercent || 0}%)</p>
                         </div>
                       </div>
                     </div>
@@ -1006,7 +1008,7 @@ export function CombinedPersonalityCard({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-xs h-8 text-violet-700 hover:text-violet-800 hover:bg-violet-50"
+                      className="w-full text-xs h-8 text-violet-700 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-200 hover:bg-violet-50 dark:hover:bg-violet-900/20"
                       onClick={() => handleNavigateToTask('meditation')}
                     >
                       📌 {beliefLayer?.nextStep} →
@@ -1017,6 +1019,7 @@ export function CombinedPersonalityCard({
             </motion.div>
           </AccordionItem>
         </Accordion>
+        </div>
 
         {/* 底部核心洞见 */}
         <motion.div
