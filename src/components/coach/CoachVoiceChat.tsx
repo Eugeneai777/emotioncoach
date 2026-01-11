@@ -66,6 +66,7 @@ export const CoachVoiceChat = ({
   const [transcript, setTranscript] = useState('');
   const [userTranscript, setUserTranscript] = useState('');
   const [duration, setDuration] = useState(0);
+  const durationValueRef = useRef(0); // 🔧 用于 endCall 退款判断，避免 state 延迟问题
   const [billedMinutes, setBilledMinutes] = useState(0);
   const [remainingQuota, setRemainingQuota] = useState<number | null>(null);
   const [isCheckingQuota, setIsCheckingQuota] = useState(true);
@@ -590,7 +591,13 @@ export const CoachVoiceChat = ({
     setStatus(mappedStatus);
     if (mappedStatus === 'connected') {
       lastActivityRef.current = Date.now();
-      durationRef.current = setInterval(() => setDuration(prev => prev + 1), 1000);
+      durationRef.current = setInterval(() => {
+        setDuration(prev => {
+          const newVal = prev + 1;
+          durationValueRef.current = newVal; // 🔧 同步更新 ref
+          return newVal;
+        });
+      }, 1000);
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
       if (durationRef.current) clearInterval(durationRef.current);
     }
@@ -827,15 +834,18 @@ export const CoachVoiceChat = ({
         durationRef.current = null;
       }
       
-      // 🔧 退款逻辑优化
+      // 🔧 退款逻辑优化 - 使用 durationValueRef 避免 state 延迟问题
+      const finalDuration = durationValueRef.current;
+      console.log(`[VoiceChat] EndCall - finalDuration: ${finalDuration}, lastBilledMinute: ${lastBilledMinuteRef.current}`);
+      
       if (lastBilledMinuteRef.current > 0) {
-        if (duration === 0) {
+        if (finalDuration === 0) {
           // 🔧 修复：预扣了点数但通话从未真正开始（duration=0），全额退款
           console.log('[VoiceChat] Call never started (duration=0), refunding pre-deducted quota');
           await refundPreDeductedQuota('call_never_started');
-        } else if (duration > 0 && lastBilledMinuteRef.current === 1) {
+        } else if (finalDuration > 0 && lastBilledMinuteRef.current === 1) {
           // 🔧 短通话退款检查：只有扣了第一分钟时才检查
-          await refundShortCall(duration);
+          await refundShortCall(finalDuration);
         }
       }
       
