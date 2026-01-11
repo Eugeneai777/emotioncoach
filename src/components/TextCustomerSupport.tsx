@@ -18,7 +18,7 @@ interface TextCustomerSupportProps {
 
 export default function TextCustomerSupport({ onClose }: TextCustomerSupportProps) {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: '您好！我是有劲AI客服，请问有什么可以帮您的？' }
+    { role: 'assistant', content: '您好！我是有劲AI客服 🌿\n\n产品刚上线，您的每一条反馈对我们都特别珍贵！无论是使用建议、功能需求还是问题反馈，都欢迎告诉我 💬' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
