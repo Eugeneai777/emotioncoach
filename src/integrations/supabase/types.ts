@@ -2779,10 +2779,12 @@ export type Database = {
           id: string
           is_ai_generated: boolean | null
           is_completed: boolean | null
+          journal_entry_id: string | null
           linked_belief: string | null
           linked_focus_area: string | null
           points_reward: number | null
           recommendation_reason: string | null
+          source: string | null
           target_date: string
           target_poor_type: string | null
           user_id: string
@@ -2799,10 +2801,12 @@ export type Database = {
           id?: string
           is_ai_generated?: boolean | null
           is_completed?: boolean | null
+          journal_entry_id?: string | null
           linked_belief?: string | null
           linked_focus_area?: string | null
           points_reward?: number | null
           recommendation_reason?: string | null
+          source?: string | null
           target_date: string
           target_poor_type?: string | null
           user_id: string
@@ -2819,15 +2823,25 @@ export type Database = {
           id?: string
           is_ai_generated?: boolean | null
           is_completed?: boolean | null
+          journal_entry_id?: string | null
           linked_belief?: string | null
           linked_focus_area?: string | null
           points_reward?: number | null
           recommendation_reason?: string | null
+          source?: string | null
           target_date?: string
           target_poor_type?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "daily_challenges_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "wealth_journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       decision_logs: {
         Row: {

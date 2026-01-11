@@ -318,11 +318,41 @@ export function UnifiedTaskCenter({
         {/* AI Challenges Section - Only for post-camp users */}
         {isPostCampMode && (
           <div className="space-y-2">
+            {/* Coach Actions - 来自教练对话 */}
+            {challenges && challenges.filter(c => c.source === 'coach_action').length > 0 && (
+              <>
+                <div className="text-xs font-medium text-amber-600 dark:text-amber-400 px-1 flex items-center gap-1.5">
+                  <span>✨</span>
+                  <span>── 今日行动（来自教练对话）──</span>
+                </div>
+                <AnimatePresence>
+                  {challenges.filter(c => c.source === 'coach_action').map((challenge, index) => (
+                    <ChallengeItem
+                      key={challenge.id}
+                      challenge={challenge}
+                      index={index}
+                      isExpanded={expandedChallengeId === challenge.id}
+                      onExpand={() => setExpandedChallengeId(expandedChallengeId === challenge.id ? null : challenge.id)}
+                      reflection={reflection}
+                      onReflectionChange={setReflection}
+                      onComplete={() => handleCompleteChallenge(challenge)}
+                      completing={completing}
+                      isCoachAction
+                    />
+                  ))}
+                </AnimatePresence>
+              </>
+            )}
+            
+            {/* AI Challenges */}
             <div className="text-xs font-medium text-muted-foreground px-1 flex items-center justify-between">
-              <span>── AI 挑战 ──</span>
-              {challenges && challenges.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <span>💡</span>
+                <span>── AI 挑战 ──</span>
+              </div>
+              {challenges && challenges.filter(c => c.source !== 'coach_action').length > 0 && (
                 <Badge variant="secondary" className="text-[10px]">
-                  {challengeCompletedCount}/{challenges.length}
+                  {challenges.filter(c => c.source !== 'coach_action' && c.is_completed).length}/{challenges.filter(c => c.source !== 'coach_action').length}
                 </Badge>
               )}
             </div>
@@ -332,9 +362,9 @@ export function UnifiedTaskCenter({
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="text-sm">{generating ? '正在生成...' : '加载中...'}</span>
               </div>
-            ) : challenges && challenges.length > 0 ? (
+            ) : challenges && challenges.filter(c => c.source !== 'coach_action').length > 0 ? (
               <AnimatePresence>
-                {challenges.map((challenge, index) => (
+                {challenges.filter(c => c.source !== 'coach_action').map((challenge, index) => (
                   <ChallengeItem
                     key={challenge.id}
                     challenge={challenge}
@@ -350,7 +380,7 @@ export function UnifiedTaskCenter({
               </AnimatePresence>
             ) : (
               <div className="text-center py-4 text-sm text-muted-foreground">
-                今日暂无挑战
+                今日暂无 AI 挑战
               </div>
             )}
           </div>
@@ -476,6 +506,7 @@ function ChallengeItem({
   onReflectionChange,
   onComplete,
   completing,
+  isCoachAction = false,
 }: {
   challenge: DailyChallenge;
   index: number;
@@ -485,12 +516,18 @@ function ChallengeItem({
   onReflectionChange: (val: string) => void;
   onComplete: () => void;
   completing: boolean;
+  isCoachAction?: boolean;
 }) {
-  const typeInfo = challengeTypes[challenge.challenge_type as keyof typeof challengeTypes] || {
-    name: '挑战',
-    icon: '🎯',
-    color: 'text-gray-500',
-  };
+  // For coach actions, use a special icon and styling
+  const isFromCoach = isCoachAction || challenge.source === 'coach_action';
+  
+  const typeInfo = isFromCoach 
+    ? { name: '给予行动', icon: '🎁', color: 'text-amber-500' }
+    : (challengeTypes[challenge.challenge_type as keyof typeof challengeTypes] || {
+        name: '挑战',
+        icon: '🎯',
+        color: 'text-gray-500',
+      });
   const difficultyInfo = challengeDifficulties[challenge.difficulty as keyof typeof challengeDifficulties] || challengeDifficulties.medium;
   const poorTypeInfo = challenge.target_poor_type 
     ? fourPoorRichConfig[challenge.target_poor_type as PoorTypeKey]
@@ -509,7 +546,9 @@ function ChallengeItem({
           "flex items-center gap-3 p-3 rounded-lg transition-all",
           challenge.is_completed 
             ? "bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800" 
-            : "bg-muted/50 cursor-pointer hover:bg-muted"
+            : isFromCoach
+              ? "bg-amber-50/50 dark:bg-amber-950/20 border-2 border-amber-300 dark:border-amber-700 cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-950/30"
+              : "bg-muted/50 cursor-pointer hover:bg-muted"
         )}
         onClick={() => !challenge.is_completed && onExpand()}
       >
@@ -518,7 +557,9 @@ function ChallengeItem({
           "w-9 h-9 rounded-lg flex items-center justify-center text-lg",
           challenge.is_completed 
             ? "bg-emerald-100 dark:bg-emerald-900/50" 
-            : "bg-amber-100 dark:bg-amber-900/50"
+            : isFromCoach
+              ? "bg-amber-200 dark:bg-amber-800/50"
+              : "bg-amber-100 dark:bg-amber-900/50"
         )}>
           {typeInfo.icon}
         </div>

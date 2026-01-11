@@ -415,6 +415,49 @@ ${trendSection}
 
     console.log('✅ 财富日记生成成功:', journalEntry.id, '卡点类型:', behaviorType, emotionType, beliefType);
 
+    // ============= 同步教练给予行动到挑战表 =============
+    if (givingAction) {
+      const today = new Date().toISOString().split('T')[0];
+      
+      // 检查是否已存在今日的教练行动挑战
+      const { data: existingCoachChallenge } = await supabaseClient
+        .from('daily_challenges')
+        .select('id')
+        .eq('user_id', user_id)
+        .eq('target_date', today)
+        .eq('source', 'coach_action')
+        .maybeSingle();
+
+      if (!existingCoachChallenge) {
+        // 创建教练行动挑战记录
+        const { error: challengeError } = await supabaseClient
+          .from('daily_challenges')
+          .insert({
+            user_id,
+            challenge_type: 'giving',
+            challenge_title: givingAction,
+            challenge_description: '来自今日教练对话的给予行动',
+            difficulty: 'medium',
+            points_reward: 20, // 统一积分
+            target_date: today,
+            is_ai_generated: false,
+            target_poor_type: behaviorType || null,
+            recommendation_reason: '✨ 这是你在教练对话中的行动承诺',
+            source: 'coach_action',
+            journal_entry_id: journalEntry.id,
+            ai_insight_source: null,
+          });
+
+        if (challengeError) {
+          console.error('❌ 同步教练行动到挑战表失败:', challengeError);
+        } else {
+          console.log('✅ 教练行动已同步到挑战表:', givingAction);
+        }
+      } else {
+        console.log('ℹ️ 今日已有教练行动挑战，跳过同步');
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       journal: journalEntry,

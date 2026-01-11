@@ -498,16 +498,42 @@ serve(async (req: Request) => {
     // Check if challenges already exist for today
     const { data: existingChallenges } = await supabaseClient
       .from('daily_challenges')
-      .select('id')
+      .select('id, source')
       .eq('user_id', user.id)
       .eq('target_date', dateStr);
 
-    if (existingChallenges && existingChallenges.length > 0) {
+    // 检查是否已有 AI 生成的挑战
+    const hasAiChallenges = existingChallenges?.some((c: any) => c.source === 'ai_generated' || !c.source);
+    
+    if (hasAiChallenges) {
       return new Response(
-        JSON.stringify({ success: true, message: 'Challenges already exist', count: existingChallenges.length }),
+        JSON.stringify({ success: true, message: 'Challenges already exist', count: existingChallenges?.length || 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // ============= 检查当日教练行动（去重逻辑） =============
+    const todayStart = new Date(dateStr);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(dateStr);
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const { data: todayJournals } = await supabaseClient
+      .from('wealth_journal_entries')
+      .select('id, giving_action, action_suggestion, behavior_type')
+      .eq('user_id', user.id)
+      .gte('created_at', todayStart.toISOString())
+      .lte('created_at', todayEnd.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    const todayJournal = todayJournals?.[0];
+    const coachGivingAction = todayJournal?.giving_action;
+    const coachActionKeywords = coachGivingAction 
+      ? coachGivingAction.split(/[，,、。\s]+/).filter((k: string) => k.length > 1)
+      : [];
+    
+    console.log('Today coach action:', { coachGivingAction, keywords: coachActionKeywords });
 
     // ============= 获取用户完整画像 =============
     const userProfile = await getUserProfile(supabaseClient, user.id);
@@ -551,6 +577,13 @@ serve(async (req: Request) => {
     // 5. 获取主导层
     const dominantLayer = getDominantLayer(userProfile.layerWeights);
 
+    // 检查挑战是否与教练行动关键词重复
+    const hasKeywordOverlap = (title: string, description: string): boolean => {
+      if (coachActionKeywords.length === 0) return false;
+      const text = `${title} ${description}`.toLowerCase();
+      return coachActionKeywords.some((kw: string) => text.includes(kw.toLowerCase()));
+    };
+
     // Helper function to pick a random non-repeated challenge
     const pickChallenge = (
       challenges: ChallengeTemplate[],
@@ -561,7 +594,10 @@ serve(async (req: Request) => {
       linkedBelief?: string
     ) => {
       const difficultyFiltered = filterChallengesByDifficulty(challenges, targetDifficulty);
-      const available = difficultyFiltered.filter(c => !recentTitles.has(c.title));
+      // 过滤：排除重复标题 + 排除与教练行动相似的挑战
+      const available = difficultyFiltered.filter(c => 
+        !recentTitles.has(c.title) && !hasKeywordOverlap(c.title, c.description)
+      );
       const pool = available.length > 0 ? available : difficultyFiltered;
       
       const challenge = pool[Math.floor(Math.random() * pool.length)];
@@ -582,6 +618,7 @@ serve(async (req: Request) => {
         linked_focus_area: linkedFocusArea || null,
         linked_belief: linkedBelief || null,
         ai_insight_source: source,
+        source: 'ai_generated',
       };
     };
 
@@ -630,33 +667,40 @@ serve(async (req: Request) => {
     );
 
     // 挑战3：根据完成率和连续打卡决定类型
-    let thirdType: string;
-    let thirdReason: ReasonContext;
+    // 如果当天已有教练行动，只生成2个 AI 挑战
+    const shouldGenerateThird = !coachGivingAction;
     
-    const completionRate = progress.transformationRates[priorityList[0].type] / 100;
-    
-    if (userProfile.streak >= 3 && completionRate >= 0.7) {
-      // 高完成率 + 连续打卡：社交分享挑战
-      thirdType = 'share';
-      thirdReason = { poorType: 'mouth', reactionPattern: userProfile.reactionPattern || undefined };
-    } else if (completionRate >= 0.4) {
-      // 中完成率：感恩类挑战
-      thirdType = 'gratitude';
-      thirdReason = { poorType: 'heart', savedBelief: userProfile.savedBeliefs[1] };
+    if (shouldGenerateThird) {
+      let thirdType: string;
+      let thirdReason: ReasonContext;
+      
+      const completionRate = progress.transformationRates[priorityList[0].type] / 100;
+      
+      if (userProfile.streak >= 3 && completionRate >= 0.7) {
+        // 高完成率 + 连续打卡：社交分享挑战
+        thirdType = 'share';
+        thirdReason = { poorType: 'mouth', reactionPattern: userProfile.reactionPattern || undefined };
+      } else if (completionRate >= 0.4) {
+        // 中完成率：感恩类挑战
+        thirdType = 'gratitude';
+        thirdReason = { poorType: 'heart', savedBelief: userProfile.savedBeliefs[1] };
+      } else {
+        // 低完成率：简单富足思维挑战
+        thirdType = 'abundance';
+        thirdReason = { poorType: 'eye', focusArea: effectiveFocusAreas[0] };
+      }
+      
+      challengesToCreate.push(
+        pickChallenge(
+          genericChallenges[thirdType],
+          thirdType,
+          userProfile.streak >= 3 ? 'medium' : 'easy',
+          thirdReason
+        )
+      );
     } else {
-      // 低完成率：简单富足思维挑战
-      thirdType = 'abundance';
-      thirdReason = { poorType: 'eye', focusArea: effectiveFocusAreas[0] };
+      console.log('Skipping 3rd challenge - coach action exists:', coachGivingAction);
     }
-    
-    challengesToCreate.push(
-      pickChallenge(
-        genericChallenges[thirdType],
-        thirdType,
-        userProfile.streak >= 3 ? 'medium' : 'easy',
-        thirdReason
-      )
-    );
 
     console.log('Challenges to create:', challengesToCreate);
 
