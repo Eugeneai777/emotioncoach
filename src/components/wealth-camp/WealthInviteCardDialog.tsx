@@ -178,6 +178,10 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const [selectedAwakeningType, setSelectedAwakeningType] = useState<'behavior' | 'emotion' | 'belief'>('belief');
   const [partnerInfo, setPartnerInfo] = useState<{ partnerId: string; partnerCode: string } | null>(null);
   
+  // Achievement share card settings
+  const [achievementPath, setAchievementPath] = useState<string | null>(null);
+  const [achievementStyle, setAchievementStyle] = useState<'dark' | 'gradient' | 'minimal' | 'neon'>('dark');
+  
   // Get awakening progress for graduation card
   const { progress: awakeningProgress, currentLevel } = useAwakeningProgress();
   const { userAchievements } = useUserAchievements();
@@ -755,6 +759,12 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                   ref={achievementCardRef}
                   avatarUrl={userInfo.avatarUrl}
                   displayName={userInfo.displayName}
+                  selectedPath={achievementPath}
+                  onPathChange={setAchievementPath}
+                  showPathSelector={true}
+                  stylePreset={achievementStyle}
+                  onStyleChange={setAchievementStyle}
+                  showStyleSelector={true}
                 />
               </div>
             </div>
