@@ -23,6 +23,31 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // 🔒 SECURITY: Validate redirect URLs to prevent open redirect attacks
+  const isValidRedirect = (url: string): boolean => {
+    // Only allow relative paths starting with / (not //)
+    if (!url.startsWith('/') || url.startsWith('//')) {
+      return false;
+    }
+    
+    // Block javascript: and other protocol handlers that could be injected
+    try {
+      const testUrl = new URL(url, window.location.origin);
+      // Ensure it's same origin
+      if (testUrl.origin !== window.location.origin) {
+        return false;
+      }
+      // Block javascript: or data: protocols
+      if (testUrl.protocol !== 'http:' && testUrl.protocol !== 'https:') {
+        return false;
+      }
+    } catch {
+      return false;
+    }
+    
+    return true;
+  };
+
   useEffect(() => {
     // 处理推荐参数
     const urlParams = new URLSearchParams(window.location.search);
@@ -31,8 +56,11 @@ const Auth = () => {
     if (refCode) {
       localStorage.setItem('referral_code', refCode);
     }
-    if (redirectTo) {
+    // 🔒 SECURITY: Validate redirect URL before storing
+    if (redirectTo && isValidRedirect(redirectTo)) {
       localStorage.setItem('auth_redirect', redirectTo);
+    } else if (redirectTo) {
+      console.warn('Invalid redirect URL blocked:', redirectTo);
     }
 
     // 检查用户是否已登录
