@@ -113,7 +113,15 @@ export function CombinedPersonalityCard({
     );
   }
 
-  if (!baseline || !patternConfig) {
+  // Get pattern info from wealthBlockData for full display - with fallback
+  const pattern = baseline?.reaction_pattern 
+    ? (patternInfo[baseline.reaction_pattern as keyof typeof patternInfo] || patternInfo.harmony)
+    : patternInfo.harmony;
+  
+  // Get patternConfig with fallback
+  const safePatternConfig = patternConfig || getPatternConfig('harmony') || reactionPatternConfig.harmony;
+
+  if (!baseline) {
     return (
       <Card className={cn("overflow-hidden", className)}>
         <CardContent className="py-8 text-center">
@@ -132,9 +140,6 @@ export function CombinedPersonalityCard({
       </Card>
     );
   }
-
-  // Get pattern info from wealthBlockData for full display
-  const pattern = patternInfo[baseline.reaction_pattern as keyof typeof patternInfo] || patternInfo.harmony;
   
   // Get dominant block info
   const dominantPoor = baseline.dominant_poor ? 
@@ -268,9 +273,9 @@ export function CombinedPersonalityCard({
                 <div className="flex items-center justify-between text-xs mb-1.5">
                   <span className="text-white/80">🎯 转化进度</span>
                   <span className="flex items-center gap-2">
-                    <span className="text-white/60">{patternConfig.transformation.from}</span>
+                    <span className="text-white/60">{safePatternConfig.transformation.from}</span>
                     <span>→</span>
-                    <span className="font-semibold">{patternConfig.transformation.toName} {patternConfig.transformation.toEmoji}</span>
+                    <span className="font-semibold">{safePatternConfig.transformation.toName} {safePatternConfig.transformation.toEmoji}</span>
                   </span>
                 </div>
                 <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
