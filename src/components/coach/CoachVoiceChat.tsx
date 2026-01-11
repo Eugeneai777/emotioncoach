@@ -734,7 +734,69 @@ export const CoachVoiceChat = ({
   };
 
 
-  // 结束通话 - 🔧 添加防重复点击和更可靠的清理
+  // 🔧 短通话退款函数
+  const refundShortCall = async (durationSeconds: number): Promise<boolean> => {
+    // 只有在真正扣费了的情况下才处理
+    if (lastBilledMinuteRef.current === 0) {
+      console.log('[VoiceChat] No billing to refund for short call');
+      return false;
+    }
+
+    let refundAmount = 0;
+    let refundReason = '';
+
+    // 10秒内：全额退款（可能是误触或连接问题）
+    if (durationSeconds < 10) {
+      refundAmount = POINTS_PER_MINUTE;
+      refundReason = 'call_too_short_under_10s';
+    } 
+    // 10-30秒：半额退款（可能是快速测试）
+    else if (durationSeconds < 30) {
+      refundAmount = Math.floor(POINTS_PER_MINUTE / 2);
+      refundReason = 'call_short_10_to_30s';
+    }
+    // 超过30秒：不退款
+    else {
+      console.log('[VoiceChat] Call duration >= 30s, no refund');
+      return false;
+    }
+
+    if (refundAmount === 0) return false;
+
+    try {
+      console.log(`[VoiceChat] Short call refund: ${refundAmount} points, duration: ${durationSeconds}s, reason: ${refundReason}`);
+      const { data, error } = await supabase.functions.invoke('refund-failed-voice-call', {
+        body: {
+          amount: refundAmount,
+          session_id: sessionIdRef.current,
+          reason: refundReason,
+          feature_key: featureKey
+        }
+      });
+
+      if (error) {
+        console.error('[VoiceChat] Short call refund failed:', error);
+        return false;
+      }
+
+      if (data?.success) {
+        setRemainingQuota(data.remaining_quota);
+        toast({
+          title: "短通话退款",
+          description: `通话时长较短，已退还 ${refundAmount} 点`,
+        });
+        console.log(`[VoiceChat] Short call refunded ${refundAmount} points`);
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      console.error('[VoiceChat] Short call refund error:', e);
+      return false;
+    }
+  };
+
+  // 结束通话 - 🔧 添加防重复点击、短通话退款和更可靠的清理
   const endCall = async (e?: React.MouseEvent) => {
     // 阻止事件冒泡
     e?.stopPropagation();
@@ -757,6 +819,11 @@ export const CoachVoiceChat = ({
       if (durationRef.current) {
         clearInterval(durationRef.current);
         durationRef.current = null;
+      }
+      
+      // 🔧 短通话退款检查
+      if (status === 'connected' && duration > 0) {
+        await refundShortCall(duration);
       }
       
       // 保存session信息用于断线重连
