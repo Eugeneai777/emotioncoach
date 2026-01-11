@@ -45,7 +45,7 @@ export const availablePages = [
 ];
 
 export const defaultConfig: QuickMenuConfig = {
-  homePagePath: '/coach-space',
+  homePagePath: '/coach/wealth_coach_4_questions',
   customSlot1: {
     id: 'custom1',
     label: '财富日记',
@@ -73,6 +73,8 @@ export const useQuickMenuConfig = () => {
       // Wealth coach legacy paths
       '/wealth-coach': '/coach/wealth_coach_4_questions',
       '/coach/wealth': '/coach/wealth_coach_4_questions',
+      // Coach space legacy path - now defaults to wealth coach
+      '/coach-space': '/coach/wealth_coach_4_questions',
       // Awakening legacy paths (if ever persisted)
       '/wealth-block': '/awakening',
     };
