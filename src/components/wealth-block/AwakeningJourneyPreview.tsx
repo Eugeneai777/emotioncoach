@@ -1,22 +1,10 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Target, Eye, Heart, Brain, Sparkles, MessageCircle, CheckCircle, ArrowRight, Check, Loader2, RefreshCw } from 'lucide-react';
+import { MapPin, Target, Eye, Heart, Brain, Sparkles, MessageCircle, CheckCircle, ArrowRight } from 'lucide-react';
 import { getAwakeningColor } from '@/config/wealthStyleConfig';
 import { cn } from '@/lib/utils';
 import { fourPoorRichConfig, PoorTypeKey } from '@/config/fourPoorConfig';
-
-interface AIInsightData {
-  rootCauseAnalysis?: string;
-  combinedPatternInsight?: string;
-  breakthroughPath?: string[];
-  avoidPitfalls?: string[];
-  firstStep?: string;
-  encouragement?: string;
-  mirrorStatement?: string;
-  coreStuckPoint?: string;
-  unlockKey?: string;
-}
 
 interface AwakeningJourneyPreviewProps {
   healthScore: number;
@@ -26,18 +14,10 @@ interface AwakeningJourneyPreviewProps {
   dominantPoor?: PoorTypeKey;
   hasPurchased?: boolean;
   onPurchase?: () => void;
-  onStartCamp?: () => void;
-  // 步骤进度相关
-  isSaved?: boolean;
-  isSaving?: boolean;
-  onSave?: () => void;
-  // AI insight
-  aiInsight?: AIInsightData | null;
-  isLoadingAI?: boolean;
 }
 
-// 训练营价值点配置（按卡点类型个性化）
-const getCampValuePoints = (poorName: string) => [
+// 训练营价值点配置
+const campValuePoints = [
   {
     icon: Sparkles,
     title: '每日冥想',
@@ -48,7 +28,7 @@ const getCampValuePoints = (poorName: string) => [
   {
     icon: MessageCircle,
     title: '1v1 教练对话',
-    description: `针对你的「${poorName}」定制突破`,
+    description: '针对你的卡点定制突破',
     color: 'bg-amber-500',
     bgColor: 'bg-amber-100 dark:bg-amber-900/30',
   },
@@ -93,12 +73,6 @@ export function AwakeningJourneyPreview({
   dominantPoor,
   hasPurchased,
   onPurchase,
-  onStartCamp,
-  isSaved,
-  isSaving,
-  onSave,
-  aiInsight,
-  isLoadingAI,
 }: AwakeningJourneyPreviewProps) {
   // 觉醒起点 = 100 - 卡点分数
   const awakeningStart = 100 - healthScore;
@@ -130,16 +104,6 @@ export function AwakeningJourneyPreview({
 
   // 获取匹配的见证
   const testimonial = dominantPoor ? testimonials[dominantPoor] : testimonials.mouth;
-
-  // 个性化价值点
-  const campValuePoints = getCampValuePoints(poorName);
-
-  // 步骤进度
-  const steps = [
-    { id: 1, title: '完成测评', completed: true },
-    { id: 2, title: '保存结果', completed: isSaved || false },
-    { id: 3, title: '加入训练营', completed: hasPurchased || false },
-  ];
 
   return (
     <motion.div
@@ -271,41 +235,17 @@ export function AwakeningJourneyPreview({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm text-foreground">{point.title}</div>
-                    <div className="text-xs text-muted-foreground">{point.description}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {index === 1 && dominantPoor 
+                        ? `针对你的「${poorName}」定制突破`
+                        : point.description
+                      }
+                    </div>
                   </div>
                 </motion.div>
               ))}
             </div>
           </div>
-
-          {/* AI 定制突破路径 */}
-          {isLoadingAI && (
-            <div className="flex items-center justify-center gap-2 p-3 bg-violet-50 dark:bg-violet-950/30 rounded-xl">
-              <Loader2 className="w-4 h-4 animate-spin text-violet-500" />
-              <span className="text-xs text-violet-600 dark:text-violet-400">AI正在分析突破路径...</span>
-            </div>
-          )}
-          
-          {aiInsight && !isLoadingAI && aiInsight.breakthroughPath && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="p-3 bg-violet-50 dark:bg-violet-950/30 rounded-xl space-y-2"
-            >
-              <p className="text-xs font-semibold text-violet-700 dark:text-violet-300 flex items-center gap-1.5">
-                <Target className="w-3.5 h-3.5" /> AI定制突破路径
-              </p>
-              <div className="space-y-1.5">
-                {aiInsight.breakthroughPath.slice(0, 3).map((step, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs text-violet-700 dark:text-violet-300">
-                    <span className="w-4 h-4 rounded-full bg-violet-500 text-white flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">{i + 1}</span>
-                    <span className="leading-relaxed">{step}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
 
           {/* 用户见证 */}
           <motion.div
@@ -327,60 +267,6 @@ export function AwakeningJourneyPreview({
             </div>
           </motion.div>
 
-          {/* 步骤进度 */}
-          <div className="flex items-center justify-between py-2 px-1">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <div className="flex flex-col items-center">
-                  <div 
-                    className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all",
-                      step.completed 
-                        ? "bg-emerald-500 text-white" 
-                        : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {step.completed ? <Check className="w-4 h-4" /> : step.id}
-                  </div>
-                  <span className={cn(
-                    "text-[10px] mt-1 font-medium",
-                    step.completed ? "text-emerald-600" : "text-muted-foreground"
-                  )}>
-                    {step.title}
-                  </span>
-                  {/* 保存按钮 */}
-                  {step.id === 2 && !step.completed && onSave && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={onSave}
-                      disabled={isSaving}
-                      className="h-6 text-[10px] mt-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 px-2"
-                    >
-                      {isSaving ? '保存中...' : '保存'}
-                    </Button>
-                  )}
-                </div>
-                {index < steps.length - 1 && (
-                  <div className={cn(
-                    "w-8 sm:w-10 h-0.5 mx-1",
-                    steps[index + 1].completed || step.completed ? "bg-emerald-300" : "bg-muted"
-                  )} />
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* 同步状态 */}
-          <div className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
-            <RefreshCw className={cn("w-3.5 h-3.5", isSaved ? "text-emerald-500" : "text-muted-foreground")} />
-            <p className="text-[11px] text-muted-foreground">
-              {isSaved 
-                ? "✓ 测评数据已同步到财富日记 Day 0" 
-                : "保存后自动同步到财富日记"}
-            </p>
-          </div>
-
           {/* CTA 按钮 */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -389,10 +275,10 @@ export function AwakeningJourneyPreview({
           >
             {hasPurchased ? (
               <Button
-                onClick={onStartCamp}
-                className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-base shadow-lg shadow-emerald-500/25"
+                onClick={onPurchase}
+                className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-base shadow-lg shadow-amber-500/25"
               >
-                开始财富觉醒训练营
+                开始训练营
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             ) : (
@@ -406,11 +292,6 @@ export function AwakeningJourneyPreview({
               </Button>
             )}
           </motion.div>
-
-          {/* 底部信息 */}
-          <div className="text-center text-[10px] text-muted-foreground">
-            2,847人已参与
-          </div>
         </CardContent>
       </Card>
     </motion.div>
