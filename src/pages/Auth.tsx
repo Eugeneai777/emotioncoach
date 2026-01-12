@@ -117,6 +117,38 @@ const Auth = () => {
           }
         }
         
+        // 扫码转化追踪：如果是新用户注册且有分享追踪信息
+        if (isNewUser) {
+          const shareRefCode = localStorage.getItem('share_ref_code');
+          if (shareRefCode) {
+            try {
+              const landingPage = localStorage.getItem('share_landing_page');
+              const landingTime = localStorage.getItem('share_landing_time');
+              const timeToConvert = landingTime ? Date.now() - parseInt(landingTime) : undefined;
+              
+              await supabase.from('conversion_events').insert({
+                event_type: 'share_scan_converted',
+                feature_key: 'wealth_camp',
+                user_id: session.user.id,
+                metadata: {
+                  ref_code: shareRefCode,
+                  landing_page: landingPage,
+                  conversion_type: 'registration',
+                  time_to_convert_ms: timeToConvert,
+                  timestamp: new Date().toISOString(),
+                }
+              });
+              
+              // 清理 localStorage
+              localStorage.removeItem('share_ref_code');
+              localStorage.removeItem('share_landing_page');
+              localStorage.removeItem('share_landing_time');
+            } catch (error) {
+              console.error('Error tracking share conversion:', error);
+            }
+          }
+        }
+        
         // 计算目标跳转路径
         const savedRedirect = localStorage.getItem('auth_redirect');
         let targetRedirect = '/';

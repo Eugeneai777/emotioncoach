@@ -30,7 +30,10 @@ export type WealthCampEventType =
   | 'share_invite_clicked'      // 点击邀请好友
   | 'share_invite_completed'    // 完成邀请（生成链接/海报）
   | 'share_organic'             // 自发分享（非任务驱动）
-  | 'referral_registration';    // 被邀请用户注册
+  | 'referral_registration'     // 被邀请用户注册
+  // 扫码追踪
+  | 'share_scan_landed'         // 扫码落地（用户通过分享链接进入页面）
+  | 'share_scan_converted';     // 扫码转化（用户注册/购买）
 
 interface TrackEventOptions {
   userId?: string;
@@ -116,11 +119,65 @@ export function useWealthCampAnalytics() {
     }
   }, [trackEvent]);
 
+  // 追踪扫码落地
+  const trackShareScanLanded = useCallback(async (
+    refCode: string,
+    landingPage: string,
+    referrer?: string
+  ) => {
+    // 存储追踪信息到 localStorage 用于后续归因
+    localStorage.setItem('share_ref_code', refCode);
+    localStorage.setItem('share_landing_page', landingPage);
+    localStorage.setItem('share_landing_time', Date.now().toString());
+    
+    await trackEvent('share_scan_landed', {
+      metadata: {
+        ref_code: refCode,
+        landing_page: landingPage,
+        referrer: referrer || document.referrer,
+        user_agent: navigator.userAgent,
+      }
+    });
+  }, [trackEvent]);
+
+  // 追踪扫码转化
+  const trackShareScanConverted = useCallback(async (
+    conversionType: 'registration' | 'purchase',
+    metadata?: Record<string, any>
+  ) => {
+    const savedRefCode = localStorage.getItem('share_ref_code');
+    const savedLandingPage = localStorage.getItem('share_landing_page');
+    const savedLandingTime = localStorage.getItem('share_landing_time');
+    
+    if (!savedRefCode) return; // 没有推荐码，不记录
+    
+    const timeToConvert = savedLandingTime 
+      ? Date.now() - parseInt(savedLandingTime) 
+      : undefined;
+    
+    await trackEvent('share_scan_converted', {
+      metadata: {
+        ref_code: savedRefCode,
+        landing_page: savedLandingPage,
+        conversion_type: conversionType,
+        time_to_convert_ms: timeToConvert,
+        ...metadata,
+      }
+    });
+    
+    // 清理 localStorage
+    localStorage.removeItem('share_ref_code');
+    localStorage.removeItem('share_landing_page');
+    localStorage.removeItem('share_landing_time');
+  }, [trackEvent]);
+
   return {
     trackEvent,
     trackAssessmentTocamp,
     trackDayCheckin,
     trackShare,
+    trackShareScanLanded,
+    trackShareScanConverted,
   };
 }
 

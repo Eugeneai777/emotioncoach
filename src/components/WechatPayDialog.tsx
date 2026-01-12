@@ -236,6 +236,38 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
 
           toast.success('支付成功！');
           
+          // 扫码转化追踪：购买转化
+          const shareRefCode = localStorage.getItem('share_ref_code');
+          if (shareRefCode && user) {
+            try {
+              const landingPage = localStorage.getItem('share_landing_page');
+              const landingTime = localStorage.getItem('share_landing_time');
+              const timeToConvert = landingTime ? Date.now() - parseInt(landingTime) : undefined;
+              
+              await supabase.from('conversion_events').insert({
+                event_type: 'share_scan_converted',
+                feature_key: 'wealth_camp',
+                user_id: user.id,
+                metadata: {
+                  ref_code: shareRefCode,
+                  landing_page: landingPage,
+                  conversion_type: 'purchase',
+                  package_key: packageInfo?.key,
+                  amount: packageInfo?.price,
+                  time_to_convert_ms: timeToConvert,
+                  timestamp: new Date().toISOString(),
+                }
+              });
+              
+              // 清理 localStorage
+              localStorage.removeItem('share_ref_code');
+              localStorage.removeItem('share_landing_page');
+              localStorage.removeItem('share_landing_time');
+            } catch (error) {
+              console.error('Error tracking share conversion:', error);
+            }
+          }
+          
           // 延迟关闭
           setTimeout(() => {
             onSuccess();
