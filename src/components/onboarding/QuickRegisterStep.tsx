@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle, User, QrCode, Smartphone, RefreshCw } from 'lucide-react';
+import { Loader2, CheckCircle, User, QrCode, Mail, LogIn, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -13,7 +13,7 @@ interface QuickRegisterStepProps {
   onSkip?: () => void;
 }
 
-type RegisterMode = 'wechat' | 'phone';
+type RegisterMode = 'wechat' | 'email' | 'login';
 
 export function QuickRegisterStep({
   orderNo,
@@ -34,6 +34,12 @@ export function QuickRegisterStep({
   const [qrStatus, setQrStatus] = useState<'loading' | 'ready' | 'scanned' | 'confirmed' | 'expired'>('loading');
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 邮箱注册/登录相关状态
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // 检测是否是微信环境
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
@@ -60,7 +66,7 @@ export function QuickRegisterStep({
       startPolling(data.sceneStr);
     } catch (error: any) {
       console.error('Generate QR error:', error);
-      toast.error('生成二维码失败，请使用手机号注册');
+      toast.error('生成二维码失败，请使用邮箱注册');
       setQrStatus('expired');
     } finally {
       setIsGeneratingQr(false);
@@ -185,76 +191,91 @@ export function QuickRegisterStep({
     }
   };
 
-  // 手动输入手机号注册
-  const [phone, setPhone] = useState('');
-  const [verifyCode, setVerifyCode] = useState('');
-  const [codeSent, setCodeSent] = useState(false);
-  const [countdown, setCountdown] = useState(0);
+  // 邮箱注册
+  const handleEmailRegister = async () => {
+    if (!email || !password) {
+      toast.error('请填写邮箱和密码');
+      return;
+    }
 
-  const sendCode = async () => {
-    if (!phone || phone.length !== 11) {
-      toast.error('请输入正确的手机号');
+    if (password !== confirmPassword) {
+      toast.error('两次密码输入不一致');
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error('密码至少需要6位');
       return;
     }
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.functions.invoke('send-sms-code', {
-        body: { phone }
+      // 使用 Supabase Auth 注册
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { display_name: nickname || undefined }
+        }
       });
 
       if (error) throw error;
+      if (!data.user) throw new Error('注册失败');
 
-      setCodeSent(true);
-      setCountdown(60);
-      toast.success('验证码已发送');
+      // 创建 profile
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        display_name: nickname || undefined,
+      });
 
-      // 倒计时
-      const timer = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      // 绑定订单到用户
+      await bindOrderToUser(data.user.id);
+
+      toast.success('注册成功！');
+      onSuccess(data.user.id);
     } catch (error: any) {
-      toast.error(error.message || '发送失败');
+      console.error('Email register error:', error);
+      if (error.message?.includes('already registered')) {
+        toast.error('该邮箱已注册，请直接登录');
+        setRegisterMode('login');
+      } else {
+        toast.error(error.message || '注册失败，请重试');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handlePhoneRegister = async () => {
-    if (!phone || !verifyCode) {
-      toast.error('请填写完整信息');
+  // 邮箱登录
+  const handleEmailLogin = async () => {
+    if (!email || !password) {
+      toast.error('请填写邮箱和密码');
       return;
     }
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-user-from-payment', {
-        body: {
-          orderNo,
-          phone,
-          verifyCode,
-          nickname: nickname || undefined
-        }
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
       if (error) throw error;
-      if (!data.success) throw new Error(data.error || '注册失败');
+      if (!data.user) throw new Error('登录失败');
 
-      if (data.session) {
-        await supabase.auth.setSession(data.session);
-      }
+      // 绑定订单到用户
+      await bindOrderToUser(data.user.id);
 
-      toast.success('注册成功！');
-      onSuccess(data.userId);
+      toast.success('登录成功！');
+      onSuccess(data.user.id);
     } catch (error: any) {
-      console.error('Phone register error:', error);
-      toast.error(error.message || '注册失败');
+      console.error('Email login error:', error);
+      if (error.message?.includes('Invalid login credentials')) {
+        toast.error('邮箱或密码错误');
+      } else {
+        toast.error(error.message || '登录失败，请重试');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -304,7 +325,80 @@ export function QuickRegisterStep({
           </Button>
         </div>
 
-        {onSkip && (
+        {/* 已有账号入口 */}
+        <div className="text-center pt-4 border-t mt-4">
+          <button 
+            onClick={() => setRegisterMode('login')}
+            className="text-sm text-muted-foreground hover:text-primary transition-colors"
+          >
+            已有账号？点击登录 →
+          </button>
+        </div>
+
+        {/* 邮箱登录表单（微信环境） */}
+        {registerMode === 'login' && (
+          <div className="space-y-4 pt-4 border-t">
+            <div className="space-y-2">
+              <Label htmlFor="email-login">邮箱</Label>
+              <Input
+                id="email-login"
+                type="email"
+                placeholder="输入邮箱地址"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password-login">密码</Label>
+              <div className="relative">
+                <Input
+                  id="password-login"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="输入密码"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleEmailLogin}
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  登录中...
+                </>
+              ) : (
+                <>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  登录并开始测评
+                </>
+              )}
+            </Button>
+
+            <button
+              onClick={() => setRegisterMode('wechat')}
+              className="w-full text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              ← 返回微信注册
+            </button>
+          </div>
+        )}
+
+        {onSkip && registerMode !== 'login' && (
           <Button variant="ghost" onClick={onSkip} className="w-full text-muted-foreground">
             稍后完善
           </Button>
@@ -313,7 +407,7 @@ export function QuickRegisterStep({
     );
   }
 
-  // 非微信环境 - 支持扫码注册或手机号注册
+  // 非微信环境 - 支持扫码注册、邮箱注册或登录
   return (
     <div className="space-y-4">
       <div className="text-center space-y-2">
@@ -322,7 +416,7 @@ export function QuickRegisterStep({
         </div>
         <h3 className="text-lg font-semibold">支付成功！</h3>
         <p className="text-sm text-muted-foreground">
-          完成注册后即可开始使用
+          {registerMode === 'login' ? '登录已有账号后即可开始使用' : '完成注册后即可开始使用'}
         </p>
       </div>
 
@@ -330,7 +424,7 @@ export function QuickRegisterStep({
       <div className="flex rounded-lg border p-1 bg-muted/30">
         <button
           onClick={() => setRegisterMode('wechat')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-sm font-medium transition-colors ${
             registerMode === 'wechat'
               ? 'bg-background shadow-sm text-foreground'
               : 'text-muted-foreground hover:text-foreground'
@@ -340,15 +434,26 @@ export function QuickRegisterStep({
           微信扫码
         </button>
         <button
-          onClick={() => setRegisterMode('phone')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-            registerMode === 'phone'
+          onClick={() => setRegisterMode('email')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-sm font-medium transition-colors ${
+            registerMode === 'email'
               ? 'bg-background shadow-sm text-foreground'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Smartphone className="w-4 h-4" />
-          手机号
+          <Mail className="w-4 h-4" />
+          邮箱注册
+        </button>
+        <button
+          onClick={() => setRegisterMode('login')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-sm font-medium transition-colors ${
+            registerMode === 'login'
+              ? 'bg-background shadow-sm text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <LogIn className="w-4 h-4" />
+          已有账号
         </button>
       </div>
 
@@ -398,8 +503,8 @@ export function QuickRegisterStep({
         </div>
       )}
 
-      {/* 手机号注册 */}
-      {registerMode === 'phone' && (
+      {/* 邮箱注册 */}
+      {registerMode === 'email' && (
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="nickname">昵称（可选）</Label>
@@ -413,47 +518,53 @@ export function QuickRegisterStep({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">手机号</Label>
-            <div className="flex gap-3">
+            <Label htmlFor="email">邮箱</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="输入邮箱地址"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">密码</Label>
+            <div className="relative">
               <Input
-                id="phone"
-                type="tel"
-                inputMode="tel"
-                placeholder="输入手机号"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                maxLength={11}
-                autoComplete="tel"
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="设置密码（至少6位）"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
               />
-              <Button
-                variant="outline"
-                onClick={sendCode}
-                disabled={isLoading || countdown > 0}
-                className="shrink-0 min-w-[100px]"
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
-                {countdown > 0 ? `${countdown}s` : '发送验证码'}
-              </Button>
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
-          {codeSent && (
-            <div className="space-y-2">
-              <Label htmlFor="code">验证码</Label>
-              <Input
-                id="code"
-                inputMode="numeric"
-                placeholder="输入验证码"
-                value={verifyCode}
-                onChange={(e) => setVerifyCode(e.target.value)}
-                maxLength={6}
-                autoComplete="one-time-code"
-              />
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">确认密码</Label>
+            <Input
+              id="confirmPassword"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="再次输入密码"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+          </div>
 
           <Button
-            onClick={handlePhoneRegister}
-            disabled={isLoading || !phone || !verifyCode}
+            onClick={handleEmailRegister}
+            disabled={isLoading || !email || !password || !confirmPassword}
             className="w-full bg-gradient-to-r from-teal-500 to-cyan-500"
           >
             {isLoading ? (
@@ -462,7 +573,66 @@ export function QuickRegisterStep({
                 注册中...
               </>
             ) : (
-              '完成注册'
+              <>
+                <Mail className="mr-2 h-4 w-4" />
+                注册并开始测评
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* 已有账号登录 */}
+      {registerMode === 'login' && (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="login-email">邮箱</Label>
+            <Input
+              id="login-email"
+              type="email"
+              placeholder="输入邮箱地址"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="login-password">密码</Label>
+            <div className="relative">
+              <Input
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="输入密码"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <Button
+            onClick={handleEmailLogin}
+            disabled={isLoading || !email || !password}
+            className="w-full"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                登录中...
+              </>
+            ) : (
+              <>
+                <LogIn className="mr-2 h-4 w-4" />
+                登录并开始测评
+              </>
             )}
           </Button>
         </div>
