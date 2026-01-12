@@ -61,9 +61,9 @@ export default function Partner() {
       <Helmet>
         <title>合伙人中心 - 有劲AI</title>
         <meta name="description" content="管理你的推广数据、佣金收益和学员列表" />
-        <meta property="og:title" content="有劲AI • 合伙人中心" />
+        <meta property="og:title" content="有劲AI • 合伙人" />
         <meta property="og:description" content="推广有劲AI，获得持续分成收入" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-partner.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/partner" />
         <meta property="og:site_name" content="有劲AI" />
       </Helmet>
