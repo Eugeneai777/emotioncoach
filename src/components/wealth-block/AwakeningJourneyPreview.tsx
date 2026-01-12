@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Target, Eye, Heart, Brain, Sparkles, MessageCircle, CheckCircle, ArrowRight } from 'lucide-react';
+import { MapPin, Target, Eye, Heart, Brain, Sparkles, MessageCircle, CheckCircle, ArrowRight, Gift } from 'lucide-react';
 import { getAwakeningColor } from '@/config/wealthStyleConfig';
 import { cn } from '@/lib/utils';
 import { fourPoorRichConfig, PoorTypeKey } from '@/config/fourPoorConfig';
+import { useNavigate } from 'react-router-dom';
 
 interface AwakeningJourneyPreviewProps {
   healthScore: number;
@@ -16,29 +17,51 @@ interface AwakeningJourneyPreviewProps {
   onPurchase?: () => void;
 }
 
-// 训练营价值点配置
-const campValuePoints = [
+// 每日4步流程配置
+const dailySteps = [
   {
+    step: 1,
     icon: Sparkles,
-    title: '每日冥想',
-    description: '5分钟觉察情绪根源',
-    color: 'bg-violet-500',
+    title: '财富觉察冥想',
+    time: '5分钟',
+    description: '觉察情绪根源',
+    color: 'text-violet-600',
     bgColor: 'bg-violet-100 dark:bg-violet-900/30',
   },
   {
+    step: 2,
     icon: MessageCircle,
-    title: '1v1 教练对话',
+    title: '教练对话',
+    time: '5分钟',
     description: '针对你的卡点定制突破',
-    color: 'bg-amber-500',
+    color: 'text-amber-600',
     bgColor: 'bg-amber-100 dark:bg-amber-900/30',
   },
   {
+    step: 3,
     icon: CheckCircle,
-    title: '行动打卡',
-    description: '小步突破，AI见证蜕变',
-    color: 'bg-emerald-500',
+    title: '打卡分享',
+    time: '1句话',
+    description: '真实本身就是训练',
+    color: 'text-emerald-600',
     bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
   },
+  {
+    step: 4,
+    icon: Gift,
+    title: '邀请练习',
+    time: '可选',
+    description: '照见内在反应',
+    color: 'text-rose-600',
+    bgColor: 'bg-rose-100 dark:bg-rose-900/30',
+  },
+];
+
+// 7天后的收获
+const sevenDayOutcomes = [
+  '清晰看见自己的财富卡点类型',
+  '一套可持续的每日觉察习惯',
+  'AI记录的个人成长档案',
 ];
 
 // 用户见证数据（按卡点类型匹配）
@@ -74,6 +97,7 @@ export function AwakeningJourneyPreview({
   hasPurchased,
   onPurchase,
 }: AwakeningJourneyPreviewProps) {
+  const navigate = useNavigate();
   // 觉醒起点 = 100 - 卡点分数
   const awakeningStart = 100 - healthScore;
   
@@ -214,69 +238,104 @@ export function AwakeningJourneyPreview({
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-300/50 to-transparent" />
           </div>
 
-          {/* 训练营价值说明 */}
+          {/* 训练营概览 */}
+          <div className="p-4 bg-white/70 dark:bg-white/10 rounded-xl border border-amber-200/50 dark:border-amber-700/30">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-base font-bold text-foreground">财富觉醒训练营</span>
+              <span className="px-2.5 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-semibold rounded-full">
+                7天 · 每天15分钟
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              不是教你快速赚钱，而是<span className="text-amber-600 dark:text-amber-400 font-medium">每天帮你看见卡住的位置</span>，陪你迈出一个不消耗自己的小进步。
+            </p>
+          </div>
+
+          {/* 每日4步流程 */}
           <div className="space-y-3">
             <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
-              💡 训练营如何帮你突破「{poorName}」？
+              💡 每天做4件事，只需15分钟：
             </h4>
             
-            {/* 三项核心价值 */}
-            <div className="grid grid-cols-1 gap-2.5">
-              {campValuePoints.map((point, index) => (
+            <div className="grid grid-cols-2 gap-2.5">
+              {dailySteps.map((step, index) => (
                 <motion.div
-                  key={point.title}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
-                  className="flex items-center gap-3 p-3 bg-white/60 dark:bg-white/5 rounded-xl border border-white/50 dark:border-white/10"
+                  key={step.step}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + index * 0.08 }}
+                  className="relative p-3 bg-white/60 dark:bg-white/5 rounded-xl border border-white/50 dark:border-white/10"
                 >
-                  <div className={cn("p-2 rounded-lg", point.bgColor)}>
-                    <point.icon className={cn("w-4 h-4 text-white", point.color.replace('bg-', 'text-').replace('-500', '-600'))} />
+                  <div className="absolute -top-2 -left-1 w-5 h-5 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow">
+                    {step.step}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm text-foreground">{point.title}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {index === 1 && dominantPoor 
-                        ? `针对你的「${poorName}」定制突破`
-                        : point.description
-                      }
+                  <div className="flex items-center gap-2 mb-1.5 mt-1">
+                    <div className={cn("p-1.5 rounded-lg", step.bgColor)}>
+                      <step.icon className={cn("w-3.5 h-3.5", step.color)} />
                     </div>
+                    <span className="text-xs font-medium px-1.5 py-0.5 bg-muted/50 rounded text-muted-foreground">
+                      {step.time}
+                    </span>
                   </div>
+                  <div className="font-semibold text-sm text-foreground">{step.title}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{step.description}</div>
                 </motion.div>
               ))}
             </div>
           </div>
 
-          {/* 用户见证 */}
+          {/* 7天后的收获 */}
+          <div className="space-y-2">
+            <h4 className="font-bold text-sm text-foreground">✨ 7天后，你会得到：</h4>
+            <div className="grid grid-cols-1 gap-1.5">
+              {sevenDayOutcomes.map((item, i) => (
+                <motion.div 
+                  key={i} 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.7 + i * 0.1 }}
+                  className="flex items-center gap-2 text-sm text-muted-foreground"
+                >
+                  <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                  <span>{item}</span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* 简化的用户见证 */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl border border-amber-200/50 dark:border-amber-700/30"
+            transition={{ delay: 0.9 }}
+            className="flex items-center gap-2 p-3 bg-amber-50/50 dark:bg-amber-900/20 rounded-lg text-sm"
           >
-            <div className="flex items-start gap-2">
-              <span className="text-lg">📈</span>
-              <div className="flex-1">
-                <p className="text-sm text-foreground/90 leading-relaxed">
-                  "{testimonial.quote}"
-                </p>
-                <p className="text-xs text-muted-foreground mt-1.5">
-                  — {testimonial.name}，7天觉醒 <span className="font-semibold text-emerald-600">{testimonial.growth}</span>
-                </p>
-              </div>
-            </div>
+            <span className="text-amber-500">📈</span>
+            <span className="text-muted-foreground truncate flex-1">"{testimonial.quote.slice(0, 20)}..."</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-semibold whitespace-nowrap">{testimonial.growth}</span>
           </motion.div>
 
-          {/* CTA 按钮 */}
+          {/* 双按钮 CTA 区域 */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9 }}
+            transition={{ delay: 1.0 }}
+            className="flex gap-3"
           >
+            {/* 了解详情按钮 */}
+            <Button
+              variant="outline"
+              onClick={() => navigate('/wealth-camp-intro')}
+              className="flex-1 h-12 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 font-semibold"
+            >
+              了解详情
+            </Button>
+            
+            {/* 购买/开始按钮 */}
             {hasPurchased ? (
               <Button
                 onClick={onPurchase}
-                className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-base shadow-lg shadow-amber-500/25"
+                className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg shadow-amber-500/25"
               >
                 开始训练营
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -284,10 +343,9 @@ export function AwakeningJourneyPreview({
             ) : (
               <Button
                 onClick={onPurchase}
-                className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-base shadow-lg shadow-amber-500/25"
+                className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg shadow-amber-500/25"
               >
-                <span className="mr-2">¥299</span>
-                开始7天突破之旅
+                ¥299 立即加入
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             )}
