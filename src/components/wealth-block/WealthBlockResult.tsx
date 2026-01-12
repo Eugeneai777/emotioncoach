@@ -242,6 +242,9 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         behaviorScore={result.behaviorScore}
         emotionScore={result.emotionScore}
         beliefScore={result.beliefScore}
+        dominantPoor={result.dominantPoor as 'mouth' | 'hand' | 'eye' | 'heart'}
+        hasPurchased={hasPurchased}
+        onPurchase={() => setShowPayDialog(true)}
       />
 
       {/* 分隔装饰 */}
