@@ -405,6 +405,30 @@ export class RealtimeChat {
   }
 
   async init() {
+    // 🔧 连接超时保护 - 移动端网络可能导致连接卡住
+    const CONNECTION_TIMEOUT_MS = 30000; // 30秒超时
+    let connectionTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let isTimedOut = false;
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      connectionTimeoutId = setTimeout(() => {
+        isTimedOut = true;
+        reject(new Error('连接超时，请检查网络后重试'));
+      }, CONNECTION_TIMEOUT_MS);
+    });
+
+    const connectPromise = this.initConnection();
+    
+    try {
+      await Promise.race([connectPromise, timeoutPromise]);
+    } finally {
+      if (connectionTimeoutId) {
+        clearTimeout(connectionTimeoutId);
+      }
+    }
+  }
+
+  private async initConnection() {
     try {
       // 🔧 防止重复初始化：如果已有连接，先断开
       if (this.pc || this.dc || this.audioEl) {
