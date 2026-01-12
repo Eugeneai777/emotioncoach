@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { orderNo, openId, phone, verifyCode, nickname } = await req.json();
+    const { orderNo, openId, nickname } = await req.json();
 
     if (!orderNo) {
       throw new Error('缺少订单号');
@@ -105,65 +105,8 @@ serve(async (req) => {
         // 实际场景中需要更好的session处理
         console.log('User created:', userId);
       }
-    } else if (phone && verifyCode) {
-      // 手机号注册 - 验证验证码
-      const { data: codeData, error: codeError } = await supabaseAdmin
-        .from('sms_verification_codes')
-        .select('*')
-        .eq('phone', phone)
-        .eq('code', verifyCode)
-        .eq('is_used', false)
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (!codeData) {
-        throw new Error('验证码无效或已过期');
-      }
-
-      // 标记验证码已使用
-      await supabaseAdmin
-        .from('sms_verification_codes')
-        .update({ is_used: true })
-        .eq('id', codeData.id);
-
-      // 检查手机号是否已注册
-      const { data: existingUser } = await supabaseAdmin
-        .from('profiles')
-        .select('id')
-        .eq('phone', phone)
-        .maybeSingle();
-
-      if (existingUser) {
-        userId = existingUser.id;
-      } else {
-        // 创建新账号
-        const email = `phone_${phone}@youjin.app`;
-        const password = `phone_${crypto.randomUUID()}`;
-
-        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: {
-            phone,
-            display_name: nickname || '有劲用户'
-          }
-        });
-
-        if (authError) throw authError;
-        userId = authData.user.id;
-
-        // 更新 profile
-        await supabaseAdmin.from('profiles').upsert({
-          id: userId,
-          phone,
-          display_name: nickname || '有劲用户'
-        });
-      }
     } else {
-      throw new Error('请提供微信或手机号信息');
+      throw new Error('请提供微信信息完成注册');
     }
 
     // 4. 更新订单绑定用户

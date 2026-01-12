@@ -15,6 +15,17 @@ interface QuickRegisterStepProps {
 
 type RegisterMode = 'wechat' | 'email' | 'login';
 
+// 根据环境智能选择默认注册模式
+const getDefaultMode = (): RegisterMode => {
+  const ua = navigator.userAgent.toLowerCase();
+  const isWechat = /micromessenger/i.test(ua);
+  const isMobile = /android|iphone|ipad|ipod|mobile/i.test(ua);
+  
+  if (isWechat) return 'wechat';  // 微信内 → 微信一键注册
+  if (isMobile) return 'email';   // 移动端非微信 → 邮箱注册更方便
+  return 'wechat';                // PC端 → 微信扫码
+};
+
 export function QuickRegisterStep({
   orderNo,
   paymentOpenId,
@@ -25,8 +36,8 @@ export function QuickRegisterStep({
   const [isLoading, setIsLoading] = useState(false);
   const [isAutoCreating, setIsAutoCreating] = useState(false);
   
-  // 注册方式切换
-  const [registerMode, setRegisterMode] = useState<RegisterMode>('wechat');
+  // 注册方式切换 - 根据环境智能选择默认模式
+  const [registerMode, setRegisterMode] = useState<RegisterMode>(getDefaultMode);
   
   // 微信扫码注册相关状态
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
