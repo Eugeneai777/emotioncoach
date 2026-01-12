@@ -1,10 +1,17 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useEffect, useState } from 'react';
 import { TrendingUp, Sparkles, Calendar, Star } from 'lucide-react';
+import QRCode from 'qrcode';
+import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
 interface ChartDataPoint {
   day: number;
   value: number;
   hasData: boolean;
+}
+
+interface PartnerInfo {
+  partnerId: string;
+  partnerCode: string;
 }
 
 interface EnhancedGrowthPosterCardProps {
@@ -23,6 +30,7 @@ interface EnhancedGrowthPosterCardProps {
   aiMessage?: string;
   consecutiveDays?: number;
   peakIndex?: number;
+  partnerInfo?: PartnerInfo;
 }
 
 const EnhancedGrowthPosterCard = forwardRef<HTMLDivElement, EnhancedGrowthPosterCardProps>(({
@@ -37,7 +45,32 @@ const EnhancedGrowthPosterCard = forwardRef<HTMLDivElement, EnhancedGrowthPoster
   aiMessage,
   consecutiveDays = 0,
   peakIndex,
+  partnerInfo,
 }, ref) => {
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  
+  // Generate share URL with partner tracking
+  const baseUrl = `${getPromotionDomain()}/wealth-camp-intro`;
+  const shareUrl = partnerInfo?.partnerCode 
+    ? `${baseUrl}?ref=${partnerInfo.partnerCode}` 
+    : baseUrl;
+
+  useEffect(() => {
+    const generateQR = async () => {
+      try {
+        const qr = await QRCode.toDataURL(shareUrl, {
+          width: 120,
+          margin: 1,
+          color: { dark: '#78350f', light: '#ffffff' }
+        });
+        setQrCodeUrl(qr);
+      } catch (error) {
+        console.error('Failed to generate QR code:', error);
+      }
+    };
+    generateQR();
+  }, [shareUrl]);
+  
   const getLevel = (index: number) => {
     if (index >= 80) return { label: '高度觉醒', emoji: '🟢', color: '#10b981' };
     if (index >= 60) return { label: '稳步觉醒', emoji: '🟡', color: '#eab308' };
@@ -353,18 +386,32 @@ const EnhancedGrowthPosterCard = forwardRef<HTMLDivElement, EnhancedGrowthPoster
         </div>
       )}
 
-      {/* Footer */}
+      {/* Footer with QR Code */}
       <div style={{
-        textAlign: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         paddingTop: 16,
         borderTop: '1px dashed rgba(120, 53, 15, 0.2)',
       }}>
-        <div style={{ fontSize: 15, fontWeight: 600, color: '#78350f', marginBottom: 4 }}>
-          💰 有劲AI · 财富教练
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#78350f', marginBottom: 2 }}>
+            💰 有劲AI · 财富教练
+          </div>
+          <div style={{ fontSize: 10, color: '#92400e' }}>
+            扫码开启你的财富觉醒之旅
+          </div>
         </div>
-        <div style={{ fontSize: 10, color: '#92400e' }}>
-          扫码开启你的财富觉醒之旅
-        </div>
+        {qrCodeUrl && (
+          <div style={{
+            background: 'white',
+            padding: 4,
+            borderRadius: 8,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          }}>
+            <img src={qrCodeUrl} alt="QR Code" style={{ width: 56, height: 56 }} />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -719,6 +719,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                   displayName={userInfo.displayName}
                   currentDay={userInfo.currentDay}
                   totalDays={userInfo.totalDays}
+                  partnerInfo={partnerInfo || undefined}
                 />
               </div>
             </div>
@@ -741,6 +742,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                     aiMessage={growthData.aiMessage}
                     consecutiveDays={growthData.consecutiveDays}
                     peakIndex={growthData.peakIndex}
+                    partnerInfo={partnerInfo || undefined}
                   />
                 </div>
               </div>
@@ -765,6 +767,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                   stylePreset={achievementStyle}
                   onStyleChange={setAchievementStyle}
                   showStyleSelector={true}
+                  partnerInfo={partnerInfo || undefined}
                 />
               </div>
             </div>

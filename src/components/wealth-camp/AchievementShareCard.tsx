@@ -1,8 +1,10 @@
-import React, { forwardRef, useState } from 'react';
+import React, { forwardRef, useState, useEffect } from 'react';
 import { Sparkles, ChevronRight, Crown, Flame, Star, Zap } from 'lucide-react';
 import { useAchievementProgress } from '@/hooks/useAchievementProgress';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import QRCode from 'qrcode';
+import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
 // Path theme colors for share card
 const pathThemes = {
@@ -66,6 +68,11 @@ const stylePresets: Record<CardStylePreset, { name: string; icon: React.ReactNod
   },
 };
 
+interface PartnerInfo {
+  partnerId: string;
+  partnerCode: string;
+}
+
 interface AchievementShareCardProps {
   avatarUrl?: string;
   displayName?: string;
@@ -76,6 +83,7 @@ interface AchievementShareCardProps {
   stylePreset?: CardStylePreset;
   onStyleChange?: (style: CardStylePreset) => void;
   showStyleSelector?: boolean;
+  partnerInfo?: PartnerInfo;
 }
 
 const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProps>(
@@ -89,8 +97,32 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
     stylePreset = 'dark',
     onStyleChange,
     showStyleSelector = false,
+    partnerInfo,
   }, ref) => {
     const { paths, totalEarned, totalCount, overallProgress, globalNextAchievement } = useAchievementProgress();
+    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+    
+    // Generate share URL with partner tracking
+    const baseUrl = `${getPromotionDomain()}/wealth-camp-intro`;
+    const shareUrl = partnerInfo?.partnerCode 
+      ? `${baseUrl}?ref=${partnerInfo.partnerCode}` 
+      : baseUrl;
+    
+    useEffect(() => {
+      const generateQR = async () => {
+        try {
+          const qr = await QRCode.toDataURL(shareUrl, {
+            width: 100,
+            margin: 1,
+            color: { dark: '#000000', light: '#ffffff' }
+          });
+          setQrCodeUrl(qr);
+        } catch (error) {
+          console.error('Failed to generate QR code:', error);
+        }
+      };
+      generateQR();
+    }, [shareUrl]);
     
     const currentStyle = stylePresets[stylePreset];
     const isDark = stylePreset !== 'minimal';
@@ -421,7 +453,7 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer with QR Code */}
         <div className={cn(
           "px-5 py-2.5 flex items-center justify-between border-t",
           stylePreset === 'neon'
@@ -441,9 +473,19 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
             )}>
               <span className="text-[10px]">💰</span>
             </div>
-            <span className={cn("text-xs font-medium", isDark ? "text-slate-300" : "text-slate-600")}>有劲AI · 财富教练</span>
+            <div>
+              <div className={cn("text-xs font-medium", isDark ? "text-slate-300" : "text-slate-600")}>有劲AI · 财富教练</div>
+              <div className={cn("text-[9px]", isDark ? "text-slate-500" : "text-slate-400")}>扫码开启觉醒之旅</div>
+            </div>
           </div>
-          <div className={cn("text-[10px]", isDark ? "text-slate-500" : "text-slate-400")}>扫码开启觉醒之旅</div>
+          {qrCodeUrl && (
+            <div className={cn(
+              "p-1 rounded-md",
+              isDark ? "bg-white" : "bg-white shadow-sm"
+            )}>
+              <img src={qrCodeUrl} alt="QR Code" className="w-10 h-10" />
+            </div>
+          )}
         </div>
       </div>
     );
