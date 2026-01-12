@@ -730,16 +730,31 @@ export class MiniProgramAudioClient {
   private handleDisconnect(): void {
     this.stopHeartbeat();
     
-    if (this.status === 'connected' && this.reconnectAttempts < this.maxReconnectAttempts) {
+    // 🔧 只在之前是已连接状态时才尝试重连
+    const wasConnected = this.status === 'connected';
+    
+    if (wasConnected && this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`[MiniProgramAudio] Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts - 1), 5000); // 指数退避：1s, 2s, 4s (最多5s)
+      
+      console.log(`[MiniProgramAudio] Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
+      this.updateStatus('connecting');
       
       setTimeout(() => {
-        this.connect().catch((error) => {
+        this.connect().then(() => {
+          console.log('[MiniProgramAudio] Reconnect successful');
+          this.reconnectAttempts = 0;
+          this.startRecording(); // 重连成功后恢复录音
+        }).catch((error) => {
           console.error('[MiniProgramAudio] Reconnect failed:', error);
+          if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+            console.log('[MiniProgramAudio] Max reconnect attempts reached');
+            this.updateStatus('error');
+          }
         });
-      }, 1000 * this.reconnectAttempts); // 指数退避
-    } else {
+      }, delay);
+    } else if (!wasConnected || this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.log('[MiniProgramAudio] Not reconnecting - wasConnected:', wasConnected, 'attempts:', this.reconnectAttempts);
       this.updateStatus('disconnected');
     }
   }

@@ -582,8 +582,40 @@ export class RealtimeChat {
 
       if (!sdpResponse.ok) {
         const errorText = await sdpResponse.text();
-        console.error('[WebRTC] SDP error:', errorText);
-        throw new Error('Failed to connect to OpenAI Realtime API');
+        console.error('[WebRTC] SDP error:', sdpResponse.status, errorText);
+        
+        // 🔧 解析具体错误类型
+        let errorType = 'unknown';
+        let errorMessage = 'Failed to connect to OpenAI Realtime API';
+        
+        try {
+          const errorJson = JSON.parse(errorText);
+          if (errorJson.error?.code === 'unsupported_country_region_territory') {
+            errorType = 'region_blocked';
+            errorMessage = '当前网络环境不支持直连语音服务，正在尝试备用通道...';
+          } else if (errorJson.error?.code === 'invalid_api_key') {
+            errorType = 'auth_error';
+            errorMessage = '语音服务认证失败，请稍后重试';
+          } else if (sdpResponse.status === 403) {
+            errorType = 'forbidden';
+            errorMessage = '语音服务访问被拒绝，正在尝试备用通道...';
+          } else if (sdpResponse.status === 429) {
+            errorType = 'rate_limited';
+            errorMessage = '服务繁忙，请稍后重试';
+          }
+        } catch {
+          // JSON 解析失败，使用默认错误
+          if (sdpResponse.status === 403) {
+            errorType = 'forbidden';
+            errorMessage = '语音服务访问受限，正在尝试备用通道...';
+          }
+        }
+        
+        // 抛出带类型的错误
+        const error = new Error(errorMessage) as Error & { errorType?: string; statusCode?: number };
+        error.errorType = errorType;
+        error.statusCode = sdpResponse.status;
+        throw error;
       }
 
       const answer = {
