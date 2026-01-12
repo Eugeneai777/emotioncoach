@@ -39,7 +39,19 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [orderNo, setOrderNo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [payType, setPayType] = useState<'h5' | 'native'>('h5');
-  const [agreedTerms, setAgreedTerms] = useState(false);
+  // 判断是否需要显示条款（仅合伙人套餐需要特殊条款确认）
+  const requiresTermsAgreement = () => {
+    if (!packageInfo?.key) return false;
+    // 合伙人套餐需要同意特定条款
+    return packageInfo.key.includes('partner') || 
+           packageInfo.key.startsWith('partner_l') ||
+           packageInfo.key.includes('youjin_partner') ||
+           packageInfo.key.includes('bloom_partner');
+  };
+  const needsTerms = requiresTermsAgreement();
+  
+  // 非合伙人套餐默认已同意（无需显示条款）
+  const [agreedTerms, setAgreedTerms] = useState(!needsTerms);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const orderCreatedRef = useRef<boolean>(false); // 防止重复创建订单
@@ -71,7 +83,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setH5PayLink('');
     setOrderNo('');
     setErrorMessage('');
-    setAgreedTerms(false);
+    // 非合伙人套餐默认已同意，合伙人套餐需要重新勾选
+    setAgreedTerms(!needsTerms);
     orderCreatedRef.current = false; // 重置订单创建标记
   };
 
@@ -135,8 +148,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const createOrder = async () => {
     if (!packageInfo || !user) return;
 
-    // 验证是否同意条款
-    if (!agreedTerms) {
+    // 仅合伙人套餐验证条款
+    if (needsTerms && !agreedTerms) {
       toast.error('请先阅读并同意服务条款和隐私政策');
       return;
     }
@@ -284,16 +297,17 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     }, 3000);
   };
 
-  // 用户同意条款后创建订单
+  // 条款同意后（或无需条款时）创建订单
   useEffect(() => {
-    if (open && packageInfo && user && agreedTerms && !orderCreatedRef.current) {
+    // 无需条款 或 已同意条款时，自动创建订单
+    if (open && packageInfo && user && (!needsTerms || agreedTerms) && !orderCreatedRef.current) {
       orderCreatedRef.current = true;
       createOrder();
     }
     return () => {
       clearTimers();
     };
-  }, [open, packageInfo, user, agreedTerms]);
+  }, [open, packageInfo, user, agreedTerms, needsTerms]);
 
   // 关闭对话框时重置
   useEffect(() => {
@@ -332,8 +346,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
             </Card>
           )}
 
-          {/* 服务条款同意 */}
-          {status === 'idle' && (
+          {/* 服务条款同意 - 仅合伙人套餐显示 */}
+          {status === 'idle' && needsTerms && (
             <div className="flex items-start gap-2 w-full">
               <Checkbox
                 id="pay-terms"
