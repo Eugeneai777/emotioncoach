@@ -113,12 +113,12 @@ export function CollapsibleProgressCalendar({
     });
     
     // 基于实际打卡次数生成轮次
-    // cycleRound 表示当前是第几轮 (1-based)
-    const displayRounds = Math.max(cycleRound, 1);
-    
-    for (let r = 1; r <= displayRounds; r++) {
+    // cycleRound 表示当前是第几轮 (1-based)，训练营 = 第1轮，毕业后第一轮 = 第2轮
+    // 只生成第2轮及之后的轮次，第1轮已经由上面的训练营数据覆盖
+    for (let r = 2; r <= cycleRound; r++) {
       const roundDays: typeof rounds[0]['days'] = [];
-      const roundStartCheckIn = (r - 1) * 7; // 本轮起始的打卡次数 (0-indexed)
+      // 第2轮对应打卡次数 1-7，第3轮对应 8-14，以此类推
+      const roundStartCheckIn = (r - 2) * 7; // 本轮起始的打卡次数 (0-indexed)
       const isCurrentRound = r === cycleRound;
       
       for (let d = 1; d <= 7; d++) {
