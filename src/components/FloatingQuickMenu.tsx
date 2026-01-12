@@ -10,7 +10,7 @@ import { useQuickMenuConfig } from '@/hooks/useQuickMenuConfig';
 import { QuickMenuSettingsDialog } from '@/components/QuickMenuSettingsDialog';
 import FeedbackDialog from '@/components/FeedbackDialog';
 const POSITION_STORAGE_KEY = 'floatingQuickMenuPosition';
-const EXCLUDED_ROUTES = ['/auth', '/login', '/register', '/onboarding'];
+const EXCLUDED_ROUTES = ['/auth', '/login', '/register', '/onboarding', '/wealth-block'];
 
 interface Position {
   x: number;
