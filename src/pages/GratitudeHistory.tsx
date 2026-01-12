@@ -205,7 +205,7 @@ const GratitudeHistory = () => {
       <Helmet>
         <title>感恩日记 - 有劲AI</title>
         <meta name="description" content="每天1分钟，记录感恩，提升幸福感" />
-        <meta property="og:title" content="有劲AI｜感恩日记" />
+        <meta property="og:title" content="有劲AI • 感恩日记" />
         <meta property="og:description" content="7维度AI幸福分析，科学验证提升幸福感25%" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/gratitude-history" />

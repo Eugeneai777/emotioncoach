@@ -28,7 +28,7 @@ export default function PartnerTypeSelector() {
       <Helmet>
         <title>选择合伙人类型 - 有劲AI</title>
         <meta name="description" content="有劲合伙人 vs 绽放合伙人，选择适合你的方式" />
-        <meta property="og:title" content="有劲AI合伙人计划" />
+        <meta property="og:title" content="有劲AI • 合伙人类型" />
         <meta property="og:description" content="两种合伙人模式，预购分成或直推佣金，选择适合你的方式" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/partner/type" />

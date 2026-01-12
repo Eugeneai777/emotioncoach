@@ -150,7 +150,7 @@ const PanicHistory: React.FC = () => {
       <Helmet>
         <title>缓解历史分析 - 有劲AI</title>
         <meta name="description" content="追踪你的情绪缓解进展" />
-        <meta property="og:title" content="有劲AI｜缓解历史分析" />
+        <meta property="og:title" content="有劲AI • 急救记录" />
         <meta property="og:description" content="查看情绪急救使用记录与效果分析" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/panic-history" />

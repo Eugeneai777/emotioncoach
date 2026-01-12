@@ -59,7 +59,7 @@ export default function PartnerBenefits() {
       <Helmet>
         <title>合伙人专属权益 - 有劲AI</title>
         <meta name="description" content="绽放合伙人专属权益详情" />
-        <meta property="og:title" content="有劲AI合伙人权益" />
+        <meta property="og:title" content="有劲AI • 合伙人福利" />
         <meta property="og:description" content={`总价值¥${totalValue.toLocaleString()}的专属权益`} />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/partner/benefits" />

@@ -585,7 +585,7 @@ export default function PosterCenter() {
       <Helmet>
         <title>海报工坊 - 有劲AI</title>
         <meta name="description" content="一键生成专业推广海报" />
-        <meta property="og:title" content="有劲AI海报工坊" />
+        <meta property="og:title" content="有劲AI • 海报中心" />
         <meta property="og:description" content="AI智能生成，快速创作吸睛海报" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/poster-center" />

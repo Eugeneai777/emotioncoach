@@ -130,7 +130,7 @@ export default function TeenBind() {
       <Helmet>
         <title>绑定家长 - 有劲AI</title>
         <meta name="description" content="与家长建立连接，开启专属AI陪伴" />
-        <meta property="og:title" content="有劲AI｜青少年绑定" />
+        <meta property="og:title" content="有劲AI • 绑定青少年" />
         <meta property="og:description" content="输入家长的绑定码，开启你的专属AI朋友" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/teen/bind" />

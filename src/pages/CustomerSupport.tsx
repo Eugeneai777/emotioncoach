@@ -131,7 +131,7 @@ const CustomerSupport = () => {
       <Helmet>
         <title>客服中心 - 有劲AI</title>
         <meta name="description" content="有问题？随时联系我们" />
-        <meta property="og:title" content="有劲AI客服中心" />
+        <meta property="og:title" content="有劲AI • 客服中心" />
         <meta property="og:description" content="7x24小时在线AI客服，随时为你解答" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/support" />

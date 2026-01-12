@@ -195,7 +195,7 @@ export default function MyPosts() {
       <Helmet>
         <title>我的动态 - 有劲AI</title>
         <meta name="description" content="查看和管理我发布的动态" />
-        <meta property="og:title" content="有劲AI｜我的动态" />
+        <meta property="og:title" content="有劲AI • 我的发布" />
         <meta property="og:description" content="记录成长，分享感悟" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/my-posts" />

@@ -176,7 +176,7 @@ export default function WealthAwakeningProgress() {
       <Helmet>
         <title>财富觉醒进度 - 有劲AI</title>
         <meta name="description" content="追踪你的7天财富觉醒之旅" />
-        <meta property="og:title" content="有劲AI｜财富觉醒进度" />
+        <meta property="og:title" content="有劲AI • 觉醒进度" />
         <meta property="og:description" content="7天信念转变，见证财富觉醒的每一步成长" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/wealth-awakening-progress" />

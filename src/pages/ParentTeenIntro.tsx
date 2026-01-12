@@ -45,7 +45,7 @@ export default function ParentTeenIntro() {
       <Helmet>
         <title>双轨模式介绍 - 有劲AI</title>
         <meta name="description" content="让孩子也有一个安全角落" />
-        <meta property="og:title" content="有劲AI｜亲子教练双轨模式" />
+        <meta property="og:title" content="有劲AI • 双轨模式" />
         <meta property="og:description" content="家长和孩子各自拥有专属AI陪伴，在安全空间中成长" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/parent/teen-intro" />

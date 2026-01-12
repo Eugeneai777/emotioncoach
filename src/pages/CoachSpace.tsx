@@ -18,7 +18,7 @@ const CoachSpace = () => {
       <Helmet>
         <title>教练空间 - 有劲AI</title>
         <meta name="description" content="选择你的专属AI教练，开启成长之旅" />
-        <meta property="og:title" content="有劲AI教练空间" />
+        <meta property="og:title" content="有劲AI • 教练空间" />
         <meta property="og:description" content="7位专业AI教练，24小时陪伴你成长" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/coach-space" />

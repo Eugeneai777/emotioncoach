@@ -148,7 +148,7 @@ export default function TeenChat() {
       <Helmet>
         <title>有劲AI · 懂你版</title>
         <meta name="description" content="专属青少年的AI朋友，私密安全的倾诉空间" />
-        <meta property="og:title" content="有劲AI｜懂你版" />
+        <meta property="og:title" content="有劲AI • 青少年对话" />
         <meta property="og:description" content="不说教、不评判，24小时陪伴你的AI朋友" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/teen-chat" />

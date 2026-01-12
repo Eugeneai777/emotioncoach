@@ -126,7 +126,7 @@ const YoujinPartnerPlan = () => {
       <Helmet>
         <title>有劲合伙人计划 - 有劲AI</title>
         <meta name="description" content="让AI为你赚钱，在AI大浪潮中抓住机会" />
-        <meta property="og:title" content="有劲AI合伙人计划｜让AI为你赚钱" />
+        <meta property="og:title" content="有劲AI • 有劲合伙人" />
         <meta property="og:description" content="AI时代最佳副业机会，分享真实成长故事，AI帮你创造价值" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/partner/youjin-plan" />

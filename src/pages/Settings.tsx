@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Helmet } from "react-helmet";
 
+// OG title to be updated below
+
 export default function Settings() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -161,7 +163,7 @@ export default function Settings() {
       <Helmet>
         <title>设置 - 有劲AI</title>
         <meta name="description" content="管理个人资料、账户、提醒和通知偏好" />
-        <meta property="og:title" content="有劲AI｜个人设置" />
+        <meta property="og:title" content="有劲AI • 设置" />
         <meta property="og:description" content="管理你的有劲AI账户和偏好设置" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/settings" />
