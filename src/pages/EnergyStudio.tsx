@@ -176,7 +176,7 @@ const EnergyStudio = () => {
       <Helmet>
         <title>能量工作室 - 有劲AI</title>
         <meta name="description" content="多种情绪工具，随时调节你的能量状态" />
-        <meta property="og:title" content="有劲AI能量工作室" />
+        <meta property="og:title" content="有劲AI • 有劲生活馆" />
         <meta property="og:description" content="情绪急救、情绪日记、冥想引导等多种工具" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/energy-studio" />
