@@ -217,7 +217,7 @@ export function CollapsibleProgressCalendar({
               <div className="flex items-center gap-4">
                 {isPostCampMode ? (
                   <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                    第{cycleRound + 1}轮 · Day {cycleDayInRound}
+                    第{cycleRound}轮 · Day {cycleDayInRound}
                   </span>
                 ) : (
                   <span className={cn(
@@ -285,7 +285,7 @@ export function CollapsibleProgressCalendar({
                 {/* Post-camp hint to expand */}
                 {isPostCampMode && (
                   <div className="text-xs text-amber-600/70 dark:text-amber-400/70">
-                    第{cycleRound + 1}轮 · 点击查看完整历史
+                    第{cycleRound}轮 · 点击查看完整历史
                   </div>
                 )}
               </div>
@@ -325,7 +325,7 @@ export function CollapsibleProgressCalendar({
                               "text-amber-700 dark:text-amber-300",
                               round.isCurrentRound && "font-semibold"
                             )}>
-                              {round.roundNumber === 0 ? '第1轮 · 训练营' : `第${round.roundNumber + 1}轮`}
+                              {round.roundNumber === 0 ? '第1轮 · 训练营' : `第${round.roundNumber}轮`}
                               {round.isCurrentRound && round.roundNumber > 0 && ' · 进行中'}
                             </span>
                             <span className="text-amber-600 dark:text-amber-400">
