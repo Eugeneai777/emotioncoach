@@ -140,6 +140,22 @@ export function isWeChatBrowser(): boolean {
 }
 
 /**
+ * 检测是否为 iOS 设备
+ */
+export function isIOSDevice(): boolean {
+  const ua = navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+/**
+ * 检测是否为 iOS 微信浏览器
+ * iOS 微信的 WKWebView 对 WebRTC 支持不稳定，需要使用 WebSocket 中继
+ */
+export function isIOSWeChatBrowser(): boolean {
+  return isWeChatBrowser() && isIOSDevice();
+}
+
+/**
  * 检测小程序是否支持所需的音频 API
  */
 export function supportsMiniProgramAudio(): boolean {
@@ -196,8 +212,14 @@ export function getPlatformInfo(): {
     recommendedVoiceMethod = 'websocket';
   } else if (isWechat) {
     platform = 'wechat-browser';
-    // 微信浏览器支持 WebRTC
-    recommendedVoiceMethod = hasWebRTC ? 'webrtc' : 'websocket';
+    // 🔧 iOS 微信浏览器的 WKWebView 对 WebRTC 支持不稳定，强制使用 WebSocket 中继
+    if (isIOSDevice()) {
+      console.log('[Platform] iOS WeChat Browser detected, forcing WebSocket relay');
+      recommendedVoiceMethod = 'websocket';
+    } else {
+      // Android 微信浏览器支持 WebRTC
+      recommendedVoiceMethod = hasWebRTC ? 'webrtc' : 'websocket';
+    }
   } else {
     platform = 'web-browser';
     // 普通浏览器：优先 WebRTC，不支持则降级 WebSocket
