@@ -252,33 +252,32 @@ export function AwakeningJourneyPreview({
           </div>
 
           {/* 每日4步流程 */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
               💡 每天做4件事，只需15分钟：
             </h4>
             
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-2">
               {dailySteps.map((step, index) => (
                 <motion.div
                   key={step.step}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 + index * 0.08 }}
-                  className="relative p-3 bg-white/60 dark:bg-white/5 rounded-xl border border-white/50 dark:border-white/10"
+                  className="relative p-2.5 pt-3 bg-white/60 dark:bg-white/5 rounded-xl border border-white/50 dark:border-white/10"
                 >
-                  <div className="absolute -top-2 -left-1 w-5 h-5 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow">
+                  <div className="absolute -top-1.5 left-2 w-5 h-5 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
                     {step.step}
                   </div>
-                  <div className="flex items-center gap-2 mb-1.5 mt-1">
-                    <div className={cn("p-1.5 rounded-lg", step.bgColor)}>
-                      <step.icon className={cn("w-3.5 h-3.5", step.color)} />
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <div className={cn("p-1 rounded-md", step.bgColor)}>
+                      <step.icon className={cn("w-3 h-3", step.color)} />
                     </div>
-                    <span className="text-xs font-medium px-1.5 py-0.5 bg-muted/50 rounded text-muted-foreground">
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 bg-muted/50 rounded text-muted-foreground">
                       {step.time}
                     </span>
                   </div>
-                  <div className="font-semibold text-sm text-foreground">{step.title}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{step.description}</div>
+                  <div className="font-semibold text-xs text-foreground leading-tight">{step.title}</div>
                 </motion.div>
               ))}
             </div>
@@ -320,13 +319,13 @@ export function AwakeningJourneyPreview({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.0 }}
-            className="flex gap-3"
+            className="flex flex-col sm:flex-row gap-2.5"
           >
             {/* 了解详情按钮 */}
             <Button
               variant="outline"
               onClick={() => navigate('/wealth-camp-intro')}
-              className="flex-1 h-12 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 font-semibold"
+              className="h-11 sm:flex-1 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 font-semibold text-sm"
             >
               了解详情
             </Button>
@@ -335,18 +334,18 @@ export function AwakeningJourneyPreview({
             {hasPurchased ? (
               <Button
                 onClick={onPurchase}
-                className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg shadow-amber-500/25"
+                className="h-11 sm:flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg shadow-amber-500/25 text-sm"
               >
                 开始训练营
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
             ) : (
               <Button
                 onClick={onPurchase}
-                className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg shadow-amber-500/25"
+                className="h-11 sm:flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg shadow-amber-500/25 text-sm"
               >
                 ¥299 立即加入
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
             )}
           </motion.div>
