@@ -3387,6 +3387,30 @@ export type Database = {
         }
         Relationships: []
       }
+      follow_reminder_tracking: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          trigger_key: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          trigger_key: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          trigger_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       goal_templates: {
         Row: {
           camp_duration_days: number | null
