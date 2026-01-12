@@ -372,7 +372,7 @@ export default function CommunicationHistory() {
       <Helmet>
         <title>沟通日记 - 有劲AI</title>
         <meta name="description" content="记录沟通，提升表达能力" />
-        <meta property="og:title" content="有劲AI沟通日记" />
+        <meta property="og:title" content="有劲AI • 沟通日记" />
         <meta property="og:description" content="四步沟通法记录，让关系更顺畅" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/communication-history" />

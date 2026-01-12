@@ -489,7 +489,7 @@ const Index = () => {
         <Helmet>
           <title>情绪教练 - 有劲AI</title>
           <meta name="description" content="AI情绪教练，陪你觉察、理解、转化情绪" />
-          <meta property="og:title" content="有劲AI情绪教练" />
+          <meta property="og:title" content="有劲AI" />
           <meta property="og:description" content="4阶段情绪对话，帮你从失控到平静" />
           <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
           <meta property="og:url" content="https://wechat.eugenewe.net/" />

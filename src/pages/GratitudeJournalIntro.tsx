@@ -189,7 +189,7 @@ const GratitudeJournalIntro = () => {
       <Helmet>
         <title>我的感恩日记 - 有劲AI</title>
         <meta name="description" content="每天1分钟的幸福训练系统+人生趋势洞察工具" />
-        <meta property="og:title" content="有劲AI感恩日记｜7维度幸福分析" />
+        <meta property="og:title" content="有劲AI • 感恩日记" />
         <meta property="og:description" content="每天1分钟，AI自动分析7维度幸福趋势，科学验证提升幸福感25%" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/gratitude-journal-intro" />

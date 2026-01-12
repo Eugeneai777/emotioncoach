@@ -252,7 +252,7 @@ export default function CampGraduate() {
       <Helmet>
         <title>毕业成长报告 - 有劲AI</title>
         <meta name="description" content="财富觉醒训练营毕业证书与成长报告" />
-        <meta property="og:title" content="有劲AI｜财富觉醒毕业报告" />
+        <meta property="og:title" content="有劲AI • 毕业报告" />
         <meta property="og:description" content="7天财富觉醒之旅，见证我的成长蜕变" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/partner/graduate" />

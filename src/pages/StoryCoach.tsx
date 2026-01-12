@@ -155,7 +155,7 @@ export default function StoryCoach() {
       <Helmet>
         <title>说好故事教练 - 有劲AI</title>
         <meta name="description" content="用科学方法把经历变成动人故事" />
-        <meta property="og:title" content="有劲AI说好故事教练" />
+        <meta property="og:title" content="有劲AI • 故事教练" />
         <meta property="og:description" content="英雄之旅 × 向导觉醒，让你的故事打动人心" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/story-coach" />

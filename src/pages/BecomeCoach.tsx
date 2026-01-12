@@ -188,7 +188,7 @@ export default function BecomeCoach() {
       <Helmet>
         <title>申请成为教练 - 有劲AI</title>
         <meta name="description" content="加入有劲教练团队，帮助更多人成长" />
-        <meta property="og:title" content="有劲AI｜申请成为教练" />
+        <meta property="og:title" content="有劲AI • 成为教练" />
         <meta property="og:description" content="成为有劲认证教练，用专业能力帮助更多人" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/become-coach" />

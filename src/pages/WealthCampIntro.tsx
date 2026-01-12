@@ -149,7 +149,7 @@ const WealthCampIntro = () => {
         <title>财富觉醒训练营｜7天走出卡住的位置 - 有劲AI</title>
         <meta name="description" content="¥299·每天15分钟AI教练对话+冥想觉察，帮你看见行为、情绪、信念层的财富卡点。已有500+人完成蜕变。" />
         <meta name="keywords" content="财富觉醒,财富训练营,财富教练,金钱观,财富信念,有劲AI,财富觉醒训练营,财富突破,财富觉察" />
-        <meta property="og:title" content="财富觉醒训练营｜7天走出卡住的位置" />
+        <meta property="og:title" content="有劲AI • 财富觉醒训练营" />
         <meta property="og:description" content="¥299·每天15分钟AI教练对话+冥想觉察，帮你看见行为、情绪、信念层的财富卡点。已有500+人完成蜕变。" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://wechat.eugenewe.net/wealth-camp-intro" />

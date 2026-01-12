@@ -105,7 +105,7 @@ const CampIntro = () => {
       <Helmet>
         <title>{campTemplate?.camp_name || '训练营'} - 有劲AI</title>
         <meta name="description" content={campTemplate?.description || '系统化训练营，助你成长蜕变'} />
-        <meta property="og:title" content={`有劲AI｜${campTemplate?.camp_name || '训练营'}`} />
+        <meta property="og:title" content={`有劲AI • ${campTemplate?.camp_name || '训练营'}`} />
         <meta property="og:description" content={campTemplate?.description || '科学方法，系统训练，见证成长'} />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content={`https://wechat.eugenewe.net/camp/${campType}`} />

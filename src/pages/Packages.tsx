@@ -60,7 +60,7 @@ export default function Packages() {
     <Helmet>
       <title>会员套餐 - 有劲AI</title>
       <meta name="description" content="选择适合您的产品，开启成长之旅" />
-      <meta property="og:title" content="有劲AI会员套餐" />
+      <meta property="og:title" content="有劲AI • 套餐中心" />
       <meta property="og:description" content="多种套餐选择，满足不同需求" />
       <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
       <meta property="og:url" content="https://wechat.eugenewe.net/packages" />

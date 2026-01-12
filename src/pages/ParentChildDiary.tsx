@@ -386,7 +386,7 @@ const ParentChildDiary = () => {
       <Helmet>
         <title>我的亲子日记 - 有劲AI</title>
         <meta name="description" content="记录亲子成长的每一个瞬间" />
-        <meta property="og:title" content="有劲AI｜我的亲子日记" />
+        <meta property="og:title" content="有劲AI • 亲子日记" />
         <meta property="og:description" content="亲子情绪四部曲记录，见证关系的改善" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/parent-child-diary" />

@@ -145,7 +145,7 @@ export default function MyAppointments() {
       <Helmet>
         <title>我的预约 - 有劲AI</title>
         <meta name="description" content="管理你的教练预约和咨询记录" />
-        <meta property="og:title" content="有劲AI｜我的预约" />
+        <meta property="og:title" content="有劲AI • 我的预约" />
         <meta property="og:description" content="一对一真人教练咨询预约管理" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/my-appointments" />

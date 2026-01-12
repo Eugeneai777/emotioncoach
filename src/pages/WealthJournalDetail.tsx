@@ -122,7 +122,7 @@ export default function WealthJournalDetail() {
       <Helmet>
         <title>财富日记详情 - 有劲AI</title>
         <meta name="description" content="财富觉醒训练营日记详情" />
-        <meta property="og:title" content="有劲AI财富日记" />
+        <meta property="og:title" content="有劲AI • 财富日记" />
         <meta property="og:description" content="每天觉察打卡，见证财富觉醒之旅" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/wealth-journal" />

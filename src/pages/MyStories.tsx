@@ -132,7 +132,7 @@ export default function MyStories() {
       <Helmet>
         <title>我的故事广场 - 有劲AI</title>
         <meta name="description" content="记录你的成长故事" />
-        <meta property="og:title" content="有劲AI｜我的故事广场" />
+        <meta property="og:title" content="有劲AI • 我的故事" />
         <meta property="og:description" content="用故事记录成长，用分享传递力量" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/my-stories" />
