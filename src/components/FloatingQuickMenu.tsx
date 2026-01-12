@@ -66,7 +66,7 @@ export const FloatingQuickMenu = () => {
     { 
       id: 'products', 
       icon: iconMap['Package'], 
-      label: '产品', 
+      label: '产品中心', 
       path: '/packages', 
       color: 'bg-emerald-500',
     },
