@@ -134,10 +134,10 @@ const ParentCoachIntro = () => {
     <div className="min-h-screen bg-background">
       <Helmet>
         <title>亲子情绪教练 - 有劲AI</title>
-        <meta name="description" content="父母先稳，孩子才愿意走向你" />
-        <meta property="og:title" content="有劲AI亲子教练" />
-        <meta property="og:description" content="亲子情绪四部曲，从觉察到行动，重建温暖的亲子关系" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta name="description" content="亲子情绪四部曲，从觉察到行动，重建温暖亲子关系" />
+        <meta property="og:title" content="有劲AI • 亲子教练" />
+        <meta property="og:description" content="亲子情绪四部曲，从觉察到行动，重建温暖亲子关系" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-parent-coach.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/parent-coach-intro" />
         <meta property="og:site_name" content="有劲AI" />
       </Helmet>

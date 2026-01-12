@@ -101,10 +101,10 @@ const EmotionButtonIntro = () => {
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 pb-24">
       <Helmet>
         <title>情绪急救按钮 - 有劲AI</title>
-        <meta name="description" content="当情绪太大，一秒按下，让身体稳住" />
-        <meta property="og:title" content="有劲AI • 情绪按钮" />
-        <meta property="og:description" content="30秒科学稳定流程，288个专业认知提醒，9种情绪场景覆盖" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta name="description" content="30秒科学稳定流程，288个认知提醒，9种场景" />
+        <meta property="og:title" content="有劲AI • 情绪急救" />
+        <meta property="og:description" content="30秒科学稳定流程，288个认知提醒，9种场景" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-emotion-coach.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/emotion-button-intro" />
         <meta property="og:site_name" content="有劲AI" />
       </Helmet>

@@ -56,10 +56,10 @@ export default function TeenCoach() {
     <>
       <Helmet>
         <title>青少年AI伙伴 - 有劲AI</title>
-        <meta name="description" content="懂你的AI朋友，不说教、不评判，只是陪你聊聊" />
+        <meta name="description" content="安全私密的倾诉空间，24h陪伴成长" />
         <meta property="og:title" content="有劲AI • 青少年模式" />
-        <meta property="og:description" content="安全私密的倾诉空间，24小时陪伴，帮你度过成长的困惑" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:description" content="安全私密的倾诉空间，24h陪伴成长" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-teen-coach.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/teen-coach" />
         <meta property="og:site_name" content="有劲AI" />
       </Helmet>
