@@ -420,9 +420,9 @@ const History = () => {
       <Helmet>
         <title>我的情绪日记 - 有劲AI</title>
         <meta name="description" content="记录情绪，看见成长" />
-        <meta property="og:title" content="有劲AI情绪日记" />
+        <meta property="og:title" content="有劲AI • 情绪日记" />
         <meta property="og:description" content="情绪四部曲记录，见证你的成长轨迹" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-emotion-coach.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/history" />
         <meta property="og:site_name" content="有劲AI" />
       </Helmet>

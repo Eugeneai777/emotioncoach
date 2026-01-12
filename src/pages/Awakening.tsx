@@ -23,7 +23,7 @@ const Awakening: React.FC = () => {
       <Helmet>
         <title>觉察记录 - 有劲AI</title>
         <meta name="description" content="每天1次轻记录，帮你看见盲点与模式，给你一个最小行动" />
-        <meta property="og:title" content="有劲AI觉察记录" />
+        <meta property="og:title" content="有劲AI • 觉察中心" />
         <meta property="og:description" content="每天1次轻记录，帮你看见盲点与模式，给你一个最小行动" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/awakening" />
