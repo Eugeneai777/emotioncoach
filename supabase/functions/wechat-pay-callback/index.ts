@@ -9,7 +9,9 @@ const corsHeaders = {
 // AES-256-GCM 解密
 async function decryptAesGcm(ciphertext: string, nonce: string, associatedData: string, key: string): Promise<string> {
   const keyBytes = new TextEncoder().encode(key);
-  const nonceBytes = Uint8Array.from(atob(nonce), c => c.charCodeAt(0));
+  // 微信的 nonce 是纯字符串（12字符），直接用 TextEncoder 转换
+  const nonceBytes = new TextEncoder().encode(nonce);
+  // ciphertext 是 base64 编码的
   const ciphertextBytes = Uint8Array.from(atob(ciphertext), c => c.charCodeAt(0));
   const associatedDataBytes = new TextEncoder().encode(associatedData);
   
