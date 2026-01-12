@@ -17,12 +17,16 @@ import {
 } from "./wealthBlockData";
 import { FollowUpDialog, FollowUpData } from "./FollowUpDialog";
 import { DeepFollowUpDialog, DeepFollowUp, DeepFollowUpAnswer } from "./DeepFollowUpDialog";
+import { AssessmentStartScreen } from "./AssessmentStartScreen";
 
 interface WealthBlockQuestionsProps {
   onComplete: (result: AssessmentResult, answers: Record<number, number>, followUpInsights?: FollowUpAnswer[], deepFollowUpAnswers?: DeepFollowUpAnswer[]) => void;
 }
 
 export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) {
+  // 新增：开始前介绍页状态
+  const [showStartScreen, setShowStartScreen] = useState(true);
+  
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   
@@ -48,6 +52,11 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
   const progress = (answeredCount / questions.length) * 100;
   const isLastQuestion = currentIndex === questions.length - 1;
   const canSubmit = answeredCount === questions.length;
+
+  // 如果显示开始介绍页，先渲染它
+  if (showStartScreen) {
+    return <AssessmentStartScreen onStart={() => setShowStartScreen(false)} />;
+  }
 
   // 生成AI追问
   const generateFollowUp = useCallback(async (questionId: number, score: number) => {
