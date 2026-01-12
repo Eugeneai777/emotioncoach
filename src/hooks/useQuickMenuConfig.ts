@@ -33,7 +33,6 @@ export const coachPages = [
 // All available pages for custom slots
 export const availablePages = [
   ...coachPages,
-  { path: '/wealth-camp-checkin', label: '财富日记', icon: 'BookOpen', color: 'bg-amber-500' },
   { path: '/wealth-block', label: '财富测评', icon: 'ClipboardCheck', color: 'bg-purple-500' },
   { path: '/customer-support', label: '给予建议', icon: 'MessageCircle', color: 'bg-blue-500' },
   { path: '/packages', label: '产品套餐', icon: 'Package', color: 'bg-emerald-500' },
