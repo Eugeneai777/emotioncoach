@@ -1,10 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, X, Minus, Info, Sparkles, ShoppingCart } from "lucide-react";
+import { Check, X, Minus, Info, Sparkles, ShoppingCart, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { youjinFeatures, bloomFeatures, youjinPartnerFeatures, type YoujinFeature, type BloomFeature, type YoujinPartnerFeature } from "@/config/productComparison";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PointsRulesDialog } from "./PointsRulesDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent } from "@/components/ui/mobile-card";
 
 interface PackageInfo {
   key: string;
@@ -18,8 +20,60 @@ interface ProductComparisonTableProps {
   onPurchase?: (packageInfo: PackageInfo) => void;
 }
 
+// 移动端套餐卡片组件
+interface PackageCardProps {
+  emoji: string;
+  name: string;
+  price: number;
+  priceLabel?: string;
+  features: string[];
+  recommended?: boolean;
+  gradient?: string;
+  onPurchase: () => void;
+}
+
+const PackageCard = ({ emoji, name, price, priceLabel, features, recommended, gradient, onPurchase }: PackageCardProps) => (
+  <MobileCard 
+    className={`relative ${recommended ? 'ring-2 ring-primary/50' : ''} ${gradient || ''}`}
+    interactive
+    onClick={onPurchase}
+  >
+    {recommended && (
+      <div className="absolute -top-2 right-3 px-2 py-0.5 bg-primary text-primary-foreground text-xs font-medium rounded-full">
+        推荐
+      </div>
+    )}
+    <div className="flex items-start gap-3">
+      <span className="text-3xl">{emoji}</span>
+      <div className="flex-1 min-w-0">
+        <h3 className="font-bold text-base">{name}</h3>
+        <div className="flex items-baseline gap-1 mt-1">
+          <span className="text-xl font-bold text-primary">¥{price}</span>
+          {priceLabel && <span className="text-xs text-muted-foreground">{priceLabel}</span>}
+        </div>
+        <ul className="mt-2 space-y-1">
+          {features.slice(0, 4).map((feature, i) => (
+            <li key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Check className="w-3 h-3 text-green-500 flex-shrink-0" />
+              <span className="line-clamp-1">{feature}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+    <Button 
+      size="sm" 
+      className={`w-full mt-3 ${recommended ? 'bg-primary' : ''}`}
+      variant={recommended ? 'default' : 'outline'}
+    >
+      立即购买
+    </Button>
+  </MobileCard>
+);
+
 export function ProductComparisonTable({ category, onPurchase }: ProductComparisonTableProps) {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const renderValue = (value: boolean | string) => {
     if (typeof value === 'boolean') {
@@ -46,9 +100,52 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
     const features = youjinFeatures;
     const categories = Array.from(new Set(features.map(f => f.category)));
 
+    // 移动端：卡片堆叠
+    if (isMobile) {
+      return (
+        <div className="space-y-3">
+          {/* 价值说明 */}
+          <MobileCard className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="font-bold text-sm">点数 = 解锁全部功能</span>
+              </div>
+              <p className="text-xs text-muted-foreground">5位AI教练 · 情绪按钮 · 20+成长工具</p>
+              <PointsRulesDialog 
+                trigger={
+                  <button className="text-xs text-primary mt-1">了解点数规则 →</button>
+                }
+              />
+            </div>
+          </MobileCard>
+
+          {/* 套餐卡片 */}
+          <PackageCard
+            emoji="💎"
+            name="尝鲜会员"
+            price={9.9}
+            priceLabel="50点"
+            features={['5位AI教练体验', '情绪按钮系统', '成长社区', '7天有效']}
+            onPurchase={() => handlePurchase({ key: 'basic', name: '尝鲜会员', price: 9.9, quota: 50 })}
+          />
+
+          <PackageCard
+            emoji="👑"
+            name="365会员"
+            price={365}
+            priceLabel="1000点"
+            features={['5位AI教练无限使用', '语音对话特权', 'VIP专属服务', '365天有效']}
+            recommended
+            onPurchase={() => handlePurchase({ key: 'member365', name: '365会员', price: 365, quota: 1000 })}
+          />
+        </div>
+      );
+    }
+
+    // 桌面端：保持表格
     return (
       <div className="space-y-4">
-        {/* 价值导向横幅 */}
         <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-xl p-4 border border-primary/20">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Sparkles className="w-5 h-5 text-primary" />
@@ -63,38 +160,30 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           <div className="text-center text-xs text-muted-foreground mt-2">
             大部分功能1点/次 · 
             <PointsRulesDialog 
-              trigger={
-                <button className="text-primary hover:underline">
-                  了解点数规则 →
-                </button>
-              }
+              trigger={<button className="text-primary hover:underline">了解点数规则 →</button>}
             />
           </div>
         </div>
 
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto -mx-0">
+          <div className="overflow-x-auto">
             <table className="w-full border-collapse min-w-[400px]">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm text-muted-foreground min-w-[100px] sm:min-w-[140px] sticky left-0 bg-muted/50 z-10">
-                    权益项目
-                  </th>
-                  <th className="text-center p-2 sm:p-4 min-w-[100px] sm:min-w-[140px]">
-                    <div className="space-y-0.5 sm:space-y-1">
-                      <div className="font-bold text-sm sm:text-base text-foreground">尝鲜会员</div>
-                      <div className="text-[10px] sm:text-xs text-muted-foreground">¥9.9 · 50点</div>
+                  <th className="text-left p-4 font-semibold text-sm text-muted-foreground min-w-[140px] sticky left-0 bg-muted/50 z-10">权益项目</th>
+                  <th className="text-center p-4 min-w-[140px]">
+                    <div className="space-y-1">
+                      <div className="font-bold text-base text-foreground">尝鲜会员</div>
+                      <div className="text-xs text-muted-foreground">¥9.9 · 50点</div>
                     </div>
                   </th>
-                  <th className="text-center p-2 sm:p-4 min-w-[100px] sm:min-w-[140px] bg-primary/5">
-                    <div className="space-y-0.5 sm:space-y-1">
-                      <div className="flex items-center justify-center gap-1 sm:gap-2">
-                        <div className="font-bold text-sm sm:text-base text-primary">365会员</div>
-                        <span className="text-[10px] sm:text-xs bg-primary text-primary-foreground px-1.5 sm:px-2 py-0.5 rounded-full font-semibold">
-                          推荐
-                        </span>
+                  <th className="text-center p-4 min-w-[140px] bg-primary/5">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="font-bold text-base text-primary">365会员</div>
+                        <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-semibold">推荐</span>
                       </div>
-                      <div className="text-[10px] sm:text-xs text-muted-foreground">¥365 · 1000点</div>
+                      <div className="text-xs text-muted-foreground">¥365 · 1000点</div>
                     </div>
                   </th>
                 </tr>
@@ -106,23 +195,18 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                     <TooltipProvider key={cat}>
                       <tr className="border-b bg-muted/30">
                         <td colSpan={3} className="p-3">
-                          <div className="font-semibold text-sm text-primary flex items-center gap-2">
-                            {cat}
-                          </div>
+                          <div className="font-semibold text-sm text-primary">{cat}</div>
                         </td>
                       </tr>
                       {categoryFeatures.map((feature, idx) => (
-                        <tr 
-                          key={`${cat}-${idx}`} 
-                          className="border-b hover:bg-muted/30 transition-colors"
-                        >
-                          <td className="p-2 sm:p-3 text-xs sm:text-sm text-muted-foreground sticky left-0 bg-background z-10">
-                            <div className="flex items-center gap-1 sm:gap-2">
-                              <span className="line-clamp-2">{feature.name}</span>
+                        <tr key={`${cat}-${idx}`} className="border-b hover:bg-muted/30 transition-colors">
+                          <td className="p-3 text-sm text-muted-foreground sticky left-0 bg-background z-10">
+                            <div className="flex items-center gap-2">
+                              <span>{feature.name}</span>
                               {feature.tooltip && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Info className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground/60 cursor-help flex-shrink-0" />
+                                    <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help" />
                                   </TooltipTrigger>
                                   <TooltipContent>
                                     <p className="max-w-xs text-xs">{feature.tooltip}</p>
@@ -131,8 +215,8 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                               )}
                             </div>
                           </td>
-                          <td className="p-2 sm:p-3 text-center">{renderValue(feature.basic)}</td>
-                          <td className="p-2 sm:p-3 text-center bg-primary/5">{renderValue(feature.premium)}</td>
+                          <td className="p-3 text-center">{renderValue(feature.basic)}</td>
+                          <td className="p-3 text-center bg-primary/5">{renderValue(feature.premium)}</td>
                         </tr>
                       ))}
                     </TooltipProvider>
@@ -141,21 +225,12 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                 <tr>
                   <td className="p-4 sticky left-0 bg-background z-10"></td>
                   <td className="p-4 text-center">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => handlePurchase({ key: 'basic', name: '尝鲜会员', price: 9.9, quota: 50 })}
-                    >
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => handlePurchase({ key: 'basic', name: '尝鲜会员', price: 9.9, quota: 50 })}>
                       立即购买
                     </Button>
                   </td>
                   <td className="p-4 text-center bg-primary/5">
-                    <Button 
-                      size="sm" 
-                      className="w-full bg-primary hover:bg-primary/90"
-                      onClick={() => handlePurchase({ key: 'member365', name: '365会员', price: 365, quota: 1000 })}
-                    >
+                    <Button size="sm" className="w-full bg-primary hover:bg-primary/90" onClick={() => handlePurchase({ key: 'member365', name: '365会员', price: 365, quota: 1000 })}>
                       立即购买
                     </Button>
                   </td>
@@ -171,77 +246,132 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
   // 有劲训练营 - 财富觉醒训练营 ¥299
   if (category === 'youjin-camp') {
     return (
-      <div className="space-y-4">
-        <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20">
-          <CardContent className="p-6 text-center space-y-4">
-            <div className="text-5xl">🔥</div>
-            <h3 className="text-2xl font-bold">财富觉醒训练营</h3>
-            <p className="text-muted-foreground">7天突破财富卡点，重塑金钱关系</p>
+      <div className="space-y-3">
+        <MobileCard className="bg-gradient-to-br from-amber-50/80 to-orange-50/80 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200/50">
+          <div className="text-center space-y-3">
+            <span className="text-4xl">🔥</span>
+            <h3 className="text-xl font-bold">财富觉醒训练营</h3>
+            <p className="text-sm text-muted-foreground">7天突破财富卡点，重塑金钱关系</p>
             
-            <div className="flex flex-wrap justify-center gap-2 text-sm">
-              <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 rounded-full">📊 财富卡点测评</span>
-              <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 rounded-full">🧘 7天冥想引导</span>
-              <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 rounded-full">🤖 AI教练陪伴</span>
-              <span className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 rounded-full">📝 财富日记</span>
+            <div className="flex flex-wrap justify-center gap-1.5 text-xs">
+              <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 rounded-full">📊 卡点测评</span>
+              <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 rounded-full">🧘 7天冥想</span>
+              <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 rounded-full">🤖 AI陪伴</span>
             </div>
             
-            <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">¥299</div>
+            <div className="text-2xl font-bold text-amber-600">¥299</div>
             
-            <div className="flex gap-2 justify-center flex-wrap">
+            <div className="flex gap-2 justify-center">
               <Button 
-                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                className="bg-gradient-to-r from-amber-500 to-orange-500 text-white flex-1"
                 onClick={() => handlePurchase({ key: 'wealth_camp_7day', name: '财富觉醒训练营', price: 299 })}
               >
                 <ShoppingCart className="w-4 h-4 mr-1" />
                 立即报名
               </Button>
-              <Button variant="outline" onClick={() => navigate('/wealth-camp-intro')}>
-                了解更多 →
+              <Button variant="outline" size="sm" onClick={() => navigate('/wealth-camp-intro')}>
+                了解更多
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </MobileCard>
 
-        {/* 训练营权益说明 */}
-        <Card>
-          <CardContent className="p-4 space-y-3">
-            <h4 className="font-semibold">训练营包含</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
-                财富卡点深度测评（价值¥9.9）
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
-                7天专属冥想音频引导
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
-                AI财富教练1对1陪伴
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
-                财富日记与成长追踪
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
-                训练营专属社群支持
-              </li>
+        <MobileCard>
+          <MobileCardHeader>
+            <MobileCardTitle>训练营包含</MobileCardTitle>
+          </MobileCardHeader>
+          <MobileCardContent>
+            <ul className="space-y-1.5 text-sm">
+              {['财富卡点深度测评（¥9.9）', '7天专属冥想音频', 'AI财富教练1对1陪伴', '财富日记与成长追踪'].map((item, i) => (
+                <li key={i} className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span>{item}</span>
+                </li>
+              ))}
             </ul>
-          </CardContent>
-        </Card>
+          </MobileCardContent>
+        </MobileCard>
       </div>
     );
   }
 
-  // 有劲合伙人 - L1/L2/L3 矩阵对比表
+  // 有劲合伙人 - L1/L2/L3 
   if (category === 'youjin-partner') {
     const features = youjinPartnerFeatures;
     const categories = Array.from(new Set(features.map(f => f.category)));
 
+    // 移动端：卡片堆叠
+    if (isMobile) {
+      return (
+        <div className="space-y-3">
+          {/* 价值说明 */}
+          <MobileCard className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border-orange-200/50">
+            <div className="text-center space-y-1">
+              <h3 className="font-bold text-sm">预购体验包，建立长期用户关系</h3>
+              <p className="text-xs text-muted-foreground">🎁 分发9.9体验包 · 🔗 用户永久绑定 · 💰 持续分成</p>
+            </div>
+          </MobileCard>
+
+          {/* 体验包预览 */}
+          <MobileCard>
+            <MobileCardHeader>
+              <span className="text-lg">🎁</span>
+              <MobileCardTitle>可分发的体验包</MobileCardTitle>
+            </MobileCardHeader>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="bg-teal-50 dark:bg-teal-950/30 rounded-lg p-2 text-center">
+                <span className="text-xl">💎</span>
+                <p className="text-xs font-medium mt-1">尝鲜会员</p>
+                <p className="text-xs text-teal-600">¥9.9</p>
+              </div>
+              <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-2 text-center">
+                <span className="text-xl">📊</span>
+                <p className="text-xs font-medium mt-1">财富测评</p>
+                <p className="text-xs text-purple-600">¥9.9</p>
+              </div>
+            </div>
+          </MobileCard>
+
+          {/* 合伙人套餐 */}
+          <PackageCard
+            emoji="💪"
+            name="初级合伙人"
+            price={792}
+            priceLabel="100份体验包"
+            features={['直推20%佣金', '100份体验包', '基础推广工具']}
+            onPurchase={() => handlePurchase({ key: 'youjin_partner_l1', name: '初级合伙人', price: 792 })}
+          />
+
+          <PackageCard
+            emoji="🔥"
+            name="高级合伙人"
+            price={3217}
+            priceLabel="500份体验包"
+            features={['直推25%佣金', '500份体验包', '二级10%佣金', '高级推广工具']}
+            onPurchase={() => handlePurchase({ key: 'youjin_partner_l2', name: '高级合伙人', price: 3217 })}
+          />
+
+          <PackageCard
+            emoji="💎"
+            name="钻石合伙人"
+            price={4950}
+            priceLabel="1000份体验包"
+            features={['直推30%佣金', '1000份体验包', '二级15%佣金', '专属1对1培训']}
+            recommended
+            gradient="bg-gradient-to-br from-orange-50/80 to-amber-50/80 dark:from-orange-950/30 dark:to-amber-950/30"
+            onPurchase={() => handlePurchase({ key: 'youjin_partner_l3', name: '钻石合伙人', price: 4950 })}
+          />
+
+          <Button variant="outline" className="w-full" onClick={() => navigate('/partner/youjin-intro')}>
+            了解有劲合伙人详情 →
+          </Button>
+        </div>
+      );
+    }
+
+    // 桌面端：保持表格
     return (
       <div className="space-y-4">
-        {/* 价值说明横幅 */}
         <div className="bg-gradient-to-r from-orange-500/10 to-amber-500/10 rounded-xl p-4 border border-orange-200 dark:border-orange-800">
           <div className="text-center space-y-2">
             <h3 className="font-bold text-lg">预购体验包，建立长期用户关系</h3>
@@ -253,7 +383,6 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           </div>
         </div>
 
-        {/* 体验包内容展示 - 两种可选产品 */}
         <Card className="border-purple-200 dark:border-purple-800">
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center gap-2">
@@ -261,8 +390,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
               <h4 className="font-bold text-base">可分发的体验包（二选一）</h4>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* 尝鲜会员 */}
+            <div className="grid grid-cols-2 gap-3">
               <div className="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/30 rounded-lg p-4 border border-teal-200 dark:border-teal-800">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -272,30 +400,15 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   <span className="text-teal-600 font-bold text-sm">¥9.9</span>
                 </div>
                 <ul className="text-xs text-muted-foreground space-y-1.5">
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-teal-500" />
-                    <span>50点AI对话额度</span>
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-teal-500" />
-                    <span>5位AI教练体验</span>
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-teal-500" />
-                    <span>情绪按钮 + 社区</span>
-                  </li>
+                  <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-teal-500" /><span>50点AI对话额度</span></li>
+                  <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-teal-500" /><span>5位AI教练体验</span></li>
+                  <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-teal-500" /><span>情绪按钮 + 社区</span></li>
                 </ul>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full mt-3 border-teal-300 text-teal-700 hover:bg-teal-100"
-                  onClick={() => navigate('/packages')}
-                >
+                <Button variant="outline" size="sm" className="w-full mt-3 border-teal-300 text-teal-700 hover:bg-teal-100" onClick={() => navigate('/packages')}>
                   体验会员 →
                 </Button>
               </div>
 
-              {/* 财富测评 */}
               <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -305,80 +418,53 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   <span className="text-purple-600 font-bold text-sm">¥9.9</span>
                 </div>
                 <ul className="text-xs text-muted-foreground space-y-1.5">
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-purple-500" />
-                    <span>30道财富场景诊断</span>
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-purple-500" />
-                    <span>三层深度分析</span>
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-purple-500" />
-                    <span>AI个性化突破路径</span>
-                  </li>
+                  <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-purple-500" /><span>30道财富场景诊断</span></li>
+                  <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-purple-500" /><span>三层深度分析</span></li>
+                  <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-purple-500" /><span>AI个性化突破路径</span></li>
                 </ul>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full mt-3 border-purple-300 text-purple-700 hover:bg-purple-100"
-                  onClick={() => navigate('/wealth-block')}
-                >
+                <Button variant="outline" size="sm" className="w-full mt-3 border-purple-300 text-purple-700 hover:bg-purple-100" onClick={() => navigate('/wealth-block')}>
                   体验测评 →
                 </Button>
               </div>
             </div>
             
-            {/* 说明文案 */}
             <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
               <p className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                <span>
-                  购买合伙人套餐后，你可选择推广任一体验包。
-                  用户将<strong className="text-foreground">永久绑定</strong>为你的学员，
-                  后续所有消费都能获得佣金分成。
-                </span>
+                <span>购买合伙人套餐后，你可选择推广任一体验包。用户将<strong className="text-foreground">永久绑定</strong>为你的学员，后续所有消费都能获得佣金分成。</span>
               </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* 矩阵对比表 */}
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto -mx-0">
+          <div className="overflow-x-auto">
             <table className="w-full border-collapse min-w-[500px]">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm text-muted-foreground min-w-[100px] sm:min-w-[120px] sticky left-0 bg-muted/50 z-10">
-                    权益项目
-                  </th>
-                  {/* L1 初级合伙人 */}
-                  <th className="text-center p-2 sm:p-4 min-w-[100px] sm:min-w-[120px]">
-                    <div className="space-y-0.5 sm:space-y-1">
+                  <th className="text-left p-4 font-semibold text-sm text-muted-foreground min-w-[120px] sticky left-0 bg-muted/50 z-10">权益项目</th>
+                  <th className="text-center p-4 min-w-[120px]">
+                    <div className="space-y-1">
                       <span className="text-2xl">💪</span>
-                      <div className="font-bold text-xs sm:text-sm text-foreground">初级合伙人</div>
-                      <div className="text-[10px] sm:text-xs text-muted-foreground">¥792 · 100份</div>
+                      <div className="font-bold text-sm">初级合伙人</div>
+                      <div className="text-xs text-muted-foreground">¥792 · 100份</div>
                     </div>
                   </th>
-                  {/* L2 高级合伙人 */}
-                  <th className="text-center p-2 sm:p-4 min-w-[100px] sm:min-w-[120px]">
-                    <div className="space-y-0.5 sm:space-y-1">
+                  <th className="text-center p-4 min-w-[120px]">
+                    <div className="space-y-1">
                       <span className="text-2xl">🔥</span>
-                      <div className="font-bold text-xs sm:text-sm text-foreground">高级合伙人</div>
-                      <div className="text-[10px] sm:text-xs text-muted-foreground">¥3,217 · 500份</div>
+                      <div className="font-bold text-sm">高级合伙人</div>
+                      <div className="text-xs text-muted-foreground">¥3,217 · 500份</div>
                     </div>
                   </th>
-                  {/* L3 钻石合伙人 - 推荐 */}
-                  <th className="text-center p-2 sm:p-4 min-w-[100px] sm:min-w-[120px] bg-primary/5">
-                    <div className="space-y-0.5 sm:space-y-1">
+                  <th className="text-center p-4 min-w-[120px] bg-primary/5">
+                    <div className="space-y-1">
                       <span className="text-2xl">💎</span>
-                      <div className="flex items-center justify-center gap-1 flex-wrap">
-                        <div className="font-bold text-xs sm:text-sm text-primary">钻石合伙人</div>
-                        <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-semibold">
-                          推荐
-                        </span>
+                      <div className="flex items-center justify-center gap-1">
+                        <div className="font-bold text-sm text-primary">钻石合伙人</div>
+                        <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">推荐</span>
                       </div>
-                      <div className="text-[10px] sm:text-xs text-muted-foreground">¥4,950 · 1000份</div>
+                      <div className="text-xs text-muted-foreground">¥4,950 · 1000份</div>
                     </div>
                   </th>
                 </tr>
@@ -390,23 +476,18 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                     <TooltipProvider key={cat}>
                       <tr className="border-b bg-muted/30">
                         <td colSpan={4} className="p-3">
-                          <div className="font-semibold text-sm text-primary flex items-center gap-2">
-                            {cat}
-                          </div>
+                          <div className="font-semibold text-sm text-primary">{cat}</div>
                         </td>
                       </tr>
                       {categoryFeatures.map((feature, idx) => (
-                        <tr 
-                          key={`${cat}-${idx}`} 
-                          className="border-b hover:bg-muted/30 transition-colors"
-                        >
-                          <td className="p-2 sm:p-3 text-xs sm:text-sm text-muted-foreground sticky left-0 bg-background z-10">
-                            <div className="flex items-center gap-1 sm:gap-2">
-                              <span className="line-clamp-2">{feature.name}</span>
+                        <tr key={`${cat}-${idx}`} className="border-b hover:bg-muted/30 transition-colors">
+                          <td className="p-3 text-sm text-muted-foreground sticky left-0 bg-background z-10">
+                            <div className="flex items-center gap-2">
+                              <span>{feature.name}</span>
                               {feature.tooltip && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Info className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground/60 cursor-help flex-shrink-0" />
+                                    <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help" />
                                   </TooltipTrigger>
                                   <TooltipContent>
                                     <p className="max-w-xs text-xs">{feature.tooltip}</p>
@@ -415,9 +496,9 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                               )}
                             </div>
                           </td>
-                          <td className="p-2 sm:p-3 text-center">{renderValue(feature.l1)}</td>
-                          <td className="p-2 sm:p-3 text-center">{renderValue(feature.l2)}</td>
-                          <td className="p-2 sm:p-3 text-center bg-primary/5">{renderValue(feature.l3)}</td>
+                          <td className="p-3 text-center">{renderValue(feature.l1)}</td>
+                          <td className="p-3 text-center">{renderValue(feature.l2)}</td>
+                          <td className="p-3 text-center bg-primary/5">{renderValue(feature.l3)}</td>
                         </tr>
                       ))}
                     </TooltipProvider>
@@ -426,33 +507,13 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                 <tr>
                   <td className="p-4 sticky left-0 bg-background z-10"></td>
                   <td className="p-3 text-center">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full text-xs"
-                      onClick={() => handlePurchase({ key: 'youjin_partner_l1', name: '初级合伙人', price: 792 })}
-                    >
-                      立即购买
-                    </Button>
+                    <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => handlePurchase({ key: 'youjin_partner_l1', name: '初级合伙人', price: 792 })}>立即购买</Button>
                   </td>
                   <td className="p-3 text-center">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full text-xs"
-                      onClick={() => handlePurchase({ key: 'youjin_partner_l2', name: '高级合伙人', price: 3217 })}
-                    >
-                      立即购买
-                    </Button>
+                    <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => handlePurchase({ key: 'youjin_partner_l2', name: '高级合伙人', price: 3217 })}>立即购买</Button>
                   </td>
                   <td className="p-3 text-center bg-primary/5">
-                    <Button 
-                      size="sm" 
-                      className="w-full text-xs bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:opacity-90"
-                      onClick={() => handlePurchase({ key: 'youjin_partner_l3', name: '钻石合伙人', price: 4950 })}
-                    >
-                      立即购买
-                    </Button>
+                    <Button size="sm" className="w-full text-xs bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:opacity-90" onClick={() => handlePurchase({ key: 'youjin_partner_l3', name: '钻石合伙人', price: 4950 })}>立即购买</Button>
                   </td>
                 </tr>
               </tbody>
@@ -460,47 +521,68 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           </div>
         </Card>
         
-        {/* 了解更多按钮 */}
         <div className="text-center">
-          <Button variant="outline" onClick={() => navigate('/partner/youjin-intro')}>
-            了解有劲合伙人详情 →
-          </Button>
+          <Button variant="outline" onClick={() => navigate('/partner/youjin-intro')}>了解有劲合伙人详情 →</Button>
         </div>
       </div>
     );
   }
 
-  // 绽放训练营 - 身份绽放 + 情感绽放对比表
+  // 绽放训练营 - 身份绽放 + 情感绽放
   if (category === 'bloom-camp') {
     const features = bloomFeatures;
     const categories = Array.from(new Set(features.map(f => f.category)));
 
+    // 移动端：卡片堆叠
+    if (isMobile) {
+      return (
+        <div className="space-y-3">
+          <PackageCard
+            emoji="🦋"
+            name="身份绽放训练营"
+            price={2980}
+            priceLabel="认识真实自我"
+            features={['21天深度身份探索', '专业教练1对1指导', '社群共修支持', '个性化成长方案']}
+            onPurchase={() => handlePurchase({ key: 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', name: '身份绽放训练营', price: 2980 })}
+          />
+
+          <PackageCard
+            emoji="💗"
+            name="情感绽放训练营"
+            price={3980}
+            priceLabel="体验内在情绪"
+            features={['21天情感疗愈之旅', '深度情绪释放技术', '专属情感教练', '亲密关系修复']}
+            recommended
+            gradient="bg-gradient-to-br from-pink-50/80 to-purple-50/80 dark:from-pink-950/30 dark:to-purple-950/30"
+            onPurchase={() => handlePurchase({ key: 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', name: '情感绽放训练营', price: 3980 })}
+          />
+        </div>
+      );
+    }
+
+    // 桌面端：保持表格
     return (
       <Card className="overflow-hidden">
-        <div className="overflow-x-auto -mx-0">
+        <div className="overflow-x-auto">
           <table className="w-full border-collapse min-w-[440px]">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm text-muted-foreground min-w-[100px] sm:min-w-[140px] sticky left-0 bg-muted/50 z-10">
-                  权益项目
-                </th>
-                <th className="text-center p-2 sm:p-4 min-w-[120px] sm:min-w-[160px]">
-                  <div className="space-y-0.5 sm:space-y-1">
-                    <div className="font-bold text-xs sm:text-base text-foreground">身份绽放训练营</div>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground">认识真实自我</div>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground font-semibold mt-1">¥2,980</div>
+                <th className="text-left p-4 font-semibold text-sm text-muted-foreground min-w-[140px] sticky left-0 bg-muted/50 z-10">权益项目</th>
+                <th className="text-center p-4 min-w-[160px]">
+                  <div className="space-y-1">
+                    <div className="font-bold text-base">身份绽放训练营</div>
+                    <div className="text-xs text-muted-foreground">认识真实自我</div>
+                    <div className="text-xs text-muted-foreground font-semibold mt-1">¥2,980</div>
                   </div>
                 </th>
-                <th className="text-center p-2 sm:p-4 min-w-[120px] sm:min-w-[160px] bg-primary/5">
-                  <div className="space-y-0.5 sm:space-y-1">
-                    <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
-                      <div className="font-bold text-xs sm:text-base text-primary">情感绽放训练营</div>
-                      <span className="text-[10px] sm:text-xs bg-primary text-primary-foreground px-1.5 sm:px-2 py-0.5 rounded-full font-semibold">
-                        推荐
-                      </span>
+                <th className="text-center p-4 min-w-[160px] bg-primary/5">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="font-bold text-base text-primary">情感绽放训练营</div>
+                      <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-semibold">推荐</span>
                     </div>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground">体验内在情绪</div>
-                    <div className="text-[10px] sm:text-xs text-muted-foreground font-semibold mt-1">¥3,980</div>
+                    <div className="text-xs text-muted-foreground">体验内在情绪</div>
+                    <div className="text-xs text-muted-foreground font-semibold mt-1">¥3,980</div>
                   </div>
                 </th>
               </tr>
@@ -512,16 +594,11 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   <TooltipProvider key={cat}>
                     <tr className="border-b bg-muted/30">
                       <td colSpan={3} className="p-3">
-                        <div className="font-semibold text-sm text-primary flex items-center gap-2">
-                          {cat}
-                        </div>
+                        <div className="font-semibold text-sm text-primary">{cat}</div>
                       </td>
                     </tr>
                     {categoryFeatures.map((feature, idx) => (
-                      <tr 
-                        key={`${cat}-${idx}`} 
-                        className="border-b hover:bg-muted/30 transition-colors"
-                      >
+                      <tr key={`${cat}-${idx}`} className="border-b hover:bg-muted/30 transition-colors">
                         <td className="p-3 text-sm text-muted-foreground sticky left-0 bg-background z-10">
                           <div className="flex items-center gap-2">
                             {feature.name}
@@ -548,42 +625,18 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                 <td className="p-4 sticky left-0 bg-background z-10"></td>
                 <td className="p-4 text-center">
                   <div className="space-y-2">
-                    <Button 
-                      size="sm" 
-                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-md hover:shadow-lg transition-all"
-                      onClick={() => handlePurchase({ key: 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', name: '身份绽放训练营', price: 2980 })}
-                    >
-                      <ShoppingCart className="w-4 h-4 mr-1" />
-                      立即购买 ¥2,980
+                    <Button size="sm" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white" onClick={() => handlePurchase({ key: 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', name: '身份绽放训练营', price: 2980 })}>
+                      <ShoppingCart className="w-4 h-4 mr-1" />立即购买 ¥2,980
                     </Button>
-                    <Button 
-                      variant="ghost"
-                      size="sm" 
-                      className="w-full text-muted-foreground hover:text-primary"
-                      onClick={() => navigate('/camp-template/fdbf32e0-61c5-464e-817a-45661dfc8105')}
-                    >
-                      了解更多 →
-                    </Button>
+                    <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={() => navigate('/camp-template/fdbf32e0-61c5-464e-817a-45661dfc8105')}>了解更多 →</Button>
                   </div>
                 </td>
                 <td className="p-4 text-center bg-primary/5">
                   <div className="space-y-2">
-                    <Button 
-                      size="sm" 
-                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white shadow-md hover:shadow-lg transition-all"
-                      onClick={() => handlePurchase({ key: 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', name: '情感绽放训练营', price: 3980 })}
-                    >
-                      <ShoppingCart className="w-4 h-4 mr-1" />
-                      立即购买 ¥3,980
+                    <Button size="sm" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white" onClick={() => handlePurchase({ key: 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', name: '情感绽放训练营', price: 3980 })}>
+                      <ShoppingCart className="w-4 h-4 mr-1" />立即购买 ¥3,980
                     </Button>
-                    <Button 
-                      variant="ghost"
-                      size="sm" 
-                      className="w-full text-muted-foreground hover:text-primary"
-                      onClick={() => navigate('/camp-template/c77488e9-959f-4ee0-becd-9cbc99fd1dc5')}
-                    >
-                      了解更多 →
-                    </Button>
+                    <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={() => navigate('/camp-template/c77488e9-959f-4ee0-becd-9cbc99fd1dc5')}>了解更多 →</Button>
                   </div>
                 </td>
               </tr>
@@ -594,76 +647,60 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
     );
   }
 
-  // 绽放合伙人 - 独立会员 ¥19,800
+  // 绽放合伙人
   if (category === 'bloom-partner') {
     return (
-      <div className="space-y-4">
-        <Card className="border-pink-200 dark:border-pink-800 bg-gradient-to-br from-pink-50/50 to-purple-50/50 dark:from-pink-950/20 dark:to-purple-950/20">
-          <CardContent className="p-6 text-center space-y-4">
-            <div className="text-5xl">👑</div>
-            <h3 className="text-2xl font-bold">绽放合伙人</h3>
-            <p className="text-muted-foreground">成为绽放产品推广合伙人，共创财富未来</p>
+      <div className="space-y-3">
+        <MobileCard className="bg-gradient-to-br from-pink-50/80 to-purple-50/80 dark:from-pink-950/30 dark:to-purple-950/30 border-pink-200/50">
+          <div className="text-center space-y-3">
+            <span className="text-4xl">👑</span>
+            <h3 className="text-xl font-bold">绽放合伙人</h3>
+            <p className="text-sm text-muted-foreground">成为绽放产品推广合伙人</p>
             
-            <div className="flex flex-wrap justify-center gap-2 text-sm">
-              <span className="px-3 py-1 bg-pink-100 dark:bg-pink-900/30 rounded-full">💰 直推30%佣金</span>
-              <span className="px-3 py-1 bg-pink-100 dark:bg-pink-900/30 rounded-full">🔗 二级10%佣金</span>
-              <span className="px-3 py-1 bg-pink-100 dark:bg-pink-900/30 rounded-full">🎓 专属培训支持</span>
+            <div className="flex flex-wrap justify-center gap-1.5 text-xs">
+              <span className="px-2 py-1 bg-pink-100 dark:bg-pink-900/30 rounded-full">💰 直推30%</span>
+              <span className="px-2 py-1 bg-pink-100 dark:bg-pink-900/30 rounded-full">🔗 二级10%</span>
+              <span className="px-2 py-1 bg-pink-100 dark:bg-pink-900/30 rounded-full">🎓 专属培训</span>
             </div>
             
-            <div className="text-3xl font-bold text-pink-600 dark:text-pink-400">¥19,800</div>
+            <div className="text-2xl font-bold text-pink-600">¥19,800</div>
             
-            <div className="flex gap-2 justify-center flex-wrap">
+            <div className="flex gap-2 justify-center">
               <Button 
-                className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white"
+                className="bg-gradient-to-r from-pink-500 to-purple-500 text-white flex-1"
                 onClick={() => handlePurchase({ key: 'bloom_partner', name: '绽放合伙人', price: 19800 })}
               >
                 <ShoppingCart className="w-4 h-4 mr-1" />
                 立即购买
               </Button>
-              <Button variant="outline" onClick={() => navigate('/partner/type')}>
-                了解详情 →
+              <Button variant="outline" size="sm" onClick={() => navigate('/partner/type')}>
+                了解详情
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </MobileCard>
 
-        {/* 合伙人权益说明 */}
-        <Card>
-          <CardContent className="p-4 space-y-3">
-            <h4 className="font-semibold">合伙人权益</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
-                推广绽放产品享30%直推佣金
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
-                二级推广享10%间接佣金
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
-                专属推广码与推广物料
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
-                合伙人专属培训与支持
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
-                身份绽放 + 情感绽放训练营全部权益
-              </li>
+        <MobileCard>
+          <MobileCardHeader>
+            <MobileCardTitle>合伙人权益</MobileCardTitle>
+          </MobileCardHeader>
+          <MobileCardContent>
+            <ul className="space-y-1.5 text-sm">
+              {['推广绽放产品享30%直推佣金', '二级推广享10%间接佣金', '专属推广码与推广物料', '身份+情感训练营全部权益'].map((item, i) => (
+                <li key={i} className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span>{item}</span>
+                </li>
+              ))}
             </ul>
-          </CardContent>
-        </Card>
+          </MobileCardContent>
+        </MobileCard>
 
-        {/* 套餐包含说明 */}
-        <Card className="border-dashed">
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground text-center">
-              💡 绽放合伙人套餐包含：身份绽放训练营（¥2,980） + 情感绽放训练营（¥3,980） + 合伙人资格
-            </p>
-          </CardContent>
-        </Card>
+        <MobileCard className="border-dashed">
+          <p className="text-xs text-muted-foreground text-center">
+            💡 包含：身份绽放（¥2,980）+ 情感绽放（¥3,980）+ 合伙人资格
+          </p>
+        </MobileCard>
       </div>
     );
   }

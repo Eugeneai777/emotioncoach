@@ -70,51 +70,40 @@ export default function Packages() {
         open={showTour}
         onComplete={completeTour}
       />
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="min-h-screen bg-background">
         <PageHeader title="产品中心" />
 
-        <div className="container max-w-7xl mx-auto px-4 py-4 space-y-6">
-          {/* 标题区域 */}
-          <div className="text-center space-y-2">
-            <p className="text-muted-foreground">
-              选择适合您的产品
-            </p>
-          </div>
+        <div className="container max-w-2xl mx-auto px-3 py-3 space-y-3">
+          {/* 产品分类 Tabs - 简化版 */}
+          <Tabs value={activeTab} onValueChange={v => setActiveTab(v as typeof activeTab)} className="w-full">
+            <TabsList className="w-full h-auto flex overflow-x-auto gap-1 p-1 bg-muted/50">
+              {productCategories.map(category => (
+                <TabsTrigger 
+                  key={category.id} 
+                  value={category.id} 
+                  className="flex-shrink-0 gap-1 py-2 px-3 text-xs whitespace-nowrap"
+                >
+                  <span>{category.emoji}</span>
+                  <span>{category.name}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-          {/* 产品分类 Tabs */}
-          <div>
-            <Tabs value={activeTab} onValueChange={v => setActiveTab(v as typeof activeTab)} className="w-full">
-              <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 sm:grid-cols-5 h-auto gap-1 p-1">
-                {productCategories.map(category => (
-                  <TabsTrigger 
-                    key={category.id} 
-                    value={category.id} 
-                    className="gap-1 py-2 px-2 text-xs sm:text-sm flex-col sm:flex-row"
-                  >
-                    <span>{category.emoji}</span>
-                    <span className="whitespace-nowrap">{category.name}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+            <TabsContent value={activeTab} className="mt-3 space-y-3">
+              {/* 分类说明 - 更紧凑 */}
+              {currentCategory?.tagline && (
+                <p className="text-center text-sm font-medium text-foreground">{currentCategory.tagline}</p>
+              )}
 
-              <TabsContent value={activeTab} className="mt-4 space-y-4">
-                {/* 分类说明 */}
-                <div className="text-center">
-                  <h2 className="text-xl font-bold">{currentCategory?.tagline}</h2>
-                </div>
+              {/* 产品内容 */}
+              <ProductComparisonTable category={activeTab} onPurchase={handlePurchase} />
+            </TabsContent>
+          </Tabs>
 
-                {/* 📊 产品权益对比表 */}
-                <ProductComparisonTable category={activeTab} onPurchase={handlePurchase} />
-              </TabsContent>
-            </Tabs>
-          </div>
-
-          {/* 底部说明 */}
-          <div className="border-t pt-4">
-            <p className="text-xs text-center text-muted-foreground">
-              💡 套餐购买后立即生效 · ⏰ 会员365天有效 · ⚠️ 尝鲜会员限购1次 · 🏕️ 训练营永久有效 · 🔒 隐私数据安全
-            </p>
-          </div>
+          {/* 底部说明 - 更紧凑 */}
+          <p className="text-[10px] text-center text-muted-foreground pt-2 border-t">
+            💡 购买后立即生效 · ⏰ 会员365天有效 · 🔒 隐私安全
+          </p>
         </div>
         
         {/* 微信支付对话框 */}
