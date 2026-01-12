@@ -26,18 +26,25 @@ const PROCESSING_KEY = 'payment_callback_processing';
 function getRedirectRoute(packageKey: string, currentPath: string): string | null {
   // 如果已经在对应页面，不需要跳转
   const routeMap: Record<string, string[]> = {
-    'wealth_block_assessment': ['/wealth-block', '/wealth-block-assessment'],
+    'wealth_block_assessment': ['/wealth-block', '/wealth-block-assessment', '/coach/wealth'],
     'basic': ['/profile', '/packages'],
     'member365': ['/profile', '/packages'],
     'youjin_partner_l3': ['/partner', '/partner/center'],
     'partner': ['/partner', '/partner/center'],
-    'bloom_partner': ['/bloom-partner', '/bloom-partner/center'],
+    'bloom_partner': ['/partner', '/partner/center'],
   };
 
   // 检查是否在训练营相关页面
   if (packageKey.startsWith('camp-')) {
-    if (currentPath.includes('/camp') || currentPath.includes('/wealth')) {
+    if (currentPath.includes('/camp') || currentPath.includes('/wealth-camp')) {
       return null; // 已经在训练营相关页面
+    }
+  }
+
+  // 检查是否在合伙人相关页面（支持 partner_l* 格式）
+  if (packageKey.startsWith('partner_l') || packageKey === 'partner' || packageKey === 'youjin_partner_l3' || packageKey === 'bloom_partner') {
+    if (currentPath.startsWith('/partner')) {
+      return null; // 已经在合伙人相关页面
     }
   }
 
@@ -56,26 +63,28 @@ function getRedirectRoute(packageKey: string, currentPath: string): string | nul
   // 训练营购买 → 对应训练营页面
   if (packageKey.startsWith('camp-')) {
     const campType = packageKey.replace('camp-', '');
-    // 特定训练营类型映射
-    if (campType === 'wealth_block_21' || campType === 'wealth_block_7') {
+    // 财富觉醒训练营 → 财富日记打卡页
+    if (campType === 'wealth_block_21' || campType === 'wealth_block_7' || campType === 'wealth_block') {
       return '/wealth-camp-checkin';
     }
+    // 情感绽放训练营 → 训练营大厅
     if (campType === 'emotion_bloom') {
       return '/camps';
     }
-    // 其他训练营 → 训练营大厅
+    // UUID 格式的训练营（如 camp-c77488e9-...）→ 训练营大厅
+    // 其他所有训练营类型 → 训练营大厅
     return '/camps';
   }
   
-  // 合伙人套餐 → 合伙人中心
-  if (packageKey === 'youjin_partner_l3' || packageKey === 'partner') {
-    return '/partner';
-  }
-  if (packageKey === 'bloom_partner') {
+  // 合伙人套餐 → 合伙人中心（支持多种格式：partner, partner_l1, partner_l2, partner_l3, youjin_partner_l3, bloom_partner）
+  if (packageKey === 'youjin_partner_l3' || 
+      packageKey === 'partner' || 
+      packageKey === 'bloom_partner' ||
+      packageKey.startsWith('partner_l')) {
     return '/partner';
   }
   
-  // 会员套餐 → 首页或个人中心
+  // 会员套餐 → 个人中心
   if (packageKey === 'basic' || packageKey === 'member365') {
     return '/profile';
   }
