@@ -99,16 +99,22 @@ const NaturalVoiceChat: React.FC<NaturalVoiceChatProps> = ({ onClose }) => {
       const hasWebRTC = supportsWebRTC();
       const platformInfo = getPlatformInfo();
       
+      // 检测是否在微信浏览器中（非小程序）
+      const ua = navigator.userAgent.toLowerCase();
+      const isWeChatBrowser = /micromessenger/i.test(ua) && !isMiniProgram;
+      
       console.log('[NaturalVoiceChat] Platform detection:', {
         isMiniProgram,
+        isWeChatBrowser,
         hasWebRTC,
         platform: platformInfo.platform,
         recommendedMethod: platformInfo.recommendedVoiceMethod
       });
 
-      if (isMiniProgram || !hasWebRTC) {
-        // 🔧 小程序环境或不支持 WebRTC：使用 WebSocket 中继
-        console.log('[NaturalVoiceChat] Using MiniProgram mode (WebSocket relay)');
+      // 🔧 微信浏览器、小程序、或不支持 WebRTC 的环境：使用 WebSocket 中继
+      if (isMiniProgram || isWeChatBrowser || !hasWebRTC) {
+        console.log('[NaturalVoiceChat] Using WebSocket relay mode for:', 
+          isMiniProgram ? 'MiniProgram' : isWeChatBrowser ? 'WeChat Browser' : 'No WebRTC');
         setUseMiniProgramMode(true);
         
         const miniProgramClient = new MiniProgramAudioClient({
@@ -133,7 +139,7 @@ const NaturalVoiceChat: React.FC<NaturalVoiceChatProps> = ({ onClose }) => {
         chatRef.current = miniProgramClient;
         await miniProgramClient.connect();
         
-        // 小程序模式需要手动开始录音
+        // 需要手动开始录音
         miniProgramClient.startRecording?.();
       } else {
         // 🔧 普通浏览器：使用 WebRTC 直连
