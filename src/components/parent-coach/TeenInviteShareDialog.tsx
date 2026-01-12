@@ -10,16 +10,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, Loader2, Share2 } from "lucide-react";
+import { Download, Loader2, Share2, ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import TeenInviteShareCard, { CARD_THEMES, CardTheme } from './TeenInviteShareCard';
+import ShareImagePreview from '@/components/ui/share-image-preview';
 
 interface TeenInviteShareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+// Helper: Detect if running in WeChat or iOS environment
+const isWeChatOrIOS = (): boolean => {
+  const ua = navigator.userAgent.toLowerCase();
+  const isWeChat = ua.includes('micromessenger');
+  const isIOS = /iphone|ipad|ipod/.test(ua);
+  return isWeChat || isIOS;
+};
 
 const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
   open,
@@ -29,6 +38,8 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
   const [teenNickname, setTeenNickname] = useState('');
   const [selectedTheme, setSelectedTheme] = useState<CardTheme>('purple');
   const [personalMessage, setPersonalMessage] = useState('');
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [showImagePreview, setShowImagePreview] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -163,20 +174,27 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
         }
       }
 
-      // Fallback to download
+      // For WeChat/iOS, show image preview for long-press save
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = '青少年私密空间-邀请卡.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      
+      if (isWeChatOrIOS()) {
+        setPreviewImageUrl(url);
+        setShowImagePreview(true);
+      } else {
+        // Fallback to download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = '青少年私密空间-邀请卡.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
 
-      toast({
-        title: "图片已生成",
-        description: "邀请卡片已保存，发给孩子即可使用",
-      });
+        toast({
+          title: "图片已生成",
+          description: "邀请卡片已保存，发给孩子即可使用",
+        });
+      }
     } catch (error) {
       console.error('Image generation failed:', error);
       toast({
@@ -194,6 +212,15 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
         container.style.opacity = '0';
         container.style.visibility = 'hidden';
       }
+    }
+  };
+
+  // Handle closing image preview
+  const handleCloseImagePreview = () => {
+    setShowImagePreview(false);
+    if (previewImageUrl) {
+      URL.revokeObjectURL(previewImageUrl);
+      setPreviewImageUrl(null);
     }
   };
 
@@ -340,6 +367,11 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
               <Loader2 className="w-5 h-5 animate-spin" />
               生成中...
             </>
+          ) : isWeChatOrIOS() ? (
+            <>
+              <ImageIcon className="w-5 h-5" />
+              生成图片
+            </>
           ) : (
             <>
               <Download className="w-5 h-5" />
@@ -349,9 +381,21 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
         </Button>
 
         <p className="text-xs text-center text-muted-foreground">
-          生成图片发给孩子，扫码即可开始私密对话
+          {isWeChatOrIOS() 
+            ? '生成图片后长按保存，然后发给孩子'
+            : '生成图片发给孩子，扫码即可开始私密对话'
+          }
         </p>
       </DialogContent>
+      
+      {/* Full-screen image preview for WeChat/iOS */}
+      <ShareImagePreview
+        open={showImagePreview}
+        onClose={handleCloseImagePreview}
+        imageUrl={previewImageUrl}
+        onRegenerate={handleGenerateImage}
+        isRegenerating={isGenerating}
+      />
     </Dialog>
   );
 };
