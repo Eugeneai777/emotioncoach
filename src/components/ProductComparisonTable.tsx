@@ -2,10 +2,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X, Minus, Info, Sparkles, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { youjinFeatures, bloomFeatures, type YoujinFeature, type BloomFeature } from "@/config/productComparison";
+import { youjinFeatures, bloomFeatures, youjinPartnerFeatures, type YoujinFeature, type BloomFeature, type YoujinPartnerFeature } from "@/config/productComparison";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PointsRulesDialog } from "./PointsRulesDialog";
-import { youjinPartnerLevels } from "@/config/partnerLevels";
 
 interface PackageInfo {
   key: string;
@@ -235,8 +234,11 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
     );
   }
 
-  // 有劲合伙人 - L1/L2/L3 三级套餐
+  // 有劲合伙人 - L1/L2/L3 矩阵对比表
   if (category === 'youjin-partner') {
+    const features = youjinPartnerFeatures;
+    const categories = Array.from(new Set(features.map(f => f.category)));
+
     return (
       <div className="space-y-4">
         {/* 价值说明横幅 */}
@@ -251,66 +253,128 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           </div>
         </div>
 
-        {/* 3个等级卡片 */}
-        <div className="grid gap-4">
-          {youjinPartnerLevels.map((level) => (
-            <Card key={level.level} className="border-orange-200 dark:border-orange-800 hover:border-orange-400 dark:hover:border-orange-600 transition-all">
-              <CardContent className="p-4 sm:p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{level.icon}</span>
-                    <div>
-                      <p className="font-bold text-lg">{level.name}</p>
-                      <p className="text-sm text-muted-foreground">{level.minPrepurchase}份体验包分发权</p>
+        {/* 矩阵对比表 */}
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto -mx-0">
+            <table className="w-full border-collapse min-w-[500px]">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm text-muted-foreground min-w-[100px] sm:min-w-[120px] sticky left-0 bg-muted/50 z-10">
+                    权益项目
+                  </th>
+                  {/* L1 初级合伙人 */}
+                  <th className="text-center p-2 sm:p-4 min-w-[100px] sm:min-w-[120px]">
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <span className="text-2xl">💪</span>
+                      <div className="font-bold text-xs sm:text-sm text-foreground">初级合伙人</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground">¥792 · 100份</div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">¥{level.price}</p>
-                  </div>
-                </div>
-                
-                {/* 佣金标签 */}
-                <div className="flex gap-2 flex-wrap">
-                  <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-3 py-1 rounded-full text-sm font-medium">
-                    全产品 {(level.commissionRateL1 * 100).toFixed(0)}% 佣金
-                  </span>
-                  {level.commissionRateL2 > 0 && (
-                    <span className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-3 py-1 rounded-full text-sm font-medium">
-                      二级 {(level.commissionRateL2 * 100).toFixed(0)}% 佣金
-                    </span>
-                  )}
-                </div>
-                
-                {/* 权益列表 */}
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  {level.benefits.map((benefit, idx) => (
-                    <div key={idx} className="flex items-center gap-1.5">
-                      <Check className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                      <span className="text-muted-foreground">{benefit}</span>
+                  </th>
+                  {/* L2 高级合伙人 */}
+                  <th className="text-center p-2 sm:p-4 min-w-[100px] sm:min-w-[120px]">
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <span className="text-2xl">🔥</span>
+                      <div className="font-bold text-xs sm:text-sm text-foreground">高级合伙人</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground">¥3,217 · 500份</div>
                     </div>
-                  ))}
-                </div>
-                
-                {/* 购买按钮 */}
-                <div className="flex gap-2">
-                  <Button 
-                    className={`flex-1 bg-gradient-to-r ${level.gradient} text-white hover:opacity-90`}
-                    onClick={() => handlePurchase({ 
-                      key: `youjin_partner_${level.level.toLowerCase()}`, 
-                      name: level.name, 
-                      price: level.price 
-                    })}
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-1" />
-                    立即购买
-                  </Button>
-                  <Button variant="outline" onClick={() => navigate('/partner/youjin-intro')}>
-                    了解更多
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </th>
+                  {/* L3 钻石合伙人 - 推荐 */}
+                  <th className="text-center p-2 sm:p-4 min-w-[100px] sm:min-w-[120px] bg-primary/5">
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <span className="text-2xl">💎</span>
+                      <div className="flex items-center justify-center gap-1 flex-wrap">
+                        <div className="font-bold text-xs sm:text-sm text-primary">钻石合伙人</div>
+                        <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-semibold">
+                          推荐
+                        </span>
+                      </div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground">¥4,950 · 1000份</div>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {categories.map((cat) => {
+                  const categoryFeatures = (features as YoujinPartnerFeature[]).filter(f => f.category === cat);
+                  return (
+                    <TooltipProvider key={cat}>
+                      <tr className="border-b bg-muted/30">
+                        <td colSpan={4} className="p-3">
+                          <div className="font-semibold text-sm text-primary flex items-center gap-2">
+                            {cat}
+                          </div>
+                        </td>
+                      </tr>
+                      {categoryFeatures.map((feature, idx) => (
+                        <tr 
+                          key={`${cat}-${idx}`} 
+                          className="border-b hover:bg-muted/30 transition-colors"
+                        >
+                          <td className="p-2 sm:p-3 text-xs sm:text-sm text-muted-foreground sticky left-0 bg-background z-10">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <span className="line-clamp-2">{feature.name}</span>
+                              {feature.tooltip && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Info className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground/60 cursor-help flex-shrink-0" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p className="max-w-xs text-xs">{feature.tooltip}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-2 sm:p-3 text-center">{renderValue(feature.l1)}</td>
+                          <td className="p-2 sm:p-3 text-center">{renderValue(feature.l2)}</td>
+                          <td className="p-2 sm:p-3 text-center bg-primary/5">{renderValue(feature.l3)}</td>
+                        </tr>
+                      ))}
+                    </TooltipProvider>
+                  );
+                })}
+                <tr>
+                  <td className="p-4 sticky left-0 bg-background z-10"></td>
+                  <td className="p-3 text-center">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full text-xs"
+                      onClick={() => handlePurchase({ key: 'youjin_partner_l1', name: '初级合伙人', price: 792 })}
+                    >
+                      立即购买
+                    </Button>
+                  </td>
+                  <td className="p-3 text-center">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full text-xs"
+                      onClick={() => handlePurchase({ key: 'youjin_partner_l2', name: '高级合伙人', price: 3217 })}
+                    >
+                      立即购买
+                    </Button>
+                  </td>
+                  <td className="p-3 text-center bg-primary/5">
+                    <Button 
+                      size="sm" 
+                      className="w-full text-xs bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:opacity-90"
+                      onClick={() => handlePurchase({ key: 'youjin_partner_l3', name: '钻石合伙人', price: 4950 })}
+                    >
+                      立即购买
+                    </Button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </Card>
+        
+        {/* 了解更多按钮 */}
+        <div className="text-center">
+          <Button variant="outline" onClick={() => navigate('/partner/youjin-intro')}>
+            了解有劲合伙人详情 →
+          </Button>
         </div>
       </div>
     );
