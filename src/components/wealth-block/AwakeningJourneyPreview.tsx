@@ -1,21 +1,78 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, ArrowRight, Target, Eye, Heart, Brain } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, Target, Eye, Heart, Brain, Sparkles, MessageCircle, CheckCircle, ArrowRight } from 'lucide-react';
 import { getAwakeningColor } from '@/config/wealthStyleConfig';
 import { cn } from '@/lib/utils';
+import { fourPoorRichConfig, PoorTypeKey } from '@/config/fourPoorConfig';
 
 interface AwakeningJourneyPreviewProps {
   healthScore: number;
   behaviorScore: number;
   emotionScore: number;
   beliefScore: number;
+  dominantPoor?: PoorTypeKey;
+  hasPurchased?: boolean;
+  onPurchase?: () => void;
 }
+
+// 训练营价值点配置
+const campValuePoints = [
+  {
+    icon: Sparkles,
+    title: '每日冥想',
+    description: '5分钟觉察情绪根源',
+    color: 'bg-violet-500',
+    bgColor: 'bg-violet-100 dark:bg-violet-900/30',
+  },
+  {
+    icon: MessageCircle,
+    title: '1v1 教练对话',
+    description: '针对你的卡点定制突破',
+    color: 'bg-amber-500',
+    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+  },
+  {
+    icon: CheckCircle,
+    title: '行动打卡',
+    description: '小步突破，AI见证蜕变',
+    color: 'bg-emerald-500',
+    bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+  },
+];
+
+// 用户见证数据（按卡点类型匹配）
+const testimonials: Record<PoorTypeKey, { quote: string; name: string; growth: string }> = {
+  mouth: {
+    quote: '终于敢主动谈价格了，不再觉得开口要钱很丢人',
+    name: '小米',
+    growth: '+28',
+  },
+  hand: {
+    quote: '从舍不得花钱到懂得投资自己，心态完全不一样了',
+    name: '阿杰',
+    growth: '+35',
+  },
+  eye: {
+    quote: '开始看到别人的价值，人际关系明显变好了',
+    name: '晓晓',
+    growth: '+32',
+  },
+  heart: {
+    quote: '不再觉得自己是受害者，找到了内心的力量',
+    name: '小雨',
+    growth: '+30',
+  },
+};
 
 export function AwakeningJourneyPreview({ 
   healthScore, 
   behaviorScore, 
   emotionScore, 
-  beliefScore 
+  beliefScore,
+  dominantPoor,
+  hasPurchased,
+  onPurchase,
 }: AwakeningJourneyPreviewProps) {
   // 觉醒起点 = 100 - 卡点分数
   const awakeningStart = 100 - healthScore;
@@ -40,6 +97,13 @@ export function AwakeningJourneyPreview({
     { name: '情绪', icon: Heart, color: 'bg-pink-500', bgColor: 'bg-pink-100', value: emotionAwakening },
     { name: '信念', icon: Brain, color: 'bg-violet-500', bgColor: 'bg-violet-100', value: beliefAwakening },
   ];
+
+  // 获取个性化卡点名称
+  const poorConfig = dominantPoor ? fourPoorRichConfig[dominantPoor] : null;
+  const poorName = poorConfig?.poorName || '财富卡点';
+
+  // 获取匹配的见证
+  const testimonial = dominantPoor ? testimonials[dominantPoor] : testimonials.mouth;
 
   return (
     <motion.div
@@ -143,12 +207,91 @@ export function AwakeningJourneyPreview({
             ))}
           </div>
 
-          {/* 底部行动引导 */}
-          <div className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-100/80 to-orange-100/80 dark:from-amber-900/30 dark:to-orange-900/30 rounded-xl">
-            <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
-              💡 通过7天训练营，系统突破财富卡点
-            </span>
+          {/* 分隔线 */}
+          <div className="flex items-center gap-3 py-2">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-300/50 to-transparent" />
+            <span className="text-xs text-amber-500">✦</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-300/50 to-transparent" />
           </div>
+
+          {/* 训练营价值说明 */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
+              💡 训练营如何帮你突破「{poorName}」？
+            </h4>
+            
+            {/* 三项核心价值 */}
+            <div className="grid grid-cols-1 gap-2.5">
+              {campValuePoints.map((point, index) => (
+                <motion.div
+                  key={point.title}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                  className="flex items-center gap-3 p-3 bg-white/60 dark:bg-white/5 rounded-xl border border-white/50 dark:border-white/10"
+                >
+                  <div className={cn("p-2 rounded-lg", point.bgColor)}>
+                    <point.icon className={cn("w-4 h-4 text-white", point.color.replace('bg-', 'text-').replace('-500', '-600'))} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm text-foreground">{point.title}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {index === 1 && dominantPoor 
+                        ? `针对你的「${poorName}」定制突破`
+                        : point.description
+                      }
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* 用户见证 */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl border border-amber-200/50 dark:border-amber-700/30"
+          >
+            <div className="flex items-start gap-2">
+              <span className="text-lg">📈</span>
+              <div className="flex-1">
+                <p className="text-sm text-foreground/90 leading-relaxed">
+                  "{testimonial.quote}"
+                </p>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  — {testimonial.name}，7天觉醒 <span className="font-semibold text-emerald-600">{testimonial.growth}</span>
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* CTA 按钮 */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9 }}
+          >
+            {hasPurchased ? (
+              <Button
+                onClick={onPurchase}
+                className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-base shadow-lg shadow-amber-500/25"
+              >
+                开始训练营
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            ) : (
+              <Button
+                onClick={onPurchase}
+                className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-base shadow-lg shadow-amber-500/25"
+              >
+                <span className="mr-2">¥299</span>
+                开始7天突破之旅
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            )}
+          </motion.div>
         </CardContent>
       </Card>
     </motion.div>
