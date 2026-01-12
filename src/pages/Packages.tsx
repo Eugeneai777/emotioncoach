@@ -23,7 +23,7 @@ export default function Packages() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showTour, completeTour } = usePageTour('packages');
-  const [activeTab, setActiveTab] = useState<'youjin-member' | 'youjin-camp' | 'bloom-camp' | 'bloom-partner'>('youjin-member');
+  const [activeTab, setActiveTab] = useState<'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner'>('youjin-member');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<PackageInfo | null>(null);
 
@@ -84,7 +84,7 @@ export default function Packages() {
           {/* 产品分类 Tabs */}
           <div>
             <Tabs value={activeTab} onValueChange={v => setActiveTab(v as typeof activeTab)} className="w-full">
-              <TabsList className="grid w-full max-w-lg mx-auto grid-cols-2 sm:grid-cols-4 h-auto gap-1 p-1">
+              <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 sm:grid-cols-5 h-auto gap-1 p-1">
                 {productCategories.map(category => (
                   <TabsTrigger 
                     key={category.id} 
