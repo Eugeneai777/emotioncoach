@@ -1,6 +1,6 @@
 export interface ComparisonFeature {
   name: string;
-  category: '基础信息' | '教练空间' | '成长工具' | '学习课程' | '训练营';
+  category: '基础信息' | '教练空间' | '成长工具' | '学习课程' | '训练营' | '佣金权益' | '专属权益';
   tooltip?: string;
 }
 
@@ -12,6 +12,12 @@ export interface YoujinFeature extends ComparisonFeature {
 export interface BloomFeature extends ComparisonFeature {
   identityCamp: boolean | string;  // 身份绽放训练营
   emotionCamp: boolean | string;   // 情感绽放训练营
+}
+
+export interface YoujinPartnerFeature extends ComparisonFeature {
+  l1: boolean | string;   // 初级合伙人
+  l2: boolean | string;   // 高级合伙人
+  l3: boolean | string;   // 钻石合伙人
 }
 
 // 有劲产品对比数据 - 简化为2列
@@ -72,4 +78,24 @@ export const bloomFeatures: BloomFeature[] = [
   { name: "每日打卡陪伴", category: "训练营", identityCamp: true, emotionCamp: true, tooltip: "深度陪伴" },
   { name: "社群支持", category: "训练营", identityCamp: true, emotionCamp: true, tooltip: "专属成长社群" },
   { name: "VIP客服", category: "训练营", identityCamp: true, emotionCamp: true, tooltip: "专属客服支持" },
+];
+
+// 有劲合伙人对比数据 - L1/L2/L3 三级
+export const youjinPartnerFeatures: YoujinPartnerFeature[] = [
+  // 基础信息
+  { name: "价格", category: "基础信息", l1: "¥792", l2: "¥3,217", l3: "¥4,950" },
+  { name: "体验包分发权", category: "基础信息", l1: "100份", l2: "500份", l3: "1000份" },
+  
+  // 佣金权益
+  { name: "一级佣金", category: "佣金权益", l1: "20%", l2: "35%", l3: "50%" },
+  { name: "二级佣金", category: "佣金权益", l1: false, l2: false, l3: "10%" },
+  
+  // 专属权益
+  { name: "专属推广二维码", category: "专属权益", l1: true, l2: true, l3: true },
+  { name: "合伙人专属社群", category: "专属权益", l1: true, l2: true, l3: true },
+  { name: "优先活动参与权", category: "专属权益", l1: false, l2: true, l3: true },
+  { name: "专属运营支持", category: "专属权益", l1: false, l2: true, l3: true },
+  { name: "VIP活动邀请", category: "专属权益", l1: false, l2: false, l3: true },
+  { name: "专属客户经理", category: "专属权益", l1: false, l2: false, l3: true },
+  { name: "定制化营销物料", category: "专属权益", l1: false, l2: false, l3: true },
 ];
