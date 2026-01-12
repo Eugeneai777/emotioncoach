@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
+import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@/utils/MiniProgramAudio';
+import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo } from '@/utils/platform';
 import { cn } from '@/lib/utils';
 
 interface Message {
@@ -17,14 +19,24 @@ interface NaturalVoiceChatProps {
   onClose?: () => void;
 }
 
+// 统一的音频客户端接口
+interface AudioClient {
+  connect?: () => Promise<void>;
+  init?: () => Promise<void>;
+  disconnect: () => void;
+  startRecording?: () => void;
+  stopRecording?: () => void;
+}
+
 const NaturalVoiceChat: React.FC<NaturalVoiceChatProps> = ({ onClose }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'disconnected' | 'error'>('idle');
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentTranscript, setCurrentTranscript] = useState('');
+  const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);
   
-  const chatRef = useRef<RealtimeChat | null>(null);
+  const chatRef = useRef<AudioClient | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // 自动滚动到底部
@@ -81,8 +93,57 @@ const NaturalVoiceChat: React.FC<NaturalVoiceChatProps> = ({ onClose }) => {
   const startConversation = async () => {
     try {
       setStatus('connecting');
-      chatRef.current = new RealtimeChat(handleMessage, handleStatusChange, handleTranscript);
-      await chatRef.current.init();
+      
+      // 检测平台环境，决定使用哪种连接方式
+      const isMiniProgram = isWeChatMiniProgram();
+      const hasWebRTC = supportsWebRTC();
+      const platformInfo = getPlatformInfo();
+      
+      console.log('[NaturalVoiceChat] Platform detection:', {
+        isMiniProgram,
+        hasWebRTC,
+        platform: platformInfo.platform,
+        recommendedMethod: platformInfo.recommendedVoiceMethod
+      });
+
+      if (isMiniProgram || !hasWebRTC) {
+        // 🔧 小程序环境或不支持 WebRTC：使用 WebSocket 中继
+        console.log('[NaturalVoiceChat] Using MiniProgram mode (WebSocket relay)');
+        setUseMiniProgramMode(true);
+        
+        const miniProgramClient = new MiniProgramAudioClient({
+          onMessage: handleMessage,
+          onStatusChange: (newStatus: MiniProgramStatus) => {
+            // 转换状态类型
+            if (newStatus === 'connected') {
+              handleStatusChange('connected');
+            } else if (newStatus === 'disconnected') {
+              handleStatusChange('disconnected');
+            } else if (newStatus === 'error') {
+              handleStatusChange('error');
+            } else if (newStatus === 'connecting') {
+              // 保持 connecting 状态
+            }
+          },
+          onTranscript: handleTranscript,
+          tokenEndpoint: 'vibrant-life-realtime-token',
+          mode: 'general'
+        });
+        
+        chatRef.current = miniProgramClient;
+        await miniProgramClient.connect();
+        
+        // 小程序模式需要手动开始录音
+        miniProgramClient.startRecording?.();
+      } else {
+        // 🔧 普通浏览器：使用 WebRTC 直连
+        console.log('[NaturalVoiceChat] Using WebRTC mode');
+        setUseMiniProgramMode(false);
+        
+        const realtimeChat = new RealtimeChat(handleMessage, handleStatusChange, handleTranscript);
+        chatRef.current = realtimeChat;
+        await realtimeChat.init();
+      }
     } catch (error) {
       console.error('Error starting conversation:', error);
       setStatus('error');
@@ -91,9 +152,9 @@ const NaturalVoiceChat: React.FC<NaturalVoiceChatProps> = ({ onClose }) => {
       // 根据错误类型显示不同提示
       if (errorMessage.includes('超时') || errorMessage.includes('timeout')) {
         toast.error('连接超时，请检查网络后重试');
-      } else if (errorMessage.includes('麦克风') || errorMessage.includes('microphone')) {
+      } else if (errorMessage.includes('麦克风') || errorMessage.includes('microphone') || errorMessage.includes('permission')) {
         toast.error('麦克风权限不足，请允许访问麦克风');
-      } else if (errorMessage.includes('not supported')) {
+      } else if (errorMessage.includes('not supported') || errorMessage.includes('不支持')) {
         toast.error('当前环境不支持语音通话，请使用微信或其他现代浏览器');
       } else {
         toast.error(errorMessage);
