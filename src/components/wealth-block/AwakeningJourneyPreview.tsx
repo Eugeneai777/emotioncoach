@@ -76,9 +76,21 @@ export function AwakeningJourneyPreview({
               <motion.div 
                 className="text-5xl sm:text-6xl font-bold tabular-nums mt-2"
                 style={{ color: getAwakeningColor(awakeningStart) }}
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.3, type: 'spring' }}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ 
+                  scale: [1, 1.03, 1],
+                  opacity: 1,
+                  textShadow: [
+                    '0 0 0px rgba(251, 191, 36, 0)',
+                    '0 0 20px rgba(251, 191, 36, 0.3)',
+                    '0 0 0px rgba(251, 191, 36, 0)'
+                  ]
+                }}
+                transition={{ 
+                  scale: { delay: 0.3, duration: 2.5, repeat: Infinity, ease: 'easeInOut' },
+                  textShadow: { delay: 0.3, duration: 2.5, repeat: Infinity, ease: 'easeInOut' },
+                  opacity: { delay: 0.3, duration: 0.5 }
+                }}
               >
                 {awakeningStart}
               </motion.div>
