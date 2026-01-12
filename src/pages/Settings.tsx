@@ -17,6 +17,7 @@ import CampSettings from "@/components/CampSettings";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { AccountCredentials } from "@/components/profile/AccountCredentials";
+import { PhoneNumberManager } from "@/components/profile/PhoneNumberManager";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, CheckCircle2, AlertCircle, Home } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
@@ -324,6 +325,9 @@ export default function Settings() {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* 手机号管理 */}
+            <PhoneNumberManager />
 
             {/* 账号与密码管理 */}
             <AccountCredentials />
