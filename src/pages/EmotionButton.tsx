@@ -29,9 +29,9 @@ const EmotionButton = () => {
       <Helmet>
         <title>情绪急救 - 有劲AI</title>
         <meta name="description" content="当情绪来袭，这里有你的安全角落" />
-        <meta property="og:title" content="有劲AI • 情绪急救" />
+        <meta property="og:title" content="有劲AI • 情绪按钮" />
         <meta property="og:description" content="焦虑、愤怒、恐惧...每种情绪都有专属疗愈方案" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-emotion-coach.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/emotion-button" />
         <meta property="og:site_name" content="有劲AI" />
       </Helmet>

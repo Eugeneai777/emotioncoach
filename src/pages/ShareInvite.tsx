@@ -82,9 +82,9 @@ const ShareInvite = () => {
       <Helmet>
         <title>邀请好友 - 有劲AI</title>
         <meta name="description" content="邀请好友一起成长，分享财富觉醒之旅" />
-        <meta property="og:title" content="有劲AI邀请好友" />
+        <meta property="og:title" content="有劲AI • 邀请好友" />
         <meta property="og:description" content="分享测评或训练营给朋友，一起开启财富觉醒" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-wealth-coach.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/share-invite" />
         <meta property="og:site_name" content="有劲AI" />
       </Helmet>
