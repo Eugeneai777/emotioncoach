@@ -99,6 +99,7 @@ import CoachSpace from "./pages/CoachSpace";
 import CoachSpaceIntro from "./pages/CoachSpaceIntro";
 import { GlobalRefTracker } from "./hooks/useGlobalRefTracking";
 import { GlobalPaymentCallback } from "./components/GlobalPaymentCallback";
+import { FollowWechatReminder } from "./components/FollowWechatReminder";
 
 const queryClient = new QueryClient();
 
@@ -113,6 +114,7 @@ const App = () => (
           <GlobalPaymentCallback />
           <FloatingVoiceButton />
           <FloatingQuickMenu />
+          <FollowWechatReminder />
           <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />

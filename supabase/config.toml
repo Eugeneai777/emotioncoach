@@ -350,3 +350,6 @@ verify_jwt = false
 
 [functions.refund-failed-voice-call]
 verify_jwt = true
+
+[functions.check-wechat-subscribe-status]
+verify_jwt = false

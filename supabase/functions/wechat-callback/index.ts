@@ -283,12 +283,43 @@ Deno.serve(async (req) => {
 
       console.log('Parsed message:', { MsgType, Event, EventKey });
 
+      // 处理取消关注事件
+      if (MsgType === 'event' && Event === 'unsubscribe') {
+        console.log('User unsubscribed:', FromUserName);
+        
+        await supabase
+          .from('wechat_user_mappings')
+          .update({ 
+            subscribe_status: false,
+            updated_at: new Date().toISOString()
+          })
+          .eq('openid', FromUserName);
+
+        return new Response('success', { headers: { 'Content-Type': 'text/plain' } });
+      }
+
       // 处理扫码登录事件
       if (MsgType === 'event' && (Event === 'SCAN' || Event === 'subscribe')) {
         // EventKey 格式: login_xxx 或 qrscene_login_xxx (关注时带前缀)
         const sceneStr = EventKey?.startsWith('qrscene_')
           ? EventKey.substring(8)
           : EventKey;
+
+        // 处理重新关注事件（非扫码登录场景）
+        if (Event === 'subscribe' && !sceneStr?.startsWith('login_')) {
+          console.log('User re-subscribed:', FromUserName);
+          
+          await supabase
+            .from('wechat_user_mappings')
+            .update({ 
+              subscribe_status: true,
+              subscribe_time: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('openid', FromUserName);
+
+          return new Response('success', { headers: { 'Content-Type': 'text/plain' } });
+        }
 
         if (sceneStr?.startsWith('login_')) {
           console.log('Processing login scan event, sceneStr:', sceneStr);
