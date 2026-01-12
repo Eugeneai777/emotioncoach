@@ -86,7 +86,18 @@ const NaturalVoiceChat: React.FC<NaturalVoiceChatProps> = ({ onClose }) => {
     } catch (error) {
       console.error('Error starting conversation:', error);
       setStatus('error');
-      toast.error(error instanceof Error ? error.message : '连接失败');
+      const errorMessage = error instanceof Error ? error.message : '连接失败';
+      
+      // 根据错误类型显示不同提示
+      if (errorMessage.includes('超时') || errorMessage.includes('timeout')) {
+        toast.error('连接超时，请检查网络后重试');
+      } else if (errorMessage.includes('麦克风') || errorMessage.includes('microphone')) {
+        toast.error('麦克风权限不足，请允许访问麦克风');
+      } else if (errorMessage.includes('not supported')) {
+        toast.error('当前环境不支持语音通话，请使用微信或其他现代浏览器');
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
 
