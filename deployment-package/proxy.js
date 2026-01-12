@@ -169,6 +169,40 @@ app.post('/wechat-proxy', authenticateRequest, async (req, res) => {
   }
 });
 
+// 微信支付回调转发端点（无需认证 - 微信服务器直接调用）
+app.post('/wechat-pay-callback', async (req, res) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] 📥 微信支付回调收到`);
+  
+  try {
+    // 获取原始请求体
+    const body = JSON.stringify(req.body);
+    console.log(`[${timestamp}] 回调数据:`, body.substring(0, 200) + '...');
+    
+    // 转发到 Supabase Edge Function
+    const targetUrl = 'https://vlsuzskvykddwrxbmcbu.supabase.co/functions/v1/wechat-pay-callback';
+    
+    const response = await fetch(targetUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: body,
+    });
+    
+    const data = await response.json();
+    console.log(`[${timestamp}] ✅ 回调转发结果:`, JSON.stringify(data));
+    
+    res.status(response.status).json(data);
+  } catch (error) {
+    console.error(`[${timestamp}] ❌ 支付回调转发失败:`, error.message);
+    res.status(500).json({ 
+      code: 'FAIL', 
+      message: error.message 
+    });
+  }
+});
+
 // 404 处理
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
