@@ -46,26 +46,11 @@ export default function WealthBlockAssessmentPage() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const { trackAssessmentTocamp, trackEvent } = useWealthCampAnalytics();
 
-  // 页面访问埋点 + 扫码追踪 + 加载历史记录
+  // 页面访问埋点 + 加载历史记录
+  // 注意：扫码追踪已由全局 GlobalRefTracker 统一处理
   useEffect(() => {
     // 埋点：测评页面访问
     trackEvent('assessment_page_viewed');
-    
-    // 扫码落地追踪：检查是否带有推荐码
-    const refCode = searchParams.get('ref');
-    if (refCode) {
-      trackEvent('share_scan_landed' as any, {
-        metadata: {
-          ref_code: refCode,
-          landing_page: '/wealth-block',
-          referrer: document.referrer,
-        }
-      });
-      // 存储到 localStorage 用于后续归因
-      localStorage.setItem('share_ref_code', refCode);
-      localStorage.setItem('share_landing_page', '/wealth-block');
-      localStorage.setItem('share_landing_time', Date.now().toString());
-    }
     
     if (user) {
       loadHistory();
