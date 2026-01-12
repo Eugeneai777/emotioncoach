@@ -165,6 +165,15 @@ export function supportsMiniProgramAudio(): boolean {
 
 /**
  * 获取当前平台信息
+ * 
+ * 🔧 小程序 WebView 策略变更：
+ * 小程序 WebView 内嵌的 H5 页面无法使用 wx.getRecorderManager 等原生 API，
+ * 但可以使用标准 Web API（navigator.mediaDevices.getUserMedia）获取麦克风权限，
+ * 然后通过 WebSocket 中继到 OpenAI Realtime API。
+ * 
+ * 因此，对于小程序 WebView：
+ * - 即使 supportsMiniProgramAudio() 返回 false，也应该尝试使用 websocket 模式
+ * - WebSocket 客户端会自动降级为使用 Web Audio API 录音
  */
 export function getPlatformInfo(): {
   platform: 'miniprogram' | 'wechat-browser' | 'web-browser';
@@ -182,13 +191,17 @@ export function getPlatformInfo(): {
 
   if (isMiniProgram) {
     platform = 'miniprogram';
-    recommendedVoiceMethod = hasMiniProgramAudio ? 'websocket' : 'none';
+    // 🔧 小程序 WebView 改用 websocket 模式（不再依赖 wx 原生 API）
+    // WebSocket 客户端内部会自动降级为 Web Audio API 录音
+    recommendedVoiceMethod = 'websocket';
   } else if (isWechat) {
     platform = 'wechat-browser';
-    recommendedVoiceMethod = hasWebRTC ? 'webrtc' : 'none';
+    // 微信浏览器支持 WebRTC
+    recommendedVoiceMethod = hasWebRTC ? 'webrtc' : 'websocket';
   } else {
     platform = 'web-browser';
-    recommendedVoiceMethod = hasWebRTC ? 'webrtc' : 'none';
+    // 普通浏览器：优先 WebRTC，不支持则降级 WebSocket
+    recommendedVoiceMethod = hasWebRTC ? 'webrtc' : 'websocket';
   }
 
   return {
