@@ -138,9 +138,14 @@ export const CoachVoiceChat = ({
   }, []);
 
   // 保护机制常量
-  const PAGE_HIDDEN_TIMEOUT = 5 * 60 * 1000;  // 5分钟页面隐藏自动结束
-  const INACTIVITY_TIMEOUT = 3 * 60 * 1000;  // 3分钟无活动自动结束
+  const PAGE_HIDDEN_TIMEOUT = 10 * 60 * 1000;  // 🔧 延长到10分钟页面隐藏自动结束
+  const USER_INACTIVITY_TIMEOUT = 5 * 60 * 1000;  // 🔧 用户5分钟无说话
+  const AI_RESPONSE_TIMEOUT = 2 * 60 * 1000;  // 🔧 AI 2分钟无回应
   const INACTIVITY_CHECK_INTERVAL = 30 * 1000;  // 每30秒检查一次
+  
+  // 🔧 区分用户和AI的活动时间
+  const userLastActivityRef = useRef(Date.now());
+  const aiLastActivityRef = useRef(Date.now());
 
   const MEMBER_365_PACKAGE = {
     key: 'member365',
@@ -553,14 +558,19 @@ export const CoachVoiceChat = ({
     
     if (event.type === 'input_audio_buffer.speech_started' || event.type === 'speech_started') {
       setSpeakingStatus('user-speaking');
+      userLastActivityRef.current = Date.now(); // 🔧 用户开始说话
     } else if (event.type === 'input_audio_buffer.speech_stopped' || event.type === 'speech_stopped') {
       setSpeakingStatus('idle');
+      userLastActivityRef.current = Date.now(); // 🔧 用户说完
     } else if (event.type === 'response.audio.delta' || event.type === 'audio_output') {
       setSpeakingStatus('assistant-speaking');
+      aiLastActivityRef.current = Date.now(); // 🔧 AI 正在回复
     } else if (event.type === 'response.done') {
       setSpeakingStatus('idle');
+      aiLastActivityRef.current = Date.now(); // 🔧 AI 回复完成
     } else if (event.type === 'tool_executed') {
       handleToolExecuted(event.tool, event.result, event.args);
+      aiLastActivityRef.current = Date.now(); // 🔧 工具执行也算AI活动
     } else if (event.type === 'navigation_request') {
       handleNavigation(event.path, event.name);
     } else if (event.type === 'search_results') {
@@ -617,8 +627,10 @@ export const CoachVoiceChat = ({
   const handleTranscript = (text: string, isFinal: boolean, role: 'user' | 'assistant') => {
     if (role === 'assistant') {
       setTranscript(isFinal ? text : prev => prev + text);
+      aiLastActivityRef.current = Date.now(); // 🔧 AI 文字回复
     } else if (role === 'user' && isFinal) {
       setUserTranscript(text);
+      userLastActivityRef.current = Date.now(); // 🔧 用户说话转录完成
     }
   };
 
@@ -765,7 +777,52 @@ export const CoachVoiceChat = ({
         
         const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode);
         chatRef.current = chat;
-        await chat.init();
+        
+        try {
+          await chat.init();
+        } catch (webrtcError: any) {
+          console.error('[VoiceChat] WebRTC connection failed:', webrtcError);
+          
+          // 🔧 检查是否是地区限制或 403 错误，自动降级到 WebSocket
+          const isRegionBlocked = webrtcError.errorType === 'region_blocked' || 
+                                  webrtcError.errorType === 'forbidden' ||
+                                  webrtcError.statusCode === 403 ||
+                                  webrtcError.message?.includes('403') ||
+                                  webrtcError.message?.includes('unsupported_country');
+          
+          if (isRegionBlocked) {
+            console.log('[VoiceChat] WebRTC blocked by region, falling back to WebSocket relay...');
+            toast({
+              title: "正在切换通道",
+              description: "检测到网络限制，正在使用备用语音通道...",
+            });
+            
+            // 清理 WebRTC 连接
+            chat.disconnect();
+            chatRef.current = null;
+            
+            // 切换到 WebSocket relay 模式
+            setUseMiniProgramMode(true);
+            const miniProgramClient = new MiniProgramAudioClient({
+              onMessage: handleVoiceMessage,
+              onStatusChange: handleStatusChange,
+              onTranscript: handleTranscript,
+              onUsageUpdate: (usage) => setApiUsage(prev => ({
+                inputTokens: prev.inputTokens + usage.input_tokens,
+                outputTokens: prev.outputTokens + usage.output_tokens
+              })),
+              tokenEndpoint,
+              mode
+            });
+            chatRef.current = miniProgramClient;
+            await miniProgramClient.connect();
+            miniProgramClient.startRecording();
+            return;
+          }
+          
+          // 其他错误，向上抛出
+          throw webrtcError;
+        }
       } else {
         // 环境不支持语音通话 - 退还预扣点数
         if (platformInfo.platform === 'miniprogram') {
@@ -783,6 +840,8 @@ export const CoachVoiceChat = ({
       
       // 🔧 连接失败时退还预扣点数
       const errorMessage = error?.message || '';
+      const errorType = (error as any)?.errorType || 'unknown';
+      
       if (!errorMessage.includes('环境不支持')) {
         // 如果不是环境不支持（已在上面退还），则在这里退还
         await refundPreDeductedQuota('connection_failed');
@@ -791,10 +850,19 @@ export const CoachVoiceChat = ({
       setStatus('error');
       isInitializingRef.current = false;
       releaseLock();
+      
       let title = "连接失败", description = "无法建立语音连接，请稍后重试";
       if (errorMessage.includes('超时') || errorMessage.includes('timeout')) { 
         title = "连接超时"; 
         description = "网络连接较慢，请检查网络后重试"; 
+      }
+      else if (errorType === 'region_blocked' || errorMessage.includes('地区') || errorMessage.includes('备用通道')) {
+        title = "网络环境受限";
+        description = "当前网络不支持语音服务，备用通道也无法连接，请尝试更换网络";
+      }
+      else if (errorType === 'rate_limited') {
+        title = "服务繁忙";
+        description = "请等待几秒后重试";
       }
       else if (errorMessage.includes('麦克风')) { title = "麦克风权限不足"; description = errorMessage; }
       else if (errorMessage.includes('ephemeral token')) { title = "服务连接失败"; description = "语音服务暂时不可用，请稍后重试"; }
@@ -1027,11 +1095,12 @@ export const CoachVoiceChat = ({
     }
   }, [speakingStatus]);
 
-  // 页面可见性检测 - 页面隐藏5分钟后自动结束
+  // 🔧 页面可见性检测 - 页面隐藏10分钟后自动结束，返回时尝试恢复
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden && status === 'connected') {
         // 页面不可见，启动计时器
+        console.log('[VoiceChat] Page hidden, starting timeout timer');
         visibilityTimerRef.current = setTimeout(() => {
           toast({
             title: "通话已自动结束",
@@ -1044,6 +1113,17 @@ export const CoachVoiceChat = ({
         if (visibilityTimerRef.current) {
           clearTimeout(visibilityTimerRef.current);
           visibilityTimerRef.current = null;
+          console.log('[VoiceChat] Page visible again, cancelled timeout');
+        }
+        
+        // 🔧 如果连接已断开但页面恢复可见，提示用户
+        if ((status === 'disconnected' || status === 'error') && !isEnding) {
+          console.log('[VoiceChat] Connection lost while page was hidden');
+          // 不自动重连，只提示用户
+          toast({
+            title: "连接已断开",
+            description: "您可以点击重新开始对话",
+          });
         }
       }
     };
@@ -1055,9 +1135,9 @@ export const CoachVoiceChat = ({
         clearTimeout(visibilityTimerRef.current);
       }
     };
-  }, [status]);
+  }, [status, isEnding]);
 
-  // 无活动检测 - 3分钟无语音活动自动结束
+  // 🔧 无活动检测 - 改进：区分用户和AI活动，只在双方都无活动时才断线
   useEffect(() => {
     if (status !== 'connected') {
       if (inactivityTimerRef.current) {
@@ -1069,8 +1149,13 @@ export const CoachVoiceChat = ({
 
     // 每30秒检查一次无活动状态
     inactivityTimerRef.current = setInterval(() => {
-      const idleTime = Date.now() - lastActivityRef.current;
-      if (idleTime > INACTIVITY_TIMEOUT) {
+      const now = Date.now();
+      const userInactive = now - userLastActivityRef.current;
+      const aiSilent = now - aiLastActivityRef.current;
+      
+      // 🔧 只在双方都无活动时才断线（避免用户思考时被误判）
+      if (userInactive > USER_INACTIVITY_TIMEOUT && aiSilent > AI_RESPONSE_TIMEOUT) {
+        console.log(`[VoiceChat] Both sides inactive - user: ${Math.floor(userInactive/1000)}s, AI: ${Math.floor(aiSilent/1000)}s`);
         toast({
           title: "通话已自动结束",
           description: "检测到长时间无对话活动，已自动挂断以节省点数",
