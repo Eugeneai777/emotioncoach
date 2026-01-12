@@ -221,7 +221,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   };
 
   return (
-    <div className="space-y-2.5 sm:space-y-3 pb-16 sm:pb-20 relative px-0.5">
+    <div className="space-y-4 sm:space-y-5 pb-20 sm:pb-24 relative px-2 sm:px-0">
       {/* 背景装饰 */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,hsl(var(--primary)/0.4),transparent_50%)]" />
@@ -245,7 +245,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
       />
 
       {/* 分隔装饰 */}
-      <div className="flex items-center gap-3 sm:gap-4 py-0.5 sm:py-1">
+      <div className="flex items-center gap-3 sm:gap-4 py-1 sm:py-2">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         <span className="text-[10px] sm:text-xs text-muted-foreground">✧</span>
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
@@ -258,34 +258,34 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         transition={{ delay: 0.05 }}
       >
         <Card className="overflow-hidden border-0 shadow-xl">
-          <div className={cn("bg-gradient-to-br p-3 sm:p-4 text-white", pattern.color)}>
-            {/* 头部 - 移动端紧凑 */}
-            <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-              <div className="p-2 sm:p-3 bg-white/20 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+          <div className={cn("bg-gradient-to-br p-4 sm:p-5 text-white", pattern.color)}>
+            {/* 头部 - 移动端优化 */}
+            <div className="flex items-center gap-3 sm:gap-4 mb-4">
+              <div className="p-2.5 sm:p-3 bg-white/20 rounded-xl sm:rounded-2xl backdrop-blur-sm">
                 <span className="text-3xl sm:text-4xl">{pattern.emoji}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white/80 text-[10px] sm:text-xs">🧭 你的财富反应模式</p>
                 <h2 className="text-xl sm:text-2xl font-bold truncate">【{pattern.name}】</h2>
-                <p className="text-white/90 text-xs sm:text-sm mt-0.5 line-clamp-1">{pattern.tagline}</p>
+                <p className="text-white/90 text-xs sm:text-sm mt-1 line-clamp-2">{pattern.tagline}</p>
               </div>
             </div>
             
             {/* 说明文字 */}
-            <div className="p-2.5 sm:p-3 bg-white/15 rounded-lg sm:rounded-xl mb-2.5 sm:mb-3">
-              <p className="text-white/95 text-xs sm:text-sm leading-relaxed">
+            <div className="p-3 sm:p-4 bg-white/15 rounded-xl mb-3 sm:mb-4">
+              <p className="text-white/95 text-sm leading-relaxed">
                 📌 这不是性格，而是你在面对<span className="font-semibold">钱、机会、价格、收入</span>时的自动反应。
               </p>
             </div>
             
-            {/* 你的状态 - 标签式布局，移动端换行 */}
-            <div className="mb-2.5 sm:mb-3">
-              <h4 className="text-white/90 text-[10px] sm:text-xs font-semibold mb-1.5 sm:mb-2 flex items-center gap-1">
+            {/* 你的状态 - 标签式布局 */}
+            <div className="mb-3 sm:mb-4">
+              <h4 className="text-white/90 text-xs font-semibold mb-2 flex items-center gap-1">
                 💬 你的状态
               </h4>
-              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+              <div className="flex flex-wrap gap-2">
                 {pattern.state.map((item, index) => (
-                  <span key={index} className="bg-white/20 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs text-white/95 backdrop-blur-sm">
+                  <span key={index} className="bg-white/20 px-2.5 py-1 rounded-full text-xs text-white/95 backdrop-blur-sm">
                     {item}
                   </span>
                 ))}
@@ -293,12 +293,12 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
             </div>
             
             {/* 系统建议 */}
-            <div className="p-2.5 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl">
-              <h4 className="text-white text-xs sm:text-sm font-semibold mb-1 flex items-center gap-2">
+            <div className="p-3 sm:p-4 bg-white/20 rounded-xl">
+              <h4 className="text-white text-sm font-semibold mb-1.5 flex items-center gap-2">
                 💡 系统建议
               </h4>
-              <p className="text-white/95 text-xs sm:text-sm">{pattern.suggestion}</p>
-              <p className="text-white/80 text-[10px] sm:text-xs mt-1 opacity-80">训练营重点：{pattern.trainingFocus}</p>
+              <p className="text-white/95 text-sm leading-relaxed">{pattern.suggestion}</p>
+              <p className="text-white/80 text-xs mt-2 opacity-80">训练营重点：{pattern.trainingFocus}</p>
             </div>
           </div>
         </Card>
@@ -341,7 +341,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         type="multiple" 
         value={openLayers}
         onValueChange={setOpenLayers}
-        className="space-y-3"
+        className="space-y-4"
       >
         {/* 第一层：行为层分析 */}
         <AccordionItem value="behavior" className="border-0">
@@ -372,9 +372,9 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <CardContent className="p-4 space-y-4">
+                <CardContent className="p-4 sm:p-5 space-y-4">
                   {/* 主导卡点卡片 */}
-                  <div className={cn("bg-gradient-to-br p-4 text-white rounded-xl", dominantPoor.color)}>
+                  <div className={cn("bg-gradient-to-br p-4 sm:p-5 text-white rounded-xl", dominantPoor.color)}>
                     <div className="flex items-center gap-3 mb-3">
                       <span className="text-3xl">{dominantPoor.emoji}</span>
                       <div>
@@ -388,19 +388,19 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                     </div>
                   </div>
 
-                  {/* 雷达图和条形图 */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="h-[180px]">
+                  {/* 雷达图和条形图 - 移动端竖向堆叠 */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="h-[200px] sm:h-[180px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart cx="50%" cy="50%" outerRadius="65%" data={fourPoorRadarData}>
+                        <RadarChart cx="50%" cy="50%" outerRadius="70%" data={fourPoorRadarData}>
                           <PolarGrid stroke="hsl(var(--border))" />
-                          <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                          <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 11 }} />
                           <PolarRadiusAxis angle={90} domain={[0, 15]} tick={false} axisLine={false} />
                           <Radar dataKey="score" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.5} strokeWidth={2} />
                         </RadarChart>
                       </ResponsiveContainer>
                     </div>
-                    <div className="h-[180px]">
+                    <div className="h-[200px] sm:h-[180px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart 
                           data={[
@@ -412,7 +412,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                           layout="vertical"
                         >
                           <XAxis type="number" domain={[0, 15]} hide />
-                          <YAxis dataKey="name" type="category" width={40} tick={{ fontSize: 11 }} />
+                          <YAxis dataKey="name" type="category" width={45} tick={{ fontSize: 12 }} />
                           <Bar dataKey="score" radius={[0, 4, 4, 0]}>
                             {[
                               { key: 'mouth' as FourPoorType },
@@ -440,7 +440,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
           </motion.div>
         </AccordionItem>
         
-        <LayerTransitionHint from="behavior" to="emotion" />
+        {/* 移除 LayerTransitionHint 减少页面长度 */}
 
         {/* 第二层：情绪层分析 */}
         <AccordionItem value="emotion" className="border-0">
@@ -471,9 +471,9 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <CardContent className="p-4 space-y-4">
+                <CardContent className="p-4 sm:p-5 space-y-4">
                   {/* 主导卡点卡片 */}
-                  <div className={cn("bg-gradient-to-br p-4 text-white rounded-xl", dominantEmotion.color)}>
+                  <div className={cn("bg-gradient-to-br p-4 sm:p-5 text-white rounded-xl", dominantEmotion.color)}>
                     <div className="flex items-center gap-3 mb-3">
                       <span className="text-3xl">{dominantEmotion.emoji}</span>
                       <div>
@@ -487,19 +487,19 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                     </div>
                   </div>
 
-                  {/* 雷达图和条形图 */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="h-[180px]">
+                  {/* 雷达图和条形图 - 移动端竖向堆叠 */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="h-[200px] sm:h-[180px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart cx="50%" cy="50%" outerRadius="65%" data={emotionRadarData}>
+                        <RadarChart cx="50%" cy="50%" outerRadius="70%" data={emotionRadarData}>
                           <PolarGrid stroke="hsl(var(--border))" />
-                          <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }} />
+                          <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 11 }} />
                           <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
                           <Radar dataKey="score" stroke="#ec4899" fill="#ec4899" fillOpacity={0.5} strokeWidth={2} />
                         </RadarChart>
                       </ResponsiveContainer>
                     </div>
-                    <div className="h-[180px]">
+                    <div className="h-[200px] sm:h-[180px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart 
                           data={[
@@ -512,7 +512,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                           layout="vertical"
                         >
                           <XAxis type="number" domain={[0, 10]} hide />
-                          <YAxis dataKey="name" type="category" width={35} tick={{ fontSize: 10 }} />
+                          <YAxis dataKey="name" type="category" width={40} tick={{ fontSize: 11 }} />
                           <Bar dataKey="score" radius={[0, 4, 4, 0]}>
                             {[
                               { key: 'anxiety' as EmotionBlockType },
@@ -541,7 +541,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
           </motion.div>
         </AccordionItem>
         
-        <LayerTransitionHint from="emotion" to="belief" />
+        {/* 移除 LayerTransitionHint 减少页面长度 */}
 
         {/* 第三层：信念层分析 */}
         <AccordionItem value="belief" className="border-0">
@@ -572,9 +572,9 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <CardContent className="p-4 space-y-4">
+                <CardContent className="p-4 sm:p-5 space-y-4">
                   {/* 主导卡点卡片 */}
-                  <div className={cn("bg-gradient-to-br p-4 text-white rounded-xl", dominantBelief.color)}>
+                  <div className={cn("bg-gradient-to-br p-4 sm:p-5 text-white rounded-xl", dominantBelief.color)}>
                     <div className="flex items-center gap-3 mb-3">
                       <span className="text-3xl">{dominantBelief.emoji}</span>
                       <div>
@@ -601,19 +601,19 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                     </div>
                   </div>
 
-                  {/* 雷达图和条形图 */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="h-[180px]">
+                  {/* 雷达图和条形图 - 移动端竖向堆叠 */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="h-[200px] sm:h-[180px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart cx="50%" cy="50%" outerRadius="65%" data={beliefRadarData}>
+                        <RadarChart cx="50%" cy="50%" outerRadius="70%" data={beliefRadarData}>
                           <PolarGrid stroke="hsl(var(--border))" />
-                          <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }} />
+                          <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 11 }} />
                           <PolarRadiusAxis angle={90} domain={[0, 10]} tick={false} axisLine={false} />
                           <Radar dataKey="score" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.5} strokeWidth={2} />
                         </RadarChart>
                       </ResponsiveContainer>
                     </div>
-                    <div className="h-[180px]">
+                    <div className="h-[200px] sm:h-[180px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart 
                           data={[
@@ -626,7 +626,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                           layout="vertical"
                         >
                           <XAxis type="number" domain={[0, 10]} hide />
-                          <YAxis dataKey="name" type="category" width={35} tick={{ fontSize: 10 }} />
+                          <YAxis dataKey="name" type="category" width={40} tick={{ fontSize: 11 }} />
                           <Bar dataKey="score" radius={[0, 4, 4, 0]}>
                             {[
                               { key: 'lack' as BeliefBlockType },
@@ -679,12 +679,12 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="space-y-3"
+        className="space-y-4"
       >
         <WealthInviteCardDialog
           defaultTab="aianalysis"
           trigger={
-            <Button className="w-full h-12 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white shadow-lg">
+            <Button className="w-full h-14 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white shadow-lg text-base">
               <Share2 className="w-5 h-5 mr-2" />
               分享我的AI测评报告
             </Button>

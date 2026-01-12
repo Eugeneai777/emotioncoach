@@ -57,11 +57,11 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
       transition={{ duration: 0.5 }}
     >
       <Card className="overflow-hidden border-0 shadow-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <CardContent className="p-4 sm:p-6">
+        <CardContent className="p-5 sm:p-6">
           {/* Header */}
-          <div className="text-center mb-2">
-            <h2 className="text-white font-bold text-base sm:text-lg flex items-center justify-center gap-2">
-              <span className="text-xl sm:text-2xl">💰</span>
+          <div className="text-center mb-3">
+            <h2 className="text-white font-bold text-lg sm:text-xl flex items-center justify-center gap-2">
+              <span className="text-2xl">💰</span>
               财富心理健康度
             </h2>
           </div>
@@ -171,8 +171,8 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
             <p className="text-slate-400 text-sm mt-2">{zone.description}</p>
           </motion.div>
 
-          {/* Three Layer Breakdown */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
+          {/* Three Layer Breakdown - 移动端竖向堆叠 */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             {layers.map((layer, idx) => (
               <motion.div
                 key={layer.name}
@@ -181,25 +181,32 @@ export function EnhancedHealthGauge({ healthScore, behaviorScore, emotionScore, 
                 transition={{ delay: 0.8 + idx * 0.1 }}
                 className="relative group"
               >
-                <div className="bg-slate-800/80 rounded-lg sm:rounded-xl p-2 sm:p-3 text-center border border-slate-700/50 transition-all group-hover:border-slate-600 group-hover:bg-slate-800">
-                  <div className="text-lg sm:text-2xl mb-0.5 sm:mb-1">{layer.emoji}</div>
-                  <div className="text-slate-400 text-[10px] sm:text-xs mb-0.5 sm:mb-1">{layer.name}层</div>
-                  <div className={cn(
-                    "text-sm sm:text-lg font-bold tabular-nums",
-                    layer.score / layer.max <= 0.4 ? "text-emerald-400" :
-                    layer.score / layer.max <= 0.7 ? "text-amber-400" : "text-rose-400"
-                  )}>
-                    {layer.score}
-                    <span className="text-slate-500 text-[10px] sm:text-xs font-normal">/{layer.max}</span>
-                  </div>
-                  {/* Mini progress bar */}
-                  <div className="h-1 sm:h-1.5 bg-slate-700 rounded-full mt-1.5 sm:mt-2 overflow-hidden">
-                    <motion.div
-                      className={cn("h-full rounded-full bg-gradient-to-r", layer.color)}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(layer.score / layer.max) * 100}%` }}
-                      transition={{ duration: 0.8, delay: 1 + idx * 0.1 }}
-                    />
+                <div className="bg-slate-800/80 rounded-xl p-3 border border-slate-700/50 transition-all group-hover:border-slate-600 group-hover:bg-slate-800">
+                  {/* 移动端横向布局 */}
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl">{layer.emoji}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-slate-400 text-xs">{layer.name}层</span>
+                        <div className={cn(
+                          "text-base font-bold tabular-nums",
+                          layer.score / layer.max <= 0.4 ? "text-emerald-400" :
+                          layer.score / layer.max <= 0.7 ? "text-amber-400" : "text-rose-400"
+                        )}>
+                          {layer.score}
+                          <span className="text-slate-500 text-xs font-normal">/{layer.max}</span>
+                        </div>
+                      </div>
+                      {/* Progress bar 全宽 */}
+                      <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                        <motion.div
+                          className={cn("h-full rounded-full bg-gradient-to-r", layer.color)}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(layer.score / layer.max) * 100}%` }}
+                          transition={{ duration: 0.8, delay: 1 + idx * 0.1 }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </motion.div>

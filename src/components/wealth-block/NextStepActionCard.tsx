@@ -88,18 +88,18 @@ export function NextStepActionCard({
       transition={{ delay: 0.35 }}
     >
       <Card className="overflow-hidden border-0 shadow-xl">
-        {/* Header - 移动端优化 */}
-        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 p-3 sm:p-4 text-white">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 p-4 sm:p-5 text-white">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
-            <h3 className="font-bold text-base sm:text-lg">开启你的觉醒之旅</h3>
+            <Sparkles className="h-5 w-5" />
+            <h3 className="font-bold text-lg">开启你的觉醒之旅</h3>
           </div>
-          <p className="text-white/80 text-xs sm:text-sm mt-1">
-            从觉醒起点 <span className="font-bold">{awakeningStart}</span> 出发，7天突破至 <span className="font-bold">{day7Target}+</span>
+          <p className="text-white/80 text-sm mt-1.5">
+            从觉醒起点 <span className="font-bold text-base">{awakeningStart}</span> 出发，7天突破至 <span className="font-bold text-base">{day7Target}+</span>
           </p>
         </div>
 
-        <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+        <CardContent className="p-4 sm:p-5 space-y-4">
           {/* 个性化卡点标签 - 移动端紧凑 */}
           {(poorInfo || emotionInfo || beliefInfo) && (
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -145,23 +145,23 @@ export function NextStepActionCard({
             </div>
           )}
 
-          {/* 步骤进度 - 移动端水平紧凑版 */}
-          <div className="flex items-center justify-between py-1.5 sm:py-2">
+          {/* 步骤进度 */}
+          <div className="flex items-center justify-between py-2">
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
                 <div className="flex flex-col items-center">
                   <div 
                     className={cn(
-                      "w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-all",
+                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all",
                       step.completed 
                         ? "bg-emerald-500 text-white" 
                         : "bg-muted text-muted-foreground"
                     )}
                   >
-                    {step.completed ? <Check className="w-3 h-3 sm:w-4 sm:h-4" /> : step.id}
+                    {step.completed ? <Check className="w-4 h-4" /> : step.id}
                   </div>
                   <span className={cn(
-                    "text-[9px] sm:text-[10px] mt-0.5 sm:mt-1 font-medium",
+                    "text-[10px] mt-1 font-medium",
                     step.completed ? "text-emerald-600" : "text-muted-foreground"
                   )}>
                     {step.title}
@@ -173,7 +173,7 @@ export function NextStepActionCard({
                       variant="ghost"
                       onClick={step.action}
                       disabled={isSaving}
-                      className="h-5 sm:h-6 text-[9px] sm:text-[10px] mt-0.5 sm:mt-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 px-1.5 sm:px-2"
+                      className="h-6 text-[10px] mt-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 px-2"
                     >
                       {step.actionLabel}
                     </Button>
@@ -181,7 +181,7 @@ export function NextStepActionCard({
                 </div>
                 {index < steps.length - 1 && (
                   <div className={cn(
-                    "w-6 sm:w-8 h-0.5 mx-0.5 sm:mx-1",
+                    "w-8 sm:w-10 h-0.5 mx-1",
                     steps[index + 1].completed || step.completed ? "bg-emerald-300" : "bg-muted"
                   )} />
                 )}
@@ -199,21 +199,21 @@ export function NextStepActionCard({
             </p>
           </div>
 
-          {/* 主CTA按钮 - 移动端高度优化 */}
+          {/* 主CTA按钮 */}
           {hasPurchased ? (
             <Button
               onClick={onStartCamp}
-              className="w-full h-10 sm:h-12 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg font-bold text-sm sm:text-base"
+              className="w-full h-12 sm:h-14 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg font-bold text-base"
             >
               开始财富觉醒训练营
-              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-2" />
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
             <Button
               onClick={onPurchase}
-              className="w-full h-10 sm:h-12 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:via-orange-600 hover:to-rose-600 text-white shadow-lg font-bold text-sm sm:text-base"
+              className="w-full h-12 sm:h-14 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:via-orange-600 hover:to-rose-600 text-white shadow-lg font-bold text-base"
             >
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
+              <Sparkles className="w-4 h-4 mr-2" />
               ¥299 立即加入训练营
             </Button>
           )}
