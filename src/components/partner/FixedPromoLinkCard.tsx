@@ -3,21 +3,27 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Link2, Copy, QrCode, Check, ImagePlus } from "lucide-react";
-import { getPartnerShareUrl } from "@/utils/partnerQRUtils";
+import { Link2, Copy, QrCode, Check, ImagePlus, Sparkles, BarChart3 } from "lucide-react";
+import { getPartnerShareUrl, type PartnerProductType } from "@/utils/partnerQRUtils";
 import QRCode from "qrcode";
 
 interface FixedPromoLinkCardProps {
   partnerId: string;
   entryType: 'free' | 'paid';
+  productType?: PartnerProductType;
 }
 
-export function FixedPromoLinkCard({ partnerId, entryType }: FixedPromoLinkCardProps) {
+export function FixedPromoLinkCard({ partnerId, entryType, productType = 'trial_member' }: FixedPromoLinkCardProps) {
   const [copied, setCopied] = useState(false);
   const [generatingQR, setGeneratingQR] = useState(false);
   const navigate = useNavigate();
 
-  const promoUrl = getPartnerShareUrl(partnerId, entryType);
+  const promoUrl = getPartnerShareUrl(partnerId, entryType, productType);
+  
+  const isWealthAssessment = productType === 'wealth_assessment';
+  const productLabel = isWealthAssessment ? '📊 财富测评' : '💎 尝鲜会员';
+  const priceLabel = isWealthAssessment ? '¥9.9' : (entryType === 'paid' ? '¥9.9' : '免费');
+  const themeColor = isWealthAssessment ? 'purple' : 'teal';
 
   const handleCopyLink = async () => {
     try {
@@ -33,18 +39,20 @@ export function FixedPromoLinkCard({ partnerId, entryType }: FixedPromoLinkCardP
   const handleDownloadQR = async () => {
     setGeneratingQR(true);
     try {
+      const qrColor = isWealthAssessment ? '#9333ea' : (entryType === 'paid' ? '#f97316' : '#14b8a6');
       const qrDataUrl = await QRCode.toDataURL(promoUrl, {
         width: 512,
         margin: 2,
         color: {
-          dark: entryType === 'paid' ? '#f97316' : '#14b8a6',
+          dark: qrColor,
           light: '#ffffff'
         }
       });
 
       const link = document.createElement('a');
       link.href = qrDataUrl;
-      link.download = `推广二维码_${entryType === 'paid' ? '付费' : '免费'}.png`;
+      const productName = isWealthAssessment ? '财富测评' : (entryType === 'paid' ? '付费' : '免费');
+      link.download = `推广二维码_${productName}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -58,33 +66,38 @@ export function FixedPromoLinkCard({ partnerId, entryType }: FixedPromoLinkCardP
   };
 
   return (
-    <Card className="bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200">
+    <Card className={`bg-gradient-to-br ${isWealthAssessment ? 'from-purple-50 to-violet-50 border-purple-200' : 'from-teal-50 to-cyan-50 border-teal-200'}`}>
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center">
+          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${isWealthAssessment ? 'from-purple-400 to-violet-500' : 'from-teal-400 to-cyan-500'} flex items-center justify-center`}>
             <Link2 className="w-4 h-4 text-white" />
           </div>
           <div>
-            <span className="text-teal-800">固定推广链接</span>
-            <span className="text-xs text-teal-600 ml-2 font-normal">推荐</span>
+            <span className={isWealthAssessment ? 'text-purple-800' : 'text-teal-800'}>固定推广链接</span>
+            <span className={`text-xs ml-2 font-normal ${isWealthAssessment ? 'text-purple-600' : 'text-teal-600'}`}>推荐</span>
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* 链接显示 */}
-        <div className="flex items-center gap-2 p-3 bg-white/80 rounded-lg border border-teal-100">
+        <div className={`flex items-center gap-2 p-3 bg-white/80 rounded-lg border ${isWealthAssessment ? 'border-purple-100' : 'border-teal-100'}`}>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground mb-1">
-              {entryType === 'paid' ? '💰 付费入口 (¥9.9)' : '🆓 免费入口'}
+            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+              {isWealthAssessment ? (
+                <BarChart3 className="w-3 h-3 text-purple-500" />
+              ) : (
+                <Sparkles className="w-3 h-3 text-teal-500" />
+              )}
+              {productLabel} ({priceLabel})
             </p>
-            <p className="text-sm font-mono text-teal-700 truncate">
+            <p className={`text-sm font-mono truncate ${isWealthAssessment ? 'text-purple-700' : 'text-teal-700'}`}>
               {promoUrl}
             </p>
           </div>
           <Button
             size="sm"
             variant="ghost"
-            className="shrink-0 text-teal-600 hover:text-teal-700 hover:bg-teal-100"
+            className={`shrink-0 ${isWealthAssessment ? 'text-purple-600 hover:text-purple-700 hover:bg-purple-100' : 'text-teal-600 hover:text-teal-700 hover:bg-teal-100'}`}
             onClick={handleCopyLink}
           >
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -96,7 +109,7 @@ export function FixedPromoLinkCard({ partnerId, entryType }: FixedPromoLinkCardP
           <Button 
             onClick={handleCopyLink}
             size="sm"
-            className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
+            className={`bg-gradient-to-r ${isWealthAssessment ? 'from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600' : 'from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600'}`}
           >
             <Copy className="w-4 h-4 mr-1" />
             复制
@@ -105,7 +118,7 @@ export function FixedPromoLinkCard({ partnerId, entryType }: FixedPromoLinkCardP
             onClick={handleDownloadQR}
             variant="outline"
             size="sm"
-            className="border-teal-300 text-teal-700 hover:bg-teal-50"
+            className={isWealthAssessment ? 'border-purple-300 text-purple-700 hover:bg-purple-50' : 'border-teal-300 text-teal-700 hover:bg-teal-50'}
             disabled={generatingQR}
           >
             <QrCode className="w-4 h-4 mr-1" />
@@ -123,7 +136,7 @@ export function FixedPromoLinkCard({ partnerId, entryType }: FixedPromoLinkCardP
         </div>
 
         {/* 说明 */}
-        <div className="text-xs text-teal-600 space-y-1">
+        <div className={`text-xs space-y-1 ${isWealthAssessment ? 'text-purple-600' : 'text-teal-600'}`}>
           <p>✓ 永久有效，无限使用</p>
           <p>✓ 入口类型跟随上方"推广入口设置"</p>
           <p>✓ 适合日常推广，分享到朋友圈、微信群</p>
