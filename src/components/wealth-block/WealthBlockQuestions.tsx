@@ -30,6 +30,9 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   
+  // 进度激励状态
+  const [shownMilestones, setShownMilestones] = useState<Set<number>>(new Set());
+  
   // AI追问相关状态
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [currentFollowUp, setCurrentFollowUp] = useState<FollowUpData | null>(null);
@@ -52,6 +55,34 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
   const progress = (answeredCount / questions.length) * 100;
   const isLastQuestion = currentIndex === questions.length - 1;
   const canSubmit = answeredCount === questions.length;
+
+  // 进度激励配置
+  const milestones = [
+    { threshold: 25, emoji: "🌱", message: "很棒！已完成 1/4，继续保持～" },
+    { threshold: 50, emoji: "⭐", message: "太棒了！已经过半，你做得很好！" },
+    { threshold: 75, emoji: "🔥", message: "冲刺阶段！马上就要完成了！" },
+    { threshold: 90, emoji: "🎯", message: "最后几题！胜利在望！" },
+  ];
+
+  // 检查并显示进度激励
+  const checkMilestone = useCallback((newProgress: number) => {
+    for (const milestone of milestones) {
+      if (newProgress >= milestone.threshold && !shownMilestones.has(milestone.threshold)) {
+        setShownMilestones(prev => new Set([...prev, milestone.threshold]));
+        toast(
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{milestone.emoji}</span>
+            <span>{milestone.message}</span>
+          </div>,
+          { 
+            duration: 2500,
+            className: "bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200"
+          }
+        );
+        break;
+      }
+    }
+  }, [shownMilestones]);
 
   // 如果显示开始介绍页，先渲染它
   if (showStartScreen) {
@@ -144,7 +175,12 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
   }, [pendingResult, onComplete]);
 
   const handleAnswer = async (value: number) => {
-    setAnswers(prev => ({ ...prev, [currentQuestion.id]: value }));
+    const newAnswers = { ...answers, [currentQuestion.id]: value };
+    setAnswers(newAnswers);
+    
+    // 检查进度激励
+    const newProgress = (Object.keys(newAnswers).length / questions.length) * 100;
+    checkMilestone(newProgress);
     
     // 检查是否需要AI追问
     if (shouldAskFollowUp(value, currentIndex, followUpAnswers.length)) {
