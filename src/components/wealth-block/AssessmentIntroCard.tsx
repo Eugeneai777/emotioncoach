@@ -495,7 +495,6 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
           <h3 className="font-bold text-lg text-slate-800">开启你的财富觉醒之旅</h3>
           
           <div className="flex items-center justify-center gap-3">
-            <span className="text-slate-400 line-through text-lg">¥99</span>
             <span className="text-4xl font-bold text-amber-600">¥9.9</span>
             <span className="px-2 py-0.5 bg-red-500 rounded text-xs text-white font-medium animate-pulse">限时</span>
           </div>
