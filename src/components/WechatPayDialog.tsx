@@ -23,11 +23,13 @@ interface WechatPayDialogProps {
   onOpenChange: (open: boolean) => void;
   packageInfo: PackageInfo | null;
   onSuccess: () => void;
+  /** 支付成功后跳转的页面路径，默认为当前页面 */
+  returnUrl?: string;
 }
 
 type PaymentStatus = 'idle' | 'loading' | 'ready' | 'polling' | 'success' | 'failed' | 'expired';
 
-export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: WechatPayDialogProps) {
+export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl }: WechatPayDialogProps) {
   const { user } = useAuth();
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
@@ -165,7 +167,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess }: 
       if (selectedPayType === 'h5' && (data.h5Url || data.payUrl)) {
         // H5支付
         const baseUrl: string = (data.h5Url || data.payUrl) as string;
-        const redirectUrl = encodeURIComponent(window.location.origin + '/packages?order=' + data.orderNo);
+        // 使用传入的 returnUrl 或当前页面路径作为支付后跳转目标
+        const targetPath = returnUrl || window.location.pathname;
+        const redirectUrl = encodeURIComponent(window.location.origin + targetPath + '?order=' + data.orderNo + '&payment_success=1');
         const finalUrl = baseUrl.includes('redirect_url=')
           ? baseUrl
           : baseUrl + (baseUrl.includes('?') ? '&' : '?') + 'redirect_url=' + redirectUrl;

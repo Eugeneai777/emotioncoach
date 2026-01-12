@@ -20,6 +20,7 @@ import { AssessmentResult, blockInfo, patternInfo, FollowUpAnswer, calculateResu
 import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog";
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
+import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 
 export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
@@ -45,6 +46,17 @@ export default function WealthBlockAssessmentPage() {
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const { trackAssessmentTocamp, trackEvent } = useWealthCampAnalytics();
+
+  // 监听支付回调（H5支付返回后自动处理）
+  const { isPaymentCallback, orderNo: callbackOrderNo } = usePaymentCallback({
+    onSuccess: (orderNo) => {
+      // 支付成功后，显示注册对话框让用户完成绑定
+      console.log('[WealthBlock] Payment callback success, order:', orderNo);
+      // 存储订单号以便后续注册绑定
+      sessionStorage.setItem('pending_assessment_order', orderNo);
+      setShowPayDialog(true);
+    },
+  });
 
   // 页面访问埋点 + 加载历史记录
   // 注意：扫码追踪已由全局 GlobalRefTracker 统一处理
