@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { orderNo, openId, nickname } = await req.json();
+    const { orderNo, openId, nickname, phone, phoneCountryCode } = await req.json();
 
     if (!orderNo) {
       throw new Error('缺少订单号');
@@ -90,10 +90,12 @@ serve(async (req) => {
           unionid: null
         });
 
-        // 更新 profile
+        // 更新 profile（包含手机号）
         await supabaseAdmin.from('profiles').upsert({
           id: userId,
-          display_name: nickname || '有劲用户'
+          display_name: nickname || '有劲用户',
+          phone: phone || null,
+          phone_country_code: phoneCountryCode || '+86'
         });
 
         // 生成登录session
