@@ -96,6 +96,7 @@ import YoujinPartnerTerms from "./pages/YoujinPartnerTerms";
 import BloomPartnerTerms from "./pages/BloomPartnerTerms";
 import CoachSpace from "./pages/CoachSpace";
 import CoachSpaceIntro from "./pages/CoachSpaceIntro";
+import { GlobalRefTracker } from "./hooks/useGlobalRefTracking";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +107,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <GlobalRefTracker />
           <FloatingVoiceButton />
           <FloatingQuickMenu />
           <Routes>
