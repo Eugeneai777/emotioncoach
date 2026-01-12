@@ -91,6 +91,13 @@ export class MiniProgramAudioClient {
   private maxReconnectAttempts = 3;
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
   private config: MiniProgramAudioConfig;
+  
+  // 🔧 Web Audio API 降级录音相关
+  private webAudioContext: AudioContext | null = null;
+  private webMediaStream: MediaStream | null = null;
+  private webProcessor: ScriptProcessorNode | null = null;
+  private webSource: MediaStreamAudioSourceNode | null = null;
+  private useWebAudioFallback = false;
 
   constructor(config: MiniProgramAudioConfig) {
     this.config = config;
@@ -153,6 +160,12 @@ export class MiniProgramAudioClient {
    * 开始录音
    */
   startRecording(): void {
+    if (this.useWebAudioFallback) {
+      // Web Audio API 模式：录音已在初始化时自动开始
+      console.log('[MiniProgramAudio] Web Audio recording already started');
+      return;
+    }
+    
     if (!this.recorder) {
       console.error('[MiniProgramAudio] Recorder not initialized');
       return;
@@ -175,6 +188,12 @@ export class MiniProgramAudioClient {
    * 停止录音
    */
   stopRecording(): void {
+    // 停止 Web Audio API 录音
+    if (this.useWebAudioFallback) {
+      this.stopWebAudioRecording();
+      return;
+    }
+    
     if (this.recorder) {
       try {
         this.recorder.stop();
@@ -273,43 +292,139 @@ export class MiniProgramAudioClient {
 
   private async initRecorder(): Promise<void> {
     const wx = window.wx;
-    if (!wx?.getRecorderManager) {
-      console.warn('[MiniProgramAudio] wx.getRecorderManager not available');
+    
+    // 🔧 优先使用小程序原生 API
+    if (wx?.getRecorderManager) {
+      console.log('[MiniProgramAudio] Using wx.getRecorderManager');
+      
+      // 请求录音权限
+      const hasPermission = await this.requestRecordPermission();
+      if (!hasPermission) {
+        throw new Error('Recording permission denied');
+      }
+
+      this.recorder = wx.getRecorderManager();
+
+      // 监听录音帧数据
+      this.recorder.onFrameRecorded((res: { frameBuffer: ArrayBuffer; isLastFrame: boolean }) => {
+        if (this.ws?.readyState === WebSocket.OPEN && res.frameBuffer) {
+          // 将音频数据转为 Base64 并发送
+          const base64Audio = wx.arrayBufferToBase64?.(res.frameBuffer) || '';
+          if (base64Audio) {
+            const chunk: AudioChunk = {
+              type: 'audio_input',
+              audio: base64Audio,
+            };
+            this.ws.send(JSON.stringify(chunk));
+          }
+        }
+      });
+
+      // 监听录音错误
+      this.recorder.onError((error: any) => {
+        console.error('[MiniProgramAudio] Recorder error:', error);
+      });
+
+      // 监听录音结束
+      this.recorder.onStop(() => {
+        console.log('[MiniProgramAudio] Recording stopped');
+      });
+      
       return;
     }
 
-    // 请求录音权限
-    const hasPermission = await this.requestRecordPermission();
-    if (!hasPermission) {
-      throw new Error('Recording permission denied');
-    }
-
-    this.recorder = wx.getRecorderManager();
-
-    // 监听录音帧数据
-    this.recorder.onFrameRecorded((res: { frameBuffer: ArrayBuffer; isLastFrame: boolean }) => {
-      if (this.ws?.readyState === WebSocket.OPEN && res.frameBuffer) {
-        // 将音频数据转为 Base64 并发送
-        const base64Audio = wx.arrayBufferToBase64?.(res.frameBuffer) || '';
-        if (base64Audio) {
-          const chunk: AudioChunk = {
-            type: 'audio_input',
-            audio: base64Audio,
-          };
-          this.ws.send(JSON.stringify(chunk));
+    // 🔧 降级为 Web Audio API（小程序 WebView 中使用）
+    console.log('[MiniProgramAudio] wx.getRecorderManager not available, using Web Audio API fallback');
+    this.useWebAudioFallback = true;
+    
+    try {
+      // 请求麦克风权限
+      this.webMediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          sampleRate: 24000,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
         }
-      }
-    });
+      });
+      
+      // 创建 AudioContext
+      this.webAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+        sampleRate: 24000
+      });
+      
+      // 创建音频源
+      this.webSource = this.webAudioContext.createMediaStreamSource(this.webMediaStream);
+      
+      // 创建处理节点（每帧 4096 样本）
+      this.webProcessor = this.webAudioContext.createScriptProcessor(4096, 1, 1);
+      
+      this.webProcessor.onaudioprocess = (e) => {
+        if (this.ws?.readyState !== WebSocket.OPEN) return;
+        
+        const inputData = e.inputBuffer.getChannelData(0);
+        
+        // 转换为 PCM16 格式
+        const int16Array = new Int16Array(inputData.length);
+        for (let i = 0; i < inputData.length; i++) {
+          const s = Math.max(-1, Math.min(1, inputData[i]));
+          int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        }
+        
+        // 转换为 Base64
+        const uint8Array = new Uint8Array(int16Array.buffer);
+        let binary = '';
+        const chunkSize = 0x8000;
+        for (let i = 0; i < uint8Array.length; i += chunkSize) {
+          const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+          binary += String.fromCharCode.apply(null, Array.from(chunk));
+        }
+        const base64Audio = btoa(binary);
+        
+        // 发送到服务器
+        const audioChunk: AudioChunk = {
+          type: 'audio_input',
+          audio: base64Audio,
+        };
+        this.ws?.send(JSON.stringify(audioChunk));
+      };
+      
+      // 连接节点（静音输出，避免回声）
+      this.webSource.connect(this.webProcessor);
+      const silentGain = this.webAudioContext.createGain();
+      silentGain.gain.value = 0;
+      this.webProcessor.connect(silentGain);
+      silentGain.connect(this.webAudioContext.destination);
+      
+      console.log('[MiniProgramAudio] Web Audio API recorder initialized');
+    } catch (error) {
+      console.error('[MiniProgramAudio] Web Audio API init failed:', error);
+      throw new Error('麦克风权限不足，请允许访问麦克风');
+    }
+  }
 
-    // 监听录音错误
-    this.recorder.onError((error: any) => {
-      console.error('[MiniProgramAudio] Recorder error:', error);
-    });
-
-    // 监听录音结束
-    this.recorder.onStop(() => {
-      console.log('[MiniProgramAudio] Recording stopped');
-    });
+  /**
+   * 停止 Web Audio API 录音
+   */
+  private stopWebAudioRecording(): void {
+    if (this.webSource) {
+      this.webSource.disconnect();
+      this.webSource = null;
+    }
+    if (this.webProcessor) {
+      this.webProcessor.disconnect();
+      this.webProcessor = null;
+    }
+    if (this.webMediaStream) {
+      this.webMediaStream.getTracks().forEach(track => track.stop());
+      this.webMediaStream = null;
+    }
+    if (this.webAudioContext) {
+      this.webAudioContext.close();
+      this.webAudioContext = null;
+    }
+    console.log('[MiniProgramAudio] Web Audio recording stopped');
   }
 
   private requestRecordPermission(): Promise<boolean> {
