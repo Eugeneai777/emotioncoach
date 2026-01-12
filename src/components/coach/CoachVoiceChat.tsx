@@ -731,6 +731,38 @@ export const CoachVoiceChat = ({
       } else if (platformInfo.recommendedVoiceMethod === 'webrtc') {
         console.log('[VoiceChat] Using WebRTC direct connection mode');
         setUseMiniProgramMode(false);
+        
+        // 🔧 微信浏览器：先请求麦克风权限，避免权限弹框阻塞 WebRTC 连接导致超时
+        if (platformInfo.platform === 'wechat-browser') {
+          console.log('[VoiceChat] WeChat Browser: requesting microphone permission first...');
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // 权限获取成功后立即释放，后续 WebRTC 连接会重新获取
+            stream.getTracks().forEach(track => track.stop());
+            console.log('[VoiceChat] WeChat Browser: microphone permission granted');
+          } catch (permError: any) {
+            console.error('[VoiceChat] WeChat Browser: microphone permission denied:', permError);
+            if (permError.name === 'NotAllowedError' || permError.name === 'PermissionDeniedError') {
+              throw new Error('麦克风权限被拒绝，请在设置中允许访问麦克风');
+            }
+            // 权限获取失败，尝试降级到 WebSocket
+            console.log('[VoiceChat] WeChat Browser: falling back to WebSocket relay...');
+            setUseMiniProgramMode(true);
+            const miniProgramClient = new MiniProgramAudioClient({
+              onMessage: handleVoiceMessage,
+              onStatusChange: handleStatusChange,
+              onTranscript: handleTranscript,
+              onUsageUpdate: (usage) => setApiUsage(prev => ({ inputTokens: prev.inputTokens + usage.input_tokens, outputTokens: prev.outputTokens + usage.output_tokens })),
+              tokenEndpoint,
+              mode
+            });
+            chatRef.current = miniProgramClient;
+            await miniProgramClient.connect();
+            miniProgramClient.startRecording();
+            return;
+          }
+        }
+        
         const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode);
         chatRef.current = chat;
         await chat.init();
