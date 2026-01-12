@@ -287,8 +287,8 @@ export default function WealthBlockAssessmentPage() {
 
   // 分享配置
   const shareTitle = "AI财富卡点测评｜找出你的隐形刹车";
-  const shareDescription = "¥9.9深度诊断30个场景，3层AI追问定位卡点，生成专属突破路径。测一次，清醒一辈子。";
-  const shareImage = "https://wechat.eugenewe.net/og-youjin-ai.png";
+  const shareDescription = "¥9.9测出你的财富隐形刹车，30场景×3层AI追问";
+  const shareImage = "https://wechat.eugenewe.net/og-wealth-coach.png";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">

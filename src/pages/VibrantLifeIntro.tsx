@@ -143,10 +143,10 @@ const VibrantLifeIntro = () => {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-teal-50/30 to-cyan-50/50 relative overflow-hidden">
       <Helmet>
         <title>有劲生活教练 - 有劲AI</title>
-        <meta name="description" content="24小时在你身边的AI生活教练" />
-        <meta property="og:title" content="有劲AI生活教练" />
-        <meta property="og:description" content="懂情绪、懂方法、懂结构、懂成长，比你更懂你的第二个自己" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta name="description" content="7位AI教练24小时在线，推荐最适合你的成长路径" />
+        <meta property="og:title" content="有劲AI • 生活教练" />
+        <meta property="og:description" content="7位AI教练24小时在线，推荐最适合你的成长路径" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-vibrant-life.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/vibrant-life-intro" />
         <meta property="og:site_name" content="有劲AI" />
       </Helmet>
