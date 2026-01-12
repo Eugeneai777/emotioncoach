@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, Image, Copy, Check, Share2, Edit3, ChevronDown } from 'lucide-react';
+import { Download, Image, Copy, Check, Share2, Edit3, ChevronDown, ImageIcon } from 'lucide-react';
+import ShareImagePreview from '@/components/ui/share-image-preview';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
 import {
@@ -187,6 +188,10 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const [activeTab, setActiveTab] = useState<CardTab>(defaultTab);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  
+  // Image preview state for WeChat/mobile environments
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [showImagePreview, setShowImagePreview] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo>({});
   const [awakeningData, setAwakeningData] = useState<AwakeningData | null>(null);
   const [selectedAwakeningType, setSelectedAwakeningType] = useState<'behavior' | 'emotion' | 'belief'>('belief');
@@ -552,25 +557,23 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       // Create blob URL for download
       const blobUrl = URL.createObjectURL(blob);
       
-      // Try download with <a> element
-      const link = document.createElement('a');
-      link.download = `${cardName}.png`;
-      link.href = blobUrl;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // For iOS/WeChat, also open in new tab as fallback
+      // For iOS/WeChat, show image preview for long-press save
       if (isWeChatOrIOS()) {
-        // Give user instruction to long-press save
-        toast.success('图片已生成，长按图片可保存到相册', { duration: 4000 });
-        window.open(blobUrl, '_blank');
+        setPreviewImageUrl(blobUrl);
+        setShowImagePreview(true);
       } else {
+        // Try download with <a> element
+        const link = document.createElement('a');
+        link.download = `${cardName}.png`;
+        link.href = blobUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         toast.success('卡片已保存');
+        
+        // Revoke blob URL after a delay
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
       }
-
-      // Revoke blob URL after a delay
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
       
       onGenerate?.();
     } catch (error) {
@@ -612,12 +615,13 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         });
         toast.success('分享成功');
       } else {
-        // Fallback: download the image
+        // Create blob URL for preview
         const blobUrl = URL.createObjectURL(blob);
         
         if (isWeChatOrIOS()) {
-          toast.info('请长按图片保存后分享', { duration: 4000 });
-          window.open(blobUrl, '_blank');
+          // Show full-screen image preview for long-press saving
+          setPreviewImageUrl(blobUrl);
+          setShowImagePreview(true);
         } else {
           const link = document.createElement('a');
           link.download = `${cardName}.png`;
@@ -626,9 +630,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           link.click();
           document.body.removeChild(link);
           toast.success('图片已下载，请手动分享');
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
         }
-        
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
       }
       
       onGenerate?.();
@@ -641,6 +644,23 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     } finally {
       setGenerating(false);
     }
+  };
+
+  // Handle closing image preview
+  const handleCloseImagePreview = () => {
+    setShowImagePreview(false);
+    if (previewImageUrl) {
+      URL.revokeObjectURL(previewImageUrl);
+      setPreviewImageUrl(null);
+    }
+  };
+
+  // Regenerate image for preview
+  const handleRegeneratePreview = async () => {
+    if (previewImageUrl) {
+      URL.revokeObjectURL(previewImageUrl);
+    }
+    await handleShare();
   };
 
   const handleCopyLink = async () => {
@@ -993,8 +1013,17 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             disabled={generating || (activeTab === 'awakening' && !hasAnyAwakening)}
             className="flex-1 gap-2"
           >
-            <Download className="h-4 w-4" />
-            {generating ? '生成中...' : '下载'}
+            {isWeChatOrIOS() ? (
+              <>
+                <ImageIcon className="h-4 w-4" />
+                {generating ? '生成中...' : '生成图片'}
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                {generating ? '生成中...' : '下载'}
+              </>
+            )}
           </Button>
           <Button
             onClick={handleShare}
@@ -1015,9 +1044,21 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         </div>
 
         <p className="text-xs text-muted-foreground text-center mt-2">
-          下载或分享卡片给朋友，或复制链接直接分享
+          {isWeChatOrIOS() 
+            ? '生成图片后长按保存，然后分享给朋友'
+            : '下载或分享卡片给朋友，或复制链接直接分享'
+          }
         </p>
       </DialogContent>
+      
+      {/* Full-screen image preview for WeChat/iOS */}
+      <ShareImagePreview
+        open={showImagePreview}
+        onClose={handleCloseImagePreview}
+        imageUrl={previewImageUrl}
+        onRegenerate={handleRegeneratePreview}
+        isRegenerating={generating}
+      />
     </Dialog>
   );
 };
