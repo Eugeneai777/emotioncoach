@@ -78,8 +78,18 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
             <p className="text-[10px] text-slate-500">Powered by 有劲AI · 财富教练</p>
           </motion.div>
           
+          {/* 社交证明置顶 */}
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100/80 rounded-full border border-amber-200"
+          >
+            <BarChart3 className="w-4 h-4 text-amber-600" />
+            <span className="text-amber-700 text-sm font-medium">
+              {statistics.totalAssessments.toLocaleString()} 人已找到答案
+            </span>
+          </motion.div>
           
-
           {/* 共鸣式提问 - 逐字显示 */}
           <motion.h2 
             initial={{ opacity: 0 }}
