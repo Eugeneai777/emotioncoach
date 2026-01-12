@@ -156,12 +156,27 @@ const NaturalVoiceChat: React.FC<NaturalVoiceChatProps> = ({ onClose }) => {
         return;
       }
 
-      // ✅ 微信浏览器：优先尝试 WebRTC（避免某些机型/网络下 WebSocket 被拦截导致超时）
+      // ✅ 微信浏览器：先请求麦克风权限，避免权限弹框阻塞连接导致超时
       if (isWeChatBrowser) {
         try {
+          console.log('[NaturalVoiceChat] WeChat Browser: requesting microphone permission first...');
+          // 先请求麦克风权限，确保权限弹框在连接前处理完成
+          await navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+            // 权限获取成功后立即释放，后续连接会重新获取
+            stream.getTracks().forEach(track => track.stop());
+            console.log('[NaturalVoiceChat] WeChat Browser: microphone permission granted');
+          });
+          
+          // 权限通过后再尝试 WebRTC
           await startWebRTC();
-        } catch (e) {
-          console.warn('[NaturalVoiceChat] WeChat Browser WebRTC failed, fallback to WebSocket relay:', e);
+        } catch (e: any) {
+          console.warn('[NaturalVoiceChat] WeChat Browser WebRTC failed:', e);
+          // 如果是权限被拒绝，直接报错
+          if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+            throw new Error('麦克风权限被拒绝，请在设置中允许访问麦克风');
+          }
+          // 其他错误尝试 WebSocket 回退
+          console.log('[NaturalVoiceChat] Fallback to WebSocket relay...');
           await startWebSocketRelay();
         }
         return;
