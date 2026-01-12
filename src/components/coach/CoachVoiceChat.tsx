@@ -760,10 +760,15 @@ export const CoachVoiceChat = ({
       isInitializingRef.current = false;
       releaseLock();
       let title = "连接失败", description = "无法建立语音连接，请稍后重试";
-      if (errorMessage.includes('麦克风')) { title = "麦克风权限不足"; description = errorMessage; }
+      if (errorMessage.includes('超时') || errorMessage.includes('timeout')) { 
+        title = "连接超时"; 
+        description = "网络连接较慢，请检查网络后重试"; 
+      }
+      else if (errorMessage.includes('麦克风')) { title = "麦克风权限不足"; description = errorMessage; }
       else if (errorMessage.includes('ephemeral token')) { title = "服务连接失败"; description = "语音服务暂时不可用，请稍后重试"; }
       else if (errorMessage.includes('不支持语音')) { title = "环境不支持"; description = errorMessage; }
       else if (errorMessage.includes('Recording permission denied')) { title = "录音权限被拒绝"; description = "请在小程序设置中允许录音权限"; }
+      else if (errorMessage.includes('not supported')) { title = "环境不支持"; description = "当前浏览器不支持语音通话，请使用微信或其他现代浏览器"; }
       toast({ title, description, variant: "destructive" });
     }
   };
