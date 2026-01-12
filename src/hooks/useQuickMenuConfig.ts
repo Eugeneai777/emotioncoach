@@ -35,7 +35,7 @@ export const availablePages = [
   ...coachPages,
   { path: '/wealth-block', label: '财富测评', icon: 'ClipboardCheck', color: 'bg-purple-500' },
   { path: '/customer-support', label: '给予建议', icon: 'MessageCircle', color: 'bg-blue-500' },
-  { path: '/packages', label: '产品套餐', icon: 'Package', color: 'bg-emerald-500' },
+  { path: '/packages', label: '产品中心', icon: 'Package', color: 'bg-emerald-500' },
   { path: '/settings', label: '设置', icon: 'Settings', color: 'bg-slate-500' },
   { path: '/energy-studio', label: '有劲生活馆', icon: 'Sparkles', color: 'bg-violet-500' },
   { path: '/partner', label: '合伙人', icon: 'Handshake', color: 'bg-teal-500' },
