@@ -22,16 +22,29 @@ export const getPromotionDomain = (): string => {
 };
 
 /**
- * Generate partner share URL based on entry type
+ * Product types that partners can distribute
+ */
+export type PartnerProductType = 'trial_member' | 'wealth_assessment';
+
+/**
+ * Generate partner share URL based on entry type and product type
  * @param partnerId - Partner's UUID
  * @param entryType - 'free' (0 yuan) or 'paid' (9.9 yuan)
+ * @param productType - 'trial_member' (尝鲜会员) or 'wealth_assessment' (财富测评)
  */
 export const getPartnerShareUrl = (
   partnerId: string, 
-  entryType: 'free' | 'paid'
+  entryType: 'free' | 'paid',
+  productType: PartnerProductType = 'trial_member'
 ): string => {
   const baseUrl = getPromotionDomain();
   
+  if (productType === 'wealth_assessment') {
+    // Wealth assessment: always goes to wealth-block page with partner tracking
+    return `${baseUrl}/wealth-block?ref=${partnerId}`;
+  }
+  
+  // Trial member product
   if (entryType === 'free') {
     // Free entry: claim directly
     return `${baseUrl}/claim?partner=${partnerId}`;

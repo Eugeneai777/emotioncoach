@@ -253,6 +253,96 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           </div>
         </div>
 
+        {/* 体验包内容展示 - 两种可选产品 */}
+        <Card className="border-purple-200 dark:border-purple-800">
+          <CardContent className="p-4 space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🎁</span>
+              <h4 className="font-bold text-base">可分发的体验包（二选一）</h4>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* 尝鲜会员 */}
+              <div className="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/30 rounded-lg p-4 border border-teal-200 dark:border-teal-800">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">💎</span>
+                    <span className="font-bold">尝鲜会员</span>
+                  </div>
+                  <span className="text-teal-600 font-bold text-sm">¥9.9</span>
+                </div>
+                <ul className="text-xs text-muted-foreground space-y-1.5">
+                  <li className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-teal-500" />
+                    <span>50点AI对话额度</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-teal-500" />
+                    <span>5位AI教练体验</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-teal-500" />
+                    <span>情绪按钮 + 社区</span>
+                  </li>
+                </ul>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full mt-3 border-teal-300 text-teal-700 hover:bg-teal-100"
+                  onClick={() => navigate('/packages')}
+                >
+                  体验会员 →
+                </Button>
+              </div>
+
+              {/* 财富测评 */}
+              <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">📊</span>
+                    <span className="font-bold">财富卡点测评</span>
+                  </div>
+                  <span className="text-purple-600 font-bold text-sm">¥9.9</span>
+                </div>
+                <ul className="text-xs text-muted-foreground space-y-1.5">
+                  <li className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-purple-500" />
+                    <span>30道财富场景诊断</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-purple-500" />
+                    <span>三层深度分析</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-purple-500" />
+                    <span>AI个性化突破路径</span>
+                  </li>
+                </ul>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full mt-3 border-purple-300 text-purple-700 hover:bg-purple-100"
+                  onClick={() => navigate('/wealth-block')}
+                >
+                  体验测评 →
+                </Button>
+              </div>
+            </div>
+            
+            {/* 说明文案 */}
+            <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+              <p className="flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                <span>
+                  购买合伙人套餐后，你可选择推广任一体验包。
+                  用户将<strong className="text-foreground">永久绑定</strong>为你的学员，
+                  后续所有消费都能获得佣金分成。
+                </span>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* 矩阵对比表 */}
         <Card className="overflow-hidden">
           <div className="overflow-x-auto -mx-0">
