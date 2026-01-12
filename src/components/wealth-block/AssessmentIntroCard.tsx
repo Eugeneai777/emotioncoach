@@ -1,11 +1,10 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Target, BarChart3, FileText, Check, LogIn, ArrowRight, AlertTriangle, TrendingDown, Shield, Sparkles, Brain, Zap } from "lucide-react";
+import { Target, BarChart3, FileText, Check, LogIn, ArrowRight, AlertTriangle, TrendingDown, Shield, Sparkles, Brain } from "lucide-react";
 import { AIComparisonCard } from "./AIComparisonCard";
 import { AssessmentFlowCard } from "./AssessmentFlowCard";
 import { AssessmentPreviewCard } from "./AssessmentPreviewCard";
-import { CapabilityRadarChart } from "./CapabilityRadarChart";
 
 
 interface AssessmentIntroCardProps {
@@ -256,14 +255,6 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
       {/* Section 4: AI Comparison Card - NEW */}
       <AIComparisonCard />
 
-      {/* Section 5: Value Points - Animated Radar Chart */}
-      <Card className="p-4 bg-gradient-to-br from-emerald-50 via-teal-50 to-white border-emerald-200 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 mb-3">
-          <Zap className="w-4 h-4 text-emerald-600" />
-          <h3 className="font-medium text-sm text-slate-800">这份测评将帮你</h3>
-        </div>
-        <CapabilityRadarChart />
-      </Card>
 
       {/* Section 5: Assessment Structure - Onion Model */}
       <Card className="p-5 bg-white border-slate-200 shadow-sm">
