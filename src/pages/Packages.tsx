@@ -1,5 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Home } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -20,17 +18,15 @@ interface PackageInfo {
   price: number;
   quota?: number;
 }
-// 基础套餐配置已移至 ProductComparisonTable 组件中统一管理
+
 export default function Packages() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showTour, completeTour } = usePageTour('packages');
-  const [activeTab, setActiveTab] = useState<'youjin' | 'bloom'>('youjin');
+  const [activeTab, setActiveTab] = useState<'youjin-member' | 'youjin-camp' | 'bloom-camp' | 'bloom-partner'>('youjin-member');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<PackageInfo | null>(null);
 
-  // 套餐数据已移至 ProductComparisonTable 组件统一管理
-  
   const handlePurchase = (packageInfo: PackageInfo) => {
     // 免费训练营入口
     if (packageInfo.key === 'youjin-camps') {
@@ -55,74 +51,80 @@ export default function Packages() {
     // 刷新页面数据
     window.location.reload();
   };
+
   const currentCategory = productCategories.find(c => c.id === activeTab);
-  return <>
-    <Helmet>
-      <title>会员套餐 - 有劲AI</title>
-      <meta name="description" content="选择适合您的产品，开启成长之旅" />
-      <meta property="og:title" content="有劲AI • 产品中心" />
-      <meta property="og:description" content="多种套餐选择，满足不同需求" />
-      <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-      <meta property="og:url" content="https://wechat.eugenewe.net/packages" />
-      <meta property="og:site_name" content="有劲AI" />
-    </Helmet>
-    <PageTour
-      steps={pageTourConfig.packages}
-      open={showTour}
-      onComplete={completeTour}
-    />
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <PageHeader title="会员套餐" />
 
-      <div className="container max-w-7xl mx-auto px-4 py-4 space-y-6">
-        {/* 标题区域 */}
-        <div className="text-center space-y-2">
-          <p className="text-muted-foreground">
-            选择适合您的产品
-          </p>
-        </div>
-        
-
-        {/* 产品分类 Tabs */}
-        <div>
-          <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'youjin' | 'bloom')} className="w-full">
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-              {productCategories.map(category => <TabsTrigger key={category.id} value={category.id} className="gap-2">
-                  <span>{category.emoji}</span>
-                  {category.name}
-                </TabsTrigger>)}
-            </TabsList>
-
-            <TabsContent value={activeTab} className="mt-4 space-y-4">
-              {/* 分类说明 */}
-              <div className="text-center">
-                <h2 className="text-xl font-bold">{currentCategory?.tagline}</h2>
-              </div>
-
-              {/* 📊 产品权益对比表 */}
-              <ProductComparisonTable category={activeTab} onPurchase={handlePurchase} />
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* 购买历史 */}
-        
-
-        {/* 底部说明 */}
-        <div className="border-t pt-4">
-          <p className="text-xs text-center text-muted-foreground">
-            💡 套餐购买后立即生效 · ⏰ 会员365天有效 · ⚠️ 尝鲜会员限购1次 · 🏕️ 训练营永久有效 · 🔒 隐私数据安全
-          </p>
-        </div>
-      </div>
-      
-      {/* 微信支付对话框 */}
-      <WechatPayDialog
-        open={payDialogOpen}
-        onOpenChange={setPayDialogOpen}
-        packageInfo={selectedPackage}
-        onSuccess={handlePaymentSuccess}
+  return (
+    <>
+      <Helmet>
+        <title>产品中心 - 有劲AI</title>
+        <meta name="description" content="选择适合您的产品，开启成长之旅" />
+        <meta property="og:title" content="有劲AI • 产品中心" />
+        <meta property="og:description" content="多种套餐选择，满足不同需求" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:url" content="https://wechat.eugenewe.net/packages" />
+        <meta property="og:site_name" content="有劲AI" />
+      </Helmet>
+      <PageTour
+        steps={pageTourConfig.packages}
+        open={showTour}
+        onComplete={completeTour}
       />
-    </div>
-  </>;
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+        <PageHeader title="产品中心" />
+
+        <div className="container max-w-7xl mx-auto px-4 py-4 space-y-6">
+          {/* 标题区域 */}
+          <div className="text-center space-y-2">
+            <p className="text-muted-foreground">
+              选择适合您的产品
+            </p>
+          </div>
+
+          {/* 产品分类 Tabs */}
+          <div>
+            <Tabs value={activeTab} onValueChange={v => setActiveTab(v as typeof activeTab)} className="w-full">
+              <TabsList className="grid w-full max-w-lg mx-auto grid-cols-2 sm:grid-cols-4 h-auto gap-1 p-1">
+                {productCategories.map(category => (
+                  <TabsTrigger 
+                    key={category.id} 
+                    value={category.id} 
+                    className="gap-1 py-2 px-2 text-xs sm:text-sm flex-col sm:flex-row"
+                  >
+                    <span>{category.emoji}</span>
+                    <span className="whitespace-nowrap">{category.name}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              <TabsContent value={activeTab} className="mt-4 space-y-4">
+                {/* 分类说明 */}
+                <div className="text-center">
+                  <h2 className="text-xl font-bold">{currentCategory?.tagline}</h2>
+                </div>
+
+                {/* 📊 产品权益对比表 */}
+                <ProductComparisonTable category={activeTab} onPurchase={handlePurchase} />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* 底部说明 */}
+          <div className="border-t pt-4">
+            <p className="text-xs text-center text-muted-foreground">
+              💡 套餐购买后立即生效 · ⏰ 会员365天有效 · ⚠️ 尝鲜会员限购1次 · 🏕️ 训练营永久有效 · 🔒 隐私数据安全
+            </p>
+          </div>
+        </div>
+        
+        {/* 微信支付对话框 */}
+        <WechatPayDialog
+          open={payDialogOpen}
+          onOpenChange={setPayDialogOpen}
+          packageInfo={selectedPackage}
+          onSuccess={handlePaymentSuccess}
+        />
+      </div>
+    </>
+  );
 }

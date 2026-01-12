@@ -9,8 +9,8 @@ import { Helmet } from "react-helmet";
 export default function PartnerTypeSelector() {
   const navigate = useNavigate();
   const [payDialogOpen, setPayDialogOpen] = useState(false);
-  const youjinCategory = productCategories.find(c => c.id === 'youjin')!;
-  const bloomCategory = productCategories.find(c => c.id === 'bloom')!;
+  const youjinCategory = productCategories.find(c => c.id === 'youjin-member')!;
+  const bloomCategory = productCategories.find(c => c.id === 'bloom-partner')!;
   const bloomPackage = {
     key: 'bloom_partner',
     name: '绽放合伙人',
