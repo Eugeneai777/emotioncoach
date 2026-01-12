@@ -158,6 +158,33 @@ export type Database = {
           },
         ]
       }
+      awakening_entries: {
+        Row: {
+          created_at: string
+          id: string
+          input_text: string
+          life_card: Json
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          input_text: string
+          life_card: Json
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          input_text?: string
+          life_card?: Json
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       billing_corrections: {
         Row: {
           alert_id: string | null

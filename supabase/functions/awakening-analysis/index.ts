@@ -139,24 +139,26 @@ E. 微行动（microAction）：建议一个2分钟内可完成的最小行动
       throw new Error("Failed to parse AI response");
     }
 
-    // 如果用户已登录，保存记录
+    // 如果用户已登录，保存记录到统一的觉察记录表
     if (userId) {
       try {
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        // 根据类型保存到不同的表
-        if (type === 'decision') {
-          await supabase.from('decision_logs').insert({
-            user_id: userId,
-            decision_question: input,
-            ai_analysis: lifeCard
-          });
+        // 保存到觉察记录表
+        const { error: insertError } = await supabase.from('awakening_entries').insert({
+          user_id: userId,
+          type: type,
+          input_text: input,
+          life_card: lifeCard
+        });
+
+        if (insertError) {
+          console.error("Failed to save awakening entry:", insertError);
+        } else {
+          console.log(`Saved ${type} awakening entry for user ${userId}`);
         }
-        // 其他类型可以保存到各自的表或统一的觉醒记录表
-        
-        console.log(`Saved ${type} awakening log for user ${userId}`);
       } catch (saveError) {
         console.error("Failed to save awakening log:", saveError);
         // 不影响返回结果
