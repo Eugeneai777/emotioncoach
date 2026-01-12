@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Bell, Gift, MessageCircle, CheckCircle, X } from 'lucide-react';
+import { Bell, Gift, MessageCircle, CheckCircle, X, Loader2 } from 'lucide-react';
 import { useFollowReminder, TriggerKey } from '@/hooks/useFollowReminder';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 // Detect WeChat environment
 function isWechatBrowser(): boolean {
@@ -39,6 +41,7 @@ const TRIGGER_MESSAGES: Record<TriggerKey, { title: string; subtitle: string }> 
 
 export function FollowWechatReminder() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const {
     shouldShowReminder,
     triggerKey,
@@ -49,6 +52,7 @@ export function FollowWechatReminder() {
   } = useFollowReminder();
 
   const [isOpen, setIsOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const isWechat = isWechatBrowser();
 
   // Sync with hook state
@@ -76,8 +80,39 @@ export function FollowWechatReminder() {
   };
 
   const handleFollowed = async () => {
-    await markAsFollowed();
-    setIsOpen(false);
+    setSyncing(true);
+    try {
+      // 标记为已关注
+      await markAsFollowed();
+      
+      // 尝试同步微信用户信息
+      if (user) {
+        const { data, error } = await supabase.functions.invoke('check-wechat-subscribe-status');
+        
+        if (!error && data?.subscribed && data?.nickname && data.nickname !== '微信用户') {
+          // 如果已关注且有真实昵称，更新本地 profiles
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              display_name: data.nickname,
+              avatar_url: data.avatar_url || null,
+            })
+            .eq('id', user.id);
+
+          if (!updateError) {
+            toast({
+              title: '信息已同步',
+              description: `已同步微信昵称: ${data.nickname}`,
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error syncing WeChat info:', err);
+    } finally {
+      setSyncing(false);
+      setIsOpen(false);
+    }
   };
 
   const handleLater = async () => {
@@ -154,10 +189,15 @@ export function FollowWechatReminder() {
         <div className="space-y-2 pt-2">
           <Button
             onClick={handleFollowed}
+            disabled={syncing}
             className="w-full bg-gradient-to-r from-[#07C160] to-[#06AD56] hover:from-[#06AD56] hover:to-[#059849] text-white"
           >
-            <CheckCircle className="w-4 h-4 mr-2" />
-            已关注
+            {syncing ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <CheckCircle className="w-4 h-4 mr-2" />
+            )}
+            {syncing ? '同步中...' : '已关注'}
           </Button>
           <Button
             variant="ghost"
