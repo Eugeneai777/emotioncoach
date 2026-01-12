@@ -2,9 +2,34 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle, User, QrCode, Mail, LogIn, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { Loader2, CheckCircle, User, QrCode, Mail, LogIn, RefreshCw, Eye, EyeOff, Phone, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// 国家区号列表
+const countryCodes = [
+  { code: '+86', country: '中国', flag: '🇨🇳' },
+  { code: '+852', country: '中国香港', flag: '🇭🇰' },
+  { code: '+853', country: '中国澳门', flag: '🇲🇴' },
+  { code: '+886', country: '中国台湾', flag: '🇹🇼' },
+  { code: '+1', country: '美国/加拿大', flag: '🇺🇸' },
+  { code: '+44', country: '英国', flag: '🇬🇧' },
+  { code: '+81', country: '日本', flag: '🇯🇵' },
+  { code: '+82', country: '韩国', flag: '🇰🇷' },
+  { code: '+65', country: '新加坡', flag: '🇸🇬' },
+  { code: '+60', country: '马来西亚', flag: '🇲🇾' },
+  { code: '+61', country: '澳大利亚', flag: '🇦🇺' },
+  { code: '+64', country: '新西兰', flag: '🇳🇿' },
+  { code: '+49', country: '德国', flag: '🇩🇪' },
+  { code: '+33', country: '法国', flag: '🇫🇷' },
+];
 
 interface QuickRegisterStepProps {
   orderNo: string;
@@ -36,6 +61,11 @@ export function QuickRegisterStep({
   const [isLoading, setIsLoading] = useState(false);
   const [isAutoCreating, setIsAutoCreating] = useState(false);
   
+  // 手机号相关状态
+  const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('+86');
+  const [wechatNicknameLoaded, setWechatNicknameLoaded] = useState(false);
+  
   // 注册方式切换 - 根据环境智能选择默认模式
   const [registerMode, setRegisterMode] = useState<RegisterMode>(getDefaultMode);
   
@@ -54,6 +84,29 @@ export function QuickRegisterStep({
 
   // 检测是否是微信环境
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+  
+  // 微信环境下自动获取微信昵称
+  useEffect(() => {
+    const fetchWechatNickname = async () => {
+      if (isWechat && paymentOpenId && !wechatNicknameLoaded) {
+        try {
+          const { data, error } = await supabase.functions.invoke('get-wechat-user-info', {
+            body: { openId: paymentOpenId }
+          });
+          
+          if (!error && data?.nickname) {
+            setNickname(data.nickname);
+          }
+          setWechatNicknameLoaded(true);
+        } catch (e) {
+          console.error('Fetch wechat nickname error:', e);
+          setWechatNicknameLoaded(true);
+        }
+      }
+    };
+    
+    fetchWechatNickname();
+  }, [isWechat, paymentOpenId, wechatNicknameLoaded]);
 
   // 生成微信扫码注册二维码
   const generateQrCode = async () => {
@@ -180,7 +233,9 @@ export function QuickRegisterStep({
         body: {
           orderNo,
           openId: paymentOpenId,
-          nickname: nickname || undefined
+          nickname: nickname || undefined,
+          phone: phone || undefined,
+          phoneCountryCode: phone ? countryCode : undefined
         }
       });
 
@@ -308,16 +363,50 @@ export function QuickRegisterStep({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="nickname">设置昵称（可选）</Label>
+            <Label htmlFor="nickname">昵称{wechatNicknameLoaded && nickname ? '（已从微信获取）' : '（可选）'}</Label>
             <div className="flex gap-2">
-              <User className="w-5 h-5 text-muted-foreground mt-2" />
+              <User className="w-5 h-5 text-muted-foreground mt-2 shrink-0" />
               <Input
                 id="nickname"
-                placeholder="输入你的昵称"
+                placeholder={wechatNicknameLoaded ? '已自动填充微信昵称' : '输入你的昵称'}
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
               />
             </div>
+          </div>
+
+          {/* 手机号输入（可选） */}
+          <div className="space-y-2">
+            <Label htmlFor="phone">手机号（可选）</Label>
+            <div className="flex gap-2">
+              <Select value={countryCode} onValueChange={setCountryCode}>
+                <SelectTrigger className="w-[110px] shrink-0">
+                  <SelectValue>
+                    {countryCodes.find(c => c.code === countryCode)?.flag} {countryCode}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {countryCodes.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      <span className="flex items-center gap-2">
+                        <span>{c.flag}</span>
+                        <span>{c.country}</span>
+                        <span className="text-muted-foreground">{c.code}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="手机号码"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                className="flex-1"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">填写手机号方便后续接收重要通知</p>
           </div>
 
           <Button

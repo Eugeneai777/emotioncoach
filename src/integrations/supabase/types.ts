@@ -5116,6 +5116,8 @@ export type Database = {
           last_reminder_shown: string | null
           mood_status: string | null
           notification_frequency: string | null
+          phone: string | null
+          phone_country_code: string | null
           preferred_coach: string | null
           preferred_encouragement_style: string | null
           profile_completed: boolean | null
@@ -5178,6 +5180,8 @@ export type Database = {
           last_reminder_shown?: string | null
           mood_status?: string | null
           notification_frequency?: string | null
+          phone?: string | null
+          phone_country_code?: string | null
           preferred_coach?: string | null
           preferred_encouragement_style?: string | null
           profile_completed?: boolean | null
@@ -5240,6 +5244,8 @@ export type Database = {
           last_reminder_shown?: string | null
           mood_status?: string | null
           notification_frequency?: string | null
+          phone?: string | null
+          phone_country_code?: string | null
           preferred_coach?: string | null
           preferred_encouragement_style?: string | null
           profile_completed?: boolean | null
