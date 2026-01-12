@@ -520,9 +520,6 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
             </span>
           </Button>
           
-          <p className="text-xs text-slate-500">
-            已有 <span className="text-amber-600 font-medium">{statistics.breakthroughUsers.toLocaleString()}</span> 人通过测评获得突破
-          </p>
           
           <p className="text-xs text-slate-400 pt-2 border-t border-amber-200 text-center">
             💎 财富卡点测评 · Powered by 有劲AI · 财富教练
