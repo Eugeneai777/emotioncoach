@@ -509,22 +509,16 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
             ))}
           </div>
           
-          <div className="space-y-2">
-            <Button
-              onClick={onPay || onStart}
-              size="lg"
-              className="w-full h-14 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 flex flex-col items-center justify-center gap-0.5 text-white"
-            >
-              <span className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                ¥9.9 立即测评
-                <ArrowRight className="w-4 h-4" />
-              </span>
-            </Button>
-            <p className="text-[10px] text-slate-500">
-              30道题 + AI追问 + 专属报告
-            </p>
-          </div>
+          <Button
+            onClick={onPay || onStart}
+            size="lg"
+            className="w-full h-14 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 text-white"
+          >
+            <span className="flex items-center gap-2">
+              立即测评
+              <ArrowRight className="w-4 h-4" />
+            </span>
+          </Button>
           
           <p className="text-xs text-slate-500">
             已有 <span className="text-amber-600 font-medium">{statistics.breakthroughUsers.toLocaleString()}</span> 人通过测评获得突破
