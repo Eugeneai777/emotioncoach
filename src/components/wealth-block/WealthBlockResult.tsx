@@ -51,7 +51,7 @@ import { AIInsightData } from "./AIInsightCard";
 import { LayerTransitionHint } from "./LayerTransitionHint";
 import { DeepFollowUpAnswer } from "./DeepFollowUpDialog";
 import { AwakeningJourneyPreview } from "./AwakeningJourneyPreview";
-import { NextStepActionCard } from "./NextStepActionCard";
+// NextStepActionCard removed - functionality merged into AwakeningJourneyPreview
 
 interface WealthBlockResultProps {
   result: AssessmentResult;
@@ -245,6 +245,12 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         dominantPoor={result.dominantPoor as 'mouth' | 'hand' | 'eye' | 'heart'}
         hasPurchased={hasPurchased}
         onPurchase={() => setShowPayDialog(true)}
+        onStartCamp={() => setShowStartDialog(true)}
+        isSaved={isSaved || false}
+        isSaving={isSaving}
+        onSave={onSave}
+        aiInsight={aiInsight}
+        isLoadingAI={isLoadingAI}
       />
 
       {/* 分隔装饰 */}
@@ -659,23 +665,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         </AccordionItem>
       </Accordion>
 
-      {/* 统一行动区：合并CTA */}
-      <NextStepActionCard
-        isSaved={isSaved || false}
-        isSaving={isSaving}
-        hasPurchased={hasPurchased}
-        awakeningStart={100 - healthScore}
-        day7Target={Math.min(100 - healthScore + 20, 95)}
-        onSave={onSave}
-        onPurchase={() => setShowPayDialog(true)}
-        onStartCamp={() => setShowStartDialog(true)}
-        dominantPoor={result.dominantPoor}
-        dominantEmotion={result.dominantEmotionBlock}
-        dominantBelief={result.dominantBeliefBlock}
-        aiInsight={aiInsight}
-        isLoadingAI={isLoadingAI}
-        onViewDetails={() => navigate('/wealth-camp-intro')}
-      />
+      {/* NextStepActionCard removed - functionality merged into AwakeningJourneyPreview */}
 
       {/* 分享和重测按钮 */}
       <motion.div
