@@ -40,7 +40,7 @@ export const GoalMilestoneCard = ({
       }}
       whileHover={{ scale: 1.03, y: -2 }}
       className={`
-        flex-shrink-0 w-32 p-3.5 rounded-xl border relative overflow-hidden
+        flex-shrink-0 w-28 sm:w-32 p-3 sm:p-3.5 rounded-xl border relative overflow-hidden
         transition-shadow duration-300
         ${isCompleted 
           ? 'bg-gradient-to-br from-emerald-500/15 to-emerald-600/10 border-emerald-500/40 shadow-lg shadow-emerald-500/10' 
@@ -77,7 +77,7 @@ export const GoalMilestoneCard = ({
       
       {/* 图标 - 带入场动画 */}
       <motion.div 
-        className="text-2xl mb-1.5"
+        className="text-xl sm:text-2xl mb-1 sm:mb-1.5"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ 
@@ -90,25 +90,25 @@ export const GoalMilestoneCard = ({
       </motion.div>
       
       {/* 标题 */}
-      <div className={`text-xs font-semibold ${isCompleted ? 'text-emerald-400' : colorClass}`}>
+      <div className={`text-[11px] sm:text-xs font-semibold ${isCompleted ? 'text-emerald-400' : colorClass}`}>
         {title}
       </div>
       
       {/* 副标题 */}
-      <div className="text-xs text-slate-400 truncate mt-0.5">
+      <div className="text-[10px] sm:text-xs text-slate-400 truncate mt-0.5">
         {subtitle}
       </div>
       
       {/* 剩余/完成状态 - 数字动画 */}
       <motion.div 
-        className={`text-xs mt-2 font-medium ${isCompleted ? 'text-emerald-400' : 'text-slate-200'}`}
+        className={`text-[10px] sm:text-xs mt-1.5 sm:mt-2 font-medium ${isCompleted ? 'text-emerald-400' : 'text-slate-200'}`}
         key={remaining}
         initial={{ scale: 1.1 }}
         animate={{ scale: 1 }}
       >
         {isCompleted ? (
           <span className="flex items-center gap-1">
-            <Check className="h-3 w-3" /> 已达成
+            <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> 已达成
           </span>
         ) : (
           <span>
@@ -118,8 +118,8 @@ export const GoalMilestoneCard = ({
       </motion.div>
       
       {/* 进度条 - 带流光动画 */}
-      <div className="mt-2.5 relative">
-        <div className={`h-1.5 rounded-full overflow-hidden ${isCompleted ? 'bg-emerald-900/40' : 'bg-slate-700'}`}>
+      <div className="mt-2 sm:mt-2.5 relative">
+        <div className={`h-1 sm:h-1.5 rounded-full overflow-hidden ${isCompleted ? 'bg-emerald-900/40' : 'bg-slate-700'}`}>
           <motion.div 
             className={`
               h-full rounded-full relative
@@ -156,7 +156,7 @@ export const GoalMilestoneCard = ({
         
         {/* 百分比 */}
         <motion.div 
-          className={`text-xs text-right mt-1 font-medium ${isCompleted ? 'text-emerald-400' : 'text-slate-500'}`}
+          className={`text-[10px] sm:text-xs text-right mt-0.5 sm:mt-1 font-medium ${isCompleted ? 'text-emerald-400' : 'text-slate-500'}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 + index * 0.1 }}

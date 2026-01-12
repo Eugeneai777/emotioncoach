@@ -118,7 +118,7 @@ const AwakeningStatusBar: React.FC<AwakeningStatusBarProps> = ({ currentScore })
         {/* 状态进度条 */}
         <div className="relative">
           {/* 4段式进度条 */}
-          <div className="flex h-8 rounded-lg overflow-hidden border border-slate-700">
+          <div className="flex h-7 sm:h-8 rounded-lg overflow-hidden border border-slate-700">
             {awakeningStates.map((state, index) => {
               const isCurrentState = state.id === currentState.id;
               const isHovered = hoveredState === state.id;
@@ -147,8 +147,9 @@ const AwakeningStatusBar: React.FC<AwakeningStatusBarProps> = ({ currentScore })
                       )}
                       
                       <div className="flex flex-col items-center z-10">
-                        <span className="text-sm">{state.emoji}</span>
-                        <span className={`text-[10px] ${isCurrentState ? 'text-white font-medium' : 'text-slate-500'}`}>
+                        <span className="text-sm sm:text-base">{state.emoji}</span>
+                        {/* 分数范围 - 仅在 sm 及以上显示 */}
+                        <span className={`hidden sm:block text-[10px] ${isCurrentState ? 'text-white font-medium' : 'text-slate-500'}`}>
                           {state.minScore}-{state.maxScore === 100 ? '100' : state.maxScore}
                         </span>
                       </div>
@@ -192,9 +193,9 @@ const AwakeningStatusBar: React.FC<AwakeningStatusBarProps> = ({ currentScore })
           </motion.div>
         </div>
         
-        {/* 当前状态和目标 */}
+        {/* 当前状态和目标 - 移动端堆叠 */}
         <motion.div 
-          className="flex items-center justify-between text-xs pt-2"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs pt-2 gap-1 sm:gap-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
@@ -204,12 +205,12 @@ const AwakeningStatusBar: React.FC<AwakeningStatusBarProps> = ({ currentScore })
               {currentState.emoji}
               <span className="text-white font-medium">{currentState.label}</span>
             </span>
-            <span className="text-slate-400">· 当前 {currentScore} 分</span>
+            <span className="text-slate-400">· {currentScore}分</span>
           </div>
           
           {nextState ? (
             <motion.span 
-              className="text-slate-400"
+              className="text-slate-400 text-left sm:text-right"
               animate={{ opacity: [0.7, 1, 0.7] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
