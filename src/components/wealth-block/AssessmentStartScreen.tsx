@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Lightbulb, Heart, ArrowRight, Sparkles } from "lucide-react";
+import { Heart, Play, Lock } from "lucide-react";
 
 interface AssessmentStartScreenProps {
   onStart: () => void;
@@ -9,10 +9,9 @@ interface AssessmentStartScreenProps {
 
 export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
   const tips = [
-    "没有对错之分，如实作答即可",
-    "选择最接近你真实反应的数字",
-    "AI会根据回答适时深入追问",
-    "全程约 5-8 分钟"
+    "没有对错，如实作答即可",
+    "点击 1-5 选择最接近你的选项",
+    "全程约 5 分钟，AI会适时追问"
   ];
 
   return (
@@ -20,41 +19,42 @@ export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.4 }}
         className="w-full max-w-md space-y-4"
       >
-        {/* 标题 */}
-        <div className="text-center mb-6">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-            className="inline-flex items-center gap-2 text-2xl font-bold text-amber-800"
-          >
-            <Sparkles className="h-6 w-6 text-amber-500" />
-            <span>准备开始测评</span>
-          </motion.div>
-        </div>
+        {/* 个性化欢迎标题 */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1, duration: 0.3 }}
+          className="text-center mb-4"
+        >
+          <div className="text-3xl mb-2">✨</div>
+          <h1 className="text-xl font-bold text-amber-800 mb-1">准备好了吗？</h1>
+          <p className="text-sm text-muted-foreground">让我们开始探索你的财富模式</p>
+        </motion.div>
 
-        {/* 测评小贴士 */}
+        {/* 答题指南 - 合并小贴士和评分方式 */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
+          transition={{ delay: 0.2, duration: 0.3 }}
         >
           <Card className="border-amber-200 bg-white/80 backdrop-blur-sm shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-3">
-                <Lightbulb className="h-5 w-5 text-amber-500" />
-                <span className="font-medium text-amber-800">测评小贴士</span>
+                <span className="text-lg">📝</span>
+                <span className="font-medium text-amber-800">答题指南</span>
               </div>
-              <ul className="space-y-2">
+              
+              {/* 精简的提示列表 */}
+              <ul className="space-y-1.5 mb-4">
                 {tips.map((tip, index) => (
                   <motion.li
                     key={index}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + index * 0.1, duration: 0.3 }}
+                    transition={{ delay: 0.25 + index * 0.05, duration: 0.2 }}
                     className="flex items-start gap-2 text-sm text-muted-foreground"
                   >
                     <span className="text-amber-400 mt-0.5">•</span>
@@ -62,67 +62,55 @@ export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
                   </motion.li>
                 ))}
               </ul>
+
+              {/* 评分预览 */}
+              <div className="pt-3 border-t border-amber-100">
+                <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                  <span>不符合</span>
+                  <span>符合</span>
+                </div>
+                <div className="flex gap-2 justify-center">
+                  {[1, 2, 3, 4, 5].map((score) => (
+                    <motion.div
+                      key={score}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.35 + score * 0.03, duration: 0.2 }}
+                      whileHover={{ scale: 1.1, y: -2 }}
+                      className={`
+                        w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium
+                        cursor-pointer transition-all duration-200
+                        ${score <= 2 
+                          ? 'bg-gray-100 text-gray-500 hover:bg-gray-200' 
+                          : score === 3
+                            ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
+                            : 'bg-gradient-to-br from-amber-200 to-orange-200 text-amber-700 hover:from-amber-300 hover:to-orange-300'
+                        }
+                      `}
+                    >
+                      {score}
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* 评分方式 */}
+        {/* 放轻松鼓励语 */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
-        >
-          <Card className="border-amber-200 bg-white/80 backdrop-blur-sm shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">📊</span>
-                <span className="font-medium text-amber-800">评分方式</span>
-              </div>
-              <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-                <span>完全不符合</span>
-                <span>非常符合</span>
-              </div>
-              <div className="flex gap-2 justify-center">
-                {[1, 2, 3, 4, 5].map((score) => (
-                  <motion.div
-                    key={score}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.6 + score * 0.05, duration: 0.2 }}
-                    className={`
-                      w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium
-                      ${score === 3 
-                        ? 'bg-amber-100 text-amber-700 ring-2 ring-amber-300' 
-                        : 'bg-gray-100 text-gray-500'
-                      }
-                    `}
-                  >
-                    {score}
-                  </motion.div>
-                ))}
-              </div>
-              <p className="text-xs text-center text-muted-foreground mt-2">
-                点击数字选择你的答案
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* 鼓励语 */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.7, duration: 0.4 }}
+          transition={{ delay: 0.35, duration: 0.3 }}
         >
           <Card className="border-pink-200 bg-gradient-to-r from-pink-50 to-amber-50 shadow-sm">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Heart className="h-5 w-5 text-pink-400" />
+              <div className="flex items-center gap-2 mb-1">
+                <Heart className="h-4 w-4 text-pink-400" />
                 <span className="font-medium text-pink-700">放轻松</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                这不是考试，没有"正确答案"<br />
-                你只需真实面对自己 💫
+                这不是考试，没有"正确答案"，你只需真实面对自己
               </p>
             </CardContent>
           </Card>
@@ -132,16 +120,34 @@ export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9, duration: 0.4 }}
-          className="pt-4"
+          transition={{ delay: 0.45, duration: 0.3 }}
+          className="pt-2"
         >
-          <Button
-            onClick={onStart}
-            className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium text-base rounded-full shadow-lg"
+          <motion.div
+            animate={{ scale: [1, 1.02, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           >
-            <span>开始第一题</span>
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+            <Button
+              onClick={onStart}
+              className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium text-base rounded-full shadow-lg"
+            >
+              <Play className="mr-2 h-5 w-5" />
+              <span>开始探索</span>
+            </Button>
+          </motion.div>
+        </motion.div>
+
+        {/* 隐私保障提示 */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.55, duration: 0.3 }}
+          className="text-center"
+        >
+          <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+            <Lock className="h-3 w-3" />
+            回答完全保密，仅用于生成专属分析报告
+          </p>
         </motion.div>
       </motion.div>
     </div>
