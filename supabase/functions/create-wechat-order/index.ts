@@ -104,7 +104,8 @@ serve(async (req) => {
 
     // 构建微信支付请求体
     const amountInFen = Math.round(amount * 100); // 转换为分
-    const notifyUrl = `${supabaseUrl}/functions/v1/wechat-pay-callback`;
+    // 使用 wechat.eugenewe.net 域名作为回调地址，由代理转发到 Edge Function
+    const notifyUrl = 'https://wechat.eugenewe.net/wechat-pay-callback';
     
     // 根据支付类型选择不同的API和请求体
     const isH5 = payType === 'h5';
