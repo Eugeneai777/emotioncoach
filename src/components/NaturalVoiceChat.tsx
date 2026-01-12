@@ -93,30 +93,28 @@ const NaturalVoiceChat: React.FC<NaturalVoiceChatProps> = ({ onClose }) => {
   const startConversation = async () => {
     try {
       setStatus('connecting');
-      
+
       // 检测平台环境，决定使用哪种连接方式
       const isMiniProgram = isWeChatMiniProgram();
       const hasWebRTC = supportsWebRTC();
       const platformInfo = getPlatformInfo();
-      
+
       // 检测是否在微信浏览器中（非小程序）
       const ua = navigator.userAgent.toLowerCase();
       const isWeChatBrowser = /micromessenger/i.test(ua) && !isMiniProgram;
-      
+
       console.log('[NaturalVoiceChat] Platform detection:', {
         isMiniProgram,
         isWeChatBrowser,
         hasWebRTC,
         platform: platformInfo.platform,
-        recommendedMethod: platformInfo.recommendedVoiceMethod
+        recommendedMethod: platformInfo.recommendedVoiceMethod,
       });
 
-      // 🔧 微信浏览器、小程序、或不支持 WebRTC 的环境：使用 WebSocket 中继
-      if (isMiniProgram || isWeChatBrowser || !hasWebRTC) {
-        console.log('[NaturalVoiceChat] Using WebSocket relay mode for:', 
-          isMiniProgram ? 'MiniProgram' : isWeChatBrowser ? 'WeChat Browser' : 'No WebRTC');
+      const startWebSocketRelay = async () => {
+        console.log('[NaturalVoiceChat] Using WebSocket relay mode');
         setUseMiniProgramMode(true);
-        
+
         const miniProgramClient = new MiniProgramAudioClient({
           onMessage: handleMessage,
           onStatusChange: (newStatus: MiniProgramStatus) => {
@@ -133,28 +131,49 @@ const NaturalVoiceChat: React.FC<NaturalVoiceChatProps> = ({ onClose }) => {
           },
           onTranscript: handleTranscript,
           tokenEndpoint: 'vibrant-life-realtime-token',
-          mode: 'general'
+          mode: 'general',
         });
-        
+
         chatRef.current = miniProgramClient;
         await miniProgramClient.connect();
-        
+
         // 需要手动开始录音
         miniProgramClient.startRecording?.();
-      } else {
-        // 🔧 普通浏览器：使用 WebRTC 直连
+      };
+
+      const startWebRTC = async () => {
         console.log('[NaturalVoiceChat] Using WebRTC mode');
         setUseMiniProgramMode(false);
-        
+
         const realtimeChat = new RealtimeChat(handleMessage, handleStatusChange, handleTranscript);
         chatRef.current = realtimeChat;
         await realtimeChat.init();
+      };
+
+      // ✅ 小程序或不支持 WebRTC：直接使用 WebSocket 中继
+      if (isMiniProgram || !hasWebRTC) {
+        await startWebSocketRelay();
+        return;
       }
+
+      // ✅ 微信浏览器：优先尝试 WebRTC（避免某些机型/网络下 WebSocket 被拦截导致超时）
+      if (isWeChatBrowser) {
+        try {
+          await startWebRTC();
+        } catch (e) {
+          console.warn('[NaturalVoiceChat] WeChat Browser WebRTC failed, fallback to WebSocket relay:', e);
+          await startWebSocketRelay();
+        }
+        return;
+      }
+
+      // ✅ 其他浏览器：使用 WebRTC
+      await startWebRTC();
     } catch (error) {
       console.error('Error starting conversation:', error);
       setStatus('error');
       const errorMessage = error instanceof Error ? error.message : '连接失败';
-      
+
       // 根据错误类型显示不同提示
       if (errorMessage.includes('超时') || errorMessage.includes('timeout')) {
         toast.error('连接超时，请检查网络后重试');
