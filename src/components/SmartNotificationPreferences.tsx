@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Bell, Moon, Leaf, Sun, Sparkles, Heart, Zap, Info, MessageSquare, QrCode, Copy, Check, Smartphone, CheckCircle, Gift } from "lucide-react";
+import { Loader2, Bell, Moon, Leaf, Sun, Sparkles, Heart, Zap, Info, MessageSquare, QrCode, Copy, Check, Smartphone, CheckCircle, Gift, RefreshCw } from "lucide-react";
 import QRCode from "qrcode";
 
 // 检测是否在微信内置浏览器中
@@ -38,6 +38,7 @@ export function SmartNotificationPreferences() {
   const [wechatBound, setWechatBound] = useState(false);
   const [testingWechat, setTestingWechat] = useState(false);
   const [unbinding, setUnbinding] = useState(false);
+  const [syncingWechatInfo, setSyncingWechatInfo] = useState(false);
   
   // 绑定弹窗状态
   const [showBindDialog, setShowBindDialog] = useState(false);
@@ -302,6 +303,70 @@ export function SmartNotificationPreferences() {
     }
   };
 
+  // 同步微信用户信息
+  const syncWechatUserInfo = async () => {
+    setSyncingWechatInfo(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("用户未登录");
+
+      // 调用 check-wechat-subscribe-status 获取最新微信信息
+      const { data, error } = await supabase.functions.invoke("check-wechat-subscribe-status");
+
+      if (error) throw error;
+
+      if (!data?.linked) {
+        toast({
+          title: "未绑定微信",
+          description: "请先绑定微信账号",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data?.subscribed) {
+        toast({
+          title: "未关注公众号",
+          description: "请先关注微信公众号才能同步信息",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data?.nickname && data.nickname !== '微信用户') {
+        // 更新本地 profiles
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            display_name: data.nickname,
+            avatar_url: data.avatar_url || null,
+          })
+          .eq("id", user.id);
+
+        if (updateError) throw updateError;
+
+        toast({
+          title: "同步成功",
+          description: `已同步微信昵称: ${data.nickname}`,
+        });
+      } else {
+        toast({
+          title: "无法获取信息",
+          description: "微信未返回真实昵称，可能是隐私设置限制",
+        });
+      }
+    } catch (error) {
+      console.error("Error syncing WeChat info:", error);
+      toast({
+        title: "同步失败",
+        description: error instanceof Error ? error.message : "请稍后再试",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncingWechatInfo(false);
+    }
+  };
+
   const testWechatConnection = async () => {
     setTestingWechat(true);
     try {
@@ -502,6 +567,14 @@ export function SmartNotificationPreferences() {
                         >
                           {testingWechat && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                           测试推送
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={syncWechatUserInfo}
+                          disabled={syncingWechatInfo}
+                        >
+                          {syncingWechatInfo && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                          同步微信信息
                         </Button>
                         <Button
                           variant="ghost"
