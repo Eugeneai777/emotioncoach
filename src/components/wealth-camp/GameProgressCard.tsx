@@ -205,14 +205,18 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <div className="text-center">
-              <div className="text-xs text-slate-400 mb-1">觉醒起点 (Day 0)</div>
-              <div className="text-2xl font-bold text-slate-300">{progress.baseline_awakening}</div>
+            <div className="text-center flex-shrink-0">
+              <div className="text-[10px] sm:text-xs text-slate-400 mb-1">觉醒起点</div>
+              <div className="text-xl sm:text-2xl font-bold text-slate-300">{progress.baseline_awakening}</div>
             </div>
             
-            <div className="flex-1 px-4 flex items-center justify-center">
+            <div className="flex-1 px-2 sm:px-4 flex items-center justify-center">
+              {/* 移动端简化版 */}
+              <TrendingUp className="sm:hidden h-4 w-4 text-amber-400" />
+              
+              {/* 桌面端完整动画 */}
               <motion.div 
-                className="flex items-center gap-2"
+                className="hidden sm:flex items-center gap-2"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.4, type: 'spring' }}
@@ -245,16 +249,16 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
               </motion.div>
             </div>
             
-            <div className="text-center">
-              <div className="text-xs text-slate-400 mb-1">当前觉醒</div>
-              <div className="flex items-baseline gap-1">
+            <div className="text-center flex-shrink-0">
+              <div className="text-[10px] sm:text-xs text-slate-400 mb-1">当前觉醒</div>
+              <div className="flex items-baseline gap-0.5 sm:gap-1">
                 <AnimatedNumber 
                   value={progress.current_awakening} 
-                  className={`text-3xl font-bold ${currentStatusColor}`}
+                  className={`text-2xl sm:text-3xl font-bold ${currentStatusColor}`}
                 />
                 {awakeningGrowth > 0 && (
                   <motion.span 
-                    className="text-sm text-amber-400"
+                    className="text-[10px] sm:text-sm text-amber-400"
                     initial={{ opacity: 0, x: -5 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 }}
@@ -269,7 +273,7 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
           {/* 等级进度条 - 可交互 */}
           <div className="space-y-3">
             {/* 等级图标轨道 */}
-            <div className="relative flex justify-between items-center px-2">
+            <div className="relative flex justify-between items-center px-1 sm:px-2">
               {awakeningLevels.map((level, index) => {
                 const isActive = currentLevel && level.level <= currentLevel.level;
                 const isCurrent = currentLevel && level.level === currentLevel.level;
@@ -286,7 +290,8 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                       <TooltipTrigger asChild>
                         <motion.div
                           className={`
-                            w-8 h-8 rounded-full flex items-center justify-center text-lg cursor-pointer
+                            w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center 
+                            text-sm sm:text-lg cursor-pointer
                             transition-all duration-200 relative
                             ${isCurrent 
                               ? 'bg-amber-500 shadow-lg shadow-amber-500/50 ring-2 ring-amber-300' 
@@ -314,9 +319,9 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                             <motion.div
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
-                              className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full flex items-center justify-center"
+                              className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 bg-emerald-500 rounded-full flex items-center justify-center"
                             >
-                              <Check className="h-2.5 w-2.5 text-white" />
+                              <Check className="h-1.5 w-1.5 sm:h-2.5 sm:w-2.5 text-white" />
                             </motion.div>
                           )}
                           
@@ -352,7 +357,7 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
                     
                     {isCurrent && (
                       <motion.div 
-                        className="text-xs text-amber-400 mt-1 font-medium whitespace-nowrap"
+                        className="text-[10px] sm:text-xs text-amber-400 mt-0.5 sm:mt-1 font-medium whitespace-nowrap"
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.8 }}
@@ -365,15 +370,15 @@ export const GameProgressCard = ({ currentDayNumber = 1, streak = 0 }: GameProgr
               })}
               
               {/* 进度条背景 */}
-              <div className="absolute top-4 left-6 right-6 h-0.5 bg-slate-700 -z-0" />
+              <div className="absolute top-3 sm:top-4 left-4 right-4 sm:left-6 sm:right-6 h-0.5 bg-slate-700 -z-0" />
               
               {/* 进度条填充 - 带流光动画 */}
               <motion.div 
-                className="absolute top-4 left-6 h-0.5 bg-gradient-to-r from-emerald-500 via-amber-400 to-amber-500 overflow-hidden"
+                className="absolute top-3 sm:top-4 left-4 sm:left-6 h-0.5 bg-gradient-to-r from-emerald-500 via-amber-400 to-amber-500 overflow-hidden"
                 initial={{ width: 0 }}
                 animate={{ width: `${getLevelTrackProgress()}%` }}
                 transition={{ duration: 1, ease: 'easeOut', delay: 0.5 }}
-                style={{ maxWidth: 'calc(100% - 3rem)' }}
+                style={{ maxWidth: 'calc(100% - 2rem)' }}
               >
                 {/* 流光效果 */}
                 <motion.div

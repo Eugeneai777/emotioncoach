@@ -146,7 +146,7 @@ export const GoalCarousel = ({
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.55 }}
       >
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-1.5 sm:gap-2 text-xs">
           <motion.div
             animate={{ 
               scale: [1, 1.1, 1],
@@ -154,11 +154,11 @@ export const GoalCarousel = ({
             }}
             transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
           >
-            <Target className="h-3.5 w-3.5 text-amber-400" />
+            <Target className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-400" />
           </motion.div>
-          <span className="text-slate-300 font-medium">下一目标</span>
-          <span className="text-slate-500">·</span>
-          <span className="text-slate-500">{goals.length} 个待完成</span>
+          <span className="text-slate-300 font-medium">目标</span>
+          <span className="text-slate-500 hidden sm:inline">·</span>
+          <span className="text-slate-500 hidden sm:inline">{goals.length}个待完成</span>
         </div>
         
         {/* 可点击的左右箭头按钮 */}
