@@ -28,6 +28,9 @@ import { ShareCardStyleSelector } from './ShareCardStyleSelector';
 import { CardStylePreset } from './shareCardStyles';
 import AIAnalysisShareCard from '@/components/wealth-block/AIAnalysisShareCard';
 import AssessmentValueShareCard from '@/components/wealth-block/AssessmentValueShareCard';
+import FearAwakeningShareCard from '@/components/wealth-block/FearAwakeningShareCard';
+import BlockRevealShareCard from '@/components/wealth-block/BlockRevealShareCard';
+import TransformationValueShareCard from '@/components/wealth-block/TransformationValueShareCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
@@ -48,7 +51,7 @@ interface AwakeningData {
   newBelief?: string;
 }
 
-type CardTab = 'camp' | 'awakening' | 'milestone' | 'assessment' | 'growth' | 'aianalysis' | 'value' | 'achievement';
+type CardTab = 'camp' | 'awakening' | 'milestone' | 'assessment' | 'growth' | 'aianalysis' | 'value' | 'achievement' | 'fear' | 'blindspot' | 'transform';
 
 interface WealthInviteCardDialogProps {
   trigger?: React.ReactNode;
@@ -153,10 +156,13 @@ const getBestAwakening = (data: AwakeningData): { type: 'behavior' | 'emotion' |
 const CARD_TABS = [
   { id: 'aianalysis' as const, label: 'AI分析', emoji: '🤖' },
   { id: 'value' as const, label: '测评价值', emoji: '🎁' },
+  { id: 'fear' as const, label: '情绪锁', emoji: '🔓' },
+  { id: 'blindspot' as const, label: '盲区', emoji: '👁️' },
+  { id: 'transform' as const, label: '转变', emoji: '✨' },
   { id: 'camp' as const, label: '训练营', emoji: '🏕️' },
   { id: 'growth' as const, label: '成长海报', emoji: '📊' },
   { id: 'achievement' as const, label: '成就墙', emoji: '🏅' },
-  { id: 'awakening' as const, label: '今日觉醒', emoji: '✨' },
+  { id: 'awakening' as const, label: '今日觉醒', emoji: '🌟' },
   { id: 'milestone' as const, label: '里程碑', emoji: '🏆' },
 ];
 
@@ -209,6 +215,9 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const aiAnalysisCardRef = useRef<HTMLDivElement>(null);
   const valueCardRef = useRef<HTMLDivElement>(null);
   const achievementCardRef = useRef<HTMLDivElement>(null);
+  const fearCardRef = useRef<HTMLDivElement>(null);
+  const blindspotCardRef = useRef<HTMLDivElement>(null);
+  const transformCardRef = useRef<HTMLDivElement>(null);
   
   // Growth poster specific data
   const [growthData, setGrowthData] = useState<{
@@ -494,6 +503,9 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       case 'aianalysis': return aiAnalysisCardRef;
       case 'value': return valueCardRef;
       case 'achievement': return achievementCardRef;
+      case 'fear': return fearCardRef;
+      case 'blindspot': return blindspotCardRef;
+      case 'transform': return transformCardRef;
       default: return campCardRef;
     }
   };
@@ -508,6 +520,9 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       case 'aianalysis': return 'AI智能分析报告';
       case 'value': return '财富测评价值卡';
       case 'achievement': return '财富觉醒成就墙';
+      case 'fear': return '财富情绪锁诊断卡';
+      case 'blindspot': return '财富盲区测评卡';
+      case 'transform': return '财富觉醒之旅卡';
       default: return '邀请卡片';
     }
   };
@@ -677,9 +692,16 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as CardTab)}>
-          <TabsList className="grid w-full grid-cols-7">
-            {CARD_TABS.map(tab => (
-              <TabsTrigger key={tab.id} value={tab.id} className="text-[10px] px-1">
+          <TabsList className="grid w-full grid-cols-5 gap-0.5 h-auto p-1">
+            {CARD_TABS.slice(0, 5).map(tab => (
+              <TabsTrigger key={tab.id} value={tab.id} className="text-[10px] px-0.5 py-1.5">
+                {tab.emoji}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <TabsList className="grid w-full grid-cols-5 gap-0.5 h-auto p-1 mt-1">
+            {CARD_TABS.slice(5).map(tab => (
+              <TabsTrigger key={tab.id} value={tab.id} className="text-[10px] px-0.5 py-1.5">
                 {tab.emoji}
               </TabsTrigger>
             ))}
@@ -703,6 +725,45 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
               <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
                 <AssessmentValueShareCard 
                   ref={valueCardRef}
+                  avatarUrl={userInfo.avatarUrl}
+                  displayName={userInfo.displayName}
+                  partnerInfo={partnerInfo || undefined}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="fear" className="mt-4">
+            <div className="flex justify-center">
+              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+                <FearAwakeningShareCard 
+                  ref={fearCardRef}
+                  avatarUrl={userInfo.avatarUrl}
+                  displayName={userInfo.displayName}
+                  partnerInfo={partnerInfo || undefined}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="blindspot" className="mt-4">
+            <div className="flex justify-center">
+              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+                <BlockRevealShareCard 
+                  ref={blindspotCardRef}
+                  avatarUrl={userInfo.avatarUrl}
+                  displayName={userInfo.displayName}
+                  partnerInfo={partnerInfo || undefined}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="transform" className="mt-4">
+            <div className="flex justify-center">
+              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+                <TransformationValueShareCard 
+                  ref={transformCardRef}
                   avatarUrl={userInfo.avatarUrl}
                   displayName={userInfo.displayName}
                   partnerInfo={partnerInfo || undefined}
