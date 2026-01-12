@@ -178,9 +178,9 @@ export class MiniProgramAudioClient {
       duration: 60000, // 最长 60 秒
       sampleRate: 24000, // 24kHz 采样率（OpenAI 要求）
       numberOfChannels: 1, // 单声道
-      encodeBitRate: 48000,
+      encodeBitRate: 96000, // 提高码率，改善音质
       format: 'PCM', // PCM 格式
-      frameSize: 3, // 每帧 3KB，平衡延迟和网络开销
+      frameSize: 6, // 每帧 6KB，减少分片和网络开销
     });
   }
 
@@ -357,8 +357,8 @@ export class MiniProgramAudioClient {
       // 创建音频源
       this.webSource = this.webAudioContext.createMediaStreamSource(this.webMediaStream);
       
-      // 创建处理节点（每帧 4096 样本）
-      this.webProcessor = this.webAudioContext.createScriptProcessor(4096, 1, 1);
+      // 创建处理节点（每帧 8192 样本，减少数据碎片提升音质）
+      this.webProcessor = this.webAudioContext.createScriptProcessor(8192, 1, 1);
       
       this.webProcessor.onaudioprocess = (e) => {
         if (this.ws?.readyState !== WebSocket.OPEN) return;

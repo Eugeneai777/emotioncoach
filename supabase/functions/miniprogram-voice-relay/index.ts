@@ -103,9 +103,9 @@ Deno.serve(async (req) => {
             },
             turn_detection: {
               type: 'server_vad',
-              threshold: 0.5,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 500,
+              threshold: 0.4, // 降低阈值，更敏感捕捉语音
+              prefix_padding_ms: 400, // 增加前缀填充，保留更多语音起始
+              silence_duration_ms: 700, // 增加静默时长，减少语音被截断
             },
           },
         };
