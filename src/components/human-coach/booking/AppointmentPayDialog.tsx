@@ -20,6 +20,8 @@ interface AppointmentPayDialogProps {
   slot: CoachTimeSlot;
   userNotes: string;
   onSuccess: () => void;
+  /** 支付成功后跳转的页面路径，默认为当前页面 */
+  returnUrl?: string;
 }
 
 type PaymentStatus = 'loading' | 'pending' | 'success' | 'failed' | 'expired';
@@ -32,6 +34,7 @@ export function AppointmentPayDialog({
   slot,
   userNotes,
   onSuccess,
+  returnUrl,
 }: AppointmentPayDialogProps) {
   const [status, setStatus] = useState<PaymentStatus>('loading');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
@@ -152,7 +155,15 @@ export function AppointmentPayDialog({
 
   const handleH5Pay = () => {
     if (h5PayUrl) {
-      window.location.href = h5PayUrl;
+      // 使用传入的 returnUrl 或当前页面路径
+      const targetPath = returnUrl || window.location.pathname;
+      const redirectUrl = encodeURIComponent(
+        window.location.origin + targetPath + '?order=' + orderNo + '&payment_success=1'
+      );
+      const finalUrl = h5PayUrl.includes('redirect_url=')
+        ? h5PayUrl
+        : h5PayUrl + (h5PayUrl.includes('?') ? '&' : '?') + 'redirect_url=' + redirectUrl;
+      window.location.href = finalUrl;
     }
   };
 

@@ -16,6 +16,8 @@ interface AssessmentPayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: (userId: string) => void;
+  /** 支付成功后跳转的页面路径，默认为当前页面 */
+  returnUrl?: string;
 }
 
 type PaymentStatus = 'idle' | 'creating' | 'pending' | 'polling' | 'paid' | 'registering' | 'error';
@@ -24,6 +26,7 @@ export function AssessmentPayDialog({
   open,
   onOpenChange,
   onSuccess,
+  returnUrl,
 }: AssessmentPayDialogProps) {
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [orderNo, setOrderNo] = useState<string>('');
@@ -173,7 +176,15 @@ export function AssessmentPayDialog({
   // H5支付跳转
   const handleH5Pay = () => {
     if (payUrl) {
-      window.location.href = payUrl;
+      // 使用传入的 returnUrl 或当前页面路径
+      const targetPath = returnUrl || window.location.pathname;
+      const redirectUrl = encodeURIComponent(
+        window.location.origin + targetPath + '?order=' + orderNo + '&payment_success=1'
+      );
+      const finalUrl = payUrl.includes('redirect_url=')
+        ? payUrl
+        : payUrl + (payUrl.includes('?') ? '&' : '?') + 'redirect_url=' + redirectUrl;
+      window.location.href = finalUrl;
     }
   };
 

@@ -21,6 +21,8 @@ interface PaymentStepProps {
   partnerId?: string;
   onSuccess: (orderNo: string, paymentOpenId?: string) => void;
   onBack: () => void;
+  /** 支付成功后跳转的页面路径，默认为当前页面 */
+  returnUrl?: string;
 }
 
 type PaymentStatus = 'loading' | 'ready' | 'polling' | 'success' | 'failed' | 'expired';
@@ -30,7 +32,8 @@ export function PaymentStep({
   tempUserId,
   partnerId,
   onSuccess,
-  onBack
+  onBack,
+  returnUrl
 }: PaymentStepProps) {
   const [status, setStatus] = useState<PaymentStatus>('loading');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
@@ -145,8 +148,15 @@ export function PaymentStep({
 
   const handleH5Pay = () => {
     if (!h5Url) return;
-    const redirectUrl = encodeURIComponent(window.location.origin + '/payment-callback?order=' + orderNo);
-    window.location.href = h5Url + '&redirect_url=' + redirectUrl;
+    // 使用传入的 returnUrl 或当前页面路径
+    const targetPath = returnUrl || window.location.pathname;
+    const redirectUrl = encodeURIComponent(
+      window.location.origin + targetPath + '?order=' + orderNo + '&payment_success=1'
+    );
+    const finalUrl = h5Url.includes('redirect_url=')
+      ? h5Url
+      : h5Url + (h5Url.includes('?') ? '&' : '?') + 'redirect_url=' + redirectUrl;
+    window.location.href = finalUrl;
   };
 
   const handleCopyLink = async () => {
