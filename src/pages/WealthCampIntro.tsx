@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { ArrowLeft, Sparkles, Brain, MessageCircle, Share2, Gift, Heart, Target, Shield, Users, CheckCircle2, Clock, Zap, Home } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
@@ -18,6 +18,7 @@ import { AIMoatAnimation } from "@/components/wealth-block/AIMoatAnimation";
 
 const WealthCampIntro = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
@@ -27,9 +28,25 @@ const WealthCampIntro = () => {
   const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase("wealth_block_7");
   const hasPurchased = !!purchaseRecord;
 
-  // 埋点：页面加载时追踪
+  // 埋点：页面加载时追踪 + 扫码落地追踪
   useEffect(() => {
     trackAssessmentTocamp('camp_intro_viewed');
+    
+    // 扫码落地追踪：检查是否带有推荐码
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      trackEvent('share_scan_landed' as any, {
+        metadata: {
+          ref_code: refCode,
+          landing_page: '/wealth-camp-intro',
+          referrer: document.referrer,
+        }
+      });
+      // 存储到 localStorage 用于后续归因
+      localStorage.setItem('share_ref_code', refCode);
+      localStorage.setItem('share_landing_page', '/wealth-camp-intro');
+      localStorage.setItem('share_landing_time', Date.now().toString());
+    }
   }, []);
 
   // Check if user has already joined the camp

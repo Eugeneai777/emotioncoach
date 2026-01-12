@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, TrendingDown, Users, DollarSign, Target, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, DollarSign, Target, Calendar, Share2, MousePointerClick } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
 import { format, subDays, startOfDay } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -28,13 +28,22 @@ interface ConversionStats {
   monthlyRevenue: number;
 }
 
+interface ShareStats {
+  scanLanded: number;
+  scanConverted: number;
+  conversionRate: string;
+  topLandingPage: string;
+}
+
 export function PartnerAnalytics({ partnerId }: PartnerAnalyticsProps) {
   const [dailyData, setDailyData] = useState<DailyData[]>([]);
   const [stats, setStats] = useState<ConversionStats | null>(null);
+  const [shareStats, setShareStats] = useState<ShareStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadAnalytics();
+    loadShareStats();
   }, [partnerId]);
 
   const loadAnalytics = async () => {
@@ -132,6 +141,68 @@ export function PartnerAnalytics({ partnerId }: PartnerAnalyticsProps) {
     }
   };
 
+  // 加载分享效果统计
+  const loadShareStats = async () => {
+    try {
+      // 获取合伙人的 partner_code
+      const { data: partner } = await supabase
+        .from('partners')
+        .select('partner_code')
+        .eq('id', partnerId)
+        .single();
+      
+      if (!partner?.partner_code) return;
+      
+      const partnerCode = partner.partner_code;
+      
+      // 查询扫码落地事件
+      const { data: landedEvents } = await supabase
+        .from('conversion_events')
+        .select('metadata')
+        .eq('event_type', 'share_scan_landed')
+        .eq('feature_key', 'wealth_camp');
+      
+      // 查询扫码转化事件
+      const { data: convertedEvents } = await supabase
+        .from('conversion_events')
+        .select('metadata')
+        .eq('event_type', 'share_scan_converted')
+        .eq('feature_key', 'wealth_camp');
+      
+      // 过滤出当前合伙人的事件
+      const myLanded = landedEvents?.filter(e => 
+        (e.metadata as any)?.ref_code === partnerCode
+      ) || [];
+      
+      const myConverted = convertedEvents?.filter(e => 
+        (e.metadata as any)?.ref_code === partnerCode
+      ) || [];
+      
+      // 统计最热门落地页
+      const landingPages: Record<string, number> = {};
+      myLanded.forEach(e => {
+        const page = (e.metadata as any)?.landing_page || 'unknown';
+        landingPages[page] = (landingPages[page] || 0) + 1;
+      });
+      
+      const topLandingPage = Object.entries(landingPages)
+        .sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+      
+      const conversionRate = myLanded.length > 0 
+        ? ((myConverted.length / myLanded.length) * 100).toFixed(1)
+        : '0';
+      
+      setShareStats({
+        scanLanded: myLanded.length,
+        scanConverted: myConverted.length,
+        conversionRate: `${conversionRate}%`,
+        topLandingPage: topLandingPage.replace('/wealth-block', '测评页').replace('/wealth-camp-intro', '训练营'),
+      });
+    } catch (error) {
+      console.error('Load share stats error:', error);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -202,6 +273,42 @@ export function PartnerAnalytics({ partnerId }: PartnerAnalyticsProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* 分享效果统计 */}
+      {shareStats && (shareStats.scanLanded > 0 || shareStats.scanConverted > 0) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Share2 className="w-5 h-5 text-purple-500" />
+              分享效果
+            </CardTitle>
+            <CardDescription>扫码访问与转化数据</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="text-center p-3 bg-purple-50 rounded-lg">
+                <div className="flex items-center justify-center gap-1 text-purple-600 mb-1">
+                  <MousePointerClick className="w-4 h-4" />
+                </div>
+                <div className="text-xl font-bold text-purple-700">{shareStats.scanLanded}</div>
+                <div className="text-xs text-muted-foreground">扫码访问</div>
+              </div>
+              <div className="text-center p-3 bg-green-50 rounded-lg">
+                <div className="text-xl font-bold text-green-700">{shareStats.scanConverted}</div>
+                <div className="text-xs text-muted-foreground">转化人数</div>
+              </div>
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <div className="text-xl font-bold text-blue-700">{shareStats.conversionRate}</div>
+                <div className="text-xs text-muted-foreground">转化率</div>
+              </div>
+              <div className="text-center p-3 bg-amber-50 rounded-lg">
+                <div className="text-sm font-medium text-amber-700 truncate">{shareStats.topLandingPage}</div>
+                <div className="text-xs text-muted-foreground">热门入口</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 趋势图 */}
       <Card>

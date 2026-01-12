@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, Image, Copy, Check, Share2 } from 'lucide-react';
+import { Download, Image, Copy, Check, Share2, Edit3, ChevronDown } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
 import {
@@ -10,7 +10,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import WealthAssessmentShareCard from './WealthAssessmentShareCard';
 import WealthCampShareCard from './WealthCampShareCard';
 import WealthAwakeningShareCard from './WealthAwakeningShareCard';
@@ -18,6 +24,8 @@ import WealthMilestoneShareCard from './WealthMilestoneShareCard';
 import GraduationShareCard from './GraduationShareCard';
 import EnhancedGrowthPosterCard from './EnhancedGrowthPosterCard';
 import AchievementShareCard from './AchievementShareCard';
+import { ShareCardStyleSelector } from './ShareCardStyleSelector';
+import { CardStylePreset } from './shareCardStyles';
 import AIAnalysisShareCard from '@/components/wealth-block/AIAnalysisShareCard';
 import AssessmentValueShareCard from '@/components/wealth-block/AssessmentValueShareCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
@@ -181,6 +189,12 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   // Achievement share card settings
   const [achievementPath, setAchievementPath] = useState<string | null>(null);
   const [achievementStyle, setAchievementStyle] = useState<'dark' | 'gradient' | 'minimal' | 'neon'>('dark');
+  
+  // Card customization settings
+  const [customTitle, setCustomTitle] = useState<string>('');
+  const [customSubtitle, setCustomSubtitle] = useState<string>('');
+  const [cardStyle, setCardStyle] = useState<CardStylePreset>('default');
+  const [customizeOpen, setCustomizeOpen] = useState(false);
   
   // Get awakening progress for graduation card
   const { progress: awakeningProgress, currentLevel } = useAwakeningProgress();
@@ -875,6 +889,42 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* 卡片自定义面板 */}
+        <Collapsible open={customizeOpen} onOpenChange={setCustomizeOpen} className="mt-4">
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="w-full gap-2 text-muted-foreground">
+              <Edit3 className="w-4 h-4" />
+              自定义卡片
+              <ChevronDown className={`w-4 h-4 transition-transform ${customizeOpen ? 'rotate-180' : ''}`} />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-3 space-y-3 px-1">
+            <ShareCardStyleSelector
+              selectedStyle={cardStyle}
+              onStyleChange={setCardStyle}
+            />
+            <div className="space-y-2">
+              <Input
+                placeholder="自定义标题（可选）"
+                value={customTitle}
+                onChange={(e) => setCustomTitle(e.target.value)}
+                maxLength={20}
+                className="text-sm"
+              />
+              <Input
+                placeholder="自定义副标题（可选）"
+                value={customSubtitle}
+                onChange={(e) => setCustomSubtitle(e.target.value)}
+                maxLength={30}
+                className="text-sm"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              提示：自定义内容仅影响部分卡片类型
+            </p>
+          </CollapsibleContent>
+        </Collapsible>
 
         <div className="flex gap-2 mt-4">
           <Button

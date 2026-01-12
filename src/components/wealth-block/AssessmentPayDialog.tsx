@@ -106,6 +106,36 @@ export function AssessmentPayDialog({
           setPaymentOpenId(data.openId); // 获取支付时的openId
           setStatus('paid');
           
+          // 扫码转化追踪：测评购买转化（游客场景，记录到 conversion_events）
+          const shareRefCode = localStorage.getItem('share_ref_code');
+          if (shareRefCode) {
+            try {
+              const landingPage = localStorage.getItem('share_landing_page');
+              const landingTime = localStorage.getItem('share_landing_time');
+              const timeToConvert = landingTime ? Date.now() - parseInt(landingTime) : undefined;
+              
+              await supabase.from('conversion_events').insert({
+                event_type: 'share_scan_converted',
+                feature_key: 'wealth_camp',
+                user_id: null, // 游客购买，没有 user_id
+                visitor_id: localStorage.getItem('wealth_camp_visitor_id') || undefined,
+                metadata: {
+                  ref_code: shareRefCode,
+                  landing_page: landingPage,
+                  conversion_type: 'assessment_purchase',
+                  order_no: orderNumber,
+                  amount: 9.9,
+                  time_to_convert_ms: timeToConvert,
+                  timestamp: new Date().toISOString(),
+                }
+              });
+              
+              // 注意：不清理 localStorage，因为后续注册时还需要关联
+            } catch (error) {
+              console.error('Error tracking share conversion:', error);
+            }
+          }
+          
           // 短暂显示成功状态后进入注册流程
           setTimeout(() => {
             setStatus('registering');
