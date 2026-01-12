@@ -18,6 +18,8 @@ interface AssessmentPayDialogProps {
   onSuccess: (userId: string) => void;
   /** 支付成功后跳转的页面路径，默认为当前页面 */
   returnUrl?: string;
+  /** 当前登录用户ID，如果已登录则直接跳过注册 */
+  userId?: string;
 }
 
 type PaymentStatus = 'idle' | 'creating' | 'pending' | 'polling' | 'paid' | 'registering' | 'error';
@@ -27,6 +29,7 @@ export function AssessmentPayDialog({
   onOpenChange,
   onSuccess,
   returnUrl,
+  userId,
 }: AssessmentPayDialogProps) {
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [orderNo, setOrderNo] = useState<string>('');
@@ -56,7 +59,7 @@ export function AssessmentPayDialog({
           packageKey: 'wealth_block_assessment',
           packageName: '财富卡点测评',
           amount: 9.9,
-          userId: 'guest', // 游客订单
+          userId: userId || 'guest', // 使用真实用户ID或游客
           payType: isWechat ? 'h5' : 'native',
         }
       });
@@ -109,7 +112,7 @@ export function AssessmentPayDialog({
           setPaymentOpenId(data.openId); // 获取支付时的openId
           setStatus('paid');
           
-          // 扫码转化追踪：测评购买转化（游客场景，记录到 conversion_events）
+          // 扫码转化追踪：测评购买转化
           const shareRefCode = localStorage.getItem('share_ref_code');
           if (shareRefCode) {
             try {
@@ -120,7 +123,7 @@ export function AssessmentPayDialog({
               await supabase.from('conversion_events').insert({
                 event_type: 'share_scan_converted',
                 feature_key: 'wealth_camp',
-                user_id: null, // 游客购买，没有 user_id
+                user_id: userId || null, // 使用真实用户ID或null
                 visitor_id: localStorage.getItem('wealth_camp_visitor_id') || undefined,
                 metadata: {
                   ref_code: shareRefCode,
@@ -139,10 +142,20 @@ export function AssessmentPayDialog({
             }
           }
           
-          // 短暂显示成功状态后进入注册流程
-          setTimeout(() => {
-            setStatus('registering');
-          }, 1500);
+          // 根据用户登录状态分流处理
+          if (userId) {
+            // 已登录用户：直接成功，开始测评
+            toast.success('支付成功！');
+            setTimeout(() => {
+              onSuccess(userId);
+              onOpenChange(false);
+            }, 1500);
+          } else {
+            // 游客用户：进入注册流程
+            setTimeout(() => {
+              setStatus('registering');
+            }, 1500);
+          }
         }
       } catch (error) {
         console.error('Polling error:', error);
@@ -304,7 +317,9 @@ export function AssessmentPayDialog({
                 <CheckCircle className="w-10 h-10 text-green-500" />
               </div>
               <p className="text-lg font-semibold text-green-600">支付成功！</p>
-              <p className="text-sm text-muted-foreground mt-2">正在进入注册...</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                {userId ? '即将开始测评...' : '正在进入注册...'}
+              </p>
             </div>
           )}
 

@@ -485,7 +485,8 @@ export default function WealthBlockAssessmentPage() {
       <AssessmentPayDialog
         open={showPayDialog}
         onOpenChange={setShowPayDialog}
-        onSuccess={(userId) => {
+        userId={user?.id}
+        onSuccess={(returnedUserId) => {
           // 支付+注册成功，开始测评
           setShowIntro(false);
           setShowPayDialog(false);
