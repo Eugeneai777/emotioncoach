@@ -83,7 +83,7 @@ export const VoiceCallCTA = ({ onVoiceChatClick }: VoiceCallCTAProps) => {
           
           {/* 品牌文字 */}
           <span className="text-white font-bold text-2xl tracking-wide text-center">有劲AI</span>
-          <span className="text-white/90 text-base mt-2 text-center max-w-[85%] px-2">每个人的生活教练</span>
+          <span className="text-white/90 text-base mt-2 text-center max-w-[85%] px-2">生活教练</span>
         </div>
       </button>
       
