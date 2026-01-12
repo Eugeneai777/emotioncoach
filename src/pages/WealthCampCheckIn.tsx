@@ -522,9 +522,7 @@ ${reflection}`;
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="today">今日任务</TabsTrigger>
-            <TabsTrigger value="coaching" disabled={!meditationCompleted && !makeupDayNumber}>
-              教练对话
-            </TabsTrigger>
+            <TabsTrigger value="coaching">教练对话</TabsTrigger>
             <TabsTrigger value="archive">成长档案</TabsTrigger>
           </TabsList>
 
@@ -789,42 +787,65 @@ ${reflection}`;
 
           {/* 教练对话 Tab */}
           <TabsContent value="coaching" className="mt-6">
-            {makeupDayNumber && (
-              <div className="mb-4 p-3 rounded-lg bg-amber-100 border border-amber-300 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-amber-600">📅</span>
-                  <span className="text-sm font-medium text-amber-800">
-                    正在补打 Day {makeupDayNumber} 的卡
-                  </span>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-amber-600 hover:text-amber-800"
-                  onClick={() => setMakeupDayNumber(null)}
-                >
-                  取消补卡
-                </Button>
-              </div>
+            {!meditationCompleted && !makeupDayNumber ? (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium">教练对话将基于你的冥想感受进行梳理</div>
+                    <div className="text-xs text-muted-foreground">
+                      先完成今日冥想后再进入对话；历史内容请到「成长档案 → 财富简报」查看。
+                    </div>
+                    <div className="pt-2">
+                      <Button onClick={() => {
+                        setActiveTab('today');
+                        scrollToMeditation();
+                      }}>
+                        去完成今日冥想
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {makeupDayNumber && (
+                  <div className="mb-4 p-3 rounded-lg bg-amber-100 border border-amber-300 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-600">📅</span>
+                      <span className="text-sm font-medium text-amber-800">
+                        正在补打 Day {makeupDayNumber} 的卡
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-amber-600 hover:text-amber-800"
+                      onClick={() => setMakeupDayNumber(null)}
+                    >
+                      取消补卡
+                    </Button>
+                  </div>
+                )}
+                <WealthCoachEmbedded
+                  key={`wealth-coach-${campId}-${makeupDayNumber ?? currentDay}`}
+                  initialMessage={makeupDayNumber ? getMeditationContext(makeupDayNumber) : getMeditationContext()}
+                  campId={campId || ''}
+                  dayNumber={makeupDayNumber || currentDay}
+                  meditationTitle={makeupDayNumber ? undefined : meditation?.title}
+                  onCoachingComplete={() => {
+                    handleCoachingComplete();
+                    if (makeupDayNumber) {
+                      toast({
+                        title: "补卡成功",
+                        description: `Day ${makeupDayNumber} 的打卡已完成`,
+                      });
+                      setMakeupDayNumber(null);
+                      queryClient.invalidateQueries({ queryKey: ['wealth-camp', urlCampId] });
+                    }
+                  }}
+                />
+              </>
             )}
-            <WealthCoachEmbedded
-              key={`wealth-coach-${campId}-${makeupDayNumber ?? currentDay}`}
-              initialMessage={makeupDayNumber ? getMeditationContext(makeupDayNumber) : getMeditationContext()}
-              campId={campId || ''}
-              dayNumber={makeupDayNumber || currentDay}
-              meditationTitle={makeupDayNumber ? undefined : meditation?.title}
-              onCoachingComplete={() => {
-                handleCoachingComplete();
-                if (makeupDayNumber) {
-                  toast({
-                    title: "补卡成功",
-                    description: `Day ${makeupDayNumber} 的打卡已完成`,
-                  });
-                  setMakeupDayNumber(null);
-                  queryClient.invalidateQueries({ queryKey: ['wealth-camp', urlCampId] });
-                }
-              }}
-            />
           </TabsContent>
 
           {/* 成长档案 Tab - 合并原 archive 和 journal */}
