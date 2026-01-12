@@ -73,8 +73,6 @@ export const useQuickMenuConfig = () => {
       // Wealth coach legacy paths
       '/wealth-coach': '/coach/wealth_coach_4_questions',
       '/coach/wealth': '/coach/wealth_coach_4_questions',
-      // Coach space legacy path - now defaults to wealth coach
-      '/coach-space': '/coach/wealth_coach_4_questions',
       // Awakening legacy paths (if ever persisted)
       '/wealth-block': '/awakening',
     };
