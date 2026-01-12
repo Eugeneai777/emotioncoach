@@ -98,6 +98,7 @@ import BloomPartnerTerms from "./pages/BloomPartnerTerms";
 import CoachSpace from "./pages/CoachSpace";
 import CoachSpaceIntro from "./pages/CoachSpaceIntro";
 import { GlobalRefTracker } from "./hooks/useGlobalRefTracking";
+import { GlobalPaymentCallback } from "./components/GlobalPaymentCallback";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <GlobalRefTracker />
+          <GlobalPaymentCallback />
           <FloatingVoiceButton />
           <FloatingQuickMenu />
           <Routes>
