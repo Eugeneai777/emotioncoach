@@ -197,9 +197,9 @@ const EnergyStudio = () => {
 
       {/* Main Content */}
       <main className="container max-w-6xl mx-auto px-4 py-8">
-        {/* 一级导航菜单 */}
-        <div className="flex justify-center mb-6 px-2">
-          <div className="grid w-full max-w-4xl grid-cols-3 sm:grid-cols-5 bg-card/50 backdrop-blur-sm rounded-2xl sm:rounded-full p-1 sm:p-1.5 border shadow-sm gap-1">
+        {/* 一级导航菜单 - 5等分紧凑布局 */}
+        <div className="flex justify-center mb-4 sm:mb-6 px-1 sm:px-2">
+          <div className="grid w-full max-w-4xl grid-cols-5 bg-card/50 backdrop-blur-sm rounded-xl sm:rounded-full p-0.5 sm:p-1.5 border shadow-sm gap-0.5 sm:gap-1">
             {primaryMenuItems.map(item => <Button key={item.id} variant={primaryTab === item.id ? "default" : "ghost"} onClick={() => {
             if (item.route) {
               navigate(item.route);
@@ -207,9 +207,9 @@ const EnergyStudio = () => {
               setPrimaryTab(item.id);
               setActiveTool(null);
             }
-          }} className={cn("rounded-xl sm:rounded-full py-2 sm:py-2.5 px-1.5 sm:px-3 gap-1 transition-all duration-300 text-xs flex-col sm:flex-row h-auto min-h-[44px] sm:min-h-0", primaryTab === item.id && "bg-gradient-to-r from-primary to-warm text-white shadow-lg")}>
-                <span className="text-base sm:text-sm">{item.emoji}</span>
-                <span className="text-[10px] sm:text-sm whitespace-nowrap">{item.label}</span>
+          }} className={cn("rounded-lg sm:rounded-full py-1.5 sm:py-2.5 px-0.5 sm:px-3 gap-0.5 sm:gap-1 transition-all duration-300 flex-col sm:flex-row h-auto min-h-[48px] sm:min-h-0", primaryTab === item.id && "bg-gradient-to-r from-primary to-warm text-white shadow-lg")}>
+                <span className="text-sm sm:text-base">{item.emoji}</span>
+                <span className="text-[9px] sm:text-sm whitespace-nowrap font-medium">{item.label}</span>
               </Button>)}
           </div>
         </div>
@@ -226,19 +226,15 @@ const EnergyStudio = () => {
             {renderTool()}
           </div> : <>
         <Tabs value={activeTab} onValueChange={v => setActiveTab(v as typeof activeTab)} className="w-full">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 mb-8 h-auto p-1.5 bg-card/50 backdrop-blur-sm rounded-full">
-            {categories.map(category => <TabsTrigger key={category.id} value={category.id} className={cn("rounded-full transition-all duration-300 gap-2 py-2.5 px-4", "data-[state=active]:text-white data-[state=active]:shadow-lg", category.id === "emotion" && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500", category.id === "exploration" && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-emerald-500", category.id === "management" && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-yellow-500")}>
-                {category.emoji} {category.name}
+          <TabsList className="grid w-full max-w-md sm:max-w-2xl mx-auto grid-cols-3 mb-4 sm:mb-8 h-auto p-1 sm:p-1.5 bg-card/50 backdrop-blur-sm rounded-xl sm:rounded-full">
+            {categories.map(category => <TabsTrigger key={category.id} value={category.id} className={cn("rounded-lg sm:rounded-full transition-all duration-300 gap-1 sm:gap-2 py-2 sm:py-2.5 px-2 sm:px-4 text-xs sm:text-sm", "data-[state=active]:text-white data-[state=active]:shadow-lg", category.id === "emotion" && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500", category.id === "exploration" && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-emerald-500", category.id === "management" && "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-yellow-500")}>
+                <span>{category.emoji}</span>
+                <span className="hidden xs:inline">{category.name}</span>
               </TabsTrigger>)}
           </TabsList>
 
-          <div className="mb-8 text-center space-y-2">
-            
-            <div className="flex items-center justify-center gap-2">
-              <div className="h-px w-12 bg-gradient-to-r from-transparent to-border"></div>
-              <p className="text-muted-foreground">{getCategoryDescription(activeTab)}</p>
-              <div className="h-px w-12 bg-gradient-to-l from-transparent to-border"></div>
-            </div>
+          <div className="mb-4 sm:mb-8 text-center">
+            <p className="text-xs sm:text-sm text-muted-foreground">{getCategoryDescription(activeTab)}</p>
           </div>
 
           {/* 情绪按钮作为核心工具置顶显示 */}
@@ -254,30 +250,30 @@ const EnergyStudio = () => {
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
               </div>}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {filteredTools.map((tool, index) => {
-                  return <Card key={tool.id} className={`group cursor-pointer bg-white/70 backdrop-blur-sm border hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 hover:shadow-xl rounded-2xl overflow-hidden animate-fade-in ${tool.tool_id === 'declaration' ? 'ring-2 ring-primary/20' : ''}`} style={{
+                  return <Card key={tool.id} className={`group cursor-pointer bg-white/70 backdrop-blur-sm border hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-300 hover:shadow-lg rounded-xl overflow-hidden animate-fade-in ${tool.tool_id === 'declaration' ? 'ring-2 ring-primary/20' : ''}`} style={{
                     animationDelay: `${index * 50}ms`
                   }} onClick={() => handleToolClick(tool.tool_id)}>
                     <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
                     
-                    <CardHeader className="relative pb-3">
-                      <div className="flex items-start gap-4">
-                        <div className={`p-3.5 rounded-xl bg-gradient-to-br ${tool.gradient} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                    <CardHeader className="relative pb-2 pt-3 px-3 sm:px-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2.5 sm:p-3 rounded-lg bg-gradient-to-br ${tool.gradient} text-white shadow-md group-hover:scale-105 transition-transform duration-300`}>
                           {getIcon(tool.icon_name)}
                         </div>
-                        <div className="flex-1">
-                          <CardTitle className="text-lg group-hover:text-primary transition-colors flex items-center gap-2 flex-wrap">
-                            {tool.title}
-                            {tool.tool_id === 'declaration' && <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-sm sm:text-base group-hover:text-primary transition-colors flex items-center gap-2">
+                            <span className="truncate">{tool.title}</span>
+                            {tool.tool_id === 'declaration' && <span className="text-[10px] sm:text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-1.5 py-0.5 rounded-full shrink-0">
                                 推荐
                               </span>}
                           </CardTitle>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="relative pt-0">
-                      <CardDescription className="text-sm leading-relaxed line-clamp-2">
+                    <CardContent className="relative pt-0 pb-3 px-3 sm:px-4">
+                      <CardDescription className="text-xs sm:text-sm leading-relaxed line-clamp-1 sm:line-clamp-2">
                         {tool.description}
                       </CardDescription>
                     </CardContent>
