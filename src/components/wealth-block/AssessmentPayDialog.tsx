@@ -204,10 +204,11 @@ export function AssessmentPayDialog({
        // - 其他：Native
        let selectedPayType: 'jsapi' | 'h5' | 'native';
 
-       const wechatEnv = isMiniProgram || isWechat;
-       const shouldTryJsapi = wechatEnv && !!userOpenId;
-
-       if (shouldTryJsapi) {
+       // 小程序环境：直接使用小程序原生支付（跳过 JSAPI 检测）
+       if (isMiniProgram) {
+         selectedPayType = 'jsapi'; // 标记为 jsapi 以便后续走 triggerMiniProgramNativePay 分支
+       } else if (isWechat && !!userOpenId) {
+         // 微信浏览器：检测 WeixinJSBridge
          const bridgeReady = await new Promise<boolean>((resolve) => {
            if (typeof window.WeixinJSBridge !== 'undefined') return resolve(true);
            let done = false;
@@ -226,15 +227,8 @@ export function AssessmentPayDialog({
            document.addEventListener('onWeixinJSBridgeReady', onReady as any, false);
          });
 
-         if (bridgeReady) {
-           selectedPayType = 'jsapi';
-         } else {
-           if (isMiniProgram) {
-             toast.info('小程序内未检测到支付弹窗能力，已切换为扫码支付');
-           }
-           selectedPayType = 'native';
-         }
-       } else if (isMobile && !wechatEnv) {
+         selectedPayType = bridgeReady ? 'jsapi' : 'native';
+       } else if (isMobile && !isWechat) {
          selectedPayType = 'h5';
        } else {
          selectedPayType = 'native';
