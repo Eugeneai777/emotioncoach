@@ -302,6 +302,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           userId: user.id,
           payType: selectedPayType,
           openId: selectedPayType === 'jsapi' ? userOpenId : undefined,
+          isMiniProgram: isMiniProgram, // 传递小程序环境标识
         },
       });
 
