@@ -222,15 +222,21 @@ serve(async (req) => {
 
     console.log('User mapping saved for:', tokenData.openid);
 
-    // 更新 profiles 表的 auth_provider、display_name、avatar_url，并默认启用微信公众号推送
+    // 更新 profiles 表的 auth_provider、display_name、avatar_url
+    // 只有首次注册的微信用户才默认启用公众号推送，已有用户登录不覆盖其设置
+    const profileUpdateData: Record<string, unknown> = { 
+      auth_provider: 'wechat',
+      display_name: userInfo.nickname,
+      avatar_url: userInfo.headimgurl
+    };
+    
+    if (isNewUser) {
+      profileUpdateData.smart_notification_enabled = true;  // 首次注册微信用户默认启用公众号推送
+    }
+    
     const { error: profileUpdateError } = await supabaseClient
       .from('profiles')
-      .update({ 
-        auth_provider: 'wechat',
-        display_name: userInfo.nickname,
-        avatar_url: userInfo.headimgurl,
-        smart_notification_enabled: true  // 微信用户默认启用公众号推送
-      })
+      .update(profileUpdateData)
       .eq('id', finalUserId);
 
     if (profileUpdateError) {
