@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, Loader2, Check, ImageIcon, Maximize2, Minimize2 } from "lucide-react";
+import { Upload, Loader2, Check, ImageIcon, Maximize2, Minimize2, AlignHorizontalJustifyEnd } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useUpsertOGConfiguration } from "@/hooks/useOGConfigurations";
@@ -57,7 +57,7 @@ const parseUploadError = (error: any): string => {
   return message;
 };
 
-type ResizeMode = 'contain' | 'cover';
+type ResizeMode = 'contain' | 'cover' | 'partial';
 
 interface OGBatchUploadProps {
   open: boolean;
@@ -109,7 +109,7 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
             offsetX = (targetWidth - drawWidth) / 2;
             offsetY = 0;
           }
-        } else {
+        } else if (mode === 'cover') {
           // Cover 模式：填满画布，裁剪多余部分
           if (imgRatio > targetRatio) {
             drawHeight = targetHeight;
@@ -122,6 +122,21 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
             offsetX = 0;
             offsetY = (targetHeight - drawHeight) / 2;
           }
+        } else {
+          // Partial 模式：图片缩小居右，左侧留白
+          const scaleFactor = 0.6;
+          drawHeight = targetHeight * scaleFactor;
+          drawWidth = img.width * (drawHeight / img.height);
+          
+          // 如果宽度超出画布，则以宽度为准重新计算
+          if (drawWidth > targetWidth * 0.5) {
+            drawWidth = targetWidth * 0.5;
+            drawHeight = img.height * (drawWidth / img.width);
+          }
+          
+          // 右对齐，垂直居中
+          offsetX = targetWidth - drawWidth - 50;
+          offsetY = (targetHeight - drawHeight) / 2;
         }
 
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
@@ -202,7 +217,7 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
             offsetX = (targetWidth - drawWidth) / 2;
             offsetY = 0;
           }
-        } else {
+        } else if (mode === 'cover') {
           // Cover 模式：填满画布，裁剪多余部分
           if (imgRatio > targetRatio) {
             drawHeight = targetHeight;
@@ -215,6 +230,21 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
             offsetX = 0;
             offsetY = (targetHeight - drawHeight) / 2;
           }
+        } else {
+          // Partial 模式：图片缩小居右，左侧留白
+          const scaleFactor = 0.6;
+          drawHeight = targetHeight * scaleFactor;
+          drawWidth = img.width * (drawHeight / img.height);
+          
+          // 如果宽度超出画布，则以宽度为准重新计算
+          if (drawWidth > targetWidth * 0.5) {
+            drawWidth = targetWidth * 0.5;
+            drawHeight = img.height * (drawWidth / img.width);
+          }
+          
+          // 右对齐，垂直居中
+          offsetX = targetWidth - drawWidth - 50;
+          offsetY = (targetHeight - drawHeight) / 2;
         }
 
         // 绘制图片
@@ -341,7 +371,7 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
             <div className="text-sm">
               <p className="font-medium">缩放模式</p>
               <p className="text-xs text-muted-foreground">
-                {resizeMode === 'contain' ? '完整显示，背景填充' : '填满画布，裁剪多余'}
+                {resizeMode === 'contain' ? '完整显示，背景填充' : resizeMode === 'cover' ? '填满画布，裁剪多余' : '缩小居右，左侧留白'}
               </p>
             </div>
             <ToggleGroup 
@@ -350,13 +380,17 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
               onValueChange={(value) => value && setResizeMode(value as ResizeMode)}
               className="bg-background rounded-md"
             >
-              <ToggleGroupItem value="contain" aria-label="Contain 模式" className="gap-1.5 px-3">
+              <ToggleGroupItem value="contain" aria-label="Contain 模式" className="gap-1.5 px-2.5">
                 <Minimize2 className="h-4 w-4" />
                 <span className="text-xs">Contain</span>
               </ToggleGroupItem>
-              <ToggleGroupItem value="cover" aria-label="Cover 模式" className="gap-1.5 px-3">
+              <ToggleGroupItem value="cover" aria-label="Cover 模式" className="gap-1.5 px-2.5">
                 <Maximize2 className="h-4 w-4" />
                 <span className="text-xs">Cover</span>
+              </ToggleGroupItem>
+              <ToggleGroupItem value="partial" aria-label="Partial 模式" className="gap-1.5 px-2.5">
+                <AlignHorizontalJustifyEnd className="h-4 w-4" />
+                <span className="text-xs">Partial</span>
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
@@ -379,7 +413,7 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  预览 (1200×630，{resizeMode === 'contain' ? 'Contain 模式 - 完整显示' : 'Cover 模式 - 裁剪填满'})
+                  预览 (1200×630，{resizeMode === 'contain' ? 'Contain - 完整显示' : resizeMode === 'cover' ? 'Cover - 裁剪填满' : 'Partial - 缩小居右'})
                 </p>
                 <p className="text-xs text-primary/70 font-mono">
                   📁 og-{safeSlug(productLine)}-series-*.png
