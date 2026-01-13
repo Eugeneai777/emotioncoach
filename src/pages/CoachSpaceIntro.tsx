@@ -88,9 +88,9 @@ const CoachSpaceIntro = () => {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 pb-[env(safe-area-inset-bottom)]">
       <Helmet>
         <title>教练空间介绍 - 有劲AI</title>
-        <meta name="description" content="了解有劲AI教练空间如何帮助你成长" />
+        <meta name="description" content="7位AI教练24小时在线，专业陪伴你成长" />
         <meta property="og:title" content="有劲AI • 教练空间" />
-        <meta property="og:description" content="24小时在线、隐私安全、专业陪伴的AI教练团队" />
+        <meta property="og:description" content="7位AI教练24小时在线，专业陪伴你成长" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/coach-space-intro" />
         <meta property="og:site_name" content="有劲AI" />

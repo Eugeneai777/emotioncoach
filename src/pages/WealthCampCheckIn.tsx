@@ -481,9 +481,9 @@ ${reflection}`;
       <>
         <Helmet>
           <title>财富日记 - 有劲AI</title>
-          <meta name="description" content="每天15分钟，觉察财富卡点，开启觉醒之旅" />
+          <meta name="description" content="每天15分钟，觉察财富卡点" />
           <meta property="og:title" content="有劲AI • 财富日记" />
-          <meta property="og:description" content="AI教练陪伴，每日觉察打卡，见证你的成长蜕变" />
+          <meta property="og:description" content="每天15分钟，觉察财富卡点" />
           <meta property="og:image" content="https://wechat.eugenewe.net/og-wealth-coach.png" />
           <meta property="og:url" content="https://wechat.eugenewe.net/wealth-camp-checkin" />
           <meta property="og:site_name" content="有劲AI" />

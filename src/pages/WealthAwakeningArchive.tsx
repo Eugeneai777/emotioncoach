@@ -252,10 +252,10 @@ export default function WealthAwakeningArchive() {
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20">
       <Helmet>
         <title>财富觉醒档案 - 有劲AI</title>
-        <meta name="description" content="收录你的每一个觉醒时刻" />
+        <meta name="description" content="见证你的财富觉醒之旅" />
         <meta property="og:title" content="有劲AI • 成长档案" />
-        <meta property="og:description" content="财富觉醒之旅，见证你的成长蜕变" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:description" content="见证你的财富觉醒之旅" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-wealth-coach.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/wealth-awakening-archive" />
         <meta property="og:site_name" content="有劲AI" />
       </Helmet>

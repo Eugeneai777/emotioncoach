@@ -424,7 +424,7 @@ ${briefingData.growth_story || '暂无记录'}
     <>
       <Helmet>
         <title>亲子教练 - 有劲AI</title>
-        <meta name="description" content="化解亲子情绪困扰，改善家庭关系" />
+        <meta name="description" content="父母先稳，孩子才愿意走向你" />
         <meta property="og:title" content="有劲AI • 亲子教练" />
         <meta property="og:description" content="父母先稳，孩子才愿意走向你" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-parent-coach.png" />

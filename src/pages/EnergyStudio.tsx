@@ -138,9 +138,9 @@ const EnergyStudio = () => {
     <div className="min-h-screen bg-background">
       <Helmet>
         <title>有劲生活馆 - 有劲AI</title>
-        <meta name="description" content="多种情绪工具，随时调节你的能量状态" />
+        <meta name="description" content="多种成长工具，随时调节你的能量" />
         <meta property="og:title" content="有劲AI • 有劲生活馆" />
-        <meta property="og:description" content="情绪急救、情绪日记、冥想引导等多种工具" />
+        <meta property="og:description" content="多种成长工具，随时调节你的能量" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/energy-studio" />
         <meta property="og:site_name" content="有劲AI" />
