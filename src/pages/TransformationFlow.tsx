@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Sparkles, Eye, Heart, Lightbulb, Target, RefreshCw, MessageCircle, Users, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 // 六大入口
 const sixEntries = [
@@ -34,15 +34,7 @@ const TransformationFlow: React.FC = () => {
 
   return (
     <>
-      <Helmet>
-        <title>四层支持系统 - 有劲AI</title>
-        <meta name="description" content="有劲AI用四层方式陪你，从轻轻开始，到真正改变发生" />
-        <meta property="og:title" content="有劲AI • 四层支持系统" />
-        <meta property="og:description" content="从觉察→理解→行动→转化，AI教练陪你走完成长闭环" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/transformation-flow" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="transformationFlow" />
 
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-background to-orange-50/30">
         {/* Header */}

@@ -12,7 +12,7 @@ import { useCoachProfile } from "@/hooks/useCoachDashboard";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 const SPECIALTIES = [
   "全部",
@@ -47,15 +47,7 @@ export default function HumanCoaches() {
   
   return (
     <>
-      <Helmet>
-        <title>真人教练 - 有劲AI</title>
-        <meta name="description" content="一对一专属咨询服务，找到适合你的教练" />
-        <meta property="og:title" content="有劲AI • 真人教练" />
-        <meta property="og:description" content="专业认证教练，一对一深度咨询，助你突破成长瓶颈" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/human-coaches" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="humanCoaches" />
       <PageTour
         steps={pageTourConfig.human_coaches}
         open={showTour}

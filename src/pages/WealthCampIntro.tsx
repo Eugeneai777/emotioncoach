@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ArrowLeft, Sparkles, Brain, MessageCircle, Share2, Gift, Heart, Target, Shield, Users, CheckCircle2, Clock, Zap, Home } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -147,18 +147,7 @@ const WealthCampIntro = () => {
 
   return (
     <>
-      <Helmet>
-        <title>财富觉醒训练营 - 有劲AI</title>
-        <meta name="description" content="7天看见财富卡点，开启觉醒之旅" />
-        <meta name="keywords" content="财富觉醒,财富训练营,财富教练,金钱观,财富信念,有劲AI" />
-        <meta property="og:title" content="有劲AI • 财富觉醒训练营" />
-        <meta property="og:description" content="7天看见财富卡点，开启觉醒之旅" />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/wealth-camp-intro" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-wealth-camp.png" />
-        <meta property="og:site_name" content="有劲AI" />
-        <link rel="canonical" href="https://wechat.eugenewe.net/wealth-camp-intro" />
-      </Helmet>
+      <DynamicOGMeta pageKey="wealthCampIntro" />
       <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">
       {/* Header - 使用统一的PageHeader */}
       <PageHeader 

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ArrowLeft, Info, History } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { emotionTypes, EmotionType } from "@/config/emotionReliefConfig";
@@ -26,15 +26,7 @@ const EmotionButton = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
-      <Helmet>
-        <title>情绪急救 - 有劲AI</title>
-        <meta name="description" content="情绪来袭时，这里有你的安全角落" />
-        <meta property="og:title" content="有劲AI • 情绪按钮" />
-        <meta property="og:description" content="情绪来袭时，这里有你的安全角落" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-emotion-coach.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/emotion-button" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="emotionButton" />
       {/* 装饰性背景元素 */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-20 -right-20 w-72 h-72 bg-teal-200/30 rounded-full blur-3xl" />

@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 interface PackageInfo {
   key: string;
@@ -56,15 +56,7 @@ export default function Packages() {
 
   return (
     <>
-      <Helmet>
-        <title>产品中心 - 有劲AI</title>
-        <meta name="description" content="选择适合您的产品，开启成长之旅" />
-        <meta property="og:title" content="有劲AI • 产品中心" />
-        <meta property="og:description" content="多种套餐选择，满足不同需求" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/packages" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="packages" />
       <PageTour
         steps={pageTourConfig.packages}
         open={showTour}

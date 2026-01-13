@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -192,15 +192,7 @@ export default function MyPosts() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 relative">
-      <Helmet>
-        <title>我的动态 - 有劲AI</title>
-        <meta name="description" content="查看和管理我发布的动态" />
-        <meta property="og:title" content="有劲AI • 我的发布" />
-        <meta property="og:description" content="记录成长，分享感悟" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/my-posts" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="myPosts" />
       {/* Pull to Refresh Indicator */}
       <PullToRefreshIndicator
         pullDistance={pullDistance}

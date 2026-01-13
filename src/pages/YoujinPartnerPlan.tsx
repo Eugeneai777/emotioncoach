@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { youjinPartnerLevels } from "@/config/partnerLevels";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 const YoujinPartnerPlan = () => {
   const navigate = useNavigate();
@@ -123,15 +123,7 @@ const YoujinPartnerPlan = () => {
     }
   };
   return <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
-      <Helmet>
-        <title>有劲合伙人计划 - 有劲AI</title>
-        <meta name="description" content="AI时代最佳副业，分享故事创造价值" />
-        <meta property="og:title" content="有劲AI • 有劲合伙人" />
-        <meta property="og:description" content="AI时代最佳副业，分享故事创造价值" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-partner.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/partner/youjin-plan" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="youjinPartnerPlan" />
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">

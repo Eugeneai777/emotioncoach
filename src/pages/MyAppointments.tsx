@@ -21,7 +21,7 @@ import { AppointmentCard } from "@/components/human-coach/AppointmentCard";
 import { ReviewDialog } from "@/components/human-coach/ReviewDialog";
 import { useCoachCallContext } from "@/components/coach-call/CoachCallProvider";
 import { toast } from "sonner";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 export default function MyAppointments() {
   const navigate = useNavigate();
@@ -142,15 +142,7 @@ export default function MyAppointments() {
 
   return (
     <>
-      <Helmet>
-        <title>我的预约 - 有劲AI</title>
-        <meta name="description" content="管理你的教练预约和咨询记录" />
-        <meta property="og:title" content="有劲AI • 我的预约" />
-        <meta property="og:description" content="一对一真人教练咨询预约管理" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/my-appointments" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="myAppointments" />
     <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b">
