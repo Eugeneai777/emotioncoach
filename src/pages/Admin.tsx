@@ -19,6 +19,7 @@ import CustomerServiceManagement from "@/components/admin/CustomerServiceManagem
 import FeatureCostManagement from "@/components/admin/FeatureCostManagement";
 import CostMonitorDashboard from "@/components/admin/CostMonitorDashboard";
 import ConversionAnalytics from "@/components/admin/ConversionAnalytics";
+import OGPreviewManagement from "@/components/admin/OGPreviewManagement";
 
 function AdminRoutes() {
   return (
@@ -39,6 +40,7 @@ function AdminRoutes() {
       <Route path="packages" element={<PackagesManagement />} />
       <Route path="sync" element={<SyncStatusDashboard />} />
       <Route path="service" element={<CustomerServiceManagement />} />
+      <Route path="og-preview" element={<OGPreviewManagement />} />
     </Routes>
   );
 }

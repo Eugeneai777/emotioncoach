@@ -21,7 +21,8 @@ import {
   TrendingUp,
   UserCheck,
   Flower2,
-  Wallet
+  Wallet,
+  Share2
 } from "lucide-react";
 import {
   Sidebar,
@@ -94,6 +95,7 @@ const NAV_GROUPS = [
     items: [
       { key: "packages", label: "套餐权益", path: "/admin/packages", icon: Package },
       { key: "partner-levels", label: "合伙人等级", path: "/admin/partner-levels", icon: Handshake },
+      { key: "og-preview", label: "OG预览", path: "/admin/og-preview", icon: Share2 },
       { key: "sync", label: "同步状态", path: "/admin/sync", icon: RefreshCw },
       { key: "service", label: "客服管理", path: "/admin/service", icon: Headphones }
     ]
