@@ -71,7 +71,50 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
   
   const upsertConfig = useUpsertOGConfiguration();
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  // 生成 contain 模式预览（与上传效果一致）
+  const generateContainPreview = useCallback((file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+        
+        const targetWidth = 1200;
+        const targetHeight = 630;
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
+        // 填充白色背景
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+        // Contain 模式：完整显示图片，居中
+        const imgRatio = img.width / img.height;
+        const targetRatio = targetWidth / targetHeight;
+        let drawWidth, drawHeight, offsetX, offsetY;
+
+        if (imgRatio > targetRatio) {
+          // 图片更宽 → 以宽度为准，高度留白
+          drawWidth = targetWidth;
+          drawHeight = img.height * (targetWidth / img.width);
+          offsetX = 0;
+          offsetY = (targetHeight - drawHeight) / 2;
+        } else {
+          // 图片更高 → 以高度为准，宽度留白
+          drawHeight = targetHeight;
+          drawWidth = img.width * (targetHeight / img.height);
+          offsetX = (targetWidth - drawWidth) / 2;
+          offsetY = 0;
+        }
+
+        ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  }, []);
+
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
@@ -81,14 +124,12 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
     }
 
     setFile(selectedFile);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setPreview(event.target?.result as string);
-    };
-    reader.readAsDataURL(selectedFile);
-  }, []);
+    // 生成 contain 模式预览
+    const croppedPreview = await generateContainPreview(selectedFile);
+    setPreview(croppedPreview);
+  }, [generateContainPreview]);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     const droppedFile = e.dataTransfer.files[0];
     if (!droppedFile?.type.startsWith('image/')) {
@@ -97,12 +138,10 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
     }
     
     setFile(droppedFile);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setPreview(event.target?.result as string);
-    };
-    reader.readAsDataURL(droppedFile);
-  }, []);
+    // 生成 contain 模式预览
+    const croppedPreview = await generateContainPreview(droppedFile);
+    setPreview(croppedPreview);
+  }, [generateContainPreview]);
 
   const resizeAndUpload = async (file: File, fileName: string): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -121,27 +160,31 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
         canvas.width = targetWidth;
         canvas.height = targetHeight;
 
-        // Calculate cover dimensions (fill entire canvas, crop excess)
+        // 填充白色背景
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+        // Contain 模式：完整显示图片，居中，不裁剪
         const imgRatio = img.width / img.height;
         const targetRatio = targetWidth / targetHeight;
 
         let drawWidth, drawHeight, offsetX, offsetY;
 
         if (imgRatio > targetRatio) {
-          // Image is wider - fit height, crop width
-          drawHeight = targetHeight;
-          drawWidth = img.width * (targetHeight / img.height);
-          offsetX = (targetWidth - drawWidth) / 2;
-          offsetY = 0;
-        } else {
-          // Image is taller - fit width, crop height
+          // 图片更宽 → 以宽度为准，高度留白
           drawWidth = targetWidth;
           drawHeight = img.height * (targetWidth / img.width);
           offsetX = 0;
           offsetY = (targetHeight - drawHeight) / 2;
+        } else {
+          // 图片更高 → 以高度为准，宽度留白
+          drawHeight = targetHeight;
+          drawWidth = img.width * (targetHeight / img.height);
+          offsetX = (targetWidth - drawWidth) / 2;
+          offsetY = 0;
         }
 
-        // Draw the image with cover scaling
+        // 绘制完整图片（居中）
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
 
         // Convert to blob
@@ -276,7 +319,7 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  预览 (自动调整为 1200×630，cover 模式)
+                  预览 (自动调整为 1200×630，contain 模式 - 完整显示)
                 </p>
                 <p className="text-xs text-primary/70 font-mono">
                   📁 og-{safeSlug(productLine)}-series-*.png
