@@ -7,6 +7,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUpsertOGConfiguration } from "@/hooks/useOGConfigurations";
 import { PAGE_OG_CONFIGS } from "@/config/ogConfig";
 
+// 产品线英文映射，用于生成存储友好的文件名
+const PRODUCT_LINE_CODES: Record<string, string> = {
+  '情绪教练': 'emotion',
+  '财富教练': 'wealth',
+  '亲子教练': 'parent',
+  '有劲生活': 'vibrant-life',
+  '会员套餐': 'membership',
+  '合伙人': 'partner',
+  '社区': 'community',
+  '课程': 'course',
+  '系统': 'system',
+  '青少年': 'teen',
+};
+
 interface OGBatchUploadProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -144,8 +158,9 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
     setProgress({ current: 0, total: pageKeys.length });
 
     try {
-      // Upload resized image once
-      const fileName = `og-${productLine}-series-${Date.now()}.png`;
+      // Upload resized image once with English filename
+      const productLineCode = PRODUCT_LINE_CODES[productLine] || 'general';
+      const fileName = `og-${productLineCode}-series-${Date.now()}.png`;
       const imageUrl = await resizeAndUpload(file, fileName);
       
       // Apply to all pages
