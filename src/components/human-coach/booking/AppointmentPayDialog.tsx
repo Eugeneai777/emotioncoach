@@ -168,7 +168,8 @@ export function AppointmentPayDialog({
   // 小程序原生支付桥接：H5 通过 postMessage 通知小程序侧调用 wx.requestPayment
   const invokeMiniProgramPay = useCallback((params: Record<string, string>) => {
     return new Promise<void>((resolve, reject) => {
-      const postMessage = window.wx?.miniProgram?.postMessage;
+      const mp = window.wx?.miniProgram as { postMessage?: (options: { data: any }) => void } | undefined;
+      const postMessage = mp?.postMessage;
       if (typeof postMessage !== 'function') {
         reject(new Error('小程序未接入原生支付桥接'));
         return;

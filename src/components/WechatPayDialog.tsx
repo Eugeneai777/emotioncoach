@@ -277,7 +277,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   // 小程序侧需要在 <web-view bindmessage> / webViewContext.onMessage 中接收 MINIPROGRAM_PAY_REQUEST 并回传 MINIPROGRAM_PAY_RESPONSE。
   const invokeMiniProgramPay = useCallback((params: Record<string, string>) => {
     return new Promise<void>((resolve, reject) => {
-      const postMessage = window.wx?.miniProgram?.postMessage;
+      const mp = window.wx?.miniProgram as { postMessage?: (options: { data: any }) => void } | undefined;
+      const postMessage = mp?.postMessage;
       if (typeof postMessage !== 'function') {
         reject(new Error('小程序未接入原生支付桥接'));
         return;
