@@ -12,7 +12,7 @@ import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
 import { isWeChatMiniProgram, isWeChatBrowser } from '@/utils/platform';
 
-// 声明 WeixinJSBridge 类型
+// 声明 WeixinJSBridge 类型（wx 类型已在 platform.ts 中声明）
 declare global {
   interface Window {
     WeixinJSBridge?: {
@@ -45,7 +45,7 @@ interface WechatPayDialogProps {
 
 type PaymentStatus = 'idle' | 'loading' | 'ready' | 'polling' | 'success' | 'failed' | 'expired';
 
-export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl, openId }: WechatPayDialogProps) {
+export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl, openId: propOpenId }: WechatPayDialogProps) {
   const { user } = useAuth();
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
@@ -55,6 +55,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [orderNo, setOrderNo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [payType, setPayType] = useState<'h5' | 'native' | 'jsapi'>('h5');
+  const [userOpenId, setUserOpenId] = useState<string | undefined>(propOpenId);
+  
   // 判断是否需要显示条款（仅合伙人套餐需要特殊条款确认）
   const requiresTermsAgreement = () => {
     if (!packageInfo?.key) return false;
@@ -71,6 +73,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const orderCreatedRef = useRef<boolean>(false); // 防止重复创建订单
+  const openIdFetchedRef = useRef<boolean>(false); // 防止重复获取 openId
 
   // 检测是否在微信内
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
@@ -78,8 +81,44 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   // 检测是否在小程序环境
   const isMiniProgram = isWeChatMiniProgram();
-  // 检测是否可以使用 JSAPI 支付（微信浏览器或小程序内，且有 openId）
-  const canUseJsapi = (isWechat || isMiniProgram) && !!openId;
+  
+  // 小程序或微信浏览器内，有 openId 时可以使用 JSAPI 支付
+  const canUseJsapi = (isMiniProgram || isWechat) && !!userOpenId;
+
+  // 在小程序/微信环境下自动获取用户的 openId
+  useEffect(() => {
+    const fetchUserOpenId = async () => {
+      if (!open || !user || openIdFetchedRef.current) return;
+      if (propOpenId) {
+        setUserOpenId(propOpenId);
+        return;
+      }
+      
+      // 只在微信环境下获取 openId
+      if (!isMiniProgram && !isWechat) return;
+      
+      openIdFetchedRef.current = true;
+      
+      try {
+        const { data: mapping } = await supabase
+          .from('wechat_user_mappings')
+          .select('openid')
+          .eq('system_user_id', user.id)
+          .maybeSingle();
+        
+        if (mapping?.openid) {
+          console.log('Found user openId for JSAPI payment');
+          setUserOpenId(mapping.openid);
+        } else {
+          console.log('No openId found, will use H5/Native payment');
+        }
+      } catch (error) {
+        console.error('Failed to fetch user openId:', error);
+      }
+    };
+    
+    fetchUserOpenId();
+  }, [open, user, propOpenId, isMiniProgram, isWechat]);
 
   // 清理定时器
   const clearTimers = () => {
@@ -106,6 +145,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     // 非合伙人套餐默认已同意，合伙人套餐需要重新勾选
     setAgreedTerms(!needsTerms);
     orderCreatedRef.current = false; // 重置订单创建标记
+    openIdFetchedRef.current = false; // 重置 openId 获取标记
   };
 
   // 根据套餐类型获取对应的服务条款链接
@@ -164,9 +204,36 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     }, 1200);
   };
 
-  // 调用 JSAPI 支付
+  // 调用 JSAPI 支付（支持小程序和微信浏览器两种方式）
   const invokeJsapiPay = useCallback((params: Record<string, string>) => {
     return new Promise<void>((resolve, reject) => {
+      // 小程序环境使用 wx.requestPayment（使用 any 类型绕过类型检查）
+      const wx = window.wx as any;
+      if (isMiniProgram && wx?.requestPayment) {
+        console.log('Using wx.requestPayment for mini program');
+        wx.requestPayment({
+          timeStamp: params.timeStamp,
+          nonceStr: params.nonceStr,
+          package: params.package,
+          signType: params.signType,
+          paySign: params.paySign,
+          success: () => {
+            console.log('wx.requestPayment success');
+            resolve();
+          },
+          fail: (res: { errMsg?: string }) => {
+            console.log('wx.requestPayment fail:', res);
+            if (res.errMsg?.includes('cancel')) {
+              reject(new Error('用户取消支付'));
+            } else {
+              reject(new Error(res.errMsg || '支付失败'));
+            }
+          },
+        });
+        return;
+      }
+
+      // 微信浏览器使用 WeixinJSBridge
       const onBridgeReady = () => {
         if (!window.WeixinJSBridge) {
           reject(new Error('WeixinJSBridge 未初始化'));
@@ -200,7 +267,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         onBridgeReady();
       }
     });
-  }, []);
+  }, [isMiniProgram]);
 
   // 创建订单
   const createOrder = async () => {
@@ -234,7 +301,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           amount: packageInfo.price,
           userId: user.id,
           payType: selectedPayType,
-          openId: selectedPayType === 'jsapi' ? openId : undefined,
+          openId: selectedPayType === 'jsapi' ? userOpenId : undefined,
         },
       });
 
