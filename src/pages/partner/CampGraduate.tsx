@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -249,15 +249,7 @@ export default function CampGraduate() {
 
   return (
     <>
-      <Helmet>
-        <title>毕业成长报告 - 有劲AI</title>
-        <meta name="description" content="财富觉醒训练营毕业证书与成长报告" />
-        <meta property="og:title" content="有劲AI • 毕业报告" />
-        <meta property="og:description" content="7天财富觉醒之旅，见证我的成长蜕变" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/partner/graduate" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="campGraduate" />
       
       {/* Achievement Celebration Modal */}
       {showCelebration && newlyEarned.length > 0 && (

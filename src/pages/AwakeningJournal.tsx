@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { awakeningDimensions, AwakeningType, LifeCard } from "@/config/awakeningConfig";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -120,10 +120,7 @@ const AwakeningJournal: React.FC = () => {
 
   return (
     <>
-      <Helmet>
-        <title>觉察日记 - 有劲AI</title>
-        <meta name="description" content="查看你的觉察记录，追踪成长轨迹" />
-      </Helmet>
+      <DynamicOGMeta pageKey="awakeningJournal" />
 
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
         {/* Header */}

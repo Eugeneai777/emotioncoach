@@ -16,7 +16,7 @@ import { ActionCompletionDialog } from '@/components/wealth-block/ActionCompleti
 import { useToast } from '@/hooks/use-toast';
 import { CoachMemoriesCard } from '@/components/wealth-camp/CoachMemoriesCard';
 import confetti from 'canvas-confetti';
-import { Helmet } from 'react-helmet';
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 interface AiInsight {
   behavior_analysis?: string;
@@ -119,15 +119,7 @@ export default function WealthJournalDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20">
-      <Helmet>
-        <title>财富日记详情 - 有劲AI</title>
-        <meta name="description" content="财富觉醒训练营日记详情" />
-        <meta property="og:title" content="有劲AI • 财富日记" />
-        <meta property="og:description" content="每天觉察打卡，见证财富觉醒之旅" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/wealth-journal" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="wealthJournalDetail" />
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
         <div className="container max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">

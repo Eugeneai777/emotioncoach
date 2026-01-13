@@ -11,7 +11,7 @@ import { CoachVoiceChat } from "@/components/coach/CoachVoiceChat";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 export default function TeenCoach() {
   const { user, loading: authLoading } = useAuth();
@@ -54,15 +54,7 @@ export default function TeenCoach() {
 
   return (
     <>
-      <Helmet>
-        <title>青少年AI伙伴 - 有劲AI</title>
-        <meta name="description" content="安全私密的倾诉空间，24h陪伴成长" />
-        <meta property="og:title" content="有劲AI • 青少年教练" />
-        <meta property="og:description" content="安全私密的倾诉空间，24h陪伴成长" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-teen-coach.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/teen-coach" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="teenCoach" />
       <PageTour
         steps={pageTourConfig.teen_coach}
         open={showTour}
