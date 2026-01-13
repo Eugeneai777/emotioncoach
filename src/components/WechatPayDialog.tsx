@@ -56,6 +56,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [payType, setPayType] = useState<'h5' | 'native' | 'jsapi'>('h5');
   const [userOpenId, setUserOpenId] = useState<string | undefined>(propOpenId);
+  const [jsapiPayParams, setJsapiPayParams] = useState<Record<string, string> | null>(null);
   // 用于避免“第一次打开先走扫码、第二次才JSAPI”的竞态：先确认 openId 是否已获取/确认不存在，再创建订单
   const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
   
