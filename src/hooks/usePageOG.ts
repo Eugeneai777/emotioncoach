@@ -34,7 +34,7 @@ export function usePageOG(pageKey: string): {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("og_configurations")
-        .select("title, og_title, description, image_url, url, site_name, is_active, image_width, image_height")
+        .select("title, og_title, description, image_url, url, site_name, is_active")
         .eq("page_key", pageKey)
         .eq("is_active", true)
         .maybeSingle();
@@ -43,7 +43,10 @@ export function usePageOG(pageKey: string): {
         console.error("Failed to fetch OG config:", error);
         return null;
       }
-      return data;
+      
+      // 尝试获取图片尺寸字段（可能尚未在类型定义中）
+      const record = data as any;
+      return record;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     gcTime: 10 * 60 * 1000,
