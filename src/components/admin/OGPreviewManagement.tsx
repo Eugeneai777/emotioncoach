@@ -15,42 +15,40 @@ import {
 } from "@/components/ui/select";
 import { useOGConfigurations } from "@/hooks/useOGConfigurations";
 
-// 产品线分类
+// OG分类：教练、训练营、合伙人、其他
 const PRODUCT_LINES = {
   all: { label: "全部", filter: () => true },
-  wealth: { 
-    label: "财富教练", 
-    filter: (key: string) => key.toLowerCase().includes('wealth') 
-  },
-  emotion: { 
-    label: "情绪教练", 
-    filter: (key: string) => key.toLowerCase().includes('emotion') 
-  },
-  parent: { 
-    label: "亲子教练", 
-    filter: (key: string) => key.toLowerCase().includes('parent') || key.toLowerCase().includes('teen')
-  },
   coach: { 
-    label: "教练空间", 
-    filter: (key: string) => key.toLowerCase().includes('coach') && !key.includes('wealth') && !key.includes('emotion') && !key.includes('parent')
+    label: "🎯 教练", 
+    filter: (key: string) => {
+      const k = key.toLowerCase();
+      return k.includes('coach') || k.includes('emotion') || k.includes('parent') || k.includes('teen') || k.includes('wealth-block') || k.includes('gratitude') || k.includes('awakening');
+    }
+  },
+  camp: { 
+    label: "🏕️ 训练营", 
+    filter: (key: string) => {
+      const k = key.toLowerCase();
+      return k.includes('camp') || k.includes('training');
+    }
   },
   partner: { 
-    label: "合伙人", 
-    filter: (key: string) => key.toLowerCase().includes('partner') || key.toLowerCase().includes('promo')
-  },
-  gratitude: { 
-    label: "感恩日记", 
-    filter: (key: string) => key.toLowerCase().includes('gratitude')
-  },
-  awakening: { 
-    label: "觉察", 
-    filter: (key: string) => key.toLowerCase().includes('awakening')
+    label: "🤝 合伙人", 
+    filter: (key: string) => {
+      const k = key.toLowerCase();
+      return k.includes('partner') || k.includes('promo') || k.includes('referral');
+    }
   },
   other: { 
-    label: "其他", 
+    label: "📄 其他", 
     filter: (key: string) => {
-      const excludePatterns = ['wealth', 'emotion', 'parent', 'teen', 'partner', 'promo', 'gratitude', 'awakening', 'coach'];
-      return !excludePatterns.some(p => key.toLowerCase().includes(p));
+      const k = key.toLowerCase();
+      // 排除教练、训练营、合伙人相关的
+      const coachPatterns = ['coach', 'emotion', 'parent', 'teen', 'wealth-block', 'gratitude', 'awakening'];
+      const campPatterns = ['camp', 'training'];
+      const partnerPatterns = ['partner', 'promo', 'referral'];
+      const allPatterns = [...coachPatterns, ...campPatterns, ...partnerPatterns];
+      return !allPatterns.some(p => k.includes(p));
     }
   },
 };
