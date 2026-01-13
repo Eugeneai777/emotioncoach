@@ -5,7 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
 import ShareCard from "./ShareCard";
 import ShareCardExport from "./ShareCardExport";
+import ShareImagePreview from "@/components/ui/share-image-preview";
 import { usePartner } from "@/hooks/usePartner";
+import { handleShareWithFallback, getShareEnvironment } from "@/utils/shareUtils";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +38,8 @@ interface ShareButtonProps {
 const ShareButton = ({ post }: ShareButtonProps) => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [showImagePreview, setShowImagePreview] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { partner, isPartner } = usePartner();
@@ -44,9 +48,19 @@ const ShareButton = ({ post }: ShareButtonProps) => {
     isPartner,
     partnerId: partner?.id
   };
+  
+  const { isWeChat } = getShareEnvironment();
 
   const handleShare = async () => {
     setShowShareDialog(true);
+  };
+
+  const handleCloseImagePreview = () => {
+    setShowImagePreview(false);
+    if (previewImageUrl) {
+      URL.revokeObjectURL(previewImageUrl);
+      setPreviewImageUrl(null);
+    }
   };
 
   const handleGenerateImage = async () => {
@@ -108,33 +122,34 @@ const ShareButton = ({ post }: ShareButtonProps) => {
         canvas.toBlob((blob) => resolve(blob!), "image/png");
       });
 
-      const file = new File([blob], "share.png", { type: "image/png" });
-
-      // 尝试使用系统分享
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
+      // Use unified share handler with proper WeChat/iOS fallback
+      const result = await handleShareWithFallback(
+        blob,
+        "分享卡片.png",
+        {
           title: post.title || "我的分享",
           text: post.content?.slice(0, 100) || "",
-        });
-      } else {
-        // 降级：下载图片
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "share.png";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+          onShowPreview: (blobUrl) => {
+            setPreviewImageUrl(blobUrl);
+            setShowImagePreview(true);
+            setShowShareDialog(false);
+          },
+          onDownload: () => {
+            toast({
+              title: "图片已保存",
+              description: "请打开微信手动分享",
+            });
+            setShowShareDialog(false);
+          },
+        }
+      );
 
-        toast({
-          title: "图片已保存",
-          description: "请打开微信手动分享",
-        });
+      // Only show success and close for Web Share API
+      if (result.method === 'webshare' && result.success && !result.cancelled) {
+        toast({ title: "分享成功" });
+        setShowShareDialog(false);
       }
 
-      setShowShareDialog(false);
     } catch (error) {
       console.error("分享失败:", error);
       toast({
@@ -142,14 +157,6 @@ const ShareButton = ({ post }: ShareButtonProps) => {
         description: "请稍后重试",
         variant: "destructive",
       });
-      
-      // 恢复隐藏
-      if (container) {
-        container.style.position = 'fixed';
-        container.style.left = '-9999px';
-        container.style.opacity = '0';
-        container.style.visibility = 'hidden';
-      }
     } finally {
       setSharing(false);
       
@@ -196,14 +203,21 @@ const ShareButton = ({ post }: ShareButtonProps) => {
               disabled={sharing}
               className="w-full"
             >
-              {sharing ? "生成中..." : "生成分享图片"}
+              {sharing ? "生成中..." : isWeChat ? "生成图片" : "生成分享图片"}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
-              生成图片后可保存并分享至微信朋友圈
+              {isWeChat ? "生成图片后长按保存，然后分享给朋友" : "生成图片后可保存并分享至微信朋友圈"}
             </p>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Image preview for WeChat/iOS */}
+      <ShareImagePreview
+        open={showImagePreview}
+        onClose={handleCloseImagePreview}
+        imageUrl={previewImageUrl}
+      />
     </>
   );
 };

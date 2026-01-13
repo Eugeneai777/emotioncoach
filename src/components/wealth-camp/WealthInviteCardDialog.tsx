@@ -137,13 +137,8 @@ const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> => {
   });
 };
 
-// Helper: Detect if running in WeChat or iOS environment
-const isWeChatOrIOS = (): boolean => {
-  const ua = navigator.userAgent.toLowerCase();
-  const isWeChat = ua.includes('micromessenger');
-  const isIOS = /iphone|ipad|ipod/.test(ua);
-  return isWeChat || isIOS;
-};
+// Import share utilities
+import { shouldUseImagePreview, handleShareWithFallback, getShareEnvironment } from '@/utils/shareUtils';
 
 // Get best awakening content with priority: belief > emotion > behavior
 const getBestAwakening = (data: AwakeningData): { type: 'behavior' | 'emotion' | 'belief'; content: string } | null => {
@@ -558,7 +553,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       const blobUrl = URL.createObjectURL(blob);
       
       // For iOS/WeChat, show image preview for long-press save
-      if (isWeChatOrIOS()) {
+      if (shouldUseImagePreview()) {
         setPreviewImageUrl(blobUrl);
         setShowImagePreview(true);
       } else {
@@ -605,42 +600,31 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         throw new Error('Failed to convert canvas to blob');
       }
 
-      // Check if Web Share API with files is supported
-      const file = new File([blob], `${cardName}.png`, { type: 'image/png' });
-      
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
+      // Use unified share handler with proper WeChat/iOS fallback
+      const result = await handleShareWithFallback(
+        blob,
+        `${cardName}.png`,
+        {
           title: cardName,
-        });
-        toast.success('分享成功');
-      } else {
-        // Create blob URL for preview
-        const blobUrl = URL.createObjectURL(blob);
-        
-        if (isWeChatOrIOS()) {
-          // Show full-screen image preview for long-press saving
-          setPreviewImageUrl(blobUrl);
-          setShowImagePreview(true);
-        } else {
-          const link = document.createElement('a');
-          link.download = `${cardName}.png`;
-          link.href = blobUrl;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          toast.success('图片已下载，请手动分享');
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+          onShowPreview: (blobUrl) => {
+            setPreviewImageUrl(blobUrl);
+            setShowImagePreview(true);
+          },
+          onDownload: () => {
+            toast.success('图片已下载，请手动分享');
+          },
         }
+      );
+
+      // Only show success toast for Web Share API (not for preview/download)
+      if (result.method === 'webshare' && result.success && !result.cancelled) {
+        toast.success('分享成功');
       }
       
       onGenerate?.();
     } catch (error) {
-      // User cancelled share or error occurred
-      if ((error as Error).name !== 'AbortError') {
-        console.error('Failed to share card:', error);
-        toast.error('分享失败，请重试');
-      }
+      console.error('Failed to share card:', error);
+      toast.error('分享失败，请重试');
     } finally {
       setGenerating(false);
     }
@@ -1013,7 +997,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             disabled={generating || (activeTab === 'awakening' && !hasAnyAwakening)}
             className="flex-1 gap-2"
           >
-            {isWeChatOrIOS() ? (
+            {shouldUseImagePreview() ? (
               <>
                 <ImageIcon className="h-4 w-4" />
                 {generating ? '生成中...' : '生成图片'}
@@ -1044,7 +1028,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         </div>
 
         <p className="text-xs text-muted-foreground text-center mt-2">
-          {isWeChatOrIOS() 
+          {shouldUseImagePreview() 
             ? '生成图片后长按保存，然后分享给朋友'
             : '下载或分享卡片给朋友，或复制链接直接分享'
           }

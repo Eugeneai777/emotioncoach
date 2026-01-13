@@ -12,6 +12,7 @@ import CommentSection from "./CommentSection";
 import PostEditDialog from "./PostEditDialog";
 import ShareCard from "./ShareCard";
 import ShareCardExport from "./ShareCardExport";
+import ShareImagePreview from "@/components/ui/share-image-preview";
 import { useState, useEffect, useRef } from "react";
 import { MessageCircle, Star, Pencil, Heart, Trash2, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { getCoachSpaceInfo } from "@/utils/coachSpaceUtils";
 import { useNavigate } from "react-router-dom";
 import html2canvas from "html2canvas";
+import { handleShareWithFallback, getShareEnvironment } from "@/utils/shareUtils";
 interface PostDetailSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -74,12 +76,16 @@ const PostDetailSheet = ({
   const [deleting, setDeleting] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [showImagePreview, setShowImagePreview] = useState(false);
   const [authorProfile, setAuthorProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const partnerInfo = {
     isPartner,
     partnerId: partner?.id
   };
+  
+  const { isWeChat } = getShareEnvironment();
 
   // 获取教练空间信息
   const coachSpace = getCoachSpaceInfo(post.camp_type, post.camp_name, post.template_id);
@@ -249,6 +255,15 @@ const PostDetailSheet = ({
     setShowShareDialog(true);
   };
 
+  // Handle closing image preview
+  const handleCloseImagePreview = () => {
+    setShowImagePreview(false);
+    if (previewImageUrl) {
+      URL.revokeObjectURL(previewImageUrl);
+      setPreviewImageUrl(null);
+    }
+  };
+
   // 生成分享图片 - 使用专用导出组件确保完美渲染
   const handleGenerateImage = async () => {
     if (!cardRef.current) return;
@@ -296,46 +311,40 @@ const PostDetailSheet = ({
         }, "image/png", 1.0);
       });
       
-      const file = new File([blob], "分享卡片.png", { type: "image/png" });
-      
-      // 优先尝试使用系统分享 API（移动端）
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: post.title || "我的分享",
-            text: post.content?.slice(0, 100) || "",
-          });
-          toast.success("分享成功");
-          setShowShareDialog(false);
-          
-          // 更新分享数
-          await supabase.from("community_posts").update({
-            shares_count: (post.shares_count || 0) + 1
-          }).eq("id", post.id);
-          return;
-        } catch {
-          // 用户取消分享或分享失败，降级到下载
+      // Use unified share handler with proper WeChat/iOS fallback
+      const result = await handleShareWithFallback(
+        blob,
+        "分享卡片.png",
+        {
+          title: post.title || "我的分享",
+          text: post.content?.slice(0, 100) || "",
+          onShowPreview: (blobUrl) => {
+            setPreviewImageUrl(blobUrl);
+            setShowImagePreview(true);
+            setShowShareDialog(false);
+          },
+          onDownload: () => {
+            toast.success("图片已保存，可分享至微信");
+            setShowShareDialog(false);
+          },
         }
-      }
-      
-      // 降级方案：下载图片
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `有劲生活-分享-${new Date().getTime()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      toast.success("图片已保存，可分享至微信");
-      setShowShareDialog(false);
+      );
 
-      // 更新分享数
-      await supabase.from("community_posts").update({
-        shares_count: (post.shares_count || 0) + 1
-      }).eq("id", post.id);
+      // Only show success and close for Web Share API
+      if (result.method === 'webshare' && result.success && !result.cancelled) {
+        toast.success("分享成功");
+        setShowShareDialog(false);
+        
+        // 更新分享数
+        await supabase.from("community_posts").update({
+          shares_count: (post.shares_count || 0) + 1
+        }).eq("id", post.id);
+      } else if (result.success) {
+        // Also update share count for preview/download methods
+        await supabase.from("community_posts").update({
+          shares_count: (post.shares_count || 0) + 1
+        }).eq("id", post.id);
+      }
       
     } catch (error) {
       console.error("生成图片失败:", error);
@@ -673,14 +682,21 @@ const PostDetailSheet = ({
             </div>
             
             <Button onClick={handleGenerateImage} disabled={sharing} className="w-full">
-              {sharing ? "生成中..." : "生成分享图片"}
+              {sharing ? "生成中..." : isWeChat ? "生成图片" : "生成分享图片"}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
-              生成图片后可保存并分享至微信朋友圈
+              {isWeChat ? "生成图片后长按保存，然后分享给朋友" : "生成图片后可保存并分享至微信朋友圈"}
             </p>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Image preview for WeChat/iOS */}
+      <ShareImagePreview
+        open={showImagePreview}
+        onClose={handleCloseImagePreview}
+        imageUrl={previewImageUrl}
+      />
     </>
   );
 };
