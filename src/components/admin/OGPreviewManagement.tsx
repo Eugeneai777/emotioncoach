@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react";
 import { PAGE_OG_CONFIGS, OG_IMAGES } from "@/config/ogConfig";
 import { OGCardPreview } from "./OGCardPreview";
+import { OGBatchUpload } from "./OGBatchUpload";
 import { Input } from "@/components/ui/input";
-import { Search, Image as ImageIcon, FileText, Filter, Sparkles, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Image as ImageIcon, FileText, Filter, Sparkles, Loader2, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -56,6 +58,7 @@ const PRODUCT_LINES = {
 export default function OGPreviewManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLine, setSelectedLine] = useState<string>("all");
+  const [batchUploadOpen, setBatchUploadOpen] = useState(false);
   
   // Fetch custom configurations from database
   const { data: customConfigs, isLoading } = useOGConfigurations();
@@ -174,6 +177,18 @@ export default function OGPreviewManagement() {
             ))}
           </SelectContent>
         </Select>
+        
+        {/* Batch upload button */}
+        {selectedLine !== "all" && filteredConfigs.length > 0 && (
+          <Button
+            variant="outline"
+            onClick={() => setBatchUploadOpen(true)}
+            className="gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            批量上传
+          </Button>
+        )}
       </div>
 
       {/* 产品线快捷标签 */}
@@ -189,6 +204,14 @@ export default function OGPreviewManagement() {
           </Badge>
         ))}
       </div>
+
+      {/* Batch upload dialog */}
+      <OGBatchUpload
+        open={batchUploadOpen}
+        onOpenChange={setBatchUploadOpen}
+        productLine={PRODUCT_LINES[selectedLine as keyof typeof PRODUCT_LINES]?.label || selectedLine}
+        pageKeys={filteredConfigs.map(c => c.key)}
+      />
 
       {/* OG卡片网格 */}
       {isLoading ? (
