@@ -38,10 +38,10 @@ export default function YoujinPartnerIntro() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-orange-50/30">
       <Helmet>
         <title>有劲合伙人 - 有劲AI</title>
-        <meta name="description" content="成为有劲合伙人，开启事业发展新路径" />
+        <meta name="description" content="分发体验包，获得持续分成收入" />
         <meta property="og:title" content="有劲AI • 有劲合伙人" />
-        <meta property="og:description" content="分发体验包，建立用户关系，获得持续分成收入" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:description" content="分发体验包，获得持续分成收入" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-partner.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/partner/youjin-intro" />
         <meta property="og:site_name" content="有劲AI" />
       </Helmet>

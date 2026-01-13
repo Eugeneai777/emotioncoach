@@ -104,9 +104,9 @@ const CampIntro = () => {
     <div className="min-h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white pb-24">
       <Helmet>
         <title>{campTemplate?.camp_name || '训练营'} - 有劲AI</title>
-        <meta name="description" content={campTemplate?.description || '系统化训练营，助你成长蜕变'} />
+        <meta name="description" content="系统训练，科学成长，见证蜕变" />
         <meta property="og:title" content={`有劲AI • ${campTemplate?.camp_name || '训练营'}`} />
-        <meta property="og:description" content={campTemplate?.description || '科学方法，系统训练，见证成长'} />
+        <meta property="og:description" content="系统训练，科学成长，见证蜕变" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content={`https://wechat.eugenewe.net/camp/${campType}`} />
         <meta property="og:site_name" content="有劲AI" />

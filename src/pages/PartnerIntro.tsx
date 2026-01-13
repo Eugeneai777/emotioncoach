@@ -65,10 +65,10 @@ const PartnerIntro = () => {
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       <Helmet>
         <title>绽放合伙人计划 - 有劲AI</title>
-        <meta name="description" content="开启你的情绪觉醒事业之旅" />
+        <meta name="description" content="直推30%+二级10%，获得持续收益" />
         <meta property="og:title" content="有劲AI • 绽放合伙人" />
-        <meta property="og:description" content="直推30%+二级10%永久佣金，推广有劲，获得持续收益" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
+        <meta property="og:description" content="直推30%+二级10%，获得持续收益" />
+        <meta property="og:image" content="https://wechat.eugenewe.net/og-partner.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/partner-intro" />
         <meta property="og:site_name" content="有劲AI" />
       </Helmet>

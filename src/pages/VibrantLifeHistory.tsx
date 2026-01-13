@@ -95,9 +95,9 @@ const VibrantLifeHistory = () => {
     <>
       <Helmet>
         <title>我的生活记录 - 有劲AI</title>
-        <meta name="description" content="记录生活点滴，见证成长轨迹" />
+        <meta name="description" content="AI陪你记录生活，见证成长轨迹" />
         <meta property="og:title" content="有劲AI • 生活日记" />
-        <meta property="og:description" content="AI陪伴你记录生活，推荐最适合的成长教练" />
+        <meta property="og:description" content="AI陪你记录生活，见证成长轨迹" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
         <meta property="og:url" content="https://wechat.eugenewe.net/vibrant-life-history" />
         <meta property="og:site_name" content="有劲AI" />

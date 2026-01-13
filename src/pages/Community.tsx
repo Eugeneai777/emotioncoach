@@ -306,7 +306,7 @@ const Community = () => {
     <div className="min-h-screen bg-background">
       <Helmet>
         <title>有劲社区 - 有劲AI</title>
-        <meta name="description" content="分享成长·见证蜕变" />
+        <meta name="description" content="分享成长故事，见证彼此蜕变" />
         <meta property="og:title" content="有劲AI • 有劲社区" />
         <meta property="og:description" content="分享成长故事，见证彼此蜕变" />
         <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
