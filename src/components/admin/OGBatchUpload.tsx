@@ -410,13 +410,13 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
                 value={[partialScale]}
                 onValueChange={(value) => setPartialScale(value[0])}
                 min={40}
-                max={80}
+                max={150}
                 step={5}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>40% 小</span>
-                <span>80% 大</span>
+                <span>150% 大</span>
               </div>
             </div>
           )}
