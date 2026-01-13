@@ -153,81 +153,39 @@ export function AssessmentPayDialog({
     });
   }, []);
 
-  // 等待小程序 JSSDK 加载并获取 postMessage 方法
-  const waitForMiniProgramBridge = useCallback((): Promise<(options: { data: any }) => void> => {
-    return new Promise((resolve, reject) => {
-      let attempts = 0;
-      const maxAttempts = 150; // 最多等待 15 秒（小程序首次打开 WebView 注入可能较慢）
+  // 小程序原生支付：通知小程序跳转到原生支付页面
+  // 小程序侧收到 MINIPROGRAM_NAVIGATE_PAY 后跳转到原生支付页，支付完成后 reload webview 并拼上 payment_success=true&orderNo=xxx
+  const triggerMiniProgramNativePay = useCallback((params: Record<string, string>, orderNumber: string) => {
+    const mp = window.wx?.miniProgram;
+    if (!mp || typeof mp.postMessage !== 'function') {
+      console.warn('[MiniProgram] postMessage not available, trying navigateTo fallback');
+      if (typeof mp?.navigateTo === 'function') {
+        const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}`;
+        mp.navigateTo({ url: payPageUrl });
+      }
+      return;
+    }
 
-      const check = () => {
-        attempts++;
-        const mp = window.wx?.miniProgram;
-        if (mp && typeof mp.postMessage === 'function') {
-          console.log('[MiniProgram] postMessage bridge ready');
-          resolve(mp.postMessage.bind(mp));
-          return;
-        }
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('payment_success', 'true');
+    currentUrl.searchParams.set('orderNo', orderNumber);
+    const callbackUrl = currentUrl.toString();
 
-        if (attempts >= maxAttempts) {
-          console.error('[MiniProgram] postMessage bridge not available after', attempts, 'attempts');
-          reject(new Error('小程序支付桥接未就绪，请稍后重试（可下拉刷新页面）'));
-          return;
-        }
-
-        setTimeout(check, 100);
-      };
-
-      check();
+    console.log('[MiniProgram] Sending MINIPROGRAM_NAVIGATE_PAY', { orderNo: orderNumber, callbackUrl });
+    mp.postMessage({
+      data: {
+        type: 'MINIPROGRAM_NAVIGATE_PAY',
+        orderNo: orderNumber,
+        params,
+        callbackUrl,
+      },
     });
+
+    if (typeof mp.navigateTo === 'function') {
+      const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}`;
+      mp.navigateTo({ url: payPageUrl });
+    }
   }, []);
-
-  // 小程序环境：提前预热 postMessage 桥接，避免创建订单后立刻拉起支付时仍未注入
-  useEffect(() => {
-    if (!open || !isMiniProgram) return;
-    waitForMiniProgramBridge().catch(() => {
-      // 预热失败不打断流程；真正支付时会再次等待并给出提示
-    });
-  }, [open, isMiniProgram, waitForMiniProgramBridge]);
-
-  // 小程序原生支付桥接：H5 通过 postMessage 通知小程序侧调用 wx.requestPayment
-  const invokeMiniProgramPay = useCallback(async (params: Record<string, string>) => {
-    // 等待 postMessage 桥接就绪
-    const postMessage = await waitForMiniProgramBridge();
-
-    return new Promise<void>((resolve, reject) => {
-      const requestId = (globalThis.crypto as any)?.randomUUID?.() ?? `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-      let settled = false;
-
-      const cleanup = () => window.removeEventListener('message', onMessage);
-
-      const onMessage = (event: MessageEvent) => {
-        const raw = (event as any)?.data;
-        const payload = raw?.data ?? raw;
-        if (!payload || payload.type !== 'MINIPROGRAM_PAY_RESPONSE' || payload.requestId !== requestId) return;
-        settled = true;
-        cleanup();
-        if (payload.ok) resolve();
-        else reject(new Error(payload.errMsg || '支付失败'));
-      };
-
-      window.addEventListener('message', onMessage);
-
-      console.log('[MiniProgram] Sending MINIPROGRAM_PAY_REQUEST', { requestId, params });
-      postMessage({
-        data: {
-          type: 'MINIPROGRAM_PAY_REQUEST',
-          requestId,
-          params,
-        },
-      });
-
-      window.setTimeout(() => {
-        if (settled) return;
-        cleanup();
-        reject(new Error('小程序支付未响应，请确认小程序已配置支付桥接'));
-      }, 15000);
-    });
-  }, [waitForMiniProgramBridge]);
 
   // 创建订单（带超时处理）
   const createOrder = async () => {
@@ -304,19 +262,22 @@ export function AssessmentPayDialog({
 
        if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
          // JSAPI 支付
-         // - 微信浏览器：WeixinJSBridge.invoke
-         // - 微信小程序：通过 postMessage 让小程序侧调用 wx.requestPayment
          setStatus('polling');
          startPolling(data.orderNo);
 
-         try {
-           const invoker = isMiniProgram ? invokeMiniProgramPay : invokeJsapiPay;
-           await invoker(data.jsapiPayParams);
-           console.log('JSAPI/miniprogram pay invoked');
-         } catch (jsapiError: any) {
-           console.log('JSAPI/miniprogram pay error:', jsapiError?.message);
-           if (jsapiError?.message !== '用户取消支付') {
-             toast.error(jsapiError?.message || '支付失败');
+         if (isMiniProgram) {
+           // 小程序环境：通知小程序跳转到原生支付页（不等待回复，靠轮询检测支付结果）
+           triggerMiniProgramNativePay(data.jsapiPayParams, data.orderNo);
+         } else {
+           // 微信浏览器：直接 WeixinJSBridge.invoke
+           try {
+             await invokeJsapiPay(data.jsapiPayParams);
+             console.log('JSAPI pay invoked');
+           } catch (jsapiError: any) {
+             console.log('JSAPI pay error:', jsapiError?.message);
+             if (jsapiError?.message !== '用户取消支付') {
+               toast.error(jsapiError?.message || '支付失败');
+             }
            }
          }
       } else if ((data.payType || selectedPayType) === 'h5' && (data.h5Url || data.payUrl)) {
