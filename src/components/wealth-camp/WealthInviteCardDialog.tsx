@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Download, Image, Copy, Check, Share2, Edit3, ChevronDown, ImageIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
 import ShareImagePreview from '@/components/ui/share-image-preview';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
@@ -194,7 +195,7 @@ const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> => {
 };
 
 // Import share utilities
-import { shouldUseImagePreview, handleShareWithFallback, getShareEnvironment } from '@/utils/shareUtils';
+import { shouldUseImagePreview, handleShareWithFallback, getShareEnvironment, getShareButtonText, getShareButtonHint } from '@/utils/shareUtils';
 
 // Get best awakening content with priority: belief > emotion > behavior
 const getBestAwakening = (data: AwakeningData): { type: 'behavior' | 'emotion' | 'belief'; content: string } | null => {
@@ -785,9 +786,9 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             ))}
           </TabsList>
 
-          <TabsContent value="aianalysis" className="mt-4">
-            <div className="flex justify-center overflow-hidden">
-              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
+          <TabsContent value="aianalysis" className="mt-3">
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
+              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
                 <AIAnalysisShareCard 
                   ref={aiAnalysisCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -798,9 +799,9 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="value" className="mt-4">
-            <div className="flex justify-center overflow-hidden">
-              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
+          <TabsContent value="value" className="mt-3">
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
+              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
                 <AssessmentValueShareCard 
                   ref={valueCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -811,9 +812,9 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="fear" className="mt-4">
-            <div className="flex justify-center overflow-hidden">
-              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
+          <TabsContent value="fear" className="mt-3">
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
+              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
                 <FearAwakeningShareCard 
                   ref={fearCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -824,9 +825,9 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="blindspot" className="mt-4">
-            <div className="flex justify-center overflow-hidden">
-              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
+          <TabsContent value="blindspot" className="mt-3">
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
+              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
                 <BlockRevealShareCard 
                   ref={blindspotCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -837,9 +838,9 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="transform" className="mt-4">
-            <div className="flex justify-center overflow-hidden">
-              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
+          <TabsContent value="transform" className="mt-3">
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
+              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
                 <TransformationValueShareCard 
                   ref={transformCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -850,9 +851,9 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="assessment" className="mt-4">
-            <div className="flex justify-center overflow-hidden">
-              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
+          <TabsContent value="assessment" className="mt-3">
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
+              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
                 <WealthAssessmentShareCard 
                   ref={assessmentCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -863,9 +864,9 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="camp" className="mt-4">
-            <div className="flex justify-center overflow-hidden">
-              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
+          <TabsContent value="camp" className="mt-3">
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
+              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
                 <WealthCampShareCard 
                   ref={campCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -878,10 +879,10 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="growth" className="mt-4">
+          <TabsContent value="growth" className="mt-3">
             {growthData ? (
-              <div className="flex justify-center overflow-hidden">
-                <div className="origin-top" style={{ transform: 'scale(0.7)', marginBottom: '-30%' }}>
+              <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
+                <div className="origin-top" style={{ transform: 'scale(0.65)', marginBottom: '-35%' }}>
                   <EnhancedGrowthPosterCard
                     ref={growthCardRef}
                     avatarUrl={userInfo.avatarUrl}
@@ -900,16 +901,16 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p className="text-sm">暂无成长数据</p>
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                <p>暂无成长数据</p>
                 <p className="text-xs mt-1">完成教练对话后生成成长海报</p>
               </div>
             )}
           </TabsContent>
 
-          <TabsContent value="achievement" className="mt-4">
-            <div className="flex justify-center overflow-hidden">
-              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
+          <TabsContent value="achievement" className="mt-3">
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
+              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
                 <AchievementShareCard 
                   ref={achievementCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -926,7 +927,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="awakening" className="mt-4">
+          <TabsContent value="awakening" className="mt-3">
             {hasAnyAwakening && awakeningData ? (
               <>
                 {/* Awakening Type Selector */}
@@ -936,7 +937,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                       variant={selectedAwakeningType === 'behavior' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setSelectedAwakeningType('behavior')}
-                      className="text-xs"
+                      className="text-xs h-8"
                     >
                       🎯 行为
                     </Button>
@@ -946,7 +947,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                       variant={selectedAwakeningType === 'emotion' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setSelectedAwakeningType('emotion')}
-                      className="text-xs"
+                      className="text-xs h-8"
                     >
                       💛 情绪
                     </Button>
@@ -956,14 +957,14 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                       variant={selectedAwakeningType === 'belief' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setSelectedAwakeningType('belief')}
-                      className="text-xs"
+                      className="text-xs h-8"
                     >
                       🧠 信念
                     </Button>
                   )}
                 </div>
-                <div className="flex justify-center overflow-hidden">
-                  <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
+                <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
+                  <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
                     <WealthAwakeningShareCard
                       ref={awakeningCardRef}
                       dayNumber={awakeningData.dayNumber}
@@ -977,16 +978,16 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                 </div>
               </>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p className="text-sm">暂无觉醒记录</p>
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                <p>暂无觉醒记录</p>
                 <p className="text-xs mt-1">完成今日教练对话后生成觉醒卡片</p>
               </div>
             )}
           </TabsContent>
 
-          <TabsContent value="milestone" className="mt-4">
-            <div className="flex justify-center overflow-hidden">
-              <div className="origin-top" style={{ transform: 'scale(0.75)', marginBottom: '-25%' }}>
+          <TabsContent value="milestone" className="mt-3">
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
+              <div className="origin-top" style={{ transform: 'scale(0.68)', marginBottom: '-32%' }}>
                 {/* Show enhanced graduation card for Day 7+ users */}
                 {(userInfo.currentDay || 1) >= 7 ? (
                   <GraduationShareCard
@@ -1065,48 +1066,44 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="flex gap-2 mt-4">
-          <Button
-            onClick={handleDownload}
-            disabled={generating || (activeTab === 'awakening' && !hasAnyAwakening)}
-            className="flex-1 gap-2"
-          >
-            {shouldUseImagePreview() ? (
-              <>
-                <ImageIcon className="h-4 w-4" />
-                {generating ? '生成中...' : '生成图片'}
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4" />
-                {generating ? '生成中...' : '下载'}
-              </>
-            )}
-          </Button>
-          <Button
-            onClick={handleShare}
-            disabled={generating || (activeTab === 'awakening' && !hasAnyAwakening)}
-            variant="secondary"
-            className="flex-1 gap-2"
-          >
-            <Share2 className="h-4 w-4" />
-            分享
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleCopyLink}
-            className="gap-2"
-          >
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          </Button>
+        {/* Action Buttons - Optimized for mobile */}
+        <div className="flex flex-col gap-3 mt-4">
+          <div className="flex gap-2">
+            <Button
+              onClick={handleDownload}
+              disabled={generating || (activeTab === 'awakening' && !hasAnyAwakening)}
+              className="flex-1 gap-2 h-11 text-base font-medium bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+            >
+              {generating ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                  </motion.div>
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <ImageIcon className="h-4 w-4" />
+                  {getShareButtonText()}
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleCopyLink}
+              className="gap-2 h-11 px-4"
+            >
+              {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
+          
+          <p className="text-xs text-muted-foreground text-center">
+            {getShareButtonHint()}
+          </p>
         </div>
-
-        <p className="text-xs text-muted-foreground text-center mt-2">
-          {shouldUseImagePreview() 
-            ? '生成图片后长按保存，然后分享给朋友'
-            : '下载或分享卡片给朋友，或复制链接直接分享'
-          }
-        </p>
       </DialogContent>
       
       {/* Full-screen image preview for WeChat/iOS */}
