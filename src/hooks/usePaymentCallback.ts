@@ -55,6 +55,11 @@ function getRedirectRoute(packageKey: string, currentPath: string): string | nul
     }
   }
 
+  // 🆕 在教练对话页面购买会员套餐时，不跳转（用户意图是继续使用教练功能）
+  if (currentPath.startsWith('/coach/') && (packageKey === 'basic' || packageKey === 'member365')) {
+    return null;
+  }
+
   // 财富卡点测评 → 测评页面
   if (packageKey === 'wealth_block_assessment') {
     return '/wealth-block';
@@ -152,12 +157,28 @@ export function usePaymentCallback(options: UsePaymentCallbackOptions = {}) {
     processingRef.current = true;
 
     try {
-      // 验证订单状态
-      const { data, error } = await supabase.functions.invoke('check-order-status', {
-        body: { orderNo },
-      });
+      // 验证订单状态（支持轮询重试，等待微信回调处理完成）
+      const maxAttempts = 10;
+      const pollInterval = 2000;
+      let attempts = 0;
 
-      if (error) throw error;
+      const checkStatus = async () => {
+        const { data, error } = await supabase.functions.invoke('check-order-status', {
+          body: { orderNo },
+        });
+        if (error) throw error;
+        return data;
+      };
+
+      let data = await checkStatus();
+
+      // 如果订单还在 pending 状态，继续轮询（最多 20 秒）
+      while (data.status === 'pending' && attempts < maxAttempts) {
+        attempts++;
+        console.log(`[PaymentCallback] Polling attempt ${attempts}/${maxAttempts}, status: ${data.status}`);
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        data = await checkStatus();
+      }
 
       if (data.status === 'paid') {
         // 清除 URL 参数
@@ -195,8 +216,9 @@ export function usePaymentCallback(options: UsePaymentCallbackOptions = {}) {
           }
         }
       } else if (data.status === 'pending') {
-        // 订单还在等待支付，可能是用户取消了
-        toast.info('订单支付未完成');
+        // 订单还在等待支付（轮询后仍未完成）
+        console.log('[PaymentCallback] Order still pending after polling:', orderNo);
+        toast.info('订单支付处理中，请稍候刷新页面查看');
         
         // 清除参数
         const newParams = new URLSearchParams(searchParams);
