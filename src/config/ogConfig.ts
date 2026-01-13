@@ -10,6 +10,10 @@ export interface OGConfig {
   image: string;           // OG图片URL
   url: string;             // 页面URL
   siteName?: string;       // 站点名称 (默认: 有劲AI)
+  imageWidth?: number;     // OG图片宽度 (默认: 1200)
+  imageHeight?: number;    // OG图片高度 (默认: 630)
+  locale?: string;         // 语言 (默认: zh_CN)
+  twitterCard?: 'summary' | 'summary_large_image';  // Twitter卡片类型
 }
 
 // 基础URL配置
