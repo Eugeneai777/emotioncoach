@@ -59,21 +59,19 @@ serve(async (req) => {
     let finalUserId: string | null = null;
     let isNewUser = false;
 
-    // 如果 state 是 'register'，表示是注册流程
-    if (state === 'register') {
-      if (existingMapping?.system_user_id) {
-        // 该微信已绑定账号，提示用户
-        const redirectUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || '';
-        return new Response(null, {
-          status: 302,
-          headers: {
-            ...corsHeaders,
-            'Location': `${redirectUrl}/auth?wechat_error=already_bound`
-          }
-        });
-      }
+    // 解析 state：支持 'register', 'register_订单号', 'login', 'bind_用户ID' 格式
+    const isRegister = state === 'register' || state.startsWith('register_');
+    const isLogin = state === 'login';
+    const isBind = state.startsWith('bind_');
 
-      // 创建新用户（使用微信昵称作为邮箱前缀）
+    // 核心逻辑：如果微信已绑定账号，无论登录还是注册都直接使用已有用户
+    if (existingMapping?.system_user_id) {
+      // 微信已绑定用户，直接当作登录处理
+      finalUserId = existingMapping.system_user_id;
+      isNewUser = false;
+      console.log('微信已绑定用户，直接登录:', finalUserId);
+    } else if (isRegister) {
+      // 注册模式且微信未绑定，创建新用户
       const email = `wechat_${tokenData.openid}@temp.youjin365.com`;
       const password = crypto.randomUUID();
       
@@ -88,23 +86,48 @@ serve(async (req) => {
         }
       });
 
-      if (signUpError) throw signUpError;
-      if (!newUser.user) throw new Error('Failed to create user');
-
-      finalUserId = newUser.user.id;
-      isNewUser = true;
-      console.log('创建新用户成功:', finalUserId);
-    } else if (existingMapping) {
-      // 登录流程且已有映射，使用已有用户
-      finalUserId = existingMapping.system_user_id;
-    } else {
-      // 登录流程但没有映射，引导去注册
+      if (signUpError) {
+        // 如果邮箱已存在，尝试获取现有用户
+        if (signUpError.code === 'email_exists') {
+          console.log('邮箱已存在，查找现有用户...');
+          const { data: existingUsers } = await supabaseClient.auth.admin.listUsers();
+          const existingUser = existingUsers?.users?.find(u => u.email === email);
+          
+          if (existingUser) {
+            finalUserId = existingUser.id;
+            isNewUser = false;
+            console.log('找到现有用户:', finalUserId);
+          } else {
+            throw signUpError;
+          }
+        } else {
+          throw signUpError;
+        }
+      } else if (!newUser?.user) {
+        throw new Error('Failed to create user');
+      } else {
+        finalUserId = newUser.user.id;
+        isNewUser = true;
+        console.log('创建新用户成功:', finalUserId);
+      }
+    } else if (isLogin || isBind) {
+      // 登录或绑定模式但没有映射，引导去注册
       const redirectUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || '';
       return new Response(null, {
         status: 302,
         headers: {
           ...corsHeaders,
-          'Location': `${redirectUrl}/auth?wechat_error=not_registered`
+          'Location': `${redirectUrl}/wechat-auth?mode=register&wechat_error=not_registered`
+        }
+      });
+    } else {
+      // 未知 state，引导去注册
+      const redirectUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || '';
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': `${redirectUrl}/wechat-auth?mode=register`
         }
       });
     }
