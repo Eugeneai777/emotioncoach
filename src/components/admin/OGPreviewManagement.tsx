@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { PAGE_OG_CONFIGS, OG_IMAGES } from "@/config/ogConfig";
 import { OGCardPreview } from "./OGCardPreview";
 import { OGBatchUpload } from "./OGBatchUpload";
+import { OGBatchCategorize } from "./OGBatchCategorize";
 import { OGCategoryManager, loadCategories, buildProductLines, ProductLineCategory } from "./OGCategoryManager";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useOGConfigurations } from "@/hooks/useOGConfigurations";
+import { useOGConfigurations, OGConfiguration } from "@/hooks/useOGConfigurations";
 
 export default function OGPreviewManagement() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -37,23 +38,40 @@ export default function OGPreviewManagement() {
     return map;
   }, [customConfigs]);
 
+  // 计算每个页面的自动分类
+  const getAutoCategoryId = (pageKey: string): string | null => {
+    for (const category of categories) {
+      const filter = productLines[category.id]?.filter;
+      if (filter && filter(pageKey)) {
+        return category.id;
+      }
+    }
+    return null;
+  };
+
   const allConfigs = useMemo(() => {
     return Object.entries(PAGE_OG_CONFIGS).map(([key, config]) => ({
       key,
       config,
       customConfig: customConfigMap.get(key),
+      autoCategoryId: getAutoCategoryId(key),
     }));
-  }, [customConfigMap]);
+  }, [customConfigMap, categories, productLines]);
 
   const filteredConfigs = useMemo(() => {
     let results = allConfigs;
 
-    // 按产品线筛选
+    // 按产品线筛选 - 优先使用手动分类，其次自动分类
     if (selectedLine !== "all") {
-      const lineFilter = productLines[selectedLine]?.filter;
-      if (lineFilter) {
-        results = results.filter(item => lineFilter(item.key));
-      }
+      results = results.filter(item => {
+        // 手动分类优先
+        const manualCategoryId = item.customConfig?.category_id;
+        if (manualCategoryId) {
+          return manualCategoryId === selectedLine;
+        }
+        // 回退到自动分类
+        return item.autoCategoryId === selectedLine;
+      });
     }
 
     // 按搜索词筛选
@@ -69,7 +87,7 @@ export default function OGPreviewManagement() {
     }
 
     return results;
-  }, [allConfigs, selectedLine, searchQuery, productLines]);
+  }, [allConfigs, selectedLine, searchQuery]);
 
   const imageCount = Object.keys(OG_IMAGES).length;
   const pageCount = allConfigs.length;
@@ -165,6 +183,12 @@ export default function OGPreviewManagement() {
             批量上传
           </Button>
         )}
+        
+        {/* Batch categorize button */}
+        <OGBatchCategorize
+          configs={allConfigs}
+          categories={categories}
+        />
       </div>
 
       {/* 产品线快捷标签 */}
@@ -201,12 +225,14 @@ export default function OGPreviewManagement() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredConfigs.map(({ key, config, customConfig }) => (
+          {filteredConfigs.map(({ key, config, customConfig, autoCategoryId }) => (
             <OGCardPreview 
               key={key} 
               pageKey={key} 
               config={config}
               customConfig={customConfig}
+              categories={categories}
+              autoCategoryId={autoCategoryId}
             />
           ))}
         </div>
