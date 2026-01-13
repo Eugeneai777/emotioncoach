@@ -2,13 +2,26 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PAGE_OG_CONFIGS, OGConfig, OG_SITE_NAME } from "@/config/ogConfig";
 
+// 默认 OG 图片尺寸
+const DEFAULT_IMAGE_WIDTH = 1200;
+const DEFAULT_IMAGE_HEIGHT = 630;
+
 export interface DynamicOGConfig extends OGConfig {
   isCustomized: boolean;
+  imageWidth: number;
+  imageHeight: number;
+  locale: string;
+  twitterCard: 'summary' | 'summary_large_image';
 }
 
 /**
  * 从数据库获取单个页面的 OG 配置
  * 优先使用数据库配置，否则使用默认配置
+ * 
+ * 支持的优化字段：
+ * - imageWidth/imageHeight: 图片尺寸声明
+ * - locale: 多语言标签
+ * - twitterCard: Twitter 卡片类型
  */
 export function usePageOG(pageKey: string): {
   ogConfig: DynamicOGConfig;
@@ -21,7 +34,7 @@ export function usePageOG(pageKey: string): {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("og_configurations")
-        .select("title, og_title, description, image_url, url, site_name, is_active")
+        .select("title, og_title, description, image_url, url, site_name, is_active, image_width, image_height")
         .eq("page_key", pageKey)
         .eq("is_active", true)
         .maybeSingle();
@@ -45,6 +58,11 @@ export function usePageOG(pageKey: string): {
     url: customConfig?.url || defaultConfig.url,
     siteName: customConfig?.site_name || defaultConfig.siteName || OG_SITE_NAME,
     isCustomized: !!customConfig,
+    // 优化字段 - 带默认值
+    imageWidth: (customConfig as any)?.image_width || defaultConfig.imageWidth || DEFAULT_IMAGE_WIDTH,
+    imageHeight: (customConfig as any)?.image_height || defaultConfig.imageHeight || DEFAULT_IMAGE_HEIGHT,
+    locale: defaultConfig.locale || 'zh_CN',
+    twitterCard: defaultConfig.twitterCard || 'summary_large_image',
   };
 
   return { ogConfig, isLoading };
