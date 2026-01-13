@@ -21,6 +21,41 @@ const PRODUCT_LINE_CODES: Record<string, string> = {
   '青少年': 'teen',
 };
 
+// 将任意字符串转换为 URL 安全的 slug（兜底方案）
+const safeSlug = (str: string): string => {
+  // 先尝试映射表
+  if (PRODUCT_LINE_CODES[str]) {
+    return PRODUCT_LINE_CODES[str];
+  }
+  // 兜底：转换为只含 a-z0-9- 的 slug
+  return str
+    .toLowerCase()
+    .replace(/[\u4e00-\u9fa5]/g, '') // 移除中文字符
+    .replace(/[^a-z0-9]+/g, '-')     // 非字母数字转为连字符
+    .replace(/^-+|-+$/g, '')          // 移除首尾连字符
+    || 'general';                     // 如果为空则返回 general
+};
+
+// 解析上传错误，返回用户友好的错误信息
+const parseUploadError = (error: any): string => {
+  const message = error?.message || error?.error || String(error);
+  
+  if (message.includes('InvalidKey') || message.includes('Invalid key')) {
+    return '文件名包含非法字符，请联系技术支持';
+  }
+  if (message.includes('row-level security') || message.includes('403') || message.includes('Forbidden')) {
+    return '权限不足，请确认已登录管理员账号';
+  }
+  if (message.includes('413') || message.includes('Payload too large') || message.includes('too large')) {
+    return '图片体积过大，请压缩后重试（建议 < 5MB）';
+  }
+  if (message.includes('Bucket not found')) {
+    return '存储桶不存在，请联系技术支持配置 og-images 存储桶';
+  }
+  
+  return message;
+};
+
 interface OGBatchUploadProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -158,9 +193,10 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
     setProgress({ current: 0, total: pageKeys.length });
 
     try {
-      // Upload resized image once with English filename
-      const productLineCode = PRODUCT_LINE_CODES[productLine] || 'general';
+      // Upload resized image once with safe English filename
+      const productLineCode = safeSlug(productLine);
       const fileName = `og-${productLineCode}-series-${Date.now()}.png`;
+      console.log('[OGBatchUpload] Uploading with filename:', fileName);
       const imageUrl = await resizeAndUpload(file, fileName);
       
       // Apply to all pages
@@ -189,7 +225,8 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
       setProgress(null);
     } catch (error) {
       console.error('Batch upload error:', error);
-      toast.error("批量上传失败: " + (error as Error).message);
+      const errorMessage = parseUploadError(error);
+      toast.error("批量上传失败: " + errorMessage);
     } finally {
       setUploading(false);
     }
@@ -240,6 +277,9 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
                 </div>
                 <p className="text-xs text-muted-foreground">
                   预览 (自动调整为 1200×630，cover 模式)
+                </p>
+                <p className="text-xs text-primary/70 font-mono">
+                  📁 og-{safeSlug(productLine)}-series-*.png
                 </p>
               </div>
             ) : (
