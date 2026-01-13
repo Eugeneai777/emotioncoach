@@ -26,6 +26,59 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ProductLineCategory } from "./OGCategoryManager";
 import { OGConfiguration } from "@/hooks/useOGConfigurations";
 
+// 页面键名到中文名称的映射
+const PAGE_KEY_LABELS: Record<string, string> = {
+  home: "首页",
+  coachSpace: "教练空间",
+  coachSpaceIntro: "教练空间介绍",
+  energyStudio: "有劲生活馆",
+  courses: "学习课程",
+  community: "社区",
+  myPosts: "我的帖子",
+  packages: "产品中心",
+  wealthBlock: "财富卡点测评",
+  wealthBlockIntro: "财富卡点介绍",
+  wealthCamp: "财富觉醒训练营",
+  wealthCampIntro: "财富训练营介绍",
+  wealthJournal: "财富觉醒日记",
+  wealthCoach: "财富教练",
+  emotionCoach: "情绪教练",
+  parentCoach: "亲子教练",
+  teenCoach: "青少年教练",
+  vibrantLife: "有劲生活教练",
+  partner: "合伙人",
+  partnerIntro: "合伙人介绍",
+  partnerDashboard: "合伙人仪表盘",
+  bloomPartner: "绽放合伙人",
+  bloomCamp: "绽放训练营",
+  profile: "个人中心",
+  settings: "设置",
+  notifications: "通知",
+  auth: "登录注册",
+  breathing: "呼吸练习",
+  gratitude: "感恩日记",
+  awakening: "觉察日记",
+  coach: "AI教练",
+};
+
+// 获取页面中文名称
+export function getPageKeyLabel(key: string): string {
+  // 尝试精确匹配
+  if (PAGE_KEY_LABELS[key]) {
+    return PAGE_KEY_LABELS[key];
+  }
+  
+  // 尝试部分匹配
+  for (const [pattern, label] of Object.entries(PAGE_KEY_LABELS)) {
+    if (key.toLowerCase().includes(pattern.toLowerCase())) {
+      return label;
+    }
+  }
+  
+  // 返回原始键名
+  return key;
+}
+
 interface OGBatchCategorizeProps {
   configs: Array<{
     key: string;
@@ -209,7 +262,7 @@ export function OGBatchCategorize({ configs, categories }: OGBatchCategorizeProp
                               onCheckedChange={() => toggleKey(config.key)}
                             />
                             <span className="text-sm truncate flex-1" title={config.key}>
-                              {config.key}
+                              {getPageKeyLabel(config.key)}
                             </span>
                             {isManual && (
                               <Check className="h-3 w-3 text-primary flex-shrink-0" />
