@@ -125,20 +125,20 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
             offsetY = (targetHeight - drawHeight) / 2;
           }
         } else {
-          // Partial 模式：图片缩小居右，左侧留白
+          // Partial 模式：图片缩小居中，左右留白
           const scaleFactor = scale / 100;
           drawHeight = targetHeight * scaleFactor;
           drawWidth = img.width * (drawHeight / img.height);
           
-          // 如果宽度超出画布的一半，则以宽度为准重新计算
-          const maxWidth = targetWidth * (scaleFactor * 0.9);
+          // 如果宽度超出画布，则以宽度为准重新计算
+          const maxWidth = targetWidth * scaleFactor;
           if (drawWidth > maxWidth) {
             drawWidth = maxWidth;
             drawHeight = img.height * (drawWidth / img.width);
           }
           
-          // 右对齐，垂直居中
-          offsetX = targetWidth - drawWidth - 50;
+          // 水平居中，垂直居中
+          offsetX = (targetWidth - drawWidth) / 2;
           offsetY = (targetHeight - drawHeight) / 2;
         }
 
@@ -234,20 +234,20 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
             offsetY = (targetHeight - drawHeight) / 2;
           }
         } else {
-          // Partial 模式：图片缩小居右，左侧留白
+          // Partial 模式：图片缩小居中，左右留白
           const scaleFactor = scale / 100;
           drawHeight = targetHeight * scaleFactor;
           drawWidth = img.width * (drawHeight / img.height);
           
-          // 如果宽度超出画布的一半，则以宽度为准重新计算
-          const maxWidth = targetWidth * (scaleFactor * 0.9);
+          // 如果宽度超出画布，则以宽度为准重新计算
+          const maxWidth = targetWidth * scaleFactor;
           if (drawWidth > maxWidth) {
             drawWidth = maxWidth;
             drawHeight = img.height * (drawWidth / img.width);
           }
           
-          // 右对齐，垂直居中
-          offsetX = targetWidth - drawWidth - 50;
+          // 水平居中，垂直居中
+          offsetX = (targetWidth - drawWidth) / 2;
           offsetY = (targetHeight - drawHeight) / 2;
         }
 
@@ -375,7 +375,7 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
             <div className="text-sm">
               <p className="font-medium">缩放模式</p>
               <p className="text-xs text-muted-foreground">
-                {resizeMode === 'contain' ? '完整显示，背景填充' : resizeMode === 'cover' ? '填满画布，裁剪多余' : '缩小居右，左侧留白'}
+                {resizeMode === 'contain' ? '完整显示，背景填充' : resizeMode === 'cover' ? '填满画布，裁剪多余' : '缩小居中，左右留白'}
               </p>
             </div>
             <ToggleGroup 
@@ -439,7 +439,7 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  预览 (1200×630，{resizeMode === 'contain' ? 'Contain - 完整显示' : resizeMode === 'cover' ? 'Cover - 裁剪填满' : 'Partial - 缩小居右'})
+                  预览 (1200×630，{resizeMode === 'contain' ? 'Contain - 完整显示' : resizeMode === 'cover' ? 'Cover - 裁剪填满' : `Partial - 居中 ${partialScale}%`})
                 </p>
                 <p className="text-xs text-primary/70 font-mono">
                   📁 og-{safeSlug(productLine)}-series-*.png
