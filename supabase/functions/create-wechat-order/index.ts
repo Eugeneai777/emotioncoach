@@ -90,10 +90,11 @@ serve(async (req) => {
     const apiV3Key = Deno.env.get('WECHAT_API_V3_KEY');
     const certSerialNo = Deno.env.get('WECHAT_CERT_SERIAL_NO');
     const privateKey = Deno.env.get('WECHAT_PRIVATE_KEY');
-    // 根据环境选择 appId：小程序使用小程序 appId，其他使用公众号 appId
-    const mpAppId = Deno.env.get('WECHAT_MINI_PROGRAM_APP_ID');
-    const officialAppId = Deno.env.get('WECHAT_APP_ID');
-    const appId = (isMiniProgram && mpAppId) ? mpAppId : officialAppId;
+
+    // ⚠️ 重要：当前 H5/微信浏览器/小程序 WebView 场景都使用公众号 appId 发起支付。
+    // 如果未来要做“小程序原生页支付（wx.requestPayment）”，需要商户号绑定小程序 appId 后再启用。
+    const appId = Deno.env.get('WECHAT_APP_ID');
+
     const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
     const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
 

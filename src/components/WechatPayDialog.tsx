@@ -56,6 +56,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [payType, setPayType] = useState<'h5' | 'native' | 'jsapi'>('h5');
   const [userOpenId, setUserOpenId] = useState<string | undefined>(propOpenId);
+  // 用于避免“第一次打开先走扫码、第二次才JSAPI”的竞态：先确认 openId 是否已获取/确认不存在，再创建订单
+  const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
   
   // 判断是否需要显示条款（仅合伙人套餐需要特殊条款确认）
   const requiresTermsAgreement = () => {
@@ -85,40 +87,53 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   // 小程序或微信浏览器内，有 openId 时可以使用 JSAPI 支付
   const canUseJsapi = (isMiniProgram || isWechat) && !!userOpenId;
 
-  // 在小程序/微信环境下自动获取用户的 openId
+  const shouldWaitForOpenId = (isMiniProgram || isWechat) && !propOpenId;
+
+  // 在小程序/微信环境下自动获取用户的 openId（用于 JSAPI 支付）
   useEffect(() => {
     const fetchUserOpenId = async () => {
-      if (!open || !user || openIdFetchedRef.current) return;
-      if (propOpenId) {
-        setUserOpenId(propOpenId);
+      if (!open) return;
+      if (!user) return;
+
+      // 非微信环境：无需等待 openId
+      if (!shouldWaitForOpenId) {
+        setOpenIdResolved(true);
         return;
       }
-      
-      // 只在微信环境下获取 openId
-      if (!isMiniProgram && !isWechat) return;
-      
+
+      // 已传入 openId：直接使用
+      if (propOpenId) {
+        setUserOpenId(propOpenId);
+        setOpenIdResolved(true);
+        return;
+      }
+
+      if (openIdFetchedRef.current) return;
       openIdFetchedRef.current = true;
-      
+
       try {
         const { data: mapping } = await supabase
           .from('wechat_user_mappings')
           .select('openid')
           .eq('system_user_id', user.id)
           .maybeSingle();
-        
+
         if (mapping?.openid) {
           console.log('Found user openId for JSAPI payment');
           setUserOpenId(mapping.openid);
         } else {
           console.log('No openId found, will use H5/Native payment');
+          setUserOpenId(undefined);
         }
       } catch (error) {
         console.error('Failed to fetch user openId:', error);
+      } finally {
+        setOpenIdResolved(true);
       }
     };
-    
+
     fetchUserOpenId();
-  }, [open, user, propOpenId, isMiniProgram, isWechat]);
+  }, [open, user, propOpenId, shouldWaitForOpenId]);
 
   // 清理定时器
   const clearTimers = () => {
@@ -146,6 +161,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setAgreedTerms(!needsTerms);
     orderCreatedRef.current = false; // 重置订单创建标记
     openIdFetchedRef.current = false; // 重置 openId 获取标记
+    setUserOpenId(propOpenId);
+    setOpenIdResolved(false);
   };
 
   // 根据套餐类型获取对应的服务条款链接
@@ -447,6 +464,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
   // 条款同意后（或无需条款时）创建订单
   useEffect(() => {
+    // 微信环境下：先等待 openId 查询完成，避免首次打开误走扫码支付
+    if (shouldWaitForOpenId && !openIdResolved) return;
+
     // 无需条款 或 已同意条款时，自动创建订单
     if (open && packageInfo && user && (!needsTerms || agreedTerms) && !orderCreatedRef.current) {
       orderCreatedRef.current = true;
@@ -455,7 +475,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     return () => {
       clearTimers();
     };
-  }, [open, packageInfo, user, agreedTerms, needsTerms]);
+  }, [open, packageInfo, user, agreedTerms, needsTerms, shouldWaitForOpenId, openIdResolved]);
 
   // 关闭对话框时重置
   useEffect(() => {
