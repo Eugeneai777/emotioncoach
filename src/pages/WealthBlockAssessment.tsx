@@ -299,9 +299,9 @@ export default function WealthBlockAssessmentPage() {
   };
 
   // 分享配置
-  const shareTitle = "AI财富卡点测评｜找出你的隐形刹车";
-  const shareDescription = "¥9.9测出你的财富隐形刹车，30场景×3层AI追问";
-  const shareImage = "https://wechat.eugenewe.net/og-wealth-coach.png";
+  const shareTitle = "有劲AI • 财富卡点测评";
+  const shareDescription = "3分钟找到阻碍你财富增长的隐形卡点";
+  const shareImage = "https://wechat.eugenewe.net/og-wealth-block.png";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">
