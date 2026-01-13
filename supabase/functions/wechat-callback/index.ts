@@ -426,6 +426,16 @@ Deno.serve(async (req) => {
           // 所以这里先立刻返回 success，再把耗时逻辑放到后台执行。
           const runInBackground = async () => {
             try {
+              // 首先获取场景信息，确定是登录还是注册模式
+              const { data: sceneData } = await supabase
+                .from('wechat_login_scenes')
+                .select('mode')
+                .eq('scene_str', sceneStr)
+                .maybeSingle();
+              
+              const sceneMode = sceneData?.mode || 'login';
+              console.log('Scene mode:', sceneMode, 'for sceneStr:', sceneStr);
+
               // 查找已绑定的用户（一个微信只能绑定一个账号）
               const { data: existingMapping, error: mappingErr } = await supabase
                 .from('wechat_user_mappings')
@@ -434,13 +444,18 @@ Deno.serve(async (req) => {
                 .maybeSingle();
 
               if (mappingErr) {
-                console.warn('Failed to query wechat_user_mappings (will fallback to create):', mappingErr);
+                console.warn('Failed to query wechat_user_mappings:', mappingErr);
               }
 
               let userId = existingMapping?.system_user_id;
 
-              // 如果用户不存在，创建新用户
-              if (!userId) {
+              // 如果用户已存在映射，直接使用（无论是登录还是注册模式）
+              if (userId) {
+                console.log('User already registered, using existing userId:', userId);
+              } else if (sceneMode === 'register') {
+                // 只有在注册模式下才创建新用户
+                console.log('Register mode: creating new user for openid:', FromUserName);
+                
                 // 获取微信用户信息
                 const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
                 const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
@@ -495,8 +510,8 @@ Deno.serve(async (req) => {
                     console.log('User info obtained:', userInfo.nickname || 'default');
                   }
 
-                  // 创建/获取用户（openid 派生的 email）
-                  const email = `wechat_${FromUserName.substring(0, 10)}@youjin.app`;
+                  // 创建/获取用户（使用完整 openid 生成邮箱，与 wechat-oauth-process 保持一致）
+                  const email = `wechat_${FromUserName.toLowerCase()}@temp.youjin365.com`;
                   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
                     email,
                     email_confirm: true,
@@ -509,7 +524,9 @@ Deno.serve(async (req) => {
 
                   if (!authError && authData.user) {
                     userId = authData.user.id;
+                    console.log('Created new user:', userId);
                   } else if ((authError as any)?.code === 'email_exists') {
+                    // 邮箱已存在，查找已有用户
                     const { data: listData, error: listErr } = await supabase.auth.admin.listUsers({
                       page: 1,
                       perPage: 1000,
@@ -519,7 +536,10 @@ Deno.serve(async (req) => {
                       console.error('Failed to list users after email_exists:', listErr);
                     } else {
                       const existing = listData?.users?.find((u) => u.email === email);
-                      if (existing) userId = existing.id;
+                      if (existing) {
+                        userId = existing.id;
+                        console.log('Found existing user by email:', userId);
+                      }
                     }
 
                     if (!userId) {
@@ -550,19 +570,35 @@ Deno.serve(async (req) => {
                       { onConflict: 'openid' }
                     );
 
-                    console.log('Resolved user for openid:', userId);
+                    console.log('Registered new user for openid:', userId);
                   }
                 }
+              } else {
+                // 登录模式但用户未注册，标记场景为未注册状态
+                console.log('Login mode but user not registered, marking scene as not_registered');
+                await supabase
+                  .from('wechat_login_scenes')
+                  .update({
+                    status: 'not_registered',
+                    openid: FromUserName,
+                    confirmed_at: new Date().toISOString(),
+                  })
+                  .eq('scene_str', sceneStr);
+                
+                return; // 不继续执行后续登录逻辑
               }
 
               if (userId) {
+                // 使用一致的邮箱格式
+                const email = `wechat_${FromUserName.toLowerCase()}@temp.youjin365.com`;
+                
                 await supabase
                   .from('wechat_login_scenes')
                   .update({
                     status: 'confirmed',
                     openid: FromUserName,
                     user_id: userId,
-                    user_email: `wechat_${FromUserName.substring(0, 10)}@youjin.app`,
+                    user_email: email,
                     confirmed_at: new Date().toISOString(),
                   })
                   .eq('scene_str', sceneStr);
@@ -571,8 +607,6 @@ Deno.serve(async (req) => {
 
                 // 发送登录成功模板消息通知（走后台通知函数）
                 try {
-                  const email = `wechat_${FromUserName.substring(0, 10)}@youjin.app`;
-
                   // 确保订阅状态为true（否则通知函数会跳过发送）
                   await supabase.from('wechat_user_mappings').upsert(
                     {

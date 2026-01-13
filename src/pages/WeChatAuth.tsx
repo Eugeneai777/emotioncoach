@@ -29,7 +29,7 @@ export default function WeChatAuth() {
   const [loading, setLoading] = useState(true);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [sceneStr, setSceneStr] = useState<string>("");
-  const [loginStatus, setLoginStatus] = useState<'pending' | 'scanned' | 'confirmed' | 'expired'>('pending');
+  const [loginStatus, setLoginStatus] = useState<'pending' | 'scanned' | 'confirmed' | 'expired' | 'not_registered'>('pending');
   const [isOpenPlatform, setIsOpenPlatform] = useState<boolean | null>(null);
   const [authUrl, setAuthUrl] = useState<string>("");
   const [expiresIn, setExpiresIn] = useState<number>(0);
@@ -138,7 +138,15 @@ export default function WeChatAuth() {
              toast.error(`登录失败：${msg}`);
              setLoginStatus('expired');
            }
-         } else if (data.status === 'scanned') {
+         } else if (data.status === 'not_registered') {
+          clearPolling();
+          setLoginStatus('not_registered');
+          toast.error("该微信未注册，请先注册");
+          // 3秒后跳转到注册页
+          setTimeout(() => {
+            navigate('/wechat-auth?mode=register');
+          }, 3000);
+        } else if (data.status === 'scanned') {
           setLoginStatus('scanned');
         } else if (data.status === 'expired') {
           setLoginStatus('expired');

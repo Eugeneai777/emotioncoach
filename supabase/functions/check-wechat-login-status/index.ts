@@ -86,6 +86,14 @@ serve(async (req) => {
     }
 
 
+    // 如果是未注册状态，提示用户先注册
+    if (scene.status === 'not_registered') {
+      return new Response(
+        JSON.stringify({ status: 'not_registered', message: '该微信未注册，请先注册' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // 如果已扫码但未确认
     if (scene.status === 'scanned') {
       return new Response(
