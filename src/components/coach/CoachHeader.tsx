@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SmartNotificationCenter } from "@/components/SmartNotificationCenter";
+import { WeChatBindQuickEntry } from "@/components/WeChatBindQuickEntry";
 import { hamburgerMenuItems } from "@/config/hamburgerMenuConfig";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -109,7 +110,11 @@ export const CoachHeader = ({
   };
 
   return (
-    <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-10">
+    <div className="sticky top-0 z-10">
+      {/* 微信绑定快捷入口 - 仅邮箱用户未绑定时显示 */}
+      <WeChatBindQuickEntry variant="banner" />
+      
+      <header className="border-b border-border/50 bg-card/80 backdrop-blur-md">
       <div className="container max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-2 md:px-4 py-2 md:py-3">
         <div className="flex items-center justify-between gap-2">
           {/* Left side */}
@@ -266,5 +271,6 @@ export const CoachHeader = ({
         </div>
       </div>
     </header>
+    </div>
   );
 };

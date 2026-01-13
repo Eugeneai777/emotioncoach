@@ -5202,6 +5202,8 @@ export type Database = {
           voice_rate: number | null
           wechat_appid: string | null
           wechat_appsecret: string | null
+          wechat_bind_prompted: boolean | null
+          wechat_bind_prompted_at: string | null
           wechat_enabled: boolean | null
           wechat_encoding_aes_key: string | null
           wechat_proxy_auth_token: string | null
@@ -5266,6 +5268,8 @@ export type Database = {
           voice_rate?: number | null
           wechat_appid?: string | null
           wechat_appsecret?: string | null
+          wechat_bind_prompted?: boolean | null
+          wechat_bind_prompted_at?: string | null
           wechat_enabled?: boolean | null
           wechat_encoding_aes_key?: string | null
           wechat_proxy_auth_token?: string | null
@@ -5330,6 +5334,8 @@ export type Database = {
           voice_rate?: number | null
           wechat_appid?: string | null
           wechat_appsecret?: string | null
+          wechat_bind_prompted?: boolean | null
+          wechat_bind_prompted_at?: string | null
           wechat_enabled?: boolean | null
           wechat_encoding_aes_key?: string | null
           wechat_proxy_auth_token?: string | null

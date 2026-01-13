@@ -19,6 +19,7 @@ import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { AccountCredentials } from "@/components/profile/AccountCredentials";
 import { PhoneNumberManager } from "@/components/profile/PhoneNumberManager";
+import { WeChatBindStatus } from "@/components/profile/WeChatBindStatus";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, CheckCircle2, AlertCircle, Home } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
@@ -324,6 +325,9 @@ export default function Settings() {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* 微信绑定状态 */}
+            <WeChatBindStatus className="mt-6" />
 
             {/* 手机号管理 */}
             <PhoneNumberManager />

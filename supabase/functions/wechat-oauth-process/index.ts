@@ -183,6 +183,26 @@ serve(async (req) => {
 
       finalUserId = bindUserId;
       console.log('Binding to existing user:', finalUserId);
+      
+      // 绑定成功，发送欢迎通知
+      try {
+        await supabaseClient.functions.invoke('send-wechat-template-message', {
+          body: {
+            userId: bindUserId,
+            scenario: 'wechat_bind_success',
+            notification: {
+              id: crypto.randomUUID(),
+              title: '绑定成功',
+              message: '恭喜！您已成功绑定微信账号，现在可以接收智能消息推送啦 🎉',
+              remark: '如需帮助请回复任意消息'
+            }
+          }
+        });
+        console.log('Bind success notification sent');
+      } catch (notifyError) {
+        console.log('Failed to send bind success notification:', notifyError);
+        // 不阻止绑定流程
+      }
     } else if (existingMapping) {
       // 登录流程且已有映射
       finalUserId = existingMapping.system_user_id;
