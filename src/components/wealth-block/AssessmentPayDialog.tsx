@@ -157,8 +157,8 @@ export function AssessmentPayDialog({
   const waitForMiniProgramBridge = useCallback((): Promise<(options: { data: any }) => void> => {
     return new Promise((resolve, reject) => {
       let attempts = 0;
-      const maxAttempts = 20; // 最多等待 2 秒
-      
+      const maxAttempts = 150; // 最多等待 15 秒（小程序首次打开 WebView 注入可能较慢）
+
       const check = () => {
         attempts++;
         const mp = window.wx?.miniProgram;
@@ -167,19 +167,27 @@ export function AssessmentPayDialog({
           resolve(mp.postMessage.bind(mp));
           return;
         }
-        
+
         if (attempts >= maxAttempts) {
           console.error('[MiniProgram] postMessage bridge not available after', attempts, 'attempts');
-          reject(new Error('小程序支付桥接未就绪，请刷新页面重试'));
+          reject(new Error('小程序支付桥接未就绪，请稍后重试（可下拉刷新页面）'));
           return;
         }
-        
+
         setTimeout(check, 100);
       };
-      
+
       check();
     });
   }, []);
+
+  // 小程序环境：提前预热 postMessage 桥接，避免创建订单后立刻拉起支付时仍未注入
+  useEffect(() => {
+    if (!open || !isMiniProgram) return;
+    waitForMiniProgramBridge().catch(() => {
+      // 预热失败不打断流程；真正支付时会再次等待并给出提示
+    });
+  }, [open, isMiniProgram, waitForMiniProgramBridge]);
 
   // 小程序原生支付桥接：H5 通过 postMessage 通知小程序侧调用 wx.requestPayment
   const invokeMiniProgramPay = useCallback(async (params: Record<string, string>) => {
