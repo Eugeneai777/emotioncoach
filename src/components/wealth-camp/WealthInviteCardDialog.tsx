@@ -86,48 +86,104 @@ const getProxiedAvatarUrl = (avatarUrl?: string): string | undefined => {
   }
 };
 
-// Helper: Wait for all images in element to load
-const waitForImages = async (element: HTMLElement): Promise<void> => {
+// Helper: Wait for all images in element to load with timeout
+const waitForImages = async (element: HTMLElement, timeout = 3000): Promise<void> => {
   const images = element.querySelectorAll('img');
   const promises = Array.from(images).map(img => {
-    if (img.complete) return Promise.resolve();
+    if (img.complete && img.naturalHeight > 0) return Promise.resolve();
     return new Promise<void>((resolve) => {
-      img.onload = () => resolve();
-      img.onerror = () => resolve(); // Resolve even on error to not block
+      const timer = setTimeout(() => resolve(), timeout);
+      img.onload = () => {
+        clearTimeout(timer);
+        resolve();
+      };
+      img.onerror = () => {
+        clearTimeout(timer);
+        resolve(); // Resolve even on error to not block
+      };
     });
   });
   await Promise.all(promises);
 };
 
-// Helper: Generate canvas from card element
+// Helper: Copy computed styles to cloned element
+const copyComputedStyles = (source: HTMLElement, target: HTMLElement): void => {
+  const computedStyle = window.getComputedStyle(source);
+  const importantProps = [
+    'font-family', 'font-size', 'font-weight', 'line-height', 'color',
+    'background', 'background-color', 'background-image', 'background-size',
+    'border-radius', 'padding', 'margin', 'width', 'height',
+    'display', 'flex-direction', 'align-items', 'justify-content', 'gap',
+    'box-shadow', 'text-align', 'opacity', 'overflow'
+  ];
+  
+  importantProps.forEach(prop => {
+    const value = computedStyle.getPropertyValue(prop);
+    if (value) {
+      target.style.setProperty(prop, value);
+    }
+  });
+};
+
+// Helper: Generate canvas from card element with enhanced stability
 const generateCanvas = async (cardRef: React.RefObject<HTMLDivElement>): Promise<HTMLCanvasElement | null> => {
   if (!cardRef.current) return null;
   
   const originalElement = cardRef.current;
+  
+  // Create a wrapper for proper rendering
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = `
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    z-index: -9999;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: none;
+  `;
+  
+  // Clone the element
   const clonedElement = originalElement.cloneNode(true) as HTMLElement;
   
-  // Set up the cloned element for rendering
-  clonedElement.style.position = 'fixed';
-  clonedElement.style.left = '-9999px';
-  clonedElement.style.top = '0';
+  // Reset transform and ensure proper sizing
   clonedElement.style.transform = 'none';
-  clonedElement.style.zIndex = '-9999';
+  clonedElement.style.transformOrigin = 'top left';
+  clonedElement.style.margin = '0';
+  clonedElement.style.position = 'relative';
   
-  document.body.appendChild(clonedElement);
+  wrapper.appendChild(clonedElement);
+  document.body.appendChild(wrapper);
   
-  // Wait for all images to load
-  await waitForImages(clonedElement);
-  
-  const canvas = await html2canvas(clonedElement, {
-    scale: 3,
-    useCORS: true,
-    allowTaint: false,
-    backgroundColor: null,
-    logging: false,
-  });
-  
-  document.body.removeChild(clonedElement);
-  return canvas;
+  try {
+    // Wait for images with timeout
+    await waitForImages(clonedElement, 5000);
+    
+    // Small delay to ensure rendering is complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const canvas = await html2canvas(clonedElement, {
+      scale: 3,
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: null,
+      logging: false,
+      imageTimeout: 5000,
+      onclone: (_doc, element) => {
+        // Ensure cloned element has proper styles
+        element.style.transform = 'none';
+        element.style.visibility = 'visible';
+        element.style.opacity = '1';
+      },
+    });
+    
+    return canvas;
+  } catch (error) {
+    console.error('html2canvas error:', error);
+    return null;
+  } finally {
+    document.body.removeChild(wrapper);
+  }
 };
 
 // Helper: Canvas to Blob
@@ -538,16 +594,24 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     }
 
     setGenerating(true);
+    
     try {
+      // Show loading toast for better UX
+      const toastId = toast.loading('正在生成图片...');
+      
       const canvas = await generateCanvas(cardRef);
       if (!canvas) {
+        toast.dismiss(toastId);
         throw new Error('Failed to generate canvas');
       }
 
       const blob = await canvasToBlob(canvas);
       if (!blob) {
+        toast.dismiss(toastId);
         throw new Error('Failed to convert canvas to blob');
       }
+
+      toast.dismiss(toastId);
 
       // Create blob URL for download
       const blobUrl = URL.createObjectURL(blob);
@@ -556,6 +620,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       if (shouldUseImagePreview()) {
         setPreviewImageUrl(blobUrl);
         setShowImagePreview(true);
+        toast.success('图片已生成，长按保存');
       } else {
         // Try download with <a> element
         const link = document.createElement('a');
@@ -589,16 +654,24 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     }
 
     setGenerating(true);
+    
     try {
+      // Show loading toast for better UX
+      const toastId = toast.loading('正在生成图片...');
+      
       const canvas = await generateCanvas(cardRef);
       if (!canvas) {
+        toast.dismiss(toastId);
         throw new Error('Failed to generate canvas');
       }
 
       const blob = await canvasToBlob(canvas);
       if (!blob) {
+        toast.dismiss(toastId);
         throw new Error('Failed to convert canvas to blob');
       }
+
+      toast.dismiss(toastId);
 
       // Use unified share handler with proper WeChat/iOS fallback
       const result = await handleShareWithFallback(
@@ -609,6 +682,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           onShowPreview: (blobUrl) => {
             setPreviewImageUrl(blobUrl);
             setShowImagePreview(true);
+            toast.success('图片已生成，长按保存');
           },
           onDownload: () => {
             toast.success('图片已下载，请手动分享');
@@ -712,8 +786,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsList>
 
           <TabsContent value="aianalysis" className="mt-4">
-            <div className="flex justify-center">
-              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+            <div className="flex justify-center overflow-hidden">
+              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
                 <AIAnalysisShareCard 
                   ref={aiAnalysisCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -725,8 +799,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="value" className="mt-4">
-            <div className="flex justify-center">
-              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+            <div className="flex justify-center overflow-hidden">
+              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
                 <AssessmentValueShareCard 
                   ref={valueCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -738,8 +812,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="fear" className="mt-4">
-            <div className="flex justify-center">
-              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+            <div className="flex justify-center overflow-hidden">
+              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
                 <FearAwakeningShareCard 
                   ref={fearCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -751,8 +825,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="blindspot" className="mt-4">
-            <div className="flex justify-center">
-              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+            <div className="flex justify-center overflow-hidden">
+              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
                 <BlockRevealShareCard 
                   ref={blindspotCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -764,8 +838,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="transform" className="mt-4">
-            <div className="flex justify-center">
-              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+            <div className="flex justify-center overflow-hidden">
+              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
                 <TransformationValueShareCard 
                   ref={transformCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -777,8 +851,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="assessment" className="mt-4">
-            <div className="flex justify-center">
-              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+            <div className="flex justify-center overflow-hidden">
+              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
                 <WealthAssessmentShareCard 
                   ref={assessmentCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -790,8 +864,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="camp" className="mt-4">
-            <div className="flex justify-center">
-              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+            <div className="flex justify-center overflow-hidden">
+              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
                 <WealthCampShareCard 
                   ref={campCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -806,8 +880,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 
           <TabsContent value="growth" className="mt-4">
             {growthData ? (
-              <div className="flex justify-center">
-              <div className="transform scale-[0.72] origin-top" style={{ marginBottom: '-28%' }}>
+              <div className="flex justify-center overflow-hidden">
+                <div className="origin-top" style={{ transform: 'scale(0.7)', marginBottom: '-30%' }}>
                   <EnhancedGrowthPosterCard
                     ref={growthCardRef}
                     avatarUrl={userInfo.avatarUrl}
@@ -834,8 +908,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="achievement" className="mt-4">
-            <div className="flex justify-center">
-              <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+            <div className="flex justify-center overflow-hidden">
+              <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
                 <AchievementShareCard 
                   ref={achievementCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -888,8 +962,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                     </Button>
                   )}
                 </div>
-                <div className="flex justify-center">
-                  <div className="transform scale-[0.85] origin-top" style={{ marginBottom: '-15%' }}>
+                <div className="flex justify-center overflow-hidden">
+                  <div className="origin-top" style={{ transform: 'scale(0.8)', marginBottom: '-20%' }}>
                     <WealthAwakeningShareCard
                       ref={awakeningCardRef}
                       dayNumber={awakeningData.dayNumber}
@@ -911,8 +985,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="milestone" className="mt-4">
-            <div className="flex justify-center">
-              <div className="transform scale-[0.8] origin-top" style={{ marginBottom: '-20%' }}>
+            <div className="flex justify-center overflow-hidden">
+              <div className="origin-top" style={{ transform: 'scale(0.75)', marginBottom: '-25%' }}>
                 {/* Show enhanced graduation card for Day 7+ users */}
                 {(userInfo.currentDay || 1) >= 7 ? (
                   <GraduationShareCard
