@@ -5,25 +5,25 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { OGConfig } from "@/config/ogConfig";
 import { OGEditDialog } from "./OGEditDialog";
+import { OGCardCategorySelector } from "./OGCardCategorySelector";
+import { ProductLineCategory } from "./OGCategoryManager";
+import { useUpsertOGConfiguration, OGConfiguration } from "@/hooks/useOGConfigurations";
 
 interface OGCardPreviewProps {
   config: OGConfig;
   pageKey: string;
-  customConfig?: {
-    title?: string | null;
-    og_title?: string | null;
-    description?: string | null;
-    image_url?: string | null;
-    url?: string | null;
-  } | null;
+  customConfig?: OGConfiguration | null;
+  categories?: ProductLineCategory[];
+  autoCategoryId?: string | null;
 }
 
 type ImageStatus = 'loading' | 'loaded' | 'error';
 
-export function OGCardPreview({ config, pageKey, customConfig }: OGCardPreviewProps) {
+export function OGCardPreview({ config, pageKey, customConfig, categories = [], autoCategoryId }: OGCardPreviewProps) {
   const [imageStatus, setImageStatus] = useState<ImageStatus>('loading');
   const [copied, setCopied] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const upsertConfig = useUpsertOGConfiguration();
 
   // Use custom config if available, otherwise use default
   const displayConfig = {
@@ -46,6 +46,13 @@ export function OGCardPreview({ config, pageKey, customConfig }: OGCardPreviewPr
 
   const handleVisit = () => {
     window.open(displayConfig.url, '_blank');
+  };
+
+  const handleCategoryChange = (categoryId: string | null) => {
+    upsertConfig.mutate({
+      page_key: pageKey,
+      category_id: categoryId || undefined,
+    });
   };
 
   const getStatusIcon = () => {
@@ -111,12 +118,21 @@ export function OGCardPreview({ config, pageKey, customConfig }: OGCardPreviewPr
 
         {/* 配置信息 */}
         <div className="p-3 space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded truncate max-w-[100px]" title={pageKey}>
               {pageKey}
             </span>
             {getStatusIcon()}
-            {hasCustomConfig && (
+            {categories.length > 0 && (
+              <OGCardCategorySelector
+                currentCategoryId={customConfig?.category_id || null}
+                autoCategoryId={autoCategoryId || null}
+                categories={categories}
+                onSelect={handleCategoryChange}
+                disabled={upsertConfig.isPending}
+              />
+            )}
+            {hasCustomConfig && !customConfig?.category_id && (
               <span className="text-xs bg-amber-500/10 text-amber-600 px-1.5 py-0.5 rounded flex items-center gap-1">
                 <Sparkles className="h-3 w-3" />
                 已自定义

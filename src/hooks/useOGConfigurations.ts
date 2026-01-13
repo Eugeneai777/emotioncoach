@@ -15,6 +15,7 @@ export interface OGConfiguration {
   created_at: string;
   updated_at: string;
   updated_by: string | null;
+  category_id: string | null;
 }
 
 export interface OGConfigurationInput {
@@ -26,6 +27,7 @@ export interface OGConfigurationInput {
   url?: string;
   site_name?: string;
   is_active?: boolean;
+  category_id?: string;
 }
 
 export function useOGConfigurations() {

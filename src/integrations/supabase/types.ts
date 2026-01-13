@@ -3957,6 +3957,7 @@ export type Database = {
       }
       og_configurations: {
         Row: {
+          category_id: string | null
           created_at: string | null
           description: string | null
           id: string
@@ -3971,6 +3972,7 @@ export type Database = {
           url: string | null
         }
         Insert: {
+          category_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -3985,6 +3987,7 @@ export type Database = {
           url?: string | null
         }
         Update: {
+          category_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
