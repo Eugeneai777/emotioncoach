@@ -1,11 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, Loader2, Check, ImageIcon } from "lucide-react";
+import { Upload, Loader2, Check, ImageIcon, Maximize2, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useUpsertOGConfiguration } from "@/hooks/useOGConfigurations";
 import { PAGE_OG_CONFIGS } from "@/config/ogConfig";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 // 产品线英文映射，用于生成存储友好的文件名
 const PRODUCT_LINE_CODES: Record<string, string> = {
@@ -56,6 +57,8 @@ const parseUploadError = (error: any): string => {
   return message;
 };
 
+type ResizeMode = 'contain' | 'cover';
+
 interface OGBatchUploadProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -68,11 +71,12 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
+  const [resizeMode, setResizeMode] = useState<ResizeMode>('contain');
   
   const upsertConfig = useUpsertOGConfiguration();
 
-  // 生成 contain 模式预览（与上传效果一致）
-  const generateContainPreview = useCallback((file: File): Promise<string> => {
+  // 生成预览（根据模式）
+  const generatePreview = useCallback((file: File, mode: ResizeMode): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
@@ -88,23 +92,36 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, targetWidth, targetHeight);
 
-        // Contain 模式：完整显示图片，居中
         const imgRatio = img.width / img.height;
         const targetRatio = targetWidth / targetHeight;
         let drawWidth, drawHeight, offsetX, offsetY;
 
-        if (imgRatio > targetRatio) {
-          // 图片更宽 → 以宽度为准，高度留白
-          drawWidth = targetWidth;
-          drawHeight = img.height * (targetWidth / img.width);
-          offsetX = 0;
-          offsetY = (targetHeight - drawHeight) / 2;
+        if (mode === 'contain') {
+          // Contain 模式：完整显示图片，居中
+          if (imgRatio > targetRatio) {
+            drawWidth = targetWidth;
+            drawHeight = img.height * (targetWidth / img.width);
+            offsetX = 0;
+            offsetY = (targetHeight - drawHeight) / 2;
+          } else {
+            drawHeight = targetHeight;
+            drawWidth = img.width * (targetHeight / img.height);
+            offsetX = (targetWidth - drawWidth) / 2;
+            offsetY = 0;
+          }
         } else {
-          // 图片更高 → 以高度为准，宽度留白
-          drawHeight = targetHeight;
-          drawWidth = img.width * (targetHeight / img.height);
-          offsetX = (targetWidth - drawWidth) / 2;
-          offsetY = 0;
+          // Cover 模式：填满画布，裁剪多余部分
+          if (imgRatio > targetRatio) {
+            drawHeight = targetHeight;
+            drawWidth = img.width * (targetHeight / img.height);
+            offsetX = (targetWidth - drawWidth) / 2;
+            offsetY = 0;
+          } else {
+            drawWidth = targetWidth;
+            drawHeight = img.height * (targetWidth / img.width);
+            offsetX = 0;
+            offsetY = (targetHeight - drawHeight) / 2;
+          }
         }
 
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
@@ -113,6 +130,13 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
       img.src = URL.createObjectURL(file);
     });
   }, []);
+
+  // 当模式切换时，重新生成预览
+  useEffect(() => {
+    if (file) {
+      generatePreview(file, resizeMode).then(setPreview);
+    }
+  }, [resizeMode, file, generatePreview]);
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -124,10 +148,9 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
     }
 
     setFile(selectedFile);
-    // 生成 contain 模式预览
-    const croppedPreview = await generateContainPreview(selectedFile);
-    setPreview(croppedPreview);
-  }, [generateContainPreview]);
+    const previewUrl = await generatePreview(selectedFile, resizeMode);
+    setPreview(previewUrl);
+  }, [generatePreview, resizeMode]);
 
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
@@ -138,16 +161,14 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
     }
     
     setFile(droppedFile);
-    // 生成 contain 模式预览
-    const croppedPreview = await generateContainPreview(droppedFile);
-    setPreview(croppedPreview);
-  }, [generateContainPreview]);
+    const previewUrl = await generatePreview(droppedFile, resizeMode);
+    setPreview(previewUrl);
+  }, [generatePreview, resizeMode]);
 
-  const resizeAndUpload = async (file: File, fileName: string): Promise<string> => {
+  const resizeAndUpload = async (file: File, fileName: string, mode: ResizeMode): Promise<string> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = async () => {
-        // Create canvas with target dimensions
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         if (!ctx) {
@@ -164,27 +185,39 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, targetWidth, targetHeight);
 
-        // Contain 模式：完整显示图片，居中，不裁剪
         const imgRatio = img.width / img.height;
         const targetRatio = targetWidth / targetHeight;
-
         let drawWidth, drawHeight, offsetX, offsetY;
 
-        if (imgRatio > targetRatio) {
-          // 图片更宽 → 以宽度为准，高度留白
-          drawWidth = targetWidth;
-          drawHeight = img.height * (targetWidth / img.width);
-          offsetX = 0;
-          offsetY = (targetHeight - drawHeight) / 2;
+        if (mode === 'contain') {
+          // Contain 模式：完整显示图片，居中，不裁剪
+          if (imgRatio > targetRatio) {
+            drawWidth = targetWidth;
+            drawHeight = img.height * (targetWidth / img.width);
+            offsetX = 0;
+            offsetY = (targetHeight - drawHeight) / 2;
+          } else {
+            drawHeight = targetHeight;
+            drawWidth = img.width * (targetHeight / img.height);
+            offsetX = (targetWidth - drawWidth) / 2;
+            offsetY = 0;
+          }
         } else {
-          // 图片更高 → 以高度为准，宽度留白
-          drawHeight = targetHeight;
-          drawWidth = img.width * (targetHeight / img.height);
-          offsetX = (targetWidth - drawWidth) / 2;
-          offsetY = 0;
+          // Cover 模式：填满画布，裁剪多余部分
+          if (imgRatio > targetRatio) {
+            drawHeight = targetHeight;
+            drawWidth = img.width * (targetHeight / img.height);
+            offsetX = (targetWidth - drawWidth) / 2;
+            offsetY = 0;
+          } else {
+            drawWidth = targetWidth;
+            drawHeight = img.height * (targetWidth / img.width);
+            offsetX = 0;
+            offsetY = (targetHeight - drawHeight) / 2;
+          }
         }
 
-        // 绘制完整图片（居中）
+        // 绘制图片
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
 
         // Convert to blob
@@ -240,7 +273,7 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
       const productLineCode = safeSlug(productLine);
       const fileName = `og-${productLineCode}-series-${Date.now()}.png`;
       console.log('[OGBatchUpload] Uploading with filename:', fileName);
-      const imageUrl = await resizeAndUpload(file, fileName);
+      const imageUrl = await resizeAndUpload(file, fileName, resizeMode);
       
       // Apply to all pages
       for (let i = 0; i < pageKeys.length; i++) {
@@ -265,6 +298,8 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
       onOpenChange(false);
       setFile(null);
       setPreview(null);
+      setProgress(null);
+      setResizeMode('contain');
       setProgress(null);
     } catch (error) {
       console.error('Batch upload error:', error);
@@ -301,6 +336,31 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
             </div>
           </div>
 
+          {/* Resize mode toggle */}
+          <div className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
+            <div className="text-sm">
+              <p className="font-medium">缩放模式</p>
+              <p className="text-xs text-muted-foreground">
+                {resizeMode === 'contain' ? '完整显示，背景填充' : '填满画布，裁剪多余'}
+              </p>
+            </div>
+            <ToggleGroup 
+              type="single" 
+              value={resizeMode} 
+              onValueChange={(value) => value && setResizeMode(value as ResizeMode)}
+              className="bg-background rounded-md"
+            >
+              <ToggleGroupItem value="contain" aria-label="Contain 模式" className="gap-1.5 px-3">
+                <Minimize2 className="h-4 w-4" />
+                <span className="text-xs">Contain</span>
+              </ToggleGroupItem>
+              <ToggleGroupItem value="cover" aria-label="Cover 模式" className="gap-1.5 px-3">
+                <Maximize2 className="h-4 w-4" />
+                <span className="text-xs">Cover</span>
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+
           {/* Upload area */}
           <div
             onDrop={handleDrop}
@@ -315,11 +375,11 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
                   <img 
                     src={preview} 
                     alt="Preview" 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  预览 (自动调整为 1200×630，contain 模式 - 完整显示)
+                  预览 (1200×630，{resizeMode === 'contain' ? 'Contain 模式 - 完整显示' : 'Cover 模式 - 裁剪填满'})
                 </p>
                 <p className="text-xs text-primary/70 font-mono">
                   📁 og-{safeSlug(productLine)}-series-*.png
@@ -368,6 +428,7 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
                 onOpenChange(false);
                 setFile(null);
                 setPreview(null);
+                setResizeMode('contain');
               }}
               disabled={uploading}
               className="flex-1"
