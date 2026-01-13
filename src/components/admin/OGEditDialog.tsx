@@ -19,12 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Upload, Loader2, Image as ImageIcon, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import type { OGConfig } from "@/config/ogConfig";
 import { useUpsertOGConfiguration, useDeleteOGConfiguration, uploadOGImage } from "@/hooks/useOGConfigurations";
 import { supabase } from "@/integrations/supabase/client";
+import { ProductLineCategory } from "./OGCategoryManager";
 
 type ResizeMode = 'contain' | 'cover' | 'partial';
 
@@ -47,7 +49,11 @@ interface OGEditDialogProps {
     description?: string | null;
     image_url?: string | null;
     url?: string | null;
+    category_id?: string | null;
   } | null;
+  categories?: ProductLineCategory[];
+  currentCategoryId?: string | null;
+  autoCategoryId?: string | null;
 }
 
 export function OGEditDialog({
@@ -56,15 +62,25 @@ export function OGEditDialog({
   pageKey,
   defaultConfig,
   customConfig,
+  categories = [],
+  currentCategoryId,
+  autoCategoryId,
 }: OGEditDialogProps) {
   const [title, setTitle] = useState(customConfig?.title || defaultConfig.title);
   const [ogTitle, setOgTitle] = useState(customConfig?.og_title || defaultConfig.ogTitle);
   const [description, setDescription] = useState(customConfig?.description || defaultConfig.description);
   const [imageUrl, setImageUrl] = useState(customConfig?.image_url || defaultConfig.image);
+  const [categoryId, setCategoryId] = useState<string | null>(currentCategoryId || null);
   const [isUploading, setIsUploading] = useState(false);
   const [aiKeywords, setAiKeywords] = useState("");
   const [aiStyle, setAiStyle] = useState("brand");
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Get category label helper
+  const getCategoryLabel = (id: string) => {
+    const cat = categories.find(c => c.id === id);
+    return cat ? `${cat.emoji} ${cat.label}` : id;
+  };
   
   // Image resize options
   const [resizeMode, setResizeMode] = useState<ResizeMode>('cover');
@@ -244,6 +260,7 @@ export function OGEditDialog({
       description,
       image_url: imageUrl,
       url: defaultConfig.url,
+      category_id: categoryId || undefined,
     });
     onOpenChange(false);
   };
@@ -521,6 +538,36 @@ export function OGEditDialog({
               </p>
             )}
           </div>
+
+          {/* Category Selection */}
+          {categories.length > 0 && (
+            <div className="space-y-2">
+              <Label>卡片分类</Label>
+              <Select
+                value={categoryId || "auto"}
+                onValueChange={(v) => setCategoryId(v === "auto" ? null : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="选择分类" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">
+                    🔄 自动匹配
+                    {autoCategoryId && ` (${getCategoryLabel(autoCategoryId)})`}
+                  </SelectItem>
+                  <Separator className="my-1" />
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.emoji} {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                手动指定分类将覆盖自动匹配结果
+              </p>
+            </div>
+          )}
 
           {/* Preview */}
           <div className="space-y-2">
