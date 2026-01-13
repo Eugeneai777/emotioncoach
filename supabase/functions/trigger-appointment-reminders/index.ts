@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, validateCronSecret } from '../_shared/auth.ts';
 
 // 提醒时间配置（分钟）
 const REMINDER_TIMES = [60, 15]; // 提前1小时和15分钟提醒
@@ -13,6 +9,10 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Validate cron secret for scheduled batch operations
+  const authError = validateCronSecret(req);
+  if (authError) return authError;
 
   try {
     console.log('开始检查需要发送提醒的预约...');

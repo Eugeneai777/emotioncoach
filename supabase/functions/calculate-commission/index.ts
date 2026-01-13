@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0'
-import { corsHeaders } from '../_shared/cors.ts'
+import { corsHeaders, validateServiceRole } from '../_shared/auth.ts'
 
 // 判断产品线 - 与 wechat-pay-callback 中的 package_key 保持一致
 function getProductLine(orderType: string): 'youjin' | 'bloom' {
@@ -17,6 +17,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Validate that this is an internal service call
+  const authError = validateServiceRole(req);
+  if (authError) return authError;
 
   try {
     const { order_id, user_id, order_amount, order_type } = await req.json();
