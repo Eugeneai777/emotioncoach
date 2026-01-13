@@ -7,49 +7,8 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-
-// 扩展 Window 接口以支持小程序 API（与 platform.ts 保持一致）
-declare global {
-  interface Window {
-    wx?: {
-      miniProgram?: {
-        getEnv: (callback: (res: { miniprogram: boolean }) => void) => void;
-      };
-      getRecorderManager?: () => any;
-      createInnerAudioContext?: () => {
-        src: string;
-        obeyMuteSwitch: boolean;
-        play: () => void;
-        stop: () => void;
-        onEnded: (callback: () => void) => void;
-        offEnded: () => void;
-        onError: (callback: (error: any) => void) => void;
-      };
-      authorize?: (options: any) => void;
-      canIUse?: (api: string) => boolean;
-      arrayBufferToBase64?: (buffer: ArrayBuffer) => string;
-      base64ToArrayBuffer?: (base64: string) => ArrayBuffer;
-      getFileSystemManager?: () => {
-        writeFile: (options: {
-          filePath: string;
-          data: ArrayBuffer | string;
-          encoding?: string;
-          success?: () => void;
-          fail?: (err: { errMsg?: string }) => void;
-        }) => void;
-        readFile: (options: any) => void;
-        unlink: (options: {
-          filePath: string;
-          success?: () => void;
-          fail?: (err: { errMsg?: string }) => void;
-        }) => void;
-      };
-      env?: {
-        USER_DATA_PATH: string;
-      };
-    };
-  }
-}
+// wx 类型已在 platform.ts 中统一声明
+import '@/utils/platform';
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
