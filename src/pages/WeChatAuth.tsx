@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, CheckCircle2, Smartphone, Bell, Calendar, MessageCircle, RefreshCw, QrCode } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,6 +35,9 @@ export default function WeChatAuth() {
   const [expiresIn, setExpiresIn] = useState<number>(0);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const mode = searchParams.get("mode") || "login";
+  
+  // 注册模式需要同意服务条款
+  const [agreedTerms, setAgreedTerms] = useState(false);
 
   // 清理轮询
   const clearPolling = useCallback(() => {
@@ -190,6 +194,12 @@ export default function WeChatAuth() {
       return;
     }
 
+    // 注册模式且未同意条款时，不自动生成二维码/授权链接
+    if (mode === "register" && !agreedTerms) {
+      setLoading(false);
+      return;
+    }
+
     // 判断设备类型
     if (isMobileDevice()) {
       // 移动端：使用OAuth跳转
@@ -202,7 +212,7 @@ export default function WeChatAuth() {
     return () => {
       clearPolling();
     };
-  }, [mode, generateLoginQR, generateMobileAuthUrl, clearPolling]);
+  }, [mode, agreedTerms, generateLoginQR, generateMobileAuthUrl, clearPolling]);
 
   // 关注公众号引导页面
   if (mode === "follow") {
@@ -276,6 +286,62 @@ export default function WeChatAuth() {
                 onClick={() => navigate("/")}
               >
                 先去体验
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // 注册模式且未同意条款 - 显示条款确认页面
+  if (mode === "register" && !agreedTerms) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 p-4">
+        <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+          <CardHeader className="text-center">
+            <div className="flex items-center gap-2 mb-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/auth")}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </div>
+            <CardTitle className="text-teal-700">微信注册</CardTitle>
+            <CardDescription>请先阅读并同意服务条款</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="wechat-auth-terms"
+                checked={agreedTerms}
+                onCheckedChange={(checked) => setAgreedTerms(checked === true)}
+                className="mt-0.5"
+              />
+              <label htmlFor="wechat-auth-terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                我已阅读并同意
+                <Link to="/terms" target="_blank" className="text-primary hover:underline mx-0.5">
+                  服务条款
+                </Link>
+                和
+                <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
+                  隐私政策
+                </Link>
+              </label>
+            </div>
+            
+            <Button 
+              disabled={!agreedTerms}
+              className="w-full bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600"
+            >
+              继续微信注册
+            </Button>
+            
+            <div className="text-center">
+              <Button variant="link" onClick={() => navigate("/auth")} className="text-teal-600">
+                使用其他方式注册
               </Button>
             </div>
           </CardContent>

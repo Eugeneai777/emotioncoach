@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, CheckCircle, User, QrCode, Mail, LogIn, RefreshCw, Eye, EyeOff, Phone, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -81,6 +83,9 @@ export function QuickRegisterStep({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  
+  // 服务条款同意状态（注册模式需要勾选，登录模式不需要）
+  const [agreedTerms, setAgreedTerms] = useState(false);
 
   // 检测是否是微信环境
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
@@ -409,9 +414,29 @@ export function QuickRegisterStep({
             <p className="text-xs text-muted-foreground">填写手机号方便后续接收重要通知</p>
           </div>
 
+          {/* 服务条款同意 */}
+          <div className="flex items-start gap-2">
+            <Checkbox
+              id="wechat-terms"
+              checked={agreedTerms}
+              onCheckedChange={(checked) => setAgreedTerms(checked === true)}
+              className="mt-0.5"
+            />
+            <label htmlFor="wechat-terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+              继续即表示您同意
+              <Link to="/terms" target="_blank" className="text-primary hover:underline mx-0.5">
+                服务条款
+              </Link>
+              和
+              <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
+                隐私政策
+              </Link>
+            </label>
+          </div>
+
           <Button
             onClick={handleAutoCreate}
-            disabled={isAutoCreating}
+            disabled={isAutoCreating || !agreedTerms}
             className="w-full bg-gradient-to-r from-[#07C160] to-[#06AD56] hover:opacity-90"
           >
             {isAutoCreating ? (
@@ -597,6 +622,25 @@ export function QuickRegisterStep({
             </p>
           )}
           
+          <div className="flex items-start gap-2 justify-center">
+            <Checkbox
+              id="scan-terms"
+              checked={agreedTerms}
+              onCheckedChange={(checked) => setAgreedTerms(checked === true)}
+              className="mt-0.5"
+            />
+            <label htmlFor="scan-terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+              扫码即表示同意
+              <Link to="/terms" target="_blank" className="text-primary hover:underline mx-0.5">
+                服务条款
+              </Link>
+              和
+              <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
+                隐私政策
+              </Link>
+            </label>
+          </div>
+          
           <p className="text-center text-xs text-muted-foreground">
             扫码关注公众号自动完成注册
           </p>
@@ -662,9 +706,29 @@ export function QuickRegisterStep({
             />
           </div>
 
+          {/* 服务条款同意 */}
+          <div className="flex items-start gap-2">
+            <Checkbox
+              id="email-terms"
+              checked={agreedTerms}
+              onCheckedChange={(checked) => setAgreedTerms(checked === true)}
+              className="mt-0.5"
+            />
+            <label htmlFor="email-terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+              继续即表示您同意
+              <Link to="/terms" target="_blank" className="text-primary hover:underline mx-0.5">
+                服务条款
+              </Link>
+              和
+              <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
+                隐私政策
+              </Link>
+            </label>
+          </div>
+
           <Button
             onClick={handleEmailRegister}
-            disabled={isLoading || !email || !password || !confirmPassword}
+            disabled={isLoading || !email || !password || !confirmPassword || !agreedTerms}
             className="w-full bg-gradient-to-r from-teal-500 to-cyan-500"
           >
             {isLoading ? (
