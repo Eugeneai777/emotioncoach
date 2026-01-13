@@ -35,6 +35,7 @@ import { EmotionVoiceBriefingPreview } from "@/components/emotion-coach/EmotionV
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
+import { WeChatBindOnboarding } from "@/components/onboarding/WeChatBindOnboarding";
 
 
 const Index = () => {
@@ -733,6 +734,9 @@ const Index = () => {
           />
         }
       />
+      
+      {/* 微信绑定引导 - 邮箱用户首次登录时显示 */}
+      <WeChatBindOnboarding />
     </>
   );
 };
