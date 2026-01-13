@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Button } from "@/components/ui/button";
 import { ChatEmotionIntensityPrompt } from "@/components/ChatEmotionIntensityPrompt";
 import { EmotionAlert } from "@/components/EmotionAlert";
@@ -487,15 +487,7 @@ const Index = () => {
   if (authLoading) {
     return (
       <>
-        <Helmet>
-          <title>情绪教练 - 有劲AI</title>
-          <meta name="description" content="情绪四部曲，找回情绪里的力量" />
-          <meta property="og:title" content="有劲AI • 情绪教练" />
-          <meta property="og:description" content="情绪四部曲，找回情绪里的力量" />
-          <meta property="og:image" content="https://wechat.eugenewe.net/og-emotion-coach.png" />
-          <meta property="og:url" content="https://wechat.eugenewe.net/" />
-          <meta property="og:site_name" content="有劲AI" />
-        </Helmet>
+        <DynamicOGMeta pageKey="emotionCoach" />
         <div className="min-h-screen bg-gradient-to-br from-emerald-50/80 via-teal-50/50 to-green-50/30 dark:from-emerald-950/20 dark:via-teal-950/10 dark:to-green-950/10 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
         </div>
