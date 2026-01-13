@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ArrowLeft, ClipboardCheck, Target, Calendar, Lightbulb, Share2, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -79,15 +79,7 @@ const ShareInvite = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
-      <Helmet>
-        <title>邀请好友 - 有劲AI</title>
-        <meta name="description" content="邀请好友一起成长，分享财富觉醒之旅" />
-        <meta property="og:title" content="有劲AI • 邀请好友" />
-        <meta property="og:description" content="分享测评或训练营给朋友，一起开启财富觉醒" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-wealth-coach.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/share-invite" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="shareInvite" />
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-white/20">
         <div className="flex items-center justify-between px-4 py-3">

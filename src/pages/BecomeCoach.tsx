@@ -9,7 +9,7 @@ import { SubmitStep } from "@/components/coach-application/SubmitStep";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 type Step = "basic" | "certifications" | "services" | "submit" | "success";
 
@@ -185,15 +185,7 @@ export default function BecomeCoach() {
 
   return (
     <>
-      <Helmet>
-        <title>申请成为教练 - 有劲AI</title>
-        <meta name="description" content="加入有劲教练团队，帮助更多人成长" />
-        <meta property="og:title" content="有劲AI • 成为教练" />
-        <meta property="og:description" content="成为有劲认证教练，用专业能力帮助更多人" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/become-coach" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="becomeCoach" />
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-border">

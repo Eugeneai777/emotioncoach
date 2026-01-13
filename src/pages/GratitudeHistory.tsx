@@ -19,7 +19,7 @@ import { toast } from "@/hooks/use-toast";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 interface GratitudeEntry {
   id: string;
@@ -202,15 +202,7 @@ const GratitudeHistory = () => {
 
   return (
     <>
-      <Helmet>
-        <title>感恩日记 - 有劲AI</title>
-        <meta name="description" content="每天1分钟，记录感恩，提升幸福感" />
-        <meta property="og:title" content="有劲AI • 感恩日记" />
-        <meta property="og:description" content="7维度AI幸福分析，科学验证提升幸福感25%" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/gratitude-history" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="gratitudeHistory" />
     <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative">
       {/* Pull to Refresh Indicator */}
       <PullToRefreshIndicator

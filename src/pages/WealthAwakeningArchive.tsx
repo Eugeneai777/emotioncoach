@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ArrowLeft, Sparkles, BookOpen, Share2, ChevronRight, Calendar, Target, Heart, Brain, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -250,15 +250,7 @@ export default function WealthAwakeningArchive() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20">
-      <Helmet>
-        <title>财富觉醒档案 - 有劲AI</title>
-        <meta name="description" content="见证你的财富觉醒之旅" />
-        <meta property="og:title" content="有劲AI • 成长档案" />
-        <meta property="og:description" content="见证你的财富觉醒之旅" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-wealth-coach.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/wealth-awakening-archive" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="wealthAwakeningArchive" />
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
         <div className="container max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">

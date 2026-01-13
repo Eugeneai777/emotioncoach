@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import {
   MessageCircle,
   Eye,
@@ -175,15 +175,7 @@ const CommunicationCoachIntro = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>卡内基沟通教练 - 有劲AI</title>
-        <meta name="description" content="说得更清晰·关系更顺畅·对方更愿意听" />
-        <meta property="og:title" content="有劲AI • 沟通教练" />
-        <meta property="og:description" content="说得更清晰·关系更顺畅·对方更愿意听" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-communication.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/communication-coach-intro" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="communicationCoachIntro" />
       {/* 模块1: Hero Banner */}
       <section className="relative overflow-hidden">
         {/* 渐变背景 */}

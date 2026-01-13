@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Check } from "lucide-react";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 interface Benefit {
   id: string;
@@ -56,15 +56,7 @@ export default function PartnerBenefits() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <Helmet>
-        <title>合伙人专属权益 - 有劲AI</title>
-        <meta name="description" content="绽放合伙人专属权益详情" />
-        <meta property="og:title" content="有劲AI • 合伙人福利" />
-        <meta property="og:description" content={`总价值¥${totalValue.toLocaleString()}的专属权益`} />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/partner/benefits" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="partnerBenefits" />
       <div className="container max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div className="space-y-4">
