@@ -70,12 +70,13 @@ serve(async (req) => {
     let finalUserId: string | null = null;
     let isNewUser = false;
     
-    // 解析 state：支持 'register', 'bind_用户ID' 格式
+    // 解析 state：支持 'register', 'register_订单号', 'bind_用户ID' 格式
     const isBind = state.startsWith('bind_');
+    const isRegister = state === 'register' || state.startsWith('register_');
     const bindUserId = isBind ? state.replace('bind_', '') : null;
 
-    // 如果 state 是 'register'，表示是注册流程
-    if (state === 'register') {
+    // 如果 state 是 'register' 或 'register_xxx'，表示是注册流程
+    if (isRegister) {
       if (existingMapping?.system_user_id) {
         // 微信已绑定用户，直接当作登录处理
         finalUserId = existingMapping.system_user_id;
