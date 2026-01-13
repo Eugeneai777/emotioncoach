@@ -273,6 +273,52 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     });
   }, []);
 
+  // 小程序原生支付桥接：H5 通过 postMessage 通知小程序侧调用 wx.requestPayment。
+  // 小程序侧需要在 <web-view bindmessage> / webViewContext.onMessage 中接收 MINIPROGRAM_PAY_REQUEST 并回传 MINIPROGRAM_PAY_RESPONSE。
+  const invokeMiniProgramPay = useCallback((params: Record<string, string>) => {
+    return new Promise<void>((resolve, reject) => {
+      const postMessage = window.wx?.miniProgram?.postMessage;
+      if (typeof postMessage !== 'function') {
+        reject(new Error('小程序未接入原生支付桥接'));
+        return;
+      }
+
+      const requestId = (globalThis.crypto as any)?.randomUUID?.() ?? `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+      let settled = false;
+
+      const cleanup = () => {
+        window.removeEventListener('message', onMessage);
+      };
+
+      const onMessage = (event: MessageEvent) => {
+        const raw = (event as any)?.data;
+        const payload = raw?.data ?? raw; // 兼容不同 web-view postMessage 形态
+        if (!payload || payload.type !== 'MINIPROGRAM_PAY_RESPONSE' || payload.requestId !== requestId) return;
+
+        settled = true;
+        cleanup();
+        if (payload.ok) resolve();
+        else reject(new Error(payload.errMsg || '支付失败'));
+      };
+
+      window.addEventListener('message', onMessage);
+
+      postMessage({
+        data: {
+          type: 'MINIPROGRAM_PAY_REQUEST',
+          requestId,
+          params,
+        },
+      });
+
+      window.setTimeout(() => {
+        if (settled) return;
+        cleanup();
+        reject(new Error('小程序支付未响应'));
+      }, 8000);
+    });
+  }, []);
+
   // 创建订单
   const createOrder = async () => {
     if (!packageInfo || !user) return;
@@ -350,18 +396,20 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       setOrderNo(data.orderNo);
 
       if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
-        // JSAPI 支付 - 直接调起微信支付
-        setStatus('polling'); // 标记为等待支付状态
+        // JSAPI 支付
+        // - 微信浏览器：直接 WeixinJSBridge.invoke
+        // - 微信小程序：通过 postMessage 让小程序侧调用 wx.requestPayment
+        setStatus('polling');
         startPolling(data.orderNo);
-        
+
         try {
-          await invokeJsapiPay(data.jsapiPayParams);
-          // 支付成功（前端回调，实际以轮询结果为准）
-          console.log('JSAPI pay success callback');
+          const invoker = isMiniProgram ? invokeMiniProgramPay : invokeJsapiPay;
+          await invoker(data.jsapiPayParams);
+          console.log('JSAPI/miniprogram pay invoked');
         } catch (jsapiError: any) {
-          console.log('JSAPI pay error:', jsapiError.message);
-          if (jsapiError.message !== '用户取消支付') {
-            toast.error(jsapiError.message || '支付失败');
+          console.log('JSAPI/miniprogram pay error:', jsapiError?.message);
+          if (jsapiError?.message !== '用户取消支付') {
+            toast.error(jsapiError?.message || '支付失败');
           }
         }
       } else if ((data.payType || selectedPayType) === 'h5' && (data.h5Url || data.payUrl)) {

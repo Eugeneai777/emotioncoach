@@ -153,6 +153,48 @@ export function AssessmentPayDialog({
     });
   }, []);
 
+  // 小程序原生支付桥接：H5 通过 postMessage 通知小程序侧调用 wx.requestPayment
+  const invokeMiniProgramPay = useCallback((params: Record<string, string>) => {
+    return new Promise<void>((resolve, reject) => {
+      const postMessage = window.wx?.miniProgram?.postMessage;
+      if (typeof postMessage !== 'function') {
+        reject(new Error('小程序未接入原生支付桥接'));
+        return;
+      }
+
+      const requestId = (globalThis.crypto as any)?.randomUUID?.() ?? `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+      let settled = false;
+
+      const cleanup = () => window.removeEventListener('message', onMessage);
+
+      const onMessage = (event: MessageEvent) => {
+        const raw = (event as any)?.data;
+        const payload = raw?.data ?? raw;
+        if (!payload || payload.type !== 'MINIPROGRAM_PAY_RESPONSE' || payload.requestId !== requestId) return;
+        settled = true;
+        cleanup();
+        if (payload.ok) resolve();
+        else reject(new Error(payload.errMsg || '支付失败'));
+      };
+
+      window.addEventListener('message', onMessage);
+
+      postMessage({
+        data: {
+          type: 'MINIPROGRAM_PAY_REQUEST',
+          requestId,
+          params,
+        },
+      });
+
+      window.setTimeout(() => {
+        if (settled) return;
+        cleanup();
+        reject(new Error('小程序支付未响应'));
+      }, 8000);
+    });
+  }, []);
+
   // 创建订单（带超时处理）
   const createOrder = async () => {
     setStatus('creating');
@@ -226,20 +268,23 @@ export function AssessmentPayDialog({
 
       setOrderNo(data.orderNo);
 
-      if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
-        // JSAPI 支付 - 直接调起微信支付
-        setStatus('polling');
-        startPolling(data.orderNo);
-        
-        try {
-          await invokeJsapiPay(data.jsapiPayParams);
-          console.log('JSAPI pay success callback');
-        } catch (jsapiError: any) {
-          console.log('JSAPI pay error:', jsapiError.message);
-          if (jsapiError.message !== '用户取消支付') {
-            toast.error(jsapiError.message || '支付失败');
-          }
-        }
+       if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
+         // JSAPI 支付
+         // - 微信浏览器：WeixinJSBridge.invoke
+         // - 微信小程序：通过 postMessage 让小程序侧调用 wx.requestPayment
+         setStatus('polling');
+         startPolling(data.orderNo);
+
+         try {
+           const invoker = isMiniProgram ? invokeMiniProgramPay : invokeJsapiPay;
+           await invoker(data.jsapiPayParams);
+           console.log('JSAPI/miniprogram pay invoked');
+         } catch (jsapiError: any) {
+           console.log('JSAPI/miniprogram pay error:', jsapiError?.message);
+           if (jsapiError?.message !== '用户取消支付') {
+             toast.error(jsapiError?.message || '支付失败');
+           }
+         }
       } else if ((data.payType || selectedPayType) === 'h5' && (data.h5Url || data.payUrl)) {
         // H5支付
         setPayUrl(data.h5Url || data.payUrl);
