@@ -150,6 +150,7 @@ export function AppointmentPayDialog({
         console.log('WeixinJSBridge not ready, waiting for WeixinJSBridgeReady event');
         if (document.addEventListener) {
           document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);
+          document.addEventListener('onWeixinJSBridgeReady', onBridgeReady as any, false);
         }
         // 超时处理
         setTimeout(() => {
@@ -203,11 +204,44 @@ export function AppointmentPayDialog({
   const createAppointmentOrder = async () => {
     setStatus('loading');
     try {
-      // 确定支付类型
+      // 确定支付类型：
+      // - 微信浏览器：优先 JSAPI（弹窗）
+      // - 小程序 WebView：若检测不到 WeixinJSBridge，则自动降级为扫码
+      // - 移动端非微信：H5
+      // - 其他：Native
       let selectedPayType: 'jsapi' | 'h5' | 'native';
-      if (canUseJsapi) {
-        selectedPayType = 'jsapi';
-      } else if (isMobile && !isWechat) {
+
+      const wechatEnv = isMiniProgram || isWechat;
+      const shouldTryJsapi = wechatEnv && !!userOpenId;
+
+      if (shouldTryJsapi) {
+        const bridgeReady = await new Promise<boolean>((resolve) => {
+          if (typeof window.WeixinJSBridge !== 'undefined') return resolve(true);
+          let done = false;
+          const onReady = () => {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            resolve(typeof window.WeixinJSBridge !== 'undefined');
+          };
+          const timer = window.setTimeout(() => {
+            if (done) return;
+            done = true;
+            resolve(false);
+          }, 1200);
+          document.addEventListener('WeixinJSBridgeReady', onReady, false);
+          document.addEventListener('onWeixinJSBridgeReady', onReady as any, false);
+        });
+
+        if (bridgeReady) {
+          selectedPayType = 'jsapi';
+        } else {
+          if (isMiniProgram) {
+            toast.info('小程序内未检测到支付弹窗能力，已切换为扫码支付');
+          }
+          selectedPayType = 'native';
+        }
+      } else if (isMobile && !wechatEnv) {
         selectedPayType = 'h5';
       } else {
         selectedPayType = 'native';

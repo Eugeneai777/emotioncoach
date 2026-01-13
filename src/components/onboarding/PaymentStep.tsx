@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
-
+ 
 interface Package {
   id: string;
   package_key: string;
