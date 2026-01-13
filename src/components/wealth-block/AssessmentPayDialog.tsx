@@ -267,21 +267,16 @@ export function AssessmentPayDialog({
          setStatus('polling');
          startPolling(data.orderNo);
 
-         if (isMiniProgram) {
-           // 小程序环境：通知小程序跳转到原生支付页（不等待回复，靠轮询检测支付结果）
-           triggerMiniProgramNativePay(data.jsapiPayParams, data.orderNo);
-         } else {
-           // 微信浏览器：直接 WeixinJSBridge.invoke
-           try {
-             await invokeJsapiPay(data.jsapiPayParams);
-             console.log('JSAPI pay invoked');
-           } catch (jsapiError: any) {
-             console.log('JSAPI pay error:', jsapiError?.message);
-             if (jsapiError?.message !== '用户取消支付') {
-               toast.error(jsapiError?.message || '支付失败');
-             }
-           }
-         }
+          // 小程序 WebView / 微信浏览器：统一使用 WeixinJSBridge.invoke('getBrandWCPayRequest')
+          try {
+            await invokeJsapiPay(data.jsapiPayParams);
+            console.log('JSAPI pay invoked');
+          } catch (jsapiError: any) {
+            console.log('JSAPI pay error:', jsapiError?.message);
+            if (jsapiError?.message !== '用户取消支付') {
+              toast.error(jsapiError?.message || '支付失败');
+            }
+          }
       } else if ((data.payType || selectedPayType) === 'h5' && (data.h5Url || data.payUrl)) {
         // H5支付
         setPayUrl(data.h5Url || data.payUrl);
