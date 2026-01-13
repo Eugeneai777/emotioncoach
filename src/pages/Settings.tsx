@@ -13,6 +13,7 @@ import { SmartNotificationPreferences } from "@/components/SmartNotificationPref
 import { AccountBalance } from "@/components/AccountBalance";
 import { BillingExplanation } from "@/components/BillingExplanation";
 import { PackageSelector } from "@/components/PackageSelector";
+import { PurchaseHistory } from "@/components/PurchaseHistory";
 import CampSettings from "@/components/CampSettings";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
@@ -24,8 +25,6 @@ import PageHeader from "@/components/PageHeader";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Helmet } from "react-helmet";
-
-// OG title to be updated below
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -335,6 +334,7 @@ export default function Settings() {
 
           <TabsContent value="account" className="space-y-6">
             <AccountBalance />
+            <PurchaseHistory />
             <PackageSelector />
             <BillingExplanation />
           </TabsContent>
