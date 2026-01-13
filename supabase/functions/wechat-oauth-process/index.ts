@@ -222,13 +222,14 @@ serve(async (req) => {
 
     console.log('User mapping saved for:', tokenData.openid);
 
-    // 更新 profiles 表的 auth_provider、display_name 和 avatar_url
+    // 更新 profiles 表的 auth_provider、display_name、avatar_url，并默认启用微信公众号推送
     const { error: profileUpdateError } = await supabaseClient
       .from('profiles')
       .update({ 
         auth_provider: 'wechat',
         display_name: userInfo.nickname,
-        avatar_url: userInfo.headimgurl
+        avatar_url: userInfo.headimgurl,
+        smart_notification_enabled: true  // 微信用户默认启用公众号推送
       })
       .eq('id', finalUserId);
 

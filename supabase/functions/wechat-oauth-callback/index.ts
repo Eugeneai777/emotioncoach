@@ -152,6 +152,17 @@ serve(async (req) => {
 
     if (upsertError) throw upsertError;
 
+    // 更新 profiles 表，默认启用微信公众号推送（解决微信消息同步问题）
+    await supabaseClient
+      .from('profiles')
+      .update({ 
+        auth_provider: 'wechat',
+        display_name: userInfo.nickname || undefined,
+        avatar_url: userInfo.headimgurl || undefined,
+        smart_notification_enabled: true  // 微信用户默认启用公众号推送
+      })
+      .eq('id', finalUserId);
+
     console.log('用户微信映射成功:', tokenData.openid);
 
     // 生成登录令牌（必须使用 finalUserId 对应的邮箱，否则会登录到错误账号）
