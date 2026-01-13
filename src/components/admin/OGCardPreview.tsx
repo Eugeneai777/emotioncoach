@@ -185,6 +185,9 @@ export function OGCardPreview({ config, pageKey, customConfig, categories = [], 
         pageKey={pageKey}
         defaultConfig={config}
         customConfig={customConfig}
+        categories={categories}
+        currentCategoryId={customConfig?.category_id}
+        autoCategoryId={autoCategoryId}
       />
     </>
   );
