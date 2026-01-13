@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { PAGE_OG_CONFIGS, OG_IMAGES } from "@/config/ogConfig";
 import { OGCardPreview } from "./OGCardPreview";
 import { OGBatchUpload } from "./OGBatchUpload";
+import { OGCategoryManager, loadCategories, buildProductLines, ProductLineCategory } from "./OGCategoryManager";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Image as ImageIcon, FileText, Filter, Sparkles, Loader2, Upload } from "lucide-react";
@@ -15,66 +16,14 @@ import {
 } from "@/components/ui/select";
 import { useOGConfigurations } from "@/hooks/useOGConfigurations";
 
-// OG分类：教练（细分）、训练营、合伙人、其他
-const PRODUCT_LINES = {
-  all: { label: "全部", filter: () => true },
-  // 教练细分
-  wealth: { 
-    label: "💰 财富教练", 
-    filter: (key: string) => key.toLowerCase().includes('wealth')
-  },
-  emotion: { 
-    label: "💜 情绪教练", 
-    filter: (key: string) => key.toLowerCase().includes('emotion')
-  },
-  gratitude: { 
-    label: "🙏 感恩教练", 
-    filter: (key: string) => key.toLowerCase().includes('gratitude')
-  },
-  story: { 
-    label: "📖 故事教练", 
-    filter: (key: string) => key.toLowerCase().includes('story') || key.toLowerCase().includes('awakening')
-  },
-  parent: { 
-    label: "👨‍👩‍👧 亲子教练", 
-    filter: (key: string) => key.toLowerCase().includes('parent') || key.toLowerCase().includes('teen')
-  },
-  communication: { 
-    label: "💬 沟通教练", 
-    filter: (key: string) => key.toLowerCase().includes('communication') || key.toLowerCase().includes('vibrant')
-  },
-  // 其他大类
-  camp: { 
-    label: "🏕️ 训练营", 
-    filter: (key: string) => {
-      const k = key.toLowerCase();
-      return k.includes('camp') || k.includes('training');
-    }
-  },
-  partner: { 
-    label: "🤝 合伙人", 
-    filter: (key: string) => {
-      const k = key.toLowerCase();
-      return k.includes('partner') || k.includes('promo') || k.includes('referral');
-    }
-  },
-  other: { 
-    label: "📄 其他", 
-    filter: (key: string) => {
-      const k = key.toLowerCase();
-      const coachPatterns = ['wealth', 'emotion', 'gratitude', 'story', 'awakening', 'parent', 'teen', 'communication', 'vibrant'];
-      const campPatterns = ['camp', 'training'];
-      const partnerPatterns = ['partner', 'promo', 'referral'];
-      const allPatterns = [...coachPatterns, ...campPatterns, ...partnerPatterns];
-      return !allPatterns.some(p => k.includes(p));
-    }
-  },
-};
-
 export default function OGPreviewManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLine, setSelectedLine] = useState<string>("all");
   const [batchUploadOpen, setBatchUploadOpen] = useState(false);
+  const [categories, setCategories] = useState<ProductLineCategory[]>(() => loadCategories());
+  
+  // Build product lines from categories
+  const productLines = useMemo(() => buildProductLines(categories), [categories]);
   
   // Fetch custom configurations from database
   const { data: customConfigs, isLoading } = useOGConfigurations();
@@ -101,7 +50,7 @@ export default function OGPreviewManagement() {
 
     // 按产品线筛选
     if (selectedLine !== "all") {
-      const lineFilter = PRODUCT_LINES[selectedLine as keyof typeof PRODUCT_LINES]?.filter;
+      const lineFilter = productLines[selectedLine]?.filter;
       if (lineFilter) {
         results = results.filter(item => lineFilter(item.key));
       }
@@ -120,20 +69,31 @@ export default function OGPreviewManagement() {
     }
 
     return results;
-  }, [allConfigs, selectedLine, searchQuery]);
+  }, [allConfigs, selectedLine, searchQuery, productLines]);
 
   const imageCount = Object.keys(OG_IMAGES).length;
   const pageCount = allConfigs.length;
   const customCount = customConfigs?.length || 0;
 
+  const handleCategoriesChange = (newCategories: ProductLineCategory[]) => {
+    setCategories(newCategories);
+    // Reset selection if current selection no longer exists
+    if (selectedLine !== "all" && selectedLine !== "other" && !newCategories.find(c => c.id === selectedLine)) {
+      setSelectedLine("all");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 页面标题 */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">OG 预览管理</h1>
-        <p className="text-muted-foreground mt-1">
-          预览、编辑和上传所有页面的微信分享配置
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">OG 预览管理</h1>
+          <p className="text-muted-foreground mt-1">
+            预览、编辑和上传所有页面的微信分享配置
+          </p>
+        </div>
+        <OGCategoryManager onCategoriesChange={handleCategoriesChange} />
       </div>
 
       {/* 统计概览 */}
@@ -186,7 +146,7 @@ export default function OGPreviewManagement() {
             <SelectValue placeholder="选择产品线" />
           </SelectTrigger>
           <SelectContent>
-            {Object.entries(PRODUCT_LINES).map(([key, { label }]) => (
+            {Object.entries(productLines).map(([key, { label }]) => (
               <SelectItem key={key} value={key}>
                 {label}
               </SelectItem>
@@ -209,7 +169,7 @@ export default function OGPreviewManagement() {
 
       {/* 产品线快捷标签 */}
       <div className="flex flex-wrap gap-2">
-        {Object.entries(PRODUCT_LINES).map(([key, { label }]) => (
+        {Object.entries(productLines).map(([key, { label }]) => (
           <Badge
             key={key}
             variant={selectedLine === key ? "default" : "outline"}
@@ -225,7 +185,7 @@ export default function OGPreviewManagement() {
       <OGBatchUpload
         open={batchUploadOpen}
         onOpenChange={setBatchUploadOpen}
-        productLine={PRODUCT_LINES[selectedLine as keyof typeof PRODUCT_LINES]?.label || selectedLine}
+        productLine={productLines[selectedLine]?.label || selectedLine}
         pageKeys={filteredConfigs.map(c => c.key)}
       />
 
