@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,6 +10,20 @@ import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
+import { isWeChatMiniProgram, isWeChatBrowser } from '@/utils/platform';
+
+// 声明 WeixinJSBridge 类型
+declare global {
+  interface Window {
+    WeixinJSBridge?: {
+      invoke: (
+        api: string,
+        params: Record<string, string>,
+        callback: (res: { err_msg: string }) => void
+      ) => void;
+    };
+  }
+}
 
 interface PackageInfo {
   key: string;
@@ -25,11 +39,13 @@ interface WechatPayDialogProps {
   onSuccess: () => void;
   /** 支付成功后跳转的页面路径，默认为当前页面 */
   returnUrl?: string;
+  /** 用户的微信 openId，用于 JSAPI 支付 */
+  openId?: string;
 }
 
 type PaymentStatus = 'idle' | 'loading' | 'ready' | 'polling' | 'success' | 'failed' | 'expired';
 
-export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl }: WechatPayDialogProps) {
+export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl, openId }: WechatPayDialogProps) {
   const { user } = useAuth();
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
@@ -38,7 +54,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [h5PayLink, setH5PayLink] = useState<string>('');
   const [orderNo, setOrderNo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [payType, setPayType] = useState<'h5' | 'native'>('h5');
+  const [payType, setPayType] = useState<'h5' | 'native' | 'jsapi'>('h5');
   // 判断是否需要显示条款（仅合伙人套餐需要特殊条款确认）
   const requiresTermsAgreement = () => {
     if (!packageInfo?.key) return false;
@@ -60,6 +76,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
   // 检测是否在移动端
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  // 检测是否在小程序环境
+  const isMiniProgram = isWeChatMiniProgram();
+  // 检测是否可以使用 JSAPI 支付（微信浏览器或小程序内，且有 openId）
+  const canUseJsapi = (isWechat || isMiniProgram) && !!openId;
 
   // 清理定时器
   const clearTimers = () => {
@@ -144,6 +164,44 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     }, 1200);
   };
 
+  // 调用 JSAPI 支付
+  const invokeJsapiPay = useCallback((params: Record<string, string>) => {
+    return new Promise<void>((resolve, reject) => {
+      const onBridgeReady = () => {
+        if (!window.WeixinJSBridge) {
+          reject(new Error('WeixinJSBridge 未初始化'));
+          return;
+        }
+        
+        window.WeixinJSBridge.invoke(
+          'getBrandWCPayRequest',
+          params,
+          (res) => {
+            if (res.err_msg === 'get_brand_wcpay_request:ok') {
+              resolve();
+            } else if (res.err_msg === 'get_brand_wcpay_request:cancel') {
+              reject(new Error('用户取消支付'));
+            } else {
+              reject(new Error(res.err_msg || '支付失败'));
+            }
+          }
+        );
+      };
+
+      if (typeof window.WeixinJSBridge === 'undefined') {
+        if (document.addEventListener) {
+          document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);
+        }
+        // 超时处理
+        setTimeout(() => {
+          reject(new Error('WeixinJSBridge 加载超时'));
+        }, 5000);
+      } else {
+        onBridgeReady();
+      }
+    });
+  }, []);
+
   // 创建订单
   const createOrder = async () => {
     if (!packageInfo || !user) return;
@@ -157,8 +215,15 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setStatus('loading');
     setErrorMessage('');
 
-    // 移动端优先使用H5支付，PC端使用Native扫码
-    const selectedPayType = isMobile && !isWechat ? 'h5' : 'native';
+    // 确定支付类型：小程序/微信浏览器有openId时用JSAPI，移动端非微信用H5，其他用Native
+    let selectedPayType: 'jsapi' | 'h5' | 'native';
+    if (canUseJsapi) {
+      selectedPayType = 'jsapi';
+    } else if (isMobile && !isWechat) {
+      selectedPayType = 'h5';
+    } else {
+      selectedPayType = 'native';
+    }
     setPayType(selectedPayType);
 
     try {
@@ -169,6 +234,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           amount: packageInfo.price,
           userId: user.id,
           payType: selectedPayType,
+          openId: selectedPayType === 'jsapi' ? openId : undefined,
         },
       });
 
@@ -177,7 +243,22 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       setOrderNo(data.orderNo);
 
-      if (selectedPayType === 'h5' && (data.h5Url || data.payUrl)) {
+      if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
+        // JSAPI 支付 - 直接调起微信支付
+        setStatus('polling'); // 标记为等待支付状态
+        startPolling(data.orderNo);
+        
+        try {
+          await invokeJsapiPay(data.jsapiPayParams);
+          // 支付成功（前端回调，实际以轮询结果为准）
+          console.log('JSAPI pay success callback');
+        } catch (jsapiError: any) {
+          console.log('JSAPI pay error:', jsapiError.message);
+          if (jsapiError.message !== '用户取消支付') {
+            toast.error(jsapiError.message || '支付失败');
+          }
+        }
+      } else if ((data.payType || selectedPayType) === 'h5' && (data.h5Url || data.payUrl)) {
         // H5支付
         const baseUrl: string = (data.h5Url || data.payUrl) as string;
         // 使用传入的 returnUrl 或当前页面路径作为支付后跳转目标
@@ -199,6 +280,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         });
         setQrCodeDataUrl(qrDataUrl);
         setStatus('ready');
+        startPolling(data.orderNo);
       } else {
         // Native扫码支付
         setPayUrl(data.qrCodeUrl || data.payUrl);
@@ -210,10 +292,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         });
         setQrCodeDataUrl(qrDataUrl);
         setStatus('ready');
+        startPolling(data.orderNo);
       }
-
-      // 开始轮询
-      startPolling(data.orderNo);
 
       // 设置5分钟超时
       timeoutRef.current = setTimeout(() => {
@@ -368,14 +448,23 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
             </div>
           )}
 
-          {/* 二维码/H5支付区域 */}
+          {/* 二维码/H5/JSAPI支付区域 */}
           <div className="flex items-center justify-center border rounded-lg bg-white w-52 h-52">
             {status === 'loading' && (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="text-sm text-muted-foreground">
-                  {payType === 'h5' ? '正在创建订单...' : '正在生成二维码...'}
+                  {payType === 'jsapi' ? '正在调起支付...' : payType === 'h5' ? '正在创建订单...' : '正在生成二维码...'}
                 </span>
+              </div>
+            )}
+
+            {/* JSAPI 支付状态 */}
+            {(status === 'ready' || status === 'polling') && payType === 'jsapi' && (
+              <div className="flex flex-col items-center gap-2 text-[#07C160]">
+                <Loader2 className="h-12 w-12 animate-spin" />
+                <span className="font-medium">等待支付完成...</span>
+                <span className="text-xs text-muted-foreground">请在弹出的支付窗口中完成支付</span>
               </div>
             )}
 
@@ -428,7 +517,27 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           {/* 状态提示 */}
           {(status === 'ready' || status === 'polling') && (
             <div className="text-center space-y-3">
-              {payType === 'h5' ? (
+              {payType === 'jsapi' ? (
+                <>
+                  <p className="text-sm text-muted-foreground">正在等待支付结果...</p>
+                  {status === 'polling' && (
+                    <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      支付弹窗已打开，请完成支付
+                    </p>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRetry}
+                    className="gap-2"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    重新发起支付
+                  </Button>
+                </>
+              ) : payType === 'h5' ? (
                 <>
                   <p className="text-sm text-muted-foreground">点击下方按钮跳转微信支付</p>
                    {!isWechat && (
