@@ -3961,7 +3961,9 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          image_height: number | null
           image_url: string | null
+          image_width: number | null
           is_active: boolean | null
           og_title: string | null
           page_key: string
@@ -3976,7 +3978,9 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_height?: number | null
           image_url?: string | null
+          image_width?: number | null
           is_active?: boolean | null
           og_title?: string | null
           page_key: string
@@ -3991,7 +3995,9 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_height?: number | null
           image_url?: string | null
+          image_width?: number | null
           is_active?: boolean | null
           og_title?: string | null
           page_key?: string
