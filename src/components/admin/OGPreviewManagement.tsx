@@ -2,8 +2,7 @@ import { useState, useMemo } from "react";
 import { PAGE_OG_CONFIGS, OG_IMAGES } from "@/config/ogConfig";
 import { OGCardPreview } from "./OGCardPreview";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Image as ImageIcon, FileText, Filter } from "lucide-react";
+import { Search, Image as ImageIcon, FileText, Filter, Sparkles, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -12,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useOGConfigurations } from "@/hooks/useOGConfigurations";
 
 // 产品线分类
 const PRODUCT_LINES = {
@@ -56,13 +56,26 @@ const PRODUCT_LINES = {
 export default function OGPreviewManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLine, setSelectedLine] = useState<string>("all");
+  
+  // Fetch custom configurations from database
+  const { data: customConfigs, isLoading } = useOGConfigurations();
+
+  // Create a map for quick lookup
+  const customConfigMap = useMemo(() => {
+    const map = new Map<string, typeof customConfigs extends (infer T)[] ? T : never>();
+    customConfigs?.forEach(config => {
+      map.set(config.page_key, config);
+    });
+    return map;
+  }, [customConfigs]);
 
   const allConfigs = useMemo(() => {
     return Object.entries(PAGE_OG_CONFIGS).map(([key, config]) => ({
       key,
       config,
+      customConfig: customConfigMap.get(key),
     }));
-  }, []);
+  }, [customConfigMap]);
 
   const filteredConfigs = useMemo(() => {
     let results = allConfigs;
@@ -92,6 +105,7 @@ export default function OGPreviewManagement() {
 
   const imageCount = Object.keys(OG_IMAGES).length;
   const pageCount = allConfigs.length;
+  const customCount = customConfigs?.length || 0;
 
   return (
     <div className="space-y-6">
@@ -99,7 +113,7 @@ export default function OGPreviewManagement() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">OG 预览管理</h1>
         <p className="text-muted-foreground mt-1">
-          预览和检查所有页面的微信分享配置
+          预览、编辑和上传所有页面的微信分享配置
         </p>
       </div>
 
@@ -121,19 +135,19 @@ export default function OGPreviewManagement() {
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center gap-2 text-muted-foreground">
+            <Sparkles className="h-4 w-4" />
+            <span className="text-sm">已自定义</span>
+          </div>
+          <p className="text-2xl font-bold text-amber-500 mt-1">
+            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : customCount}
+          </p>
+        </div>
+        <div className="bg-card border border-border rounded-lg p-4">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <Filter className="h-4 w-4" />
             <span className="text-sm">当前筛选</span>
           </div>
           <p className="text-2xl font-bold text-foreground mt-1">{filteredConfigs.length}</p>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Search className="h-4 w-4" />
-            <span className="text-sm">产品线</span>
-          </div>
-          <p className="text-2xl font-bold text-foreground mt-1">
-            {Object.keys(PRODUCT_LINES).length - 1}
-          </p>
         </div>
       </div>
 
@@ -177,15 +191,24 @@ export default function OGPreviewManagement() {
       </div>
 
       {/* OG卡片网格 */}
-      {filteredConfigs.length === 0 ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : filteredConfigs.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p>没有找到匹配的配置</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredConfigs.map(({ key, config }) => (
-            <OGCardPreview key={key} pageKey={key} config={config} />
+          {filteredConfigs.map(({ key, config, customConfig }) => (
+            <OGCardPreview 
+              key={key} 
+              pageKey={key} 
+              config={config}
+              customConfig={customConfig}
+            />
           ))}
         </div>
       )}

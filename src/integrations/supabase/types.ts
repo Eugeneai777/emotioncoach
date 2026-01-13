@@ -3955,6 +3955,51 @@ export type Database = {
           },
         ]
       }
+      og_configurations: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          og_title: string | null
+          page_key: string
+          site_name: string | null
+          title: string | null
+          updated_at: string | null
+          updated_by: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          og_title?: string | null
+          page_key: string
+          site_name?: string | null
+          title?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          og_title?: string | null
+          page_key?: string
+          site_name?: string | null
+          title?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           amount: number
