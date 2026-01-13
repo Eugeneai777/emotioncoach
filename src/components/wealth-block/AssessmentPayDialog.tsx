@@ -166,10 +166,10 @@ export function AssessmentPayDialog({
       return;
     }
 
-    const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set('payment_success', 'true');
-    currentUrl.searchParams.set('orderNo', orderNumber);
-    const callbackUrl = currentUrl.toString();
+     const currentUrl = new URL(window.location.href);
+     currentUrl.searchParams.set('payment_success', '1');
+     currentUrl.searchParams.set('order', orderNumber);
+     const callbackUrl = currentUrl.toString();
 
     console.log('[MiniProgram] Sending MINIPROGRAM_NAVIGATE_PAY', { orderNo: orderNumber, callbackUrl });
     mp.postMessage({
@@ -204,9 +204,17 @@ export function AssessmentPayDialog({
        // - 其他：Native
        let selectedPayType: 'jsapi' | 'h5' | 'native';
 
-       // 小程序环境：直接使用小程序原生支付（跳过 JSAPI 检测）
+       // 小程序环境：优先走“小程序原生支付页”方案（需要 miniProgram bridge）
        if (isMiniProgram) {
-         selectedPayType = 'jsapi'; // 标记为 jsapi 以便后续走 triggerMiniProgramNativePay 分支
+         const hasMpBridge =
+           typeof window.wx?.miniProgram?.postMessage === 'function' ||
+           typeof window.wx?.miniProgram?.navigateTo === 'function';
+
+         if (!hasMpBridge) {
+           toast.info('小程序支付能力未就绪，已切换为扫码支付');
+         }
+
+         selectedPayType = hasMpBridge ? 'jsapi' : 'native';
        } else if (isWechat && !!userOpenId) {
          // 微信浏览器：检测 WeixinJSBridge
          const bridgeReady = await new Promise<boolean>((resolve) => {
