@@ -11,10 +11,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Upload, Loader2, Image as ImageIcon, RotateCcw } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Upload, Loader2, Image as ImageIcon, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import type { OGConfig } from "@/config/ogConfig";
 import { useUpsertOGConfiguration, useDeleteOGConfiguration, uploadOGImage } from "@/hooks/useOGConfigurations";
+import { supabase } from "@/integrations/supabase/client";
+
+const AI_STYLE_OPTIONS = [
+  { value: 'brand', label: '品牌风格', desc: '紫色/粉色渐变' },
+  { value: 'warm', label: '温暖风格', desc: '橙色/金色暖调' },
+  { value: 'professional', label: '专业风格', desc: '蓝色/灰色商务' },
+  { value: 'nature', label: '自然风格', desc: '绿色自然元素' },
+  { value: 'cosmic', label: '宇宙风格', desc: '深蓝星空紫色' },
+];
 
 interface OGEditDialogProps {
   open: boolean;
@@ -42,6 +58,9 @@ export function OGEditDialog({
   const [description, setDescription] = useState(customConfig?.description || defaultConfig.description);
   const [imageUrl, setImageUrl] = useState(customConfig?.image_url || defaultConfig.image);
   const [isUploading, setIsUploading] = useState(false);
+  const [aiKeywords, setAiKeywords] = useState("");
+  const [aiStyle, setAiStyle] = useState("brand");
+  const [isGenerating, setIsGenerating] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const upsertMutation = useUpsertOGConfiguration();
@@ -162,6 +181,84 @@ export function OGEditDialog({
                 <p className="text-xs text-muted-foreground">
                   推荐尺寸: 1200×630px，PNG/JPG/WebP，最大 5MB
                 </p>
+                
+                {/* AI Generation */}
+                <div className="pt-3 border-t border-border/50 mt-3 space-y-2">
+                  <div className="flex items-center gap-1 text-sm font-medium text-primary">
+                    <Sparkles className="h-4 w-4" />
+                    AI 智能生成
+                  </div>
+                  <Input
+                    value={aiKeywords}
+                    onChange={(e) => setAiKeywords(e.target.value)}
+                    placeholder="输入关键词，如：财富、成长、突破"
+                    className="text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <Select value={aiStyle} onValueChange={setAiStyle}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AI_STYLE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            <span>{opt.label}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={async () => {
+                        if (!aiKeywords.trim()) {
+                          toast.error("请输入关键词");
+                          return;
+                        }
+                        setIsGenerating(true);
+                        try {
+                          const { data: { session } } = await supabase.auth.getSession();
+                          const response = await supabase.functions.invoke('generate-og-image', {
+                            body: { 
+                              keywords: aiKeywords,
+                              style: aiStyle,
+                              pageKey
+                            },
+                            headers: {
+                              Authorization: `Bearer ${session?.access_token}`
+                            }
+                          });
+                          
+                          if (response.error) throw response.error;
+                          if (response.data?.imageUrl) {
+                            setImageUrl(response.data.imageUrl);
+                            toast.success("AI 图片生成成功");
+                          } else {
+                            throw new Error(response.data?.error || "生成失败");
+                          }
+                        } catch (error: unknown) {
+                          const msg = error instanceof Error ? error.message : "生成失败";
+                          toast.error(msg);
+                        } finally {
+                          setIsGenerating(false);
+                        }
+                      }}
+                      disabled={isGenerating || !aiKeywords.trim()}
+                      className="flex-1"
+                    >
+                      {isGenerating ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 mr-1" />
+                      )}
+                      生成图片
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    AI 会生成 1200×630 的专业分享图（无文字）
+                  </p>
+                </div>
               </div>
             </div>
           </div>
