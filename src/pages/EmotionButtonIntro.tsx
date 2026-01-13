@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -99,15 +99,7 @@ const EmotionButtonIntro = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 pb-24">
-      <Helmet>
-        <title>情绪急救按钮 - 有劲AI</title>
-        <meta name="description" content="30秒科学稳定流程，288个认知提醒，9种场景" />
-        <meta property="og:title" content="有劲AI • 情绪急救" />
-        <meta property="og:description" content="30秒科学稳定流程，288个认知提醒，9种场景" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-emotion-coach.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/emotion-button-intro" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="emotionButtonIntro" />
       {/* Header */}
       <header className="bg-white/60 backdrop-blur-sm border-b border-teal-100 sticky top-0 z-10">
         <div className="container max-w-4xl mx-auto px-4 py-3">

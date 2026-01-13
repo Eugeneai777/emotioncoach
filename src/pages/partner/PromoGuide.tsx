@@ -2,22 +2,14 @@ import { ArrowLeft, Link2, Check, Sparkles, Target, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 const PromoGuide = () => {
   const navigate = useNavigate();
 
   return (
     <>
-      <Helmet>
-        <title>推广指南 - 有劲AI</title>
-        <meta name="description" content="固定推广链接，简单高效" />
-        <meta property="og:title" content="有劲AI • 推广指南" />
-        <meta property="og:description" content="固定推广链接，简单高效" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-partner.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/partner/promo-guide" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="promoGuide" />
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-teal-100">

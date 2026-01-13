@@ -25,7 +25,7 @@ import UnifiedEmotionHeatmap from "@/components/UnifiedEmotionHeatmap";
 import BriefingShareDialog from "@/components/briefing/BriefingShareDialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { EmotionAnalyticsDashboard } from "@/components/emotion/EmotionAnalyticsDashboard";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 interface TagType {
   id: string;
@@ -417,15 +417,7 @@ const History = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>我的情绪日记 - 有劲AI</title>
-        <meta name="description" content="记录情绪，看见成长" />
-        <meta property="og:title" content="有劲AI • 情绪日记" />
-        <meta property="og:description" content="情绪四部曲记录，见证你的成长轨迹" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-emotion-coach.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/history" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="emotionHistory" />
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4 space-y-2 md:space-y-3">
           <div className="flex items-center justify-between gap-2">

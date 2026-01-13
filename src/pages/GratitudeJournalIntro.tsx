@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
 import { GratitudeJournalShareDialog } from "@/components/gratitude/GratitudeJournalShareDialog";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 const GratitudeJournalIntro = () => {
   const navigate = useNavigate();
@@ -186,15 +186,7 @@ const GratitudeJournalIntro = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50">
-      <Helmet>
-        <title>我的感恩日记 - 有劲AI</title>
-        <meta name="description" content="每天1分钟，科学提升幸福感25%" />
-        <meta property="og:title" content="有劲AI • 感恩日记" />
-        <meta property="og:description" content="每天1分钟，科学提升幸福感25%" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-gratitude-journal.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/gratitude-journal-intro" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="gratitudeJournalIntro" />
       {/* Decorative elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-32 h-32 bg-teal-200/30 rounded-full blur-3xl" />

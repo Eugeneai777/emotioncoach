@@ -8,7 +8,7 @@ import { useParentIntake } from "@/hooks/useParentIntake";
 import { IntakeQuestionCard } from "@/components/parent-intake/IntakeQuestionCard";
 import { IntakeOnboardingFlow } from "@/components/parent-intake/IntakeOnboardingFlow";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -218,15 +218,7 @@ const ParentIntake = () => {
 
   return (
     <>
-      <Helmet>
-        <title>亲子教练 · 入驻问卷 - 有劲AI</title>
-        <meta name="description" content="成为有劲AI亲子教练，用专业陪伴更多家庭" />
-        <meta property="og:title" content="亲子教练入驻问卷 - 有劲AI" />
-        <meta property="og:description" content="成为有劲AI亲子教练，用专业陪伴更多家庭" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/parent-intake" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="parentIntake" />
       
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
         {/* Header */}
