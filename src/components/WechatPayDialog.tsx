@@ -273,17 +273,41 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     });
   }, []);
 
+  // 等待小程序 JSSDK 加载并获取 postMessage 方法
+  const waitForMiniProgramBridge = useCallback((): Promise<(options: { data: any }) => void> => {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxAttempts = 20; // 最多等待 2 秒
+      
+      const check = () => {
+        attempts++;
+        const mp = window.wx?.miniProgram;
+        if (mp && typeof mp.postMessage === 'function') {
+          console.log('[MiniProgram] postMessage bridge ready');
+          resolve(mp.postMessage.bind(mp));
+          return;
+        }
+        
+        if (attempts >= maxAttempts) {
+          console.error('[MiniProgram] postMessage bridge not available after', attempts, 'attempts');
+          reject(new Error('小程序支付桥接未就绪，请刷新页面重试'));
+          return;
+        }
+        
+        setTimeout(check, 100);
+      };
+      
+      check();
+    });
+  }, []);
+
   // 小程序原生支付桥接：H5 通过 postMessage 通知小程序侧调用 wx.requestPayment。
   // 小程序侧需要在 <web-view bindmessage> / webViewContext.onMessage 中接收 MINIPROGRAM_PAY_REQUEST 并回传 MINIPROGRAM_PAY_RESPONSE。
-  const invokeMiniProgramPay = useCallback((params: Record<string, string>) => {
-    return new Promise<void>((resolve, reject) => {
-      const mp = window.wx?.miniProgram as { postMessage?: (options: { data: any }) => void } | undefined;
-      const postMessage = mp?.postMessage;
-      if (typeof postMessage !== 'function') {
-        reject(new Error('小程序未接入原生支付桥接'));
-        return;
-      }
+  const invokeMiniProgramPay = useCallback(async (params: Record<string, string>) => {
+    // 等待 postMessage 桥接就绪
+    const postMessage = await waitForMiniProgramBridge();
 
+    return new Promise<void>((resolve, reject) => {
       const requestId = (globalThis.crypto as any)?.randomUUID?.() ?? `${Date.now()}_${Math.random().toString(16).slice(2)}`;
       let settled = false;
 
@@ -304,6 +328,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       window.addEventListener('message', onMessage);
 
+      console.log('[MiniProgram] Sending MINIPROGRAM_PAY_REQUEST', { requestId, params });
       postMessage({
         data: {
           type: 'MINIPROGRAM_PAY_REQUEST',
@@ -315,10 +340,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       window.setTimeout(() => {
         if (settled) return;
         cleanup();
-        reject(new Error('小程序支付未响应'));
-      }, 8000);
+        reject(new Error('小程序支付未响应，请确认小程序已配置支付桥接'));
+      }, 15000); // 延长超时到 15 秒
     });
-  }, []);
+  }, [waitForMiniProgramBridge]);
 
   // 创建订单
   const createOrder = async () => {
