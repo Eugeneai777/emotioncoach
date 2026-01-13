@@ -247,11 +247,27 @@ serve(async (req) => {
       );
     }
 
-    // 生成登录令牌
-    const email = `wechat_${tokenData.openid}@temp.youjin365.com`;
+    // 生成登录令牌（必须使用 finalUserId 对应的邮箱，否则会登录到错误账号）
+    if (!finalUserId) {
+      return new Response(
+        JSON.stringify({ error: 'Missing finalUserId' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: finalAuthUser, error: finalAuthUserError } = await supabaseClient.auth.admin.getUserById(finalUserId);
+    if (finalAuthUserError || !finalAuthUser?.user?.email) {
+      console.error('Failed to resolve user email for magiclink:', finalUserId, finalAuthUserError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to resolve user email' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const loginEmail = finalAuthUser.user.email;
     const { data: session, error: sessionError } = await supabaseClient.auth.admin.generateLink({
       type: 'magiclink',
-      email
+      email: loginEmail,
     });
 
     if (sessionError) {

@@ -154,10 +154,19 @@ serve(async (req) => {
 
     console.log('用户微信映射成功:', tokenData.openid);
 
-    // 生成登录令牌
+    // 生成登录令牌（必须使用 finalUserId 对应的邮箱，否则会登录到错误账号）
+    if (!finalUserId) {
+      throw new Error('Missing finalUserId');
+    }
+
+    const { data: finalAuthUser, error: finalAuthUserError } = await supabaseClient.auth.admin.getUserById(finalUserId);
+    if (finalAuthUserError || !finalAuthUser?.user?.email) {
+      throw new Error('Failed to resolve user email for magiclink');
+    }
+
     const { data: session, error: sessionError } = await supabaseClient.auth.admin.generateLink({
       type: 'magiclink',
-      email: `wechat_${tokenData.openid}@temp.youjin365.com`
+      email: finalAuthUser.user.email,
     });
 
     if (sessionError) throw sessionError;
