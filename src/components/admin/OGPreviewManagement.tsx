@@ -15,16 +15,35 @@ import {
 } from "@/components/ui/select";
 import { useOGConfigurations } from "@/hooks/useOGConfigurations";
 
-// OG分类：教练、训练营、合伙人、其他
+// OG分类：教练（细分）、训练营、合伙人、其他
 const PRODUCT_LINES = {
   all: { label: "全部", filter: () => true },
-  coach: { 
-    label: "🎯 教练", 
-    filter: (key: string) => {
-      const k = key.toLowerCase();
-      return k.includes('coach') || k.includes('emotion') || k.includes('parent') || k.includes('teen') || k.includes('wealth-block') || k.includes('gratitude') || k.includes('awakening');
-    }
+  // 教练细分
+  wealth: { 
+    label: "💰 财富教练", 
+    filter: (key: string) => key.toLowerCase().includes('wealth')
   },
+  emotion: { 
+    label: "💜 情绪教练", 
+    filter: (key: string) => key.toLowerCase().includes('emotion')
+  },
+  gratitude: { 
+    label: "🙏 感恩教练", 
+    filter: (key: string) => key.toLowerCase().includes('gratitude')
+  },
+  story: { 
+    label: "📖 故事教练", 
+    filter: (key: string) => key.toLowerCase().includes('story') || key.toLowerCase().includes('awakening')
+  },
+  parent: { 
+    label: "👨‍👩‍👧 亲子教练", 
+    filter: (key: string) => key.toLowerCase().includes('parent') || key.toLowerCase().includes('teen')
+  },
+  communication: { 
+    label: "💬 沟通教练", 
+    filter: (key: string) => key.toLowerCase().includes('communication') || key.toLowerCase().includes('vibrant')
+  },
+  // 其他大类
   camp: { 
     label: "🏕️ 训练营", 
     filter: (key: string) => {
@@ -43,8 +62,7 @@ const PRODUCT_LINES = {
     label: "📄 其他", 
     filter: (key: string) => {
       const k = key.toLowerCase();
-      // 排除教练、训练营、合伙人相关的
-      const coachPatterns = ['coach', 'emotion', 'parent', 'teen', 'wealth-block', 'gratitude', 'awakening'];
+      const coachPatterns = ['wealth', 'emotion', 'gratitude', 'story', 'awakening', 'parent', 'teen', 'communication', 'vibrant'];
       const campPatterns = ['camp', 'training'];
       const partnerPatterns = ['partner', 'promo', 'referral'];
       const allPatterns = [...coachPatterns, ...campPatterns, ...partnerPatterns];
