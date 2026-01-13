@@ -23,6 +23,7 @@ import AdminBloomMonthlyProfit from "./AdminBloomMonthlyProfit";
 import AdminBloomSingleDelivery from "./AdminBloomSingleDelivery";
 import AdminBloomMonthlyCashflow from "./AdminBloomMonthlyCashflow";
 import { ConversionFunnelDashboard } from "@/components/analytics/ConversionFunnelDashboard";
+import OGPreviewManagement from "./OGPreviewManagement";
 
 export function AdminLayout() {
   return (
@@ -57,6 +58,7 @@ export function AdminLayout() {
               <Route path="partner-levels" element={<PartnerLevelManagement />} />
               <Route path="sync" element={<SyncStatusDashboard />} />
               <Route path="service" element={<CustomerServiceManagement />} />
+              <Route path="og-preview" element={<OGPreviewManagement />} />
             </Routes>
           </main>
         </SidebarInset>
