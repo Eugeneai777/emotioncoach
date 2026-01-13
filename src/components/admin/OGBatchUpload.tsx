@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUpsertOGConfiguration } from "@/hooks/useOGConfigurations";
 import { PAGE_OG_CONFIGS } from "@/config/ogConfig";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Slider } from "@/components/ui/slider";
 
 // 产品线英文映射，用于生成存储友好的文件名
 const PRODUCT_LINE_CODES: Record<string, string> = {
@@ -72,11 +73,12 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [resizeMode, setResizeMode] = useState<ResizeMode>('contain');
+  const [partialScale, setPartialScale] = useState(60); // 40-80%
   
   const upsertConfig = useUpsertOGConfiguration();
 
-  // 生成预览（根据模式）
-  const generatePreview = useCallback((file: File, mode: ResizeMode): Promise<string> => {
+  // 生成预览（根据模式和缩放比例）
+  const generatePreview = useCallback((file: File, mode: ResizeMode, scale: number = 60): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
@@ -124,13 +126,14 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
           }
         } else {
           // Partial 模式：图片缩小居右，左侧留白
-          const scaleFactor = 0.6;
+          const scaleFactor = scale / 100;
           drawHeight = targetHeight * scaleFactor;
           drawWidth = img.width * (drawHeight / img.height);
           
-          // 如果宽度超出画布，则以宽度为准重新计算
-          if (drawWidth > targetWidth * 0.5) {
-            drawWidth = targetWidth * 0.5;
+          // 如果宽度超出画布的一半，则以宽度为准重新计算
+          const maxWidth = targetWidth * (scaleFactor * 0.9);
+          if (drawWidth > maxWidth) {
+            drawWidth = maxWidth;
             drawHeight = img.height * (drawWidth / img.width);
           }
           
@@ -146,12 +149,12 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
     });
   }, []);
 
-  // 当模式切换时，重新生成预览
+  // 当模式或缩放比例切换时，重新生成预览
   useEffect(() => {
     if (file) {
-      generatePreview(file, resizeMode).then(setPreview);
+      generatePreview(file, resizeMode, partialScale).then(setPreview);
     }
-  }, [resizeMode, file, generatePreview]);
+  }, [resizeMode, file, generatePreview, partialScale]);
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -163,9 +166,9 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
     }
 
     setFile(selectedFile);
-    const previewUrl = await generatePreview(selectedFile, resizeMode);
+    const previewUrl = await generatePreview(selectedFile, resizeMode, partialScale);
     setPreview(previewUrl);
-  }, [generatePreview, resizeMode]);
+  }, [generatePreview, resizeMode, partialScale]);
 
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
@@ -176,11 +179,11 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
     }
     
     setFile(droppedFile);
-    const previewUrl = await generatePreview(droppedFile, resizeMode);
+    const previewUrl = await generatePreview(droppedFile, resizeMode, partialScale);
     setPreview(previewUrl);
-  }, [generatePreview, resizeMode]);
+  }, [generatePreview, resizeMode, partialScale]);
 
-  const resizeAndUpload = async (file: File, fileName: string, mode: ResizeMode): Promise<string> => {
+  const resizeAndUpload = async (file: File, fileName: string, mode: ResizeMode, scale: number = 60): Promise<string> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = async () => {
@@ -232,13 +235,14 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
           }
         } else {
           // Partial 模式：图片缩小居右，左侧留白
-          const scaleFactor = 0.6;
+          const scaleFactor = scale / 100;
           drawHeight = targetHeight * scaleFactor;
           drawWidth = img.width * (drawHeight / img.height);
           
-          // 如果宽度超出画布，则以宽度为准重新计算
-          if (drawWidth > targetWidth * 0.5) {
-            drawWidth = targetWidth * 0.5;
+          // 如果宽度超出画布的一半，则以宽度为准重新计算
+          const maxWidth = targetWidth * (scaleFactor * 0.9);
+          if (drawWidth > maxWidth) {
+            drawWidth = maxWidth;
             drawHeight = img.height * (drawWidth / img.width);
           }
           
@@ -303,7 +307,7 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
       const productLineCode = safeSlug(productLine);
       const fileName = `og-${productLineCode}-series-${Date.now()}.png`;
       console.log('[OGBatchUpload] Uploading with filename:', fileName);
-      const imageUrl = await resizeAndUpload(file, fileName, resizeMode);
+      const imageUrl = await resizeAndUpload(file, fileName, resizeMode, partialScale);
       
       // Apply to all pages
       for (let i = 0; i < pageKeys.length; i++) {
@@ -330,7 +334,7 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
       setPreview(null);
       setProgress(null);
       setResizeMode('contain');
-      setProgress(null);
+      setPartialScale(60);
     } catch (error) {
       console.error('Batch upload error:', error);
       const errorMessage = parseUploadError(error);
@@ -394,6 +398,28 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
+
+          {/* Partial mode scale slider */}
+          {resizeMode === 'partial' && (
+            <div className="bg-muted/50 rounded-lg p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">缩放比例</p>
+                <span className="text-sm text-muted-foreground font-mono">{partialScale}%</span>
+              </div>
+              <Slider
+                value={[partialScale]}
+                onValueChange={(value) => setPartialScale(value[0])}
+                min={40}
+                max={80}
+                step={5}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>40% 小</span>
+                <span>80% 大</span>
+              </div>
+            </div>
+          )}
 
           {/* Upload area */}
           <div
@@ -463,6 +489,7 @@ export function OGBatchUpload({ open, onOpenChange, productLine, pageKeys }: OGB
                 setFile(null);
                 setPreview(null);
                 setResizeMode('contain');
+                setPartialScale(60);
               }}
               disabled={uploading}
               className="flex-1"
