@@ -30,7 +30,7 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { coachId, serviceId, slotId, userNotes, payType = 'native' } = await req.json();
+    const { coachId, serviceId, slotId, userNotes, payType = 'native', openId, isMiniProgram } = await req.json();
 
     if (!coachId || !serviceId || !slotId) {
       throw new Error('Missing required fields');
@@ -129,6 +129,8 @@ serve(async (req) => {
         amount: service.price,
         description: `预约咨询: ${service.service_name}`,
         payType,
+        openId: payType === 'jsapi' ? openId : undefined,
+        isMiniProgram,
       }),
     });
 
@@ -148,6 +150,7 @@ serve(async (req) => {
         appointmentId: appointment.id,
         codeUrl: wechatPayData.codeUrl,
         h5Url: wechatPayData.h5Url,
+        jsapiPayParams: wechatPayData.jsapiPayParams,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

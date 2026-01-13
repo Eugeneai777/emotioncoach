@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { HumanCoach, CoachService, CoachTimeSlot } from "@/hooks/useHumanCoaches";
 import { toast } from "sonner";
 import QRCode from "qrcode";
+import { useAuth } from "@/hooks/useAuth";
+import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
+
+// 声明 WeixinJSBridge 类型
+declare global {
+  interface Window {
+    WeixinJSBridge?: {
+      invoke: (
+        api: string,
+        params: Record<string, string>,
+        callback: (res: { err_msg: string }) => void
+      ) => void;
+    };
+  }
+}
 
 interface AppointmentPayDialogProps {
   open: boolean;
@@ -36,19 +51,118 @@ export function AppointmentPayDialog({
   onSuccess,
   returnUrl,
 }: AppointmentPayDialogProps) {
+  const { user } = useAuth();
   const [status, setStatus] = useState<PaymentStatus>('loading');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [h5PayUrl, setH5PayUrl] = useState<string>('');
   const [orderNo, setOrderNo] = useState<string>('');
   const [appointmentId, setAppointmentId] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [payType, setPayType] = useState<'native' | 'h5'>('native');
+  const [payType, setPayType] = useState<'native' | 'h5' | 'jsapi'>('native');
+  const [userOpenId, setUserOpenId] = useState<string | undefined>();
+  const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
 
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const expiryRef = useRef<NodeJS.Timeout | null>(null);
+  const openIdFetchedRef = useRef<boolean>(false);
 
-  const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+  // 检测环境
+  const isWechat = isWeChatBrowser();
+  const isMiniProgram = isWeChatMiniProgram();
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  // 小程序或微信浏览器内，有 openId 时可以使用 JSAPI 支付
+  const canUseJsapi = (isMiniProgram || isWechat) && !!userOpenId;
+  const shouldWaitForOpenId = (isMiniProgram || isWechat) && !!user;
+
+  // 获取用户 openId（用于 JSAPI 支付）
+  useEffect(() => {
+    const fetchUserOpenId = async () => {
+      if (!open) return;
+      if (!user) {
+        setOpenIdResolved(true);
+        return;
+      }
+
+      // 非微信环境：无需等待 openId
+      if (!shouldWaitForOpenId) {
+        setOpenIdResolved(true);
+        return;
+      }
+
+      if (openIdFetchedRef.current) return;
+      openIdFetchedRef.current = true;
+
+      try {
+        const { data: mapping } = await supabase
+          .from('wechat_user_mappings')
+          .select('openid')
+          .eq('system_user_id', user.id)
+          .maybeSingle();
+
+        if (mapping?.openid) {
+          console.log('Found user openId for JSAPI payment');
+          setUserOpenId(mapping.openid);
+        } else {
+          console.log('No openId found, will use H5/Native payment');
+          setUserOpenId(undefined);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user openId:', error);
+      } finally {
+        setOpenIdResolved(true);
+      }
+    };
+
+    fetchUserOpenId();
+  }, [open, user, shouldWaitForOpenId]);
+
+  // 调用 JSAPI 支付
+  const invokeJsapiPay = useCallback((params: Record<string, string>) => {
+    return new Promise<void>((resolve, reject) => {
+      console.log('Invoking JSAPI pay with WeixinJSBridge');
+      
+      const onBridgeReady = () => {
+        if (!window.WeixinJSBridge) {
+          console.error('WeixinJSBridge is not available');
+          reject(new Error('WeixinJSBridge 未初始化，请在微信中打开'));
+          return;
+        }
+        
+        console.log('WeixinJSBridge ready, invoking getBrandWCPayRequest');
+        window.WeixinJSBridge.invoke(
+          'getBrandWCPayRequest',
+          params,
+          (res) => {
+            console.log('WeixinJSBridge payment result:', res.err_msg);
+            if (res.err_msg === 'get_brand_wcpay_request:ok') {
+              resolve();
+            } else if (res.err_msg === 'get_brand_wcpay_request:cancel') {
+              reject(new Error('用户取消支付'));
+            } else {
+              reject(new Error(res.err_msg || '支付失败'));
+            }
+          }
+        );
+      };
+
+      if (typeof window.WeixinJSBridge === 'undefined') {
+        console.log('WeixinJSBridge not ready, waiting for WeixinJSBridgeReady event');
+        if (document.addEventListener) {
+          document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);
+        }
+        // 超时处理
+        setTimeout(() => {
+          if (typeof window.WeixinJSBridge === 'undefined') {
+            console.error('WeixinJSBridge load timeout');
+            reject(new Error('WeixinJSBridge 加载超时'));
+          }
+        }, 5000);
+      } else {
+        onBridgeReady();
+      }
+    });
+  }, []);
 
   const clearTimers = () => {
     if (pollingRef.current) {
@@ -69,21 +183,35 @@ export function AppointmentPayDialog({
     setOrderNo('');
     setAppointmentId('');
     setErrorMessage('');
+    openIdFetchedRef.current = false;
+    setUserOpenId(undefined);
+    setOpenIdResolved(false);
   };
 
+  // 等待 openId 解析完成后再创建订单
   useEffect(() => {
+    if (shouldWaitForOpenId && !openIdResolved) return;
+
     if (open) {
       createAppointmentOrder();
     } else {
       resetState();
     }
     return clearTimers;
-  }, [open]);
+  }, [open, shouldWaitForOpenId, openIdResolved]);
 
   const createAppointmentOrder = async () => {
     setStatus('loading');
     try {
-      const selectedPayType = isMobile && !isWechat ? 'h5' : 'native';
+      // 确定支付类型
+      let selectedPayType: 'jsapi' | 'h5' | 'native';
+      if (canUseJsapi) {
+        selectedPayType = 'jsapi';
+      } else if (isMobile && !isWechat) {
+        selectedPayType = 'h5';
+      } else {
+        selectedPayType = 'native';
+      }
       setPayType(selectedPayType);
 
       const { data, error } = await supabase.functions.invoke('create-appointment-order', {
@@ -93,6 +221,8 @@ export function AppointmentPayDialog({
           slotId: slot.id,
           userNotes,
           payType: selectedPayType,
+          openId: selectedPayType === 'jsapi' ? userOpenId : undefined,
+          isMiniProgram: isMiniProgram,
         },
       });
 
@@ -105,9 +235,24 @@ export function AppointmentPayDialog({
       setOrderNo(data.orderNo);
       setAppointmentId(data.appointmentId);
 
-      if (selectedPayType === 'h5' && data.h5Url) {
+      if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
+        // JSAPI 支付 - 直接调起微信支付
+        setStatus('pending');
+        startPolling(data.orderNo);
+        
+        try {
+          await invokeJsapiPay(data.jsapiPayParams);
+          console.log('JSAPI pay success callback');
+        } catch (jsapiError: any) {
+          console.log('JSAPI pay error:', jsapiError.message);
+          if (jsapiError.message !== '用户取消支付') {
+            toast.error(jsapiError.message || '支付失败');
+          }
+        }
+      } else if (selectedPayType === 'h5' && data.h5Url) {
         setH5PayUrl(data.h5Url);
         setStatus('pending');
+        startPolling(data.orderNo);
       } else if (data.codeUrl) {
         const qrDataUrl = await QRCode.toDataURL(data.codeUrl, {
           width: 200,
@@ -155,7 +300,6 @@ export function AppointmentPayDialog({
 
   const handleH5Pay = () => {
     if (h5PayUrl) {
-      // 使用传入的 returnUrl 或当前页面路径
       const targetPath = returnUrl || window.location.pathname;
       const redirectUrl = encodeURIComponent(
         window.location.origin + targetPath + '?order=' + orderNo + '&payment_success=1'
@@ -176,6 +320,7 @@ export function AppointmentPayDialog({
 
   const handleRetry = () => {
     resetState();
+    setOpenIdResolved(true); // 保持已解析状态，避免重复获取
     createAppointmentOrder();
   };
 
@@ -205,6 +350,13 @@ export function AppointmentPayDialog({
               <>
                 <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
                 <p className="text-muted-foreground">正在创建订单...</p>
+              </>
+            )}
+
+            {status === 'pending' && payType === 'jsapi' && (
+              <>
+                <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
+                <p className="text-muted-foreground">等待支付确认...</p>
               </>
             )}
 
