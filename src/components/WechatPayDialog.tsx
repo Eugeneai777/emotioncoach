@@ -221,46 +221,26 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     }, 1200);
   };
 
-  // 调用 JSAPI 支付（支持小程序和微信浏览器两种方式）
+  // 调用 JSAPI 支付
+  // ⚠️ 重要：小程序 WebView 中的 H5 页面**无法**直接调用 wx.requestPayment（会报 system:access_denied）
+  // 必须统一使用 WeixinJSBridge.invoke('getBrandWCPayRequest')，该接口在小程序 WebView 和微信浏览器中均可用
   const invokeJsapiPay = useCallback((params: Record<string, string>) => {
     return new Promise<void>((resolve, reject) => {
-      // 小程序环境使用 wx.requestPayment（使用 any 类型绕过类型检查）
-      const wx = window.wx as any;
-      if (isMiniProgram && wx?.requestPayment) {
-        console.log('Using wx.requestPayment for mini program');
-        wx.requestPayment({
-          timeStamp: params.timeStamp,
-          nonceStr: params.nonceStr,
-          package: params.package,
-          signType: params.signType,
-          paySign: params.paySign,
-          success: () => {
-            console.log('wx.requestPayment success');
-            resolve();
-          },
-          fail: (res: { errMsg?: string }) => {
-            console.log('wx.requestPayment fail:', res);
-            if (res.errMsg?.includes('cancel')) {
-              reject(new Error('用户取消支付'));
-            } else {
-              reject(new Error(res.errMsg || '支付失败'));
-            }
-          },
-        });
-        return;
-      }
-
-      // 微信浏览器使用 WeixinJSBridge
+      console.log('Invoking JSAPI pay with WeixinJSBridge, params:', { ...params, paySign: '***' });
+      
       const onBridgeReady = () => {
         if (!window.WeixinJSBridge) {
-          reject(new Error('WeixinJSBridge 未初始化'));
+          console.error('WeixinJSBridge is not available');
+          reject(new Error('WeixinJSBridge 未初始化，请在微信中打开'));
           return;
         }
         
+        console.log('WeixinJSBridge ready, invoking getBrandWCPayRequest');
         window.WeixinJSBridge.invoke(
           'getBrandWCPayRequest',
           params,
           (res) => {
+            console.log('WeixinJSBridge payment result:', res.err_msg);
             if (res.err_msg === 'get_brand_wcpay_request:ok') {
               resolve();
             } else if (res.err_msg === 'get_brand_wcpay_request:cancel') {
@@ -273,18 +253,22 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       };
 
       if (typeof window.WeixinJSBridge === 'undefined') {
+        console.log('WeixinJSBridge not ready, waiting for WeixinJSBridgeReady event');
         if (document.addEventListener) {
           document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);
         }
         // 超时处理
         setTimeout(() => {
-          reject(new Error('WeixinJSBridge 加载超时'));
+          if (typeof window.WeixinJSBridge === 'undefined') {
+            console.error('WeixinJSBridge load timeout');
+            reject(new Error('WeixinJSBridge 加载超时'));
+          }
         }, 5000);
       } else {
         onBridgeReady();
       }
     });
-  }, [isMiniProgram]);
+  }, []);
 
   // 创建订单
   const createOrder = async () => {
