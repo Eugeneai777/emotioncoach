@@ -71,13 +71,18 @@ serve(async (req) => {
   }
 
   try {
-    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5' } = await req.json();
+    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5', openId } = await req.json();
     
-    console.log('Creating order:', { packageKey, packageName, amount, userId, payType });
+    console.log('Creating order:', { packageKey, packageName, amount, userId, payType, openId });
 
     // 验证参数 - userId 可选（支持游客订单）
     if (!packageKey || !packageName || !amount) {
       throw new Error('缺少必要参数');
+    }
+
+    // JSAPI 支付需要 openId
+    if (payType === 'jsapi' && !openId) {
+      throw new Error('JSAPI支付需要openId');
     }
 
     // 获取微信支付配置
@@ -109,7 +114,15 @@ serve(async (req) => {
     
     // 根据支付类型选择不同的API和请求体
     const isH5 = payType === 'h5';
-    const apiPath = isH5 ? '/v3/pay/transactions/h5' : '/v3/pay/transactions/native';
+    const isJsapi = payType === 'jsapi';
+    let apiPath: string;
+    if (isJsapi) {
+      apiPath = '/v3/pay/transactions/jsapi';
+    } else if (isH5) {
+      apiPath = '/v3/pay/transactions/h5';
+    } else {
+      apiPath = '/v3/pay/transactions/native';
+    }
     const apiUrl = `https://api.mch.weixin.qq.com${apiPath}`;
     
     const requestBody: Record<string, unknown> = {
@@ -134,6 +147,13 @@ serve(async (req) => {
           wap_url: 'https://eugeneai.me',
           wap_name: '有劲AI'
         }
+      };
+    }
+
+    // JSAPI支付需要payer信息
+    if (isJsapi) {
+      requestBody.payer = {
+        openid: openId
       };
     }
 
@@ -176,7 +196,7 @@ serve(async (req) => {
       const proxyResult = await proxyResponse.json();
       console.log('Proxy response:', proxyResult);
       
-      // 检查是否需要降级到 Native 支付
+      // 检查是否需要降级到 Native 支付（仅对H5支付降级，JSAPI不降级）
       if (isH5 && (proxyResult.code === 'PARAM_ERROR' || proxyResult.code === 'NO_AUTH' || !proxyResult.h5_url)) {
         console.log('H5 payment failed, falling back to Native QR code payment');
         fallbackReason = proxyResult.message || 'H5支付不可用，已自动切换为扫码支付';
@@ -259,10 +279,39 @@ serve(async (req) => {
       }
     }
 
-    // 获取支付URL - 使用实际的支付类型
+    // 获取支付URL或prepay_id - 使用实际的支付类型
     const actualIsH5 = actualPayType === 'h5';
-    let payUrl: string;
-    if (actualIsH5) {
+    const actualIsJsapi = actualPayType === 'jsapi';
+    let payUrl: string = '';
+    let jsapiPayParams: Record<string, string> | undefined;
+    
+    if (actualIsJsapi) {
+      // JSAPI支付返回 prepay_id，需要生成前端调起支付的参数
+      const prepayId = wechatResult.prepay_id as string;
+      if (!prepayId) {
+        throw new Error('未获取到prepay_id');
+      }
+      
+      // 生成前端调起支付所需的签名参数
+      const jsapiTimestamp = getTimestamp().toString();
+      const jsapiNonceStr = generateNonceStr();
+      const packageStr = `prepay_id=${prepayId}`;
+      
+      // 签名内容：appId、timeStamp、nonceStr、package
+      const jsapiSignMessage = `${appId}\n${jsapiTimestamp}\n${jsapiNonceStr}\n${packageStr}\n`;
+      const jsapiPaySign = await signWithRSA(jsapiSignMessage, privateKey);
+      
+      jsapiPayParams = {
+        appId: appId,
+        timeStamp: jsapiTimestamp,
+        nonceStr: jsapiNonceStr,
+        package: packageStr,
+        signType: 'RSA',
+        paySign: jsapiPaySign
+      };
+      
+      console.log('JSAPI pay params generated:', { ...jsapiPayParams, paySign: '***' });
+    } else if (actualIsH5) {
       // H5支付返回 h5_url
       payUrl = wechatResult.h5_url as string;
       if (!payUrl) {
@@ -287,7 +336,7 @@ serve(async (req) => {
         amount: amount,
         order_no: orderNo,
         status: 'pending',
-        qr_code_url: payUrl, // 存储支付URL（H5或Native）
+        qr_code_url: payUrl || null, // 存储支付URL（H5或Native），JSAPI为null
         expired_at: expiredAt.toISOString(),
       });
 
@@ -302,9 +351,10 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         orderNo,
-        payUrl, // 统一返回payUrl
-        qrCodeUrl: actualIsH5 ? undefined : payUrl, // 兼容旧版本
+        payUrl: payUrl || undefined, // 统一返回payUrl
+        qrCodeUrl: !actualIsH5 && !actualIsJsapi ? payUrl : undefined, // 兼容旧版本
         h5Url: actualIsH5 ? payUrl : undefined, // H5支付专用
+        jsapiPayParams, // JSAPI支付专用参数
         payType: actualPayType, // 返回实际使用的支付类型
         fallbackReason, // 如果发生了降级，告知原因
         expiredAt: expiredAt.toISOString(),
