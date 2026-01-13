@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, validateCronSecret } from '../_shared/auth.ts';
 
 interface CorrectionResult {
   userId: string;
@@ -18,6 +14,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Validate cron secret for scheduled batch operations
+  const authError = validateCronSecret(req);
+  if (authError) return authError;
 
   try {
     const supabase = createClient(

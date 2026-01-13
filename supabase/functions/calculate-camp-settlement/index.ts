@@ -1,11 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, validateServiceRole } from '../_shared/auth.ts';
 
 interface SettlementRequest {
   camp_review_id: string;
@@ -40,6 +36,10 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Validate that this is an internal service call
+  const authError = validateServiceRole(req);
+  if (authError) return authError;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
