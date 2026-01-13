@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -136,15 +136,7 @@ const EnergyStudio = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>有劲生活馆 - 有劲AI</title>
-        <meta name="description" content="多种成长工具，随时调节你的能量" />
-        <meta property="og:title" content="有劲AI • 有劲生活馆" />
-        <meta property="og:description" content="多种成长工具，随时调节你的能量" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/energy-studio" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="energyStudio" />
 
       <PageHeader title="有劲生活馆" />
 

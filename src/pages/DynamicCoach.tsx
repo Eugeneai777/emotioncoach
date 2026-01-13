@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { CoachCommunity } from "@/components/coach/CoachCommunity";
@@ -257,15 +257,14 @@ const DynamicCoach = () => {
 
   return (
     <>
-      <Helmet>
-        <title>{template?.title || '教练对话'} - 有劲AI</title>
-        <meta name="description" content={template?.description || '与AI教练深度对话，获得专业指导'} />
-        <meta property="og:title" content={`有劲AI${template?.title || '教练'}`} />
-        <meta property="og:description" content={template?.description || '24小时AI教练，陪伴你成长'} />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content={`https://wechat.eugenewe.net/coach/${coachKey}`} />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta 
+        pageKey={`coach_${coachKey}`}
+        overrides={{
+          title: `${template?.title || '教练对话'} - 有劲AI`,
+          ogTitle: `有劲AI${template?.title || '教练'}`,
+          description: template?.description || '与AI教练深度对话，获得专业指导'
+        }}
+      />
       {tourKey && pageTourConfig[tourKey] && (
         <PageTour
           steps={pageTourConfig[tourKey]}

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Helmet } from "react-helmet";
+import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { 
   ArrowLeft, 
   Search,
@@ -217,15 +217,7 @@ const Courses = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-      <Helmet>
-        <title>线上课程 - 有劲AI</title>
-        <meta name="description" content="系统化学习，提升成长能力" />
-        <meta property="og:title" content="有劲AI • 线上课程" />
-        <meta property="og:description" content="系统化学习，提升成长能力" />
-        <meta property="og:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
-        <meta property="og:url" content="https://wechat.eugenewe.net/courses" />
-        <meta property="og:site_name" content="有劲AI" />
-      </Helmet>
+      <DynamicOGMeta pageKey="courses" />
       {/* Header */}
       <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
         <div className="container max-w-7xl mx-auto px-4 py-6">
