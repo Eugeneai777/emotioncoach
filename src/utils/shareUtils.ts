@@ -11,6 +11,8 @@ export interface ShareEnvironment {
   isWeChat: boolean;
   isIOS: boolean;
   isMobile: boolean;
+  isAndroid: boolean;
+  isMiniProgram: boolean;
   supportsWebShare: boolean;
 }
 
@@ -20,10 +22,18 @@ export interface ShareEnvironment {
 export const getShareEnvironment = (): ShareEnvironment => {
   const ua = navigator.userAgent.toLowerCase();
   
+  const isWeChat = ua.includes('micromessenger');
+  const isMiniProgram = isWeChat && (
+    ua.includes('miniprogram') || 
+    (typeof window !== 'undefined' && (window as any).__wxjs_environment === 'miniprogram')
+  );
+  
   return {
-    isWeChat: ua.includes('micromessenger'),
+    isWeChat,
     isIOS: /iphone|ipad|ipod/.test(ua),
     isMobile: /android|iphone|ipad|ipod/i.test(ua),
+    isAndroid: /android/i.test(ua),
+    isMiniProgram,
     supportsWebShare: !!(navigator.share && navigator.canShare),
   };
 };
@@ -34,10 +44,11 @@ export const getShareEnvironment = (): ShareEnvironment => {
  * Returns true for:
  * - WeChat environments (unreliable Web Share API)
  * - iOS environments (for consistent long-press-to-save UX)
+ * - Mini Program environments
  */
 export const shouldUseImagePreview = (): boolean => {
-  const { isWeChat, isIOS } = getShareEnvironment();
-  return isWeChat || isIOS;
+  const { isWeChat, isIOS, isMiniProgram } = getShareEnvironment();
+  return isWeChat || isIOS || isMiniProgram;
 };
 
 /**
@@ -49,11 +60,31 @@ export const isWeChatBrowser = (): boolean => {
 };
 
 /**
+ * Check if inside WeChat mini program
+ */
+export const isMiniProgramEnv = (): boolean => {
+  const { isMiniProgram } = getShareEnvironment();
+  return isMiniProgram;
+};
+
+/**
  * Get appropriate button text for share action based on environment
  */
 export const getShareButtonText = (): string => {
-  const { isWeChat } = getShareEnvironment();
-  return isWeChat ? '生成图片' : '分享';
+  const { isWeChat, isIOS, isMiniProgram } = getShareEnvironment();
+  if (isWeChat || isMiniProgram) return '生成图片';
+  if (isIOS) return '生成并保存';
+  return '分享';
+};
+
+/**
+ * Get share button icon hint
+ */
+export const getShareButtonHint = (): string => {
+  const { isWeChat, isIOS, isMiniProgram } = getShareEnvironment();
+  if (isWeChat || isMiniProgram) return '生成后长按保存';
+  if (isIOS) return '保存到相册后分享';
+  return '分享给好友';
 };
 
 /**
@@ -69,6 +100,7 @@ export interface ShareResult {
   method: 'webshare' | 'preview' | 'download';
   blobUrl?: string;
   cancelled?: boolean;
+  error?: string;
 }
 
 export interface ShareOptions {
@@ -83,24 +115,44 @@ export const handleShareWithFallback = async (
   filename: string,
   options: ShareOptions = {}
 ): Promise<ShareResult> => {
-  const { isWeChat, isIOS } = getShareEnvironment();
+  const { isWeChat, isIOS, isMiniProgram, isAndroid } = getShareEnvironment();
   const file = new File([blob], filename, { type: 'image/png' });
   
-  // WeChat environment: Always use image preview (Web Share API is unreliable)
-  if (isWeChat) {
+  // WeChat / MiniProgram environment: Always use image preview
+  if (isWeChat || isMiniProgram) {
     const blobUrl = URL.createObjectURL(blob);
     options.onShowPreview?.(blobUrl);
     return { success: true, method: 'preview', blobUrl };
   }
   
-  // iOS non-WeChat: Also use image preview for consistent UX
+  // iOS non-WeChat: Use image preview for consistent long-press UX
   if (isIOS) {
     const blobUrl = URL.createObjectURL(blob);
     options.onShowPreview?.(blobUrl);
     return { success: true, method: 'preview', blobUrl };
   }
   
-  // Try Web Share API for other environments
+  // Android: Try Web Share API first, it works well on most Android browsers
+  if (isAndroid && navigator.share && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: options.title || filename,
+        text: options.text,
+      });
+      return { success: true, method: 'webshare' };
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        return { success: false, method: 'webshare', cancelled: true };
+      }
+      // Fall through to preview on Android if share fails
+      const blobUrl = URL.createObjectURL(blob);
+      options.onShowPreview?.(blobUrl);
+      return { success: true, method: 'preview', blobUrl };
+    }
+  }
+  
+  // Desktop or other: Try Web Share API
   if (navigator.share && navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({
@@ -110,7 +162,6 @@ export const handleShareWithFallback = async (
       });
       return { success: true, method: 'webshare' };
     } catch (error) {
-      // User cancelled or share failed
       if ((error as Error).name === 'AbortError') {
         return { success: false, method: 'webshare', cancelled: true };
       }
@@ -119,17 +170,25 @@ export const handleShareWithFallback = async (
   }
   
   // Fallback: Download the image
-  const blobUrl = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.download = filename;
-  link.href = blobUrl;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  
-  // Cleanup blob URL after a delay
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
-  
-  options.onDownload?.();
-  return { success: true, method: 'download' };
+  try {
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = blobUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Cleanup blob URL after a delay
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    
+    options.onDownload?.();
+    return { success: true, method: 'download' };
+  } catch (error) {
+    return { 
+      success: false, 
+      method: 'download', 
+      error: (error as Error).message 
+    };
+  }
 };
