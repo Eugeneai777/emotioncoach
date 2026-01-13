@@ -71,9 +71,9 @@ serve(async (req) => {
   }
 
   try {
-    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5', openId } = await req.json();
+    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5', openId, isMiniProgram = false } = await req.json();
     
-    console.log('Creating order:', { packageKey, packageName, amount, userId, payType, openId });
+    console.log('Creating order:', { packageKey, packageName, amount, userId, payType, openId, isMiniProgram });
 
     // 验证参数 - userId 可选（支持游客订单）
     if (!packageKey || !packageName || !amount) {
@@ -90,9 +90,14 @@ serve(async (req) => {
     const apiV3Key = Deno.env.get('WECHAT_API_V3_KEY');
     const certSerialNo = Deno.env.get('WECHAT_CERT_SERIAL_NO');
     const privateKey = Deno.env.get('WECHAT_PRIVATE_KEY');
-    const appId = Deno.env.get('WECHAT_APP_ID');
+    // 根据环境选择 appId：小程序使用小程序 appId，其他使用公众号 appId
+    const mpAppId = Deno.env.get('WECHAT_MINI_PROGRAM_APP_ID');
+    const officialAppId = Deno.env.get('WECHAT_APP_ID');
+    const appId = (isMiniProgram && mpAppId) ? mpAppId : officialAppId;
     const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
     const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
+
+    console.log('Using appId:', appId, 'isMiniProgram:', isMiniProgram);
 
     if (!mchId || !apiV3Key || !certSerialNo || !privateKey || !appId) {
       throw new Error('微信支付配置不完整');
