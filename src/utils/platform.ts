@@ -9,6 +9,9 @@ declare global {
     wx?: {
       miniProgram?: {
         getEnv: (callback: (res: { miniprogram: boolean }) => void) => void;
+        postMessage: (options: { data: any }) => void;
+        navigateTo?: (options: { url: string }) => void;
+        navigateBack?: (options?: { delta?: number }) => void;
       };
       getRecorderManager?: () => any;
       createInnerAudioContext?: () => {
