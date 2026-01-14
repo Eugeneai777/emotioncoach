@@ -27,7 +27,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { redirectUri, code } = body;
+    const { redirectUri, code, callbackMode } = body;
 
     // 模式2：用 code 换取 openId
     if (code) {
@@ -36,7 +36,7 @@ serve(async (req) => {
 
     // 模式1：生成授权 URL
     if (redirectUri) {
-      return generateAuthUrl(redirectUri);
+      return generateAuthUrl(redirectUri, callbackMode);
     }
 
     return new Response(
@@ -55,8 +55,12 @@ serve(async (req) => {
 /**
  * 生成微信静默授权 URL
  * redirect_uri 必须使用微信后台配置的授权域名 wechat.eugenewe.net
+ *
+ * callbackMode:
+ * - "pay_entry": 使用 /pay-entry 作为统一回调页，再跳回原始 redirectUri（跨域安全、避免丢参）
+ * - 其他：沿用原始路径作为回调页
  */
-function generateAuthUrl(redirectUri: string): Response {
+function generateAuthUrl(redirectUri: string, callbackMode?: string): Response {
   const appId = Deno.env.get('WECHAT_APP_ID');
   if (!appId) {
     return new Response(
@@ -65,21 +69,32 @@ function generateAuthUrl(redirectUri: string): Response {
     );
   }
 
-  // 使用微信授权域名 wechat.eugenewe.net 替换原始域名
-  // 保留原始路径，添加 payment_auth_callback=1 标记
   const originalUrl = new URL(redirectUri);
   const wechatBaseUrl = 'https://wechat.eugenewe.net';
-  const callbackUrl = new URL(originalUrl.pathname, wechatBaseUrl);
-  
-  // 保留原始查询参数并添加回调标记
-  originalUrl.searchParams.forEach((value, key) => {
-    callbackUrl.searchParams.set(key, value);
-  });
-  callbackUrl.searchParams.set('payment_auth_callback', '1');
-  
+
+  let callbackUrl: URL;
+
+  // 统一回调页模式：避免回调后停留在 wechat.eugenewe.net 导致状态丢失/循环授权
+  if (callbackMode === 'pay_entry') {
+    callbackUrl = new URL('/pay-entry', wechatBaseUrl);
+    callbackUrl.searchParams.set('payment_auth_callback', '1');
+    // 在回调页中再跳回原始页面，并把 openId 带回去
+    callbackUrl.searchParams.set('payment_redirect', originalUrl.toString());
+  } else {
+    // 默认：使用微信授权域名 wechat.eugenewe.net 替换原始域名
+    // 保留原始路径，添加 payment_auth_callback=1 标记
+    callbackUrl = new URL(originalUrl.pathname, wechatBaseUrl);
+
+    // 保留原始查询参数并添加回调标记
+    originalUrl.searchParams.forEach((value, key) => {
+      callbackUrl.searchParams.set(key, value);
+    });
+    callbackUrl.searchParams.set('payment_auth_callback', '1');
+  }
+
   // state 用于防止 CSRF，简单使用时间戳
   const state = `payment_${Date.now()}`;
-  
+
   // 使用 snsapi_base 静默授权（用户无感知）
   const wechatAuthUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${encodeURIComponent(callbackUrl.toString())}&response_type=code&scope=snsapi_base&state=${state}#wechat_redirect`;
 

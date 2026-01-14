@@ -11,20 +11,65 @@ export default function PayEntry() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const partnerId = searchParams.get("partner");
+
+  // 微信静默授权回调：在 /pay-entry 中换取 openId 并跳回原页面
+  const paymentAuthCode = searchParams.get('code');
+  const paymentRedirect = searchParams.get('payment_redirect');
+  const isPaymentAuthCallback =
+    searchParams.get('payment_auth_callback') === '1' &&
+    !!paymentAuthCode &&
+    !!paymentRedirect;
   
   const [loading, setLoading] = useState(true);
   const [partner, setPartner] = useState<any>(null);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
+  // 优先处理静默授权回调（避免走合伙人付费入口逻辑）
   useEffect(() => {
+    if (!isPaymentAuthCallback) return;
+
+    const run = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-wechat-payment-openid', {
+          body: { code: paymentAuthCode },
+        });
+
+        if (error || !data?.openId) {
+          const target = new URL(paymentRedirect!);
+          target.searchParams.set('payment_auth_error', '1');
+          window.location.replace(target.toString());
+          return;
+        }
+
+        const target = new URL(paymentRedirect!);
+        target.searchParams.set('payment_openid', data.openId);
+        // 防止回跳后 URL 过长/反复触发
+        target.searchParams.delete('code');
+        target.searchParams.delete('state');
+        target.searchParams.delete('payment_auth_callback');
+        window.location.replace(target.toString());
+      } catch (e) {
+        const target = new URL(paymentRedirect!);
+        target.searchParams.set('payment_auth_error', '1');
+        window.location.replace(target.toString());
+      }
+    };
+
+    run();
+  }, [isPaymentAuthCallback, paymentAuthCode, paymentRedirect]);
+
+  useEffect(() => {
+    if (isPaymentAuthCallback) return;
+
     if (!partnerId) {
       setLoading(false);
       return;
     }
     
     fetchPartnerInfo();
-  }, [partnerId]);
+  }, [partnerId, isPaymentAuthCallback]);
+
 
   const fetchPartnerInfo = async () => {
     try {

@@ -59,6 +59,19 @@ export default function WealthBlockAssessmentPage() {
     },
   });
 
+  // 微信内静默授权返回后：自动重新打开“测评支付弹窗”（仅测评页）
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const shouldResume = url.searchParams.get('assessment_pay_resume') === '1';
+    const hasAuthResult = url.searchParams.has('payment_openid') || url.searchParams.has('payment_auth_error');
+
+    if (shouldResume && hasAuthResult) {
+      setShowPayDialog(true);
+      url.searchParams.delete('assessment_pay_resume');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
+
   // 页面访问埋点 + 加载历史记录
   // 注意：扫码追踪已由全局 GlobalRefTracker 统一处理
   useEffect(() => {
