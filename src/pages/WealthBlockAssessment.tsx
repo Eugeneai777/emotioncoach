@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
@@ -22,6 +22,7 @@ import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
+import { useWechatShare, createShareConfig } from "@/hooks/useWechatShare";
 
 export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
@@ -388,6 +389,15 @@ export default function WealthBlockAssessmentPage() {
   // 使用动态 OG 配置
   const { ogConfig } = usePageOG("wealthBlock");
 
+  // 微信 JS-SDK 分享配置 - 解决微信内转发缓存问题
+  const shareConfig = useMemo(() => createShareConfig(
+    ogConfig.ogTitle,
+    ogConfig.description,
+    "/wealth-block",
+    ogConfig.image
+  ), [ogConfig.ogTitle, ogConfig.description, ogConfig.image]);
+  
+  useWechatShare(shareConfig);
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">
       {/* SEO & 微信分享 Meta Tags - 动态从数据库读取 */}
