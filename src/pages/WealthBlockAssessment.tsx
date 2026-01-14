@@ -42,11 +42,19 @@ export default function WealthBlockAssessmentPage() {
   
   // 支付相关状态
   const [showPayDialog, setShowPayDialog] = useState(false);
+  // 正在跳转微信授权中
+  const [isRedirectingForAuth, setIsRedirectingForAuth] = useState(false);
   
   // 历史记录
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const { trackAssessmentTocamp, trackEvent } = useWealthCampAnalytics();
+
+  // 检测是否为微信浏览器（非小程序）
+  const isWeChatBrowserEnv = typeof window !== 'undefined' && 
+    /MicroMessenger/i.test(navigator.userAgent) && 
+    !/miniProgram/i.test(navigator.userAgent) &&
+    !window.__wxjs_environment;
 
   // 监听支付回调（H5支付返回后自动处理）
   usePaymentCallback({
@@ -58,6 +66,54 @@ export default function WealthBlockAssessmentPage() {
     },
     autoRedirect: false, // 不自动跳转，由本页面处理
   });
+
+  // 微信浏览器未登录时，点击支付前先触发静默授权（自动登录/注册）
+  const triggerWeChatSilentAuth = async () => {
+    console.log('[WealthBlock] Triggering WeChat silent auth for login/register');
+    setIsRedirectingForAuth(true);
+
+    try {
+      // 构建回跳 URL：授权回来后自动再打开支付弹窗
+      const resumeUrl = new URL(window.location.href);
+      resumeUrl.searchParams.set('assessment_pay_resume', '1');
+
+      const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
+        body: { 
+          redirectUri: resumeUrl.toString(), 
+          flow: 'wealth_assessment',
+        },
+      });
+
+      if (error || !data?.authUrl) {
+        console.error('[WealthBlock] Failed to get silent auth URL:', error || data);
+        setIsRedirectingForAuth(false);
+        // 授权失败，直接打开支付弹窗（用扫码兜底）
+        setShowPayDialog(true);
+        return;
+      }
+
+      console.log('[WealthBlock] Redirecting to silent auth...');
+      window.location.href = data.authUrl;
+    } catch (err) {
+      console.error('[WealthBlock] Silent auth error:', err);
+      setIsRedirectingForAuth(false);
+      setShowPayDialog(true);
+    }
+  };
+
+  // 处理支付按钮点击
+  const handlePayClick = () => {
+    console.log('[WealthBlock] handlePayClick called, user:', user?.id, 'isWeChatBrowser:', isWeChatBrowserEnv);
+    
+    // 微信浏览器内且未登录：先触发静默授权（自动登录/注册）
+    if (isWeChatBrowserEnv && !user) {
+      triggerWeChatSilentAuth();
+      return;
+    }
+    
+    // 已登录或非微信环境：直接打开支付弹窗
+    setShowPayDialog(true);
+  };
 
   // 微信内静默授权返回后：自动登录 + 重新打开"测评支付弹窗"
   useEffect(() => {
@@ -436,7 +492,15 @@ export default function WealthBlockAssessmentPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-            {showIntro && !showResult ? (
+            {/* 正在跳转微信授权中 */}
+            {isRedirectingForAuth && (
+              <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-muted-foreground">正在跳转微信授权...</p>
+              </div>
+            )}
+            
+            {!isRedirectingForAuth && showIntro && !showResult ? (
                 <AssessmentIntroCard
                   isLoggedIn={!!user}
                   onStart={() => {
@@ -446,10 +510,7 @@ export default function WealthBlockAssessmentPage() {
                     setShowIntro(false);
                   }}
                   onLogin={() => navigate("/auth?redirect=/wealth-block")}
-                  onPay={() => {
-                    console.log('[WealthBlock] User clicked pay, opening dialog');
-                    setShowPayDialog(true);
-                  }}
+                  onPay={handlePayClick}
                 />
               ) : showResult && currentResult ? (
                 <div className="space-y-6">
