@@ -36,12 +36,23 @@ export default function PayEntry() {
       console.log('[PayEntry] paymentRedirect:', paymentRedirect);
       console.log('[PayEntry] payFlow:', payFlow);
 
+      // 添加超时保护
+      const timeoutId = setTimeout(() => {
+        console.error('[PayEntry] Payment auth callback timeout');
+        const target = new URL(paymentRedirect!);
+        target.searchParams.set('payment_auth_error', '1');
+        target.searchParams.set('payment_auth_timeout', '1');
+        target.searchParams.set('assessment_pay_resume', '1');
+        window.location.replace(target.toString());
+      }, 15000); // 15秒超时
+
       try {
         // 调用新的 wechat-pay-auth 函数换取 openId + tokenHash（自动登录/注册）
         const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
           body: { code: paymentAuthCode },
         });
 
+        clearTimeout(timeoutId);
         console.log('[PayEntry] wechat-pay-auth response:', data, error);
 
         // 构建回跳 URL
@@ -81,6 +92,7 @@ export default function PayEntry() {
         // 使用 replace 防止回退导致重复触发
         window.location.replace(target.toString());
       } catch (e) {
+        clearTimeout(timeoutId);
         console.error('[PayEntry] Exception in payment auth callback:', e);
         const target = new URL(paymentRedirect!);
         target.searchParams.set('payment_auth_error', '1');
