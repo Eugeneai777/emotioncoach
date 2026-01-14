@@ -38,6 +38,12 @@ interface AssessmentPayDialogProps {
 
 type PaymentStatus = 'idle' | 'creating' | 'pending' | 'polling' | 'paid' | 'registering' | 'error';
 
+// 从 URL 中获取静默授权返回的 openId
+const getPaymentOpenIdFromUrl = (): string | undefined => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('payment_openid') || undefined;
+};
+
 export function AssessmentPayDialog({
   open,
   onOpenChange,
@@ -51,12 +57,18 @@ export function AssessmentPayDialog({
   const [payUrl, setPayUrl] = useState<string>('');
   const [payType, setPayType] = useState<'h5' | 'native' | 'jsapi'>('native');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
-  const [userOpenId, setUserOpenId] = useState<string | undefined>();
+  // 优先使用 URL 中静默授权返回的 openId
+  const urlOpenId = getPaymentOpenIdFromUrl();
+  const [userOpenId, setUserOpenId] = useState<string | undefined>(urlOpenId);
   const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
+  // 正在跳转微信授权中
+  const [isRedirectingForOpenId, setIsRedirectingForOpenId] = useState<boolean>(false);
+  // 用于注册流程的 openId（支付成功后从后端返回）
+  const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
   
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const openIdFetchedRef = useRef<boolean>(false);
+  const silentAuthTriggeredRef = useRef<boolean>(false);
 
   // 检测环境
   const isWechat = isWeChatBrowser();
@@ -65,7 +77,8 @@ export function AssessmentPayDialog({
 
   // 小程序或微信浏览器内，有 openId 时可以使用 JSAPI 支付
   const canUseJsapi = (isMiniProgram || isWechat) && !!userOpenId;
-  const shouldWaitForOpenId = (isMiniProgram || isWechat) && userId;
+  // 微信环境下需要获取 openId
+  const shouldWaitForOpenId = isMiniProgram || isWechat;
 
   // 优化后的 WeixinJSBridge 等待逻辑：缩短为 1.5 秒，避免阻塞体验
   const waitForWeixinJSBridge = useCallback((timeout = 1500): Promise<boolean> => {
@@ -102,6 +115,38 @@ export function AssessmentPayDialog({
   }, []);
 
 
+  // 触发静默授权获取 openId（用于未登录用户）
+  const triggerSilentAuth = useCallback(async () => {
+    if (silentAuthTriggeredRef.current) return;
+    silentAuthTriggeredRef.current = true;
+    setIsRedirectingForOpenId(true);
+
+    try {
+      console.log('[AssessmentPay] Triggering silent auth for openId');
+      const currentUrl = window.location.href;
+      
+      const { data, error } = await supabase.functions.invoke('get-wechat-payment-openid', {
+        body: { redirectUri: currentUrl },
+      });
+
+      if (error || !data?.authUrl) {
+        console.error('[AssessmentPay] Failed to get silent auth URL:', error || data);
+        setIsRedirectingForOpenId(false);
+        silentAuthTriggeredRef.current = false;
+        setOpenIdResolved(true); // 授权失败，继续使用扫码支付
+        return;
+      }
+
+      console.log('[AssessmentPay] Redirecting to silent auth...');
+      window.location.href = data.authUrl;
+    } catch (err) {
+      console.error('[AssessmentPay] Silent auth error:', err);
+      setIsRedirectingForOpenId(false);
+      silentAuthTriggeredRef.current = false;
+      setOpenIdResolved(true);
+    }
+  }, []);
+
   // 获取用户 openId（用于 JSAPI 支付）
   useEffect(() => {
     const fetchUserOpenId = async () => {
@@ -113,32 +158,49 @@ export function AssessmentPayDialog({
         return;
       }
 
+      // 已有 openId（从 URL）：直接使用
+      if (urlOpenId) {
+        console.log('[AssessmentPay] Using openId from URL');
+        setUserOpenId(urlOpenId);
+        setOpenIdResolved(true);
+        // 清理 URL 中的 payment_openid 参数
+        const url = new URL(window.location.href);
+        url.searchParams.delete('payment_openid');
+        url.searchParams.delete('payment_auth_error');
+        window.history.replaceState({}, '', url.toString());
+        return;
+      }
+
       if (openIdFetchedRef.current) return;
       openIdFetchedRef.current = true;
 
-      try {
-        const { data: mapping } = await supabase
-          .from('wechat_user_mappings')
-          .select('openid')
-          .eq('system_user_id', userId)
-          .maybeSingle();
+      // 已登录用户：尝试从数据库获取 openId
+      if (userId) {
+        try {
+          const { data: mapping } = await supabase
+            .from('wechat_user_mappings')
+            .select('openid')
+            .eq('system_user_id', userId)
+            .maybeSingle();
 
-        if (mapping?.openid) {
-          console.log('Found user openId for JSAPI payment');
-          setUserOpenId(mapping.openid);
-        } else {
-          console.log('No openId found, will use H5/Native payment');
-          setUserOpenId(undefined);
+          if (mapping?.openid) {
+            console.log('[AssessmentPay] Found user openId from database');
+            setUserOpenId(mapping.openid);
+            setOpenIdResolved(true);
+            return;
+          }
+        } catch (error) {
+          console.error('[AssessmentPay] Failed to fetch user openId:', error);
         }
-      } catch (error) {
-        console.error('Failed to fetch user openId:', error);
-      } finally {
-        setOpenIdResolved(true);
       }
+
+      // 微信环境下没有 openId：触发静默授权
+      console.log('[AssessmentPay] No openId available, triggering silent auth');
+      triggerSilentAuth();
     };
 
     fetchUserOpenId();
-  }, [open, userId, shouldWaitForOpenId]);
+  }, [open, userId, urlOpenId, shouldWaitForOpenId, triggerSilentAuth]);
 
   // 调用 JSAPI 支付
   const invokeJsapiPay = useCallback((params: Record<string, string>) => {
@@ -546,8 +608,16 @@ export function AssessmentPayDialog({
         </DialogHeader>
 
         <div className="py-2">
+          {/* 正在跳转微信授权 */}
+          {isRedirectingForOpenId && (
+            <div className="flex flex-col items-center py-8">
+              <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+              <p className="text-muted-foreground">正在跳转微信授权...</p>
+            </div>
+          )}
+
           {/* 创建订单中 */}
-          {(status === 'idle' || status === 'creating') && (
+          {!isRedirectingForOpenId && (status === 'idle' || status === 'creating') && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
               <p className="text-muted-foreground">
