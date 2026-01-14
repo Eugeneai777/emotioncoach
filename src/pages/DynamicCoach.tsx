@@ -3,6 +3,7 @@ import { useParams, useLocation } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
+import { VibrantLifeScenarioCards } from "@/components/coach/VibrantLifeScenarioCards";
 import { CoachCommunity } from "@/components/coach/CoachCommunity";
 import { VideoRecommendationCard } from "@/components/coach/VideoRecommendationCard";
 import { ToolRecommendationCard } from "@/components/coach/ToolRecommendationCard";
@@ -309,11 +310,18 @@ const DynamicCoach = () => {
       ) : undefined}
       scenarioChips={
         template.enable_scenarios && template.scenarios ? (
-          <CoachScenarioChips
-            scenarios={template.scenarios as any[]}
-            onSelectScenario={handleSelectScenario}
-            primaryColor={template.primary_color}
-          />
+          template.coach_key === 'vibrant_life_sage' ? (
+            <VibrantLifeScenarioCards
+              scenarios={template.scenarios as any[]}
+              onSelectScenario={handleSelectScenario}
+            />
+          ) : (
+            <CoachScenarioChips
+              scenarios={template.scenarios as any[]}
+              onSelectScenario={handleSelectScenario}
+              primaryColor={template.primary_color}
+            />
+          )
         ) : undefined
       }
       videoRecommendation={videoRecommendation ? (
