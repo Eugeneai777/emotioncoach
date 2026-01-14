@@ -45,6 +45,12 @@ interface WechatPayDialogProps {
 
 type PaymentStatus = 'idle' | 'loading' | 'ready' | 'polling' | 'success' | 'failed' | 'expired';
 
+// 从 URL 中获取静默授权返回的 openId
+const getPaymentOpenIdFromUrl = (): string | undefined => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('payment_openid') || undefined;
+};
+
 export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl, openId: propOpenId }: WechatPayDialogProps) {
   const { user } = useAuth();
   const [status, setStatus] = useState<PaymentStatus>('idle');
@@ -55,11 +61,14 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [orderNo, setOrderNo] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [payType, setPayType] = useState<'h5' | 'native' | 'jsapi'>('h5');
-  const [userOpenId, setUserOpenId] = useState<string | undefined>(propOpenId);
+  // 优先使用 props 传入的 openId，其次使用 URL 中静默授权返回的 openId
+  const urlOpenId = getPaymentOpenIdFromUrl();
+  const [userOpenId, setUserOpenId] = useState<string | undefined>(propOpenId || urlOpenId);
   const [jsapiPayParams, setJsapiPayParams] = useState<Record<string, string> | null>(null);
-  // 用于避免“第一次打开先走扫码、第二次才JSAPI”的竞态：先确认 openId 是否已获取/确认不存在，再创建订单
+  // 用于避免"第一次打开先走扫码、第二次才JSAPI"的竞态
   const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
-  // 用于避免"第一次打开先走扫码、第二次才JSAPI"的竞态：先确认 openId 是否已获取/确认不存在，再创建订单
+  // 正在跳转微信授权中
+  const [isRedirectingForOpenId, setIsRedirectingForOpenId] = useState<boolean>(false);
 
   // 判断是否需要显示条款（仅合伙人套餐需要特殊条款确认）
   const requiresTermsAgreement = () => {
@@ -78,6 +87,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const orderCreatedRef = useRef<boolean>(false); // 防止重复创建订单
   const openIdFetchedRef = useRef<boolean>(false); // 防止重复获取 openId
+  const silentAuthTriggeredRef = useRef<boolean>(false); // 防止重复触发静默授权
 
   // 检测是否在微信内
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
@@ -126,11 +136,42 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   }, []);
 
 
-  // 在小程序/微信环境下自动获取用户的 openId（用于 JSAPI 支付）
+  // 触发静默授权获取 openId（用于未登录用户）
+  const triggerSilentAuth = useCallback(async () => {
+    if (silentAuthTriggeredRef.current) return;
+    silentAuthTriggeredRef.current = true;
+    setIsRedirectingForOpenId(true);
+
+    try {
+      console.log('[Payment] Triggering silent auth for openId');
+      const currentUrl = window.location.href;
+      
+      const { data, error } = await supabase.functions.invoke('get-wechat-payment-openid', {
+        body: { redirectUri: currentUrl },
+      });
+
+      if (error || !data?.authUrl) {
+        console.error('[Payment] Failed to get silent auth URL:', error || data);
+        setIsRedirectingForOpenId(false);
+        silentAuthTriggeredRef.current = false;
+        setOpenIdResolved(true); // 授权失败，继续使用扫码支付
+        return;
+      }
+
+      console.log('[Payment] Redirecting to silent auth...');
+      window.location.href = data.authUrl;
+    } catch (err) {
+      console.error('[Payment] Silent auth error:', err);
+      setIsRedirectingForOpenId(false);
+      silentAuthTriggeredRef.current = false;
+      setOpenIdResolved(true);
+    }
+  }, []);
+
+  // 在小程序/微信环境下获取用户的 openId（用于 JSAPI 支付）
   useEffect(() => {
     const fetchUserOpenId = async () => {
       if (!open) return;
-      if (!user) return;
 
       // 非微信环境：无需等待 openId
       if (!shouldWaitForOpenId) {
@@ -138,39 +179,51 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         return;
       }
 
-      // 已传入 openId：直接使用
-      if (propOpenId) {
-        setUserOpenId(propOpenId);
+      // 已有 openId（从 props 或 URL）：直接使用
+      if (propOpenId || urlOpenId) {
+        console.log('[Payment] Using existing openId:', propOpenId ? 'from props' : 'from URL');
+        setUserOpenId(propOpenId || urlOpenId);
         setOpenIdResolved(true);
+        // 清理 URL 中的 payment_openid 参数
+        if (urlOpenId) {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('payment_openid');
+          url.searchParams.delete('payment_auth_error');
+          window.history.replaceState({}, '', url.toString());
+        }
         return;
       }
 
       if (openIdFetchedRef.current) return;
       openIdFetchedRef.current = true;
 
-      try {
-        const { data: mapping } = await supabase
-          .from('wechat_user_mappings')
-          .select('openid')
-          .eq('system_user_id', user.id)
-          .maybeSingle();
+      // 已登录用户：尝试从数据库获取 openId
+      if (user) {
+        try {
+          const { data: mapping } = await supabase
+            .from('wechat_user_mappings')
+            .select('openid')
+            .eq('system_user_id', user.id)
+            .maybeSingle();
 
-        if (mapping?.openid) {
-          console.log('Found user openId for JSAPI payment');
-          setUserOpenId(mapping.openid);
-        } else {
-          console.log('No openId found, will use H5/Native payment');
-          setUserOpenId(undefined);
+          if (mapping?.openid) {
+            console.log('[Payment] Found user openId from database');
+            setUserOpenId(mapping.openid);
+            setOpenIdResolved(true);
+            return;
+          }
+        } catch (error) {
+          console.error('[Payment] Failed to fetch user openId:', error);
         }
-      } catch (error) {
-        console.error('Failed to fetch user openId:', error);
-      } finally {
-        setOpenIdResolved(true);
       }
+
+      // 微信环境下没有 openId：触发静默授权
+      console.log('[Payment] No openId available, triggering silent auth');
+      triggerSilentAuth();
     };
 
     fetchUserOpenId();
-  }, [open, user, propOpenId, shouldWaitForOpenId]);
+  }, [open, user, propOpenId, urlOpenId, shouldWaitForOpenId, triggerSilentAuth]);
 
   // 清理定时器
   const clearTimers = () => {
@@ -198,8 +251,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setAgreedTerms(!needsTerms);
     orderCreatedRef.current = false; // 重置订单创建标记
     openIdFetchedRef.current = false; // 重置 openId 获取标记
-    setUserOpenId(propOpenId);
+    silentAuthTriggeredRef.current = false; // 重置静默授权标记
+    setUserOpenId(propOpenId || urlOpenId);
     setOpenIdResolved(false);
+    setIsRedirectingForOpenId(false);
   };
 
   // 根据套餐类型获取对应的服务条款链接
@@ -673,8 +728,15 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
           {/* 二维码/H5/JSAPI支付区域 */}
           <div className="flex items-center justify-center border rounded-lg bg-white w-52 h-52">
+            {/* 正在跳转微信授权 */}
+            {isRedirectingForOpenId && (
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="text-sm text-muted-foreground">正在跳转微信授权...</span>
+              </div>
+            )}
             {/* 等待 openId 或创建订单中 */}
-            {(status === 'idle' && shouldWaitForOpenId && !openIdResolved) && (
+            {!isRedirectingForOpenId && (status === 'idle' && shouldWaitForOpenId && !openIdResolved) && (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="text-sm text-muted-foreground">正在初始化...</span>
