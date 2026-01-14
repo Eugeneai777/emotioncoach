@@ -5459,6 +5459,60 @@ export type Database = {
         }
         Relationships: []
       }
+      scenario_strategy_analytics: {
+        Row: {
+          briefing_generated: boolean | null
+          completed_naturally: boolean | null
+          conversation_duration_seconds: number | null
+          conversation_id: string | null
+          created_at: string
+          ended_at: string | null
+          id: string
+          message_count: number | null
+          scenario_id: string
+          scenario_title: string
+          started_at: string
+          strategy_mode: string | null
+          updated_at: string
+          user_id: string
+          user_satisfaction: number | null
+        }
+        Insert: {
+          briefing_generated?: boolean | null
+          completed_naturally?: boolean | null
+          conversation_duration_seconds?: number | null
+          conversation_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          message_count?: number | null
+          scenario_id: string
+          scenario_title: string
+          started_at?: string
+          strategy_mode?: string | null
+          updated_at?: string
+          user_id: string
+          user_satisfaction?: number | null
+        }
+        Update: {
+          briefing_generated?: boolean | null
+          completed_naturally?: boolean | null
+          conversation_duration_seconds?: number | null
+          conversation_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          message_count?: number | null
+          scenario_id?: string
+          scenario_title?: string
+          started_at?: string
+          strategy_mode?: string | null
+          updated_at?: string
+          user_id?: string
+          user_satisfaction?: number | null
+        }
+        Relationships: []
+      }
       sleep_logs: {
         Row: {
           created_at: string | null
