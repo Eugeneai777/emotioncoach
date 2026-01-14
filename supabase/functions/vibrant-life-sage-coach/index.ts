@@ -119,11 +119,11 @@ serve(async (req) => {
       frequencyContext = `用户是忠实伙伴，已经聊过${conversationCount}次了！开场可以亲切地说："${timeEmoji} ${userName}，${timeGreeting}～看到你来我很开心，今天有什么想分享的吗？"`;
     }
 
-    // 从数据库加载系统提示词和实时产品信息
+    // 从数据库加载系统提示词、场景策略和实时产品信息
     const [templateRes, packagesRes, coachesRes, campsRes, toolsRes, memoriesRes] = await Promise.all([
       supabase
         .from('coach_templates')
-        .select('system_prompt')
+        .select('system_prompt, scenarios')
         .eq('coach_key', 'vibrant_life_sage')
         .single(),
       supabase
@@ -266,8 +266,62 @@ ${toolsInfo}
 - 不要主动推销产品，除非用户明确需要
 `;
 
+    // 场景检测和策略注入
+    const scenarios = templateRes.data?.scenarios || [];
+    const firstUserMessage = messages.find((m: any) => m.role === 'user')?.content || '';
+    
+    // 场景关键词匹配
+    function detectScenario(userMessage: string, scenarioList: any[]): any | null {
+      const scenarioKeywords: Record<string, string[]> = {
+        'sleep_issue': ['睡不着', '失眠', '睡眠', '早醒', '做梦', '睡不好', '夜里醒', '入睡难'],
+        'elderly_mood': ['孤单', '年纪大', '老人', '空落落', '陪伴', '寂寞', '老了', '退休'],
+        'work_stress': ['工作', '职场', '压力', '撑不住', '加班', '领导', '同事', '辞职', '升职', 'KPI', '项目'],
+        'exam_stress': ['考试', '面试', '紧张', '害怕', '表现', '考前', '复习', '成绩'],
+        'teen_social': ['没什么用', '不想交流', '社交', '孤独', '交朋友', '自卑', '被排斥', '没人理']
+      };
+      
+      for (const [scenarioId, keywords] of Object.entries(scenarioKeywords)) {
+        if (keywords.some(kw => userMessage.includes(kw))) {
+          return scenarioList.find((s: any) => s.id === scenarioId);
+        }
+      }
+      return null;
+    }
+    
+    // 构建场景策略提示词
+    function buildScenarioPrompt(scenario: any): string {
+      if (!scenario?.strategy) return '';
+      
+      const { mode, tone, rules, opening_style, avoid } = scenario.strategy;
+      
+      return `
+
+【当前场景策略：${scenario.emoji} ${scenario.title}】
+🎭 模式：${mode} | 🎵 语调：${tone}
+
+✅ 对话规则（必须遵守）：
+${rules.map((r: string, i: number) => `${i + 1}. ${r}`).join('\n')}
+
+💬 开场风格示例：
+${opening_style}
+
+❌ 避免行为：
+${avoid.join('、')}
+
+⚠️ 重要：场景策略优先级高于通用规则，请严格按照当前场景的风格回复。
+`;
+    }
+    
+    const detectedScenario = detectScenario(firstUserMessage, scenarios);
+    const scenarioPrompt = buildScenarioPrompt(detectedScenario);
+    
+    if (detectedScenario) {
+      console.log(`🎯 检测到场景: ${detectedScenario.emoji} ${detectedScenario.title} (${detectedScenario.strategy?.mode})`);
+    }
+
     const basePrompt = templateRes.data?.system_prompt || `你是劲老师，一位温暖的生活教练。帮助用户探索问题、找到方向。`;
     const systemPrompt = `${basePrompt}
+${scenarioPrompt}
 ${conversationStyleGuide}
 
 【用户信息】
