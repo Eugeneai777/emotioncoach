@@ -21,7 +21,7 @@ const STORAGE_KEYS = {
   HAS_FOLLOWED: 'follow_reminder_has_followed',
 };
 
-export type TriggerKey = 'after_purchase' | 'after_coach' | 'after_days' | 'session_start' | 'manual';
+export type TriggerKey = 'after_purchase' | 'after_coach' | 'after_journal' | 'after_checkin' | 'manual';
 
 interface UseFollowReminderReturn {
   shouldShowReminder: boolean;
@@ -100,48 +100,8 @@ export function useFollowReminder(): UseFollowReminderReturn {
       }
     }
 
-    // Check session interval
-    const sessionCount = parseInt(localStorage.getItem(STORAGE_KEYS.SESSION_COUNT) || '0', 10) + 1;
-    localStorage.setItem(STORAGE_KEYS.SESSION_COUNT, String(sessionCount));
-
-    if (sessionCount % DEFAULT_CONFIG.sessionInterval === 0) {
-      setTriggerKey('session_start');
-      setShouldShowReminder(true);
-      return;
-    }
-
-    // Check days since registration
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('created_at')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (profile?.created_at) {
-      const daysSinceRegister = Math.floor(
-        (Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24)
-      );
-
-      // Check if we should show reminder based on days
-      for (const day of DEFAULT_CONFIG.afterDays) {
-        if (daysSinceRegister >= day && daysSinceRegister < day + 1) {
-          // Check if we already showed for this day
-          const { data: tracking } = await supabase
-            .from('follow_reminder_tracking')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('trigger_key', 'after_days')
-            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
-            .maybeSingle();
-
-          if (!tracking) {
-            setTriggerKey('after_days');
-            setShouldShowReminder(true);
-            return;
-          }
-        }
-      }
-    }
+    // Removed auto-triggers (session_start, after_days)
+    // Now only triggered explicitly at key moments via triggerFollowReminder()
   }, [user, checkSubscribeStatus]);
 
   // Initial check on mount
