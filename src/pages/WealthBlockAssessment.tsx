@@ -49,13 +49,14 @@ export default function WealthBlockAssessmentPage() {
   const { trackAssessmentTocamp, trackEvent } = useWealthCampAnalytics();
 
   // 监听支付回调（H5支付返回后自动处理）
-  const { isPaymentCallback, orderNo: callbackOrderNo } = usePaymentCallback({
+  usePaymentCallback({
     onSuccess: (orderNo) => {
       // 支付成功后直接进入测评（避免重复打开支付弹窗导致卡住/循环）
       console.log('[WealthBlock] Payment callback success, order:', orderNo);
       setShowPayDialog(false);
       setShowIntro(false);
     },
+    autoRedirect: false, // 不自动跳转，由本页面处理
   });
 
   // 微信内静默授权返回后：自动登录 + 重新打开"测评支付弹窗"
@@ -435,16 +436,20 @@ export default function WealthBlockAssessmentPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              {showIntro && !showResult ? (
+            {showIntro && !showResult ? (
                 <AssessmentIntroCard
                   isLoggedIn={!!user}
                   onStart={() => {
                     // 埋点：开始测评
                     trackEvent('assessment_started');
+                    console.log('[WealthBlock] User clicked start, hiding intro');
                     setShowIntro(false);
                   }}
                   onLogin={() => navigate("/auth?redirect=/wealth-block")}
-                  onPay={() => setShowPayDialog(true)}
+                  onPay={() => {
+                    console.log('[WealthBlock] User clicked pay, opening dialog');
+                    setShowPayDialog(true);
+                  }}
                 />
               ) : showResult && currentResult ? (
                 <div className="space-y-6">
@@ -548,10 +553,15 @@ export default function WealthBlockAssessmentPage() {
       {/* 支付对话框 */}
       <AssessmentPayDialog
         open={showPayDialog}
-        onOpenChange={setShowPayDialog}
+        onOpenChange={(open) => {
+          console.log('[WealthBlock] PayDialog onOpenChange:', open);
+          setShowPayDialog(open);
+        }}
         userId={user?.id}
         onSuccess={(returnedUserId) => {
           // 支付+注册成功，开始测评
+          console.log('[WealthBlock] PayDialog onSuccess, userId:', returnedUserId);
+          console.log('[WealthBlock] Setting showIntro=false, showPayDialog=false');
           setShowIntro(false);
           setShowPayDialog(false);
         }}

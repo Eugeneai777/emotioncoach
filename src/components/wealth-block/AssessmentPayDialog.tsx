@@ -538,6 +538,7 @@ export function AssessmentPayDialog({
           stopPolling();
           setPaymentOpenId(data.openId);
           setStatus('paid');
+          console.log('[AssessmentPayDialog] Payment confirmed, userId:', userId, 'openId:', data.openId);
           
           // 扫码转化追踪：测评购买转化
           const shareRefCode = localStorage.getItem('share_ref_code');
@@ -569,12 +570,14 @@ export function AssessmentPayDialog({
           
           // 根据用户登录状态分流处理
           if (userId) {
+            console.log('[AssessmentPayDialog] Logged in user, calling onSuccess directly');
             toast.success('支付成功！');
             setTimeout(() => {
               onSuccess(userId);
               onOpenChange(false);
             }, 1500);
           } else {
+            console.log('[AssessmentPayDialog] Guest user, showing registration');
             setTimeout(() => {
               setStatus('registering');
             }, 1500);
@@ -622,6 +625,7 @@ export function AssessmentPayDialog({
 
   // 注册成功回调
   const handleRegisterSuccess = (userId: string) => {
+    console.log('[AssessmentPayDialog] Registration success, userId:', userId);
     toast.success('注册成功，开始测评！');
     onSuccess(userId);
     onOpenChange(false);
