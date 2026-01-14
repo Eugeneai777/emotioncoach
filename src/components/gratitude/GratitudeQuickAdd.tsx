@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { VoiceInputButton } from "@/components/coach/VoiceInputButton";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useWeChatBindStatus } from "@/hooks/useWeChatBindStatus";
+import { triggerFollowReminder } from "@/hooks/useFollowReminder";
 
 interface GratitudeQuickAddProps {
   userId?: string;
@@ -26,6 +28,9 @@ export const GratitudeQuickAdd = ({
   const [loading, setLoading] = useState(false);
   const networkOnline = useOnlineStatus();
   const isOnline = isOnlineProp ?? networkOnline;
+  
+  // 微信绑定状态（用于关键时刻提示）
+  const { isBound, isEmailUser } = useWeChatBindStatus();
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -53,6 +58,18 @@ export const GratitudeQuickAdd = ({
           title: "记录成功 ✨",
           description: "标签将自动分析，或点击「同步分析」立即生成"
         });
+        
+        // 关键时刻：感恩日记记录后，每5次提示一次绑定微信
+        if (isEmailUser && !isBound) {
+          const recordCount = parseInt(localStorage.getItem('gratitude_record_count') || '0') + 1;
+          localStorage.setItem('gratitude_record_count', String(recordCount));
+          
+          if (recordCount % 5 === 0) {
+            setTimeout(() => {
+              triggerFollowReminder('after_journal');
+            }, 1500);
+          }
+        }
       } else if (userId && !isOnline) {
         // Logged in but offline: save to pending queue
         if (onOfflineAdd) {

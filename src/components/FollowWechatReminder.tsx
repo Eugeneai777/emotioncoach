@@ -15,23 +15,23 @@ function isWechatBrowser(): boolean {
   return ua.includes('micromessenger');
 }
 
-// Trigger messages based on context
+// Trigger messages based on context - only key moments
 const TRIGGER_MESSAGES: Record<TriggerKey, { title: string; subtitle: string }> = {
   after_purchase: {
     title: '🎉 订阅成功！',
     subtitle: '关注公众号接收课程提醒和专属福利',
   },
   after_coach: {
-    title: '💬 对话结束！',
-    subtitle: '关注公众号接收情绪简报和成长分析',
+    title: '💬 对话有收获？',
+    subtitle: '关注公众号，明天收到个性化成长提醒',
   },
-  after_days: {
-    title: '🌟 欢迎回来！',
-    subtitle: '关注公众号开启打卡提醒，持续成长',
+  after_journal: {
+    title: '📝 记录成功！',
+    subtitle: '关注公众号，接收每日感恩提醒',
   },
-  session_start: {
-    title: '📱 开启智能提醒',
-    subtitle: '关注公众号获取每日情绪洞察',
+  after_checkin: {
+    title: '✅ 打卡成功！',
+    subtitle: '关注公众号，不错过明天的训练',
   },
   manual: {
     title: '📱 关注公众号',

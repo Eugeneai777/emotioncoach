@@ -19,6 +19,8 @@ import { useSmartNotification } from "@/hooks/useSmartNotification";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCampEntitlement } from "@/hooks/useCampEntitlement";
+import { useWeChatBindStatus } from "@/hooks/useWeChatBindStatus";
+import { triggerFollowReminder } from "@/hooks/useFollowReminder";
 import { GratitudeQuickAdd } from "@/components/gratitude/GratitudeQuickAdd";
 import { Loader2 } from "lucide-react";
 import { PageTour } from "@/components/PageTour";
@@ -49,6 +51,9 @@ const DynamicCoach = () => {
   // 检查财富训练营权益
   const isWealthCoach = coachKey === 'wealth_coach_4_questions';
   const { data: campEntitlement } = useCampEntitlement(isWealthCoach ? 'wealth_block_7' : '');
+  
+  // 微信绑定状态（用于关键时刻提示）
+  const { isBound, isEmailUser } = useWeChatBindStatus();
   
   // 根据教练类型选择引导配置
   const tourKey = coachKey === 'vibrant_life_sage' 
@@ -118,6 +123,13 @@ const DynamicCoach = () => {
       belief_insight: briefingData.belief_insight,
       giving_action: briefingData.giving_action,
     });
+    
+    // 关键时刻：对话完成后，检查是否需要提示绑定微信
+    if (isEmailUser && !isBound) {
+      setTimeout(() => {
+        triggerFollowReminder('after_coach');
+      }, 2000);
+    }
   };
 
   // 确定对话模式：来自训练营的冥想感受使用 meditation_analysis 模式
