@@ -351,6 +351,7 @@ export function AssessmentPayDialog({
 
   // 创建订单（带超时处理）
   const createOrder = async () => {
+    console.log('[AssessmentPay] createOrder called, userId:', userId, 'isWechat:', isWechat, 'isMobile:', isMobile);
     setStatus('creating');
     setErrorMessage('');
     
@@ -637,9 +638,16 @@ export function AssessmentPayDialog({
 
   // 初始化 - 等待 openId 解析完成后再创建订单
   useEffect(() => {
-    if (shouldWaitForOpenId && !openIdResolved) return;
+    console.log('[AssessmentPay] Init effect - open:', open, 'status:', status, 'shouldWaitForOpenId:', shouldWaitForOpenId, 'openIdResolved:', openIdResolved);
+    
+    // 微信环境需要等待 openId 解析
+    if (shouldWaitForOpenId && !openIdResolved) {
+      console.log('[AssessmentPay] Waiting for openId to resolve...');
+      return;
+    }
 
     if (open && status === 'idle') {
+      console.log('[AssessmentPay] Triggering createOrder...');
       createOrder();
     }
   }, [open, status, shouldWaitForOpenId, openIdResolved]);
