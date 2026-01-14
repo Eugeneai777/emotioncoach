@@ -38,19 +38,22 @@ interface AssessmentPayDialogProps {
 
 type PaymentStatus = 'idle' | 'creating' | 'pending' | 'polling' | 'paid' | 'registering' | 'error';
 
-// 从 URL 中获取静默授权返回的 openId 或 code
-const getPaymentOpenIdFromUrl = (): string | undefined => {
+// 从多个来源获取 openId（URL 参数 > sessionStorage 缓存）
+const getPaymentOpenId = (): string | undefined => {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('payment_openid') || undefined;
+  const urlOpenId = urlParams.get('payment_openid');
+  if (urlOpenId) return urlOpenId;
+  
+  // 从 sessionStorage 获取（由 WealthBlockAssessment 在回调时缓存）
+  const cachedOpenId = sessionStorage.getItem('wechat_payment_openid');
+  if (cachedOpenId) return cachedOpenId;
+  
+  return undefined;
 };
 
-// 检测是否是微信 OAuth 回调（带 code 和 payment_auth_callback 标记）
-const getPaymentAuthCode = (): string | undefined => {
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('payment_auth_callback') === '1') {
-    return urlParams.get('code') || undefined;
-  }
-  return undefined;
+// 检测是否正在进行授权跳转（防止循环）
+const isPayAuthInProgress = (): boolean => {
+  return sessionStorage.getItem('pay_auth_in_progress') === '1';
 };
 
 export function AssessmentPayDialog({
@@ -66,23 +69,18 @@ export function AssessmentPayDialog({
   const [payUrl, setPayUrl] = useState<string>('');
   const [payType, setPayType] = useState<'h5' | 'native' | 'jsapi'>('native');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  // 优先使用 URL 中静默授权返回的 openId
-  const urlOpenId = getPaymentOpenIdFromUrl();
-  // 检测是否是 OAuth 回调（需要用 code 换取 openId）
-  const authCode = getPaymentAuthCode();
-  const [userOpenId, setUserOpenId] = useState<string | undefined>(urlOpenId);
+  // 从 URL 或缓存获取 openId
+  const cachedOpenId = getPaymentOpenId();
+  const [userOpenId, setUserOpenId] = useState<string | undefined>(cachedOpenId);
   const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
   // 正在跳转微信授权中
   const [isRedirectingForOpenId, setIsRedirectingForOpenId] = useState<boolean>(false);
-  // 正在用 code 换取 openId
-  const [isExchangingCode, setIsExchangingCode] = useState<boolean>(false);
   // 用于注册流程的 openId（支付成功后从后端返回）
   const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
   
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const openIdFetchedRef = useRef<boolean>(false);
   const silentAuthTriggeredRef = useRef<boolean>(false);
-  const codeExchangedRef = useRef<boolean>(false);
 
   // 检测环境
   const isWechat = isWeChatBrowser();
@@ -127,27 +125,34 @@ export function AssessmentPayDialog({
       document.addEventListener('onWeixinJSBridgeReady', onReady as EventListener, false);
     });
   }, []);
-  // 触发静默授权获取 openId（用于未登录用户）
+  // 触发静默授权获取 openId（使用新的 wechat-pay-auth 函数）
   const triggerSilentAuth = useCallback(async () => {
     if (silentAuthTriggeredRef.current) return;
     silentAuthTriggeredRef.current = true;
     setIsRedirectingForOpenId(true);
 
+    // 设置防抖标记
+    sessionStorage.setItem('pay_auth_in_progress', '1');
+
     try {
       console.log('[AssessmentPay] Triggering silent auth for openId');
 
-      // 仅用于“测评页”恢复弹窗：授权回来后自动再打开支付弹窗
+      // 构建回跳 URL：授权回来后自动再打开支付弹窗
       const resumeUrl = new URL(window.location.href);
       resumeUrl.searchParams.set('assessment_pay_resume', '1');
 
-      const { data, error } = await supabase.functions.invoke('get-wechat-payment-openid', {
-        body: { redirectUri: resumeUrl.toString(), callbackMode: 'pay_entry' },
+      const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
+        body: { 
+          redirectUri: resumeUrl.toString(), 
+          flow: 'wealth_assessment',
+        },
       });
 
       if (error || !data?.authUrl) {
         console.error('[AssessmentPay] Failed to get silent auth URL:', error || data);
         setIsRedirectingForOpenId(false);
         silentAuthTriggeredRef.current = false;
+        sessionStorage.removeItem('pay_auth_in_progress');
         setOpenIdResolved(true); // 授权失败，继续使用扫码支付
         return;
       }
@@ -158,44 +163,7 @@ export function AssessmentPayDialog({
       console.error('[AssessmentPay] Silent auth error:', err);
       setIsRedirectingForOpenId(false);
       silentAuthTriggeredRef.current = false;
-      setOpenIdResolved(true);
-    }
-  }, []);
-
-  // 用 code 换取 openId
-  const exchangeCodeForOpenId = useCallback(async (code: string) => {
-    if (codeExchangedRef.current) return;
-    codeExchangedRef.current = true;
-    setIsExchangingCode(true);
-
-    try {
-      console.log('[AssessmentPay] Exchanging code for openId');
-      
-      const { data, error } = await supabase.functions.invoke('get-wechat-payment-openid', {
-        body: { code },
-      });
-
-      // 清理 URL 中的 OAuth 参数
-      const url = new URL(window.location.href);
-      url.searchParams.delete('code');
-      url.searchParams.delete('state');
-      url.searchParams.delete('payment_auth_callback');
-      window.history.replaceState({}, '', url.toString());
-
-      if (error || !data?.openId) {
-        console.error('[AssessmentPay] Failed to exchange code:', error || data);
-        setIsExchangingCode(false);
-        setOpenIdResolved(true); // 换取失败，继续使用扫码支付
-        return;
-      }
-
-      console.log('[AssessmentPay] Successfully got openId from code');
-      setUserOpenId(data.openId);
-      setOpenIdResolved(true);
-      setIsExchangingCode(false);
-    } catch (err) {
-      console.error('[AssessmentPay] Code exchange error:', err);
-      setIsExchangingCode(false);
+      sessionStorage.removeItem('pay_auth_in_progress');
       setOpenIdResolved(true);
     }
   }, []);
@@ -211,23 +179,22 @@ export function AssessmentPayDialog({
         return;
       }
 
-      // 已有 openId（从 URL）：直接使用
-      if (urlOpenId) {
-        console.log('[AssessmentPay] Using openId from URL');
-        setUserOpenId(urlOpenId);
+      // 已有 openId（从缓存或 URL）：直接使用
+      if (cachedOpenId) {
+        console.log('[AssessmentPay] Using openId from cache/URL');
+        setUserOpenId(cachedOpenId);
         setOpenIdResolved(true);
-        // 清理 URL 中的 payment_openid 参数
-        const url = new URL(window.location.href);
-        url.searchParams.delete('payment_openid');
-        url.searchParams.delete('payment_auth_error');
-        window.history.replaceState({}, '', url.toString());
         return;
       }
 
-      // 如果有 authCode（OAuth 回调），用它换取 openId
-      if (authCode) {
-        console.log('[AssessmentPay] Found auth code, exchanging for openId');
-        exchangeCodeForOpenId(authCode);
+      // 检查是否正在授权中（防止循环）
+      if (isPayAuthInProgress()) {
+        console.log('[AssessmentPay] Auth already in progress, waiting...');
+        // 等待一段时间后继续（可能是页面刷新后）
+        setTimeout(() => {
+          sessionStorage.removeItem('pay_auth_in_progress');
+          setOpenIdResolved(true);
+        }, 3000);
         return;
       }
 
@@ -260,7 +227,7 @@ export function AssessmentPayDialog({
     };
 
     fetchUserOpenId();
-  }, [open, userId, urlOpenId, authCode, shouldWaitForOpenId, triggerSilentAuth, exchangeCodeForOpenId]);
+  }, [open, userId, cachedOpenId, shouldWaitForOpenId, triggerSilentAuth]);
 
   // 调用 JSAPI 支付
   const invokeJsapiPay = useCallback((params: Record<string, string>) => {
@@ -668,18 +635,16 @@ export function AssessmentPayDialog({
         </DialogHeader>
 
         <div className="py-2">
-          {/* 正在跳转微信授权或换取 openId */}
-          {(isRedirectingForOpenId || isExchangingCode) && (
+          {/* 正在跳转微信授权 */}
+          {isRedirectingForOpenId && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-              <p className="text-muted-foreground">
-                {isExchangingCode ? '正在获取授权信息...' : '正在跳转微信授权...'}
-              </p>
+              <p className="text-muted-foreground">正在跳转微信授权...</p>
             </div>
           )}
 
           {/* 创建订单中 */}
-          {!isRedirectingForOpenId && !isExchangingCode && (status === 'idle' || status === 'creating') && (
+          {!isRedirectingForOpenId && (status === 'idle' || status === 'creating') && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
               <p className="text-muted-foreground">

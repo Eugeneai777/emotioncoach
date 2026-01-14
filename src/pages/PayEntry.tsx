@@ -12,9 +12,10 @@ export default function PayEntry() {
   const navigate = useNavigate();
   const partnerId = searchParams.get("partner");
 
-  // 微信静默授权回调：在 /pay-entry 中换取 openId 并跳回原页面
+  // 微信静默授权回调参数
   const paymentAuthCode = searchParams.get('code');
   const paymentRedirect = searchParams.get('payment_redirect');
+  const payFlow = searchParams.get('pay_flow');
   const isPaymentAuthCallback =
     searchParams.get('payment_auth_callback') === '1' &&
     !!paymentAuthCode &&
@@ -25,39 +26,71 @@ export default function PayEntry() {
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
-  // 优先处理静默授权回调（避免走合伙人付费入口逻辑）
+  // 优先处理静默授权回调（使用新的 wechat-pay-auth 函数）
   useEffect(() => {
     if (!isPaymentAuthCallback) return;
 
     const run = async () => {
+      console.log('[PayEntry] Processing payment auth callback...');
+      console.log('[PayEntry] code:', paymentAuthCode);
+      console.log('[PayEntry] paymentRedirect:', paymentRedirect);
+      console.log('[PayEntry] payFlow:', payFlow);
+
       try {
-        const { data, error } = await supabase.functions.invoke('get-wechat-payment-openid', {
+        // 调用新的 wechat-pay-auth 函数换取 openId + tokenHash（自动登录/注册）
+        const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
           body: { code: paymentAuthCode },
         });
 
+        console.log('[PayEntry] wechat-pay-auth response:', data, error);
+
+        // 构建回跳 URL
+        const target = new URL(paymentRedirect!);
+        
+        // 清理原有的授权相关参数
+        target.searchParams.delete('code');
+        target.searchParams.delete('state');
+        target.searchParams.delete('payment_auth_callback');
+        target.searchParams.delete('payment_redirect');
+
         if (error || !data?.openId) {
-          const target = new URL(paymentRedirect!);
+          console.error('[PayEntry] Error from wechat-pay-auth:', error || data);
           target.searchParams.set('payment_auth_error', '1');
+          target.searchParams.set('assessment_pay_resume', '1');
           window.location.replace(target.toString());
           return;
         }
 
-        const target = new URL(paymentRedirect!);
-        target.searchParams.set('payment_openid', data.openId);
-        // 防止回跳后 URL 过长/反复触发
-        target.searchParams.delete('code');
-        target.searchParams.delete('state');
-        target.searchParams.delete('payment_auth_callback');
+        const { openId, tokenHash, isNewUser } = data;
+
+        // 添加新参数
+        target.searchParams.set('payment_openid', openId);
+        if (tokenHash) {
+          target.searchParams.set('payment_token_hash', tokenHash);
+        }
+        if (payFlow) {
+          target.searchParams.set('pay_flow', payFlow);
+        }
+        target.searchParams.set('assessment_pay_resume', '1');
+        if (isNewUser) {
+          target.searchParams.set('is_new_user', '1');
+        }
+
+        console.log('[PayEntry] Redirecting to:', target.toString());
+        
+        // 使用 replace 防止回退导致重复触发
         window.location.replace(target.toString());
       } catch (e) {
+        console.error('[PayEntry] Exception in payment auth callback:', e);
         const target = new URL(paymentRedirect!);
         target.searchParams.set('payment_auth_error', '1');
+        target.searchParams.set('assessment_pay_resume', '1');
         window.location.replace(target.toString());
       }
     };
 
     run();
-  }, [isPaymentAuthCallback, paymentAuthCode, paymentRedirect]);
+  }, [isPaymentAuthCallback, paymentAuthCode, paymentRedirect, payFlow]);
 
   useEffect(() => {
     if (isPaymentAuthCallback) return;
@@ -120,6 +153,20 @@ export default function PayEntry() {
   const handleGoHome = () => {
     navigate('/');
   };
+
+  // 如果正在处理支付授权回调，显示处理中
+  if (isPaymentAuthCallback) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm">
+          <CardContent className="p-8 text-center">
+            <Loader2 className="w-10 h-10 text-teal-500 animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">正在处理授权...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

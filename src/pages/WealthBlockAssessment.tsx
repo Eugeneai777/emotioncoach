@@ -59,17 +59,70 @@ export default function WealthBlockAssessmentPage() {
     },
   });
 
-  // 微信内静默授权返回后：自动重新打开“测评支付弹窗”（仅测评页）
+  // 微信内静默授权返回后：自动登录 + 重新打开"测评支付弹窗"
   useEffect(() => {
-    const url = new URL(window.location.href);
-    const shouldResume = url.searchParams.get('assessment_pay_resume') === '1';
-    const hasAuthResult = url.searchParams.has('payment_openid') || url.searchParams.has('payment_auth_error');
+    const handleWeChatPayAuthReturn = async () => {
+      const url = new URL(window.location.href);
+      const shouldResume = url.searchParams.get('assessment_pay_resume') === '1';
+      const paymentOpenId = url.searchParams.get('payment_openid');
+      const paymentTokenHash = url.searchParams.get('payment_token_hash');
+      const paymentAuthError = url.searchParams.has('payment_auth_error');
+      const payFlow = url.searchParams.get('pay_flow');
 
-    if (shouldResume && hasAuthResult) {
-      setShowPayDialog(true);
+      // 只处理测评页的支付回调（或通用支付回调）
+      if (!shouldResume) return;
+
+      console.log('[WealthBlock] Processing payment auth return:', {
+        paymentOpenId: !!paymentOpenId,
+        paymentTokenHash: !!paymentTokenHash,
+        paymentAuthError,
+        payFlow,
+      });
+
+      // 清理 URL 参数，避免重复触发
       url.searchParams.delete('assessment_pay_resume');
+      url.searchParams.delete('payment_openid');
+      url.searchParams.delete('payment_token_hash');
+      url.searchParams.delete('payment_auth_error');
+      url.searchParams.delete('pay_flow');
+      url.searchParams.delete('is_new_user');
       window.history.replaceState({}, '', url.toString());
-    }
+
+      // 如果有 tokenHash，先自动登录
+      if (paymentTokenHash) {
+        console.log('[WealthBlock] Attempting auto-login with tokenHash...');
+        try {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: paymentTokenHash,
+            type: 'magiclink',
+          });
+          
+          if (error) {
+            console.error('[WealthBlock] Auto-login failed:', error);
+            // 登录失败也继续打开弹窗（用扫码支付兜底）
+          } else {
+            console.log('[WealthBlock] Auto-login success:', data.user?.id);
+          }
+        } catch (err) {
+          console.error('[WealthBlock] Auto-login exception:', err);
+        }
+      }
+
+      // 如果有 openId，缓存到 sessionStorage（供支付弹窗使用）
+      if (paymentOpenId) {
+        sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
+      }
+
+      // 如果授权失败，也清理防抖标记以允许重试
+      if (paymentAuthError) {
+        sessionStorage.removeItem('pay_auth_in_progress');
+      }
+
+      // 打开支付弹窗
+      setShowPayDialog(true);
+    };
+
+    handleWeChatPayAuthReturn();
   }, []);
 
   // 页面访问埋点 + 加载历史记录

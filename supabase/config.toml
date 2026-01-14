@@ -1,5 +1,8 @@
 project_id = "vlsuzskvykddwrxbmcbu"
 
+[functions.wechat-pay-auth]
+verify_jwt = false
+
 [functions.get-wechat-user-info]
 verify_jwt = false
 
