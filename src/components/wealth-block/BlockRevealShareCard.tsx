@@ -274,7 +274,7 @@ const BlockRevealShareCard = forwardRef<HTMLDivElement, BlockRevealShareCardProp
               扫码测测你的财富盲区
             </p>
             <p style={{ fontSize: '11px', opacity: 0.7, margin: 0 }}>
-              ¥9.9 精准诊断
+              🎁 免费精准诊断
             </p>
           </div>
         </div>

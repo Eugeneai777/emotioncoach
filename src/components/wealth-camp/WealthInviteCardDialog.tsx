@@ -573,8 +573,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsList>
 
           <TabsContent value="value" className="mt-3">
-            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
-              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2 max-h-[380px]">
+              <div className="origin-top scale-[0.65] sm:scale-[0.72]">
                 <AssessmentValueShareCard 
                   ref={valueCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -586,8 +586,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="fear" className="mt-3">
-            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
-              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2 max-h-[380px]">
+              <div className="origin-top scale-[0.65] sm:scale-[0.72]">
                 <FearAwakeningShareCard 
                   ref={fearCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -599,8 +599,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="blindspot" className="mt-3">
-            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
-              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2 max-h-[380px]">
+              <div className="origin-top scale-[0.65] sm:scale-[0.72]">
                 <BlockRevealShareCard 
                   ref={blindspotCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -612,8 +612,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="transform" className="mt-3">
-            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
-              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2 max-h-[380px]">
+              <div className="origin-top scale-[0.65] sm:scale-[0.72]">
                 <TransformationValueShareCard 
                   ref={transformCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -625,8 +625,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="camp" className="mt-3">
-            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
-              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2 max-h-[380px]">
+              <div className="origin-top scale-[0.65] sm:scale-[0.72]">
                 <WealthCampShareCard 
                   ref={campCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -688,8 +688,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
             
             {/* Card Preview */}
-            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
-              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
+            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2 max-h-[380px]">
+              <div className="origin-top scale-[0.65] sm:scale-[0.72]">
                 <AchievementShareCard 
                   ref={achievementCardRef}
                   avatarUrl={userInfo.avatarUrl}
