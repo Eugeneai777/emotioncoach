@@ -1,20 +1,31 @@
 import { useState } from "react";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { VoiceInputButton } from "@/components/coach/VoiceInputButton";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 interface GratitudeQuickAddProps {
   userId?: string;
   onAdded: () => void;
   onLocalAdd?: (content: string) => number;
+  onOfflineAdd?: (content: string, userId: string) => void;
+  isOnline?: boolean;
 }
 
-export const GratitudeQuickAdd = ({ userId, onAdded, onLocalAdd }: GratitudeQuickAddProps) => {
+export const GratitudeQuickAdd = ({ 
+  userId, 
+  onAdded, 
+  onLocalAdd,
+  onOfflineAdd,
+  isOnline: isOnlineProp 
+}: GratitudeQuickAddProps) => {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const networkOnline = useOnlineStatus();
+  const isOnline = isOnlineProp ?? networkOnline;
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -22,8 +33,8 @@ export const GratitudeQuickAdd = ({ userId, onAdded, onLocalAdd }: GratitudeQuic
 
     setLoading(true);
     try {
-      if (userId) {
-        // Logged in: save to database
+      if (userId && isOnline) {
+        // Logged in AND online: save to database
         const { error } = await supabase
           .from("gratitude_entries")
           .insert({
@@ -42,6 +53,15 @@ export const GratitudeQuickAdd = ({ userId, onAdded, onLocalAdd }: GratitudeQuic
           title: "记录成功 ✨",
           description: "标签将自动分析，或点击「同步分析」立即生成"
         });
+      } else if (userId && !isOnline) {
+        // Logged in but offline: save to pending queue
+        if (onOfflineAdd) {
+          onOfflineAdd(content.trim(), userId);
+          toast({
+            title: "已离线保存 📴",
+            description: "网络恢复后自动同步到云端"
+          });
+        }
       } else {
         // Not logged in: save to local storage
         if (onLocalAdd) {
@@ -57,10 +77,21 @@ export const GratitudeQuickAdd = ({ userId, onAdded, onLocalAdd }: GratitudeQuic
       onAdded();
     } catch (error) {
       console.error("Error saving:", error);
-      toast({
-        title: "保存失败",
-        variant: "destructive"
-      });
+      // If save failed due to network, try offline save
+      if (userId && onOfflineAdd) {
+        onOfflineAdd(content.trim(), userId);
+        setContent("");
+        toast({
+          title: "已离线保存 📴",
+          description: "网络恢复后自动同步到云端"
+        });
+        onAdded();
+      } else {
+        toast({
+          title: "保存失败",
+          variant: "destructive"
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -78,14 +109,17 @@ export const GratitudeQuickAdd = ({ userId, onAdded, onLocalAdd }: GratitudeQuic
             onTranscript={handleVoiceTranscript}
             disabled={loading}
           />
-          <div className="flex-1">
+          <div className="flex-1 relative">
             <Input
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="今天感恩什么？"
-              className="bg-muted/50 border-muted h-9 text-sm"
+              placeholder={isOnline ? "今天感恩什么？" : "离线记录，稍后同步..."}
+              className="bg-muted/50 border-muted h-9 text-sm pr-8"
               disabled={loading}
             />
+            {!isOnline && (
+              <WifiOff className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+            )}
           </div>
           <Button
             type="submit"

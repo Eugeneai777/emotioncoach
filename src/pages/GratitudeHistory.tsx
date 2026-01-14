@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +15,8 @@ import { GratitudePurchasePrompt } from "@/components/conversion/GratitudePurcha
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useLocalGratitude } from "@/hooks/useLocalGratitude";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { OfflineStatusBanner } from "@/components/gratitude/OfflineStatusBanner";
 import { toast } from "@/hooks/use-toast";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
@@ -32,24 +34,33 @@ interface GratitudeEntry {
 const GratitudeHistory = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isOnline = useOnlineStatus();
   const { showTour, completeTour } = usePageTour('gratitude_journal');
   const [dbEntries, setDbEntries] = useState<GratitudeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const hasSyncedRef = useRef(false);
 
-  // Local storage for unregistered users
+  // Local storage for unregistered users + offline pending queue
   const {
     entries: localEntries,
     addEntry: addLocalEntry,
     themeStats: localThemeStats,
+    addPendingEntry,
+    syncPendingEntries,
+    getPendingCount,
+    isSyncing,
   } = useLocalGratitude();
 
   // Conversion prompts state
   const [showRegisterPrompt, setShowRegisterPrompt] = useState(false);
   const [showPurchasePrompt, setShowPurchasePrompt] = useState(false);
   const [purchaseRequired, setPurchaseRequired] = useState(false);
+
+  // Pending count for current user
+  const pendingCount = user ? getPendingCount(user.id) : 0;
 
   // Determine which entries to use
   const entries = user ? dbEntries : localEntries;
@@ -79,6 +90,26 @@ const GratitudeHistory = () => {
     threshold: 80,
     maxPull: 120
   });
+
+  // Auto-sync when network recovers
+  useEffect(() => {
+    if (!user || !isOnline || isSyncing || hasSyncedRef.current) return;
+    
+    const pending = getPendingCount(user.id);
+    if (pending > 0) {
+      hasSyncedRef.current = true;
+      syncPendingEntries(user.id).then((synced) => {
+        if (synced > 0) {
+          toast({
+            title: `已同步 ${synced} 条离线记录 ✨`,
+            description: "数据已保存到云端"
+          });
+          loadEntries();
+        }
+        hasSyncedRef.current = false;
+      });
+    }
+  }, [user, isOnline, isSyncing, getPendingCount, syncPendingEntries]);
 
   // Auto-refresh on page visibility change (only for logged-in users)
   useEffect(() => {
@@ -204,6 +235,13 @@ const GratitudeHistory = () => {
     <>
       <DynamicOGMeta pageKey="gratitudeHistory" />
     <div className="min-h-screen bg-gradient-to-b from-teal-50 via-cyan-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative">
+      {/* Offline Status Banner */}
+      <OfflineStatusBanner 
+        isOnline={isOnline} 
+        pendingCount={pendingCount} 
+        isSyncing={isSyncing} 
+      />
+      
       {/* Pull to Refresh Indicator */}
       <PullToRefreshIndicator
         pullDistance={pullDistance}
@@ -280,6 +318,8 @@ const GratitudeHistory = () => {
         userId={user?.id} 
         onAdded={user ? loadEntries : handleLocalEntryAdded}
         onLocalAdd={!user ? addLocalEntry : undefined}
+        onOfflineAdd={user ? addPendingEntry : undefined}
+        isOnline={isOnline}
       />
 
       {/* Conversion Prompts */}
