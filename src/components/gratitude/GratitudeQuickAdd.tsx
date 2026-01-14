@@ -59,12 +59,12 @@ export const GratitudeQuickAdd = ({
           description: "标签将自动分析，或点击「同步分析」立即生成"
         });
         
-        // 关键时刻：感恩日记记录后，每5次提示一次绑定微信
+        // 关键时刻：感恩日记记录后，每10次提示一次绑定微信
         if (isEmailUser && !isBound) {
           const recordCount = parseInt(localStorage.getItem('gratitude_record_count') || '0') + 1;
           localStorage.setItem('gratitude_record_count', String(recordCount));
           
-          if (recordCount % 5 === 0) {
+          if (recordCount % 10 === 0) {
             setTimeout(() => {
               triggerFollowReminder('after_journal');
             }, 1500);

@@ -9,7 +9,7 @@ interface ReminderConfig {
 }
 
 const DEFAULT_CONFIG: ReminderConfig = {
-  cooldownHours: 48,
+  cooldownHours: 72, // 增加到72小时冷却期
   sessionInterval: 3,
   afterDays: [7, 14, 21],
 };
@@ -111,12 +111,29 @@ export function useFollowReminder(): UseFollowReminderReturn {
     }
   }, [user, checkShouldShowReminder]);
 
-  // Show reminder with specific trigger
-  const showReminder = useCallback((trigger: TriggerKey) => {
+  // Show reminder with specific trigger - includes pre-checks
+  const showReminder = useCallback(async (trigger: TriggerKey) => {
+    // 先检查是否已关注
+    const subscribed = await checkSubscribeStatus();
+    if (subscribed) {
+      console.log('用户已关注，跳过提示');
+      return;
+    }
+    
+    // 检查冷却期
+    const lastShown = localStorage.getItem(STORAGE_KEYS.LAST_SHOWN);
+    if (lastShown) {
+      const cooldownMs = DEFAULT_CONFIG.cooldownHours * 60 * 60 * 1000;
+      if (Date.now() - new Date(lastShown).getTime() < cooldownMs) {
+        console.log('冷却期内，跳过提示');
+        return;
+      }
+    }
+    
     setTriggerKey(trigger);
     setShouldShowReminder(true);
     localStorage.setItem(STORAGE_KEYS.LAST_SHOWN, new Date().toISOString());
-  }, []);
+  }, [checkSubscribeStatus]);
 
   // Hide reminder
   const hideReminder = useCallback(() => {
