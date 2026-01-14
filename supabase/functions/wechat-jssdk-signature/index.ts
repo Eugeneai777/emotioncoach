@@ -123,33 +123,71 @@ async function getAccessToken(
   console.log("[JSSDK] Fetching new access_token");
   const tokenUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
 
-  let response;
+  // 代理：强制走代理（云函数直连通常会触发微信 IP 白名单限制）
   if (proxyUrl && proxyToken) {
-    console.log("[JSSDK] Using proxy for access_token");
-    response = await fetch(proxyUrl, {
+    const base = proxyUrl.replace(/\/$/, "");
+    console.log("[JSSDK] Using proxy for access_token:", base);
+
+    // 使用专用 /wechat/token 端点（与其他微信函数保持一致）
+    const resp = await fetch(`${base}/wechat/token`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        token: proxyToken,
-        targetUrl: tokenUrl,
-        method: "GET",
-      }),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${proxyToken}`,
+      },
+      body: JSON.stringify({ appid: appId, secret: appSecret }),
     });
-  } else {
-    response = await fetch(tokenUrl);
+
+    const text = await resp.text();
+    let data: any;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(
+        `Proxy /wechat/token returned non-JSON (HTTP ${resp.status}): ${text.slice(0, 200)}`
+      );
+    }
+
+    console.log("[JSSDK] access_token response:", JSON.stringify(data));
+
+    if (!resp.ok) {
+      throw new Error(`Proxy /wechat/token HTTP ${resp.status}: ${JSON.stringify(data)}`);
+    }
+
+    if (data?.errcode) {
+      throw new Error(`Failed to get access_token: ${data.errmsg} (code: ${data.errcode})`);
+    }
+
+    const accessToken = data?.access_token;
+    if (!accessToken) {
+      throw new Error(`No access_token in response: ${JSON.stringify(data)}`);
+    }
+
+    // expires_in 默认 7200
+    const expiresIn = data?.expires_in || 7200;
+
+    // 缓存 access_token（提前 5 分钟过期）
+    const expiresAt = new Date(Date.now() + (expiresIn - 300) * 1000).toISOString();
+    await supabase.from("cache_store").upsert({
+      key: cacheKey,
+      value: accessToken,
+      expires_at: expiresAt,
+      updated_at: new Date().toISOString(),
+    });
+
+    return accessToken;
   }
 
-  const result = await response.json();
+  // 无代理：直连（仅用于本地/已配置固定出口 IP 的环境）
+  const resp = await fetch(tokenUrl);
+  const result = await resp.json();
   console.log("[JSSDK] access_token response:", JSON.stringify(result));
 
-  // 处理代理返回格式（可能嵌套在 data 字段中）
-  const tokenData = result.data || result;
-
-  if (tokenData.errcode) {
-    throw new Error(`Failed to get access_token: ${tokenData.errmsg} (code: ${tokenData.errcode})`);
+  if ((result as any).errcode) {
+    throw new Error(`Failed to get access_token: ${(result as any).errmsg} (code: ${(result as any).errcode})`);
   }
 
-  const accessToken = tokenData.access_token;
+  const accessToken = (result as any).access_token;
   if (!accessToken) {
     throw new Error(`No access_token in response: ${JSON.stringify(result)}`);
   }
@@ -196,13 +234,16 @@ async function getJsapiTicket(
 
   let response;
   if (proxyUrl && proxyToken) {
-    console.log("[JSSDK] Using proxy for jsapi_ticket");
-    response = await fetch(proxyUrl, {
+    const base = proxyUrl.replace(/\/$/, "");
+    console.log("[JSSDK] Using proxy for jsapi_ticket:", base);
+    response = await fetch(`${base}/wechat-proxy`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${proxyToken}`,
+      },
       body: JSON.stringify({
-        token: proxyToken,
-        targetUrl: ticketUrl,
+        target_url: ticketUrl,
         method: "GET",
       }),
     });
