@@ -38,10 +38,19 @@ interface AssessmentPayDialogProps {
 
 type PaymentStatus = 'idle' | 'creating' | 'pending' | 'polling' | 'paid' | 'registering' | 'error';
 
-// 从 URL 中获取静默授权返回的 openId
+// 从 URL 中获取静默授权返回的 openId 或 code
 const getPaymentOpenIdFromUrl = (): string | undefined => {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get('payment_openid') || undefined;
+};
+
+// 检测是否是微信 OAuth 回调（带 code 和 payment_auth_callback 标记）
+const getPaymentAuthCode = (): string | undefined => {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('payment_auth_callback') === '1') {
+    return urlParams.get('code') || undefined;
+  }
+  return undefined;
 };
 
 export function AssessmentPayDialog({
@@ -59,16 +68,21 @@ export function AssessmentPayDialog({
   const [errorMessage, setErrorMessage] = useState<string>('');
   // 优先使用 URL 中静默授权返回的 openId
   const urlOpenId = getPaymentOpenIdFromUrl();
+  // 检测是否是 OAuth 回调（需要用 code 换取 openId）
+  const authCode = getPaymentAuthCode();
   const [userOpenId, setUserOpenId] = useState<string | undefined>(urlOpenId);
   const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
   // 正在跳转微信授权中
   const [isRedirectingForOpenId, setIsRedirectingForOpenId] = useState<boolean>(false);
+  // 正在用 code 换取 openId
+  const [isExchangingCode, setIsExchangingCode] = useState<boolean>(false);
   // 用于注册流程的 openId（支付成功后从后端返回）
   const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
   
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const openIdFetchedRef = useRef<boolean>(false);
   const silentAuthTriggeredRef = useRef<boolean>(false);
+  const codeExchangedRef = useRef<boolean>(false);
 
   // 检测环境
   const isWechat = isWeChatBrowser();
@@ -147,6 +161,44 @@ export function AssessmentPayDialog({
     }
   }, []);
 
+  // 用 code 换取 openId
+  const exchangeCodeForOpenId = useCallback(async (code: string) => {
+    if (codeExchangedRef.current) return;
+    codeExchangedRef.current = true;
+    setIsExchangingCode(true);
+
+    try {
+      console.log('[AssessmentPay] Exchanging code for openId');
+      
+      const { data, error } = await supabase.functions.invoke('get-wechat-payment-openid', {
+        body: { code },
+      });
+
+      // 清理 URL 中的 OAuth 参数
+      const url = new URL(window.location.href);
+      url.searchParams.delete('code');
+      url.searchParams.delete('state');
+      url.searchParams.delete('payment_auth_callback');
+      window.history.replaceState({}, '', url.toString());
+
+      if (error || !data?.openId) {
+        console.error('[AssessmentPay] Failed to exchange code:', error || data);
+        setIsExchangingCode(false);
+        setOpenIdResolved(true); // 换取失败，继续使用扫码支付
+        return;
+      }
+
+      console.log('[AssessmentPay] Successfully got openId from code');
+      setUserOpenId(data.openId);
+      setOpenIdResolved(true);
+      setIsExchangingCode(false);
+    } catch (err) {
+      console.error('[AssessmentPay] Code exchange error:', err);
+      setIsExchangingCode(false);
+      setOpenIdResolved(true);
+    }
+  }, []);
+
   // 获取用户 openId（用于 JSAPI 支付）
   useEffect(() => {
     const fetchUserOpenId = async () => {
@@ -168,6 +220,13 @@ export function AssessmentPayDialog({
         url.searchParams.delete('payment_openid');
         url.searchParams.delete('payment_auth_error');
         window.history.replaceState({}, '', url.toString());
+        return;
+      }
+
+      // 如果有 authCode（OAuth 回调），用它换取 openId
+      if (authCode) {
+        console.log('[AssessmentPay] Found auth code, exchanging for openId');
+        exchangeCodeForOpenId(authCode);
         return;
       }
 
@@ -200,7 +259,7 @@ export function AssessmentPayDialog({
     };
 
     fetchUserOpenId();
-  }, [open, userId, urlOpenId, shouldWaitForOpenId, triggerSilentAuth]);
+  }, [open, userId, urlOpenId, authCode, shouldWaitForOpenId, triggerSilentAuth, exchangeCodeForOpenId]);
 
   // 调用 JSAPI 支付
   const invokeJsapiPay = useCallback((params: Record<string, string>) => {
@@ -608,16 +667,18 @@ export function AssessmentPayDialog({
         </DialogHeader>
 
         <div className="py-2">
-          {/* 正在跳转微信授权 */}
-          {isRedirectingForOpenId && (
+          {/* 正在跳转微信授权或换取 openId */}
+          {(isRedirectingForOpenId || isExchangingCode) && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-              <p className="text-muted-foreground">正在跳转微信授权...</p>
+              <p className="text-muted-foreground">
+                {isExchangingCode ? '正在获取授权信息...' : '正在跳转微信授权...'}
+              </p>
             </div>
           )}
 
           {/* 创建订单中 */}
-          {!isRedirectingForOpenId && (status === 'idle' || status === 'creating') && (
+          {!isRedirectingForOpenId && !isExchangingCode && (status === 'idle' || status === 'creating') && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
               <p className="text-muted-foreground">
