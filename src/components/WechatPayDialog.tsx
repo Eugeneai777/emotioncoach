@@ -51,6 +51,15 @@ const getPaymentOpenIdFromUrl = (): string | undefined => {
   return urlParams.get('payment_openid') || undefined;
 };
 
+// 检测是否是微信 OAuth 回调（带 code 和 payment_auth_callback 标记）
+const getPaymentAuthCode = (): string | undefined => {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('payment_auth_callback') === '1') {
+    return urlParams.get('code') || undefined;
+  }
+  return undefined;
+};
+
 export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl, openId: propOpenId }: WechatPayDialogProps) {
   const { user } = useAuth();
   const [status, setStatus] = useState<PaymentStatus>('idle');
@@ -63,12 +72,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [payType, setPayType] = useState<'h5' | 'native' | 'jsapi'>('h5');
   // 优先使用 props 传入的 openId，其次使用 URL 中静默授权返回的 openId
   const urlOpenId = getPaymentOpenIdFromUrl();
+  // 检测是否是 OAuth 回调（需要用 code 换取 openId）
+  const authCode = getPaymentAuthCode();
   const [userOpenId, setUserOpenId] = useState<string | undefined>(propOpenId || urlOpenId);
   const [jsapiPayParams, setJsapiPayParams] = useState<Record<string, string> | null>(null);
   // 用于避免"第一次打开先走扫码、第二次才JSAPI"的竞态
   const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
   // 正在跳转微信授权中
   const [isRedirectingForOpenId, setIsRedirectingForOpenId] = useState<boolean>(false);
+  // 正在用 code 换取 openId
+  const [isExchangingCode, setIsExchangingCode] = useState<boolean>(false);
 
   // 判断是否需要显示条款（仅合伙人套餐需要特殊条款确认）
   const requiresTermsAgreement = () => {
@@ -88,6 +101,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const orderCreatedRef = useRef<boolean>(false); // 防止重复创建订单
   const openIdFetchedRef = useRef<boolean>(false); // 防止重复获取 openId
   const silentAuthTriggeredRef = useRef<boolean>(false); // 防止重复触发静默授权
+  const codeExchangedRef = useRef<boolean>(false); // 防止重复换取 openId
 
   // 检测是否在微信内
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
@@ -168,6 +182,44 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     }
   }, []);
 
+  // 用 code 换取 openId
+  const exchangeCodeForOpenId = useCallback(async (code: string) => {
+    if (codeExchangedRef.current) return;
+    codeExchangedRef.current = true;
+    setIsExchangingCode(true);
+
+    try {
+      console.log('[Payment] Exchanging code for openId');
+      
+      const { data, error } = await supabase.functions.invoke('get-wechat-payment-openid', {
+        body: { code },
+      });
+
+      // 清理 URL 中的 OAuth 参数
+      const url = new URL(window.location.href);
+      url.searchParams.delete('code');
+      url.searchParams.delete('state');
+      url.searchParams.delete('payment_auth_callback');
+      window.history.replaceState({}, '', url.toString());
+
+      if (error || !data?.openId) {
+        console.error('[Payment] Failed to exchange code:', error || data);
+        setIsExchangingCode(false);
+        setOpenIdResolved(true); // 换取失败，继续使用扫码支付
+        return;
+      }
+
+      console.log('[Payment] Successfully got openId from code');
+      setUserOpenId(data.openId);
+      setOpenIdResolved(true);
+      setIsExchangingCode(false);
+    } catch (err) {
+      console.error('[Payment] Code exchange error:', err);
+      setIsExchangingCode(false);
+      setOpenIdResolved(true);
+    }
+  }, []);
+
   // 在小程序/微信环境下获取用户的 openId（用于 JSAPI 支付）
   useEffect(() => {
     const fetchUserOpenId = async () => {
@@ -191,6 +243,13 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           url.searchParams.delete('payment_auth_error');
           window.history.replaceState({}, '', url.toString());
         }
+        return;
+      }
+
+      // 如果有 authCode（OAuth 回调），用它换取 openId
+      if (authCode) {
+        console.log('[Payment] Found auth code, exchanging for openId');
+        exchangeCodeForOpenId(authCode);
         return;
       }
 
@@ -223,7 +282,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     };
 
     fetchUserOpenId();
-  }, [open, user, propOpenId, urlOpenId, shouldWaitForOpenId, triggerSilentAuth]);
+  }, [open, user, propOpenId, urlOpenId, authCode, shouldWaitForOpenId, triggerSilentAuth, exchangeCodeForOpenId]);
 
   // 清理定时器
   const clearTimers = () => {
@@ -252,9 +311,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     orderCreatedRef.current = false; // 重置订单创建标记
     openIdFetchedRef.current = false; // 重置 openId 获取标记
     silentAuthTriggeredRef.current = false; // 重置静默授权标记
+    codeExchangedRef.current = false; // 重置 code 换取标记
     setUserOpenId(propOpenId || urlOpenId);
     setOpenIdResolved(false);
     setIsRedirectingForOpenId(false);
+    setIsExchangingCode(false);
   };
 
   // 根据套餐类型获取对应的服务条款链接
@@ -728,15 +789,17 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
           {/* 二维码/H5/JSAPI支付区域 */}
           <div className="flex items-center justify-center border rounded-lg bg-white w-52 h-52">
-            {/* 正在跳转微信授权 */}
-            {isRedirectingForOpenId && (
+            {/* 正在跳转微信授权或换取 openId */}
+            {(isRedirectingForOpenId || isExchangingCode) && (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="text-sm text-muted-foreground">正在跳转微信授权...</span>
+                <span className="text-sm text-muted-foreground">
+                  {isExchangingCode ? '正在获取授权信息...' : '正在跳转微信授权...'}
+                </span>
               </div>
             )}
             {/* 等待 openId 或创建订单中 */}
-            {!isRedirectingForOpenId && (status === 'idle' && shouldWaitForOpenId && !openIdResolved) && (
+            {!isRedirectingForOpenId && !isExchangingCode && (status === 'idle' && shouldWaitForOpenId && !openIdResolved) && (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="text-sm text-muted-foreground">正在初始化...</span>
