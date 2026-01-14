@@ -126,11 +126,16 @@ const copyComputedStyles = (source: HTMLElement, target: HTMLElement): void => {
   });
 };
 
-// Helper: Generate canvas from card element with enhanced stability
+// Helper: Generate canvas from card element with enhanced stability for WeChat
 const generateCanvas = async (cardRef: React.RefObject<HTMLDivElement>): Promise<HTMLCanvasElement | null> => {
-  if (!cardRef.current) return null;
+  if (!cardRef.current) {
+    console.error('[generateCanvas] cardRef.current is null');
+    return null;
+  }
   
   const originalElement = cardRef.current;
+  console.log('[generateCanvas] Starting canvas generation, element size:', 
+    originalElement.offsetWidth, 'x', originalElement.offsetHeight);
   
   // Create a wrapper for proper rendering
   const wrapper = document.createElement('div');
@@ -142,34 +147,41 @@ const generateCanvas = async (cardRef: React.RefObject<HTMLDivElement>): Promise
     visibility: visible;
     opacity: 1;
     pointer-events: none;
+    background: white;
   `;
   
   // Clone the element
   const clonedElement = originalElement.cloneNode(true) as HTMLElement;
   
-  // Reset transform and ensure proper sizing
+  // Reset transform and ensure proper sizing for WeChat
   clonedElement.style.transform = 'none';
   clonedElement.style.transformOrigin = 'top left';
   clonedElement.style.margin = '0';
   clonedElement.style.position = 'relative';
+  clonedElement.style.width = originalElement.offsetWidth + 'px';
+  clonedElement.style.minWidth = originalElement.offsetWidth + 'px';
   
   wrapper.appendChild(clonedElement);
   document.body.appendChild(wrapper);
   
   try {
-    // Wait for images with timeout
-    await waitForImages(clonedElement, 5000);
+    // Wait for images with extended timeout for WeChat
+    console.log('[generateCanvas] Waiting for images...');
+    await waitForImages(clonedElement, 8000);
     
-    // Small delay to ensure rendering is complete
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Longer delay for WeChat browser rendering
+    await new Promise(resolve => setTimeout(resolve, 200));
     
+    console.log('[generateCanvas] Starting html2canvas...');
     const canvas = await html2canvas(clonedElement, {
       scale: 3,
       useCORS: true,
-      allowTaint: false,
-      backgroundColor: null,
+      allowTaint: true, // Allow taint for WeChat compatibility
+      backgroundColor: '#ffffff',
       logging: false,
-      imageTimeout: 5000,
+      imageTimeout: 8000,
+      removeContainer: false,
+      foreignObjectRendering: false, // Disable for better WeChat compatibility
       onclone: (_doc, element) => {
         // Ensure cloned element has proper styles
         element.style.transform = 'none';
@@ -178,12 +190,15 @@ const generateCanvas = async (cardRef: React.RefObject<HTMLDivElement>): Promise
       },
     });
     
+    console.log('[generateCanvas] Canvas generated successfully:', canvas.width, 'x', canvas.height);
     return canvas;
   } catch (error) {
-    console.error('html2canvas error:', error);
+    console.error('[generateCanvas] html2canvas error:', error);
     return null;
   } finally {
-    document.body.removeChild(wrapper);
+    if (wrapper.parentNode) {
+      document.body.removeChild(wrapper);
+    }
   }
 };
 
@@ -587,9 +602,12 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const handleDownload = async () => {
     const cardRef = getActiveCardRef();
     const cardName = getCardName();
+    const env = getShareEnvironment();
+    
+    console.log('[handleDownload] Starting, env:', env, 'activeTab:', activeTab);
     
     if (!cardRef.current) {
-      console.error('Card ref not found');
+      console.error('[handleDownload] Card ref not found for tab:', activeTab);
       toast.error('卡片未加载完成，请稍后重试');
       return;
     }
@@ -600,46 +618,61 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       // Show loading toast for better UX
       const toastId = toast.loading('正在生成图片...');
       
+      console.log('[handleDownload] Generating canvas...');
       const canvas = await generateCanvas(cardRef);
       if (!canvas) {
         toast.dismiss(toastId);
-        throw new Error('Failed to generate canvas');
+        console.error('[handleDownload] Canvas generation failed');
+        toast.error('图片生成失败，请重试或截图分享');
+        return;
       }
 
+      console.log('[handleDownload] Converting to blob...');
       const blob = await canvasToBlob(canvas);
       if (!blob) {
         toast.dismiss(toastId);
-        throw new Error('Failed to convert canvas to blob');
+        console.error('[handleDownload] Blob conversion failed');
+        toast.error('图片转换失败，请重试或截图分享');
+        return;
       }
 
       toast.dismiss(toastId);
+      console.log('[handleDownload] Blob created, size:', blob.size);
 
-      // Create blob URL for download
+      // Create blob URL for preview/download
       const blobUrl = URL.createObjectURL(blob);
       
-      // For iOS/WeChat, show image preview for long-press save
-      if (shouldUseImagePreview()) {
+      // WeChat/iOS: Always show image preview for long-press save
+      if (env.isWeChat || env.isIOS || env.isMiniProgram) {
+        console.log('[handleDownload] WeChat/iOS detected, showing preview');
         setPreviewImageUrl(blobUrl);
         setShowImagePreview(true);
-        toast.success('图片已生成，长按保存');
+        // Don't show toast here - preview component will guide user
       } else {
-        // Try download with <a> element
-        const link = document.createElement('a');
-        link.download = `${cardName}.png`;
-        link.href = blobUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('卡片已保存');
+        // Desktop/Android: Try download
+        try {
+          const link = document.createElement('a');
+          link.download = `${cardName}.png`;
+          link.href = blobUrl;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast.success('卡片已保存');
+        } catch (downloadError) {
+          console.error('[handleDownload] Download failed:', downloadError);
+          // Fallback to preview
+          setPreviewImageUrl(blobUrl);
+          setShowImagePreview(true);
+        }
         
         // Revoke blob URL after a delay
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
       }
       
       onGenerate?.();
     } catch (error) {
-      console.error('Failed to generate card:', error);
-      toast.error('生成失败，请重试');
+      console.error('[handleDownload] Error:', error);
+      toast.error('生成失败，请截图分享');
     } finally {
       setGenerating(false);
     }
