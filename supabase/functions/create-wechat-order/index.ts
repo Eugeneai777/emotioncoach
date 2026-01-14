@@ -109,6 +109,23 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // 🔑 关键修复：如果有 openId，先查询是否已绑定用户
+    let finalUserId = userId;
+    if (openId) {
+      const { data: mapping } = await supabase
+        .from('wechat_user_mappings')
+        .select('system_user_id')
+        .eq('openid', openId)
+        .maybeSingle();
+      
+      if (mapping?.system_user_id) {
+        finalUserId = mapping.system_user_id;
+        console.log('Found bound user for openId:', openId, '-> userId:', finalUserId);
+      } else {
+        console.log('No bound user found for openId:', openId, ', using:', userId);
+      }
+    }
+
     // 生成订单号
     const orderNo = generateOrderNo();
     const expiredAt = new Date(Date.now() + 5 * 60 * 1000); // 5分钟后过期
@@ -331,12 +348,12 @@ serve(async (req) => {
       }
     }
 
-    // 保存订单到数据库 - guest订单使用null作为user_id
-    const isGuest = userId === 'guest' || !userId;
+    // 保存订单到数据库 - 使用 finalUserId（已绑定用户或guest）
+    const isGuest = finalUserId === 'guest' || !finalUserId;
     const { error: insertError } = await supabase
       .from('orders')
       .insert({
-        user_id: isGuest ? null : userId,
+        user_id: isGuest ? null : finalUserId,
         package_key: packageKey,
         package_name: packageName,
         amount: amount,
@@ -351,7 +368,7 @@ serve(async (req) => {
       throw new Error('订单创建失败');
     }
 
-    console.log('Order created successfully:', orderNo, 'payType:', actualPayType, fallbackReason ? `(fallback: ${fallbackReason})` : '');
+    console.log('Order created successfully:', orderNo, 'userId:', isGuest ? 'guest' : finalUserId, 'payType:', actualPayType, fallbackReason ? `(fallback: ${fallbackReason})` : '');
 
     return new Response(
       JSON.stringify({
