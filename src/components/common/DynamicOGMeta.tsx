@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet";
 import { usePageOG } from "@/hooks/usePageOG";
 import { OG_BASE_URL } from "@/config/ogConfig";
+import { useWechatShare } from "@/hooks/useWechatShare";
 
 interface DynamicOGMetaProps {
   pageKey: string;
@@ -56,6 +57,14 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
 
   // 生成 Canonical URL (移除查询参数如 ?ref=xxx)
   const canonicalUrl = finalConfig.url?.split('?')[0] || `${OG_BASE_URL}${window.location.pathname}`;
+
+  // 微信 JS-SDK 分享配置
+  useWechatShare({
+    title: finalConfig.ogTitle,
+    desc: finalConfig.description,
+    link: finalConfig.url,
+    imgUrl: finalConfig.image,
+  });
 
   return (
     <Helmet>
