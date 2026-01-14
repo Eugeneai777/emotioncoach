@@ -211,18 +211,60 @@ export const useDynamicCoachChat = (
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("未登录");
 
+      // 提取场景追踪相关字段，不保存到简报表
+      const { user_satisfaction, completed_naturally, ...restBriefingData } = briefingData;
+
       const { data, error } = await (supabase as any)
         .from(briefingTableName)
         .insert({
           user_id: user.id,
           conversation_id: convId,
-          ...briefingData,
+          ...restBriefingData,
         })
         .select()
         .single();
 
       if (error) throw error;
       setLastBriefingId(data.id);
+
+      // 更新场景策略效果追踪（如果有满意度数据）
+      if (user_satisfaction !== undefined) {
+        try {
+          // 查找当前对话的场景追踪记录并更新
+          const { data: analyticsRecords } = await supabase
+            .from('scenario_strategy_analytics')
+            .select('id, started_at')
+            .eq('user_id', user.id)
+            .order('started_at', { ascending: false })
+            .limit(1);
+
+          if (analyticsRecords && analyticsRecords.length > 0) {
+            const record = analyticsRecords[0];
+            const startedAt = new Date(record.started_at).getTime();
+            const now = Date.now();
+            const durationSeconds = Math.floor((now - startedAt) / 1000);
+
+            await supabase
+              .from('scenario_strategy_analytics')
+              .update({
+                user_satisfaction,
+                completed_naturally: completed_naturally ?? true,
+                briefing_generated: true,
+                ended_at: new Date().toISOString(),
+                conversation_duration_seconds: durationSeconds,
+              })
+              .eq('id', record.id);
+
+            console.log('📊 场景追踪已更新:', {
+              id: record.id,
+              user_satisfaction,
+              durationSeconds,
+            });
+          }
+        } catch (analyticsError) {
+          console.error('场景追踪更新失败:', analyticsError);
+        }
+      }
 
       toast({
         title: "简报已生成",
@@ -233,7 +275,7 @@ export const useDynamicCoachChat = (
       if (onBriefingGenerated) {
         onBriefingGenerated({
           briefingId: data.id,
-          ...briefingData
+          ...restBriefingData
         });
       }
     } catch (error: any) {
