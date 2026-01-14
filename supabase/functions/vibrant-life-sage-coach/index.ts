@@ -315,13 +315,60 @@ ${avoid.join('、')}
     const detectedScenario = detectScenario(firstUserMessage, scenarios);
     const scenarioPrompt = buildScenarioPrompt(detectedScenario);
     
+    // 场景追踪变量
+    let scenarioAnalyticsId: string | null = null;
+    
     if (detectedScenario) {
       console.log(`🎯 检测到场景: ${detectedScenario.emoji} ${detectedScenario.title} (${detectedScenario.strategy?.mode})`);
+      
+      // 如果是新对话（第一条消息）且检测到场景，创建追踪记录
+      if (isNewConversation) {
+        try {
+          const { data: analyticsData } = await supabase
+            .from('scenario_strategy_analytics')
+            .insert({
+              user_id: user.id,
+              scenario_id: detectedScenario.id,
+              scenario_title: detectedScenario.title,
+              strategy_mode: detectedScenario.strategy?.mode || null,
+              message_count: 1,
+              started_at: new Date().toISOString()
+            })
+            .select('id')
+            .single();
+          
+          if (analyticsData) {
+            scenarioAnalyticsId = analyticsData.id;
+            console.log(`📊 场景追踪已创建: ${scenarioAnalyticsId}`);
+          }
+        } catch (err) {
+          console.error('场景追踪创建失败:', err);
+        }
+      }
+    }
+    
+    // 检查是否应该使用场景专属开场白
+    // 条件：是新对话 + 检测到场景 + 场景有开场白
+    const shouldUseScenarioOpening = isNewConversation && detectedScenario?.opening_message;
+    
+    // 如果使用场景开场白，修改系统提示词
+    let scenarioOpeningInstruction = '';
+    if (shouldUseScenarioOpening) {
+      scenarioOpeningInstruction = `
+
+【重要：场景专属开场白】
+这是用户选择的「${detectedScenario.emoji} ${detectedScenario.title}」场景，你的第一条回复必须使用以下开场白：
+
+"${detectedScenario.opening_message}"
+
+请直接使用这个开场白回复，不要修改或添加其他内容。这是为了确保场景化体验的一致性。
+`;
     }
 
     const basePrompt = templateRes.data?.system_prompt || `你是劲老师，一位温暖的生活教练。帮助用户探索问题、找到方向。`;
     const systemPrompt = `${basePrompt}
 ${scenarioPrompt}
+${scenarioOpeningInstruction}
 ${conversationStyleGuide}
 
 【用户信息】
@@ -329,7 +376,7 @@ ${conversationStyleGuide}
 对话次数：${conversationCount}次
 
 【个性化问候 - 第一条消息时使用】
-${frequencyContext}
+${shouldUseScenarioOpening ? '（已使用场景专属开场白，忽略此部分）' : frequencyContext}
 ${continuityContext}
 
 ${memoryContext}
@@ -338,7 +385,8 @@ ${productKnowledge}
 【对话结束时生成简报】
 当用户表达结束意愿（如"谢谢"、"再见"、"没了"、"就这样"、"好的我知道了"）或对话已经有5轮以上且用户表示满意时：
 - 必须调用 generate_sage_briefing 工具生成对话简报
-- 简报要总结本次对话的核心主题和收获`;
+- 简报要总结本次对话的核心主题和收获
+${scenarioAnalyticsId ? `- 场景追踪ID: ${scenarioAnalyticsId}（用于记录效果数据）` : ''}`;
 
     // 定义推荐工具
     const tools = [
@@ -489,12 +537,12 @@ ${productKnowledge}
           }
         }
       },
-      // 对话简报生成工具
+      // 对话简报生成工具（含满意度追踪）
       {
         type: "function",
         function: {
           name: "generate_sage_briefing",
-          description: "当对话结束时（用户说谢谢、再见、没了、就这样等），生成对话简报保存本次交流精华。对话超过5轮且用户满意时也应调用。",
+          description: "当对话结束时（用户说谢谢、再见、没了、就这样等），生成对话简报保存本次交流精华。对话超过5轮且用户满意时也应调用。同时记录场景策略效果数据。",
           parameters: {
             type: "object",
             properties: {
@@ -513,9 +561,18 @@ ${productKnowledge}
               user_issue_summary: {
                 type: "string",
                 description: "用户遇到的主要问题或困扰，30-50字"
+              },
+              user_satisfaction: {
+                type: "integer",
+                description: "根据对话内容评估用户满意度（1-5分）：1=非常不满意/负面结束，2=不太满意，3=一般，4=满意/有收获，5=非常满意/表达感谢",
+                enum: [1, 2, 3, 4, 5]
+              },
+              completed_naturally: {
+                type: "boolean",
+                description: "对话是否自然结束（true=用户主动说谢谢/再见等，false=对话中断或未完成）"
               }
             },
-            required: ["summary", "insight", "action"]
+            required: ["summary", "insight", "action", "user_satisfaction", "completed_naturally"]
           }
         }
       }
