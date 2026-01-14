@@ -79,17 +79,29 @@ export function useWechatShare(config: WechatShareConfig) {
   const lastConfigRef = useRef<string>('');
 
   useEffect(() => {
+    // 详细环境检测日志
+    const isWeChat = isWeChatBrowser();
+    console.log('[WechatShare] Hook triggered', {
+      isWeChatBrowser: isWeChat,
+      userAgent: navigator.userAgent.substring(0, 100),
+      windowWxExists: typeof window !== 'undefined' && !!(window as any).wx,
+      config: { title: config.title?.substring(0, 20), link: config.link }
+    });
+
     // 非微信环境直接跳过
-    if (!isWeChatBrowser()) {
+    if (!isWeChat) {
+      console.log('[WechatShare] Skipping - not in WeChat browser');
       return;
     }
 
     // 检查 wx 对象是否存在
     const wx = getWxJssdk();
     if (!wx) {
-      console.warn('[WechatShare] wx JS-SDK not found or not loaded');
+      console.warn('[WechatShare] wx JS-SDK not found. Check if jweixin script is loaded in index.html');
       return;
     }
+    
+    console.log('[WechatShare] wx object found, proceeding with configuration');
 
     // 配置唯一标识（避免重复配置）
     const configKey = `${config.title}|${config.desc}|${config.link}|${config.imgUrl}`;
@@ -161,9 +173,11 @@ export function useWechatShare(config: WechatShareConfig) {
         // 错误处理（静默失败，不影响其他功能）
         wxSdk.error((res) => {
           console.warn('[WechatShare] wx.error:', res.errMsg);
+          console.warn('[WechatShare] Possible causes: 1) JS接口安全域名未配置 2) 签名过期 3) appId不匹配');
         });
       } catch (error) {
         console.warn('[WechatShare] Failed to configure share:', error);
+        console.warn('[WechatShare] This is non-blocking - sharing may still work with default OG tags');
       }
     }
 
