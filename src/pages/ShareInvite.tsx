@@ -140,7 +140,7 @@ const ShareInvite = () => {
                       复制链接
                     </Button>
                     <WealthInviteCardDialog
-                      defaultTab={entry.id === 'assessment' ? 'assessment' : 'camp'}
+                      defaultTab={entry.id === 'assessment' ? 'value' : 'camp'}
                       trigger={
                         <Button variant="default" size="sm" className="gap-1.5">
                           <Image className="h-4 w-4" />
