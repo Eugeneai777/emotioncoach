@@ -6,6 +6,11 @@ import { AIComparisonCard } from "./AIComparisonCard";
 import { AssessmentFlowCard } from "./AssessmentFlowCard";
 import { AssessmentPreviewCard } from "./AssessmentPreviewCard";
 
+// 检测是否为移动端
+const isMobileDevice = () => {
+  if (typeof window === 'undefined') return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+};
 
 interface AssessmentIntroCardProps {
   isLoggedIn: boolean;
@@ -54,6 +59,23 @@ const loginBenefits = [
 ];
 
 export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: AssessmentIntroCardProps) {
+  const isMobile = isMobileDevice();
+  
+  // 电脑端未登录时，点击开始测评需要先登录
+  const handlePayClick = () => {
+    if (!isMobile && !isLoggedIn) {
+      // 电脑端未登录，跳转到登录页
+      onLogin();
+      return;
+    }
+    // 移动端或已登录，正常支付流程
+    if (onPay) {
+      onPay();
+    } else {
+      onStart();
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -183,12 +205,12 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
           
           {/* 首屏CTA按钮 */}
           <Button
-            onClick={onPay || onStart}
+            onClick={handlePayClick}
             size="lg"
             className="w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 text-white mt-2"
           >
             <Sparkles className="w-4 h-4 mr-2" />
-            ¥9.9 开始测评
+            {!isMobile && !isLoggedIn ? '登录后开始测评' : '¥9.9 开始测评'}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
@@ -509,12 +531,12 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
           </div>
           
           <Button
-            onClick={onPay || onStart}
+            onClick={handlePayClick}
             size="lg"
             className="w-full h-14 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 text-white"
           >
             <span className="flex items-center gap-2">
-              立即测评
+              {!isMobile && !isLoggedIn ? '登录后开始测评' : '立即测评'}
               <ArrowRight className="w-4 h-4" />
             </span>
           </Button>
