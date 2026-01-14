@@ -168,6 +168,24 @@ export function AssessmentPayDialog({
     }
   }, []);
 
+  // 请求小程序获取 openId（通过 postMessage）
+  const requestMiniProgramOpenId = useCallback(() => {
+    const mp = window.wx?.miniProgram;
+    if (!mp || typeof mp.postMessage !== 'function') {
+      console.warn('[AssessmentPay] MiniProgram postMessage not available');
+      return false;
+    }
+
+    console.log('[AssessmentPay] Requesting openId from MiniProgram');
+    mp.postMessage({
+      data: {
+        type: 'GET_OPENID',
+        callbackUrl: window.location.href,
+      },
+    });
+    return true;
+  }, []);
+
   // 获取用户 openId（用于 JSAPI 支付）
   useEffect(() => {
     const fetchUserOpenId = async () => {
@@ -221,13 +239,29 @@ export function AssessmentPayDialog({
         }
       }
 
-      // 微信环境下没有 openId：触发静默授权
-      console.log('[AssessmentPay] No openId available, triggering silent auth');
-      triggerSilentAuth();
+      // 小程序环境：不做跳转授权，直接标记为已解析
+      // 小程序支付时会通过 postMessage 让原生小程序处理
+      if (isMiniProgram) {
+        console.log('[AssessmentPay] MiniProgram environment, skip OAuth redirect');
+        // 尝试请求小程序获取 openId（可选）
+        requestMiniProgramOpenId();
+        setOpenIdResolved(true);
+        return;
+      }
+
+      // 微信浏览器下没有 openId：触发静默授权
+      if (isWechat) {
+        console.log('[AssessmentPay] WeChat browser, no openId, triggering silent auth');
+        triggerSilentAuth();
+        return;
+      }
+
+      // 其他情况：标记为已解析
+      setOpenIdResolved(true);
     };
 
     fetchUserOpenId();
-  }, [open, userId, cachedOpenId, shouldWaitForOpenId, triggerSilentAuth]);
+  }, [open, userId, cachedOpenId, shouldWaitForOpenId, triggerSilentAuth, isMiniProgram, isWechat, requestMiniProgramOpenId]);
 
   // 调用 JSAPI 支付
   const invokeJsapiPay = useCallback((params: Record<string, string>) => {
