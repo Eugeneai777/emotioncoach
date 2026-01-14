@@ -6804,29 +6804,38 @@ export type Database = {
       }
       vibrant_life_sage_briefings: {
         Row: {
+          action: string | null
           conversation_id: string | null
           created_at: string | null
           id: string
+          insight: string | null
           reasoning: string | null
           recommended_coach_type: string | null
+          summary: string | null
           user_id: string
           user_issue_summary: string | null
         }
         Insert: {
+          action?: string | null
           conversation_id?: string | null
           created_at?: string | null
           id?: string
+          insight?: string | null
           reasoning?: string | null
           recommended_coach_type?: string | null
+          summary?: string | null
           user_id: string
           user_issue_summary?: string | null
         }
         Update: {
+          action?: string | null
           conversation_id?: string | null
           created_at?: string | null
           id?: string
+          insight?: string | null
           reasoning?: string | null
           recommended_coach_type?: string | null
+          summary?: string | null
           user_id?: string
           user_issue_summary?: string | null
         }

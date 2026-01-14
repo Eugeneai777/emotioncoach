@@ -71,14 +71,53 @@ serve(async (req) => {
       }
     }
 
-    // 获取用户信息
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', user.id)
-      .single();
+    // 获取用户信息和对话历史统计
+    const [profileRes, briefingCountRes] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .single(),
+      supabase
+        .from('vibrant_life_sage_briefings')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user.id)
+    ]);
 
-    const userName = profile?.display_name || '朋友';
+    const userName = profileRes.data?.display_name || '朋友';
+    const conversationCount = briefingCountRes.count || 0;
+
+    // 生成个性化问候语
+    const beijingHour = new Date().getUTCHours() + 8; // UTC+8
+    const hour = beijingHour >= 24 ? beijingHour - 24 : beijingHour;
+    
+    let timeGreeting = '';
+    let timeEmoji = '';
+    if (hour >= 5 && hour < 12) {
+      timeGreeting = '早上好';
+      timeEmoji = '🌅';
+    } else if (hour >= 12 && hour < 18) {
+      timeGreeting = '下午好';
+      timeEmoji = '☀️';
+    } else if (hour >= 18 && hour < 22) {
+      timeGreeting = '晚上好';
+      timeEmoji = '🌙';
+    } else {
+      timeGreeting = '夜深了';
+      timeEmoji = '🌃';
+    }
+
+    // 根据对话频率调整问候
+    let frequencyContext = '';
+    if (conversationCount === 0) {
+      frequencyContext = `这是用户第一次来找你聊天，请热情欢迎ta。开场可以说："${timeEmoji} ${userName}，${timeGreeting}呀～很高兴认识你！有什么想聊的吗？"`;
+    } else if (conversationCount <= 3) {
+      frequencyContext = `用户是新朋友，来过${conversationCount}次。开场可以说："${timeEmoji} ${userName}，${timeGreeting}～又见面啦！今天想聊点什么？"`;
+    } else if (conversationCount <= 10) {
+      frequencyContext = `用户是老朋友了，已经聊过${conversationCount}次。开场可以说："${timeEmoji} ${userName}，${timeGreeting}～最近怎么样？"`;
+    } else {
+      frequencyContext = `用户是忠实伙伴，已经聊过${conversationCount}次了！开场可以亲切地说："${timeEmoji} ${userName}，${timeGreeting}～看到你来我很开心，今天有什么想分享的吗？"`;
+    }
 
     // 从数据库加载系统提示词和实时产品信息
     const [templateRes, packagesRes, coachesRes, campsRes, toolsRes, memoriesRes] = await Promise.all([
@@ -233,10 +272,19 @@ ${conversationStyleGuide}
 
 【用户信息】
 用户名称：${userName}
+对话次数：${conversationCount}次
+
+【个性化问候 - 第一条消息时使用】
+${frequencyContext}
 ${continuityContext}
 
 ${memoryContext}
-${productKnowledge}`;
+${productKnowledge}
+
+【对话结束时生成简报】
+当用户表达结束意愿（如"谢谢"、"再见"、"没了"、"就这样"、"好的我知道了"）或对话已经有5轮以上且用户表示满意时：
+- 必须调用 generate_sage_briefing 工具生成对话简报
+- 简报要总结本次对话的核心主题和收获`;
 
     // 定义推荐工具
     const tools = [
@@ -384,6 +432,36 @@ ${productKnowledge}`;
               }
             },
             required: ["user_need", "recommended_tool_id", "usage_reason"]
+          }
+        }
+      },
+      // 对话简报生成工具
+      {
+        type: "function",
+        function: {
+          name: "generate_sage_briefing",
+          description: "当对话结束时（用户说谢谢、再见、没了、就这样等），生成对话简报保存本次交流精华。对话超过5轮且用户满意时也应调用。",
+          parameters: {
+            type: "object",
+            properties: {
+              summary: {
+                type: "string",
+                description: "本次对话的核心主题摘要，20-40字，用于下次对话连接。如：'关于工作压力和自我期待的平衡'"
+              },
+              insight: {
+                type: "string", 
+                description: "用户在对话中获得的核心洞察，30-50字。如：'意识到自己对完美的执着其实是害怕失败'"
+              },
+              action: {
+                type: "string",
+                description: "用户可以尝试的具体小行动，15-25字。如：'今晚睡前给自己写一句肯定的话'"
+              },
+              user_issue_summary: {
+                type: "string",
+                description: "用户遇到的主要问题或困扰，30-50字"
+              }
+            },
+            required: ["summary", "insight", "action"]
           }
         }
       }
