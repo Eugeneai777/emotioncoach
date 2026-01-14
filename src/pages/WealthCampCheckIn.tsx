@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
-import { ArrowLeft, Home } from 'lucide-react';
+import { ArrowLeft, Home, Target } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -857,14 +857,32 @@ ${reflection}`;
               </TabsContent>
 
               <TabsContent value="briefing" className="space-y-4">
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/wealth-block')}
+                    className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                  >
+                    <Target className="w-4 h-4 mr-1.5" />
+                    财富测评
+                  </Button>
                   <BackfillMemoriesButton />
                 </div>
                 
                 {journalEntries.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <p>还没有财富日记</p>
-                    <p className="text-sm">完成财富梳理后自动生成</p>
+                  <div className="text-center py-12 space-y-4">
+                    <div className="text-muted-foreground">
+                      <p>还没有财富日记</p>
+                      <p className="text-sm">完成财富梳理后自动生成</p>
+                    </div>
+                    <Button 
+                      onClick={() => navigate('/wealth-block')}
+                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                    >
+                      <Target className="w-4 h-4 mr-2" />
+                      开始财富测评
+                    </Button>
                   </div>
                 ) : (
                   journalEntries.map((entry) => (
