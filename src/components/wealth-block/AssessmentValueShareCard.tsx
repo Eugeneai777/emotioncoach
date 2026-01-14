@@ -153,13 +153,11 @@ const AssessmentValueShareCard = forwardRef<HTMLDivElement, AssessmentValueShare
                   扫码体验专属你的
                 </p>
                 <p className="text-amber-300 font-bold text-base">
-                  财富心理诊断
+                  AI财富心理诊断
                 </p>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className="text-amber-400 font-bold text-xl">¥9.9</span>
-                  <span className="text-white/40 text-xs line-through">¥49</span>
-                  <span className="text-amber-300/70 text-xs">限时体验价</span>
-                </div>
+                <p className="text-amber-300/70 text-xs mt-2">
+                  🎁 免费测评你的财富卡点
+                </p>
               </div>
               {qrCodeUrl && (
                 <div className="w-20 h-20 rounded-lg overflow-hidden bg-white p-1.5">

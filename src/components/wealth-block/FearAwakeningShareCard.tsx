@@ -237,7 +237,7 @@ const FearAwakeningShareCard = forwardRef<HTMLDivElement, FearAwakeningShareCard
               扫码诊断你的情绪锁
             </p>
             <p style={{ fontSize: '11px', opacity: 0.7, margin: 0 }}>
-              ¥9.9 限时体验
+              🎁 免费体验
             </p>
           </div>
         </div>
