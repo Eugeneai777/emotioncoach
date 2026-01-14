@@ -86,7 +86,14 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
 
   // 如果显示开始介绍页，先渲染它
   if (showStartScreen) {
-    return <AssessmentStartScreen onStart={() => setShowStartScreen(false)} />;
+    return (
+      <AssessmentStartScreen 
+        onStart={() => {
+          console.log('[WealthBlockQuestions] Starting assessment...');
+          setShowStartScreen(false);
+        }} 
+      />
+    );
   }
 
   // 生成AI追问

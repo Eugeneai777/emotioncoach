@@ -15,7 +15,7 @@ export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-4 flex flex-col items-center justify-center">
+    <div className="min-h-[60vh] py-6 flex flex-col items-center justify-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
