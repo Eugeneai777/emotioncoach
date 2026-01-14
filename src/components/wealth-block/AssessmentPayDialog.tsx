@@ -92,8 +92,14 @@ export function AssessmentPayDialog({
   // 微信环境下需要获取 openId
   const shouldWaitForOpenId = isMiniProgram || isWechat;
 
-  // 优化后的 WeixinJSBridge 等待逻辑：缩短为 1.5 秒，避免阻塞体验
-  const waitForWeixinJSBridge = useCallback((timeout = 1500): Promise<boolean> => {
+  // 检测是否为安卓设备
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  
+  // 优化后的 WeixinJSBridge 等待逻辑：安卓缩短为 500ms，iOS 保持 1.5 秒
+  const waitForWeixinJSBridge = useCallback((timeout?: number): Promise<boolean> => {
+    // 安卓端 Bridge 通常更快加载，使用更短超时；iOS 保持原有时间
+    const actualTimeout = timeout ?? (isAndroid ? 500 : 1500);
+    
     return new Promise((resolve) => {
       if (typeof window.WeixinJSBridge !== 'undefined') {
         console.log('[Payment] WeixinJSBridge already available');
@@ -119,12 +125,12 @@ export function AssessmentPayDialog({
         const available = typeof window.WeixinJSBridge !== 'undefined';
         console.log('[Payment] WeixinJSBridge wait timeout, available:', available);
         resolve(available);
-      }, timeout);
+      }, actualTimeout);
 
       document.addEventListener('WeixinJSBridgeReady', onReady, false);
       document.addEventListener('onWeixinJSBridgeReady', onReady as EventListener, false);
     });
-  }, []);
+  }, [isAndroid]);
   // 触发静默授权获取 openId（使用新的 wechat-pay-auth 函数）
   const triggerSilentAuth = useCallback(async () => {
     if (silentAuthTriggeredRef.current) return;
@@ -207,12 +213,10 @@ export function AssessmentPayDialog({
 
       // 检查是否正在授权中（防止循环）
       if (isPayAuthInProgress()) {
-        console.log('[AssessmentPay] Auth already in progress, waiting...');
-        // 等待一段时间后继续（可能是页面刷新后）
-        setTimeout(() => {
-          sessionStorage.removeItem('pay_auth_in_progress');
-          setOpenIdResolved(true);
-        }, 3000);
+        console.log('[AssessmentPay] Auth already in progress, clearing and continuing...');
+        // 清除标记，立即继续（不再等待3秒）
+        sessionStorage.removeItem('pay_auth_in_progress');
+        setOpenIdResolved(true);
         return;
       }
 
