@@ -51,11 +51,10 @@ export default function WealthBlockAssessmentPage() {
   // 监听支付回调（H5支付返回后自动处理）
   const { isPaymentCallback, orderNo: callbackOrderNo } = usePaymentCallback({
     onSuccess: (orderNo) => {
-      // 支付成功后，显示注册对话框让用户完成绑定
+      // 支付成功后直接进入测评（避免重复打开支付弹窗导致卡住/循环）
       console.log('[WealthBlock] Payment callback success, order:', orderNo);
-      // 存储订单号以便后续注册绑定
-      sessionStorage.setItem('pending_assessment_order', orderNo);
-      setShowPayDialog(true);
+      setShowPayDialog(false);
+      setShowIntro(false);
     },
   });
 
