@@ -22,10 +22,45 @@ const VibrantLifeIntro = () => {
     { icon: "🪞", title: "比你更懂你模式的「第二个自己」" },
   ];
 
+  // 生活场景快捷入口
+  const lifeScenarios = [
+    { 
+      emoji: "😴", 
+      title: "睡不着觉", 
+      desc: "深夜难眠时，轻柔陪伴",
+      strategy: "舒缓安眠模式"
+    },
+    { 
+      emoji: "🧓", 
+      title: "老人陪伴", 
+      desc: "尊重聆听，温情交流",
+      strategy: "温情陪伴模式"
+    },
+    { 
+      emoji: "💼", 
+      title: "职场压力", 
+      desc: "理性梳理，赋能前行",
+      strategy: "理性赋能模式"
+    },
+    { 
+      emoji: "📚", 
+      title: "考试焦虑", 
+      desc: "缓解紧张，建立信心",
+      strategy: "信心激励模式"
+    },
+    { 
+      emoji: "🎒", 
+      title: "社交困扰", 
+      desc: "完全接纳，不评判",
+      strategy: "接纳理解模式"
+    },
+  ];
+
   // 对比表格数据
   const comparisonData = [
     { item: "对话能力", chatgpt: "强，但偏知识", replika: "温暖但浅", youjin: "深度理解 + 生活智慧" },
     { item: "情绪理解", chatgpt: "一般", replika: "有，但轻", youjin: "专业教练级洞察" },
+    { item: "场景适配", chatgpt: false, replika: false, youjin: "5大场景智能切换风格" },
     { item: "自动引导", chatgpt: false, replika: false, youjin: "自动引导工具与方法" },
     { item: "自动记录", chatgpt: false, replika: false, youjin: "一句话生成日记/洞察" },
     { item: "趋势分析", chatgpt: false, replika: false, youjin: "分析你的模式与压力源" },
@@ -136,6 +171,14 @@ const VibrantLifeIntro = () => {
     {
       q: "Q8：它能替代真人心理咨询吗？",
       a: "不能替代严重的问题处理，但可以帮助你梳理日常情绪、稳定状态、建立可执行的生活结构。\n\n对大部分生活困扰，它已经足够。"
+    },
+    {
+      q: "Q9：它怎么知道用什么语气跟我说话？",
+      a: "有劲AI会根据你的问题自动识别场景。比如深夜聊失眠，它会用轻柔缓慢的方式陪伴你；聊工作压力，它会更理性务实。每种场景都有专门设计的对话策略。"
+    },
+    {
+      q: "Q10：场景按钮和直接聊有什么区别？",
+      a: "场景按钮帮你快速进入状态——AI会用专属开场白开始对话，省去你组织语言的过程。直接聊也可以，AI同样能智能识别你的需求。"
     },
   ];
 
@@ -324,6 +367,67 @@ const VibrantLifeIntro = () => {
           </div>
         </section>
 
+        {/* 场景智能适配 - 新增 */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🎭</span>
+            <h2 className="text-xl font-bold text-foreground">场景智能适配</h2>
+          </div>
+          
+          <Card className="border-0 shadow-xl bg-white/60 backdrop-blur-sm overflow-hidden">
+            <CardContent className="p-5 space-y-4">
+              <p className="text-muted-foreground">
+                有劲AI能识别你的状态，自动切换对话风格：
+              </p>
+              
+              {/* 场景入口横向滚动 */}
+              <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+                {lifeScenarios.map((scenario, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => navigate(`/coach/vibrant_life_sage?scenario=${encodeURIComponent(scenario.title)}`)}
+                    className="flex-shrink-0 flex flex-col items-center gap-1.5 p-3 min-w-[90px] rounded-xl bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-100/50 hover:border-teal-300 hover:shadow-md transition-all active:scale-95"
+                  >
+                    <span className="text-2xl">{scenario.emoji}</span>
+                    <span className="text-xs font-medium text-foreground">{scenario.title}</span>
+                    <span className="text-[10px] text-muted-foreground leading-tight text-center">{scenario.desc}</span>
+                  </button>
+                ))}
+              </div>
+              
+              {/* 策略说明 */}
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-teal-500">•</span>
+                  <span className="text-muted-foreground"><strong className="text-foreground">深夜失眠</strong> → 语速放慢，语调轻柔，引导放松</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-teal-500">•</span>
+                  <span className="text-muted-foreground"><strong className="text-foreground">职场压力</strong> → 专业温和，帮你理清思路</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-teal-500">•</span>
+                  <span className="text-muted-foreground"><strong className="text-foreground">考试焦虑</strong> → 轻松温暖，提供实用小技巧</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-teal-500">•</span>
+                  <span className="text-muted-foreground"><strong className="text-foreground">老人陪伴</strong> → 耐心尊重，朴实易懂</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-teal-500">•</span>
+                  <span className="text-muted-foreground"><strong className="text-foreground">社交困扰</strong> → 完全接纳，不催促改变</span>
+                </div>
+              </div>
+              
+              <div className="pt-2 text-center">
+                <Badge className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-0 px-4 py-1.5">
+                  每个场景都有专属开场白，一开口就让你感到被理解
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* 怎么开始用 */}
         <section className="space-y-4">
           <Card className="border-0 shadow-xl bg-gradient-to-br from-teal-500 to-cyan-500 text-white overflow-hidden">
@@ -421,46 +525,78 @@ const VibrantLifeIntro = () => {
           </div>
         </section>
 
-        {/* 使用示例 */}
+        {/* 使用示例 - 场景化展示 */}
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <span className="text-2xl">📘</span>
             <h2 className="text-xl font-bold text-foreground">使用示例</h2>
           </div>
           
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-slate-50 to-teal-50/50 overflow-hidden">
-            <CardContent className="p-5 space-y-4">
+          {/* 示例1：深夜失眠 */}
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-indigo-50/50 to-purple-50/50 overflow-hidden">
+            <CardContent className="p-5 space-y-3">
+              <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-0">
+                😴 深夜失眠场景
+              </Badge>
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
                   👤
                 </div>
                 <div className="flex-1 p-3 bg-white rounded-2xl rounded-tl-sm shadow-sm">
-                  <p className="font-medium text-foreground">"我今天很焦虑。"</p>
+                  <p className="font-medium text-foreground">"睡不着..."</p>
                 </div>
               </div>
-              
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-cyan-400 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
-                <div className="flex-1 p-3 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl rounded-tl-sm border border-teal-100/50">
-                  <p className="font-medium text-teal-700 mb-2">有劲AI会：</p>
-                  <div className="space-y-1.5 text-sm text-muted-foreground">
-                    <p className="flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-teal-100 text-teal-600 text-xs flex items-center justify-center">1</span> 先接住你的感觉</p>
-                    <p className="flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-teal-100 text-teal-600 text-xs flex items-center justify-center">2</span> 引导你说出触发点</p>
-                    <p className="flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-teal-100 text-teal-600 text-xs flex items-center justify-center">3</span> 问你是否要用"情绪按钮"</p>
-                    <p className="flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-teal-100 text-teal-600 text-xs flex items-center justify-center">4</span> 生成一篇情绪日记</p>
-                    <p className="flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-teal-100 text-teal-600 text-xs flex items-center justify-center">5</span> 分析你本周的压力来源</p>
-                    <p className="flex items-center gap-2"><span className="w-5 h-5 rounded-full bg-teal-100 text-teal-600 text-xs flex items-center justify-center">6</span> 建议一个可执行的小行动</p>
-                  </div>
+                <div className="flex-1 p-3 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl rounded-tl-sm border border-indigo-100/50">
+                  <p className="text-indigo-800 text-sm leading-relaxed">
+                    "嗯...深夜睡不着的感觉，我懂。<br/>
+                    现在躺着的时候，脑子里在转些什么呢？"
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2 italic">
+                    （语气轻柔，不追问，帮助放松）
+                  </p>
                 </div>
               </div>
-              
-              <p className="text-center text-sm font-medium text-teal-700 pt-2">
-                ✨ 这是普通AI无法做到的完整流程
-              </p>
             </CardContent>
           </Card>
+
+          {/* 示例2：职场压力 */}
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-50/50 to-orange-50/50 overflow-hidden">
+            <CardContent className="p-5 space-y-3">
+              <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-0">
+                💼 职场压力场景
+              </Badge>
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
+                  👤
+                </div>
+                <div className="flex-1 p-3 bg-white rounded-2xl rounded-tl-sm shadow-sm">
+                  <p className="font-medium text-foreground">"工作压力太大了"</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1 p-3 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl rounded-tl-sm border border-amber-100/50">
+                  <p className="text-amber-800 text-sm leading-relaxed">
+                    "工作压力大到快撑不住——这种感觉很真实。<br/>
+                    先喘口气。最近是什么事情让你压力最大？"
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2 italic">
+                    （专业共情，帮助梳理）
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <p className="text-center text-sm font-medium text-teal-700 pt-2">
+            ✨ 不同场景，AI自动切换风格和策略
+          </p>
         </section>
 
         {/* FAQ */}
