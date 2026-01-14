@@ -128,6 +128,27 @@ ${memoriesRes.data.map((m: any, i: number) => `${i + 1}. ${m.content}`).join('\n
 - 建立连接："我记得你说过..."`;
     }
 
+    // 获取上次对话摘要，建立对话连续性
+    const { data: lastBriefing } = await supabase
+      .from('vibrant_life_sage_briefings')
+      .select('summary, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    let continuityContext = '';
+    if (lastBriefing?.summary) {
+      const daysSince = Math.floor((Date.now() - new Date(lastBriefing.created_at).getTime()) / 86400000);
+      if (daysSince <= 7) {
+        continuityContext = `
+【上次对话连接】
+距离上次：${daysSince}天
+上次聊到：${lastBriefing.summary}
+${daysSince <= 3 ? `可以自然提起："${userName}，又见面了～上次我们聊到${lastBriefing.summary}，这几天怎么样？"` : ''}`;
+      }
+    }
+
     // 构建实时产品信息
     const packagesInfo = packagesRes.data?.map(p => 
       `- ${p.package_name}：¥${p.price}，${p.ai_quota}点对话额度，${p.duration_days}天有效期${p.description ? `，${p.description}` : ''}`
@@ -167,12 +188,52 @@ ${toolsInfo}
 - 如果用户问到具体价格，请引用上述准确数据
 `;
 
+    // 对话风格指导 - 让对话更有人性和温度
+    const conversationStyleGuide = `
+
+【对话风格指导 - 必须遵守】
+
+🎯 回复简短原则：
+- 每次回复控制在 80-150 字，最多不超过 200 字
+- 一次只聚焦一个点，不要罗列多个建议
+- 宁可少说，留给用户思考空间
+
+💬 自然对话节奏：
+- 先回应用户说的内容（共情/认可/好奇）
+- 再用一个开放性问题延续对话
+- 不要一口气给完所有答案
+
+❤️ 共情优先：
+- 回复开头先接住情绪："听起来你有点..."、"这确实让人..."、"我能感受到..."
+- 使用「${userName}」增加亲切感，但不要每句话都用
+- 避免说教语气，用平等分享的口吻
+
+❓ 开放性问题规范：
+- 每次回复结尾用开放性问题引导用户思考
+- 使用"什么"、"怎么"、"什么感觉"类问题
+- ❌ 禁止封闭式问题："好吗？"、"是这样吗？"、"愿意试试吗？"
+- ✅ 推荐："这让你有什么感觉？"、"你觉得是什么让你这样想？"
+
+📝 回复结构示例：
+[共情开头] ${userName}，听起来这件事让你挺困扰的。
+[简短回应] 有时候我们在乎一个人，才会这么在意ta的反应。
+[开放问题] 你觉得这背后，你最希望从ta那里得到的是什么？
+
+⚠️ 禁止行为：
+- 不要列清单、不要分点回答、不要用数字序号
+- 不要一次问多个问题
+- 不要在没有先共情的情况下就给建议
+- 不要使用"我建议你..."、"你应该..."这样的说教语句
+- 不要主动推销产品，除非用户明确需要
+`;
+
     const basePrompt = templateRes.data?.system_prompt || `你是劲老师，一位温暖的生活教练。帮助用户探索问题、找到方向。`;
     const systemPrompt = `${basePrompt}
+${conversationStyleGuide}
 
 【用户信息】
 用户名称：${userName}
-在对话中使用用户名称来增加亲切感，如"${userName}，我很高兴你来找我聊聊..."
+${continuityContext}
 
 ${memoryContext}
 ${productKnowledge}`;
