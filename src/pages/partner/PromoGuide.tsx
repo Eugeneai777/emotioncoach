@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 
 const PromoGuide = () => {
   const navigate = useNavigate();
@@ -23,6 +25,7 @@ const PromoGuide = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-lg font-semibold text-teal-800">推广指南</h1>
+          <IntroShareDialog config={introShareConfigs.promoGuide} />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 // Unified partner QR code URL generation utility
 
-const PRODUCTION_DOMAIN = 'https://eugeneai.me';
+const PRODUCTION_DOMAIN = 'https://wechat.eugenewe.net';
 
 /**
  * Check if current environment is production
@@ -8,7 +8,7 @@ const PRODUCTION_DOMAIN = 'https://eugeneai.me';
 export const isProductionEnv = (): boolean => {
   if (typeof window === 'undefined') return true;
   const host = window.location.host;
-  return host === 'eugeneai.me' || !host.includes('lovable');
+  return host === 'wechat.eugenewe.net' || !host.includes('lovable');
 };
 
 /**

@@ -270,7 +270,7 @@ serve(async (req) => {
     const remark = generateRemark(scenario);
 
     // 构建跳转URL
-    const productionUrl = Deno.env.get('VITE_PRODUCTION_URL') || 'https://eugeneai.me';
+    const productionUrl = Deno.env.get('VITE_PRODUCTION_URL') || 'https://wechat.eugenewe.net';
     let redirectUrl = `${productionUrl}/my-appointments`;
     if (scenario === 'review_invitation') {
       redirectUrl = `${productionUrl}/coach/${appointment.coach_id}?review=${appointmentId}`;

@@ -14,7 +14,7 @@ interface PosterWithCustomCopyProps {
   height?: number;
 }
 
-const PRODUCTION_DOMAIN = 'https://eugeneai.me';
+const PRODUCTION_DOMAIN = 'https://wechat.eugenewe.net';
 
 const templateGradients: Record<string, string> = {
   emotion_button: 'linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #3b82f6 100%)',

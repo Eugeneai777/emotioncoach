@@ -167,7 +167,7 @@ serve(async (req) => {
         payer_client_ip: '127.0.0.1', // 实际项目中应从请求头获取
         h5_info: {
           type: 'Wap',
-          wap_url: 'https://eugeneai.me',
+          wap_url: 'https://wechat.eugenewe.net',
           wap_name: '有劲AI'
         }
       };
