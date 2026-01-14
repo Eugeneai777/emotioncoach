@@ -54,6 +54,8 @@ export function AssessmentPayDialog({
   const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
   const [userOpenId, setUserOpenId] = useState<string | undefined>();
   const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
+  // Bridge 预热状态：null=未检测, true=就绪, false=超时未就绪
+  const [bridgeReady, setBridgeReady] = useState<boolean | null>(null);
   
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const openIdFetchedRef = useRef<boolean>(false);
@@ -66,6 +68,61 @@ export function AssessmentPayDialog({
   // 小程序或微信浏览器内，有 openId 时可以使用 JSAPI 支付
   const canUseJsapi = (isMiniProgram || isWechat) && !!userOpenId;
   const shouldWaitForOpenId = (isMiniProgram || isWechat) && userId;
+
+  // 优化后的 WeixinJSBridge 等待逻辑：延长超时到 3 秒，增加事件监听
+  const waitForWeixinJSBridge = useCallback((timeout = 3000): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (typeof window.WeixinJSBridge !== 'undefined') {
+        console.log('[Payment] WeixinJSBridge already available');
+        return resolve(true);
+      }
+
+      let done = false;
+      const onReady = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        document.removeEventListener('WeixinJSBridgeReady', onReady);
+        document.removeEventListener('onWeixinJSBridgeReady', onReady as EventListener);
+        console.log('[Payment] WeixinJSBridge ready via event');
+        resolve(typeof window.WeixinJSBridge !== 'undefined');
+      };
+
+      const timer = window.setTimeout(() => {
+        if (done) return;
+        done = true;
+        document.removeEventListener('WeixinJSBridgeReady', onReady);
+        document.removeEventListener('onWeixinJSBridgeReady', onReady as EventListener);
+        console.log('[Payment] WeixinJSBridge wait timeout after', timeout, 'ms, available:', typeof window.WeixinJSBridge !== 'undefined');
+        // 超时后再次检查，可能已经加载但事件未触发
+        resolve(typeof window.WeixinJSBridge !== 'undefined');
+      }, timeout);
+
+      document.addEventListener('WeixinJSBridgeReady', onReady, false);
+      document.addEventListener('onWeixinJSBridgeReady', onReady as EventListener, false);
+    });
+  }, []);
+
+  // Bridge 预热：Dialog 打开时提前等待 WeixinJSBridge，与 openId 获取并行
+  useEffect(() => {
+    if (!open) {
+      setBridgeReady(null);
+      return;
+    }
+    if (!isWechat && !isMiniProgram) {
+      setBridgeReady(false); // 非微信环境不需要 Bridge
+      return;
+    }
+
+    const preheatBridge = async () => {
+      console.log('[Payment] Preheating WeixinJSBridge...');
+      const ready = await waitForWeixinJSBridge(3000);
+      console.log('[Payment] Bridge preheat result:', ready);
+      setBridgeReady(ready);
+    };
+
+    preheatBridge();
+  }, [open, isWechat, isMiniProgram, waitForWeixinJSBridge]);
 
   // 获取用户 openId（用于 JSAPI 支付）
   useEffect(() => {
@@ -216,26 +273,15 @@ export function AssessmentPayDialog({
 
          selectedPayType = hasMpBridge ? 'jsapi' : 'native';
        } else if (isWechat && !!userOpenId) {
-         // 微信浏览器：检测 WeixinJSBridge
-         const bridgeReady = await new Promise<boolean>((resolve) => {
-           if (typeof window.WeixinJSBridge !== 'undefined') return resolve(true);
-           let done = false;
-           const onReady = () => {
-             if (done) return;
-             done = true;
-             clearTimeout(timer);
-             resolve(typeof window.WeixinJSBridge !== 'undefined');
-           };
-           const timer = window.setTimeout(() => {
-             if (done) return;
-             done = true;
-             resolve(false);
-           }, 1200);
-           document.addEventListener('WeixinJSBridgeReady', onReady, false);
-           document.addEventListener('onWeixinJSBridgeReady', onReady as any, false);
-         });
-
-         selectedPayType = bridgeReady ? 'jsapi' : 'native';
+         // 微信浏览器：使用预热的 bridgeReady 状态（已在 useEffect 中等待 3 秒）
+         console.log('[Payment] WeChat browser, bridgeReady:', bridgeReady);
+         if (bridgeReady) {
+           selectedPayType = 'jsapi';
+         } else {
+           console.log('[Payment] Bridge not ready after preheat, falling back to native');
+           toast.info('微信支付能力加载中，已切换为扫码支付');
+           selectedPayType = 'native';
+         }
        } else if (isMobile && !isWechat) {
          selectedPayType = 'h5';
        } else {
@@ -270,11 +316,46 @@ export function AssessmentPayDialog({
           // 小程序 WebView / 微信浏览器：统一使用 WeixinJSBridge.invoke('getBrandWCPayRequest')
           try {
             await invokeJsapiPay(data.jsapiPayParams);
-            console.log('JSAPI pay invoked');
+            console.log('[Payment] JSAPI pay invoked successfully');
           } catch (jsapiError: any) {
-            console.log('JSAPI pay error:', jsapiError?.message);
-            if (jsapiError?.message !== '用户取消支付') {
-              toast.error(jsapiError?.message || '支付失败');
+            console.log('[Payment] JSAPI pay error:', jsapiError?.message);
+            if (jsapiError?.message === '用户取消支付') {
+              // 用户取消，不做额外处理
+            } else {
+              // JSAPI 失败，降级到扫码模式
+              console.log('[Payment] JSAPI failed, falling back to native payment');
+              toast.info('支付弹窗调起失败，已切换为扫码支付');
+              
+              // 使用已有的订单号，生成二维码供用户扫码
+              try {
+                const { data: nativeData, error: nativeError } = await supabase.functions.invoke('create-wechat-order', {
+                  body: {
+                    packageKey: 'wealth_block_assessment',
+                    packageName: '财富卡点测评',
+                    amount: 9.9,
+                    userId: userId || 'guest',
+                    payType: 'native',
+                    existingOrderNo: data.orderNo, // 复用已有订单号
+                  },
+                });
+                
+                if (nativeError || !nativeData?.success) {
+                  throw new Error(nativeData?.error || '降级失败');
+                }
+                
+                const qrDataUrl = await QRCode.toDataURL(nativeData.qrCodeUrl || nativeData.payUrl, {
+                  width: 200,
+                  margin: 2,
+                  color: { dark: '#000000', light: '#ffffff' },
+                });
+                setQrCodeDataUrl(qrDataUrl);
+                setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
+                setPayType('native');
+                setStatus('pending');
+              } catch (fallbackError: any) {
+                console.error('[Payment] Fallback to native payment failed:', fallbackError);
+                toast.error('支付初始化失败，请刷新重试');
+              }
             }
           }
       } else if ((data.payType || selectedPayType) === 'h5' && (data.h5Url || data.payUrl)) {
@@ -412,11 +493,14 @@ export function AssessmentPayDialog({
   // 初始化 - 等待 openId 解析完成后再创建订单
   useEffect(() => {
     if (shouldWaitForOpenId && !openIdResolved) return;
+    
+    // 微信环境下：还需等待 Bridge 预热完成
+    if ((isWechat || isMiniProgram) && bridgeReady === null) return;
 
     if (open && status === 'idle') {
       createOrder();
     }
-  }, [open, status, shouldWaitForOpenId, openIdResolved]);
+  }, [open, status, shouldWaitForOpenId, openIdResolved, bridgeReady, isWechat, isMiniProgram]);
 
   // 清理
   useEffect(() => {
@@ -437,6 +521,7 @@ export function AssessmentPayDialog({
       openIdFetchedRef.current = false;
       setUserOpenId(undefined);
       setOpenIdResolved(false);
+      setBridgeReady(null); // 重置 Bridge 状态
     }
   }, [open]);
 
