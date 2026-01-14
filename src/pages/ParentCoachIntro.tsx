@@ -5,7 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoachTemplate } from "@/hooks/useCoachTemplates";
-import { ArrowLeft, Heart, Eye, Brain, Zap, Users, MessageCircle, Target, Sparkles, BookOpen, Calendar } from "lucide-react";
+import { ArrowLeft, Heart, Eye, Brain, Zap, Users, MessageCircle, Target, Sparkles, BookOpen, Calendar, Share2 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 
 const ParentCoachIntro = () => {
   const navigate = useNavigate();
@@ -139,7 +141,8 @@ const ParentCoachIntro = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="ml-2 font-medium">亲子情绪教练介绍</h1>
+          <h1 className="ml-2 font-medium flex-1">亲子情绪教练介绍</h1>
+          <IntroShareDialog config={introShareConfigs.parentCoach} />
         </div>
       </header>
 

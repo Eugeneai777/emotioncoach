@@ -2,7 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Sparkles, ArrowDown } from "lucide-react";
+import { ArrowLeft, Sparkles, ArrowDown, Share2 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import {
   Accordion,
@@ -219,15 +221,18 @@ const StoryCoachIntro = () => {
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-yellow-300/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
         
         <div className="container mx-auto px-4 py-16 relative z-10">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/story-coach")}
-            className="mb-6 hover:scale-105 transition-transform"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            返回故事教练
-          </Button>
+          <div className="flex items-center justify-between mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/story-coach")}
+              className="hover:scale-105 transition-transform"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              返回故事教练
+            </Button>
+            <IntroShareDialog config={introShareConfigs.storyCoach} />
+          </div>
 
           <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-in">
             <div className="text-7xl md:text-8xl mb-6 animate-bounce">🌟</div>

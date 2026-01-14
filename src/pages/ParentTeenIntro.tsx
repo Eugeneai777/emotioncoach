@@ -18,8 +18,11 @@ import {
   ChevronUp,
   Link2,
   Eye,
-  EyeOff
+  EyeOff,
+  Share2
 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 import { useToast } from "@/hooks/use-toast";
 import { 
   INVITATION_SCRIPTS, 
@@ -50,7 +53,7 @@ export default function ParentTeenIntro() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-lg font-semibold">双轨模式介绍</h1>
-          <div className="w-10" />
+          <IntroShareDialog config={introShareConfigs.parentTeen} />
         </div>
       </header>
 

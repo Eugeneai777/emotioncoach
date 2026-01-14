@@ -2,7 +2,9 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
-import { ArrowLeft, ArrowRight, Clock, Lock, GraduationCap, Target, MessageCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, Lock, GraduationCap, Target, MessageCircle, Sparkles, Share2 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -94,7 +96,7 @@ const CoachSpaceIntro = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h1 className="font-semibold text-slate-800">教练空间介绍</h1>
-          <div className="w-9" />
+          <IntroShareDialog config={introShareConfigs.coachSpace} />
         </div>
       </header>
 

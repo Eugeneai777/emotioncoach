@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Check, TrendingUp, Users, Gift, Clock } from "lucide-react";
+import { ArrowLeft, Check, TrendingUp, Users, Gift, Clock, Share2 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 import { youjinPartnerLevels } from "@/config/partnerLevels";
 import { toast } from "sonner";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
@@ -40,14 +42,17 @@ export default function YoujinPartnerIntro() {
       <div className="container max-w-5xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div className="space-y-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/partner/type")}
-            className="gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            返回选择
-          </Button>
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/partner/type")}
+              className="gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              返回选择
+            </Button>
+            <IntroShareDialog config={introShareConfigs.youjinPartner} />
+          </div>
           
           <div className="text-center space-y-2">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
