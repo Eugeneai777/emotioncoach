@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Volume2, Check, Copy, MessageCircle } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, Check, Copy, MessageCircle, Download, Cloud, CloudOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import MeditationVideoBackground, { VideoBackgroundType } from './MeditationVideoBackground';
+import { useAudioCache } from '@/hooks/useAudioCache';
 
 interface WealthMeditationPlayerProps {
   dayNumber: number;
@@ -53,8 +54,50 @@ export function WealthMeditationPlayer({
   const [hasListened, setHasListened] = useState(false);
   const videoBackground: VideoBackgroundType = 'water'; // 默认水面背景
   const [copied, setCopied] = useState(false);
+  const [cachedAudioUrl, setCachedAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  
+  // Audio cache hook
+  const { 
+    isSupported: isCacheSupported, 
+    isCached, 
+    cacheAudio, 
+    getCachedAudio, 
+    isLoading: isCaching 
+  } = useAudioCache();
+  
+  const isAudioCached = isCached(audioUrl);
 
+  // Load cached audio on mount
+  useEffect(() => {
+    const loadCachedAudio = async () => {
+      if (isAudioCached) {
+        const blobUrl = await getCachedAudio(audioUrl);
+        if (blobUrl) {
+          setCachedAudioUrl(blobUrl);
+        }
+      }
+    };
+    loadCachedAudio();
+    
+    // Cleanup blob URL on unmount
+    return () => {
+      if (cachedAudioUrl) {
+        URL.revokeObjectURL(cachedAudioUrl);
+      }
+    };
+  }, [audioUrl, isAudioCached, getCachedAudio]);
+
+  // Handle cache button click
+  const handleCacheAudio = async () => {
+    const success = await cacheAudio(audioUrl);
+    if (success) {
+      const blobUrl = await getCachedAudio(audioUrl);
+      if (blobUrl) {
+        setCachedAudioUrl(blobUrl);
+      }
+    }
+  };
   // 当从已完成状态切换回播放器时，重置状态
   useEffect(() => {
     if (!isCompleted) {
@@ -235,7 +278,7 @@ export function WealthMeditationPlayer({
       <CardContent className="p-0">
         <audio 
           ref={audioRef} 
-          src={encodeURI(audioUrl)} 
+          src={cachedAudioUrl || encodeURI(audioUrl)} 
           preload="metadata"
           onError={() => {
             const code = audioRef.current?.error?.code;
@@ -247,17 +290,52 @@ export function WealthMeditationPlayer({
         
         {/* Header */}
         <div className="p-6 pb-4">
-          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm mb-2">
-            <span className="text-2xl">🧘</span>
-            {isCycleMode ? (
-              <span>
-                循环冥想 · 第{cycleWeek}周 Day {dayNumber}
-                <span className="ml-2 text-xs bg-amber-100 dark:bg-amber-900/50 px-2 py-0.5 rounded-full">
-                  第{listenCount}次聆听
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm">
+              <span className="text-2xl">🧘</span>
+              {isCycleMode ? (
+                <span>
+                  循环冥想 · 第{cycleWeek}周 Day {dayNumber}
+                  <span className="ml-2 text-xs bg-amber-100 dark:bg-amber-900/50 px-2 py-0.5 rounded-full">
+                    第{listenCount}次聆听
+                  </span>
                 </span>
-              </span>
-            ) : (
-              <span>今日冥想 · Day {dayNumber}</span>
+              ) : (
+                <span>今日冥想 · Day {dayNumber}</span>
+              )}
+            </div>
+            
+            {/* Offline Cache Button */}
+            {isCacheSupported && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCacheAudio}
+                disabled={isCaching || isAudioCached}
+                className={cn(
+                  "h-7 px-2 text-xs gap-1",
+                  isAudioCached 
+                    ? "text-green-600 hover:text-green-700" 
+                    : "text-amber-600 hover:text-amber-700"
+                )}
+              >
+                {isCaching ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    缓存中...
+                  </>
+                ) : isAudioCached ? (
+                  <>
+                    <CloudOff className="w-3 h-3" />
+                    已离线
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3 h-3" />
+                    离线缓存
+                  </>
+                )}
+              </Button>
             )}
           </div>
           <h3 className="text-xl font-semibold text-amber-900 dark:text-amber-100">{title}</h3>
