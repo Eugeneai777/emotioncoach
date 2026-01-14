@@ -673,6 +673,13 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
           {/* 二维码/H5/JSAPI支付区域 */}
           <div className="flex items-center justify-center border rounded-lg bg-white w-52 h-52">
+            {/* 等待 openId 或创建订单中 */}
+            {(status === 'idle' && shouldWaitForOpenId && !openIdResolved) && (
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="text-sm text-muted-foreground">正在初始化...</span>
+              </div>
+            )}
             {status === 'loading' && (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

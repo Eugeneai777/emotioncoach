@@ -550,7 +550,11 @@ export function AssessmentPayDialog({
           {(status === 'idle' || status === 'creating') && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-              <p className="text-muted-foreground">正在创建订单...</p>
+              <p className="text-muted-foreground">
+                {status === 'idle' && shouldWaitForOpenId && !openIdResolved 
+                  ? '正在初始化...' 
+                  : '正在创建订单...'}
+              </p>
             </div>
           )}
 
