@@ -127,8 +127,6 @@ export function AssessmentPayDialog({
       document.addEventListener('onWeixinJSBridgeReady', onReady as EventListener, false);
     });
   }, []);
-
-
   // 触发静默授权获取 openId（用于未登录用户）
   const triggerSilentAuth = useCallback(async () => {
     if (silentAuthTriggeredRef.current) return;
@@ -137,10 +135,13 @@ export function AssessmentPayDialog({
 
     try {
       console.log('[AssessmentPay] Triggering silent auth for openId');
-      const currentUrl = window.location.href;
-      
+
+      // 仅用于“测评页”恢复弹窗：授权回来后自动再打开支付弹窗
+      const resumeUrl = new URL(window.location.href);
+      resumeUrl.searchParams.set('assessment_pay_resume', '1');
+
       const { data, error } = await supabase.functions.invoke('get-wechat-payment-openid', {
-        body: { redirectUri: currentUrl },
+        body: { redirectUri: resumeUrl.toString(), callbackMode: 'pay_entry' },
       });
 
       if (error || !data?.authUrl) {
