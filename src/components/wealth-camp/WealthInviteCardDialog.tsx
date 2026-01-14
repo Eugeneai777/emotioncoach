@@ -639,7 +639,55 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="achievement" className="mt-3">
+          <TabsContent value="achievement" className="mt-3 space-y-2">
+            {/* Style & Path Selectors (outside card for cleaner screenshot) */}
+            <div className="flex flex-wrap gap-1.5 px-1">
+              {(['dark', 'gradient', 'minimal', 'neon'] as const).map((style) => (
+                <button
+                  key={style}
+                  onClick={() => setAchievementStyle(style)}
+                  className={`px-2 py-1 rounded-md text-[10px] transition-all ${
+                    achievementStyle === style 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                  }`}
+                >
+                  {style === 'dark' ? '深邃' : style === 'gradient' ? '渐变' : style === 'minimal' ? '简约' : '霓虹'}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1.5 px-1">
+              <button
+                onClick={() => setAchievementPath(null)}
+                className={`px-2 py-1 rounded-md text-[10px] transition-all ${
+                  !achievementPath 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                }`}
+              >
+                全部
+              </button>
+              {[
+                { key: 'milestone', icon: '🎯', name: '里程碑' },
+                { key: 'streak', icon: '🔥', name: '坚持' },
+                { key: 'growth', icon: '🌟', name: '成长' },
+                { key: 'social', icon: '💫', name: '社交' },
+              ].map((path) => (
+                <button
+                  key={path.key}
+                  onClick={() => setAchievementPath(path.key)}
+                  className={`px-2 py-1 rounded-md text-[10px] transition-all flex items-center gap-0.5 ${
+                    achievementPath === path.key 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                  }`}
+                >
+                  {path.icon} {path.name}
+                </button>
+              ))}
+            </div>
+            
+            {/* Card Preview */}
             <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
               <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
                 <AchievementShareCard 
@@ -648,10 +696,10 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                   displayName={userInfo.displayName}
                   selectedPath={achievementPath}
                   onPathChange={setAchievementPath}
-                  showPathSelector={true}
+                  showPathSelector={false}
                   stylePreset={achievementStyle}
                   onStyleChange={setAchievementStyle}
-                  showStyleSelector={true}
+                  showStyleSelector={false}
                   partnerInfo={partnerInfo || undefined}
                 />
               </div>
