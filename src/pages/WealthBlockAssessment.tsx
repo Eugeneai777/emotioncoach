@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { usePageOG } from "@/hooks/usePageOG";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ClipboardList, History, TrendingUp, Share2, Sparkles, ChevronRight, Home, Loader2 } from "lucide-react";
+import { ArrowLeft, ClipboardList, History, TrendingUp, Share2, Sparkles, ChevronRight, Home } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +22,6 @@ import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
-import { useWechatShare, createShareConfig } from "@/hooks/useWechatShare";
 
 export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
@@ -43,8 +42,6 @@ export default function WealthBlockAssessmentPage() {
   
   // 支付相关状态
   const [showPayDialog, setShowPayDialog] = useState(false);
-  // 授权回调处理中状态
-  const [isProcessingAuthCallback, setIsProcessingAuthCallback] = useState(false);
   
   // 历史记录
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
@@ -70,20 +67,15 @@ export default function WealthBlockAssessmentPage() {
       const paymentOpenId = url.searchParams.get('payment_openid');
       const paymentTokenHash = url.searchParams.get('payment_token_hash');
       const paymentAuthError = url.searchParams.has('payment_auth_error');
-      const paymentAuthTimeout = url.searchParams.has('payment_auth_timeout');
       const payFlow = url.searchParams.get('pay_flow');
 
       // 只处理测评页的支付回调（或通用支付回调）
       if (!shouldResume) return;
 
-      // 设置处理中状态
-      setIsProcessingAuthCallback(true);
-
       console.log('[WealthBlock] Processing payment auth return:', {
         paymentOpenId: !!paymentOpenId,
         paymentTokenHash: !!paymentTokenHash,
         paymentAuthError,
-        paymentAuthTimeout,
         payFlow,
       });
 
@@ -92,22 +84,18 @@ export default function WealthBlockAssessmentPage() {
       url.searchParams.delete('payment_openid');
       url.searchParams.delete('payment_token_hash');
       url.searchParams.delete('payment_auth_error');
-      url.searchParams.delete('payment_auth_timeout');
       url.searchParams.delete('pay_flow');
       url.searchParams.delete('is_new_user');
       window.history.replaceState({}, '', url.toString());
-
-      // 清理防抖标记
-      sessionStorage.removeItem('pay_auth_in_progress');
 
       // 如果有 openId，缓存到 sessionStorage（供支付弹窗使用）
       if (paymentOpenId) {
         sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
       }
 
-      // 如果授权超时，显示提示
-      if (paymentAuthTimeout) {
-        toast.error('授权超时，请重新尝试');
+      // 如果授权失败，清理防抖标记以允许重试
+      if (paymentAuthError) {
+        sessionStorage.removeItem('pay_auth_in_progress');
       }
 
       // 如果有 tokenHash，先自动登录，等待登录状态更新后再打开弹窗
@@ -122,46 +110,35 @@ export default function WealthBlockAssessmentPage() {
           if (error) {
             console.error('[WealthBlock] Auto-login failed:', error);
             // 登录失败也继续打开弹窗（用扫码支付兜底）
-            setIsProcessingAuthCallback(false);
-            setTimeout(() => setShowPayDialog(true), 100);
+            setShowPayDialog(true);
           } else if (data.session?.user) {
             // verifyOtp 返回了 session，说明登录已成功
             // 短暂延迟让 React 状态同步，然后立即打开弹窗
             console.log('[WealthBlock] Auto-login success, user:', data.session.user.id);
-            setIsProcessingAuthCallback(false);
-            setTimeout(() => setShowPayDialog(true), 200);
+            setTimeout(() => setShowPayDialog(true), 100);
           } else {
             // 没有 session，等待 auth 状态更新
             console.log('[WealthBlock] Waiting for auth state update...');
-            let opened = false;
             const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-              if (!opened && event === 'SIGNED_IN' && session?.user) {
+              if (event === 'SIGNED_IN' && session?.user) {
                 console.log('[WealthBlock] Auth state updated, opening pay dialog');
-                opened = true;
-                setIsProcessingAuthCallback(false);
                 setShowPayDialog(true);
                 subscription.unsubscribe();
               }
             });
-            // 超时保护：2秒后无论如何都打开弹窗
+            // 超时保护：1秒后无论如何都打开弹窗
             setTimeout(() => {
-              if (!opened) {
-                opened = true;
-                subscription.unsubscribe();
-                setIsProcessingAuthCallback(false);
-                setShowPayDialog(true);
-              }
-            }, 2000);
+              subscription.unsubscribe();
+              setShowPayDialog(true);
+            }, 1000);
           }
         } catch (err) {
           console.error('[WealthBlock] Auto-login exception:', err);
-          setIsProcessingAuthCallback(false);
-          setTimeout(() => setShowPayDialog(true), 100);
+          setShowPayDialog(true);
         }
       } else {
         // 没有 tokenHash，直接打开弹窗
-        setIsProcessingAuthCallback(false);
-        setTimeout(() => setShowPayDialog(true), 100);
+        setShowPayDialog(true);
       }
     };
 
@@ -410,28 +387,6 @@ export default function WealthBlockAssessmentPage() {
 
   // 使用动态 OG 配置
   const { ogConfig } = usePageOG("wealthBlock");
-
-  // 微信 JS-SDK 分享配置 - 解决微信内转发缓存问题
-  const shareConfig = useMemo(() => createShareConfig(
-    ogConfig.ogTitle,
-    ogConfig.description,
-    "/wealth-block",
-    ogConfig.image
-  ), [ogConfig.ogTitle, ogConfig.description, ogConfig.image]);
-  
-  useWechatShare(shareConfig);
-
-  // 如果正在处理授权回调，显示加载状态
-  if (isProcessingAuthCallback) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 text-amber-500 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">正在处理登录...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">

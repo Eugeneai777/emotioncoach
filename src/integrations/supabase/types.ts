@@ -848,30 +848,6 @@ export type Database = {
           },
         ]
       }
-      cache_store: {
-        Row: {
-          created_at: string | null
-          expires_at: string
-          key: string
-          updated_at: string | null
-          value: string
-        }
-        Insert: {
-          created_at?: string | null
-          expires_at: string
-          key: string
-          updated_at?: string | null
-          value: string
-        }
-        Update: {
-          created_at?: string | null
-          expires_at?: string
-          key?: string
-          updated_at?: string | null
-          value?: string
-        }
-        Relationships: []
-      }
       camp_coach_assignments: {
         Row: {
           assigned_at: string | null

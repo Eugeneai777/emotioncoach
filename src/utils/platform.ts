@@ -7,7 +7,6 @@ declare global {
   interface Window {
     __wxjs_environment?: string;
     wx?: {
-      // 小程序 API
       miniProgram?: {
         getEnv: (callback: (res: { miniprogram: boolean }) => void) => void;
         postMessage: (options: { data: any }) => void;
@@ -48,30 +47,6 @@ declare global {
       env?: {
         USER_DATA_PATH: string;
       };
-      // JS-SDK 分享 API
-      config?: (options: {
-        debug?: boolean;
-        appId: string;
-        timestamp: number;
-        nonceStr: string;
-        signature: string;
-        jsApiList: string[];
-      }) => void;
-      ready?: (callback: () => void) => void;
-      error?: (callback: (res: { errMsg: string }) => void) => void;
-      updateAppMessageShareData?: (options: {
-        title: string;
-        desc: string;
-        link: string;
-        imgUrl: string;
-        success?: () => void;
-      }) => void;
-      updateTimelineShareData?: (options: {
-        title: string;
-        link: string;
-        imgUrl: string;
-        success?: () => void;
-      }) => void;
     };
   }
 }
