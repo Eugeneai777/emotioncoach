@@ -9,7 +9,9 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from "@/components/ui/accordion";
-import { ArrowLeft, ArrowRight, Sparkles, MessageCircle, Brain, BookOpen, TrendingUp, Check, X, Zap, Heart } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, MessageCircle, Brain, BookOpen, TrendingUp, Check, X, Zap, Heart, Share2 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 
 const VibrantLifeIntro = () => {
   const navigate = useNavigate();
@@ -202,7 +204,7 @@ const VibrantLifeIntro = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="font-semibold text-teal-800">有劲AI介绍</h1>
-          <div className="w-10" />
+          <IntroShareDialog config={introShareConfigs.vibrantLife} />
         </div>
       </div>
 

@@ -16,7 +16,11 @@ import {
   TrendingUp,
   CheckCircle2,
   Sparkles,
+  ArrowLeft,
+  Share2,
 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 import React from "react";
 
 const CommunicationCoachIntro = () => {
@@ -180,6 +184,16 @@ const CommunicationCoachIntro = () => {
       <section className="relative overflow-hidden">
         {/* 渐变背景 */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-indigo-50 to-violet-100 opacity-60"></div>
+        
+        {/* Header with share button */}
+        <div className="container mx-auto px-4 pt-4 relative z-20">
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <IntroShareDialog config={introShareConfigs.communicationCoach} />
+          </div>
+        </div>
         
         <div className="container mx-auto px-4 py-20 md:py-28 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-6 animate-fade-in">

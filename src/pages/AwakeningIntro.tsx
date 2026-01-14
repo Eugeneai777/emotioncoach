@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ChevronDown, ChevronUp, Sparkles, ArrowRight, Layers } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Sparkles, ArrowRight, Layers, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
 // 六大觉察配置
@@ -113,7 +115,7 @@ const AwakeningIntro: React.FC = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-lg font-semibold">六大觉察入口</h1>
-            <div className="w-10" />
+            <IntroShareDialog config={introShareConfigs.awakening} />
           </div>
         </header>
 

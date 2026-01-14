@@ -1,8 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Share2 } from "lucide-react";
 import { tools, categories, getToolsByCategory, getToolCount, getCategoryCount } from "@/config/energyStudioTools";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 
 const EnergyStudioIntro = () => {
   const navigate = useNavigate();
@@ -88,15 +90,18 @@ const EnergyStudioIntro = () => {
                 有劲生活馆使用指南
               </h1>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/energy-studio")}
-              className="gap-2"
-            >
-              进入生活馆
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <IntroShareDialog config={introShareConfigs.energyStudio} />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/energy-studio")}
+                className="gap-2"
+              >
+                进入生活馆
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>

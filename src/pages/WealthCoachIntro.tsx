@@ -6,8 +6,10 @@ import { Card } from "@/components/ui/card";
 import { 
   ArrowLeft, Activity, Heart, Brain, User, Network, Sparkles, 
   CheckCircle2, ArrowRight, ClipboardCheck, Tent, Handshake, 
-  ChevronRight, ChevronDown, Layers, Home
+  ChevronRight, ChevronDown, Layers, Home, Share2
 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -215,6 +217,7 @@ const WealthCoachIntro = () => {
       <PageHeader 
         title="财富教练"
         className="bg-white/80 dark:bg-background/80 border-amber-100/50 dark:border-border"
+        rightActions={<IntroShareDialog config={introShareConfigs.wealthCoach} />}
       />
 
       {/* Hero Section - 更简洁 */}

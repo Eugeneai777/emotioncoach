@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, TrendingUp, Users, DollarSign, Gift, CheckCircle, HelpCircle, Sparkles, ShoppingCart } from "lucide-react";
+import { ArrowLeft, TrendingUp, Users, DollarSign, Gift, CheckCircle, HelpCircle, Sparkles, ShoppingCart, Share2 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { toast } from "sonner";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
@@ -78,7 +80,7 @@ const PartnerIntro = () => {
               </h1>
               <p className="text-sm text-muted-foreground mt-1">开启你的情绪觉醒事业之旅</p>
             </div>
-            <div className="w-20" />
+            <IntroShareDialog config={introShareConfigs.partnerIntro} />
           </div>
         </div>
       </header>
