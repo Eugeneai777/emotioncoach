@@ -111,10 +111,14 @@ export default function WealthBlockAssessmentPage() {
             console.error('[WealthBlock] Auto-login failed:', error);
             // 登录失败也继续打开弹窗（用扫码支付兜底）
             setShowPayDialog(true);
+          } else if (data.session?.user) {
+            // verifyOtp 返回了 session，说明登录已成功
+            // 短暂延迟让 React 状态同步，然后立即打开弹窗
+            console.log('[WealthBlock] Auto-login success, user:', data.session.user.id);
+            setTimeout(() => setShowPayDialog(true), 100);
           } else {
-            console.log('[WealthBlock] Auto-login success:', data.user?.id);
-            // 登录成功：等待 auth 状态更新后再打开弹窗
-            // 使用 onAuthStateChange 确保状态同步
+            // 没有 session，等待 auth 状态更新
+            console.log('[WealthBlock] Waiting for auth state update...');
             const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
               if (event === 'SIGNED_IN' && session?.user) {
                 console.log('[WealthBlock] Auth state updated, opening pay dialog');
@@ -122,11 +126,11 @@ export default function WealthBlockAssessmentPage() {
                 subscription.unsubscribe();
               }
             });
-            // 超时保护：3秒后无论如何都打开弹窗
+            // 超时保护：1秒后无论如何都打开弹窗
             setTimeout(() => {
               subscription.unsubscribe();
               setShowPayDialog(true);
-            }, 3000);
+            }, 1000);
           }
         } catch (err) {
           console.error('[WealthBlock] Auto-login exception:', err);
