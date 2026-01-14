@@ -534,90 +534,90 @@ export function QuickRegisterStep({
 
   // 非微信环境 - 支持扫码注册、邮箱注册或登录
   return (
-    <div className="space-y-4">
-      <div className="text-center space-y-2">
-        <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center">
-          <CheckCircle className="w-10 h-10 text-white" />
+    <div className="space-y-3 sm:space-y-4 pb-2">
+      <div className="text-center space-y-1.5">
+        <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center">
+          <CheckCircle className="w-7 h-7 sm:w-10 sm:h-10 text-white" />
         </div>
-        <h3 className="text-lg font-semibold">支付成功！</h3>
-        <p className="text-sm text-muted-foreground">
+        <h3 className="text-base sm:text-lg font-semibold">支付成功！</h3>
+        <p className="text-xs sm:text-sm text-muted-foreground">
           {registerMode === 'login' ? '登录已有账号后即可开始使用' : '完成注册后即可开始使用'}
         </p>
       </div>
 
-      {/* 注册方式切换 */}
-      <div className="flex rounded-lg border p-1 bg-muted/30">
+      {/* 注册方式切换 - 移动端紧凑布局 */}
+      <div className="flex rounded-lg border p-0.5 sm:p-1 bg-muted/30">
         <button
           onClick={() => setRegisterMode('wechat')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-sm font-medium transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 px-1 sm:px-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
             registerMode === 'wechat'
               ? 'bg-background shadow-sm text-foreground'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <QrCode className="w-4 h-4" />
+          <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" />
           微信扫码
         </button>
         <button
           onClick={() => setRegisterMode('email')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-sm font-medium transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 px-1 sm:px-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
             registerMode === 'email'
               ? 'bg-background shadow-sm text-foreground'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Mail className="w-4 h-4" />
+          <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" />
           邮箱注册
         </button>
         <button
           onClick={() => setRegisterMode('login')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-sm font-medium transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 px-1 sm:px-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
             registerMode === 'login'
               ? 'bg-background shadow-sm text-foreground'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <LogIn className="w-4 h-4" />
+          <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" />
           已有账号
         </button>
       </div>
 
       {/* 微信扫码注册 */}
       {registerMode === 'wechat' && (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div className="flex flex-col items-center">
             {qrStatus === 'loading' || isGeneratingQr ? (
-              <div className="w-48 h-48 flex items-center justify-center bg-muted/30 rounded-lg border">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              <div className="w-36 h-36 sm:w-48 sm:h-48 flex items-center justify-center bg-muted/30 rounded-lg border">
+                <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-muted-foreground" />
               </div>
             ) : qrStatus === 'expired' ? (
-              <div className="w-48 h-48 flex flex-col items-center justify-center bg-muted/30 rounded-lg border gap-3">
-                <p className="text-sm text-muted-foreground">二维码已过期</p>
+              <div className="w-36 h-36 sm:w-48 sm:h-48 flex flex-col items-center justify-center bg-muted/30 rounded-lg border gap-2 sm:gap-3">
+                <p className="text-xs sm:text-sm text-muted-foreground">二维码已过期</p>
                 <Button size="sm" variant="outline" onClick={generateQrCode}>
-                  <RefreshCw className="w-4 h-4 mr-1" />
+                  <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
                   刷新
                 </Button>
               </div>
             ) : qrStatus === 'scanned' ? (
-              <div className="w-48 h-48 flex flex-col items-center justify-center bg-green-50 rounded-lg border border-green-200 gap-2">
-                <CheckCircle className="w-10 h-10 text-green-500" />
-                <p className="text-sm text-green-600 font-medium">已扫码</p>
-                <p className="text-xs text-green-500">请在微信中确认</p>
+              <div className="w-36 h-36 sm:w-48 sm:h-48 flex flex-col items-center justify-center bg-green-50 rounded-lg border border-green-200 gap-1.5 sm:gap-2">
+                <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
+                <p className="text-xs sm:text-sm text-green-600 font-medium">已扫码</p>
+                <p className="text-[10px] sm:text-xs text-green-500">请在微信中确认</p>
               </div>
             ) : qrStatus === 'confirmed' ? (
-              <div className="w-48 h-48 flex flex-col items-center justify-center bg-green-50 rounded-lg border border-green-200 gap-2">
-                <Loader2 className="w-8 h-8 animate-spin text-green-500" />
-                <p className="text-sm text-green-600">正在完成注册...</p>
+              <div className="w-36 h-36 sm:w-48 sm:h-48 flex flex-col items-center justify-center bg-green-50 rounded-lg border border-green-200 gap-1.5 sm:gap-2">
+                <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-green-500" />
+                <p className="text-xs sm:text-sm text-green-600">正在完成注册...</p>
               </div>
             ) : (
-              <div className="bg-white p-2 rounded-lg border shadow-sm">
-                <img src={qrCodeUrl} alt="微信扫码注册" className="w-44 h-44" />
+              <div className="bg-white p-1.5 sm:p-2 rounded-lg border shadow-sm">
+                <img src={qrCodeUrl} alt="微信扫码注册" className="w-32 h-32 sm:w-44 sm:h-44" />
               </div>
             )}
           </div>
           
           {qrStatus === 'ready' && (
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-xs sm:text-sm text-muted-foreground">
               请使用微信扫描二维码完成注册
             </p>
           )}
@@ -641,7 +641,7 @@ export function QuickRegisterStep({
             </label>
           </div>
           
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-[10px] sm:text-xs text-muted-foreground">
             扫码关注公众号自动完成注册
           </p>
         </div>
@@ -649,20 +649,21 @@ export function QuickRegisterStep({
 
       {/* 邮箱注册 */}
       {registerMode === 'email' && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="nickname">昵称（可选）</Label>
+        <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="nickname" className="text-xs sm:text-sm">昵称（可选）</Label>
             <Input
               id="nickname"
               placeholder="输入你的昵称"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               autoComplete="nickname"
+              className="h-9 sm:h-10 text-sm"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">邮箱</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="email" className="text-xs sm:text-sm">邮箱</Label>
             <Input
               id="email"
               type="email"
@@ -670,11 +671,12 @@ export function QuickRegisterStep({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
+              className="h-9 sm:h-10 text-sm"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">密码</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="password" className="text-xs sm:text-sm">密码</Label>
             <div className="relative">
               <Input
                 id="password"
@@ -683,6 +685,7 @@ export function QuickRegisterStep({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
+                className="h-9 sm:h-10 text-sm pr-10"
               />
               <button
                 type="button"
@@ -694,8 +697,8 @@ export function QuickRegisterStep({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">确认密码</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="confirmPassword" className="text-xs sm:text-sm">确认密码</Label>
             <Input
               id="confirmPassword"
               type={showPassword ? 'text' : 'password'}
@@ -703,6 +706,7 @@ export function QuickRegisterStep({
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               autoComplete="new-password"
+              className="h-9 sm:h-10 text-sm"
             />
           </div>
 
@@ -748,9 +752,9 @@ export function QuickRegisterStep({
 
       {/* 已有账号登录 */}
       {registerMode === 'login' && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="login-email">邮箱</Label>
+        <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="login-email" className="text-xs sm:text-sm">邮箱</Label>
             <Input
               id="login-email"
               type="email"
@@ -758,11 +762,12 @@ export function QuickRegisterStep({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
+              className="h-9 sm:h-10 text-sm"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="login-password">密码</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="login-password" className="text-xs sm:text-sm">密码</Label>
             <div className="relative">
               <Input
                 id="login-password"
@@ -771,6 +776,7 @@ export function QuickRegisterStep({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
+                className="h-9 sm:h-10 text-sm pr-10"
               />
               <button
                 type="button"
@@ -785,7 +791,7 @@ export function QuickRegisterStep({
           <Button
             onClick={handleEmailLogin}
             disabled={isLoading || !email || !password}
-            className="w-full"
+            className="w-full h-9 sm:h-10 text-sm"
           >
             {isLoading ? (
               <>
