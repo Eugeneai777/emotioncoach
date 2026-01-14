@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
-import { ArrowLeft, Home, Target } from 'lucide-react';
+import { ArrowLeft, Home, Target, Share2, MessageCircle } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -857,16 +857,36 @@ ${reflection}`;
               </TabsContent>
 
               <TabsContent value="briefing" className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate('/wealth-block')}
-                    className="text-amber-600 border-amber-200 hover:bg-amber-50"
-                  >
-                    <Target className="w-4 h-4 mr-1.5" />
-                    财富测评
-                  </Button>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/wealth-block')}
+                      className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                    >
+                      <Target className="w-4 h-4 mr-1.5" />
+                      财富测评
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/coach/wealth_coach_4_questions')}
+                      className="text-violet-600 border-violet-200 hover:bg-violet-50"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-1.5" />
+                      教练对话
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowInviteDialog(true)}
+                      className="text-rose-600 border-rose-200 hover:bg-rose-50"
+                    >
+                      <Share2 className="w-4 h-4 mr-1.5" />
+                      分享邀请
+                    </Button>
+                  </div>
                   <BackfillMemoriesButton />
                 </div>
                 
