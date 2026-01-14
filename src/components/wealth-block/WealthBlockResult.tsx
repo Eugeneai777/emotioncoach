@@ -685,7 +685,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
         className="space-y-4"
       >
         <WealthInviteCardDialog
-          defaultTab="aianalysis"
+          defaultTab="value"
           trigger={
             <Button className="w-full h-14 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white shadow-lg text-base">
               <Share2 className="w-5 h-5 mr-2" />

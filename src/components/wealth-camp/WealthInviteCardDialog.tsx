@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, Image, Copy, Check, Share2, Edit3, ChevronDown, ImageIcon } from 'lucide-react';
+import { Image, Copy, Check, ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ShareImagePreview from '@/components/ui/share-image-preview';
 import html2canvas from 'html2canvas';
@@ -12,31 +12,15 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import WealthAssessmentShareCard from './WealthAssessmentShareCard';
 import WealthCampShareCard from './WealthCampShareCard';
-import WealthAwakeningShareCard from './WealthAwakeningShareCard';
-import WealthMilestoneShareCard from './WealthMilestoneShareCard';
-import GraduationShareCard from './GraduationShareCard';
-import EnhancedGrowthPosterCard from './EnhancedGrowthPosterCard';
 import AchievementShareCard from './AchievementShareCard';
-import { ShareCardStyleSelector } from './ShareCardStyleSelector';
-import { CardStylePreset } from './shareCardStyles';
-import AIAnalysisShareCard from '@/components/wealth-block/AIAnalysisShareCard';
 import AssessmentValueShareCard from '@/components/wealth-block/AssessmentValueShareCard';
 import FearAwakeningShareCard from '@/components/wealth-block/FearAwakeningShareCard';
 import BlockRevealShareCard from '@/components/wealth-block/BlockRevealShareCard';
 import TransformationValueShareCard from '@/components/wealth-block/TransformationValueShareCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
-import { useAwakeningProgress } from '@/hooks/useAwakeningProgress';
-import { useUserAchievements } from '@/hooks/useUserAchievements';
 
 interface UserInfo {
   avatarUrl?: string;
@@ -53,7 +37,7 @@ interface AwakeningData {
   newBelief?: string;
 }
 
-type CardTab = 'camp' | 'awakening' | 'milestone' | 'assessment' | 'growth' | 'aianalysis' | 'value' | 'achievement' | 'fear' | 'blindspot' | 'transform';
+type CardTab = 'camp' | 'value' | 'achievement' | 'fear' | 'blindspot' | 'transform';
 
 interface WealthInviteCardDialogProps {
   trigger?: React.ReactNode;
@@ -222,16 +206,12 @@ const getBestAwakening = (data: AwakeningData): { type: 'behavior' | 'emotion' |
 };
 
 const CARD_TABS = [
-  { id: 'aianalysis' as const, label: 'AI分析', emoji: '🤖' },
   { id: 'value' as const, label: '测评价值', emoji: '🎁' },
   { id: 'fear' as const, label: '情绪锁', emoji: '🔓' },
   { id: 'blindspot' as const, label: '盲区', emoji: '👁️' },
   { id: 'transform' as const, label: '转变', emoji: '✨' },
   { id: 'camp' as const, label: '训练营', emoji: '🏕️' },
-  { id: 'growth' as const, label: '成长海报', emoji: '📊' },
   { id: 'achievement' as const, label: '成就墙', emoji: '🏅' },
-  { id: 'awakening' as const, label: '今日觉醒', emoji: '🌟' },
-  { id: 'milestone' as const, label: '里程碑', emoji: '🏆' },
 ];
 
 const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
@@ -260,59 +240,18 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo>({});
-  const [awakeningData, setAwakeningData] = useState<AwakeningData | null>(null);
-  const [selectedAwakeningType, setSelectedAwakeningType] = useState<'behavior' | 'emotion' | 'belief'>('belief');
   const [partnerInfo, setPartnerInfo] = useState<{ partnerId: string; partnerCode: string } | null>(null);
   
   // Achievement share card settings
   const [achievementPath, setAchievementPath] = useState<string | null>(null);
   const [achievementStyle, setAchievementStyle] = useState<'dark' | 'gradient' | 'minimal' | 'neon'>('dark');
   
-  // Card customization settings
-  const [customTitle, setCustomTitle] = useState<string>('');
-  const [customSubtitle, setCustomSubtitle] = useState<string>('');
-  const [cardStyle, setCardStyle] = useState<CardStylePreset>('default');
-  const [customizeOpen, setCustomizeOpen] = useState(false);
-  
-  // Get awakening progress for graduation card
-  const { progress: awakeningProgress, currentLevel } = useAwakeningProgress();
-  const { userAchievements } = useUserAchievements();
-  
-  const assessmentCardRef = useRef<HTMLDivElement>(null);
   const campCardRef = useRef<HTMLDivElement>(null);
-  const awakeningCardRef = useRef<HTMLDivElement>(null);
-  const milestoneCardRef = useRef<HTMLDivElement>(null);
-  const graduationCardRef = useRef<HTMLDivElement>(null);
-  const growthCardRef = useRef<HTMLDivElement>(null);
-  const aiAnalysisCardRef = useRef<HTMLDivElement>(null);
   const valueCardRef = useRef<HTMLDivElement>(null);
   const achievementCardRef = useRef<HTMLDivElement>(null);
   const fearCardRef = useRef<HTMLDivElement>(null);
   const blindspotCardRef = useRef<HTMLDivElement>(null);
   const transformCardRef = useRef<HTMLDivElement>(null);
-  
-  // Growth poster specific data
-  const [growthData, setGrowthData] = useState<{
-    awakeningIndex: number;
-    awakeningChange: number;
-    chartData: { day: number; value: number; hasData: boolean }[];
-    coreBreakthrough?: { type: 'behavior' | 'emotion' | 'belief'; title: string; content: string };
-    aiMessage?: string;
-    consecutiveDays: number;
-    peakIndex?: number;
-  } | null>(null);
-  
-  // Camp summary data for graduation card
-  const [campSummaryData, setCampSummaryData] = useState<{
-    startAwakening?: number;
-    endAwakening?: number;
-    awakeningGrowth?: number;
-    behaviorGrowth?: number;
-    emotionGrowth?: number;
-    beliefGrowth?: number;
-    biggest_breakthrough?: string;
-    ai_coach_message?: string;
-  } | null>(null);
 
   // Generate share URLs with partner tracking if available
   const getAssessmentUrl = (): string => {
@@ -388,152 +327,6 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         }
       }
 
-      // Fetch latest journal entry for awakening data
-      if (campId) {
-        const { data: latestEntry } = await supabase
-          .from('wealth_journal_entries')
-          .select('day_number, personal_awakening, new_belief, emotion_need')
-          .eq('camp_id', campId)
-          .eq('user_id', user.id)
-          .order('day_number', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (latestEntry) {
-          // personal_awakening is a JSON object with behavior_awakening, emotion_awakening, belief_awakening
-          const personalAwakening = latestEntry.personal_awakening as {
-            behavior_awakening?: string;
-            emotion_awakening?: string;
-            belief_awakening?: string;
-          } | null;
-          
-          const awakening: AwakeningData = {
-            dayNumber: latestEntry.day_number,
-            behaviorAwakening: personalAwakening?.behavior_awakening || undefined,
-            emotionAwakening: personalAwakening?.emotion_awakening || undefined,
-            beliefAwakening: personalAwakening?.belief_awakening || undefined,
-            newBelief: latestEntry.new_belief || undefined,
-          };
-          setAwakeningData(awakening);
-          
-          // Auto-select best awakening type
-          const best = getBestAwakening(awakening);
-          if (best) {
-            setSelectedAwakeningType(best.type);
-          }
-        }
-      }
-
-      // Fetch growth data for the poster
-      if (campId) {
-        const { data: journalEntries } = await supabase
-          .from('wealth_journal_entries')
-          .select('day_number, behavior_score, emotion_score, belief_score, behavior_block, personal_awakening, new_belief')
-          .eq('camp_id', campId)
-          .eq('user_id', user.id)
-          .order('day_number', { ascending: true });
-
-        if (journalEntries && journalEntries.length > 0) {
-          // Calculate awakening index for each day
-          const chartData = journalEntries.map(e => {
-            const scores = [e.behavior_score, e.emotion_score, e.belief_score].filter(s => s && s > 0) as number[];
-            const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-            const awakeningValue = ((avg - 1) / 4) * 100;
-            return {
-              day: e.day_number,
-              value: Math.max(0, Math.min(100, awakeningValue)),
-              hasData: scores.length > 0,
-            };
-          });
-
-          // Calculate current awakening index
-          const validEntries = journalEntries.filter(e => e.behavior_score || e.emotion_score || e.belief_score);
-          const avgBehavior = validEntries.reduce((sum, e) => sum + (e.behavior_score || 0), 0) / (validEntries.length || 1);
-          const avgEmotion = validEntries.reduce((sum, e) => sum + (e.emotion_score || 0), 0) / (validEntries.length || 1);
-          const avgBelief = validEntries.reduce((sum, e) => sum + (e.belief_score || 0), 0) / (validEntries.length || 1);
-          const avgScore = (avgBehavior + avgEmotion + avgBelief) / 3;
-          const currentAwakeningIndex = ((avgScore - 1) / 4) * 100;
-
-          // Calculate change from first entry
-          const firstValidIdx = chartData.findIndex(d => d.hasData);
-          const awakeningChange = firstValidIdx >= 0 && chartData.length > firstValidIdx + 1
-            ? chartData[chartData.length - 1].value - chartData[firstValidIdx].value
-            : 0;
-
-          // Find peak awakening
-          const peakIndex = Math.max(...chartData.filter(d => d.hasData).map(d => d.value));
-
-          // Find core breakthrough from personal_awakening JSON
-          const latestEntry = journalEntries[journalEntries.length - 1];
-          const awakening = latestEntry?.personal_awakening as { behavior_awakening?: string; emotion_awakening?: string; belief_awakening?: string } | null;
-          let coreBreakthrough: { type: 'behavior' | 'emotion' | 'belief'; title: string; content: string } | undefined;
-          
-          if (awakening?.belief_awakening || latestEntry?.new_belief) {
-            coreBreakthrough = {
-              type: 'belief',
-              title: '信念层突破',
-              content: (awakening?.belief_awakening || latestEntry?.new_belief) as string,
-            };
-          } else if (awakening?.emotion_awakening) {
-            coreBreakthrough = {
-              type: 'emotion',
-              title: '情绪层觉察',
-              content: awakening.emotion_awakening,
-            };
-          } else if (awakening?.behavior_awakening) {
-            coreBreakthrough = {
-              type: 'behavior',
-              title: '行为层觉察',
-              content: awakening.behavior_awakening,
-            };
-          }
-
-          // Generate AI message based on progress
-          const userName = profile?.display_name || '财富觉醒者';
-          let aiMessage: string | undefined;
-          if (currentAwakeningIndex >= 70) {
-            aiMessage = `${userName}，你的觉醒之旅令人振奋！持续保持这份觉察力，让财富自然流动。`;
-          } else if (currentAwakeningIndex >= 50) {
-            aiMessage = `${userName}，你正在稳步成长！每一次觉察都是蜕变的种子。`;
-          } else if (validEntries.length >= 3) {
-            aiMessage = `${userName}，坚持就是胜利！你已经迈出了改变的第一步。`;
-          }
-
-          setGrowthData({
-            awakeningIndex: Math.max(0, Math.min(100, currentAwakeningIndex)),
-            awakeningChange: Math.round(awakeningChange),
-            chartData,
-            coreBreakthrough,
-            aiMessage,
-            consecutiveDays: validEntries.length,
-            peakIndex: peakIndex > 0 ? peakIndex : undefined,
-          });
-        }
-      }
-
-      // Fetch camp summary for graduation card
-      if (campId) {
-        const { data: summary } = await supabase
-          .from('camp_summaries')
-          .select('start_awakening, end_awakening, awakening_growth, behavior_growth, emotion_growth, belief_growth, biggest_breakthrough, ai_coach_message')
-          .eq('camp_id', campId)
-          .eq('user_id', user.id)
-          .maybeSingle();
-        
-        if (summary) {
-          setCampSummaryData({
-            startAwakening: summary.start_awakening ?? undefined,
-            endAwakening: summary.end_awakening ?? undefined,
-            awakeningGrowth: summary.awakening_growth ?? undefined,
-            behaviorGrowth: summary.behavior_growth ?? undefined,
-            emotionGrowth: summary.emotion_growth ?? undefined,
-            beliefGrowth: summary.belief_growth ?? undefined,
-            biggest_breakthrough: summary.biggest_breakthrough ?? undefined,
-            ai_coach_message: summary.ai_coach_message ?? undefined,
-          });
-        }
-      }
-
       // Proxy third-party avatar URLs
       const proxiedAvatarUrl = getProxiedAvatarUrl(profile?.avatar_url);
 
@@ -565,14 +358,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 
   const getActiveCardRef = () => {
     switch (activeTab) {
-      case 'assessment': return assessmentCardRef;
       case 'camp': return campCardRef;
-      case 'awakening': return awakeningCardRef;
-      case 'milestone': 
-        // Use graduation card ref for Day 7+ users
-        return (userInfo.currentDay || 1) >= 7 ? graduationCardRef : milestoneCardRef;
-      case 'growth': return growthCardRef;
-      case 'aianalysis': return aiAnalysisCardRef;
       case 'value': return valueCardRef;
       case 'achievement': return achievementCardRef;
       case 'fear': return fearCardRef;
@@ -584,12 +370,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 
   const getCardName = () => {
     switch (activeTab) {
-      case 'assessment': return '财富卡点测评邀请卡';
       case 'camp': return '7天财富训练营邀请卡';
-      case 'awakening': return '财富觉醒分享卡';
-      case 'milestone': return (userInfo.currentDay || 1) >= 7 ? '财富觉醒毕业证书' : '财富训练营里程碑';
-      case 'growth': return '财富成长海报';
-      case 'aianalysis': return 'AI智能分析报告';
       case 'value': return '财富测评价值卡';
       case 'achievement': return '财富觉醒成就墙';
       case 'fear': return '财富情绪锁诊断卡';
@@ -756,9 +537,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   };
 
   const handleCopyLink = async () => {
-    const url = activeTab === 'assessment' ? assessmentUrl : campUrl;
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(campUrl);
       setCopied(true);
       toast.success('链接已复制');
       setTimeout(() => setCopied(false), 2000);
@@ -767,26 +547,6 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       toast.error('复制失败');
     }
   };
-
-  // Get awakening content for selected type
-  const getSelectedAwakening = (): string | undefined => {
-    if (!awakeningData) return undefined;
-    switch (selectedAwakeningType) {
-      case 'behavior': return awakeningData.behaviorAwakening;
-      case 'emotion': return awakeningData.emotionAwakening;
-      case 'belief': return awakeningData.beliefAwakening || awakeningData.newBelief;
-      default: return undefined;
-    }
-  };
-
-  // Check which awakening types are available
-  const availableTypes = awakeningData ? {
-    behavior: !!awakeningData.behaviorAwakening,
-    emotion: !!awakeningData.emotionAwakening,
-    belief: !!(awakeningData.beliefAwakening || awakeningData.newBelief),
-  } : { behavior: false, emotion: false, belief: false };
-
-  const hasAnyAwakening = availableTypes.behavior || availableTypes.emotion || availableTypes.belief;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -804,33 +564,13 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as CardTab)}>
-          <TabsList className="grid w-full grid-cols-5 gap-0.5 h-auto p-1">
-            {CARD_TABS.slice(0, 5).map(tab => (
+          <TabsList className="grid w-full grid-cols-6 gap-0.5 h-auto p-1">
+            {CARD_TABS.map(tab => (
               <TabsTrigger key={tab.id} value={tab.id} className="text-[10px] px-0.5 py-1.5">
                 {tab.emoji}
               </TabsTrigger>
             ))}
           </TabsList>
-          <TabsList className="grid w-full grid-cols-5 gap-0.5 h-auto p-1 mt-1">
-            {CARD_TABS.slice(5).map(tab => (
-              <TabsTrigger key={tab.id} value={tab.id} className="text-[10px] px-0.5 py-1.5">
-                {tab.emoji}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <TabsContent value="aianalysis" className="mt-3">
-            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
-              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
-                <AIAnalysisShareCard 
-                  ref={aiAnalysisCardRef}
-                  avatarUrl={userInfo.avatarUrl}
-                  displayName={userInfo.displayName}
-                  partnerInfo={partnerInfo || undefined}
-                />
-              </div>
-            </div>
-          </TabsContent>
 
           <TabsContent value="value" className="mt-3">
             <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
@@ -884,19 +624,6 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="assessment" className="mt-3">
-            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
-              <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
-                <WealthAssessmentShareCard 
-                  ref={assessmentCardRef}
-                  avatarUrl={userInfo.avatarUrl}
-                  displayName={userInfo.displayName}
-                  partnerInfo={partnerInfo || undefined}
-                />
-              </div>
-            </div>
-          </TabsContent>
-
           <TabsContent value="camp" className="mt-3">
             <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
               <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
@@ -910,35 +637,6 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                 />
               </div>
             </div>
-          </TabsContent>
-
-          <TabsContent value="growth" className="mt-3">
-            {growthData ? (
-              <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
-                <div className="origin-top" style={{ transform: 'scale(0.65)', marginBottom: '-35%' }}>
-                  <EnhancedGrowthPosterCard
-                    ref={growthCardRef}
-                    avatarUrl={userInfo.avatarUrl}
-                    displayName={userInfo.displayName}
-                    currentDay={userInfo.currentDay || 1}
-                    totalDays={userInfo.totalDays || 7}
-                    awakeningIndex={growthData.awakeningIndex}
-                    awakeningChange={growthData.awakeningChange}
-                    chartData={growthData.chartData}
-                    coreBreakthrough={growthData.coreBreakthrough}
-                    aiMessage={growthData.aiMessage}
-                    consecutiveDays={growthData.consecutiveDays}
-                    peakIndex={growthData.peakIndex}
-                    partnerInfo={partnerInfo || undefined}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                <p>暂无成长数据</p>
-                <p className="text-xs mt-1">完成教练对话后生成成长海报</p>
-              </div>
-            )}
           </TabsContent>
 
           <TabsContent value="achievement" className="mt-3">
@@ -959,152 +657,14 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
               </div>
             </div>
           </TabsContent>
-
-          <TabsContent value="awakening" className="mt-3">
-            {hasAnyAwakening && awakeningData ? (
-              <>
-                {/* Awakening Type Selector */}
-                <div className="flex justify-center gap-2 mb-3">
-                  {availableTypes.behavior && (
-                    <Button
-                      variant={selectedAwakeningType === 'behavior' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedAwakeningType('behavior')}
-                      className="text-xs h-8"
-                    >
-                      🎯 行为
-                    </Button>
-                  )}
-                  {availableTypes.emotion && (
-                    <Button
-                      variant={selectedAwakeningType === 'emotion' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedAwakeningType('emotion')}
-                      className="text-xs h-8"
-                    >
-                      💛 情绪
-                    </Button>
-                  )}
-                  {availableTypes.belief && (
-                    <Button
-                      variant={selectedAwakeningType === 'belief' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedAwakeningType('belief')}
-                      className="text-xs h-8"
-                    >
-                      🧠 信念
-                    </Button>
-                  )}
-                </div>
-                <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
-                  <div className="origin-top" style={{ transform: 'scale(0.72)', marginBottom: '-28%' }}>
-                    <WealthAwakeningShareCard
-                      ref={awakeningCardRef}
-                      dayNumber={awakeningData.dayNumber}
-                      awakeningContent={getSelectedAwakening() || ''}
-                      awakeningType={selectedAwakeningType}
-                      shareUrl={campUrl}
-                      avatarUrl={userInfo.avatarUrl}
-                      displayName={userInfo.displayName}
-                    />
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                <p>暂无觉醒记录</p>
-                <p className="text-xs mt-1">完成今日教练对话后生成觉醒卡片</p>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="milestone" className="mt-3">
-            <div className="flex justify-center overflow-hidden rounded-lg bg-muted/30 p-2">
-              <div className="origin-top" style={{ transform: 'scale(0.68)', marginBottom: '-32%' }}>
-                {/* Show enhanced graduation card for Day 7+ users */}
-                {(userInfo.currentDay || 1) >= 7 ? (
-                  <GraduationShareCard
-                    ref={graduationCardRef}
-                    displayName={userInfo.displayName}
-                    avatarUrl={userInfo.avatarUrl}
-                    shareUrl={campUrl}
-                    totalDays={userInfo.totalDays || 7}
-                    journalCount={userInfo.currentDay || 7}
-                    awakeningGrowth={campSummaryData?.awakeningGrowth ?? (awakeningProgress?.current_awakening ?? 0) - (awakeningProgress?.baseline_awakening ?? 0)}
-                    startAwakening={campSummaryData?.startAwakening ?? awakeningProgress?.baseline_awakening ?? 45}
-                    endAwakening={campSummaryData?.endAwakening ?? awakeningProgress?.current_awakening ?? 78}
-                    consecutiveStreak={awakeningProgress?.consecutive_days ?? 0}
-                    behaviorGrowth={campSummaryData?.behaviorGrowth ?? 0}
-                    emotionGrowth={campSummaryData?.emotionGrowth ?? 0}
-                    beliefGrowth={campSummaryData?.beliefGrowth ?? 0}
-                    currentLevel={currentLevel?.level ?? 4}
-                    levelName={currentLevel?.name ?? '信念转化者'}
-                    levelIcon={currentLevel?.icon ?? '⭐'}
-                    totalPoints={awakeningProgress?.total_points ?? 0}
-                    earnedAchievements={userAchievements?.map(a => ({ 
-                      icon: a.achievement_icon || '🏆', 
-                      name: a.achievement_name 
-                    })) || []}
-                    coreBreakthrough={campSummaryData?.biggest_breakthrough}
-                  />
-                ) : (
-                  <WealthMilestoneShareCard
-                    ref={milestoneCardRef}
-                    completedDays={userInfo.currentDay || 1}
-                    totalDays={userInfo.totalDays || 7}
-                    coreInsight={awakeningData?.beliefAwakening || awakeningData?.newBelief}
-                    shareUrl={campUrl}
-                    avatarUrl={userInfo.avatarUrl}
-                    displayName={userInfo.displayName}
-                  />
-                )}
-              </div>
-            </div>
-          </TabsContent>
         </Tabs>
-
-        {/* 卡片自定义面板 */}
-        <Collapsible open={customizeOpen} onOpenChange={setCustomizeOpen} className="mt-4">
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm" className="w-full gap-2 text-muted-foreground">
-              <Edit3 className="w-4 h-4" />
-              自定义卡片
-              <ChevronDown className={`w-4 h-4 transition-transform ${customizeOpen ? 'rotate-180' : ''}`} />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-3 space-y-3 px-1">
-            <ShareCardStyleSelector
-              selectedStyle={cardStyle}
-              onStyleChange={setCardStyle}
-            />
-            <div className="space-y-2">
-              <Input
-                placeholder="自定义标题（可选）"
-                value={customTitle}
-                onChange={(e) => setCustomTitle(e.target.value)}
-                maxLength={20}
-                className="text-sm"
-              />
-              <Input
-                placeholder="自定义副标题（可选）"
-                value={customSubtitle}
-                onChange={(e) => setCustomSubtitle(e.target.value)}
-                maxLength={30}
-                className="text-sm"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              提示：自定义内容仅影响部分卡片类型
-            </p>
-          </CollapsibleContent>
-        </Collapsible>
 
         {/* Action Buttons - Optimized for mobile */}
         <div className="flex flex-col gap-3 mt-4">
           <div className="flex gap-2">
             <Button
               onClick={handleDownload}
-              disabled={generating || (activeTab === 'awakening' && !hasAnyAwakening)}
+              disabled={generating}
               className="flex-1 gap-2 h-11 text-base font-medium bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
             >
               {generating ? (

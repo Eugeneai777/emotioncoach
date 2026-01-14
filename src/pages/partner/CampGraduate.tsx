@@ -549,7 +549,7 @@ export default function CampGraduate() {
 
         {/* 分享毕业证书 */}
         <WealthInviteCardDialog
-          defaultTab="milestone"
+          defaultTab="achievement"
           campId={graduationData?.campId}
           currentDay={7}
           trigger={
