@@ -88,7 +88,17 @@ export default function WealthBlockAssessmentPage() {
       url.searchParams.delete('is_new_user');
       window.history.replaceState({}, '', url.toString());
 
-      // 如果有 tokenHash，先自动登录
+      // 如果有 openId，缓存到 sessionStorage（供支付弹窗使用）
+      if (paymentOpenId) {
+        sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
+      }
+
+      // 如果授权失败，清理防抖标记以允许重试
+      if (paymentAuthError) {
+        sessionStorage.removeItem('pay_auth_in_progress');
+      }
+
+      // 如果有 tokenHash，先自动登录，等待登录状态更新后再打开弹窗
       if (paymentTokenHash) {
         console.log('[WealthBlock] Attempting auto-login with tokenHash...');
         try {
@@ -100,26 +110,32 @@ export default function WealthBlockAssessmentPage() {
           if (error) {
             console.error('[WealthBlock] Auto-login failed:', error);
             // 登录失败也继续打开弹窗（用扫码支付兜底）
+            setShowPayDialog(true);
           } else {
             console.log('[WealthBlock] Auto-login success:', data.user?.id);
+            // 登录成功：等待 auth 状态更新后再打开弹窗
+            // 使用 onAuthStateChange 确保状态同步
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+              if (event === 'SIGNED_IN' && session?.user) {
+                console.log('[WealthBlock] Auth state updated, opening pay dialog');
+                setShowPayDialog(true);
+                subscription.unsubscribe();
+              }
+            });
+            // 超时保护：3秒后无论如何都打开弹窗
+            setTimeout(() => {
+              subscription.unsubscribe();
+              setShowPayDialog(true);
+            }, 3000);
           }
         } catch (err) {
           console.error('[WealthBlock] Auto-login exception:', err);
+          setShowPayDialog(true);
         }
+      } else {
+        // 没有 tokenHash，直接打开弹窗
+        setShowPayDialog(true);
       }
-
-      // 如果有 openId，缓存到 sessionStorage（供支付弹窗使用）
-      if (paymentOpenId) {
-        sessionStorage.setItem('wechat_payment_openid', paymentOpenId);
-      }
-
-      // 如果授权失败，也清理防抖标记以允许重试
-      if (paymentAuthError) {
-        sessionStorage.removeItem('pay_auth_in_progress');
-      }
-
-      // 打开支付弹窗
-      setShowPayDialog(true);
     };
 
     handleWeChatPayAuthReturn();
