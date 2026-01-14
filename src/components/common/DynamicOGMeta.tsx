@@ -41,11 +41,21 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
   const { ogConfig } = usePageOG(pageKey);
 
   // Apply overrides if provided
+  // OG 缓存版本号 - 修改此值可强制微信刷新缓存
+  const OG_CACHE_VERSION = 'v20260114';
+  
+  // 给图片URL添加版本参数以绕过微信缓存
+  const addCacheVersion = (url: string | undefined) => {
+    if (!url) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}og=${OG_CACHE_VERSION}`;
+  };
+
   const finalConfig = {
     title: overrides?.title || ogConfig.title,
     ogTitle: overrides?.ogTitle || ogConfig.ogTitle,
     description: overrides?.description || ogConfig.description,
-    image: overrides?.image || ogConfig.image,
+    image: addCacheVersion(overrides?.image || ogConfig.image),
     url: overrides?.url || ogConfig.url,
     siteName: ogConfig.siteName,
     imageWidth: overrides?.imageWidth || ogConfig.imageWidth || DEFAULT_IMAGE_WIDTH,
