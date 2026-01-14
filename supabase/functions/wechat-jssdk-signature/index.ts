@@ -125,6 +125,7 @@ async function getAccessToken(
 
   let response;
   if (proxyUrl && proxyToken) {
+    console.log("[JSSDK] Using proxy for access_token");
     response = await fetch(proxyUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -139,12 +140,19 @@ async function getAccessToken(
   }
 
   const result = await response.json();
+  console.log("[JSSDK] access_token response:", JSON.stringify(result));
 
-  if (result.errcode) {
-    throw new Error(`Failed to get access_token: ${result.errmsg}`);
+  // 处理代理返回格式（可能嵌套在 data 字段中）
+  const tokenData = result.data || result;
+
+  if (tokenData.errcode) {
+    throw new Error(`Failed to get access_token: ${tokenData.errmsg} (code: ${tokenData.errcode})`);
   }
 
-  const accessToken = result.access_token;
+  const accessToken = tokenData.access_token;
+  if (!accessToken) {
+    throw new Error(`No access_token in response: ${JSON.stringify(result)}`);
+  }
   const expiresIn = result.expires_in || 7200;
 
   // 缓存 access_token（提前 5 分钟过期）
@@ -188,6 +196,7 @@ async function getJsapiTicket(
 
   let response;
   if (proxyUrl && proxyToken) {
+    console.log("[JSSDK] Using proxy for jsapi_ticket");
     response = await fetch(proxyUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -202,13 +211,20 @@ async function getJsapiTicket(
   }
 
   const result = await response.json();
+  console.log("[JSSDK] jsapi_ticket response:", JSON.stringify(result));
 
-  if (result.errcode !== 0) {
-    throw new Error(`Failed to get jsapi_ticket: ${result.errmsg}`);
+  // 处理代理返回格式（可能嵌套在 data 字段中）
+  const ticketData = result.data || result;
+
+  if (ticketData.errcode !== 0) {
+    throw new Error(`Failed to get jsapi_ticket: ${ticketData.errmsg} (code: ${ticketData.errcode})`);
   }
 
-  const ticket = result.ticket;
-  const expiresIn = result.expires_in || 7200;
+  const ticket = ticketData.ticket;
+  if (!ticket) {
+    throw new Error(`No ticket in response: ${JSON.stringify(result)}`);
+  }
+  const expiresIn = ticketData.expires_in || 7200;
 
   // 缓存 jsapi_ticket（提前 5 分钟过期）
   const expiresAt = new Date(Date.now() + (expiresIn - 300) * 1000).toISOString();
