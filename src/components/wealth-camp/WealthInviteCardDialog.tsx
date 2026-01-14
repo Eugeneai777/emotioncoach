@@ -573,7 +573,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsList>
 
           <TabsContent value="value" className="mt-3">
-            <div className="flex justify-center rounded-lg bg-muted/30 p-2">
+            <div className="flex justify-center rounded-lg bg-slate-900/30 p-2">
               <div className="origin-top scale-[0.6] sm:scale-[0.68]" style={{ marginBottom: '-35%' }}>
                 <AssessmentValueShareCard 
                   ref={valueCardRef}
@@ -586,7 +586,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="fear" className="mt-3">
-            <div className="flex justify-center rounded-lg bg-muted/30 p-2">
+            <div className="flex justify-center rounded-lg bg-slate-900/30 p-2">
               <div className="origin-top scale-[0.6] sm:scale-[0.68]" style={{ marginBottom: '-35%' }}>
                 <FearAwakeningShareCard 
                   ref={fearCardRef}
@@ -599,7 +599,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="blindspot" className="mt-3">
-            <div className="flex justify-center rounded-lg bg-muted/30 p-2">
+            <div className="flex justify-center rounded-lg bg-slate-900/30 p-2">
               <div className="origin-top scale-[0.6] sm:scale-[0.68]" style={{ marginBottom: '-35%' }}>
                 <BlockRevealShareCard 
                   ref={blindspotCardRef}
@@ -612,7 +612,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="transform" className="mt-3">
-            <div className="flex justify-center rounded-lg bg-muted/30 p-2">
+            <div className="flex justify-center rounded-lg bg-slate-900/30 p-2">
               <div className="origin-top scale-[0.6] sm:scale-[0.68]" style={{ marginBottom: '-35%' }}>
                 <TransformationValueShareCard 
                   ref={transformCardRef}
@@ -625,7 +625,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="camp" className="mt-3">
-            <div className="flex justify-center rounded-lg bg-muted/30 p-2">
+            <div className="flex justify-center rounded-lg bg-slate-900/30 p-2">
               <div className="origin-top scale-[0.6] sm:scale-[0.68]" style={{ marginBottom: '-35%' }}>
                 <WealthCampShareCard 
                   ref={campCardRef}
@@ -688,7 +688,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
             
             {/* Card Preview */}
-            <div className="flex justify-center rounded-lg bg-muted/30 p-2">
+            <div className="flex justify-center rounded-lg bg-slate-900/30 p-2">
               <div className="origin-top scale-[0.6] sm:scale-[0.68]" style={{ marginBottom: '-35%' }}>
                 <AchievementShareCard 
                   ref={achievementCardRef}
