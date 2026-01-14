@@ -124,11 +124,16 @@ const DynamicCoach = () => {
       giving_action: briefingData.giving_action,
     });
     
-    // 关键时刻：对话完成后，检查是否需要提示绑定微信
+    // 关键时刻：对话完成后，检查是否需要提示绑定微信（仅首次）
     if (isEmailUser && !isBound) {
-      setTimeout(() => {
-        triggerFollowReminder('after_coach');
-      }, 2000);
+      const COACH_REMINDER_SHOWN_KEY = 'coach_follow_reminder_shown';
+      const alreadyShown = localStorage.getItem(COACH_REMINDER_SHOWN_KEY);
+      if (!alreadyShown) {
+        setTimeout(() => {
+          triggerFollowReminder('after_coach');
+          localStorage.setItem(COACH_REMINDER_SHOWN_KEY, 'true');
+        }, 2000);
+      }
     }
   };
 
