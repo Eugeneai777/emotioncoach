@@ -27,6 +27,8 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
   // 新增：开始前介绍页状态
   const [showStartScreen, setShowStartScreen] = useState(true);
   
+  console.log('[WealthBlockQuestions] Rendering, showStartScreen:', showStartScreen);
+  
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   
@@ -86,8 +88,14 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
 
   // 如果显示开始介绍页，先渲染它
   if (showStartScreen) {
-    return <AssessmentStartScreen onStart={() => setShowStartScreen(false)} />;
+    console.log('[WealthBlockQuestions] Showing start screen');
+    return <AssessmentStartScreen onStart={() => {
+      console.log('[WealthBlockQuestions] Start screen clicked, entering questions');
+      setShowStartScreen(false);
+    }} />;
   }
+  
+  console.log('[WealthBlockQuestions] Showing questions, currentIndex:', currentIndex);
 
   // 生成AI追问
   const generateFollowUp = useCallback(async (questionId: number, score: number) => {
