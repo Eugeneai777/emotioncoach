@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      alive_check_logs: {
+        Row: {
+          checked_at: string
+          created_at: string | null
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          checked_at?: string
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          checked_at?: string
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      alive_check_settings: {
+        Row: {
+          created_at: string | null
+          days_threshold: number | null
+          emergency_contact_email: string | null
+          emergency_contact_name: string | null
+          id: string
+          is_enabled: boolean | null
+          last_notification_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          days_threshold?: number | null
+          emergency_contact_email?: string | null
+          emergency_contact_name?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_notification_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          days_threshold?: number | null
+          emergency_contact_email?: string | null
+          emergency_contact_name?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_notification_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_cost_logs: {
         Row: {
           created_at: string | null
