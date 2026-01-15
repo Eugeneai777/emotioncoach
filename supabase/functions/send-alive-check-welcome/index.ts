@@ -33,7 +33,7 @@ const handler = async (req: Request): Promise<Response> => {
     const displayName = userName || "您的朋友";
     const contactDisplayName = contactName || "尊敬的用户";
     const threshold = daysThreshold || 3;
-    const siteUrl = "https://wechat.eugenewe.net/alive-check";
+    const siteUrl = "https://wechat.eugenewe.net/alive-check-intro";
 
     const emailResponse = await resend.emails.send({
       from: "有劲AI <noreply@eugeneai.me>",
@@ -74,7 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
             
             <div style="text-align: center; margin: 30px 0;">
               <a href="${siteUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899, #f43f5e); color: white; padding: 14px 32px; border-radius: 30px; text-decoration: none; font-size: 16px; font-weight: bold;">
-                💝 我也想试试
+                💗 了解并开启
               </a>
             </div>
             

@@ -187,8 +187,13 @@ export const PAGE_OG_CONFIGS: Record<string, OGConfig> = {
     image: OG_IMAGES.energyStudio,
     url: `${OG_BASE_URL}/energy-studio`,
   },
-
-  // ========== 感恩日记 ==========
+  aliveCheckIntro: {
+    title: '安全打卡 - 有劲AI',
+    ogTitle: '有劲AI • 安全打卡',
+    description: '让关心你的人安心，让你关心的人放心',
+    image: OG_IMAGES.energyStudio,
+    url: `${OG_BASE_URL}/alive-check-intro`,
+  },
   gratitudeJournal: {
     title: '感恩日记 - 有劲AI',
     ogTitle: '有劲AI • 感恩日记',

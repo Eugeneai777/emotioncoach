@@ -197,6 +197,20 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
     gradient: 'linear-gradient(135deg, #14b8a6, #0d9488)',
     category: 'partner'
   },
+  aliveCheck: {
+    pageKey: 'aliveCheck',
+    title: '安全打卡',
+    subtitle: '让关心你的人安心',
+    targetUrl: '/alive-check-intro',
+    emoji: '💗',
+    highlights: [
+      '每日一键安全确认',
+      '超时自动通知联系人',
+      '最多5位紧急联系人',
+    ],
+    gradient: 'linear-gradient(135deg, #ec4899, #f43f5e)',
+    category: 'tool'
+  },
 };
 
 /**
