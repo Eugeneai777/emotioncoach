@@ -681,6 +681,7 @@ export function getOGConfigByPath(pathname: string): OGConfig {
     '/wealth-journal': 'wealthJournal',
     '/wealth-awakening-archive': 'wealthArchive',
     '/emotion-button': 'emotionButton',
+    '/emotion-coach': 'emotionCoach',
     '/history': 'emotionHistory',
     '/parent-coach': 'parentCoach',
     '/parent-coach-intro': 'parentCoachIntro',
