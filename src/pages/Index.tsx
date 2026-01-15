@@ -487,7 +487,7 @@ const Index = () => {
   if (authLoading) {
     return (
       <>
-        <DynamicOGMeta pageKey="emotionCoach" />
+        <DynamicOGMeta pageKey="home" />
         <div className="min-h-screen bg-gradient-to-br from-emerald-50/80 via-teal-50/50 to-green-50/30 dark:from-emerald-950/20 dark:via-teal-950/10 dark:to-green-950/10 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
         </div>
