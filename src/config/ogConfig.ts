@@ -635,6 +635,22 @@ export const PAGE_OG_CONFIGS: Record<string, OGConfig> = {
     image: OG_IMAGES.parentCoach,
     url: `${OG_BASE_URL}/parent-child-diary`,
   },
+  
+  // ========== 介绍页补齐 ==========
+  introduction: {
+    title: '有劲AI - 你的AI成长教练',
+    ogTitle: '有劲AI • 成长教练',
+    description: 'AI陪伴成长，每一步都有力量',
+    image: OG_IMAGES.default,
+    url: `${OG_BASE_URL}/introduction`,
+  },
+  energyStudioIntro: {
+    title: '有劲生活馆介绍 - 有劲AI',
+    ogTitle: '有劲AI • 有劲生活馆',
+    description: '多种成长工具，随时调节你的能量',
+    image: OG_IMAGES.energyStudio,
+    url: `${OG_BASE_URL}/energy-studio-intro`,
+  },
 };
 
 /**
@@ -696,6 +712,7 @@ export function getOGConfigByPath(pathname: string): OGConfig {
     '/alive-check': 'aliveCheck',
     '/alive-check-intro': 'aliveCheckIntro',
     '/gratitude-journal-intro': 'gratitudeJournal',
+    '/gratitude-journal': 'gratitudeHistory',
     // 教练对话页动态路由
     '/coach/wealth_coach_4_questions': 'coach_wealth_coach_4_questions',
     '/coach/vibrant_life_sage': 'coach_vibrant_life_sage',
@@ -710,6 +727,7 @@ export function getOGConfigByPath(pathname: string): OGConfig {
     '/gratitude-history': 'gratitudeHistory',
     '/communication-coach': 'communicationCoach',
     '/communication-history': 'communicationHistory',
+    '/communication-intro': 'communicationCoachIntro',
     '/story-coach-intro': 'storyCoach',
     '/awakening': 'awakening',
     '/awakening-intro': 'awakeningIntro',
@@ -719,8 +737,12 @@ export function getOGConfigByPath(pathname: string): OGConfig {
     '/youjin-partner-plan': 'youjinPartnerPlan',
     '/partner-intro': 'partnerIntro',
     '/partner-benefits': 'partnerBenefits',
+    '/partner/youjin-intro': 'youjinPartnerIntro',
+    '/partner/youjin-plan': 'youjinPartnerPlan',
+    '/partner/benefits': 'partnerBenefits',
     '/partner/type': 'partnerTypeSelector',
     '/partner/promo-guide': 'promoGuide',
+    '/partner/graduate': 'campGraduate',
     '/camps': 'campIntro',
     '/camp-checkin': 'campCheckIn',
     '/courses': 'courses',
@@ -728,12 +750,27 @@ export function getOGConfigByPath(pathname: string): OGConfig {
     '/my-posts': 'myPosts',
     '/packages': 'packages',
     '/pay': 'payEntry',
+    '/pay-entry': 'payEntry',
     '/profile': 'profile',
     '/settings': 'settings',
     '/auth': 'auth',
     '/share-invite': 'shareInvite',
     '/my-appointments': 'myAppointments',
     '/become-coach': 'becomeCoach',
+    // 补齐缺失的介绍页路径
+    '/introduction': 'introduction',
+    '/emotion-button-intro': 'emotionButtonIntro',
+    '/energy-studio-intro': 'energyStudioIntro',
+    '/transformation-flow': 'transformationFlow',
+    '/wealth-awakening-progress': 'wealthAwakeningProgress',
+    '/human-coaches': 'humanCoaches',
+    '/poster-center': 'posterCenter',
+    '/customer-support': 'customerSupport',
+    '/my-stories': 'myStories',
+    '/panic-history': 'panicHistory',
+    '/parent-diary': 'parentChildDiary',
+    '/parent/intake': 'parentIntake',
+    '/parent-camp': 'parentCampLanding',
   };
 
   const key = pathToKeyMap[pathname];
