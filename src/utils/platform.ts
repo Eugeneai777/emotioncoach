@@ -54,50 +54,69 @@ declare global {
 /**
  * 检测是否在微信小程序 WebView 环境中
  * 小程序 WebView 不支持 WebRTC，需要使用 WebSocket 中继方案
+ * 
+ * 🔧 修复：移除对 window.wx.miniProgram.getEnv 存在性的同步检测
+ * 原因：微信 JS-SDK 会在所有微信环境（包括 H5）注入 wx 对象，
+ * 导致 getEnv 函数在 H5 中也存在，造成 H5 被误判为小程序。
+ * 
+ * 正确的检测逻辑：
+ * 1. 优先检测 __wxjs_environment 环境变量（小程序 WebView 专有）
+ * 2. 检测 UA 中同时包含 micromessenger 和 miniprogram 标识
+ * 3. 不再同步检测 getEnv 函数存在性（改为异步版本使用）
  */
 export function isWeChatMiniProgram(): boolean {
-  // 检测微信小程序环境变量
+  // 1. 最可靠：检测微信小程序专有环境变量
   if (window.__wxjs_environment === 'miniprogram') {
     return true;
   }
 
   const ua = navigator.userAgent.toLowerCase();
   
-  // 检测 UA 中的小程序标识
+  // 2. 检测 UA 中的小程序标识
+  // 小程序 WebView 的 UA 会同时包含 "micromessenger" 和 "miniprogram"
   const hasMiniProgramUA = /miniprogram/i.test(ua);
-  
-  // 检测是否在微信环境中
   const isWechat = /micromessenger/i.test(ua);
   
-  // 同时满足微信环境 + 小程序标识
+  // 必须同时满足：在微信环境 + UA 包含小程序标识
   if (isWechat && hasMiniProgramUA) {
     return true;
   }
 
-  // 检测小程序 API 是否存在
-  if (typeof window.wx?.miniProgram?.getEnv === 'function') {
-    return true;
-  }
+  // 🔧 移除：不再同步检测 window.wx.miniProgram.getEnv
+  // 原因：微信 JS-SDK 在 H5 中也会注入此 API，导致误判
+  // 如需精确检测，请使用 detectMiniProgramAsync()
 
   return false;
 }
 
 /**
  * 异步检测是否在小程序环境（更准确）
+ * 通过调用 getEnv API 获取真实环境信息
  */
 export function detectMiniProgramAsync(): Promise<boolean> {
   return new Promise((resolve) => {
-    // 快速同步检测
-    if (isWeChatMiniProgram()) {
+    // 1. 快速同步检测（基于环境变量和 UA）
+    const syncResult = isWeChatMiniProgram();
+    if (syncResult) {
       resolve(true);
       return;
     }
 
-    // 使用小程序 API 进行异步检测
+    // 2. 异步调用 getEnv 获取精确结果
+    // 只有在小程序 WebView 中，getEnv 回调才会返回 { miniprogram: true }
     if (typeof window.wx?.miniProgram?.getEnv === 'function') {
-      window.wx.miniProgram.getEnv((res) => {
-        resolve(res.miniprogram === true);
-      });
+      try {
+        window.wx.miniProgram.getEnv((res) => {
+          const isMiniProgram = res?.miniprogram === true;
+          if (isMiniProgram) {
+            console.log('[Platform] Async detection confirmed: MiniProgram WebView');
+          }
+          resolve(isMiniProgram);
+        });
+      } catch (e) {
+        console.warn('[Platform] getEnv call failed:', e);
+        resolve(false);
+      }
     } else {
       resolve(false);
     }
