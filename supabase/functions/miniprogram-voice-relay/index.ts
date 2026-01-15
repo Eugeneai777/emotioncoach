@@ -72,6 +72,29 @@ Deno.serve(async (req) => {
 
   let openaiSocket: WebSocket | null = null;
   let isConnected = false;
+  let healthCheckInterval: ReturnType<typeof setInterval> | null = null;
+
+  // 🔧 定期检查 OpenAI 连接健康状态
+  const startHealthCheck = () => {
+    healthCheckInterval = setInterval(() => {
+      if (openaiSocket?.readyState !== WebSocket.OPEN) {
+        console.log('[Relay] OpenAI connection lost, closing client');
+        if (clientSocket.readyState === WebSocket.OPEN) {
+          clientSocket.close(1000, 'OpenAI connection lost');
+        }
+        if (healthCheckInterval) {
+          clearInterval(healthCheckInterval);
+        }
+      }
+    }, 5000);
+  };
+
+  const stopHealthCheck = () => {
+    if (healthCheckInterval) {
+      clearInterval(healthCheckInterval);
+      healthCheckInterval = null;
+    }
+  };
 
   // 处理客户端连接
   clientSocket.onopen = async () => {
@@ -88,6 +111,7 @@ Deno.serve(async (req) => {
       openaiSocket.onopen = () => {
         console.log('[Relay] Connected to OpenAI');
         isConnected = true;
+        startHealthCheck(); // 🔧 启动健康检查
 
         // 发送会话配置
         const sessionConfig = {
@@ -125,6 +149,7 @@ Deno.serve(async (req) => {
       openaiSocket.onclose = (event) => {
         console.log('[Relay] OpenAI disconnected:', event.code, event.reason);
         isConnected = false;
+        stopHealthCheck(); // 🔧 停止健康检查
         if (clientSocket.readyState === WebSocket.OPEN) {
           clientSocket.close(1000, 'OpenAI disconnected');
         }
@@ -193,6 +218,7 @@ Deno.serve(async (req) => {
   // 处理客户端断开
   clientSocket.onclose = (event) => {
     console.log('[Relay] Client disconnected:', event.code, event.reason);
+    stopHealthCheck(); // 🔧 停止健康检查
     if (openaiSocket) {
       openaiSocket.close();
       openaiSocket = null;
