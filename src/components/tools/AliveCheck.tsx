@@ -6,13 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { HeartHandshake, CheckCircle2, AlertCircle, Settings, Calendar, Loader2, Info, Share2, Plus, Trash2, Users } from "lucide-react";
+import { HeartHandshake, CheckCircle2, AlertCircle, Settings, Calendar, Loader2, Info, Share2, Plus, Trash2, Users, LogIn, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { usePartner } from "@/hooks/usePartner";
+import { useNavigate } from "react-router-dom";
 import AliveCheckIntroDialog from "./AliveCheckIntroDialog";
 import AliveCheckShareDialog from "./AliveCheckShareDialog";
 
@@ -42,8 +43,9 @@ interface CheckLog {
 }
 
 export const AliveCheck = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { partner } = usePartner();
+  const navigate = useNavigate();
   const [settings, setSettings] = useState<AliveCheckSettings | null>(null);
   const [contacts, setContacts] = useState<AliveCheckContact[]>([]);
   const [logs, setLogs] = useState<CheckLog[]>([]);
@@ -72,6 +74,13 @@ export const AliveCheck = () => {
       localStorage.setItem('alive_check_intro_shown', 'true');
     }
   }, [user]);
+
+  // Fix loading lifecycle: set loading to false when auth is done and no user
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setLoading(false);
+    }
+  }, [authLoading, user]);
 
   useEffect(() => {
     if (user) {
@@ -388,11 +397,61 @@ export const AliveCheck = () => {
 
   const streak = calculateStreak();
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
+    );
+  }
+
+  // Login prompt for unauthenticated users
+  if (!user) {
+    return (
+      <Card className="border-rose-200 dark:border-rose-800 bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-950/30 dark:to-red-950/30">
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto w-16 h-16 rounded-full bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center mb-4">
+            <HeartHandshake className="w-8 h-8 text-rose-500" />
+          </div>
+          <CardTitle className="text-xl">登录后使用安全打卡</CardTitle>
+          <CardDescription className="text-base">
+            这是你的个人安全打卡与联系人设置，需要登录后查看和使用
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col gap-3">
+            <Button 
+              onClick={() => navigate('/auth?redirect=/alive-check')}
+              className="w-full bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white"
+              size="lg"
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              去登录
+            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/')}
+                className="flex-1"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                返回首页
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate('/energy-studio-intro')}
+                className="flex-1"
+              >
+                <Info className="w-4 h-4 mr-2" />
+                了解功能
+              </Button>
+            </div>
+          </div>
+          <p className="text-xs text-center text-muted-foreground">
+            💡 每天打卡表示"我活得很好"，连续未打卡时会通知您设定的紧急联系人
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
