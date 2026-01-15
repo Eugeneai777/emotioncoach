@@ -17,8 +17,8 @@ export interface IntroShareConfig {
 export const introShareConfigs: Record<string, IntroShareConfig> = {
   vibrantLife: {
     pageKey: 'vibrantLife',
-    title: '有劲生活AI',
-    subtitle: '24小时智能陪伴教练',
+    title: '有劲AI • 生活教练',
+    subtitle: '24小时智能陪伴',
     targetUrl: '/vibrant-life-intro',
     emoji: '🌟',
     highlights: [
@@ -115,7 +115,7 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
   },
   storyCoach: {
     pageKey: 'storyCoach',
-    title: 'BEST故事教练',
+    title: '故事教练',
     subtitle: '把经历变成力量',
     targetUrl: '/story-coach-intro',
     emoji: '📖',
