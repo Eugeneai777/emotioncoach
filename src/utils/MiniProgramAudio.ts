@@ -57,6 +57,13 @@ export class MiniProgramAudioClient {
   private webProcessor: ScriptProcessorNode | null = null;
   private webSource: MediaStreamAudioSourceNode | null = null;
   private useWebAudioFallback = false;
+  
+  // 🔧 复用播放 AudioContext 提升音质
+  private playbackContext: AudioContext | null = null;
+  
+  // 🔧 心跳延迟追踪
+  private lastPingTime: number = 0;
+  private latency: number = 0;
 
   constructor(config: MiniProgramAudioConfig) {
     this.config = config;
@@ -297,14 +304,14 @@ export class MiniProgramAudioClient {
     this.useWebAudioFallback = true;
     
     try {
-      // 请求麦克风权限
+      // 请求麦克风权限 - 增强录音参数
       this.webMediaStream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          sampleRate: 24000,
+          sampleRate: { ideal: 24000 },
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true
+          autoGainControl: true,
         }
       });
       
@@ -456,7 +463,11 @@ export class MiniProgramAudioClient {
           break;
 
         case 'pong':
-          // 心跳响应
+          // 🔧 心跳响应 - 计算延迟
+          if (this.lastPingTime > 0) {
+            this.latency = Date.now() - this.lastPingTime;
+            console.log(`[MiniProgramAudio] Latency: ${this.latency}ms`);
+          }
           break;
 
         default:
@@ -618,6 +629,22 @@ export class MiniProgramAudioClient {
     }
   }
 
+  /**
+   * 🔧 获取或创建播放用 AudioContext（复用以提升音质）
+   */
+  private getPlaybackContext(): AudioContext {
+    if (!this.playbackContext || this.playbackContext.state === 'closed') {
+      this.playbackContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+        sampleRate: 24000
+      });
+    }
+    // 确保 AudioContext 是运行状态
+    if (this.playbackContext.state === 'suspended') {
+      this.playbackContext.resume();
+    }
+    return this.playbackContext;
+  }
+
   private playPCMWithWebAudio(base64Audio: string): void {
     try {
       const arrayBuffer = this.base64ToArrayBuffer(base64Audio);
@@ -628,8 +655,8 @@ export class MiniProgramAudioClient {
         return;
       }
 
-      // 使用 AudioContext 播放 PCM
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // 🔧 复用 AudioContext 提升音质
+      const audioContext = this.getPlaybackContext();
       const sampleRate = 24000;
       const numChannels = 1;
       
@@ -649,7 +676,7 @@ export class MiniProgramAudioClient {
       source.onended = () => {
         this.isPlaying = false;
         this.playNextInQueue();
-        audioContext.close();
+        // 🔧 不再关闭 AudioContext，复用以减少创建开销
       };
       source.start();
     } catch (error) {
@@ -672,11 +699,20 @@ export class MiniProgramAudioClient {
   }
 
   private startHeartbeat(): void {
+    // 🔧 缩短心跳间隔到 15 秒，更快检测连接问题
     this.heartbeatInterval = setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
+        this.lastPingTime = Date.now();
         this.ws.send(JSON.stringify({ type: 'ping' }));
       }
-    }, 30000); // 每 30 秒发送心跳
+    }, 15000);
+  }
+  
+  /**
+   * 🔧 获取当前网络延迟（毫秒）
+   */
+  getLatency(): number {
+    return this.latency;
   }
 
   private stopHeartbeat(): void {

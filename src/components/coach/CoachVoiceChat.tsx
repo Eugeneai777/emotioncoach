@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock } from 'lucide-react';
+import { AudioWaveform } from './AudioWaveform';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@/utils/MiniProgramAudio';
 import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo } from '@/utils/platform';
@@ -1382,8 +1383,21 @@ export const CoachVoiceChat = ({
         {/* 教练名称 - 增强可读性 */}
         <h2 className="text-white text-2xl font-semibold mb-2 drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>{coachTitle}</h2>
         
+        {/* 🔧 音频波形可视化 */}
+        <div className="mb-4 w-24">
+          <AudioWaveform 
+            status={
+              status === 'connecting' ? 'connecting' :
+              speakingStatus === 'user-speaking' ? 'user-speaking' :
+              speakingStatus === 'assistant-speaking' ? 'assistant-speaking' :
+              'idle'
+            }
+            primaryColor={primaryColor}
+          />
+        </div>
+        
         {/* 状态文字 - 增强对比度 */}
-        <div className="flex items-center gap-2 text-white/80 text-sm mb-8 drop-shadow-md font-medium">
+        <div className="flex items-center gap-2 text-white/80 text-sm mb-6 drop-shadow-md font-medium">
           {status === 'connecting' && (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
