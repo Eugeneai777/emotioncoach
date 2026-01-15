@@ -26,8 +26,7 @@ export const coachPages = [
   { path: '/coach/emotion', label: '情绪教练', icon: 'Heart', color: 'bg-pink-500' },
   { path: '/parent-coach', label: '亲子教练', icon: 'Baby', color: 'bg-sky-500' },
   { path: '/coach/wealth_coach_4_questions', label: '财富教练', icon: 'Coins', color: 'bg-amber-500' },
-  { path: '/coach/vibrant_life', label: '有劲生活', icon: 'Sparkles', color: 'bg-violet-500' },
-  { path: '/teen-coach', label: '青少年教练', icon: 'Gamepad2', color: 'bg-cyan-500' },
+  { path: '/coach/vibrant_life', label: '生活教练', icon: 'Sparkles', color: 'bg-violet-500' },
   { path: '/wealth-camp-checkin', label: '财富日记', icon: 'BookOpen', color: 'bg-orange-500' },
 ];
 
@@ -39,10 +38,6 @@ export const availablePages = [
   { path: '/energy-studio?tool=alive-check', label: '死了吗', icon: 'HeartPulse', color: 'bg-rose-500' },
   { path: '/courses', label: '学习课程', icon: 'GraduationCap', color: 'bg-blue-500' },
   { path: '/wealth-block', label: '财富测评', icon: 'ClipboardCheck', color: 'bg-purple-500' },
-  { path: '/customer-support', label: '给予建议', icon: 'MessageCircle', color: 'bg-blue-500' },
-  { path: '/packages', label: '产品中心', icon: 'Package', color: 'bg-emerald-500' },
-  { path: '/settings', label: '设置', icon: 'Settings', color: 'bg-slate-500' },
-  { path: '/energy-studio', label: '有劲生活馆', icon: 'Sparkles', color: 'bg-violet-500' },
   { path: '/partner', label: '合伙人', icon: 'Handshake', color: 'bg-teal-500' },
 ];
 
