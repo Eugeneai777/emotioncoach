@@ -491,6 +491,92 @@ export const PAGE_OG_CONFIGS: Record<string, OGConfig> = {
     image: OG_IMAGES.coachSpace,
     url: `${OG_BASE_URL}/become-coach`,
   },
+
+  // ========== 补齐缺失的页面配置 ==========
+  humanCoaches: {
+    title: '真人教练 - 有劲AI',
+    ogTitle: '有劲AI • 真人教练',
+    description: '专业教练一对一指导，陪伴深度成长',
+    image: OG_IMAGES.coachSpace,
+    url: `${OG_BASE_URL}/human-coaches`,
+  },
+  campGraduate: {
+    title: '训练营毕业 - 有劲AI',
+    ogTitle: '有劲AI • 训练营毕业',
+    description: '恭喜完成训练营，开启持续成长',
+    image: OG_IMAGES.wealthCamp,
+    url: `${OG_BASE_URL}/camp-graduate`,
+  },
+  transformationFlow: {
+    title: '蜕变流程 - 有劲AI',
+    ogTitle: '有劲AI • 蜕变流程',
+    description: '财富蜕变之旅，见证内在成长',
+    image: OG_IMAGES.wealthCoach,
+    url: `${OG_BASE_URL}/transformation-flow`,
+  },
+  parentIntake: {
+    title: '亲子教练入门 - 有劲AI',
+    ogTitle: '有劲AI • 亲子教练入门',
+    description: '开启亲子关系改善之旅',
+    image: OG_IMAGES.parentCoach,
+    url: `${OG_BASE_URL}/parent-intake`,
+  },
+  customerSupport: {
+    title: '客服中心 - 有劲AI',
+    ogTitle: '有劲AI • 客服中心',
+    description: '有问题？AI客服随时为你解答',
+    image: OG_IMAGES.default,
+    url: `${OG_BASE_URL}/customer-support`,
+  },
+  wealthCampIntro: {
+    title: '财富觉醒训练营 - 有劲AI',
+    ogTitle: '有劲AI • 财富觉醒训练营',
+    description: '7天重塑财富信念，开启丰盛人生',
+    image: OG_IMAGES.wealthCamp,
+    url: `${OG_BASE_URL}/wealth-camp-intro`,
+  },
+  myStories: {
+    title: '我的故事 - 有劲AI',
+    ogTitle: '有劲AI • 我的故事',
+    description: '用故事记录成长，用文字见证蜕变',
+    image: OG_IMAGES.coachSpace,
+    url: `${OG_BASE_URL}/my-stories`,
+  },
+  panicHistory: {
+    title: '紧急支援记录 - 有劲AI',
+    ogTitle: '有劲AI • 紧急支援记录',
+    description: '查看你的情绪支援历史',
+    image: OG_IMAGES.emotionCoach,
+    url: `${OG_BASE_URL}/panic-history`,
+  },
+  wealthAwakeningProgress: {
+    title: '觉醒进度 - 有劲AI',
+    ogTitle: '有劲AI • 觉醒进度',
+    description: '追踪你的财富觉醒成长轨迹',
+    image: OG_IMAGES.wealthCoach,
+    url: `${OG_BASE_URL}/wealth-awakening-progress`,
+  },
+  wealthJournalDetail: {
+    title: '财富日记详情 - 有劲AI',
+    ogTitle: '有劲AI • 财富日记详情',
+    description: '查看财富觉醒日记记录',
+    image: OG_IMAGES.wealthCoach,
+    url: `${OG_BASE_URL}/wealth-journal-detail`,
+  },
+  posterCenter: {
+    title: '海报中心 - 有劲AI',
+    ogTitle: '有劲AI • 海报中心',
+    description: '生成精美分享海报，传递成长力量',
+    image: OG_IMAGES.partner,
+    url: `${OG_BASE_URL}/poster-center`,
+  },
+  parentCampLanding: {
+    title: '亲子训练营 - 有劲AI',
+    ogTitle: '有劲AI • 亲子训练营',
+    description: '陪伴式亲子关系成长训练',
+    image: OG_IMAGES.parentCoach,
+    url: `${OG_BASE_URL}/parent-camp-landing`,
+  },
 };
 
 /**
