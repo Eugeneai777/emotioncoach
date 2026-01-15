@@ -83,18 +83,18 @@ export const FloatingQuickMenu = () => {
       isCustom: true,
     },
     { 
-      id: 'energy-studio', 
-      icon: iconMap['Sparkles'], 
-      label: '有劲生活馆', 
-      path: '/energy-studio', 
-      color: 'bg-violet-500',
-    },
-    { 
       id: 'products', 
       icon: iconMap['Package'], 
       label: '产品中心', 
       path: '/packages', 
       color: 'bg-emerald-500',
+    },
+    { 
+      id: 'energy-studio', 
+      icon: iconMap['Sparkles'], 
+      label: '有劲生活馆', 
+      path: '/energy-studio', 
+      color: 'bg-violet-500',
     },
   ];
 
