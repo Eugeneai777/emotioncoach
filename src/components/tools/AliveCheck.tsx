@@ -1,0 +1,492 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { HeartHandshake, CheckCircle2, AlertCircle, Settings, Calendar, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
+import { format, differenceInDays, parseISO } from "date-fns";
+import { zhCN } from "date-fns/locale";
+
+interface AliveCheckSettings {
+  id: string;
+  is_enabled: boolean;
+  emergency_contact_name: string | null;
+  emergency_contact_email: string | null;
+  days_threshold: number;
+  last_notification_at: string | null;
+}
+
+interface CheckLog {
+  id: string;
+  checked_at: string;
+  note: string | null;
+  created_at: string;
+}
+
+export const AliveCheck = () => {
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<AliveCheckSettings | null>(null);
+  const [logs, setLogs] = useState<CheckLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [todayNote, setTodayNote] = useState("");
+  
+  // Form states
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [daysThreshold, setDaysThreshold] = useState("3");
+  const [isEnabled, setIsEnabled] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    if (!user) return;
+    setLoading(true);
+    
+    try {
+      // Load settings
+      const { data: settingsData, error: settingsError } = await supabase
+        .from("alive_check_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (settingsError) throw settingsError;
+
+      if (settingsData) {
+        setSettings(settingsData);
+        setContactName(settingsData.emergency_contact_name || "");
+        setContactEmail(settingsData.emergency_contact_email || "");
+        setDaysThreshold(String(settingsData.days_threshold || 3));
+        setIsEnabled(settingsData.is_enabled || false);
+      }
+
+      // Load recent logs
+      const { data: logsData, error: logsError } = await supabase
+        .from("alive_check_logs")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("checked_at", { ascending: false })
+        .limit(30);
+
+      if (logsError) throw logsError;
+      setLogs(logsData || []);
+    } catch (error) {
+      console.error("Error loading data:", error);
+      toast({
+        title: "加载失败",
+        description: "请刷新页面重试",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveSettings = async () => {
+    if (!user) return;
+    
+    // Validate email
+    if (isEnabled && (!contactEmail || !contactEmail.includes("@"))) {
+      toast({
+        title: "请输入有效的邮箱地址",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const settingsData = {
+        user_id: user.id,
+        is_enabled: isEnabled,
+        emergency_contact_name: contactName || null,
+        emergency_contact_email: contactEmail || null,
+        days_threshold: parseInt(daysThreshold) || 3,
+        updated_at: new Date().toISOString()
+      };
+
+      if (settings?.id) {
+        const { error } = await supabase
+          .from("alive_check_settings")
+          .update(settingsData)
+          .eq("id", settings.id);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from("alive_check_settings")
+          .insert(settingsData)
+          .select()
+          .single();
+        if (error) throw error;
+        setSettings(data);
+      }
+
+      toast({
+        title: "设置已保存",
+        description: isEnabled ? "功能已开启，请记得每天打卡" : "功能已关闭"
+      });
+      setShowSettings(false);
+      loadData();
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "保存失败",
+        description: "请稍后重试",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCheckIn = async () => {
+    if (!user) return;
+    
+    setChecking(true);
+    try {
+      const today = format(new Date(), "yyyy-MM-dd");
+      
+      // Check if already checked in today
+      const existingLog = logs.find(log => log.checked_at === today);
+      if (existingLog) {
+        toast({
+          title: "今天已经打卡了",
+          description: "明天再来吧！"
+        });
+        setChecking(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from("alive_check_logs")
+        .insert({
+          user_id: user.id,
+          checked_at: today,
+          note: todayNote || null
+        });
+
+      if (error) {
+        if (error.code === "23505") {
+          toast({
+            title: "今天已经打卡了",
+            description: "明天再来吧！"
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        toast({
+          title: "打卡成功！✓",
+          description: "很高兴知道你还好"
+        });
+        setTodayNote("");
+        loadData();
+      }
+    } catch (error) {
+      console.error("Error checking in:", error);
+      toast({
+        title: "打卡失败",
+        description: "请稍后重试",
+        variant: "destructive"
+      });
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  // Calculate stats
+  const today = format(new Date(), "yyyy-MM-dd");
+  const hasCheckedToday = logs.some(log => log.checked_at === today);
+  
+  const lastCheckDate = logs.length > 0 ? logs[0].checked_at : null;
+  const daysSinceLastCheck = lastCheckDate 
+    ? differenceInDays(new Date(), parseISO(lastCheckDate))
+    : null;
+
+  // Calculate streak
+  const calculateStreak = () => {
+    if (logs.length === 0) return 0;
+    
+    let streak = 0;
+    const sortedLogs = [...logs].sort((a, b) => 
+      new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime()
+    );
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    for (let i = 0; i < sortedLogs.length; i++) {
+      const logDate = parseISO(sortedLogs[i].checked_at);
+      const expectedDate = new Date(today);
+      expectedDate.setDate(expectedDate.getDate() - i);
+      expectedDate.setHours(0, 0, 0, 0);
+      
+      if (logDate.getTime() === expectedDate.getTime()) {
+        streak++;
+      } else if (i === 0 && differenceInDays(today, logDate) === 1) {
+        // If missed today but checked yesterday, start counting from yesterday
+        streak++;
+      } else {
+        break;
+      }
+    }
+    
+    return streak;
+  };
+
+  const streak = calculateStreak();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const needsSetup = !settings || !settings.emergency_contact_email;
+
+  return (
+    <div className="space-y-4">
+      {/* Header Card */}
+      <Card className="border-rose-200 dark:border-rose-800 bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-950/30 dark:to-red-950/30">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <HeartHandshake className="w-5 h-5 text-rose-500" />
+              <CardTitle className="text-lg">死了没</CardTitle>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setShowSettings(!showSettings)}
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+          </div>
+          <CardDescription>
+            每日安全打卡，让关心你的人安心
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {/* Status Display */}
+          <div className="flex items-center gap-4 mb-4">
+            {hasCheckedToday ? (
+              <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                <CheckCircle2 className="w-5 h-5" />
+                <span className="text-sm font-medium">今日已打卡</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <AlertCircle className="w-5 h-5" />
+                <span className="text-sm font-medium">今日未打卡</span>
+              </div>
+            )}
+            
+            {streak > 0 && (
+              <div className="text-sm text-muted-foreground">
+                连续 <span className="font-bold text-rose-500">{streak}</span> 天
+              </div>
+            )}
+          </div>
+
+          {/* Check-in Button */}
+          {!hasCheckedToday && settings?.is_enabled && (
+            <div className="space-y-3">
+              <Textarea
+                placeholder="今天心情如何？（选填）"
+                value={todayNote}
+                onChange={(e) => setTodayNote(e.target.value)}
+                className="min-h-[60px] resize-none"
+              />
+              <Button 
+                onClick={handleCheckIn}
+                disabled={checking}
+                className="w-full bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white"
+                size="lg"
+              >
+                {checking ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                )}
+                我还好 ✓
+              </Button>
+            </div>
+          )}
+
+          {/* Setup Prompt */}
+          {needsSetup && !showSettings && (
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                请先设置紧急联系人才能使用此功能
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => setShowSettings(true)}
+              >
+                立即设置
+              </Button>
+            </div>
+          )}
+
+          {/* Disabled State */}
+          {!settings?.is_enabled && settings?.emergency_contact_email && !showSettings && (
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                功能已关闭，开启后需要每天打卡
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => setShowSettings(true)}
+              >
+                开启功能
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Settings Panel */}
+      {showSettings && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">功能设置</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="enabled">启用功能</Label>
+              <Switch
+                id="enabled"
+                checked={isEnabled}
+                onCheckedChange={setIsEnabled}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contactName">紧急联系人姓名</Label>
+              <Input
+                id="contactName"
+                placeholder="如：妈妈、好友小明"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contactEmail">紧急联系人邮箱 *</Label>
+              <Input
+                id="contactEmail"
+                type="email"
+                placeholder="contact@example.com"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                若您连续未打卡，系统将发送提醒邮件至此邮箱
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="threshold">提醒天数</Label>
+              <Select value={daysThreshold} onValueChange={setDaysThreshold}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5, 6, 7].map(day => (
+                    <SelectItem key={day} value={String(day)}>
+                      {day} 天未打卡时通知
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowSettings(false)}
+                className="flex-1"
+              >
+                取消
+              </Button>
+              <Button 
+                onClick={saveSettings}
+                disabled={saving}
+                className="flex-1"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                保存设置
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Logs */}
+      {logs.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <CardTitle className="text-base">打卡记录</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+              {logs.slice(0, 10).map((log) => (
+                <div 
+                  key={log.id}
+                  className="flex items-start justify-between py-2 border-b last:border-0"
+                >
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <div>
+                      <div className="text-sm">
+                        {format(parseISO(log.checked_at), "M月d日 EEEE", { locale: zhCN })}
+                      </div>
+                      {log.note && (
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {log.note}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Info Card */}
+      <Card className="bg-muted/50">
+        <CardContent className="pt-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            💡 这是一个为独居或需要被关注的人设计的安全功能。
+            每天简单打卡表示"我还好"，如果连续 {daysThreshold} 天未打卡，
+            系统会自动发送邮件通知您设定的紧急联系人，让他们来关心您。
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};

@@ -27,6 +27,7 @@ import { FinanceTracker } from "@/components/tools/FinanceTracker";
 import { TimeManagement } from "@/components/tools/TimeManagement";
 import { RelationshipTracker } from "@/components/tools/RelationshipTracker";
 import { EnergyDeclaration } from "@/components/tools/EnergyDeclaration";
+import { AliveCheck } from "@/components/tools/AliveCheck";
 
 import SafetyButtonsGrid from "@/components/tools/SafetyButtonsGrid";
 import { MobileCard } from "@/components/ui/mobile-card";
@@ -126,6 +127,7 @@ const EnergyStudio = () => {
       case "time": return <TimeManagement />;
       case "relationships": return <RelationshipTracker />;
       case "declaration": return <EnergyDeclaration />;
+      case "alive-check": return <AliveCheck />;
       default: return null;
     }
   };
