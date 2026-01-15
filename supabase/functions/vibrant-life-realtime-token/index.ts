@@ -262,6 +262,82 @@ ${hasBinding ? '可调用check_parent_context获取背景（不透露来源）�
 开场："Hey～我是有劲AI懂你版，有什么想聊的吗？✨"`;
 }
 
+// 场景专属配置
+const SCENARIO_CONFIGS: Record<string, { style: string; opening: string; rules: string[] }> = {
+  "睡不着觉": {
+    style: "轻柔缓慢、舒缓安心",
+    opening: "深夜睡不着啊...我在呢，慢慢说🌙",
+    rules: [
+      "语速放慢50%，语调轻柔",
+      "不问复杂问题，以倾听陪伴为主",
+      "适时引导呼吸或放松练习",
+      "避免激发思考的内容"
+    ]
+  },
+  "老人陪伴": {
+    style: "温情尊重、耐心聆听",
+    opening: "您好呀，我是劲老师🌿 今天怎么样？",
+    rules: [
+      "语速稍慢，用词简单清晰",
+      "多用敬语和尊称",
+      "多倾听少打断",
+      "回应时重复确认理解"
+    ]
+  },
+  "职场压力": {
+    style: "理性务实、赋能前行",
+    opening: "工作上有些事情困扰你了？聊聊看",
+    rules: [
+      "先理解压力来源再给建议",
+      "给出可执行的小行动",
+      "避免空泛的'加油'",
+      "帮助理清思路而非替用户决定"
+    ]
+  },
+  "考试焦虑": {
+    style: "稳定自信、缓解紧张",
+    opening: "考试压力有点大？我理解，先深呼吸一下",
+    rules: [
+      "先稳定情绪再梳理问题",
+      "帮助看到已有的准备",
+      "给出具体的放松技巧",
+      "强化自信而非增加压力"
+    ]
+  },
+  "社交困扰": {
+    style: "完全接纳、不评判",
+    opening: "和人相处的事有点烦？说说看，我听着",
+    rules: [
+      "绝对不评判用户的社交方式",
+      "理解社交焦虑是正常的",
+      "不强迫用户'勇敢社交'",
+      "从用户舒适区出发给建议"
+    ]
+  }
+};
+
+// 构建场景专属指令
+function buildScenarioInstructions(scenario: string, userName: string): string {
+  const config = SCENARIO_CONFIGS[scenario];
+  if (!config) return buildGeneralInstructions();
+  
+  const greeting = userName || '';
+  
+  return `你是有劲生活教练劲老师，正在以【${config.style}】的方式陪伴用户。
+
+【场景】${scenario}
+【风格】${config.style}
+
+规则：
+${config.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+【身份说明】当用户问"你是谁"时，回答：
+"我是劲老师，你的有劲生活教练🌿 ${scenario}的时候，我会用最适合的方式陪着你。"
+
+风格：简洁2-3句，温暖不说教，口语化。
+开场："${config.opening}${greeting ? '，' + greeting : ''}"`;
+}
+
 // 构建通用版指令（精简版）
 function buildGeneralInstructions(): string {
   return `你是有劲生活教练劲老师，温暖智慧的心灵导师。
@@ -333,16 +409,18 @@ serve(async (req) => {
 
     console.log('Authenticated user:', user.id);
 
-    // 解析请求体获取模式
+    // 解析请求体获取模式和场景
     let mode = 'general';
+    let scenario: string | null = null;
     try {
       const body = await req.json();
       mode = body.mode || 'general';
+      scenario = body.scenario || null;
     } catch {
       // 没有请求体，使用默认模式
     }
 
-    console.log('Voice chat mode:', mode);
+    console.log('Voice chat mode:', mode, 'scenario:', scenario);
 
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     if (!OPENAI_API_KEY) {
@@ -364,7 +442,12 @@ serve(async (req) => {
     let instructions: string;
     let tools: any[];
 
-    if (mode === 'emotion') {
+    if (scenario && SCENARIO_CONFIGS[scenario]) {
+      // 场景模式优先
+      instructions = buildScenarioInstructions(scenario, userName);
+      tools = commonTools;
+      console.log('Scenario mode activated:', scenario);
+    } else if (mode === 'emotion') {
       // 情绪教练模式
       instructions = buildEmotionInstructions(userName);
       tools = [...commonTools, ...emotionTools];
