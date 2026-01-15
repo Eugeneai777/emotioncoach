@@ -143,14 +143,14 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
   },
   introduction: {
     pageKey: 'introduction',
-    title: '有劲AI情绪日记',
-    subtitle: '每天10分钟，让情绪变成力量',
+    title: '有劲AI - 每个人的生活教练',
+    subtitle: '温暖陪伴 × 系统工具 × 成长社群',
     targetUrl: '/introduction',
-    emoji: '📝',
+    emoji: '🌟',
     highlights: [
-      'AI智能对话梳理情绪',
-      '自动生成日报/周报',
-      '21天训练营系统成长',
+      '7位AI教练24小时在线',
+      '温暖陪伴持续成长',
+      '系统工具科学提升',
     ],
     gradient: 'linear-gradient(135deg, #ec4899, #8b5cf6)',
     category: 'tool'
