@@ -3,8 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, MessageCircle, Sparkles, Package, Users, Settings, 
-  Rocket, X, BookOpen, ClipboardCheck, Handshake, Sunrise, 
-  MessagesSquare, Edit3, Star, Heart, Baby, Coins, Gamepad2
+  Rocket, X, BookOpen, ClipboardCheck, Handshake, 
+  Edit3, Star, Heart, Baby, Coins, Gamepad2,
+  Flower2, AlertCircle, HeartPulse, GraduationCap
 } from 'lucide-react';
 import { useQuickMenuConfig } from '@/hooks/useQuickMenuConfig';
 import { QuickMenuSettingsDialog } from '@/components/QuickMenuSettingsDialog';
@@ -20,8 +21,9 @@ interface Position {
 // Icon mapping
 const iconMap: Record<string, React.ElementType> = {
   Home, MessageCircle, Sparkles, Package, Users, Settings,
-  BookOpen, ClipboardCheck, Handshake, Sunrise, MessagesSquare, Star,
+  BookOpen, ClipboardCheck, Handshake, Star,
   Heart, Baby, Coins, Gamepad2, Rocket,
+  Flower2, AlertCircle, HeartPulse, GraduationCap,
 };
 
 export const FloatingQuickMenu = () => {
@@ -57,11 +59,11 @@ export const FloatingQuickMenu = () => {
       color: 'bg-blue-500',
     },
     { 
-      id: 'awakening', 
+      id: 'energy-studio', 
       icon: iconMap['Sparkles'], 
-      label: '觉察入口', 
-      path: '/awakening', 
-      color: 'bg-purple-500',
+      label: '有劲生活馆', 
+      path: '/energy-studio', 
+      color: 'bg-violet-500',
     },
     { 
       id: 'products', 
