@@ -116,7 +116,8 @@ const App = () => (
           <FloatingQuickMenu />
           <FollowWechatReminder />
           <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Navigate to="/coach/vibrant_life_sage" replace />} />
+          <Route path="/emotion-coach" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/wechat-auth" element={<WeChatAuth />} />
           <Route path="/wechat-oauth-callback" element={<WeChatOAuthCallback />} />
