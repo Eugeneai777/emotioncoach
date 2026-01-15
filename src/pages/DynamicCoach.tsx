@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
-import { OG_BASE_URL, OG_IMAGES } from "@/config/ogConfig";
+import { OG_BASE_URL } from "@/config/ogConfig";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { VibrantLifeScenarioCards } from "@/components/coach/VibrantLifeScenarioCards";
@@ -38,22 +38,22 @@ interface LocationState {
   meditationTitle?: string;
 }
 
-// 教练 key → OG 图片映射
+// 教练 key → OG 图片映射（数据库配置优先，此处仅作兜底）
 const getCoachOGImage = (coachKey: string): string => {
   const imageMap: Record<string, string> = {
-    'wealth_coach_4_questions': OG_IMAGES.wealthCoach,
-    'vibrant_life_sage': OG_IMAGES.coachSpace,
-    'vibrant_life': OG_IMAGES.coachSpace,
-    'emotion': OG_IMAGES.emotionCoach,
-    'emotion_coach': OG_IMAGES.emotionCoach,
-    'parent': OG_IMAGES.parentCoach,
-    'parent_coach': OG_IMAGES.parentCoach,
-    'teen': OG_IMAGES.parentCoach,
-    'gratitude_coach': OG_IMAGES.gratitude,
-    'communication': OG_IMAGES.coachSpace,
-    'story': OG_IMAGES.coachSpace,
+    'wealth_coach_4_questions': `${OG_BASE_URL}/og-wealth-coach.png`,
+    'vibrant_life_sage': `${OG_BASE_URL}/og-coach-space.png`,
+    'vibrant_life': `${OG_BASE_URL}/og-coach-space.png`,
+    'emotion': `${OG_BASE_URL}/og-emotion-coach.png`,
+    'emotion_coach': `${OG_BASE_URL}/og-emotion-coach.png`,
+    'parent': `${OG_BASE_URL}/og-parent-coach.png`,
+    'parent_coach': `${OG_BASE_URL}/og-parent-coach.png`,
+    'teen': `${OG_BASE_URL}/og-parent-coach.png`,
+    'gratitude_coach': `${OG_BASE_URL}/og-gratitude.png`,
+    'communication': `${OG_BASE_URL}/og-coach-space.png`,
+    'story': `${OG_BASE_URL}/og-coach-space.png`,
   };
-  return imageMap[coachKey] || OG_IMAGES.coachSpace;
+  return imageMap[coachKey] || `${OG_BASE_URL}/og-coach-space.png`;
 };
 
 const DynamicCoach = () => {
