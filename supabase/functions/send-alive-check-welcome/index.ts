@@ -36,7 +36,7 @@ const handler = async (req: Request): Promise<Response> => {
     const siteUrl = "https://wechat.eugenewe.net/alive-check";
 
     const emailResponse = await resend.emails.send({
-      from: "有劲AI <onboarding@resend.dev>",
+      from: "有劲AI <noreply@eugeneai.me>",
       to: [contactEmail],
       subject: `【有劲AI】${displayName} 将您设为安全守护人`,
       html: `
