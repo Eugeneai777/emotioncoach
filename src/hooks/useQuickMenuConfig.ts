@@ -13,7 +13,6 @@ export interface MenuItemConfig {
 }
 
 export interface QuickMenuConfig {
-  homePagePath: string;
   customSlot1: MenuItemConfig;
   customSlot2: MenuItemConfig;
   customSlot3: MenuItemConfig;
@@ -42,7 +41,6 @@ export const availablePages = [
 ];
 
 export const defaultConfig: QuickMenuConfig = {
-  homePagePath: '/coach/wealth_coach_4_questions',
   customSlot1: {
     id: 'custom1',
     label: '情绪按钮',
@@ -95,8 +93,6 @@ export const useQuickMenuConfig = () => {
     });
 
     return {
-      ...raw,
-      homePagePath: normalizePath(raw.homePagePath),
       customSlot1: normalizeSlot(raw.customSlot1),
       customSlot2: normalizeSlot(raw.customSlot2),
       customSlot3: raw.customSlot3 ? normalizeSlot(raw.customSlot3) : defaultConfig.customSlot3,
@@ -122,7 +118,6 @@ export const useQuickMenuConfig = () => {
           } else if (data) {
             // Database config exists
             const dbConfig: QuickMenuConfig = normalizeConfig({
-              homePagePath: data.home_page_path,
               customSlot1: data.custom_slot_1 as unknown as MenuItemConfig,
               customSlot2: data.custom_slot_2 as unknown as MenuItemConfig,
               customSlot3: (data as any).custom_slot_3 as MenuItemConfig || defaultConfig.customSlot3,
@@ -193,7 +188,6 @@ export const useQuickMenuConfig = () => {
         const result = await supabase
           .from('user_quick_menu_config')
           .update({
-            home_page_path: configToSync.homePagePath,
             custom_slot_1: JSON.parse(JSON.stringify(configToSync.customSlot1)),
             custom_slot_2: JSON.parse(JSON.stringify(configToSync.customSlot2)),
             custom_slot_3: JSON.parse(JSON.stringify(configToSync.customSlot3)),
@@ -204,7 +198,6 @@ export const useQuickMenuConfig = () => {
         // Insert new record - use raw SQL approach to avoid type issues
         const result = await supabase.rpc('insert_quick_menu_config' as never, {
           p_user_id: user.id,
-          p_home_page_path: configToSync.homePagePath,
           p_custom_slot_1: JSON.parse(JSON.stringify(configToSync.customSlot1)),
           p_custom_slot_2: JSON.parse(JSON.stringify(configToSync.customSlot2)),
           p_custom_slot_3: JSON.parse(JSON.stringify(configToSync.customSlot3)),
@@ -217,7 +210,6 @@ export const useQuickMenuConfig = () => {
             .from('user_quick_menu_config')
             .insert([{
               user_id: user.id,
-              home_page_path: configToSync.homePagePath,
               custom_slot_1: JSON.parse(JSON.stringify(configToSync.customSlot1)),
               custom_slot_2: JSON.parse(JSON.stringify(configToSync.customSlot2)),
               custom_slot_3: JSON.parse(JSON.stringify(configToSync.customSlot3)),
@@ -246,14 +238,8 @@ export const useQuickMenuConfig = () => {
     }
   };
 
-  // Update home path
-  const updateHomePath = async (path: string) => {
-    const newConfig = { ...config, homePagePath: path };
-    await saveConfig(newConfig);
-  };
-
   // Update custom slot
-  const updateCustomSlot = async (slot: 'customSlot1' | 'customSlot2', item: MenuItemConfig) => {
+  const updateCustomSlot = async (slot: 'customSlot1' | 'customSlot2' | 'customSlot3', item: MenuItemConfig) => {
     const newConfig = { ...config, [slot]: item };
     await saveConfig(newConfig);
   };
@@ -268,7 +254,6 @@ export const useQuickMenuConfig = () => {
     isLoaded,
     isSyncing,
     saveConfig,
-    updateHomePath,
     updateCustomSlot,
     resetToDefaults,
     availablePages,

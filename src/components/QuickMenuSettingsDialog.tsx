@@ -3,13 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Check, RotateCcw, Heart, Baby, Coins, Sparkles, Gamepad2, Users } from 'lucide-react';
-import { QuickMenuConfig, availablePages, coachPages, defaultConfig } from '@/hooks/useQuickMenuConfig';
-
-// Icon mapping for coach pages
-const coachIconMap: Record<string, React.ElementType> = {
-  Users, Heart, Baby, Coins, Sparkles, Gamepad2,
-};
+import { Check, RotateCcw } from 'lucide-react';
+import { QuickMenuConfig, availablePages, defaultConfig } from '@/hooks/useQuickMenuConfig';
 
 interface QuickMenuSettingsDialogProps {
   open: boolean;
@@ -25,10 +20,6 @@ export const QuickMenuSettingsDialog = ({
   onSave,
 }: QuickMenuSettingsDialogProps) => {
   const [localConfig, setLocalConfig] = useState<QuickMenuConfig>(config);
-
-  const handleHomePathChange = (path: string) => {
-    setLocalConfig(prev => ({ ...prev, homePagePath: path }));
-  };
 
   const handleCustomSlotChange = (slot: 'customSlot1' | 'customSlot2' | 'customSlot3', path: string) => {
     const selectedPage = availablePages.find(p => p.path === path);
@@ -61,43 +52,11 @@ export const QuickMenuSettingsDialog = ({
         <DialogHeader>
           <DialogTitle className="text-lg">自定义快捷菜单</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            设置首页和两个自定义快捷入口
+            设置三个自定义快捷入口
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Home Page Setting - Coach Pages */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              🏠 首页跳转（选择教练）
-            </Label>
-            <RadioGroup
-              value={localConfig.homePagePath}
-              onValueChange={handleHomePathChange}
-              className="flex flex-col gap-1"
-            >
-              {coachPages.map((page) => {
-                const Icon = coachIconMap[page.icon] || Users;
-                return (
-                  <div 
-                    key={page.path} 
-                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted transition-colors"
-                  >
-                    <RadioGroupItem value={page.path} id={`home-${page.path}`} />
-                    <div className={`w-6 h-6 rounded-full ${page.color} flex items-center justify-center`}>
-                      <Icon className="w-3 h-3 text-white" />
-                    </div>
-                    <Label 
-                      htmlFor={`home-${page.path}`} 
-                      className="text-sm cursor-pointer flex-1"
-                    >
-                      {page.label}
-                    </Label>
-                  </div>
-                );
-              })}
-            </RadioGroup>
-          </div>
 
           {/* Custom Slot 1 */}
           <div className="space-y-3">
