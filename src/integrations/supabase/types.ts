@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      alive_check_contacts: {
+        Row: {
+          contact_email: string
+          contact_name: string
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_email: string
+          contact_name: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_email?: string
+          contact_name?: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       alive_check_logs: {
         Row: {
           checked_at: string
