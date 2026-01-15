@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PAGE_OG_CONFIGS, OGConfig, OG_SITE_NAME } from "@/config/ogConfig";
+import { DEFAULT_OG_CONFIG, OGConfig, OG_SITE_NAME } from "@/config/ogConfig";
 
 // 默认 OG 图片尺寸
 const DEFAULT_IMAGE_WIDTH = 1200;
@@ -16,18 +16,19 @@ export interface DynamicOGConfig extends OGConfig {
 
 /**
  * 从数据库获取单个页面的 OG 配置
- * 优先使用数据库配置，否则使用默认配置
+ * 数据库为唯一配置来源，DEFAULT_OG_CONFIG 仅作最终兜底
  * 
- * 支持的优化字段：
- * - imageWidth/imageHeight: 图片尺寸声明
- * - locale: 多语言标签
- * - twitterCard: Twitter 卡片类型
+ * 查询优先级：
+ * 1. 数据库中该页面的配置
+ * 2. 数据库中 home 的配置
+ * 3. 代码中的 DEFAULT_OG_CONFIG
  */
 export function usePageOG(pageKey: string): {
   ogConfig: DynamicOGConfig;
   isLoading: boolean;
 } {
-  const defaultConfig = PAGE_OG_CONFIGS[pageKey] || PAGE_OG_CONFIGS.home;
+  // 使用统一默认配置作为兜底
+  const defaultConfig = DEFAULT_OG_CONFIG;
 
   const { data: customConfig, isLoading } = useQuery({
     queryKey: ["og-config", pageKey],
@@ -52,7 +53,7 @@ export function usePageOG(pageKey: string): {
     gcTime: 10 * 60 * 1000,
   });
 
-  // Merge custom config with defaults
+  // 合并配置：数据库值 > 默认值
   const ogConfig: DynamicOGConfig = {
     title: customConfig?.title || defaultConfig.title,
     ogTitle: customConfig?.og_title || defaultConfig.ogTitle,

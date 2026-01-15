@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { PAGE_OG_CONFIGS, OG_IMAGES } from "@/config/ogConfig";
+import { useState, useMemo } from "react";
+import { OG_BASE_URL, DEFAULT_OG_CONFIG, pathToKeyMap, OGConfig } from "@/config/ogConfig";
 import { OGCardPreview } from "./OGCardPreview";
 import { OGBatchUpload } from "./OGBatchUpload";
 import { OGBatchCategorize } from "./OGBatchCategorize";
@@ -31,7 +31,7 @@ export default function OGPreviewManagement() {
 
   // Create a map for quick lookup
   const customConfigMap = useMemo(() => {
-    const map = new Map<string, typeof customConfigs extends (infer T)[] ? T : never>();
+    const map = new Map<string, OGConfiguration>();
     customConfigs?.forEach(config => {
       map.set(config.page_key, config);
     });
@@ -49,14 +49,32 @@ export default function OGPreviewManagement() {
     return null;
   };
 
+  // 从路径映射和数据库配置构建页面列表
   const allConfigs = useMemo(() => {
-    return Object.entries(PAGE_OG_CONFIGS).map(([key, config]) => ({
-      key,
-      config,
-      customConfig: customConfigMap.get(key),
-      autoCategoryId: getAutoCategoryId(key),
-    }));
-  }, [customConfigMap, categories, productLines]);
+    // 收集所有已知的页面 key（从路由映射 + 数据库）
+    const pageKeys = new Set<string>(Object.values(pathToKeyMap));
+    customConfigs?.forEach(c => pageKeys.add(c.page_key));
+    
+    return Array.from(pageKeys).map(key => {
+      const customConfig = customConfigMap.get(key);
+      
+      // 构建配置：优先数据库，否则使用默认
+      const config: OGConfig = {
+        title: customConfig?.title || DEFAULT_OG_CONFIG.title,
+        ogTitle: customConfig?.og_title || DEFAULT_OG_CONFIG.ogTitle,
+        description: customConfig?.description || DEFAULT_OG_CONFIG.description,
+        image: customConfig?.image_url || DEFAULT_OG_CONFIG.image,
+        url: customConfig?.url || `${OG_BASE_URL}/`,
+      };
+      
+      return {
+        key,
+        config,
+        customConfig,
+        autoCategoryId: getAutoCategoryId(key),
+      };
+    }).sort((a, b) => a.key.localeCompare(b.key));
+  }, [customConfigs, customConfigMap, categories, productLines]);
 
   const filteredConfigs = useMemo(() => {
     let results = allConfigs;
@@ -89,9 +107,10 @@ export default function OGPreviewManagement() {
     return results;
   }, [allConfigs, selectedLine, searchQuery]);
 
-  const imageCount = Object.keys(OG_IMAGES).length;
   const pageCount = allConfigs.length;
   const customCount = customConfigs?.length || 0;
+  // 有自定义图片的配置数量
+  const imageCount = customConfigs?.filter(c => c.image_url)?.length || 0;
 
   const handleCategoriesChange = (newCategories: ProductLineCategory[]) => {
     setCategories(newCategories);
@@ -126,14 +145,16 @@ export default function OGPreviewManagement() {
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center gap-2 text-muted-foreground">
             <ImageIcon className="h-4 w-4" />
-            <span className="text-sm">OG图片</span>
+            <span className="text-sm">自定义图片</span>
           </div>
-          <p className="text-2xl font-bold text-foreground mt-1">{imageCount}</p>
+          <p className="text-2xl font-bold text-foreground mt-1">
+            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : imageCount}
+          </p>
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Sparkles className="h-4 w-4" />
-            <span className="text-sm">已自定义</span>
+            <span className="text-sm">已配置</span>
           </div>
           <p className="text-2xl font-bold text-amber-500 mt-1">
             {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : customCount}
