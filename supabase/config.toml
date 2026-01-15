@@ -1,5 +1,8 @@
 project_id = "vlsuzskvykddwrxbmcbu"
 
+[functions.generate-alive-witness]
+verify_jwt = true
+
 [functions.wechat-pay-auth]
 verify_jwt = false
 

@@ -16,7 +16,9 @@ import { usePartner } from "@/hooks/usePartner";
 import { useNavigate } from "react-router-dom";
 import AliveCheckIntroDialog from "./AliveCheckIntroDialog";
 import AliveCheckShareDialog from "./AliveCheckShareDialog";
-
+import { AliveWitnessCard } from "./AliveWitnessCard";
+import { AwakeningQuickPicker } from "./AwakeningQuickPicker";
+import { AwakeningType, getAwakeningDimension } from "@/config/awakeningConfig";
 interface AliveCheckSettings {
   id: string;
   is_enabled: boolean;
@@ -40,8 +42,18 @@ interface CheckLog {
   id: string;
   checked_at: string;
   note: string | null;
+  ai_witness: string | null;
+  awakening_type: string | null;
   created_at: string;
 }
+
+const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 21) return 'evening';
+  return 'night';
+};
 
 export const AliveCheck = () => {
   const { user, loading: authLoading } = useAuth();
@@ -56,7 +68,11 @@ export const AliveCheck = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showWitness, setShowWitness] = useState(false);
   const [todayNote, setTodayNote] = useState("");
+  const [selectedAwakening, setSelectedAwakening] = useState<AwakeningType | null>(null);
+  const [witnessMessage, setWitnessMessage] = useState("");
+  const [generatingWitness, setGeneratingWitness] = useState(false);
   
   // Form states
   const [daysThreshold, setDaysThreshold] = useState("3");
@@ -318,6 +334,44 @@ export const AliveCheck = () => {
     }
   };
 
+  const generateWitness = async (currentStreak: number) => {
+    setGeneratingWitness(true);
+    try {
+      // Get user display name
+      let userName = userDisplayName.trim();
+      if (!userName) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", user?.id)
+          .single();
+        userName = profile?.display_name || "朋友";
+      }
+
+      const { data, error } = await supabase.functions.invoke("generate-alive-witness", {
+        body: {
+          user_name: userName,
+          streak: currentStreak + 1, // Including today
+          note: todayNote || null,
+          time_of_day: getTimeOfDay(),
+          awakening_type: selectedAwakening || undefined,
+        },
+      });
+
+      if (error) {
+        console.error("Error generating witness:", error);
+        return "又活过一天，这就是最好的消息 ✓";
+      }
+
+      return data?.witness || "又活过一天，这就是最好的消息 ✓";
+    } catch (error) {
+      console.error("Error in generateWitness:", error);
+      return "又活过一天，这就是最好的消息 ✓";
+    } finally {
+      setGeneratingWitness(false);
+    }
+  };
+
   const handleCheckIn = async () => {
     if (!user) return;
     
@@ -336,12 +390,18 @@ export const AliveCheck = () => {
         return;
       }
 
+      // Generate AI witness message
+      const witness = await generateWitness(streak);
+      setWitnessMessage(witness);
+
       const { error } = await supabase
         .from("alive_check_logs")
         .insert({
           user_id: user.id,
           checked_at: today,
-          note: todayNote || null
+          note: todayNote || null,
+          ai_witness: witness,
+          awakening_type: selectedAwakening || null,
         });
 
       if (error) {
@@ -354,11 +414,10 @@ export const AliveCheck = () => {
           throw error;
         }
       } else {
-        toast({
-          title: "打卡成功！✓",
-          description: "很高兴知道你活得很好"
-        });
+        // Show witness card instead of simple toast
+        setShowWitness(true);
         setTodayNote("");
+        setSelectedAwakening(null);
         loadData();
       }
     } catch (error) {
@@ -370,6 +429,19 @@ export const AliveCheck = () => {
       });
     } finally {
       setChecking(false);
+    }
+  };
+
+  const handleGoToAwakening = () => {
+    if (!selectedAwakening) return;
+    
+    const dimension = getAwakeningDimension(selectedAwakening);
+    if (dimension?.toolRoute) {
+      navigate(dimension.toolRoute);
+    } else if (dimension?.coachRoute) {
+      navigate(dimension.coachRoute);
+    } else {
+      navigate('/awakening');
     }
   };
 
@@ -555,18 +627,25 @@ export const AliveCheck = () => {
                 onChange={(e) => setTodayNote(e.target.value)}
                 className="min-h-[60px] resize-none"
               />
+              
+              {/* Awakening Quick Picker */}
+              <AwakeningQuickPicker 
+                selected={selectedAwakening}
+                onSelect={setSelectedAwakening}
+              />
+              
               <Button 
                 onClick={handleCheckIn}
-                disabled={checking}
+                disabled={checking || generatingWitness}
                 className="w-full bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white"
                 size="lg"
               >
-                {checking ? (
+                {(checking || generatingWitness) ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : (
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                 )}
-                我活得很好 ✓
+                {generatingWitness ? '生成见证中...' : '我活得很好 ✓'}
               </Button>
             </div>
           )}
@@ -808,6 +887,15 @@ export const AliveCheck = () => {
         open={showShare} 
         onOpenChange={setShowShare}
         partnerCode={partner?.partner_code || localStorage.getItem('share_ref_code') || undefined}
+      />
+      <AliveWitnessCard
+        open={showWitness}
+        onOpenChange={setShowWitness}
+        witness={witnessMessage}
+        streak={streak + 1}
+        date={new Date()}
+        awakeningType={selectedAwakening || undefined}
+        onGoToAwakening={selectedAwakening ? handleGoToAwakening : undefined}
       />
     </div>
   );
