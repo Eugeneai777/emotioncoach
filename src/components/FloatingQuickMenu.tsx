@@ -41,7 +41,7 @@ export const FloatingQuickMenu = () => {
   const dragStartPos = useRef<Position>({ x: 0, y: 0 });
   const initialPos = useRef<Position>({ x: 0, y: 0 });
 
-  // Build menu items from config - custom slots at positions 2, 3, 4
+  // Build menu items from config - feedback at position 2, then custom slots
   const menuItems = [
     { 
       id: 'home', 
@@ -50,6 +50,13 @@ export const FloatingQuickMenu = () => {
       path: config.homePagePath, 
       color: 'bg-amber-500',
       isHome: true,
+    },
+    { 
+      id: 'feedback', 
+      icon: iconMap['MessageCircle'], 
+      label: '建议', 
+      path: '/customer-support', 
+      color: 'bg-blue-500',
     },
     { 
       id: 'custom1', 
@@ -74,13 +81,6 @@ export const FloatingQuickMenu = () => {
       path: config.customSlot3?.path || '/gratitude', 
       color: config.customSlot3?.color || 'bg-green-500',
       isCustom: true,
-    },
-    { 
-      id: 'feedback', 
-      icon: iconMap['MessageCircle'], 
-      label: '建议', 
-      path: '/customer-support', 
-      color: 'bg-blue-500',
     },
     { 
       id: 'energy-studio', 
