@@ -16,6 +16,7 @@ export interface QuickMenuConfig {
   homePagePath: string;
   customSlot1: MenuItemConfig;
   customSlot2: MenuItemConfig;
+  customSlot3: MenuItemConfig;
 }
 
 // Coach pages - can be set as home page
@@ -61,6 +62,13 @@ export const defaultConfig: QuickMenuConfig = {
     icon: 'Sparkles',
     color: 'bg-cyan-500',
   },
+  customSlot3: {
+    id: 'custom3',
+    label: '感恩教练',
+    path: '/gratitude',
+    icon: 'Flower2',
+    color: 'bg-green-500',
+  },
 };
 
 export const useQuickMenuConfig = () => {
@@ -96,6 +104,7 @@ export const useQuickMenuConfig = () => {
       homePagePath: normalizePath(raw.homePagePath),
       customSlot1: normalizeSlot(raw.customSlot1),
       customSlot2: normalizeSlot(raw.customSlot2),
+      customSlot3: raw.customSlot3 ? normalizeSlot(raw.customSlot3) : defaultConfig.customSlot3,
     };
   };
 
@@ -121,6 +130,7 @@ export const useQuickMenuConfig = () => {
               homePagePath: data.home_page_path,
               customSlot1: data.custom_slot_1 as unknown as MenuItemConfig,
               customSlot2: data.custom_slot_2 as unknown as MenuItemConfig,
+              customSlot3: (data as any).custom_slot_3 as MenuItemConfig || defaultConfig.customSlot3,
             });
             setConfig(dbConfig);
             // Also update localStorage for offline access
@@ -186,7 +196,8 @@ export const useQuickMenuConfig = () => {
             home_page_path: configToSync.homePagePath,
             custom_slot_1: JSON.parse(JSON.stringify(configToSync.customSlot1)),
             custom_slot_2: JSON.parse(JSON.stringify(configToSync.customSlot2)),
-          })
+            custom_slot_3: JSON.parse(JSON.stringify(configToSync.customSlot3)),
+          } as any)
           .eq('user_id', user.id);
         error = result.error;
       } else {
@@ -196,6 +207,7 @@ export const useQuickMenuConfig = () => {
           p_home_page_path: configToSync.homePagePath,
           p_custom_slot_1: JSON.parse(JSON.stringify(configToSync.customSlot1)),
           p_custom_slot_2: JSON.parse(JSON.stringify(configToSync.customSlot2)),
+          p_custom_slot_3: JSON.parse(JSON.stringify(configToSync.customSlot3)),
         } as never);
         error = result.error;
         
@@ -208,6 +220,7 @@ export const useQuickMenuConfig = () => {
               home_page_path: configToSync.homePagePath,
               custom_slot_1: JSON.parse(JSON.stringify(configToSync.customSlot1)),
               custom_slot_2: JSON.parse(JSON.stringify(configToSync.customSlot2)),
+              custom_slot_3: JSON.parse(JSON.stringify(configToSync.customSlot3)),
             }] as never);
           error = insertResult.error;
         }

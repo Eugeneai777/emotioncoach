@@ -41,7 +41,7 @@ export const FloatingQuickMenu = () => {
   const dragStartPos = useRef<Position>({ x: 0, y: 0 });
   const initialPos = useRef<Position>({ x: 0, y: 0 });
 
-  // Build menu items from config
+  // Build menu items from config - custom slots at positions 2, 3, 4
   const menuItems = [
     { 
       id: 'home', 
@@ -50,6 +50,30 @@ export const FloatingQuickMenu = () => {
       path: config.homePagePath, 
       color: 'bg-amber-500',
       isHome: true,
+    },
+    { 
+      id: 'custom1', 
+      icon: iconMap[config.customSlot1.icon] || Star, 
+      label: config.customSlot1.label, 
+      path: config.customSlot1.path, 
+      color: config.customSlot1.color,
+      isCustom: true,
+    },
+    { 
+      id: 'custom2', 
+      icon: iconMap[config.customSlot2.icon] || Star, 
+      label: config.customSlot2.label, 
+      path: config.customSlot2.path, 
+      color: config.customSlot2.color,
+      isCustom: true,
+    },
+    { 
+      id: 'custom3', 
+      icon: iconMap[config.customSlot3.icon] || Star, 
+      label: config.customSlot3.label, 
+      path: config.customSlot3.path, 
+      color: config.customSlot3.color,
+      isCustom: true,
     },
     { 
       id: 'feedback', 
@@ -71,22 +95,6 @@ export const FloatingQuickMenu = () => {
       label: '产品中心', 
       path: '/packages', 
       color: 'bg-emerald-500',
-    },
-    { 
-      id: 'custom1', 
-      icon: iconMap[config.customSlot1.icon] || Star, 
-      label: config.customSlot1.label, 
-      path: config.customSlot1.path, 
-      color: config.customSlot1.color,
-      isCustom: true,
-    },
-    { 
-      id: 'custom2', 
-      icon: iconMap[config.customSlot2.icon] || Star, 
-      label: config.customSlot2.label, 
-      path: config.customSlot2.path, 
-      color: config.customSlot2.color,
-      isCustom: true,
     },
   ];
 

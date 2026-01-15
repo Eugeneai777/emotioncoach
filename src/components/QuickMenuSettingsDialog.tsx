@@ -30,7 +30,7 @@ export const QuickMenuSettingsDialog = ({
     setLocalConfig(prev => ({ ...prev, homePagePath: path }));
   };
 
-  const handleCustomSlotChange = (slot: 'customSlot1' | 'customSlot2', path: string) => {
+  const handleCustomSlotChange = (slot: 'customSlot1' | 'customSlot2' | 'customSlot3', path: string) => {
     const selectedPage = availablePages.find(p => p.path === path);
     if (selectedPage) {
       setLocalConfig(prev => ({
@@ -144,6 +144,33 @@ export const QuickMenuSettingsDialog = ({
                   <RadioGroupItem value={page.path} id={`slot2-${page.path}`} />
                   <Label 
                     htmlFor={`slot2-${page.path}`} 
+                    className="text-sm cursor-pointer"
+                  >
+                    {page.label}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+
+          {/* Custom Slot 3 */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              ⭐ 自定义按钮 3
+            </Label>
+            <RadioGroup
+              value={localConfig.customSlot3.path}
+              onValueChange={(path) => handleCustomSlotChange('customSlot3', path)}
+              className="flex flex-col gap-1"
+            >
+              {availablePages.map((page) => (
+                <div 
+                  key={page.path} 
+                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted transition-colors"
+                >
+                  <RadioGroupItem value={page.path} id={`slot3-${page.path}`} />
+                  <Label 
+                    htmlFor={`slot3-${page.path}`} 
                     className="text-sm cursor-pointer"
                   >
                     {page.label}
