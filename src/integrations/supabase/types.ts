@@ -6712,6 +6712,7 @@ export type Database = {
           created_at: string
           custom_slot_1: Json
           custom_slot_2: Json
+          custom_slot_3: Json | null
           home_page_path: string
           id: string
           updated_at: string
@@ -6721,6 +6722,7 @@ export type Database = {
           created_at?: string
           custom_slot_1?: Json
           custom_slot_2?: Json
+          custom_slot_3?: Json | null
           home_page_path?: string
           id?: string
           updated_at?: string
@@ -6730,6 +6732,7 @@ export type Database = {
           created_at?: string
           custom_slot_1?: Json
           custom_slot_2?: Json
+          custom_slot_3?: Json | null
           home_page_path?: string
           id?: string
           updated_at?: string
