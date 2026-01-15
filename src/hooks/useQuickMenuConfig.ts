@@ -163,7 +163,12 @@ export const useQuickMenuConfig = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        const mergedConfig = normalizeConfig({ ...defaultConfig, ...parsed });
+        // Ensure customSlot3 exists for backward compatibility
+        const mergedConfig = normalizeConfig({ 
+          ...defaultConfig, 
+          ...parsed,
+          customSlot3: parsed.customSlot3 || defaultConfig.customSlot3,
+        });
         setConfig(mergedConfig);
         return mergedConfig;
       } catch (e) {

@@ -69,10 +69,10 @@ export const FloatingQuickMenu = () => {
     },
     { 
       id: 'custom3', 
-      icon: iconMap[config.customSlot3.icon] || Star, 
-      label: config.customSlot3.label, 
-      path: config.customSlot3.path, 
-      color: config.customSlot3.color,
+      icon: iconMap[config.customSlot3?.icon] || Star, 
+      label: config.customSlot3?.label || '感恩教练', 
+      path: config.customSlot3?.path || '/gratitude', 
+      color: config.customSlot3?.color || 'bg-green-500',
       isCustom: true,
     },
     { 
