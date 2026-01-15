@@ -78,6 +78,7 @@ export type Database = {
           is_enabled: boolean | null
           last_notification_at: string | null
           updated_at: string | null
+          user_display_name: string | null
           user_id: string
         }
         Insert: {
@@ -89,6 +90,7 @@ export type Database = {
           is_enabled?: boolean | null
           last_notification_at?: string | null
           updated_at?: string | null
+          user_display_name?: string | null
           user_id: string
         }
         Update: {
@@ -100,6 +102,7 @@ export type Database = {
           is_enabled?: boolean | null
           last_notification_at?: string | null
           updated_at?: string | null
+          user_display_name?: string | null
           user_id?: string
         }
         Relationships: []

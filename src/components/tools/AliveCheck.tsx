@@ -24,6 +24,7 @@ interface AliveCheckSettings {
   emergency_contact_email: string | null;
   days_threshold: number;
   last_notification_at: string | null;
+  user_display_name: string | null;
 }
 
 interface AliveCheckContact {
@@ -60,6 +61,7 @@ export const AliveCheck = () => {
   // Form states
   const [daysThreshold, setDaysThreshold] = useState("3");
   const [isEnabled, setIsEnabled] = useState(false);
+  const [userDisplayName, setUserDisplayName] = useState("");
   
   // New contact form
   const [newContactName, setNewContactName] = useState("");
@@ -106,6 +108,7 @@ export const AliveCheck = () => {
         setSettings(settingsData);
         setDaysThreshold(String(settingsData.days_threshold || 3));
         setIsEnabled(settingsData.is_enabled || false);
+        setUserDisplayName(settingsData.user_display_name || "");
       }
 
       // Load contacts
@@ -172,18 +175,22 @@ export const AliveCheck = () => {
 
       if (error) throw error;
 
-      // Get user display name for welcome email
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", user.id)
-        .single();
-
       // Send welcome email to the new contact
+      // Use user_display_name from settings, fallback to profile display_name
+      let userName = userDisplayName.trim();
+      if (!userName) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", user.id)
+          .single();
+        userName = profile?.display_name || "您的朋友";
+      }
+
       const threshold = parseInt(daysThreshold) || 3;
       const { data: emailResult, error: emailError } = await supabase.functions.invoke("send-alive-check-welcome", {
         body: {
-          userName: profile?.display_name || "您的朋友",
+          userName,
           contactName: newContactName || "尊敬的用户",
           contactEmail: newContactEmail,
           daysThreshold: threshold
@@ -255,6 +262,16 @@ export const AliveCheck = () => {
       return;
     }
 
+    // Validate user display name when enabling
+    if (isEnabled && !userDisplayName.trim()) {
+      toast({
+        title: "请填写您的名字",
+        description: "这样联系人收到邮件时才知道是谁",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       const settingsData = {
@@ -263,6 +280,7 @@ export const AliveCheck = () => {
         emergency_contact_name: contacts[0]?.contact_name || null,
         emergency_contact_email: contacts[0]?.contact_email || null,
         days_threshold: parseInt(daysThreshold) || 3,
+        user_display_name: userDisplayName.trim() || null,
         updated_at: new Date().toISOString()
       };
 
@@ -593,9 +611,23 @@ export const AliveCheck = () => {
       {showSettings && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">功能设置</CardTitle>
+          <CardTitle className="text-base">功能设置</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* User Display Name */}
+            <div className="space-y-2">
+              <Label htmlFor="userName">您的名字 *</Label>
+              <Input
+                id="userName"
+                placeholder="如：小明、张三"
+                value={userDisplayName}
+                onChange={(e) => setUserDisplayName(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                联系人收到邮件时将看到这个名字
+              </p>
+            </div>
+
             <div className="flex items-center justify-between">
               <Label htmlFor="enabled">启用功能</Label>
               <Switch

@@ -94,14 +94,16 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
 
-        // Get user profile for name
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("display_name")
-          .eq("id", setting.user_id)
-          .maybeSingle();
-
-        const userName = profile?.display_name || "您的朋友";
+        // Get user name - prefer user_display_name from settings, fallback to profile
+        let userName = setting.user_display_name;
+        if (!userName) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("display_name")
+            .eq("id", setting.user_id)
+            .maybeSingle();
+          userName = profile?.display_name || "您的朋友";
+        }
 
         // Send alert
         console.log(`Sending alert for user ${setting.user_id} to ${setting.emergency_contact_email}`);
