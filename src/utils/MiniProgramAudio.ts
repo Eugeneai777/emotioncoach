@@ -19,6 +19,7 @@ export interface MiniProgramAudioConfig {
   onUsageUpdate?: (usage: { input_tokens: number; output_tokens: number }) => void;
   tokenEndpoint: string;
   mode: string;
+  scenario?: string; // 场景名称，如 "睡不着觉"
 }
 
 interface AudioChunk {
@@ -196,7 +197,10 @@ export class MiniProgramAudioClient {
   private async getEphemeralToken(): Promise<string | null> {
     try {
       const { data, error } = await supabase.functions.invoke(this.config.tokenEndpoint, {
-        body: { mode: this.config.mode },
+        body: { 
+          mode: this.config.mode,
+          scenario: this.config.scenario 
+        },
       });
 
       if (error) {

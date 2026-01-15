@@ -12,6 +12,7 @@ import {
 import { ArrowLeft, ArrowRight, Sparkles, MessageCircle, Brain, BookOpen, TrendingUp, Check, X, Zap, Heart, Share2 } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
+import { ScenarioVoiceEntry } from "@/components/coach/ScenarioVoiceEntry";
 
 const VibrantLifeIntro = () => {
   const navigate = useNavigate();
@@ -381,20 +382,8 @@ const VibrantLifeIntro = () => {
                 有劲AI能识别你的状态，自动切换对话风格：
               </p>
               
-              {/* 场景入口横向滚动 */}
-              <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-                {lifeScenarios.map((scenario, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => navigate(`/coach/vibrant_life_sage?scenario=${encodeURIComponent(scenario.title)}`)}
-                    className="flex-shrink-0 flex flex-col items-center gap-1.5 p-3 min-w-[90px] rounded-xl bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-100/50 hover:border-teal-300 hover:shadow-md transition-all active:scale-95"
-                  >
-                    <span className="text-2xl">{scenario.emoji}</span>
-                    <span className="text-xs font-medium text-foreground">{scenario.title}</span>
-                    <span className="text-[10px] text-muted-foreground leading-tight text-center">{scenario.desc}</span>
-                  </button>
-                ))}
-              </div>
+              {/* 场景入口横向滚动 - 直接进入语音通话 */}
+              <ScenarioVoiceEntry scenarios={lifeScenarios} />
               
               {/* 策略说明 */}
               <div className="space-y-2 pt-2">

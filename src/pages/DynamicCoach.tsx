@@ -416,6 +416,7 @@ const DynamicCoach = () => {
         coachTitle={template.title}
         primaryColor={template.primary_color || 'rose'}
         featureKey="realtime_voice_vibrant_life"
+        scenario={new URLSearchParams(location.search).get('scenario') || undefined}
       />
     )}
   </>

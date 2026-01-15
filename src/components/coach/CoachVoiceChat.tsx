@@ -40,6 +40,7 @@ interface CoachVoiceChatProps {
   userId?: string;
   mode?: VoiceChatMode;
   featureKey?: string; // 教练专属计费 feature_key，默认 'realtime_voice'
+  scenario?: string; // 场景名称，如 "睡不着觉"，用于场景专属语音对话
   onBriefingSaved?: (briefingId: string, briefingData: BriefingData) => void;
 }
 
@@ -58,6 +59,7 @@ export const CoachVoiceChat = ({
   userId,
   mode = 'general',
   featureKey = 'realtime_voice',
+  scenario,
   onBriefingSaved
 }: CoachVoiceChatProps) => {
   const { toast } = useToast();
@@ -734,7 +736,8 @@ export const CoachVoiceChat = ({
           onTranscript: handleTranscript,
           onUsageUpdate: (usage) => setApiUsage(prev => ({ inputTokens: prev.inputTokens + usage.input_tokens, outputTokens: prev.outputTokens + usage.output_tokens })),
           tokenEndpoint,
-          mode
+          mode,
+          scenario
         });
         chatRef.current = miniProgramClient;
         await miniProgramClient.connect();
@@ -765,7 +768,8 @@ export const CoachVoiceChat = ({
               onTranscript: handleTranscript,
               onUsageUpdate: (usage) => setApiUsage(prev => ({ inputTokens: prev.inputTokens + usage.input_tokens, outputTokens: prev.outputTokens + usage.output_tokens })),
               tokenEndpoint,
-              mode
+              mode,
+              scenario
             });
             chatRef.current = miniProgramClient;
             await miniProgramClient.connect();
@@ -774,7 +778,7 @@ export const CoachVoiceChat = ({
           }
         }
         
-        const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode);
+        const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario);
         chatRef.current = chat;
         
         try {
@@ -811,7 +815,8 @@ export const CoachVoiceChat = ({
                 outputTokens: prev.outputTokens + usage.output_tokens
               })),
               tokenEndpoint,
-              mode
+              mode,
+              scenario
             });
             chatRef.current = miniProgramClient;
             await miniProgramClient.connect();
