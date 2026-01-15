@@ -97,6 +97,18 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
+    // Check for Resend API errors
+    if (emailResponse.error) {
+      console.error("Resend API error:", emailResponse.error);
+      return new Response(
+        JSON.stringify({ 
+          error: emailResponse.error.message,
+          hint: "如需发送给任意邮箱，请在 resend.com/domains 验证自定义域名"
+        }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     console.log("Welcome email sent successfully:", emailResponse);
 
     return new Response(
