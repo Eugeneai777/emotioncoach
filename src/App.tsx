@@ -61,6 +61,7 @@ import MyPosts from "./pages/MyPosts";
 import PanicHistory from "./pages/PanicHistory";
 import EmotionButtonIntro from "./pages/EmotionButtonIntro";
 import EmotionButton from "./pages/EmotionButton";
+import AliveCheck from "./pages/AliveCheck";
 import VibrantLifeIntro from "./pages/VibrantLifeIntro";
 import GratitudeJournalIntro from "./pages/GratitudeJournalIntro";
 import GratitudeHistory from "./pages/GratitudeHistory";
@@ -175,6 +176,7 @@ const App = () => (
           <Route path="/panic-history" element={<PanicHistory />} />
           <Route path="/emotion-button-intro" element={<EmotionButtonIntro />} />
           <Route path="/emotion-button" element={<EmotionButton />} />
+          <Route path="/alive-check" element={<AliveCheck />} />
           <Route path="/vibrant-life-intro" element={<VibrantLifeIntro />} />
           <Route path="/gratitude-journal-intro" element={<GratitudeJournalIntro />} />
           <Route path="/gratitude-journal" element={<GratitudeHistory />} />
