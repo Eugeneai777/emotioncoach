@@ -6,12 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { HeartHandshake, CheckCircle2, AlertCircle, Settings, Calendar, Loader2 } from "lucide-react";
+import { HeartHandshake, CheckCircle2, AlertCircle, Settings, Calendar, Loader2, Info, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { usePartner } from "@/hooks/usePartner";
+import AliveCheckIntroDialog from "./AliveCheckIntroDialog";
+import AliveCheckShareDialog from "./AliveCheckShareDialog";
 
 interface AliveCheckSettings {
   id: string;
@@ -31,12 +34,15 @@ interface CheckLog {
 
 export const AliveCheck = () => {
   const { user } = useAuth();
+  const { partner } = usePartner();
   const [settings, setSettings] = useState<AliveCheckSettings | null>(null);
   const [logs, setLogs] = useState<CheckLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [checking, setChecking] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showIntro, setShowIntro] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [todayNote, setTodayNote] = useState("");
   
   // Form states
@@ -44,6 +50,15 @@ export const AliveCheck = () => {
   const [contactEmail, setContactEmail] = useState("");
   const [daysThreshold, setDaysThreshold] = useState("3");
   const [isEnabled, setIsEnabled] = useState(false);
+
+  // Check for first visit to show intro
+  useEffect(() => {
+    const introShown = localStorage.getItem('alive_check_intro_shown');
+    if (!introShown && user) {
+      setShowIntro(true);
+      localStorage.setItem('alive_check_intro_shown', 'true');
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -269,13 +284,32 @@ export const AliveCheck = () => {
               <HeartHandshake className="w-5 h-5 text-rose-500" />
               <CardTitle className="text-lg">死了吗</CardTitle>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setShowSettings(!showSettings)}
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setShowIntro(true)}
+              >
+                <Info className="w-4 h-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setShowShare(true)}
+              >
+                <Share2 className="w-4 h-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setShowSettings(!showSettings)}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
           <CardDescription>
             每日安全打卡，让关心你的人安心
@@ -487,6 +521,18 @@ export const AliveCheck = () => {
           </p>
         </CardContent>
       </Card>
+
+      {/* Dialogs */}
+      <AliveCheckIntroDialog 
+        open={showIntro} 
+        onOpenChange={setShowIntro}
+        onStartSetup={() => setShowSettings(true)}
+      />
+      <AliveCheckShareDialog 
+        open={showShare} 
+        onOpenChange={setShowShare}
+        partnerCode={partner?.partner_code || localStorage.getItem('share_ref_code') || undefined}
+      />
     </div>
   );
 };
