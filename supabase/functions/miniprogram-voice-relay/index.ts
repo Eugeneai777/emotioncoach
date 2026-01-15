@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
           session: {
             modalities: ['text', 'audio'],
             instructions: getSystemPrompt(mode),
-            voice: 'shimmer',
+            voice: mode === 'teen' ? 'shimmer' : 'echo', // 统一语音：青少年用 shimmer，其他用 echo
             input_audio_format: AUDIO_CONFIG.format,
             output_audio_format: AUDIO_CONFIG.format,
             input_audio_transcription: {
@@ -103,9 +103,9 @@ Deno.serve(async (req) => {
             },
             turn_detection: {
               type: 'server_vad',
-              threshold: 0.4, // 降低阈值，更敏感捕捉语音
-              prefix_padding_ms: 400, // 增加前缀填充，保留更多语音起始
-              silence_duration_ms: 700, // 增加静默时长，减少语音被截断
+              threshold: 0.6, // 提高阈值，减少背景噪音捕捉
+              prefix_padding_ms: 200, // 减少前缀填充，与 WebRTC 一致
+              silence_duration_ms: 1200, // 增加静默时长，与 WebRTC 一致，减少语音被截断
             },
           },
         };
