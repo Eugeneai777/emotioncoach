@@ -577,6 +577,64 @@ export const PAGE_OG_CONFIGS: Record<string, OGConfig> = {
     image: OG_IMAGES.parentCoach,
     url: `${OG_BASE_URL}/parent-camp-landing`,
   },
+
+  // ========== 补齐剩余缺失的页面配置 ==========
+  vibrantLifeIntro: {
+    title: '有劲生活介绍 - 有劲AI',
+    ogTitle: '有劲AI • 有劲生活',
+    description: '7位AI教练24小时在线，陪你成长',
+    image: OG_IMAGES.coachSpace,
+    url: `${OG_BASE_URL}/vibrant-life-intro`,
+  },
+  wealthCoachIntro: {
+    title: '财富教练介绍 - 有劲AI',
+    ogTitle: '有劲AI • 财富教练',
+    description: '3步突破5层同频，财富从内而外流动',
+    image: OG_IMAGES.wealthCoach,
+    url: `${OG_BASE_URL}/wealth-coach-intro`,
+  },
+  emotionButtonIntro: {
+    title: '情绪急救介绍 - 有劲AI',
+    ogTitle: '有劲AI • 情绪急救',
+    description: '情绪来袭时，这里有你的安全角落',
+    image: OG_IMAGES.emotionCoach,
+    url: `${OG_BASE_URL}/emotion-button-intro`,
+  },
+  communicationCoachIntro: {
+    title: '沟通教练介绍 - 有劲AI',
+    ogTitle: '有劲AI • 沟通教练',
+    description: '四步沟通模型，让关系更顺畅',
+    image: OG_IMAGES.coachSpace,
+    url: `${OG_BASE_URL}/communication-coach-intro`,
+  },
+  storyCoachIntro: {
+    title: '故事教练介绍 - 有劲AI',
+    ogTitle: '有劲AI • 故事教练',
+    description: '用科学方法，让你的故事打动人心',
+    image: OG_IMAGES.coachSpace,
+    url: `${OG_BASE_URL}/story-coach-intro`,
+  },
+  wealthAwakeningArchive: {
+    title: '觉醒档案 - 有劲AI',
+    ogTitle: '有劲AI • 觉醒档案',
+    description: '见证你的财富觉醒之旅',
+    image: OG_IMAGES.wealthCoach,
+    url: `${OG_BASE_URL}/wealth-awakening-archive`,
+  },
+  gratitudeJournalIntro: {
+    title: '感恩日记介绍 - 有劲AI',
+    ogTitle: '有劲AI • 感恩日记',
+    description: '每天1分钟，科学提升幸福感25%',
+    image: OG_IMAGES.gratitude,
+    url: `${OG_BASE_URL}/gratitude-journal-intro`,
+  },
+  parentChildDiary: {
+    title: '亲子日记 - 有劲AI',
+    ogTitle: '有劲AI • 亲子日记',
+    description: '记录亲子成长点滴，见证关系蜕变',
+    image: OG_IMAGES.parentCoach,
+    url: `${OG_BASE_URL}/parent-child-diary`,
+  },
 };
 
 /**
