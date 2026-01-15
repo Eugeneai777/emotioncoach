@@ -22,7 +22,7 @@ export const OG_SITE_NAME = '有劲AI';
 
 // 图片资源映射
 export const OG_IMAGES = {
-  default: `${OG_BASE_URL}/og-image.png`,
+  default: `${OG_BASE_URL}/og-youjin-ai.png`,
   wealthCoach: `${OG_BASE_URL}/og-wealth-coach.png`,
   wealthCamp: `${OG_BASE_URL}/og-wealth-camp.png`,
   wealthBlock: `${OG_BASE_URL}/og-wealth-block.png`,
@@ -38,9 +38,9 @@ export const OG_IMAGES = {
 export const PAGE_OG_CONFIGS: Record<string, OGConfig> = {
   // ========== 首页与核心入口 ==========
   home: {
-    title: '有劲AI - 情绪四部曲',
-    ogTitle: '有劲AI • 情绪四部曲',
-    description: '情绪四部曲，找回情绪里的力量',
+    title: '有劲AI - 每个人的生活教练',
+    ogTitle: '有劲AI • 每个人的生活教练',
+    description: '温暖陪伴 × 系统工具 × 成长社群，陪你持续向前',
     image: OG_IMAGES.default,
     url: `${OG_BASE_URL}/`,
   },
