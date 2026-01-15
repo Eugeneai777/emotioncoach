@@ -254,91 +254,152 @@ export const FloatingQuickMenu = () => {
         <AnimatePresence>
           {isExpanded && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              initial={{ opacity: 0, scale: 0.85, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 20 }}
-              transition={{ duration: 0.2, type: 'spring', stiffness: 300, damping: 25 }}
-              className="absolute bottom-14 left-0 bg-background/95 backdrop-blur-md rounded-xl shadow-xl border border-border p-3 min-w-[200px]"
+              exit={{ opacity: 0, scale: 0.85, y: 30 }}
+              transition={{ duration: 0.25, type: 'spring', stiffness: 350, damping: 28 }}
+              className="absolute bottom-16 left-0 bg-background/98 backdrop-blur-xl rounded-2xl shadow-2xl border border-border/50 p-3 min-w-[220px]"
+              style={{
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+              }}
             >
               {/* Menu List - Vertical Layout */}
-              <div className="flex flex-col gap-1">
-                {menuItems.map((item) => {
+              <div className="flex flex-col gap-1.5">
+                {menuItems.map((item, index) => {
                   const Icon = item.icon;
                   const isCurrentPage = location.pathname === item.path;
 
                   return (
                     <motion.button
                       key={item.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ 
+                        delay: index * 0.04,
+                        duration: 0.2,
+                        type: 'spring',
+                        stiffness: 400,
+                        damping: 25
+                      }}
                       onClick={() => handleMenuItemClick(item.id, item.path)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-left transition-colors
+                      whileHover={{ scale: 1.03, x: 4 }}
+                      whileTap={{ scale: 0.96 }}
+                      className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-left transition-all duration-200
                         ${isCurrentPage 
-                          ? 'bg-primary/10 text-primary' 
-                          : 'hover:bg-muted'
+                          ? 'bg-primary/15 text-primary shadow-sm' 
+                          : 'hover:bg-muted/80 active:bg-muted'
                         }
-                        ${item.isCustom ? 'border border-dashed border-muted-foreground/30' : ''}
+                        ${item.isCustom ? 'border border-dashed border-muted-foreground/20' : ''}
                       `}
                     >
-                      <div className={`w-8 h-8 rounded-full ${item.color} flex items-center justify-center flex-shrink-0`}>
-                        <Icon className="w-4 h-4 text-white" />
-                      </div>
-                      <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>
+                      <motion.div 
+                        className={`w-9 h-9 rounded-xl ${item.color} flex items-center justify-center flex-shrink-0 shadow-md`}
+                        whileHover={{ rotate: [0, -10, 10, 0] }}
+                        transition={{ duration: 0.4 }}
+                      >
+                        <Icon className="w-4.5 h-4.5 text-white drop-shadow-sm" />
+                      </motion.div>
+                      <span className="text-sm font-medium whitespace-nowrap group-hover:translate-x-0.5 transition-transform duration-200">
+                        {item.label}
+                      </span>
+                      {isCurrentPage && (
+                        <motion.div 
+                          className="ml-auto w-2 h-2 rounded-full bg-primary"
+                          layoutId="activeIndicator"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                        />
+                      )}
                     </motion.button>
                   );
                 })}
               </div>
 
               {/* Settings Button */}
-              <button
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.25 }}
                 onClick={() => {
                   setIsExpanded(false);
                   setShowSettings(true);
                 }}
-                className="w-full mt-2 pt-2 border-t border-border flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="w-full mt-3 pt-2.5 border-t border-border/50 flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-105 active:scale-95"
               >
-                <Edit3 className="w-3 h-3" />
+                <Edit3 className="w-3.5 h-3.5" />
                 自定义快捷入口
-              </button>
+              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Main Button */}
         <motion.div
-          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center cursor-pointer select-none
+          className={`w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center cursor-pointer select-none
             ${isExpanded 
-              ? 'bg-slate-600' 
-              : 'bg-gradient-to-br from-sky-50/80 to-sky-100/80'
+              ? 'bg-gradient-to-br from-slate-600 to-slate-700' 
+              : 'bg-gradient-to-br from-sky-100 via-white to-sky-50'
             }
-            ${isDragging ? 'scale-110' : ''}
-            transition-all duration-200`}
+            ${isDragging ? 'scale-110 shadow-2xl' : ''}
+            transition-all duration-300 border border-white/30`}
+          style={{
+            boxShadow: isExpanded 
+              ? '0 10px 40px -10px rgba(0, 0, 0, 0.4)' 
+              : '0 8px 30px -8px rgba(56, 189, 248, 0.35), 0 4px 15px -4px rgba(0, 0, 0, 0.1)',
+          }}
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleDragEnd}
           onClick={handleClick}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           animate={!isExpanded && !isDragging ? {
+            y: [0, -3, 0],
             boxShadow: [
-              '0 4px 6px -1px rgba(0, 0, 0, 0.08)',
-              '0 4px 15px -1px rgba(186, 230, 253, 0.3)',
-              '0 4px 6px -1px rgba(0, 0, 0, 0.08)',
+              '0 8px 30px -8px rgba(56, 189, 248, 0.35), 0 4px 15px -4px rgba(0, 0, 0, 0.1)',
+              '0 12px 40px -8px rgba(56, 189, 248, 0.5), 0 6px 20px -4px rgba(0, 0, 0, 0.15)',
+              '0 8px 30px -8px rgba(56, 189, 248, 0.35), 0 4px 15px -4px rgba(0, 0, 0, 0.1)',
             ],
           } : {}}
           transition={{
+            y: {
+              duration: 2.5,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            },
             boxShadow: {
-              duration: 2,
+              duration: 2.5,
               repeat: Infinity,
               ease: 'easeInOut',
             },
           }}
         >
-        {isExpanded ? (
-            <X className="w-6 h-6 text-white" />
-          ) : (
-            <span className="text-2xl" style={{ transform: 'rotate(-45deg)' }}>🚀</span>
-          )}
+          <AnimatePresence mode="wait">
+            {isExpanded ? (
+              <motion.div
+                key="close"
+                initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <X className="w-6 h-6 text-white drop-shadow-md" />
+              </motion.div>
+            ) : (
+              <motion.span 
+                key="rocket"
+                className="text-2xl drop-shadow-md"
+                initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                animate={{ rotate: -45, opacity: 1, scale: 1 }}
+                exit={{ rotate: 0, opacity: 0, scale: 0.5 }}
+                transition={{ duration: 0.2, type: 'spring', stiffness: 400 }}
+              >
+                🚀
+              </motion.span>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
 
