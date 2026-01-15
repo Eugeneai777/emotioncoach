@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import { OG_BASE_URL, OG_IMAGES } from "@/config/ogConfig";
 import { CoachLayout } from "@/components/coach/CoachLayout";
 import { CoachScenarioChips } from "@/components/coach/CoachScenarioChips";
 import { VibrantLifeScenarioCards } from "@/components/coach/VibrantLifeScenarioCards";
@@ -36,6 +37,24 @@ interface LocationState {
   dayNumber?: number;
   meditationTitle?: string;
 }
+
+// 教练 key → OG 图片映射
+const getCoachOGImage = (coachKey: string): string => {
+  const imageMap: Record<string, string> = {
+    'wealth_coach_4_questions': OG_IMAGES.wealthCoach,
+    'vibrant_life_sage': OG_IMAGES.coachSpace,
+    'vibrant_life': OG_IMAGES.coachSpace,
+    'emotion': OG_IMAGES.emotionCoach,
+    'emotion_coach': OG_IMAGES.emotionCoach,
+    'parent': OG_IMAGES.parentCoach,
+    'parent_coach': OG_IMAGES.parentCoach,
+    'teen': OG_IMAGES.parentCoach,
+    'gratitude_coach': OG_IMAGES.gratitude,
+    'communication': OG_IMAGES.coachSpace,
+    'story': OG_IMAGES.coachSpace,
+  };
+  return imageMap[coachKey] || OG_IMAGES.coachSpace;
+};
 
 const DynamicCoach = () => {
   const { coachKey } = useParams<{ coachKey: string }>();
@@ -280,7 +299,9 @@ const DynamicCoach = () => {
         overrides={{
           title: `${template?.title || '教练对话'} - 有劲AI`,
           ogTitle: `有劲AI${template?.title || '教练'}`,
-          description: template?.description || '与AI教练深度对话，获得专业指导'
+          description: template?.description || '与AI教练深度对话，获得专业指导',
+          image: getCoachOGImage(coachKey || ''),
+          url: `${OG_BASE_URL}/coach/${coachKey}`,
         }}
       />
       {tourKey && pageTourConfig[tourKey] && (
