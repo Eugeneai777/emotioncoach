@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { handleShareWithFallback, shouldUseImagePreview } from '@/utils/shareUtils';
+import { handleShareWithFallback, shouldUseImagePreview, getShareEnvironment } from '@/utils/shareUtils';
 import ShareImagePreview from '@/components/ui/share-image-preview';
 import AliveCheckShareCard from './AliveCheckShareCard';
 
@@ -28,6 +28,9 @@ const AliveCheckShareDialog: React.FC<AliveCheckShareDialogProps> = ({
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const exportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  
+  const { isWeChat, isIOS } = getShareEnvironment();
+  const showImagePreview = isWeChat || isIOS;
 
   const generateImage = async (): Promise<Blob | null> => {
     if (!exportRef.current) return null;
@@ -159,16 +162,23 @@ const AliveCheckShareDialog: React.FC<AliveCheckShareDialogProps> = ({
                 <Loader2 className="w-5 h-5 animate-spin" />
                 生成中...
               </>
+            ) : showImagePreview ? (
+              <>
+                <Share2 className="w-5 h-5" />
+                生成分享图片
+              </>
             ) : (
               <>
                 <Download className="w-5 h-5" />
-                生成分享图片
+                保存分享卡片
               </>
             )}
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">
-            图片包含二维码，扫码可直接使用"死了吗"功能
+            {showImagePreview 
+              ? "点击生成图片后，长按保存到相册分享给好友"
+              : "图片包含二维码，扫码可直接使用「死了吗」功能"}
           </p>
         </DialogContent>
       </Dialog>
