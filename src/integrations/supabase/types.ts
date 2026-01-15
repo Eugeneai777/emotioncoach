@@ -46,6 +46,8 @@ export type Database = {
       }
       alive_check_logs: {
         Row: {
+          ai_witness: string | null
+          awakening_type: string | null
           checked_at: string
           created_at: string | null
           id: string
@@ -53,6 +55,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_witness?: string | null
+          awakening_type?: string | null
           checked_at?: string
           created_at?: string | null
           id?: string
@@ -60,6 +64,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_witness?: string | null
+          awakening_type?: string | null
           checked_at?: string
           created_at?: string | null
           id?: string
