@@ -35,7 +35,7 @@ export const availablePages = [
   ...coachPages,
   { path: '/gratitude', label: '感恩教练', icon: 'Flower2', color: 'bg-green-500' },
   { path: '/emotion-button', label: '情绪按钮', icon: 'AlertCircle', color: 'bg-red-500' },
-  { path: '/energy-studio?tool=alive-check', label: '死了吗', icon: 'HeartPulse', color: 'bg-rose-500' },
+  { path: '/alive-check', label: '死了吗', icon: 'HeartPulse', color: 'bg-rose-500' },
   { path: '/courses', label: '学习课程', icon: 'GraduationCap', color: 'bg-blue-500' },
   { path: '/wealth-block', label: '财富测评', icon: 'ClipboardCheck', color: 'bg-purple-500' },
   { path: '/partner', label: '合伙人', icon: 'Handshake', color: 'bg-teal-500' },
@@ -53,7 +53,7 @@ export const defaultConfig: QuickMenuConfig = {
   customSlot2: {
     id: 'custom2',
     label: '死了吗',
-    path: '/energy-studio?tool=alive-check',
+    path: '/alive-check',
     icon: 'HeartPulse',
     color: 'bg-rose-500',
   },
