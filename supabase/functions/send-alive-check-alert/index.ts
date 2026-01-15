@@ -36,7 +36,7 @@ const handler = async (req: Request): Promise<Response> => {
     const contactDisplayName = contactName || "尊敬的用户";
 
     const emailResponse = await resend.emails.send({
-      from: "有劲AI <onboarding@resend.dev>",
+      from: "有劲AI <noreply@eugeneai.me>",
       to: [contactEmail],
       subject: `【有劲AI】${displayName} 需要您的关心`,
       html: `
