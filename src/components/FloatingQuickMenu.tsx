@@ -41,16 +41,8 @@ export const FloatingQuickMenu = () => {
   const dragStartPos = useRef<Position>({ x: 0, y: 0 });
   const initialPos = useRef<Position>({ x: 0, y: 0 });
 
-  // Build menu items from config - feedback at position 2, then custom slots
+  // Build menu items from config - feedback first, then custom slots
   const menuItems = [
-    { 
-      id: 'home', 
-      icon: iconMap['Home'], 
-      label: '首页', 
-      path: config.homePagePath, 
-      color: 'bg-amber-500',
-      isHome: true,
-    },
     { 
       id: 'feedback', 
       icon: iconMap['MessageCircle'], 
@@ -90,11 +82,11 @@ export const FloatingQuickMenu = () => {
       color: 'bg-emerald-500',
     },
     { 
-      id: 'energy-studio', 
-      icon: iconMap['Sparkles'], 
-      label: '有劲生活馆', 
-      path: '/energy-studio', 
-      color: 'bg-violet-500',
+      id: 'coach-space', 
+      icon: iconMap['Users'], 
+      label: '教练空间', 
+      path: '/coach-space', 
+      color: 'bg-rose-500',
     },
   ];
 
