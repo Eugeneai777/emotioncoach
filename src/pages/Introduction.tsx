@@ -329,7 +329,7 @@ const Introduction = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100 opacity-60"></div>
         
         {/* Header with share button */}
-        <div className="container mx-auto px-4 pt-4 relative z-20">
+        <div className="container mx-auto px-4 pt-3 relative z-20">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="w-5 h-5" />
@@ -338,26 +338,26 @@ const Introduction = () => {
           </div>
         </div>
         
-        <div className="container mx-auto px-4 py-20 md:py-28 relative z-10">
-          <div className="max-w-4xl mx-auto text-center space-y-6 animate-fade-in">
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+        <div className="container mx-auto px-4 py-8 md:py-14 relative z-10">
+          <div className="max-w-lg mx-auto text-center space-y-4 animate-fade-in">
+            <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
               有劲AI · 情绪日记
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground">
+            <p className="text-base md:text-xl text-muted-foreground">
               每天 10 分钟，让情绪变成力量
             </p>
             
             {/* 主视觉图片 */}
-            <div className="mt-10 max-w-2xl mx-auto">
-              <img src={heroIntroImage} alt="有劲AI情绪日记对话界面" className="rounded-[32px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] w-full hover:scale-[1.02] transition-all duration-500" />
+            <div className="mt-6 max-w-sm mx-auto">
+              <img src={heroIntroImage} alt="有劲AI情绪日记对话界面" className="rounded-2xl shadow-lg w-full max-h-[240px] object-contain" />
             </div>
             
             {/* CTA按钮 */}
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={handleGetStarted} className="hover:scale-105 transition-transform">
+            <div className="mt-6 flex flex-col gap-3 justify-center">
+              <Button size="default" onClick={handleGetStarted} className="w-full">
                 立即体验情绪日记
               </Button>
-              <Button size="lg" variant="outline" onClick={() => scrollToSection('camp')}>
+              <Button size="default" variant="outline" onClick={() => scrollToSection('camp')} className="w-full">
                 了解 21 天训练营
               </Button>
             </div>
@@ -366,41 +366,40 @@ const Introduction = () => {
       </section>
 
       {/* 模块2: 痛点共鸣 */}
-      <section className="container mx-auto px-4 py-16 bg-muted/30">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+      <section className="container mx-auto px-4 py-6 bg-muted/30">
+        <div className="max-w-lg mx-auto">
+          <h2 className="text-lg md:text-2xl font-bold text-center mb-4">
             这些感受，你是不是很熟悉？
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {painPoints.map((point, index) => <Card key={index} className="hover:shadow-xl transition-shadow duration-300 hover:scale-[1.02]">
-                <CardContent className="p-6">
-                  <p className="text-lg text-foreground">{point}</p>
+          <div className="space-y-2">
+            {painPoints.map((point, index) => <Card key={index} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-3">
+                  <p className="text-sm text-foreground">{point}</p>
                 </CardContent>
               </Card>)}
           </div>
           
-          <p className="text-center text-muted-foreground mt-8 text-base">
+          <p className="text-center text-muted-foreground mt-4 text-xs">
             不是你变脆弱，是这个时代太吵。你需要一个稳定、温柔又专业的陪伴者。
           </p>
         </div>
       </section>
 
       {/* 模块3: 什么是有劲AI */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
+      <section className="container mx-auto px-4 py-6">
+        <div className="max-w-lg mx-auto">
+          <h2 className="text-lg md:text-2xl font-bold text-center mb-2">
             有劲AI，是你的生活教练
           </h2>
-          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-            有劲AI通过对话、情绪分析、日报周报、测评和社群，<br />
-            让你在忙乱生活里，看见情绪、理解自己、找到方向。
+          <p className="text-center text-muted-foreground mb-4 text-xs">
+            对话、情绪分析、日报周报、测评和社群，让你看见情绪、理解自己、找到方向。
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {coreFeatures.map((feature, index) => <Card key={index} className="hover:scale-105 transition-transform duration-300 hover:shadow-xl">
-                <CardContent className="p-8 text-center">
-                  <div className="w-24 h-24 mx-auto mb-4 rounded-2xl overflow-hidden">
+          <div className="space-y-3">
+            {coreFeatures.map((feature, index) => <Card key={index} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                     <img src={feature.image} alt={feature.title} className="w-full h-full object-cover" />
                   </div>
                   <h3 className="text-xl font-bold mb-2">{feature.title}</h3>

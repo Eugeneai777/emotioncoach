@@ -150,33 +150,32 @@ const ParentCoachIntro = () => {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-50 to-violet-100 opacity-60"></div>
         
-        <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
-          <div className="max-w-4xl mx-auto text-center space-y-6 animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-full text-purple-700 text-sm font-medium">
-              <Users className="w-4 h-4" />
+        <div className="container mx-auto px-4 py-8 md:py-12 relative z-10">
+          <div className="max-w-lg mx-auto text-center space-y-4 animate-fade-in">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-100 rounded-full text-purple-700 text-xs font-medium">
+              <Users className="w-3.5 h-3.5" />
               亲子情绪教练
             </div>
             
-            <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-violet-600 bg-clip-text text-transparent">
+            <h1 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-violet-600 bg-clip-text text-transparent">
               父母先稳，孩子才愿意走向你
             </h1>
             
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-sm text-muted-foreground">
               用亲子情绪四部曲，从觉察到行动，重建温暖的亲子关系
             </p>
             
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col gap-3 pt-2">
               <Button 
-                size="lg" 
                 onClick={handleGetStarted}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 w-full"
               >
                 开始使用亲子教练
               </Button>
               <Button 
-                size="lg" 
                 variant="outline"
                 onClick={() => navigate("/parent-camp")}
+                className="w-full"
               >
                 了解 21 天训练营
               </Button>
@@ -186,23 +185,23 @@ const ParentCoachIntro = () => {
       </section>
 
       {/* 痛点共鸣 */}
-      <section className="container mx-auto px-4 py-12 bg-muted/30">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+      <section className="container mx-auto px-4 py-6 bg-muted/30">
+        <div className="max-w-lg mx-auto">
+          <h2 className="text-base font-bold text-center mb-4">
             这些场景，你是不是很熟悉？
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
             {painPoints.map((point, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-5">
-                  <p className="text-foreground">{point}</p>
+              <Card key={index} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-3">
+                  <p className="text-sm text-foreground">{point}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
           
-          <p className="text-center text-muted-foreground mt-6 text-sm">
+          <p className="text-center text-muted-foreground mt-4 text-xs">
             不是你不爱孩子，是情绪来临时，我们都需要一个方法。
           </p>
         </div>

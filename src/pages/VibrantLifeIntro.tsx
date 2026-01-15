@@ -208,41 +208,40 @@ const VibrantLifeIntro = () => {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-8 space-y-10 relative z-10">
+      <div className="max-w-lg mx-auto px-4 py-6 space-y-6 relative z-10">
         {/* Hero Section */}
-        <div className="text-center space-y-6">
+        <div className="text-center space-y-4">
           <div className="relative inline-block">
-            <div className="absolute inset-0 bg-gradient-to-br from-teal-400 to-cyan-400 rounded-3xl blur-xl opacity-40 animate-pulse" />
-            <div className="relative inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-teal-400 via-cyan-400 to-blue-400 shadow-2xl">
-              <Sparkles className="w-12 h-12 text-white" />
+            <div className="absolute inset-0 bg-gradient-to-br from-teal-400 to-cyan-400 rounded-2xl blur-lg opacity-40 animate-pulse" />
+            <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-400 via-cyan-400 to-blue-400 shadow-lg">
+              <Sparkles className="w-8 h-8 text-white" />
             </div>
           </div>
           
-          <div className="space-y-3">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-700 via-cyan-600 to-blue-600 bg-clip-text text-transparent">
+          <div className="space-y-2">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-teal-700 via-cyan-600 to-blue-600 bg-clip-text text-transparent">
               有劲AI · 每个人的生活教练
             </h1>
-            <p className="text-lg text-teal-600 font-medium">
+            <p className="text-sm text-teal-600 font-medium">
               当生活变得有点重，有劲AI让一切变轻一点
             </p>
           </div>
           
-          <Card className="border-0 shadow-xl bg-white/60 backdrop-blur-sm">
-            <CardContent className="p-5">
-              <p className="text-muted-foreground leading-relaxed">
+          <Card className="border-0 shadow-md bg-white/60 backdrop-blur-sm">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 你不需要花时间学习，不需要懂心理学，也不需要很会表达。
-                <br/>
-                <span className="font-medium text-teal-700">你只需要"开口"—有劲AI就会陪你一起把生活变清晰。</span>
+                <span className="font-medium text-teal-700">你只需要"开口"。</span>
               </p>
             </CardContent>
           </Card>
         </div>
 
         {/* 什么是有劲AI */}
-        <section className="space-y-4">
+        <section className="space-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">🧠</span>
-            <h2 className="text-xl font-bold text-foreground">什么是有劲AI？</h2>
+            <span className="text-xl">🧠</span>
+            <h2 className="text-base font-bold text-foreground">什么是有劲AI？</h2>
           </div>
           
           <Card className="border-0 shadow-xl bg-white/60 backdrop-blur-sm overflow-hidden">

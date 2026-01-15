@@ -126,16 +126,16 @@ const EmotionButtonIntro = () => {
         </div>
       </header>
 
-      <main className="container max-w-4xl mx-auto px-4 py-6 space-y-10">
+      <main className="container max-w-lg mx-auto px-4 py-4 space-y-6">
         {/* Hero Section - 优化版 */}
-        <section className="text-center space-y-5 py-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-orange-400 via-rose-500 to-red-500 text-3xl shadow-lg shadow-rose-200">
+        <section className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-orange-400 via-rose-500 to-red-500 text-2xl shadow-md shadow-rose-200">
             🆘
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+          <h1 className="text-xl font-bold text-gray-900">
             情绪🆘按钮
           </h1>
-          <p className="text-base md:text-lg text-gray-600 max-w-xl mx-auto">
+          <p className="text-sm text-gray-600">
             当情绪太大，一秒按下，让身体稳住、让大脑回来
           </p>
           
