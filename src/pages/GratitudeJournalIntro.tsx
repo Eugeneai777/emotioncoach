@@ -213,14 +213,14 @@ const GratitudeJournalIntro = () => {
 
       <main className="relative max-w-lg mx-auto px-4 py-6 space-y-8">
         {/* Hero Section */}
-        <section className="text-center space-y-4 animate-fade-in">
-          <div className="text-6xl">📔</div>
+        <section className="text-center space-y-3 animate-fade-in">
+          <div className="text-4xl">📔</div>
           
-          <h1 className="text-2xl font-bold text-teal-900">
+          <h1 className="text-xl font-bold text-teal-900">
             《有劲AI · 我的感恩日记》
           </h1>
           
-          <p className="text-teal-700 leading-relaxed">
+          <p className="text-sm text-teal-700 leading-relaxed">
             每天1分钟的幸福训练系统 + 人生趋势洞察工具
           </p>
 

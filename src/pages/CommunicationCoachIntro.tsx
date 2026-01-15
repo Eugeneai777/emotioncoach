@@ -195,25 +195,25 @@ const CommunicationCoachIntro = () => {
           </div>
         </div>
         
-        <div className="container mx-auto px-4 py-20 md:py-28 relative z-10">
-          <div className="max-w-4xl mx-auto text-center space-y-6 animate-fade-in">
-            <div className="text-6xl mb-4">💬</div>
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 bg-clip-text text-transparent">
+        <div className="container mx-auto px-4 py-8 md:py-14 relative z-10">
+          <div className="max-w-lg mx-auto text-center space-y-4 animate-fade-in">
+            <div className="text-4xl mb-2">💬</div>
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 bg-clip-text text-transparent">
               卡内基沟通教练
             </h1>
-            <p className="text-xl md:text-2xl text-foreground font-semibold">
-              让你说得更清晰、关系更顺畅、对方更愿意听
+            <p className="text-base text-foreground font-semibold">
+              让你说得更清晰、关系更顺畅
             </p>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              基于经典沟通学、人性洞察与行为心理学打造的 AI 智能沟通教练，陪你把"会说话"变成长期习惯
+            <p className="text-sm text-muted-foreground">
+              基于经典沟通学、人性洞察与行为心理学打造的 AI 智能沟通教练
             </p>
             
             {/* CTA按钮 */}
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={handleGetStarted} className="hover:scale-105 transition-transform">
+            <div className="flex flex-col gap-3 pt-2">
+              <Button onClick={handleGetStarted} className="w-full">
                 立即体验沟通教练
               </Button>
-              <Button size="lg" variant="outline" onClick={() => scrollToSection('four-steps')}>
+              <Button variant="outline" onClick={() => scrollToSection('four-steps')} className="w-full">
                 了解四步曲
               </Button>
             </div>
@@ -222,23 +222,23 @@ const CommunicationCoachIntro = () => {
       </section>
 
       {/* 模块2: 痛点共鸣 */}
-      <section className="container mx-auto px-4 py-16 bg-muted/30">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+      <section className="container mx-auto px-4 py-6 bg-muted/30">
+        <div className="max-w-lg mx-auto">
+          <h2 className="text-base font-bold text-center mb-4">
             这些场景，是不是很熟悉？
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
             {painPoints.map((point, index) => (
-              <Card key={index} className="hover:shadow-xl transition-shadow duration-300 hover:scale-[1.02]">
-                <CardContent className="p-6">
-                  <p className="text-lg text-foreground">{point}</p>
+              <Card key={index} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-3">
+                  <p className="text-sm text-foreground">{point}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
           
-          <p className="text-center text-muted-foreground mt-8 text-base">
+          <p className="text-center text-muted-foreground mt-4 text-xs">
             不是你不会说话，是没人教你怎么说对方才愿意听
           </p>
         </div>

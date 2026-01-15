@@ -120,28 +120,28 @@ const AwakeningIntro: React.FC = () => {
         </header>
 
         {/* Main Content */}
-        <main className="max-w-lg mx-auto px-4 py-6 pb-32 space-y-6">
+        <main className="max-w-lg mx-auto px-4 py-4 pb-28 space-y-4">
           {/* Hero Section */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center space-y-4"
+            className="text-center space-y-3"
           >
             
-            <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-xl p-4 border border-amber-200/50">
-              <p className="text-lg font-medium text-amber-800">
+            <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-lg p-3 border border-amber-200/50">
+              <p className="text-base font-medium text-amber-800">
                 「我此刻的生命状态，卡在哪里？」
               </p>
             </div>
 
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground flex-wrap">
-              <span className="bg-secondary px-2 py-1 rounded">每天 3–5 分钟输入</span>
-              <ArrowRight className="w-4 h-4 text-amber-500" />
-              <span className="bg-secondary px-2 py-1 rounded">AI 分析</span>
-              <ArrowRight className="w-4 h-4 text-amber-500" />
-              <span className="bg-secondary px-2 py-1 rounded">觉察盲点</span>
-              <ArrowRight className="w-4 h-4 text-amber-500" />
-              <span className="bg-secondary px-2 py-1 rounded">微行动引导</span>
+            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground flex-wrap">
+              <span className="bg-secondary px-1.5 py-0.5 rounded">3–5 分钟</span>
+              <ArrowRight className="w-3 h-3 text-amber-500" />
+              <span className="bg-secondary px-1.5 py-0.5 rounded">AI 分析</span>
+              <ArrowRight className="w-3 h-3 text-amber-500" />
+              <span className="bg-secondary px-1.5 py-0.5 rounded">觉察盲点</span>
+              <ArrowRight className="w-3 h-3 text-amber-500" />
+              <span className="bg-secondary px-1.5 py-0.5 rounded">行动</span>
             </div>
           </motion.div>
 

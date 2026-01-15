@@ -68,25 +68,22 @@ const PartnerIntro = () => {
       <DynamicOGMeta pageKey="partnerIntro" />
       {/* Header */}
       <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
-        <div className="container max-w-5xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="gap-2">
+        <div className="container max-w-lg mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="gap-1">
               <ArrowLeft className="w-4 h-4" />
               返回
             </Button>
-            <div className="flex-1 text-center">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
-                🤝 绽放合伙人计划
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">开启你的情绪觉醒事业之旅</p>
-            </div>
+            <h1 className="text-sm font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
+              🤝 绽放合伙人计划
+            </h1>
             <IntroShareDialog config={introShareConfigs.partnerIntro} />
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container max-w-5xl mx-auto px-4 py-5 space-y-5">
+      <main className="container max-w-lg mx-auto px-4 py-4 space-y-4">
         {/* Hero Section */}
         <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-background to-warm/5">
           <CardHeader className="text-center pb-2 pt-4">

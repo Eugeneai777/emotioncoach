@@ -214,84 +214,75 @@ const StoryCoachIntro = () => {
     <div className="min-h-screen bg-background">
       <DynamicOGMeta pageKey="storyCoachIntro" />
       {/* Hero Banner - 优化版 */}
-      <section className="relative overflow-hidden min-h-[85vh] flex items-center">
+      <section className="relative overflow-hidden">
         {/* 增强的装饰背景 */}
         <div className="absolute inset-0 bg-gradient-to-br from-orange-200 via-amber-100 to-yellow-200 dark:from-orange-950/40 dark:via-amber-950/20 dark:to-yellow-950/40"></div>
-        <div className="absolute top-20 left-10 w-72 h-72 bg-orange-300/30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-yellow-300/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-10 left-5 w-32 h-32 bg-orange-300/30 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-10 right-5 w-40 h-40 bg-yellow-300/30 rounded-full blur-2xl"></div>
         
-        <div className="container mx-auto px-4 py-16 relative z-10">
-          <div className="flex items-center justify-between mb-6">
+        <div className="container mx-auto px-4 py-6 relative z-10">
+          <div className="flex items-center justify-between mb-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate("/story-coach")}
-              className="hover:scale-105 transition-transform"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              返回故事教练
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              返回
             </Button>
             <IntroShareDialog config={introShareConfigs.storyCoach} />
           </div>
 
-          <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-in">
-            <div className="text-7xl md:text-8xl mb-6 animate-bounce">🌟</div>
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 bg-clip-text text-transparent leading-tight">
+          <div className="max-w-lg mx-auto text-center space-y-4 animate-fade-in">
+            <div className="text-5xl mb-3">🌟</div>
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 bg-clip-text text-transparent leading-tight">
               说好故事教练
             </h1>
-            <p className="text-2xl md:text-3xl text-foreground font-bold">
+            <p className="text-base text-foreground font-bold">
               英雄之旅 × 向导觉醒
             </p>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-sm text-muted-foreground">
               用科学方法，把你的经历变成动人的成长故事
             </p>
             
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col gap-3 pt-2">
               <Button 
-                size="lg" 
                 onClick={handleGetStarted} 
-                className="gap-2 hover:scale-105 transition-transform shadow-lg"
+                className="gap-2 w-full"
               >
-                <Sparkles className="w-5 h-5" />
+                <Sparkles className="w-4 h-4" />
                 立即体验故事教练
               </Button>
               <Button 
-                size="lg" 
                 variant="outline" 
                 onClick={() => scrollToSection('four-steps')}
-                className="hover:scale-105 transition-transform"
+                className="w-full"
               >
                 了解四步曲
               </Button>
-            </div>
-
-            {/* 滚动指示器 */}
-            <div className="mt-12 animate-bounce">
-              <ArrowDown className="w-6 h-6 mx-auto text-muted-foreground" />
             </div>
           </div>
         </div>
       </section>
 
       {/* 为什么故事重要 - 优化版 */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12 animate-fade-in">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+      <section className="container mx-auto px-4 py-6">
+        <div className="max-w-lg mx-auto">
+          <div className="text-center mb-4 animate-fade-in">
+            <h2 className="text-lg font-bold mb-2">
               🔥 为什么故事这么重要？
             </h2>
-            <p className="text-xl text-muted-foreground mb-4">学术数据 + 科学来源</p>
-            <Card className="bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-950/30 dark:to-amber-950/30 border-orange-300 dark:border-orange-700 max-w-3xl mx-auto shadow-lg">
-              <CardContent className="p-8">
-                <p className="text-xl font-bold text-orange-800 dark:text-orange-300 leading-relaxed">
+            <Card className="bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-950/30 dark:to-amber-950/30 border-orange-300 dark:border-orange-700 shadow-sm">
+              <CardContent className="p-4">
+                <p className="text-sm font-bold text-orange-800 dark:text-orange-300">
                   写下你的故事，不是为了记录人生，而是为了改变人生。
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* 2列布局 + 增强样式 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* 堆叠布局 */}
+          <div className="space-y-3 mb-4">
             {scientificResearch.map((research, index) => (
               <Card 
                 key={index} 

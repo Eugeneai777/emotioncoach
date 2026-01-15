@@ -74,61 +74,47 @@ const EnergyStudioIntro = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       {/* Header */}
       <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
-        <div className="container max-w-6xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
+        <div className="container max-w-lg mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate("/")}
-              className="gap-2 hover:bg-background/80"
+              className="gap-1"
             >
               <ArrowLeft className="w-4 h-4" />
-              返回首页
+              返回
             </Button>
-            <div className="flex-1 text-center">
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
-                有劲生活馆使用指南
-              </h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <IntroShareDialog config={introShareConfigs.energyStudio} />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/energy-studio")}
-                className="gap-2"
-              >
-                进入生活馆
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
+            <h1 className="text-sm font-bold bg-gradient-to-r from-primary via-warm to-primary bg-clip-text text-transparent">
+              有劲生活馆使用指南
+            </h1>
+            <IntroShareDialog config={introShareConfigs.energyStudio} />
           </div>
         </div>
       </header>
 
-      <main className="container max-w-6xl mx-auto px-4 py-12 space-y-16">
+      <main className="container max-w-lg mx-auto px-4 py-6 space-y-6">
         {/* Hero Section */}
-        <section className="text-center space-y-6 animate-fade-in">
-          <div className="inline-block text-6xl mb-4">🏛️</div>
-          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-warm bg-clip-text text-transparent">
+        <section className="text-center space-y-4 animate-fade-in">
+          <div className="inline-block text-4xl mb-2">🏛️</div>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-primary via-accent to-warm bg-clip-text text-transparent">
             有劲生活馆
           </h2>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-sm text-muted-foreground">
             <span className="font-semibold text-primary">{getToolCount()}</span> 个精心设计的工具，助你实现情绪管理、自我探索与生活优化
           </p>
-          <div className="flex flex-wrap gap-4 justify-center pt-4">
+          <div className="flex flex-col gap-3 pt-2">
             <Button 
-              size="lg" 
               onClick={() => navigate("/energy-studio")}
-              className="gap-2 bg-gradient-to-r from-primary to-warm hover:opacity-90"
+              className="gap-2 bg-gradient-to-r from-primary to-warm hover:opacity-90 w-full"
             >
               立即探索
               <ArrowRight className="w-4 h-4" />
             </Button>
             <Button 
-              size="lg" 
               variant="outline"
               onClick={() => navigate("/camps")}
+              className="w-full"
             >
               了解21天训练营
             </Button>
@@ -136,24 +122,25 @@ const EnergyStudioIntro = () => {
         </section>
 
         {/* 使用流程 */}
-        <section className="space-y-8">
-          <div className="text-center space-y-3">
-            <h3 className="text-3xl font-bold">如何使用生活馆</h3>
-            <p className="text-muted-foreground">四步开启你的成长之旅</p>
+        <section className="space-y-4">
+          <div className="text-center space-y-1">
+            <h3 className="text-base font-bold">如何使用生活馆</h3>
+            <p className="text-xs text-muted-foreground">四步开启你的成长之旅</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 gap-3">
             {usageSteps.map((step, index) => (
-              <Card key={step.step} className="relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary/10 to-accent/10 rounded-bl-full" />
-                <CardHeader className="relative">
-                  <div className="text-4xl mb-2">{step.icon}</div>
-                  <div className="absolute top-6 right-6 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                    {step.step}
+              <Card key={step.step} className="relative overflow-hidden border hover:border-primary/50 transition-all" style={{ animationDelay: `${index * 100}ms` }}>
+                <CardHeader className="relative p-3 pb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="text-2xl">{step.icon}</div>
+                    <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">
+                      {step.step}
+                    </div>
                   </div>
-                  <CardTitle className="text-xl">{step.title}</CardTitle>
+                  <CardTitle className="text-sm mt-1">{step.title}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <CardDescription>{step.description}</CardDescription>
+                <CardContent className="p-3 pt-0">
+                  <CardDescription className="text-xs">{step.description}</CardDescription>
                 </CardContent>
               </Card>
             ))}
