@@ -172,25 +172,29 @@ export const AliveCheck = () => {
 
       // Send welcome email to the new contact
       const threshold = parseInt(daysThreshold) || 3;
-      supabase.functions.invoke("send-alive-check-welcome", {
+      const { data: emailResult, error: emailError } = await supabase.functions.invoke("send-alive-check-welcome", {
         body: {
           userName: profile?.display_name || "您的朋友",
           contactName: newContactName || "尊敬的用户",
           contactEmail: newContactEmail,
           daysThreshold: threshold
         }
-      }).then(({ error: emailError }) => {
-        if (emailError) {
-          console.error("Error sending welcome email:", emailError);
-        } else {
-          console.log("Welcome email sent to", newContactEmail);
-        }
       });
 
-      toast({
-        title: "联系人已添加",
-        description: `已发送欢迎邮件至 ${newContactEmail}`
-      });
+      if (emailError || emailResult?.error) {
+        console.error("Error sending welcome email:", emailError || emailResult?.error);
+        toast({
+          title: "联系人已添加",
+          description: emailResult?.hint || "欢迎邮件发送失败，请检查邮箱地址或稍后重试",
+          variant: "destructive"
+        });
+      } else {
+        console.log("Welcome email sent to", newContactEmail);
+        toast({
+          title: "联系人已添加",
+          description: `已发送欢迎邮件至 ${newContactEmail}`
+        });
+      }
       setNewContactName("");
       setNewContactEmail("");
       loadData();
