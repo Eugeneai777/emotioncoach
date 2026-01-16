@@ -564,6 +564,21 @@ serve(async (req) => {
   }
 
   try {
+    // 🚀 P0: 预热请求 - 快速返回，唤醒 Edge Function（减少冷启动延迟）
+    const contentType = req.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const clonedReq = req.clone();
+      const body = await clonedReq.json().catch(() => ({}));
+      if (body.preheat) {
+        console.log('[Preheat] Function warmed up');
+        return new Response(JSON.stringify({ 
+          status: 'warm',
+          timestamp: Date.now()
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(

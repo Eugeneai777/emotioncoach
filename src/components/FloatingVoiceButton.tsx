@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Phone } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,6 +8,7 @@ import { WechatPayDialog } from '@/components/WechatPayDialog';
 import { PurchaseOnboardingDialog } from '@/components/onboarding/PurchaseOnboardingDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { hasActiveSession, getActiveSession } from '@/hooks/useVoiceSessionLock';
+import { preheatTokenEndpoint, prewarmMicrophoneStream, prewarmMicrophone } from '@/utils/RealtimeAudio';
 
 // 不显示浮动按钮的路由（有劲AI页面有居中CTA，不需要浮动按钮）
 const EXCLUDED_ROUTES = ['/auth', '/wechat-auth', '/coach/vibrant_life_sage', '/parent-coach', '/'];
@@ -60,6 +61,17 @@ const FloatingVoiceButton: React.FC = () => {
       }
     }
   }, []);
+
+  // 🚀 P0: 预热 Edge Function 和麦克风流
+  const handlePreheat = useCallback(async () => {
+    if (!user) return;
+    
+    // 并行预热 Edge Function 和麦克风流
+    Promise.all([
+      preheatTokenEndpoint('vibrant-life-realtime-token'),
+      prewarmMicrophoneStream()
+    ]).catch(console.warn);
+  }, [user]);
 
   // 保存位置到localStorage
   const savePosition = (pos: Position) => {
@@ -156,7 +168,7 @@ const FloatingVoiceButton: React.FC = () => {
     };
   }, [isDragging, position]);
 
-  // 检查是否在排除路由
+  // 检查是否在排除路由（移到 hooks 之后）
   const isExcludedRoute = EXCLUDED_ROUTES.some(route => 
     location.pathname.startsWith(route)
   );
@@ -239,6 +251,8 @@ const FloatingVoiceButton: React.FC = () => {
         ref={dragRef}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
+        onMouseEnter={handlePreheat}
+        onTouchStartCapture={handlePreheat}
         onClick={handleClick}
         className={`fixed z-50 flex flex-col items-center gap-1 group select-none ${
           isDragging ? 'cursor-grabbing' : 'cursor-grab'

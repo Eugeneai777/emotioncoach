@@ -12,6 +12,128 @@ interface CachedConfig {
 const CONFIG_CACHE_KEY = 'realtime_config_cache';
 const CONFIG_TTL_MS = 24 * 60 * 60 * 1000; // 配置缓存 24 小时
 
+// ============= Token 预取机制 =============
+interface CachedToken {
+  clientSecret: string;
+  realtimeUrl: string;
+  expiresAt: number;
+  mode: string;
+}
+
+const TOKEN_CACHE_KEY = 'realtime_token_cache';
+const TOKEN_TTL_MS = 55 * 1000; // Token 有效期 55 秒（留 5 秒安全余量）
+
+// 获取预取的 Token
+function getCachedToken(endpoint: string, mode: string): CachedToken | null {
+  try {
+    const cacheKey = `${TOKEN_CACHE_KEY}_${endpoint}_${mode}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (!cached) return null;
+    
+    const data: CachedToken = JSON.parse(cached);
+    
+    if (Date.now() >= data.expiresAt) {
+      sessionStorage.removeItem(cacheKey);
+      console.log('[TokenCache] Token expired, removed');
+      return null;
+    }
+    
+    console.log('[TokenCache] Using prefetched token, expires in', Math.round((data.expiresAt - Date.now()) / 1000), 's');
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+// 缓存预取的 Token
+function setCachedToken(endpoint: string, mode: string, clientSecret: string, realtimeUrl: string): void {
+  try {
+    const cacheKey = `${TOKEN_CACHE_KEY}_${endpoint}_${mode}`;
+    const data: CachedToken = {
+      clientSecret,
+      realtimeUrl,
+      mode,
+      expiresAt: Date.now() + TOKEN_TTL_MS
+    };
+    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+    console.log('[TokenCache] Token cached for 55s');
+  } catch (e) {
+    console.warn('[TokenCache] Failed to cache token:', e);
+  }
+}
+
+// ============= 预热机制 =============
+const PREHEAT_CACHE_KEY = 'voice_preheat_timestamp';
+const PREHEAT_INTERVAL_MS = 5 * 60 * 1000; // 5 分钟内不重复预热
+
+// 预热 Edge Function（防止冷启动延迟）
+export async function preheatTokenEndpoint(endpoint: string = 'vibrant-life-realtime-token'): Promise<boolean> {
+  try {
+    const lastPreheat = localStorage.getItem(`${PREHEAT_CACHE_KEY}_${endpoint}`);
+    if (lastPreheat && Date.now() - parseInt(lastPreheat) < PREHEAT_INTERVAL_MS) {
+      console.log('[Preheat] Already warmed up recently');
+      return true;
+    }
+    
+    const startTime = performance.now();
+    await supabase.functions.invoke(endpoint, { 
+      body: { preheat: true } 
+    });
+    
+    localStorage.setItem(`${PREHEAT_CACHE_KEY}_${endpoint}`, Date.now().toString());
+    console.log('[Preheat] Endpoint warmed up in', Math.round(performance.now() - startTime), 'ms');
+    return true;
+  } catch (e) {
+    console.warn('[Preheat] Failed:', e);
+    return false;
+  }
+}
+
+// 预取 Token（用于提前获取 Token 减少连接延迟）
+export async function prefetchToken(
+  endpoint: string = 'vibrant-life-realtime-token',
+  mode: string = 'general',
+  scenario?: string
+): Promise<boolean> {
+  try {
+    // 检查是否已有有效缓存
+    const cached = getCachedToken(endpoint, mode);
+    if (cached) {
+      console.log('[Prefetch] Token already cached');
+      return true;
+    }
+    
+    const startTime = performance.now();
+    const { data, error } = await supabase.functions.invoke(endpoint, {
+      body: { mode, scenario, prefetch: true }
+    });
+    
+    if (error || !data?.client_secret?.value) {
+      console.warn('[Prefetch] Failed to get token');
+      return false;
+    }
+    
+    setCachedToken(endpoint, mode, data.client_secret.value, data.realtime_url);
+    console.log('[Prefetch] Token prefetched in', Math.round(performance.now() - startTime), 'ms');
+    return true;
+  } catch (e) {
+    console.warn('[Prefetch] Error:', e);
+    return false;
+  }
+}
+
+// ============= 记住最佳通道 =============
+const PREFERRED_CHANNEL_KEY = 'voice_preferred_channel';
+
+export function getPreferredChannel(): 'webrtc' | 'websocket' | null {
+  return localStorage.getItem(PREFERRED_CHANNEL_KEY) as 'webrtc' | 'websocket' | null;
+}
+
+export function setPreferredChannel(channel: 'webrtc' | 'websocket'): void {
+  localStorage.setItem(PREFERRED_CHANNEL_KEY, channel);
+  console.log('[Channel] Preferred channel set to:', channel);
+}
+
 // 获取缓存的配置
 function getCachedConfig(endpoint: string): CachedConfig | null {
   try {
@@ -515,12 +637,15 @@ export class RealtimeChat {
       // 创建 WebRTC 连接 - 使用优化的 ICE 配置
       this.pc = new RTCPeerConnection({
         iceServers: [
+          // 🚀 P2: 使用多个 STUN 服务器并行收集
+          { urls: 'stun:stun.cloudflare.com:3478' }, // Cloudflare 通常更快
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' }
         ],
         iceCandidatePoolSize: 10, // 预分配 ICE 候选池
         bundlePolicy: 'max-bundle',
-        rtcpMuxPolicy: 'require'
+        rtcpMuxPolicy: 'require',
+        iceTransportPolicy: 'all' // 允许所有传输类型
       });
 
       // 设置远程音频
