@@ -513,11 +513,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     if (typeof mp.navigateTo === 'function') {
       const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}`;
       console.log('[MiniProgram] navigateTo pay page:', payPageUrl);
-      mp.navigateTo({
-        url: payPageUrl,
-        success: () => console.log('[MiniProgram] navigateTo success'),
-        fail: (err: any) => console.error('[MiniProgram] navigateTo fail', err),
-      });
+      try {
+        mp.navigateTo({ url: payPageUrl });
+      } catch (err) {
+        console.error('[MiniProgram] navigateTo error', err);
+      }
     } else {
       console.warn('[MiniProgram] navigateTo not available');
     }
