@@ -250,126 +250,106 @@ export const FloatingQuickMenu = () => {
           touchAction: 'none',
         }}
       >
-        {/* Card-style Menu */}
+        {/* Card-style Menu - Compact */}
         <AnimatePresence>
           {isExpanded && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.85, y: position.y > window.innerHeight / 2 ? 20 : -20 }}
+              initial={{ opacity: 0, scale: 0.9, y: position.y > window.innerHeight / 2 ? 10 : -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.85, y: position.y > window.innerHeight / 2 ? 20 : -20 }}
-              transition={{ duration: 0.25, type: 'spring', stiffness: 350, damping: 28 }}
-              className={`absolute ${position.y > window.innerHeight / 2 ? 'bottom-16' : 'top-16'} left-0 bg-background/98 backdrop-blur-xl rounded-xl shadow-2xl border border-border/50 p-2.5`}
+              exit={{ opacity: 0, scale: 0.9, y: position.y > window.innerHeight / 2 ? 10 : -10 }}
+              transition={{ duration: 0.15, type: 'spring', stiffness: 400, damping: 30 }}
+              className={`absolute ${position.y > window.innerHeight / 2 ? 'bottom-12' : 'top-12'} left-0 bg-background/98 backdrop-blur-xl rounded-lg shadow-lg border border-border/40 p-1.5`}
               style={{
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+                boxShadow: '0 15px 35px -10px rgba(0, 0, 0, 0.2)',
                 maxWidth: `calc(100vw - ${position.x + 16}px)`,
-                minWidth: '180px',
+                minWidth: '150px',
               }}
             >
-              {/* Menu List - Compact Vertical Layout */}
-              <div className="flex flex-col gap-1">
+              {/* Menu List - Ultra Compact */}
+              <div className="flex flex-col gap-0.5">
                 {menuItems.map((item, index) => {
                   const Icon = item.icon;
                   const isCurrentPage = location.pathname === item.path;
+                  // 截断标签
+                  const displayLabel = item.label.length > 4 ? item.label.slice(0, 4) : item.label;
 
                   return (
                     <motion.button
                       key={item.id}
-                      initial={{ opacity: 0, x: -15 }}
+                      initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ 
-                        delay: index * 0.03,
-                        duration: 0.15,
-                        type: 'spring',
-                        stiffness: 400,
-                        damping: 25
+                        delay: index * 0.02,
+                        duration: 0.1,
                       }}
                       onClick={() => handleMenuItemClick(item.id, item.path)}
                       whileTap={{ scale: 0.96 }}
-                      className={`group flex items-center gap-2.5 px-2.5 py-2 rounded-lg w-full text-left transition-all duration-200
+                      className={`group flex items-center gap-2 px-2 py-1.5 rounded-md w-full text-left transition-colors duration-100
                         ${isCurrentPage 
-                          ? 'bg-primary/15 text-primary shadow-sm' 
-                          : 'hover:bg-muted/80 active:bg-muted'
+                          ? 'bg-primary/12 text-primary' 
+                          : 'hover:bg-muted/70 active:bg-muted'
                         }
-                        ${item.isCustom ? 'border border-dashed border-muted-foreground/20' : ''}
                       `}
                     >
-                      <motion.div 
-                        className={`w-8 h-8 rounded-lg ${item.color} flex items-center justify-center flex-shrink-0 shadow-sm`}
-                        whileTap={{ scale: 0.9 }}
+                      <div 
+                        className={`w-6 h-6 rounded-md ${item.color} flex items-center justify-center flex-shrink-0`}
                       >
-                        <Icon className="w-4 h-4 text-white drop-shadow-sm" />
-                      </motion.div>
-                      <span className="text-sm font-medium truncate max-w-[100px]">
-                        {item.label}
+                        <Icon className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <span className="text-xs font-medium truncate max-w-[70px]">
+                        {displayLabel}
                       </span>
                       {isCurrentPage && (
-                        <motion.div 
-                          className="ml-auto w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"
-                          layoutId="activeIndicator"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        />
+                        <div className="ml-auto w-1 h-1 rounded-full bg-primary flex-shrink-0" />
                       )}
                     </motion.button>
                   );
                 })}
               </div>
 
-              {/* Settings Button */}
+              {/* Settings Button - Icon only */}
               <motion.button
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
+                transition={{ delay: 0.12 }}
                 onClick={() => {
                   setIsExpanded(false);
                   setShowSettings(true);
                 }}
-                className="w-full mt-2 pt-2 border-t border-border/50 flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-all duration-200 active:scale-95"
+                className="w-full mt-1 pt-1 border-t border-border/30 flex items-center justify-center py-1 text-muted-foreground/60 hover:text-muted-foreground transition-colors duration-100 active:scale-95"
               >
-                <Edit3 className="w-3 h-3" />
-                自定义
+                <Settings className="w-3.5 h-3.5" />
               </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Main Button */}
+        {/* Main Button - Compact */}
         <motion.div
-          className={`w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center cursor-pointer select-none
+          className={`w-11 h-11 rounded-xl shadow-lg flex items-center justify-center cursor-pointer select-none
             ${isExpanded 
               ? 'bg-gradient-to-br from-slate-600 to-slate-700' 
               : 'bg-gradient-to-br from-sky-100 via-white to-sky-50'
             }
-            ${isDragging ? 'scale-110 shadow-2xl' : ''}
-            transition-all duration-300 border border-white/30`}
+            ${isDragging ? 'scale-105 shadow-xl' : ''}
+            transition-all duration-200 border border-white/25`}
           style={{
             boxShadow: isExpanded 
-              ? '0 10px 40px -10px rgba(0, 0, 0, 0.4)' 
-              : '0 8px 30px -8px rgba(56, 189, 248, 0.35), 0 4px 15px -4px rgba(0, 0, 0, 0.1)',
+              ? '0 6px 25px -8px rgba(0, 0, 0, 0.35)' 
+              : '0 6px 20px -6px rgba(56, 189, 248, 0.3), 0 3px 10px -3px rgba(0, 0, 0, 0.08)',
           }}
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleDragEnd}
           onClick={handleClick}
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.92 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.9 }}
           animate={!isExpanded && !isDragging ? {
-            y: [0, -3, 0],
-            boxShadow: [
-              '0 8px 30px -8px rgba(56, 189, 248, 0.35), 0 4px 15px -4px rgba(0, 0, 0, 0.1)',
-              '0 12px 40px -8px rgba(56, 189, 248, 0.5), 0 6px 20px -4px rgba(0, 0, 0, 0.15)',
-              '0 8px 30px -8px rgba(56, 189, 248, 0.35), 0 4px 15px -4px rgba(0, 0, 0, 0.1)',
-            ],
+            y: [0, -2, 0],
           } : {}}
           transition={{
             y: {
-              duration: 2.5,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            },
-            boxShadow: {
               duration: 2.5,
               repeat: Infinity,
               ease: 'easeInOut',
@@ -383,18 +363,18 @@ export const FloatingQuickMenu = () => {
                 initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
                 animate={{ rotate: 0, opacity: 1, scale: 1 }}
                 exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.12 }}
               >
-                <X className="w-6 h-6 text-white drop-shadow-md" />
+                <X className="w-4.5 h-4.5 text-white" />
               </motion.div>
             ) : (
               <motion.span 
                 key="rocket"
-                className="text-2xl drop-shadow-md"
+                className="text-lg"
                 initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
                 animate={{ rotate: -45, opacity: 1, scale: 1 }}
                 exit={{ rotate: 0, opacity: 0, scale: 0.5 }}
-                transition={{ duration: 0.2, type: 'spring', stiffness: 400 }}
+                transition={{ duration: 0.12, type: 'spring', stiffness: 400 }}
               >
                 🚀
               </motion.span>
