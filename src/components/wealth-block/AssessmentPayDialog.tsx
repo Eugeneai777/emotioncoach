@@ -379,11 +379,12 @@ export function AssessmentPayDialog({
   const createOrder = async () => {
     console.log('[AssessmentPay] createOrder called, userId:', userId, 'isWechat:', isWechat, 'isMobile:', isMobile);
 
-    // 小程序环境不需要 openId，由小程序原生端获取
-    // 仅微信浏览器环境需要等待 openId
-    if (isWechat && !isMiniProgram && !userOpenId) {
-      console.warn('[AssessmentPay] Missing openId in WeChat browser, triggering silent auth...');
-      triggerSilentAuth();
+    // 小程序 JSAPI 下单强依赖 openId；没有 openId 时先向小程序请求，避免后端报错且前端无弹窗
+    if (isMiniProgram && !userOpenId) {
+      console.warn('[AssessmentPay] Missing openId in MiniProgram, requesting from native...');
+      requestMiniProgramOpenId();
+      setOpenIdResolved(false);
+      toast.info('正在向小程序请求支付信息…');
       return;
     }
 
@@ -425,8 +426,7 @@ export function AssessmentPayDialog({
           amount: 9.9,
           userId: userId || 'guest',
           payType: selectedPayType,
-          // 小程序环境不传 openId，由小程序原生端获取
-          openId: (selectedPayType === 'jsapi' && !isMiniProgram) ? userOpenId : undefined,
+          openId: selectedPayType === 'jsapi' ? userOpenId : undefined,
           isMiniProgram: isMiniProgram,
         }
       });
@@ -438,33 +438,27 @@ export function AssessmentPayDialog({
 
       setOrderNo(data.orderNo);
 
-       // 小程序支付：直接跳转到小程序原生支付页
-       if (isMiniProgram && (data.isMiniProgram || data.miniprogramPayParams || data.payType === 'miniprogram')) {
-         console.log('[Payment] MiniProgram: navigating to native pay page with order:', data.orderNo);
-         setStatus('polling');
-         startPolling(data.orderNo);
-         
-         // 传递订单信息给小程序原生端，由小程序获取 openId 并调用支付
-         triggerMiniProgramNativePay(
-           data.miniprogramPayParams || { orderNo: data.orderNo, amount: String(9.9 * 100) },
-           data.orderNo
-         );
-       } else if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
-         // JSAPI 支付（微信浏览器，非小程序）
+       if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
+         // JSAPI 支付
          setStatus('polling');
          startPolling(data.orderNo);
 
-         // 微信浏览器：先等待 Bridge 就绪，再调起支付
-         console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
-         const bridgeAvailable = await waitForWeixinJSBridge();
-         
-         if (bridgeAvailable) {
-           try {
-             await invokeJsapiPay(data.jsapiPayParams);
-             console.log('[Payment] JSAPI pay invoked successfully');
-           } catch (jsapiError: any) {
-             console.log('[Payment] JSAPI pay error:', jsapiError?.message);
-             if (jsapiError?.message !== '用户取消支付') {
+         if (isMiniProgram) {
+           // 小程序 WebView：通过 navigateTo 让小程序原生拉起 wx.requestPayment
+           console.log('[Payment] MiniProgram: triggering native pay via navigateTo');
+           triggerMiniProgramNativePay(data.jsapiPayParams, data.orderNo);
+         } else {
+           // 微信浏览器：先等待 Bridge 就绪，再调起支付
+           console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
+           const bridgeAvailable = await waitForWeixinJSBridge();
+           
+           if (bridgeAvailable) {
+             try {
+               await invokeJsapiPay(data.jsapiPayParams);
+               console.log('[Payment] JSAPI pay invoked successfully');
+             } catch (jsapiError: any) {
+               console.log('[Payment] JSAPI pay error:', jsapiError?.message);
+               if (jsapiError?.message !== '用户取消支付') {
                  // JSAPI 失败，降级到扫码模式
                  console.log('[Payment] JSAPI failed, falling back to native payment');
                  toast.info('支付弹窗调起失败，已切换为扫码支付');
@@ -533,10 +527,9 @@ export function AssessmentPayDialog({
              } catch (fallbackError: any) {
                console.error('[Payment] Fallback to native payment failed:', fallbackError);
                toast.error('支付初始化失败，请刷新重试');
-              }
-            }
-          }
-        }
+             }
+           }
+         }
        } else if ((data.payType || selectedPayType) === 'h5' && (data.h5Url || data.payUrl)) {
         // H5支付
         setPayUrl(data.h5Url || data.payUrl);

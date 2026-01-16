@@ -80,8 +80,8 @@ serve(async (req) => {
       throw new Error('缺少必要参数');
     }
 
-    // JSAPI 支付需要 openId（小程序原生支付除外，由小程序端获取 openId）
-    if (payType === 'jsapi' && !openId && !isMiniProgram) {
+    // JSAPI 支付需要 openId
+    if (payType === 'jsapi' && !openId) {
       throw new Error('JSAPI支付需要openId');
     }
 
@@ -136,17 +136,14 @@ serve(async (req) => {
     const notifyUrl = 'https://wechatpay.eugenewe.net/wechat-pay-callback';
     
     // 根据支付类型选择不同的API和请求体
-    // 小程序环境：使用 native 下单，返回 prepay_id 供小程序原生调用 wx.requestPayment
     const isH5 = payType === 'h5';
-    const isJsapi = payType === 'jsapi' && !isMiniProgram; // 小程序不走 JSAPI
-    const isMiniProgramPay = isMiniProgram; // 小程序原生支付
+    const isJsapi = payType === 'jsapi';
     let apiPath: string;
     if (isJsapi) {
       apiPath = '/v3/pay/transactions/jsapi';
     } else if (isH5) {
       apiPath = '/v3/pay/transactions/h5';
     } else {
-      // Native 和小程序都用 native 接口（小程序需要 prepay_id）
       apiPath = '/v3/pay/transactions/native';
     }
     const apiUrl = `https://api.mch.weixin.qq.com${apiPath}`;
@@ -307,31 +304,11 @@ serve(async (req) => {
 
     // 获取支付URL或prepay_id - 使用实际的支付类型
     const actualIsH5 = actualPayType === 'h5';
-    const actualIsJsapi = actualPayType === 'jsapi' && !isMiniProgram;
-    const actualIsMiniProgram = isMiniProgram;
+    const actualIsJsapi = actualPayType === 'jsapi';
     let payUrl: string = '';
     let jsapiPayParams: Record<string, string> | undefined;
-    let miniprogramPayParams: Record<string, string> | undefined;
     
-    if (actualIsMiniProgram) {
-      // 小程序原生支付：Native 接口也返回 prepay_id（在 code_url 之外）
-      // 但 Native 接口实际只返回 code_url，需要改用 JSAPI 接口获取 prepay_id
-      // 这里先用 code_url 作为备用，同时生成小程序需要的签名参数
-      payUrl = (wechatResult.code_url as string) || '';
-      
-      // 注意：Native 接口不返回 prepay_id，小程序需要用 JSAPI 接口
-      // 但 JSAPI 需要 openId，而小程序端获取 openId 后再调用
-      // 因此这里返回订单信息，让小程序端自己调用支付
-      console.log('MiniProgram payment: returning order info for native payment');
-      
-      // 生成小程序支付所需的预签名参数（timeStamp、nonceStr）
-      // 小程序端获取 openId 后需要重新请求 prepay_id，这里仅提供订单号
-      miniprogramPayParams = {
-        orderNo: orderNo,
-        amount: amountInFen.toString(),
-        description: packageName,
-      };
-    } else if (actualIsJsapi) {
+    if (actualIsJsapi) {
       // JSAPI支付返回 prepay_id，需要生成前端调起支付的参数
       const prepayId = wechatResult.prepay_id as string;
       if (!prepayId) {
@@ -398,14 +375,12 @@ serve(async (req) => {
         success: true,
         orderNo,
         payUrl: payUrl || undefined, // 统一返回payUrl
-        qrCodeUrl: !actualIsH5 && !actualIsJsapi && !actualIsMiniProgram ? payUrl : undefined, // 兼容旧版本
+        qrCodeUrl: !actualIsH5 && !actualIsJsapi ? payUrl : undefined, // 兼容旧版本
         h5Url: actualIsH5 ? payUrl : undefined, // H5支付专用
         jsapiPayParams, // JSAPI支付专用参数
-        miniprogramPayParams, // 小程序原生支付参数
-        payType: actualIsMiniProgram ? 'miniprogram' : actualPayType, // 返回实际使用的支付类型
+        payType: actualPayType, // 返回实际使用的支付类型
         fallbackReason, // 如果发生了降级，告知原因
         expiredAt: expiredAt.toISOString(),
-        isMiniProgram: actualIsMiniProgram, // 标识是否为小程序支付
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
