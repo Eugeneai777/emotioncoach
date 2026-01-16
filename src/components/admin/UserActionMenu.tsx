@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreVertical, Plus, Ban, Trash2, RotateCcw } from "lucide-react";
+import { MoreVertical, Plus, Ban, Trash2, RotateCcw, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DisableAccountDialog } from "./DisableAccountDialog";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
+import { SetRoleDialog } from "./SetRoleDialog";
 
 interface UserActionMenuProps {
   userId: string;
@@ -28,6 +29,7 @@ export function UserActionMenu({
 }: UserActionMenuProps) {
   const [disableDialogOpen, setDisableDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
 
   return (
     <>
@@ -41,6 +43,10 @@ export function UserActionMenu({
           <DropdownMenuItem onClick={onRecharge}>
             <Plus className="mr-2 h-4 w-4" />
             充值
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setRoleDialogOpen(true)}>
+            <Shield className="mr-2 h-4 w-4" />
+            设置角色
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
@@ -81,6 +87,14 @@ export function UserActionMenu({
       <DeleteAccountDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
+        userId={userId}
+        userName={userName}
+        onSuccess={onRefresh}
+      />
+
+      <SetRoleDialog
+        open={roleDialogOpen}
+        onOpenChange={setRoleDialogOpen}
         userId={userId}
         userName={userName}
         onSuccess={onRefresh}
