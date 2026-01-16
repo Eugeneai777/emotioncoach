@@ -17,8 +17,8 @@ import { useNavigate } from "react-router-dom";
 import AliveCheckIntroDialog from "./AliveCheckIntroDialog";
 import AliveCheckShareDialog from "./AliveCheckShareDialog";
 import { AliveWitnessCard } from "./AliveWitnessCard";
-import { AwakeningQuickPicker } from "./AwakeningQuickPicker";
-import { AwakeningType, getAwakeningDimension } from "@/config/awakeningConfig";
+import { AliveAwakeningPromptCard } from "./AliveAwakeningPromptCard";
+import { AwakeningDimension } from "@/config/awakeningConfig";
 interface AliveCheckSettings {
   id: string;
   is_enabled: boolean;
@@ -70,8 +70,8 @@ export const AliveCheck = () => {
   const [showShare, setShowShare] = useState(false);
   const [showWitness, setShowWitness] = useState(false);
   const [todayNote, setTodayNote] = useState("");
-  const [selectedAwakening, setSelectedAwakening] = useState<AwakeningType | null>(null);
   const [witnessMessage, setWitnessMessage] = useState("");
+  const [showAwakeningPrompt, setShowAwakeningPrompt] = useState(false);
   const [generatingWitness, setGeneratingWitness] = useState(false);
   
   // Form states
@@ -354,7 +354,6 @@ export const AliveCheck = () => {
           streak: currentStreak + 1, // Including today
           note: todayNote || null,
           time_of_day: getTimeOfDay(),
-          awakening_type: selectedAwakening || undefined,
         },
       });
 
@@ -401,7 +400,6 @@ export const AliveCheck = () => {
           checked_at: today,
           note: todayNote || null,
           ai_witness: witness,
-          awakening_type: selectedAwakening || null,
         });
 
       if (error) {
@@ -417,7 +415,6 @@ export const AliveCheck = () => {
         // Show witness card instead of simple toast
         setShowWitness(true);
         setTodayNote("");
-        setSelectedAwakening(null);
         loadData();
       }
     } catch (error) {
@@ -432,17 +429,22 @@ export const AliveCheck = () => {
     }
   };
 
-  const handleGoToAwakening = () => {
-    if (!selectedAwakening) return;
-    
-    const dimension = getAwakeningDimension(selectedAwakening);
-    if (dimension?.toolRoute) {
+  // Handle awakening dimension selection
+  const handleSelectAwakening = (dimension: AwakeningDimension) => {
+    setShowAwakeningPrompt(false);
+    if (dimension.toolRoute) {
       navigate(dimension.toolRoute);
-    } else if (dimension?.coachRoute) {
+    } else if (dimension.coachRoute) {
       navigate(dimension.coachRoute);
     } else {
       navigate('/awakening');
     }
+  };
+
+  // Handle proceed to awakening from witness card
+  const handleProceedToAwakening = () => {
+    setShowWitness(false);
+    setShowAwakeningPrompt(true);
   };
 
   // Calculate stats
@@ -626,12 +628,6 @@ export const AliveCheck = () => {
                 value={todayNote}
                 onChange={(e) => setTodayNote(e.target.value)}
                 className="min-h-[60px] resize-none"
-              />
-              
-              {/* Awakening Quick Picker */}
-              <AwakeningQuickPicker 
-                selected={selectedAwakening}
-                onSelect={setSelectedAwakening}
               />
               
               <Button 
@@ -894,8 +890,12 @@ export const AliveCheck = () => {
         witness={witnessMessage}
         streak={streak + 1}
         date={new Date()}
-        awakeningType={selectedAwakening || undefined}
-        onGoToAwakening={selectedAwakening ? handleGoToAwakening : undefined}
+        onProceedToAwakening={handleProceedToAwakening}
+      />
+      <AliveAwakeningPromptCard
+        open={showAwakeningPrompt}
+        onOpenChange={setShowAwakeningPrompt}
+        onSelectDimension={handleSelectAwakening}
       />
     </div>
   );

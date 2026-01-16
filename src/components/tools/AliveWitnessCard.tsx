@@ -1,10 +1,9 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { CheckCircle2, Sparkles, ArrowRight, X } from "lucide-react";
-import { AwakeningType, getAwakeningDimension } from "@/config/awakeningConfig";
+import { CheckCircle2, Sparkles, X } from "lucide-react";
 
 interface AliveWitnessCardProps {
   open: boolean;
@@ -12,8 +11,7 @@ interface AliveWitnessCardProps {
   witness: string;
   streak: number;
   date: Date;
-  awakeningType?: AwakeningType;
-  onGoToAwakening?: () => void;
+  onProceedToAwakening?: () => void;
 }
 
 const getTimeOfDayEmoji = () => {
@@ -30,10 +28,8 @@ export const AliveWitnessCard = ({
   witness,
   streak,
   date,
-  awakeningType,
-  onGoToAwakening,
+  onProceedToAwakening,
 }: AliveWitnessCardProps) => {
-  const awakeningDimension = awakeningType ? getAwakeningDimension(awakeningType) : null;
   const timeEmoji = getTimeOfDayEmoji();
 
   return (
@@ -112,7 +108,7 @@ export const AliveWitnessCard = ({
               </motion.div>
             )}
 
-            {/* Action buttons */}
+            {/* Action buttons - Two stage: close or proceed to awakening */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -124,19 +120,18 @@ export const AliveWitnessCard = ({
                 onClick={() => onOpenChange(false)}
                 className="flex-1 bg-white/20 hover:bg-white/30 text-white border-0"
               >
-                好的
+                好的，今天就这样
               </Button>
               
-              {awakeningDimension && onGoToAwakening && (
+              {onProceedToAwakening && (
                 <Button
                   onClick={() => {
                     onOpenChange(false);
-                    onGoToAwakening();
+                    onProceedToAwakening();
                   }}
-                  className={`flex-1 bg-gradient-to-r ${awakeningDimension.gradient} hover:opacity-90 text-white border-0`}
+                  className="flex-1 bg-white/30 hover:bg-white/40 text-white border-0"
                 >
-                  {awakeningDimension.emoji} 去{awakeningDimension.title}觉察
-                  <ArrowRight className="w-4 h-4 ml-1" />
+                  想觉察一下 ✨
                 </Button>
               )}
             </motion.div>
