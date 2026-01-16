@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart, ExternalLink, BookOpen, Tent, Play, Clock } from 'lucide-react';
@@ -10,6 +10,9 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { WechatPayDialog } from '@/components/WechatPayDialog';
 import { useVoiceSessionLock, forceReleaseSessionLock } from '@/hooks/useVoiceSessionLock';
+import { ConnectionProgress, ConnectionStatusBadge, type ConnectionPhase, type NetworkQuality } from './ConnectionProgress';
+import { InCallNetworkHint, type NetworkWarningLevel } from './VoiceNetworkWarning';
+import { useNetworkQuality } from '@/hooks/useNetworkQuality';
 
 export type VoiceChatMode = 'general' | 'parent_teen' | 'teen' | 'emotion';
 
@@ -101,6 +104,15 @@ export const CoachVoiceChat = ({
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);  // 无活动计时器
   const isInitializingRef = useRef(false);  // 🔧 防止 React 严格模式下重复初始化
   const [useMiniProgramMode, setUseMiniProgramMode] = useState(false);  // 是否使用小程序模式
+  // 🔧 连接进度追踪
+  const [connectionPhase, setConnectionPhase] = useState<ConnectionPhase>('preparing');
+  const [connectionElapsedTime, setConnectionElapsedTime] = useState(0);
+  const connectionStartTimeRef = useRef<number | null>(null);
+  const connectionTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // 🔧 网络质量监控
+  const { quality: networkQuality, rtt: networkRtt, checkNetwork, startMonitoring, stopMonitoring } = useNetworkQuality();
+  const [networkWarningLevel, setNetworkWarningLevel] = useState<NetworkWarningLevel>('none');
+  const [showNetworkHint, setShowNetworkHint] = useState(false);
 
   // 🔧 全局语音会话锁 - 防止多个组件同时发起语音
   const { acquire: acquireLock, release: releaseLock, isLocked, activeComponent } = useVoiceSessionLock('CoachVoiceChat');
@@ -687,6 +699,45 @@ export const CoachVoiceChat = ({
     }
   };
 
+  // 🔧 连接进度辅助函数
+  const startConnectionTimer = useCallback(() => {
+    connectionStartTimeRef.current = Date.now();
+    setConnectionElapsedTime(0);
+    connectionTimerRef.current = setInterval(() => {
+      if (connectionStartTimeRef.current) {
+        setConnectionElapsedTime(Math.floor((Date.now() - connectionStartTimeRef.current) / 1000));
+      }
+    }, 1000);
+  }, []);
+
+  const stopConnectionTimer = useCallback(() => {
+    if (connectionTimerRef.current) {
+      clearInterval(connectionTimerRef.current);
+      connectionTimerRef.current = null;
+    }
+    connectionStartTimeRef.current = null;
+  }, []);
+
+  const updateConnectionPhase = useCallback((phase: ConnectionPhase) => {
+    setConnectionPhase(phase);
+    console.log(`[VoiceChat] Connection phase: ${phase}`);
+  }, []);
+
+  // 🔧 根据网络质量更新警告级别
+  useEffect(() => {
+    if (networkQuality === 'poor') {
+      setNetworkWarningLevel('critical');
+      setShowNetworkHint(true);
+    } else if (networkQuality === 'fair' && networkRtt && networkRtt > 300) {
+      setNetworkWarningLevel('unstable');
+      setShowNetworkHint(true);
+    } else if (networkRtt && networkRtt > 200) {
+      setNetworkWarningLevel('slow');
+    } else {
+      setNetworkWarningLevel('none');
+    }
+  }, [networkQuality, networkRtt]);
+
   // 开始通话 - 双轨切换
   const startCall = async () => {
     if (isInitializingRef.current) return;
@@ -701,6 +752,11 @@ export const CoachVoiceChat = ({
       return;
     }
     
+    // 🔧 开始连接进度追踪
+    startConnectionTimer();
+    updateConnectionPhase('preparing');
+    checkNetwork(); // 开始网络检测
+    
     try {
       setStatus('connecting');
       const { error: refreshError } = await supabase.auth.refreshSession();
@@ -708,27 +764,32 @@ export const CoachVoiceChat = ({
         toast({ title: "登录已过期", description: "请重新登录后再试", variant: "destructive" });
         setStatus('error');
         isInitializingRef.current = false;
+        stopConnectionTimer();
         releaseLock();
         setTimeout(onClose, 1500);
         return;
       }
       
       // 🔧 预扣第一分钟点数
+      updateConnectionPhase('requesting_mic');
       const deducted = await deductQuota(1);
       if (!deducted) {
         setStatus('error');
         isInitializingRef.current = false;
+        stopConnectionTimer();
         releaseLock();
         setTimeout(onClose, 1500);
         return;
       }
 
       // 🔧 双轨切换：检测平台并选择合适的音频客户端
+      updateConnectionPhase('getting_token');
       const platformInfo = getPlatformInfo();
       console.log('[VoiceChat] Platform info:', platformInfo);
 
       if (platformInfo.recommendedVoiceMethod === 'websocket') {
         console.log('[VoiceChat] Using MiniProgram WebSocket relay mode');
+        updateConnectionPhase('establishing');
         setUseMiniProgramMode(true);
         const miniProgramClient = new MiniProgramAudioClient({
           onMessage: handleVoiceMessage,
@@ -741,6 +802,9 @@ export const CoachVoiceChat = ({
         });
         chatRef.current = miniProgramClient;
         await miniProgramClient.connect();
+        updateConnectionPhase('connected');
+        stopConnectionTimer();
+        startMonitoring(); // 开始持续网络监控
         miniProgramClient.startRecording();
       } else if (platformInfo.recommendedVoiceMethod === 'webrtc') {
         console.log('[VoiceChat] Using WebRTC direct connection mode');
@@ -761,6 +825,7 @@ export const CoachVoiceChat = ({
             }
             // 权限获取失败，尝试降级到 WebSocket
             console.log('[VoiceChat] WeChat Browser: falling back to WebSocket relay...');
+            updateConnectionPhase('establishing');
             setUseMiniProgramMode(true);
             const miniProgramClient = new MiniProgramAudioClient({
               onMessage: handleVoiceMessage,
@@ -773,16 +838,23 @@ export const CoachVoiceChat = ({
             });
             chatRef.current = miniProgramClient;
             await miniProgramClient.connect();
+            updateConnectionPhase('connected');
+            stopConnectionTimer();
+            startMonitoring();
             miniProgramClient.startRecording();
             return;
           }
         }
         
+        updateConnectionPhase('establishing');
         const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario);
         chatRef.current = chat;
         
         try {
           await chat.init();
+          updateConnectionPhase('connected');
+          stopConnectionTimer();
+          startMonitoring(); // 开始持续网络监控
         } catch (webrtcError: any) {
           console.error('[VoiceChat] WebRTC connection failed:', webrtcError);
           
@@ -820,6 +892,9 @@ export const CoachVoiceChat = ({
             });
             chatRef.current = miniProgramClient;
             await miniProgramClient.connect();
+            updateConnectionPhase('connected');
+            stopConnectionTimer();
+            startMonitoring();
             miniProgramClient.startRecording();
             return;
           }
@@ -841,6 +916,9 @@ export const CoachVoiceChat = ({
       }
     } catch (error: any) {
       console.error('Failed to start call:', error);
+      
+      // 🔧 停止连接计时器
+      stopConnectionTimer();
       
       // 🔧 连接失败时退还预扣点数
       const errorMessage = error?.message || '';
@@ -1271,11 +1349,27 @@ export const CoachVoiceChat = ({
     );
   }
 
-  if (isCheckingQuota) {
+  // 🔧 连接中显示进度
+  if (isCheckingQuota || status === 'connecting') {
     return (
       <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-white/70 mb-4" />
-        <p className="text-white/70">正在检查余额...</p>
+        <div className="text-6xl mb-6">{coachEmoji}</div>
+        <h2 className="text-white text-xl font-medium mb-4">{coachTitle}</h2>
+        <ConnectionProgress
+          phase={isCheckingQuota ? 'preparing' : connectionPhase}
+          networkQuality={networkQuality}
+          rtt={networkRtt}
+          elapsedTime={connectionElapsedTime}
+          usingFallback={useMiniProgramMode}
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => { stopConnectionTimer(); stopMonitoring(); onClose(); }}
+          className="mt-4 text-white/50 hover:text-white"
+        >
+          取消
+        </Button>
       </div>
     );
   }
@@ -1338,7 +1432,6 @@ export const CoachVoiceChat = ({
       {/* 顶部状态栏 */}
       <div className="flex items-center justify-between p-4 pt-safe">
         <div className="text-white/70 text-sm flex items-center gap-3">
-          {status === 'connecting' && '正在连接...'}
           {status === 'connected' && (
             <>
               <span>{formatDuration(duration)}</span>
@@ -1346,6 +1439,12 @@ export const CoachVoiceChat = ({
                 <Coins className="w-3 h-3" />
                 {billedMinutes * POINTS_PER_MINUTE}点
               </span>
+              {/* 🔧 网络状态徽章 */}
+              <ConnectionStatusBadge
+                networkQuality={networkQuality}
+                rtt={networkRtt}
+                usingFallback={useMiniProgramMode}
+              />
             </>
           )}
           {status === 'error' && '连接失败'}
@@ -1392,7 +1491,6 @@ export const CoachVoiceChat = ({
         <div className="mb-4 w-24">
           <AudioWaveform 
             status={
-              status === 'connecting' ? 'connecting' :
               speakingStatus === 'user-speaking' ? 'user-speaking' :
               speakingStatus === 'assistant-speaking' ? 'assistant-speaking' :
               'idle'
@@ -1401,14 +1499,19 @@ export const CoachVoiceChat = ({
           />
         </div>
         
+        {/* 🔧 通话中弱网提示 */}
+        {showNetworkHint && status === 'connected' && (
+          <div className="mb-4 w-full max-w-xs">
+            <InCallNetworkHint
+              level={networkWarningLevel}
+              rtt={networkRtt}
+              onDismiss={() => setShowNetworkHint(false)}
+            />
+          </div>
+        )}
+        
         {/* 状态文字 - 增强对比度 */}
         <div className="flex items-center gap-2 text-white/80 text-sm mb-6 drop-shadow-md font-medium">
-          {status === 'connecting' && (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              正在建立连接...
-            </>
-          )}
           {status === 'connected' && speakingStatus === 'idle' && (
             <>
               <Mic className="w-4 h-4" />
