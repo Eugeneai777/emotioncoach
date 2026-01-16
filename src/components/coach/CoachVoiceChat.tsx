@@ -266,25 +266,15 @@ export const CoachVoiceChat = ({
     }
   };
 
-  // 处理页面导航
+  // 处理页面导航 - 改为用户确认后再跳转，避免意外触发
   const handleNavigation = (path: string, name: string) => {
     setPendingNavigation({ path, name });
     
+    // 🔧 不再自动跳转，改为显示确认卡片，让用户主动点击
     toast({
       title: `🚀 ${name}`,
-      description: "即将为你打开...",
+      description: "对话结束后可以点击下方卡片前往",
     });
-
-    // 延迟1.5秒后跳转，让用户听完AI回复
-    setTimeout(() => {
-      chatRef.current?.disconnect();
-      if (durationRef.current) {
-        clearInterval(durationRef.current);
-      }
-      recordSession().then(() => {
-        navigate(path);
-      });
-    }, 1500);
   };
 
   // 确认导航
@@ -633,6 +623,15 @@ export const CoachVoiceChat = ({
       }, 1000);
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
       if (durationRef.current) clearInterval(durationRef.current);
+      
+      // 🔧 断线时明确提示用户（非主动挂断时）
+      if (!isEnding && durationValueRef.current > 0) {
+        toast({
+          title: "连接已断开",
+          description: "通话意外中断，可以点击重新开始继续对话",
+          variant: "destructive"
+        });
+      }
     }
   };
 

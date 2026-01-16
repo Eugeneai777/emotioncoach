@@ -29,7 +29,7 @@ const commonTools = [
   {
     type: "function",
     name: "navigate_to",
-    description: "当用户想去某个功能页面时调用",
+    description: "仅当用户明确要求跳转时调用（如'打开xx'、'带我去xx'、'我想看xx'）。用户随便聊天时绝不调用此工具。",
     parameters: {
       type: "object",
       properties: {
@@ -991,8 +991,8 @@ serve(async (req) => {
         tool_choice: "auto",
         input_audio_format: "pcm16",
         output_audio_format: "pcm16",
-        // 根据模式调整 token 限制：情绪模式需要更多空间表达，通用模式适中
-        max_response_output_tokens: mode === 'emotion' ? 400 : 300,
+        // 根据模式调整 token 限制：增加到 600-800 避免 AI 说话被截断
+        max_response_output_tokens: mode === 'emotion' ? 800 : 600,
         turn_detection: {
           type: "server_vad",
           threshold: 0.6,
