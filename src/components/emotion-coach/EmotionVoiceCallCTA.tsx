@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Phone, MessageSquare } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePersonalizedGreeting } from '@/hooks/usePersonalizedGreeting';
 import { Skeleton } from '@/components/ui/skeleton';
+import { preheatTokenEndpoint, prewarmMicrophoneStream } from '@/utils/RealtimeAudio';
 
 interface EmotionVoiceCallCTAProps {
   onVoiceChatClick: () => void;
@@ -19,6 +20,14 @@ export const EmotionVoiceCallCTA = ({
     greeting,
     isLoading
   } = usePersonalizedGreeting();
+
+  // 🚀 P0: 预热 Edge Function 和麦克风流
+  const handlePreheat = useCallback(() => {
+    Promise.all([
+      preheatTokenEndpoint('vibrant-life-realtime-token'),
+      prewarmMicrophoneStream()
+    ]).catch(console.warn);
+  }, []);
 
   const handleClick = () => {
     // 触发涟漪动画
@@ -48,7 +57,9 @@ export const EmotionVoiceCallCTA = ({
 
       {/* 大圆形品牌按钮 - 翠绿色主题 */}
       <button 
-        onClick={handleClick} 
+        onClick={handleClick}
+        onMouseEnter={handlePreheat}
+        onTouchStart={handlePreheat}
         className="relative group focus:outline-none touch-manipulation" 
         aria-label="开始情绪教练语音对话"
       >
