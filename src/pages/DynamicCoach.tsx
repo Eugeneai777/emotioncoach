@@ -38,23 +38,6 @@ interface LocationState {
   meditationTitle?: string;
 }
 
-// 教练 key → OG 图片映射（数据库配置优先，此处仅作兜底）
-const getCoachOGImage = (coachKey: string): string => {
-  const imageMap: Record<string, string> = {
-    'wealth_coach_4_questions': `${OG_BASE_URL}/og-wealth-coach.png`,
-    'vibrant_life_sage': `${OG_BASE_URL}/og-coach-space.png`,
-    'vibrant_life': `${OG_BASE_URL}/og-coach-space.png`,
-    'emotion': `${OG_BASE_URL}/og-emotion-coach.png`,
-    'emotion_coach': `${OG_BASE_URL}/og-emotion-coach.png`,
-    'parent': `${OG_BASE_URL}/og-parent-coach.png`,
-    'parent_coach': `${OG_BASE_URL}/og-parent-coach.png`,
-    'teen': `${OG_BASE_URL}/og-parent-coach.png`,
-    'gratitude_coach': `${OG_BASE_URL}/og-gratitude.png`,
-    'communication': `${OG_BASE_URL}/og-coach-space.png`,
-    'story': `${OG_BASE_URL}/og-coach-space.png`,
-  };
-  return imageMap[coachKey] || `${OG_BASE_URL}/og-coach-space.png`;
-};
 
 const DynamicCoach = () => {
   const { coachKey } = useParams<{ coachKey: string }>();
@@ -300,7 +283,6 @@ const DynamicCoach = () => {
           title: `${template?.title || '教练对话'} - 有劲AI`,
           ogTitle: template?.title || '教练',
           description: template?.description || '与AI教练深度对话，获得专业指导',
-          image: getCoachOGImage(coachKey || ''),
           url: `${OG_BASE_URL}/coach/${coachKey}`,
         }}
       />
