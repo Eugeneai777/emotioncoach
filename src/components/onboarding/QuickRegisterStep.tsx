@@ -532,7 +532,37 @@ export function QuickRegisterStep({
     );
   }
 
-  // 非微信环境 - 支持扫码注册、邮箱注册或登录
+  // 微信浏览器内授权登录处理（当没有paymentOpenId时可能发生）
+  const [isWechatAuthing, setIsWechatAuthing] = useState(false);
+  
+  const handleWechatAuth = async () => {
+    setIsWechatAuthing(true);
+    try {
+      // 调用微信OAuth授权
+      const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
+        body: {
+          action: 'get_auth_url',
+          callbackUrl: window.location.href,
+          state: JSON.stringify({ orderNo, action: 'register' })
+        }
+      });
+      
+      if (error) throw error;
+      if (data?.authUrl) {
+        window.location.href = data.authUrl;
+      } else {
+        throw new Error('获取授权链接失败');
+      }
+    } catch (error: any) {
+      console.error('WeChat auth error:', error);
+      toast.error('微信授权失败，请使用邮箱注册');
+      setRegisterMode('email');
+    } finally {
+      setIsWechatAuthing(false);
+    }
+  };
+
+  // 非微信环境或微信内无openId - 支持扫码注册、邮箱注册或登录
   return (
     <div className="space-y-3 sm:space-y-4 pb-2">
       <div className="text-center space-y-1.5">
@@ -547,6 +577,7 @@ export function QuickRegisterStep({
 
       {/* 注册方式切换 - 移动端紧凑布局 */}
       <div className="flex rounded-lg border p-0.5 sm:p-1 bg-muted/30">
+        {/* 微信浏览器内显示"微信授权"，其他环境显示"微信扫码" */}
         <button
           onClick={() => setRegisterMode('wechat')}
           className={`flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 px-1 sm:px-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
@@ -556,7 +587,7 @@ export function QuickRegisterStep({
           }`}
         >
           <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" />
-          微信扫码
+          {isWechat ? '微信授权' : '微信扫码'}
         </button>
         <button
           onClick={() => setRegisterMode('email')}
@@ -582,68 +613,123 @@ export function QuickRegisterStep({
         </button>
       </div>
 
-      {/* 微信扫码注册 */}
+      {/* 微信注册 - 微信内用授权按钮，其他环境用扫码 */}
       {registerMode === 'wechat' && (
         <div className="space-y-3 sm:space-y-4">
-          <div className="flex flex-col items-center">
-            {qrStatus === 'loading' || isGeneratingQr ? (
-              <div className="w-36 h-36 sm:w-48 sm:h-48 flex items-center justify-center bg-muted/30 rounded-lg border">
-                <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-muted-foreground" />
+          {isWechat ? (
+            // 微信浏览器内 - 显示授权登录按钮
+            <div className="space-y-4">
+              <div className="flex flex-col items-center py-6">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#07C160] to-[#06AD56] flex items-center justify-center mb-4">
+                  <svg className="w-12 h-12 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098c.836.237 1.734.366 2.672.366.072 0 .143-.002.214-.004a6.456 6.456 0 0 1-.21-1.64c0-3.533 3.14-6.396 7.012-6.396.077 0 .153.002.23.005-.625-3.62-4.287-6.36-8.781-6.36zm-2.24 4.04a.945.945 0 1 1 0 1.89.945.945 0 0 1 0-1.89zm4.5 0a.945.945 0 1 1 0 1.89.945.945 0 0 1 0-1.89z"/>
+                    <path d="M24 14.282c0-3.325-3.24-6.022-7.238-6.022-4 0-7.238 2.697-7.238 6.022 0 3.327 3.238 6.024 7.238 6.024.807 0 1.584-.103 2.304-.292a.71.71 0 0 1 .588.08l1.56.912a.268.268 0 0 0 .138.045c.132 0 .238-.108.238-.242 0-.06-.024-.117-.04-.175l-.318-1.21a.485.485 0 0 1 .175-.546c1.5-1.104 2.593-2.756 2.593-4.596zm-9.602-.898a.775.775 0 1 1 0-1.55.775.775 0 0 1 0 1.55zm4.728 0a.775.775 0 1 1 0-1.55.775.775 0 0 1 0 1.55z"/>
+                  </svg>
+                </div>
+                <p className="text-sm text-muted-foreground text-center">
+                  点击下方按钮使用微信授权登录
+                </p>
               </div>
-            ) : qrStatus === 'expired' ? (
-              <div className="w-36 h-36 sm:w-48 sm:h-48 flex flex-col items-center justify-center bg-muted/30 rounded-lg border gap-2 sm:gap-3">
-                <p className="text-xs sm:text-sm text-muted-foreground">二维码已过期</p>
-                <Button size="sm" variant="outline" onClick={generateQrCode}>
-                  <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
-                  刷新
-                </Button>
+              
+              {/* 服务条款同意 */}
+              <div className="flex items-start gap-2 justify-center">
+                <Checkbox
+                  id="wechat-auth-terms"
+                  checked={agreedTerms}
+                  onCheckedChange={(checked) => setAgreedTerms(checked === true)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="wechat-auth-terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                  继续即表示同意
+                  <Link to="/terms" target="_blank" className="text-primary hover:underline mx-0.5">
+                    服务条款
+                  </Link>
+                  和
+                  <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
+                    隐私政策
+                  </Link>
+                </label>
               </div>
-            ) : qrStatus === 'scanned' ? (
-              <div className="w-36 h-36 sm:w-48 sm:h-48 flex flex-col items-center justify-center bg-green-50 rounded-lg border border-green-200 gap-1.5 sm:gap-2">
-                <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
-                <p className="text-xs sm:text-sm text-green-600 font-medium">已扫码</p>
-                <p className="text-[10px] sm:text-xs text-green-500">请在微信中确认</p>
+              
+              <Button
+                onClick={handleWechatAuth}
+                disabled={isWechatAuthing || !agreedTerms}
+                className="w-full bg-gradient-to-r from-[#07C160] to-[#06AD56] hover:opacity-90"
+              >
+                {isWechatAuthing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    正在授权...
+                  </>
+                ) : (
+                  '微信授权登录'
+                )}
+              </Button>
+            </div>
+          ) : (
+            // 非微信环境 - 显示扫码二维码
+            <>
+              <div className="flex flex-col items-center">
+                {qrStatus === 'loading' || isGeneratingQr ? (
+                  <div className="w-36 h-36 sm:w-48 sm:h-48 flex items-center justify-center bg-muted/30 rounded-lg border">
+                    <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : qrStatus === 'expired' ? (
+                  <div className="w-36 h-36 sm:w-48 sm:h-48 flex flex-col items-center justify-center bg-muted/30 rounded-lg border gap-2 sm:gap-3">
+                    <p className="text-xs sm:text-sm text-muted-foreground">二维码已过期</p>
+                    <Button size="sm" variant="outline" onClick={generateQrCode}>
+                      <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
+                      刷新
+                    </Button>
+                  </div>
+                ) : qrStatus === 'scanned' ? (
+                  <div className="w-36 h-36 sm:w-48 sm:h-48 flex flex-col items-center justify-center bg-green-50 rounded-lg border border-green-200 gap-1.5 sm:gap-2">
+                    <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
+                    <p className="text-xs sm:text-sm text-green-600 font-medium">已扫码</p>
+                    <p className="text-[10px] sm:text-xs text-green-500">请在微信中确认</p>
+                  </div>
+                ) : qrStatus === 'confirmed' ? (
+                  <div className="w-36 h-36 sm:w-48 sm:h-48 flex flex-col items-center justify-center bg-green-50 rounded-lg border border-green-200 gap-1.5 sm:gap-2">
+                    <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-green-500" />
+                    <p className="text-xs sm:text-sm text-green-600">正在完成注册...</p>
+                  </div>
+                ) : (
+                  <div className="bg-white p-1.5 sm:p-2 rounded-lg border shadow-sm">
+                    <img src={qrCodeUrl} alt="微信扫码注册" className="w-32 h-32 sm:w-44 sm:h-44" />
+                  </div>
+                )}
               </div>
-            ) : qrStatus === 'confirmed' ? (
-              <div className="w-36 h-36 sm:w-48 sm:h-48 flex flex-col items-center justify-center bg-green-50 rounded-lg border border-green-200 gap-1.5 sm:gap-2">
-                <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-green-500" />
-                <p className="text-xs sm:text-sm text-green-600">正在完成注册...</p>
+              
+              {qrStatus === 'ready' && (
+                <p className="text-center text-xs sm:text-sm text-muted-foreground">
+                  请使用微信扫描二维码完成注册
+                </p>
+              )}
+              
+              <div className="flex items-start gap-2 justify-center">
+                <Checkbox
+                  id="scan-terms"
+                  checked={agreedTerms}
+                  onCheckedChange={(checked) => setAgreedTerms(checked === true)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="scan-terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                  扫码即表示同意
+                  <Link to="/terms" target="_blank" className="text-primary hover:underline mx-0.5">
+                    服务条款
+                  </Link>
+                  和
+                  <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
+                    隐私政策
+                  </Link>
+                </label>
               </div>
-            ) : (
-              <div className="bg-white p-1.5 sm:p-2 rounded-lg border shadow-sm">
-                <img src={qrCodeUrl} alt="微信扫码注册" className="w-32 h-32 sm:w-44 sm:h-44" />
-              </div>
-            )}
-          </div>
-          
-          {qrStatus === 'ready' && (
-            <p className="text-center text-xs sm:text-sm text-muted-foreground">
-              请使用微信扫描二维码完成注册
-            </p>
+              
+              <p className="text-center text-[10px] sm:text-xs text-muted-foreground">
+                扫码关注公众号自动完成注册
+              </p>
+            </>
           )}
-          
-          <div className="flex items-start gap-2 justify-center">
-            <Checkbox
-              id="scan-terms"
-              checked={agreedTerms}
-              onCheckedChange={(checked) => setAgreedTerms(checked === true)}
-              className="mt-0.5"
-            />
-            <label htmlFor="scan-terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
-              扫码即表示同意
-              <Link to="/terms" target="_blank" className="text-primary hover:underline mx-0.5">
-                服务条款
-              </Link>
-              和
-              <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
-                隐私政策
-              </Link>
-            </label>
-          </div>
-          
-          <p className="text-center text-[10px] sm:text-xs text-muted-foreground">
-            扫码关注公众号自动完成注册
-          </p>
         </div>
       )}
 
