@@ -25,8 +25,12 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   ShoppingCart,
-  CreditCard
+  CreditCard,
+  Copy,
+  Check
 } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface UsageRecord {
   id: string;
@@ -92,6 +96,20 @@ export function UserDetailDialog({
   authProvider,
   createdAt,
 }: UserDetailDialogProps) {
+  const { toast } = useToast();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyId = async () => {
+    try {
+      await navigator.clipboard.writeText(userId);
+      setCopied(true);
+      toast({ title: "已复制用户 ID" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "复制失败", variant: "destructive" });
+    }
+  };
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ['user-detail-stats', userId],
     queryFn: async () => {
@@ -350,9 +368,17 @@ export function UserDetailDialog({
             <p className="text-sm text-muted-foreground">
               注册时间：{createdAt ? format(new Date(createdAt), 'yyyy-MM-dd HH:mm') : '-'}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              ID: {userId.slice(0, 8)}...
-            </p>
+            <button 
+              onClick={handleCopyId}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1 hover:text-foreground transition-colors group cursor-pointer"
+            >
+              <span className="font-mono">{userId}</span>
+              {copied ? (
+                <Check className="h-3 w-3 text-green-500" />
+              ) : (
+                <Copy className="h-3 w-3 opacity-50 group-hover:opacity-100" />
+              )}
+            </button>
           </div>
         </div>
 
