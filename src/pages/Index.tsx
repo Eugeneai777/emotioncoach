@@ -648,9 +648,14 @@ const Index = () => {
           mode="emotion"
           featureKey="realtime_voice_emotion"
           onBriefingSaved={(briefingId, briefingData) => {
-            // 关闭语音对话后显示简报预览
-            setShowVoiceChat(false);
+            // 🔧 简报生成后不立即关闭语音对话，让用户可以继续或主动关闭
+            // setShowVoiceChat(false); // 移除自动关闭
             setBriefingPreview({ briefingId, briefingData });
+            // 通过 toast 提示用户简报已生成
+            toast({
+              title: "✨ 简报已生成",
+              description: "可以继续对话或点击关闭查看简报",
+            });
           }}
         />
       )}
