@@ -446,6 +446,13 @@ export class RealtimeChat {
   private dcMessageHandler: ((e: MessageEvent) => void) | null = null;
   private dcOpenHandler: (() => void) | null = null;
   private dcCloseHandler: (() => void) | null = null;
+  
+  // 🔧 ICE连接状态监控
+  private iceRecoveryTimeout: ReturnType<typeof setTimeout> | null = null;
+  
+  // 🔧 数据通道活动检测
+  private lastDataChannelActivity: number = 0;
+  private activityCheckInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private onMessage: (message: any) => void,
@@ -648,6 +655,44 @@ export class RealtimeChat {
         iceTransportPolicy: 'all' // 允许所有传输类型
       });
 
+      // 🔧 ICE 连接状态监控 - 检测断线
+      this.pc.oniceconnectionstatechange = () => {
+        const state = this.pc?.iceConnectionState;
+        console.log('[WebRTC] ICE connection state changed:', state);
+        
+        if (state === 'disconnected') {
+          console.warn('[WebRTC] ICE disconnected, waiting for recovery...');
+          // 给 5 秒恢复时间
+          this.iceRecoveryTimeout = setTimeout(() => {
+            if (this.pc?.iceConnectionState === 'disconnected' || 
+                this.pc?.iceConnectionState === 'failed') {
+              console.error('[WebRTC] ICE failed to recover, disconnecting');
+              this.disconnect();
+            }
+          }, 5000);
+        } else if (state === 'failed') {
+          console.error('[WebRTC] ICE connection failed');
+          this.disconnect();
+        } else if (state === 'connected' || state === 'completed') {
+          // 连接恢复，清除恢复超时
+          if (this.iceRecoveryTimeout) {
+            clearTimeout(this.iceRecoveryTimeout);
+            this.iceRecoveryTimeout = null;
+          }
+        }
+      };
+
+      // 🔧 连接状态变化监控（补充 ICE 状态）
+      this.pc.onconnectionstatechange = () => {
+        const state = this.pc?.connectionState;
+        console.log('[WebRTC] Connection state changed:', state);
+        
+        if (state === 'failed' || state === 'closed') {
+          console.error('[WebRTC] Connection state:', state);
+          this.disconnect();
+        }
+      };
+
       // 设置远程音频
       this.pc.ontrack = e => {
         if (this.audioEl && !this.isDisconnected) {
@@ -664,18 +709,32 @@ export class RealtimeChat {
       this.dcOpenHandler = () => {
         if (!this.isDisconnected) {
           console.log('[WebRTC] Data channel opened:', performance.now() - startTime, 'ms');
+          this.lastDataChannelActivity = Date.now();
+          
+          // 🔧 启动活动检测：每 30 秒检测一次数据通道活动
+          this.activityCheckInterval = setInterval(() => {
+            const inactiveTime = Date.now() - this.lastDataChannelActivity;
+            // 2 分钟无活动视为异常（AI 应该有回应或心跳）
+            if (inactiveTime > 120000) {
+              console.warn('[WebRTC] Data channel inactive for 2 minutes, disconnecting');
+              this.disconnect();
+            }
+          }, 30000);
+          
           this.onStatusChange('connected');
         }
       };
 
       this.dcCloseHandler = () => {
         if (!this.isDisconnected) {
+          console.log('[WebRTC] Data channel closed unexpectedly');
           this.onStatusChange('disconnected');
         }
       };
 
       this.dcMessageHandler = (e: MessageEvent) => {
         if (this.isDisconnected) return;
+        this.lastDataChannelActivity = Date.now(); // 🔧 更新活动时间
         try {
           const event = JSON.parse(e.data);
           this.handleEvent(event);
@@ -1055,6 +1114,18 @@ export class RealtimeChat {
     }
     this.isDisconnected = true;
     console.log('RealtimeChat: disconnecting...');
+    
+    // 🔧 清理 ICE 恢复超时
+    if (this.iceRecoveryTimeout) {
+      clearTimeout(this.iceRecoveryTimeout);
+      this.iceRecoveryTimeout = null;
+    }
+    
+    // 🔧 清理活动检测定时器
+    if (this.activityCheckInterval) {
+      clearInterval(this.activityCheckInterval);
+      this.activityCheckInterval = null;
+    }
     
     // 🔧 增强断开可靠性：每个步骤都包裹 try-catch
     

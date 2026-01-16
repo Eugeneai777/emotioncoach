@@ -65,6 +65,9 @@ export class MiniProgramAudioClient {
   // 🔧 心跳延迟追踪
   private lastPingTime: number = 0;
   private latency: number = 0;
+  
+  // 🔧 心跳超时检测
+  private missedPongs: number = 0;
 
   constructor(config: MiniProgramAudioConfig) {
     this.config = config;
@@ -467,11 +470,12 @@ export class MiniProgramAudioClient {
           break;
 
         case 'pong':
-          // 🔧 心跳响应 - 计算延迟
+          // 🔧 心跳响应 - 计算延迟并重置 missedPongs
           if (this.lastPingTime > 0) {
             this.latency = Date.now() - this.lastPingTime;
             console.log(`[MiniProgramAudio] Latency: ${this.latency}ms`);
           }
+          this.missedPongs = 0; // 收到 pong，重置计数
           break;
 
         default:
@@ -706,7 +710,21 @@ export class MiniProgramAudioClient {
     // 🔧 缩短心跳间隔到 15 秒，更快检测连接问题
     this.heartbeatInterval = setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
+        // 🔧 检查上次 ping 是否收到 pong
+        if (this.lastPingTime > 0 && this.latency === 0) {
+          this.missedPongs++;
+          console.warn(`[MiniProgramAudio] Missed pong #${this.missedPongs}`);
+          
+          // 连续 3 次未收到 pong，断开重连
+          if (this.missedPongs >= 3) {
+            console.error('[MiniProgramAudio] Too many missed pongs, reconnecting...');
+            this.ws?.close();
+            return;
+          }
+        }
+        
         this.lastPingTime = Date.now();
+        this.latency = 0; // 重置延迟，等待 pong 更新
         this.ws.send(JSON.stringify({ type: 'ping' }));
       }
     }, 15000);
