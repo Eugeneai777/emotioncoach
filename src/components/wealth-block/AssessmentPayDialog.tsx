@@ -369,15 +369,9 @@ export function AssessmentPayDialog({
 
        // 小程序环境：优先走“小程序原生支付页”方案（需要 miniProgram bridge）
        if (isMiniProgram) {
-         const hasMpBridge =
-           typeof window.wx?.miniProgram?.postMessage === 'function' ||
-           typeof window.wx?.miniProgram?.navigateTo === 'function';
-
-         if (!hasMpBridge) {
-           toast.info('小程序支付能力未就绪，已切换为扫码支付');
-         }
-
-         selectedPayType = hasMpBridge ? 'jsapi' : 'native';
+         // 小程序 WebView 无法直接拉起微信支付，使用扫码支付
+         console.log('[Payment] MiniProgram detected, using native (QR code) payment');
+         selectedPayType = 'native';
        } else if (isWechat && !!userOpenId) {
          // 微信浏览器：有 openId 就直接走 JSAPI，调起时再判断 Bridge
          console.log('[Payment] WeChat browser with openId, using jsapi');
@@ -413,11 +407,11 @@ export function AssessmentPayDialog({
          setStatus('polling');
          startPolling(data.orderNo);
 
-         if (isMiniProgram) {
-           // 小程序 WebView：通过 postMessage 让小程序原生拉起 wx.requestPayment
-           console.log('[Payment] MiniProgram: triggering native pay via postMessage');
-           triggerMiniProgramNativePay(data.jsapiPayParams, data.orderNo);
-         } else {
+         // 微信浏览器：先等待 Bridge 就绪（最多 1.5 秒），再调起支付
+         console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
+         const bridgeAvailable = await waitForWeixinJSBridge(1500);
+         
+         if (bridgeAvailable) {
            // 微信浏览器：先等待 Bridge 就绪（最多 1.5 秒），再调起支付
            console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
            const bridgeAvailable = await waitForWeixinJSBridge(1500);
@@ -497,9 +491,9 @@ export function AssessmentPayDialog({
              } catch (fallbackError: any) {
                console.error('[Payment] Fallback to native payment failed:', fallbackError);
                toast.error('支付初始化失败，请刷新重试');
-             }
            }
          }
+       }
        } else if ((data.payType || selectedPayType) === 'h5' && (data.h5Url || data.payUrl)) {
         // H5支付
         setPayUrl(data.h5Url || data.payUrl);
