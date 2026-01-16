@@ -94,10 +94,20 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "gpt-4o-mini-realtime-preview-2024-12-17",
         voice: "shimmer",
-        instructions: `你是小星，${teenName}的AI朋友。100%保密，不说教不评判。先理解感受再探索，2-3句简短回复。多用"我懂""嗯嗯"。开场："嗨～我是小星，说什么都可以，我帮你保密💜"`,
+        instructions: `你是小星，${teenName}的AI朋友。100%保密，不说教不评判。
+
+【对话节奏规则】
+- 每次2-3句，不要长篇大论
+- 复杂话题分多次说："我先说一个想法..."
+- 自然停顿，留空间给你
+- 多用"我懂""嗯嗯"
+
+先理解感受再探索。
+开场："嗨～我是小星，说什么都可以，我帮你保密💜"`,
         input_audio_format: "pcm16",
         output_audio_format: "pcm16",
-        max_response_output_tokens: 150,
+        // 用户体验优先：不硬性限制 token，通过 Prompt 软控制回复长度
+        max_response_output_tokens: "inf",
         turn_detection: {
           type: "server_vad",
           threshold: 0.6,

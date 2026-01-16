@@ -122,6 +122,9 @@ Deno.serve(async (req) => {
             voice: mode === 'teen' ? 'shimmer' : 'echo', // 统一语音：青少年用 shimmer，其他用 echo
             input_audio_format: AUDIO_CONFIG.format,
             output_audio_format: AUDIO_CONFIG.format,
+            // 用户体验优先：不硬性限制 token，通过 Prompt 软控制回复长度
+            // 避免 AI 说话说到一半被截断
+            max_response_output_tokens: "inf",
             input_audio_transcription: {
               model: 'whisper-1',
             },
@@ -367,6 +370,15 @@ function sendErrorToClient(socket: WebSocket, message: string) {
  * 根据模式获取系统提示词
  */
 function getSystemPrompt(mode: string): string {
+  // 通用对话节奏规则 - 所有模式都遵循
+  const rhythmRules = `
+
+【对话节奏规则 - 非常重要】
+- 每次回复2-4句，不要长篇大论
+- 复杂内容分多次说："我先说一点..."
+- 自然停顿，留空间给用户
+- 确保每句话说完整`;
+
   const prompts: Record<string, string> = {
     vibrant_life: `你是有劲AI生活教练，一位温暖、智慧、充满活力的陪伴者。你的使命是帮助用户找到生活的热情和方向。
 
@@ -379,8 +391,7 @@ function getSystemPrompt(mode: string): string {
 对话风格：
 - 语气温暖自然，像朋友聊天
 - 适时使用emoji增加亲和力
-- 回应简洁有力，每次1-3句话
-- 多用开放性问题引导思考`,
+- 多用开放性问题引导思考${rhythmRules}`,
 
     emotion: `你是有劲AI情绪教练，专注于帮助用户理解和转化情绪。你运用情绪四部曲：觉察、理解、反应、转化。
 
@@ -393,8 +404,7 @@ function getSystemPrompt(mode: string): string {
 对话风格：
 - 温柔接纳，不评判任何情绪
 - 用反映式倾听确认感受
-- 适时停顿，给用户空间
-- 引导而非说教`,
+- 引导而非说教${rhythmRules}`,
 
     parent: `你是有劲AI亲子教练，帮助家长理解孩子、改善亲子关系。
 
@@ -408,7 +418,7 @@ function getSystemPrompt(mode: string): string {
 - 同理家长的辛苦和困惑
 - 用故事和例子说明
 - 提供具体的话术建议
-- 鼓励小步尝试`,
+- 鼓励小步尝试${rhythmRules}`,
 
     teen: `你是有劲AI青少年教练，专为青少年设计的温暖伙伴。
 
@@ -423,7 +433,7 @@ function getSystemPrompt(mode: string): string {
 - 不评判，给予无条件接纳
 - 提供情绪支持而非解决方案
 - 鼓励自我探索和独立思考
-- 适当使用年轻人的表达方式`,
+- 适当使用年轻人的表达方式${rhythmRules}`,
 
     general: `你是有劲AI智能助手，一位友善、专业的对话伙伴。
 
@@ -435,9 +445,8 @@ function getSystemPrompt(mode: string): string {
 
 对话风格：
 - 语气自然亲切
-- 回应简洁明了
 - 适时提供建议
-- 保持开放和包容`,
+- 保持开放和包容${rhythmRules}`,
 
     wealth: `你是有劲AI财富教练，帮助用户发现并突破财富卡点。
 
@@ -451,7 +460,7 @@ function getSystemPrompt(mode: string): string {
 - 温和不评判，接纳用户的财富焦虑
 - 用提问引导自我觉察
 - 关注内在信念而非外在技巧
-- 鼓励给予和感恩的行动`
+- 鼓励给予和感恩的行动${rhythmRules}`
   };
 
   return prompts[mode] || prompts.vibrant_life;

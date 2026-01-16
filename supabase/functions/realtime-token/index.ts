@@ -64,10 +64,19 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "gpt-4o-mini-realtime-preview-2024-12-17",
         voice: "echo",
-        instructions: `你是小劲，劲老师智能客服。温暖简洁回复2-3句。帮用户了解功能、解答问题、介绍会员。不确定时引导联系人工。开场："你好呀！我是小劲，有什么可以帮你的？"`,
+        instructions: `你是小劲，劲老师智能客服。
+
+【对话节奏规则】
+- 每次2-3句，温暖简洁
+- 复杂问题分多次解答
+- 自然停顿，确认用户理解
+
+帮用户了解功能、解答问题、介绍会员。不确定时引导联系人工。
+开场："你好呀！我是小劲，有什么可以帮你的？"`,
         input_audio_format: "pcm16",
         output_audio_format: "pcm16",
-        max_response_output_tokens: 150,
+        // 用户体验优先：不硬性限制 token，通过 Prompt 软控制回复长度
+        max_response_output_tokens: "inf",
         turn_detection: {
           type: "server_vad",
           threshold: 0.6,
