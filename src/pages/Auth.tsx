@@ -10,6 +10,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { FollowGuideStep } from "@/components/onboarding/FollowGuideStep";
+import { useTermsAgreement } from "@/hooks/useTermsAgreement";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -17,7 +18,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [agreedTerms, setAgreedTerms] = useState(false);
+  const { isAgreed: agreedTerms, setAgreed: setAgreedTerms } = useTermsAgreement();
   const [showFollowGuide, setShowFollowGuide] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -348,7 +349,7 @@ const Auth = () => {
 
             <Button
               type="submit"
-              disabled={loading || (!isLogin && !agreedTerms)}
+              disabled={loading || !agreedTerms}
               className="w-full rounded-xl md:rounded-2xl h-10 md:h-12 text-sm md:text-base"
             >
               {loading ? (
@@ -361,26 +362,24 @@ const Auth = () => {
               )}
             </Button>
 
-            {!isLogin && (
-              <div className="flex items-start gap-2 mt-3">
-                <Checkbox
-                  id="terms"
-                  checked={agreedTerms}
-                  onCheckedChange={(checked) => setAgreedTerms(checked === true)}
-                  className="mt-0.5"
-                />
-                <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
-                  继续即表示您同意
-                  <Link to="/terms" target="_blank" className="text-primary hover:underline mx-0.5">
-                    服务条款
-                  </Link>
-                  和
-                  <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
-                    隐私政策
-                  </Link>
-                </label>
-              </div>
-            )}
+            <div className="flex items-start gap-2 mt-3">
+              <Checkbox
+                id="terms"
+                checked={agreedTerms}
+                onCheckedChange={(checked) => setAgreedTerms(checked === true)}
+                className="mt-0.5"
+              />
+              <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                继续即表示您同意
+                <Link to="/terms" target="_blank" className="text-primary hover:underline mx-0.5">
+                  服务条款
+                </Link>
+                和
+                <Link to="/privacy" target="_blank" className="text-primary hover:underline mx-0.5">
+                  隐私政策
+                </Link>
+              </label>
+            </div>
           </form>
 
           <div className="relative my-4">
