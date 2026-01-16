@@ -22,7 +22,7 @@ export const OG_BASE_URL = 'https://wechat.eugenewe.net';
 export const OG_SITE_NAME = '有劲AI';
 
 // OG 缓存版本号 - 用于强制微信刷新缓存
-export const OG_CACHE_VERSION = 'v20260116';
+export const OG_CACHE_VERSION = 'v20260116b';
 
 /**
  * 全局默认 OG 配置
