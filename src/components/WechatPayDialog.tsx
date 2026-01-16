@@ -524,15 +524,9 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
     // 小程序环境：优先走“小程序原生支付页”方案（需要 miniProgram bridge）
     if (isMiniProgram) {
-      const hasMpBridge =
-        typeof window.wx?.miniProgram?.postMessage === 'function' ||
-        typeof window.wx?.miniProgram?.navigateTo === 'function';
-
-      if (!hasMpBridge) {
-        toast.info('小程序支付能力未就绪，已切换为扫码支付');
-      }
-
-      selectedPayType = hasMpBridge ? 'jsapi' : 'native';
+      // 小程序 WebView 无法直接拉起微信支付，使用扫码支付
+      console.log('[Payment] MiniProgram detected, using native (QR code) payment');
+      selectedPayType = 'native';
     } else if (isWechat && !!userOpenId) {
       // 微信浏览器：有 openId 就直接走 JSAPI，调起时再判断 Bridge
       console.log('[Payment] WeChat browser with openId, using jsapi');
