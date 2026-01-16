@@ -13,6 +13,7 @@ import { ArrowLeft, ArrowRight, Sparkles, MessageCircle, Brain, BookOpen, Trendi
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import { ScenarioVoiceEntry } from "@/components/coach/ScenarioVoiceEntry";
+import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
 
 const VibrantLifeIntro = () => {
   const navigate = useNavigate();
@@ -270,63 +271,38 @@ const VibrantLifeIntro = () => {
           </Card>
         </section>
 
-        {/* 对比表格 */}
+        {/* 对比表格 - 使用响应式组件 */}
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🚀</span>
             <div>
-              <h2 className="text-xl font-bold text-foreground">有劲AI vs 普通AI</h2>
-              <p className="text-sm text-muted-foreground">你会立刻看懂的差异</p>
+              <h2 className="text-lg sm:text-xl font-bold text-foreground">有劲AI vs 普通AI</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">你会立刻看懂的差异</p>
             </div>
           </div>
           
           <Card className="border-0 shadow-xl bg-white/60 backdrop-blur-sm overflow-hidden">
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[420px] text-sm">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-slate-50 to-slate-100">
-                      <th className="text-left py-3 px-3 font-semibold text-muted-foreground">功能</th>
-                      <th className="text-center py-3 px-2 font-medium text-muted-foreground text-xs">
-                        ChatGPT类
-                      </th>
-                      <th className="text-center py-3 px-2 font-medium text-muted-foreground text-xs">
-                        Replika类
-                      </th>
-                      <th className="text-center py-3 px-2 font-bold text-teal-700 bg-teal-50/50 text-xs">
-                        有劲AI
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {comparisonData.map((row, idx) => (
-                      <tr key={idx} className="border-t border-slate-100">
-                        <td className="py-2.5 px-3 font-medium text-foreground text-xs">{row.item}</td>
-                        <td className="py-2.5 px-2 text-center">
-                          {row.chatgpt === false ? (
-                            <X className="w-4 h-4 text-red-400 mx-auto" />
-                          ) : (
-                            <span className="text-muted-foreground text-xs">{row.chatgpt}</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-2 text-center">
-                          {row.replika === false ? (
-                            <X className="w-4 h-4 text-red-400 mx-auto" />
-                          ) : (
-                            <span className="text-muted-foreground text-xs">{row.replika}</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-2 text-center bg-teal-50/30">
-                          <div className="flex items-center justify-center gap-1">
-                            <Check className="w-3.5 h-3.5 text-teal-500 flex-shrink-0" />
-                            <span className="text-teal-700 font-medium text-xs">{row.youjin}</span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <CardContent className="p-3 sm:p-4">
+              <ResponsiveComparison
+                columns={[
+                  { header: "功能" },
+                  { header: "ChatGPT类" },
+                  { header: "Replika类" },
+                  { header: "有劲AI", highlight: true, headerClassName: "text-teal-700" },
+                ]}
+                rows={comparisonData.map(row => ({
+                  label: row.item,
+                  values: [
+                    row.chatgpt,
+                    row.replika,
+                    <div key="youjin" className="flex items-center justify-center gap-1">
+                      <Check className="w-3.5 h-3.5 text-teal-500 flex-shrink-0" />
+                      <span className="text-teal-700 font-medium text-xs">{row.youjin}</span>
+                    </div>
+                  ]
+                }))}
+                mobileCardClassName="bg-white/80"
+              />
             </CardContent>
           </Card>
         </section>

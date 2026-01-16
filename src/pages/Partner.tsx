@@ -16,6 +16,7 @@ import { CommissionHistory } from "@/components/partner/CommissionHistory";
 import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
 import { YoujinPartnerDashboard } from "@/components/partner/YoujinPartnerDashboard";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
 
 export default function Partner() {
   const navigate = useNavigate();
@@ -146,50 +147,26 @@ export default function Partner() {
               </Card>
             </div>
 
-            {/* 对比表格 */}
+            {/* 对比表格 - 使用响应式组件 */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-base sm:text-lg">两种合伙人有什么区别？</CardTitle>
               </CardHeader>
-              <CardContent className="p-0 sm:p-6">
-                <div className="overflow-x-auto -mx-0">
-                  <table className="w-full text-xs sm:text-sm min-w-[480px]">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2 px-2 sm:px-4 whitespace-nowrap">对比项</th>
-                        <th className="text-center py-2 px-2 sm:px-4 whitespace-nowrap">💪 有劲合伙人</th>
-                        <th className="text-center py-2 px-2 sm:px-4 whitespace-nowrap">🦋 绽放合伙人</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b">
-                        <td className="py-2 px-2 sm:px-4 whitespace-nowrap">加入方式</td>
-                        <td className="text-center px-2 sm:px-4">预购体验包</td>
-                        <td className="text-center px-2 sm:px-4">购买合伙人套餐</td>
-                      </tr>
-                      <tr className="border-b">
-                        <td className="py-2 px-2 sm:px-4 whitespace-nowrap">佣金比例</td>
-                        <td className="text-center px-2 sm:px-4">20%-50%</td>
-                        <td className="text-center px-2 sm:px-4">30%+10%</td>
-                      </tr>
-                      <tr className="border-b">
-                        <td className="py-2 px-2 sm:px-4 whitespace-nowrap">可分成产品</td>
-                        <td className="text-center px-2 sm:px-4">所有有劲产品</td>
-                        <td className="text-center px-2 sm:px-4">绽放产品</td>
-                      </tr>
-                      <tr className="border-b">
-                        <td className="py-2 px-2 sm:px-4 whitespace-nowrap">推广方式</td>
-                        <td className="text-center px-2 sm:px-4">兑换码/二维码</td>
-                        <td className="text-center px-2 sm:px-4">推广码/链接</td>
-                      </tr>
-                      <tr>
-                        <td className="py-2 px-2 sm:px-4 whitespace-nowrap">适合人群</td>
-                        <td className="text-center px-2 sm:px-4">长期经营</td>
-                        <td className="text-center px-2 sm:px-4">快速变现</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+              <CardContent className="p-3 sm:p-6">
+                <ResponsiveComparison
+                  columns={[
+                    { header: "对比项" },
+                    { header: "💪 有劲合伙人", highlight: true },
+                    { header: "🦋 绽放合伙人" },
+                  ]}
+                  rows={[
+                    { label: "加入方式", values: ["预购体验包", "购买合伙人套餐"] },
+                    { label: "佣金比例", values: ["20%-50%", "30%+10%"] },
+                    { label: "可分成产品", values: ["所有有劲产品", "绽放产品"] },
+                    { label: "推广方式", values: ["兑换码/二维码", "推广码/链接"] },
+                    { label: "适合人群", values: ["长期经营", "快速变现"] },
+                  ]}
+                />
               </CardContent>
             </Card>
           </div>

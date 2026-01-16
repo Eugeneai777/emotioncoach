@@ -5,6 +5,49 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 横滑容器隐藏滚动条 */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* 超窄屏优化 (iPhone SE, < 375px) */
+@media (max-width: 374px) {
+  .xs\:text-2xs {
+    font-size: 0.625rem; /* 10px */
+  }
+  .xs\:p-1 {
+    padding: 0.25rem;
+  }
+  .xs\:gap-0\.5 {
+    gap: 0.125rem;
+  }
+  .xs\:gap-1 {
+    gap: 0.25rem;
+  }
+  .xs\:px-1 {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+  .xs\:text-xs {
+    font-size: 0.75rem;
+  }
+  .xs\:w-9 {
+    width: 2.25rem;
+  }
+  .xs\:h-9 {
+    height: 2.25rem;
+  }
+}
+
+/* 移动端按钮最小高度 */
+.btn-mobile {
+  @apply min-h-[44px] px-4;
+}
+
 /* ========================================
    响应式工具类
    ======================================== */
