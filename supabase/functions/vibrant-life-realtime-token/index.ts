@@ -244,7 +244,7 @@ const emotionTools = [
 ];
 
 // 构建家长版指令（人格驱动版）
-function buildParentTeenInstructions(problemType: any, userName: string): string {
+function buildParentTeenInstructions(_problemType: string, userName: string): string {
   const persona = buildPersonaLayer();
   const name = userName || '';
   
@@ -333,6 +333,7 @@ function buildPersonaLayer(): string {
 
 // ============ 产品知识层 (Knowledge Layer) ============
 // 分层架构：核心层（始终加载）+ 详情层（结构化组织）
+// 导出供其他函数使用
 function buildKnowledgeLayer(): string {
   return `
 ${buildCoreKnowledge()}
@@ -350,6 +351,9 @@ ${buildMembershipKnowledge()}
 ${buildResponseGuidelines()}
 `;
 }
+
+// 导出知识层供指令构建使用
+const PRODUCT_KNOWLEDGE = buildKnowledgeLayer();
 
 // ============ L1: 核心层 - 始终加载 (~400 tokens) ============
 function buildCoreKnowledge(): string {
@@ -615,7 +619,7 @@ interface UserContext {
 }
 
 function buildSmartOpening(context: UserContext, hour: number): string {
-  const { userName, sessionCount, lastBriefing, memories } = context;
+  const { userName, sessionCount, lastBriefing } = context;
   const name = userName ? `${userName}，` : '';
   const timeGreeting = getTimeGreeting(hour);
   const now = new Date();
@@ -850,7 +854,6 @@ function buildScenarioInstructions(scenario: string, userName: string): string {
   if (!config) return buildGeneralInstructions(userName);
   
   const persona = buildPersonaLayer();
-  const hour = getChinaHour();
   
   return `${persona}
 
@@ -927,6 +930,8 @@ ${contextPrompt}
 - 识别感恩相关内容 → 自动记录
 - 识别需要专业帮助 → 温和推荐对应教练
 - 用户问功能 → 调用导航
+
+${PRODUCT_KNOWLEDGE}
 
 用户问你是谁："我是劲老师，愿意听你说🌿"
 
