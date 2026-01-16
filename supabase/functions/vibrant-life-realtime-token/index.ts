@@ -41,6 +41,31 @@ const commonTools = [
       },
       required: ["destination"]
     }
+  },
+  // 🧠 智能记忆工具 - 自动记住用户重要信息
+  {
+    type: "function",
+    name: "remember_user_info",
+    description: "当用户提到重要的个人信息时调用（如：家人名字、工作、重要事件），以便后续对话中自然提及",
+    parameters: {
+      type: "object",
+      properties: {
+        memory_type: { 
+          type: "string", 
+          enum: ["family", "work", "hobby", "event", "preference", "concern"],
+          description: "记忆类型：family=家人信息, work=工作情况, hobby=兴趣爱好, event=重要事件, preference=个人偏好, concern=持续关注的事"
+        },
+        content: { 
+          type: "string", 
+          description: "需要记住的内容，如'女儿叫小花，今年8岁'、'最近项目很忙'" 
+        },
+        importance: {
+          type: "number",
+          description: "重要程度1-5，5为最重要"
+        }
+      },
+      required: ["memory_type", "content"]
+    }
   }
 ];
 
@@ -302,7 +327,7 @@ function buildPersonaLayer(): string {
 - 每个人都值得被温柔对待`;
 }
 
-// 时间感知问候
+// 时间感知问候（基础版）
 function buildTimeAwareGreeting(userName: string, hour: number): string {
   const name = userName ? `${userName}，` : '';
   
@@ -321,6 +346,157 @@ function buildTimeAwareGreeting(userName: string, hour: number): string {
   } else {
     return `深夜了${name}怎么还没休息？聊聊？🌙`;
   }
+}
+
+// 获取时间段问候语
+function getTimeGreeting(hour: number): string {
+  if (hour >= 6 && hour < 12) return '早上好';
+  if (hour >= 12 && hour < 14) return '中午好';
+  if (hour >= 14 && hour < 18) return '下午好';
+  if (hour >= 18 && hour < 22) return '晚上好';
+  return '深夜了';
+}
+
+// 计算两个日期间隔天数
+function daysBetween(dateStr: string, now: Date): number {
+  const date = new Date(dateStr);
+  const diffTime = Math.abs(now.getTime() - date.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+// 随机选择数组中的一项
+function randomPick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// 🌟 智能开场（根据用户历史和上下文个性化）
+interface UserContext {
+  userName: string;
+  sessionCount: number;
+  lastBriefing: {
+    user_issue_summary?: string;
+    insight?: string;
+    created_at: string;
+  } | null;
+  memories: Array<{
+    memory_type: string;
+    content: string;
+    importance_score: number;
+  }>;
+}
+
+function buildSmartOpening(context: UserContext, hour: number): string {
+  const { userName, sessionCount, lastBriefing, memories } = context;
+  const name = userName ? `${userName}，` : '';
+  const timeGreeting = getTimeGreeting(hour);
+  const now = new Date();
+  
+  // 首次用户 - 友好介绍
+  if (sessionCount === 0) {
+    const templates = [
+      `${timeGreeting}${name}第一次见面，很高兴认识你~有什么想聊的吗？✨`,
+      `嗨${name}欢迎来找我聊天~我是劲老师，有什么想说的吗？🌿`,
+      `${timeGreeting}${name}我是劲老师，陪你聊聊天。今天有什么想分享的？`
+    ];
+    return randomPick(templates);
+  }
+  
+  // 有近期对话（3天内）- 延续上次话题
+  if (lastBriefing && daysBetween(lastBriefing.created_at, now) <= 3) {
+    if (lastBriefing.user_issue_summary) {
+      const templates = [
+        `${timeGreeting}${name}上次聊的那件事后来怎么样了？`,
+        `嗨${name}又来啦~上次说的事情有什么进展吗？`,
+        `${timeGreeting}${name}还记得上次聊的吗？现在感觉怎么样？`
+      ];
+      return randomPick(templates);
+    }
+  }
+  
+  // 老用户但好久没来（超过7天）- 温暖问候
+  if (sessionCount > 3 && lastBriefing && daysBetween(lastBriefing.created_at, now) > 7) {
+    const templates = [
+      `${timeGreeting}${name}好久不见呀~最近怎么样？`,
+      `嗨${name}好几天没见了，今天有什么想聊的吗？`,
+      `${timeGreeting}${name}又来找我啦~这段时间过得怎么样？`
+    ];
+    return randomPick(templates);
+  }
+  
+  // 活跃老用户（5次以上）- 亲密问候
+  if (sessionCount >= 5) {
+    const templates = [
+      `${timeGreeting}${name}又来啦~今天怎么样？`,
+      `嗨${name}今天有什么想分享的吗？`,
+      `${timeGreeting}${name}我在这~有什么想聊的？`,
+      `嗨${name}见到你真好~今天过得怎么样？`
+    ];
+    return randomPick(templates);
+  }
+  
+  // 默认：时间感知问候
+  return buildTimeAwareGreeting(userName, hour);
+}
+
+// 🧠 构建用户上下文注入（让AI知道用户历史）
+function buildUserContextPrompt(context: UserContext): string {
+  const { userName, sessionCount, lastBriefing, memories } = context;
+  const parts: string[] = [];
+  
+  if (userName) {
+    parts.push(`用户名：${userName}`);
+  }
+  
+  // 用户熟悉度
+  if (sessionCount === 0) {
+    parts.push('📝 这是用户第一次语音对话，需要友好介绍自己');
+  } else if (sessionCount < 5) {
+    parts.push(`📝 这是用户第 ${sessionCount + 1} 次对话，还在建立信任阶段`);
+  } else {
+    parts.push(`📝 这是老用户，已有 ${sessionCount} 次对话，可以更自然亲密`);
+  }
+  
+  // 上次对话内容
+  if (lastBriefing) {
+    const now = new Date();
+    const daysSince = daysBetween(lastBriefing.created_at, now);
+    if (daysSince <= 7 && lastBriefing.user_issue_summary) {
+      parts.push(`📝 上次对话（${daysSince}天前）聊了："${lastBriefing.user_issue_summary}"`);
+      if (lastBriefing.insight) {
+        parts.push(`   洞察是："${lastBriefing.insight}"`);
+      }
+    }
+  }
+  
+  // 用户记忆
+  if (memories && memories.length > 0) {
+    const memoryTexts = memories.slice(0, 5).map(m => `${m.content}`).join('；');
+    parts.push(`📝 用户重要信息：${memoryTexts}`);
+  }
+  
+  if (parts.length === 0) return '';
+  
+  return `
+【用户上下文 - 请在对话中自然地使用这些信息】
+${parts.join('\n')}
+
+【称呼用户的技巧】
+- 在关键时刻自然地使用用户名"${userName || '你'}"：
+  · 表达共情时："${userName || '你'}，我听到你说..."
+  · 给予肯定时："${userName || '你'}，你做得很好"
+  · 深入探索前："${userName || '你'}，我想多了解一点..."
+  · 收尾总结时："${userName || '你'}，今天聊了很多..."
+- 不要每句话都称呼，大约每3-5轮自然地提一次
+
+【智能记忆】
+当用户提到以下内容时，调用 remember_user_info 记录：
+- 家人信息（"我女儿小花"、"老公最近加班"）
+- 工作情况（"我是做设计的"、"最近项目很忙"）
+- 重要事件（"下周要答辩"、"刚换了工作"）
+- 个人偏好（"我不太喜欢运动"、"喜欢听轻音乐"）
+- 持续关注的事（"孩子的成绩"、"睡眠问题"）
+记住后下次对话可以自然提起，增加亲切感。
+`;
 }
 
 // 获取当前北京时间小时
@@ -468,15 +644,29 @@ ${config.examples.join('\n')}
 开场："${config.opening}"`;
 }
 
-// 构建通用版指令（人格驱动版）
-function buildGeneralInstructions(userName?: string): string {
+// 构建通用版指令（人格驱动版 + 用户上下文增强）
+function buildGeneralInstructions(userName?: string, userContext?: UserContext): string {
   const persona = buildPersonaLayer();
   const hour = getChinaHour();
-  const greeting = buildTimeAwareGreeting(userName || '', hour);
+  
+  // 使用智能开场（如果有上下文）或降级到时间问候
+  const greeting = userContext 
+    ? buildSmartOpening(userContext, hour)
+    : buildTimeAwareGreeting(userName || '', hour);
+  
+  // 构建用户上下文注入（如果有）
+  const contextPrompt = userContext ? buildUserContextPrompt(userContext) : '';
   
   return `${persona}
+${contextPrompt}
 
-【对话节奏】每次2-4句，自然停顿，留空间给用户
+【强制规则】
+- 每次回复控制在1-2句话（不超过30个字），绝不啰嗦
+- 禁止开头使用"我理解"、"我明白"、"我听到了"等套话
+- 每次回复必须以开放问题结尾，引导用户继续说
+- 专注倾听，少给建议，多问"然后呢？""是什么让你这么想？"
+
+【对话节奏】每次1-2句，自然停顿，留大量空间给用户
 
 【五种回应模式】
 1. 情绪低落 → 先接住："嗯，听起来挺累的..." + 轻轻探索
@@ -492,12 +682,12 @@ function buildGeneralInstructions(userName?: string): string {
 - 留白：说完等用户回应，不急着追问
 
 【对话示例】
-用户："今天有点累" → "嗯，累了...是什么事让你特别累呢？"
-用户："工作太多了" → "工作压下来确实挺累的。最头疼的是哪块？"
-用户："还好吧" → "还好背后，有什么不太好的吗？可以聊聊。"
-用户："心情不好" → "怎么了？我在这陪你。"
-用户分享好事 → "哇，听起来不错！怎么做到的？"
-用户沉默 → "不着急，想说什么都可以，我在这。"
+用户："今天有点累" → "嗯，累了...是什么让你特别累呢？"
+用户："工作太多了" → "工作压下来确实累。最头疼的是哪块？"
+用户："还好吧" → "还好背后，有什么不太好的吗？"
+用户："心情不好" → "怎么了？"
+用户分享好事 → "哇，怎么做到的？"
+用户沉默 → "不着急，想说什么都行。"
 
 【智能识别】
 - 识别感恩相关内容 → 自动记录
@@ -627,14 +817,56 @@ serve(async (req) => {
     const OPENAI_PROXY_URL = Deno.env.get('OPENAI_PROXY_URL');
     const baseUrl = OPENAI_PROXY_URL || 'https://api.openai.com';
 
-    // 获取用户昵称
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', user.id)
-      .maybeSingle();
+    // 🌟 并行获取用户上下文数据（用户昵称、历史对话、记忆、对话次数）
+    const [
+      profileResult,
+      lastBriefingResult,
+      memoriesResult,
+      sessionCountResult
+    ] = await Promise.all([
+      // 用户昵称
+      supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .maybeSingle(),
+      // 最近一次对话简报
+      supabase
+        .from('vibrant_life_sage_briefings')
+        .select('user_issue_summary, insight, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      // 用户重要记忆
+      supabase
+        .from('user_coach_memory')
+        .select('memory_type, content, importance_score')
+        .eq('user_id', user.id)
+        .eq('coach_type', 'vibrant_life_sage')
+        .order('importance_score', { ascending: false })
+        .limit(5),
+      // 对话次数
+      supabase
+        .from('voice_chat_sessions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+    ]);
     
-    const userName = userProfile?.display_name || '';
+    const userName = profileResult.data?.display_name || '';
+    const lastBriefing = lastBriefingResult.data || null;
+    const memories = memoriesResult.data || [];
+    const sessionCount = sessionCountResult.count || 0;
+    
+    // 构建用户上下文
+    const userContext: UserContext = {
+      userName,
+      sessionCount,
+      lastBriefing,
+      memories
+    };
+    
+    console.log('User context loaded:', { userName, sessionCount, hasLastBriefing: !!lastBriefing, memoriesCount: memories.length });
 
     let instructions: string;
     let tools: any[];
@@ -686,8 +918,8 @@ serve(async (req) => {
 
       console.log('Teen mode activated, has binding:', !!binding);
     } else {
-      // 通用版
-      instructions = buildGeneralInstructions(userName);
+      // 通用版 - 使用增强的用户上下文
+      instructions = buildGeneralInstructions(userName, userContext);
       tools = [
         ...commonTools,
         {
