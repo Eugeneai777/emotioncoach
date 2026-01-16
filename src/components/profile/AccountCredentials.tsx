@@ -13,10 +13,17 @@ import { z } from "zod";
 const emailSchema = z.string().email("请输入有效的邮箱地址");
 const passwordSchema = z.string().min(6, "密码至少需要6个字符");
 
+// 判断是否为微信临时邮箱
+const isTempEmail = (email: string | null): boolean => {
+  if (!email) return true;
+  return email.includes('@temp.youjin365.com') || email.startsWith('wechat_');
+};
+
 export function AccountCredentials() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [rawEmail, setRawEmail] = useState<string | null>(null); // 保存原始邮箱用于更新
   const [hasPassword, setHasPassword] = useState(false);
   
   // 邮箱设置
@@ -36,6 +43,9 @@ export function AccountCredentials() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // 计算是否有真实邮箱（非临时邮箱）
+  const hasRealEmail = !isTempEmail(rawEmail);
+
   useEffect(() => {
     loadUserInfo();
   }, []);
@@ -44,7 +54,10 @@ export function AccountCredentials() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        setUserEmail(user.email || null);
+        const email = user.email || null;
+        setRawEmail(email);
+        // 如果是临时邮箱，显示为 null（未设置）
+        setUserEmail(isTempEmail(email) ? null : email);
         // 检查用户是否有密码（通过 identities 判断）
         const hasEmailProvider = user.app_metadata?.providers?.includes('email') || 
                                   user.identities?.some(i => i.provider === 'email');
@@ -195,14 +208,21 @@ export function AccountCredentials() {
               size="sm"
               onClick={() => setShowEmailDialog(true)}
             >
-              {userEmail ? "更换" : "设置"}
+              {hasRealEmail ? "更换" : "设置"}
             </Button>
           </div>
-          {userEmail && (
+          {hasRealEmail ? (
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <CheckCircle className="w-3 h-3 text-green-500" />
               邮箱已验证
             </p>
+          ) : (
+            <Alert className="bg-blue-50 border-blue-200">
+              <Mail className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-xs text-blue-700">
+                设置邮箱后可使用邮箱密码登录，并接收系统通知
+              </AlertDescription>
+            </Alert>
           )}
         </div>
 
@@ -244,18 +264,18 @@ export function AccountCredentials() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Mail className="w-5 h-5" />
-                {userEmail ? "更换邮箱" : "设置邮箱"}
+                {hasRealEmail ? "更换邮箱" : "设置邮箱"}
               </DialogTitle>
               <DialogDescription>
-                {userEmail 
+                {hasRealEmail 
                   ? "请输入新的邮箱地址" 
-                  : "设置邮箱后可使用邮箱密码登录"
+                  : "设置邮箱后可使用邮箱密码登录，并接收系统通知"
                 }
               </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4 py-4">
-              {userEmail && (
+              {hasRealEmail && userEmail && (
                 <div className="space-y-2">
                   <Label className="text-sm text-muted-foreground">当前邮箱</Label>
                   <Input value={userEmail} readOnly className="bg-muted/50" />
@@ -263,7 +283,7 @@ export function AccountCredentials() {
               )}
               
               <div className="space-y-2">
-                <Label htmlFor="new-email">新邮箱</Label>
+                <Label htmlFor="new-email">{hasRealEmail ? "新邮箱" : "邮箱地址"}</Label>
                 <Input
                   id="new-email"
                   type="email"
