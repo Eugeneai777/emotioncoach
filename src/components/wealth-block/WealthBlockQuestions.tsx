@@ -337,11 +337,11 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
                   </p>
                 </div>
 
-                {/* 水平评分条 */}
-                <div className="pt-6">
-                  <div className="flex items-center justify-center gap-3">
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">不符合</span>
-                    <div className="flex items-center gap-2">
+                {/* 水平评分条 - 响应式优化 */}
+                <div className="pt-4 sm:pt-6">
+                  <div className="flex items-center justify-center gap-1.5 sm:gap-3">
+                    <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">不符合</span>
+                    <div className="flex items-center gap-1 sm:gap-2">
                       {[1, 2, 3, 4, 5].map(value => {
                         const isSelected = answers[currentQuestion.id] === value;
                         return (
@@ -350,7 +350,7 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
                             whileTap={{ scale: 0.9 }}
                             whileHover={{ scale: 1.05 }}
                             className={cn(
-                              "w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-200 touch-manipulation",
+                              "w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center font-bold text-base sm:text-lg transition-all duration-200 touch-manipulation",
                               isSelected
                                 ? "bg-gradient-to-br from-amber-400 to-yellow-500 text-white shadow-lg shadow-amber-200/50 scale-110"
                                 : "border-2 border-muted bg-background text-muted-foreground hover:border-amber-300 hover:text-amber-600"
@@ -363,7 +363,7 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
                         );
                       })}
                     </div>
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">符合</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">符合</span>
                   </div>
                 </div>
 

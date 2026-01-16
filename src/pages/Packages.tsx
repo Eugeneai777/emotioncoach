@@ -11,6 +11,7 @@ import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import { HorizontalScrollHint } from "@/components/ui/horizontal-scroll-hint";
 
 interface PackageInfo {
   key: string;
@@ -66,20 +67,22 @@ export default function Packages() {
         <PageHeader title="产品中心" />
 
         <div className="container max-w-2xl mx-auto px-3 py-3 space-y-3">
-          {/* 产品分类 Tabs - 简化版 */}
+          {/* 产品分类 Tabs - 简化版 + 横滑提示 */}
           <Tabs value={activeTab} onValueChange={v => setActiveTab(v as typeof activeTab)} className="w-full">
-            <TabsList className="w-full h-auto flex overflow-x-auto gap-1 p-1 bg-muted/50">
-              {productCategories.map(category => (
-                <TabsTrigger 
-                  key={category.id} 
-                  value={category.id} 
-                  className="flex-shrink-0 gap-1 py-2 px-3 text-xs whitespace-nowrap"
-                >
-                  <span>{category.emoji}</span>
-                  <span>{category.name}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <HorizontalScrollHint className="w-full">
+              <TabsList className="w-full h-auto flex gap-1 p-1 bg-muted/50">
+                {productCategories.map(category => (
+                  <TabsTrigger 
+                    key={category.id} 
+                    value={category.id} 
+                    className="flex-shrink-0 gap-1 py-2 px-3 text-xs whitespace-nowrap"
+                  >
+                    <span>{category.emoji}</span>
+                    <span>{category.name}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </HorizontalScrollHint>
 
             <TabsContent value={activeTab} className="mt-3 space-y-3">
               {/* 分类说明 - 更紧凑 */}
