@@ -851,7 +851,17 @@ export const CoachVoiceChat = ({
         chatRef.current = chat;
         
         try {
-          await chat.init();
+          // 🔧 外层超时保护：比内部 30s 多 5s 作为外层保护
+          const connectionWithTimeout = Promise.race([
+            chat.init(),
+            new Promise((_, reject) => {
+              setTimeout(() => {
+                reject(new Error('建立阶段超时：请检查网络连接'));
+              }, 35000);
+            })
+          ]);
+          
+          await connectionWithTimeout;
           updateConnectionPhase('connected');
           stopConnectionTimer();
           startMonitoring(); // 开始持续网络监控
