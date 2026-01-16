@@ -140,23 +140,36 @@ export const QuickMenuSettingsDialog = ({
           </div>
         </div>
 
-        <div className="flex gap-2 pt-2">
+        <div className="flex flex-col gap-2 pt-2">
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleReset}
+              className="flex-1"
+            >
+              <RotateCcw className="w-4 h-4 mr-1" />
+              重置
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={handleSave}
+              className="flex-1"
+            >
+              <Check className="w-4 h-4 mr-1" />
+              保存
+            </Button>
+          </div>
           <Button 
-            variant="outline" 
+            variant="ghost" 
             size="sm" 
-            onClick={handleReset}
-            className="flex-1"
+            onClick={() => {
+              localStorage.removeItem('floatingQuickMenuPosition');
+              window.location.reload();
+            }}
+            className="text-xs text-muted-foreground"
           >
-            <RotateCcw className="w-4 h-4 mr-1" />
-            重置
-          </Button>
-          <Button 
-            size="sm" 
-            onClick={handleSave}
-            className="flex-1"
-          >
-            <Check className="w-4 h-4 mr-1" />
-            保存
+            重置按钮位置
           </Button>
         </div>
       </DialogContent>
