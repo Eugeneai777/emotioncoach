@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Heart, MessageCircle, Sparkles, Users, BookOpen, Lightbulb, CheckCircle } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Sparkles, Users, BookOpen, Lightbulb, CheckCircle, Mail, Loader2 } from "lucide-react";
 import { ServiceRecommendationCard } from "@/components/vibrantLife/ServiceRecommendationCard";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -15,6 +15,7 @@ import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import { toast } from "sonner";
 
 interface VibrantLifeBriefing {
   id: string;
@@ -48,6 +49,7 @@ const VibrantLifeHistory = () => {
   const [selectedBriefing, setSelectedBriefing] = useState<VibrantLifeBriefing | null>(null);
   const [conversationMessages, setConversationMessages] = useState<Message[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const { showTour, completeTour } = usePageTour('vibrant_life_history');
 
   const { data: briefings, isLoading } = useQuery({
@@ -93,6 +95,35 @@ const VibrantLifeHistory = () => {
   const getCoachConfig = (type: string | null) => {
     if (!type) return null;
     return coachTypeConfig[type] || null;
+  };
+
+  const handleSendEmail = async (briefingId: string) => {
+    setIsSendingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-life-briefing-email", {
+        body: { briefingId },
+      });
+
+      if (error) throw error;
+      
+      if (data?.error) {
+        toast.error(data.error, {
+          description: data.hint || undefined,
+        });
+        return;
+      }
+
+      toast.success("已发送到您的邮箱", {
+        description: data.email ? `发送至 ${data.email}` : undefined,
+      });
+    } catch (err: any) {
+      console.error("Send email error:", err);
+      toast.error("发送失败", {
+        description: err.message || "请稍后重试",
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
   return (
@@ -200,10 +231,28 @@ const VibrantLifeHistory = () => {
       <Sheet open={!!selectedBriefing} onOpenChange={() => setSelectedBriefing(null)}>
         <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl">
           <SheetHeader className="pb-4 border-b">
-            <SheetTitle className="flex items-center gap-2">
-              <span>❤️</span>
-              <span>对话详情</span>
-            </SheetTitle>
+            <div className="flex items-center justify-between">
+              <SheetTitle className="flex items-center gap-2">
+                <span>❤️</span>
+                <span>对话详情</span>
+              </SheetTitle>
+              {selectedBriefing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSendEmail(selectedBriefing.id)}
+                  disabled={isSendingEmail}
+                  className="flex items-center gap-1.5"
+                >
+                  {isSendingEmail ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Mail className="h-4 w-4" />
+                  )}
+                  <span className="hidden xs:inline">{isSendingEmail ? "发送中" : "发送到邮箱"}</span>
+                </Button>
+              )}
+            </div>
           </SheetHeader>
           
           <ScrollArea className="h-[calc(85vh-80px)] py-4">
