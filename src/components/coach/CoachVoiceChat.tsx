@@ -23,6 +23,7 @@ interface AudioClient {
   disconnect: () => void;
   startRecording?: () => void;
   stopRecording?: () => void;
+  sendTextMessage?: (text: string) => void;
 }
 
 interface BriefingData {
@@ -155,13 +156,16 @@ export const CoachVoiceChat = ({
 
   // 保护机制常量
   const PAGE_HIDDEN_TIMEOUT = 10 * 60 * 1000;  // 🔧 延长到10分钟页面隐藏自动结束
-  const USER_INACTIVITY_TIMEOUT = 5 * 60 * 1000;  // 🔧 用户5分钟无说话
-  const AI_RESPONSE_TIMEOUT = 2 * 60 * 1000;  // 🔧 AI 2分钟无回应
+  const INACTIVITY_WARNING_TIMEOUT = 3 * 60 * 1000;  // 🔧 3分钟无活动触发AI提醒
+  const INACTIVITY_FINAL_TIMEOUT = 1 * 60 * 1000;  // 🔧 提醒后1分钟无响应断线
   const INACTIVITY_CHECK_INTERVAL = 30 * 1000;  // 每30秒检查一次
   
   // 🔧 区分用户和AI的活动时间
   const userLastActivityRef = useRef(Date.now());
   const aiLastActivityRef = useRef(Date.now());
+  // 🔧 无活动提醒状态
+  const [hasWarnedInactivity, setHasWarnedInactivity] = useState(false);
+  const warningTimestampRef = useRef<number>(0);
 
   const MEMBER_365_PACKAGE = {
     key: 'member365',
@@ -562,6 +566,11 @@ export const CoachVoiceChat = ({
     if (event.type === 'input_audio_buffer.speech_started' || event.type === 'speech_started') {
       setSpeakingStatus('user-speaking');
       userLastActivityRef.current = Date.now(); // 🔧 用户开始说话
+      // 🔧 用户开始说话，重置无活动提醒状态
+      if (hasWarnedInactivity) {
+        setHasWarnedInactivity(false);
+        warningTimestampRef.current = 0;
+      }
     } else if (event.type === 'input_audio_buffer.speech_stopped' || event.type === 'speech_stopped') {
       setSpeakingStatus('idle');
       userLastActivityRef.current = Date.now(); // 🔧 用户说完
@@ -1234,13 +1243,16 @@ export const CoachVoiceChat = ({
     };
   }, [status, isEnding]);
 
-  // 🔧 无活动检测 - 改进：区分用户和AI活动，只在双方都无活动时才断线
+  // 🔧 无活动检测 - 改进：先语音提醒，再自动断线
   useEffect(() => {
     if (status !== 'connected') {
       if (inactivityTimerRef.current) {
         clearInterval(inactivityTimerRef.current);
         inactivityTimerRef.current = null;
       }
+      // 连接断开时重置提醒状态
+      setHasWarnedInactivity(false);
+      warningTimestampRef.current = 0;
       return;
     }
 
@@ -1250,14 +1262,33 @@ export const CoachVoiceChat = ({
       const userInactive = now - userLastActivityRef.current;
       const aiSilent = now - aiLastActivityRef.current;
       
-      // 🔧 只在双方都无活动时才断线（避免用户思考时被误判）
-      if (userInactive > USER_INACTIVITY_TIMEOUT && aiSilent > AI_RESPONSE_TIMEOUT) {
-        console.log(`[VoiceChat] Both sides inactive - user: ${Math.floor(userInactive/1000)}s, AI: ${Math.floor(aiSilent/1000)}s`);
-        toast({
-          title: "通话已自动结束",
-          description: "检测到长时间无对话活动，已自动挂断以节省点数",
-        });
-        endCall();
+      // 阶段1: 3分钟无用户活动 + AI沉默超30秒 → 发送语音提醒
+      if (!hasWarnedInactivity && userInactive > INACTIVITY_WARNING_TIMEOUT && aiSilent > 30000) {
+        console.log(`[VoiceChat] User inactive for ${Math.floor(userInactive/1000)}s, sending reminder`);
+        
+        // 通过 sendTextMessage 触发 AI 语音询问
+        const reminderText = "[系统提示：用户已经有一段时间没有说话了，请温柔地询问用户是否还在，比如：您好，我注意到您有一会儿没说话了，您还在吗？如果需要休息，可以先挂断通话哦。如果用户没有回应，通话将在一分钟后自动结束以节省点数]";
+        
+        if (chatRef.current?.sendTextMessage) {
+          chatRef.current.sendTextMessage(reminderText);
+        }
+        
+        setHasWarnedInactivity(true);
+        warningTimestampRef.current = now;
+      }
+      
+      // 阶段2: 提醒后1分钟仍无用户响应 → 自动断线
+      if (hasWarnedInactivity && warningTimestampRef.current > 0) {
+        const timeSinceWarning = now - warningTimestampRef.current;
+        // 提醒后用户仍无活动超过1分钟
+        if (timeSinceWarning > INACTIVITY_FINAL_TIMEOUT && userLastActivityRef.current < warningTimestampRef.current) {
+          console.log('[VoiceChat] No response after warning, auto disconnecting');
+          toast({
+            title: "通话已自动结束",
+            description: "检测到您长时间无响应，已自动挂断以节省点数",
+          });
+          endCall();
+        }
       }
     }, INACTIVITY_CHECK_INTERVAL);
 
@@ -1267,7 +1298,7 @@ export const CoachVoiceChat = ({
         inactivityTimerRef.current = null;
       }
     };
-  }, [status]);
+  }, [status, hasWarnedInactivity]);
 
   // 浏览器关闭前保存会话 - beforeunload
   useEffect(() => {
