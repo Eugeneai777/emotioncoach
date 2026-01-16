@@ -365,3 +365,6 @@ verify_jwt = true
 
 [functions.generate-life-briefing]
 verify_jwt = true
+
+[functions.send-life-briefing-email]
+verify_jwt = true
