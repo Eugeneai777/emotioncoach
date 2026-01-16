@@ -41,13 +41,20 @@ type PaymentStatus = 'idle' | 'creating' | 'pending' | 'polling' | 'paid' | 'reg
 // 从多个来源获取 openId（URL 参数 > sessionStorage 缓存）
 const getPaymentOpenId = (): string | undefined => {
   const urlParams = new URLSearchParams(window.location.search);
-  const urlOpenId = urlParams.get('payment_openid');
+
+  // 兼容不同端可能传的字段名
+  const urlOpenId =
+    urlParams.get('payment_openid') ||
+    urlParams.get('openid') ||
+    urlParams.get('openId') ||
+    urlParams.get('mp_openid');
+
   if (urlOpenId) return urlOpenId;
-  
+
   // 从 sessionStorage 获取（由 WealthBlockAssessment 在回调时缓存）
   const cachedOpenId = sessionStorage.getItem('wechat_payment_openid');
   if (cachedOpenId) return cachedOpenId;
-  
+
   return undefined;
 };
 
@@ -192,6 +199,26 @@ export function AssessmentPayDialog({
     return true;
   }, []);
 
+  // 监听小程序侧通过 postMessage/webViewContext.postMessage 回传的 openId
+  useEffect(() => {
+    if (!isMiniProgram) return;
+
+    const onMessage = (event: MessageEvent) => {
+      const payload: any = (event as any)?.data?.data ?? (event as any)?.data;
+      const openId: string | undefined = payload?.openId || payload?.openid;
+      const type: string | undefined = payload?.type;
+
+      if ((type === 'OPENID' || type === 'MP_OPENID' || type === 'GET_OPENID_RESULT') && openId) {
+        console.log('[AssessmentPay] Received openId from MiniProgram message');
+        sessionStorage.setItem('wechat_payment_openid', openId);
+        setUserOpenId(openId);
+        setOpenIdResolved(true);
+      }
+    };
+
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [isMiniProgram]);
   // 获取用户 openId（用于 JSAPI 支付）
   useEffect(() => {
     const fetchUserOpenId = async () => {
@@ -243,13 +270,12 @@ export function AssessmentPayDialog({
         }
       }
 
-      // 小程序环境：不做跳转授权，直接标记为已解析
-      // 小程序支付时会通过 postMessage 让原生小程序处理
+      // 小程序环境：不做跳转授权，需要小程序侧提供 openId（URL 参数或消息回传）
       if (isMiniProgram) {
-        console.log('[AssessmentPay] MiniProgram environment, skip OAuth redirect');
-        // 尝试请求小程序获取 openId（可选）
+        console.log('[AssessmentPay] MiniProgram environment, requesting openId');
         requestMiniProgramOpenId();
-        setOpenIdResolved(true);
+        // 关键：不要标记为 resolved，否则会在 openId=undefined 时错误发起 JSAPI 下单
+        setOpenIdResolved(false);
         return;
       }
 
@@ -352,6 +378,16 @@ export function AssessmentPayDialog({
   // 创建订单（带超时处理）
   const createOrder = async () => {
     console.log('[AssessmentPay] createOrder called, userId:', userId, 'isWechat:', isWechat, 'isMobile:', isMobile);
+
+    // 小程序 JSAPI 下单强依赖 openId；没有 openId 时先向小程序请求，避免后端报错且前端无弹窗
+    if (isMiniProgram && !userOpenId) {
+      console.warn('[AssessmentPay] Missing openId in MiniProgram, requesting from native...');
+      requestMiniProgramOpenId();
+      setOpenIdResolved(false);
+      toast.info('正在向小程序请求支付信息…');
+      return;
+    }
+
     setStatus('creating');
     setErrorMessage('');
     
@@ -692,9 +728,9 @@ export function AssessmentPayDialog({
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
               <p className="text-muted-foreground">
-                {status === 'idle' && shouldWaitForOpenId && !openIdResolved 
-                  ? '正在初始化...' 
-                  : '正在创建订单...'}
+                {status === 'idle' && shouldWaitForOpenId && !openIdResolved
+                  ? (isMiniProgram ? '等待小程序返回 openId…' : '正在初始化…')
+                  : '正在创建订单…'}
               </p>
             </div>
           )}

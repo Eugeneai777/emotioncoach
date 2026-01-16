@@ -48,7 +48,13 @@ type PaymentStatus = 'idle' | 'loading' | 'ready' | 'polling' | 'success' | 'fai
 // 从 URL 中获取静默授权返回的 openId
 const getPaymentOpenIdFromUrl = (): string | undefined => {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('payment_openid') || undefined;
+  return (
+    urlParams.get('payment_openid') ||
+    urlParams.get('openid') ||
+    urlParams.get('openId') ||
+    urlParams.get('mp_openid') ||
+    undefined
+  );
 };
 
 // 检测是否是微信 OAuth 回调（带 code 和 payment_auth_callback 标记）
@@ -220,6 +226,44 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     }
   }, []);
 
+  // 请求小程序获取 openId（通过 postMessage）
+  const requestMiniProgramOpenId = useCallback(() => {
+    const mp = window.wx?.miniProgram;
+    if (!mp || typeof mp.postMessage !== 'function') {
+      console.warn('[Payment] MiniProgram postMessage not available');
+      return false;
+    }
+
+    console.log('[Payment] Requesting openId from MiniProgram');
+    mp.postMessage({
+      data: {
+        type: 'GET_OPENID',
+        callbackUrl: window.location.href,
+      },
+    });
+    return true;
+  }, []);
+
+  // 监听小程序侧回传 openId
+  useEffect(() => {
+    if (!isMiniProgram) return;
+
+    const onMessage = (event: MessageEvent) => {
+      const payload: any = (event as any)?.data?.data ?? (event as any)?.data;
+      const openId: string | undefined = payload?.openId || payload?.openid;
+      const type: string | undefined = payload?.type;
+
+      if ((type === 'OPENID' || type === 'MP_OPENID' || type === 'GET_OPENID_RESULT') && openId) {
+        console.log('[Payment] Received openId from MiniProgram message');
+        setUserOpenId(openId);
+        setOpenIdResolved(true);
+      }
+    };
+
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [isMiniProgram]);
+
   // 在小程序/微信环境下获取用户的 openId（用于 JSAPI 支付）
   useEffect(() => {
     const fetchUserOpenId = async () => {
@@ -276,9 +320,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         }
       }
 
-      // 微信环境下没有 openId：触发静默授权
-      console.log('[Payment] No openId available, triggering silent auth');
-      triggerSilentAuth();
+       // 微信/小程序环境下没有 openId：
+       // - 小程序：必须由小程序侧提供 openId（URL 或消息回传），不要走 H5 静默授权
+       // - 微信浏览器：走静默授权
+       if (isMiniProgram) {
+         console.log('[Payment] MiniProgram: no openId, requesting from MiniProgram');
+         requestMiniProgramOpenId();
+         setOpenIdResolved(false);
+         return;
+       }
+
+       console.log('[Payment] No openId available, triggering silent auth');
+       triggerSilentAuth();
     };
 
     fetchUserOpenId();
@@ -429,13 +482,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   // 小程序侧收到 MINIPROGRAM_NAVIGATE_PAY 后跳转到原生支付页，支付完成后 reload webview 并拼上 payment_success=true&orderNo=xxx
   const triggerMiniProgramNativePay = useCallback((params: Record<string, string>, orderNumber: string) => {
     const mp = window.wx?.miniProgram;
-    if (!mp || typeof mp.postMessage !== 'function') {
-      console.warn('[MiniProgram] postMessage not available, trying navigateTo fallback');
-      // 兜底：尝试直接跳转小程序页面（需要小程序配置对应页面）
-      if (typeof mp?.navigateTo === 'function') {
-        const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}`;
-        mp.navigateTo({ url: payPageUrl });
-      }
+    if (!mp) {
+      console.warn('[MiniProgram] miniProgram object not available');
       return;
     }
 
@@ -446,20 +494,32 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     currentUrl.searchParams.set('order', orderNumber);
     const callbackUrl = currentUrl.toString();
 
-    console.log('[MiniProgram] Sending MINIPROGRAM_NAVIGATE_PAY', { orderNo: orderNumber, callbackUrl });
-    mp.postMessage({
-      data: {
-        type: 'MINIPROGRAM_NAVIGATE_PAY',
-        orderNo: orderNumber,
-        params,
-        callbackUrl, // 小程序支付成功后应 reload 到此 URL
-      },
-    });
+    // 1) 尝试 postMessage（若小程序侧在 web-view 的 bindmessage 中处理）
+    if (typeof mp.postMessage === 'function') {
+      console.log('[MiniProgram] Sending MINIPROGRAM_NAVIGATE_PAY', { orderNo: orderNumber, callbackUrl });
+      mp.postMessage({
+        data: {
+          type: 'MINIPROGRAM_NAVIGATE_PAY',
+          orderNo: orderNumber,
+          params,
+          callbackUrl,
+        },
+      });
+    } else {
+      console.warn('[MiniProgram] postMessage not available');
+    }
 
-    // 同时尝试 navigateTo（部分小程序可能更倾向于此方式）
+    // 2) 同时尝试 navigateTo（需要小程序侧存在 /pages/pay/index 页面）
     if (typeof mp.navigateTo === 'function') {
       const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}`;
-      mp.navigateTo({ url: payPageUrl });
+      console.log('[MiniProgram] navigateTo pay page:', payPageUrl);
+      mp.navigateTo({
+        url: payPageUrl,
+        success: () => console.log('[MiniProgram] navigateTo success'),
+        fail: (err: any) => console.error('[MiniProgram] navigateTo fail', err),
+      });
+    } else {
+      console.warn('[MiniProgram] navigateTo not available');
     }
   }, []);
 
