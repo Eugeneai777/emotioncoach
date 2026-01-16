@@ -106,7 +106,7 @@ const CampIntro = () => {
         pageKey="campIntro"
         overrides={{
           title: `${campTemplate?.camp_name || '训练营'} - 有劲AI`,
-          ogTitle: `有劲AI • ${campTemplate?.camp_name || '训练营'}`
+          ogTitle: campTemplate?.camp_name || '训练营'
         }}
       />
       {/* Header */}
