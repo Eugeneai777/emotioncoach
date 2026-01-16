@@ -16,6 +16,7 @@ import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface VibrantLifeBriefing {
   id: string;
@@ -44,12 +45,19 @@ const coachTypeConfig: Record<string, { label: string; icon: React.ElementType; 
   tool: { label: "成长工具", icon: Sparkles, color: "text-cyan-600" },
 };
 
+// 判断是否为微信临时邮箱
+const isTempEmail = (email: string | null): boolean => {
+  if (!email) return true;
+  return email.includes('@temp.youjin365.com') || email.startsWith('wechat_');
+};
+
 const VibrantLifeHistory = () => {
   const navigate = useNavigate();
   const [selectedBriefing, setSelectedBriefing] = useState<VibrantLifeBriefing | null>(null);
   const [conversationMessages, setConversationMessages] = useState<Message[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [showNoEmailDialog, setShowNoEmailDialog] = useState(false);
   const { showTour, completeTour } = usePageTour('vibrant_life_history');
 
   const { data: briefings, isLoading } = useQuery({
@@ -124,6 +132,16 @@ const VibrantLifeHistory = () => {
     } finally {
       setIsSendingEmail(false);
     }
+  };
+
+  // 发送邮件前检查邮箱
+  const handleSendEmailClick = async (briefingId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || isTempEmail(user.email)) {
+      setShowNoEmailDialog(true);
+      return;
+    }
+    handleSendEmail(briefingId);
   };
 
   return (
@@ -240,7 +258,7 @@ const VibrantLifeHistory = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleSendEmail(selectedBriefing.id)}
+                  onClick={() => handleSendEmailClick(selectedBriefing.id)}
                   disabled={isSendingEmail}
                   className="flex items-center gap-1.5"
                 >
@@ -381,6 +399,36 @@ const VibrantLifeHistory = () => {
           </ScrollArea>
         </SheetContent>
       </Sheet>
+
+      {/* 无邮箱提示对话框 */}
+      <Dialog open={showNoEmailDialog} onOpenChange={setShowNoEmailDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-blue-500" />
+              请先设置邮箱
+            </DialogTitle>
+            <DialogDescription>
+              您还没有设置邮箱地址，无法发送邮件。请先在设置页面设置您的邮箱。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowNoEmailDialog(false)}
+              className="flex-1"
+            >
+              稍后设置
+            </Button>
+            <Button 
+              onClick={() => navigate("/settings?tab=account")}
+              className="flex-1"
+            >
+              去设置
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       </div>
     </>
   );
