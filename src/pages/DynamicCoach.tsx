@@ -298,7 +298,7 @@ const DynamicCoach = () => {
         pageKey={`coach_${coachKey}`}
         overrides={{
           title: `${template?.title || '教练对话'} - 有劲AI`,
-          ogTitle: `有劲AI${template?.title || '教练'}`,
+          ogTitle: template?.title || '教练',
           description: template?.description || '与AI教练深度对话，获得专业指导',
           image: getCoachOGImage(coachKey || ''),
           url: `${OG_BASE_URL}/coach/${coachKey}`,
