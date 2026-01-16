@@ -540,16 +540,49 @@ export const CoachVoiceChat = ({
         console.error('[VoiceChat] Failed to log API cost:', logError);
       }
       
-      // 同时保存到 vibrant_life_sage_briefings 以便在"我的生活记录"中显示
+      // 调用 Edge Function 生成深度简报（含总结、洞察、行动建议、服务推荐）
       const transcriptContent = (userTranscript + '\n' + transcript).trim();
-      if (transcriptContent) {
+      if (transcriptContent && transcriptContent.length > 100) {
+        try {
+          const { data: briefingResult, error: briefingError } = await supabase.functions.invoke('generate-life-briefing', {
+            body: { 
+              transcript: transcriptContent,
+              duration_minutes: callMinutes,
+              coach_type: coachTitle
+            }
+          });
+          
+          if (!briefingError && briefingResult?.briefing_id) {
+            console.log('[VoiceChat] Life briefing generated with AI analysis:', briefingResult.briefing_id);
+          } else {
+            // 降级：保存简单记录
+            console.warn('[VoiceChat] Briefing generation failed, saving simple record:', briefingError);
+            await supabase.from('vibrant_life_sage_briefings').insert({
+              user_id: user.id,
+              user_issue_summary: userTranscript.slice(0, 200) || '语音对话记录',
+              reasoning: `通过语音与有劲AI进行了 ${callMinutes} 分钟的对话`,
+              recommended_coach_type: 'vibrant_life_sage'
+            });
+          }
+        } catch (briefingGenError) {
+          // 降级：保存简单记录
+          console.error('[VoiceChat] Briefing generation error:', briefingGenError);
+          await supabase.from('vibrant_life_sage_briefings').insert({
+            user_id: user.id,
+            user_issue_summary: userTranscript.slice(0, 200) || '语音对话记录',
+            reasoning: `通过语音与有劲AI进行了 ${callMinutes} 分钟的对话`,
+            recommended_coach_type: 'vibrant_life_sage'
+          });
+        }
+      } else if (transcriptContent) {
+        // 对话太短，直接保存简单记录
         await supabase.from('vibrant_life_sage_briefings').insert({
           user_id: user.id,
           user_issue_summary: userTranscript.slice(0, 200) || '语音对话记录',
           reasoning: `通过语音与有劲AI进行了 ${callMinutes} 分钟的对话`,
           recommended_coach_type: 'vibrant_life_sage'
         });
-        console.log('Vibrant life sage briefing saved');
+        console.log('[VoiceChat] Short conversation, saved simple briefing');
       }
       
       console.log('Voice chat session recorded with API cost tracking');
