@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Heart, MessageCircle, Sparkles, Users, BookOpen } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Sparkles, Users, BookOpen, Lightbulb, CheckCircle } from "lucide-react";
+import { ServiceRecommendationCard } from "@/components/vibrantLife/ServiceRecommendationCard";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +19,9 @@ import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 interface VibrantLifeBriefing {
   id: string;
   user_issue_summary: string | null;
+  summary: string | null;
+  insight: string | null;
+  action: string | null;
   recommended_coach_type: string | null;
   reasoning: string | null;
   conversation_id: string | null;
@@ -168,12 +172,19 @@ const VibrantLifeHistory = () => {
                   {/* Issue Summary */}
                   {briefing.user_issue_summary && (
                     <p className="text-sm font-medium line-clamp-2">
-                      {briefing.user_issue_summary}
+                      💬 {briefing.user_issue_summary}
                     </p>
                   )}
 
-                  {/* Reasoning Preview */}
-                  {briefing.reasoning && (
+                  {/* Summary Preview - 新增 */}
+                  {briefing.summary && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {briefing.summary}
+                    </p>
+                  )}
+
+                  {/* Fallback to reasoning if no summary */}
+                  {!briefing.summary && briefing.reasoning && (
                     <p className="text-xs text-muted-foreground line-clamp-2">
                       💡 {briefing.reasoning}
                     </p>
@@ -232,14 +243,57 @@ const VibrantLifeHistory = () => {
                       </div>
                     )}
 
-                    {selectedBriefing.reasoning && (
+                    {/* Summary - 对话总结 */}
+                    {selectedBriefing.summary && (
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">推荐理由</p>
-                        <p className="text-sm text-muted-foreground">{selectedBriefing.reasoning}</p>
+                        <p className="text-xs text-muted-foreground mb-1">📝 对话总结</p>
+                        <p className="text-sm">{selectedBriefing.summary}</p>
                       </div>
                     )}
                   </CardContent>
                 </Card>
+
+                {/* Insight Card - 核心洞察 */}
+                {selectedBriefing.insight && (
+                  <Card className="bg-amber-50/50 border-amber-100">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                          <Lightbulb className="h-4 w-4 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">💡 核心洞察</p>
+                          <p className="text-sm">{selectedBriefing.insight}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Action Card - 行动建议 */}
+                {selectedBriefing.action && (
+                  <Card className="bg-green-50/50 border-green-100">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">✅ 行动建议</p>
+                          <p className="text-sm">{selectedBriefing.action}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Service Recommendation - 推荐服务 */}
+                {selectedBriefing.recommended_coach_type && (
+                  <ServiceRecommendationCard 
+                    coachType={selectedBriefing.recommended_coach_type}
+                    reasoning={selectedBriefing.reasoning}
+                  />
+                )}
 
                 {/* Conversation Messages */}
                 {selectedBriefing.conversation_id && (
