@@ -106,6 +106,25 @@ export const FloatingQuickMenu = () => {
     }
   }, []);
 
+  // Handle window resize - ensure button stays within bounds
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition(prev => {
+        const safeX = Math.max(10, Math.min(window.innerWidth - 60, prev.x));
+        const safeY = Math.max(100, Math.min(window.innerHeight - 80, prev.y));
+        if (safeX !== prev.x || safeY !== prev.y) {
+          const newPos = { x: safeX, y: safeY };
+          savePosition(newPos);
+          return newPos;
+        }
+        return prev;
+      });
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Save position
   const savePosition = (pos: Position) => {
     localStorage.setItem(POSITION_STORAGE_KEY, JSON.stringify(pos));
