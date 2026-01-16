@@ -607,7 +607,8 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           amount: packageInfo.price,
           userId: user.id,
           payType: selectedPayType,
-          openId: selectedPayType === 'jsapi' ? userOpenId : undefined,
+          // 小程序环境不传 openId，由小程序原生端获取
+          openId: (selectedPayType === 'jsapi' && !isMiniProgram) ? userOpenId : undefined,
           isMiniProgram: isMiniProgram, // 传递小程序环境标识
         },
       });
@@ -617,36 +618,41 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       setOrderNo(data.orderNo);
 
-      if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
-        // JSAPI 支付
+      // 小程序支付：直接跳转到小程序原生支付页
+      if (isMiniProgram && (data.isMiniProgram || data.miniprogramPayParams || data.payType === 'miniprogram')) {
+        console.log('[Payment] MiniProgram: navigating to native pay page with order:', data.orderNo);
+        setStatus('polling');
+        startPolling(data.orderNo);
+        
+        // 传递订单信息给小程序原生端，由小程序获取 openId 并调用支付
+        triggerMiniProgramNativePay(
+          data.miniprogramPayParams || { orderNo: data.orderNo, amount: String(packageInfo.price * 100) },
+          data.orderNo
+        );
+      } else if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
+        // JSAPI 支付（微信浏览器，非小程序）
         setStatus('polling');
         startPolling(data.orderNo);
 
-        if (isMiniProgram) {
-          // 小程序 WebView：通过 postMessage 让小程序原生拉起 wx.requestPayment
-          console.log('[Payment] MiniProgram: triggering native pay via postMessage');
-          triggerMiniProgramNativePay(data.jsapiPayParams, data.orderNo);
-        } else {
-          // 微信浏览器：先等待 Bridge 就绪（最多 1.5 秒），再调起支付
-          console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
-          const bridgeAvailable = await waitForWeixinJSBridge(1500);
-          
-          if (bridgeAvailable) {
-            try {
-              await invokeJsapiPay(data.jsapiPayParams);
-              console.log('[Payment] JSAPI pay invoked successfully');
-            } catch (jsapiError: any) {
-              console.log('[Payment] JSAPI pay error:', jsapiError?.message);
-              if (jsapiError?.message !== '用户取消支付') {
-                // JSAPI 失败，降级到扫码模式
-                await fallbackToNativePayment(data.orderNo);
-              }
+        // 微信浏览器：先等待 Bridge 就绪（最多 1.5 秒），再调起支付
+        console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
+        const bridgeAvailable = await waitForWeixinJSBridge(1500);
+        
+        if (bridgeAvailable) {
+          try {
+            await invokeJsapiPay(data.jsapiPayParams);
+            console.log('[Payment] JSAPI pay invoked successfully');
+          } catch (jsapiError: any) {
+            console.log('[Payment] JSAPI pay error:', jsapiError?.message);
+            if (jsapiError?.message !== '用户取消支付') {
+              // JSAPI 失败，降级到扫码模式
+              await fallbackToNativePayment(data.orderNo);
             }
-          } else {
-            // Bridge 不可用，直接降级到扫码
-            console.log('[Payment] Bridge not available, falling back to native');
-            await fallbackToNativePayment(data.orderNo);
           }
+        } else {
+          // Bridge 不可用，直接降级到扫码
+          console.log('[Payment] Bridge not available, falling back to native');
+          await fallbackToNativePayment(data.orderNo);
         }
       } else if ((data.payType || selectedPayType) === 'h5' && (data.h5Url || data.payUrl)) {
         // H5支付
