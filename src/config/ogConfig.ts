@@ -22,7 +22,7 @@ export const OG_BASE_URL = 'https://wechat.eugenewe.net';
 export const OG_SITE_NAME = '有劲AI';
 
 // OG 缓存版本号 - 用于强制微信刷新缓存
-export const OG_CACHE_VERSION = 'v20260115b';
+export const OG_CACHE_VERSION = 'v20260116';
 
 /**
  * 全局默认 OG 配置
@@ -30,9 +30,9 @@ export const OG_CACHE_VERSION = 'v20260115b';
  */
 export const DEFAULT_OG_CONFIG: OGConfig = {
   title: '有劲AI - 每个人的生活教练',
-  ogTitle: '有劲AI • 每个人的生活教练',
+  ogTitle: '每个人的生活教练',
   description: '温暖陪伴 × 系统工具 × 成长社群，陪你持续向前',
-  image: `${OG_BASE_URL}/og-youjin-ai.png`,
+  image: `${OG_BASE_URL}/og-youjin-ai.png?v=20260116`,
   url: `${OG_BASE_URL}/`,
   siteName: OG_SITE_NAME,
   imageWidth: 1200,
