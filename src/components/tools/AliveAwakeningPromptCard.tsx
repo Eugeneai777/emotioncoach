@@ -47,12 +47,43 @@ export const AliveAwakeningPromptCard = ({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-center mb-5"
+              className="text-center mb-4"
             >
               <p className="text-xl font-medium">今天想觉察哪个维度？ 🌱</p>
               <p className="text-sm text-white/70 mt-1">
                 活着的每一天，都值得被看见
               </p>
+            </motion.div>
+
+            {/* 四层支持价值说明 */}
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="bg-white/15 backdrop-blur-sm rounded-xl p-3 mb-4 border border-white/10"
+            >
+              <p className="text-xs text-white/90 font-medium mb-2 text-center">
+                ✨ 一次觉察，开启四层支持
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { emoji: '📝', label: '轻点记录', desc: '开始觉察' },
+                  { emoji: '🪞', label: 'AI看见你', desc: '5维回应' },
+                  { emoji: '💬', label: '深度对话', desc: '专属教练' },
+                  { emoji: '🌱', label: '系统成长', desc: '21天蜕变' },
+                ].map((layer, i) => (
+                  <div 
+                    key={i} 
+                    className="flex items-center gap-2 bg-white/10 rounded-lg p-2"
+                  >
+                    <span className="text-base">{layer.emoji}</span>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-white font-medium">{layer.label}</span>
+                      <span className="text-[10px] text-white/60">{layer.desc}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </motion.div>
 
             {/* Dimension grid - 2x3 */}
