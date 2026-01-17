@@ -209,87 +209,92 @@ const PlatformIntro = () => {
           transition={{ duration: 0.5 }}
           className="relative"
         >
-          {/* 核心定义 */}
-          <Card className="p-4 border-0 shadow-sm bg-gradient-to-br from-primary/5 via-accent/5 to-warm/5 mb-4">
+          {/* 核心定义 - 突出视觉 */}
+          <Card className="p-4 border border-primary/10 shadow-md bg-gradient-to-br from-primary/5 via-accent/5 to-warm/5 mb-5">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 via-accent/10 to-warm/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-2xl">🌟</span>
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary via-accent to-warm flex items-center justify-center flex-shrink-0 shadow-lg">
+                <span className="text-3xl">🌟</span>
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-800">有劲AI是一位</p>
-                <p className="text-primary font-bold text-base">懂你、陪你、帮你成长的生活教练</p>
+                <p className="text-primary font-bold text-lg">懂你、陪你、帮你成长的生活教练</p>
               </div>
             </div>
           </Card>
           
-          {/* 六大能力 - 2x3 网格卡片 */}
-          <div className="mb-4">
-            <p className="text-xs font-semibold text-slate-700 mb-2">它结合：</p>
-            <div className="grid grid-cols-2 gap-2">
+          {/* 六大能力 - 2x3 真正网格 */}
+          <div className="mb-5">
+            <p className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              它结合：
+            </p>
+            <div className="grid grid-cols-2 gap-2.5">
               {aiCapabilities.map((cap, index) => (
-                <Card key={index} className="p-2.5 border-0 shadow-sm bg-white">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{cap.icon}</span>
-                    <p className="text-xs text-slate-700 font-medium">{cap.text}</p>
+                <Card key={index} className="p-3 border border-slate-100 shadow-sm bg-white hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xl">{cap.icon}</span>
+                    </div>
+                    <p className="text-sm text-slate-700 font-medium">{cap.text}</p>
                   </div>
                 </Card>
               ))}
             </div>
           </div>
           
-          {/* 用户价值 - 两行居中 */}
-          <Card className="p-3 border-0 shadow-sm mb-4">
-            <p className="text-xs font-semibold text-slate-700 mb-2">在生活里获得：</p>
-            <div className="flex justify-center gap-2 mb-2">
-              {userValues.slice(0, 3).map((value, index) => (
-                <span key={index} className="px-2 py-1 bg-primary/5 text-slate-700 rounded-full text-xs shadow-sm">
-                  {value.emoji} {value.text}
-                </span>
-              ))}
-            </div>
-            <div className="flex justify-center gap-2">
-              {userValues.slice(3).map((value, index) => (
-                <span key={index} className="px-2 py-1 bg-primary/5 text-slate-700 rounded-full text-xs shadow-sm">
+          {/* 用户价值 - 紧凑两行居中 */}
+          <Card className="p-4 border border-slate-100 shadow-sm mb-5 bg-gradient-to-br from-slate-50 to-white">
+            <p className="text-sm font-semibold text-slate-700 mb-3 text-center">在生活里获得：</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {userValues.map((value, index) => (
+                <span key={index} className="px-3 py-1.5 bg-primary/10 text-slate-700 rounded-full text-xs font-medium shadow-sm border border-primary/5">
                   {value.emoji} {value.text}
                 </span>
               ))}
             </div>
           </Card>
           
-          {/* 使命与愿景 */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <Card className="p-3 border-0 shadow-sm bg-gradient-to-br from-rose-50 to-pink-50">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-sm">🎯</span>
-                <p className="text-[10px] font-medium text-rose-600">使命 Mission</p>
+          {/* 使命与愿景 - 增强视觉 */}
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <Card className="p-4 border border-rose-100 shadow-md bg-gradient-to-br from-rose-50 via-pink-50 to-white">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center">
+                  <span className="text-sm">🎯</span>
+                </div>
+                <p className="text-xs font-bold text-rose-600">使命 Mission</p>
               </div>
-              <p className="text-xs text-slate-700 leading-relaxed">
+              <p className="text-sm text-slate-700 leading-relaxed">
                 让好的行为变得简单，让更好的自己成为必然
               </p>
             </Card>
-            <Card className="p-3 border-0 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-sm">🔭</span>
-                <p className="text-[10px] font-medium text-blue-600">愿景 Vision</p>
+            <Card className="p-4 border border-blue-100 shadow-md bg-gradient-to-br from-blue-50 via-indigo-50 to-white">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
+                  <span className="text-sm">🔭</span>
+                </div>
+                <p className="text-xs font-bold text-blue-600">愿景 Vision</p>
               </div>
-              <p className="text-xs text-slate-700 leading-relaxed">
+              <p className="text-sm text-slate-700 leading-relaxed">
                 让 AI 成为每一个人的生活教练，让成长可见、可感、可持续
               </p>
             </Card>
           </div>
           
-          {/* 核心价值（3项）- 横向滚动 */}
-          <div className="mb-4">
-            <p className="text-xs font-semibold text-slate-700 mb-2">核心价值</p>
-            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-              <div className="flex gap-3 min-w-max">
+          {/* 核心价值（3项）- 真正横向滚动 */}
+          <div className="mb-5">
+            <p className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+              核心价值
+            </p>
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
+              <div className="flex gap-3" style={{ width: 'max-content' }}>
                 {platformCoreValues.map((value) => (
-                  <Card key={value.num} className="w-[140px] flex-shrink-0 p-3 border-0 shadow-sm">
-                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${value.gradient} flex items-center justify-center mb-2`}>
-                      <span className="text-white text-xs font-bold">{value.num}</span>
+                  <Card key={value.num} className="w-[160px] flex-shrink-0 p-4 border border-slate-100 shadow-md hover:shadow-lg transition-shadow bg-white">
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${value.gradient} flex items-center justify-center mb-3 shadow-sm`}>
+                      <span className="text-white text-sm font-bold">{value.num}</span>
                     </div>
-                    <h4 className="font-semibold text-xs text-slate-800 mb-1">{value.title}</h4>
-                    <p className="text-[10px] text-slate-500 leading-relaxed">{value.desc}</p>
+                    <h4 className="font-bold text-sm text-slate-800 mb-1.5">{value.title}</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed">{value.desc}</p>
                   </Card>
                 ))}
               </div>
@@ -299,17 +304,21 @@ const PlatformIntro = () => {
           {/* CTA */}
           <Button 
             onClick={() => navigate('/coach/vibrant_life_sage')}
-            className="w-full bg-gradient-to-r from-primary to-accent text-white shadow-lg"
+            size="lg"
+            className="w-full bg-gradient-to-r from-primary to-accent text-white shadow-lg hover:shadow-xl transition-shadow text-base"
           >
-            立即体验 <ArrowRight className="w-4 h-4 ml-1" />
+            立即体验 <ArrowRight className="w-5 h-5 ml-1.5" />
           </Button>
         </motion.div>
       </section>
 
+      {/* 分隔线 */}
+      <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+
       {/* 四层支持系统 */}
       <section className="px-4 py-6">
-        <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
-          <span>🏗️</span> 四层支持系统
+        <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <span className="text-xl">🏗️</span> 四层支持系统
         </h3>
         
         <div className="space-y-3">
@@ -320,17 +329,17 @@ const PlatformIntro = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className="p-3 border-0 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${layer.gradient} flex items-center justify-center flex-shrink-0`}>
+              <Card className="p-4 border border-slate-100 shadow-md hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-4">
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${layer.gradient} flex items-center justify-center flex-shrink-0 shadow-md`}>
                     <span className="text-2xl">{layer.emoji}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className={`px-1.5 py-0.5 ${layer.color} rounded text-[10px] font-medium`}>L{layer.level}</span>
-                      <h4 className="font-semibold text-sm text-slate-800">{layer.name}</h4>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`px-2 py-0.5 ${layer.color} rounded-md text-xs font-bold`}>L{layer.level}</span>
+                      <h4 className="font-bold text-sm text-slate-800">{layer.name}</h4>
                     </div>
-                    <p className="text-xs text-slate-500 line-clamp-2">{layer.desc}</p>
+                    <p className="text-sm text-slate-500 leading-relaxed">{layer.desc}</p>
                   </div>
                 </div>
               </Card>
@@ -339,18 +348,21 @@ const PlatformIntro = () => {
         </div>
         
         <Button 
-          variant="ghost" 
-          className="w-full mt-3 text-primary"
+          variant="outline" 
+          className="w-full mt-4 text-primary border-primary/30 hover:bg-primary/5"
           onClick={() => navigate('/transformation-flow')}
         >
           了解四层支持详情 <ChevronRight className="w-4 h-4" />
         </Button>
       </section>
 
+      {/* 分隔线 */}
+      <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+
       {/* 教练空间 */}
-      <section className="px-4 py-6 bg-slate-50/50">
-        <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
-          <span>🤖</span> 教练空间
+      <section className="px-4 py-6 bg-gradient-to-b from-slate-50/80 to-white">
+        <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <span className="text-xl">🤖</span> 教练空间
         </h3>
         
         {/* 核心价值 */}
@@ -454,10 +466,13 @@ const PlatformIntro = () => {
         </Button>
       </section>
 
+      {/* 分隔线 */}
+      <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+
       {/* 有劲生活馆 */}
       <section className="px-4 py-6">
-        <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
-          <span>🏛️</span> 有劲生活馆
+        <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <span className="text-xl">🏛️</span> 有劲生活馆
         </h3>
         
         {/* 三大工具分类 */}
@@ -512,12 +527,15 @@ const PlatformIntro = () => {
         </Button>
       </section>
 
+      {/* 分隔线 */}
+      <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+
       {/* 合伙人体系 */}
-      <section className="px-4 py-6 bg-slate-50/50">
-        <h3 className="text-base font-semibold text-slate-800 mb-2 flex items-center gap-2">
-          <span>🤝</span> 合伙人体系
+      <section className="px-4 py-6 bg-gradient-to-b from-slate-50/80 to-white">
+        <h3 className="text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
+          <span className="text-xl">🤝</span> 合伙人体系
         </h3>
-        <p className="text-xs text-slate-500 mb-4">
+        <p className="text-sm text-slate-500 mb-4">
           分享的不是商品，而是被帮助到的体验
         </p>
         
@@ -560,10 +578,13 @@ const PlatformIntro = () => {
         </Card>
       </section>
 
+      {/* 分隔线 */}
+      <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+
       {/* 快捷入口导航 */}
       <section className="px-4 py-6">
-        <h3 className="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
-          <span>🔗</span> 更多了解
+        <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <span className="text-xl">🔗</span> 更多了解
         </h3>
         
         <div className="space-y-3">
