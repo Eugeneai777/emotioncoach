@@ -84,15 +84,6 @@ const coachGradientMap: Record<string, string> = {
   gratitude_coach: 'from-pink-300 to-rose-400',
 };
 
-// 有劲AI六大能力
-const aiCapabilities = [
-  { icon: '💬', text: '对话式陪伴', gradient: 'from-blue-100 to-blue-50', border: 'border-blue-200', route: '/coach-space-intro' },
-  { icon: '📊', text: '情绪洞察', gradient: 'from-purple-100 to-purple-50', border: 'border-purple-200', route: '/emotion-button-intro' },
-  { icon: '🧭', text: '行为教练', gradient: 'from-emerald-100 to-emerald-50', border: 'border-emerald-200', route: '/vibrant-life-intro' },
-  { icon: '📋', text: '日报周报', gradient: 'from-amber-100 to-amber-50', border: 'border-amber-200', route: '/coach-space-intro' },
-  { icon: '👥', text: '社群共振', gradient: 'from-pink-100 to-pink-50', border: 'border-pink-200', route: '/camps' },
-  { icon: '🧠', text: '大模型智慧', gradient: 'from-indigo-100 to-indigo-50', border: 'border-indigo-200', route: '/introduction' },
-];
 
 // 用户价值
 const userValues = [
@@ -239,30 +230,6 @@ const PlatformIntro = () => {
             </div>
           </Card>
           
-          {/* 六大能力 - 2x3 真正网格 */}
-          <div className="mb-5">
-            <p className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-              它结合：
-            </p>
-            <div className="grid grid-cols-2 gap-2.5">
-              {aiCapabilities.map((cap, index) => (
-                <Card 
-                  key={index} 
-                  className={`p-3 ${cap.border} shadow-sm bg-white hover:shadow-md transition-all hover:scale-[1.02] cursor-pointer`}
-                  onClick={() => navigate(cap.route)}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${cap.gradient} flex items-center justify-center flex-shrink-0 shadow-sm`}>
-                      <span className="text-xl">{cap.icon}</span>
-                    </div>
-                    <p className="text-sm text-slate-700 font-medium">{cap.text}</p>
-                    <ChevronRight className="w-4 h-4 text-slate-300 ml-auto flex-shrink-0" />
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
           
           {/* 用户价值 - 紧凑两行居中 */}
           <Card className="p-4 border border-slate-100 shadow-sm mb-5 bg-gradient-to-br from-slate-50 to-white">
