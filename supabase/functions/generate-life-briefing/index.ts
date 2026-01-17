@@ -152,6 +152,8 @@ ${transcript}
 
 请分析这段对话并生成结构化简报。`;
 
+    console.log(`[generate-life-briefing] 🚀 Calling AI API with transcript length: ${transcript.length}`);
+    
     const aiResponse = await fetch('https://api.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -159,7 +161,7 @@ ${transcript}
         'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`
       },
       body: JSON.stringify({
-        model: 'openai/gpt-5-mini',
+        model: 'google/gemini-2.5-flash',  // 🔧 修复：使用稳定可用的模型
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -169,29 +171,37 @@ ${transcript}
       })
     });
 
+    console.log(`[generate-life-briefing] 📡 AI API response status: ${aiResponse.status}`);
+
     if (!aiResponse.ok) {
-      throw new Error(`AI API error: ${aiResponse.status}`);
+      const errorText = await aiResponse.text().catch(() => 'unknown');
+      console.error(`[generate-life-briefing] ❌ AI API error: status=${aiResponse.status}, body=${errorText.slice(0, 500)}`);
+      throw new Error(`AI API error: ${aiResponse.status} - ${errorText.slice(0, 100)}`);
     }
 
     const aiData = await aiResponse.json();
     const content = aiData.choices?.[0]?.message?.content || '';
+    console.log(`[generate-life-briefing] ✅ AI response received, content length: ${content.length}`);
     
     // 解析 AI 返回的 JSON
     let briefingData;
+    let parseFailureReason: string | null = null;
     try {
       // 清理可能的 markdown 格式
       const cleanedContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       briefingData = JSON.parse(cleanedContent);
+      console.log(`[generate-life-briefing] ✅ JSON parsed successfully`);
     } catch (parseError) {
-      console.error('Failed to parse AI response:', content);
-      // 降级处理：使用简单的摘要
+      parseFailureReason = parseError instanceof Error ? parseError.message : 'JSON parse error';
+      console.error(`[generate-life-briefing] ⚠️ Failed to parse AI response: ${parseFailureReason}`, content.slice(0, 300));
+      // 降级处理：使用简单的摘要，但记录失败原因
       briefingData = {
-        user_issue_summary: transcript.slice(0, 200),
+        user_issue_summary: '语音对话记录',
         summary: `通过语音与有劲AI进行了 ${duration_minutes || '若干'} 分钟的对话`,
         insight: null,
         action: null,
         recommended_coach_type: 'vibrant_life_sage',
-        reasoning: '继续使用有劲AI生活教练进行深入对话'
+        reasoning: `[解析失败: ${parseFailureReason}] 继续使用有劲AI生活教练进行深入对话`
       };
     }
 

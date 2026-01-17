@@ -553,25 +553,51 @@ export const CoachVoiceChat = ({
             }
           });
           
-          if (!briefingError && briefingResult?.briefing_id) {
-            console.log('[VoiceChat] Life briefing generated with AI analysis:', briefingResult.briefing_id);
-          } else {
-            // 降级：保存简单记录
-            console.warn('[VoiceChat] Briefing generation failed, saving simple record:', briefingError);
+          if (briefingError) {
+            // 🔧 新增：详细记录失败原因并通知用户
+            console.error('[VoiceChat] ❌ Briefing generation failed:', briefingError);
+            toast({
+              title: "总结生成失败",
+              description: "已保存基础对话记录",
+              variant: "destructive"
+            });
+            // 降级：保存简单记录，但在 reasoning 中记录失败原因
             await supabase.from('vibrant_life_sage_briefings').insert({
               user_id: user.id,
               user_issue_summary: userTranscript.slice(0, 200) || '语音对话记录',
-              reasoning: `通过语音与有劲AI进行了 ${callMinutes} 分钟的对话`,
+              reasoning: `生成总结失败: ${briefingError.message || '未知错误'}。通过语音与有劲AI进行了 ${callMinutes} 分钟的对话`,
+              recommended_coach_type: 'vibrant_life_sage'
+            });
+          } else if (briefingResult?.briefing_id) {
+            console.log('[VoiceChat] ✅ Life briefing generated with AI analysis:', briefingResult.briefing_id);
+          } else if (briefingResult?.error) {
+            // API 返回了错误但没有抛出异常
+            console.error('[VoiceChat] ❌ Briefing API returned error:', briefingResult.error);
+            toast({
+              title: "总结生成失败",
+              description: briefingResult.error || "请稍后在历史记录中查看",
+              variant: "destructive"
+            });
+            await supabase.from('vibrant_life_sage_briefings').insert({
+              user_id: user.id,
+              user_issue_summary: userTranscript.slice(0, 200) || '语音对话记录',
+              reasoning: `API错误: ${briefingResult.error}。通过语音与有劲AI进行了 ${callMinutes} 分钟的对话`,
               recommended_coach_type: 'vibrant_life_sage'
             });
           }
         } catch (briefingGenError) {
-          // 降级：保存简单记录
-          console.error('[VoiceChat] Briefing generation error:', briefingGenError);
+          // 降级：保存简单记录，并记录异常信息
+          const errorMsg = briefingGenError instanceof Error ? briefingGenError.message : '网络异常';
+          console.error('[VoiceChat] ❌ Briefing generation exception:', briefingGenError);
+          toast({
+            title: "总结生成失败",
+            description: "网络异常，已保存基础对话记录",
+            variant: "destructive"
+          });
           await supabase.from('vibrant_life_sage_briefings').insert({
             user_id: user.id,
             user_issue_summary: userTranscript.slice(0, 200) || '语音对话记录',
-            reasoning: `通过语音与有劲AI进行了 ${callMinutes} 分钟的对话`,
+            reasoning: `异常: ${errorMsg}。通过语音与有劲AI进行了 ${callMinutes} 分钟的对话`,
             recommended_coach_type: 'vibrant_life_sage'
           });
         }
@@ -580,10 +606,10 @@ export const CoachVoiceChat = ({
         await supabase.from('vibrant_life_sage_briefings').insert({
           user_id: user.id,
           user_issue_summary: userTranscript.slice(0, 200) || '语音对话记录',
-          reasoning: `通过语音与有劲AI进行了 ${callMinutes} 分钟的对话`,
+          reasoning: `通过语音与有劲AI进行了 ${callMinutes} 分钟的对话（对话较短，未生成总结）`,
           recommended_coach_type: 'vibrant_life_sage'
         });
-        console.log('[VoiceChat] Short conversation, saved simple briefing');
+        console.log('[VoiceChat] ⚠️ Short conversation, saved simple briefing');
       }
       
       console.log('Voice chat session recorded with API cost tracking');
