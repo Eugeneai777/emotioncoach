@@ -203,6 +203,84 @@ app.post('/wechat-pay-callback', async (req, res) => {
   }
 });
 
+// 小程序登录端点（无需认证 - 小程序直接调用）
+app.post('/miniprogram-login', async (req, res) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] 📱 小程序登录请求`);
+  
+  try {
+    const { code } = req.body;
+    
+    if (!code) {
+      console.error(`[${timestamp}] ❌ 缺少 code 参数`);
+      return res.status(400).json({ 
+        success: false, 
+        error: '缺少 code 参数' 
+      });
+    }
+    
+    console.log(`[${timestamp}] 小程序 code: ${code.substring(0, 10)}...`);
+    
+    // 从环境变量获取小程序配置
+    const appId = process.env.WECHAT_MINI_PROGRAM_APP_ID;
+    const appSecret = process.env.WECHAT_MINI_PROGRAM_APP_SECRET;
+    
+    if (!appId || !appSecret) {
+      console.error(`[${timestamp}] ❌ 小程序配置不完整`);
+      return res.status(500).json({ 
+        success: false, 
+        error: '小程序配置不完整' 
+      });
+    }
+    
+    // 调用微信 jscode2session API
+    const wxUrl = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${appSecret}&js_code=${code}&grant_type=authorization_code`;
+    
+    console.log(`[${timestamp}] 调用微信 jscode2session API...`);
+    
+    const wxResponse = await fetch(wxUrl);
+    const wxResult = await wxResponse.json();
+    
+    console.log(`[${timestamp}] 微信响应:`, { 
+      openid: wxResult.openid ? wxResult.openid.substring(0, 10) + '...' : null,
+      errcode: wxResult.errcode,
+      errmsg: wxResult.errmsg
+    });
+    
+    if (wxResult.errcode) {
+      console.error(`[${timestamp}] ❌ 微信接口错误: ${wxResult.errcode} - ${wxResult.errmsg}`);
+      return res.status(400).json({ 
+        success: false, 
+        error: `微信接口错误: ${wxResult.errcode} - ${wxResult.errmsg}` 
+      });
+    }
+    
+    if (!wxResult.openid) {
+      console.error(`[${timestamp}] ❌ 未获取到 openid`);
+      return res.status(400).json({ 
+        success: false, 
+        error: '未获取到 openid' 
+      });
+    }
+    
+    console.log(`[${timestamp}] ✅ 小程序登录成功`);
+    
+    // 返回 openid（不返回 session_key，保证安全）
+    res.json({
+      success: true,
+      openid: wxResult.openid,
+      unionid: wxResult.unionid || null,
+    });
+    
+  } catch (error) {
+    console.error(`[${timestamp}] ❌ 小程序登录失败:`, error.message);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
 // 404 处理
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
