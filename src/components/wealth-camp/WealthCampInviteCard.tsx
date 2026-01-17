@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import WealthInviteCardDialog from './WealthInviteCardDialog';
 import { cn } from '@/lib/utils';
 import { taskCardStyles, cardBaseStyles } from '@/config/cardStyleConfig';
+import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
 interface WealthCampInviteCardProps {
   campId?: string;
@@ -22,7 +23,7 @@ export function WealthCampInviteCard({
   const [showShareDialog, setShowShareDialog] = useState(false);
   const { toast } = useToast();
 
-  const inviteUrl = `${window.location.origin}/claim?type=wealth_camp_7&ref=${userId}`;
+  const inviteUrl = `${getPromotionDomain()}/claim?type=wealth_camp_7&ref=${userId}`;
 
   const handleCopyLink = async () => {
     try {
