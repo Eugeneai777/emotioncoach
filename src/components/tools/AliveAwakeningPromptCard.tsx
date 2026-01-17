@@ -42,16 +42,21 @@ export const AliveAwakeningPromptCard = ({
               <X className="w-5 h-5" />
             </button>
 
-            {/* Header */}
+            {/* Header - 引导语 */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               className="text-center mb-4"
             >
-              <p className="text-xl font-medium">今天想觉察哪个维度？ 🌱</p>
-              <p className="text-sm text-white/70 mt-1">
-                活着的每一天，都值得被看见
+              <p className="text-lg text-white/80 mb-1">
+                我此刻的生命状态
+              </p>
+              <p className="text-xl font-semibold">
+                卡在哪里？ 🔍
+              </p>
+              <p className="text-sm text-white/60 mt-2">
+                选择一个维度，开始觉察
               </p>
             </motion.div>
 
