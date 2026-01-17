@@ -187,6 +187,57 @@ const quickLinks = [
   ]},
 ];
 
+// 动画变体
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 100,
+      damping: 15
+    }
+  }
+};
+
+const scaleVariants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: "spring" as const,
+      stiffness: 100,
+      damping: 15
+    }
+  }
+};
+
+const slideVariants = {
+  hidden: { opacity: 0, x: -30 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 100,
+      damping: 15
+    }
+  }
+};
+
 const PlatformIntro = () => {
   const navigate = useNavigate();
   const { data: templates, isLoading } = useActiveCoachTemplates();
@@ -232,16 +283,26 @@ const PlatformIntro = () => {
           
           
           {/* 用户价值 - 紧凑两行居中 */}
-          <Card className="p-4 border border-slate-100 shadow-sm mb-5 bg-gradient-to-br from-slate-50 to-white">
-            <p className="text-sm font-semibold text-slate-700 mb-3 text-center">在生活里获得：</p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {userValues.map((value, index) => (
-                <span key={index} className="px-3 py-1.5 bg-primary/10 text-slate-700 rounded-full text-xs font-medium shadow-sm border border-primary/5">
-                  {value.emoji} {value.text}
-                </span>
-              ))}
-            </div>
-          </Card>
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <Card className="p-4 border border-slate-100 shadow-sm mb-5 bg-gradient-to-br from-slate-50 to-white">
+              <p className="text-sm font-semibold text-slate-700 mb-3 text-center">在生活里获得：</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {userValues.map((value, index) => (
+                  <motion.span 
+                    key={index} 
+                    variants={scaleVariants}
+                    className="px-3 py-1.5 bg-primary/10 text-slate-700 rounded-full text-xs font-medium shadow-sm border border-primary/5"
+                  >
+                    {value.emoji} {value.text}
+                  </motion.span>
+                ))}
+              </div>
+            </Card>
+          </motion.div>
           
           {/* 使命与愿景 - 增强视觉 */}
           <div className="grid grid-cols-2 gap-3 mb-5">
@@ -276,7 +337,12 @@ const PlatformIntro = () => {
           </div>
           
           {/* 核心价值（3项）- 真正横向滚动 */}
-          <div className="mb-6">
+          <motion.div 
+            className="mb-6"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent" />
@@ -288,23 +354,28 @@ const PlatformIntro = () => {
             </div>
             <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
               <div className="flex gap-3" style={{ width: 'max-content' }}>
-                {platformCoreValues.map((value) => (
-                  <Card 
-                    key={value.num} 
-                    className={`w-[165px] flex-shrink-0 p-4 border-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.02] bg-white cursor-pointer ${value.num === 1 ? 'border-rose-200' : value.num === 2 ? 'border-blue-200' : 'border-amber-200'}`}
-                    onClick={() => navigate(value.route)}
+                {platformCoreValues.map((value, index) => (
+                  <motion.div
+                    key={value.num}
+                    variants={scaleVariants}
+                    custom={index}
                   >
-                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${value.gradient} flex items-center justify-center mb-3 shadow-md`}>
-                      <span className="text-white text-base font-bold">{value.num}</span>
-                    </div>
-                    <h4 className="font-bold text-sm text-slate-800 mb-1.5">{value.title}</h4>
-                    <p className="text-xs text-slate-500 leading-relaxed">{value.desc}</p>
-                    <ChevronRight className="w-4 h-4 text-slate-300 mt-2" />
-                  </Card>
+                    <Card 
+                      className={`w-[165px] flex-shrink-0 p-4 border-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.02] bg-white cursor-pointer ${value.num === 1 ? 'border-rose-200' : value.num === 2 ? 'border-blue-200' : 'border-amber-200'}`}
+                      onClick={() => navigate(value.route)}
+                    >
+                      <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${value.gradient} flex items-center justify-center mb-3 shadow-md`}>
+                        <span className="text-white text-base font-bold">{value.num}</span>
+                      </div>
+                      <h4 className="font-bold text-sm text-slate-800 mb-1.5">{value.title}</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">{value.desc}</p>
+                      <ChevronRight className="w-4 h-4 text-slate-300 mt-2" />
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
             </div>
-          </div>
+          </motion.div>
           
           {/* CTA */}
           <Button 
@@ -322,17 +393,28 @@ const PlatformIntro = () => {
 
       {/* 四层支持系统 */}
       <section className="px-4 py-6">
-        <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <span className="text-xl">🏗️</span> 四层支持系统
-        </h3>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5 }}
+        >
+          <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span className="text-xl">🏗️</span> 四层支持系统
+          </h3>
+        </motion.div>
         
-        <div className="space-y-3">
-          {fourLayers.map((layer, index) => (
+        <motion.div 
+          className="space-y-3"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+        >
+          {fourLayers.map((layer) => (
             <motion.div
               key={layer.level}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
+              variants={slideVariants}
             >
               <Card 
                 className="p-4 border border-slate-100 shadow-md hover:shadow-lg transition-shadow cursor-pointer"
@@ -354,15 +436,22 @@ const PlatformIntro = () => {
               </Card>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
         
-        <Button 
-          variant="outline" 
-          className="w-full mt-4 text-primary border-primary/30 hover:bg-primary/5"
-          onClick={() => navigate('/transformation-flow')}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4 }}
         >
-          了解四层支持详情 <ChevronRight className="w-4 h-4" />
-        </Button>
+          <Button 
+            variant="outline" 
+            className="w-full mt-4 text-primary border-primary/30 hover:bg-primary/5"
+            onClick={() => navigate('/transformation-flow')}
+          >
+            了解四层支持详情 <ChevronRight className="w-4 h-4" />
+          </Button>
+        </motion.div>
       </section>
 
       {/* 分隔线 */}
@@ -370,18 +459,29 @@ const PlatformIntro = () => {
 
       {/* 教练空间 */}
       <section className="px-4 py-6 bg-gradient-to-b from-slate-50/80 to-white">
-        <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <span className="text-xl">🤖</span> 教练空间
-        </h3>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5 }}
+        >
+          <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span className="text-xl">🤖</span> 教练空间
+          </h3>
+        </motion.div>
         
         {/* 核心价值 */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
-          {coachCoreValues.map((value, index) => (
+        <motion.div 
+          className="grid grid-cols-4 gap-2 mb-4"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+        >
+          {coachCoreValues.map((value) => (
             <motion.div
               key={value.title}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              variants={scaleVariants}
             >
               <Card 
                 className="p-2 text-center border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
@@ -395,7 +495,7 @@ const PlatformIntro = () => {
               </Card>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
         
         {/* 我的日记详情 */}
         <Card 
@@ -487,21 +587,34 @@ const PlatformIntro = () => {
 
       {/* 有劲生活馆 */}
       <section className="px-4 py-6">
-        <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <span className="text-xl">🏛️</span> 有劲生活馆
-        </h3>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5 }}
+        >
+          <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span className="text-xl">🏛️</span> 有劲生活馆
+          </h3>
+        </motion.div>
         
         {/* 三大工具分类 */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          {toolCategories.map((category, index) => (
+        <motion.div 
+          className="grid grid-cols-3 gap-2 mb-4"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+        >
+          {toolCategories.map((category) => (
             <motion.div
               key={category.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              variants={scaleVariants}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               <Card 
-                className={`p-2 text-center border-0 shadow-sm bg-gradient-to-br ${category.tabGradient} text-white cursor-pointer hover:scale-105 transition-transform`}
+                className={`p-2 text-center border-0 shadow-sm bg-gradient-to-br ${category.tabGradient} text-white cursor-pointer transition-transform`}
                 onClick={() => navigate('/energy-studio')}
               >
                 <span className="text-xl block mb-0.5">{category.emoji}</span>
@@ -509,16 +622,20 @@ const PlatformIntro = () => {
               </Card>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
         
         {/* 关键功能入口 */}
-        <div className="grid grid-cols-2 gap-2">
-          {studioKeyFeatures.map((feature, index) => (
+        <motion.div 
+          className="grid grid-cols-2 gap-2"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+        >
+          {studioKeyFeatures.map((feature) => (
             <motion.div
               key={feature.name}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.08 }}
+              variants={itemVariants}
             >
               <Card 
                 className="p-3 border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
@@ -535,15 +652,22 @@ const PlatformIntro = () => {
               </Card>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
         
-        <Button 
-          variant="ghost" 
-          className="w-full mt-3 text-primary"
-          onClick={() => navigate('/energy-studio')}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
         >
-          进入有劲生活馆 <ChevronRight className="w-4 h-4" />
-        </Button>
+          <Button 
+            variant="ghost" 
+            className="w-full mt-3 text-primary"
+            onClick={() => navigate('/energy-studio')}
+          >
+            进入有劲生活馆 <ChevronRight className="w-4 h-4" />
+          </Button>
+        </motion.div>
       </section>
 
       {/* 分隔线 */}
@@ -551,20 +675,32 @@ const PlatformIntro = () => {
 
       {/* 合伙人体系 */}
       <section className="px-4 py-6 bg-gradient-to-b from-slate-50/80 to-white">
-        <h3 className="text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
-          <span className="text-xl">🤝</span> 合伙人体系
-        </h3>
-        <p className="text-sm text-slate-500 mb-4">
-          分享的不是商品，而是被帮助到的体验
-        </p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5 }}
+        >
+          <h3 className="text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
+            <span className="text-xl">🤝</span> 合伙人体系
+          </h3>
+          <p className="text-sm text-slate-500 mb-4">
+            分享的不是商品，而是被帮助到的体验
+          </p>
+        </motion.div>
         
-        <div className="grid grid-cols-2 gap-3">
-          {partnerTypes.map((partner, index) => (
+        <motion.div 
+          className="grid grid-cols-2 gap-3"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+        >
+          {partnerTypes.map((partner) => (
             <motion.div
               key={partner.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              variants={itemVariants}
+              whileHover={{ y: -4 }}
             >
               <Card 
                 className="p-3 border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full"
@@ -587,14 +723,21 @@ const PlatformIntro = () => {
               </Card>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
         
         {/* 价值闭环 */}
-        <Card className="mt-4 p-3 border-0 shadow-sm bg-gradient-to-r from-primary/5 via-accent/5 to-warm/5">
-          <p className="text-[10px] text-center text-slate-600">
-            <span className="font-medium">价值闭环：</span> 用户体验 → 感受改变 → 成为会员 → 参加训练营 → 成为合伙人 → 持续被动收入
-          </p>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+        >
+          <Card className="mt-4 p-3 border-0 shadow-sm bg-gradient-to-r from-primary/5 via-accent/5 to-warm/5">
+            <p className="text-[10px] text-center text-slate-600">
+              <span className="font-medium">价值闭环：</span> 用户体验 → 感受改变 → 成为会员 → 参加训练营 → 成为合伙人 → 持续被动收入
+            </p>
+          </Card>
+        </motion.div>
       </section>
 
       {/* 分隔线 */}
@@ -602,29 +745,52 @@ const PlatformIntro = () => {
 
       {/* 快捷入口导航 */}
       <section className="px-4 py-6">
-        <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <span className="text-xl">🔗</span> 更多了解
-        </h3>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5 }}
+        >
+          <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span className="text-xl">🔗</span> 更多了解
+          </h3>
+        </motion.div>
         
-        <div className="space-y-3">
-          {quickLinks.map((group) => (
-            <div key={group.category}>
+        <motion.div 
+          className="space-y-3"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+        >
+          {quickLinks.map((group, groupIndex) => (
+            <motion.div 
+              key={group.category}
+              variants={itemVariants}
+              custom={groupIndex}
+            >
               <p className="text-xs text-slate-500 mb-2">{group.category}</p>
               <div className="flex flex-wrap gap-2">
-                {group.links.map((link) => (
-                  <Badge
+                {group.links.map((link, linkIndex) => (
+                  <motion.div
                     key={link.name}
-                    variant="secondary"
-                    className="cursor-pointer hover:bg-primary/10 transition-colors text-xs px-2.5 py-1"
-                    onClick={() => navigate(link.route)}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: groupIndex * 0.1 + linkIndex * 0.03 }}
                   >
-                    {link.name}
-                  </Badge>
+                    <Badge
+                      variant="secondary"
+                      className="cursor-pointer hover:bg-primary/10 transition-colors text-xs px-2.5 py-1"
+                      onClick={() => navigate(link.route)}
+                    >
+                      {link.name}
+                    </Badge>
+                  </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* Bottom CTA */}
