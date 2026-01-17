@@ -1,5 +1,6 @@
 import React, { forwardRef, useState, useEffect } from 'react';
 import QRCode from 'qrcode';
+import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
 // 主题色配置
 export const CARD_THEMES = {
@@ -57,7 +58,7 @@ const TeenInviteShareCard = forwardRef<HTMLDivElement, TeenInviteShareCardProps>
     useEffect(() => {
       const generateQR = async () => {
         try {
-          const targetUrl = `${window.location.origin}/teen-chat/${accessToken}`;
+          const targetUrl = `${getPromotionDomain()}/teen-chat/${accessToken}`;
           const url = await QRCode.toDataURL(targetUrl, {
             width: 160,
             margin: 1,
