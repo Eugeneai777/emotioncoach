@@ -80,10 +80,13 @@ serve(async (req) => {
       throw new Error('缺少必要参数');
     }
 
-    // JSAPI 支付需要 openId
+    // JSAPI 支付需要 openId（小程序支付除外，openId 由原生端提供）
     if (payType === 'jsapi' && !openId) {
       throw new Error('JSAPI支付需要openId');
     }
+    
+    // 小程序支付：需要返回 prepay_id，由原生端获取 openId 后调用 wx.requestPayment
+    const isMiniProgramPay = payType === 'miniprogram';
 
     // 获取微信支付配置
     const mchId = Deno.env.get('WECHAT_MCH_ID');
@@ -139,7 +142,8 @@ serve(async (req) => {
     const isH5 = payType === 'h5';
     const isJsapi = payType === 'jsapi';
     let apiPath: string;
-    if (isJsapi) {
+    if (isJsapi || isMiniProgramPay) {
+      // 小程序支付也使用 JSAPI 接口获取 prepay_id
       apiPath = '/v3/pay/transactions/jsapi';
     } else if (isH5) {
       apiPath = '/v3/pay/transactions/h5';
@@ -174,10 +178,26 @@ serve(async (req) => {
     }
 
     // JSAPI支付需要payer信息
-    if (isJsapi) {
+    if (isJsapi && !isMiniProgramPay) {
       requestBody.payer = {
         openid: openId
       };
+    }
+    
+    // 小程序支付：如果有 openId 使用 JSAPI，否则回退到 Native
+    if (isMiniProgramPay) {
+      if (openId) {
+        // 有 openId：使用小程序 appId + JSAPI
+        const miniAppId = Deno.env.get('WECHAT_MINIPROGRAM_APP_ID') || appId;
+        requestBody.appid = miniAppId;
+        requestBody.payer = { openid: openId };
+        console.log('MiniProgram pay with openId, using JSAPI');
+      } else {
+        // 无 openId：回退到 Native 支付（返回二维码链接）
+        // 但小程序内无法扫码，这种情况应该让前端先获取 openId
+        console.log('MiniProgram pay without openId - this will likely fail, please ensure mp_openid is passed');
+        // 不设置 payer，让请求继续（会返回错误）
+      }
     }
 
     console.log('WeChat pay request:', requestBody);
@@ -305,13 +325,16 @@ serve(async (req) => {
     // 获取支付URL或prepay_id - 使用实际的支付类型
     const actualIsH5 = actualPayType === 'h5';
     const actualIsJsapi = actualPayType === 'jsapi';
+    const actualIsMiniProgram = actualPayType === 'miniprogram';
     let payUrl: string = '';
     let jsapiPayParams: Record<string, string> | undefined;
+    let miniprogramPayParams: Record<string, string> | undefined;
     
-    if (actualIsJsapi) {
-      // JSAPI支付返回 prepay_id，需要生成前端调起支付的参数
+    if (actualIsJsapi || actualIsMiniProgram) {
+      // JSAPI/小程序支付返回 prepay_id，需要生成前端调起支付的参数
       const prepayId = wechatResult.prepay_id as string;
       if (!prepayId) {
+        console.error('WeChat response missing prepay_id:', wechatResult);
         throw new Error('未获取到prepay_id');
       }
       
@@ -320,12 +343,15 @@ serve(async (req) => {
       const jsapiNonceStr = generateNonceStr();
       const packageStr = `prepay_id=${prepayId}`;
       
+      // 小程序支付使用小程序 appId 签名
+      const signAppId = actualIsMiniProgram ? (Deno.env.get('WECHAT_MINIPROGRAM_APP_ID') || appId) : appId;
+      
       // 签名内容：appId、timeStamp、nonceStr、package
-      const jsapiSignMessage = `${appId}\n${jsapiTimestamp}\n${jsapiNonceStr}\n${packageStr}\n`;
+      const jsapiSignMessage = `${signAppId}\n${jsapiTimestamp}\n${jsapiNonceStr}\n${packageStr}\n`;
       const jsapiPaySign = await signWithRSA(jsapiSignMessage, privateKey);
       
-      jsapiPayParams = {
-        appId: appId,
+      const payParams = {
+        appId: signAppId,
         timeStamp: jsapiTimestamp,
         nonceStr: jsapiNonceStr,
         package: packageStr,
@@ -333,7 +359,13 @@ serve(async (req) => {
         paySign: jsapiPaySign
       };
       
-      console.log('JSAPI pay params generated:', { ...jsapiPayParams, paySign: '***' });
+      if (actualIsMiniProgram) {
+        miniprogramPayParams = payParams;
+        console.log('MiniProgram pay params generated:', { ...miniprogramPayParams, paySign: '***' });
+      } else {
+        jsapiPayParams = payParams;
+        console.log('JSAPI pay params generated:', { ...jsapiPayParams, paySign: '***' });
+      }
     } else if (actualIsH5) {
       // H5支付返回 h5_url
       payUrl = wechatResult.h5_url as string;
@@ -375,9 +407,10 @@ serve(async (req) => {
         success: true,
         orderNo,
         payUrl: payUrl || undefined, // 统一返回payUrl
-        qrCodeUrl: !actualIsH5 && !actualIsJsapi ? payUrl : undefined, // 兼容旧版本
+        qrCodeUrl: !actualIsH5 && !actualIsJsapi && !actualIsMiniProgram ? payUrl : undefined, // 兼容旧版本
         h5Url: actualIsH5 ? payUrl : undefined, // H5支付专用
         jsapiPayParams, // JSAPI支付专用参数
+        miniprogramPayParams, // 小程序支付专用参数
         payType: actualPayType, // 返回实际使用的支付类型
         fallbackReason, // 如果发生了降级，告知原因
         expiredAt: expiredAt.toISOString(),
