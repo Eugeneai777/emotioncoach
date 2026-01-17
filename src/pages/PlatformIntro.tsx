@@ -82,12 +82,12 @@ const coachGradientMap: Record<string, string> = {
 
 // 有劲AI六大能力
 const aiCapabilities = [
-  'AI 的对话式陪伴',
-  '情绪分析与洞察能力',
-  '行为教练方法',
-  '结构化成长系统（日报＋周报）',
-  '社群共振（绽放故事、Harvuta、小组讨论、每周直播）',
-  '大模型智慧（关系、职场、心理、家庭、目标等问题的建议）',
+  { icon: '💬', text: '对话式陪伴' },
+  { icon: '📊', text: '情绪洞察' },
+  { icon: '🧭', text: '行为教练' },
+  { icon: '📋', text: '日报周报' },
+  { icon: '👥', text: '社群共振' },
+  { icon: '🧠', text: '大模型智慧' },
 ];
 
 // 用户价值
@@ -209,15 +209,9 @@ const PlatformIntro = () => {
           transition={{ duration: 0.5 }}
           className="relative"
         >
-          {/* 章节标题 */}
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-xl">📖</span>
-            <h2 className="text-base font-bold text-slate-800">第一章｜什么是有劲AI？</h2>
-          </div>
-          
           {/* 核心定义 */}
           <Card className="p-4 border-0 shadow-sm bg-gradient-to-br from-primary/5 via-accent/5 to-warm/5 mb-4">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 via-accent/10 to-warm/10 flex items-center justify-center flex-shrink-0">
                 <span className="text-2xl">🌟</span>
               </div>
@@ -228,27 +222,34 @@ const PlatformIntro = () => {
             </div>
           </Card>
           
-          {/* 六大能力 */}
+          {/* 六大能力 - 2x3 网格卡片 */}
           <div className="mb-4">
             <p className="text-xs font-semibold text-slate-700 mb-2">它结合：</p>
-            <div className="space-y-1.5">
+            <div className="grid grid-cols-2 gap-2">
               {aiCapabilities.map((cap, index) => (
-                <div key={index} className="flex items-start gap-2">
-                  <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
-                    {index + 1}
-                  </span>
-                  <p className="text-xs text-slate-600 leading-relaxed">{cap}</p>
-                </div>
+                <Card key={index} className="p-2.5 border-0 shadow-sm bg-white">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{cap.icon}</span>
+                    <p className="text-xs text-slate-700 font-medium">{cap.text}</p>
+                  </div>
+                </Card>
               ))}
             </div>
           </div>
           
-          {/* 用户价值 */}
+          {/* 用户价值 - 两行居中 */}
           <Card className="p-3 border-0 shadow-sm mb-4">
-            <p className="text-xs font-semibold text-slate-700 mb-2">让每一个人能在生活里获得：</p>
-            <div className="flex flex-wrap gap-2">
-              {userValues.map((value, index) => (
-                <span key={index} className="px-2 py-1 bg-primary/5 text-slate-700 rounded-full text-xs">
+            <p className="text-xs font-semibold text-slate-700 mb-2">在生活里获得：</p>
+            <div className="flex justify-center gap-2 mb-2">
+              {userValues.slice(0, 3).map((value, index) => (
+                <span key={index} className="px-2 py-1 bg-primary/5 text-slate-700 rounded-full text-xs shadow-sm">
+                  {value.emoji} {value.text}
+                </span>
+              ))}
+            </div>
+            <div className="flex justify-center gap-2">
+              {userValues.slice(3).map((value, index) => (
+                <span key={index} className="px-2 py-1 bg-primary/5 text-slate-700 rounded-full text-xs shadow-sm">
                   {value.emoji} {value.text}
                 </span>
               ))}
@@ -258,36 +259,40 @@ const PlatformIntro = () => {
           {/* 使命与愿景 */}
           <div className="grid grid-cols-2 gap-3 mb-4">
             <Card className="p-3 border-0 shadow-sm bg-gradient-to-br from-rose-50 to-pink-50">
-              <p className="text-[10px] font-medium text-rose-600 mb-1">使命 Mission</p>
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-sm">🎯</span>
+                <p className="text-[10px] font-medium text-rose-600">使命 Mission</p>
+              </div>
               <p className="text-xs text-slate-700 leading-relaxed">
                 让好的行为变得简单，让更好的自己成为必然
               </p>
             </Card>
             <Card className="p-3 border-0 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50">
-              <p className="text-[10px] font-medium text-blue-600 mb-1">愿景 Vision</p>
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-sm">🔭</span>
+                <p className="text-[10px] font-medium text-blue-600">愿景 Vision</p>
+              </div>
               <p className="text-xs text-slate-700 leading-relaxed">
                 让 AI 成为每一个人的生活教练，让成长可见、可感、可持续
               </p>
             </Card>
           </div>
           
-          {/* 核心价值（3项） */}
+          {/* 核心价值（3项）- 横向滚动 */}
           <div className="mb-4">
-            <p className="text-xs font-semibold text-slate-700 mb-2">核心价值（3 项）</p>
-            <div className="space-y-2">
-              {platformCoreValues.map((value) => (
-                <Card key={value.num} className="p-3 border-0 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${value.gradient} flex items-center justify-center flex-shrink-0`}>
+            <p className="text-xs font-semibold text-slate-700 mb-2">核心价值</p>
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+              <div className="flex gap-3 min-w-max">
+                {platformCoreValues.map((value) => (
+                  <Card key={value.num} className="w-[140px] flex-shrink-0 p-3 border-0 shadow-sm">
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${value.gradient} flex items-center justify-center mb-2`}>
                       <span className="text-white text-xs font-bold">{value.num}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-xs text-slate-800">{value.title}</h4>
-                      <p className="text-[10px] text-slate-500">{value.desc}</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+                    <h4 className="font-semibold text-xs text-slate-800 mb-1">{value.title}</h4>
+                    <p className="text-[10px] text-slate-500 leading-relaxed">{value.desc}</p>
+                  </Card>
+                ))}
+              </div>
             </div>
           </div>
           
