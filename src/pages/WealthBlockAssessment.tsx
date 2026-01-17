@@ -472,6 +472,7 @@ export default function WealthBlockAssessmentPage() {
       {/* 导航栏 - 使用统一的PageHeader组件 */}
       <PageHeader 
         title=""
+        backTo="/coach/wealth_coach_4_questions"
         className="bg-gradient-to-r from-amber-50/95 via-orange-50/95 to-amber-50/95 border-b border-amber-200/50"
         rightActions={
           <div className="flex items-center gap-1">
