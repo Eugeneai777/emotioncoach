@@ -82,12 +82,12 @@ const coachGradientMap: Record<string, string> = {
 
 // 有劲AI六大能力
 const aiCapabilities = [
-  { icon: '💬', text: '对话式陪伴' },
-  { icon: '📊', text: '情绪洞察' },
-  { icon: '🧭', text: '行为教练' },
-  { icon: '📋', text: '日报周报' },
-  { icon: '👥', text: '社群共振' },
-  { icon: '🧠', text: '大模型智慧' },
+  { icon: '💬', text: '对话式陪伴', gradient: 'from-blue-100 to-blue-50', border: 'border-blue-200' },
+  { icon: '📊', text: '情绪洞察', gradient: 'from-purple-100 to-purple-50', border: 'border-purple-200' },
+  { icon: '🧭', text: '行为教练', gradient: 'from-emerald-100 to-emerald-50', border: 'border-emerald-200' },
+  { icon: '📋', text: '日报周报', gradient: 'from-amber-100 to-amber-50', border: 'border-amber-200' },
+  { icon: '👥', text: '社群共振', gradient: 'from-pink-100 to-pink-50', border: 'border-pink-200' },
+  { icon: '🧠', text: '大模型智慧', gradient: 'from-indigo-100 to-indigo-50', border: 'border-indigo-200' },
 ];
 
 // 用户价值
@@ -230,9 +230,9 @@ const PlatformIntro = () => {
             </p>
             <div className="grid grid-cols-2 gap-2.5">
               {aiCapabilities.map((cap, index) => (
-                <Card key={index} className="p-3 border border-slate-100 shadow-sm bg-white hover:shadow-md transition-shadow">
+                <Card key={index} className={`p-3 ${cap.border} shadow-sm bg-white hover:shadow-md transition-all hover:scale-[1.02]`}>
                   <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center flex-shrink-0">
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${cap.gradient} flex items-center justify-center flex-shrink-0 shadow-sm`}>
                       <span className="text-xl">{cap.icon}</span>
                     </div>
                     <p className="text-sm text-slate-700 font-medium">{cap.text}</p>
@@ -256,10 +256,10 @@ const PlatformIntro = () => {
           
           {/* 使命与愿景 - 增强视觉 */}
           <div className="grid grid-cols-2 gap-3 mb-5">
-            <Card className="p-4 border border-rose-100 shadow-md bg-gradient-to-br from-rose-50 via-pink-50 to-white">
+            <Card className="p-4 border border-rose-200 shadow-md bg-gradient-to-br from-rose-50 via-pink-50 to-white hover:shadow-lg transition-shadow">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center">
-                  <span className="text-sm">🎯</span>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shadow-sm">
+                  <span className="text-lg">🎯</span>
                 </div>
                 <p className="text-xs font-bold text-rose-600">使命 Mission</p>
               </div>
@@ -267,10 +267,10 @@ const PlatformIntro = () => {
                 让好的行为变得简单，让更好的自己成为必然
               </p>
             </Card>
-            <Card className="p-4 border border-blue-100 shadow-md bg-gradient-to-br from-blue-50 via-indigo-50 to-white">
+            <Card className="p-4 border border-blue-200 shadow-md bg-gradient-to-br from-blue-50 via-indigo-50 to-white hover:shadow-lg transition-shadow">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
-                  <span className="text-sm">🔭</span>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-sm">
+                  <span className="text-lg">🔭</span>
                 </div>
                 <p className="text-xs font-bold text-blue-600">愿景 Vision</p>
               </div>
@@ -281,17 +281,22 @@ const PlatformIntro = () => {
           </div>
           
           {/* 核心价值（3项）- 真正横向滚动 */}
-          <div className="mb-5">
-            <p className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-              核心价值
-            </p>
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                核心价值
+              </p>
+              <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                左右滑动 <ArrowRight className="w-3 h-3" />
+              </span>
+            </div>
             <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
               <div className="flex gap-3" style={{ width: 'max-content' }}>
                 {platformCoreValues.map((value) => (
-                  <Card key={value.num} className="w-[160px] flex-shrink-0 p-4 border border-slate-100 shadow-md hover:shadow-lg transition-shadow bg-white">
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${value.gradient} flex items-center justify-center mb-3 shadow-sm`}>
-                      <span className="text-white text-sm font-bold">{value.num}</span>
+                  <Card key={value.num} className={`w-[165px] flex-shrink-0 p-4 border-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.02] bg-white ${value.num === 1 ? 'border-rose-200' : value.num === 2 ? 'border-blue-200' : 'border-amber-200'}`}>
+                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${value.gradient} flex items-center justify-center mb-3 shadow-md`}>
+                      <span className="text-white text-base font-bold">{value.num}</span>
                     </div>
                     <h4 className="font-bold text-sm text-slate-800 mb-1.5">{value.title}</h4>
                     <p className="text-xs text-slate-500 leading-relaxed">{value.desc}</p>
@@ -624,21 +629,13 @@ const PlatformIntro = () => {
               每一次对话，都是一次自我觉察的机会
             </p>
             
-            <div className="flex flex-col gap-2">
-              <Button 
-                onClick={() => navigate('/coach/vibrant_life_sage')}
-                className="w-full bg-gradient-to-r from-primary to-accent text-white shadow-md"
-              >
-                开始体验有劲AI <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => navigate('/camps')}
-                className="w-full text-slate-600"
-              >
-                加入21天训练营
-              </Button>
-            </div>
+            <Button 
+              onClick={() => navigate('/coach/vibrant_life_sage')}
+              size="lg"
+              className="w-full bg-gradient-to-r from-primary to-accent text-white shadow-lg hover:shadow-xl transition-all text-base py-6"
+            >
+              🚀 开始体验有劲AI <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
           </Card>
         </motion.div>
       </section>
