@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, CheckCircle, User, QrCode, Mail, LogIn, RefreshCw, Eye, EyeOff, Phone, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { isWeChatMiniProgram } from '@/utils/platform';
 import {
   Select,
   SelectContent,
@@ -87,8 +88,9 @@ export function QuickRegisterStep({
   // 服务条款同意状态（注册模式需要勾选，登录模式不需要）
   const [agreedTerms, setAgreedTerms] = useState(false);
 
-  // 检测是否是微信环境
+  // 检测是否是微信环境（区分微信浏览器和小程序）
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+  const isMiniProgram = isWeChatMiniProgram();
   
   // 微信环境下自动获取微信昵称
   useEffect(() => {
@@ -538,7 +540,51 @@ export function QuickRegisterStep({
   const handleWechatAuth = async () => {
     setIsWechatAuthing(true);
     try {
-      // 调用微信OAuth授权
+      // 小程序环境：直接使用已有的 mp_openid 注册/登录
+      if (isMiniProgram) {
+        // 从 URL 或 props 获取小程序 openId
+        const urlParams = new URLSearchParams(window.location.search);
+        const mpOpenId = urlParams.get('mp_openid') || paymentOpenId;
+        
+        if (!mpOpenId) {
+          toast.error('未获取到授权信息，请返回小程序重新进入');
+          setRegisterMode('email');
+          return;
+        }
+        
+        console.log('[QuickRegister] MiniProgram direct auth with openId');
+        
+        // 调用后端直接用 openId 注册/登录
+        const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
+          body: {
+            openId: mpOpenId,
+            source: 'miniprogram'
+          }
+        });
+        
+        if (error) throw error;
+        
+        if (data?.tokenHash) {
+          // 使用 tokenHash 自动登录
+          const { error: verifyError } = await supabase.auth.verifyOtp({
+            token_hash: data.tokenHash,
+            type: 'magiclink'
+          });
+          
+          if (verifyError) {
+            console.error('Verify OTP error:', verifyError);
+            throw new Error('登录验证失败');
+          }
+          
+          toast.success(data.isNewUser ? '注册成功！' : '登录成功！');
+          onSuccess(data.userId);
+          return;
+        } else {
+          throw new Error('登录失败，请重试');
+        }
+      }
+      
+      // 微信浏览器环境：使用 OAuth 跳转
       const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
         body: {
           action: 'get_auth_url',
@@ -587,7 +633,7 @@ export function QuickRegisterStep({
           }`}
         >
           <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" />
-          {isWechat ? '微信授权' : '微信扫码'}
+          {isMiniProgram ? '一键登录' : (isWechat ? '微信授权' : '微信扫码')}
         </button>
         <button
           onClick={() => setRegisterMode('email')}
@@ -627,7 +673,7 @@ export function QuickRegisterStep({
                   </svg>
                 </div>
                 <p className="text-sm text-muted-foreground text-center">
-                  点击下方按钮使用微信授权登录
+                  {isMiniProgram ? '点击下方按钮一键登录' : '点击下方按钮使用微信授权登录'}
                 </p>
               </div>
               
@@ -659,10 +705,10 @@ export function QuickRegisterStep({
                 {isWechatAuthing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    正在授权...
+                    {isMiniProgram ? '正在登录...' : '正在授权...'}
                   </>
                 ) : (
-                  '微信授权登录'
+                  isMiniProgram ? '一键登录' : '微信授权登录'
                 )}
               </Button>
             </div>
