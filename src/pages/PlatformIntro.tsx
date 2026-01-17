@@ -258,7 +258,7 @@ const PlatformIntro = () => {
       </header>
 
       {/* 第一章｜什么是有劲AI？ */}
-      <section className="relative px-4 pt-6 pb-6 overflow-hidden">
+      <section className="relative px-4 pt-4 pb-4 overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-warm/20 to-primary/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
         
@@ -269,14 +269,14 @@ const PlatformIntro = () => {
           className="relative"
         >
           {/* 核心定义 - 突出视觉 */}
-          <Card className="p-4 border border-primary/10 shadow-md bg-gradient-to-br from-primary/5 via-accent/5 to-warm/5 mb-5">
+          <Card className="p-3 sm:p-4 border border-primary/10 shadow-md bg-gradient-to-br from-primary/5 via-accent/5 to-warm/5 mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary via-accent to-warm flex items-center justify-center flex-shrink-0 shadow-lg">
-                <span className="text-3xl">🌟</span>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-primary via-accent to-warm flex items-center justify-center flex-shrink-0 shadow-lg">
+                <span className="text-2xl sm:text-3xl">🌟</span>
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-800">有劲AI是一位</p>
-                <p className="text-primary font-bold text-lg">懂你、陪你、帮你成长的生活教练</p>
+                <p className="text-xs sm:text-sm font-semibold text-slate-800">有劲AI是一位</p>
+                <p className="text-primary font-bold text-base sm:text-lg">懂你、陪你、帮你成长的生活教练</p>
               </div>
             </div>
           </Card>
@@ -288,14 +288,14 @@ const PlatformIntro = () => {
             initial="hidden"
             animate="visible"
           >
-            <Card className="p-4 border border-slate-100 shadow-sm mb-5 bg-gradient-to-br from-slate-50 to-white">
-              <p className="text-sm font-semibold text-slate-700 mb-3 text-center">在生活里获得：</p>
-              <div className="flex flex-wrap justify-center gap-2">
+            <Card className="p-3 sm:p-4 border border-slate-100 shadow-sm mb-4 bg-gradient-to-br from-slate-50 to-white">
+              <p className="text-xs sm:text-sm font-semibold text-slate-700 mb-2 sm:mb-3 text-center">在生活里获得：</p>
+              <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
                 {userValues.map((value, index) => (
                   <motion.span 
                     key={index} 
                     variants={scaleVariants}
-                    className="px-3 py-1.5 bg-primary/10 text-slate-700 rounded-full text-xs font-medium shadow-sm border border-primary/5"
+                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-primary/10 text-slate-700 rounded-full text-[11px] sm:text-xs font-medium shadow-sm border border-primary/5"
                   >
                     {value.emoji} {value.text}
                   </motion.span>
@@ -305,32 +305,32 @@ const PlatformIntro = () => {
           </motion.div>
           
           {/* 使命与愿景 - 增强视觉 */}
-          <div className="grid grid-cols-2 gap-3 mb-5">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4">
             <Card 
-              className="p-4 border border-rose-200 shadow-md bg-gradient-to-br from-rose-50 via-pink-50 to-white hover:shadow-lg transition-shadow cursor-pointer"
+              className="p-3 sm:p-4 border border-rose-200 shadow-md bg-gradient-to-br from-rose-50 via-pink-50 to-white hover:shadow-lg transition-shadow cursor-pointer"
               onClick={() => navigate('/introduction')}
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shadow-sm">
-                  <span className="text-lg">🎯</span>
+              <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shadow-sm">
+                  <span className="text-base sm:text-lg">🎯</span>
                 </div>
-                <p className="text-xs font-bold text-rose-600">使命 Mission</p>
+                <p className="text-[10px] sm:text-xs font-bold text-rose-600">使命 Mission</p>
               </div>
-              <p className="text-sm text-slate-700 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
                 让好的行为变得简单，让更好的自己成为必然
               </p>
             </Card>
             <Card 
-              className="p-4 border border-blue-200 shadow-md bg-gradient-to-br from-blue-50 via-indigo-50 to-white hover:shadow-lg transition-shadow cursor-pointer"
+              className="p-3 sm:p-4 border border-blue-200 shadow-md bg-gradient-to-br from-blue-50 via-indigo-50 to-white hover:shadow-lg transition-shadow cursor-pointer"
               onClick={() => navigate('/introduction')}
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-sm">
-                  <span className="text-lg">🔭</span>
+              <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-sm">
+                  <span className="text-base sm:text-lg">🔭</span>
                 </div>
-                <p className="text-xs font-bold text-blue-600">愿景 Vision</p>
+                <p className="text-[10px] sm:text-xs font-bold text-blue-600">愿景 Vision</p>
               </div>
-              <p className="text-sm text-slate-700 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
                 让 AI 成为每一个人的生活教练，让成长可见、可感、可持续
               </p>
             </Card>
@@ -338,13 +338,13 @@ const PlatformIntro = () => {
           
           {/* 核心价值（3项）- 真正横向滚动 */}
           <motion.div 
-            className="mb-6"
+            className="mb-4 sm:mb-6"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <p className="text-xs sm:text-sm font-semibold text-slate-700 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                 核心价值
               </p>
@@ -353,7 +353,7 @@ const PlatformIntro = () => {
               </span>
             </div>
             <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
-              <div className="flex gap-3" style={{ width: 'max-content' }}>
+              <div className="flex gap-2 sm:gap-3" style={{ width: 'max-content' }}>
                 {platformCoreValues.map((value, index) => (
                   <motion.div
                     key={value.num}
@@ -361,15 +361,15 @@ const PlatformIntro = () => {
                     custom={index}
                   >
                     <Card 
-                      className={`w-[165px] flex-shrink-0 p-4 border-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.02] bg-white cursor-pointer ${value.num === 1 ? 'border-rose-200' : value.num === 2 ? 'border-blue-200' : 'border-amber-200'}`}
+                      className={`w-[145px] xs:w-[165px] flex-shrink-0 p-3 sm:p-4 border-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.02] bg-white cursor-pointer ${value.num === 1 ? 'border-rose-200' : value.num === 2 ? 'border-blue-200' : 'border-amber-200'}`}
                       onClick={() => navigate(value.route)}
                     >
-                      <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${value.gradient} flex items-center justify-center mb-3 shadow-md`}>
-                        <span className="text-white text-base font-bold">{value.num}</span>
+                      <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br ${value.gradient} flex items-center justify-center mb-2 sm:mb-3 shadow-md`}>
+                        <span className="text-white text-sm sm:text-base font-bold">{value.num}</span>
                       </div>
-                      <h4 className="font-bold text-sm text-slate-800 mb-1.5">{value.title}</h4>
-                      <p className="text-xs text-slate-500 leading-relaxed">{value.desc}</p>
-                      <ChevronRight className="w-4 h-4 text-slate-300 mt-2" />
+                      <h4 className="font-bold text-xs sm:text-sm text-slate-800 mb-1 sm:mb-1.5">{value.title}</h4>
+                      <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed">{value.desc}</p>
+                      <ChevronRight className="w-4 h-4 text-slate-300 mt-1.5 sm:mt-2" />
                     </Card>
                   </motion.div>
                 ))}
@@ -381,7 +381,7 @@ const PlatformIntro = () => {
           <Button 
             onClick={() => navigate('/coach/vibrant_life_sage')}
             size="lg"
-            className="w-full bg-gradient-to-r from-primary to-accent text-white shadow-lg hover:shadow-xl transition-shadow text-base"
+            className="w-full min-h-[44px] bg-gradient-to-r from-primary to-accent text-white shadow-lg hover:shadow-xl transition-shadow text-sm sm:text-base"
           >
             立即体验 <ArrowRight className="w-5 h-5 ml-1.5" />
           </Button>
@@ -392,20 +392,20 @@ const PlatformIntro = () => {
       <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 
       {/* 四层支持系统 */}
-      <section className="px-4 py-6">
+      <section className="px-4 py-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.5 }}
         >
-          <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <span className="text-xl">🏗️</span> 四层支持系统
+          <h3 className="text-sm sm:text-base font-bold text-slate-800 mb-3 sm:mb-4 flex items-center gap-2">
+            <span className="text-lg sm:text-xl">🏗️</span> 四层支持系统
           </h3>
         </motion.div>
         
         <motion.div 
-          className="space-y-3"
+          className="space-y-2 sm:space-y-3"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -417,21 +417,21 @@ const PlatformIntro = () => {
               variants={slideVariants}
             >
               <Card 
-                className="p-4 border border-slate-100 shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                className="p-3 sm:p-4 border border-slate-100 shadow-md hover:shadow-lg transition-shadow cursor-pointer"
                 onClick={() => navigate(layer.route)}
               >
-                <div className="flex items-center gap-4">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${layer.gradient} flex items-center justify-center flex-shrink-0 shadow-md`}>
-                    <span className="text-2xl">{layer.emoji}</span>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br ${layer.gradient} flex items-center justify-center flex-shrink-0 shadow-md`}>
+                    <span className="text-xl sm:text-2xl">{layer.emoji}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`px-2 py-0.5 ${layer.color} rounded-md text-xs font-bold`}>L{layer.level}</span>
-                      <h4 className="font-bold text-sm text-slate-800">{layer.name}</h4>
+                    <div className="flex items-center gap-2 mb-0.5 sm:mb-1">
+                      <span className={`px-1.5 sm:px-2 py-0.5 ${layer.color} rounded-md text-[10px] sm:text-xs font-bold`}>L{layer.level}</span>
+                      <h4 className="font-bold text-xs sm:text-sm text-slate-800">{layer.name}</h4>
                     </div>
-                    <p className="text-sm text-slate-500 leading-relaxed">{layer.desc}</p>
+                    <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">{layer.desc}</p>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-slate-300 flex-shrink-0" />
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300 flex-shrink-0" />
                 </div>
               </Card>
             </motion.div>
@@ -446,7 +446,7 @@ const PlatformIntro = () => {
         >
           <Button 
             variant="outline" 
-            className="w-full mt-4 text-primary border-primary/30 hover:bg-primary/5"
+            className="w-full mt-3 sm:mt-4 min-h-[44px] text-primary border-primary/30 hover:bg-primary/5"
             onClick={() => navigate('/transformation-flow')}
           >
             了解四层支持详情 <ChevronRight className="w-4 h-4" />
@@ -458,21 +458,21 @@ const PlatformIntro = () => {
       <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 
       {/* 教练空间 */}
-      <section className="px-4 py-6 bg-gradient-to-b from-slate-50/80 to-white">
+      <section className="px-4 py-4 bg-gradient-to-b from-slate-50/80 to-white">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.5 }}
         >
-          <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <span className="text-xl">🤖</span> 教练空间
+          <h3 className="text-sm sm:text-base font-bold text-slate-800 mb-3 sm:mb-4 flex items-center gap-2">
+            <span className="text-lg sm:text-xl">🤖</span> 教练空间
           </h3>
         </motion.div>
         
         {/* 核心价值 */}
         <motion.div 
-          className="grid grid-cols-4 gap-2 mb-4"
+          className="grid grid-cols-2 xs:grid-cols-4 gap-2 mb-3 sm:mb-4"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -484,13 +484,13 @@ const PlatformIntro = () => {
               variants={scaleVariants}
             >
               <Card 
-                className="p-2 text-center border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                className="p-2 text-center border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow min-h-[72px]"
                 onClick={() => navigate(value.route)}
               >
-                <div className={`w-8 h-8 mx-auto mb-1 rounded-lg bg-gradient-to-br ${value.gradient} flex items-center justify-center`}>
-                  <value.icon className="w-4 h-4 text-white" />
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 mx-auto mb-1 rounded-lg bg-gradient-to-br ${value.gradient} flex items-center justify-center`}>
+                  <value.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                 </div>
-                <h4 className="text-[10px] font-semibold text-slate-700">{value.title}</h4>
+                <h4 className="text-[10px] font-semibold text-slate-700 leading-tight">{value.title}</h4>
                 <p className="text-[9px] text-slate-500">{value.description}</p>
               </Card>
             </motion.div>
@@ -541,7 +541,7 @@ const PlatformIntro = () => {
         
         <Button 
           variant="ghost" 
-          className="w-full mt-3 text-primary"
+          className="w-full mt-2 sm:mt-3 min-h-[44px] text-primary"
           onClick={() => navigate('/coach-space')}
         >
           进入教练空间 <ChevronRight className="w-4 h-4" />
@@ -552,21 +552,21 @@ const PlatformIntro = () => {
       <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 
       {/* 有劲生活馆 */}
-      <section className="px-4 py-6">
+      <section className="px-4 py-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.5 }}
         >
-          <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <span className="text-xl">🏛️</span> 有劲生活馆
+          <h3 className="text-sm sm:text-base font-bold text-slate-800 mb-3 sm:mb-4 flex items-center gap-2">
+            <span className="text-lg sm:text-xl">🏛️</span> 有劲生活馆
           </h3>
         </motion.div>
         
         {/* 三大工具分类 */}
         <motion.div 
-          className="grid grid-cols-3 gap-2 mb-4"
+          className="grid grid-cols-3 gap-2 mb-3 sm:mb-4"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -576,14 +576,13 @@ const PlatformIntro = () => {
             <motion.div
               key={category.id}
               variants={scaleVariants}
-              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               <Card 
-                className={`p-2 text-center border-0 shadow-sm bg-gradient-to-br ${category.tabGradient} text-white cursor-pointer transition-transform`}
+                className={`p-2 text-center border-0 shadow-sm bg-gradient-to-br ${category.tabGradient} text-white cursor-pointer transition-transform min-h-[56px]`}
                 onClick={() => navigate('/energy-studio')}
               >
-                <span className="text-xl block mb-0.5">{category.emoji}</span>
+                <span className="text-lg sm:text-xl block mb-0.5">{category.emoji}</span>
                 <h4 className="text-[10px] font-semibold">{category.name}</h4>
               </Card>
             </motion.div>
@@ -604,11 +603,11 @@ const PlatformIntro = () => {
               variants={itemVariants}
             >
               <Card 
-                className="p-3 border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                className="p-2.5 sm:p-3 border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer min-h-[56px]"
                 onClick={() => navigate(feature.route)}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl">{feature.emoji}</span>
+                  <span className="text-xl sm:text-2xl">{feature.emoji}</span>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-xs text-slate-800">{feature.name}</h4>
                     <p className="text-[10px] text-slate-500">{feature.desc}</p>
@@ -628,7 +627,7 @@ const PlatformIntro = () => {
         >
           <Button 
             variant="ghost" 
-            className="w-full mt-3 text-primary"
+            className="w-full mt-2 sm:mt-3 min-h-[44px] text-primary"
             onClick={() => navigate('/energy-studio')}
           >
             进入有劲生活馆 <ChevronRight className="w-4 h-4" />
@@ -640,23 +639,23 @@ const PlatformIntro = () => {
       <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 
       {/* 合伙人体系 */}
-      <section className="px-4 py-6 bg-gradient-to-b from-slate-50/80 to-white">
+      <section className="px-4 py-4 bg-gradient-to-b from-slate-50/80 to-white">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.5 }}
         >
-          <h3 className="text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
-            <span className="text-xl">🤝</span> 合伙人体系
+          <h3 className="text-sm sm:text-base font-bold text-slate-800 mb-1.5 sm:mb-2 flex items-center gap-2">
+            <span className="text-lg sm:text-xl">🤝</span> 合伙人体系
           </h3>
-          <p className="text-sm text-slate-500 mb-4">
+          <p className="text-xs sm:text-sm text-slate-500 mb-3 sm:mb-4">
             分享的不是商品，而是被帮助到的体验
           </p>
         </motion.div>
         
         <motion.div 
-          className="grid grid-cols-2 gap-3"
+          className="grid grid-cols-2 gap-2 sm:gap-3"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -666,22 +665,21 @@ const PlatformIntro = () => {
             <motion.div
               key={partner.name}
               variants={itemVariants}
-              whileHover={{ y: -4 }}
             >
               <Card 
-                className="p-3 border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full"
+                className="p-2.5 sm:p-3 border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full min-h-[140px]"
                 onClick={() => navigate(partner.route)}
               >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${partner.gradient} flex items-center justify-center mb-2`}>
-                  <span className="text-2xl">{partner.emoji}</span>
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${partner.gradient} flex items-center justify-center mb-2`}>
+                  <span className="text-xl sm:text-2xl">{partner.emoji}</span>
                 </div>
-                <h4 className="font-bold text-sm text-slate-800 mb-0.5">{partner.name}</h4>
+                <h4 className="font-bold text-xs sm:text-sm text-slate-800 mb-0.5">{partner.name}</h4>
                 <p className="text-[10px] text-slate-500 mb-1">{partner.desc}</p>
-                <p className="text-xs font-semibold text-primary mb-2">{partner.price}</p>
+                <p className="text-[11px] sm:text-xs font-semibold text-primary mb-1.5 sm:mb-2">{partner.price}</p>
                 <div className="space-y-0.5">
                   {partner.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-1 text-[10px] text-slate-600">
-                      <span className="w-1 h-1 rounded-full bg-primary" />
+                    <div key={feature} className="flex items-center gap-1 text-[9px] sm:text-[10px] text-slate-600">
+                      <span className="w-1 h-1 rounded-full bg-primary flex-shrink-0" />
                       {feature}
                     </div>
                   ))}
@@ -698,8 +696,8 @@ const PlatformIntro = () => {
           viewport={{ once: true }}
           transition={{ delay: 0.3 }}
         >
-          <Card className="mt-4 p-3 border-0 shadow-sm bg-gradient-to-r from-primary/5 via-accent/5 to-warm/5">
-            <p className="text-[10px] text-center text-slate-600">
+          <Card className="mt-3 sm:mt-4 p-2.5 sm:p-3 border-0 shadow-sm bg-gradient-to-r from-primary/5 via-accent/5 to-warm/5">
+            <p className="text-[9px] sm:text-[10px] text-center text-slate-600">
               <span className="font-medium">价值闭环：</span> 用户体验 → 感受改变 → 成为会员 → 参加训练营 → 成为合伙人 → 持续被动收入
             </p>
           </Card>
@@ -710,20 +708,20 @@ const PlatformIntro = () => {
       <div className="mx-4 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 
       {/* 快捷入口导航 */}
-      <section className="px-4 py-6">
+      <section className="px-4 py-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.5 }}
         >
-          <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <span className="text-xl">🔗</span> 更多了解
+          <h3 className="text-sm sm:text-base font-bold text-slate-800 mb-3 sm:mb-4 flex items-center gap-2">
+            <span className="text-lg sm:text-xl">🔗</span> 更多了解
           </h3>
         </motion.div>
         
         <motion.div 
-          className="space-y-3"
+          className="space-y-2.5 sm:space-y-3"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -735,8 +733,8 @@ const PlatformIntro = () => {
               variants={itemVariants}
               custom={groupIndex}
             >
-              <p className="text-xs text-slate-500 mb-2">{group.category}</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-[11px] sm:text-xs text-slate-500 mb-1.5 sm:mb-2">{group.category}</p>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {group.links.map((link, linkIndex) => (
                   <motion.div
                     key={link.name}
@@ -746,7 +744,7 @@ const PlatformIntro = () => {
                   >
                     <Badge
                       variant="secondary"
-                      className="cursor-pointer hover:bg-primary/10 transition-colors text-xs px-2.5 py-1"
+                      className="cursor-pointer hover:bg-primary/10 transition-colors text-[11px] sm:text-xs px-2 sm:px-2.5 py-1.5 min-h-[32px]"
                       onClick={() => navigate(link.route)}
                     >
                       {link.name}
@@ -760,25 +758,25 @@ const PlatformIntro = () => {
       </section>
 
       {/* Bottom CTA */}
-      <section className="px-4 py-8">
+      <section className="px-4 py-6 pb-[max(env(safe-area-inset-bottom),24px)]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
-          <Card className="p-6 text-center bg-gradient-to-br from-primary/5 via-accent/5 to-warm/5 border-0 shadow-sm">
-            <span className="text-3xl mb-3 block">🚀</span>
-            <h3 className="text-lg font-bold text-slate-800 mb-2">
+          <Card className="p-4 sm:p-6 text-center bg-gradient-to-br from-primary/5 via-accent/5 to-warm/5 border-0 shadow-sm">
+            <span className="text-2xl sm:text-3xl mb-2 sm:mb-3 block">🚀</span>
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-1.5 sm:mb-2">
               准备好开始你的成长之旅了吗？
             </h3>
-            <p className="text-sm text-slate-600 mb-4">
+            <p className="text-xs sm:text-sm text-slate-600 mb-3 sm:mb-4">
               每一次对话，都是一次自我觉察的机会
             </p>
             
             <Button 
               onClick={() => navigate('/coach/vibrant_life_sage')}
               size="lg"
-              className="w-full bg-gradient-to-r from-primary to-accent text-white shadow-lg hover:shadow-xl transition-all text-base py-6"
+              className="w-full min-h-[48px] bg-gradient-to-r from-primary to-accent text-white shadow-lg hover:shadow-xl transition-all text-sm sm:text-base py-4 sm:py-6"
             >
               🚀 开始体验有劲AI <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
