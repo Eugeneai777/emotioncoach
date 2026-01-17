@@ -124,7 +124,7 @@ const coachCoreValues = [
   { icon: Clock, title: '24/7 随时陪伴', description: '不分时间地点', gradient: 'from-blue-400 to-cyan-500', route: '/coach-space-intro' },
   { icon: Lock, title: '隐私安全', description: '加密保护对话', gradient: 'from-emerald-400 to-teal-500', route: '/introduction' },
   { icon: GraduationCap, title: '专业陪伴', description: '心理学框架', gradient: 'from-violet-400 to-purple-500', route: '/vibrant-life-intro' },
-  { icon: BookOpen, title: '我的日记', description: '日报/周报/档案', gradient: 'from-amber-400 to-orange-500', route: '/coach-space-intro' },
+  { icon: BookOpen, title: 'AI分析报告', description: '日报/周报/档案', gradient: 'from-amber-400 to-orange-500', route: '/coach-space-intro' },
 ];
 
 // 生活馆关键功能
@@ -497,40 +497,6 @@ const PlatformIntro = () => {
           ))}
         </motion.div>
         
-        {/* 我的日记详情 */}
-        <Card 
-          className="mb-4 p-3 border-0 shadow-sm bg-gradient-to-r from-amber-50 to-orange-50 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => navigate('/coach-space-intro')}
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-semibold text-sm text-slate-800">我的日记系统</h4>
-              <p className="text-[10px] text-slate-500">你只需一句话，AI完成剩下全部</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-slate-300 flex-shrink-0" />
-          </div>
-          
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="p-2 bg-white/60 rounded-lg">
-              <span className="text-lg">📋</span>
-              <p className="text-[10px] font-medium text-slate-700">有劲日报</p>
-              <p className="text-[9px] text-slate-500">每日情绪总结</p>
-            </div>
-            <div className="p-2 bg-white/60 rounded-lg">
-              <span className="text-lg">📊</span>
-              <p className="text-[10px] font-medium text-slate-700">有劲周报</p>
-              <p className="text-[9px] text-slate-500">7天趋势追踪</p>
-            </div>
-            <div className="p-2 bg-white/60 rounded-lg">
-              <span className="text-lg">📁</span>
-              <p className="text-[10px] font-medium text-slate-700">成长档案</p>
-              <p className="text-[9px] text-slate-500">21天完整记录</p>
-            </div>
-          </div>
-        </Card>
         
         {/* 教练列表 */}
         <div className="grid grid-cols-2 gap-2">
