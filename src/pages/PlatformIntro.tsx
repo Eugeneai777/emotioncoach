@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
-import { ArrowLeft, ArrowRight, Clock, Lock, GraduationCap, Eye, Heart, Lightbulb, RefreshCw, Target, ChevronRight, Sparkles, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, Lock, GraduationCap, Eye, Heart, Lightbulb, RefreshCw, Target, ChevronRight, Sparkles, Users, BookOpen } from "lucide-react";
 import { IntroShareDialog } from "@/components/common/IntroShareDialog";
 import { introShareConfigs } from "@/config/introShareConfig";
 import { Button } from "@/components/ui/button";
@@ -80,11 +80,53 @@ const coachGradientMap: Record<string, string> = {
   gratitude_coach: 'from-pink-300 to-rose-400',
 };
 
+// 有劲AI六大能力
+const aiCapabilities = [
+  'AI 的对话式陪伴',
+  '情绪分析与洞察能力',
+  '行为教练方法',
+  '结构化成长系统（日报＋周报）',
+  '社群共振（绽放故事、Harvuta、小组讨论、每周直播）',
+  '大模型智慧（关系、职场、心理、家庭、目标等问题的建议）',
+];
+
+// 用户价值
+const userValues = [
+  { emoji: '🎯', text: '清晰方向' },
+  { emoji: '💪', text: '稳定心态' },
+  { emoji: '✅', text: '可执行行动' },
+  { emoji: '📈', text: '持续成长' },
+  { emoji: '🤗', text: '被理解、被陪伴的力量' },
+];
+
+// 核心价值（3项）
+const platformCoreValues = [
+  { 
+    num: 1,
+    title: '温暖陪伴与真实关系', 
+    desc: '提供情绪理解、倾听、反思，帮助你被看见',
+    gradient: 'from-rose-400 to-pink-500'
+  },
+  { 
+    num: 2,
+    title: '系统工具与实用方法', 
+    desc: '结构化流程：看见 → 理解 → 行动 → 成长',
+    gradient: 'from-blue-400 to-indigo-500'
+  },
+  { 
+    num: 3,
+    title: '社群联结与成长共振', 
+    desc: '绽放故事、伙伴支持、训练营，让改变不再孤单',
+    gradient: 'from-amber-400 to-orange-500'
+  },
+];
+
 // 教练核心价值
 const coachCoreValues = [
   { icon: Clock, title: '24/7 随时陪伴', description: '不分时间地点', gradient: 'from-blue-400 to-cyan-500' },
   { icon: Lock, title: '隐私安全', description: '加密保护对话', gradient: 'from-emerald-400 to-teal-500' },
   { icon: GraduationCap, title: '专业陪伴', description: '心理学框架', gradient: 'from-violet-400 to-purple-500' },
+  { icon: BookOpen, title: '我的日记', description: '日报/周报/档案', gradient: 'from-amber-400 to-orange-500' },
 ];
 
 // 生活馆关键功能
@@ -156,42 +198,103 @@ const PlatformIntro = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative px-6 pt-10 pb-8 text-center overflow-hidden">
+      {/* 第一章｜什么是有劲AI？ */}
+      <section className="relative px-4 pt-6 pb-6 overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-warm/20 to-primary/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
         
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="relative"
         >
-          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary/10 via-accent/10 to-warm/10 flex items-center justify-center">
-            <span className="text-4xl">🌟</span>
+          {/* 章节标题 */}
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">📖</span>
+            <h2 className="text-base font-bold text-slate-800">第一章｜什么是有劲AI？</h2>
           </div>
           
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">
-            有劲AI · 每个人的生活教练
-          </h2>
+          {/* 核心定义 */}
+          <Card className="p-4 border-0 shadow-sm bg-gradient-to-br from-primary/5 via-accent/5 to-warm/5 mb-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 via-accent/10 to-warm/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-2xl">🌟</span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800">有劲AI是一位</p>
+                <p className="text-primary font-bold text-base">懂你、陪你、帮你成长的生活教练</p>
+              </div>
+            </div>
+          </Card>
           
-          <p className="text-primary font-medium text-sm mb-3">
-            温暖陪伴 × 系统工具 × 成长社群
-          </p>
-          
-          <p className="text-slate-500 text-xs leading-relaxed mb-4 max-w-xs mx-auto">
-            让好的行为变得简单，让更好的自己成为必然
-          </p>
-          
-          <div className="flex items-center justify-center gap-2 flex-wrap mb-6">
-            <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">7位AI教练</span>
-            <span className="px-2 py-1 bg-accent/10 text-accent rounded-full text-xs">四层支持</span>
-            <span className="px-2 py-1 bg-warm/10 text-warm rounded-full text-xs">合伙人体系</span>
+          {/* 六大能力 */}
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-slate-700 mb-2">它结合：</p>
+            <div className="space-y-1.5">
+              {aiCapabilities.map((cap, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    {index + 1}
+                  </span>
+                  <p className="text-xs text-slate-600 leading-relaxed">{cap}</p>
+                </div>
+              ))}
+            </div>
           </div>
           
+          {/* 用户价值 */}
+          <Card className="p-3 border-0 shadow-sm mb-4">
+            <p className="text-xs font-semibold text-slate-700 mb-2">让每一个人能在生活里获得：</p>
+            <div className="flex flex-wrap gap-2">
+              {userValues.map((value, index) => (
+                <span key={index} className="px-2 py-1 bg-primary/5 text-slate-700 rounded-full text-xs">
+                  {value.emoji} {value.text}
+                </span>
+              ))}
+            </div>
+          </Card>
+          
+          {/* 使命与愿景 */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <Card className="p-3 border-0 shadow-sm bg-gradient-to-br from-rose-50 to-pink-50">
+              <p className="text-[10px] font-medium text-rose-600 mb-1">使命 Mission</p>
+              <p className="text-xs text-slate-700 leading-relaxed">
+                让好的行为变得简单，让更好的自己成为必然
+              </p>
+            </Card>
+            <Card className="p-3 border-0 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50">
+              <p className="text-[10px] font-medium text-blue-600 mb-1">愿景 Vision</p>
+              <p className="text-xs text-slate-700 leading-relaxed">
+                让 AI 成为每一个人的生活教练，让成长可见、可感、可持续
+              </p>
+            </Card>
+          </div>
+          
+          {/* 核心价值（3项） */}
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-slate-700 mb-2">核心价值（3 项）</p>
+            <div className="space-y-2">
+              {platformCoreValues.map((value) => (
+                <Card key={value.num} className="p-3 border-0 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${value.gradient} flex items-center justify-center flex-shrink-0`}>
+                      <span className="text-white text-xs font-bold">{value.num}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-xs text-slate-800">{value.title}</h4>
+                      <p className="text-[10px] text-slate-500">{value.desc}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+          
+          {/* CTA */}
           <Button 
             onClick={() => navigate('/coach/vibrant_life_sage')}
-            className="bg-gradient-to-r from-primary to-accent text-white shadow-lg"
+            className="w-full bg-gradient-to-r from-primary to-accent text-white shadow-lg"
           >
             立即体验 <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
@@ -246,7 +349,7 @@ const PlatformIntro = () => {
         </h3>
         
         {/* 核心价值 */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
+        <div className="grid grid-cols-4 gap-2 mb-4">
           {coachCoreValues.map((value, index) => (
             <motion.div
               key={value.title}
@@ -264,6 +367,37 @@ const PlatformIntro = () => {
             </motion.div>
           ))}
         </div>
+        
+        {/* 我的日记详情 */}
+        <Card className="mb-4 p-3 border-0 shadow-sm bg-gradient-to-r from-amber-50 to-orange-50">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-sm text-slate-800">我的日记系统</h4>
+              <p className="text-[10px] text-slate-500">你只需一句话，AI完成剩下全部</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="p-2 bg-white/60 rounded-lg">
+              <span className="text-lg">📋</span>
+              <p className="text-[10px] font-medium text-slate-700">有劲日报</p>
+              <p className="text-[9px] text-slate-500">每日情绪总结</p>
+            </div>
+            <div className="p-2 bg-white/60 rounded-lg">
+              <span className="text-lg">📊</span>
+              <p className="text-[10px] font-medium text-slate-700">有劲周报</p>
+              <p className="text-[9px] text-slate-500">7天趋势追踪</p>
+            </div>
+            <div className="p-2 bg-white/60 rounded-lg">
+              <span className="text-lg">📁</span>
+              <p className="text-[10px] font-medium text-slate-700">成长档案</p>
+              <p className="text-[9px] text-slate-500">21天完整记录</p>
+            </div>
+          </div>
+        </Card>
         
         {/* 教练列表 */}
         <div className="grid grid-cols-2 gap-2">
