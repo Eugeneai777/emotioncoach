@@ -341,38 +341,46 @@ export function AssessmentPayDialog({
     });
   }, []);
 
-  // 小程序原生支付：通知小程序跳转到原生支付页面
-  // 小程序侧收到 MINIPROGRAM_NAVIGATE_PAY 后跳转到原生支付页，支付完成后 reload webview 并拼上 payment_success=true&orderNo=xxx
+  // 小程序原生支付：直接通过 navigateTo 跳转到原生支付页面
+  // ⚠️ 重要：postMessage 只在页面后退/销毁/分享时才会被小程序接收，不能用于实时通信
+  // 因此必须直接使用 navigateTo 跳转，由小程序原生页面调用 wx.requestPayment
   const triggerMiniProgramNativePay = useCallback((params: Record<string, string>, orderNumber: string) => {
     const mp = window.wx?.miniProgram;
-    if (!mp || typeof mp.postMessage !== 'function') {
-      console.warn('[MiniProgram] postMessage not available, trying navigateTo fallback');
-      if (typeof mp?.navigateTo === 'function') {
-        const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}`;
-        mp.navigateTo({ url: payPageUrl });
-      }
+    
+    // 构建回调 URL
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('payment_success', '1');
+    currentUrl.searchParams.set('order', orderNumber);
+    const callbackUrl = currentUrl.toString();
+
+    console.log('[MiniProgram] Triggering native pay', { orderNo: orderNumber, params, callbackUrl });
+
+    // 方式1：优先使用 navigateTo 直接跳转（这是唯一可靠的实时跳转方式）
+    if (mp && typeof mp.navigateTo === 'function') {
+      const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}`;
+      console.log('[MiniProgram] navigateTo:', payPageUrl);
+      mp.navigateTo({ url: payPageUrl });
       return;
     }
 
-     const currentUrl = new URL(window.location.href);
-     currentUrl.searchParams.set('payment_success', '1');
-     currentUrl.searchParams.set('order', orderNumber);
-     const callbackUrl = currentUrl.toString();
-
-    console.log('[MiniProgram] Sending MINIPROGRAM_NAVIGATE_PAY', { orderNo: orderNumber, callbackUrl });
-    mp.postMessage({
-      data: {
-        type: 'MINIPROGRAM_NAVIGATE_PAY',
-        orderNo: orderNumber,
-        params,
-        callbackUrl,
-      },
-    });
-
-    if (typeof mp.navigateTo === 'function') {
-      const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}`;
-      mp.navigateTo({ url: payPageUrl });
+    // 方式2：备用 - 尝试 postMessage（但注意：只有页面销毁时小程序才能收到）
+    if (mp && typeof mp.postMessage === 'function') {
+      console.warn('[MiniProgram] navigateTo not available, trying postMessage (may not work immediately)');
+      mp.postMessage({
+        data: {
+          type: 'MINIPROGRAM_NAVIGATE_PAY',
+          orderNo: orderNumber,
+          params,
+          callbackUrl,
+        },
+      });
+      // 提示用户手动操作
+      toast.info('请点击右上角菜单返回小程序完成支付');
+      return;
     }
+
+    console.error('[MiniProgram] Neither navigateTo nor postMessage available');
+    toast.error('小程序支付功能不可用，请尝试其他支付方式');
   }, []);
 
   // 创建订单（带超时处理）
