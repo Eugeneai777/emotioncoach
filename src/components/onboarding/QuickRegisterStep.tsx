@@ -542,9 +542,10 @@ export function QuickRegisterStep({
     try {
       // 小程序环境：直接使用已有的 mp_openid 注册/登录
       if (isMiniProgram) {
-        // 从 URL 或 props 获取小程序 openId
+        // 从 URL 获取小程序 openId 和 unionId
         const urlParams = new URLSearchParams(window.location.search);
         const mpOpenId = urlParams.get('mp_openid') || paymentOpenId;
+        const mpUnionId = urlParams.get('mp_unionid') || undefined;
         
         if (!mpOpenId) {
           toast.error('未获取到授权信息，请返回小程序重新进入');
@@ -552,12 +553,13 @@ export function QuickRegisterStep({
           return;
         }
         
-        console.log('[QuickRegister] MiniProgram direct auth with openId');
+        console.log('[QuickRegister] MiniProgram direct auth with openId, unionId:', mpUnionId ? 'present' : 'none');
         
-        // 调用后端直接用 openId 注册/登录
+        // 调用后端直接用 openId 注册/登录（同时传 unionId 用于识别已有账号）
         const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
           body: {
             openId: mpOpenId,
+            unionId: mpUnionId,
             source: 'miniprogram'
           }
         });

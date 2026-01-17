@@ -31,12 +31,12 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { redirectUri, code, flow, openId: directOpenId, source } = body;
+    const { redirectUri, code, flow, openId: directOpenId, unionId: directUnionId, source } = body;
 
     // 模式3：小程序直接使用 openId 注册/登录（无需 OAuth 跳转）
     if (directOpenId && source === 'miniprogram') {
       console.log('[WechatPayAuth] Direct openId registration from miniprogram');
-      return await ensureUserFromOpenId(directOpenId);
+      return await ensureUserFromOpenId(directOpenId, directUnionId);
     }
 
     // 模式2：用 code 换取 openId + 自动登录/注册
@@ -105,8 +105,10 @@ function generateAuthUrl(redirectUri: string, flow?: string): Response {
 /**
  * 直接使用 openId 确保用户存在（小程序专用）
  * 小程序环境无法使用公众号 OAuth，所以直接传入 openId
+ * 
+ * 重要：使用 unionId 来识别同一个微信用户，避免公众号和小程序 openId 不同导致重复注册
  */
-async function ensureUserFromOpenId(openId: string): Promise<Response> {
+async function ensureUserFromOpenId(openId: string, unionId?: string): Promise<Response> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -118,7 +120,7 @@ async function ensureUserFromOpenId(openId: string): Promise<Response> {
     );
   }
 
-  console.log('[WechatPayAuth] ensureUserFromOpenId, openId prefix:', openId.substring(0, 10));
+  console.log('[WechatPayAuth] ensureUserFromOpenId, openId prefix:', openId.substring(0, 10), 'unionId:', unionId ? unionId.substring(0, 10) + '...' : 'none');
 
   // 创建 Supabase admin client
   const supabase = createClient(supabaseUrl, supabaseServiceKey, {
@@ -128,15 +130,53 @@ async function ensureUserFromOpenId(openId: string): Promise<Response> {
     },
   });
 
-  // 查找是否已有用户绑定
-  const { data: existingMapping, error: mappingError } = await supabase
+  // 1. 先按 openId 查找（小程序的 openId）
+  let existingMapping = null;
+  const { data: openIdMapping, error: mappingError } = await supabase
     .from('wechat_user_mappings')
-    .select('system_user_id')
+    .select('system_user_id, openid')
     .eq('openid', openId)
     .maybeSingle();
 
   if (mappingError) {
-    console.error('[WechatPayAuth] Error checking mapping:', mappingError);
+    console.error('[WechatPayAuth] Error checking openId mapping:', mappingError);
+  }
+
+  existingMapping = openIdMapping;
+
+  // 2. 如果按 openId 找不到，但有 unionId，则按 unionId 查找（可能是之前通过公众号注册的用户）
+  if (!existingMapping?.system_user_id && unionId) {
+    console.log('[WechatPayAuth] No mapping by openId, trying unionId...');
+    const { data: unionIdMapping, error: unionError } = await supabase
+      .from('wechat_user_mappings')
+      .select('system_user_id, openid')
+      .eq('unionid', unionId)
+      .maybeSingle();
+
+    if (unionError) {
+      console.error('[WechatPayAuth] Error checking unionId mapping:', unionError);
+    }
+
+    if (unionIdMapping?.system_user_id) {
+      console.log('[WechatPayAuth] Found existing user by unionId:', unionIdMapping.system_user_id);
+      existingMapping = unionIdMapping;
+      
+      // 为这个用户添加小程序的 openId 映射（方便下次直接用 openId 查找）
+      const { error: insertError } = await supabase
+        .from('wechat_user_mappings')
+        .insert({
+          openid: openId,
+          system_user_id: unionIdMapping.system_user_id,
+          unionid: unionId,
+        });
+      
+      if (insertError) {
+        // 可能是 openid 唯一约束冲突，忽略
+        console.log('[WechatPayAuth] Could not insert miniprogram openId mapping:', insertError.message);
+      } else {
+        console.log('[WechatPayAuth] Added miniprogram openId mapping for existing user');
+      }
+    }
   }
 
   let userId: string;
