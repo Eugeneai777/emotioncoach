@@ -23,20 +23,7 @@ export function TeenVoiceCallCTA({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-6">
-      {/* Greeting */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-8"
-      >
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent mb-2">
-          {teenNickname ? `Hey ${teenNickname}～` : 'Hey～'}
-        </h2>
-        <p className="text-muted-foreground text-sm">
-          有什么想聊的吗？
-        </p>
-      </motion.div>
+    <div className="flex flex-col items-center justify-center py-8 px-6">
 
       {/* Large circular voice button */}
       <div className="relative">
