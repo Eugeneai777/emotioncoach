@@ -600,14 +600,17 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     setPayType(selectedPayType);
 
     try {
+      // 小程序环境：发送 payType='miniprogram' 让后端使用小程序 AppID
+      const requestPayType = isMiniProgram ? 'miniprogram' : selectedPayType;
+      
       const { data, error } = await supabase.functions.invoke('create-wechat-order', {
         body: {
           packageKey: packageInfo.key,
           packageName: packageInfo.name,
           amount: packageInfo.price,
           userId: user.id,
-          payType: selectedPayType,
-          openId: selectedPayType === 'jsapi' ? userOpenId : undefined,
+          payType: requestPayType,
+          openId: (selectedPayType === 'jsapi' || isMiniProgram) ? userOpenId : undefined,
           isMiniProgram: isMiniProgram, // 传递小程序环境标识
         },
       });
@@ -617,15 +620,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       setOrderNo(data.orderNo);
 
-      if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
+      // 小程序返回 miniprogramPayParams，微信浏览器返回 jsapiPayParams
+      const payParams = data.miniprogramPayParams || data.jsapiPayParams;
+      
+      if (selectedPayType === 'jsapi' && payParams) {
         // JSAPI 支付
         setStatus('polling');
         startPolling(data.orderNo);
 
         if (isMiniProgram) {
           // 小程序 WebView：通过 postMessage 让小程序原生拉起 wx.requestPayment
-          console.log('[Payment] MiniProgram: triggering native pay via postMessage');
-          triggerMiniProgramNativePay(data.jsapiPayParams, data.orderNo);
+          console.log('[Payment] MiniProgram: triggering native pay via navigateTo');
+          triggerMiniProgramNativePay(payParams, data.orderNo);
         } else {
           // 微信浏览器：先等待 Bridge 就绪（最多 1.5 秒），再调起支付
           console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
@@ -633,7 +639,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           
           if (bridgeAvailable) {
             try {
-              await invokeJsapiPay(data.jsapiPayParams);
+              await invokeJsapiPay(payParams);
               console.log('[Payment] JSAPI pay invoked successfully');
             } catch (jsapiError: any) {
               console.log('[Payment] JSAPI pay error:', jsapiError?.message);
