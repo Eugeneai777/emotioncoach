@@ -211,6 +211,20 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
     gradient: 'linear-gradient(135deg, #ec4899, #f43f5e)',
     category: 'tool'
   },
+  platformIntro: {
+    pageKey: 'platformIntro',
+    title: '有劲AI · 每个人的生活教练',
+    subtitle: '温暖陪伴 × 系统工具 × 成长社群',
+    targetUrl: '/platform-intro',
+    emoji: '🌟',
+    highlights: [
+      '7位AI教练24小时在线',
+      '四层支持系统全覆盖',
+      '合伙人持续收益',
+    ],
+    gradient: 'linear-gradient(135deg, #6366f1, #ec4899)',
+    category: 'tool'
+  },
 };
 
 /**
