@@ -444,7 +444,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         body: {
           packageKey: "wealth_block_assessment",
           packageName: "财富卡点测评",
-          amount: 0.01,
+          amount: 9.9,
           userId: userId || "guest",
           payType: selectedPayType,
           openId: needsOpenId ? userOpenId : undefined,
@@ -493,7 +493,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                     body: {
                       packageKey: "wealth_block_assessment",
                       packageName: "财富卡点测评",
-                      amount: 0.01,
+                      amount: 9.9,
                       userId: userId || "guest",
                       payType: "native",
                       existingOrderNo: data.orderNo,
@@ -544,7 +544,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                       body: {
                         packageKey: "wealth_block_assessment",
                         packageName: "财富卡点测评",
-                        amount: 0.01,
+                        amount: 9.9,
                         userId: userId || "guest",
                         payType: "native",
                         existingOrderNo: data.orderNo,
@@ -580,7 +580,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                 body: {
                   packageKey: "wealth_block_assessment",
                   packageName: "财富卡点测评",
-                  amount: 0.01,
+                  amount: 9.9,
                   userId: userId || "guest",
                   payType: "native",
                   existingOrderNo: data.orderNo,
@@ -668,7 +668,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                   landing_page: landingPage,
                   conversion_type: "assessment_purchase",
                   order_no: orderNumber,
-                  amount: 0.01,
+                  amount: 9.9,
                   time_to_convert_ms: timeToConvert,
                   timestamp: new Date().toISOString(),
                 },
@@ -836,7 +836,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
               <div className="text-center bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3">
                 <div className="flex items-center justify-center gap-2 mb-0.5">
                   <span className="text-muted-foreground line-through text-sm">¥99</span>
-                  <span className="text-xl font-bold text-primary">¥0.01</span>
+                  <span className="text-xl font-bold text-primary">¥9.9</span>
                   <span className="px-1.5 py-0.5 bg-red-500 text-white text-xs rounded">限时</span>
                 </div>
                 <p className="text-xs text-muted-foreground">30道专业测评 + AI智能分析</p>
@@ -857,7 +857,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                 <div className="space-y-3">
                   <Button onClick={handleH5Pay} className="w-full bg-[#07C160] hover:bg-[#06AD56]">
                     <Smartphone className="w-4 h-4 mr-2" />
-                    立即支付 ¥0.01
+                    立即支付 ¥9.9
                   </Button>
                   <Button variant="outline" onClick={handleCopyLink} className="w-full">
                     <Copy className="w-4 h-4 mr-2" />
