@@ -67,6 +67,26 @@ export default function WealthBlockAssessmentPage() {
     autoRedirect: false, // 不自动跳转，由本页面处理
   });
 
+  // 监听小程序支付失败回调
+  useEffect(() => {
+    const paymentFail = searchParams.get('payment_fail');
+    const orderNo = searchParams.get('order');
+    
+    if (paymentFail === '1') {
+      console.log('[WealthBlock] Payment failed callback detected, order:', orderNo);
+      
+      // 清除 URL 参数
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('payment_fail');
+      newUrl.searchParams.delete('order');
+      window.history.replaceState({}, '', newUrl.toString());
+      
+      // 显示错误提示并重新打开支付弹窗
+      toast.error('支付未完成，请重试');
+      setShowPayDialog(true);
+    }
+  }, [searchParams]);
+
   // 微信浏览器未登录时，点击支付前先触发静默授权（自动登录/注册）
   const triggerWeChatSilentAuth = async () => {
     console.log('[WealthBlock] Triggering WeChat silent auth for login/register');

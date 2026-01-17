@@ -338,17 +338,23 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const triggerMiniProgramNativePay = useCallback((params: Record<string, string>, orderNumber: string) => {
     const mp = window.wx?.miniProgram;
 
-    // 构建回调 URL
-    const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set("payment_success", "1");
-    currentUrl.searchParams.set("order", orderNumber);
-    const callbackUrl = currentUrl.toString();
+    // 构建成功回调 URL
+    const successUrl = new URL(window.location.href);
+    successUrl.searchParams.set("payment_success", "1");
+    successUrl.searchParams.set("order", orderNumber);
+    const callbackUrl = successUrl.toString();
 
-    console.log("[MiniProgram] Triggering native pay", { orderNo: orderNumber, params, callbackUrl });
+    // 构建失败回调 URL
+    const failUrl = new URL(window.location.href);
+    failUrl.searchParams.set("payment_fail", "1");
+    failUrl.searchParams.set("order", orderNumber);
+    const failCallbackUrl = failUrl.toString();
+
+    console.log("[MiniProgram] Triggering native pay", { orderNo: orderNumber, params, callbackUrl, failCallbackUrl });
 
     // 方式1：优先使用 navigateTo 直接跳转（这是唯一可靠的实时跳转方式）
     if (mp && typeof mp.navigateTo === "function") {
-      const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}`;
+      const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}&failCallback=${encodeURIComponent(failCallbackUrl)}`;
       console.log("[MiniProgram] navigateTo:", payPageUrl);
       mp.navigateTo({ url: payPageUrl });
       return;
