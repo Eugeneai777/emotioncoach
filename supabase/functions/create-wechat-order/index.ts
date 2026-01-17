@@ -188,7 +188,7 @@ serve(async (req) => {
     if (isMiniProgramPay) {
       if (openId) {
         // 有 openId：使用小程序 appId + JSAPI
-        const miniAppId = Deno.env.get('WECHAT_MINIPROGRAM_APP_ID') || appId;
+        const miniAppId = Deno.env.get('WECHAT_MINI_PROGRAM_APP_ID') || appId;
         requestBody.appid = miniAppId;
         requestBody.payer = { openid: openId };
         console.log('MiniProgram pay with openId, using JSAPI');
@@ -344,7 +344,7 @@ serve(async (req) => {
       const packageStr = `prepay_id=${prepayId}`;
       
       // 小程序支付使用小程序 appId 签名
-      const signAppId = actualIsMiniProgram ? (Deno.env.get('WECHAT_MINIPROGRAM_APP_ID') || appId) : appId;
+      const signAppId = actualIsMiniProgram ? (Deno.env.get('WECHAT_MINI_PROGRAM_APP_ID') || appId) : appId;
       
       // 签名内容：appId、timeStamp、nonceStr、package
       const jsapiSignMessage = `${signAppId}\n${jsapiTimestamp}\n${jsapiNonceStr}\n${packageStr}\n`;
