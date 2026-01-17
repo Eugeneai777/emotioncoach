@@ -99,6 +99,7 @@ import YoujinPartnerTerms from "./pages/YoujinPartnerTerms";
 import BloomPartnerTerms from "./pages/BloomPartnerTerms";
 import CoachSpace from "./pages/CoachSpace";
 import CoachSpaceIntro from "./pages/CoachSpaceIntro";
+import PlatformIntro from "./pages/PlatformIntro";
 import { GlobalRefTracker } from "./hooks/useGlobalRefTracking";
 import { GlobalPaymentCallback } from "./components/GlobalPaymentCallback";
 import { FollowWechatReminder } from "./components/FollowWechatReminder";
@@ -135,6 +136,7 @@ const App = () => (
           <Route path="/energy-studio" element={<EnergyStudio />} />
           <Route path="/coach-space" element={<CoachSpace />} />
           <Route path="/coach-space-intro" element={<CoachSpaceIntro />} />
+          <Route path="/platform-intro" element={<PlatformIntro />} />
           <Route path="/energy-studio-intro" element={<EnergyStudioIntro />} />
           <Route path="/community" element={<Community />} />
           <Route path="/camps" element={<CampList />} />
