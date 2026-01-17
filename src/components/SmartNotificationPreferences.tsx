@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Bell, Moon, Leaf, Sun, Sparkles, Heart, Zap, Info, MessageSquare, QrCode, Copy, Check, Smartphone, CheckCircle, Gift, RefreshCw } from "lucide-react";
 import QRCode from "qrcode";
+import { getPromotionDomain } from "@/utils/partnerQRUtils";
 
 // 检测是否在微信内置浏览器中
 const isWeChatBrowser = () => {
@@ -219,7 +220,7 @@ export function SmartNotificationPreferences() {
         window.location.href = data.url;
       } else {
         // PC/普通浏览器：显示弹窗
-        const currentSettingsUrl = `${window.location.origin}/settings?tab=notifications`;
+        const currentSettingsUrl = `${getPromotionDomain()}/settings?tab=notifications`;
         setSettingsUrl(currentSettingsUrl);
         
         // 生成二维码

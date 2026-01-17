@@ -17,6 +17,7 @@ import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
 import { YoujinPartnerDashboard } from "@/components/partner/YoujinPartnerDashboard";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
+import { getPromotionDomain } from "@/utils/partnerQRUtils";
 
 export default function Partner() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ export default function Partner() {
 
   const handleCopyLink = () => {
     if (partner) {
-      const link = `${window.location.origin}/?ref=${partner.partner_code}`;
+      const link = `${getPromotionDomain()}/?ref=${partner.partner_code}`;
       navigator.clipboard.writeText(link);
       toast.success("推广链接已复制");
     }

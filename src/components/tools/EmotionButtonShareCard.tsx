@@ -1,5 +1,6 @@
 import React, { forwardRef, useState, useEffect } from 'react';
 import QRCode from 'qrcode';
+import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
 interface EmotionButtonShareCardProps {
   partnerCode?: string;
@@ -13,8 +14,8 @@ const EmotionButtonShareCard = forwardRef<HTMLDivElement, EmotionButtonShareCard
       const generateQR = async () => {
         try {
           const targetUrl = partnerCode 
-            ? `${window.location.origin}/energy-studio?ref=${partnerCode}`
-            : `${window.location.origin}/energy-studio`;
+            ? `${getPromotionDomain()}/energy-studio?ref=${partnerCode}`
+            : `${getPromotionDomain()}/energy-studio`;
           const url = await QRCode.toDataURL(targetUrl, {
             width: 120,
             margin: 1,
