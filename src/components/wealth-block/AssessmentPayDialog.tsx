@@ -96,8 +96,8 @@ export function AssessmentPayDialog({
 
   // 小程序或微信浏览器内，有 openId 时可以使用 JSAPI 支付
   const canUseJsapi = (isMiniProgram || isWechat) && !!userOpenId;
-  // 微信浏览器环境下需要获取 openId（小程序环境不需要，由原生页面处理）
-  const shouldWaitForOpenId = isWechat && !isMiniProgram;
+  // 微信环境下需要获取 openId
+  const shouldWaitForOpenId = isMiniProgram || isWechat;
 
   // 检测是否为安卓设备
   const isAndroid = /Android/i.test(navigator.userAgent);
@@ -138,7 +138,6 @@ export function AssessmentPayDialog({
       document.addEventListener('onWeixinJSBridgeReady', onReady as EventListener, false);
     });
   }, [isAndroid]);
-
   // 触发静默授权获取 openId（使用新的 wechat-pay-auth 函数）
   const triggerSilentAuth = useCallback(async () => {
     if (silentAuthTriggeredRef.current) return;
@@ -182,7 +181,7 @@ export function AssessmentPayDialog({
     }
   }, []);
 
-  // 请求小程序获取 openId（通过 postMessage）- 已废弃，保留兼容
+  // 请求小程序获取 openId（通过 postMessage）
   const requestMiniProgramOpenId = useCallback(() => {
     const mp = window.wx?.miniProgram;
     if (!mp || typeof mp.postMessage !== 'function') {
@@ -220,18 +219,10 @@ export function AssessmentPayDialog({
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
   }, [isMiniProgram]);
-
   // 获取用户 openId（用于 JSAPI 支付）
   useEffect(() => {
     const fetchUserOpenId = async () => {
       if (!open) return;
-
-      // 小程序环境：直接标记为 resolved，由原生支付页处理
-      if (isMiniProgram) {
-        console.log('[AssessmentPay] MiniProgram environment, will use native pay page');
-        setOpenIdResolved(true);
-        return;
-      }
 
       // 非微信环境：无需等待 openId
       if (!shouldWaitForOpenId) {
@@ -279,6 +270,16 @@ export function AssessmentPayDialog({
         }
       }
 
+      // 小程序环境：直接标记为 resolved，让订单创建流程走下去
+      // ⚠️ 重要：postMessage 无法实时通信，所以不再通过 postMessage 获取 openId
+      // 改为：创建订单时使用 payType='miniprogram'，后端不校验 openId，
+      // 然后跳转到小程序原生支付页面，由小程序原生端获取 openId 并调用 wx.requestPayment
+      if (isMiniProgram) {
+        console.log('[AssessmentPay] MiniProgram environment, will use native bridge for payment');
+        setOpenIdResolved(true);
+        return;
+      }
+
       // 微信浏览器下没有 openId：触发静默授权
       if (isWechat) {
         console.log('[AssessmentPay] WeChat browser, no openId, triggering silent auth');
@@ -291,7 +292,7 @@ export function AssessmentPayDialog({
     };
 
     fetchUserOpenId();
-  }, [open, userId, cachedOpenId, shouldWaitForOpenId, triggerSilentAuth, isMiniProgram, isWechat]);
+  }, [open, userId, cachedOpenId, shouldWaitForOpenId, triggerSilentAuth, isMiniProgram, isWechat, requestMiniProgramOpenId]);
 
   // 调用 JSAPI 支付
   const invokeJsapiPay = useCallback((params: Record<string, string>) => {
@@ -342,28 +343,25 @@ export function AssessmentPayDialog({
   }, []);
 
   // 小程序原生支付：直接通过 navigateTo 跳转到原生支付页面
-  // ⚠️ 重要：由于小程序环境无法在 H5 端获取 openId，需要由小程序原生页面：
-  // 1. 调用 wx.login 获取 code
-  // 2. 用 code 换 openId
-  // 3. 调用边缘函数创建订单（带 openId）
-  // 4. 用返回的 prepay_id 调起 wx.requestPayment
-  const triggerMiniProgramNativePay = useCallback((orderInfo: { packageKey: string; packageName: string; amount: number; userId: string }) => {
+  // ⚠️ 重要：postMessage 只在页面后退/销毁/分享时才会被小程序接收，不能用于实时通信
+  // 因此必须直接使用 navigateTo 跳转，由小程序原生页面调用 wx.requestPayment
+  const triggerMiniProgramNativePay = useCallback((params: Record<string, string>, orderNumber: string) => {
     const mp = window.wx?.miniProgram;
     
     // 构建回调 URL
     const currentUrl = new URL(window.location.href);
     currentUrl.searchParams.set('payment_success', '1');
+    currentUrl.searchParams.set('order', orderNumber);
     const callbackUrl = currentUrl.toString();
 
-    console.log('[MiniProgram] Triggering native pay page', { orderInfo, callbackUrl });
+    console.log('[MiniProgram] Triggering native pay', { orderNo: orderNumber, params, callbackUrl });
 
     // 方式1：优先使用 navigateTo 直接跳转（这是唯一可靠的实时跳转方式）
     if (mp && typeof mp.navigateTo === 'function') {
-      // 传递商品信息到原生页面，由原生页面创建订单
-      const payPageUrl = `/pages/pay/index?packageKey=${encodeURIComponent(orderInfo.packageKey)}&packageName=${encodeURIComponent(orderInfo.packageName)}&amount=${orderInfo.amount}&userId=${encodeURIComponent(orderInfo.userId)}&callback=${encodeURIComponent(callbackUrl)}`;
+      const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}`;
       console.log('[MiniProgram] navigateTo:', payPageUrl);
       mp.navigateTo({ url: payPageUrl });
-      return true;
+      return;
     }
 
     // 方式2：备用 - 尝试 postMessage（但注意：只有页面销毁时小程序才能收到）
@@ -372,23 +370,26 @@ export function AssessmentPayDialog({
       mp.postMessage({
         data: {
           type: 'MINIPROGRAM_NAVIGATE_PAY',
-          ...orderInfo,
+          orderNo: orderNumber,
+          params,
           callbackUrl,
         },
       });
       // 提示用户手动操作
       toast.info('请点击右上角菜单返回小程序完成支付');
-      return false;
+      return;
     }
 
     console.error('[MiniProgram] Neither navigateTo nor postMessage available');
     toast.error('小程序支付功能不可用，请尝试其他支付方式');
-    return false;
   }, []);
 
   // 创建订单（带超时处理）
   const createOrder = async () => {
     console.log('[AssessmentPay] createOrder called, userId:', userId, 'isWechat:', isWechat, 'isMobile:', isMobile, 'isMiniProgram:', isMiniProgram);
+
+    // ⚠️ 小程序场景：不再等待 openId，直接创建订单，由小程序原生页面获取 openId 并完成支付
+    // postMessage 无法实时通信，所以不能依赖它获取 openId
 
     setStatus('creating');
     setErrorMessage('');
@@ -398,49 +399,41 @@ export function AssessmentPayDialog({
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
 
-      // 确定支付类型：
-      // - 小程序 WebView：跳转到原生支付页
-      // - 微信浏览器：优先 JSAPI（弹窗）
-      // - 移动端非微信：H5
-      // - 其他：Native
-      let selectedPayType: 'jsapi' | 'h5' | 'native';
+       // 确定支付类型：
+       // - 微信浏览器：优先 JSAPI（弹窗）
+       // - 小程序 WebView：若检测不到 WeixinJSBridge，则自动降级为扫码
+       // - 移动端非微信：H5
+       // - 其他：Native
+       let selectedPayType: 'jsapi' | 'h5' | 'native' | 'miniprogram';
 
-      // 小程序环境：直接跳转到原生支付页，由原生页面获取 openId 并创建订单
-      // ⚠️ 重要：小程序 WebView 无法通过 postMessage 实时获取 openId
-      if (isMiniProgram) {
-        console.log('[Payment] MiniProgram detected, will redirect to native pay page');
-        clearTimeout(timeoutId);
-        
-        const navigated = triggerMiniProgramNativePay({
-          packageKey: 'wealth_block_assessment',
-          packageName: '财富卡点测评',
-          amount: 9.9,
-          userId: userId || 'guest',
-        });
-        
-        if (navigated) {
-          setStatus('polling');
-          console.log('[Payment] Waiting for native pay page callback...');
-        } else {
-          setStatus('error');
-          setErrorMessage('无法跳转到支付页面');
-        }
-        return;
-      }
-      
-      if (isWechat && !!userOpenId) {
-        // 微信浏览器：有 openId 就直接走 JSAPI，调起时再判断 Bridge
-        console.log('[Payment] WeChat browser with openId, using jsapi');
-        selectedPayType = 'jsapi';
-      } else if (isMobile && !isWechat) {
-        selectedPayType = 'h5';
-      } else {
-        selectedPayType = 'native';
-      }
-      setPayType(selectedPayType);
+       // 小程序环境：优先走“小程序原生支付页”方案（需要 miniProgram bridge）
+       if (isMiniProgram) {
+         // 小程序 WebView：使用专门的 miniprogram 支付类型
+         console.log('[Payment] MiniProgram detected, openId:', userOpenId ? 'present' : 'missing');
+         
+         // 如果没有 openId，提示用户并尝试请求
+         if (!userOpenId) {
+           console.warn('[Payment] MiniProgram requires mp_openid URL parameter');
+           requestMiniProgramOpenId();
+           toast.error('正在获取支付授权，请稍候重试');
+           setStatus('idle');
+           return;
+         }
+         
+         selectedPayType = 'miniprogram';
+       } else if (isWechat && !!userOpenId) {
+         // 微信浏览器：有 openId 就直接走 JSAPI，调起时再判断 Bridge
+         console.log('[Payment] WeChat browser with openId, using jsapi');
+         selectedPayType = 'jsapi';
+       } else if (isMobile && !isWechat) {
+         selectedPayType = 'h5';
+       } else {
+         selectedPayType = 'native';
+       }
+       setPayType(selectedPayType === 'miniprogram' ? 'jsapi' : selectedPayType);
 
-      // JSAPI 支付需要 openId
-      const needsOpenId = selectedPayType === 'jsapi';
+      // 小程序支付和 JSAPI 支付都需要 openId
+      const needsOpenId = selectedPayType === 'jsapi' || selectedPayType === 'miniprogram';
       
       const { data, error } = await supabase.functions.invoke('create-wechat-order', {
         body: {
@@ -450,7 +443,7 @@ export function AssessmentPayDialog({
           userId: userId || 'guest',
           payType: selectedPayType,
           openId: needsOpenId ? userOpenId : undefined,
-          isMiniProgram: false,
+          isMiniProgram: isMiniProgram,
         }
       });
 
@@ -461,93 +454,148 @@ export function AssessmentPayDialog({
 
       setOrderNo(data.orderNo);
 
-      if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
-        // JSAPI 支付
-        setStatus('polling');
-        startPolling(data.orderNo);
+       if (selectedPayType === 'miniprogram' && data.miniprogramPayParams) {
+         // 小程序 WebView：通过 navigateTo 让小程序原生拉起 wx.requestPayment
+         console.log('[Payment] MiniProgram: triggering native pay via navigateTo');
+         setStatus('polling');
+         startPolling(data.orderNo);
+         triggerMiniProgramNativePay(data.miniprogramPayParams, data.orderNo);
+       } else if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
+         // JSAPI 支付
+         setStatus('polling');
+         startPolling(data.orderNo);
 
-        // 微信浏览器：先等待 Bridge 就绪，再调起支付
-        console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
-        const bridgeAvailable = await waitForWeixinJSBridge();
-        
-        if (bridgeAvailable) {
-          try {
-            await invokeJsapiPay(data.jsapiPayParams);
-            console.log('[Payment] JSAPI pay invoked successfully');
-          } catch (jsapiError: any) {
-            console.log('[Payment] JSAPI pay error:', jsapiError?.message);
-            if (jsapiError?.message !== '用户取消支付') {
-              // JSAPI 失败，降级到扫码模式
-              console.log('[Payment] JSAPI failed, falling back to native payment');
-              toast.info('支付弹窗调起失败，已切换为扫码支付');
-              
-              // 使用已有的订单号，生成二维码供用户扫码
-              try {
-                const { data: nativeData, error: nativeError } = await supabase.functions.invoke('create-wechat-order', {
-                  body: {
-                    packageKey: 'wealth_block_assessment',
-                    packageName: '财富卡点测评',
-                    amount: 9.9,
-                    userId: userId || 'guest',
-                    payType: 'native',
-                    existingOrderNo: data.orderNo,
-                  },
-                });
-                
-                if (nativeError || !nativeData?.success) {
-                  throw new Error(nativeData?.error || '降级失败');
-                }
-                
-                const qrDataUrl = await QRCode.toDataURL(nativeData.qrCodeUrl || nativeData.payUrl, {
-                  width: 200,
-                  margin: 2,
-                  color: { dark: '#000000', light: '#ffffff' },
-                });
-                setQrCodeDataUrl(qrDataUrl);
-                setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
-                setPayType('native');
-                setStatus('pending');
-              } catch (fallbackError: any) {
-                console.error('[Payment] Fallback to native payment failed:', fallbackError);
-                toast.error('支付初始化失败，请刷新重试');
-              }
-            }
-          }
-        } else {
-          // Bridge 不可用，直接降级到扫码
-          console.log('[Payment] Bridge not available, falling back to native');
-          toast.info('支付弹窗调起失败，已切换为扫码支付');
-          try {
-            const { data: nativeData, error: nativeError } = await supabase.functions.invoke('create-wechat-order', {
-              body: {
-                packageKey: 'wealth_block_assessment',
-                packageName: '财富卡点测评',
-                amount: 9.9,
-                userId: userId || 'guest',
-                payType: 'native',
-                existingOrderNo: data.orderNo,
-              },
-            });
-            
-            if (nativeError || !nativeData?.success) {
-              throw new Error(nativeData?.error || '降级失败');
-            }
-            
-            const qrDataUrl = await QRCode.toDataURL(nativeData.qrCodeUrl || nativeData.payUrl, {
-              width: 200,
-              margin: 2,
-              color: { dark: '#000000', light: '#ffffff' },
-            });
-            setQrCodeDataUrl(qrDataUrl);
-            setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
-            setPayType('native');
-            setStatus('pending');
-          } catch (fallbackError: any) {
-            console.error('[Payment] Fallback to native payment failed:', fallbackError);
-            toast.error('支付初始化失败，请刷新重试');
-          }
-        }
-      } else if ((data.payType || selectedPayType) === 'h5' && (data.h5Url || data.payUrl)) {
+         // 微信浏览器：先等待 Bridge 就绪，再调起支付
+         console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
+         const bridgeAvailable = await waitForWeixinJSBridge();
+         
+         if (bridgeAvailable) {
+           try {
+             await invokeJsapiPay(data.jsapiPayParams);
+             console.log('[Payment] JSAPI pay invoked successfully');
+           } catch (jsapiError: any) {
+             console.log('[Payment] JSAPI pay error:', jsapiError?.message);
+             if (jsapiError?.message !== '用户取消支付') {
+               // JSAPI 失败，降级到扫码模式
+               console.log('[Payment] JSAPI failed, falling back to native payment');
+               toast.info('支付弹窗调起失败，已切换为扫码支付');
+               
+               // 使用已有的订单号，生成二维码供用户扫码
+               try {
+                 const { data: nativeData, error: nativeError } = await supabase.functions.invoke('create-wechat-order', {
+                   body: {
+                     packageKey: 'wealth_block_assessment',
+                     packageName: '财富卡点测评',
+                     amount: 9.9,
+                     userId: userId || 'guest',
+                     payType: 'native',
+                     existingOrderNo: data.orderNo,
+                   },
+                 });
+                 
+                 if (nativeError || !nativeData?.success) {
+                   throw new Error(nativeData?.error || '降级失败');
+                 }
+                 
+                 const qrDataUrl = await QRCode.toDataURL(nativeData.qrCodeUrl || nativeData.payUrl, {
+                   width: 200,
+                   margin: 2,
+                   color: { dark: '#000000', light: '#ffffff' },
+                 });
+                 setQrCodeDataUrl(qrDataUrl);
+                 setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
+                 setPayType('native');
+                 setStatus('pending');
+               } catch (fallbackError: any) {
+                 console.error('[Payment] Fallback to native payment failed:', fallbackError);
+                 toast.error('支付初始化失败，请刷新重试');
+               }
+             }
+           }
+         } else {
+           // 微信浏览器：先等待 Bridge 就绪，再调起支付
+           console.log('[Payment] WeChat browser: waiting for Bridge then invoke JSAPI');
+           const bridgeAvailable = await waitForWeixinJSBridge();
+           
+           if (bridgeAvailable) {
+             try {
+               await invokeJsapiPay(data.jsapiPayParams);
+               console.log('[Payment] JSAPI pay invoked successfully');
+             } catch (jsapiError: any) {
+               console.log('[Payment] JSAPI pay error:', jsapiError?.message);
+               if (jsapiError?.message !== '用户取消支付') {
+                 // JSAPI 失败，降级到扫码模式
+                 console.log('[Payment] JSAPI failed, falling back to native payment');
+                 toast.info('支付弹窗调起失败，已切换为扫码支付');
+                 
+                 // 使用已有的订单号，生成二维码供用户扫码
+                 try {
+                   const { data: nativeData, error: nativeError } = await supabase.functions.invoke('create-wechat-order', {
+                     body: {
+                       packageKey: 'wealth_block_assessment',
+                       packageName: '财富卡点测评',
+                       amount: 9.9,
+                       userId: userId || 'guest',
+                       payType: 'native',
+                       existingOrderNo: data.orderNo,
+                     },
+                   });
+                   
+                   if (nativeError || !nativeData?.success) {
+                     throw new Error(nativeData?.error || '降级失败');
+                   }
+                   
+                   const qrDataUrl = await QRCode.toDataURL(nativeData.qrCodeUrl || nativeData.payUrl, {
+                     width: 200,
+                     margin: 2,
+                     color: { dark: '#000000', light: '#ffffff' },
+                   });
+                   setQrCodeDataUrl(qrDataUrl);
+                   setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
+                   setPayType('native');
+                   setStatus('pending');
+                 } catch (fallbackError: any) {
+                   console.error('[Payment] Fallback to native payment failed:', fallbackError);
+                   toast.error('支付初始化失败，请刷新重试');
+                 }
+               }
+             }
+           } else {
+             // Bridge 不可用，直接降级到扫码
+             console.log('[Payment] Bridge not available, falling back to native');
+             toast.info('支付弹窗调起失败，已切换为扫码支付');
+             try {
+               const { data: nativeData, error: nativeError } = await supabase.functions.invoke('create-wechat-order', {
+                 body: {
+                   packageKey: 'wealth_block_assessment',
+                   packageName: '财富卡点测评',
+                   amount: 9.9,
+                   userId: userId || 'guest',
+                   payType: 'native',
+                   existingOrderNo: data.orderNo,
+                 },
+               });
+               
+               if (nativeError || !nativeData?.success) {
+                 throw new Error(nativeData?.error || '降级失败');
+               }
+               
+               const qrDataUrl = await QRCode.toDataURL(nativeData.qrCodeUrl || nativeData.payUrl, {
+                 width: 200,
+                 margin: 2,
+                 color: { dark: '#000000', light: '#ffffff' },
+               });
+               setQrCodeDataUrl(qrDataUrl);
+               setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
+               setPayType('native');
+               setStatus('pending');
+             } catch (fallbackError: any) {
+               console.error('[Payment] Fallback to native payment failed:', fallbackError);
+               toast.error('支付初始化失败，请刷新重试');
+             }
+           }
+         }
+       } else if ((data.payType || selectedPayType) === 'h5' && (data.h5Url || data.payUrl)) {
         // H5支付
         setPayUrl(data.h5Url || data.payUrl);
         setStatus('pending');
@@ -685,9 +733,9 @@ export function AssessmentPayDialog({
 
   // 初始化 - 等待 openId 解析完成后再创建订单
   useEffect(() => {
-    console.log('[AssessmentPay] Init effect - open:', open, 'status:', status, 'shouldWaitForOpenId:', shouldWaitForOpenId, 'openIdResolved:', openIdResolved, 'isMiniProgram:', isMiniProgram);
+    console.log('[AssessmentPay] Init effect - open:', open, 'status:', status, 'shouldWaitForOpenId:', shouldWaitForOpenId, 'openIdResolved:', openIdResolved);
     
-    // 微信浏览器环境需要等待 openId 解析（小程序不需要）
+    // 微信环境需要等待 openId 解析
     if (shouldWaitForOpenId && !openIdResolved) {
       console.log('[AssessmentPay] Waiting for openId to resolve...');
       return;
@@ -697,7 +745,7 @@ export function AssessmentPayDialog({
       console.log('[AssessmentPay] Triggering createOrder...');
       createOrder();
     }
-  }, [open, status, shouldWaitForOpenId, openIdResolved, isMiniProgram]);
+  }, [open, status, shouldWaitForOpenId, openIdResolved]);
 
   // 清理
   useEffect(() => {
@@ -718,6 +766,7 @@ export function AssessmentPayDialog({
       openIdFetchedRef.current = false;
       setUserOpenId(undefined);
       setOpenIdResolved(false);
+      
     }
   }, [open]);
 
@@ -745,8 +794,8 @@ export function AssessmentPayDialog({
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
               <p className="text-muted-foreground">
                 {status === 'idle' && shouldWaitForOpenId && !openIdResolved
-                  ? '正在初始化…'
-                  : (isMiniProgram ? '正在跳转支付页…' : '正在创建订单…')}
+                  ? (isMiniProgram ? '等待小程序返回 openId…' : '正在初始化…')
+                  : '正在创建订单…'}
               </p>
             </div>
           )}
@@ -755,10 +804,8 @@ export function AssessmentPayDialog({
           {status === 'polling' && payType === 'jsapi' && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-              <p className="text-muted-foreground">
-                {isMiniProgram ? '请在小程序中完成支付...' : '等待支付确认...'}
-              </p>
-              {orderNo && <p className="text-xs text-muted-foreground mt-2">订单号：{orderNo}</p>}
+              <p className="text-muted-foreground">等待支付确认...</p>
+              <p className="text-xs text-muted-foreground mt-2">订单号：{orderNo}</p>
             </div>
           )}
 
