@@ -409,7 +409,17 @@ export function AssessmentPayDialog({
        // 小程序环境：优先走“小程序原生支付页”方案（需要 miniProgram bridge）
        if (isMiniProgram) {
          // 小程序 WebView：使用专门的 miniprogram 支付类型
-         console.log('[Payment] MiniProgram detected, using miniprogram payType');
+         console.log('[Payment] MiniProgram detected, openId:', userOpenId ? 'present' : 'missing');
+         
+         // 如果没有 openId，提示用户并尝试请求
+         if (!userOpenId) {
+           console.warn('[Payment] MiniProgram requires mp_openid URL parameter');
+           requestMiniProgramOpenId();
+           toast.error('正在获取支付授权，请稍候重试');
+           setStatus('idle');
+           return;
+         }
+         
          selectedPayType = 'miniprogram';
        } else if (isWechat && !!userOpenId) {
          // 微信浏览器：有 openId 就直接走 JSAPI，调起时再判断 Bridge
@@ -422,6 +432,9 @@ export function AssessmentPayDialog({
        }
        setPayType(selectedPayType === 'miniprogram' ? 'jsapi' : selectedPayType);
 
+      // 小程序支付和 JSAPI 支付都需要 openId
+      const needsOpenId = selectedPayType === 'jsapi' || selectedPayType === 'miniprogram';
+      
       const { data, error } = await supabase.functions.invoke('create-wechat-order', {
         body: {
           packageKey: 'wealth_block_assessment',
@@ -429,7 +442,7 @@ export function AssessmentPayDialog({
           amount: 9.9,
           userId: userId || 'guest',
           payType: selectedPayType,
-          openId: selectedPayType === 'jsapi' ? userOpenId : undefined,
+          openId: needsOpenId ? userOpenId : undefined,
           isMiniProgram: isMiniProgram,
         }
       });
