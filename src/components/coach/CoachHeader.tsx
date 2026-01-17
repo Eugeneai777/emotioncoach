@@ -241,7 +241,7 @@ export const CoachHeader = ({
             )}
 
             {/* 套餐 & 觉醒 按钮组 */}
-            <div className="hidden sm:flex items-center gap-0.5 bg-muted/30 rounded-lg p-0.5">
+            <div className="flex items-center gap-0.5 bg-muted/30 rounded-lg p-0.5">
               <Button
                 size="sm"
                 variant="ghost"
