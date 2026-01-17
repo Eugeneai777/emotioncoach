@@ -542,6 +542,7 @@ export const CoachVoiceChat = ({
       
       // 调用 Edge Function 生成深度简报（含总结、洞察、行动建议、服务推荐）
       const transcriptContent = (userTranscript + '\n' + transcript).trim();
+      console.log(`[VoiceChat] 📝 Transcript stats: user=${userTranscript.length}chars, ai=${transcript.length}chars, total=${transcriptContent.length}chars`);
       if (transcriptContent && transcriptContent.length > 100) {
         try {
           const { data: briefingResult, error: briefingError } = await supabase.functions.invoke('generate-life-briefing', {
@@ -677,13 +678,17 @@ export const CoachVoiceChat = ({
     }
   };
 
-  // 通用的转录处理函数
+  // 通用的转录处理函数 - 🔧 修复：改为累积模式，确保完整对话内容被保存
   const handleTranscript = (text: string, isFinal: boolean, role: 'user' | 'assistant') => {
     if (role === 'assistant') {
-      setTranscript(isFinal ? text : prev => prev + text);
+      // AI 回复：每次收到 final 文本时累积，用换行分隔
+      if (isFinal && text.trim()) {
+        setTranscript(prev => prev ? `${prev}\n${text}` : text);
+      }
       aiLastActivityRef.current = Date.now(); // 🔧 AI 文字回复
-    } else if (role === 'user' && isFinal) {
-      setUserTranscript(text);
+    } else if (role === 'user' && isFinal && text.trim()) {
+      // 用户发言：每次收到 final 文本时累积，用换行分隔
+      setUserTranscript(prev => prev ? `${prev}\n${text}` : text);
       userLastActivityRef.current = Date.now(); // 🔧 用户说话转录完成
     }
   };
@@ -800,6 +805,9 @@ export const CoachVoiceChat = ({
     
     try {
       setStatus('connecting');
+      // 🔧 重置转录状态，确保新通话不会累积旧内容
+      setTranscript('');
+      setUserTranscript('');
       const { error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
         toast({ title: "登录已过期", description: "请重新登录后再试", variant: "destructive" });
