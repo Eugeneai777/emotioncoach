@@ -19,7 +19,8 @@ const fourLayers = [
     name: '轻记录入口', 
     desc: '6大觉醒维度：情绪/感恩/行动/选择/关系/方向',
     color: 'bg-amber-100 text-amber-700',
-    gradient: 'from-amber-400 to-orange-500'
+    gradient: 'from-amber-400 to-orange-500',
+    route: '/awakening-intro'
   },
   { 
     level: 2, 
@@ -27,7 +28,8 @@ const fourLayers = [
     name: '智能看见', 
     desc: '5件事：看见状态、告诉正常、指出盲点、新角度、微行动',
     color: 'bg-blue-100 text-blue-700',
-    gradient: 'from-blue-400 to-cyan-500'
+    gradient: 'from-blue-400 to-cyan-500',
+    route: '/emotion-button-intro'
   },
   { 
     level: 3, 
@@ -35,7 +37,8 @@ const fourLayers = [
     name: 'AI教练深入', 
     desc: '当问题反复出现时，专业AI教练陪你深入理清',
     color: 'bg-purple-100 text-purple-700',
-    gradient: 'from-purple-400 to-pink-500'
+    gradient: 'from-purple-400 to-pink-500',
+    route: '/coach-space-intro'
   },
   { 
     level: 4, 
@@ -43,7 +46,8 @@ const fourLayers = [
     name: '真人支持', 
     desc: '21天训练营 + 真人教练，被陪着走一段',
     color: 'bg-teal-100 text-teal-700',
-    gradient: 'from-teal-400 to-emerald-500'
+    gradient: 'from-teal-400 to-emerald-500',
+    route: '/camps'
   },
 ];
 
@@ -82,12 +86,12 @@ const coachGradientMap: Record<string, string> = {
 
 // 有劲AI六大能力
 const aiCapabilities = [
-  { icon: '💬', text: '对话式陪伴', gradient: 'from-blue-100 to-blue-50', border: 'border-blue-200' },
-  { icon: '📊', text: '情绪洞察', gradient: 'from-purple-100 to-purple-50', border: 'border-purple-200' },
-  { icon: '🧭', text: '行为教练', gradient: 'from-emerald-100 to-emerald-50', border: 'border-emerald-200' },
-  { icon: '📋', text: '日报周报', gradient: 'from-amber-100 to-amber-50', border: 'border-amber-200' },
-  { icon: '👥', text: '社群共振', gradient: 'from-pink-100 to-pink-50', border: 'border-pink-200' },
-  { icon: '🧠', text: '大模型智慧', gradient: 'from-indigo-100 to-indigo-50', border: 'border-indigo-200' },
+  { icon: '💬', text: '对话式陪伴', gradient: 'from-blue-100 to-blue-50', border: 'border-blue-200', route: '/coach-space-intro' },
+  { icon: '📊', text: '情绪洞察', gradient: 'from-purple-100 to-purple-50', border: 'border-purple-200', route: '/emotion-button-intro' },
+  { icon: '🧭', text: '行为教练', gradient: 'from-emerald-100 to-emerald-50', border: 'border-emerald-200', route: '/vibrant-life-intro' },
+  { icon: '📋', text: '日报周报', gradient: 'from-amber-100 to-amber-50', border: 'border-amber-200', route: '/coach-space-intro' },
+  { icon: '👥', text: '社群共振', gradient: 'from-pink-100 to-pink-50', border: 'border-pink-200', route: '/camps' },
+  { icon: '🧠', text: '大模型智慧', gradient: 'from-indigo-100 to-indigo-50', border: 'border-indigo-200', route: '/introduction' },
 ];
 
 // 用户价值
@@ -105,28 +109,31 @@ const platformCoreValues = [
     num: 1,
     title: '温暖陪伴与真实关系', 
     desc: '提供情绪理解、倾听、反思，帮助你被看见',
-    gradient: 'from-rose-400 to-pink-500'
+    gradient: 'from-rose-400 to-pink-500',
+    route: '/vibrant-life-intro'
   },
   { 
     num: 2,
     title: '系统工具与实用方法', 
     desc: '结构化流程：看见 → 理解 → 行动 → 成长',
-    gradient: 'from-blue-400 to-indigo-500'
+    gradient: 'from-blue-400 to-indigo-500',
+    route: '/transformation-flow'
   },
   { 
     num: 3,
     title: '社群联结与成长共振', 
     desc: '绽放故事、伙伴支持、训练营，让改变不再孤单',
-    gradient: 'from-amber-400 to-orange-500'
+    gradient: 'from-amber-400 to-orange-500',
+    route: '/camps'
   },
 ];
 
 // 教练核心价值
 const coachCoreValues = [
-  { icon: Clock, title: '24/7 随时陪伴', description: '不分时间地点', gradient: 'from-blue-400 to-cyan-500' },
-  { icon: Lock, title: '隐私安全', description: '加密保护对话', gradient: 'from-emerald-400 to-teal-500' },
-  { icon: GraduationCap, title: '专业陪伴', description: '心理学框架', gradient: 'from-violet-400 to-purple-500' },
-  { icon: BookOpen, title: '我的日记', description: '日报/周报/档案', gradient: 'from-amber-400 to-orange-500' },
+  { icon: Clock, title: '24/7 随时陪伴', description: '不分时间地点', gradient: 'from-blue-400 to-cyan-500', route: '/coach-space-intro' },
+  { icon: Lock, title: '隐私安全', description: '加密保护对话', gradient: 'from-emerald-400 to-teal-500', route: '/introduction' },
+  { icon: GraduationCap, title: '专业陪伴', description: '心理学框架', gradient: 'from-violet-400 to-purple-500', route: '/vibrant-life-intro' },
+  { icon: BookOpen, title: '我的日记', description: '日报/周报/档案', gradient: 'from-amber-400 to-orange-500', route: '/coach-space-intro' },
 ];
 
 // 生活馆关键功能
@@ -159,18 +166,28 @@ const partnerTypes = [
   },
 ];
 
-// 快捷入口
+// 快捷入口 - 全站16+介绍页完整覆盖
 const quickLinks = [
   { category: '教练相关', links: [
     { name: '教练空间介绍', route: '/coach-space-intro' },
     { name: '生活教练', route: '/vibrant-life-intro' },
+    { name: '情绪教练', route: '/emotion-button-intro' },
     { name: '亲子教练', route: '/parent-coach-intro' },
+    { name: '亲子双轨模式', route: '/parent-teen-intro' },
     { name: '财富教练', route: '/wealth-coach-intro' },
+    { name: '沟通教练', route: '/communication-intro' },
+    { name: '故事教练', route: '/story-coach-intro' },
   ]},
   { category: '工具相关', links: [
     { name: '生活馆介绍', route: '/energy-studio-intro' },
     { name: '觉醒系统', route: '/awakening-intro' },
+    { name: '感恩日记', route: '/gratitude-journal-intro' },
+    { name: '安全打卡', route: '/alive-check-intro' },
     { name: '四层支持', route: '/transformation-flow' },
+  ]},
+  { category: '训练营', links: [
+    { name: '训练营列表', route: '/camps' },
+    { name: '财富训练营', route: '/wealth-camp-intro' },
   ]},
   { category: '商业相关', links: [
     { name: '有劲合伙人', route: '/partner/youjin-intro' },
@@ -230,12 +247,17 @@ const PlatformIntro = () => {
             </p>
             <div className="grid grid-cols-2 gap-2.5">
               {aiCapabilities.map((cap, index) => (
-                <Card key={index} className={`p-3 ${cap.border} shadow-sm bg-white hover:shadow-md transition-all hover:scale-[1.02]`}>
+                <Card 
+                  key={index} 
+                  className={`p-3 ${cap.border} shadow-sm bg-white hover:shadow-md transition-all hover:scale-[1.02] cursor-pointer`}
+                  onClick={() => navigate(cap.route)}
+                >
                   <div className="flex items-center gap-2.5">
                     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${cap.gradient} flex items-center justify-center flex-shrink-0 shadow-sm`}>
                       <span className="text-xl">{cap.icon}</span>
                     </div>
                     <p className="text-sm text-slate-700 font-medium">{cap.text}</p>
+                    <ChevronRight className="w-4 h-4 text-slate-300 ml-auto flex-shrink-0" />
                   </div>
                 </Card>
               ))}
@@ -256,7 +278,10 @@ const PlatformIntro = () => {
           
           {/* 使命与愿景 - 增强视觉 */}
           <div className="grid grid-cols-2 gap-3 mb-5">
-            <Card className="p-4 border border-rose-200 shadow-md bg-gradient-to-br from-rose-50 via-pink-50 to-white hover:shadow-lg transition-shadow">
+            <Card 
+              className="p-4 border border-rose-200 shadow-md bg-gradient-to-br from-rose-50 via-pink-50 to-white hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => navigate('/introduction')}
+            >
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shadow-sm">
                   <span className="text-lg">🎯</span>
@@ -267,7 +292,10 @@ const PlatformIntro = () => {
                 让好的行为变得简单，让更好的自己成为必然
               </p>
             </Card>
-            <Card className="p-4 border border-blue-200 shadow-md bg-gradient-to-br from-blue-50 via-indigo-50 to-white hover:shadow-lg transition-shadow">
+            <Card 
+              className="p-4 border border-blue-200 shadow-md bg-gradient-to-br from-blue-50 via-indigo-50 to-white hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => navigate('/introduction')}
+            >
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-sm">
                   <span className="text-lg">🔭</span>
@@ -294,12 +322,17 @@ const PlatformIntro = () => {
             <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
               <div className="flex gap-3" style={{ width: 'max-content' }}>
                 {platformCoreValues.map((value) => (
-                  <Card key={value.num} className={`w-[165px] flex-shrink-0 p-4 border-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.02] bg-white ${value.num === 1 ? 'border-rose-200' : value.num === 2 ? 'border-blue-200' : 'border-amber-200'}`}>
+                  <Card 
+                    key={value.num} 
+                    className={`w-[165px] flex-shrink-0 p-4 border-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.02] bg-white cursor-pointer ${value.num === 1 ? 'border-rose-200' : value.num === 2 ? 'border-blue-200' : 'border-amber-200'}`}
+                    onClick={() => navigate(value.route)}
+                  >
                     <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${value.gradient} flex items-center justify-center mb-3 shadow-md`}>
                       <span className="text-white text-base font-bold">{value.num}</span>
                     </div>
                     <h4 className="font-bold text-sm text-slate-800 mb-1.5">{value.title}</h4>
                     <p className="text-xs text-slate-500 leading-relaxed">{value.desc}</p>
+                    <ChevronRight className="w-4 h-4 text-slate-300 mt-2" />
                   </Card>
                 ))}
               </div>
@@ -334,7 +367,10 @@ const PlatformIntro = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className="p-4 border border-slate-100 shadow-md hover:shadow-lg transition-shadow">
+              <Card 
+                className="p-4 border border-slate-100 shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => navigate(layer.route)}
+              >
                 <div className="flex items-center gap-4">
                   <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${layer.gradient} flex items-center justify-center flex-shrink-0 shadow-md`}>
                     <span className="text-2xl">{layer.emoji}</span>
@@ -346,6 +382,7 @@ const PlatformIntro = () => {
                     </div>
                     <p className="text-sm text-slate-500 leading-relaxed">{layer.desc}</p>
                   </div>
+                  <ChevronRight className="w-5 h-5 text-slate-300 flex-shrink-0" />
                 </div>
               </Card>
             </motion.div>
@@ -379,7 +416,10 @@ const PlatformIntro = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className="p-2 text-center border-0 shadow-sm">
+              <Card 
+                className="p-2 text-center border-0 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate(value.route)}
+              >
                 <div className={`w-8 h-8 mx-auto mb-1 rounded-lg bg-gradient-to-br ${value.gradient} flex items-center justify-center`}>
                   <value.icon className="w-4 h-4 text-white" />
                 </div>
@@ -391,15 +431,19 @@ const PlatformIntro = () => {
         </div>
         
         {/* 我的日记详情 */}
-        <Card className="mb-4 p-3 border-0 shadow-sm bg-gradient-to-r from-amber-50 to-orange-50">
+        <Card 
+          className="mb-4 p-3 border-0 shadow-sm bg-gradient-to-r from-amber-50 to-orange-50 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate('/coach-space-intro')}
+        >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-white" />
             </div>
-            <div>
+            <div className="flex-1">
               <h4 className="font-semibold text-sm text-slate-800">我的日记系统</h4>
               <p className="text-[10px] text-slate-500">你只需一句话，AI完成剩下全部</p>
             </div>
+            <ChevronRight className="w-5 h-5 text-slate-300 flex-shrink-0" />
           </div>
           
           <div className="grid grid-cols-3 gap-2 text-center">
@@ -489,7 +533,10 @@ const PlatformIntro = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className={`p-2 text-center border-0 shadow-sm bg-gradient-to-br ${category.tabGradient} text-white`}>
+              <Card 
+                className={`p-2 text-center border-0 shadow-sm bg-gradient-to-br ${category.tabGradient} text-white cursor-pointer hover:scale-105 transition-transform`}
+                onClick={() => navigate('/energy-studio')}
+              >
                 <span className="text-xl block mb-0.5">{category.emoji}</span>
                 <h4 className="text-[10px] font-semibold">{category.name}</h4>
               </Card>
