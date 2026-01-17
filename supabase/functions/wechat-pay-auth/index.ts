@@ -31,7 +31,13 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { redirectUri, code, flow } = body;
+    const { redirectUri, code, flow, openId: directOpenId, source } = body;
+
+    // 模式3：小程序直接使用 openId 注册/登录（无需 OAuth 跳转）
+    if (directOpenId && source === 'miniprogram') {
+      console.log('[WechatPayAuth] Direct openId registration from miniprogram');
+      return await ensureUserFromOpenId(directOpenId);
+    }
 
     // 模式2：用 code 换取 openId + 自动登录/注册
     if (code) {
@@ -91,6 +97,161 @@ function generateAuthUrl(redirectUri: string, flow?: string): Response {
     JSON.stringify({ 
       success: true,
       authUrl: wechatAuthUrl,
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+/**
+ * 直接使用 openId 确保用户存在（小程序专用）
+ * 小程序环境无法使用公众号 OAuth，所以直接传入 openId
+ */
+async function ensureUserFromOpenId(openId: string): Promise<Response> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('[WechatPayAuth] Supabase credentials not configured');
+    return new Response(
+      JSON.stringify({ error: 'Server not configured' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  console.log('[WechatPayAuth] ensureUserFromOpenId, openId prefix:', openId.substring(0, 10));
+
+  // 创建 Supabase admin client
+  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  // 查找是否已有用户绑定
+  const { data: existingMapping, error: mappingError } = await supabase
+    .from('wechat_user_mappings')
+    .select('system_user_id')
+    .eq('openid', openId)
+    .maybeSingle();
+
+  if (mappingError) {
+    console.error('[WechatPayAuth] Error checking mapping:', mappingError);
+  }
+
+  let userId: string;
+  let isNewUser = false;
+
+  if (existingMapping?.system_user_id) {
+    // 老用户：直接使用已绑定的用户ID
+    userId = existingMapping.system_user_id;
+    console.log('[WechatPayAuth] Found existing user for miniprogram:', userId);
+  } else {
+    // 新用户：静默创建账号
+    console.log('[WechatPayAuth] No existing user for miniprogram, creating new one...');
+    
+    // 使用微信 openId 生成唯一邮箱（与现有系统保持一致）
+    // 注意：小程序 openId 与公众号 openId 不同，但格式一致
+    const tempEmail = `wechat_${openId.toLowerCase()}@temp.youjin365.com`;
+    const tempPassword = `wechat_${openId}_${Date.now()}`;
+
+    // 创建用户
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: tempEmail,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: {
+        auth_provider: 'wechat_miniprogram',
+        wechat_openid: openId,
+      },
+    });
+
+    if (authError) {
+      console.error('[WechatPayAuth] Error creating miniprogram user:', authError);
+      
+      // 尝试通过邮箱查找用户
+      const { data: existingUsers } = await supabase.auth.admin.listUsers();
+      const existingUser = existingUsers?.users?.find(u => u.email === tempEmail);
+      
+      if (existingUser) {
+        userId = existingUser.id;
+        console.log('[WechatPayAuth] Found existing user by email:', userId);
+      } else {
+        return new Response(
+          JSON.stringify({ error: 'Failed to create user', details: authError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      userId = authData.user.id;
+      isNewUser = true;
+      console.log('[WechatPayAuth] Created new miniprogram user:', userId);
+    }
+
+    // 创建/更新微信用户映射
+    const { error: insertMappingError } = await supabase
+      .from('wechat_user_mappings')
+      .upsert({
+        openid: openId,
+        system_user_id: userId,
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'openid',
+      });
+
+    if (insertMappingError) {
+      console.error('[WechatPayAuth] Error creating mapping:', insertMappingError);
+    }
+
+    // 如果是新用户，更新 profiles 表
+    if (isNewUser) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          auth_provider: 'wechat_miniprogram',
+          smart_notification_enabled: true,
+        })
+        .eq('id', userId);
+
+      if (profileError) {
+        console.error('[WechatPayAuth] Error updating profile:', profileError);
+      }
+    }
+  }
+
+  // 为用户生成 magic link token
+  const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+    type: 'magiclink',
+    email: `wechat_${openId.toLowerCase()}@temp.youjin365.com`,
+  });
+
+  if (linkError) {
+    console.error('[WechatPayAuth] Error generating magic link for miniprogram:', linkError);
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        openId,
+        userId,
+        isNewUser,
+        tokenHash: null,
+        warning: 'Failed to generate login token',
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const linkUrl = new URL(linkData.properties.action_link);
+  const tokenHash = linkUrl.searchParams.get('token_hash') || linkUrl.hash?.replace('#', '');
+
+  console.log('[WechatPayAuth] Successfully processed miniprogram user:', userId);
+
+  return new Response(
+    JSON.stringify({ 
+      success: true,
+      openId,
+      userId,
+      isNewUser,
+      tokenHash,
     }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
