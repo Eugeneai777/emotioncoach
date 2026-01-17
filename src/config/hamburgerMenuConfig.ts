@@ -1,5 +1,5 @@
 import { 
-  Settings, ShoppingBag, LogOut, Handshake, Headphones, type LucideIcon 
+  Settings, ShoppingBag, LogOut, Handshake, Headphones, Info, type LucideIcon 
 } from "lucide-react";
 
 export interface MenuItemConfig {
@@ -17,5 +17,6 @@ export const hamburgerMenuItems: MenuItemConfig[] = [
   { id: 'partner', label: '合伙人中心', icon: Handshake, path: '/partner' },
   { id: 'customer-service', label: '联系客服', icon: Headphones, path: '/customer-support' },
   { id: 'admin', label: '后台管理', icon: Settings, path: '/admin', requireAdmin: true },
+  { id: 'about', label: '关于我们', icon: Info, path: '/platform-intro' },
   { id: 'logout', label: '退出登录', icon: LogOut, path: '', danger: true },
 ];
