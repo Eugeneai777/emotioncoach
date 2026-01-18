@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { introShareConfigs } from "@/config/introShareConfig";
 import { youjinPartnerLevels } from "@/config/partnerLevels";
 import { toast } from "sonner";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 
 export default function YoujinPartnerIntro() {
   const navigate = useNavigate();
@@ -18,6 +19,26 @@ export default function YoujinPartnerIntro() {
     name: string;
     price: number;
   } | null>(null);
+
+  // 处理小程序支付成功回调
+  const { isPaymentCallback } = usePaymentCallback({
+    onSuccess: () => {
+      console.log('[YoujinPartnerIntro] Payment callback success');
+      toast.success('恭喜您成为有劲合伙人！');
+      setPayDialogOpen(false);
+      navigate('/partner');
+    },
+    showToast: false,
+    showConfetti: true,
+    autoRedirect: false,
+  });
+
+  // 小程序支付回调时关闭弹窗
+  useEffect(() => {
+    if (isPaymentCallback) {
+      setPayDialogOpen(false);
+    }
+  }, [isPaymentCallback]);
 
   const handlePurchase = (levelId: string) => {
     const level = youjinPartnerLevels.find(l => l.level === levelId);
