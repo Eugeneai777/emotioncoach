@@ -14,6 +14,37 @@ import QRCode from "qrcode";
 import { useAuth } from "@/hooks/useAuth";
 import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
 
+// 小程序环境：缓存的 openId key（与 WechatPayDialog 保持一致）
+const MP_OPENID_STORAGE_KEY = 'wechat_mp_openid';
+const getMiniProgramOpenIdFromCache = (): string | undefined => {
+  try {
+    return sessionStorage.getItem(MP_OPENID_STORAGE_KEY) || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+// 等待小程序 SDK 就绪
+const waitForWxMiniProgramReady = (timeout = 2000): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (window.wx?.miniProgram?.navigateTo) {
+      resolve(true);
+      return;
+    }
+    const start = Date.now();
+    const check = () => {
+      if (window.wx?.miniProgram?.navigateTo) {
+        resolve(true);
+      } else if (Date.now() - start > timeout) {
+        resolve(false);
+      } else {
+        setTimeout(check, 100);
+      }
+    };
+    check();
+  });
+};
+
 // 声明 WeixinJSBridge 类型
 declare global {
   interface Window {
@@ -58,7 +89,7 @@ export function AppointmentPayDialog({
   const [orderNo, setOrderNo] = useState<string>('');
   const [appointmentId, setAppointmentId] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [payType, setPayType] = useState<'native' | 'h5' | 'jsapi'>('native');
+  const [payType, setPayType] = useState<'native' | 'h5' | 'jsapi' | 'miniprogram'>('native');
   const [userOpenId, setUserOpenId] = useState<string | undefined>();
   const [openIdResolved, setOpenIdResolved] = useState<boolean>(false);
 
@@ -71,9 +102,12 @@ export function AppointmentPayDialog({
   const isMiniProgram = isWeChatMiniProgram();
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-  // 小程序或微信浏览器内，有 openId 时可以使用 JSAPI 支付
-  const canUseJsapi = (isMiniProgram || isWechat) && !!userOpenId;
-  const shouldWaitForOpenId = (isMiniProgram || isWechat) && !!user;
+  // 小程序环境：从 sessionStorage 读取缓存的 mp_openid
+  const cachedMpOpenId = isMiniProgram ? getMiniProgramOpenIdFromCache() : undefined;
+
+  // 微信浏览器内，有 openId 时可以使用 JSAPI 支付（小程序走 miniprogram 类型）
+  const canUseJsapi = isWechat && !isMiniProgram && !!userOpenId;
+  const shouldWaitForOpenId = isWechat && !isMiniProgram && !!user;
 
   // 获取用户 openId（用于 JSAPI 支付）
   useEffect(() => {
@@ -165,37 +199,52 @@ export function AppointmentPayDialog({
     });
   }, []);
 
-  // 小程序原生支付：通知小程序跳转到原生支付页面
-  // 小程序侧收到 MINIPROGRAM_NAVIGATE_PAY 后跳转到原生支付页，支付完成后 reload webview 并拼上 payment_success=true&orderNo=xxx
-  const triggerMiniProgramNativePay = useCallback((params: Record<string, string>, orderNumber: string) => {
+  // 小程序原生支付：跳转到原生支付页面（与 WechatPayDialog 保持一致）
+  const triggerMiniProgramNativePay = useCallback(async (params: Record<string, string>, orderNumber: string) => {
+    console.log('[AppointmentPay] Triggering MiniProgram native pay');
+    
+    // 等待 SDK 加载
+    await waitForWxMiniProgramReady(2000);
+    
     const mp = window.wx?.miniProgram;
-    if (!mp || typeof mp.postMessage !== 'function') {
-      console.warn('[MiniProgram] postMessage not available, trying navigateTo fallback');
-      if (typeof mp?.navigateTo === 'function') {
-        const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}`;
-        mp.navigateTo({ url: payPageUrl });
-      }
+    if (!mp || typeof mp.navigateTo !== 'function') {
+      console.error('[AppointmentPay] MiniProgram navigateTo not available');
+      toast.error('小程序支付功能不可用，请刷新重试');
+      setStatus('failed');
+      setErrorMessage('小程序 SDK 未就绪');
       return;
     }
 
-     const currentUrl = new URL(window.location.href);
-     currentUrl.searchParams.set('payment_success', '1');
-     currentUrl.searchParams.set('order', orderNumber);
-     const callbackUrl = currentUrl.toString();
+    // 构建成功回调 URL
+    const successUrl = new URL(window.location.href);
+    successUrl.searchParams.set('payment_success', '1');
+    successUrl.searchParams.set('order', orderNumber);
+    const callbackUrl = successUrl.toString();
 
-    console.log('[MiniProgram] Sending MINIPROGRAM_NAVIGATE_PAY', { orderNo: orderNumber, callbackUrl });
-    mp.postMessage({
-      data: {
-        type: 'MINIPROGRAM_NAVIGATE_PAY',
-        orderNo: orderNumber,
-        params,
-        callbackUrl,
-      },
-    });
+    // 构建失败回调 URL
+    const failUrl = new URL(window.location.href);
+    failUrl.searchParams.set('payment_fail', '1');
+    failUrl.searchParams.set('order', orderNumber);
+    const failCallbackUrl = failUrl.toString();
 
-    if (typeof mp.navigateTo === 'function') {
-      const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}`;
-      mp.navigateTo({ url: payPageUrl });
+    const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}&failCallback=${encodeURIComponent(failCallbackUrl)}`;
+    
+    console.log('[AppointmentPay] Calling navigateTo:', payPageUrl);
+    
+    try {
+      mp.navigateTo({
+        url: payPageUrl,
+        success: () => console.log('[AppointmentPay] navigateTo success'),
+        fail: (err: any) => {
+          console.error('[AppointmentPay] navigateTo failed:', err);
+          toast.error('跳转支付页面失败');
+          setStatus('failed');
+        },
+      } as any);
+    } catch (error) {
+      console.error('[AppointmentPay] navigateTo error:', error);
+      toast.error('跳转支付页面失败');
+      setStatus('failed');
     }
   }, []);
 
@@ -277,6 +326,7 @@ export function AppointmentPayDialog({
         });
 
         selectedPayType = bridgeReady ? 'jsapi' : 'native';
+        openIdForPayment = userOpenId;
       } else if (isMobile && !isWechat) {
         selectedPayType = 'h5';
       } else {
@@ -291,7 +341,7 @@ export function AppointmentPayDialog({
           slotId: slot.id,
           userNotes,
           payType: selectedPayType,
-          openId: selectedPayType === 'jsapi' ? userOpenId : undefined,
+          openId: openIdForPayment,
           isMiniProgram: isMiniProgram,
         },
       });
@@ -305,16 +355,16 @@ export function AppointmentPayDialog({
       setOrderNo(data.orderNo);
       setAppointmentId(data.appointmentId);
 
-      if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
-        // JSAPI 支付
+      // 小程序原生支付：跳转到原生支付页
+      if (selectedPayType === 'miniprogram' && data.jsapiPayParams) {
+        setStatus('pending');
+        startPolling(data.orderNo);
+        await triggerMiniProgramNativePay(data.jsapiPayParams, data.orderNo);
+      } else if (selectedPayType === 'jsapi' && data.jsapiPayParams) {
+        // 微信浏览器 JSAPI 支付
         setStatus('pending');
         startPolling(data.orderNo);
 
-        // JSAPI 支付
-        setStatus('pending');
-        startPolling(data.orderNo);
-
-        // 小程序 WebView / 微信浏览器：统一使用 WeixinJSBridge.invoke('getBrandWCPayRequest')
         try {
           await invokeJsapiPay(data.jsapiPayParams);
           console.log('JSAPI pay invoked');
