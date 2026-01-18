@@ -17,17 +17,19 @@ export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-4 flex flex-col items-center justify-center">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0.01, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className="w-full max-w-md space-y-4"
+        style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
       >
         {/* 个性化欢迎标题 */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0.01, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1, duration: 0.3 }}
           className="text-center mb-4"
+          style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
         >
           <div className="text-3xl mb-2">✨</div>
           <h1 className="text-xl font-bold text-amber-800 mb-1">准备好了吗？</h1>
@@ -36,9 +38,10 @@ export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
 
         {/* 答题指南 - 合并小贴士和评分方式 */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0.01, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.3 }}
+          style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
         >
           <Card className="border-amber-200 bg-white/80 backdrop-blur-sm shadow-sm">
             <CardContent className="p-4">
@@ -99,9 +102,10 @@ export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
 
         {/* 放轻松鼓励语 */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0.01, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.35, duration: 0.3 }}
+          style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
         >
           <Card className="border-pink-200 bg-gradient-to-r from-pink-50 to-amber-50 shadow-sm">
             <CardContent className="p-4">
@@ -118,10 +122,11 @@ export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
 
         {/* 开始按钮 */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0.01, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45, duration: 0.3 }}
           className="pt-2"
+          style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
         >
           <motion.div
             animate={{ scale: [1, 1.02, 1] }}
@@ -139,9 +144,10 @@ export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
 
         {/* 隐私保障提示 */}
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={{ opacity: 0.01 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.55, duration: 0.3 }}
+          style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
           className="text-center"
         >
           <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">

@@ -320,10 +320,11 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestion.id}
-            initial={{ opacity: 0, x: 50 }}
+            initial={{ opacity: 0.01, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
+            exit={{ opacity: 0.01, x: -50 }}
             transition={{ duration: 0.2 }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
           >
             <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-amber-50/30">
               <CardContent className="p-6 space-y-6">
