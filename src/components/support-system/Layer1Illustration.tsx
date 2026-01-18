@@ -27,7 +27,7 @@ const Layer1Illustration: React.FC = () => {
       {floatingCards.map((card, i) => (
         <motion.div
           key={i}
-          initial={{ opacity: 0, scale: 0 }}
+          initial={{ opacity: 0.01, scale: 0 }}
           animate={{ 
             opacity: 1, 
             scale: 1,
@@ -43,7 +43,7 @@ const Layer1Illustration: React.FC = () => {
               ease: "easeInOut"
             }
           }}
-          style={{ x: card.x }}
+          style={{ x: card.x, transform: 'translateZ(0)', willChange: 'transform, opacity' }}
           className="absolute w-8 h-8 bg-white rounded-lg shadow-md flex items-center justify-center text-sm"
         >
           {card.emoji}

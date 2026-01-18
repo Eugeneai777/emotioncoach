@@ -273,12 +273,14 @@ export const FloatingQuickMenu = () => {
         <AnimatePresence>
           {isExpanded && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: position.y > window.innerHeight / 2 ? 10 : -10 }}
+              initial={{ opacity: 0.01, scale: 0.9, y: position.y > window.innerHeight / 2 ? 10 : -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: position.y > window.innerHeight / 2 ? 10 : -10 }}
+              exit={{ opacity: 0.01, scale: 0.9, y: position.y > window.innerHeight / 2 ? 10 : -10 }}
               transition={{ duration: 0.15, type: 'spring', stiffness: 400, damping: 30 }}
               className={`absolute ${position.y > window.innerHeight / 2 ? 'bottom-12' : 'top-12'} left-0 bg-background/98 backdrop-blur-xl rounded-lg shadow-lg border border-border/40 p-1.5`}
               style={{
+                transform: 'translateZ(0)',
+                willChange: 'transform, opacity',
                 boxShadow: '0 15px 35px -10px rgba(0, 0, 0, 0.2)',
                 maxWidth: `calc(100vw - ${position.x + 16}px)`,
                 minWidth: '150px',
@@ -292,11 +294,12 @@ export const FloatingQuickMenu = () => {
                   // 截断标签
                   const displayLabel = item.label.length > 4 ? item.label.slice(0, 4) : item.label;
 
-                  return (
-                    <motion.button
-                      key={item.id}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
+                    return (
+                      <motion.button
+                        key={item.id}
+                        initial={{ opacity: 0.01, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                       transition={{ 
                         delay: index * 0.02,
                         duration: 0.1,
@@ -328,9 +331,10 @@ export const FloatingQuickMenu = () => {
 
               {/* Settings Button - Icon only */}
               <motion.button
-                initial={{ opacity: 0 }}
+                initial={{ opacity: 0.01 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.12 }}
+                style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                 onClick={() => {
                   setIsExpanded(false);
                   setShowSettings(true);

@@ -54,10 +54,11 @@ const AwakeningQuickSelect: React.FC<AwakeningQuickSelectProps> = ({
         return (
           <motion.button
             key={word}
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0.01, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: index * 0.03 }}
             whileTap={{ scale: 0.95 }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
             onClick={() => onSelect(word)}
             className={cn(
               "px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-200",
