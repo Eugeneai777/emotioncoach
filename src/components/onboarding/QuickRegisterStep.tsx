@@ -587,23 +587,29 @@ export function QuickRegisterStep({
       }
       
       // 微信浏览器环境：使用 OAuth 跳转
+      // 注意：后端 wechat-pay-auth 期望 redirectUri，而非 action/callbackUrl/state
       const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
         body: {
-          action: 'get_auth_url',
-          callbackUrl: window.location.href,
-          state: JSON.stringify({ orderNo, action: 'register' })
+          redirectUri: window.location.href,
+          flow: 'register_after_payment'
         }
       });
       
+      console.log('[QuickRegister] wechat-pay-auth response:', { data, error });
+      
       if (error) throw error;
       if (data?.authUrl) {
+        console.log('[QuickRegister] Redirecting to WeChat OAuth:', data.authUrl);
         window.location.href = data.authUrl;
       } else {
+        console.error('[QuickRegister] No authUrl in response:', data);
         throw new Error('获取授权链接失败');
       }
     } catch (error: any) {
-      console.error('WeChat auth error:', error);
-      toast.error('微信授权失败，请重试');
+      console.error('[QuickRegister] WeChat auth error:', error);
+      toast.error('微信授权失败，请重试', {
+        description: error?.message || '请检查网络后重试'
+      });
       // 不再自动切换到邮箱注册，让用户可以重试或手动选择其他方式
     } finally {
       setIsWechatAuthing(false);
