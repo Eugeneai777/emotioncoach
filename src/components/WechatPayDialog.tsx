@@ -57,6 +57,17 @@ const getPaymentOpenIdFromUrl = (): string | undefined => {
   );
 };
 
+// 小程序环境：缓存的 openId（用于跨路由复用，避免必须每个页面都拼接 mp_openid）
+const MP_OPENID_STORAGE_KEY = 'wechat_mp_openid';
+const MP_UNIONID_STORAGE_KEY = 'wechat_mp_unionid';
+const getMiniProgramOpenIdFromCache = (): string | undefined => {
+  try {
+    return sessionStorage.getItem(MP_OPENID_STORAGE_KEY) || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 // 检测是否是微信 OAuth 回调（带 code 和 payment_auth_callback 标记）
 const getPaymentAuthCode = (): string | undefined => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -251,10 +262,18 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     const onMessage = (event: MessageEvent) => {
       const payload: any = (event as any)?.data?.data ?? (event as any)?.data;
       const openId: string | undefined = payload?.openId || payload?.openid;
+      const unionId: string | undefined = payload?.unionId || payload?.unionid;
       const type: string | undefined = payload?.type;
 
       if ((type === 'OPENID' || type === 'MP_OPENID' || type === 'GET_OPENID_RESULT') && openId) {
         console.log('[Payment] Received openId from MiniProgram message');
+        // 缓存下来，供后续页面复用
+        try {
+          sessionStorage.setItem(MP_OPENID_STORAGE_KEY, openId);
+          if (unionId) sessionStorage.setItem(MP_UNIONID_STORAGE_KEY, unionId);
+        } catch {
+          // ignore
+        }
         setUserOpenId(openId);
         setOpenIdResolved(true);
       }
@@ -277,10 +296,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
       const urlParams = new URLSearchParams(window.location.search);
       const mpOpenIdFromUrl = urlParams.get('mp_openid') || undefined;
+      const cachedMpOpenId = getMiniProgramOpenIdFromCache();
 
-      // 小程序：只接受 mp_openid（或 props 传入），避免误用公众号 openid
+      // 小程序：只接受 mp_openid（URL 或缓存）或 props 传入，避免误用公众号 openid
       const existingOpenId = isMiniProgram
-        ? (propOpenId || mpOpenIdFromUrl)
+        ? (propOpenId || mpOpenIdFromUrl || cachedMpOpenId)
         : (propOpenId || urlOpenId);
 
       // 已有 openId（从 props 或 URL）：直接使用

@@ -22,6 +22,7 @@ import { DeepFollowUpAnswer } from "@/components/wealth-block/DeepFollowUpDialog
 import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
+import { isWeChatMiniProgram } from "@/utils/platform";
 
 export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
@@ -55,6 +56,21 @@ export default function WealthBlockAssessmentPage() {
     /MicroMessenger/i.test(navigator.userAgent) && 
     !/miniProgram/i.test(navigator.userAgent) &&
     !window.__wxjs_environment;
+
+  // 小程序入口页：把 mp_openid / mp_unionid 缓存下来，供后续页面（如产品中心）支付复用
+  useEffect(() => {
+    if (!isWeChatMiniProgram()) return;
+
+    const mpOpenId = searchParams.get('mp_openid') || undefined;
+    const mpUnionId = searchParams.get('mp_unionid') || undefined;
+
+    if (mpOpenId) {
+      sessionStorage.setItem('wechat_mp_openid', mpOpenId);
+    }
+    if (mpUnionId) {
+      sessionStorage.setItem('wechat_mp_unionid', mpUnionId);
+    }
+  }, [searchParams]);
 
   // 监听支付回调（H5支付返回后自动处理）
   usePaymentCallback({
