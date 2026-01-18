@@ -255,3 +255,31 @@ export function getPlatformInfo(): {
     recommendedVoiceMethod,
   };
 }
+
+/**
+ * 等待微信小程序 JS-SDK (wx.miniProgram) 加载完成
+ * 用于确保在调用 navigateTo 等 API 前 SDK 已就绪
+ */
+export function waitForWxMiniProgramReady(timeout = 3000): Promise<boolean> {
+  return new Promise((resolve) => {
+    // 如果已经存在且有 navigateTo 方法
+    if (window.wx?.miniProgram && typeof window.wx.miniProgram.navigateTo === 'function') {
+      console.log('[Platform] wx.miniProgram already available');
+      resolve(true);
+      return;
+    }
+    
+    const startTime = Date.now();
+    const checkInterval = setInterval(() => {
+      if (window.wx?.miniProgram && typeof window.wx.miniProgram.navigateTo === 'function') {
+        clearInterval(checkInterval);
+        console.log('[Platform] wx.miniProgram became available after', Date.now() - startTime, 'ms');
+        resolve(true);
+      } else if (Date.now() - startTime > timeout) {
+        clearInterval(checkInterval);
+        console.warn('[Platform] wx.miniProgram not available after timeout');
+        resolve(false);
+      }
+    }, 50);
+  });
+}
