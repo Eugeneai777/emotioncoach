@@ -80,9 +80,9 @@ serve(async (req) => {
       throw new Error('缺少必要参数');
     }
 
-    // JSAPI 支付需要 openId（小程序支付除外，openId 由原生端提供）
-    if (payType === 'jsapi' && !openId) {
-      throw new Error('JSAPI支付需要openId');
+    // JSAPI 支付需要 openId（小程序支付也需要 openId，但由小程序原生端提供）
+    if ((payType === 'jsapi' || payType === 'miniprogram') && !openId) {
+      throw new Error('支付需要 openId（小程序请确保传入 mp_openid）');
     }
     
     // 小程序支付：需要返回 prepay_id，由原生端获取 openId 后调用 wx.requestPayment
@@ -342,10 +342,15 @@ serve(async (req) => {
     
     if (actualIsJsapi || actualIsMiniProgram) {
       // JSAPI/小程序支付返回 prepay_id，需要生成前端调起支付的参数
-      const prepayId = wechatResult.prepay_id as string;
+      const prepayId = wechatResult.prepay_id as string | undefined;
       if (!prepayId) {
         console.error('WeChat response missing prepay_id:', wechatResult);
-        throw new Error('未获取到prepay_id');
+        const code = (wechatResult as any)?.code as string | undefined;
+        const msg = (wechatResult as any)?.message as string | undefined;
+        if (code || msg) {
+          throw new Error(`微信下单失败：${[code, msg].filter(Boolean).join(' ')}`);
+        }
+        throw new Error('未获取到 prepay_id');
       }
       
       // 生成前端调起支付所需的签名参数
