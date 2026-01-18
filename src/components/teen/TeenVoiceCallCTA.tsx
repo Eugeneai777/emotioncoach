@@ -86,10 +86,11 @@ export function TeenVoiceCallCTA({
 
       {/* Prompt text */}
       <motion.p
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0.01 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
         className="mt-8 text-sm text-muted-foreground text-center"
+        style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
       >
         点击按钮，说出你的心声 💜
       </motion.p>

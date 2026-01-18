@@ -230,10 +230,11 @@ export function AIMoatAnimation({ compact = false, showLabels = true }: AIMoatAn
           {trilogy.map((item, index) => (
             <motion.div
               key={item.name}
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0.01, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 + index * 0.15 }}
               className="flex items-center gap-3"
+              style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
             >
               <div className={`p-1.5 rounded-lg bg-gradient-to-br ${item.color}`}>
                 <item.icon className="w-3 h-3 text-white" />
@@ -257,10 +258,11 @@ export function AIMoatAnimation({ compact = false, showLabels = true }: AIMoatAn
       
       {/* Bottom tagline */}
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0.01 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
         className={`relative z-10 ${compact ? 'mt-3' : 'mt-4'} text-center`}
+        style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
       >
         <p className="text-[10px] text-slate-500">
           追踪 → 对比 → 见证，AI陪你走完每一步

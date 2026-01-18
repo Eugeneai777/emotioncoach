@@ -50,10 +50,11 @@ export function LivingProfileCard() {
         {features.map((feature, idx) => (
           <motion.div
             key={feature.title}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0.01, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + idx * 0.08 }}
             className="p-3 bg-white/80 rounded-xl border border-white shadow-sm"
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
           >
             <div className={`w-7 h-7 ${feature.bgColor} rounded-lg flex items-center justify-center mb-2`}>
               <feature.icon className={`w-4 h-4 ${feature.color}`} />
@@ -66,10 +67,11 @@ export function LivingProfileCard() {
       
       {/* Bottom highlight */}
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0.01 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
         className="mt-3 p-2.5 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-lg text-center"
+        style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
       >
         <p className="text-[11px] text-emerald-700 font-medium">
           不是静态报告，而是与你一起成长的「活」档案

@@ -8,7 +8,7 @@ export const HumanCoachEntry = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0.01, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4, type: "spring", stiffness: 100 }}
       whileTap={{ scale: 0.98 }}
@@ -16,6 +16,7 @@ export const HumanCoachEntry = () => {
       className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-2xl p-4 
                  border border-teal-100 cursor-pointer 
                  hover:shadow-lg active:shadow-inner transition-all duration-300"
+      style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
     >
       <div className="flex items-center gap-4">
         <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 

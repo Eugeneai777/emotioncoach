@@ -89,9 +89,10 @@ export function DeepFollowUpDialog({
   if (isLoading) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0.01, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+        style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
       >
         <Card className="w-full max-w-md border-0 shadow-2xl">
           <CardContent className="p-8 text-center">
@@ -116,10 +117,11 @@ export function DeepFollowUpDialog({
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
+      initial={{ opacity: 0.01 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      exit={{ opacity: 0.01 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+      style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
     >
       <motion.div
         initial={{ scale: 0.9, y: 20 }}
@@ -154,10 +156,11 @@ export function DeepFollowUpDialog({
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentIndex}
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0.01, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                exit={{ opacity: 0.01, x: -20 }}
                 className="space-y-4"
+                style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
               >
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
@@ -173,9 +176,10 @@ export function DeepFollowUpDialog({
                   {currentQuestion.options.map((option, index) => (
                     <motion.button
                       key={index}
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0.01, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
+                      style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                       onClick={() => handleSelectOption(option)}
                       className={cn(
                         "w-full text-left px-4 py-3 rounded-xl border-2 transition-all",
@@ -194,9 +198,10 @@ export function DeepFollowUpDialog({
                 {/* Custom input */}
                 {showCustomInput && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
+                    initial={{ opacity: 0.01, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     className="pl-11 space-y-2"
+                    style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                   >
                     <Input
                       value={customInput}

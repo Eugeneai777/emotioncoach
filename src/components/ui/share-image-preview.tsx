@@ -96,17 +96,19 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
     <AnimatePresence>
       {open && (
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={{ opacity: 0.01 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0.01 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-[100] bg-black/95 flex flex-col"
+          style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
         >
           {/* Header */}
           <motion.div 
-            initial={{ y: -20, opacity: 0 }}
+            initial={{ y: -20, opacity: 0.01 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
             className="flex items-center justify-between p-3 sm:p-4 text-white shrink-0 safe-area-top"
           >
             <Button
@@ -162,9 +164,10 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
             onClick={onClose}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.9, opacity: 0.01 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 25 }}
+              style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
               className="relative max-w-full max-h-full"
               onClick={(e) => e.stopPropagation()}
             >
@@ -222,9 +225,10 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
               {/* Floating save indicator for WeChat/iOS - Always visible */}
               {(isWeChat || isIOS) && imageLoaded && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0.01, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="absolute -bottom-14 left-1/2 -translate-x-1/2 whitespace-nowrap"
+                  style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                 >
                   <motion.div 
                     animate={{ 
@@ -254,11 +258,15 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
 
           {/* Bottom Guidance */}
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
+            initial={{ y: 20, opacity: 0.01 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
             className="shrink-0 pb-safe"
-            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+            style={{ 
+              transform: 'translateZ(0)', 
+              willChange: 'transform, opacity',
+              paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' 
+            }}
           >
             <div className="flex flex-col items-center gap-3 px-4">
               {(isWeChat || isIOS) ? (

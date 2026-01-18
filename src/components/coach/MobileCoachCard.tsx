@@ -39,7 +39,7 @@ export const MobileCoachCard = ({ coach, index }: MobileCoachCardProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0.01, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08, type: "spring", stiffness: 100 }}
       whileTap={{ scale: 0.95 }}
@@ -49,6 +49,7 @@ export const MobileCoachCard = ({ coach, index }: MobileCoachCardProps) => {
                   shadow-md hover:shadow-xl transition-shadow duration-300
                   flex flex-col items-center justify-center text-white
                   active:shadow-inner`}
+      style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
     >
       {/* Badge */}
       {badge && (

@@ -52,13 +52,14 @@ export const EnhancedCoachCard = ({ coach, index }: EnhancedCoachCardProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0.01, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08, type: "spring", stiffness: 100 }}
       whileTap={{ scale: 0.98 }}
       onClick={() => coach.page_route && navigate(coach.page_route)}
       className="relative flex bg-white rounded-xl shadow-sm hover:shadow-md 
                  transition-shadow duration-200 cursor-pointer overflow-hidden"
+      style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
     >
       {/* 左侧主题色边条 */}
       <div className={`w-1 bg-gradient-to-b ${sidebarGradient} flex-shrink-0`} />

@@ -32,10 +32,11 @@ export function AssessmentFlowCard() {
         {steps.map((step, idx) => (
           <motion.div
             key={idx}
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0.01, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 + idx * 0.1 }}
             className="flex items-center flex-1"
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
           >
             {/* Step Card */}
             <div className="flex-1 text-center">
@@ -55,10 +56,11 @@ export function AssessmentFlowCard() {
       </div>
       
       <motion.p 
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0.01 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
         className="text-[10px] text-slate-500 text-center mt-3"
+        style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
       >
         全程AI引导，轻松完成
       </motion.p>

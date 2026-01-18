@@ -60,7 +60,8 @@ const Layer2Illustration: React.FC = () => {
         return (
           <motion.div
             key={i}
-            initial={{ opacity: 0, scale: 0 }}
+            initial={{ opacity: 0.01, scale: 0 }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
             animate={{ 
               opacity: [0, 1, 0],
               scale: [0.5, 1, 0.5],

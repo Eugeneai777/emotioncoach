@@ -58,10 +58,11 @@ export function FollowUpDialog({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0.01, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
+          exit={{ opacity: 0.01, y: -20 }}
           transition={{ duration: 0.3 }}
+          style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
           className="mt-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 p-5"
         >
           {isLoading ? (
@@ -127,10 +128,11 @@ export function FollowUpDialog({
                   ))}
                 </div>
               ) : (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
+              <motion.div
+                  initial={{ opacity: 0.01, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   className="space-y-3"
+                  style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                 >
                   <Input
                     value={customAnswer}

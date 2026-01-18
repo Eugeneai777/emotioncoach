@@ -50,9 +50,10 @@ export function AIThreeLocksCard() {
         {trilogy.map((item, idx) => (
           <motion.div
             key={item.name}
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0.01, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.15 + idx * 0.1 }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
             className={`p-3 rounded-xl ${item.bgColor} border ${item.borderColor} relative overflow-hidden`}
           >
             {/* Step number */}
@@ -80,10 +81,11 @@ export function AIThreeLocksCard() {
       
       {/* Summary */}
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0.01 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
         className="mt-4 text-center"
+        style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
       >
         <p className="text-[10px] text-slate-400 leading-relaxed">
           追踪 → 对比 → 见证，AI陪你走完每一步
