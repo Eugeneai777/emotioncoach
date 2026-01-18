@@ -288,23 +288,28 @@ export function AppointmentPayDialog({
     setStatus('loading');
     try {
       // 确定支付类型：
+      // - 小程序：使用原生支付 (miniprogram)
       // - 微信浏览器：优先 JSAPI（弹窗）
-      // - 小程序 WebView：若检测不到 WeixinJSBridge，则自动降级为扫码
       // - 移动端非微信：H5
       // - 其他：Native
-      let selectedPayType: 'jsapi' | 'h5' | 'native';
+      let selectedPayType: 'jsapi' | 'h5' | 'native' | 'miniprogram';
+      let openIdForPayment: string | undefined = undefined;
 
-      // 小程序环境：优先走“小程序原生支付页”方案（需要 miniProgram bridge）
+      // 小程序环境：使用原生支付
       if (isMiniProgram) {
-        const hasMpBridge =
-          typeof window.wx?.miniProgram?.postMessage === 'function' ||
-          typeof window.wx?.miniProgram?.navigateTo === 'function';
-
-        if (!hasMpBridge) {
-          toast.info('小程序支付能力未就绪，已切换为扫码支付');
+        const mpOpenId = getMiniProgramOpenIdFromCache();
+        console.log('[AppointmentPay] MiniProgram detected, cached mp_openid:', mpOpenId || 'MISSING');
+        
+        if (!mpOpenId) {
+          console.error('[AppointmentPay] MiniProgram payment requires mp_openid');
+          toast.error('缺少支付授权信息，请返回小程序首页重新进入');
+          setStatus('failed');
+          setErrorMessage('缺少 mp_openid 参数');
+          return;
         }
-
-        selectedPayType = hasMpBridge ? 'jsapi' : 'native';
+        
+        openIdForPayment = mpOpenId;
+        selectedPayType = 'miniprogram';
       } else if (isWechat && !!userOpenId) {
         // 微信浏览器：检测 WeixinJSBridge
         const bridgeReady = await new Promise<boolean>((resolve) => {
