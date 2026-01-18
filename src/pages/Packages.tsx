@@ -31,8 +31,8 @@ export default function Packages() {
 
   // 处理小程序支付成功回调
   const { isPaymentCallback, orderNo } = usePaymentCallback({
-    onSuccess: () => {
-      console.log('[Packages] Payment callback success, order:', orderNo);
+    onSuccess: (order) => {
+      console.log('[Packages] Payment callback success, order:', order);
       toast.success("购买成功！配额已到账 🎉");
       // 关闭支付弹窗
       setPayDialogOpen(false);
