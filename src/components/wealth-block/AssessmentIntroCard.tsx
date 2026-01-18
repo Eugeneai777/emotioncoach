@@ -14,6 +14,7 @@ const isMobileDevice = () => {
 
 interface AssessmentIntroCardProps {
   isLoggedIn: boolean;
+  hasPurchased?: boolean; // 是否已购买测评
   onStart: () => void;
   onLogin: () => void;
   onPay?: () => void; // 新增：支付按钮回调
@@ -58,11 +59,17 @@ const loginBenefits = [
   "获得AI教练个性化指导",
 ];
 
-export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: AssessmentIntroCardProps) {
+export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, onStart, onLogin, onPay }: AssessmentIntroCardProps) {
   const isMobile = isMobileDevice();
   
   // 电脑端未登录时，点击开始测评需要先登录
   const handlePayClick = () => {
+    // 已购买，直接开始测评
+    if (hasPurchased) {
+      onStart();
+      return;
+    }
+    
     if (!isMobile && !isLoggedIn) {
       // 电脑端未登录，跳转到登录页
       onLogin();
@@ -210,7 +217,10 @@ export function AssessmentIntroCard({ isLoggedIn, onStart, onLogin, onPay }: Ass
             className="w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 text-white mt-2"
           >
             <Sparkles className="w-4 h-4 mr-2" />
-            {!isMobile && !isLoggedIn ? '登录后开始测评' : '¥9.9 开始测评'}
+            {hasPurchased 
+              ? '继续测评' 
+              : (!isMobile && !isLoggedIn ? '登录后开始测评' : '¥9.9 开始测评')
+            }
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>

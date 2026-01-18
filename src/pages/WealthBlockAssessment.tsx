@@ -23,6 +23,7 @@ import { useWealthCampAnalytics } from "@/hooks/useWealthCampAnalytics";
 import WealthInviteCardDialog from "@/components/wealth-camp/WealthInviteCardDialog";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { isWeChatMiniProgram } from "@/utils/platform";
+import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
 
 export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
@@ -50,6 +51,10 @@ export default function WealthBlockAssessmentPage() {
   const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const { trackAssessmentTocamp, trackEvent } = useWealthCampAnalytics();
+  
+  // 检查用户是否已购买测评
+  const { data: purchaseRecord, isLoading: isPurchaseLoading } = useAssessmentPurchase();
+  const hasPurchased = !!purchaseRecord;
 
   // 检测是否为微信浏览器（非小程序）
   const isWeChatBrowserEnv = typeof window !== 'undefined' && 
@@ -540,6 +545,7 @@ export default function WealthBlockAssessmentPage() {
             {!isRedirectingForAuth && showIntro && !showResult ? (
                 <AssessmentIntroCard
                   isLoggedIn={!!user}
+                  hasPurchased={hasPurchased}
                   onStart={() => {
                     // 埋点：开始测评
                     trackEvent('assessment_started');
