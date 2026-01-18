@@ -141,7 +141,7 @@ serve(async (req) => {
     // 查询订单状态
     const { data: order, error } = await supabase
       .from('orders')
-      .select('status, paid_at, package_key, package_name, amount, user_id')
+      .select('status, paid_at, package_key, package_name, amount, user_id, openid')
       .eq('order_no', orderNo)
       .single();
 
@@ -166,6 +166,7 @@ serve(async (req) => {
           packageKey: order.package_key,
           packageName: order.package_name,
           amount: order.amount,
+          openId: order.openid || null, // 🆕 返回订单关联的 openId
           source: 'db',
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -227,6 +228,7 @@ serve(async (req) => {
         packageKey: order.package_key,
         packageName: order.package_name,
         amount: order.amount,
+        openId: order.openid || null, // 🆕 返回订单关联的 openId
         source: 'db',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

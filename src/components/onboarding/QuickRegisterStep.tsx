@@ -87,6 +87,9 @@ export function QuickRegisterStep({
   
   // 服务条款同意状态（注册模式需要勾选，登录模式不需要）
   const [agreedTerms, setAgreedTerms] = useState(false);
+  
+  // 微信浏览器内授权登录状态（移到顶部确保 hooks 顺序一致）
+  const [isWechatAuthing, setIsWechatAuthing] = useState(false);
 
   // 检测是否是微信环境（区分微信浏览器和小程序）
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
@@ -354,6 +357,38 @@ export function QuickRegisterStep({
     }
   };
 
+  // 🆕 微信环境下但缺少 openId 的兜底处理
+  if (isWechat && !paymentOpenId) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center space-y-2">
+          <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+            <RefreshCw className="w-10 h-10 text-white" />
+          </div>
+          <h3 className="text-lg font-semibold">授权信息获取失败</h3>
+          <p className="text-sm text-muted-foreground">
+            微信授权信息未能正确获取，请尝试刷新
+          </p>
+        </div>
+        <div className="space-y-3">
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="w-full"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            刷新重试
+          </Button>
+          <button 
+            onClick={() => setRegisterMode('email')}
+            className="w-full text-sm text-primary hover:underline py-2"
+          >
+            使用邮箱注册
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // 微信环境下优先使用openid一键注册
   if (isWechat && paymentOpenId) {
     return (
@@ -535,8 +570,6 @@ export function QuickRegisterStep({
   }
 
   // 微信浏览器内授权登录处理（当没有paymentOpenId时可能发生）
-  const [isWechatAuthing, setIsWechatAuthing] = useState(false);
-  
   const handleWechatAuth = async () => {
     setIsWechatAuthing(true);
     try {
