@@ -127,32 +127,22 @@ export function usePaymentCallback(options: UsePaymentCallbackOptions = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const processingRef = useRef(false);
-  const initializedRef = useRef(false);
 
   const orderNo = searchParams.get('order');
   const paymentSuccess = searchParams.get('payment_success');
 
-  // 🆕 小程序支付回调：页面重新加载时，清理之前的处理标记
-  // 这是因为小程序 WebView 更新 URL 会导致完整的页面刷新
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-    
-    // 如果 URL 中有 payment_success 参数，说明是从小程序支付返回
-    // 此时需要清理之前的处理标记，允许重新处理
-    if (paymentSuccess === '1' && orderNo) {
-      const existingKey = sessionStorage.getItem(PROCESSING_KEY);
-      if (existingKey) {
-        console.log('[PaymentCallback] Clearing stale processing key on page load:', existingKey);
-        sessionStorage.removeItem(PROCESSING_KEY);
-      }
-    }
-  }, []); // 只在组件初始化时执行一次
-
   const verifyAndHandlePayment = useCallback(async (orderNo: string) => {
-    // 检查是否已经在处理中
+    // 🆕 小程序支付回调：页面重新加载时，清理之前的处理标记
+    // 这是因为小程序 WebView 更新 URL 会导致完整的页面刷新
+    // 如果当前订单号与处理中的订单号不同，清理旧标记
     const processingOrder = sessionStorage.getItem(PROCESSING_KEY);
-    if (processingOrder === orderNo) {
+    if (processingOrder && processingOrder !== orderNo) {
+      console.log('[PaymentCallback] Clearing stale processing key:', processingOrder, '-> new:', orderNo);
+      sessionStorage.removeItem(PROCESSING_KEY);
+    }
+    
+    // 检查是否已经在处理中（同一订单）
+    if (processingOrder === orderNo && processingRef.current) {
       console.log('[PaymentCallback] Already processing order:', orderNo);
       return;
     }
@@ -164,7 +154,7 @@ export function usePaymentCallback(options: UsePaymentCallbackOptions = {}) {
       
       // 再次检查是否已被处理
       const stillProcessing = sessionStorage.getItem(PROCESSING_KEY);
-      if (stillProcessing === orderNo) {
+      if (stillProcessing === orderNo && processingRef.current) {
         console.log('[PaymentCallback] Order already claimed by page handler:', orderNo);
         return;
       }
