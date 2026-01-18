@@ -889,6 +889,42 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
     }
   }, [open, status, shouldWaitForOpenId, openIdResolved]);
 
+  // 🆕 registering 状态下监听 auth 变化，如果用户登录了，自动完成流程
+  useEffect(() => {
+    if (status === 'registering' && open) {
+      console.log('[AssessmentPay] Listening for auth state changes in registering mode');
+      
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('[AssessmentPay] User logged in during registering state:', session.user.id);
+          
+          // 登录成功，检查是否已购买
+          try {
+            const { data: existingOrder } = await supabase
+              .from('orders')
+              .select('id')
+              .eq('user_id', session.user.id)
+              .eq('package_key', 'wealth_block_assessment')
+              .eq('status', 'paid')
+              .limit(1)
+              .maybeSingle();
+            
+            if (existingOrder) {
+              console.log('[AssessmentPay] User already purchased during registering');
+              toast.success('登录成功，已进入测评！');
+              onSuccess(session.user.id);
+              onOpenChange(false);
+            }
+          } catch (error) {
+            console.error('[AssessmentPay] Error checking purchase during registering:', error);
+          }
+        }
+      });
+      
+      return () => subscription.unsubscribe();
+    }
+  }, [status, open, onSuccess, onOpenChange]);
+
   // 清理
   useEffect(() => {
     return () => {

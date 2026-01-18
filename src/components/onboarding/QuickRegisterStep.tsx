@@ -95,6 +95,62 @@ export function QuickRegisterStep({
   const isWechat = /MicroMessenger/i.test(navigator.userAgent);
   const isMiniProgram = isWeChatMiniProgram();
   
+  // 🆕 组件初始化时检测用户是否已登录且已购买
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          console.log('[QuickRegister] User already logged in:', session.user.id);
+          // 已登录，检查是否已购买
+          const { data: existingOrder } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .eq('package_key', 'wealth_block_assessment')
+            .eq('status', 'paid')
+            .limit(1)
+            .maybeSingle();
+          
+          if (existingOrder) {
+            console.log('[QuickRegister] User already purchased, calling onSuccess');
+            toast.success('检测到您已购买测评，正在进入...');
+            onSuccess(session.user.id);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('[QuickRegister] Check existing session error:', error);
+      }
+    };
+    
+    checkExistingSession();
+  }, [onSuccess]);
+
+  // 🆕 监听页面可见性变化，处理微信授权返回
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        const authPending = localStorage.getItem('wechat_auth_pending');
+        if (authPending === 'true') {
+          console.log('[QuickRegister] Visibility changed, checking auth status');
+          localStorage.removeItem('wechat_auth_pending');
+          
+          // 检查是否已登录
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            console.log('[QuickRegister] User logged in after visibility change:', session.user.id);
+            toast.success('微信授权成功！');
+            onSuccess(session.user.id);
+          }
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [onSuccess]);
+
   // 微信环境下自动获取微信昵称
   useEffect(() => {
     const fetchWechatNickname = async () => {
@@ -444,6 +500,10 @@ export function QuickRegisterStep({
       
       // 微信浏览器环境：使用 OAuth 跳转
       // 注意：后端 wechat-pay-auth 期望 redirectUri，而非 action/callbackUrl/state
+      
+      // 🆕 设置授权进行中标记，用于页面可见性变化时检测
+      localStorage.setItem('wechat_auth_pending', 'true');
+      
       const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
         body: {
           redirectUri: window.location.href,
@@ -453,7 +513,10 @@ export function QuickRegisterStep({
       
       console.log('[QuickRegister] wechat-pay-auth response:', { data, error });
       
-      if (error) throw error;
+      if (error) {
+        localStorage.removeItem('wechat_auth_pending');
+        throw error;
+      }
       if (data?.authUrl) {
         console.log('[QuickRegister] Redirecting to WeChat OAuth:', data.authUrl);
         window.location.href = data.authUrl;

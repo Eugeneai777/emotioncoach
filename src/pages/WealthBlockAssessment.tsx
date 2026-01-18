@@ -276,9 +276,34 @@ export default function WealthBlockAssessmentPage() {
           }
         }
       } else {
-        // 没有 tokenHash，检查是否已购买
+        // 🆕 没有 tokenHash，但可能用户已经通过其他方式登录了
+        // 先检查当前登录状态和购买状态
+        console.log('[WealthBlock] No tokenHash, checking current session...');
+        
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (currentSession?.user) {
+          console.log('[WealthBlock] Found existing session:', currentSession.user.id);
+          
+          const { data: existingOrder } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('user_id', currentSession.user.id)
+            .eq('package_key', 'wealth_block_assessment')
+            .eq('status', 'paid')
+            .limit(1)
+            .maybeSingle();
+          
+          if (existingOrder) {
+            console.log('[WealthBlock] User already purchased (no tokenHash path), skipping pay dialog');
+            setShowIntro(false);
+            return;
+          }
+        }
+        
+        // 如果没登录或未购买，打开支付弹窗
         if (hasPurchased) {
-          console.log('[WealthBlock] Already purchased, skipping pay dialog');
+          console.log('[WealthBlock] Already purchased (via hook), skipping pay dialog');
           setShowIntro(false);
         } else {
           setShowPayDialog(true);
