@@ -43,7 +43,11 @@ const Layer1Illustration: React.FC = () => {
               ease: "easeInOut"
             }
           }}
-          style={{ x: card.x, transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+          style={{ 
+            x: card.x, 
+            transform: 'translateZ(0)', 
+            willChange: 'transform, opacity' 
+          }}
           className="absolute w-8 h-8 bg-white rounded-lg shadow-md flex items-center justify-center text-sm"
         >
           {card.emoji}
