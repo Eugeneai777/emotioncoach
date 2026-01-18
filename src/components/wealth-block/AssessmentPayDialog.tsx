@@ -7,6 +7,7 @@ import { Loader2, CheckCircle, QrCode, Smartphone, Copy, ExternalLink } from "lu
 import { QuickRegisterStep } from "@/components/onboarding/QuickRegisterStep";
 import QRCode from "qrcode";
 import { isWeChatMiniProgram, isWeChatBrowser } from "@/utils/platform";
+import { usePackages, getPackagePrice } from "@/hooks/usePackages";
 
 // 声明 WeixinJSBridge 类型
 declare global {
@@ -70,6 +71,10 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const openIdFetchedRef = useRef<boolean>(false);
   const silentAuthTriggeredRef = useRef<boolean>(false);
+
+  // 🆕 从数据库获取套餐价格
+  const { data: packages } = usePackages();
+  const assessmentPrice = getPackagePrice(packages, 'wealth_block_assessment', 9.9);
 
   // 检测环境
   const isWechat = isWeChatBrowser();
@@ -444,7 +449,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         body: {
           packageKey: "wealth_block_assessment",
           packageName: "财富卡点测评",
-          amount: 9.9,
+          amount: assessmentPrice,
           userId: userId || "guest",
           payType: selectedPayType,
           openId: needsOpenId ? userOpenId : undefined,
@@ -493,7 +498,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                     body: {
                       packageKey: "wealth_block_assessment",
                       packageName: "财富卡点测评",
-                      amount: 9.9,
+                      amount: assessmentPrice,
                       userId: userId || "guest",
                       payType: "native",
                       existingOrderNo: data.orderNo,
@@ -544,7 +549,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                       body: {
                         packageKey: "wealth_block_assessment",
                         packageName: "财富卡点测评",
-                        amount: 9.9,
+                        amount: assessmentPrice,
                         userId: userId || "guest",
                         payType: "native",
                         existingOrderNo: data.orderNo,
@@ -580,7 +585,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                 body: {
                   packageKey: "wealth_block_assessment",
                   packageName: "财富卡点测评",
-                  amount: 9.9,
+                  amount: assessmentPrice,
                   userId: userId || "guest",
                   payType: "native",
                   existingOrderNo: data.orderNo,
@@ -668,7 +673,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                   landing_page: landingPage,
                   conversion_type: "assessment_purchase",
                   order_no: orderNumber,
-                  amount: 9.9,
+                  amount: assessmentPrice,
                   time_to_convert_ms: timeToConvert,
                   timestamp: new Date().toISOString(),
                 },
@@ -836,7 +841,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
               <div className="text-center bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3">
                 <div className="flex items-center justify-center gap-2 mb-0.5">
                   <span className="text-muted-foreground line-through text-sm">¥99</span>
-                  <span className="text-xl font-bold text-primary">¥9.9</span>
+                  <span className="text-xl font-bold text-primary">¥{assessmentPrice}</span>
                   <span className="px-1.5 py-0.5 bg-red-500 text-white text-xs rounded">限时</span>
                 </div>
                 <p className="text-xs text-muted-foreground">30道专业测评 + AI智能分析</p>
@@ -857,7 +862,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                 <div className="space-y-3">
                   <Button onClick={handleH5Pay} className="w-full bg-[#07C160] hover:bg-[#06AD56]">
                     <Smartphone className="w-4 h-4 mr-2" />
-                    立即支付 ¥9.9
+                    立即支付 ¥{assessmentPrice}
                   </Button>
                   <Button variant="outline" onClick={handleCopyLink} className="w-full">
                     <Copy className="w-4 h-4 mr-2" />
