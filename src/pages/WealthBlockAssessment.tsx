@@ -207,35 +207,82 @@ export default function WealthBlockAssessmentPage() {
           if (error) {
             console.error('[WealthBlock] Auto-login failed:', error);
             // 登录失败也继续打开弹窗（用扫码支付兜底）
-            setShowPayDialog(true);
+            if (!hasPurchased) {
+              setShowPayDialog(true);
+            } else {
+              console.log('[WealthBlock] Already purchased, skipping pay dialog');
+              setShowIntro(false);
+            }
           } else if (data.session?.user) {
             // verifyOtp 返回了 session，说明登录已成功
             // 短暂延迟让 React 状态同步，然后立即打开弹窗
             console.log('[WealthBlock] Auto-login success, user:', data.session.user.id);
-            setTimeout(() => setShowPayDialog(true), 100);
+            // 🆕 登录后检查是否已购买
+            setTimeout(async () => {
+              const { data: existingOrder } = await supabase
+                .from('orders')
+                .select('id')
+                .eq('user_id', data.session!.user.id)
+                .eq('package_key', 'wealth_block_assessment')
+                .eq('status', 'paid')
+                .limit(1)
+                .maybeSingle();
+
+              if (existingOrder) {
+                console.log('[WealthBlock] User already purchased after login, skipping pay dialog');
+                setShowIntro(false);
+              } else {
+                setShowPayDialog(true);
+              }
+            }, 100);
           } else {
             // 没有 session，等待 auth 状态更新
             console.log('[WealthBlock] Waiting for auth state update...');
             const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
               if (event === 'SIGNED_IN' && session?.user) {
-                console.log('[WealthBlock] Auth state updated, opening pay dialog');
-                setShowPayDialog(true);
+                console.log('[WealthBlock] Auth state updated, checking purchase status');
+                // 🆕 登录后检查是否已购买
+                supabase
+                  .from('orders')
+                  .select('id')
+                  .eq('user_id', session.user.id)
+                  .eq('package_key', 'wealth_block_assessment')
+                  .eq('status', 'paid')
+                  .limit(1)
+                  .maybeSingle()
+                  .then(({ data: existingOrder }) => {
+                    if (existingOrder) {
+                      console.log('[WealthBlock] User already purchased, skipping pay dialog');
+                      setShowIntro(false);
+                    } else {
+                      setShowPayDialog(true);
+                    }
+                  });
                 subscription.unsubscribe();
               }
             });
-            // 超时保护：1秒后无论如何都打开弹窗
+            // 超时保护：1秒后无论如何都打开弹窗（如果还没购买）
             setTimeout(() => {
               subscription.unsubscribe();
-              setShowPayDialog(true);
+              if (!hasPurchased) {
+                setShowPayDialog(true);
+              }
             }, 1000);
           }
         } catch (err) {
           console.error('[WealthBlock] Auto-login exception:', err);
-          setShowPayDialog(true);
+          if (!hasPurchased) {
+            setShowPayDialog(true);
+          }
         }
       } else {
-        // 没有 tokenHash，直接打开弹窗
-        setShowPayDialog(true);
+        // 没有 tokenHash，检查是否已购买
+        if (hasPurchased) {
+          console.log('[WealthBlock] Already purchased, skipping pay dialog');
+          setShowIntro(false);
+        } else {
+          setShowPayDialog(true);
+        }
       }
     };
 
@@ -662,6 +709,7 @@ export default function WealthBlockAssessmentPage() {
           setShowPayDialog(open);
         }}
         userId={user?.id}
+        hasPurchased={hasPurchased}
         onSuccess={(returnedUserId) => {
           // 支付+注册成功，开始测评
           console.log('[WealthBlock] PayDialog onSuccess, userId:', returnedUserId);

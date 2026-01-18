@@ -26,6 +26,8 @@ interface AssessmentPayDialogProps {
   returnUrl?: string;
   /** 当前登录用户ID，如果已登录则直接跳过注册 */
   userId?: string;
+  /** 用户是否已购买过测评（用于跳过支付） */
+  hasPurchased?: boolean;
 }
 
 type PaymentStatus = "idle" | "creating" | "pending" | "polling" | "paid" | "registering" | "error";
@@ -52,7 +54,7 @@ const isPayAuthInProgress = (): boolean => {
   return sessionStorage.getItem("pay_auth_in_progress") === "1";
 };
 
-export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, userId }: AssessmentPayDialogProps) {
+export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, userId, hasPurchased }: AssessmentPayDialogProps) {
   const [status, setStatus] = useState<PaymentStatus>("idle");
   const [orderNo, setOrderNo] = useState<string>("");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
@@ -396,7 +398,34 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       isMobile,
       "isMiniProgram:",
       isMiniProgram,
+      "hasPurchased:",
+      hasPurchased,
     );
+
+    // 🆕 防止重复支付：检查用户是否已购买过
+    if (userId && userId !== 'guest') {
+      try {
+        const { data: existingOrder } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('package_key', 'wealth_block_assessment')
+          .eq('status', 'paid')
+          .limit(1)
+          .maybeSingle();
+
+        if (existingOrder) {
+          console.log('[AssessmentPay] User already purchased, skipping payment');
+          toast.success('您已购买过测评，直接开始！');
+          onSuccess(userId);
+          onOpenChange(false);
+          return;
+        }
+      } catch (checkError) {
+        console.error('[AssessmentPay] Failed to check existing purchase:', checkError);
+        // 检查失败不阻止支付流程，继续创建订单
+      }
+    }
 
     // ⚠️ 小程序场景：不再等待 openId，直接创建订单，由小程序原生页面获取 openId 并完成支付
     // postMessage 无法实时通信，所以不能依赖它获取 openId
