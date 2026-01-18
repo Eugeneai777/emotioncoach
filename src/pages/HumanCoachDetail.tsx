@@ -24,6 +24,7 @@ import {
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
+import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 
 export default function HumanCoachDetail() {
   const { id } = useParams<{ id: string }>();
@@ -39,6 +40,25 @@ export default function HumanCoachDetail() {
   const { data: services = [] } = useCoachServices(id);
   const { data: certifications = [] } = useCoachCertifications(id);
   const { data: reviews = [] } = useCoachReviews(id);
+
+  // 处理小程序支付成功回调
+  const { isPaymentCallback } = usePaymentCallback({
+    onSuccess: () => {
+      console.log('[HumanCoachDetail] Payment callback success');
+      toast.success("预约成功！我们会发送确认通知给您");
+      setBookingOpen(false);
+    },
+    showToast: false,
+    showConfetti: true,
+    autoRedirect: false,
+  });
+
+  // 小程序支付回调时关闭弹窗
+  useEffect(() => {
+    if (isPaymentCallback) {
+      setBookingOpen(false);
+    }
+  }, [isPaymentCallback]);
   
   // 检查当前用户是否为此教练
   useEffect(() => {

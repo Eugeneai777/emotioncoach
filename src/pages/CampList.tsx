@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
+import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 
 const campCategories = [
   {
@@ -53,6 +54,25 @@ const CampList = () => {
   const [sortBy, setSortBy] = useState<'popular' | 'duration' | 'newest'>('popular');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedCamp, setSelectedCamp] = useState<CampTemplate | null>(null);
+
+  // 处理小程序支付成功回调
+  const { isPaymentCallback } = usePaymentCallback({
+    onSuccess: () => {
+      console.log('[CampList] Payment callback success');
+      toast.success("购买成功！", { description: "即将开启你的训练营之旅" });
+      setPayDialogOpen(false);
+    },
+    showToast: false,
+    showConfetti: true,
+    autoRedirect: false,
+  });
+
+  // 小程序支付回调时关闭弹窗
+  useEffect(() => {
+    if (isPaymentCallback) {
+      setPayDialogOpen(false);
+    }
+  }, [isPaymentCallback]);
 
   const handlePurchase = (camp: CampTemplate) => {
     if (!user) {

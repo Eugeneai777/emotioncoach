@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePartner } from "@/hooks/usePartner";
+import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,26 @@ const PartnerIntro = () => {
     loading: partnerLoading
   } = usePartner();
   const [payDialogOpen, setPayDialogOpen] = useState(false);
+
+  // 处理小程序支付成功回调
+  const { isPaymentCallback } = usePaymentCallback({
+    onSuccess: () => {
+      console.log('[PartnerIntro] Payment callback success');
+      toast.success('🎉 恭喜您成为绽放合伙人！');
+      setPayDialogOpen(false);
+      navigate('/partner');
+    },
+    showToast: false,
+    showConfetti: true,
+    autoRedirect: false,
+  });
+
+  // 小程序支付回调时关闭弹窗
+  useEffect(() => {
+    if (isPaymentCallback) {
+      setPayDialogOpen(false);
+    }
+  }, [isPaymentCallback]);
 
   // 绽放合伙人套餐信息
   const bloomPackage = {

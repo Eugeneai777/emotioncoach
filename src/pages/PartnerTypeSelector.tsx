@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import { ArrowLeft, Users, Sparkles, ShoppingCart } from "lucide-react";
 import { productCategories } from "@/config/productCategories";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 export default function PartnerTypeSelector() {
   const navigate = useNavigate();
   const [payDialogOpen, setPayDialogOpen] = useState(false);
@@ -17,6 +18,25 @@ export default function PartnerTypeSelector() {
     price: 19800,
     quota: 0
   };
+
+  // 处理小程序支付成功回调
+  const { isPaymentCallback } = usePaymentCallback({
+    onSuccess: () => {
+      console.log('[PartnerTypeSelector] Payment callback success');
+      setPayDialogOpen(false);
+      navigate("/partner");
+    },
+    showConfetti: true,
+    autoRedirect: false,
+  });
+
+  // 小程序支付回调时关闭弹窗
+  useEffect(() => {
+    if (isPaymentCallback) {
+      setPayDialogOpen(false);
+    }
+  }, [isPaymentCallback]);
+
   const handleBloomPurchase = () => {
     setPayDialogOpen(true);
   };

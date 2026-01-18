@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCampPurchase } from "@/hooks/useCampPurchase";
+import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,25 @@ const CampTemplateDetail = () => {
   const {
     user
   } = useAuth();
+
+  // 处理小程序支付成功回调
+  const { isPaymentCallback } = usePaymentCallback({
+    onSuccess: () => {
+      console.log('[CampTemplateDetail] Payment callback success');
+      toast.success("购买成功！", { description: "训练营权限已开通" });
+      setShowPurchaseDialog(false);
+    },
+    showToast: false,
+    showConfetti: true,
+    autoRedirect: false,
+  });
+
+  // 小程序支付回调时关闭弹窗
+  useEffect(() => {
+    if (isPaymentCallback) {
+      setShowPurchaseDialog(false);
+    }
+  }, [isPaymentCallback]);
   const {
     data: camp,
     isLoading
