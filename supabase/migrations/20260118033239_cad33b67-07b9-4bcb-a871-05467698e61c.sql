@@ -1,0 +1,2 @@
+INSERT INTO packages (package_key, package_name, price, ai_quota, is_active, display_order, product_line, description)
+VALUES ('wealth_block_assessment', '财富卡点测评', 9.9, 0, true, 5, 'youjin', '30道专业测评 + AI智能分析');
