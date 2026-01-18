@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { PointsRulesDialog } from "./PointsRulesDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent } from "@/components/ui/mobile-card";
+import { usePackages, getPackagePrice, getPackageQuota } from "@/hooks/usePackages";
 
 interface PackageInfo {
   key: string;
@@ -74,6 +75,20 @@ const PackageCard = ({ emoji, name, price, priceLabel, features, recommended, gr
 export function ProductComparisonTable({ category, onPurchase }: ProductComparisonTableProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { data: packages } = usePackages();
+  
+  // 从数据库获取价格，提供默认值作为回退
+  const basicPrice = getPackagePrice(packages, 'basic', 9.9);
+  const basicQuota = getPackageQuota(packages, 'basic', 50);
+  const member365Price = getPackagePrice(packages, 'member365', 365);
+  const member365Quota = getPackageQuota(packages, 'member365', 1000);
+  const wealthCampPrice = getPackagePrice(packages, 'wealth_camp_7day', 299);
+  const partnerL1Price = getPackagePrice(packages, 'youjin_partner_l1', 792);
+  const partnerL2Price = getPackagePrice(packages, 'youjin_partner_l2', 3217);
+  const partnerL3Price = getPackagePrice(packages, 'youjin_partner_l3', 4950);
+  const identityCampPrice = getPackagePrice(packages, 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', 2980);
+  const emotionCampPrice = getPackagePrice(packages, 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', 3980);
+  const bloomPartnerPrice = getPackagePrice(packages, 'bloom_partner', 19800);
   
   const renderValue = (value: boolean | string) => {
     if (typeof value === 'boolean') {
@@ -124,20 +139,20 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           <PackageCard
             emoji="💎"
             name="尝鲜会员"
-            price={9.9}
-            priceLabel="50点"
+            price={basicPrice}
+            priceLabel={`${basicQuota}点`}
             features={['5位AI教练体验', '情绪按钮系统', '成长社区', '7天有效']}
-            onPurchase={() => handlePurchase({ key: 'basic', name: '尝鲜会员', price: 9.9, quota: 50 })}
+            onPurchase={() => handlePurchase({ key: 'basic', name: '尝鲜会员', price: basicPrice, quota: basicQuota })}
           />
 
           <PackageCard
             emoji="👑"
             name="365会员"
-            price={365}
-            priceLabel="1000点"
+            price={member365Price}
+            priceLabel={`${member365Quota}点`}
             features={['5位AI教练无限使用', '语音对话特权', 'VIP专属服务', '365天有效']}
             recommended
-            onPurchase={() => handlePurchase({ key: 'member365', name: '365会员', price: 365, quota: 1000 })}
+            onPurchase={() => handlePurchase({ key: 'member365', name: '365会员', price: member365Price, quota: member365Quota })}
           />
         </div>
       );
@@ -174,7 +189,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   <th className="text-center p-4 min-w-[140px]">
                     <div className="space-y-1">
                       <div className="font-bold text-base text-foreground">尝鲜会员</div>
-                      <div className="text-xs text-muted-foreground">¥9.9 · 50点</div>
+                      <div className="text-xs text-muted-foreground">¥{basicPrice} · {basicQuota}点</div>
                     </div>
                   </th>
                   <th className="text-center p-4 min-w-[140px] bg-primary/5">
@@ -183,7 +198,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                         <div className="font-bold text-base text-primary">365会员</div>
                         <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-semibold">推荐</span>
                       </div>
-                      <div className="text-xs text-muted-foreground">¥365 · 1000点</div>
+                      <div className="text-xs text-muted-foreground">¥{member365Price} · {member365Quota}点</div>
                     </div>
                   </th>
                 </tr>
@@ -225,12 +240,12 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                 <tr>
                   <td className="p-4 sticky left-0 bg-background z-10"></td>
                   <td className="p-4 text-center">
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => handlePurchase({ key: 'basic', name: '尝鲜会员', price: 9.9, quota: 50 })}>
+                    <Button variant="outline" size="sm" className="w-full" onClick={() => handlePurchase({ key: 'basic', name: '尝鲜会员', price: basicPrice, quota: basicQuota })}>
                       立即购买
                     </Button>
                   </td>
                   <td className="p-4 text-center bg-primary/5">
-                    <Button size="sm" className="w-full bg-primary hover:bg-primary/90" onClick={() => handlePurchase({ key: 'member365', name: '365会员', price: 365, quota: 1000 })}>
+                    <Button size="sm" className="w-full bg-primary hover:bg-primary/90" onClick={() => handlePurchase({ key: 'member365', name: '365会员', price: member365Price, quota: member365Quota })}>
                       立即购买
                     </Button>
                   </td>
@@ -259,12 +274,12 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
               <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 rounded-full">🤖 AI陪伴</span>
             </div>
             
-            <div className="text-2xl font-bold text-amber-600">¥299</div>
+            <div className="text-2xl font-bold text-amber-600">¥{wealthCampPrice}</div>
             
             <div className="flex gap-2 justify-center">
               <Button 
                 className="bg-gradient-to-r from-amber-500 to-orange-500 text-white flex-1"
-                onClick={() => handlePurchase({ key: 'wealth_camp_7day', name: '财富觉醒训练营', price: 299 })}
+                onClick={() => handlePurchase({ key: 'wealth_camp_7day', name: '财富觉醒训练营', price: wealthCampPrice })}
               >
                 <ShoppingCart className="w-4 h-4 mr-1" />
                 立即报名
@@ -336,30 +351,30 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           <PackageCard
             emoji="💪"
             name="初级合伙人"
-            price={792}
+            price={partnerL1Price}
             priceLabel="100份体验包"
             features={['直推20%佣金', '100份体验包', '基础推广工具']}
-            onPurchase={() => handlePurchase({ key: 'youjin_partner_l1', name: '初级合伙人', price: 792 })}
+            onPurchase={() => handlePurchase({ key: 'youjin_partner_l1', name: '初级合伙人', price: partnerL1Price })}
           />
 
           <PackageCard
             emoji="🔥"
             name="高级合伙人"
-            price={3217}
+            price={partnerL2Price}
             priceLabel="500份体验包"
             features={['直推25%佣金', '500份体验包', '二级10%佣金', '高级推广工具']}
-            onPurchase={() => handlePurchase({ key: 'youjin_partner_l2', name: '高级合伙人', price: 3217 })}
+            onPurchase={() => handlePurchase({ key: 'youjin_partner_l2', name: '高级合伙人', price: partnerL2Price })}
           />
 
           <PackageCard
             emoji="💎"
             name="钻石合伙人"
-            price={4950}
+            price={partnerL3Price}
             priceLabel="1000份体验包"
             features={['直推30%佣金', '1000份体验包', '二级15%佣金', '专属1对1培训']}
             recommended
             gradient="bg-gradient-to-br from-orange-50/80 to-amber-50/80 dark:from-orange-950/30 dark:to-amber-950/30"
-            onPurchase={() => handlePurchase({ key: 'youjin_partner_l3', name: '钻石合伙人', price: 4950 })}
+            onPurchase={() => handlePurchase({ key: 'youjin_partner_l3', name: '钻石合伙人', price: partnerL3Price })}
           />
 
           <Button variant="outline" className="w-full" onClick={() => navigate('/partner/youjin-intro')}>
@@ -447,14 +462,14 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                     <div className="space-y-1">
                       <span className="text-2xl">💪</span>
                       <div className="font-bold text-sm">初级合伙人</div>
-                      <div className="text-xs text-muted-foreground">¥792 · 100份</div>
+                      <div className="text-xs text-muted-foreground">¥{partnerL1Price.toLocaleString()} · 100份</div>
                     </div>
                   </th>
                   <th className="text-center p-4 min-w-[120px]">
                     <div className="space-y-1">
                       <span className="text-2xl">🔥</span>
                       <div className="font-bold text-sm">高级合伙人</div>
-                      <div className="text-xs text-muted-foreground">¥3,217 · 500份</div>
+                      <div className="text-xs text-muted-foreground">¥{partnerL2Price.toLocaleString()} · 500份</div>
                     </div>
                   </th>
                   <th className="text-center p-4 min-w-[120px] bg-primary/5">
@@ -464,7 +479,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                         <div className="font-bold text-sm text-primary">钻石合伙人</div>
                         <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">推荐</span>
                       </div>
-                      <div className="text-xs text-muted-foreground">¥4,950 · 1000份</div>
+                      <div className="text-xs text-muted-foreground">¥{partnerL3Price.toLocaleString()} · 1000份</div>
                     </div>
                   </th>
                 </tr>
@@ -507,13 +522,13 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                 <tr>
                   <td className="p-4 sticky left-0 bg-background z-10"></td>
                   <td className="p-3 text-center">
-                    <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => handlePurchase({ key: 'youjin_partner_l1', name: '初级合伙人', price: 792 })}>立即购买</Button>
+                    <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => handlePurchase({ key: 'youjin_partner_l1', name: '初级合伙人', price: partnerL1Price })}>立即购买</Button>
                   </td>
                   <td className="p-3 text-center">
-                    <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => handlePurchase({ key: 'youjin_partner_l2', name: '高级合伙人', price: 3217 })}>立即购买</Button>
+                    <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => handlePurchase({ key: 'youjin_partner_l2', name: '高级合伙人', price: partnerL2Price })}>立即购买</Button>
                   </td>
                   <td className="p-3 text-center bg-primary/5">
-                    <Button size="sm" className="w-full text-xs bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:opacity-90" onClick={() => handlePurchase({ key: 'youjin_partner_l3', name: '钻石合伙人', price: 4950 })}>立即购买</Button>
+                    <Button size="sm" className="w-full text-xs bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:opacity-90" onClick={() => handlePurchase({ key: 'youjin_partner_l3', name: '钻石合伙人', price: partnerL3Price })}>立即购买</Button>
                   </td>
                 </tr>
               </tbody>
@@ -540,21 +555,21 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           <PackageCard
             emoji="🦋"
             name="身份绽放训练营"
-            price={2980}
+            price={identityCampPrice}
             priceLabel="认识真实自我"
             features={['21天深度身份探索', '专业教练1对1指导', '社群共修支持', '个性化成长方案']}
-            onPurchase={() => handlePurchase({ key: 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', name: '身份绽放训练营', price: 2980 })}
+            onPurchase={() => handlePurchase({ key: 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', name: '身份绽放训练营', price: identityCampPrice })}
           />
 
           <PackageCard
             emoji="💗"
             name="情感绽放训练营"
-            price={3980}
+            price={emotionCampPrice}
             priceLabel="体验内在情绪"
             features={['21天情感疗愈之旅', '深度情绪释放技术', '专属情感教练', '亲密关系修复']}
             recommended
             gradient="bg-gradient-to-br from-pink-50/80 to-purple-50/80 dark:from-pink-950/30 dark:to-purple-950/30"
-            onPurchase={() => handlePurchase({ key: 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', name: '情感绽放训练营', price: 3980 })}
+            onPurchase={() => handlePurchase({ key: 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', name: '情感绽放训练营', price: emotionCampPrice })}
           />
         </div>
       );
@@ -572,7 +587,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   <div className="space-y-1">
                     <div className="font-bold text-base">身份绽放训练营</div>
                     <div className="text-xs text-muted-foreground">认识真实自我</div>
-                    <div className="text-xs text-muted-foreground font-semibold mt-1">¥2,980</div>
+                    <div className="text-xs text-muted-foreground font-semibold mt-1">¥{identityCampPrice.toLocaleString()}</div>
                   </div>
                 </th>
                 <th className="text-center p-4 min-w-[160px] bg-primary/5">
@@ -582,7 +597,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                       <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-semibold">推荐</span>
                     </div>
                     <div className="text-xs text-muted-foreground">体验内在情绪</div>
-                    <div className="text-xs text-muted-foreground font-semibold mt-1">¥3,980</div>
+                    <div className="text-xs text-muted-foreground font-semibold mt-1">¥{emotionCampPrice.toLocaleString()}</div>
                   </div>
                 </th>
               </tr>
@@ -621,25 +636,25 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   </TooltipProvider>
                 );
               })}
-              <tr>
-                <td className="p-4 sticky left-0 bg-background z-10"></td>
-                <td className="p-4 text-center">
-                  <div className="space-y-2">
-                    <Button size="sm" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white" onClick={() => handlePurchase({ key: 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', name: '身份绽放训练营', price: 2980 })}>
-                      <ShoppingCart className="w-4 h-4 mr-1" />立即购买 ¥2,980
-                    </Button>
-                    <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={() => navigate('/camp-template/fdbf32e0-61c5-464e-817a-45661dfc8105')}>了解更多 →</Button>
-                  </div>
-                </td>
-                <td className="p-4 text-center bg-primary/5">
-                  <div className="space-y-2">
-                    <Button size="sm" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white" onClick={() => handlePurchase({ key: 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', name: '情感绽放训练营', price: 3980 })}>
-                      <ShoppingCart className="w-4 h-4 mr-1" />立即购买 ¥3,980
-                    </Button>
-                    <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={() => navigate('/camp-template/c77488e9-959f-4ee0-becd-9cbc99fd1dc5')}>了解更多 →</Button>
-                  </div>
-                </td>
-              </tr>
+                <tr>
+                  <td className="p-4 sticky left-0 bg-background z-10"></td>
+                  <td className="p-4 text-center">
+                    <div className="space-y-2">
+                      <Button size="sm" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white" onClick={() => handlePurchase({ key: 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', name: '身份绽放训练营', price: identityCampPrice })}>
+                        <ShoppingCart className="w-4 h-4 mr-1" />立即购买 ¥{identityCampPrice.toLocaleString()}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={() => navigate('/camp-template/fdbf32e0-61c5-464e-817a-45661dfc8105')}>了解更多 →</Button>
+                    </div>
+                  </td>
+                  <td className="p-4 text-center bg-primary/5">
+                    <div className="space-y-2">
+                      <Button size="sm" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white" onClick={() => handlePurchase({ key: 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', name: '情感绽放训练营', price: emotionCampPrice })}>
+                        <ShoppingCart className="w-4 h-4 mr-1" />立即购买 ¥{emotionCampPrice.toLocaleString()}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={() => navigate('/camp-template/c77488e9-959f-4ee0-becd-9cbc99fd1dc5')}>了解更多 →</Button>
+                    </div>
+                  </td>
+                </tr>
             </tbody>
           </table>
         </div>
@@ -663,12 +678,12 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
               <span className="px-2 py-1 bg-pink-100 dark:bg-pink-900/30 rounded-full">🎓 专属培训</span>
             </div>
             
-            <div className="text-2xl font-bold text-pink-600">¥19,800</div>
+            <div className="text-2xl font-bold text-pink-600">¥{bloomPartnerPrice.toLocaleString()}</div>
             
             <div className="flex gap-2 justify-center">
               <Button 
                 className="bg-gradient-to-r from-pink-500 to-purple-500 text-white flex-1"
-                onClick={() => handlePurchase({ key: 'bloom_partner', name: '绽放合伙人', price: 19800 })}
+                onClick={() => handlePurchase({ key: 'bloom_partner', name: '绽放合伙人', price: bloomPartnerPrice })}
               >
                 <ShoppingCart className="w-4 h-4 mr-1" />
                 立即购买
