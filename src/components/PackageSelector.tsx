@@ -6,25 +6,25 @@ import { useNavigate } from "react-router-dom";
 
 const packages = [
   {
-    id: 'basic',
-    name: '尝鲜会员',
+    id: "basic",
+    name: "尝鲜会员",
     quota: 50,
-    price: 9.9,
-    duration: '365天',
+    price: 0.01,
+    duration: "365天",
     icon: Sparkles,
     limitPurchase: true,
-    features: ['50次AI对话', '基础功能', '365天有效', '⚠️ 限购一次']
+    features: ["50次AI对话", "基础功能", "365天有效", "⚠️ 限购一次"],
   },
   {
-    id: 'member365',
-    name: '365会员',
+    id: "member365",
+    name: "365会员",
     quota: 1000,
     price: 365,
-    duration: '365天',
+    duration: "365天",
     icon: Crown,
     popular: true,
-    features: ['1000次AI对话', '全部高级功能', '365天有效期']
-  }
+    features: ["1000次AI对话", "全部高级功能", "365天有效期"],
+  },
 ];
 
 export const PackageSelector = () => {
@@ -41,28 +41,22 @@ export const PackageSelector = () => {
           {packages.map((pkg) => {
             const Icon = pkg.icon;
             return (
-              <Card key={pkg.id} className={pkg.popular ? 'border-primary' : ''}>
+              <Card key={pkg.id} className={pkg.popular ? "border-primary" : ""}>
                 <CardHeader className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Icon className="w-5 h-5 text-primary" />
                       <CardTitle className="text-lg">{pkg.name}</CardTitle>
                     </div>
-                    {pkg.popular && (
-                      <Badge variant="default">推荐</Badge>
-                    )}
+                    {pkg.popular && <Badge variant="default">推荐</Badge>}
                   </div>
                   <div>
-                    <div className="text-3xl font-bold">
-                      ¥{pkg.price}
-                    </div>
+                    <div className="text-3xl font-bold">¥{pkg.price}</div>
                     <div className="text-sm text-muted-foreground mt-1">
                       {pkg.quota}次 / {pkg.duration}
                     </div>
                     {pkg.limitPurchase && (
-                      <div className="text-xs text-amber-600 dark:text-amber-500 font-medium mt-1">
-                        ⚠️ 限购一次
-                      </div>
+                      <div className="text-xs text-amber-600 dark:text-amber-500 font-medium mt-1">⚠️ 限购一次</div>
                     )}
                   </div>
                 </CardHeader>
@@ -75,11 +69,7 @@ export const PackageSelector = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button 
-                    className="w-full" 
-                    variant="default"
-                    onClick={() => navigate('/packages')}
-                  >
+                  <Button className="w-full" variant="default" onClick={() => navigate("/packages")}>
                     立即购买
                   </Button>
                 </CardContent>
