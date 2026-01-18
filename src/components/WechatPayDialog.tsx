@@ -478,25 +478,37 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     });
   }, []);
 
-  // 小程序原生支付：通知小程序跳转到原生支付页面
-  // 小程序侧收到 MINIPROGRAM_NAVIGATE_PAY 后跳转到原生支付页，支付完成后 reload webview 并拼上 payment_success=true&orderNo=xxx
+  // 小程序原生支付：直接通过 navigateTo 跳转到原生支付页面
+  // ⚠️ 重要：postMessage 只在页面后退/销毁/分享时才会被小程序接收，不能用于实时通信
+  // 因此必须直接使用 navigateTo 跳转，由小程序原生页面调用 wx.requestPayment
   const triggerMiniProgramNativePay = useCallback((params: Record<string, string>, orderNumber: string) => {
     const mp = window.wx?.miniProgram;
-    if (!mp) {
-      console.warn('[MiniProgram] miniProgram object not available');
+
+    // 构建成功回调 URL
+    const successUrl = new URL(window.location.href);
+    successUrl.searchParams.set('payment_success', '1');
+    successUrl.searchParams.set('order', orderNumber);
+    const callbackUrl = successUrl.toString();
+
+    // 构建失败回调 URL
+    const failUrl = new URL(window.location.href);
+    failUrl.searchParams.set('payment_fail', '1');
+    failUrl.searchParams.set('order', orderNumber);
+    const failCallbackUrl = failUrl.toString();
+
+    console.log('[MiniProgram] Triggering native pay', { orderNo: orderNumber, params, callbackUrl, failCallbackUrl });
+
+    // 方式1：优先使用 navigateTo 直接跳转（这是唯一可靠的实时跳转方式）
+    if (mp && typeof mp.navigateTo === 'function') {
+      const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}&failCallback=${encodeURIComponent(failCallbackUrl)}`;
+      console.log('[MiniProgram] navigateTo:', payPageUrl);
+      mp.navigateTo({ url: payPageUrl });
       return;
     }
 
-    // 构造当前 H5 页面的回调 URL（支付成功后小程序 reload 时使用）
-    // 兼容现有 H5 回调逻辑：?payment_success=1&order=<orderNo>
-    const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set('payment_success', '1');
-    currentUrl.searchParams.set('order', orderNumber);
-    const callbackUrl = currentUrl.toString();
-
-    // 1) 尝试 postMessage（若小程序侧在 web-view 的 bindmessage 中处理）
-    if (typeof mp.postMessage === 'function') {
-      console.log('[MiniProgram] Sending MINIPROGRAM_NAVIGATE_PAY', { orderNo: orderNumber, callbackUrl });
+    // 方式2：备用 - 尝试 postMessage（但注意：只有页面销毁时小程序才能收到）
+    if (mp && typeof mp.postMessage === 'function') {
+      console.warn('[MiniProgram] navigateTo not available, trying postMessage (may not work immediately)');
       mp.postMessage({
         data: {
           type: 'MINIPROGRAM_NAVIGATE_PAY',
@@ -505,22 +517,13 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
           callbackUrl,
         },
       });
-    } else {
-      console.warn('[MiniProgram] postMessage not available');
+      // 提示用户手动操作
+      toast.info('请点击右上角菜单返回小程序完成支付');
+      return;
     }
 
-    // 2) 同时尝试 navigateTo（需要小程序侧存在 /pages/pay/index 页面）
-    if (typeof mp.navigateTo === 'function') {
-      const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}`;
-      console.log('[MiniProgram] navigateTo pay page:', payPageUrl);
-      try {
-        mp.navigateTo({ url: payPageUrl });
-      } catch (err) {
-        console.error('[MiniProgram] navigateTo error', err);
-      }
-    } else {
-      console.warn('[MiniProgram] navigateTo not available');
-    }
+    console.error('[MiniProgram] Neither navigateTo nor postMessage available');
+    toast.error('小程序支付功能不可用，请尝试其他支付方式');
   }, []);
 
   // JSAPI 失败后降级到扫码支付
