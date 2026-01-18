@@ -86,18 +86,7 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
     }
   }, [shownMilestones]);
 
-  // 如果显示开始介绍页，先渲染它
-  if (showStartScreen) {
-    console.log('[WealthBlockQuestions] Showing start screen');
-    return <AssessmentStartScreen onStart={() => {
-      console.log('[WealthBlockQuestions] Start screen clicked, entering questions');
-      setShowStartScreen(false);
-    }} />;
-  }
-  
-  console.log('[WealthBlockQuestions] Showing questions, currentIndex:', currentIndex);
-
-  // 生成AI追问
+  // 生成AI追问 - MUST be defined before any early returns (React Rules of Hooks)
   const generateFollowUp = useCallback(async (questionId: number, score: number) => {
     const question = questions.find(q => q.id === questionId);
     if (!question) return;
@@ -134,7 +123,7 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
     }
   }, [answers]);
 
-  // 生成深度追问
+  // 生成深度追问 - MUST be defined before any early returns (React Rules of Hooks)
   const generateDeepFollowUp = useCallback(async (result: AssessmentResult) => {
     setIsLoadingDeepFollowUp(true);
     setShowDeepFollowUp(true);
@@ -181,6 +170,17 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
       setIsLoadingDeepFollowUp(false);
     }
   }, [pendingResult, onComplete]);
+
+  // 如果显示开始介绍页，先渲染它 (all hooks must be called above this line)
+  if (showStartScreen) {
+    console.log('[WealthBlockQuestions] Showing start screen');
+    return <AssessmentStartScreen onStart={() => {
+      console.log('[WealthBlockQuestions] Start screen clicked, entering questions');
+      setShowStartScreen(false);
+    }} />;
+  }
+  
+  console.log('[WealthBlockQuestions] Showing questions, currentIndex:', currentIndex);
 
   const handleAnswer = async (value: number) => {
     const newAnswers = { ...answers, [currentQuestion.id]: value };
