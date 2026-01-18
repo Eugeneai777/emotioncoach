@@ -549,7 +549,7 @@ export function QuickRegisterStep({
         
         if (!mpOpenId) {
           toast.error('未获取到授权信息，请返回小程序重新进入');
-          setRegisterMode('email');
+          setIsWechatAuthing(false);
           return;
         }
         
@@ -603,8 +603,8 @@ export function QuickRegisterStep({
       }
     } catch (error: any) {
       console.error('WeChat auth error:', error);
-      toast.error('微信授权失败，请使用邮箱注册');
-      setRegisterMode('email');
+      toast.error('微信授权失败，请重试');
+      // 不再自动切换到邮箱注册，让用户可以重试或手动选择其他方式
     } finally {
       setIsWechatAuthing(false);
     }
