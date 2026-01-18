@@ -69,8 +69,12 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const [isRedirectingForOpenId, setIsRedirectingForOpenId] = useState<boolean>(false);
   // 用于注册流程的 openId（支付成功后从后端返回）
   const [paymentOpenId, setPaymentOpenId] = useState<string | undefined>();
+  // 🆕 轮询超时状态
+  const [pollingTimeout, setPollingTimeout] = useState<boolean>(false);
+  const [isForceChecking, setIsForceChecking] = useState<boolean>(false);
 
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingStartTimeRef = useRef<number>(0);
   const openIdFetchedRef = useRef<boolean>(false);
   const silentAuthTriggeredRef = useRef<boolean>(false);
 
@@ -668,12 +672,26 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
   // 轮询订单状态
   const startPolling = (orderNumber: string) => {
+    // 防止重复启动轮询
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+    }
+    
     setStatus("polling");
+    setPollingTimeout(false);
+    pollingStartTimeRef.current = Date.now();
 
-    const poll = async () => {
+    const poll = async (forceWechatQuery = false) => {
       try {
+        // 检查是否超时（45秒）
+        const elapsed = Date.now() - pollingStartTimeRef.current;
+        if (elapsed > 45000 && !pollingTimeout) {
+          console.log("[AssessmentPay] Polling timeout reached");
+          setPollingTimeout(true);
+        }
+
         const { data, error } = await supabase.functions.invoke("check-order-status", {
-          body: { orderNo: orderNumber },
+          body: { orderNo: orderNumber, forceWechatQuery },
         });
 
         if (error) throw error;
@@ -682,7 +700,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
           stopPolling();
           setPaymentOpenId(data.openId);
           setStatus("paid");
-          console.log("[AssessmentPayDialog] Payment confirmed, userId:", userId, "openId:", data.openId);
+          console.log("[AssessmentPayDialog] Payment confirmed, userId:", userId, "openId:", data.openId, "source:", data.source);
 
           // 扫码转化追踪：测评购买转化
           const shareRefCode = localStorage.getItem("share_ref_code");
@@ -727,13 +745,62 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
             }, 1500);
           }
         }
+        
+        // 检查是否返回 alreadyPaid（幂等检查）
+        if (data.alreadyPaid && userId) {
+          stopPolling();
+          toast.success("您已购买过测评，直接开始！");
+          onSuccess(userId);
+          onOpenChange(false);
+        }
       } catch (error) {
         console.error("Polling error:", error);
       }
     };
 
     poll();
-    pollingRef.current = setInterval(poll, 2000);
+    pollingRef.current = setInterval(() => poll(false), 2000);
+  };
+
+  // 🆕 手动强制检查支付状态（查询微信）
+  const handleForceCheck = async () => {
+    if (!orderNo || isForceChecking) return;
+    
+    setIsForceChecking(true);
+    console.log("[AssessmentPay] Force checking order status with WeChat query");
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("check-order-status", {
+        body: { orderNo, forceWechatQuery: true },
+      });
+
+      if (error) throw error;
+
+      if (data.status === "paid") {
+        stopPolling();
+        setPaymentOpenId(data.openId);
+        setStatus("paid");
+        toast.success("支付确认成功！");
+        
+        if (userId) {
+          setTimeout(() => {
+            onSuccess(userId);
+            onOpenChange(false);
+          }, 1500);
+        } else {
+          setTimeout(() => {
+            setStatus("registering");
+          }, 1500);
+        }
+      } else {
+        toast.info("暂未检测到支付，请稍后再试");
+      }
+    } catch (error) {
+      console.error("[AssessmentPay] Force check error:", error);
+      toast.error("检测失败，请稍后重试");
+    } finally {
+      setIsForceChecking(false);
+    }
   };
 
   const stopPolling = () => {
@@ -816,6 +883,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       setQrCodeDataUrl("");
       setPayUrl("");
       setErrorMessage("");
+      setPollingTimeout(false);
+      setIsForceChecking(false);
       openIdFetchedRef.current = false;
       setUserOpenId(undefined);
       setOpenIdResolved(false);
@@ -856,10 +925,46 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
           {/* 等待支付 - JSAPI/轮询中 */}
           {status === "polling" && payType === "jsapi" && (
-            <div className="flex flex-col items-center py-8">
-              <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-              <p className="text-muted-foreground">等待支付确认...</p>
-              <p className="text-xs text-muted-foreground mt-2">订单号：{orderNo}</p>
+            <div className="flex flex-col items-center py-6">
+              {!pollingTimeout ? (
+                <>
+                  <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+                  <p className="text-muted-foreground">等待支付确认...</p>
+                  <p className="text-xs text-muted-foreground mt-2">订单号：{orderNo}</p>
+                </>
+              ) : (
+                <>
+                  <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+                    <CheckCircle className="w-6 h-6 text-amber-600" />
+                  </div>
+                  <p className="text-foreground font-medium mb-1">支付确认中</p>
+                  <p className="text-sm text-muted-foreground text-center mb-4">
+                    可能由于网络延迟，暂未检测到支付结果
+                  </p>
+                  <div className="space-y-2 w-full">
+                    <Button 
+                      onClick={handleForceCheck} 
+                      disabled={isForceChecking}
+                      className="w-full"
+                    >
+                      {isForceChecking ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                      )}
+                      我已完成支付，立即刷新
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => onOpenChange(false)}
+                      className="w-full"
+                    >
+                      稍后再试
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3">订单号：{orderNo}</p>
+                </>
+              )}
             </div>
           )}
 
