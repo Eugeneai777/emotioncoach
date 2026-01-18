@@ -86,8 +86,8 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
   const partnerL1Price = getPackagePrice(packages, 'youjin_partner_l1', 792);
   const partnerL2Price = getPackagePrice(packages, 'youjin_partner_l2', 3217);
   const partnerL3Price = getPackagePrice(packages, 'youjin_partner_l3', 4950);
-  const identityCampPrice = getPackagePrice(packages, 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', 2980);
-  const emotionCampPrice = getPackagePrice(packages, 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', 3980);
+  const identityCampPrice = getPackagePrice(packages, 'bloom_identity_camp', 2980);
+  const emotionCampPrice = getPackagePrice(packages, 'bloom_emotion_camp', 3980);
   const bloomPartnerPrice = getPackagePrice(packages, 'bloom_partner', 19800);
   
   const renderValue = (value: boolean | string) => {
@@ -558,7 +558,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             price={identityCampPrice}
             priceLabel="认识真实自我"
             features={['21天深度身份探索', '专业教练1对1指导', '社群共修支持', '个性化成长方案']}
-            onPurchase={() => handlePurchase({ key: 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', name: '身份绽放训练营', price: identityCampPrice })}
+            onPurchase={() => handlePurchase({ key: 'bloom_identity_camp', name: '身份绽放训练营', price: identityCampPrice })}
           />
 
           <PackageCard
@@ -569,7 +569,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             features={['21天情感疗愈之旅', '深度情绪释放技术', '专属情感教练', '亲密关系修复']}
             recommended
             gradient="bg-gradient-to-br from-pink-50/80 to-purple-50/80 dark:from-pink-950/30 dark:to-purple-950/30"
-            onPurchase={() => handlePurchase({ key: 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', name: '情感绽放训练营', price: emotionCampPrice })}
+            onPurchase={() => handlePurchase({ key: 'bloom_emotion_camp', name: '情感绽放训练营', price: emotionCampPrice })}
           />
         </div>
       );
@@ -640,7 +640,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   <td className="p-4 sticky left-0 bg-background z-10"></td>
                   <td className="p-4 text-center">
                     <div className="space-y-2">
-                      <Button size="sm" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white" onClick={() => handlePurchase({ key: 'camp-fdbf32e0-61c5-464e-817a-45661dfc8105', name: '身份绽放训练营', price: identityCampPrice })}>
+                      <Button size="sm" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white" onClick={() => handlePurchase({ key: 'bloom_identity_camp', name: '身份绽放训练营', price: identityCampPrice })}>
                         <ShoppingCart className="w-4 h-4 mr-1" />立即购买 ¥{identityCampPrice.toLocaleString()}
                       </Button>
                       <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={() => navigate('/camp-template/fdbf32e0-61c5-464e-817a-45661dfc8105')}>了解更多 →</Button>
@@ -648,7 +648,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   </td>
                   <td className="p-4 text-center bg-primary/5">
                     <div className="space-y-2">
-                      <Button size="sm" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white" onClick={() => handlePurchase({ key: 'camp-c77488e9-959f-4ee0-becd-9cbc99fd1dc5', name: '情感绽放训练营', price: emotionCampPrice })}>
+                      <Button size="sm" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white" onClick={() => handlePurchase({ key: 'bloom_emotion_camp', name: '情感绽放训练营', price: emotionCampPrice })}>
                         <ShoppingCart className="w-4 h-4 mr-1" />立即购买 ¥{emotionCampPrice.toLocaleString()}
                       </Button>
                       <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={() => navigate('/camp-template/c77488e9-959f-4ee0-becd-9cbc99fd1dc5')}>了解更多 →</Button>
