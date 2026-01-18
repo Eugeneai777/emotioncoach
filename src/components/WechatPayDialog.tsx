@@ -7,7 +7,7 @@ import { Loader2, CheckCircle, XCircle, QrCode, RefreshCw, ExternalLink, Copy } 
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
 import { isWeChatMiniProgram, isWeChatBrowser, waitForWxMiniProgramReady } from '@/utils/platform';
@@ -79,6 +79,7 @@ const getPaymentAuthCode = (): string | undefined => {
 
 export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, returnUrl, openId: propOpenId }: WechatPayDialogProps) {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [payUrl, setPayUrl] = useState<string>('');
@@ -99,6 +100,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   const [isRedirectingForOpenId, setIsRedirectingForOpenId] = useState<boolean>(false);
   // 正在用 code 换取 openId
   const [isExchangingCode, setIsExchangingCode] = useState<boolean>(false);
+  
+  // 🆕 使用 useSearchParams 监听 URL 变化，检测支付回调场景
+  const paymentSuccessParam = searchParams.get('payment_success');
+  const callbackOrderNo = searchParams.get('order');
+  const isPaymentCallbackScene = paymentSuccessParam === '1' && !!callbackOrderNo;
 
   // 判断是否需要显示条款（仅合伙人套餐需要特殊条款确认）
   const requiresTermsAgreement = () => {
@@ -884,8 +890,67 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     }, 3000);
   };
 
+  // 🆕 支付回调场景：小程序支付完成后返回，自动验证订单并触发成功
+  useEffect(() => {
+    if (!open || !isPaymentCallbackScene || !callbackOrderNo) return;
+    
+    // 防止重复处理
+    if (status === 'success') return;
+    
+    console.log('[WechatPayDialog] Payment callback detected, order:', callbackOrderNo);
+    setOrderNo(callbackOrderNo);
+    setStatus('polling');
+    
+    // 验证订单状态
+    const verifyOrder = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('check-order-status', {
+          body: { orderNo: callbackOrderNo },
+        });
+        
+        if (error) throw error;
+        
+        if (data.status === 'paid') {
+          console.log('[WechatPayDialog] Order verified as paid');
+          setStatus('success');
+          
+          // 庆祝动画
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+          
+          toast.success('支付成功！');
+          
+          // 延迟关闭
+          setTimeout(() => {
+            onSuccess();
+            onOpenChange(false);
+          }, 2000);
+        } else {
+          console.log('[WechatPayDialog] Order status:', data.status);
+          // 如果还在 pending，继续轮询
+          startPolling(callbackOrderNo);
+        }
+      } catch (error) {
+        console.error('[WechatPayDialog] Verify order error:', error);
+        startPolling(callbackOrderNo);
+      }
+    };
+    
+    verifyOrder();
+    
+    return () => {
+      clearTimers();
+    };
+  }, [open, isPaymentCallbackScene, callbackOrderNo, status, onSuccess, onOpenChange]);
+
   // 条款同意后（或无需条款时）创建订单
   useEffect(() => {
+    // 🆕 支付回调场景：不创建新订单，由上面的 useEffect 处理
+    if (isPaymentCallbackScene) return;
+    
     // 微信环境下：先等待 openId 查询完成，避免首次打开误走扫码支付
     if (shouldWaitForOpenId && !openIdResolved) return;
 
@@ -897,7 +962,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     return () => {
       clearTimers();
     };
-  }, [open, packageInfo, user, agreedTerms, needsTerms, shouldWaitForOpenId, openIdResolved]);
+  }, [open, packageInfo, user, agreedTerms, needsTerms, shouldWaitForOpenId, openIdResolved, isPaymentCallbackScene]);
 
   // 关闭对话框时重置
   useEffect(() => {
