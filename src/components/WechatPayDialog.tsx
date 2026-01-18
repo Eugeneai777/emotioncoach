@@ -331,12 +331,11 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       }
 
       // 微信/小程序环境下没有 openId：
-      // - 小程序：必须由小程序侧提供 openId（URL 或消息回传），不要走 H5 静默授权
+      // - 小程序：不阻塞，openId 将由小程序原生支付页面自动处理
       // - 微信浏览器：走静默授权
       if (isMiniProgram) {
-        console.log('[Payment] MiniProgram: no openId, requesting from MiniProgram');
-        requestMiniProgramOpenId();
-        setOpenIdResolved(false);
+        console.log('[Payment] MiniProgram: no openId from URL, will proceed without it (native page handles openId)');
+        setOpenIdResolved(true); // 标记为已解决，允许继续支付流程
         return;
       }
 
@@ -647,19 +646,12 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     // - 其他：Native
     let selectedPayType: 'jsapi' | 'h5' | 'native' | 'miniprogram';
 
-    // 小程序环境：优先走"小程序原生支付页"方案（与 AssessmentPayDialog 保持一致）
+    // 小程序环境：直接走"小程序原生支付页"方案
+    // ⚠️ 小程序原生支付不需要前端提供 openId，后端会使用小程序专用 APP_ID
+    // openId 将由小程序原生页面在调用 wx.requestPayment 时自动获取
     if (isMiniProgram) {
-      console.log('[Payment] MiniProgram detected, openId:', userOpenId ? 'present' : 'missing');
-      
-      // 如果没有 openId，提示用户并尝试请求
-      if (!userOpenId) {
-        console.warn('[Payment] MiniProgram requires mp_openid URL parameter');
-        requestMiniProgramOpenId();
-        toast.error('正在获取支付授权，请稍候重试');
-        setStatus('idle');
-        return;
-      }
-      
+      console.log('[Payment] MiniProgram detected, using native bridge payment');
+      console.log('[Payment] mp_openid from URL:', userOpenId || 'not provided (will be handled by native page)');
       selectedPayType = 'miniprogram';
     } else if (isWechat && !!userOpenId) {
       console.log('[Payment] WeChat browser with openId, using jsapi');
