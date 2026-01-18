@@ -71,13 +71,99 @@ serve(async (req) => {
   }
 
   try {
-    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5', openId, isMiniProgram = false } = await req.json();
+    const { packageKey, packageName, amount, userId = 'guest', payType = 'h5', openId, isMiniProgram = false, existingOrderNo } = await req.json();
     
-    console.log('Creating order:', { packageKey, packageName, amount, userId, payType, openId, isMiniProgram });
+    console.log('Creating order:', { packageKey, packageName, amount, userId, payType, openId, isMiniProgram, existingOrderNo });
 
     // 验证参数 - userId 可选（支持游客订单）
     if (!packageKey || !packageName || !amount) {
       throw new Error('缺少必要参数');
+    }
+
+    // 初始化Supabase（提前初始化用于幂等检查）
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // 🔑 幂等检查：如果传了 existingOrderNo，先检查该订单状态
+    if (existingOrderNo) {
+      console.log('[CreateOrder] Checking existing order:', existingOrderNo);
+      const { data: existingOrder } = await supabase
+        .from('orders')
+        .select('status, order_no, qr_code_url, package_key')
+        .eq('order_no', existingOrderNo)
+        .maybeSingle();
+
+      if (existingOrder) {
+        if (existingOrder.status === 'paid') {
+          console.log('[CreateOrder] Existing order already paid');
+          return new Response(
+            JSON.stringify({
+              success: true,
+              alreadyPaid: true,
+              orderNo: existingOrderNo,
+              message: '订单已支付',
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        // 订单存在且未支付，返回现有订单信息（不创建新订单）
+        if (existingOrder.status === 'pending') {
+          console.log('[CreateOrder] Existing order still pending, returning existing info');
+          return new Response(
+            JSON.stringify({
+              success: true,
+              orderNo: existingOrderNo,
+              payUrl: existingOrder.qr_code_url,
+              qrCodeUrl: existingOrder.qr_code_url,
+              payType: 'native',
+              existingOrder: true,
+              message: '使用已有订单',
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+
+    // 🔑 防止重复支付：检查用户是否已有同 package_key 的已支付订单
+    let finalUserId = userId;
+    if (openId) {
+      const { data: mapping } = await supabase
+        .from('wechat_user_mappings')
+        .select('system_user_id')
+        .eq('openid', openId)
+        .maybeSingle();
+      
+      if (mapping?.system_user_id) {
+        finalUserId = mapping.system_user_id;
+        console.log('Found bound user for openId:', openId, '-> userId:', finalUserId);
+      }
+    }
+
+    if (finalUserId && finalUserId !== 'guest') {
+      const { data: paidOrder } = await supabase
+        .from('orders')
+        .select('id, order_no')
+        .eq('user_id', finalUserId)
+        .eq('package_key', packageKey)
+        .eq('status', 'paid')
+        .limit(1)
+        .maybeSingle();
+
+      if (paidOrder) {
+        console.log('[CreateOrder] User already has paid order for this package:', paidOrder.order_no);
+        return new Response(
+          JSON.stringify({
+            success: true,
+            alreadyPaid: true,
+            orderNo: paidOrder.order_no,
+            message: '您已购买过此产品',
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // JSAPI 支付需要 openId（小程序支付也需要 openId，但由小程序原生端提供）
@@ -121,27 +207,8 @@ serve(async (req) => {
       throw new Error('支付需要配置 WECHAT_APP_ID');
     }
 
-    // 初始化Supabase
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // 🔑 关键修复：如果有 openId，先查询是否已绑定用户
-    let finalUserId = userId;
-    if (openId) {
-      const { data: mapping } = await supabase
-        .from('wechat_user_mappings')
-        .select('system_user_id')
-        .eq('openid', openId)
-        .maybeSingle();
-      
-      if (mapping?.system_user_id) {
-        finalUserId = mapping.system_user_id;
-        console.log('Found bound user for openId:', openId, '-> userId:', finalUserId);
-      } else {
-        console.log('No bound user found for openId:', openId, ', using:', userId);
-      }
-    }
+    // 继续使用之前初始化的 supabase 和 finalUserId
+    // （已在幂等检查阶段初始化）
 
     // 生成订单号
     const orderNo = generateOrderNo();
