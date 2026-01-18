@@ -94,17 +94,31 @@ serve(async (req) => {
     const certSerialNo = Deno.env.get('WECHAT_CERT_SERIAL_NO');
     const privateKey = Deno.env.get('WECHAT_PRIVATE_KEY');
 
-    // ⚠️ 重要：当前 H5/微信浏览器/小程序 WebView 场景都使用公众号 appId 发起支付。
-    // 如果未来要做“小程序原生页支付（wx.requestPayment）”，需要商户号绑定小程序 appId 后再启用。
-    const appId = Deno.env.get('WECHAT_APP_ID');
+    // 公众号 appId（用于 H5、微信浏览器 JSAPI 支付）
+    const publicAppId = Deno.env.get('WECHAT_APP_ID');
+    // 小程序 appId（用于小程序原生支付）
+    const miniProgramAppId = Deno.env.get('WECHAT_MINI_PROGRAM_APP_ID');
+
+    // ⚠️ 关键：小程序支付必须使用小程序的 appId，否则会报 "appid和openid不匹配"
+    const appId = isMiniProgramPay ? miniProgramAppId : publicAppId;
 
     const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
     const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
 
-    console.log('Using appId:', appId, 'isMiniProgram:', isMiniProgram);
+    console.log('Using appId:', appId, 'isMiniProgramPay:', isMiniProgramPay, 'publicAppId:', publicAppId, 'miniProgramAppId:', miniProgramAppId);
 
-    if (!mchId || !apiV3Key || !certSerialNo || !privateKey || !appId) {
+    if (!mchId || !apiV3Key || !certSerialNo || !privateKey) {
       throw new Error('微信支付配置不完整');
+    }
+    
+    // 小程序支付必须有小程序 appId
+    if (isMiniProgramPay && !miniProgramAppId) {
+      throw new Error('小程序支付需要配置 WECHAT_MINI_PROGRAM_APP_ID');
+    }
+    
+    // 非小程序支付需要公众号 appId
+    if (!isMiniProgramPay && !publicAppId) {
+      throw new Error('支付需要配置 WECHAT_APP_ID');
     }
 
     // 初始化Supabase
@@ -184,19 +198,15 @@ serve(async (req) => {
       };
     }
     
-    // 小程序支付：如果有 openId 使用 JSAPI，否则回退到 Native
+    // 小程序支付：需要 openId 来使用 JSAPI
     if (isMiniProgramPay) {
       if (openId) {
-        // 有 openId：使用小程序 appId + JSAPI
-        const miniAppId = Deno.env.get('WECHAT_MINI_PROGRAM_APP_ID') || appId;
-        requestBody.appid = miniAppId;
+        // 有 openId：使用 JSAPI（appId 已在上面设置为小程序 appId）
         requestBody.payer = { openid: openId };
-        console.log('MiniProgram pay with openId, using JSAPI');
+        console.log('MiniProgram pay with openId, using JSAPI with miniProgramAppId:', appId);
       } else {
-        // 无 openId：回退到 Native 支付（返回二维码链接）
-        // 但小程序内无法扫码，这种情况应该让前端先获取 openId
+        // 无 openId：这种情况应该让前端先获取 openId
         console.log('MiniProgram pay without openId - this will likely fail, please ensure mp_openid is passed');
-        // 不设置 payer，让请求继续（会返回错误）
       }
     }
 
@@ -244,11 +254,11 @@ serve(async (req) => {
         console.log('H5 payment failed, falling back to Native QR code payment');
         fallbackReason = proxyResult.message || 'H5支付不可用，已自动切换为扫码支付';
         
-        // 重新构建 Native 支付请求
+        // 重新构建 Native 支付请求（使用公众号 appId）
         const nativeApiPath = '/v3/pay/transactions/native';
         const nativeApiUrl = `https://api.mch.weixin.qq.com${nativeApiPath}`;
         const nativeRequestBody: Record<string, unknown> = {
-          appid: appId,
+          appid: publicAppId,
           mchid: mchId,
           description: packageName,
           out_trade_no: orderNo,
@@ -343,15 +353,15 @@ serve(async (req) => {
       const jsapiNonceStr = generateNonceStr();
       const packageStr = `prepay_id=${prepayId}`;
       
-      // 小程序支付使用小程序 appId 签名
-      const signAppId = actualIsMiniProgram ? (Deno.env.get('WECHAT_MINI_PROGRAM_APP_ID') || appId) : appId;
+      // 小程序支付使用小程序 appId 签名，JSAPI 使用公众号 appId
+      const signAppId = actualIsMiniProgram ? miniProgramAppId : publicAppId;
       
       // 签名内容：appId、timeStamp、nonceStr、package
       const jsapiSignMessage = `${signAppId}\n${jsapiTimestamp}\n${jsapiNonceStr}\n${packageStr}\n`;
       const jsapiPaySign = await signWithRSA(jsapiSignMessage, privateKey);
       
       const payParams = {
-        appId: signAppId,
+        appId: signAppId!,
         timeStamp: jsapiTimestamp,
         nonceStr: jsapiNonceStr,
         package: packageStr,
