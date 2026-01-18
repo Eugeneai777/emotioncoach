@@ -495,6 +495,25 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "创建订单失败，请稍后重试");
 
+      // 🆕 处理后端返回的 alreadyPaid 响应（用户已购买）
+      if (data.alreadyPaid) {
+        console.log('[AssessmentPay] Backend returned alreadyPaid, skipping payment flow');
+        toast.success('您已购买过测评，直接开始！');
+        
+        if (userId && userId !== 'guest') {
+          // 已登录用户：直接成功
+          onSuccess(userId);
+          onOpenChange(false);
+        } else {
+          // Guest 用户但后端确认已购买（通过 openId 识别）
+          // 进入注册流程让用户绑定账号
+          setOrderNo(data.orderNo || '');
+          setPaymentOpenId(userOpenId);
+          setStatus('registering');
+        }
+        return;
+      }
+
       setOrderNo(data.orderNo);
 
       if (selectedPayType === "miniprogram" && data.miniprogramPayParams) {
