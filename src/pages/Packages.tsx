@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { productCategories } from "@/config/productCategories";
 import { ProductComparisonTable } from "@/components/ProductComparisonTable";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
@@ -28,14 +28,10 @@ export default function Packages() {
   const [activeTab, setActiveTab] = useState<'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner'>('youjin-member');
   const [selectedPackage, setSelectedPackage] = useState<PackageInfo | null>(null);
   
-  // 🆕 检测是否是支付回调场景（URL 中带有 payment_success=1）
-  const isPaymentCallbackOnMount = typeof window !== 'undefined' && 
-    new URLSearchParams(window.location.search).get('payment_success') === '1';
-  
-  // 支付弹窗状态：如果是回调场景，初始就是关闭状态，不会被打开
+  // 支付弹窗状态
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   // 标记支付已完成，防止弹窗被意外打开
-  const [paymentCompleted, setPaymentCompleted] = useState(isPaymentCallbackOnMount);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
 
   // 处理小程序支付成功回调
   const { isPaymentCallback } = usePaymentCallback({
@@ -50,6 +46,15 @@ export default function Packages() {
     showConfetti: true,
     autoRedirect: false,
   });
+
+  // 🆕 监听支付回调状态变化，自动关闭弹窗
+  useEffect(() => {
+    if (isPaymentCallback) {
+      console.log('[Packages] Payment callback detected, closing dialog');
+      setPayDialogOpen(false);
+      setPaymentCompleted(true);
+    }
+  }, [isPaymentCallback]);
 
   const handlePurchase = (packageInfo: PackageInfo) => {
     // 如果支付已完成，不再打开弹窗
