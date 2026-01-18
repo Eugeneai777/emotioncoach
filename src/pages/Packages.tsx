@@ -5,13 +5,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { productCategories } from "@/config/productCategories";
 import { ProductComparisonTable } from "@/components/ProductComparisonTable";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
 import { pageTourConfig } from "@/config/pageTourConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { HorizontalScrollHint } from "@/components/ui/horizontal-scroll-hint";
+import { usePaymentCallback } from "@/hooks/usePaymentCallback";
 
 interface PackageInfo {
   key: string;
@@ -27,6 +28,26 @@ export default function Packages() {
   const [activeTab, setActiveTab] = useState<'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner'>('youjin-member');
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<PackageInfo | null>(null);
+
+  // 处理小程序支付成功回调
+  const { isPaymentCallback, orderNo } = usePaymentCallback({
+    onSuccess: () => {
+      console.log('[Packages] Payment callback success, order:', orderNo);
+      toast.success("购买成功！配额已到账 🎉");
+      // 关闭支付弹窗
+      setPayDialogOpen(false);
+    },
+    showToast: false, // 我们自己显示 toast
+    showConfetti: true,
+    autoRedirect: false,
+  });
+
+  // 小程序支付回调时关闭弹窗
+  useEffect(() => {
+    if (isPaymentCallback) {
+      setPayDialogOpen(false);
+    }
+  }, [isPaymentCallback]);
 
   const handlePurchase = (packageInfo: PackageInfo) => {
     // 免费训练营入口
@@ -48,9 +69,10 @@ export default function Packages() {
   };
   
   const handlePaymentSuccess = () => {
+    console.log('[Packages] Dialog payment success callback');
     toast.success("购买成功！配额已到账 🎉");
-    // 刷新页面数据
-    window.location.reload();
+    // 不再强制刷新页面，由 usePaymentCallback 处理后续逻辑
+    setPayDialogOpen(false);
   };
 
   const currentCategory = productCategories.find(c => c.id === activeTab);
