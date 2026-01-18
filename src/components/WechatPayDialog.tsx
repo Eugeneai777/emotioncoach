@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
-import { isWeChatMiniProgram, isWeChatBrowser } from '@/utils/platform';
+import { isWeChatMiniProgram, isWeChatBrowser, waitForWxMiniProgramReady } from '@/utils/platform';
 
 // 声明 WeixinJSBridge 类型（wx 类型已在 platform.ts 中声明）
 declare global {
@@ -502,7 +502,17 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
   // 小程序原生支付：直接通过 navigateTo 跳转到原生支付页面
   // ⚠️ 重要：postMessage 只在页面后退/销毁/分享时才会被小程序接收，不能用于实时通信
   // 因此必须直接使用 navigateTo 跳转，由小程序原生页面调用 wx.requestPayment
-  const triggerMiniProgramNativePay = useCallback((params: Record<string, string>, orderNumber: string) => {
+  const triggerMiniProgramNativePay = useCallback(async (params: Record<string, string>, orderNumber: string) => {
+    // 增加更详细的日志
+    console.log('[MiniProgram] Attempting to trigger native pay');
+    console.log('[MiniProgram] window.wx:', typeof window.wx);
+    console.log('[MiniProgram] window.wx?.miniProgram:', typeof window.wx?.miniProgram);
+    console.log('[MiniProgram] navigateTo type:', typeof window.wx?.miniProgram?.navigateTo);
+
+    // 等待 SDK 加载（最多 2 秒）
+    const sdkReady = await waitForWxMiniProgramReady(2000);
+    console.log('[MiniProgram] SDK ready:', sdkReady);
+
     const mp = window.wx?.miniProgram;
 
     // 构建成功回调 URL
@@ -517,34 +527,65 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     failUrl.searchParams.set('order', orderNumber);
     const failCallbackUrl = failUrl.toString();
 
-    console.log('[MiniProgram] Triggering native pay', { orderNo: orderNumber, params, callbackUrl, failCallbackUrl });
+    console.log('[MiniProgram] Triggering native pay', { orderNo: orderNumber, callbackUrl, failCallbackUrl });
 
-    // 方式1：优先使用 navigateTo 直接跳转（这是唯一可靠的实时跳转方式）
-    if (mp && typeof mp.navigateTo === 'function') {
-      const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}&failCallback=${encodeURIComponent(failCallbackUrl)}`;
-      console.log('[MiniProgram] navigateTo:', payPageUrl);
-      mp.navigateTo({ url: payPageUrl });
+    // 检查 mp 对象是否存在
+    if (!mp) {
+      console.error('[MiniProgram] wx.miniProgram not available - JSSDK may not be loaded');
+      toast.error('小程序环境异常，请刷新页面重试');
+      setStatus('failed');
+      setErrorMessage('小程序 SDK 未加载');
       return;
     }
 
-    // 方式2：备用 - 尝试 postMessage（但注意：只有页面销毁时小程序才能收到）
-    if (mp && typeof mp.postMessage === 'function') {
-      console.warn('[MiniProgram] navigateTo not available, trying postMessage (may not work immediately)');
-      mp.postMessage({
-        data: {
-          type: 'MINIPROGRAM_NAVIGATE_PAY',
-          orderNo: orderNumber,
-          params,
-          callbackUrl,
+    // 检查 navigateTo 方法
+    if (typeof mp.navigateTo !== 'function') {
+      console.error('[MiniProgram] mp.navigateTo is not a function');
+      // 备用：尝试 postMessage
+      if (typeof mp.postMessage === 'function') {
+        console.warn('[MiniProgram] Trying postMessage as fallback');
+        mp.postMessage({
+          data: {
+            type: 'MINIPROGRAM_NAVIGATE_PAY',
+            orderNo: orderNumber,
+            params,
+            callbackUrl,
+          },
+        });
+        toast.info('请点击右上角菜单返回小程序完成支付');
+        return;
+      }
+      toast.error('小程序支付功能不可用');
+      setStatus('failed');
+      return;
+    }
+
+    const payPageUrl = `/pages/pay/index?orderNo=${encodeURIComponent(orderNumber)}&params=${encodeURIComponent(JSON.stringify(params))}&callback=${encodeURIComponent(callbackUrl)}&failCallback=${encodeURIComponent(failCallbackUrl)}`;
+    
+    console.log('[MiniProgram] Calling navigateTo:', payPageUrl);
+    
+    // 调用 navigateTo 并添加回调处理
+    try {
+      mp.navigateTo({
+        url: payPageUrl,
+        success: () => {
+          console.log('[MiniProgram] navigateTo success');
         },
-      });
-      // 提示用户手动操作
-      toast.info('请点击右上角菜单返回小程序完成支付');
-      return;
+        fail: (err: any) => {
+          console.error('[MiniProgram] navigateTo failed:', err);
+          toast.error('跳转支付页面失败：' + (err?.errMsg || '未知错误'));
+          setStatus('failed');
+          setErrorMessage('跳转支付页面失败');
+        },
+        complete: () => {
+          console.log('[MiniProgram] navigateTo complete');
+        }
+      } as any);
+    } catch (error) {
+      console.error('[MiniProgram] navigateTo threw exception:', error);
+      toast.error('小程序跳转异常');
+      setStatus('failed');
     }
-
-    console.error('[MiniProgram] Neither navigateTo nor postMessage available');
-    toast.error('小程序支付功能不可用，请尝试其他支付方式');
   }, []);
 
   // JSAPI 失败后降级到扫码支付
