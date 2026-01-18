@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { productCategories } from "@/config/productCategories";
 import { ProductComparisonTable } from "@/components/ProductComparisonTable";
 import { WechatPayDialog } from "@/components/WechatPayDialog";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { PageTour } from "@/components/PageTour";
 import { usePageTour } from "@/hooks/usePageTour";
@@ -26,15 +26,24 @@ export default function Packages() {
   const { user } = useAuth();
   const { showTour, completeTour } = usePageTour('packages');
   const [activeTab, setActiveTab] = useState<'youjin-member' | 'youjin-camp' | 'youjin-partner' | 'bloom-camp' | 'bloom-partner'>('youjin-member');
-  const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<PackageInfo | null>(null);
+  
+  // 🆕 检测是否是支付回调场景（URL 中带有 payment_success=1）
+  const isPaymentCallbackOnMount = typeof window !== 'undefined' && 
+    new URLSearchParams(window.location.search).get('payment_success') === '1';
+  
+  // 支付弹窗状态：如果是回调场景，初始就是关闭状态，不会被打开
+  const [payDialogOpen, setPayDialogOpen] = useState(false);
+  // 标记支付已完成，防止弹窗被意外打开
+  const [paymentCompleted, setPaymentCompleted] = useState(isPaymentCallbackOnMount);
 
   // 处理小程序支付成功回调
-  const { isPaymentCallback, orderNo } = usePaymentCallback({
+  const { isPaymentCallback } = usePaymentCallback({
     onSuccess: (order) => {
       console.log('[Packages] Payment callback success, order:', order);
       toast.success("购买成功！配额已到账 🎉");
-      // 关闭支付弹窗
+      // 标记支付完成并关闭弹窗
+      setPaymentCompleted(true);
       setPayDialogOpen(false);
     },
     showToast: false, // 我们自己显示 toast
@@ -42,14 +51,12 @@ export default function Packages() {
     autoRedirect: false,
   });
 
-  // 小程序支付回调时关闭弹窗
-  useEffect(() => {
-    if (isPaymentCallback) {
-      setPayDialogOpen(false);
-    }
-  }, [isPaymentCallback]);
-
   const handlePurchase = (packageInfo: PackageInfo) => {
+    // 如果支付已完成，不再打开弹窗
+    if (paymentCompleted || isPaymentCallback) {
+      console.log('[Packages] Payment already completed, skipping dialog');
+      return;
+    }
     // 免费训练营入口
     if (packageInfo.key === 'youjin-camps') {
       navigate('/camp-list');
@@ -71,7 +78,7 @@ export default function Packages() {
   const handlePaymentSuccess = () => {
     console.log('[Packages] Dialog payment success callback');
     toast.success("购买成功！配额已到账 🎉");
-    // 不再强制刷新页面，由 usePaymentCallback 处理后续逻辑
+    setPaymentCompleted(true);
     setPayDialogOpen(false);
   };
 
@@ -123,13 +130,15 @@ export default function Packages() {
           </p>
         </div>
         
-        {/* 微信支付对话框 */}
-        <WechatPayDialog
-          open={payDialogOpen}
-          onOpenChange={setPayDialogOpen}
-          packageInfo={selectedPackage}
-          onSuccess={handlePaymentSuccess}
-        />
+        {/* 微信支付对话框 - 仅在非回调场景下渲染 */}
+        {!paymentCompleted && !isPaymentCallback && (
+          <WechatPayDialog
+            open={payDialogOpen}
+            onOpenChange={setPayDialogOpen}
+            packageInfo={selectedPackage}
+            onSuccess={handlePaymentSuccess}
+          />
+        )}
       </div>
     </>
   );
