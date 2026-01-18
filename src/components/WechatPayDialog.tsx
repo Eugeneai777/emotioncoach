@@ -932,6 +932,73 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     }, 3000);
   };
 
+  // 🆕 小程序"内容页"从原生支付页返回时：补偿校验一次订单状态
+  // 目的：有些小程序环境不会把 payment_success/order 参数可靠地带回 URL，导致弹框一直"等待支付完成"。
+  useEffect(() => {
+    if (!open || !isMiniProgram) return;
+
+    const maybeResumeCheck = async () => {
+      // 仅在回到前台/页面可见时检查
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+
+      // 仅对"正在等支付"的阶段做补偿校验
+      if (status !== 'polling') return;
+
+      const pendingOrderNo = orderNo || getPendingOrderFromCache();
+      if (!pendingOrderNo) return;
+
+      const now = Date.now();
+      if (resumeCheckInFlightRef.current) return;
+      if (now - lastResumeCheckAtRef.current < 800) return;
+      lastResumeCheckAtRef.current = now;
+
+      resumeCheckInFlightRef.current = true;
+      try {
+        console.log('[WechatPayDialog] Resume check on return, order:', pendingOrderNo);
+        const { data, error } = await supabase.functions.invoke('check-order-status', {
+          body: { orderNo: pendingOrderNo },
+        });
+        if (error) throw error;
+
+        if (data?.status === 'paid') {
+          clearTimers();
+          clearPendingOrderCache();
+          setStatus('success');
+
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+
+          toast.success('支付成功！');
+
+          setTimeout(() => {
+            onSuccess();
+            onOpenChange(false);
+          }, 2000);
+        }
+      } catch (e) {
+        console.error('[WechatPayDialog] Resume check error:', e);
+      } finally {
+        resumeCheckInFlightRef.current = false;
+      }
+    };
+
+    window.addEventListener('focus', maybeResumeCheck);
+    window.addEventListener('pageshow', maybeResumeCheck);
+    document.addEventListener('visibilitychange', maybeResumeCheck);
+
+    // 立即执行一次（避免必须切后台再回来）
+    maybeResumeCheck();
+
+    return () => {
+      window.removeEventListener('focus', maybeResumeCheck);
+      window.removeEventListener('pageshow', maybeResumeCheck);
+      document.removeEventListener('visibilitychange', maybeResumeCheck);
+    };
+  }, [open, isMiniProgram, status, orderNo, onSuccess, onOpenChange]);
+
   // 🆕 支付回调场景：小程序支付完成后返回，自动验证订单并触发成功
   useEffect(() => {
     if (!open || !isPaymentCallbackScene || !callbackOrderNo) return;
@@ -954,6 +1021,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         
         if (data.status === 'paid') {
           console.log('[WechatPayDialog] Order verified as paid');
+          clearPendingOrderCache();
           setStatus('success');
           
           // 庆祝动画
