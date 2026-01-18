@@ -507,8 +507,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         } else {
           // Guest 用户但后端确认已购买（通过 openId 识别）
           // 进入注册流程让用户绑定账号
-          setOrderNo(data.orderNo || '');
-          setPaymentOpenId(userOpenId);
+          setOrderNo(data.orderNo || orderNo || '');
+          // 🆕 优先使用后端返回的 openId
+          setPaymentOpenId(data.openId || userOpenId);
           setStatus('registering');
         }
         return;
@@ -717,9 +718,11 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
         if (data.status === "paid") {
           stopPolling();
-          setPaymentOpenId(data.openId);
+          // 🆕 优先使用后端返回的 openId，否则使用当前 userOpenId
+          const resolvedOpenId = data.openId || userOpenId;
+          setPaymentOpenId(resolvedOpenId);
           setStatus("paid");
-          console.log("[AssessmentPayDialog] Payment confirmed, userId:", userId, "openId:", data.openId, "source:", data.source);
+          console.log("[AssessmentPayDialog] Payment confirmed, userId:", userId, "openId:", resolvedOpenId, "source:", data.source);
 
           // 扫码转化追踪：测评购买转化
           const shareRefCode = localStorage.getItem("share_ref_code");
