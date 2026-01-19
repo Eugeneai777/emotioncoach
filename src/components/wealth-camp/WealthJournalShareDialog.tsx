@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import WealthJournalShareCard from './WealthJournalShareCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
+import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 
 interface JournalEntry {
   day_number: number;
@@ -117,7 +118,15 @@ const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
 }) => {
   const [generating, setGenerating] = useState(false);
   const [userInfo, setUserInfo] = useState<{ avatarUrl?: string; displayName?: string }>({});
+  const [isLoading, setIsLoading] = useState(true);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Reset loading state when dialog opens
+  useEffect(() => {
+    if (open) {
+      setIsLoading(true);
+    }
+  }, [open]);
 
   // Fetch user profile
   useEffect(() => {
@@ -139,6 +148,7 @@ const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
         avatarUrl: proxiedAvatarUrl,
         displayName: profile?.display_name || '财富觉醒者',
       });
+      setIsLoading(false);
     };
 
     fetchUserInfo();
@@ -248,20 +258,24 @@ const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
 
         <div className="flex justify-center overflow-hidden">
           <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
-            <WealthJournalShareCard
-              ref={cardRef}
-              dayNumber={entry.day_number}
-              meditationReflection={entry.meditation_reflection}
-              behaviorBlock={entry.behavior_block}
-              emotionNeed={entry.emotion_need}
-              newBelief={entry.new_belief}
-              behaviorAwakening={behaviorAwakening}
-              emotionAwakening={emotionAwakening}
-              beliefAwakening={beliefAwakening}
-              shareUrl={shareUrl}
-              avatarUrl={userInfo.avatarUrl}
-              displayName={userInfo.displayName}
-            />
+            {isLoading ? (
+              <ShareCardSkeleton />
+            ) : (
+              <WealthJournalShareCard
+                ref={cardRef}
+                dayNumber={entry.day_number}
+                meditationReflection={entry.meditation_reflection}
+                behaviorBlock={entry.behavior_block}
+                emotionNeed={entry.emotion_need}
+                newBelief={entry.new_belief}
+                behaviorAwakening={behaviorAwakening}
+                emotionAwakening={emotionAwakening}
+                beliefAwakening={beliefAwakening}
+                shareUrl={shareUrl}
+                avatarUrl={userInfo.avatarUrl}
+                displayName={userInfo.displayName}
+              />
+            )}
           </div>
         </div>
 

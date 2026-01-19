@@ -24,7 +24,7 @@ const WealthCampShareCard = forwardRef<HTMLDivElement, WealthCampShareCardProps>
       ? `${baseUrl}?ref=${partnerInfo.partnerCode}` 
       : baseUrl;
 
-    const qrCodeUrl = useQRCode(shareUrl);
+    const { qrCodeUrl } = useQRCode(shareUrl);
 
     return (
       <div

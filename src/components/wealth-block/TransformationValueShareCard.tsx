@@ -41,7 +41,7 @@ const TransformationValueShareCard = forwardRef<HTMLDivElement, TransformationVa
     
     const shareUrl = getShareUrl();
     const growthDelta = targetScore - healthScore;
-    const qrCodeUrl = useQRCode(shareUrl);
+    const { qrCodeUrl } = useQRCode(shareUrl);
 
     return (
       <div

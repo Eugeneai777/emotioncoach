@@ -16,7 +16,7 @@ interface PosterPreviewProps {
 export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
   ({ template, partnerId, entryType, backgroundImageUrl, customTagline, customSellingPoints, scene = 'default' }, ref) => {
     const shareUrl = getPartnerShareUrl(partnerId, entryType);
-    const qrCodeUrl = useQRCode(shareUrl, 'LARGE');
+    const { qrCodeUrl } = useQRCode(shareUrl, 'LARGE');
 
     // Product slogan mapping
     const getProductSlogan = (key: string): string => {

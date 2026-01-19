@@ -26,7 +26,7 @@ const WealthAssessmentShareCard = forwardRef<HTMLDivElement, WealthAssessmentSha
     };
     
     const shareUrl = getShareUrl();
-    const qrCodeUrl = useQRCode(shareUrl);
+    const { qrCodeUrl } = useQRCode(shareUrl);
 
     return (
       <div

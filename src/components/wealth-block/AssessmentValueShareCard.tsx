@@ -28,7 +28,7 @@ const AssessmentValueShareCard = forwardRef<HTMLDivElement, AssessmentValueShare
     };
 
     const shareUrl = getShareUrl();
-    const qrCodeUrl = useQRCode(shareUrl);
+    const { qrCodeUrl } = useQRCode(shareUrl);
 
     // Value propositions
     const valuePoints = [

@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleShareWithFallback, shouldUseImagePreview, getShareEnvironment } from '@/utils/shareUtils';
 import ShareImagePreview from '@/components/ui/share-image-preview';
 import AliveCheckShareCard from './AliveCheckShareCard';
+import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 
 interface AliveCheckShareDialogProps {
   open: boolean;
@@ -26,6 +27,7 @@ const AliveCheckShareDialog: React.FC<AliveCheckShareDialogProps> = ({
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [cardReady, setCardReady] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
@@ -142,7 +144,10 @@ const AliveCheckShareDialog: React.FC<AliveCheckShareDialogProps> = ({
           {/* Preview area */}
           <div className="flex justify-center overflow-hidden">
             <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
-              <AliveCheckShareCard partnerCode={partnerCode} />
+              {!cardReady && <ShareCardSkeleton variant="wide" />}
+              <div className={cardReady ? '' : 'invisible absolute'}>
+                <AliveCheckShareCard partnerCode={partnerCode} onReady={() => setCardReady(true)} />
+              </div>
             </div>
           </div>
 

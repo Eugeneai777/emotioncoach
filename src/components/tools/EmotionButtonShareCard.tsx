@@ -4,10 +4,11 @@ import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
 interface EmotionButtonShareCardProps {
   partnerCode?: string;
+  onReady?: () => void;
 }
 
 const EmotionButtonShareCard = forwardRef<HTMLDivElement, EmotionButtonShareCardProps>(
-  ({ partnerCode }, ref) => {
+  ({ partnerCode, onReady }, ref) => {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
     useEffect(() => {
@@ -22,12 +23,14 @@ const EmotionButtonShareCard = forwardRef<HTMLDivElement, EmotionButtonShareCard
             color: { dark: '#0D9488', light: '#FFFFFF' }
           });
           setQrCodeUrl(url);
+          onReady?.();
         } catch (err) {
           console.error('QR code generation failed:', err);
+          onReady?.();
         }
       };
       generateQR();
-    }, [partnerCode]);
+    }, [partnerCode, onReady]);
 
     // 9种情绪 emoji
     const emotions = [
