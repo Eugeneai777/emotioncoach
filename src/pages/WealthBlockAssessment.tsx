@@ -56,6 +56,41 @@ export default function WealthBlockAssessmentPage() {
   const { data: purchaseRecord, isLoading: isPurchaseLoading } = useAssessmentPurchase();
   const hasPurchased = !!purchaseRecord;
 
+  // 已登录且已购买：自动跳过介绍页
+  useEffect(() => {
+    if (user && hasPurchased && !isPurchaseLoading) {
+      console.log('[WealthBlock] User purchased, auto-skipping intro');
+      setShowIntro(false);
+    }
+  }, [user, hasPurchased, isPurchaseLoading]);
+
+  // 监听登录状态变化，登录后检查购买状态
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('[WealthBlock] User signed in, checking purchase status');
+          
+          const { data: existingOrder } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .eq('package_key', 'wealth_block_assessment')
+            .eq('status', 'paid')
+            .limit(1)
+            .maybeSingle();
+          
+          if (existingOrder) {
+            toast.success('欢迎回来！正在恢复测评...');
+            setShowIntro(false);
+          }
+        }
+      }
+    );
+    
+    return () => subscription.unsubscribe();
+  }, []);
+
   // 检测是否为微信浏览器（非小程序）
   const isWeChatBrowserEnv = typeof window !== 'undefined' && 
     /MicroMessenger/i.test(navigator.userAgent) && 
