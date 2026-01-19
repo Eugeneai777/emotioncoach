@@ -303,7 +303,7 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
       )}
 
       {/* 进度指示 */}
-      <div className="space-y-3 mb-6">
+      <div className="space-y-3 mb-6 pt-2">
         <div className="flex justify-between items-center">
           <span className="text-sm text-muted-foreground">答题进度</span>
           <div className="flex items-center gap-2">

@@ -598,7 +598,7 @@ export default function WealthBlockAssessmentPage() {
       />
 
       {/* 主内容 */}
-      <main className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24">
+      <main className="container max-w-sm sm:max-w-lg mx-auto px-3 sm:px-4 pt-2 sm:pt-4 pb-24">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
 
           <TabsContent value="assessment" className="mt-0">
