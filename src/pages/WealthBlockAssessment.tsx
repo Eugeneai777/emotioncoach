@@ -380,7 +380,7 @@ export default function WealthBlockAssessmentPage() {
     }
   };
 
-  const handleComplete = (
+  const handleComplete = async (
     result: AssessmentResult, 
     answers: Record<number, number>, 
     followUpInsights?: FollowUpAnswer[],
@@ -408,6 +408,89 @@ export default function WealthBlockAssessmentPage() {
     }).catch((err) => {
       console.error('❌ Failed to track assessment completion:', err);
     });
+
+    // 🆕 自动保存测评结果（用户无需手动点击保存按钮）
+    if (user) {
+      try {
+        console.log('[WealthBlock] Auto-saving assessment result...');
+        
+        // 获取最近一次测评用于版本链接
+        const { data: latestAssessment } = await supabase
+          .from("wealth_block_assessments")
+          .select("id")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const prevId = latestAssessment?.id || null;
+        const newVersion = (historyRecords.length || 0) + 1;
+
+        const { data: savedRecord, error } = await supabase
+          .from("wealth_block_assessments")
+          .insert({
+            user_id: user.id,
+            answers: answers,
+            behavior_score: result.behaviorScore,
+            emotion_score: result.emotionScore,
+            belief_score: result.beliefScore,
+            mouth_score: result.mouthScore,
+            hand_score: result.handScore,
+            eye_score: result.eyeScore,
+            heart_score: result.heartScore,
+            dominant_block: result.dominantBlock,
+            dominant_poor: result.dominantPoor,
+            reaction_pattern: result.reactionPattern,
+            version: newVersion,
+            previous_assessment_id: prevId,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('[WealthBlock] Auto-save failed:', error);
+        } else if (savedRecord) {
+          console.log('✅ 测评结果已自动保存:', savedRecord.id);
+          setIsSaved(true);
+          setSavedAssessmentId(savedRecord.id);
+          setPreviousAssessmentId(prevId);
+          
+          // 同步用户财富画像
+          const healthScore = Math.round(
+            ((5 - result.behaviorScore) / 4 * 33) +
+            ((5 - result.emotionScore) / 4 * 33) +
+            ((5 - result.beliefScore) / 4 * 34)
+          );
+
+          supabase.functions.invoke('sync-wealth-profile', {
+            body: {
+              user_id: user.id,
+              assessment_result: {
+                assessment_id: savedRecord.id,
+                health_score: healthScore,
+                reaction_pattern: result.reactionPattern,
+                dominant_level: result.dominantBlock,
+                top_poor: result.dominantPoor,
+                top_emotion: result.dominantEmotionBlock || 'anxiety',
+                top_belief: result.dominantBeliefBlock || 'lack',
+              }
+            }
+          }).then(({ error: profileError }) => {
+            if (profileError) {
+              console.error('❌ 用户画像同步失败:', profileError);
+            } else {
+              console.log('✅ 用户财富画像同步成功');
+            }
+          });
+          
+          // 刷新历史记录
+          loadHistory();
+        }
+      } catch (e) {
+        console.error('[WealthBlock] Auto-save exception:', e);
+        // 自动保存失败时静默处理，用户仍可手动保存
+      }
+    }
   };
 
   const handleSave = async () => {
