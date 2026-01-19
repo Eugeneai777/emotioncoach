@@ -33,28 +33,28 @@ export default function Packages() {
   // 标记支付已完成，防止弹窗被意外打开
   const [paymentCompleted, setPaymentCompleted] = useState(false);
 
-  // 处理小程序支付成功回调
-  const { isPaymentCallback } = usePaymentCallback({
+  // 处理小程序支付成功回调 - 仅用于检测是否处于回调场景，不显示 toast
+  // toast 由 WechatPayDialog 组件内部在验证订单成功后显示
+  const { isPaymentCallback, orderNo: callbackOrderNo } = usePaymentCallback({
     onSuccess: (order) => {
-      console.log('[Packages] Payment callback success, order:', order);
-      toast.success("购买成功！配额已到账 🎉");
-      // 标记支付完成并关闭弹窗
+      console.log('[Packages] Payment callback verified success, order:', order);
+      // 不在这里显示 toast，让 WechatPayDialog 内部处理
       setPaymentCompleted(true);
       setPayDialogOpen(false);
     },
-    showToast: false, // 我们自己显示 toast
-    showConfetti: true,
+    showToast: false, // 由 WechatPayDialog 内部显示
+    showConfetti: false, // 由 WechatPayDialog 内部显示
     autoRedirect: false,
   });
 
-  // 🆕 监听支付回调状态变化，自动关闭弹窗
+  // 🆕 监听支付回调状态变化，但不立即标记完成
+  // 让 WechatPayDialog 组件先验证订单状态
   useEffect(() => {
-    if (isPaymentCallback) {
-      console.log('[Packages] Payment callback detected, closing dialog');
-      setPayDialogOpen(false);
-      setPaymentCompleted(true);
+    if (isPaymentCallback && callbackOrderNo) {
+      console.log('[Packages] Payment callback detected, order:', callbackOrderNo);
+      // 不关闭弹窗，让 WechatPayDialog 组件验证订单后再关闭
     }
-  }, [isPaymentCallback]);
+  }, [isPaymentCallback, callbackOrderNo]);
 
   const handlePurchase = (packageInfo: PackageInfo) => {
     // 如果支付已完成，不再打开弹窗
@@ -82,7 +82,7 @@ export default function Packages() {
   
   const handlePaymentSuccess = () => {
     console.log('[Packages] Dialog payment success callback');
-    toast.success("购买成功！配额已到账 🎉");
+    // toast 由 WechatPayDialog 内部在验证成功后显示
     setPaymentCompleted(true);
     setPayDialogOpen(false);
   };
@@ -135,11 +135,15 @@ export default function Packages() {
           </p>
         </div>
         
-        {/* 微信支付对话框 - 仅在非回调场景下渲染 */}
-        {!paymentCompleted && !isPaymentCallback && (
+        {/* 微信支付对话框 - 允许在回调场景下渲染以验证订单状态 */}
+        {!paymentCompleted && (
           <WechatPayDialog
-            open={payDialogOpen}
-            onOpenChange={setPayDialogOpen}
+            open={payDialogOpen || isPaymentCallback}
+            onOpenChange={(open) => {
+              if (!isPaymentCallback) {
+                setPayDialogOpen(open);
+              }
+            }}
             packageInfo={selectedPackage}
             onSuccess={handlePaymentSuccess}
           />
