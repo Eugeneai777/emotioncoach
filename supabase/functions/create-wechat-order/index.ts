@@ -127,7 +127,11 @@ serve(async (req) => {
       }
     }
 
-    // 🔑 防止重复支付：检查用户是否已有同 package_key 的已支付订单
+    // 🔑 防止重复支付：仅对限购套餐检查用户是否已有同 package_key 的已支付订单
+    // 限购套餐列表（只能购买一次的产品）
+    const limitedPurchasePackages = ['basic', 'wealth_block_assessment'];
+    const isLimitedPackage = limitedPurchasePackages.includes(packageKey);
+    
     let finalUserId = userId;
     if (openId) {
       const { data: mapping } = await supabase
@@ -142,7 +146,8 @@ serve(async (req) => {
       }
     }
 
-    if (finalUserId && finalUserId !== 'guest') {
+    // 仅对限购套餐检查是否已购买
+    if (isLimitedPackage && finalUserId && finalUserId !== 'guest') {
       const { data: paidOrder } = await supabase
         .from('orders')
         .select('id, order_no')
@@ -153,7 +158,7 @@ serve(async (req) => {
         .maybeSingle();
 
       if (paidOrder) {
-        console.log('[CreateOrder] User already has paid order for this package:', paidOrder.order_no);
+        console.log('[CreateOrder] User already has paid order for this LIMITED package:', paidOrder.order_no);
         return new Response(
           JSON.stringify({
             success: true,
