@@ -375,6 +375,14 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         return;
       }
 
+      // 🆕 小程序环境：即使没有 mp_openid 也直接标记为 resolved
+      // 由小程序原生支付页面获取 openId 并调用 wx.requestPayment
+      if (isMiniProgram) {
+        console.log('[Payment] MiniProgram environment, will use native bridge for payment');
+        setOpenIdResolved(true);
+        return;
+      }
+
       if (openIdFetchedRef.current) return;
       openIdFetchedRef.current = true;
 
@@ -730,19 +738,10 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
     // - 其他：Native
     let selectedPayType: 'jsapi' | 'h5' | 'native' | 'miniprogram';
 
-    // 小程序环境：使用原生支付，需要 mp_openid
+    // 小程序环境：使用原生支付
+    // ⚠️ 不再强制要求 mp_openid，由小程序原生支付页面获取 openId 并调用 wx.requestPayment
     if (isMiniProgram) {
-      console.log('[Payment] MiniProgram detected, mp_openid:', userOpenId || 'MISSING');
-      
-      if (!userOpenId) {
-        console.error('[Payment] MiniProgram payment requires mp_openid in URL');
-        console.log('[Payment] Current URL:', window.location.href);
-        toast.error('缺少支付授权信息，请返回小程序首页重新进入');
-        setStatus('failed');
-        setErrorMessage('缺少 mp_openid 参数');
-        return;
-      }
-      
+      console.log('[Payment] MiniProgram detected, mp_openid:', userOpenId || 'MISSING (will get from native)');
       selectedPayType = 'miniprogram';
     } else if (isWechat && !!userOpenId) {
       console.log('[Payment] WeChat browser with openId, using jsapi');
