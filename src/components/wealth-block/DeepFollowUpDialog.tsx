@@ -131,9 +131,9 @@ export function DeepFollowUpDialog({
         animate={{ scale: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <Card className="border-0 shadow-2xl overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 p-4 text-white">
+        <Card className="border-0 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
+          {/* Header - 移动端响应式 */}
+          <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 p-3 sm:p-4 text-white flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-5 h-5" />
@@ -154,7 +154,7 @@ export function DeepFollowUpDialog({
             </div>
           </div>
 
-          <CardContent className="p-5 space-y-5 max-h-[60vh] overflow-y-auto">
+          <CardContent className="p-4 sm:p-5 space-y-4 sm:space-y-5 flex-1 overflow-y-auto scroll-smooth">
             {/* 首次说明 */}
             {currentIndex === 0 && (
               <div className="bg-violet-50 dark:bg-violet-900/20 p-3 rounded-lg">

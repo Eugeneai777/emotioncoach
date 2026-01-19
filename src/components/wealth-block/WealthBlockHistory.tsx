@@ -96,7 +96,7 @@ export function WealthBlockHistory({ records, isLoading, onDelete, onViewDetail 
 
   return (
     <>
-      <ScrollArea className="h-[500px] pr-4">
+      <ScrollArea className="max-h-[60vh] sm:max-h-[500px] pr-2 sm:pr-4">
         <div className="space-y-4">
           {records.map((record, index) => {
             const dominant = blockInfo[record.dominant_block];
@@ -107,9 +107,10 @@ export function WealthBlockHistory({ records, isLoading, onDelete, onViewDetail 
             return (
               <motion.div
                 key={record.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0.01, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
+                style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
               >
                 <Card className="overflow-hidden">
                   <CardContent className="p-0">

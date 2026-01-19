@@ -291,7 +291,7 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
   };
 
   return (
-    <div className="flex flex-col min-h-[500px]">
+    <div className="flex flex-col min-h-[calc(100dvh-180px)] sm:min-h-[500px]">
       {/* 深度追问对话框 */}
       {showDeepFollowUp && (
         <DeepFollowUpDialog
@@ -389,8 +389,8 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
         </AnimatePresence>
       </div>
 
-      {/* 导航按钮 */}
-      <div className="flex gap-3 pt-6 mt-auto">
+      {/* 导航按钮 - 移动端 sticky 底部 */}
+      <div className="flex gap-3 pt-4 sm:pt-6 mt-auto sticky bottom-0 bg-background/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)] -mx-2 px-2 sm:mx-0 sm:px-0 sm:static sm:bg-transparent sm:backdrop-blur-none">
         <Button
           variant="outline"
           className="flex-1 h-12"

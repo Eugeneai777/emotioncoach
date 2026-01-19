@@ -221,7 +221,7 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
   };
 
   return (
-    <div className="space-y-4 sm:space-y-5 pb-20 sm:pb-24 relative px-2 sm:px-0">
+    <div className="space-y-4 sm:space-y-5 pb-[calc(80px+env(safe-area-inset-bottom))] sm:pb-24 relative px-1 sm:px-0">
       {/* 背景装饰 */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,hsl(var(--primary)/0.4),transparent_50%)]" />
@@ -392,18 +392,18 @@ export function WealthBlockResult({ result, followUpInsights, deepFollowUpAnswer
                   </div>
 
                   {/* 雷达图和条形图 - 移动端竖向堆叠 */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="h-[200px] sm:h-[180px]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="h-[180px] xs:h-[200px] sm:h-[180px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart cx="50%" cy="50%" outerRadius="70%" data={fourPoorRadarData}>
+                        <RadarChart cx="50%" cy="50%" outerRadius="65%" data={fourPoorRadarData}>
                           <PolarGrid stroke="hsl(var(--border))" />
-                          <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 11 }} />
+                          <PolarAngleAxis dataKey="subject" tick={{ fill: '#1f2937', fontSize: 10 }} />
                           <PolarRadiusAxis angle={90} domain={[0, 15]} tick={false} axisLine={false} />
                           <Radar dataKey="score" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.5} strokeWidth={2} />
                         </RadarChart>
                       </ResponsiveContainer>
                     </div>
-                    <div className="h-[200px] sm:h-[180px]">
+                    <div className="h-[180px] xs:h-[200px] sm:h-[180px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart 
                           data={[
