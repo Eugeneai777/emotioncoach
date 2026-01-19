@@ -4,6 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Sparkles, Crown, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { usePackages, getPackagePrice, getPackageQuota } from "@/hooks/usePackages";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 // 套餐配置（静态部分）
 const packageConfig = [
@@ -12,7 +15,7 @@ const packageConfig = [
     name: "尝鲜会员",
     duration: "365天",
     icon: Sparkles,
-    limitPurchase: true,
+    limitPurchase: true, // 限购一次
     features: ["AI对话体验", "基础功能", "365天有效", "⚠️ 限购一次"],
   },
   {
@@ -21,13 +24,49 @@ const packageConfig = [
     duration: "365天",
     icon: Crown,
     popular: true,
+    limitPurchase: false, // 可多次购买
     features: ["AI对话无限使用", "全部高级功能", "365天有效期"],
   },
 ];
 
+// 检查用户是否已购买指定套餐
+function usePackagePurchased(packageKey: string, enabled: boolean) {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['package-purchased', packageKey, user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      
+      // 查询 orders 表检查是否有已支付的订单
+      const { data, error } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('package_key', packageKey)
+        .eq('status', 'paid')
+        .limit(1)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('[PackageSelector] Check purchase error:', error);
+        return false;
+      }
+      
+      return !!data;
+    },
+    enabled: !!user && enabled,
+    staleTime: 30 * 1000, // 30秒缓存
+  });
+}
+
 export const PackageSelector = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: packages, isLoading } = usePackages();
+
+  // 检查 basic 套餐是否已购买（限购一次）
+  const { data: basicPurchased, isLoading: isCheckingBasic } = usePackagePurchased('basic', true);
 
   // 从数据库获取动态价格和配额
   const basicPrice = getPackagePrice(packages, 'basic', 9.9);
@@ -40,7 +79,11 @@ export const PackageSelector = () => {
     ...pkg,
     price: pkg.key === 'basic' ? basicPrice : member365Price,
     quota: pkg.key === 'basic' ? basicQuota : member365Quota,
+    // 限购套餐已购买则禁用
+    isPurchased: pkg.limitPurchase && pkg.key === 'basic' ? !!basicPurchased : false,
   }));
+
+  const isLoadingAll = isLoading || isCheckingBasic;
 
   return (
     <Card>
@@ -49,7 +92,7 @@ export const PackageSelector = () => {
         <CardDescription>选择适合您的套餐方案</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {isLoadingAll ? (
           <div className="flex justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
@@ -57,6 +100,8 @@ export const PackageSelector = () => {
           <div className="grid md:grid-cols-2 gap-4">
             {packagesWithData.map((pkg) => {
               const Icon = pkg.icon;
+              const isDisabled = pkg.isPurchased;
+              
               return (
                 <Card key={pkg.key} className={pkg.popular ? "border-primary" : ""}>
                   <CardHeader className="space-y-3">
@@ -66,13 +111,14 @@ export const PackageSelector = () => {
                         <CardTitle className="text-lg">{pkg.name}</CardTitle>
                       </div>
                       {pkg.popular && <Badge variant="default">推荐</Badge>}
+                      {pkg.isPurchased && <Badge variant="secondary">已购买</Badge>}
                     </div>
                     <div>
                       <div className="text-3xl font-bold">¥{pkg.price}</div>
                       <div className="text-sm text-muted-foreground mt-1">
                         {pkg.quota}次 / {pkg.duration}
                       </div>
-                      {pkg.limitPurchase && (
+                      {pkg.limitPurchase && !pkg.isPurchased && (
                         <div className="text-xs text-amber-600 dark:text-amber-500 font-medium mt-1">⚠️ 限购一次</div>
                       )}
                     </div>
@@ -86,8 +132,13 @@ export const PackageSelector = () => {
                         </li>
                       ))}
                     </ul>
-                    <Button className="w-full" variant="default" onClick={() => navigate("/packages")}>
-                      立即购买
+                    <Button 
+                      className="w-full" 
+                      variant={isDisabled ? "secondary" : "default"}
+                      disabled={isDisabled}
+                      onClick={() => !isDisabled && navigate("/packages")}
+                    >
+                      {isDisabled ? "已购买" : "立即购买"}
                     </Button>
                   </CardContent>
                 </Card>
