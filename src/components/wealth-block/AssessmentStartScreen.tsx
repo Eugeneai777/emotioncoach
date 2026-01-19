@@ -55,10 +55,11 @@ export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
                 {tips.map((tip, index) => (
                   <motion.li
                     key={index}
-                    initial={{ opacity: 0, x: -10 }}
+                    initial={{ opacity: 0.01, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.25 + index * 0.05, duration: 0.2 }}
                     className="flex items-start gap-2 text-sm text-muted-foreground"
+                    style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                   >
                     <span className="text-amber-400 mt-0.5">•</span>
                     <span>{tip}</span>
@@ -76,9 +77,10 @@ export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
                   {[1, 2, 3, 4, 5].map((score) => (
                     <motion.div
                       key={score}
-                      initial={{ scale: 0.8, opacity: 0 }}
+                      initial={{ scale: 0.8, opacity: 0.01 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ delay: 0.35 + score * 0.03, duration: 0.2 }}
+                      style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                       whileHover={{ scale: 1.1, y: -2 }}
                       className={`
                         w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium
