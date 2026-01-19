@@ -7,8 +7,10 @@ import html2canvas from 'html2canvas';
 import { type IntroShareConfig } from '@/config/introShareConfig';
 import IntroShareCard, { CardTemplate, TEMPLATE_LABELS } from './IntroShareCard';
 import { useAuth } from '@/hooks/useAuth';
+import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 import { getShareEnvironment, handleShareWithFallback } from '@/utils/shareUtils';
 import ShareImagePreview from '@/components/ui/share-image-preview';
+import { getProxiedAvatarUrl } from '@/utils/avatarUtils';
 
 interface IntroShareDialogProps {
   config: IntroShareConfig;
@@ -24,6 +26,11 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
   const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { profile } = useProfileCompletion();
+
+  // 获取用户头像和昵称
+  const avatarUrl = getProxiedAvatarUrl(profile?.avatar_url);
+  const displayName = profile?.display_name || '';
 
   const shareEnv = getShareEnvironment();
   const showImagePreview = shareEnv.isWeChat || shareEnv.isIOS;
@@ -167,6 +174,8 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
                 config={config}
                 template={selectedTemplate}
                 partnerCode={getPartnerCode()}
+                avatarUrl={avatarUrl}
+                displayName={displayName}
               />
             </div>
           </div>
