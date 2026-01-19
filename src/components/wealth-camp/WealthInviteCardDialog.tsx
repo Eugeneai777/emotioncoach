@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Image, Copy, Check, ImageIcon } from 'lucide-react';
+import { Image, Copy, Check, ImageIcon, Share2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ShareImagePreview from '@/components/ui/share-image-preview';
 import html2canvas from 'html2canvas';
@@ -21,6 +21,7 @@ import BlockRevealShareCard from '@/components/wealth-block/BlockRevealShareCard
 import TransformationValueShareCard from '@/components/wealth-block/TransformationValueShareCard';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
+import useWechatShare from '@/hooks/useWechatShare';
 
 interface UserInfo {
   avatarUrl?: string;
@@ -121,17 +122,20 @@ const generateCanvas = async (cardRef: React.RefObject<HTMLDivElement>): Promise
   console.log('[generateCanvas] Starting canvas generation, element size:', 
     originalElement.offsetWidth, 'x', originalElement.offsetHeight);
   
-  // Create a wrapper for proper rendering
+  // Create a wrapper for proper rendering with reliable hiding
   const wrapper = document.createElement('div');
+  wrapper.id = 'html2canvas-clone-wrapper';
   wrapper.style.cssText = `
-    position: fixed;
-    left: -9999px;
-    top: 0;
-    z-index: -9999;
-    visibility: visible;
-    opacity: 1;
-    pointer-events: none;
-    background: white;
+    position: fixed !important;
+    left: -99999px !important;
+    top: -99999px !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    z-index: -99999 !important;
   `;
   
   // Clone the element
@@ -144,6 +148,8 @@ const generateCanvas = async (cardRef: React.RefObject<HTMLDivElement>): Promise
   clonedElement.style.position = 'relative';
   clonedElement.style.width = originalElement.offsetWidth + 'px';
   clonedElement.style.minWidth = originalElement.offsetWidth + 'px';
+  clonedElement.style.visibility = 'visible';
+  clonedElement.style.opacity = '1';
   
   wrapper.appendChild(clonedElement);
   document.body.appendChild(wrapper);
@@ -157,33 +163,45 @@ const generateCanvas = async (cardRef: React.RefObject<HTMLDivElement>): Promise
     await new Promise(resolve => setTimeout(resolve, 200));
     
     console.log('[generateCanvas] Starting html2canvas...');
-    const canvas = await html2canvas(clonedElement, {
-      scale: 3,
-      useCORS: true,
-      allowTaint: true, // Allow taint for WeChat compatibility
-      backgroundColor: '#ffffff',
-      logging: false,
-      imageTimeout: 8000,
-      removeContainer: false,
-      foreignObjectRendering: false, // Disable for better WeChat compatibility
-      onclone: (_doc, element) => {
-        // Ensure cloned element has proper styles
-        element.style.transform = 'none';
-        element.style.visibility = 'visible';
-        element.style.opacity = '1';
-      },
-    });
+    
+    // Add 15-second timeout protection
+    const canvas = await Promise.race([
+      html2canvas(clonedElement, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        imageTimeout: 8000,
+        removeContainer: false,
+        foreignObjectRendering: false,
+        onclone: (_doc, element) => {
+          element.style.transform = 'none';
+          element.style.visibility = 'visible';
+          element.style.opacity = '1';
+        },
+      }),
+      new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('图片生成超时，请重试')), 15000)
+      )
+    ]) as HTMLCanvasElement;
     
     console.log('[generateCanvas] Canvas generated successfully:', canvas.width, 'x', canvas.height);
     return canvas;
   } catch (error) {
     console.error('[generateCanvas] html2canvas error:', error);
-    return null;
+    throw error;
   } finally {
+    // Clean up wrapper
     if (wrapper.parentNode) {
       document.body.removeChild(wrapper);
     }
   }
+};
+
+// Helper: Clean up any lingering clone elements
+const cleanupCloneElements = () => {
+  document.querySelectorAll('#html2canvas-clone-wrapper').forEach(el => el.remove());
 };
 
 // Helper: Canvas to Blob
@@ -194,7 +212,7 @@ const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> => {
 };
 
 // Import share utilities
-import { shouldUseImagePreview, handleShareWithFallback, getShareEnvironment, getShareButtonText, getShareButtonHint } from '@/utils/shareUtils';
+import { getShareEnvironment } from '@/utils/shareUtils';
 
 // Get best awakening content with priority: belief > emotion > behavior
 const getBestAwakening = (data: AwakeningData): { type: 'behavior' | 'emotion' | 'belief'; content: string } | null => {
@@ -272,6 +290,31 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
 
   const assessmentUrl = getAssessmentUrl();
   const campUrl = getCampUrl();
+  
+  // Get share environment
+  const env = getShareEnvironment();
+
+  // Configure WeChat JS-SDK share content (use static title for hook stability)
+  useWechatShare({
+    title: '财富觉醒训练营 - 邀请你一起突破',
+    desc: '每天15分钟，7天突破财富卡点',
+    link: campUrl,
+    imgUrl: `${getPromotionDomain()}/og-youjin-ai.png`,
+  });
+
+  // Cleanup clone elements on unmount
+  useEffect(() => {
+    return () => {
+      cleanupCloneElements();
+    };
+  }, []);
+
+  // Cleanup clone elements when dialog closes
+  useEffect(() => {
+    if (!open) {
+      cleanupCloneElements();
+    }
+  }, [open]);
 
   // 3-second view completion timer for task tracking
   useEffect(() => {
@@ -459,7 +502,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     }
   };
 
-  const handleShare = async () => {
+  // Handle native share (non-WeChat environments)
+  const handleNativeShare = async () => {
     const cardRef = getActiveCardRef();
     const cardName = getCardName();
     
@@ -471,52 +515,69 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     setGenerating(true);
     
     try {
-      // Show loading toast for better UX
       const toastId = toast.loading('正在生成图片...');
       
       const canvas = await generateCanvas(cardRef);
       if (!canvas) {
         toast.dismiss(toastId);
-        throw new Error('Failed to generate canvas');
+        toast.error('生成失败，请重试或截图分享');
+        return;
       }
 
       const blob = await canvasToBlob(canvas);
       if (!blob) {
         toast.dismiss(toastId);
-        throw new Error('Failed to convert canvas to blob');
+        toast.error('转换失败，请重试或截图分享');
+        return;
       }
 
       toast.dismiss(toastId);
 
-      // Use unified share handler with proper WeChat/iOS fallback
-      const result = await handleShareWithFallback(
-        blob,
-        `${cardName}.png`,
-        {
-          title: cardName,
-          onShowPreview: (blobUrl) => {
-            setPreviewImageUrl(blobUrl);
-            setShowImagePreview(true);
-            toast.success('图片已生成，长按保存');
-          },
-          onDownload: () => {
-            toast.success('图片已下载，请手动分享');
-          },
-        }
-      );
-
-      // Only show success toast for Web Share API (not for preview/download)
-      if (result.method === 'webshare' && result.success && !result.cancelled) {
-        toast.success('分享成功');
-      }
+      // Try Web Share API
+      const file = new File([blob], `${cardName}.png`, { type: 'image/png' });
       
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: cardName,
+            text: '邀请你一起突破财富卡点',
+          });
+          toast.success('分享成功');
+          onGenerate?.();
+          return;
+        } catch (shareError) {
+          if ((shareError as Error).name === 'AbortError') {
+            return; // User cancelled
+          }
+          console.error('[handleNativeShare] Web Share failed:', shareError);
+        }
+      }
+
+      // Fallback: Download the image
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `${cardName}.png`;
+      link.href = blobUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      toast.success('卡片已保存');
       onGenerate?.();
     } catch (error) {
       console.error('Failed to share card:', error);
-      toast.error('分享失败，请重试');
+      const errorMessage = error instanceof Error ? error.message : '分享失败，请重试';
+      toast.error(errorMessage);
     } finally {
       setGenerating(false);
     }
+  };
+
+  // Handle link share prompt for WeChat
+  const handleLinkSharePrompt = () => {
+    setOpen(false);
+    toast.info('请点击微信右上角「...」→「发送给朋友」', { duration: 4000 });
   };
 
   // Handle closing image preview
@@ -533,7 +594,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     if (previewImageUrl) {
       URL.revokeObjectURL(previewImageUrl);
     }
-    await handleShare();
+    await handleDownload();
   };
 
   const handleCopyLink = async () => {
@@ -707,43 +768,123 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
         </Tabs>
 
-        {/* Action Buttons - Optimized for mobile */}
+        {/* Action Buttons - Dual-track for WeChat vs Other */}
         <div className="flex flex-col gap-3 mt-4">
-          <div className="flex gap-2">
-            <Button
-              onClick={handleDownload}
-              disabled={generating}
-              className="flex-1 gap-2 h-11 text-base font-medium bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-            >
-              {generating ? (
-                <>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  >
-                    <ImageIcon className="h-4 w-4" />
-                  </motion.div>
-                  生成中...
-                </>
-              ) : (
-                <>
-                  <ImageIcon className="h-4 w-4" />
-                  {getShareButtonText()}
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleCopyLink}
-              className="gap-2 h-11 px-4"
-            >
-              {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-            </Button>
-          </div>
-          
-          <p className="text-xs text-muted-foreground text-center">
-            {getShareButtonHint()}
-          </p>
+          {/* WeChat/MiniProgram: Show dual-track options */}
+          {(env.isWeChat || env.isMiniProgram) ? (
+            <div className="flex flex-col gap-3">
+              {/* Option 1: Link Share (Recommended) */}
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🔗</span>
+                  <span className="font-medium text-emerald-700 dark:text-emerald-300">
+                    方式1：链接分享（推荐）
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  点击右上角「<strong>...</strong>」→「<strong>发送给朋友</strong>」，好友可直接点击进入
+                </p>
+                <Button 
+                  onClick={handleLinkSharePrompt} 
+                  variant="outline" 
+                  className="w-full h-11 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  去右上角分享链接
+                </Button>
+              </div>
+              
+              {/* Option 2: Image Share */}
+              <div className="bg-muted/50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🖼️</span>
+                  <span className="font-medium">方式2：图片分享</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  生成精美邀请卡片，<strong>长按保存</strong>后发送给好友
+                </p>
+                <Button 
+                  onClick={handleDownload} 
+                  disabled={generating} 
+                  className="w-full h-11 bg-gradient-to-r from-primary to-primary/80"
+                >
+                  {generating ? (
+                    <>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                      >
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                      </motion.div>
+                      生成中...
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      生成邀请卡片
+                    </>
+                  )}
+                </Button>
+              </div>
+              
+              {/* Fallback: Copy Link */}
+              <Button 
+                onClick={handleCopyLink} 
+                variant="ghost" 
+                className="gap-2 text-muted-foreground"
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? '已复制' : '复制邀请链接'}
+              </Button>
+            </div>
+          ) : (
+            /* Non-WeChat: Standard buttons */
+            <>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleNativeShare}
+                  disabled={generating}
+                  className="flex-1 gap-2 h-12 text-base font-medium bg-gradient-to-r from-primary to-primary/80"
+                >
+                  {generating ? (
+                    <>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                      >
+                        <Share2 className="h-5 w-5" />
+                      </motion.div>
+                      生成中...
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="h-5 w-5" />
+                      分享
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={handleDownload}
+                  disabled={generating}
+                  variant="outline"
+                  className="h-12 px-4"
+                >
+                  <ImageIcon className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleCopyLink}
+                  className="h-12 px-4"
+                >
+                  {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+              
+              <p className="text-xs text-muted-foreground text-center">
+                点击分享按钮，或生成图片保存后发送
+              </p>
+            </>
+          )}
         </div>
       </DialogContent>
       
