@@ -454,11 +454,10 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         // 小程序 WebView：使用专门的 miniprogram 支付类型
         console.log("[Payment] MiniProgram detected, openId:", userOpenId ? "present" : "missing");
 
-        // 如果没有 openId，提示用户并尝试请求
+        // 如果没有 openId，静默请求（小程序环境不显示消息）
         if (!userOpenId) {
           console.warn("[Payment] MiniProgram requires mp_openid URL parameter");
           requestMiniProgramOpenId();
-          toast.error("正在获取支付授权，请稍候重试");
           setStatus("idle");
           return;
         }
@@ -967,17 +966,21 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
             </div>
           )}
 
-          {/* 创建订单中 */}
-          {!isRedirectingForOpenId && (status === "idle" || status === "creating") && (
+          {/* 创建订单中 - 小程序环境不显示等待消息 */}
+          {!isRedirectingForOpenId && (status === "idle" || status === "creating") && !isMiniProgram && (
             <div className="flex flex-col items-center py-8">
               <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
               <p className="text-muted-foreground">
                 {status === "idle" && shouldWaitForOpenId && !openIdResolved
-                  ? isMiniProgram
-                    ? "等待小程序返回 openId…"
-                    : "正在初始化…"
+                  ? "正在初始化…"
                   : "正在创建订单…"}
               </p>
+            </div>
+          )}
+          {/* 小程序环境：仅显示简化的加载动画 */}
+          {!isRedirectingForOpenId && (status === "idle" || status === "creating") && isMiniProgram && (
+            <div className="flex flex-col items-center py-8">
+              <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
             </div>
           )}
 
