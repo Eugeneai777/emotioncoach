@@ -684,6 +684,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         throw new Error(nativeData?.error || '降级失败');
       }
       
+      // 小程序环境不生成二维码（canvas 不可用），直接显示错误提示
+      if (isMiniProgram) {
+        console.log('[Payment] MiniProgram: skipping QR code generation');
+        setPayUrl(nativeData.qrCodeUrl || nativeData.payUrl);
+        setPayType('native');
+        setStatus('failed');
+        setErrorMessage('小程序内暂不支持扫码支付，请返回重试');
+        return;
+      }
+      
       const qrDataUrl = await QRCode.toDataURL(nativeData.qrCodeUrl || nativeData.payUrl, {
         width: 200,
         margin: 2,
@@ -813,25 +823,29 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
         setPayUrl(baseUrl);
         setH5PayLink(finalUrl);
         
-        // 移动端H5支付也生成二维码，用于长按识别
-        const qrDataUrl = await QRCode.toDataURL(finalUrl, {
-          width: 200,
-          margin: 2,
-          color: { dark: '#000000', light: '#ffffff' },
-        });
-        setQrCodeDataUrl(qrDataUrl);
+        // 小程序环境不生成二维码（canvas 不可用）
+        if (!isMiniProgram) {
+          const qrDataUrl = await QRCode.toDataURL(finalUrl, {
+            width: 200,
+            margin: 2,
+            color: { dark: '#000000', light: '#ffffff' },
+          });
+          setQrCodeDataUrl(qrDataUrl);
+        }
         setStatus('ready');
         startPolling(data.orderNo);
       } else {
         // Native扫码支付
         setPayUrl(data.qrCodeUrl || data.payUrl);
-        // 生成二维码
-        const qrDataUrl = await QRCode.toDataURL(data.qrCodeUrl || data.payUrl, {
-          width: 200,
-          margin: 2,
-          color: { dark: '#000000', light: '#ffffff' },
-        });
-        setQrCodeDataUrl(qrDataUrl);
+        // 小程序环境不生成二维码（canvas 不可用）
+        if (!isMiniProgram) {
+          const qrDataUrl = await QRCode.toDataURL(data.qrCodeUrl || data.payUrl, {
+            width: 200,
+            margin: 2,
+            color: { dark: '#000000', light: '#ffffff' },
+          });
+          setQrCodeDataUrl(qrDataUrl);
+        }
         setStatus('ready');
         startPolling(data.orderNo);
       }
