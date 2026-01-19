@@ -64,7 +64,7 @@ const Awakening: React.FC = () => {
         </header>
 
         {/* Main Content */}
-        <main className="max-w-lg mx-auto px-4 py-6 pb-28 space-y-6">
+        <main className="max-w-lg mx-auto px-4 py-6 pb-28 space-y-4">
           {/* 标题区 */}
           <motion.div 
             initial={{ opacity: 0.01, y: -10 }}
@@ -79,7 +79,7 @@ const Awakening: React.FC = () => {
           </motion.div>
 
           {/* 6宫格入口 */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {awakeningDimensions.map((dimension, index) => <AwakeningEntryCard key={dimension.id} dimension={dimension} onClick={() => handleEntryClick(dimension)} index={index} />)}
           </div>
 

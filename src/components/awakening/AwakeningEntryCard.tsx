@@ -23,10 +23,10 @@ const AwakeningEntryCard: React.FC<AwakeningEntryCardProps> = ({
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-2xl p-4 cursor-pointer",
+        "relative overflow-hidden rounded-2xl p-3 cursor-pointer",
         "bg-gradient-to-br shadow-lg",
         dimension.gradient,
-        "min-h-[120px] flex flex-col justify-between"
+        "min-h-[100px] flex flex-col justify-between"
       )}
     >
       {/* 背景装饰 */}
@@ -38,7 +38,7 @@ const AwakeningEntryCard: React.FC<AwakeningEntryCardProps> = ({
       
       {/* 主要内容 */}
       <div className="relative z-10">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-1.5 mb-1.5">
           <span className="text-2xl">{dimension.emoji}</span>
           <h3 className="text-xl font-bold text-white">{dimension.title}</h3>
         </div>
@@ -46,7 +46,7 @@ const AwakeningEntryCard: React.FC<AwakeningEntryCardProps> = ({
       </div>
       
       {/* 模板提示 */}
-      <div className="relative z-10 mt-2">
+      <div className="relative z-10 mt-1.5">
         <p className="text-xs text-white/70 truncate">
           {dimension.template.replace('___', '...')}
         </p>
