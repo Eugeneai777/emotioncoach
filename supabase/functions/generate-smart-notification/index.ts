@@ -399,7 +399,16 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       action_completion_celebration: { type: 'celebration', priority: 4 },
       after_wealth_coaching: { type: 'encouragement', priority: 3 },
       wealth_weekly_summary: { type: 'insight', priority: 4 },
-      profile_completion: { type: 'reminder', priority: 2 }
+      profile_completion: { type: 'reminder', priority: 2 },
+      // 前瞻性预测场景
+      emotion_trend_warning: { type: 'care', priority: 4 },
+      upcoming_milestone: { type: 'celebration', priority: 4 },
+      weekly_rhythm_care: { type: 'encouragement', priority: 3 },
+      pattern_breakthrough: { type: 'celebration', priority: 5 },
+      cycle_low_prevention: { type: 'care', priority: 4 },
+      morning_intention: { type: 'encouragement', priority: 3 },
+      evening_reflection: { type: 'insight', priority: 3 },
+      memory_connection: { type: 'insight', priority: 4 }
     };
 
     // 场景到教练类型的映射
@@ -427,7 +436,16 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       action_completion_celebration: 'wealth_coach_4_questions_coach',
       after_wealth_coaching: 'wealth_coach_4_questions_coach',
       wealth_weekly_summary: 'wealth_coach_4_questions_coach',
-      profile_completion: 'general'
+      profile_completion: 'general',
+      // 前瞻性预测场景
+      emotion_trend_warning: 'emotion_coach',
+      upcoming_milestone: 'general',
+      weekly_rhythm_care: 'general',
+      pattern_breakthrough: 'general',
+      cycle_low_prevention: 'emotion_coach',
+      morning_intention: 'general',
+      evening_reflection: 'general',
+      memory_connection: 'general'
     };
 
     let { type, priority } = baseNotificationTypeMap[scenarioTyped] || { type: 'encouragement', priority: 1 };
