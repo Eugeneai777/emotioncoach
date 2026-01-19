@@ -44,7 +44,7 @@ const BlockRevealShareCard = forwardRef<HTMLDivElement, BlockRevealShareCardProp
     
     const shareUrl = getShareUrl();
     const poorConfig = poorTypeConfig[dominantPoor] || poorTypeConfig['心穷'];
-    const qrCodeUrl = useQRCode(shareUrl);
+    const { qrCodeUrl } = useQRCode(shareUrl);
 
     return (
       <div

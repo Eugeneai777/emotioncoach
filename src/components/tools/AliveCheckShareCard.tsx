@@ -3,10 +3,11 @@ import QRCode from 'qrcode';
 
 interface AliveCheckShareCardProps {
   partnerCode?: string;
+  onReady?: () => void;
 }
 
 const AliveCheckShareCard = forwardRef<HTMLDivElement, AliveCheckShareCardProps>(
-  ({ partnerCode }, ref) => {
+  ({ partnerCode, onReady }, ref) => {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
     useEffect(() => {
@@ -24,12 +25,14 @@ const AliveCheckShareCard = forwardRef<HTMLDivElement, AliveCheckShareCardProps>
             },
           });
           setQrCodeUrl(url);
+          onReady?.();
         } catch (error) {
           console.error('Failed to generate QR code:', error);
+          onReady?.();
         }
       };
       generateQRCode();
-    }, [partnerCode]);
+    }, [partnerCode, onReady]);
 
     const features = [
       { icon: '🛡️', title: '每日安全确认', desc: '一键打卡，确认平安' },

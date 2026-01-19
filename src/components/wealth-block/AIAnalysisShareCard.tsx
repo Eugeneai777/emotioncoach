@@ -36,7 +36,7 @@ const AIAnalysisShareCard = forwardRef<HTMLDivElement, AIAnalysisShareCardProps>
     };
     
     const shareUrl = getShareUrl();
-    const qrCodeUrl = useQRCode(shareUrl);
+    const { qrCodeUrl } = useQRCode(shareUrl);
 
     const healthScore = assessmentData?.healthScore ?? 65;
     const getScoreColor = (score: number) => {

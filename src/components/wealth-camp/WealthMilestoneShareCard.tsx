@@ -54,7 +54,7 @@ const getMilestoneConfig = (days: number) => {
 
 const WealthMilestoneShareCard = forwardRef<HTMLDivElement, WealthMilestoneShareCardProps>(
   ({ completedDays, totalDays, coreInsight, shareUrl, avatarUrl, displayName = '财富觉醒者' }, ref) => {
-    const qrCodeUrl = useQRCode(shareUrl);
+    const { qrCodeUrl } = useQRCode(shareUrl);
     const config = getMilestoneConfig(completedDays);
     const progress = Math.min((completedDays / totalDays) * 100, 100);
 

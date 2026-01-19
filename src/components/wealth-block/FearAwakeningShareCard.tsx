@@ -34,7 +34,7 @@ const FearAwakeningShareCard = forwardRef<HTMLDivElement, FearAwakeningShareCard
     
     const shareUrl = getShareUrl();
     const dominant = lockConfig[dominantLock];
-    const qrCodeUrl = useQRCode(shareUrl);
+    const { qrCodeUrl } = useQRCode(shareUrl);
 
     return (
       <div

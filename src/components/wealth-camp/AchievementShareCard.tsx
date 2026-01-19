@@ -107,7 +107,7 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
       ? `${baseUrl}?ref=${partnerInfo.partnerCode}` 
       : baseUrl;
     
-    const qrCodeUrl = useQRCode(shareUrl);
+    const { qrCodeUrl } = useQRCode(shareUrl);
     
     const currentStyle = stylePresets[stylePreset];
     const isDark = stylePreset !== 'minimal';

@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { handleShareWithFallback, shouldUseImagePreview, getShareEnvironment } from '@/utils/shareUtils';
 import ShareImagePreview from '@/components/ui/share-image-preview';
 import EmotionButtonShareCard from './EmotionButtonShareCard';
+import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 
 interface EmotionButtonShareDialogProps {
   open: boolean;
@@ -26,6 +27,7 @@ const EmotionButtonShareDialog: React.FC<EmotionButtonShareDialogProps> = ({
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [cardReady, setCardReady] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -142,7 +144,10 @@ const EmotionButtonShareDialog: React.FC<EmotionButtonShareDialogProps> = ({
           {/* Preview area */}
           <div className="flex justify-center overflow-hidden">
             <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
-              <EmotionButtonShareCard partnerCode={partnerCode} />
+              {!cardReady && <ShareCardSkeleton variant="wide" />}
+              <div className={cardReady ? '' : 'invisible absolute'}>
+                <EmotionButtonShareCard partnerCode={partnerCode} onReady={() => setCardReady(true)} />
+              </div>
             </div>
           </div>
 

@@ -22,6 +22,7 @@ import TransformationValueShareCard from '@/components/wealth-block/Transformati
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
 import useWechatShare from '@/hooks/useWechatShare';
+import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 
 interface UserInfo {
   avatarUrl?: string;
@@ -258,6 +259,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo>({});
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [partnerInfo, setPartnerInfo] = useState<{ partnerId: string; partnerCode: string } | null>(null);
   
   // Achievement share card settings
@@ -338,6 +340,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
   // Fetch user profile and camp progress
   useEffect(() => {
     if (!open) return;
+    setIsLoadingUser(true);
     const fetchUserInfo = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -394,6 +397,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         currentDay: currentDay || undefined,
         totalDays,
       });
+      setIsLoadingUser(false);
     };
 
     fetchUserInfo();
@@ -636,12 +640,16 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           <TabsContent value="value" className="mt-3">
             <div className="flex justify-center overflow-hidden">
               <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
-                <AssessmentValueShareCard 
-                  ref={valueCardRef}
-                  avatarUrl={userInfo.avatarUrl}
-                  displayName={userInfo.displayName}
-                  partnerInfo={partnerInfo || undefined}
-                />
+                {isLoadingUser ? (
+                  <ShareCardSkeleton />
+                ) : (
+                  <AssessmentValueShareCard 
+                    ref={valueCardRef}
+                    avatarUrl={userInfo.avatarUrl}
+                    displayName={userInfo.displayName}
+                    partnerInfo={partnerInfo || undefined}
+                  />
+                )}
               </div>
             </div>
           </TabsContent>
@@ -649,12 +657,16 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           <TabsContent value="fear" className="mt-3">
             <div className="flex justify-center overflow-hidden">
               <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
-                <FearAwakeningShareCard 
-                  ref={fearCardRef}
-                  avatarUrl={userInfo.avatarUrl}
-                  displayName={userInfo.displayName}
-                  partnerInfo={partnerInfo || undefined}
-                />
+                {isLoadingUser ? (
+                  <ShareCardSkeleton />
+                ) : (
+                  <FearAwakeningShareCard 
+                    ref={fearCardRef}
+                    avatarUrl={userInfo.avatarUrl}
+                    displayName={userInfo.displayName}
+                    partnerInfo={partnerInfo || undefined}
+                  />
+                )}
               </div>
             </div>
           </TabsContent>
@@ -662,12 +674,16 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           <TabsContent value="blindspot" className="mt-3">
             <div className="flex justify-center overflow-hidden">
               <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
-                <BlockRevealShareCard 
-                  ref={blindspotCardRef}
-                  avatarUrl={userInfo.avatarUrl}
-                  displayName={userInfo.displayName}
-                  partnerInfo={partnerInfo || undefined}
-                />
+                {isLoadingUser ? (
+                  <ShareCardSkeleton />
+                ) : (
+                  <BlockRevealShareCard 
+                    ref={blindspotCardRef}
+                    avatarUrl={userInfo.avatarUrl}
+                    displayName={userInfo.displayName}
+                    partnerInfo={partnerInfo || undefined}
+                  />
+                )}
               </div>
             </div>
           </TabsContent>
@@ -675,12 +691,16 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           <TabsContent value="transform" className="mt-3">
             <div className="flex justify-center overflow-hidden">
               <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
-                <TransformationValueShareCard 
-                  ref={transformCardRef}
-                  avatarUrl={userInfo.avatarUrl}
-                  displayName={userInfo.displayName}
-                  partnerInfo={partnerInfo || undefined}
-                />
+                {isLoadingUser ? (
+                  <ShareCardSkeleton />
+                ) : (
+                  <TransformationValueShareCard 
+                    ref={transformCardRef}
+                    avatarUrl={userInfo.avatarUrl}
+                    displayName={userInfo.displayName}
+                    partnerInfo={partnerInfo || undefined}
+                  />
+                )}
               </div>
             </div>
           </TabsContent>
@@ -688,14 +708,18 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           <TabsContent value="camp" className="mt-3">
             <div className="flex justify-center overflow-hidden">
               <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
-                <WealthCampShareCard 
-                  ref={campCardRef}
-                  avatarUrl={userInfo.avatarUrl}
-                  displayName={userInfo.displayName}
-                  currentDay={userInfo.currentDay}
-                  totalDays={userInfo.totalDays}
-                  partnerInfo={partnerInfo || undefined}
-                />
+                {isLoadingUser ? (
+                  <ShareCardSkeleton />
+                ) : (
+                  <WealthCampShareCard 
+                    ref={campCardRef}
+                    avatarUrl={userInfo.avatarUrl}
+                    displayName={userInfo.displayName}
+                    currentDay={userInfo.currentDay}
+                    totalDays={userInfo.totalDays}
+                    partnerInfo={partnerInfo || undefined}
+                  />
+                )}
               </div>
             </div>
           </TabsContent>

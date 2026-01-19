@@ -21,7 +21,7 @@ export const TEMPLATE_LABELS: Record<CardTemplate, string> = {
 export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
   ({ config, template, partnerCode, avatarUrl, displayName }, ref) => {
     const shareUrl = getShareUrl(config.targetUrl, partnerCode);
-    const qrCodeUrl = useQRCode(shareUrl);
+    const { qrCodeUrl } = useQRCode(shareUrl);
 
     const containerStyle: React.CSSProperties = {
       width: template === 'scenario' ? '320px' : template === 'value' ? '320px' : '320px',

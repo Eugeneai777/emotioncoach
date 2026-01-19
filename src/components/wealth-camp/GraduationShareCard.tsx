@@ -55,7 +55,7 @@ const GraduationShareCard = forwardRef<HTMLDivElement, GraduationShareCardProps>
     },
     ref
   ) => {
-    const qrCodeUrl = useQRCode(shareUrl);
+    const { qrCodeUrl } = useQRCode(shareUrl);
 
     // Display top achievements (max 5)
     const displayAchievements = earnedAchievements.slice(0, 5);

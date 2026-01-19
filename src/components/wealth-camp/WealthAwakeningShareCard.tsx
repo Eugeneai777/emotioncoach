@@ -40,7 +40,7 @@ const typeConfig = {
 
 const WealthAwakeningShareCard = forwardRef<HTMLDivElement, WealthAwakeningShareCardProps>(
   ({ dayNumber, awakeningContent, awakeningType, shareUrl, avatarUrl, displayName = '财富觉醒者' }, ref) => {
-    const qrCodeUrl = useQRCode(shareUrl);
+    const { qrCodeUrl } = useQRCode(shareUrl);
     const config = typeConfig[awakeningType];
     const TypeIcon = config.icon;
 

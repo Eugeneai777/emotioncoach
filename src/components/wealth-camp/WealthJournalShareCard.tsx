@@ -30,7 +30,7 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
     avatarUrl,
     displayName = '财富觉醒者'
   }, ref) => {
-    const qrCodeUrl = useQRCode(shareUrl);
+    const { qrCodeUrl } = useQRCode(shareUrl);
 
     // Pick the best content to display (avoid duplication)
     const primaryAwakening = beliefAwakening || emotionAwakening || behaviorAwakening;
