@@ -150,11 +150,12 @@ const AwakeningDrawer: React.FC<AwakeningDrawerProps> = ({
           <div className="p-4 pb-8 space-y-4 overflow-y-auto max-h-[60vh]">
             <AnimatePresence mode="wait">
               {lifeCard ? (
-                <motion.div
-                  key="lifecard"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
+              <motion.div
+                key="lifecard"
+                initial={{ opacity: 0.01, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0.01, y: -20 }}
+                style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                 >
                   <AwakeningLifeCard
                     lifeCard={lifeCard}
@@ -165,11 +166,12 @@ const AwakeningDrawer: React.FC<AwakeningDrawerProps> = ({
                   />
                 </motion.div>
               ) : (
-                <motion.div
-                  key="input"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
+              <motion.div
+                key="input"
+                initial={{ opacity: 0.01, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0.01, y: -20 }}
+                style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                   className="space-y-4"
                 >
                   {/* 输入模式切换 */}

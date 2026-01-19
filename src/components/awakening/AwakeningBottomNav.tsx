@@ -36,9 +36,10 @@ const AwakeningBottomNav: React.FC = () => {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
+            initial={{ opacity: 0.01 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0.01 }}
+            style={{ transform: 'translateZ(0)' }}
             className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
             onClick={() => setIsMenuOpen(false)}
           />
@@ -51,7 +52,7 @@ const AwakeningBottomNav: React.FC = () => {
           <motion.div 
             initial={{ opacity: 0.01 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0.01 }}
             style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
             className="fixed bottom-24 left-0 right-0 z-50 px-4"
           >
@@ -61,10 +62,11 @@ const AwakeningBottomNav: React.FC = () => {
                 {leftActions.map((action, i) => (
                   <motion.button
                     key={action.id}
-                    initial={{ scale: 0, x: 20, opacity: 0 }}
+                    initial={{ scale: 0, x: 20, opacity: 0.01 }}
                     animate={{ scale: 1, x: 0, opacity: 1 }}
-                    exit={{ scale: 0, x: 20, opacity: 0 }}
+                    exit={{ scale: 0, x: 20, opacity: 0.01 }}
                     transition={{ delay: i * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
+                    style={{ transform: 'translateZ(0)' }}
                     onClick={() => handleQuickAction(action.route)}
                     className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-gradient-to-br ${action.color} shadow-lg w-[68px] h-[68px]`}
                     whileTap={{ scale: 0.9 }}
@@ -83,10 +85,11 @@ const AwakeningBottomNav: React.FC = () => {
                 {rightActions.map((action, i) => (
                   <motion.button
                     key={action.id}
-                    initial={{ scale: 0, x: -20, opacity: 0 }}
+                    initial={{ scale: 0, x: -20, opacity: 0.01 }}
                     animate={{ scale: 1, x: 0, opacity: 1 }}
-                    exit={{ scale: 0, x: -20, opacity: 0 }}
+                    exit={{ scale: 0, x: -20, opacity: 0.01 }}
                     transition={{ delay: (i + 3) * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
+                    style={{ transform: 'translateZ(0)' }}
                     onClick={() => handleQuickAction(action.route)}
                     className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-gradient-to-br ${action.color} shadow-lg w-[68px] h-[68px]`}
                     whileTap={{ scale: 0.9 }}
