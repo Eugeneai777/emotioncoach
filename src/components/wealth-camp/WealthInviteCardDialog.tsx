@@ -749,8 +749,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
             
             {/* Card Preview */}
-            <div className="flex justify-center rounded-lg bg-slate-900/30 p-2">
-              <div className="origin-top scale-[0.6] sm:scale-[0.68]" style={{ marginBottom: '-35%' }}>
+            <div className="flex justify-center">
+              <div className="origin-top scale-[0.55] sm:scale-[0.62]" style={{ marginBottom: '-42%' }}>
                 <AchievementShareCard 
                   ref={achievementCardRef}
                   avatarUrl={userInfo.avatarUrl}
@@ -864,14 +864,6 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
                   )}
                 </Button>
                 <Button
-                  onClick={handleDownload}
-                  disabled={generating}
-                  variant="outline"
-                  className="h-12 px-4"
-                >
-                  <ImageIcon className="h-5 w-5" />
-                </Button>
-                <Button
                   variant="outline"
                   onClick={handleCopyLink}
                   className="h-12 px-4"
@@ -881,7 +873,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
               </div>
               
               <p className="text-xs text-muted-foreground text-center">
-                点击分享按钮，或生成图片保存后发送
+                点击分享按钮，或复制链接后发送
               </p>
             </>
           )}
