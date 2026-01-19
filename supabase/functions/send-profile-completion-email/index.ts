@@ -31,8 +31,13 @@ function buildEmailHtml(userName: string, missingName: boolean, missingAvatar: b
     </head>
     <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f3f4f6;">
       <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-        <!-- Header -->
+        <!-- Header with Logo -->
         <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 32px 24px; border-radius: 16px 16px 0 0; text-align: center;">
+          <img src="https://wechat.eugenewe.net/logo-youjin-ai.png" 
+               alt="有劲AI" 
+               width="64" 
+               height="64" 
+               style="margin-bottom: 16px; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 3px solid rgba(255,255,255,0.3);" />
           <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 600;">🌟 让有劲AI更好地认识你</h1>
           <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">完善资料，开启个性化陪伴</p>
         </div>
@@ -94,16 +99,44 @@ function buildEmailHtml(userName: string, missingName: boolean, missingAvatar: b
             </ul>
           </div>
 
+          <!-- Scenario Preview -->
+          <div style="background: #f0f9ff; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+            <p style="font-size: 13px; color: #0369a1; margin: 0 0 12px 0; font-weight: 500;">
+              🎬 完善后的对话体验
+            </p>
+            <div style="font-size: 12px; color: #0c4a6e; line-height: 1.8; background: white; border-radius: 8px; padding: 12px;">
+              <p style="margin: 0 0 8px 0;">
+                "早上好，<strong>亲爱的${userName || '[你的昵称]'}</strong>！新的一天，愿你充满能量 ☀️"
+              </p>
+              <p style="margin: 0 0 8px 0;">
+                "恭喜你连续打卡7天！<strong>${userName || '[你的昵称]'}</strong>，你真的很棒！"
+              </p>
+              <p style="margin: 0; color: #6b7280; font-style: italic;">
+                —— 来自你的专属AI教练
+              </p>
+            </div>
+          </div>
+
+          <!-- Social Proof -->
+          <div style="background: #faf5ff; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+            <p style="font-size: 12px; color: #7c3aed; margin: 0 0 10px 0; font-weight: 500;">
+              💬 其他用户的分享
+            </p>
+            <blockquote style="font-size: 12px; color: #5b21b6; margin: 0; font-style: italic; line-height: 1.6;">
+              "完善资料后，AI真的会用我的名字叫我，感觉特别亲切！每天都期待收到它的问候~"
+            </blockquote>
+          </div>
+
           <!-- CTA Button -->
           <div style="text-align: center; margin-top: 28px;">
             <a href="${settingsUrl}" 
-               style="display: inline-block; background: linear-gradient(135deg, #10b981, #059669); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-size: 15px; font-weight: 500;">
-              立即完善资料 →
+               style="display: inline-block; background: linear-gradient(135deg, #10b981, #059669); color: white; text-decoration: none; padding: 16px 40px; border-radius: 30px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+              ✨ 立即完善资料
             </a>
           </div>
 
           <p style="text-align: center; font-size: 12px; color: #9ca3af; margin: 16px 0 0 0;">
-            只需1分钟，让AI更懂你 💚
+            只需30秒，让AI更懂你 💚
           </p>
 
           <!-- Footer -->
