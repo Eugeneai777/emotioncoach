@@ -138,10 +138,10 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 查询订单状态
+    // 查询订单状态（orders 表没有 openid 字段，需要从 wechat_user_mappings 获取）
     const { data: order, error } = await supabase
       .from('orders')
-      .select('status, paid_at, package_key, package_name, amount, user_id, openid')
+      .select('status, paid_at, package_key, package_name, amount, user_id')
       .eq('order_no', orderNo)
       .single();
 
@@ -156,6 +156,17 @@ serve(async (req) => {
 
     console.log('[CheckOrder] DB status:', orderNo, order.status);
 
+    // 尝试获取用户的 openId（用于前端支付后注册流程）
+    let userOpenId: string | null = null;
+    if (order.user_id) {
+      const { data: mapping } = await supabase
+        .from('wechat_user_mappings')
+        .select('openid')
+        .eq('system_user_id', order.user_id)
+        .maybeSingle();
+      userOpenId = mapping?.openid || null;
+    }
+
     // 如果数据库显示已支付，直接返回
     if (order.status === 'paid') {
       return new Response(
@@ -166,7 +177,7 @@ serve(async (req) => {
           packageKey: order.package_key,
           packageName: order.package_name,
           amount: order.amount,
-          openId: order.openid || null, // 🆕 返回订单关联的 openId
+          openId: userOpenId,
           source: 'db',
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -228,7 +239,7 @@ serve(async (req) => {
         packageKey: order.package_key,
         packageName: order.package_name,
         amount: order.amount,
-        openId: order.openid || null, // 🆕 返回订单关联的 openId
+        openId: userOpenId,
         source: 'db',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
