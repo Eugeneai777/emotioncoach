@@ -33,7 +33,12 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
     };
 
     const BrandFooter = () => (
-      <div style={{ textAlign: 'center', marginTop: '8px' }}>
+      <div style={{ textAlign: 'center', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+        <img 
+          src="/logo-youjin-ai.png" 
+          alt="有劲AI" 
+          style={{ width: '18px', height: '18px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.3)' }} 
+        />
         <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
           有劲AI · 每个人的生活教练
         </span>

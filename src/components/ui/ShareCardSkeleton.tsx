@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import logoImage from '@/assets/logo-youjin-ai.png';
 
 interface ShareCardSkeletonProps {
   variant?: 'standard' | 'compact' | 'wide';
@@ -19,8 +20,17 @@ export function ShareCardSkeleton({ variant = 'standard' }: ShareCardSkeletonPro
 
   return (
     <div className={`${widthClass} rounded-2xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted animate-pulse`}>
-      {/* Header */}
+      {/* Header with Brand Logo */}
       <div className="p-5 space-y-4">
+        {/* Brand Logo as placeholder */}
+        <div className="flex items-center justify-center py-2">
+          <img 
+            src={logoImage} 
+            alt="有劲AI" 
+            className="w-12 h-12 rounded-full opacity-30 animate-pulse"
+          />
+        </div>
+        
         {/* Avatar and name */}
         <div className="flex items-center gap-3">
           <Skeleton className="w-12 h-12 rounded-full" />
