@@ -1,6 +1,6 @@
-import React, { forwardRef, useEffect, useState } from 'react';
+import React, { forwardRef } from 'react';
 import { Sparkles, Brain, Heart } from 'lucide-react';
-import QRCode from 'qrcode';
+import { useQRCode } from '@/utils/qrCodeUtils';
 
 interface WealthJournalShareCardProps {
   dayNumber: number;
@@ -30,23 +30,7 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
     avatarUrl,
     displayName = '财富觉醒者'
   }, ref) => {
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-
-    useEffect(() => {
-      const generateQR = async () => {
-        try {
-          const url = await QRCode.toDataURL(shareUrl, {
-            width: 200,
-            margin: 1,
-            color: { dark: '#000000', light: '#ffffff' },
-          });
-          setQrCodeUrl(url);
-        } catch (err) {
-          console.error('Failed to generate QR code:', err);
-        }
-      };
-      generateQR();
-    }, [shareUrl]);
+    const qrCodeUrl = useQRCode(shareUrl);
 
     // Pick the best content to display (avoid duplication)
     const primaryAwakening = beliefAwakening || emotionAwakening || behaviorAwakening;

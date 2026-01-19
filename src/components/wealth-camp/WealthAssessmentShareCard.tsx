@@ -1,6 +1,6 @@
-import React, { forwardRef, useEffect, useState } from 'react';
-import QRCode from 'qrcode';
+import React, { forwardRef } from 'react';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
+import { useQRCode } from '@/utils/qrCodeUtils';
 
 interface PartnerInfo {
   partnerId: string;
@@ -16,8 +16,6 @@ interface WealthAssessmentShareCardProps {
 
 const WealthAssessmentShareCard = forwardRef<HTMLDivElement, WealthAssessmentShareCardProps>(
   ({ className, avatarUrl, displayName = '财富觉醒者', partnerInfo }, ref) => {
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-    
     // Generate share URL with partner tracking if available
     const getShareUrl = (): string => {
       const baseUrl = `${getPromotionDomain()}/wealth-block`;
@@ -28,22 +26,7 @@ const WealthAssessmentShareCard = forwardRef<HTMLDivElement, WealthAssessmentSha
     };
     
     const shareUrl = getShareUrl();
-
-    useEffect(() => {
-      const generateQR = async () => {
-        try {
-          const qr = await QRCode.toDataURL(shareUrl, {
-            width: 120,
-            margin: 2,
-            color: { dark: '#0d9488', light: '#ffffff' }
-          });
-          setQrCodeUrl(qr);
-        } catch (error) {
-          console.error('Failed to generate QR code:', error);
-        }
-      };
-      generateQR();
-    }, [shareUrl]);
+    const qrCodeUrl = useQRCode(shareUrl);
 
     return (
       <div

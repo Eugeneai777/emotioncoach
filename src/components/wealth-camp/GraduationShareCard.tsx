@@ -1,7 +1,7 @@
-import React, { forwardRef, useEffect, useState } from 'react';
+import React, { forwardRef } from 'react';
 import { Trophy, Sparkles, TrendingUp, Award, Flame } from 'lucide-react';
-import QRCode from 'qrcode';
 import { motion } from 'framer-motion';
+import { useQRCode } from '@/utils/qrCodeUtils';
 
 interface GraduationShareCardProps {
   displayName?: string;
@@ -55,23 +55,7 @@ const GraduationShareCard = forwardRef<HTMLDivElement, GraduationShareCardProps>
     },
     ref
   ) => {
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-
-    useEffect(() => {
-      const generateQR = async () => {
-        try {
-          const url = await QRCode.toDataURL(shareUrl, {
-            width: 180,
-            margin: 1,
-            color: { dark: '#1e293b', light: '#ffffff' },
-          });
-          setQrCodeUrl(url);
-        } catch (err) {
-          console.error('Failed to generate QR code:', err);
-        }
-      };
-      generateQR();
-    }, [shareUrl]);
+    const qrCodeUrl = useQRCode(shareUrl);
 
     // Display top achievements (max 5)
     const displayAchievements = earnedAchievements.slice(0, 5);
