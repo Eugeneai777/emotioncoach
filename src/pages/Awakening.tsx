@@ -76,15 +76,6 @@ const Awakening: React.FC = () => {
             <p className="text-sm text-muted-foreground">
               每天1次轻记录 → 我帮你看见盲点与模式 → 给你一个最小行动
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/awakening-system-intro')}
-              className="text-amber-600 border-amber-200 hover:bg-amber-50"
-            >
-              <Sparkles className="w-4 h-4 mr-1" />
-              了解觉察系统
-            </Button>
           </motion.div>
 
           {/* 6宫格入口 */}
