@@ -159,11 +159,8 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
           {/* Card Preview */}
           <div className="flex justify-center overflow-hidden">
             <div 
-              className="transform origin-top"
-              style={{ 
-                transform: `scale(${selectedTemplate === 'scenario' ? 0.65 : 0.72})`,
-                marginBottom: selectedTemplate === 'scenario' ? '-120px' : '-80px',
-              }}
+              className="transform origin-top scale-[0.55] sm:scale-[0.62]"
+              style={{ marginBottom: '-42%' }}
             >
               <IntroShareCard
                 ref={cardRef}

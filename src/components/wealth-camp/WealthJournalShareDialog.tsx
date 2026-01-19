@@ -246,8 +246,8 @@ const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
           <DialogTitle>分享日记卡片</DialogTitle>
         </DialogHeader>
 
-        <div className="flex justify-center py-4">
-          <div className="transform scale-[0.9] origin-top">
+        <div className="flex justify-center overflow-hidden">
+          <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
             <WealthJournalShareCard
               ref={cardRef}
               dayNumber={entry.day_number}
@@ -265,28 +265,27 @@ const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <Button
-            onClick={handleDownload}
-            disabled={generating}
-            className="flex-1 gap-2"
-          >
-            <Download className="h-4 w-4" />
-            {generating ? '生成中...' : '保存图片'}
-          </Button>
+        <div className="flex gap-2">
           <Button
             onClick={handleShare}
             disabled={generating}
-            variant="secondary"
-            className="flex-1 gap-2"
+            className="flex-1 h-12 gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-90 text-white"
           >
             <Share2 className="h-4 w-4" />
-            分享好友
+            {generating ? '生成中...' : '分享'}
+          </Button>
+          <Button
+            onClick={handleDownload}
+            disabled={generating}
+            variant="outline"
+            className="h-12 px-4"
+          >
+            <Download className="h-4 w-4" />
           </Button>
         </div>
 
         <p className="text-xs text-muted-foreground text-center">
-          保存图片或直接分享给好友
+          点击分享按钮，或保存图片后发送
         </p>
       </DialogContent>
     </Dialog>
