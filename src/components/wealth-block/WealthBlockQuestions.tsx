@@ -245,6 +245,9 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
   const handleSubmit = async () => {
     const result = calculateResult(answers);
     
+    // 显示过渡提示
+    toast.success("🎉 恭喜完成测评！正在生成深度问题...", { duration: 2000 });
+    
     // 保存待提交的结果
     setPendingResult({
       result,
