@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { LifeCard, AwakeningDimension } from "@/config/awakeningConfig";
 import { Button } from "@/components/ui/button";
-import { Eye, Heart, Lightbulb, Sparkles, Zap, Bell, MessageCircle, Wrench } from "lucide-react";
+import { Eye, Heart, Lightbulb, Sparkles, Zap, Bell, MessageCircle, Wrench, ArrowRight } from "lucide-react";
 
 interface AwakeningLifeCardProps {
   lifeCard: LifeCard;
@@ -95,12 +95,30 @@ const AwakeningLifeCard: React.FC<AwakeningLifeCardProps> = ({
         ))}
       </div>
 
+      {/* 第三层过渡：AI教练引导 */}
+      {lifeCard.coachPrompt && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="p-4 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200/50 dark:border-purple-700/30 space-y-3"
+        >
+          <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400">
+            <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 rounded-full font-medium">第3层</span>
+            <span>想聊得更深一点吗？</span>
+          </div>
+          <p className="text-sm text-foreground italic leading-relaxed">
+            "{lifeCard.coachPrompt}"
+          </p>
+        </motion.div>
+      )}
+
       {/* 智能提醒 */}
       {lifeCard.reminder && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.65 }}
           className="flex items-center justify-between p-3 rounded-lg bg-amber-50 border border-amber-200"
         >
           <div className="flex items-center gap-2">
@@ -115,7 +133,7 @@ const AwakeningLifeCard: React.FC<AwakeningLifeCardProps> = ({
         </motion.div>
       )}
 
-      {/* 操作按钮 */}
+      {/* 操作按钮 - 重新设计 */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -124,36 +142,35 @@ const AwakeningLifeCard: React.FC<AwakeningLifeCardProps> = ({
       >
         <Button
           onClick={onContinueChat}
-          className={cn(
-            "flex-1 bg-gradient-to-r text-white",
-            dimension.gradient
-          )}
+          className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-md"
         >
           <MessageCircle className="w-4 h-4 mr-2" />
           继续深聊
+          <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
         <Button
-          onClick={onGetTool}
+          onClick={onClose}
           variant="outline"
-          className="flex-1"
+          className="flex-1 text-muted-foreground"
         >
-          <Wrench className="w-4 h-4 mr-2" />
-          给我工具
+          <Lightbulb className="w-4 h-4 mr-2" />
+          先想一下
         </Button>
       </motion.div>
 
-      {/* 记下来按钮 */}
+      {/* 工具入口移到最底部 */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
       >
         <Button
-          onClick={onClose}
+          onClick={onGetTool}
           variant="ghost"
-          className="w-full text-muted-foreground"
+          className="w-full text-xs text-muted-foreground hover:text-foreground"
         >
-          记下来，稍后再说
+          <Wrench className="w-3 h-3 mr-1" />
+          或者，给我一个实用工具
         </Button>
       </motion.div>
     </div>

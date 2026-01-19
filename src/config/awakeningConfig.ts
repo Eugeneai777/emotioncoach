@@ -187,7 +187,8 @@ export interface LifeCard {
   blindSpot: string;    // C. 盲点 - 可能忽略的
   insight: string;      // D. 启发 - 小转念
   microAction: string;  // E. 微行动 - 2分钟内可完成
-  reminder?: {          // F. 智能提醒（可选）
+  coachPrompt?: string; // F. 继续深聊引导 - 温和邀请用户继续深聊
+  reminder?: {          // G. 智能提醒（可选）
     time: string;
     action: string;
   };
