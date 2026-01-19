@@ -131,9 +131,10 @@ export function AwakeningJourneyPreview({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0.01, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15 }}
+      style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
     >
       <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-amber-50/80 via-orange-50/60 to-rose-50/40 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-rose-950/10">
         <CardContent className="p-4 sm:p-5 space-y-4">
@@ -240,9 +241,9 @@ export function AwakeningJourneyPreview({
 
           {/* 训练营概览 */}
           <div className="p-4 bg-white/70 dark:bg-white/10 rounded-xl border border-amber-200/50 dark:border-amber-700/30">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-1.5 xs:gap-2 mb-2">
               <span className="text-base font-bold text-foreground">财富觉醒训练营</span>
-              <span className="px-2.5 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-semibold rounded-full">
+              <span className="px-2.5 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-semibold rounded-full w-fit">
                 7天 · 每天15分钟
               </span>
             </div>
@@ -261,10 +262,11 @@ export function AwakeningJourneyPreview({
               {dailySteps.map((step, index) => (
                 <motion.div
                   key={step.step}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0.01, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 + index * 0.08 }}
-                  className="relative p-2.5 pt-3 bg-white/60 dark:bg-white/5 rounded-xl border border-white/50 dark:border-white/10"
+                  style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+                  className="relative p-2 sm:p-2.5 pt-3 bg-white/60 dark:bg-white/5 rounded-xl border border-white/50 dark:border-white/10"
                 >
                   <div className="absolute -top-1.5 left-2 w-5 h-5 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
                     {step.step}
@@ -290,9 +292,10 @@ export function AwakeningJourneyPreview({
               {sevenDayOutcomes.map((item, i) => (
                 <motion.div 
                   key={i} 
-                  initial={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0.01, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.7 + i * 0.1 }}
+                  style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                   className="flex items-center gap-2 text-sm text-muted-foreground"
                 >
                   <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
@@ -304,9 +307,10 @@ export function AwakeningJourneyPreview({
 
           {/* 简化的用户见证 */}
           <motion.div
-            initial={{ opacity: 0 }}
+            initial={{ opacity: 0.01 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.9 }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
             className="flex items-center gap-2 p-3 bg-amber-50/50 dark:bg-amber-900/20 rounded-lg text-sm"
           >
             <span className="text-amber-500">📈</span>
@@ -316,16 +320,17 @@ export function AwakeningJourneyPreview({
 
           {/* 双按钮 CTA 区域 */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0.01, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.0 }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
             className="flex flex-col sm:flex-row gap-2.5"
           >
             {/* 了解详情按钮 */}
             <Button
               variant="outline"
               onClick={() => navigate('/wealth-camp-intro')}
-              className="h-11 sm:flex-1 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 font-semibold text-sm"
+              className="h-12 sm:flex-1 border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 font-semibold text-sm"
             >
               了解详情
             </Button>
@@ -334,7 +339,7 @@ export function AwakeningJourneyPreview({
             {hasPurchased ? (
               <Button
                 onClick={onPurchase}
-                className="h-11 sm:flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg shadow-amber-500/25 text-sm"
+                className="h-12 sm:flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg shadow-amber-500/25 text-sm"
               >
                 开始训练营
                 <ArrowRight className="w-4 h-4 ml-1.5" />
@@ -342,7 +347,7 @@ export function AwakeningJourneyPreview({
             ) : (
               <Button
                 onClick={onPurchase}
-                className="h-11 sm:flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg shadow-amber-500/25 text-sm"
+                className="h-12 sm:flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg shadow-amber-500/25 text-sm"
               >
                 ¥299 立即加入
                 <ArrowRight className="w-4 h-4 ml-1.5" />
