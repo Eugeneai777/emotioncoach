@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, X, Minus, Info, Sparkles, ShoppingCart, Crown } from "lucide-react";
+import { Check, X, Minus, Info, Sparkles, ShoppingCart, Crown, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { youjinFeatures, bloomFeatures, youjinPartnerFeatures, type YoujinFeature, type BloomFeature, type YoujinPartnerFeature } from "@/config/productComparison";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -8,6 +8,8 @@ import { PointsRulesDialog } from "./PointsRulesDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent } from "@/components/ui/mobile-card";
 import { usePackages, getPackagePrice, getPackageQuota } from "@/hooks/usePackages";
+import { usePackagePurchased } from "@/hooks/usePackagePurchased";
+import { Badge } from "@/components/ui/badge";
 
 interface PackageInfo {
   key: string;
@@ -31,17 +33,24 @@ interface PackageCardProps {
   recommended?: boolean;
   gradient?: string;
   onPurchase: () => void;
+  isPurchased?: boolean;
+  limitPurchase?: boolean;
 }
 
-const PackageCard = ({ emoji, name, price, priceLabel, features, recommended, gradient, onPurchase }: PackageCardProps) => (
+const PackageCard = ({ emoji, name, price, priceLabel, features, recommended, gradient, onPurchase, isPurchased, limitPurchase }: PackageCardProps) => (
   <MobileCard 
     className={`relative ${recommended ? 'ring-2 ring-primary/50' : ''} ${gradient || ''}`}
-    interactive
-    onClick={onPurchase}
+    interactive={!isPurchased}
+    onClick={() => !isPurchased && onPurchase()}
   >
-    {recommended && (
+    {recommended && !isPurchased && (
       <div className="absolute -top-2 right-3 px-2 py-0.5 bg-primary text-primary-foreground text-xs font-medium rounded-full">
         推荐
+      </div>
+    )}
+    {isPurchased && (
+      <div className="absolute -top-2 right-3 px-2 py-0.5 bg-muted text-muted-foreground text-xs font-medium rounded-full">
+        已购买
       </div>
     )}
     <div className="flex items-start gap-3">
@@ -60,14 +69,18 @@ const PackageCard = ({ emoji, name, price, priceLabel, features, recommended, gr
             </li>
           ))}
         </ul>
+        {limitPurchase && !isPurchased && (
+          <div className="text-xs text-amber-600 dark:text-amber-500 font-medium mt-2">⚠️ 限购一次</div>
+        )}
       </div>
     </div>
     <Button 
       size="sm" 
-      className={`w-full mt-3 ${recommended ? 'bg-primary' : ''}`}
-      variant={recommended ? 'default' : 'outline'}
+      className={`w-full mt-3 ${recommended && !isPurchased ? 'bg-primary' : ''}`}
+      variant={isPurchased ? 'secondary' : (recommended ? 'default' : 'outline')}
+      disabled={isPurchased}
     >
-      立即购买
+      {isPurchased ? '已购买' : '立即购买'}
     </Button>
   </MobileCard>
 );
@@ -76,6 +89,9 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { data: packages } = usePackages();
+  
+  // 检查限购套餐是否已购买
+  const { data: basicPurchased, isLoading: isCheckingBasic } = usePackagePurchased('basic', category === 'youjin-member');
   
   // 从数据库获取价格，提供默认值作为回退
   const basicPrice = getPackagePrice(packages, 'basic', 9.9);
@@ -143,6 +159,8 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             priceLabel={`${basicQuota}点`}
             features={['5位AI教练体验', '情绪按钮系统', '成长社区', '7天有效']}
             onPurchase={() => handlePurchase({ key: 'basic', name: '尝鲜会员', price: basicPrice, quota: basicQuota })}
+            isPurchased={!!basicPurchased}
+            limitPurchase
           />
 
           <PackageCard
@@ -188,8 +206,12 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                   <th className="text-left p-4 font-semibold text-sm text-muted-foreground min-w-[140px] sticky left-0 bg-muted/50 z-10">权益项目</th>
                   <th className="text-center p-4 min-w-[140px]">
                     <div className="space-y-1">
-                      <div className="font-bold text-base text-foreground">尝鲜会员</div>
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="font-bold text-base text-foreground">尝鲜会员</div>
+                        {basicPurchased && <Badge variant="secondary" className="text-[10px]">已购买</Badge>}
+                      </div>
                       <div className="text-xs text-muted-foreground">¥{basicPrice} · {basicQuota}点</div>
+                      {!basicPurchased && <div className="text-[10px] text-amber-600 dark:text-amber-500">限购一次</div>}
                     </div>
                   </th>
                   <th className="text-center p-4 min-w-[140px] bg-primary/5">
@@ -240,8 +262,14 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
                 <tr>
                   <td className="p-4 sticky left-0 bg-background z-10"></td>
                   <td className="p-4 text-center">
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => handlePurchase({ key: 'basic', name: '尝鲜会员', price: basicPrice, quota: basicQuota })}>
-                      立即购买
+                    <Button 
+                      variant={basicPurchased ? "secondary" : "outline"} 
+                      size="sm" 
+                      className="w-full" 
+                      disabled={!!basicPurchased}
+                      onClick={() => !basicPurchased && handlePurchase({ key: 'basic', name: '尝鲜会员', price: basicPrice, quota: basicQuota })}
+                    >
+                      {basicPurchased ? '已购买' : '立即购买'}
                     </Button>
                   </td>
                   <td className="p-4 text-center bg-primary/5">
