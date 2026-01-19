@@ -78,8 +78,7 @@ serve(async (req) => {
     type EncouragementStyle = 'gentle' | 'cheerful' | 'motivational';
     type CompanionType = 'jing_teacher' | 'friend' | 'coach';
     type NotificationFrequency = 'minimal' | 'balanced' | 'frequent';
-    type Scenario = 'after_briefing' | 'after_story' | 'after_gratitude_analysis' | 'after_gratitude_sync' | 'after_communication' | 'after_parent' | 'after_vibrant_life' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement' | 'checkin_success' | 'checkin_streak_milestone' | 'checkin_reminder' | 'checkin_streak_break_warning' | 'camp_day_complete' | 'weekly_summary' | 'pending_action_reminder' | 'action_completion_celebration' | 'after_wealth_coaching' | 'wealth_weekly_summary' | 'profile_completion';
-
+    type Scenario = 'after_briefing' | 'after_story' | 'after_gratitude_analysis' | 'after_gratitude_sync' | 'after_communication' | 'after_parent' | 'after_vibrant_life' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement' | 'checkin_success' | 'checkin_streak_milestone' | 'checkin_reminder' | 'checkin_streak_break_warning' | 'camp_day_complete' | 'weekly_summary' | 'pending_action_reminder' | 'action_completion_celebration' | 'after_wealth_coaching' | 'wealth_weekly_summary' | 'profile_completion' | 'emotion_trend_warning' | 'upcoming_milestone' | 'weekly_rhythm_care' | 'pattern_breakthrough' | 'cycle_low_prevention' | 'morning_intention' | 'evening_reflection' | 'memory_connection';
     // 维度名称映射
     const dimensionNames: Record<string, string> = {
       'CREATION': '创造',
@@ -122,20 +121,48 @@ serve(async (req) => {
       .eq('user_id', userId)
       .eq('is_active', true);
 
-    // 获取用户记忆用于个性化通知
+    // 获取用户记忆用于个性化通知 - 增强版多维度记忆
     const { data: userMemories } = await supabase
       .from('user_coach_memory')
-      .select('content, memory_type')
+      .select('content, memory_type, layer, coach_type, created_at')
       .eq('user_id', userId)
       .order('importance_score', { ascending: false })
+      .limit(5);
+
+    // 获取最近对话主题用于更深层次的个性化
+    const { data: recentSessions } = await supabase
+      .from('vibrant_life_sage_briefings')
+      .select('user_issue_summary, insight, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
       .limit(3);
 
-    // 构建记忆上下文
+    // 构建深度记忆上下文
     let memoryHint = '';
     if (userMemories && userMemories.length > 0) {
-      memoryHint = `\n用户最近的觉察（可在通知中自然引用）：
-${userMemories.map((m: any, i: number) => `- ${m.content}`).join('\n')}
-如果合适，可以在消息中引用用户的觉察："记得你说过..."，让用户感受到被记住。`;
+      const insights = userMemories.filter((m: any) => m.memory_type === 'insight');
+      const patterns = userMemories.filter((m: any) => m.memory_type === 'pattern');
+      const stickingPoints = userMemories.filter((m: any) => m.memory_type === 'sticking_point');
+      
+      memoryHint = `\n【用户深度记忆 - 请在通知中自然引用，让用户感受到被理解】`;
+      if (insights.length > 0) {
+        memoryHint += `\n💡 觉察洞察：\n${insights.map((m: any) => `- "${m.content}"`).join('\n')}`;
+      }
+      if (patterns.length > 0) {
+        memoryHint += `\n🔄 识别的模式：\n${patterns.map((m: any) => `- ${m.content}`).join('\n')}`;
+      }
+      if (stickingPoints.length > 0) {
+        memoryHint += `\n🎯 关注的卡点：\n${stickingPoints.map((m: any) => `- ${m.content}`).join('\n')}`;
+      }
+      memoryHint += `\n\n记忆引用技巧：使用"记得你说过..."、"上次你提到的..."、"我一直记得你..."让用户感受到被记住和理解。`;
+    }
+    
+    // 添加最近对话上下文
+    if (recentSessions && recentSessions.length > 0) {
+      const recentIssues = recentSessions.map((s: any) => s.user_issue_summary).filter(Boolean);
+      if (recentIssues.length > 0) {
+        memoryHint += `\n\n【最近关注的话题】：${recentIssues.slice(0, 2).join('、')}`;
+      }
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -223,7 +250,18 @@ ${context?.new_beliefs?.length ? context.new_beliefs.slice(0, 2).map((b: string)
 3. 让AI更好地认识他们，提供更贴心的陪伴
 4. 开启智能消息后，在关键时刻收到温暖问候
 
-语气要温柔、邀请式的，不是催促。可以用"为了让我更好地认识你..."或"期待看到你的样子..."开头。`
+语气要温柔、邀请式的，不是催促。可以用"为了让我更好地认识你..."或"期待看到你的样子..."开头。`,
+      // ========== 前瞻性预测场景 ==========
+      emotion_trend_warning: `用户最近${context?.consecutive_days}天的情绪呈现上升趋势（平均强度${context?.avg_intensity}/10）${context?.dominant_emotions?.length ? `，主要情绪包括"${context.dominant_emotions.join('、')}"` : ''}。这是一个预警信号。请用温暖关怀的语气给予支持，表达理解和陪伴，提醒他们可以来倾诉，但不要让他们感到被评判或有压力。`,
+      upcoming_milestone: `用户在目标"${context?.goal_description}"上已达到${context?.progress_percentage}%的进度，距离完成只差${context?.remaining_count || '一点点'}了！请给予冲刺鼓励，表达对他们坚持的敬佩，激励他们完成最后一步。`,
+      weekly_rhythm_care: context?.rhythm_type === 'monday_morning' 
+        ? `周一早晨，新的一周开始了。请给用户一个温暖的问候和能量加持，帮助他们以积极的心态开启这一周。可以简单询问他们这周有什么期待。`
+        : `周五晚上，辛苦了一周。请给用户一个放松的问候，肯定他们这一周的付出，祝愿他们度过愉快的周末。语气要轻松愉快。`,
+      pattern_breakthrough: `恭喜！检测到用户有积极的突破：${context?.improvement_detail}（${context?.comparison}）。这是值得庆祝的正向变化！请热烈地肯定这个突破，表达真诚的欣喜，鼓励他们继续保持。`,
+      cycle_low_prevention: `根据历史数据分析，用户${context?.historical_pattern}。${context?.predicted_low_day}可能是情绪较低的时期。请在用户进入低谷前给予预防性的温暖关怀，提供一些应对建议："${context?.preventive_suggestion}"，但语气要轻松，不要让用户感到焦虑。`,
+      morning_intention: `早安问候时刻。${context?.yesterday_summary ? `用户昨天的情绪主题是"${context.yesterday_summary}"。` : ''}${context?.memory_hint ? `用户曾经说过："${context.memory_hint}"。` : ''}请给用户一个温暖的早安问候，设定今天的积极意向，可以包含一个小小的今日建议。`,
+      evening_reflection: `晚间回顾时刻。用户今天有${context?.today_activities || 0}次活动记录。${context?.positive_moment ? `今天有平静的时刻。` : ''}请给用户一个温暖的晚间问候，肯定他们今天的付出，引导一个简单的反思："${context?.reflection_prompt}"`,
+      memory_connection: `这是一个记忆连接场景。${context?.days_ago}天前，用户分享了一个重要的洞察："${context?.connected_memory}"。请温暖地引用这个记忆，表达"我一直记得你说过..."，让用户感受到被记住和理解，并询问他们现在对这个话题有什么新的想法。`
     };
 
     const styleDescriptions: Record<EncouragementStyle, string> = {
