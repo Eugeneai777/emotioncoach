@@ -82,6 +82,7 @@ import CoachDashboard from "./pages/CoachDashboard";
 import TeenChat from "./pages/TeenChat";
 import Awakening from "./pages/Awakening";
 import AwakeningIntro from "./pages/AwakeningIntro";
+import AwakeningSystemIntro from "./pages/AwakeningSystemIntro";
 import AwakeningJournal from "./pages/AwakeningJournal";
 import TransformationFlow from "./pages/TransformationFlow";
 import WealthBlockAssessment from "./pages/WealthBlockAssessment";
@@ -198,6 +199,7 @@ const App = () => (
           <Route path="/teen-chat/:token" element={<TeenChat />} />
           <Route path="/awakening" element={<Awakening />} />
           <Route path="/awakening-intro" element={<AwakeningIntro />} />
+          <Route path="/awakening-system-intro" element={<AwakeningSystemIntro />} />
           <Route path="/awakening-journal" element={<AwakeningJournal />} />
           <Route path="/transformation-flow" element={<TransformationFlow />} />
           <Route path="/wealth-block" element={<WealthBlockAssessment />} />

@@ -2,10 +2,9 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
-  BookOpen, Settings, Sparkles, 
+  BookOpen, Info, Sparkles, 
   MessageCircle, Heart, Zap, GraduationCap, Package, Users 
 } from "lucide-react";
-
 const AwakeningBottomNav: React.FC = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -120,14 +119,14 @@ const AwakeningBottomNav: React.FC = () => {
             {/* 中间占位 */}
             <div className="w-16" />
 
-            {/* 右侧 - 设置 */}
+            {/* 右侧 - 关于 */}
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate('/awakening-system-intro')}
               className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Settings className="w-5 h-5" />
-              <span className="text-xs">设置</span>
+              <Info className="w-5 h-5" />
+              <span className="text-xs">关于</span>
             </motion.button>
           </div>
         </div>
