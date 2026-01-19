@@ -1,10 +1,10 @@
-import React, { forwardRef, useState, useEffect } from 'react';
+import React, { forwardRef } from 'react';
 import { Sparkles, ChevronRight, Crown, Flame, Star, Zap } from 'lucide-react';
 import { useAchievementProgress } from '@/hooks/useAchievementProgress';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import QRCode from 'qrcode';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
+import { useQRCode } from '@/utils/qrCodeUtils';
 
 // Path theme colors for share card
 const pathThemes = {
@@ -100,7 +100,6 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
     partnerInfo,
   }, ref) => {
     const { paths, totalEarned, totalCount, overallProgress, globalNextAchievement } = useAchievementProgress();
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
     
     // Generate share URL with partner tracking
     const baseUrl = `${getPromotionDomain()}/wealth-camp-intro`;
@@ -108,21 +107,7 @@ const AchievementShareCard = forwardRef<HTMLDivElement, AchievementShareCardProp
       ? `${baseUrl}?ref=${partnerInfo.partnerCode}` 
       : baseUrl;
     
-    useEffect(() => {
-      const generateQR = async () => {
-        try {
-          const qr = await QRCode.toDataURL(shareUrl, {
-            width: 100,
-            margin: 1,
-            color: { dark: '#000000', light: '#ffffff' }
-          });
-          setQrCodeUrl(qr);
-        } catch (error) {
-          console.error('Failed to generate QR code:', error);
-        }
-      };
-      generateQR();
-    }, [shareUrl]);
+    const qrCodeUrl = useQRCode(shareUrl);
     
     const currentStyle = stylePresets[stylePreset];
     const isDark = stylePreset !== 'minimal';

@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Bell, Moon, Leaf, Sun, Sparkles, Heart, Zap, Info, MessageSquare, QrCode, Copy, Check, Smartphone, CheckCircle, Gift, RefreshCw } from "lucide-react";
-import QRCode from "qrcode";
+import { generateQRCode } from "@/utils/qrCodeUtils";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
 
 // 检测是否在微信内置浏览器中
@@ -224,14 +224,7 @@ export function SmartNotificationPreferences() {
         setSettingsUrl(currentSettingsUrl);
         
         // 生成二维码
-        const qrDataUrl = await QRCode.toDataURL(currentSettingsUrl, {
-          width: 200,
-          margin: 2,
-          color: {
-            dark: '#000000',
-            light: '#ffffff',
-          },
-        });
+        const qrDataUrl = await generateQRCode(currentSettingsUrl, 'LARGE');
         setBindQrDataUrl(qrDataUrl);
         setShowBindDialog(true);
       }

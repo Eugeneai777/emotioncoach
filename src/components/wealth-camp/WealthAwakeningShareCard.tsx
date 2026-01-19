@@ -1,6 +1,6 @@
-import React, { forwardRef, useEffect, useState } from 'react';
+import React, { forwardRef } from 'react';
 import { Sparkles, Brain, Heart, Target } from 'lucide-react';
-import QRCode from 'qrcode';
+import { useQRCode } from '@/utils/qrCodeUtils';
 
 interface WealthAwakeningShareCardProps {
   dayNumber: number;
@@ -40,25 +40,9 @@ const typeConfig = {
 
 const WealthAwakeningShareCard = forwardRef<HTMLDivElement, WealthAwakeningShareCardProps>(
   ({ dayNumber, awakeningContent, awakeningType, shareUrl, avatarUrl, displayName = '财富觉醒者' }, ref) => {
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+    const qrCodeUrl = useQRCode(shareUrl);
     const config = typeConfig[awakeningType];
     const TypeIcon = config.icon;
-
-    useEffect(() => {
-      const generateQR = async () => {
-        try {
-          const url = await QRCode.toDataURL(shareUrl, {
-            width: 200,
-            margin: 1,
-            color: { dark: '#000000', light: '#ffffff' },
-          });
-          setQrCodeUrl(url);
-        } catch (err) {
-          console.error('Failed to generate QR code:', err);
-        }
-      };
-      generateQR();
-    }, [shareUrl]);
 
     const truncate = (text: string, maxLen: number) => {
       if (!text) return '';

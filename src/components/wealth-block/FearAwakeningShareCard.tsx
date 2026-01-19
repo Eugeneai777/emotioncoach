@@ -1,6 +1,6 @@
-import React, { forwardRef, useEffect, useState } from 'react';
-import QRCode from 'qrcode';
+import React, { forwardRef } from 'react';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
+import { useQRCode } from '@/utils/qrCodeUtils';
 
 interface PartnerInfo {
   partnerId: string;
@@ -24,8 +24,6 @@ const lockConfig = {
 
 const FearAwakeningShareCard = forwardRef<HTMLDivElement, FearAwakeningShareCardProps>(
   ({ className, avatarUrl, displayName = '财富觉醒者', partnerInfo, dominantLock = 'anxiety', healthScore = 65 }, ref) => {
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-    
     const getShareUrl = (): string => {
       const baseUrl = `${getPromotionDomain()}/wealth-block`;
       if (partnerInfo?.partnerCode) {
@@ -36,22 +34,7 @@ const FearAwakeningShareCard = forwardRef<HTMLDivElement, FearAwakeningShareCard
     
     const shareUrl = getShareUrl();
     const dominant = lockConfig[dominantLock];
-
-    useEffect(() => {
-      const generateQR = async () => {
-        try {
-          const qr = await QRCode.toDataURL(shareUrl, {
-            width: 100,
-            margin: 2,
-            color: { dark: '#ef4444', light: '#ffffff' }
-          });
-          setQrCodeUrl(qr);
-        } catch (error) {
-          console.error('Failed to generate QR code:', error);
-        }
-      };
-      generateQR();
-    }, [shareUrl]);
+    const qrCodeUrl = useQRCode(shareUrl);
 
     return (
       <div

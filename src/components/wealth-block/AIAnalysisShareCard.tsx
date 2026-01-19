@@ -1,6 +1,6 @@
-import React, { forwardRef, useEffect, useState } from 'react';
-import QRCode from 'qrcode';
+import React, { forwardRef } from 'react';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
+import { useQRCode } from '@/utils/qrCodeUtils';
 
 
 interface PartnerInfo {
@@ -27,8 +27,6 @@ interface AIAnalysisShareCardProps {
 
 const AIAnalysisShareCard = forwardRef<HTMLDivElement, AIAnalysisShareCardProps>(
   ({ className, avatarUrl, displayName = '财富觉醒者', partnerInfo, assessmentData }, ref) => {
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-    
     const getShareUrl = (): string => {
       const baseUrl = `${getPromotionDomain()}/wealth-block`;
       if (partnerInfo?.partnerCode) {
@@ -38,22 +36,7 @@ const AIAnalysisShareCard = forwardRef<HTMLDivElement, AIAnalysisShareCardProps>
     };
     
     const shareUrl = getShareUrl();
-
-    useEffect(() => {
-      const generateQR = async () => {
-        try {
-          const qr = await QRCode.toDataURL(shareUrl, {
-            width: 100,
-            margin: 2,
-            color: { dark: '#7c3aed', light: '#ffffff' }
-          });
-          setQrCodeUrl(qr);
-        } catch (error) {
-          console.error('Failed to generate QR code:', error);
-        }
-      };
-      generateQR();
-    }, [shareUrl]);
+    const qrCodeUrl = useQRCode(shareUrl);
 
     const healthScore = assessmentData?.healthScore ?? 65;
     const getScoreColor = (score: number) => {

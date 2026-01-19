@@ -1,7 +1,7 @@
-import { forwardRef, useEffect, useState } from "react";
-import QRCode from "qrcode";
+import { forwardRef } from "react";
 import { PosterTemplate } from "./PosterTemplateGrid";
 import { getPartnerShareUrl } from "@/utils/partnerQRUtils";
+import { useQRCode } from "@/utils/qrCodeUtils";
 
 interface PosterPreviewProps {
   template: PosterTemplate;
@@ -15,24 +15,8 @@ interface PosterPreviewProps {
 
 export const PosterPreview = forwardRef<HTMLDivElement, PosterPreviewProps>(
   ({ template, partnerId, entryType, backgroundImageUrl, customTagline, customSellingPoints, scene = 'default' }, ref) => {
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-
-    useEffect(() => {
-      const generateQR = async () => {
-        const shareUrl = getPartnerShareUrl(partnerId, entryType);
-        try {
-          const qrDataUrl = await QRCode.toDataURL(shareUrl, {
-            width: 200,
-            margin: 2,
-            color: { dark: '#000000', light: '#FFFFFF' }
-          });
-          setQrCodeUrl(qrDataUrl);
-        } catch (err) {
-          console.error('QR generation error:', err);
-        }
-      };
-      generateQR();
-    }, [partnerId, entryType]);
+    const shareUrl = getPartnerShareUrl(partnerId, entryType);
+    const qrCodeUrl = useQRCode(shareUrl, 'LARGE');
 
     // Product slogan mapping
     const getProductSlogan = (key: string): string => {

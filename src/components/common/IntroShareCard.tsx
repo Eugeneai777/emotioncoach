@@ -1,6 +1,6 @@
-import { forwardRef, useEffect, useState } from 'react';
-import QRCode from 'qrcode';
+import { forwardRef } from 'react';
 import { type IntroShareConfig, getShareUrl } from '@/config/introShareConfig';
+import { useQRCode } from '@/utils/qrCodeUtils';
 
 export type CardTemplate = 'concise' | 'value' | 'scenario';
 
@@ -20,24 +20,8 @@ export const TEMPLATE_LABELS: Record<CardTemplate, string> = {
 
 export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
   ({ config, template, partnerCode, avatarUrl, displayName }, ref) => {
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-
-    useEffect(() => {
-      const generateQR = async () => {
-        const shareUrl = getShareUrl(config.targetUrl, partnerCode);
-        try {
-          const url = await QRCode.toDataURL(shareUrl, {
-            width: 100,
-            margin: 1,
-            color: { dark: '#000000', light: '#ffffff' },
-          });
-          setQrCodeUrl(url);
-        } catch (error) {
-          console.error('Failed to generate QR code:', error);
-        }
-      };
-      generateQR();
-    }, [config.targetUrl, partnerCode]);
+    const shareUrl = getShareUrl(config.targetUrl, partnerCode);
+    const qrCodeUrl = useQRCode(shareUrl);
 
     const containerStyle: React.CSSProperties = {
       width: template === 'scenario' ? '320px' : template === 'value' ? '320px' : '320px',

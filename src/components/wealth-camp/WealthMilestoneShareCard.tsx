@@ -1,6 +1,6 @@
-import React, { forwardRef, useEffect, useState } from 'react';
+import React, { forwardRef } from 'react';
 import { Trophy, Sparkles, Star } from 'lucide-react';
-import QRCode from 'qrcode';
+import { useQRCode } from '@/utils/qrCodeUtils';
 
 interface WealthMilestoneShareCardProps {
   completedDays: number;
@@ -54,25 +54,9 @@ const getMilestoneConfig = (days: number) => {
 
 const WealthMilestoneShareCard = forwardRef<HTMLDivElement, WealthMilestoneShareCardProps>(
   ({ completedDays, totalDays, coreInsight, shareUrl, avatarUrl, displayName = '财富觉醒者' }, ref) => {
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+    const qrCodeUrl = useQRCode(shareUrl);
     const config = getMilestoneConfig(completedDays);
     const progress = Math.min((completedDays / totalDays) * 100, 100);
-
-    useEffect(() => {
-      const generateQR = async () => {
-        try {
-          const url = await QRCode.toDataURL(shareUrl, {
-            width: 200,
-            margin: 1,
-            color: { dark: '#000000', light: '#ffffff' },
-          });
-          setQrCodeUrl(url);
-        } catch (err) {
-          console.error('Failed to generate QR code:', err);
-        }
-      };
-      generateQR();
-    }, [shareUrl]);
 
     return (
       <div
