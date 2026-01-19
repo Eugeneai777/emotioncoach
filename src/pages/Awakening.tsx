@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { isWeChatMiniProgram } from "@/utils/platform";
 import { motion } from "framer-motion";
-import { ArrowLeft, BookOpen, Info, Layers } from "lucide-react";
+import { ArrowLeft, Share2, Info, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { awakeningDimensions, AwakeningDimension } from "@/config/awakeningConfig";
 import AwakeningEntryCard from "@/components/awakening/AwakeningEntryCard";
 import AwakeningDrawer from "@/components/awakening/AwakeningDrawer";
 import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 const Awakening: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -50,9 +52,14 @@ const Awakening: React.FC = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-lg font-semibold">觉察入口</h1>
-            <Button variant="ghost" size="icon" onClick={() => navigate('/awakening-journal')}>
-              <BookOpen className="h-5 w-5" />
-            </Button>
+            <IntroShareDialog
+              config={introShareConfigs.awakening}
+              trigger={
+                <Button variant="ghost" size="icon">
+                  <Share2 className="h-5 w-5" />
+                </Button>
+              }
+            />
           </div>
         </header>
 
