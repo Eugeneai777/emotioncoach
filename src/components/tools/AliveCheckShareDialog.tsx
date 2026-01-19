@@ -140,8 +140,8 @@ const AliveCheckShareDialog: React.FC<AliveCheckShareDialogProps> = ({
           </DialogHeader>
 
           {/* Preview area */}
-          <div className="flex justify-center overflow-hidden rounded-xl border border-rose-100 bg-gray-50 max-h-[400px]">
-            <div className="transform scale-[0.45] origin-top -mb-[55%]">
+          <div className="flex justify-center overflow-hidden">
+            <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
               <AliveCheckShareCard partnerCode={partnerCode} />
             </div>
           </div>
