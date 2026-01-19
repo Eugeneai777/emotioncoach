@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { isWeChatMiniProgram } from "@/utils/platform";
 import { motion } from "framer-motion";
 import { ArrowLeft, BookOpen, Info, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,26 @@ import AwakeningDrawer from "@/components/awakening/AwakeningDrawer";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 const Awakening: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [selectedDimension, setSelectedDimension] = useState<AwakeningDimension | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  // 小程序入口页：把 mp_openid / mp_unionid 缓存下来，供后续页面（如产品中心）支付复用
+  useEffect(() => {
+    if (!isWeChatMiniProgram()) return;
+
+    const mpOpenId = searchParams.get('mp_openid') || undefined;
+    const mpUnionId = searchParams.get('mp_unionid') || undefined;
+
+    if (mpOpenId) {
+      sessionStorage.setItem('wechat_mp_openid', mpOpenId);
+      console.log('[Awakening] Cached mp_openid for MiniProgram');
+    }
+    if (mpUnionId) {
+      sessionStorage.setItem('wechat_mp_unionid', mpUnionId);
+      console.log('[Awakening] Cached mp_unionid for MiniProgram');
+    }
+  }, [searchParams]);
   const handleEntryClick = (dimension: AwakeningDimension) => {
     setSelectedDimension(dimension);
     setIsDrawerOpen(true);
@@ -39,13 +58,12 @@ const Awakening: React.FC = () => {
         {/* Main Content */}
         <main className="max-w-lg mx-auto px-4 py-6 space-y-6">
           {/* 标题区 */}
-          <motion.div initial={{
-          opacity: 0,
-          y: -10
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} className="text-center space-y-2">
+          <motion.div 
+            initial={{ opacity: 0.01, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+            className="text-center space-y-2"
+          >
             
             <p className="text-sm text-muted-foreground">
               每天1次轻记录 → 我帮你看见盲点与模式 → 给你一个最小行动
@@ -78,13 +96,13 @@ const Awakening: React.FC = () => {
           </div>
 
           {/* 底部说明 */}
-          <motion.div initial={{
-          opacity: 0
-        }} animate={{
-          opacity: 1
-        }} transition={{
-          delay: 0.5
-        }} className="text-center space-y-3 pt-4">
+          <motion.div 
+            initial={{ opacity: 0.01 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+            className="text-center space-y-3 pt-4"
+          >
             
             <Button variant="ghost" size="sm" onClick={() => navigate('/awakening-journal')} className="text-muted-foreground hover:text-foreground">
               <BookOpen className="w-4 h-4 mr-2" />
