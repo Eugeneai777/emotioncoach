@@ -112,9 +112,9 @@ export function FollowUpDialog({
                 </p>
               )}
 
-              {/* 快速选项 */}
+              {/* 快速选项 - 移动端滚动优化 */}
               {!showCustomInput ? (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 max-h-[30vh] overflow-y-auto pb-1">
                   {followUp.quickOptions.map((option, index) => (
                     <motion.button
                       key={index}

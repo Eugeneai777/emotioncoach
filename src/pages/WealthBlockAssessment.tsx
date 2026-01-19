@@ -603,8 +603,9 @@ export default function WealthBlockAssessmentPage() {
 
           <TabsContent value="assessment" className="mt-0">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0.01, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
             >
             {/* 正在跳转微信授权中 */}
             {isRedirectingForAuth && (
@@ -655,8 +656,9 @@ export default function WealthBlockAssessmentPage() {
 
           <TabsContent value="history" className="mt-0">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0.01, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
             >
               {!user ? (
                 <div className="text-center py-12">

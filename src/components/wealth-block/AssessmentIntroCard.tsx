@@ -236,9 +236,10 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, onStart,
           {upgradedPainPoints.map((point, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, x: -10 }}
+              initial={{ opacity: 0.01, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 + idx * 0.05 }}
+              style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
               className="flex items-start gap-3 p-2.5 rounded-lg bg-slate-50 border border-slate-200"
             >
               <span className="text-lg shrink-0">{point.emoji}</span>
@@ -266,9 +267,10 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, onStart,
           {authorityData.map((item, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0.01, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 + idx * 0.1 }}
+              style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
               className="flex items-start gap-3 p-3 rounded-lg bg-white border border-indigo-200"
             >
               <span className="text-xl shrink-0">{item.icon}</span>
@@ -468,9 +470,10 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, onStart,
           {/* Behavior Layer */}
           <motion.div 
             className="text-center p-2.5 rounded-lg bg-amber-50 border border-amber-200"
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0.01, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
           >
             <div className="text-lg mb-1">🚶</div>
             <div className="text-xs font-medium text-amber-700">行为层</div>
@@ -481,9 +484,10 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, onStart,
           {/* Emotion Layer */}
           <motion.div 
             className="text-center p-2.5 rounded-lg bg-orange-50 border border-orange-200"
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0.01, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
           >
             <div className="text-lg mb-1">💭</div>
             <div className="text-xs font-medium text-orange-700">情绪层</div>
@@ -494,9 +498,10 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, onStart,
           {/* Belief Layer */}
           <motion.div 
             className="text-center p-2.5 rounded-lg bg-red-50 border border-red-200"
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0.01, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
           >
             <div className="text-lg mb-1">💡</div>
             <div className="text-xs font-medium text-red-700">信念层</div>
