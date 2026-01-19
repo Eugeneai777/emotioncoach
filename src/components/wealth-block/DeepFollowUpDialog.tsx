@@ -105,6 +105,9 @@ export function DeepFollowUpDialog({
                 <p className="text-sm text-muted-foreground mt-1">
                   AI 正在根据你的回答，准备几个深入问题...
                 </p>
+                <p className="text-xs text-muted-foreground/70 mt-2">
+                  回答后报告会更精准，也可以跳过
+                </p>
               </div>
             </div>
           </CardContent>
@@ -152,6 +155,15 @@ export function DeepFollowUpDialog({
           </div>
 
           <CardContent className="p-5 space-y-5 max-h-[60vh] overflow-y-auto">
+            {/* 首次说明 */}
+            {currentIndex === 0 && (
+              <div className="bg-violet-50 dark:bg-violet-900/20 p-3 rounded-lg">
+                <p className="text-sm text-violet-700 dark:text-violet-300">
+                  💡 以下问题帮助 AI 更精准地分析你的卡点模式
+                </p>
+              </div>
+            )}
+
             {/* Question */}
             <AnimatePresence mode="wait">
               <motion.div
@@ -172,7 +184,7 @@ export function DeepFollowUpDialog({
                 </div>
 
                 {/* Options */}
-                <div className="space-y-2 pl-11">
+                <div className="space-y-2 pl-11 max-h-[35vh] overflow-y-auto">
                   {currentQuestion.options.map((option, index) => (
                     <motion.button
                       key={index}
@@ -236,13 +248,15 @@ export function DeepFollowUpDialog({
             </AnimatePresence>
 
             {/* Skip button */}
-            <div className="flex justify-center pt-2">
-              <button
+            <div className="flex justify-center pt-4 border-t border-muted/30 mt-2">
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={onSkip}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm text-muted-foreground hover:text-foreground"
               >
-                跳过，直接查看结果
-              </button>
+                跳过，直接查看结果 →
+              </Button>
             </div>
           </CardContent>
         </Card>
