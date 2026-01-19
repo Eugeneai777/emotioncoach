@@ -105,7 +105,14 @@ export function UserAccountsTable() {
           </TableHeader>
           <TableBody>
             {filteredAccounts?.map((account) => {
-              const displayName = account.profile?.display_name || '未设置';
+              // 🆕 优先使用微信昵称和头像（如果 profile 中没有设置）
+              const displayName = 
+                account.profile?.display_name || 
+                account.wechat?.nickname || 
+                '未设置';
+              const avatarUrl = 
+                account.profile?.avatar_url || 
+                account.wechat?.avatar_url;
               const authProvider = account.profile?.auth_provider || 'email';
               const isDisabled = account.profile?.is_disabled || false;
 
@@ -117,7 +124,7 @@ export function UserAccountsTable() {
                     setSelectedUser({
                       id: account.user_id,
                       name: displayName,
-                      avatarUrl: account.profile?.avatar_url,
+                      avatarUrl: avatarUrl,
                       authProvider: authProvider,
                       createdAt: account.profile?.created_at
                     });
@@ -128,7 +135,7 @@ export function UserAccountsTable() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        <AvatarImage src={account.profile?.avatar_url || undefined} />
+                        <AvatarImage src={avatarUrl || undefined} />
                         <AvatarFallback className="text-xs">
                           {displayName[0]?.toUpperCase() || 'U'}
                         </AvatarFallback>
