@@ -52,7 +52,7 @@ export function UserAccountsTable() {
               .maybeSingle(),
             supabase
               .from('wechat_user_mappings')
-              .select('nickname, subscribe_status, phone_number')
+              .select('nickname, subscribe_status, phone_number, avatar_url')
               .eq('system_user_id', account.user_id)
               .maybeSingle()
           ]);
