@@ -204,23 +204,34 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
 
 
   // 触发静默授权获取 openId（用于未登录用户）
+  // 使用 wechat-pay-auth 函数，通过 /pay-entry 统一回调处理
   const triggerSilentAuth = useCallback(async () => {
     if (silentAuthTriggeredRef.current) return;
     silentAuthTriggeredRef.current = true;
     setIsRedirectingForOpenId(true);
 
+    // 设置防抖标记
+    sessionStorage.setItem("pay_auth_in_progress", "1");
+
     try {
-      console.log('[Payment] Triggering silent auth for openId');
-      const currentUrl = window.location.href;
+      console.log('[Payment] Triggering silent auth for openId via wechat-pay-auth');
       
-      const { data, error } = await supabase.functions.invoke('get-wechat-payment-openid', {
-        body: { redirectUri: currentUrl },
+      // 构建回跳 URL：授权回来后自动再打开支付弹窗
+      const resumeUrl = new URL(window.location.href);
+      resumeUrl.searchParams.set('payment_resume', '1'); // 标记为支付恢复
+      
+      const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
+        body: {
+          redirectUri: resumeUrl.toString(),
+          flow: 'camp_purchase',
+        },
       });
 
       if (error || !data?.authUrl) {
         console.error('[Payment] Failed to get silent auth URL:', error || data);
         setIsRedirectingForOpenId(false);
         silentAuthTriggeredRef.current = false;
+        sessionStorage.removeItem("pay_auth_in_progress");
         setOpenIdResolved(true); // 授权失败，继续使用扫码支付
         return;
       }
@@ -231,20 +242,21 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       console.error('[Payment] Silent auth error:', err);
       setIsRedirectingForOpenId(false);
       silentAuthTriggeredRef.current = false;
+      sessionStorage.removeItem("pay_auth_in_progress");
       setOpenIdResolved(true);
     }
   }, []);
 
-  // 用 code 换取 openId
+  // 用 code 换取 openId（通过 wechat-pay-auth 函数）
   const exchangeCodeForOpenId = useCallback(async (code: string) => {
     if (codeExchangedRef.current) return;
     codeExchangedRef.current = true;
     setIsExchangingCode(true);
 
     try {
-      console.log('[Payment] Exchanging code for openId');
+      console.log('[Payment] Exchanging code for openId via wechat-pay-auth');
       
-      const { data, error } = await supabase.functions.invoke('get-wechat-payment-openid', {
+      const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
         body: { code },
       });
 
@@ -253,6 +265,7 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       url.searchParams.delete('code');
       url.searchParams.delete('state');
       url.searchParams.delete('payment_auth_callback');
+      url.searchParams.delete('payment_resume');
       window.history.replaceState({}, '', url.toString());
 
       if (error || !data?.openId) {
