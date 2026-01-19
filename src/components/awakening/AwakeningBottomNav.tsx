@@ -66,11 +66,11 @@ const AwakeningBottomNav: React.FC = () => {
                     exit={{ scale: 0, x: 20, opacity: 0 }}
                     transition={{ delay: i * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
                     onClick={() => handleQuickAction(action.route)}
-                    className={`flex flex-col items-center gap-1 p-2.5 rounded-xl bg-gradient-to-br ${action.color} shadow-lg min-w-[52px]`}
+                    className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-gradient-to-br ${action.color} shadow-lg w-[68px] h-[68px]`}
                     whileTap={{ scale: 0.9 }}
                   >
                     <action.icon className="w-5 h-5 text-white" />
-                    <span className="text-[10px] text-white font-medium whitespace-nowrap">{action.label}</span>
+                    <span className="text-[9px] text-white font-medium text-center leading-tight">{action.label}</span>
                   </motion.button>
                 ))}
               </div>
@@ -88,11 +88,11 @@ const AwakeningBottomNav: React.FC = () => {
                     exit={{ scale: 0, x: -20, opacity: 0 }}
                     transition={{ delay: (i + 3) * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
                     onClick={() => handleQuickAction(action.route)}
-                    className={`flex flex-col items-center gap-1 p-2.5 rounded-xl bg-gradient-to-br ${action.color} shadow-lg min-w-[52px]`}
+                    className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-gradient-to-br ${action.color} shadow-lg w-[68px] h-[68px]`}
                     whileTap={{ scale: 0.9 }}
                   >
                     <action.icon className="w-5 h-5 text-white" />
-                    <span className="text-[10px] text-white font-medium whitespace-nowrap">{action.label}</span>
+                    <span className="text-[9px] text-white font-medium text-center leading-tight">{action.label}</span>
                   </motion.button>
                 ))}
               </div>
