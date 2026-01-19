@@ -56,6 +56,8 @@ export default function PayEntry() {
         if (error || !data?.openId) {
           console.error('[PayEntry] Error from wechat-pay-auth:', error || data);
           target.searchParams.set('payment_auth_error', '1');
+          // 通用支付恢复标记
+          target.searchParams.set('payment_resume', '1');
           target.searchParams.set('assessment_pay_resume', '1');
           window.location.replace(target.toString());
           return;
@@ -71,6 +73,8 @@ export default function PayEntry() {
         if (payFlow) {
           target.searchParams.set('pay_flow', payFlow);
         }
+        // 通用支付恢复标记
+        target.searchParams.set('payment_resume', '1');
         target.searchParams.set('assessment_pay_resume', '1');
         if (isNewUser) {
           target.searchParams.set('is_new_user', '1');
