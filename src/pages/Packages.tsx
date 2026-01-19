@@ -30,8 +30,6 @@ export default function Packages() {
   
   // 支付弹窗状态
   const [payDialogOpen, setPayDialogOpen] = useState(false);
-  // 标记支付已完成，防止弹窗被意外打开
-  const [paymentCompleted, setPaymentCompleted] = useState(false);
 
   // 处理小程序支付成功回调 - 仅用于检测是否处于回调场景，不显示 toast
   // toast 由 WechatPayDialog 组件内部在验证订单成功后显示
@@ -39,7 +37,6 @@ export default function Packages() {
     onSuccess: (order) => {
       console.log('[Packages] Payment callback verified success, order:', order);
       // 不在这里显示 toast，让 WechatPayDialog 内部处理
-      setPaymentCompleted(true);
       setPayDialogOpen(false);
     },
     showToast: false, // 由 WechatPayDialog 内部显示
@@ -57,9 +54,9 @@ export default function Packages() {
   }, [isPaymentCallback, callbackOrderNo]);
 
   const handlePurchase = (packageInfo: PackageInfo) => {
-    // 如果支付已完成，不再打开弹窗
-    if (paymentCompleted || isPaymentCallback) {
-      console.log('[Packages] Payment already completed, skipping dialog');
+    // 如果正在处理支付回调，不打开新弹窗
+    if (isPaymentCallback) {
+      console.log('[Packages] Payment callback in progress, skipping new dialog');
       return;
     }
     // 免费训练营入口
@@ -83,8 +80,9 @@ export default function Packages() {
   const handlePaymentSuccess = () => {
     console.log('[Packages] Dialog payment success callback');
     // toast 由 WechatPayDialog 内部在验证成功后显示
-    setPaymentCompleted(true);
     setPayDialogOpen(false);
+    // 重置状态以允许再次购买其他产品
+    setSelectedPackage(null);
   };
 
   const currentCategory = productCategories.find(c => c.id === activeTab);
@@ -135,19 +133,17 @@ export default function Packages() {
           </p>
         </div>
         
-        {/* 微信支付对话框 - 允许在回调场景下渲染以验证订单状态 */}
-        {!paymentCompleted && (
-          <WechatPayDialog
-            open={payDialogOpen || isPaymentCallback}
-            onOpenChange={(open) => {
-              if (!isPaymentCallback) {
-                setPayDialogOpen(open);
-              }
-            }}
-            packageInfo={selectedPackage}
-            onSuccess={handlePaymentSuccess}
-          />
-        )}
+        {/* 微信支付对话框 */}
+        <WechatPayDialog
+          open={payDialogOpen || isPaymentCallback}
+          onOpenChange={(open) => {
+            if (!isPaymentCallback) {
+              setPayDialogOpen(open);
+            }
+          }}
+          packageInfo={selectedPackage}
+          onSuccess={handlePaymentSuccess}
+        />
       </div>
     </>
   );
