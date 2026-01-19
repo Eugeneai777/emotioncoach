@@ -772,6 +772,16 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
       if (error) throw error;
       if (!data.success) throw new Error(data.error || '创建订单失败');
 
+      // 🆕 处理后端返回的 alreadyPaid 响应（用户已购买）
+      if (data.alreadyPaid) {
+        console.log('[Payment] Backend returned alreadyPaid, user already purchased this package');
+        toast.success('您已购买过此产品，无需重复购买！');
+        setStatus('success');
+        onSuccess?.();
+        onOpenChange(false);
+        return;
+      }
+
       setOrderNo(data.orderNo);
 
       // 🆕 小程序原生支付：缓存订单号，便于从原生支付页返回后恢复状态
