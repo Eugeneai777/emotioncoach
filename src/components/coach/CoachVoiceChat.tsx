@@ -93,6 +93,7 @@ export const CoachVoiceChat = ({
   const [maxDurationMinutes, setMaxDurationMinutes] = useState<number | null>(null);
   const [isLoadingDuration, setIsLoadingDuration] = useState(true);
   const [isEnding, setIsEnding] = useState(false);  // 🔧 防止重复点击挂断
+  const isEndingRef = useRef(false);  // 🔧 同步标记：避免主动挂断被误判为意外中断
   const [insufficientDuringCall, setInsufficientDuringCall] = useState(false);  // 🔧 通话中余额不足
   // API 成本追踪
   const [apiUsage, setApiUsage] = useState({ inputTokens: 0, outputTokens: 0 });
@@ -693,8 +694,8 @@ export const CoachVoiceChat = ({
     } else if (mappedStatus === 'disconnected' || mappedStatus === 'error') {
       if (durationRef.current) clearInterval(durationRef.current);
       
-      // 🔧 断线时明确提示用户（非主动挂断时）
-      if (!isEnding && durationValueRef.current > 0) {
+      // 🔧 断线时明确提示用户（使用 ref 判断：非主动挂断、非余额不足）
+      if (!isEndingRef.current && !insufficientDuringCall && durationValueRef.current > 0) {
         toast({
           title: "连接已断开",
           description: "通话意外中断，可以点击重新开始继续对话",
@@ -831,7 +832,9 @@ export const CoachVoiceChat = ({
     
     try {
       setStatus('connecting');
-      // 🔧 重置转录状态，确保新通话不会累积旧内容
+      // 🔧 重置结束标记和转录状态，确保新通话不会受之前状态影响
+      isEndingRef.current = false;
+      setIsEnding(false);
       setTranscript('');
       setUserTranscript('');
       const { error: refreshError } = await supabase.auth.refreshSession();
@@ -1132,12 +1135,14 @@ export const CoachVoiceChat = ({
     e?.preventDefault();
     
     // 防止重复点击
-    if (isEnding) {
+    if (isEnding || isEndingRef.current) {
       console.log('EndCall: already ending, ignoring');
       return;
     }
+    // 🔧 立即同步设置 ref（避免 disconnect 回调误判为意外中断）
+    isEndingRef.current = true;
     setIsEnding(true);
-    console.log('EndCall: starting...');
+    console.log('EndCall: starting (isEndingRef set to true)...');
     
     try {
       // 断开 WebRTC 连接
@@ -1289,8 +1294,8 @@ export const CoachVoiceChat = ({
           console.log('[VoiceChat] Page visible again, cancelled timeout');
         }
         
-        // 🔧 如果连接已断开但页面恢复可见，提示用户
-        if ((status === 'disconnected' || status === 'error') && !isEnding) {
+        // 🔧 如果连接已断开但页面恢复可见，提示用户（使用 ref 判断避免误报）
+        if ((status === 'disconnected' || status === 'error') && !isEndingRef.current) {
           console.log('[VoiceChat] Connection lost while page was hidden');
           // 不自动重连，只提示用户
           toast({
