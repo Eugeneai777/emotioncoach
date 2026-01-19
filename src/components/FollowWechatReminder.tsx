@@ -162,6 +162,11 @@ export function FollowWechatReminder() {
           </div>
         </Card>
 
+        {/* 交互引导提示 */}
+        <div className="text-xs text-center text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-300 p-2 rounded-lg border border-amber-200 dark:border-amber-800">
+          💡 <strong>提示：</strong>关注后请在公众号内发送任意消息，即可同步您的微信昵称和头像
+        </div>
+
         {/* Benefits */}
         <div className="space-y-2">
           <p className="text-sm font-medium text-center">关注后可获得：</p>

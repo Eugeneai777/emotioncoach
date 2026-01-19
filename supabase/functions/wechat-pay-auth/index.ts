@@ -463,6 +463,72 @@ async function exchangeCodeAndEnsureUser(code: string): Promise<Response> {
     // 老用户：直接使用已绑定的用户ID
     userId = existingMapping.system_user_id;
     console.log('[WechatPayAuth] Found existing user:', userId);
+    
+    // 老用户登录时，异步尝试更新资料（如果缺失）
+    const tryUpdateExistingUserInfo = async () => {
+      try {
+        // 检查当前用户是否缺少资料
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name, avatar_url')
+          .eq('id', userId)
+          .maybeSingle();
+
+        const needsUpdate = !profile?.display_name || 
+                           profile.display_name === '微信用户' || 
+                           !profile?.avatar_url;
+
+        if (!needsUpdate) {
+          console.log('[WechatPayAuth] Existing user has complete profile, skipping sync');
+          return;
+        }
+
+        // 尝试获取微信用户信息
+        const userInfo = await tryGetUserInfo(openId);
+        
+        if (userInfo.nickname || userInfo.avatar_url) {
+          // 更新 wechat_user_mappings
+          const mappingUpdate: Record<string, unknown> = { 
+            updated_at: new Date().toISOString() 
+          };
+          if (userInfo.nickname) mappingUpdate.nickname = userInfo.nickname;
+          if (userInfo.avatar_url) mappingUpdate.avatar_url = userInfo.avatar_url;
+          
+          await supabase
+            .from('wechat_user_mappings')
+            .update(mappingUpdate)
+            .eq('openid', openId);
+
+          // 更新 profiles
+          const profileUpdate: Record<string, unknown> = {};
+          if (userInfo.nickname && (!profile?.display_name || profile.display_name === '微信用户')) {
+            profileUpdate.display_name = userInfo.nickname;
+          }
+          if (userInfo.avatar_url && !profile?.avatar_url) {
+            profileUpdate.avatar_url = userInfo.avatar_url;
+          }
+
+          if (Object.keys(profileUpdate).length > 0) {
+            await supabase
+              .from('profiles')
+              .update(profileUpdate)
+              .eq('id', userId);
+            
+            console.log('[WechatPayAuth] Updated existing user profile:', userId);
+          }
+        }
+      } catch (e) {
+        console.error('[WechatPayAuth] Error updating existing user info:', e);
+      }
+    };
+
+    // 使用 waitUntil 或 fire-and-forget
+    const waitUntil = (globalThis as any)?.EdgeRuntime?.waitUntil;
+    if (typeof waitUntil === 'function') {
+      waitUntil(tryUpdateExistingUserInfo());
+    } else {
+      tryUpdateExistingUserInfo();
+    }
   } else {
     // 新用户：静默创建账号
     console.log('[WechatPayAuth] No existing user, creating new one...');

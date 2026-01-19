@@ -346,7 +346,17 @@ export function SmartNotificationPreferences() {
       } else {
         toast({
           title: "无法获取信息",
-          description: "微信未返回真实昵称，可能是隐私设置限制",
+          description: "请先在公众号内发送任意消息后重试",
+          action: (
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-2"
+              onClick={() => window.open('https://mp.weixin.qq.com', '_blank')}
+            >
+              去公众号
+            </Button>
+          ),
         });
       }
     } catch (error) {

@@ -122,15 +122,49 @@ Deno.serve(async (req) => {
     const userInfo = await userInfoResp.json();
     const subscribed = userInfo.subscribe === 1;
 
-    // Update database with latest status
-    if (subscribed !== mapping.subscribe_status) {
-      await supabase
-        .from('wechat_user_mappings')
-        .update({ 
-          subscribe_status: subscribed,
-          updated_at: new Date().toISOString()
-        })
-        .eq('openid', mapping.openid);
+    // Update database with latest status and user info
+    const mappingUpdate: Record<string, unknown> = {
+      subscribe_status: subscribed,
+      updated_at: new Date().toISOString(),
+    };
+    
+    // 如果获取到有效的昵称头像，也一并更新
+    if (userInfo.nickname && userInfo.nickname !== '微信用户' && userInfo.nickname !== '') {
+      mappingUpdate.nickname = userInfo.nickname;
+    }
+    if (userInfo.headimgurl) {
+      mappingUpdate.avatar_url = userInfo.headimgurl;
+    }
+    
+    await supabase
+      .from('wechat_user_mappings')
+      .update(mappingUpdate)
+      .eq('openid', mapping.openid);
+
+    // 同时更新 profiles 表（如果缺少信息）
+    if (subscribed && userInfo.nickname && userInfo.nickname !== '微信用户') {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('id', userId)
+        .maybeSingle();
+
+      const profileUpdate: Record<string, unknown> = {};
+      if (!profile?.display_name || profile.display_name === '微信用户') {
+        profileUpdate.display_name = userInfo.nickname;
+      }
+      if (!profile?.avatar_url && userInfo.headimgurl) {
+        profileUpdate.avatar_url = userInfo.headimgurl;
+      }
+
+      if (Object.keys(profileUpdate).length > 0) {
+        await supabase
+          .from('profiles')
+          .update(profileUpdate)
+          .eq('id', userId);
+        
+        console.log('Updated profile with WeChat info:', userId);
+      }
     }
 
     return new Response(
