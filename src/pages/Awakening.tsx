@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { awakeningDimensions, AwakeningDimension } from "@/config/awakeningConfig";
 import AwakeningEntryCard from "@/components/awakening/AwakeningEntryCard";
 import AwakeningDrawer from "@/components/awakening/AwakeningDrawer";
+import AwakeningBottomNav from "@/components/awakening/AwakeningBottomNav";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 const Awakening: React.FC = () => {
   const navigate = useNavigate();
@@ -56,7 +57,7 @@ const Awakening: React.FC = () => {
         </header>
 
         {/* Main Content */}
-        <main className="max-w-lg mx-auto px-4 py-6 space-y-6">
+        <main className="max-w-lg mx-auto px-4 py-6 pb-28 space-y-6">
           {/* 标题区 */}
           <motion.div 
             initial={{ opacity: 0.01, y: -10 }}
@@ -95,21 +96,10 @@ const Awakening: React.FC = () => {
             {awakeningDimensions.map((dimension, index) => <AwakeningEntryCard key={dimension.id} dimension={dimension} onClick={() => handleEntryClick(dimension)} index={index} />)}
           </div>
 
-          {/* 底部说明 */}
-          <motion.div 
-            initial={{ opacity: 0.01 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-            className="text-center space-y-3 pt-4"
-          >
-            
-            <Button variant="ghost" size="sm" onClick={() => navigate('/awakening-journal')} className="text-muted-foreground hover:text-foreground">
-              <BookOpen className="w-4 h-4 mr-2" />
-              查看觉察日记
-            </Button>
-          </motion.div>
         </main>
+
+        {/* 底部凸起导航 */}
+        <AwakeningBottomNav />
 
         {/* 输入抽屉 */}
         <AwakeningDrawer dimension={selectedDimension} isOpen={isDrawerOpen} onClose={handleDrawerClose} />
