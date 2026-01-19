@@ -105,6 +105,25 @@ export function ProfileCompletionPrompt({
         </DialogHeader>
 
         <div className="space-y-6 pt-2">
+          {/* 智能消息价值说明 */}
+          <div className="bg-emerald-50 rounded-lg p-3 text-sm">
+            <p className="font-medium text-emerald-800 mb-2">✨ 完善资料后你将获得：</p>
+            <ul className="space-y-1 text-emerald-700">
+              <li className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-emerald-500" />
+                AI会用你的昵称亲切地称呼你
+              </li>
+              <li className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-emerald-500" />
+                分享卡片显示你的专属头像
+              </li>
+              <li className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-emerald-500" />
+                开启智能消息，关键时刻收到温暖问候
+              </li>
+            </ul>
+          </div>
+
           {/* 头像上传 */}
           <div className="flex flex-col items-center">
             <AvatarUploader

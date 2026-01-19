@@ -78,7 +78,7 @@ serve(async (req) => {
     type EncouragementStyle = 'gentle' | 'cheerful' | 'motivational';
     type CompanionType = 'jing_teacher' | 'friend' | 'coach';
     type NotificationFrequency = 'minimal' | 'balanced' | 'frequent';
-    type Scenario = 'after_briefing' | 'after_story' | 'after_gratitude_analysis' | 'after_gratitude_sync' | 'after_communication' | 'after_parent' | 'after_vibrant_life' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement' | 'checkin_success' | 'checkin_streak_milestone' | 'checkin_reminder' | 'checkin_streak_break_warning' | 'camp_day_complete' | 'weekly_summary' | 'pending_action_reminder' | 'action_completion_celebration' | 'after_wealth_coaching' | 'wealth_weekly_summary';
+    type Scenario = 'after_briefing' | 'after_story' | 'after_gratitude_analysis' | 'after_gratitude_sync' | 'after_communication' | 'after_parent' | 'after_vibrant_life' | 'goal_milestone' | 'emotion_improvement' | 'consistent_checkin' | 'inactivity' | 'sustained_low_mood' | 'encouragement' | 'checkin_success' | 'checkin_streak_milestone' | 'checkin_reminder' | 'checkin_streak_break_warning' | 'camp_day_complete' | 'weekly_summary' | 'pending_action_reminder' | 'action_completion_celebration' | 'after_wealth_coaching' | 'wealth_weekly_summary' | 'profile_completion';
 
     // 维度名称映射
     const dimensionNames: Record<string, string> = {
@@ -214,7 +214,16 @@ ${context?.new_beliefs?.length ? context.new_beliefs.slice(0, 2).map((b: string)
 1. 总结本周的成长亮点（用具体数据说话）
 2. 肯定用户在最强维度上的突破
 3. 温柔提醒下周可以关注的改进方向
-4. 给予继续训练的信心和期待`
+4. 给予继续训练的信心和期待`,
+      profile_completion: `用户还没有完善个人资料${context?.missing_name ? '（缺少昵称）' : ''}${context?.missing_avatar ? '（缺少头像）' : ''}。
+
+请温暖地邀请他们完善资料，强调以下好处：
+1. 对话中AI会亲切地称呼他们的名字
+2. 分享卡片会显示个性化头像和昵称
+3. 让AI更好地认识他们，提供更贴心的陪伴
+4. 开启智能消息后，在关键时刻收到温暖问候
+
+语气要温柔、邀请式的，不是催促。可以用"为了让我更好地认识你..."或"期待看到你的样子..."开头。`
     };
 
     const styleDescriptions: Record<EncouragementStyle, string> = {
@@ -351,7 +360,8 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       pending_action_reminder: { type: 'reminder', priority: 3 },
       action_completion_celebration: { type: 'celebration', priority: 4 },
       after_wealth_coaching: { type: 'encouragement', priority: 3 },
-      wealth_weekly_summary: { type: 'insight', priority: 4 }
+      wealth_weekly_summary: { type: 'insight', priority: 4 },
+      profile_completion: { type: 'reminder', priority: 2 }
     };
 
     // 场景到教练类型的映射
@@ -378,7 +388,8 @@ ${isPreview ? '**这是预览模式**，请生成一条展示你陪伴风格的�
       pending_action_reminder: 'wealth_coach_4_questions_coach',
       action_completion_celebration: 'wealth_coach_4_questions_coach',
       after_wealth_coaching: 'wealth_coach_4_questions_coach',
-      wealth_weekly_summary: 'wealth_coach_4_questions_coach'
+      wealth_weekly_summary: 'wealth_coach_4_questions_coach',
+      profile_completion: 'general'
     };
 
     let { type, priority } = baseNotificationTypeMap[scenarioTyped] || { type: 'encouragement', priority: 1 };
