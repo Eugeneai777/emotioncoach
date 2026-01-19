@@ -68,6 +68,24 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
       </div>
     );
 
+    // User Header Component (reusable across templates)
+    const UserHeader = ({ style }: { style?: React.CSSProperties }) => (
+      (avatarUrl || displayName) ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', ...style }}>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.8)' }} crossOrigin="anonymous" />
+          ) : (
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', color: 'white' }}>
+              {displayName?.[0] || '👤'}
+            </div>
+          )}
+          <div>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', margin: 0, fontWeight: 500 }}>{displayName || '朋友'} 推荐</p>
+          </div>
+        </div>
+      ) : null
+    );
+
     // Template A: 简洁版 (朋友圈)
     const renderConciseTemplate = () => (
       <div style={containerStyle} ref={ref}>
@@ -77,6 +95,9 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           background: 'linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.3) 100%)',
           display: 'flex', flexDirection: 'column', padding: '28px 24px',
         }}>
+          {/* User Header */}
+          <UserHeader />
+
           {/* Emoji + Title */}
           <div style={{ textAlign: 'center', marginBottom: '16px' }}>
             <div style={{ fontSize: '48px', marginBottom: '12px' }}>{config.emoji}</div>
@@ -122,20 +143,7 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           display: 'flex', flexDirection: 'column', padding: '24px 20px',
         }}>
           {/* User Avatar + Recommends */}
-          {(avatarUrl || displayName) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid white' }} />
-              ) : (
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
-                  {displayName?.[0] || '👤'}
-                </div>
-              )}
-              <div>
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', margin: 0 }}>{displayName || '朋友'} 推荐</p>
-              </div>
-            </div>
-          )}
+          <UserHeader />
 
           {/* Main Content */}
           <div style={{ textAlign: 'center', marginBottom: '16px' }}>
@@ -193,6 +201,9 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 100%)',
           display: 'flex', flexDirection: 'column', padding: '24px 20px',
         }}>
+          {/* User Header */}
+          <UserHeader style={{ marginBottom: '12px' }}/>
+
           {/* Category Badge */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
             <span style={{
