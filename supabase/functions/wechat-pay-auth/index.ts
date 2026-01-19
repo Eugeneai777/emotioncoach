@@ -298,6 +298,92 @@ async function ensureUserFromOpenId(openId: string, unionId?: string): Promise<R
 }
 
 /**
+ * 尝试通过 cgi-bin/user/info 获取已关注用户的信息
+ * 此接口仅对已关注公众号的用户返回真实昵称头像
+ */
+async function tryGetUserInfo(openId: string): Promise<{ nickname?: string; avatar_url?: string }> {
+  try {
+    const appId = Deno.env.get('WECHAT_APP_ID');
+    const appSecret = Deno.env.get('WECHAT_APP_SECRET');
+    const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
+    const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
+    
+    if (!appId || !appSecret) {
+      console.log('[WechatPayAuth] tryGetUserInfo: WeChat credentials not configured');
+      return {};
+    }
+
+    // 1. 获取 access_token（通过代理服务器）
+    let accessToken: string | null = null;
+    
+    if (proxyUrl && proxyToken) {
+      // 使用代理服务器获取 access_token
+      const tokenProxyUrl = `${proxyUrl}/proxy/wechat/token?appid=${appId}&secret=${appSecret}`;
+      const tokenResponse = await fetch(tokenProxyUrl, {
+        headers: { 'Authorization': `Bearer ${proxyToken}` }
+      });
+      const tokenData = await tokenResponse.json();
+      
+      if (tokenData.access_token) {
+        accessToken = tokenData.access_token;
+        console.log('[WechatPayAuth] Got access_token from proxy');
+      }
+    } else {
+      // 直接请求微信 API（可能被 IP 白名单限制）
+      const tokenUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
+      const tokenResponse = await fetch(tokenUrl);
+      const tokenData = await tokenResponse.json();
+      
+      if (tokenData.access_token) {
+        accessToken = tokenData.access_token;
+        console.log('[WechatPayAuth] Got access_token directly');
+      }
+    }
+
+    if (!accessToken) {
+      console.log('[WechatPayAuth] tryGetUserInfo: Failed to get access_token');
+      return {};
+    }
+
+    // 2. 调用 cgi-bin/user/info 获取用户信息（仅对已关注用户有效）
+    let userInfoUrl: string;
+    let userInfoResponse: Response;
+    
+    if (proxyUrl && proxyToken) {
+      // 使用代理服务器
+      userInfoUrl = `${proxyUrl}/proxy/wechat/user/info?access_token=${accessToken}&openid=${openId}&lang=zh_CN`;
+      userInfoResponse = await fetch(userInfoUrl, {
+        headers: { 'Authorization': `Bearer ${proxyToken}` }
+      });
+    } else {
+      userInfoUrl = `https://api.weixin.qq.com/cgi-bin/user/info?access_token=${accessToken}&openid=${openId}&lang=zh_CN`;
+      userInfoResponse = await fetch(userInfoUrl);
+    }
+    
+    const userInfo = await userInfoResponse.json();
+    
+    console.log('[WechatPayAuth] User info response:', JSON.stringify({
+      subscribe: userInfo.subscribe,
+      nickname: userInfo.nickname ? '***' : null,
+      errcode: userInfo.errcode,
+    }));
+
+    // 检查是否已关注并且有昵称
+    if (userInfo.subscribe === 1 && userInfo.nickname && userInfo.nickname !== '微信用户') {
+      return {
+        nickname: userInfo.nickname,
+        avatar_url: userInfo.headimgurl,
+      };
+    }
+    
+    return {};
+  } catch (e) {
+    console.error('[WechatPayAuth] tryGetUserInfo error:', e);
+    return {};
+  }
+}
+
+/**
  * 用 code 换取 openId，并自动识别/创建用户，返回登录令牌
  */
 async function exchangeCodeAndEnsureUser(code: string): Promise<Response> {
@@ -436,19 +522,47 @@ async function exchangeCodeAndEnsureUser(code: string): Promise<Response> {
       // 不阻塞流程，继续
     }
 
-    // 如果是新用户，更新 profiles 表
+    // 如果是新用户，尝试获取用户信息并更新 profiles 表
     if (isNewUser) {
+      // 尝试获取微信用户信息（仅对已关注公众号的用户有效）
+      const userInfo = await tryGetUserInfo(openId);
+      
+      const profileUpdateData: Record<string, unknown> = {
+        auth_provider: 'wechat',
+        smart_notification_enabled: true, // 首次微信注册默认开启
+      };
+      
+      if (userInfo.nickname) {
+        profileUpdateData.display_name = userInfo.nickname;
+        console.log('[WechatPayAuth] Setting nickname for new user:', userInfo.nickname);
+      }
+      if (userInfo.avatar_url) {
+        profileUpdateData.avatar_url = userInfo.avatar_url;
+        console.log('[WechatPayAuth] Setting avatar for new user');
+      }
+
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
-          auth_provider: 'wechat',
-          smart_notification_enabled: true, // 首次微信注册默认开启
-        })
+        .update(profileUpdateData)
         .eq('id', userId);
 
       if (profileError) {
         console.error('[WechatPayAuth] Error updating profile:', profileError);
         // 不阻塞流程
+      }
+      
+      // 同时更新 wechat_user_mappings 中的昵称和头像
+      if (userInfo.nickname || userInfo.avatar_url) {
+        const mappingUpdateData: Record<string, unknown> = {
+          updated_at: new Date().toISOString(),
+        };
+        if (userInfo.nickname) mappingUpdateData.nickname = userInfo.nickname;
+        if (userInfo.avatar_url) mappingUpdateData.avatar_url = userInfo.avatar_url;
+        
+        await supabase
+          .from('wechat_user_mappings')
+          .update(mappingUpdateData)
+          .eq('openid', openId);
       }
     }
   }
