@@ -29,7 +29,12 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [cardReady, setCardReady] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  
+  // 预览卡片引用（带缩放，仅用于显示）
+  const previewRef = useRef<HTMLDivElement>(null);
+  // 导出卡片引用（全尺寸隐藏，用于 html2canvas）
+  const exportRef = useRef<HTMLDivElement>(null);
+  
   const { toast } = useToast();
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useProfileCompletion();
@@ -57,13 +62,16 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
   const showImagePreview = shareEnv.isWeChat || shareEnv.isIOS;
 
   const generateImage = async () => {
-    if (!cardRef.current) {
-      DEBUG_SHARE_CARD && console.log('[IntroShareDialog] No card ref available');
+    // 使用隐藏的全尺寸导出卡片
+    if (!exportRef.current) {
+      DEBUG_SHARE_CARD && console.log('[IntroShareDialog] No export ref available');
       return null;
     }
     
     setIsGenerating(true);
     try {
+      const element = exportRef.current;
+      
       // 检查卡片内容
       DEBUG_SHARE_CARD && console.log('[IntroShareDialog] Card content:', {
         hasAvatar: !!avatarUrl,
@@ -71,10 +79,14 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
         displayName,
         configTitle: config.title,
         template: selectedTemplate,
+        elementSize: { width: element.scrollWidth, height: element.scrollHeight },
       });
 
+      // 等待渲染稳定
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       // 等待图片加载
-      const images = cardRef.current.querySelectorAll('img');
+      const images = element.querySelectorAll('img');
       DEBUG_SHARE_CARD && console.log('[IntroShareDialog] Found images:', images.length);
       
       await Promise.all(
@@ -100,17 +112,34 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
         })
       );
 
-      const canvas = await html2canvas(cardRef.current, {
+      // 关键：使用显式尺寸约束，确保捕获完整卡片
+      const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
         logging: DEBUG_SHARE_CARD,
         foreignObjectRendering: false,
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        windowWidth: element.scrollWidth + 100,
+        windowHeight: element.scrollHeight + 100,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
       });
 
       DEBUG_SHARE_CARD && console.log('[IntroShareDialog] Canvas generated:', canvas.width, 'x', canvas.height);
-      return canvas.toDataURL('image/png');
+      
+      const dataUrl = canvas.toDataURL('image/png');
+      
+      // 验证生成的数据
+      if (!dataUrl || !dataUrl.startsWith('data:image/png')) {
+        throw new Error('Invalid image data generated');
+      }
+      
+      return dataUrl;
     } catch (error) {
       console.error('[IntroShareDialog] Generation failed:', error);
       toast({
@@ -136,7 +165,20 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
     if (!imageData) return;
 
     try {
-      const blob = await fetch(imageData).then(r => r.blob());
+      // 验证数据格式
+      if (!imageData.startsWith('data:image/')) {
+        throw new Error('Invalid image data format');
+      }
+      
+      const response = await fetch(imageData);
+      const blob = await response.blob();
+      
+      // 验证 blob 类型
+      if (!blob.type.startsWith('image/')) {
+        console.error('[IntroShareDialog] Invalid blob type:', blob.type);
+        throw new Error('Invalid blob type');
+      }
+      
       const filename = `${config.title}-分享卡片.png`;
       
       const result = await handleShareWithFallback(blob, filename, {
@@ -156,7 +198,7 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
         }
       }
     } catch (error) {
-      console.error('Failed to save image:', error);
+      console.error('[IntroShareDialog] Save failed:', error);
       toast({
         title: "保存失败",
         description: "请稍后重试",
@@ -202,7 +244,7 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
             ))}
           </div>
 
-          {/* Card Preview */}
+          {/* Card Preview - 缩放显示 */}
           <div className="flex justify-center overflow-hidden">
             <div 
               className="transform origin-top scale-[0.55] sm:scale-[0.62]"
@@ -212,7 +254,7 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
                 <ShareCardSkeleton variant="compact" />
               ) : (
                 <IntroShareCard
-                  ref={cardRef}
+                  ref={previewRef}
                   config={config}
                   template={selectedTemplate}
                   partnerCode={getPartnerCodeValue()}
@@ -224,11 +266,29 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
             </div>
           </div>
 
+          {/* Hidden Export Card - 全尺寸，用于 html2canvas */}
+          {!isContentLoading && (
+            <div 
+              className="fixed -left-[9999px] top-0 pointer-events-none"
+              style={{ opacity: 0.01 }}
+              aria-hidden="true"
+            >
+              <IntroShareCard
+                ref={exportRef}
+                config={config}
+                template={selectedTemplate}
+                partnerCode={getPartnerCodeValue()}
+                avatarUrl={avatarUrl}
+                displayName={displayName}
+              />
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex gap-2 mt-2">
             <Button
               onClick={showImagePreview ? handleGeneratePreview : handleDownload}
-              disabled={isGenerating}
+              disabled={isGenerating || isContentLoading}
               className="flex-1 bg-gradient-to-r from-primary to-primary/80"
             >
               {isGenerating ? (
