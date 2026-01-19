@@ -4,9 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Sparkles, Crown, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { usePackages, getPackagePrice, getPackageQuota } from "@/hooks/usePackages";
-import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { usePackagePurchased } from "@/hooks/usePackagePurchased";
 
 // 套餐配置（静态部分）
 const packageConfig = [
@@ -29,40 +27,8 @@ const packageConfig = [
   },
 ];
 
-// 检查用户是否已购买指定套餐
-function usePackagePurchased(packageKey: string, enabled: boolean) {
-  const { user } = useAuth();
-  
-  return useQuery({
-    queryKey: ['package-purchased', packageKey, user?.id],
-    queryFn: async () => {
-      if (!user) return false;
-      
-      // 查询 orders 表检查是否有已支付的订单
-      const { data, error } = await supabase
-        .from('orders')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('package_key', packageKey)
-        .eq('status', 'paid')
-        .limit(1)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('[PackageSelector] Check purchase error:', error);
-        return false;
-      }
-      
-      return !!data;
-    },
-    enabled: !!user && enabled,
-    staleTime: 30 * 1000, // 30秒缓存
-  });
-}
-
 export const PackageSelector = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { data: packages, isLoading } = usePackages();
 
   // 检查 basic 套餐是否已购买（限购一次）
