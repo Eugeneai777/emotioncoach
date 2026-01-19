@@ -4,13 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Share2, Download, Check, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import html2canvas from 'html2canvas';
-import { type IntroShareConfig } from '@/config/introShareConfig';
+import { type IntroShareConfig, getShareUrl } from '@/config/introShareConfig';
 import IntroShareCard, { CardTemplate, TEMPLATE_LABELS } from './IntroShareCard';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 import { getShareEnvironment, handleShareWithFallback } from '@/utils/shareUtils';
 import ShareImagePreview from '@/components/ui/share-image-preview';
 import { getProxiedAvatarUrl } from '@/utils/avatarUtils';
+import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
+import { useQRCode } from '@/utils/qrCodeUtils';
+
+// 调试开关
+const DEBUG_SHARE_CARD = localStorage.getItem('debug_share_card') === 'true';
 
 interface IntroShareDialogProps {
   config: IntroShareConfig;
@@ -23,43 +28,76 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
   const [selectedTemplate, setSelectedTemplate] = useState<CardTemplate>('concise');
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [cardReady, setCardReady] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { profile } = useProfileCompletion();
+  const { profile, loading: profileLoading } = useProfileCompletion();
 
   // 获取用户头像和昵称
   const avatarUrl = getProxiedAvatarUrl(profile?.avatar_url);
   const displayName = profile?.display_name || '';
 
-  const shareEnv = getShareEnvironment();
-  const showImagePreview = shareEnv.isWeChat || shareEnv.isIOS;
-
   // 获取合伙人代码
-  const getPartnerCode = useCallback(() => {
+  const getPartnerCodeValue = useCallback(() => {
     if (partnerCode) return partnerCode;
-    // 从localStorage获取合伙人代码
     const storedRef = localStorage.getItem('share_ref_code');
     if (storedRef) return storedRef;
-    // 如果当前用户是合伙人，使用自己的ID
     return user?.id;
   }, [partnerCode, user]);
 
+  // 预先获取QR码状态用于骨架屏判断
+  const shareUrl = getShareUrl(config.targetUrl, getPartnerCodeValue());
+  const { qrCodeUrl, isLoading: qrLoading } = useQRCode(shareUrl);
+
+  // 整体加载状态
+  const isContentLoading = profileLoading || qrLoading || !qrCodeUrl;
+
+  const shareEnv = getShareEnvironment();
+  const showImagePreview = shareEnv.isWeChat || shareEnv.isIOS;
+
   const generateImage = async () => {
-    if (!cardRef.current) return null;
+    if (!cardRef.current) {
+      DEBUG_SHARE_CARD && console.log('[IntroShareDialog] No card ref available');
+      return null;
+    }
     
     setIsGenerating(true);
     try {
+      // 检查卡片内容
+      DEBUG_SHARE_CARD && console.log('[IntroShareDialog] Card content:', {
+        hasAvatar: !!avatarUrl,
+        avatarUrl: avatarUrl?.substring(0, 50),
+        displayName,
+        configTitle: config.title,
+        template: selectedTemplate,
+      });
+
       // 等待图片加载
       const images = cardRef.current.querySelectorAll('img');
+      DEBUG_SHARE_CARD && console.log('[IntroShareDialog] Found images:', images.length);
+      
       await Promise.all(
-        Array.from(images).map(img => 
-          img.complete ? Promise.resolve() : new Promise(resolve => {
-            img.onload = resolve;
-            img.onerror = resolve;
-            setTimeout(resolve, 3000); // 3秒超时
-          })
-        )
+        Array.from(images).map((img, i) => {
+          if (img.complete && img.naturalHeight > 0) {
+            DEBUG_SHARE_CARD && console.log(`[IntroShareDialog] Image ${i} already loaded:`, img.src.substring(0, 50));
+            return Promise.resolve();
+          }
+          return new Promise(resolve => {
+            img.onload = () => {
+              DEBUG_SHARE_CARD && console.log(`[IntroShareDialog] Image ${i} loaded:`, img.src.substring(0, 50));
+              resolve(undefined);
+            };
+            img.onerror = (e) => {
+              console.error(`[IntroShareDialog] Image ${i} failed:`, img.src.substring(0, 50), e);
+              resolve(undefined);
+            };
+            setTimeout(() => {
+              DEBUG_SHARE_CARD && console.log(`[IntroShareDialog] Image ${i} timeout`);
+              resolve(undefined);
+            }, 3000);
+          });
+        })
       );
 
       const canvas = await html2canvas(cardRef.current, {
@@ -67,13 +105,14 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
-        logging: false,
+        logging: DEBUG_SHARE_CARD,
         foreignObjectRendering: false,
       });
 
+      DEBUG_SHARE_CARD && console.log('[IntroShareDialog] Canvas generated:', canvas.width, 'x', canvas.height);
       return canvas.toDataURL('image/png');
     } catch (error) {
-      console.error('Failed to generate image:', error);
+      console.error('[IntroShareDialog] Generation failed:', error);
       toast({
         title: "生成图片失败",
         description: "请稍后重试",
@@ -169,14 +208,19 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
               className="transform origin-top scale-[0.55] sm:scale-[0.62]"
               style={{ marginBottom: '-42%' }}
             >
-              <IntroShareCard
-                ref={cardRef}
-                config={config}
-                template={selectedTemplate}
-                partnerCode={getPartnerCode()}
-                avatarUrl={avatarUrl}
-                displayName={displayName}
-              />
+              {isContentLoading ? (
+                <ShareCardSkeleton variant="compact" />
+              ) : (
+                <IntroShareCard
+                  ref={cardRef}
+                  config={config}
+                  template={selectedTemplate}
+                  partnerCode={getPartnerCodeValue()}
+                  avatarUrl={avatarUrl}
+                  displayName={displayName}
+                  onReady={() => setCardReady(true)}
+                />
+              )}
             </div>
           </div>
 

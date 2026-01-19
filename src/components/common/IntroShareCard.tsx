@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, useEffect, useState, useCallback } from 'react';
 import { type IntroShareConfig, getShareUrl } from '@/config/introShareConfig';
 import { useQRCode } from '@/utils/qrCodeUtils';
 
@@ -10,6 +10,7 @@ interface IntroShareCardProps {
   partnerCode?: string;
   avatarUrl?: string;
   displayName?: string;
+  onReady?: () => void;
 }
 
 export const TEMPLATE_LABELS: Record<CardTemplate, string> = {
@@ -18,10 +19,41 @@ export const TEMPLATE_LABELS: Record<CardTemplate, string> = {
   scenario: '场景版',
 };
 
+// 调试开关
+const DEBUG_SHARE_CARD = localStorage.getItem('debug_share_card') === 'true';
+
 export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
-  ({ config, template, partnerCode, avatarUrl, displayName }, ref) => {
+  ({ config, template, partnerCode, avatarUrl, displayName, onReady }, ref) => {
     const shareUrl = getShareUrl(config.targetUrl, partnerCode);
     const { qrCodeUrl } = useQRCode(shareUrl);
+    const [avatarLoaded, setAvatarLoaded] = useState(false);
+    const [qrLoaded, setQrLoaded] = useState(false);
+
+    // 当所有图片加载完成时通知父组件
+    useEffect(() => {
+      const avatarReady = !avatarUrl || avatarLoaded;
+      const qrReady = !qrCodeUrl || qrLoaded;
+      
+      if (avatarReady && qrReady && onReady) {
+        DEBUG_SHARE_CARD && console.log('[IntroShareCard] Card ready', { avatarReady, qrReady });
+        onReady();
+      }
+    }, [avatarLoaded, qrLoaded, avatarUrl, qrCodeUrl, onReady]);
+
+    const handleAvatarLoad = useCallback(() => {
+      DEBUG_SHARE_CARD && console.log('[IntroShareCard] Avatar loaded:', avatarUrl?.substring(0, 50));
+      setAvatarLoaded(true);
+    }, [avatarUrl]);
+
+    const handleAvatarError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+      console.error('[IntroShareCard] Avatar load error:', avatarUrl?.substring(0, 50), e);
+      setAvatarLoaded(true); // 即使失败也标记为完成，避免无限等待
+    }, [avatarUrl]);
+
+    const handleQrLoad = useCallback(() => {
+      DEBUG_SHARE_CARD && console.log('[IntroShareCard] QR loaded');
+      setQrLoaded(true);
+    }, []);
 
     const containerStyle: React.CSSProperties = {
       width: template === 'scenario' ? '320px' : template === 'value' ? '320px' : '320px',
@@ -55,7 +87,12 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
         gap: '12px',
       }}>
         {qrCodeUrl && (
-          <img src={qrCodeUrl} alt="QR Code" style={{ width: compact ? '55px' : '65px', height: compact ? '55px' : '65px', borderRadius: '8px' }} />
+          <img 
+            src={qrCodeUrl} 
+            alt="QR Code" 
+            style={{ width: compact ? '55px' : '65px', height: compact ? '55px' : '65px', borderRadius: '8px' }} 
+            onLoad={handleQrLoad}
+          />
         )}
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#1a1a1a', margin: '0 0 4px 0' }}>
@@ -68,22 +105,40 @@ export const IntroShareCard = forwardRef<HTMLDivElement, IntroShareCardProps>(
       </div>
     );
 
-    // User Header Component (reusable across templates)
+    // User Header Component - 总是显示，即使没有头像也显示默认
     const UserHeader = ({ style }: { style?: React.CSSProperties }) => (
-      (avatarUrl || displayName) ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', ...style }}>
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.8)' }} crossOrigin="anonymous" />
-          ) : (
-            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', color: 'white' }}>
-              {displayName?.[0] || '👤'}
-            </div>
-          )}
-          <div>
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', margin: 0, fontWeight: 500 }}>{displayName || '朋友'} 推荐</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', ...style }}>
+        {avatarUrl ? (
+          <img 
+            src={avatarUrl} 
+            alt="" 
+            style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.8)' }} 
+            crossOrigin="anonymous"
+            onLoad={handleAvatarLoad}
+            onError={handleAvatarError}
+          />
+        ) : (
+          <div style={{ 
+            width: '36px', 
+            height: '36px', 
+            borderRadius: '50%', 
+            background: 'rgba(255,255,255,0.3)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            fontSize: '16px', 
+            color: 'white',
+            border: '2px solid rgba(255,255,255,0.5)'
+          }}>
+            {displayName?.[0] || '👤'}
           </div>
+        )}
+        <div>
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', margin: 0, fontWeight: 500 }}>
+            {displayName || '朋友'} 推荐
+          </p>
         </div>
-      ) : null
+      </div>
     );
 
     // Template A: 简洁版 (朋友圈)
