@@ -677,8 +677,114 @@ Deno.serve(async (req) => {
         status: 'received'
       });
 
-      // 处理文本消息 - 生成 AI 回复
+      // 处理文本消息 - 生成 AI 回复 + 异步同步用户资料
       if (MsgType === 'text' && Content) {
+        // 后台异步同步用户资料（用户发送消息后可获取真实昵称头像）
+        const syncProfileInBackground = async () => {
+          try {
+            const proxyUrl = Deno.env.get('WECHAT_PROXY_URL');
+            const proxyToken = Deno.env.get('WECHAT_PROXY_TOKEN');
+            const wechatAppId = Deno.env.get('WECHAT_APP_ID');
+            const appSecret = Deno.env.get('WECHAT_APP_SECRET');
+
+            if (!proxyUrl || !proxyToken) {
+              console.log('[MessageSync] Proxy not configured, skipping profile sync');
+              return;
+            }
+
+            // 获取 access_token
+            const baseUrl = proxyUrl.replace(/\/$/, '');
+            const tokenResp = await fetch(`${baseUrl}/wechat/token`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${proxyToken}`,
+              },
+              body: JSON.stringify({ appid: wechatAppId, secret: appSecret }),
+            });
+            const tokenData = await tokenResp.json();
+            const accessToken = tokenData.access_token;
+
+            if (!accessToken) {
+              console.log('[MessageSync] Failed to get access token');
+              return;
+            }
+
+            // 获取用户信息
+            const userInfoResp = await fetch(`${baseUrl}/wechat-proxy`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${proxyToken}`,
+              },
+              body: JSON.stringify({
+                target_url: `https://api.weixin.qq.com/cgi-bin/user/info?access_token=${accessToken}&openid=${FromUserName}&lang=zh_CN`,
+                method: 'GET',
+              }),
+            });
+            const userInfo = await userInfoResp.json();
+
+            // 检查是否获取到有效信息
+            if (userInfo.nickname && userInfo.nickname !== '微信用户' && userInfo.nickname !== '') {
+              console.log('[MessageSync] Got valid user info:', userInfo.nickname);
+
+              // 更新 wechat_user_mappings
+              await supabase
+                .from('wechat_user_mappings')
+                .update({
+                  nickname: userInfo.nickname,
+                  avatar_url: userInfo.headimgurl || null,
+                  subscribe_status: true,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('openid', FromUserName);
+
+              // 获取关联的用户 ID 并更新 profiles
+              const { data: mapping } = await supabase
+                .from('wechat_user_mappings')
+                .select('system_user_id')
+                .eq('openid', FromUserName)
+                .maybeSingle();
+
+              if (mapping?.system_user_id) {
+                // 检查 profiles 中的信息
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('display_name, avatar_url')
+                  .eq('id', mapping.system_user_id)
+                  .maybeSingle();
+
+                const updateData: Record<string, unknown> = {};
+                if (!profile?.display_name || profile.display_name === '微信用户') {
+                  updateData.display_name = userInfo.nickname;
+                }
+                if (!profile?.avatar_url) {
+                  updateData.avatar_url = userInfo.headimgurl;
+                }
+
+                if (Object.keys(updateData).length > 0) {
+                  await supabase
+                    .from('profiles')
+                    .update(updateData)
+                    .eq('id', mapping.system_user_id);
+
+                  console.log('[MessageSync] Updated profile for user:', mapping.system_user_id);
+                }
+              }
+            }
+          } catch (syncErr) {
+            console.error('[MessageSync] Error syncing profile:', syncErr);
+          }
+        };
+
+        // 不 await，让其在后台运行
+        const waitUntil = (globalThis as any)?.EdgeRuntime?.waitUntil;
+        if (typeof waitUntil === 'function') {
+          waitUntil(syncProfileInBackground());
+        } else {
+          syncProfileInBackground();
+        }
+
         try {
           const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
           
