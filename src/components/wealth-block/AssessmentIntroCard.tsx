@@ -62,7 +62,7 @@ const loginBenefits = [
 export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, onStart, onLogin, onPay }: AssessmentIntroCardProps) {
   const isMobile = isMobileDevice();
   
-  // 电脑端未登录时，点击开始测评需要先登录
+  // 处理支付按钮点击
   const handlePayClick = () => {
     // 已购买，直接开始测评
     if (hasPurchased) {
@@ -70,12 +70,7 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, onStart,
       return;
     }
     
-    if (!isMobile && !isLoggedIn) {
-      // 电脑端未登录，跳转到登录页
-      onLogin();
-      return;
-    }
-    // 移动端或已登录，正常支付流程
+    // 未购买，正常支付流程
     if (onPay) {
       onPay();
     } else {
@@ -217,12 +212,27 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, onStart,
             className="w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 text-white mt-2"
           >
             <Sparkles className="w-4 h-4 mr-2" />
-            {hasPurchased 
-              ? '继续测评' 
-              : (!isMobile && !isLoggedIn ? '登录后开始测评' : '¥9.9 开始测评')
-            }
+            {hasPurchased ? '继续测评' : '¥9.9 开始测评'}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
+          
+          {/* 已有账号登录入口 */}
+          {!isLoggedIn && (
+            <button
+              onClick={onLogin}
+              className="w-full mt-2 py-2 text-sm text-primary hover:underline flex items-center justify-center gap-1.5"
+            >
+              <LogIn className="w-4 h-4" />
+              已有账号？点击登录
+            </button>
+          )}
+          
+          {/* 已登录用户欢迎信息 */}
+          {isLoggedIn && !hasPurchased && (
+            <p className="text-center text-xs text-muted-foreground mt-2">
+              欢迎回来！点击上方按钮开始测评
+            </p>
+          )}
         </div>
       </Card>
 
@@ -551,10 +561,21 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, onStart,
             className="w-full h-14 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 text-white"
           >
             <span className="flex items-center gap-2">
-              {!isMobile && !isLoggedIn ? '登录后开始测评' : '立即测评'}
+              {hasPurchased ? '继续测评' : '立即测评'}
               <ArrowRight className="w-4 h-4" />
             </span>
           </Button>
+          
+          {/* 底部登录入口 */}
+          {!isLoggedIn && (
+            <button
+              onClick={onLogin}
+              className="w-full mt-3 py-2 text-sm text-primary hover:underline flex items-center justify-center gap-1.5"
+            >
+              <LogIn className="w-4 h-4" />
+              已有账号？点击登录
+            </button>
+          )}
           
           
           <p className="text-xs text-slate-400 pt-2 border-t border-amber-200 text-center">
