@@ -91,7 +91,7 @@ export function DeepFollowUpDialog({
       <motion.div
         initial={{ opacity: 0.01, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
         style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
       >
         <Card className="w-full max-w-md border-0 shadow-2xl">
@@ -101,9 +101,9 @@ export function DeepFollowUpDialog({
                 <Loader2 className="w-8 h-8 text-white animate-spin" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">AI 正在为你准备深度问题</h3>
+                <h3 className="text-lg font-semibold">测评已完成 🎉</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  基于你的测评结果，生成个性化追问...
+                  AI 正在根据你的回答，准备几个深入问题...
                 </p>
               </div>
             </div>
@@ -120,7 +120,7 @@ export function DeepFollowUpDialog({
       initial={{ opacity: 0.01 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0.01 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
       style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
     >
       <motion.div
@@ -151,7 +151,7 @@ export function DeepFollowUpDialog({
             </div>
           </div>
 
-          <CardContent className="p-5 space-y-5">
+          <CardContent className="p-5 space-y-5 max-h-[60vh] overflow-y-auto">
             {/* Question */}
             <AnimatePresence mode="wait">
               <motion.div
