@@ -325,7 +325,7 @@ export const CoachLayout = ({
 
   return (
     <>
-      <div className={`min-h-screen bg-gradient-to-br ${getThemeBackgroundGradient(primaryColor, themeConfig)} flex flex-col`}>
+      <div className={`min-h-screen min-h-dvh w-full max-w-full overflow-x-hidden bg-gradient-to-br ${getThemeBackgroundGradient(primaryColor, themeConfig)} flex flex-col`}>
         {/* Header */}
         <CoachHeader
           emoji={emoji}
@@ -374,7 +374,7 @@ export const CoachLayout = ({
         {/* Main Content */}
         <main 
           ref={mainRef}
-          className="flex-1 overflow-y-auto overscroll-none scroll-container"
+          className="flex-1 overflow-y-auto overflow-x-hidden overscroll-none scroll-container"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
