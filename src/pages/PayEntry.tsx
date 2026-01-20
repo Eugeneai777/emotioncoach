@@ -16,6 +16,7 @@ export default function PayEntry() {
   const paymentAuthCode = searchParams.get('code');
   const paymentRedirect = searchParams.get('payment_redirect');
   const payFlow = searchParams.get('pay_flow');
+  const authState = searchParams.get('state'); // 微信回调的 state 参数
   const isPaymentAuthCallback =
     searchParams.get('payment_auth_callback') === '1' &&
     !!paymentAuthCode &&
@@ -35,11 +36,13 @@ export default function PayEntry() {
       console.log('[PayEntry] code:', paymentAuthCode);
       console.log('[PayEntry] paymentRedirect:', paymentRedirect);
       console.log('[PayEntry] payFlow:', payFlow);
+      console.log('[PayEntry] authState:', authState);
 
       try {
         // 调用新的 wechat-pay-auth 函数换取 openId + tokenHash（自动登录/注册）
+        // 传递 state 参数以便识别是否是注册场景（用于获取用户头像昵称）
         const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
-          body: { code: paymentAuthCode },
+          body: { code: paymentAuthCode, state: authState },
         });
 
         console.log('[PayEntry] wechat-pay-auth response:', data, error);
@@ -94,7 +97,7 @@ export default function PayEntry() {
     };
 
     run();
-  }, [isPaymentAuthCallback, paymentAuthCode, paymentRedirect, payFlow]);
+  }, [isPaymentAuthCallback, paymentAuthCode, paymentRedirect, payFlow, authState]);
 
   useEffect(() => {
     if (isPaymentAuthCallback) return;

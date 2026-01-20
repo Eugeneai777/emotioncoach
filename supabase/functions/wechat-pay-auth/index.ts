@@ -31,7 +31,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { redirectUri, code, flow, openId: directOpenId, unionId: directUnionId, source } = body;
+    const { redirectUri, code, flow, openId: directOpenId, unionId: directUnionId, source, state } = body;
 
     // 模式3：小程序直接使用 openId 注册/登录（无需 OAuth 跳转）
     if (directOpenId && source === 'miniprogram') {
@@ -41,7 +41,7 @@ serve(async (req) => {
 
     // 模式2：用 code 换取 openId + 自动登录/注册
     if (code) {
-      return await exchangeCodeAndEnsureUser(code);
+      return await exchangeCodeAndEnsureUser(code, state);
     }
 
     // 模式1：生成授权 URL
@@ -389,8 +389,9 @@ async function tryGetUserInfo(openId: string): Promise<{ nickname?: string; avat
 
 /**
  * 用 code 换取 openId，并自动识别/创建用户，返回登录令牌
+ * @param state 微信回调的 state 参数，用于判断是否是注册场景
  */
-async function exchangeCodeAndEnsureUser(code: string): Promise<Response> {
+async function exchangeCodeAndEnsureUser(code: string, state?: string): Promise<Response> {
   const appId = Deno.env.get('WECHAT_APP_ID');
   const appSecret = Deno.env.get('WECHAT_APP_SECRET');
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -432,7 +433,13 @@ async function exchangeCodeAndEnsureUser(code: string): Promise<Response> {
 
   const openId = tokenData.openid;
   const snsAccessToken = tokenData.access_token; // OAuth 授权的 access_token，用于获取用户信息
-  const scope = tokenData.scope; // 授权范围：snsapi_base 或 snsapi_userinfo
+  const tokenScope = tokenData.scope; // 授权范围：snsapi_base 或 snsapi_userinfo
+  
+  // 通过 state 参数判断是否是注册场景（更可靠，因为 tokenData.scope 可能为空）
+  const isRegisterFlow = state?.startsWith('register_');
+  const shouldGetUserInfo = isRegisterFlow || tokenScope === 'snsapi_userinfo';
+  
+  console.log('[WechatPayAuth] Token response - scope:', tokenScope, 'state:', state, 'isRegisterFlow:', isRegisterFlow);
   
   if (!openId) {
     console.error('[WechatPayAuth] No openid in response');
@@ -442,27 +449,37 @@ async function exchangeCodeAndEnsureUser(code: string): Promise<Response> {
     );
   }
 
-  // 如果是 snsapi_userinfo 授权，可以直接通过 sns/userinfo 获取用户信息
+  // 如果是 snsapi_userinfo 授权（注册场景），通过 sns/userinfo 获取用户信息
   let snsUserInfo: { nickname?: string; avatar_url?: string } = {};
-  if (scope === 'snsapi_userinfo' && snsAccessToken) {
+  if (shouldGetUserInfo && snsAccessToken) {
     try {
       const snsUserInfoUrl = `https://api.weixin.qq.com/sns/userinfo?access_token=${snsAccessToken}&openid=${openId}&lang=zh_CN`;
+      console.log('[WechatPayAuth] Fetching user info from sns/userinfo...');
       const snsResponse = await fetch(snsUserInfoUrl);
       const snsData = await snsResponse.json();
       
-      if (snsData.nickname && snsData.nickname !== '微信用户') {
+      console.log('[WechatPayAuth] sns/userinfo response:', JSON.stringify({
+        errcode: snsData.errcode,
+        errmsg: snsData.errmsg,
+        nickname: snsData.nickname,
+        hasAvatar: !!snsData.headimgurl,
+      }));
+      
+      if (!snsData.errcode && snsData.nickname && snsData.nickname !== '微信用户') {
         snsUserInfo = {
           nickname: snsData.nickname,
           avatar_url: snsData.headimgurl,
         };
-        console.log('[WechatPayAuth] Got user info from sns/userinfo:', snsData.nickname);
+        console.log('[WechatPayAuth] Successfully got user info:', snsData.nickname);
+      } else if (snsData.errcode) {
+        console.error('[WechatPayAuth] sns/userinfo error:', snsData.errcode, snsData.errmsg);
       }
     } catch (e) {
       console.error('[WechatPayAuth] Error getting sns/userinfo:', e);
     }
   }
 
-  console.log('[WechatPayAuth] Got openId, scope:', scope, 'checking user mapping...');
+  console.log('[WechatPayAuth] Got openId, tokenScope:', tokenScope, 'snsUserInfo:', JSON.stringify(snsUserInfo), 'checking user mapping...');
 
   // 2. 创建 Supabase admin client
   const supabase = createClient(supabaseUrl, supabaseServiceKey, {
