@@ -507,7 +507,7 @@ export function QuickRegisterStep({
       const { data, error } = await supabase.functions.invoke('wechat-pay-auth', {
         body: {
           redirectUri: window.location.href,
-          flow: 'register_after_payment'
+          flow: 'register' // 使用 register 以获取用户头像昵称
         }
       });
       
