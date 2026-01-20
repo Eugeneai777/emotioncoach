@@ -1283,6 +1283,26 @@ export function WechatPayDialog({ open, onOpenChange, packageInfo, onSuccess, re
                      </p>
                    )}
 
+                  {/* 桌面端显示立即支付按钮 */}
+                  {!isMobile && (
+                    <Button asChild className="w-full gap-2 bg-[#07C160] hover:bg-[#06AD56] text-white">
+                      <a
+                        href={h5PayLink || '#'}
+                        target="_top"
+                        rel="noopener noreferrer"
+                        onClick={(e) => {
+                          if (!h5PayLink) {
+                            e.preventDefault();
+                            toast.error('支付链接未生成，请稍后重试');
+                          }
+                        }}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        立即支付
+                      </a>
+                    </Button>
+                  )}
+
                    {(h5PayLink || h5Url || payUrl) && (
                      <Button
                        type="button"
