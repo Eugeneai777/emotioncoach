@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet";
 import { usePageOG } from "@/hooks/usePageOG";
 import { OG_BASE_URL } from "@/config/ogConfig";
 import { useWechatShare } from "@/hooks/useWechatShare";
+import { getPromotionDomain } from "@/utils/partnerQRUtils";
 
 interface DynamicOGMetaProps {
   pageKey: string;
@@ -55,14 +56,17 @@ export function DynamicOGMeta({ pageKey, overrides }: DynamicOGMetaProps) {
     twitterCard: ogConfig.twitterCard || 'summary_large_image',
   };
 
-  // 生成 Canonical URL (移除查询参数如 ?ref=xxx)
-  const canonicalUrl = finalConfig.url?.split('?')[0] || `${OG_BASE_URL}${window.location.pathname}`;
+  // 生成 Canonical URL (移除查询参数/Hash，保证分享/SEO 入口稳定)
+  const baseDomain = getPromotionDomain() || OG_BASE_URL;
+  const fallbackUrl = `${baseDomain}${window.location.pathname}`;
+  const canonicalUrl = (finalConfig.url || fallbackUrl).split('?')[0].split('#')[0];
 
   // 微信 JS-SDK 分享配置
   useWechatShare({
     title: finalConfig.ogTitle,
     desc: finalConfig.description,
-    link: finalConfig.url,
+    // 统一使用 canonicalUrl，避免带 ref 等参数导致微信“首次分享”命中默认/旧缓存
+    link: canonicalUrl,
     imgUrl: finalConfig.image,
   });
 

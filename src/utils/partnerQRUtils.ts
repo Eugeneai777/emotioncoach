@@ -15,9 +15,8 @@ export const isProductionEnv = (): boolean => {
  * Get the base domain for partner promotion URLs
  */
 export const getPromotionDomain = (): string => {
-  if (isProductionEnv()) {
-    return window.location.origin;
-  }
+  // 外部分享/二维码必须统一指向生产域名，避免在预览/多域名访问时导致微信分享不稳定或链接失效。
+  // 注意：支付/OAuth 等内部回跳仍应使用 window.location.origin（不走这里）。
   return PRODUCTION_DOMAIN;
 };
 
