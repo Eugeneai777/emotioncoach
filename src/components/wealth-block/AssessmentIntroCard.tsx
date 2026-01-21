@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Target, BarChart3, FileText, Check, LogIn, ArrowRight, AlertTriangle, TrendingDown, Shield, Sparkles, Brain } from "lucide-react";
+import { Target, BarChart3, FileText, Check, LogIn, ArrowRight, AlertTriangle, TrendingDown, Shield, Sparkles, Brain, Loader2 } from "lucide-react";
 import { AIComparisonCard } from "./AIComparisonCard";
 import { AssessmentFlowCard } from "./AssessmentFlowCard";
 import { AssessmentPreviewCard } from "./AssessmentPreviewCard";
@@ -15,6 +15,7 @@ const isMobileDevice = () => {
 interface AssessmentIntroCardProps {
   isLoggedIn: boolean;
   hasPurchased?: boolean; // 是否已购买测评
+  isLoading?: boolean; // 新增：是否正在加载登录/购买状态
   onStart: () => void;
   onLogin: () => void;
   onPay?: () => void; // 新增：支付按钮回调
@@ -59,7 +60,7 @@ const loginBenefits = [
   "获得AI教练个性化指导",
 ];
 
-export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, onStart, onLogin, onPay }: AssessmentIntroCardProps) {
+export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isLoading = false, onStart, onLogin, onPay }: AssessmentIntroCardProps) {
   const isMobile = isMobileDevice();
   
   // 处理支付按钮点击
@@ -208,12 +209,22 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, onStart,
           {/* 首屏CTA按钮 */}
           <Button
             onClick={handlePayClick}
+            disabled={isLoading}
             size="lg"
-            className="w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 text-white mt-2"
+            className="w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 shadow-lg shadow-amber-500/30 border-0 text-white mt-2 disabled:opacity-70"
           >
-            <Sparkles className="w-4 h-4 mr-2" />
-            {hasPurchased ? '继续测评' : '¥9.9 开始测评'}
-            <ArrowRight className="w-4 h-4 ml-2" />
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                加载中...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                {hasPurchased ? '继续测评' : '¥9.9 开始测评'}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </>
+            )}
           </Button>
           
           {/* 已有账号登录入口 */}

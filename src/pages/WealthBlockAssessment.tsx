@@ -9,6 +9,7 @@ import { ArrowLeft, ClipboardList, History, TrendingUp, Share2, Sparkles, Chevro
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { WealthBlockQuestions } from "@/components/wealth-block/WealthBlockQuestions";
 import { WealthBlockResult } from "@/components/wealth-block/WealthBlockResult";
@@ -28,7 +29,7 @@ import { useAssessmentPurchase } from "@/hooks/useAssessmentPurchase";
 export default function WealthBlockAssessmentPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "assessment");
   const [showIntro, setShowIntro] = useState(true);
@@ -733,10 +734,19 @@ export default function WealthBlockAssessmentPage() {
               </div>
             )}
             
-            {!isRedirectingForAuth && showIntro && !showResult ? (
+            {/* 登录状态加载中 */}
+            {!isRedirectingForAuth && (authLoading || isPurchaseLoading) && (
+              <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                <Loader2 className="w-10 h-10 text-amber-500 animate-spin" />
+                <p className="text-muted-foreground text-sm">正在加载...</p>
+              </div>
+            )}
+            
+            {!isRedirectingForAuth && !authLoading && !isPurchaseLoading && showIntro && !showResult ? (
                 <AssessmentIntroCard
                   isLoggedIn={!!user}
                   hasPurchased={hasPurchased}
+                  isLoading={false}
                   onStart={() => {
                     // 埋点：开始测评
                     trackEvent('assessment_started');
