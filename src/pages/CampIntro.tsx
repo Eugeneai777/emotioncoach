@@ -102,13 +102,7 @@ const CampIntro = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white pb-24">
-      <DynamicOGMeta 
-        pageKey="campIntro"
-        overrides={{
-          title: `${campTemplate?.camp_name || '训练营'} - 有劲AI`,
-          ogTitle: campTemplate?.camp_name || '训练营'
-        }}
-      />
+      <DynamicOGMeta pageKey="campIntro" />
       {/* Header */}
       <header className="border-b border-purple-200/50 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-6xl mx-auto px-4 py-3">
