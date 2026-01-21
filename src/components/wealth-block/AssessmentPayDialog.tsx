@@ -246,7 +246,26 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       if (openIdFetchedRef.current) return;
       openIdFetchedRef.current = true;
 
-      // 已登录用户：尝试从数据库获取 openId
+      // ⚠️ 小程序环境：必须使用小程序 openId（mp_openid），不能使用公众号 openId
+      // 小程序 openId 只能从 URL 参数或 sessionStorage 获取（由小程序启动时传入）
+      // 数据库中存储的是公众号 openId，不能用于小程序支付！
+      if (isMiniProgram) {
+        // 尝试从 URL 或 sessionStorage 获取小程序 openId
+        const mpOpenId = new URLSearchParams(window.location.search).get("mp_openid") 
+          || sessionStorage.getItem("wechat_mp_openid");
+        
+        if (mpOpenId) {
+          console.log("[AssessmentPay] MiniProgram using mp_openid from URL/session:", mpOpenId.substring(0, 8) + "...");
+          setUserOpenId(mpOpenId);
+          setOpenIdResolved(true);
+        } else {
+          console.warn("[AssessmentPay] MiniProgram: no mp_openid available, will request from native");
+          setOpenIdResolved(true);
+        }
+        return;
+      }
+
+      // 已登录用户（非小程序）：从数据库获取公众号 openId
       if (userId) {
         try {
           const { data: mapping } = await supabase
@@ -256,7 +275,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
             .maybeSingle();
 
           if (mapping?.openid) {
-            console.log("[AssessmentPay] Found user openId from database");
+            console.log("[AssessmentPay] Found user openId from database (公众号)");
             setUserOpenId(mapping.openid);
             setOpenIdResolved(true);
             return;
@@ -264,16 +283,6 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
         } catch (error) {
           console.error("[AssessmentPay] Failed to fetch user openId:", error);
         }
-      }
-
-      // 小程序环境：直接标记为 resolved，让订单创建流程走下去
-      // ⚠️ 重要：postMessage 无法实时通信，所以不再通过 postMessage 获取 openId
-      // 改为：创建订单时使用 payType='miniprogram'，后端不校验 openId，
-      // 然后跳转到小程序原生支付页面，由小程序原生端获取 openId 并调用 wx.requestPayment
-      if (isMiniProgram) {
-        console.log("[AssessmentPay] MiniProgram environment, will use native bridge for payment");
-        setOpenIdResolved(true);
-        return;
       }
 
       // 微信浏览器下没有 openId：触发静默授权
