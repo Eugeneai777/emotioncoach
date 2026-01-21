@@ -277,15 +277,7 @@ const DynamicCoach = () => {
 
   return (
     <>
-      <DynamicOGMeta 
-        pageKey={`coach_${coachKey}`}
-        overrides={{
-          title: `${template?.title || '教练对话'} - 有劲AI`,
-          ogTitle: template?.title || '教练',
-          description: template?.description || '与AI教练深度对话，获得专业指导',
-          url: `${OG_BASE_URL}/coach/${coachKey}`,
-        }}
-      />
+      <DynamicOGMeta pageKey={`coach_${coachKey}`} />
       {tourKey && pageTourConfig[tourKey] && (
         <PageTour
           steps={pageTourConfig[tourKey]}
