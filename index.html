@@ -18,8 +18,27 @@
     <meta name="twitter:description" content="温暖陪伴 × 系统工具 × 成长社群，陪你持续向前" />
     <meta name="twitter:image" content="https://wechat.eugenewe.net/og-youjin-ai.png" />
     
-    <!-- 微信 JS-SDK -->
-    <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+    <!-- 微信 JS-SDK: 异步加载，不阻塞首屏渲染 -->
+    <script>
+      (function() {
+        var loaded = false;
+        function loadWxSdk() {
+          if (loaded) return;
+          loaded = true;
+          var s = document.createElement('script');
+          s.src = 'https://res.wx.qq.com/open/js/jweixin-1.6.0.js';
+          s.async = true;
+          document.head.appendChild(s);
+        }
+        // 页面可交互后加载，或 2 秒后兜底加载
+        if (document.readyState === 'complete') {
+          setTimeout(loadWxSdk, 100);
+        } else {
+          window.addEventListener('load', function() { setTimeout(loadWxSdk, 100); });
+        }
+        setTimeout(loadWxSdk, 2000);
+      })();
+    </script>
 </head>
 
   <body>
