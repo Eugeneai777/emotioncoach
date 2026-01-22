@@ -1,9 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, differenceInDays } from "date-fns";
+import { CheckCircle2, XCircle, Clock, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, differenceInDays, addMonths, subMonths, isBefore, isAfter } from "date-fns";
+import { zhCN } from "date-fns/locale";
 import { getTodayStartInBeijing, parseDateInBeijing } from "@/utils/dateUtils";
+import { useState } from "react";
 
 interface CheckInRecord {
   date: string;
@@ -31,12 +33,34 @@ const CampProgressCalendar = ({
 }: CampProgressCalendarProps) => {
   const campStartDate = parseDateInBeijing(startDate);
   const today = getTodayStartInBeijing();
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
+  
+  // 当前显示的月份
+  const [displayMonth, setDisplayMonth] = useState(today);
+  
+  const monthStart = startOfMonth(displayMonth);
+  const monthEnd = endOfMonth(displayMonth);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   // 动态计算当前是第几天（从1开始）
   const calculatedCurrentDay = Math.max(1, differenceInDays(today, campStartDate) + 1);
+  
+  // 判断是否可以导航到上/下个月
+  const campStartMonth = startOfMonth(campStartDate);
+  const currentMonth = startOfMonth(today);
+  const canGoPrev = !isBefore(monthStart, campStartMonth);
+  const canGoNext = !isAfter(monthStart, currentMonth);
+  
+  const handlePrevMonth = () => {
+    if (canGoPrev) {
+      setDisplayMonth(prev => subMonths(prev, 1));
+    }
+  };
+  
+  const handleNextMonth = () => {
+    if (canGoNext) {
+      setDisplayMonth(prev => addMonths(prev, 1));
+    }
+  };
 
   const getDateStatus = (date: Date): CheckInRecord => {
     const dateStr = format(date, "yyyy-MM-dd");
@@ -124,6 +148,31 @@ const CampProgressCalendar = ({
           <Badge variant="secondary">
             已打卡 {checkInDates.length}/{calculatedCurrentDay} 天
           </Badge>
+        </div>
+        
+        {/* 月份导航 */}
+        <div className="flex items-center justify-between mt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handlePrevMonth}
+            disabled={!canGoPrev}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="font-medium text-sm">
+            {format(displayMonth, "yyyy年MM月", { locale: zhCN })}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleNextMonth}
+            disabled={!canGoNext}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
