@@ -104,8 +104,8 @@ export function AwakeningJourneyPreview({
   // 7天目标：起点 + 15~25（取中位数20）
   const day7Target = Math.min(awakeningStart + 20, 95);
   
-  // 毕业目标：80+ 高度觉醒
-  const graduateTarget = 80;
+  // 毕业目标：至少比7天目标高5分，且不低于85
+  const graduateTarget = Math.max(day7Target + 5, 85);
   
   // 三层觉醒百分比计算 (0-50分 -> 0-100%觉醒)
   const getAwakeningPercent = (score: number, max: number = 50) => {
