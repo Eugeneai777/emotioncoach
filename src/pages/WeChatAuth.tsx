@@ -319,6 +319,9 @@ export default function WeChatAuth() {
             </div>
             <CardTitle className="text-teal-700">微信注册</CardTitle>
             <CardDescription>请先阅读并同意服务条款</CardDescription>
+            <div className="mt-3 text-xs text-amber-600 bg-amber-50 rounded-md px-3 py-2">
+              💡 已有邮箱账号？请先<Link to="/auth" className="text-primary underline mx-0.5 font-medium">登录</Link>后在设置中绑定微信，避免创建重复账户
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-start gap-2">

@@ -602,6 +602,16 @@ export function QuickRegisterStep({
                 <p className="text-sm text-muted-foreground text-center">
                   {isMiniProgram ? '点击下方按钮一键登录' : '点击下方按钮使用微信授权登录'}
                 </p>
+                <p className="text-xs text-amber-600 bg-amber-50 rounded-md px-3 py-1.5 mt-2">
+                  💡 已有邮箱账号？请先
+                  <button 
+                    onClick={() => setRegisterMode('login')} 
+                    className="text-primary underline mx-0.5 font-medium"
+                  >
+                    登录
+                  </button>
+                  后在设置中绑定微信
+                </p>
               </div>
               
               {/* 服务条款同意 */}
