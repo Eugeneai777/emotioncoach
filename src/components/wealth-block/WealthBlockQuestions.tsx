@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,12 +18,23 @@ import {
 import { FollowUpDialog, FollowUpData } from "./FollowUpDialog";
 import { DeepFollowUpDialog, DeepFollowUp, DeepFollowUpAnswer } from "./DeepFollowUpDialog";
 import { AssessmentStartScreen } from "./AssessmentStartScreen";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface WealthBlockQuestionsProps {
   onComplete: (result: AssessmentResult, answers: Record<number, number>, followUpInsights?: FollowUpAnswer[], deepFollowUpAnswers?: DeepFollowUpAnswer[]) => void;
+  onExit?: () => void;
 }
 
-export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) {
+export function WealthBlockQuestions({ onComplete, onExit }: WealthBlockQuestionsProps) {
   // 新增：开始前介绍页状态
   const [showStartScreen, setShowStartScreen] = useState(true);
   
@@ -51,6 +62,9 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
     answers: Record<number, number>;
     followUpInsights?: FollowUpAnswer[];
   } | null>(null);
+  
+  // 退出确认弹窗状态
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const currentQuestion = questions[currentIndex];
   const answeredCount = Object.keys(answers).length;
@@ -302,11 +316,48 @@ export function WealthBlockQuestions({ onComplete }: WealthBlockQuestionsProps) 
         />
       )}
 
+      {/* 退出确认弹窗 */}
+      <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认退出？</AlertDialogTitle>
+            <AlertDialogDescription>
+              你已回答了 {answeredCount} 道题目，退出后进度将不会保存。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>继续答题</AlertDialogCancel>
+            <AlertDialogAction onClick={() => onExit?.()}>
+              确认退出
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* 进度指示 */}
       <div className="space-y-3 mb-6 pt-2">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">答题进度</span>
-          <div className="flex items-center gap-2">
+          {/* 左侧：退出按钮 */}
+          {onExit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-destructive -ml-2"
+              onClick={() => {
+                if (answeredCount > 0) {
+                  setShowExitConfirm(true);
+                } else {
+                  onExit();
+                }
+              }}
+            >
+              <X className="w-4 h-4 mr-1" />
+              退出
+            </Button>
+          )}
+          
+          {/* 右侧：进度信息 */}
+          <div className="flex items-center gap-2 ml-auto">
             {followUpAnswers.length > 0 && (
               <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                 💬 {followUpAnswers.length}个追问

@@ -777,7 +777,7 @@ export default function WealthBlockAssessmentPage() {
                   />
                 </div>
               ) : (
-                <WealthBlockQuestions onComplete={handleComplete} />
+                <WealthBlockQuestions onComplete={handleComplete} onExit={() => setShowIntro(true)} />
               )}
             </motion.div>
           </TabsContent>
