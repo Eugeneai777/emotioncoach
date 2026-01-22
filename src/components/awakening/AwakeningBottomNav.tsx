@@ -9,13 +9,10 @@ const AwakeningBottomNav: React.FC = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const leftActions = [
+  const quickActions = [
     { id: 'feedback', icon: MessageCircle, label: '建议', route: '/customer-support', color: 'from-blue-400 to-blue-500' },
     { id: 'emotion', icon: Heart, label: '情绪按钮', route: '/emotion-button', color: 'from-pink-400 to-pink-500' },
     { id: 'alive', icon: Zap, label: '死了吗', route: '/alive-check', color: 'from-amber-400 to-amber-500' },
-  ];
-
-  const rightActions = [
     { id: 'courses', icon: GraduationCap, label: '学习课程', route: '/courses', color: 'from-green-400 to-green-500' },
     { id: 'products', icon: Package, label: '产品中心', route: '/packages', color: 'from-emerald-400 to-emerald-500' },
     { id: 'coach', icon: Users, label: '教练空间', route: '/coach-space', color: 'from-rose-400 to-rose-500' },
@@ -56,49 +53,25 @@ const AwakeningBottomNav: React.FC = () => {
             style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
             className="fixed bottom-24 left-0 right-0 z-50 px-4"
           >
-            <div className="flex items-center justify-center gap-2">
-              {/* 左侧 3 个 */}
-              <div className="flex gap-2">
-                {leftActions.map((action, i) => (
-                  <motion.button
-                    key={action.id}
-                    initial={{ scale: 0, x: 20, opacity: 0.01 }}
-                    animate={{ scale: 1, x: 0, opacity: 1 }}
-                    exit={{ scale: 0, x: 20, opacity: 0.01 }}
-                    transition={{ delay: i * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
-                    style={{ transform: 'translateZ(0)' }}
-                    onClick={() => handleQuickAction(action.route)}
-                    className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-gradient-to-br ${action.color} shadow-lg w-[68px] h-[68px]`}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <action.icon className="w-5 h-5 text-white" />
-                    <span className="text-[9px] text-white font-medium text-center leading-tight">{action.label}</span>
-                  </motion.button>
-                ))}
-              </div>
-              
-              {/* 中间留空给凸起按钮 */}
-              <div className="w-16" />
-              
-              {/* 右侧 3 个 */}
-              <div className="flex gap-2">
-                {rightActions.map((action, i) => (
-                  <motion.button
-                    key={action.id}
-                    initial={{ scale: 0, x: -20, opacity: 0.01 }}
-                    animate={{ scale: 1, x: 0, opacity: 1 }}
-                    exit={{ scale: 0, x: -20, opacity: 0.01 }}
-                    transition={{ delay: (i + 3) * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
-                    style={{ transform: 'translateZ(0)' }}
-                    onClick={() => handleQuickAction(action.route)}
-                    className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-gradient-to-br ${action.color} shadow-lg w-[68px] h-[68px]`}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <action.icon className="w-5 h-5 text-white" />
-                    <span className="text-[9px] text-white font-medium text-center leading-tight">{action.label}</span>
-                  </motion.button>
-                ))}
-              </div>
+            {/* 3列2行网格布局，适配手机屏幕 */}
+            <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
+              {quickActions.map((action, i) => (
+                <motion.button
+                  key={action.id}
+                  initial={{ scale: 0, opacity: 0.01 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0.01 }}
+                  transition={{ delay: i * 0.03, type: 'spring', stiffness: 300, damping: 20 }}
+                  style={{ transform: 'translateZ(0)' }}
+                  onClick={() => handleQuickAction(action.route)}
+                  className={`flex flex-col items-center justify-center gap-1 p-3 rounded-xl 
+                              bg-gradient-to-br ${action.color} shadow-lg aspect-square`}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <action.icon className="w-6 h-6 text-white" />
+                  <span className="text-[10px] text-white font-medium text-center leading-tight">{action.label}</span>
+                </motion.button>
+              ))}
             </div>
           </motion.div>
         )}
