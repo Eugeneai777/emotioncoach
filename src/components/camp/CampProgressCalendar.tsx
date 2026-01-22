@@ -2,7 +2,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Clock, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, differenceInDays, addMonths, subMonths, isBefore, isAfter } from "date-fns";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  parseISO,
+  differenceInDays,
+  addMonths,
+  subMonths,
+  isBefore,
+  isAfter,
+} from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { getTodayStartInBeijing, parseDateInBeijing } from "@/utils/dateUtils";
 import { useState } from "react";
@@ -44,11 +56,11 @@ const CampProgressCalendar = ({
   // 动态计算当前是第几天（从1开始）
   const calculatedCurrentDay = Math.max(1, differenceInDays(today, campStartDate) + 1);
   
-  // 判断是否可以导航到上/下个月
+  // 判断是否可以导航到上/下个月（限制在“训练营开始月份”到“当前月份”之间）
   const campStartMonth = startOfMonth(campStartDate);
   const currentMonth = startOfMonth(today);
-  const canGoPrev = !isBefore(monthStart, campStartMonth);
-  const canGoNext = !isAfter(monthStart, currentMonth);
+  const canGoPrev = isAfter(monthStart, campStartMonth);
+  const canGoNext = isBefore(monthStart, currentMonth);
   
   const handlePrevMonth = () => {
     if (canGoPrev) {
@@ -157,21 +169,25 @@ const CampProgressCalendar = ({
             size="sm"
             onClick={handlePrevMonth}
             disabled={!canGoPrev}
-            className="h-8 w-8 p-0"
+            className="h-8 px-2"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            上月
           </Button>
+
           <span className="font-medium text-sm">
             {format(displayMonth, "yyyy年MM月", { locale: zhCN })}
           </span>
+
           <Button
             variant="ghost"
             size="sm"
             onClick={handleNextMonth}
             disabled={!canGoNext}
-            className="h-8 w-8 p-0"
+            className="h-8 px-2"
           >
-            <ChevronRight className="h-4 w-4" />
+            下月
+            <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         </div>
       </CardHeader>
