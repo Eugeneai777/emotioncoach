@@ -13,6 +13,7 @@ import { TrainingCamp } from "@/types/trainingCamp";
 import CampProgressCalendar from "@/components/camp/CampProgressCalendar";
 import CampDailyTaskList from "@/components/camp/CampDailyTaskList";
 import CampShareDialog from "@/components/camp/CampShareDialog";
+import DayDetailDialog from "@/components/camp/DayDetailDialog";
 import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { getTodayCST, getCSTStartUTC, formatDateCST, formatInCST, getDaysSinceStart } from "@/utils/dateUtils";
@@ -29,6 +30,8 @@ const CampCheckIn = () => {
   const [latestBriefing, setLatestBriefing] = useState<any>(null);
   const [todayProgress, setTodayProgress] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("checkin");
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showDayDetail, setShowDayDetail] = useState(false);
 
   useEffect(() => {
     if (user && campId) {
@@ -459,6 +462,12 @@ const CampCheckIn = () => {
                 currentDay={calculatedCurrentDay}
                 makeupDaysLimit={1}
                 onMakeupCheckIn={handleMakeupCheckIn}
+                onDayClick={(date, isCheckedIn) => {
+                  if (isCheckedIn) {
+                    setSelectedDate(date);
+                    setShowDayDetail(true);
+                  }
+                }}
               />
             </TabsContent>
 
@@ -485,6 +494,17 @@ const CampCheckIn = () => {
           emotionIntensity={latestBriefing?.emotion_intensity}
           insight={latestBriefing?.insight}
           action={latestBriefing?.action}
+        />
+      )}
+
+      {/* 历史打卡详情弹窗 */}
+      {user && campId && (
+        <DayDetailDialog
+          open={showDayDetail}
+          onOpenChange={setShowDayDetail}
+          campId={campId}
+          userId={user.id}
+          date={selectedDate}
         />
       )}
     </div>

@@ -18,6 +18,7 @@ interface CampProgressCalendarProps {
   currentDay: number;
   makeupDaysLimit: number;
   onMakeupCheckIn?: (date: string) => void;
+  onDayClick?: (date: string, isCheckedIn: boolean) => void;
 }
 
 const CampProgressCalendar = ({
@@ -26,6 +27,7 @@ const CampProgressCalendar = ({
   currentDay: propCurrentDay,
   makeupDaysLimit,
   onMakeupCheckIn,
+  onDayClick,
 }: CampProgressCalendarProps) => {
   const campStartDate = parseDateInBeijing(startDate);
   const today = getTodayStartInBeijing();
@@ -85,7 +87,13 @@ const CampProgressCalendar = ({
             {dayNum}
           </span>
           {status.completed && (
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            <button
+              className="flex flex-col items-center gap-0.5 hover:bg-green-50 dark:hover:bg-green-950/30 rounded-lg p-1 transition-colors"
+              onClick={() => onDayClick?.(status.date, true)}
+            >
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <span className="text-[10px] text-green-600 dark:text-green-400">查看</span>
+            </button>
           )}
           {!status.completed && status.canMakeup && (
             <Button
