@@ -4,10 +4,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, MessageSquare, Play, CheckCircle2, ExternalLink } from "lucide-react";
+import { Loader2, MessageSquare, Play, CheckCircle2, ExternalLink, RefreshCw } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { getDateRangeUTC } from "@/utils/dateUtils";
+import { toast } from "sonner";
 
 interface DayDetailDialogProps {
   open: boolean;
@@ -45,6 +46,7 @@ interface VideoRecommendation {
 
 const DayDetailDialog = ({ open, onOpenChange, campId, userId, date }: DayDetailDialogProps) => {
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [briefing, setBriefing] = useState<Briefing | null>(null);
   const [recommendations, setRecommendations] = useState<VideoRecommendation[]>([]);
 
@@ -114,6 +116,56 @@ const DayDetailDialog = ({ open, onOpenChange, campId, userId, date }: DayDetail
     }
 
     setRecommendations((data as VideoRecommendation[]) || []);
+  };
+
+  // 为历史简报生成推荐课程
+  const generateRecommendationsForBriefing = async () => {
+    if (!briefing || !date || !campId || !userId) return;
+    
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("recommend-courses", {
+        body: {
+          briefing: {
+            emotion_theme: briefing.emotion_theme,
+            emotion_intensity: briefing.emotion_intensity,
+            insight: briefing.insight,
+            action: briefing.action,
+          },
+          coachType: 'emotion',
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.recommendations && Array.isArray(data.recommendations) && data.recommendations.length > 0) {
+        const topRecommendations = data.recommendations.slice(0, 3);
+        
+        for (const rec of topRecommendations) {
+          await supabase
+            .from("camp_video_tasks")
+            .insert({
+              camp_id: campId,
+              user_id: userId,
+              video_id: rec.id,
+              progress_date: date,
+              reason: rec.reason,
+              match_score: rec.match_score,
+            });
+        }
+
+        // 重新加载推荐
+        await loadRecommendationsForDate();
+        toast.success("已生成推荐课程");
+      } else {
+        toast.info("暂无匹配的推荐课程");
+      }
+    } catch (error) {
+      console.error("生成推荐失败:", error);
+      toast.error("生成推荐失败，请重试");
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const getIntensityColor = (intensity: number | null) => {
@@ -249,6 +301,32 @@ const DayDetailDialog = ({ open, onOpenChange, campId, userId, date }: DayDetail
                     </Card>
                   ))}
                 </div>
+              ) : briefing ? (
+                <Card className="p-4 bg-muted/30 border-dashed">
+                  <div className="text-center space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      该简报暂无推荐课程
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={generateRecommendationsForBriefing}
+                      disabled={generating}
+                    >
+                      {generating ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          生成中...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          生成推荐课程
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </Card>
               ) : (
                 <Card className="p-4 bg-muted/30 border-dashed">
                   <p className="text-sm text-muted-foreground text-center">
