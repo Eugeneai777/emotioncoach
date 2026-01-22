@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { CheckCircle2, Sparkles, X } from "lucide-react";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface AliveWitnessCardProps {
   open: boolean;
@@ -35,6 +36,10 @@ export const AliveWitnessCard = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden border-rose-200 dark:border-rose-800">
+        <VisuallyHidden>
+          <DialogTitle>打卡成功</DialogTitle>
+          <DialogDescription>今天的生命见证卡片</DialogDescription>
+        </VisuallyHidden>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -127,7 +132,10 @@ export const AliveWitnessCard = ({
                 <Button
                   onClick={() => {
                     onOpenChange(false);
-                    onProceedToAwakening();
+                    // 延时确保 Dialog 关闭动画完成后再触发下一个
+                    setTimeout(() => {
+                      onProceedToAwakening();
+                    }, 100);
                   }}
                   className="flex-1 bg-white/30 hover:bg-white/40 text-white border-0"
                 >

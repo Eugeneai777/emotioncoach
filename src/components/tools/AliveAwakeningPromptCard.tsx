@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { awakeningDimensions, AwakeningDimension } from "@/config/awakeningConfig";
 import { X } from "lucide-react";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface AliveAwakeningPromptCardProps {
   open: boolean;
@@ -18,6 +19,10 @@ export const AliveAwakeningPromptCard = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden border-rose-200 dark:border-rose-800">
+        <VisuallyHidden>
+          <DialogTitle>选择觉察维度</DialogTitle>
+          <DialogDescription>选择一个维度开始觉察练习</DialogDescription>
+        </VisuallyHidden>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
