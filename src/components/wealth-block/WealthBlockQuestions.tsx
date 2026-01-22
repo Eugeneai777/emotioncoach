@@ -188,10 +188,13 @@ export function WealthBlockQuestions({ onComplete, onExit }: WealthBlockQuestion
   // 如果显示开始介绍页，先渲染它 (all hooks must be called above this line)
   if (showStartScreen) {
     console.log('[WealthBlockQuestions] Showing start screen');
-    return <AssessmentStartScreen onStart={() => {
-      console.log('[WealthBlockQuestions] Start screen clicked, entering questions');
-      setShowStartScreen(false);
-    }} />;
+    return <AssessmentStartScreen 
+      onStart={() => {
+        console.log('[WealthBlockQuestions] Start screen clicked, entering questions');
+        setShowStartScreen(false);
+      }}
+      onBack={onExit}
+    />;
   }
   
   console.log('[WealthBlockQuestions] Showing questions, currentIndex:', currentIndex);

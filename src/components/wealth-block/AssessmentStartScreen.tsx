@@ -1,13 +1,14 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, Play, Lock } from "lucide-react";
+import { Heart, Play, Lock, ArrowLeft } from "lucide-react";
 
 interface AssessmentStartScreenProps {
   onStart: () => void;
+  onBack?: () => void;
 }
 
-export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
+export function AssessmentStartScreen({ onStart, onBack }: AssessmentStartScreenProps) {
   const tips = [
     "没有对错，如实作答即可",
     "点击 1-5 选择最接近你的选项",
@@ -15,7 +16,26 @@ export function AssessmentStartScreen({ onStart }: AssessmentStartScreenProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-4 flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-4 flex flex-col items-center justify-center relative">
+      {/* 返回按钮 */}
+      {onBack && (
+        <motion.div
+          initial={{ opacity: 0.01 }}
+          animate={{ opacity: 1 }}
+          className="absolute top-4 left-4"
+          style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            返回
+          </Button>
+        </motion.div>
+      )}
       <motion.div
         initial={{ opacity: 0.01, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
