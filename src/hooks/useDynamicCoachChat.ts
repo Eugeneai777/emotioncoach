@@ -323,6 +323,12 @@ export const useDynamicCoachChat = (
 
     setIsLoading(true);
 
+    // 创建 AbortController 用于超时控制
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 60000); // 60秒超时
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("未登录");
@@ -339,6 +345,7 @@ export const useDynamicCoachChat = (
             messages: nextMessages,
             mode: chatMode,
           }),
+          signal: controller.signal,
         }
       );
 
@@ -361,9 +368,23 @@ export const useDynamicCoachChat = (
       const toolCallsMap: Record<number, { id: string; function: { name: string; arguments: string } }> = {};
 
       if (reader) {
+        // SSE 流读取超时保护
+        let lastActivityTime = Date.now();
+        const streamTimeoutMs = 30000; // 30秒无数据则超时
+        
         while (true) {
+          // 检查是否超时
+          if (Date.now() - lastActivityTime > streamTimeoutMs) {
+            console.warn("SSE 流读取超时，终止连接");
+            reader.cancel();
+            break;
+          }
+          
           const { done, value } = await reader.read();
           if (done) break;
+          
+          // 收到数据，更新活动时间
+          lastActivityTime = Date.now();
 
           const chunk = decoder.decode(value, { stream: true });
           sseBuffer += chunk;
@@ -683,12 +704,24 @@ export const useDynamicCoachChat = (
         await saveMessage(convId, "assistant", assistantMessage);
       }
 
+      // 清理超时定时器
+      clearTimeout(timeoutId);
       setIsLoading(false);
     } catch (error: any) {
+      // 清理超时定时器
+      clearTimeout(timeoutId);
+      
       console.error("发送消息失败:", error);
+      
+      // 处理超时/中止错误
+      const isAborted = error.name === 'AbortError' || error.message?.includes('abort');
+      const errorMessage = isAborted 
+        ? "请求超时，请检查网络后重试" 
+        : (error.message || "请稍后重试");
+      
       toast({
         title: "发送失败",
-        description: error.message || "请稍后重试",
+        description: errorMessage,
         variant: "destructive",
       });
       setIsLoading(false);
