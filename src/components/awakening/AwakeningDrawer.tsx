@@ -174,8 +174,8 @@ const AwakeningDrawer: React.FC<AwakeningDrawerProps> = ({
                 style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                   className="space-y-4"
                 >
-                  {/* 输入模式切换 */}
-                  <div className="flex gap-2 justify-center">
+                  {/* 输入模式切换 - 水平滚动支持窄屏 */}
+                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
                     {inputModes.map((mode) => (
                       <Button
                         key={mode.id}
@@ -183,7 +183,7 @@ const AwakeningDrawer: React.FC<AwakeningDrawerProps> = ({
                         size="sm"
                         onClick={() => setInputMode(mode.id)}
                         className={cn(
-                          "flex-1",
+                          "flex-shrink-0 min-w-fit whitespace-nowrap",
                           inputMode === mode.id && `bg-gradient-to-r ${dimension.gradient} text-white border-0`
                         )}
                       >
