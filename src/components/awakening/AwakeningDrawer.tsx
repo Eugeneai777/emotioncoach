@@ -114,7 +114,13 @@ const AwakeningDrawer: React.FC<AwakeningDrawerProps> = ({
   const handleContinueChat = () => {
     if (!dimension) return;
     handleClose();
-    navigate(dimension.coachRoute);
+    // 传递 coachPrompt 作为初始消息，让 AI 教练自动开始对话
+    navigate(dimension.coachRoute, { 
+      state: { 
+        initialMessage: lifeCard?.coachPrompt,
+        fromAwakening: true 
+      } 
+    });
   };
 
   const handleGetTool = () => {
