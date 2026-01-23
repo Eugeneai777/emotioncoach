@@ -33,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 interface LocationState {
   initialMessage?: string;
   fromCamp?: boolean;
+  fromAwakening?: boolean;
   campId?: string;
   dayNumber?: number;
   meditationTitle?: string;
@@ -175,9 +176,12 @@ const DynamicCoach = () => {
   );
   
   useEffect(() => {
+    // 支持从训练营(fromCamp)或觉察系统(fromAwakening)带入的初始消息
+    const hasInitialMessage = locationState?.initialMessage && 
+      (locationState?.fromCamp || locationState?.fromAwakening);
+    
     if (
-      locationState?.initialMessage && 
-      locationState?.fromCamp && 
+      hasInitialMessage && 
       template && 
       !hasAutoSent && 
       messages.length === 0 &&
