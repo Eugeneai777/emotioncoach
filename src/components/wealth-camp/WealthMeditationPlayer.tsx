@@ -138,6 +138,12 @@ export function WealthMeditationPlayer({
     const audio = audioRef.current;
     if (!audio) return;
 
+    // 检查音频源是否已加载
+    if (!audio.src || audio.networkState === audio.NETWORK_NO_SOURCE) {
+      toast.error('音频未加载，请刷新页面重试');
+      return;
+    }
+
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
@@ -148,9 +154,21 @@ export function WealthMeditationPlayer({
       await audio.play();
       setIsPlaying(true);
     } catch (err) {
-      console.error('Audio play failed:', err);
+      console.error('Audio play failed:', err, { 
+        src: audio.src,
+        readyState: audio.readyState,
+        networkState: audio.networkState 
+      });
       setIsPlaying(false);
-      toast.error('无法播放音频：请检查静音/系统媒体权限，或稍后重试');
+      
+      // 更具体的错误提示
+      if (err instanceof DOMException && err.name === 'NotAllowedError') {
+        toast.error('请先点击页面任意位置，解除浏览器自动播放限制');
+      } else if (err instanceof DOMException && err.name === 'NotSupportedError') {
+        toast.error('音频格式不支持，请尝试刷新页面');
+      } else {
+        toast.error('无法播放音频：请检查网络连接或稍后重试');
+      }
     }
   };
 
