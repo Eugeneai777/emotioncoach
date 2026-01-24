@@ -188,7 +188,16 @@ export default function WealthCampCheckIn() {
   const displayDay = makeupDayNumber || currentDay;
 
   // Fetch meditations - 使用循环天数（毕业用户）或当前天数（活跃用户）
-  const meditationDayNumber = isPostCampMode ? cycleMeditationDay : currentDay;
+  // 即使不是 postCampMode，超过7天也应该循环使用冥想（因为数据库只有 Day 1-7）
+  const meditationDayNumber = useMemo(() => {
+    if (isPostCampMode) return cycleMeditationDay;
+    // 活跃用户超过7天也循环使用冥想
+    if (currentDay > 7) {
+      return ((currentDay - 1) % 7) + 1;
+    }
+    return currentDay;
+  }, [isPostCampMode, cycleMeditationDay, currentDay]);
+  
   const { data: meditation } = useQuery({
     queryKey: ['wealth-meditation', meditationDayNumber],
     queryFn: async () => {
@@ -200,7 +209,8 @@ export default function WealthCampCheckIn() {
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
-    enabled: !!camp && meditationDayNumber >= 1 && meditationDayNumber <= 7,
+    // meditationDayNumber 已经是循环后的值(1-7)，不需要额外限制
+    enabled: !!camp && meditationDayNumber >= 1,
   });
 
   const { data: makeupMeditation } = useQuery({
