@@ -10,9 +10,30 @@ import { getShareEnvironment } from './shareUtils';
 
 export type CardType = 'camp' | 'value' | 'achievement' | 'fear' | 'blindspot' | 'transform';
 
+/**
+ * Background colors for each card type
+ * Used to ensure proper display on platforms that don't support transparent PNGs
+ */
+export const CARD_BACKGROUND_COLORS: Record<CardType, string> = {
+  // Purple/Indigo scheme - Assessment & Blindspot cards
+  value: '#1e1b4b',      // Deep indigo (matches gradient start)
+  blindspot: '#1e1b4b',  // Deep indigo (matches gradient start)
+  
+  // Red/Orange scheme - Fear/Emotional cards  
+  fear: '#ef4444',       // Red (matches gradient start)
+  
+  // Orange/Amber scheme - Camp & Transform cards
+  camp: '#f59e0b',       // Amber (matches gradient start)
+  transform: '#f59e0b',  // Amber (matches gradient start)
+  
+  // Achievement card - Dark theme
+  achievement: '#1a1a2e', // Dark purple-gray
+};
+
 export interface OneClickShareConfig {
   cardRef: React.RefObject<HTMLDivElement>;
   cardName?: string;
+  cardType?: CardType;
   onProgress?: (status: 'generating' | 'sharing' | 'preview' | 'done' | 'error') => void;
   onShowPreview?: (blobUrl: string) => void;
   onSuccess?: () => void;
@@ -43,9 +64,12 @@ const waitForImages = async (element: HTMLElement, timeout = 5000): Promise<void
 
 /**
  * Generate canvas from a card element
+ * @param cardRef - Reference to the card element
+ * @param cardType - Optional card type for background color matching
  */
 export const generateCardCanvas = async (
-  cardRef: React.RefObject<HTMLDivElement>
+  cardRef: React.RefObject<HTMLDivElement>,
+  cardType?: CardType
 ): Promise<HTMLCanvasElement | null> => {
   if (!cardRef.current) {
     console.error('[oneClickShare] cardRef.current is null');
@@ -53,6 +77,9 @@ export const generateCardCanvas = async (
   }
 
   const originalElement = cardRef.current;
+  
+  // Get background color based on card type (null for transparent if not specified)
+  const backgroundColor = cardType ? CARD_BACKGROUND_COLORS[cardType] : null;
   
   // Create hidden wrapper for rendering
   const wrapper = document.createElement('div');
@@ -90,7 +117,7 @@ export const generateCardCanvas = async (
         scale: 3,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: null,
+        backgroundColor: backgroundColor,
         logging: false,
         imageTimeout: 5000,
         removeContainer: false,
@@ -131,14 +158,14 @@ export const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> =>
  * - Fallback: Download the image
  */
 export const executeOneClickShare = async (config: OneClickShareConfig): Promise<boolean> => {
-  const { cardRef, cardName = '邀请卡片', onProgress, onShowPreview, onSuccess, onError } = config;
+  const { cardRef, cardName = '邀请卡片', cardType, onProgress, onShowPreview, onSuccess, onError } = config;
   const env = getShareEnvironment();
 
   try {
     onProgress?.('generating');
 
-    // Generate canvas
-    const canvas = await generateCardCanvas(cardRef);
+    // Generate canvas with appropriate background color
+    const canvas = await generateCardCanvas(cardRef, cardType);
     if (!canvas) {
       onProgress?.('error');
       onError?.('卡片生成失败，请重试');
