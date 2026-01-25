@@ -1,22 +1,90 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
-import { ArrowLeft, ClipboardCheck, Target, Calendar, Lightbulb, Share2, Image } from 'lucide-react';
+import { ArrowLeft, ClipboardCheck, Target, Calendar, Lightbulb, Share2, Loader2, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import QRCode from 'qrcode';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
-import WealthInviteCardDialog from '@/components/wealth-camp/WealthInviteCardDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { executeOneClickShare, CardType } from '@/utils/oneClickShare';
+import ShareImagePreview from '@/components/ui/share-image-preview';
+import AssessmentValueShareCard from '@/components/wealth-block/AssessmentValueShareCard';
+import WealthCampShareCard from '@/components/wealth-camp/WealthCampShareCard';
+
+// Helper: Proxy third-party avatar URLs
+const getProxiedAvatarUrl = (avatarUrl?: string): string | undefined => {
+  if (!avatarUrl) return undefined;
+  try {
+    const url = new URL(avatarUrl);
+    const thirdPartyDomains = ['thirdwx.qlogo.cn', 'wx.qlogo.cn', 'qlogo.cn'];
+    const needsProxy = thirdPartyDomains.some(domain => url.hostname.includes(domain));
+    if (needsProxy) {
+      return `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-proxy?url=${encodeURIComponent(avatarUrl)}`;
+    }
+    return avatarUrl;
+  } catch {
+    return avatarUrl;
+  }
+};
 
 const ShareInvite = () => {
   const navigate = useNavigate();
   const [assessmentQR, setAssessmentQR] = useState<string>('');
   const [campQR, setCampQR] = useState<string>('');
+  const [generating, setGenerating] = useState<string | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  
+  // User info for share cards
+  const [userInfo, setUserInfo] = useState<{
+    avatarUrl?: string;
+    displayName?: string;
+  }>({});
+  const [partnerInfo, setPartnerInfo] = useState<{
+    partnerId: string;
+    partnerCode: string;
+  } | null>(null);
+
+  // Card refs for one-click share
+  const assessmentCardRef = useRef<HTMLDivElement>(null);
+  const campCardRef = useRef<HTMLDivElement>(null);
 
   const baseUrl = getPromotionDomain();
   const assessmentUrl = `${baseUrl}/wealth-block`;
   const campUrl = `${baseUrl}/wealth-camp-intro`;
+
+  // Load user data on mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sb = supabase as any;
+      
+      const profileRes = await sb.from('profiles').select('avatar_url, display_name').eq('user_id', user.id).single();
+      const partnerRes = await sb.from('partners').select('id, partner_code').eq('user_id', user.id).eq('status', 'active').maybeSingle();
+      
+      const profile = profileRes?.data;
+      const partner = partnerRes?.data;
+
+      setUserInfo({
+        avatarUrl: getProxiedAvatarUrl(profile?.avatar_url || user.user_metadata?.avatar_url),
+        displayName: profile?.display_name || user.user_metadata?.full_name || '财富觉醒者',
+      });
+
+      if (partner) {
+        setPartnerInfo({
+          partnerId: partner.id,
+          partnerCode: partner.partner_code,
+        });
+      }
+    };
+
+    loadUserData();
+  }, []);
 
   useEffect(() => {
     // Generate QR codes
@@ -51,6 +119,46 @@ const ShareInvite = () => {
       toast.error('复制失败，请手动复制');
     }
   };
+
+  // One-click share handler
+  const handleOneClickShare = useCallback(async (cardType: 'assessment' | 'camp') => {
+    const cardRef = cardType === 'assessment' ? assessmentCardRef : campCardRef;
+    const cardName = cardType === 'assessment' ? '测评价值卡' : '训练营邀请卡';
+    
+    if (!cardRef.current) {
+      toast.error('卡片未加载完成，请稍后重试');
+      return;
+    }
+
+    setGenerating(cardType);
+
+    await executeOneClickShare({
+      cardRef,
+      cardName,
+      onProgress: (status) => {
+        if (status === 'done') {
+          toast.success('分享成功');
+        }
+      },
+      onShowPreview: (blobUrl) => {
+        setPreviewImageUrl(blobUrl);
+        setShowImagePreview(true);
+      },
+      onError: (error) => {
+        toast.error(error);
+      },
+    });
+
+    setGenerating(null);
+  }, []);
+
+  const closePreview = useCallback(() => {
+    setShowImagePreview(false);
+    if (previewImageUrl) {
+      URL.revokeObjectURL(previewImageUrl);
+      setPreviewImageUrl(null);
+    }
+  }, [previewImageUrl]);
 
   const shareEntries = [
     {
@@ -139,15 +247,20 @@ const ShareInvite = () => {
                       <ClipboardCheck className="h-4 w-4 mr-2" />
                       复制链接
                     </Button>
-                    <WealthInviteCardDialog
-                      defaultTab={entry.id === 'assessment' ? 'value' : 'camp'}
-                      trigger={
-                        <Button variant="default" size="sm" className="gap-1.5">
-                          <Image className="h-4 w-4" />
-                          生成卡片
-                        </Button>
-                      }
-                    />
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="gap-1.5"
+                      disabled={generating === entry.id}
+                      onClick={() => handleOneClickShare(entry.id as 'assessment' | 'camp')}
+                    >
+                      {generating === entry.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Image className="h-4 w-4" />
+                      )}
+                      {generating === entry.id ? '生成中...' : '分享卡片'}
+                    </Button>
                   </div>
                 </div>
 
@@ -179,8 +292,8 @@ const ShareInvite = () => {
             <div className="space-y-2">
               <h4 className="font-medium text-foreground">分享小贴士</h4>
               <ul className="text-sm text-muted-foreground space-y-1.5">
+                <li>• 点击「分享卡片」一键生成精美邀请图</li>
                 <li>• 长按二维码保存到相册，发送给朋友</li>
-                <li>• 复制链接后直接发送到微信群</li>
                 <li>• 先让朋友做测评，了解自己的卡点</li>
                 <li>• 再邀请加入训练营，系统突破</li>
               </ul>
@@ -188,6 +301,35 @@ const ShareInvite = () => {
           </div>
         </Card>
       </div>
+
+      {/* Hidden cards for screenshot capture */}
+      <div 
+        className="fixed -left-[9999px] top-0 pointer-events-none"
+        style={{ opacity: 0.01 }}
+        aria-hidden="true"
+      >
+        <AssessmentValueShareCard
+          ref={assessmentCardRef}
+          avatarUrl={userInfo.avatarUrl}
+          displayName={userInfo.displayName}
+          partnerInfo={partnerInfo || undefined}
+        />
+        <WealthCampShareCard
+          ref={campCardRef}
+          avatarUrl={userInfo.avatarUrl}
+          displayName={userInfo.displayName}
+          currentDay={1}
+          totalDays={7}
+          partnerInfo={partnerInfo || undefined}
+        />
+      </div>
+
+      {/* Image preview for WeChat/iOS */}
+      <ShareImagePreview
+        open={showImagePreview}
+        onClose={closePreview}
+        imageUrl={previewImageUrl}
+      />
     </div>
   );
 };
