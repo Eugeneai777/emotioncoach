@@ -333,7 +333,11 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
   // SessionID 在 StartSession 中是必需的，但是它跟随 Event 字段，不是由单独的 flag 控制
   return buildPacket({
     messageType: MESSAGE_TYPE_FULL_CLIENT,
-    flags: FLAG_HAS_EVENT | FLAG_HAS_SESSION_ID,
+    // ✅ Fix: StartSession 也需要携带 sequence。
+    // 否则服务端会“自动分配”序号（通常从 1 开始），而我们首个音频包若从 0 开始会触发：
+    // autoAssignedSequence (2) mismatch sequence in request (0)
+    flags: FLAG_HAS_SEQUENCE | FLAG_HAS_EVENT | FLAG_HAS_SESSION_ID,
+    sequence: 1,
     event: EVENT_START_SESSION,
     sessionId: sessionId,
     payload: payloadBytes,
@@ -888,7 +892,8 @@ Deno.serve(async (req) => {
           sessionConfig = {
             instructions: message.instructions || ''
           };
-          audioSequence = 0;  // 重置序号
+          // ✅ Fix: StartSession 使用 sequence=1；音频包从 sequence=2 开始递增
+          audioSequence = 2;
           sessionStarted = false;
           doubaoSessionId = null;
           await connectToDoubao();
