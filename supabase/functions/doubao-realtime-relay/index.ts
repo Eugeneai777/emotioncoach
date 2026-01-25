@@ -328,21 +328,52 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
   console.log('[Protocol] StartSession payload:', JSON.stringify(payload).substring(0, 200) + '...');
   console.log('[Protocol] StartSession sessionId:', sessionId);
 
-  // StartSession: Full Client Request with event=100 and sessionId
-  // 根据官方示例 Byte1=0x14，flags=0x04 (HAS_EVENT)
-  // SessionID 在 StartSession 中是必需的，但是它跟随 Event 字段，不是由单独的 flag 控制
-  return buildPacket({
-    messageType: MESSAGE_TYPE_FULL_CLIENT,
-    // ✅ Fix: StartSession 也需要携带 sequence。
-    // 否则服务端会“自动分配”序号（通常从 1 开始），而我们首个音频包若从 0 开始会触发：
-    // autoAssignedSequence (2) mismatch sequence in request (0)
-    flags: FLAG_HAS_SEQUENCE | FLAG_HAS_EVENT | FLAG_HAS_SESSION_ID,
-    sequence: 1,
-    event: EVENT_START_SESSION,
-    sessionId: sessionId,
-    payload: payloadBytes,
-    serialization: SERIALIZATION_JSON
-  });
+  /**
+   * ✅ IMPORTANT: StartSession 的字段布局与 “flags” 不完全一致。
+   * 官方示例中 flags=0x04(HAS_EVENT)，但仍然紧跟写入 SessionID(len + bytes)。
+   * 若我们错误地依赖 FLAG_HAS_SESSION_ID / FLAG_HAS_SEQUENCE，会导致服务端按官方格式解码时字段错位，
+   * 继而出现 autoAssignedSequence mismatch 等“连接后无反应”的问题。
+   */
+  const flags = FLAG_HAS_EVENT; // StartSession 按示例仅标记 HAS_EVENT
+  const header = buildHeader(MESSAGE_TYPE_FULL_CLIENT, flags, SERIALIZATION_JSON);
+
+  const sessionIdBytes = new TextEncoder().encode(sessionId);
+
+  // layout: header(4) + event(4) + sessionIdLen(4) + sessionId + payloadSize(4) + payload
+  const totalSize = 4 + 4 + 4 + sessionIdBytes.length + 4 + payloadBytes.length;
+  const packet = new Uint8Array(totalSize);
+  let offset = 0;
+
+  // header
+  packet.set(header, offset);
+  offset += 4;
+
+  // event (uint32be)
+  packet[offset] = (EVENT_START_SESSION >> 24) & 0xff;
+  packet[offset + 1] = (EVENT_START_SESSION >> 16) & 0xff;
+  packet[offset + 2] = (EVENT_START_SESSION >> 8) & 0xff;
+  packet[offset + 3] = EVENT_START_SESSION & 0xff;
+  offset += 4;
+
+  // sessionIdLen + sessionId
+  const sidLen = sessionIdBytes.length;
+  packet[offset] = (sidLen >> 24) & 0xff;
+  packet[offset + 1] = (sidLen >> 16) & 0xff;
+  packet[offset + 2] = (sidLen >> 8) & 0xff;
+  packet[offset + 3] = sidLen & 0xff;
+  offset += 4;
+  packet.set(sessionIdBytes, offset);
+  offset += sidLen;
+
+  // payloadSize + payload
+  packet[offset] = (payloadBytes.length >> 24) & 0xff;
+  packet[offset + 1] = (payloadBytes.length >> 16) & 0xff;
+  packet[offset + 2] = (payloadBytes.length >> 8) & 0xff;
+  packet[offset + 3] = payloadBytes.length & 0xff;
+  offset += 4;
+  packet.set(payloadBytes, offset);
+
+  return packet;
 }
 
 /**
