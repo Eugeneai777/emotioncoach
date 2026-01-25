@@ -124,6 +124,8 @@ const ShareInvite = () => {
   const handleOneClickShare = useCallback(async (cardType: 'assessment' | 'camp') => {
     const cardRef = cardType === 'assessment' ? assessmentCardRef : campCardRef;
     const cardName = cardType === 'assessment' ? '测评价值卡' : '训练营邀请卡';
+    // Map to oneClickShare CardType for background color
+    const shareCardType = cardType === 'assessment' ? 'value' : 'camp';
     
     if (!cardRef.current) {
       toast.error('卡片未加载完成，请稍后重试');
@@ -135,6 +137,7 @@ const ShareInvite = () => {
     await executeOneClickShare({
       cardRef,
       cardName,
+      cardType: shareCardType,
       onProgress: (status) => {
         if (status === 'done') {
           toast.success('分享成功');
