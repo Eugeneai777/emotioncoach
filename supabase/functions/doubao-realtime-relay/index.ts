@@ -59,6 +59,9 @@ const FLAG_HAS_SESSION_ID = 0x08;    // bit 3: 有 session_id 字段
 // Event Types
 const EVENT_START_SESSION = 100;
 const EVENT_SESSION_STARTED = 101;
+// Some deployments of Doubao realtime dialogue return an ACK-like event=150 whose payload is the sessionId (UUID)
+// before/without emitting event=101. If we don't treat it as "session ready", the relay will drop audio forever.
+const EVENT_SESSION_ACK = 150;
 const EVENT_AUDIO_UPLOAD = 200;
 const EVENT_AUDIO_STREAM = 201;
 const EVENT_TEXT_OUTPUT = 300;
@@ -717,6 +720,22 @@ Deno.serve(async (req) => {
                     message: 'Connected to Doubao API - Session started'
                   }));
                   continue;
+                }
+
+                // 兼容：部分豆包环境会先回 event=150，payload 为 sessionId(36字节 UUID)
+                // 若不处理，sessionStarted 将永远为 false，导致音频一直被丢弃，最终触发 DialogAudioIdleTimeout。
+                if (parsed.event === EVENT_SESSION_ACK && parsed.payloadSize > 0) {
+                  const maybeSessionId = new TextDecoder().decode(parsed.payload).trim();
+                  // If payload matches our generated sessionId, treat as ready.
+                  if (doubaoSessionId && maybeSessionId === doubaoSessionId) {
+                    sessionStarted = true;
+                    console.log('[DoubaoRelay] Session ACK received (event=150), session is ready');
+                    clientSocket.send(JSON.stringify({
+                      type: 'session.connected',
+                      message: 'Connected to Doubao API - Session ACK'
+                    }));
+                    continue;
+                  }
                 }
                 
                 // 处理文本/JSON 响应
