@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, Download, Loader2, Calendar, TrendingUp, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SHARE_CARD_CONFIG } from '@/utils/shareCardConfig';
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import TagSentimentBadge from "./TagSentimentBadge";
@@ -94,11 +95,10 @@ const WeeklyTagReport = ({ startDate, endDate }: WeeklyTagReportProps): JSX.Elem
     try {
       setIsGeneratingPDF(true);
 
-      // 使用html2canvas截图
+      // 使用html2canvas截图 (使用统一配置)
       const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
+        ...SHARE_CARD_CONFIG,
+        scale: 2, // PDF export uses lower scale for file size
       });
 
       const imgData = canvas.toDataURL('image/png');

@@ -9,6 +9,7 @@ import { TemplateSelector } from "@/components/declaration/TemplateSelector";
 import { AIDeclarationGenerator } from "@/components/declaration/AIDeclarationGenerator";
 import { VoiceRecorder } from "@/components/declaration/VoiceRecorder";
 import { getThemeById } from "@/config/themes";
+import { SHARE_CARD_CONFIG } from '@/utils/shareCardConfig';
 import html2canvas from "html2canvas";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -148,10 +149,8 @@ export const EnergyDeclaration = () => {
       const scale = Math.max(2, dpr);
 
       const canvas = await html2canvas(posterRef.current, {
-        scale: scale,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
+        ...SHARE_CARD_CONFIG,
+        scale: scale, // Use dynamic scale for DPR
         width: currentWidth,
         height: currentHeight,
         windowWidth: currentWidth,

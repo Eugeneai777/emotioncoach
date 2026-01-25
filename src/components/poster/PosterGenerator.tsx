@@ -8,6 +8,7 @@ import { BackgroundSourceSelector } from "./BackgroundSourceSelector";
 import { UnsplashImagePicker } from "./UnsplashImagePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SHARE_CARD_CONFIG } from '@/utils/shareCardConfig';
 import html2canvas from "html2canvas";
 
 interface PosterGeneratorProps {
@@ -142,11 +143,7 @@ export function PosterGenerator({
       await new Promise(resolve => setTimeout(resolve, 300));
 
       const canvas = await html2canvas(posterElement, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false,
+        ...SHARE_CARD_CONFIG,
         width: posterWidth,
         height: posterHeight,
       });
