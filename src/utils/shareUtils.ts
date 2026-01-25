@@ -41,14 +41,12 @@ export const getShareEnvironment = (): ShareEnvironment => {
 /**
  * Determine if image preview should be used instead of Web Share API
  * 
- * Returns true for:
- * - WeChat environments (unreliable Web Share API)
- * - iOS environments (for consistent long-press-to-save UX)
- * - Mini Program environments
+ * Returns true only for Mini Program environments where Web Share API is not available.
+ * iOS (including WeChat H5) will use native navigator.share for system share panel.
  */
 export const shouldUseImagePreview = (): boolean => {
-  const { isWeChat, isIOS, isMiniProgram } = getShareEnvironment();
-  return isWeChat || isIOS || isMiniProgram;
+  const { isMiniProgram } = getShareEnvironment();
+  return isMiniProgram;
 };
 
 /**
@@ -71,9 +69,8 @@ export const isMiniProgramEnv = (): boolean => {
  * Get appropriate button text for share action based on environment
  */
 export const getShareButtonText = (): string => {
-  const { isWeChat, isIOS, isMiniProgram } = getShareEnvironment();
-  if (isWeChat || isMiniProgram) return '生成图片';
-  if (isIOS) return '生成并保存';
+  const { isMiniProgram } = getShareEnvironment();
+  if (isMiniProgram) return '生成图片';
   return '分享';
 };
 
@@ -81,9 +78,8 @@ export const getShareButtonText = (): string => {
  * Get share button icon hint
  */
 export const getShareButtonHint = (): string => {
-  const { isWeChat, isIOS, isMiniProgram } = getShareEnvironment();
-  if (isWeChat || isMiniProgram) return '生成后长按保存';
-  if (isIOS) return '保存到相册后分享';
+  const { isMiniProgram } = getShareEnvironment();
+  if (isMiniProgram) return '生成后长按保存';
   return '分享给好友';
 };
 
@@ -115,24 +111,37 @@ export const handleShareWithFallback = async (
   filename: string,
   options: ShareOptions = {}
 ): Promise<ShareResult> => {
-  const { isWeChat, isIOS, isMiniProgram, isAndroid } = getShareEnvironment();
+  const { isIOS, isMiniProgram, isAndroid } = getShareEnvironment();
   const file = new File([blob], filename, { type: 'image/png' });
   
-  // WeChat / MiniProgram environment: Always use image preview
-  if (isWeChat || isMiniProgram) {
+  // Mini Program environment: Always use image preview (no Web Share API support)
+  if (isMiniProgram) {
     const blobUrl = URL.createObjectURL(blob);
     options.onShowPreview?.(blobUrl);
     return { success: true, method: 'preview', blobUrl };
   }
   
-  // iOS non-WeChat: Use image preview for consistent long-press UX
-  if (isIOS) {
-    const blobUrl = URL.createObjectURL(blob);
-    options.onShowPreview?.(blobUrl);
-    return { success: true, method: 'preview', blobUrl };
+  // iOS (including WeChat H5): Try native share first for system share panel
+  if (isIOS && navigator.share && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: options.title || filename,
+        text: options.text,
+      });
+      return { success: true, method: 'webshare' };
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        return { success: false, method: 'webshare', cancelled: true };
+      }
+      // Fall back to image preview if share fails
+      const blobUrl = URL.createObjectURL(blob);
+      options.onShowPreview?.(blobUrl);
+      return { success: true, method: 'preview', blobUrl };
+    }
   }
   
-  // Android: Try Web Share API first, it works well on most Android browsers
+  // Android: Try Web Share API first
   if (isAndroid && navigator.share && navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({
