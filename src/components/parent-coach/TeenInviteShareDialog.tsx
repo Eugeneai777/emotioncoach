@@ -302,8 +302,8 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
             <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
           </div>
         ) : accessToken ? (
-          <div className="flex justify-center overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-pink-50">
-            <div className="transform scale-[0.45] origin-top" style={{ marginBottom: personalMessage ? '-50%' : '-55%' }}>
+          <div className="flex justify-center overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-pink-50" style={{ height: personalMessage ? '340px' : '320px' }}>
+            <div className="transform scale-[0.45] origin-top">
               <TeenInviteShareCard 
                 accessToken={accessToken} 
                 teenNickname={teenNickname}
