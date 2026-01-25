@@ -277,25 +277,32 @@ export const CoachLayout = ({
     }
   };
 
-  // Pull to refresh handlers
+  // Pull to refresh handlers - 优化触摸逻辑，避免阻断正常滚动
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (!onRefresh) return;
     const scrollTop = mainRef.current?.scrollTop ?? 0;
-    if (scrollTop <= 0) {
+    if (scrollTop <= 5) { // 增加小容差
       startY.current = e.touches[0].clientY;
-      setIsPulling(true);
+      // 不立即设置 isPulling，等 touchMove 确认方向
     }
   }, [onRefresh]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isPulling || isRefreshing || !onRefresh) return;
+    if (isRefreshing || !onRefresh) return;
     
+    const scrollTop = mainRef.current?.scrollTop ?? 0;
     const currentY = e.touches[0].clientY;
     const diff = currentY - startY.current;
     
-    if (diff > 0) {
+    // 只有在顶部且向下拉时才启用下拉刷新
+    if (scrollTop <= 0 && diff > 10) {
+      if (!isPulling) setIsPulling(true);
       const dampedPull = Math.min(diff * 0.5, 120);
       setPullDistance(dampedPull);
+    } else if (isPulling && diff <= 0) {
+      // 如果开始向上滑，取消下拉状态
+      setIsPulling(false);
+      setPullDistance(0);
     }
   }, [isPulling, isRefreshing, onRefresh]);
 
@@ -325,7 +332,7 @@ export const CoachLayout = ({
 
   return (
     <>
-      <div className={`min-h-screen min-h-dvh w-full max-w-full overflow-x-hidden bg-gradient-to-br ${getThemeBackgroundGradient(primaryColor, themeConfig)} flex flex-col`}>
+      <div className={`h-screen h-dvh w-full max-w-full overflow-hidden bg-gradient-to-br ${getThemeBackgroundGradient(primaryColor, themeConfig)} flex flex-col`}>
         {/* Header */}
         <CoachHeader
           emoji={emoji}
@@ -374,14 +381,16 @@ export const CoachLayout = ({
         {/* Main Content */}
         <main 
           ref={mainRef}
-          className="flex-1 overflow-y-auto overflow-x-hidden overscroll-none scroll-container"
+          className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain scroll-container"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           style={{
             paddingBottom: `${getContentPaddingBottom()}px`,
-            transform: `translateY(${pullDistance}px)`,
-            transition: isPulling ? 'none' : 'transform 0.3s ease-out'
+            ...(onRefresh && {
+              transform: `translateY(${pullDistance}px)`,
+              transition: isPulling ? 'none' : 'transform 0.3s ease-out'
+            })
           }}
         >
           <div className="container max-w-sm sm:max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-8">
