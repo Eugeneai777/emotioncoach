@@ -67,6 +67,16 @@ const EVENT_AUDIO_STREAM = 201;
 const EVENT_TEXT_OUTPUT = 300;
 const EVENT_END_SESSION = 900;
 
+// 豆包端到端对话事件码（官方文档 - 用于接收服务端响应）
+const EVENT_TTS_START = 350;        // TTS 开始
+const EVENT_TTS_END = 351;          // TTS 分句结束  
+const EVENT_TTS_RESPONSE = 352;     // TTS 音频数据 ✅ 主要音频输出事件
+const EVENT_ASR_START = 450;        // ASR 开始
+const EVENT_ASR_RESPONSE = 451;     // ASR 识别结果
+const EVENT_CHAT_START = 459;       // 对话开始
+const EVENT_CHAT_RESPONSE = 550;    // 模型文本回复
+const EVENT_RESPONSE_DONE = 559;    // 回复完成
+
 // ============= 协议构建函数 =============
 
 /**
@@ -744,6 +754,25 @@ Deno.serve(async (req) => {
                 
                 console.log(`[DoubaoRelay] Received: msgType=${parsed.messageType}, event=${parsed.event}, seq=${parsed.sequence}, errCode=${parsed.errorCode}, payloadSize=${parsed.payloadSize}`);
                 
+                // ⚠️ 优先处理 TTS 音频响应 (event=352) - 豆包实际发送音频的事件码
+                // 这必须在 JSON 解析之前处理，因为 payload 是二进制 PCM 数据
+                if (parsed.event === EVENT_TTS_RESPONSE) {
+                  if (parsed.payload.length > 0) {
+                    console.log(`[DoubaoRelay] TTS audio: ${parsed.payload.length} bytes`);
+                    clientSocket.send(JSON.stringify({
+                      type: 'response.audio.delta',
+                      delta: uint8ArrayToBase64(parsed.payload)
+                    }));
+                  }
+                  continue; // 跳过后续处理，防止 JSON 解析失败
+                }
+                
+                // 处理 TTS 开始/结束事件 (event=350/351) - payload 通常是 sessionId，跳过 JSON 解析
+                if (parsed.event === EVENT_TTS_START || parsed.event === EVENT_TTS_END) {
+                  console.log(`[DoubaoRelay] TTS event: ${parsed.event === EVENT_TTS_START ? 'start' : 'end'}`);
+                  continue;
+                }
+                
                 // 处理 SessionStarted 事件 (event=101)
                 if (parsed.event === EVENT_SESSION_STARTED) {
                   sessionStarted = true;
@@ -773,11 +802,51 @@ Deno.serve(async (req) => {
                   }
                 }
                 
-                // 处理文本/JSON 响应
+                // 跳过 ASR/Chat 相关的非 JSON payload 事件 (event=450/451/459/550/559)
+                // 这些事件的 payload 通常是 sessionId（UUID 字符串），不是有效 JSON
+                if (parsed.event === EVENT_ASR_START || 
+                    parsed.event === EVENT_ASR_RESPONSE || 
+                    parsed.event === EVENT_CHAT_START ||
+                    parsed.event === EVENT_CHAT_RESPONSE ||
+                    parsed.event === EVENT_RESPONSE_DONE) {
+                  // 尝试安全解析，但失败时不报错（静默跳过）
+                  try {
+                    const jsonStr = new TextDecoder().decode(parsed.payload);
+                    // 检查是否看起来像 JSON
+                    if (jsonStr.startsWith('{') || jsonStr.startsWith('[')) {
+                      const payload = JSON.parse(jsonStr);
+                      console.log(`[DoubaoRelay] Event ${parsed.event} payload:`, JSON.stringify(payload).substring(0, 200));
+                      
+                      // ASR 识别结果
+                      if (parsed.event === EVENT_ASR_RESPONSE && payload.result?.text) {
+                        clientSocket.send(JSON.stringify({
+                          type: 'response.audio_transcript.delta',
+                          delta: payload.result.text
+                        }));
+                      }
+                      
+                      // Chat 回复文本
+                      if (parsed.event === EVENT_CHAT_RESPONSE && payload.text) {
+                        clientSocket.send(JSON.stringify({
+                          type: 'response.audio_transcript.delta',
+                          delta: payload.text
+                        }));
+                      }
+                    }
+                  } catch {
+                    // 非 JSON payload，静默跳过
+                  }
+                  continue;
+                }
+                
+                // 处理其他文本/JSON 响应
                 if (parsed.messageType === MESSAGE_TYPE_FULL_SERVER && parsed.serialization === SERIALIZATION_JSON) {
                   try {
                     const jsonStr = new TextDecoder().decode(parsed.payload);
                     // 有些事件 payload 可能不是 JSON（例如纯 sessionId 字符串）；JSON.parse 失败时直接跳过即可
+                    if (!jsonStr.startsWith('{') && !jsonStr.startsWith('[')) {
+                      continue;
+                    }
                     const payload = JSON.parse(jsonStr);
                     console.log('[DoubaoRelay] JSON payload:', JSON.stringify(payload).substring(0, 200));
                     
@@ -803,10 +872,8 @@ Deno.serve(async (req) => {
                       }));
                     }
                   } catch (e) {
-                    console.error('[DoubaoRelay] Failed to parse JSON:', e, {
-                      event: parsed.event,
-                      payloadPreview: new TextDecoder().decode(parsed.payload.slice(0, 120)),
-                    });
+                    // 解析失败时静默跳过，避免日志刷屏
+                    console.warn('[DoubaoRelay] Non-JSON payload for event:', parsed.event);
                   }
                 }
                 
