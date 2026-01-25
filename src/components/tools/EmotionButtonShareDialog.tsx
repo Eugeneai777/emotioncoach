@@ -142,8 +142,8 @@ const EmotionButtonShareDialog: React.FC<EmotionButtonShareDialogProps> = ({
           </DialogHeader>
 
           {/* Preview area */}
-          <div className="flex justify-center overflow-hidden">
-            <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
+          <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
+            <div className="transform scale-[0.55] sm:scale-[0.62] origin-top">
               {!cardReady && <ShareCardSkeleton variant="wide" />}
               <div className={cardReady ? '' : 'invisible absolute'}>
                 <EmotionButtonShareCard partnerCode={partnerCode} onReady={() => setCardReady(true)} />

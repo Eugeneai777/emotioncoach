@@ -1,13 +1,14 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Share2 } from "lucide-react";
+import { Share2, Copy, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
 import ShareCard from "./ShareCard";
 import ShareCardExport from "./ShareCardExport";
 import ShareImagePreview from "@/components/ui/share-image-preview";
 import { usePartner } from "@/hooks/usePartner";
-import { handleShareWithFallback, getShareEnvironment } from "@/utils/shareUtils";
+import { handleShareWithFallback, getShareEnvironment, shouldUseImagePreview } from "@/utils/shareUtils";
+import { getPromotionDomain } from "@/utils/partnerQRUtils";
 import {
   Dialog,
   DialogContent,
@@ -38,6 +39,7 @@ interface ShareButtonProps {
 const ShareButton = ({ post }: ShareButtonProps) => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -49,10 +51,25 @@ const ShareButton = ({ post }: ShareButtonProps) => {
     partnerId: partner?.id
   };
   
-  const { isWeChat } = getShareEnvironment();
+  const { isWeChat, isIOS } = getShareEnvironment();
+  const showPreviewMode = shouldUseImagePreview();
+
+  // 生成分享链接
+  const shareUrl = `${getPromotionDomain()}/community?post=${post.id}${isPartner && partner?.id ? `&ref=${partner.id}` : ''}`;
 
   const handleShare = async () => {
     setShowShareDialog(true);
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast({ title: "链接已复制" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "复制失败", variant: "destructive" });
+    }
   };
 
   const handleCloseImagePreview = () => {
@@ -188,9 +205,11 @@ const ShareButton = ({ post }: ShareButtonProps) => {
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* 预览卡片 - 响应式显示 */}
-            <div className="bg-secondary/20 p-3 rounded-lg max-h-[50vh] overflow-auto">
-              <ShareCard post={post} partnerInfo={partnerInfo} isPreview />
+            {/* 预览卡片 - 固定高度容器 */}
+            <div className="flex justify-center overflow-hidden bg-secondary/20 rounded-lg" style={{ height: '320px' }}>
+              <div className="transform scale-[0.45] sm:scale-[0.5] origin-top pt-4">
+                <ShareCard post={post} partnerInfo={partnerInfo} isPreview />
+              </div>
             </div>
 
             {/* 导出用卡片 - 使用纯内联样式版本 */}
@@ -198,16 +217,45 @@ const ShareButton = ({ post }: ShareButtonProps) => {
               <ShareCardExport ref={cardRef} post={post} partnerInfo={partnerInfo} />
             </div>
 
-            <Button
-              onClick={handleGenerateImage}
-              disabled={sharing}
-              className="w-full"
-            >
-              {sharing ? "生成中..." : isWeChat ? "生成图片" : "生成分享图片"}
-            </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              {isWeChat ? "生成图片后长按保存，然后分享给朋友" : "生成图片后可保存并分享至微信朋友圈"}
-            </p>
+            {/* 统一的操作按钮 */}
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleGenerateImage}
+                  disabled={sharing}
+                  className="flex-1 h-12 gap-2"
+                >
+                  {sharing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      生成中...
+                    </>
+                  ) : showPreviewMode ? (
+                    <>
+                      <Share2 className="w-4 h-4" />
+                      生成分享图片
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-4 h-4" />
+                      分享
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-12 px-4"
+                  onClick={handleCopyLink}
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                {showPreviewMode 
+                  ? "点击生成图片后，长按保存到相册分享给好友"
+                  : "点击分享按钮，或复制链接后发送"}
+              </p>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
