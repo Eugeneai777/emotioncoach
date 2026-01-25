@@ -90,7 +90,7 @@ export const generateCardCanvas = async (
         scale: 3,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: null,
         logging: false,
         imageTimeout: 5000,
         removeContainer: false,
