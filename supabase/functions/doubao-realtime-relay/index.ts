@@ -186,6 +186,11 @@ function parsePacket(data: Uint8Array): {
     return null;
   }
 
+  const readUint32BE = (buf: Uint8Array, off: number): number => {
+    // Ensure unsigned 32-bit
+    return (((buf[off] << 24) >>> 0) + (buf[off + 1] << 16) + (buf[off + 2] << 8) + buf[off + 3]) >>> 0;
+  };
+
   const messageType = (data[1] >> 4) & 0x0F;
   const flags = data[1] & 0x0F;
   const serialization = (data[2] >> 4) & 0x0F;
@@ -203,21 +208,21 @@ function parsePacket(data: Uint8Array): {
   // Parse sequence
   if (hasSequence) {
     if (data.length < offset + 4) return null;
-    sequence = (data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3];
+    sequence = readUint32BE(data, offset);
     offset += 4;
   }
 
   // Parse event
   if (hasEvent) {
     if (data.length < offset + 4) return null;
-    event = (data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3];
+    event = readUint32BE(data, offset);
     offset += 4;
   }
 
   // Parse session ID
   if (hasSessionId) {
     if (data.length < offset + 4) return null;
-    const sessionIdLen = (data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3];
+    const sessionIdLen = readUint32BE(data, offset);
     offset += 4;
     if (data.length < offset + sessionIdLen) return null;
     sessionId = new TextDecoder().decode(data.slice(offset, offset + sessionIdLen));
@@ -226,10 +231,14 @@ function parsePacket(data: Uint8Array): {
 
   // Parse payload size
   if (data.length < offset + 4) return null;
-  const payloadSize = (data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3];
+  const payloadSize = readUint32BE(data, offset);
   offset += 4;
 
   // Parse payload
+  if (data.length < offset + payloadSize) {
+    console.error('[Protocol] Payload size exceeds buffer:', { payloadSize, available: data.length - offset });
+    return null;
+  }
   const payload = data.slice(offset, offset + payloadSize);
 
   return {
@@ -561,6 +570,7 @@ Deno.serve(async (req) => {
             const n = await doubaoConn.read(buffer);
             if (n === null || n === 0) {
               console.log('[DoubaoRelay] Connection closed by Doubao');
+              isConnected = false;
               break;
             }
             
@@ -698,16 +708,8 @@ Deno.serve(async (req) => {
         console.error('[DoubaoRelay] Read loop error:', err);
       });
       
-      // 如果没有在合理时间内收到 SessionStarted，也发送 connected（兼容旧版本协议）
-      setTimeout(() => {
-        if (isConnected && !sessionStarted && clientSocket.readyState === WebSocket.OPEN) {
-          console.log('[DoubaoRelay] Timeout waiting for SessionStarted, sending connected anyway');
-          clientSocket.send(JSON.stringify({ 
-            type: 'session.connected',
-            message: 'Connected to Doubao API (timeout)'
-          }));
-        }
-      }, 3000);
+      // ⚠️ 不再在超时情况下发送 session.connected：
+      // 这会导致前端开始录音并持续推送音频，但实际上 Doubao 端可能尚未完成会话启动/已经返回错误。
       
     } catch (err) {
       console.error('[DoubaoRelay] Failed to connect to Doubao:', err);
