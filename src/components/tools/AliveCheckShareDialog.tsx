@@ -6,13 +6,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, Share2 } from "lucide-react";
+import { Download, Loader2, Share2, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { handleShareWithFallback, shouldUseImagePreview, getShareEnvironment } from '@/utils/shareUtils';
 import ShareImagePreview from '@/components/ui/share-image-preview';
 import AliveCheckShareCard from './AliveCheckShareCard';
 import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 import { generateCardBlob } from '@/utils/shareCardConfig';
+import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
 interface AliveCheckShareDialogProps {
   open: boolean;
@@ -28,8 +29,24 @@ const AliveCheckShareDialog: React.FC<AliveCheckShareDialogProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [cardReady, setCardReady] = useState(false);
+  const [copied, setCopied] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  const shareUrl = partnerCode
+    ? `${getPromotionDomain()}/energy-studio?tool=alive-check&ref=${partnerCode}`
+    : `${getPromotionDomain()}/energy-studio?tool=alive-check`;
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast({ title: "链接已复制" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "复制失败", variant: "destructive" });
+    }
+  };
   
   const { isWeChat, isIOS } = getShareEnvironment();
   const showImagePreview = isWeChat || isIOS;
@@ -117,34 +134,41 @@ const AliveCheckShareDialog: React.FC<AliveCheckShareDialogProps> = ({
             <AliveCheckShareCard ref={exportRef} partnerCode={partnerCode} />
           </div>
 
-          {/* Action button */}
-          <Button
-            onClick={handleGenerateImage}
-            disabled={isGenerating}
-            className="w-full h-12 bg-gradient-to-r from-rose-500 to-pink-500 hover:opacity-90 text-white gap-2"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                生成中...
-              </>
-            ) : showImagePreview ? (
-              <>
-                <Share2 className="w-5 h-5" />
-                生成分享图片
-              </>
-            ) : (
-              <>
-                <Download className="w-5 h-5" />
-                保存分享卡片
-              </>
-            )}
-          </Button>
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            <Button
+              onClick={handleGenerateImage}
+              disabled={isGenerating}
+              className="flex-1 h-12 bg-gradient-to-r from-rose-500 to-pink-500 hover:opacity-90 text-white gap-2"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  生成中...
+                </>
+              ) : showImagePreview ? (
+                <>
+                  <Share2 className="w-5 h-5" />
+                  生成分享图片
+                </>
+              ) : (
+                <>
+                  <Download className="w-5 h-5" />
+                  保存分享卡片
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleCopyLink}
+              className="h-12 px-4"
+            >
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            </Button>
+          </div>
 
           <p className="text-xs text-center text-muted-foreground">
-            {showImagePreview 
-              ? "点击生成图片后，长按保存到相册分享给好友"
-              : "图片包含二维码，扫码可直接使用「死了吗」功能"}
+            点击分享按钮，或复制链接后发送
           </p>
         </DialogContent>
       </Dialog>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, Share2 } from 'lucide-react';
+import { Copy, Check, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -63,7 +63,19 @@ const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
   const [generating, setGenerating] = useState(false);
   const [userInfo, setUserInfo] = useState<{ avatarUrl?: string; displayName?: string }>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast.success('链接已复制');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('复制失败');
+    }
+  };
 
   // Reset loading state when dialog opens
   useEffect(() => {
@@ -235,17 +247,16 @@ const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
             {generating ? '生成中...' : '分享'}
           </Button>
           <Button
-            onClick={handleDownload}
-            disabled={generating}
             variant="outline"
+            onClick={handleCopyLink}
             className="h-12 px-4"
           >
-            <Download className="h-4 w-4" />
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           </Button>
         </div>
 
         <p className="text-xs text-muted-foreground text-center">
-          点击分享按钮，或保存图片后发送
+          点击分享按钮，或复制链接后发送
         </p>
       </DialogContent>
     </Dialog>

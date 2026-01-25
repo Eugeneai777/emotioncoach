@@ -10,12 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, Loader2, Share2, ImageIcon } from "lucide-react";
+import { Download, Loader2, Share2, ImageIcon, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import TeenInviteShareCard, { CARD_THEMES, CardTheme } from './TeenInviteShareCard';
 import ShareImagePreview from '@/components/ui/share-image-preview';
+import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
 interface TeenInviteShareDialogProps {
   open: boolean;
@@ -40,8 +41,22 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
   const [personalMessage, setPersonalMessage] = useState('');
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
+  const [copied, setCopied] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  const handleCopyLink = async () => {
+    if (!accessToken) return;
+    try {
+      const url = `${getPromotionDomain()}/teen-space?token=${accessToken}`;
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      toast({ title: "链接已复制" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "复制失败", variant: "destructive" });
+    }
+  };
 
   // Generate random token
   const generateToken = () => {
@@ -320,34 +335,44 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
           </p>
         </div>
 
-        {/* Action button */}
-        <Button
-          onClick={handleGenerateImage}
-          disabled={isGenerating || isLoadingToken || !accessToken}
-          className="w-full h-12 bg-gradient-to-r from-violet-500 to-pink-500 hover:opacity-90 text-white gap-2"
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              生成中...
-            </>
-          ) : isWeChatOrIOS() ? (
-            <>
-              <ImageIcon className="w-5 h-5" />
-              生成图片
-            </>
-          ) : (
-            <>
-              <Download className="w-5 h-5" />
-              生成邀请卡片
-            </>
-          )}
-        </Button>
+        {/* Action buttons */}
+        <div className="flex gap-2">
+          <Button
+            onClick={handleGenerateImage}
+            disabled={isGenerating || isLoadingToken || !accessToken}
+            className="flex-1 h-12 bg-gradient-to-r from-violet-500 to-pink-500 hover:opacity-90 text-white gap-2"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                生成中...
+              </>
+            ) : isWeChatOrIOS() ? (
+              <>
+                <ImageIcon className="w-5 h-5" />
+                生成图片
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5" />
+                生成邀请卡片
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleCopyLink}
+            disabled={!accessToken}
+            className="h-12 px-4"
+          >
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+          </Button>
+        </div>
 
         <p className="text-xs text-center text-muted-foreground">
           {isWeChatOrIOS() 
-            ? '生成图片后长按保存，然后发给孩子'
-            : '生成图片发给孩子，扫码即可开始私密对话'
+            ? '生成图片后长按保存，或复制链接发给孩子'
+            : '生成图片发给孩子，或复制链接分享'
           }
         </p>
       </DialogContent>

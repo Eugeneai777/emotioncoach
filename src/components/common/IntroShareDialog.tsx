@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Share2, Download, Check, Loader2 } from 'lucide-react';
+import { Share2, Download, Check, Loader2, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { type IntroShareConfig, getShareUrl } from '@/config/introShareConfig';
 import IntroShareCard, { CardTemplate, TEMPLATE_LABELS } from './IntroShareCard';
@@ -29,6 +29,7 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [cardReady, setCardReady] = useState(false);
+  const [copied, setCopied] = useState(false);
   
   // 预览卡片引用（带缩放，仅用于显示）
   const previewRef = useRef<HTMLDivElement>(null);
@@ -157,6 +158,17 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
     setPreviewImage(null);
   };
 
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast({ title: "链接已复制" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "复制失败", variant: "destructive" });
+    }
+  };
+
   const templates: CardTemplate[] = ['concise', 'value', 'scenario'];
 
   return (
@@ -246,13 +258,18 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
                 </>
               )}
             </Button>
+            <Button
+              variant="outline"
+              onClick={handleCopyLink}
+              className="h-11 px-4"
+            >
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            </Button>
           </div>
 
-          {showImagePreview && (
-            <p className="text-xs text-center text-muted-foreground mt-2">
-              点击生成图片后，长按保存到相册
-            </p>
-          )}
+          <p className="text-xs text-center text-muted-foreground mt-2">
+            {showImagePreview ? '点击生成图片后，长按保存到相册' : '点击分享按钮，或复制链接后发送'}
+          </p>
         </DialogContent>
       </Dialog>
 
