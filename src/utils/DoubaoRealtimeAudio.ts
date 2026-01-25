@@ -1,7 +1,10 @@
 /**
- * 豆包语音大模型客户端
+ * 豆包语音大模型客户端 (Relay 架构)
  * 
- * 使用 WebSocket 连接豆包 Realtime API，实现双向语音对话
+ * 使用 WebSocket Relay 连接豆包 Realtime API，实现双向语音对话
+ * 
+ * 架构说明：
+ * 浏览器 <--JSON/WebSocket--> doubao-realtime-relay <--Binary--> 豆包 API
  * 
  * 豆包 API 特点：
  * - 纯 WebSocket 连接（非 WebRTC）
@@ -15,9 +18,10 @@ export type DoubaoConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disc
 export type DoubaoSpeakingStatus = 'idle' | 'user-speaking' | 'assistant-speaking';
 
 interface DoubaoConfig {
-  ws_url: string;
-  app_id: string;
-  token: string;
+  relay_url: string;
+  session_token: string;
+  user_id: string;
+  mode: string;
   instructions: string;
   tools: any[];
   audio_config: {
@@ -48,6 +52,7 @@ export class DoubaoRealtimeChat {
   private isPlaying = false;
   private isDisconnected = false;
   private config: DoubaoConfig | null = null;
+  private heartbeatInterval: number | null = null;
   
   private onStatusChange: (status: DoubaoConnectionStatus) => void;
   private onSpeakingChange: (status: DoubaoSpeakingStatus) => void;
@@ -68,21 +73,24 @@ export class DoubaoRealtimeChat {
   }
 
   async init(): Promise<void> {
-    console.log('[DoubaoChat] Initializing...');
+    console.log('[DoubaoChat] Initializing with Relay architecture...');
     this.onStatusChange('connecting');
 
     try {
-      // 1. 获取豆包连接配置
+      // 1. 获取 Relay 连接配置
       const { data, error } = await supabase.functions.invoke(this.tokenEndpoint, {
         body: { mode: this.mode }
       });
 
       if (error || !data) {
-        throw new Error(error?.message || 'Failed to get Doubao token');
+        throw new Error(error?.message || 'Failed to get Doubao relay config');
       }
 
       this.config = data as DoubaoConfig;
-      console.log('[DoubaoChat] Config received:', { ws_url: this.config.ws_url, app_id: this.config.app_id });
+      console.log('[DoubaoChat] Relay config received:', { 
+        relay_url: this.config.relay_url, 
+        user_id: this.config.user_id 
+      });
 
       // 2. 请求麦克风权限
       this.mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -101,21 +109,19 @@ export class DoubaoRealtimeChat {
         sampleRate: this.config.audio_config.input_sample_rate
       });
 
-      // 4. 建立 WebSocket 连接
-      const wsUrl = `${this.config.ws_url}?appid=${this.config.app_id}&token=${this.config.token}`;
+      // 4. 建立 WebSocket 连接到 Relay
+      const wsUrl = `${this.config.relay_url}?session_token=${this.config.session_token}&user_id=${this.config.user_id}&mode=${this.config.mode}`;
+      console.log('[DoubaoChat] Connecting to relay...');
       this.ws = new WebSocket(wsUrl);
 
       await this.setupWebSocket();
-      console.log('[DoubaoChat] WebSocket connected');
+      console.log('[DoubaoChat] WebSocket connected to relay');
 
-      // 5. 发送 session 配置
-      this.sendSessionUpdate();
+      // 5. 发送 session 初始化请求（让 relay 连接豆包）
+      this.sendSessionInit();
 
-      // 6. 开始音频录制
-      this.startRecording();
-
-      this.onStatusChange('connected');
-      console.log('[DoubaoChat] Initialization complete');
+      // 6. 启动心跳
+      this.startHeartbeat();
 
     } catch (error) {
       console.error('[DoubaoChat] Init error:', error);
@@ -149,6 +155,7 @@ export class DoubaoRealtimeChat {
 
       this.ws.onclose = (event) => {
         console.log('[DoubaoChat] WebSocket closed:', event.code, event.reason);
+        this.stopHeartbeat();
         if (!this.isDisconnected) {
           this.onStatusChange('disconnected');
         }
@@ -160,33 +167,33 @@ export class DoubaoRealtimeChat {
     });
   }
 
-  private sendSessionUpdate(): void {
+  private sendSessionInit(): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this.config) return;
 
-    const sessionConfig = {
-      type: 'session.update',
-      session: {
-        modalities: ['text', 'audio'],
-        instructions: this.config.instructions,
-        input_audio_format: 'pcm16',
-        output_audio_format: 'pcm16',
-        input_audio_transcription: {
-          model: 'whisper-1'
-        },
-        turn_detection: {
-          type: 'server_vad',
-          threshold: 0.5,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 800
-        },
-        tools: this.config.tools,
-        tool_choice: 'auto',
-        temperature: 0.8
-      }
+    // 发送初始化请求，让 Relay 连接到豆包
+    const initRequest = {
+      type: 'session.init',
+      instructions: this.config.instructions,
+      tools: this.config.tools
     };
 
-    this.ws.send(JSON.stringify(sessionConfig));
-    console.log('[DoubaoChat] Session config sent');
+    this.ws.send(JSON.stringify(initRequest));
+    console.log('[DoubaoChat] Session init request sent');
+  }
+
+  private startHeartbeat(): void {
+    this.heartbeatInterval = window.setInterval(() => {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, 30000);
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
   }
 
   // 公开的启动录音方法（用于符合 AudioClient 接口）
@@ -202,7 +209,7 @@ export class DoubaoRealtimeChat {
       const inputData = e.inputBuffer.getChannelData(0);
       const audioBase64 = this.encodeAudioForAPI(inputData);
 
-      // 发送音频数据
+      // 发送音频数据到 Relay
       this.ws.send(JSON.stringify({
         type: 'input_audio_buffer.append',
         audio: audioBase64
@@ -242,12 +249,21 @@ export class DoubaoRealtimeChat {
       this.onMessage?.(message);
 
       switch (message.type) {
-        case 'session.created':
-          console.log('[DoubaoChat] Session created');
+        case 'session.connected':
+          console.log('[DoubaoChat] Relay connected to Doubao');
+          // 现在开始录音
+          this.startRecording();
+          this.onStatusChange('connected');
           break;
 
-        case 'session.updated':
-          console.log('[DoubaoChat] Session updated');
+        case 'session.closed':
+          console.log('[DoubaoChat] Session closed by relay');
+          this.onStatusChange('disconnected');
+          break;
+
+        case 'heartbeat':
+        case 'pong':
+          // 心跳响应，忽略
           break;
 
         case 'input_audio_buffer.speech_started':
@@ -279,6 +295,13 @@ export class DoubaoRealtimeChat {
           }
           break;
 
+        case 'response.text':
+          // 处理豆包返回的文本消息
+          if (message.payload?.result?.text) {
+            this.onTranscript(message.payload.result.text, true, 'assistant');
+          }
+          break;
+
         case 'conversation.item.input_audio_transcription.completed':
           if (message.transcript) {
             this.onTranscript(message.transcript, true, 'user');
@@ -298,7 +321,7 @@ export class DoubaoRealtimeChat {
           break;
 
         case 'error':
-          console.error('[DoubaoChat] API error:', message);
+          console.error('[DoubaoChat] Relay error:', message.error);
           break;
       }
     } catch (e) {
@@ -426,6 +449,7 @@ export class DoubaoRealtimeChat {
   disconnect(): void {
     console.log('[DoubaoChat] Disconnecting...');
     this.isDisconnected = true;
+    this.stopHeartbeat();
 
     if (this.processor) {
       this.processor.disconnect();
@@ -448,6 +472,10 @@ export class DoubaoRealtimeChat {
     }
 
     if (this.ws) {
+      // 通知 relay 关闭
+      if (this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'session.close' }));
+      }
       this.ws.close();
       this.ws = null;
     }
