@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Image, Copy, Check, ImageIcon, Share2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ShareImagePreview from '@/components/ui/share-image-preview';
-import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -23,6 +22,8 @@ import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
 import useWechatShare from '@/hooks/useWechatShare';
 import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
+import { getShareEnvironment } from '@/utils/shareUtils';
+import { generateCanvas, canvasToBlob } from '@/utils/shareCardConfig';
 
 interface UserInfo {
   avatarUrl?: string;
@@ -73,146 +74,10 @@ const getProxiedAvatarUrl = (avatarUrl?: string): string | undefined => {
   }
 };
 
-// Helper: Wait for all images in element to load with timeout
-const waitForImages = async (element: HTMLElement, timeout = 3000): Promise<void> => {
-  const images = element.querySelectorAll('img');
-  const promises = Array.from(images).map(img => {
-    if (img.complete && img.naturalHeight > 0) return Promise.resolve();
-    return new Promise<void>((resolve) => {
-      const timer = setTimeout(() => resolve(), timeout);
-      img.onload = () => {
-        clearTimeout(timer);
-        resolve();
-      };
-      img.onerror = () => {
-        clearTimeout(timer);
-        resolve(); // Resolve even on error to not block
-      };
-    });
-  });
-  await Promise.all(promises);
-};
-
-// Helper: Copy computed styles to cloned element
-const copyComputedStyles = (source: HTMLElement, target: HTMLElement): void => {
-  const computedStyle = window.getComputedStyle(source);
-  const importantProps = [
-    'font-family', 'font-size', 'font-weight', 'line-height', 'color',
-    'background', 'background-color', 'background-image', 'background-size',
-    'border-radius', 'padding', 'margin', 'width', 'height',
-    'display', 'flex-direction', 'align-items', 'justify-content', 'gap',
-    'box-shadow', 'text-align', 'opacity', 'overflow'
-  ];
-  
-  importantProps.forEach(prop => {
-    const value = computedStyle.getPropertyValue(prop);
-    if (value) {
-      target.style.setProperty(prop, value);
-    }
-  });
-};
-
-// Helper: Generate canvas from card element with enhanced stability for WeChat
-const generateCanvas = async (cardRef: React.RefObject<HTMLDivElement>): Promise<HTMLCanvasElement | null> => {
-  if (!cardRef.current) {
-    console.error('[generateCanvas] cardRef.current is null');
-    return null;
-  }
-  
-  const originalElement = cardRef.current;
-  console.log('[generateCanvas] Starting canvas generation, element size:', 
-    originalElement.offsetWidth, 'x', originalElement.offsetHeight);
-  
-  // Create a wrapper for proper rendering with reliable hiding
-  // IMPORTANT: Use transparent background to support rounded corners
-  const wrapper = document.createElement('div');
-  wrapper.id = 'html2canvas-clone-wrapper';
-  wrapper.style.cssText = `
-    position: fixed !important;
-    left: -99999px !important;
-    top: -99999px !important;
-    pointer-events: none !important;
-    z-index: -99999 !important;
-    background: transparent !important;
-  `;
-  
-  // Clone the element
-  const clonedElement = originalElement.cloneNode(true) as HTMLElement;
-  
-  // Reset transform and ensure proper sizing for WeChat
-  // IMPORTANT: Set transparent background on cloned element for rounded corners
-  clonedElement.style.transform = 'none';
-  clonedElement.style.transformOrigin = 'top left';
-  clonedElement.style.margin = '0';
-  clonedElement.style.position = 'relative';
-  clonedElement.style.width = originalElement.offsetWidth + 'px';
-  clonedElement.style.minWidth = originalElement.offsetWidth + 'px';
-  clonedElement.style.visibility = 'visible';
-  clonedElement.style.opacity = '1';
-  clonedElement.style.background = 'transparent';
-  
-  wrapper.appendChild(clonedElement);
-  document.body.appendChild(wrapper);
-  
-  try {
-    // Wait for images with extended timeout for WeChat
-    console.log('[generateCanvas] Waiting for images...');
-    await waitForImages(clonedElement, 8000);
-    
-    // Longer delay for WeChat browser rendering
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    console.log('[generateCanvas] Starting html2canvas...');
-    
-    // Add 15-second timeout protection
-    const canvas = await Promise.race([
-      html2canvas(clonedElement, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false,
-        imageTimeout: 8000,
-        removeContainer: false,
-        foreignObjectRendering: false,
-        onclone: (_doc, element) => {
-          element.style.transform = 'none';
-          element.style.visibility = 'visible';
-          element.style.opacity = '1';
-        },
-      }),
-      new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('图片生成超时，请重试')), 15000)
-      )
-    ]) as HTMLCanvasElement;
-    
-    console.log('[generateCanvas] Canvas generated successfully:', canvas.width, 'x', canvas.height);
-    return canvas;
-  } catch (error) {
-    console.error('[generateCanvas] html2canvas error:', error);
-    throw error;
-  } finally {
-    // Clean up wrapper
-    if (wrapper.parentNode) {
-      document.body.removeChild(wrapper);
-    }
-  }
-};
-
 // Helper: Clean up any lingering clone elements
 const cleanupCloneElements = () => {
-  document.querySelectorAll('#html2canvas-clone-wrapper').forEach(el => el.remove());
+  document.querySelectorAll('#share-card-render-wrapper').forEach(el => el.remove());
 };
-
-// Helper: Canvas to Blob
-const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> => {
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => resolve(blob), 'image/png', 1.0);
-  });
-};
-
-// Import share utilities
-import { getShareEnvironment } from '@/utils/shareUtils';
 
 // Get best awakening content with priority: belief > emotion > behavior
 const getBestAwakening = (data: AwakeningData): { type: 'behavior' | 'emotion' | 'belief'; content: string } | null => {

@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Share2, Copy, Check, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import html2canvas from "html2canvas";
 import QRCode from "qrcode";
 import { usePartner } from "@/hooks/usePartner";
 import { getPartnerShareUrl, getPromotionDomain } from "@/utils/partnerQRUtils";
 import { handleShareWithFallback, shouldUseImagePreview, getShareEnvironment } from '@/utils/shareUtils';
 import ShareImagePreview from '@/components/ui/share-image-preview';
+import { generateCardBlob } from '@/utils/shareCardConfig';
 
 interface GratitudeJournalShareDialogProps {
   trigger?: React.ReactNode;
@@ -62,58 +62,22 @@ export const GratitudeJournalShareDialog = ({ trigger }: GratitudeJournalShareDi
     }
   };
 
-  const generateImage = async (): Promise<Blob | null> => {
-    if (!posterRef.current) return null;
+  const handleShare = async () => {
+    if (!posterRef.current) {
+      toast.error("请等待卡片加载完成");
+      return;
+    }
     if (!qrCodeUrl) {
       toast.error("请等待二维码生成完成");
-      return null;
+      return;
     }
 
-    const posterElement = posterRef.current;
-    const container = posterElement.parentElement;
-    
-    try {
-      if (container) {
-        container.style.position = 'fixed';
-        container.style.left = '16px';
-        container.style.top = '16px';
-        container.style.zIndex = '9999';
-        container.style.opacity = '1';
-        container.style.visibility = 'visible';
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const canvas = await html2canvas(posterElement, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false,
-        width: posterElement.scrollWidth,
-        height: posterElement.scrollHeight,
-      });
-
-      const blob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob((b) => resolve(b!), 'image/png', 1.0);
-      });
-
-      return blob;
-    } finally {
-      if (container) {
-        container.style.position = 'fixed';
-        container.style.left = '-9999px';
-        container.style.opacity = '0';
-        container.style.visibility = 'hidden';
-      }
-    }
-  };
-
-  const handleShare = async () => {
     setGenerating(true);
     try {
-      const blob = await generateImage();
-      if (!blob) return;
+      const blob = await generateCardBlob(posterRef, { isWeChat });
+      if (!blob) {
+        throw new Error('Failed to generate image');
+      }
 
       if (shouldUseImagePreview()) {
         const imageUrl = URL.createObjectURL(blob);

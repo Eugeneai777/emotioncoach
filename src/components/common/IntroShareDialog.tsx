@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Share2, Download, Check, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import html2canvas from 'html2canvas';
 import { type IntroShareConfig, getShareUrl } from '@/config/introShareConfig';
 import IntroShareCard, { CardTemplate, TEMPLATE_LABELS } from './IntroShareCard';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +12,7 @@ import ShareImagePreview from '@/components/ui/share-image-preview';
 import { getProxiedAvatarUrl } from '@/utils/avatarUtils';
 import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 import { useQRCode } from '@/utils/qrCodeUtils';
+import { generateCardDataUrl } from '@/utils/shareCardConfig';
 
 // 调试开关
 const DEBUG_SHARE_CARD = localStorage.getItem('debug_share_card') === 'true';
@@ -62,7 +62,6 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
   const showImagePreview = shareEnv.isWeChat || shareEnv.isIOS;
 
   const generateImage = async () => {
-    // 使用隐藏的全尺寸导出卡片
     if (!exportRef.current) {
       DEBUG_SHARE_CARD && console.log('[IntroShareDialog] No export ref available');
       return null;
@@ -70,75 +69,22 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
     
     setIsGenerating(true);
     try {
-      const element = exportRef.current;
-      
-      // 检查卡片内容
       DEBUG_SHARE_CARD && console.log('[IntroShareDialog] Card content:', {
         hasAvatar: !!avatarUrl,
-        avatarUrl: avatarUrl?.substring(0, 50),
-        displayName,
         configTitle: config.title,
         template: selectedTemplate,
-        elementSize: { width: element.scrollWidth, height: element.scrollHeight },
       });
 
-      // 等待渲染稳定
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // 等待图片加载
-      const images = element.querySelectorAll('img');
-      DEBUG_SHARE_CARD && console.log('[IntroShareDialog] Found images:', images.length);
-      
-      await Promise.all(
-        Array.from(images).map((img, i) => {
-          if (img.complete && img.naturalHeight > 0) {
-            DEBUG_SHARE_CARD && console.log(`[IntroShareDialog] Image ${i} already loaded:`, img.src.substring(0, 50));
-            return Promise.resolve();
-          }
-          return new Promise(resolve => {
-            img.onload = () => {
-              DEBUG_SHARE_CARD && console.log(`[IntroShareDialog] Image ${i} loaded:`, img.src.substring(0, 50));
-              resolve(undefined);
-            };
-            img.onerror = (e) => {
-              console.error(`[IntroShareDialog] Image ${i} failed:`, img.src.substring(0, 50), e);
-              resolve(undefined);
-            };
-            setTimeout(() => {
-              DEBUG_SHARE_CARD && console.log(`[IntroShareDialog] Image ${i} timeout`);
-              resolve(undefined);
-            }, 3000);
-          });
-        })
-      );
-
-      // 关键：使用显式尺寸约束，确保捕获完整卡片
-      const canvas = await html2canvas(element, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: DEBUG_SHARE_CARD,
-        foreignObjectRendering: false,
-        width: element.scrollWidth,
-        height: element.scrollHeight,
-        windowWidth: element.scrollWidth + 100,
-        windowHeight: element.scrollHeight + 100,
-        x: 0,
-        y: 0,
-        scrollX: 0,
-        scrollY: 0,
+      const dataUrl = await generateCardDataUrl(exportRef, { 
+        isWeChat: shareEnv.isWeChat,
+        debug: DEBUG_SHARE_CARD,
       });
-
-      DEBUG_SHARE_CARD && console.log('[IntroShareDialog] Canvas generated:', canvas.width, 'x', canvas.height);
       
-      const dataUrl = canvas.toDataURL('image/png');
-      
-      // 验证生成的数据
       if (!dataUrl || !dataUrl.startsWith('data:image/png')) {
         throw new Error('Invalid image data generated');
       }
       
+      DEBUG_SHARE_CARD && console.log('[IntroShareDialog] Image generated successfully');
       return dataUrl;
     } catch (error) {
       console.error('[IntroShareDialog] Generation failed:', error);
