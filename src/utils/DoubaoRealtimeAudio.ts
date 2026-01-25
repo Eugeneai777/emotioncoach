@@ -53,6 +53,7 @@ export class DoubaoRealtimeChat {
   private isDisconnected = false;
   private config: DoubaoConfig | null = null;
   private heartbeatInterval: number | null = null;
+  private hasSessionClosed = false;
   
   private onStatusChange: (status: DoubaoConnectionStatus) => void;
   private onSpeakingChange: (status: DoubaoSpeakingStatus) => void;
@@ -116,6 +117,8 @@ export class DoubaoRealtimeChat {
 
       await this.setupWebSocket();
       console.log('[DoubaoChat] WebSocket connected to relay');
+
+      this.hasSessionClosed = false;
 
       // 5. 发送 session 初始化请求（让 relay 连接豆包）
       this.sendSessionInit();
@@ -250,6 +253,10 @@ export class DoubaoRealtimeChat {
 
       switch (message.type) {
         case 'session.connected':
+          if (this.hasSessionClosed) {
+            console.warn('[DoubaoChat] Ignoring session.connected after session.closed');
+            return;
+          }
           console.log('[DoubaoChat] Relay connected to Doubao');
           // 现在开始录音
           this.startRecording();
@@ -258,6 +265,9 @@ export class DoubaoRealtimeChat {
 
         case 'session.closed':
           console.log('[DoubaoChat] Session closed by relay');
+          this.hasSessionClosed = true;
+          // 立刻停止录音，避免继续发送音频导致 relay 端 BrokenPipe 刷屏
+          this.stopRecording();
           this.onStatusChange('disconnected');
           break;
 
@@ -321,7 +331,9 @@ export class DoubaoRealtimeChat {
           break;
 
         case 'error':
-          console.error('[DoubaoChat] Relay error:', message.error);
+          console.error('[DoubaoChat] Relay error:', message.error, message.details);
+          // 如果 relay 已经明确返回错误，标记为 closed，避免后续“假 connected”触发录音
+          this.hasSessionClosed = true;
           break;
       }
     } catch (e) {
@@ -439,9 +451,11 @@ export class DoubaoRealtimeChat {
   stopRecording(): void {
     if (this.processor) {
       this.processor.disconnect();
+      this.processor = null;
     }
     if (this.source) {
       this.source.disconnect();
+      this.source = null;
     }
     console.log('[DoubaoChat] Recording stopped');
   }
