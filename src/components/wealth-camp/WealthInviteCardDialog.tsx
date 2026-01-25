@@ -792,115 +792,43 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
         </Tabs>
 
-        {/* Action Buttons - Dual-track for WeChat vs Other */}
+        {/* Action Buttons - Unified across all environments */}
         <div className="flex flex-col gap-3 mt-4">
-          {/* WeChat/MiniProgram: Show dual-track options */}
-          {(env.isWeChat || env.isMiniProgram) ? (
-            <div className="flex flex-col gap-3">
-              {/* Option 1: Link Share (Recommended) */}
-              <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">🔗</span>
-                  <span className="font-medium text-emerald-700 dark:text-emerald-300">
-                    方式1：链接分享（推荐）
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  点击右上角「<strong>...</strong>」→「<strong>发送给朋友</strong>」，好友可直接点击进入
-                </p>
-                <Button 
-                  onClick={handleLinkSharePrompt} 
-                  variant="outline" 
-                  className="w-full h-11 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
-                >
-                  <Share2 className="h-4 w-4 mr-2" />
-                  去右上角分享链接
-                </Button>
-              </div>
-              
-              {/* Option 2: Image Share */}
-              <div className="bg-muted/50 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">🖼️</span>
-                  <span className="font-medium">方式2：图片分享</span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  生成精美邀请卡片，<strong>长按保存</strong>后发送给好友
-                </p>
-                <Button 
-                  onClick={handleDownload} 
-                  disabled={generating} 
-                  className="w-full h-11 bg-gradient-to-r from-primary to-primary/80"
-                >
-                  {generating ? (
-                    <>
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                      >
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                      </motion.div>
-                      生成中...
-                    </>
-                  ) : (
-                    <>
-                      <ImageIcon className="h-4 w-4 mr-2" />
-                      生成邀请卡片
-                    </>
-                  )}
-                </Button>
-              </div>
-              
-              {/* Fallback: Copy Link */}
-              <Button 
-                onClick={handleCopyLink} 
-                variant="ghost" 
-                className="gap-2 text-muted-foreground"
-              >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied ? '已复制' : '复制邀请链接'}
-              </Button>
-            </div>
-          ) : (
-            /* Non-WeChat: Standard buttons */
-            <>
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleNativeShare}
-                  disabled={generating}
-                  className="flex-1 gap-2 h-12 text-base font-medium bg-gradient-to-r from-primary to-primary/80"
-                >
-                  {generating ? (
-                    <>
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                      >
-                        <Share2 className="h-5 w-5" />
-                      </motion.div>
-                      生成中...
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="h-5 w-5" />
-                      分享
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleCopyLink}
-                  className="h-12 px-4"
-                >
-                  {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-              
-              <p className="text-xs text-muted-foreground text-center">
-                点击分享按钮，或复制链接后发送
-              </p>
-            </>
-          )}
+          <div className="flex gap-2">
+            <Button
+              onClick={handleDownload}
+              disabled={generating}
+              className="flex-1 gap-2 h-12 text-base font-medium bg-gradient-to-r from-primary to-primary/80"
+            >
+              {generating ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  >
+                    <Share2 className="h-5 w-5" />
+                  </motion.div>
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <Share2 className="h-5 w-5" />
+                  分享
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleCopyLink}
+              className="h-12 px-4"
+            >
+              {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
+          
+          <p className="text-xs text-muted-foreground text-center">
+            点击分享按钮，或复制链接后发送
+          </p>
         </div>
       </DialogContent>
       
