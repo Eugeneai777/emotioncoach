@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Download, Share2 } from 'lucide-react';
-import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -10,9 +9,10 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import WealthJournalShareCard from './WealthJournalShareCard';
-import { getPromotionDomain } from '@/utils/partnerQRUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
+import { generateCanvas, canvasToBlob } from '@/utils/shareCardConfig';
+import { getShareEnvironment } from '@/utils/shareUtils';
 
 interface JournalEntry {
   day_number: number;
@@ -52,62 +52,6 @@ const getProxiedAvatarUrl = (avatarUrl?: string): string | undefined => {
   } catch {
     return avatarUrl;
   }
-};
-
-// Helper: Wait for all images in element to load
-const waitForImages = async (element: HTMLElement): Promise<void> => {
-  const images = element.querySelectorAll('img');
-  const promises = Array.from(images).map(img => {
-    if (img.complete) return Promise.resolve();
-    return new Promise<void>((resolve) => {
-      img.onload = () => resolve();
-      img.onerror = () => resolve();
-    });
-  });
-  await Promise.all(promises);
-};
-
-// Helper: Generate canvas from card element
-const generateCanvas = async (cardRef: React.RefObject<HTMLDivElement>): Promise<HTMLCanvasElement | null> => {
-  if (!cardRef.current) return null;
-  
-  const originalElement = cardRef.current;
-  const clonedElement = originalElement.cloneNode(true) as HTMLElement;
-  
-  clonedElement.style.position = 'fixed';
-  clonedElement.style.left = '-9999px';
-  clonedElement.style.top = '0';
-  clonedElement.style.transform = 'none';
-  clonedElement.style.zIndex = '-9999';
-  
-  document.body.appendChild(clonedElement);
-  await waitForImages(clonedElement);
-  
-  const canvas = await html2canvas(clonedElement, {
-    scale: 3,
-    useCORS: true,
-    allowTaint: false,
-    backgroundColor: null,
-    logging: false,
-  });
-  
-  document.body.removeChild(clonedElement);
-  return canvas;
-};
-
-// Helper: Canvas to Blob
-const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> => {
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => resolve(blob), 'image/png', 1.0);
-  });
-};
-
-// Helper: Detect if running in WeChat or iOS environment
-const isWeChatOrIOS = (): boolean => {
-  const ua = navigator.userAgent.toLowerCase();
-  const isWeChat = ua.includes('micromessenger');
-  const isIOS = /iphone|ipad|ipod/.test(ua);
-  return isWeChat || isIOS;
 };
 
 const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
@@ -167,9 +111,10 @@ const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
       return;
     }
 
+    const env = getShareEnvironment();
     setGenerating(true);
     try {
-      const canvas = await generateCanvas(cardRef);
+      const canvas = await generateCanvas(cardRef, { isWeChat: env.isWeChat });
       if (!canvas) throw new Error('Failed to generate canvas');
 
       const blob = await canvasToBlob(canvas);
@@ -183,7 +128,7 @@ const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
       link.click();
       document.body.removeChild(link);
 
-      if (isWeChatOrIOS()) {
+      if (env.isWeChat || env.isIOS) {
         toast.success('图片已生成，长按图片可保存到相册', { duration: 4000 });
         window.open(blobUrl, '_blank');
       } else {
@@ -205,9 +150,10 @@ const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
       return;
     }
 
+    const env = getShareEnvironment();
     setGenerating(true);
     try {
-      const canvas = await generateCanvas(cardRef);
+      const canvas = await generateCanvas(cardRef, { isWeChat: env.isWeChat });
       if (!canvas) throw new Error('Failed to generate canvas');
 
       const blob = await canvasToBlob(canvas);
@@ -224,7 +170,7 @@ const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
       } else {
         const blobUrl = URL.createObjectURL(blob);
         
-        if (isWeChatOrIOS()) {
+        if (env.isWeChat || env.isIOS) {
           toast.info('请长按图片保存后分享', { duration: 4000 });
           window.open(blobUrl, '_blank');
         } else {

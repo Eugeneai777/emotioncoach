@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import html2canvas from 'html2canvas';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +12,7 @@ import { handleShareWithFallback, shouldUseImagePreview, getShareEnvironment } f
 import ShareImagePreview from '@/components/ui/share-image-preview';
 import AliveCheckShareCard from './AliveCheckShareCard';
 import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
+import { generateCardBlob } from '@/utils/shareCardConfig';
 
 interface AliveCheckShareDialogProps {
   open: boolean;
@@ -34,58 +34,19 @@ const AliveCheckShareDialog: React.FC<AliveCheckShareDialogProps> = ({
   const { isWeChat, isIOS } = getShareEnvironment();
   const showImagePreview = isWeChat || isIOS;
 
-  const generateImage = async (): Promise<Blob | null> => {
-    if (!exportRef.current) return null;
-
-    const container = exportRef.current.parentElement;
-    
-    try {
-      if (container) {
-        container.style.position = 'fixed';
-        container.style.left = '16px';
-        container.style.top = '16px';
-        container.style.zIndex = '9999';
-        container.style.opacity = '1';
-        container.style.visibility = 'visible';
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const canvas = await html2canvas(exportRef.current, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false,
-        width: exportRef.current.scrollWidth,
-        height: exportRef.current.scrollHeight,
-        windowWidth: exportRef.current.scrollWidth + 100,
-        windowHeight: exportRef.current.scrollHeight + 100,
-        x: 0,
-        y: 0,
-        scrollX: 0,
-        scrollY: 0,
-      });
-
-      const blob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob((b) => resolve(b!), 'image/png', 1.0);
-      });
-
-      return blob;
-    } finally {
-      if (container) {
-        container.style.position = 'fixed';
-        container.style.left = '-9999px';
-        container.style.opacity = '0';
-        container.style.visibility = 'hidden';
-      }
-    }
-  };
-
   const handleGenerateImage = async () => {
+    if (!exportRef.current) {
+      toast({
+        title: "生成失败",
+        description: "卡片未加载完成",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGenerating(true);
     try {
-      const blob = await generateImage();
+      const blob = await generateCardBlob(exportRef, { isWeChat });
       if (!blob) {
         throw new Error('Failed to generate image');
       }

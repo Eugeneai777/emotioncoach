@@ -2,13 +2,13 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Share2, Copy, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import html2canvas from "html2canvas";
 import ShareCard from "./ShareCard";
 import ShareCardExport from "./ShareCardExport";
 import ShareImagePreview from "@/components/ui/share-image-preview";
 import { usePartner } from "@/hooks/usePartner";
 import { handleShareWithFallback, getShareEnvironment, shouldUseImagePreview } from "@/utils/shareUtils";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
+import { generateCardBlob } from "@/utils/shareCardConfig";
 import {
   Dialog,
   DialogContent,
@@ -82,62 +82,14 @@ const ShareButton = ({ post }: ShareButtonProps) => {
 
   const handleGenerateImage = async () => {
     if (!cardRef.current) return;
-    
-    const container = cardRef.current.parentElement;
 
     try {
       setSharing(true);
 
-      // 临时让元素可见以确保正确渲染 - 使用安全边距防止截断
-      if (container) {
-        container.style.position = 'fixed';
-        container.style.left = '16px';
-        container.style.top = '16px';
-        container.style.zIndex = '9999';
-        container.style.opacity = '1';
-        container.style.visibility = 'visible';
+      const blob = await generateCardBlob(cardRef, { isWeChat });
+      if (!blob) {
+        throw new Error('Failed to generate image');
       }
-
-      // 等待渲染稳定 - 移动端需要更长时间
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // 生成图片
-      const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: null,
-        scale: 3,
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        imageTimeout: 15000,
-        width: cardRef.current.scrollWidth,
-        height: cardRef.current.scrollHeight,
-        windowWidth: cardRef.current.scrollWidth + 100,
-        windowHeight: cardRef.current.scrollHeight + 100,
-        x: 0,
-        y: 0,
-        scrollX: 0,
-        scrollY: 0,
-        // 强制使用系统字体，避免渲染异常
-        onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.body.querySelector('[data-share-card]');
-          if (clonedElement) {
-            // 设置安全的系统字体
-            (clonedElement as HTMLElement).style.fontFamily = 
-              '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif';
-            
-            // 确保所有图片都加载完成
-            const images = clonedElement.querySelectorAll('img');
-            images.forEach((img) => {
-              (img as HTMLImageElement).crossOrigin = 'anonymous';
-            });
-          }
-        }
-      });
-
-      // 转换为 Blob
-      const blob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob((blob) => resolve(blob!), "image/png");
-      });
 
       // Use unified share handler with proper WeChat/iOS fallback
       const result = await handleShareWithFallback(
@@ -176,14 +128,6 @@ const ShareButton = ({ post }: ShareButtonProps) => {
       });
     } finally {
       setSharing(false);
-      
-      // 确保恢复隐藏
-      if (container) {
-        container.style.position = 'fixed';
-        container.style.left = '-9999px';
-        container.style.opacity = '0';
-        container.style.visibility = 'hidden';
-      }
     }
   };
 
