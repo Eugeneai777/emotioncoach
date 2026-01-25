@@ -8,6 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { youjinPartnerLevels } from "@/config/partnerLevels";
 import { toast } from "sonner";
+import { SHARE_CARD_CONFIG } from '@/utils/shareCardConfig';
 import html2canvas from "html2canvas";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 
@@ -33,10 +34,7 @@ const YoujinPartnerPlan = () => {
     setIsGeneratingPoster(true);
     try {
       const canvas = await html2canvas(posterRef.current, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: null,
-        logging: false,
+        ...SHARE_CARD_CONFIG,
       });
       
       // 转换为 Blob

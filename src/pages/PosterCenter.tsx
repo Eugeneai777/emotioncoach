@@ -16,8 +16,9 @@ import { UnsplashImagePicker } from '@/components/poster/UnsplashImagePicker';
 import { PosterSizeSelector, POSTER_SIZES, type PosterSize } from '@/components/poster/PosterSizeSelector';
 import { type PosterScheme } from '@/components/poster/SchemePreview';
 import { toast } from 'sonner';
-import html2canvas from 'html2canvas';
 import { supabase } from '@/integrations/supabase/client';
+import { SHARE_CARD_CONFIG } from '@/utils/shareCardConfig';
+import html2canvas from 'html2canvas';
 
 type Mode = 'quick' | 'expert';
 type QuickStep = 'template' | 'scene' | 'generate';
@@ -194,11 +195,7 @@ export default function PosterCenter() {
 
       // 直接截图原始元素（保留所有内部布局）
       const canvas = await html2canvas(posterElement, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false,
+        ...SHARE_CARD_CONFIG,
         width: selectedPosterSize.width,
         height: selectedPosterSize.height,
       });

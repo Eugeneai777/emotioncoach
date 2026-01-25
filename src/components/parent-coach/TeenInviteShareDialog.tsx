@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import html2canvas from 'html2canvas';
+import { generateCardBlob } from '@/utils/shareCardConfig';
 import {
   Dialog,
   DialogContent,
@@ -116,42 +116,14 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
 
   const handleGenerateImage = async () => {
     if (!exportRef.current || !accessToken) return;
-
-    const container = exportRef.current.parentElement;
     
     setIsGenerating(true);
     try {
-      // Make element visible temporarily
-      if (container) {
-        container.style.position = 'fixed';
-        container.style.left = '16px';
-        container.style.top = '16px';
-        container.style.zIndex = '9999';
-        container.style.opacity = '1';
-        container.style.visibility = 'visible';
-      }
+      const blob = await generateCardBlob(exportRef, { isWeChat: isWeChatOrIOS() });
       
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const canvas = await html2canvas(exportRef.current, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false,
-        width: exportRef.current.scrollWidth,
-        height: exportRef.current.scrollHeight,
-        windowWidth: exportRef.current.scrollWidth + 100,
-        windowHeight: exportRef.current.scrollHeight + 100,
-        x: 0,
-        y: 0,
-        scrollX: 0,
-        scrollY: 0,
-      });
-
-      const blob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob((b) => resolve(b!), 'image/png', 1.0);
-      });
+      if (!blob) {
+        throw new Error('生成图片失败');
+      }
 
       // Try system share
       if (navigator.share && navigator.canShare) {
@@ -204,14 +176,6 @@ const TeenInviteShareDialog: React.FC<TeenInviteShareDialogProps> = ({
       });
     } finally {
       setIsGenerating(false);
-      
-      // Hide element
-      if (container) {
-        container.style.position = 'fixed';
-        container.style.left = '-9999px';
-        container.style.opacity = '0';
-        container.style.visibility = 'hidden';
-      }
     }
   };
 
