@@ -341,12 +341,14 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
 /**
  * 构建 Audio Upload 请求 (event=200)
  */
-function buildAudioUploadRequest(audioData: Uint8Array, sequence: number): Uint8Array {
+function buildAudioUploadRequest(audioData: Uint8Array, sequence: number, sessionId: string): Uint8Array {
   return buildPacket({
     messageType: MESSAGE_TYPE_AUDIO_ONLY,
-    flags: FLAG_HAS_SEQUENCE | FLAG_HAS_EVENT,
+    // ⚠️ Critical: Audio Upload 必须携带 sessionId，否则服务端可能无法将音频归属到会话，导致 DialogAudioIdleTimeout
+    flags: FLAG_HAS_SEQUENCE | FLAG_HAS_EVENT | FLAG_HAS_SESSION_ID,
     sequence: sequence,
     event: EVENT_AUDIO_UPLOAD,
+    sessionId,
     payload: audioData,
     serialization: SERIALIZATION_NONE
   });
@@ -583,6 +585,7 @@ Deno.serve(async (req) => {
   let heartbeatInterval: number | null = null;
   let audioSequence = 0;  // 音频包序号
   let sessionStarted = false;  // 标记 session 是否已成功启动
+  let doubaoSessionId: string | null = null; // StartSession 生成的 sessionId，后续 Audio Upload 必须复用
 
   const connectToDoubao = async () => {
     try {
@@ -654,7 +657,7 @@ Deno.serve(async (req) => {
       // 发送 StartSession 请求
       if (sessionConfig) {
         // 生成客户端 SessionID (UUID)
-        const doubaoSessionId = crypto.randomUUID();
+        doubaoSessionId = crypto.randomUUID();
         console.log(`[DoubaoRelay] Generated SessionID: ${doubaoSessionId}`);
         
         const startSessionPacket = buildStartSessionRequest(userId, sessionConfig.instructions, doubaoSessionId);
@@ -720,6 +723,7 @@ Deno.serve(async (req) => {
                 if (parsed.messageType === MESSAGE_TYPE_FULL_SERVER && parsed.serialization === SERIALIZATION_JSON) {
                   try {
                     const jsonStr = new TextDecoder().decode(parsed.payload);
+                    // 有些事件 payload 可能不是 JSON（例如纯 sessionId 字符串）；JSON.parse 失败时直接跳过即可
                     const payload = JSON.parse(jsonStr);
                     console.log('[DoubaoRelay] JSON payload:', JSON.stringify(payload).substring(0, 200));
                     
@@ -745,7 +749,10 @@ Deno.serve(async (req) => {
                       }));
                     }
                   } catch (e) {
-                    console.error('[DoubaoRelay] Failed to parse JSON:', e);
+                    console.error('[DoubaoRelay] Failed to parse JSON:', e, {
+                      event: parsed.event,
+                      payloadPreview: new TextDecoder().decode(parsed.payload.slice(0, 120)),
+                    });
                   }
                 }
                 
@@ -863,14 +870,26 @@ Deno.serve(async (req) => {
             instructions: message.instructions || ''
           };
           audioSequence = 0;  // 重置序号
+          sessionStarted = false;
+          doubaoSessionId = null;
           await connectToDoubao();
           break;
 
         case 'input_audio_buffer.append':
           if (doubaoConn && isConnected) {
             try {
+              if (!sessionStarted) {
+                // 前端可能会在 UI 显示“连接中/已连接”时就开始推流；但 Doubao 侧 session 还没 ready。
+                // 不要提前发，否则服务端可能丢弃。
+                return;
+              }
+              if (!doubaoSessionId) {
+                console.warn('[DoubaoRelay] Dropping audio: sessionId not ready');
+                return;
+              }
+
               const audioBytes = base64ToUint8Array(message.audio);
-              const audioPacket = buildAudioUploadRequest(audioBytes, audioSequence++);
+              const audioPacket = buildAudioUploadRequest(audioBytes, audioSequence++, doubaoSessionId);
               const frame = buildWebSocketFrame(audioPacket);
               await doubaoConn.write(frame);
               
