@@ -287,8 +287,8 @@ const PostDetailSheet = ({
       
       // 捕获 ShareCardExport 组件
       const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: "#ffffff",
-        scale: 2,
+        backgroundColor: null,
+        scale: 3,
         logging: false,
         useCORS: true,
         allowTaint: true,

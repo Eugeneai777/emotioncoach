@@ -86,8 +86,8 @@ const ShareButton = ({ post }: ShareButtonProps) => {
 
       // 生成图片
       const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: "#ffffff",
-        scale: 2,
+        backgroundColor: null,
+        scale: 3,
         logging: false,
         useCORS: true,
         allowTaint: true,

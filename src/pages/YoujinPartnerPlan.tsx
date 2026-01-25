@@ -33,9 +33,9 @@ const YoujinPartnerPlan = () => {
     setIsGeneratingPoster(true);
     try {
       const canvas = await html2canvas(posterRef.current, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
-        backgroundColor: '#fff8f0',
+        backgroundColor: null,
         logging: false,
       });
       
