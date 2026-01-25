@@ -638,8 +638,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsList>
 
           <TabsContent value="value" className="mt-3">
-            <div className="flex justify-center overflow-hidden">
-              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
+            <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
+              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top">
                 {isLoadingUser ? (
                   <ShareCardSkeleton />
                 ) : (
@@ -655,8 +655,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="fear" className="mt-3">
-            <div className="flex justify-center overflow-hidden">
-              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
+            <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
+              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top">
                 {isLoadingUser ? (
                   <ShareCardSkeleton />
                 ) : (
@@ -672,8 +672,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="blindspot" className="mt-3">
-            <div className="flex justify-center overflow-hidden">
-              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
+            <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
+              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top">
                 {isLoadingUser ? (
                   <ShareCardSkeleton />
                 ) : (
@@ -689,8 +689,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="transform" className="mt-3">
-            <div className="flex justify-center overflow-hidden">
-              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
+            <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
+              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top">
                 {isLoadingUser ? (
                   <ShareCardSkeleton />
                 ) : (
@@ -706,8 +706,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="camp" className="mt-3">
-            <div className="flex justify-center overflow-hidden">
-              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
+            <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
+              <div className="transform scale-[0.55] sm:scale-[0.62] origin-top">
                 {isLoadingUser ? (
                   <ShareCardSkeleton />
                 ) : (
@@ -773,8 +773,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
             
             {/* Card Preview */}
-            <div className="flex justify-center">
-              <div className="origin-top scale-[0.55] sm:scale-[0.62]" style={{ marginBottom: '-42%' }}>
+            <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
+              <div className="origin-top scale-[0.55] sm:scale-[0.62]">
                 <AchievementShareCard 
                   ref={achievementCardRef}
                   avatarUrl={userInfo.avatarUrl}
