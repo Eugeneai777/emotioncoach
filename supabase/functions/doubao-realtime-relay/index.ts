@@ -41,20 +41,33 @@ const SERIALIZATION_JSON = 0x01;
 const COMPRESSION_NONE = 0x00;
 
 // Header Flags (byte1 low 4 bits)
-// ⚠️ CRITICAL FIX based on official ByteDance documentation example:
-// StartSession 二进制帧: [17 20 16 0 0 0 0 100 0 0 0 36 ...]
-//   - Byte 1 = 0x14 = (MessageType=1 << 4) | Flags=0x04
-//   - Flags=0x04 表示 HAS_EVENT (bit 2)
-//   - StartSession 必须包含 Event + SessionID
+// ============================================================================
+// ⚠️ CRITICAL: 发送 vs 接收的 Flags 布局不同！
+// ============================================================================
 // 
-// 官方协议映射:
-//   - bit 0 (0x01): HAS_SEQUENCE (用于 Audio Upload)
-//   - bit 1 (0x02): (保留/未使用)
-//   - bit 2 (0x04): HAS_EVENT (用于 StartSession/EndSession/Audio Upload)
-//   - bit 3 (0x08): HAS_SESSION_ID (StartSession 中隐含包含)
-const FLAG_HAS_SEQUENCE = 0x01;      // bit 0: 有 sequence 字段
-const FLAG_HAS_EVENT = 0x04;         // bit 2: 有 event 字段 (官方示例 0x14 & 0x0F = 0x04)
-const FLAG_HAS_SESSION_ID = 0x08;    // bit 3: 有 session_id 字段
+// 【发送到服务端】(StartSession/Audio Upload):
+//   官方示例 byte1 = 0x14 => MessageType=1, Flags=0x04
+//   发送时我们使用 FLAG_SEND_HAS_EVENT = 0x04
+//
+// 【接收服务端响应】(TTS Audio/ASR/Chat):
+//   实际观察 byte1 = 0x96/0xB6 => MessageType=9/B, Flags=0x06
+//   服务端响应使用不同的位布局:
+//     - bit 0 (0x01): HAS_SEQUENCE
+//     - bit 1 (0x02): HAS_EVENT      ← 服务端响应用 bit 1
+//     - bit 2 (0x04): HAS_SESSION_ID ← 服务端响应用 bit 2
+//
+// 这就是为什么之前把 36 字节 SessionID 当成了音频 payload！
+// ============================================================================
+
+// === 用于【发送】请求的 Flags ===
+const FLAG_SEND_HAS_SEQUENCE = 0x01;       // bit 0
+const FLAG_SEND_HAS_EVENT = 0x04;          // bit 2 (官方示例)
+const FLAG_SEND_HAS_SESSION_ID = 0x08;     // bit 3 (发送时 SessionID 位置)
+
+// === 用于【接收/解析】服务端响应的 Flags ===
+const FLAG_HAS_SEQUENCE = 0x01;            // bit 0: 有 sequence 字段
+const FLAG_HAS_EVENT = 0x02;               // bit 1: 有 event 字段 (服务端响应实际布局)
+const FLAG_HAS_SESSION_ID = 0x04;          // bit 2: 有 session_id 字段 (服务端响应实际布局)
 
 // Event Types
 const EVENT_START_SESSION = 100;
@@ -123,10 +136,10 @@ function buildPacket(options: {
     serialization = SERIALIZATION_JSON
   } = options;
 
-  // 计算各部分大小
-  const hasSequence = (flags & FLAG_HAS_SEQUENCE) !== 0;
-  const hasEvent = (flags & FLAG_HAS_EVENT) !== 0;
-  const hasSessionId = (flags & FLAG_HAS_SESSION_ID) !== 0;
+  // 计算各部分大小 - 发送时使用发送专用的 Flags 常量
+  const hasSequence = (flags & FLAG_SEND_HAS_SEQUENCE) !== 0;
+  const hasEvent = (flags & FLAG_SEND_HAS_EVENT) !== 0;
+  const hasSessionId = (flags & FLAG_SEND_HAS_SESSION_ID) !== 0; // 发送时 SessionID 用 0x08
 
   let optionalFieldsSize = 0;
   if (hasSequence) optionalFieldsSize += 4;  // sequence: 4 bytes
@@ -344,7 +357,7 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
    * 若我们错误地依赖 FLAG_HAS_SESSION_ID / FLAG_HAS_SEQUENCE，会导致服务端按官方格式解码时字段错位，
    * 继而出现 autoAssignedSequence mismatch 等“连接后无反应”的问题。
    */
-  const flags = FLAG_HAS_EVENT; // StartSession 按示例仅标记 HAS_EVENT
+  const flags = FLAG_SEND_HAS_EVENT; // StartSession 发送时使用发送专用的 Flags
   const header = buildHeader(MESSAGE_TYPE_FULL_CLIENT, flags, SERIALIZATION_JSON);
 
   const sessionIdBytes = new TextEncoder().encode(sessionId);
@@ -392,8 +405,9 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
 function buildAudioUploadRequest(audioData: Uint8Array, sequence: number, sessionId: string): Uint8Array {
   return buildPacket({
     messageType: MESSAGE_TYPE_AUDIO_ONLY,
-    // ⚠️ Critical: Audio Upload 必须携带 sessionId，否则服务端可能无法将音频归属到会话，导致 DialogAudioIdleTimeout
-    flags: FLAG_HAS_SEQUENCE | FLAG_HAS_EVENT | FLAG_HAS_SESSION_ID,
+    // ⚠️ Critical: Audio Upload 使用发送专用的 Flags
+    // 必须携带 sessionId，否则服务端可能无法将音频归属到会话，导致 DialogAudioIdleTimeout
+    flags: FLAG_SEND_HAS_SEQUENCE | FLAG_SEND_HAS_EVENT | FLAG_SEND_HAS_SESSION_ID,
     sequence: sequence,
     event: EVENT_AUDIO_UPLOAD,
     sessionId,
@@ -408,7 +422,7 @@ function buildAudioUploadRequest(audioData: Uint8Array, sequence: number, sessio
 function buildEndSessionRequest(): Uint8Array {
   return buildPacket({
     messageType: MESSAGE_TYPE_FULL_CLIENT,
-    flags: FLAG_HAS_EVENT,
+    flags: FLAG_SEND_HAS_EVENT, // 发送时使用发送专用的 Flags
     event: EVENT_END_SESSION,
     payload: new Uint8Array(0),
     serialization: SERIALIZATION_NONE
@@ -754,15 +768,23 @@ Deno.serve(async (req) => {
                 
                 console.log(`[DoubaoRelay] Received: msgType=${parsed.messageType}, event=${parsed.event}, seq=${parsed.sequence}, errCode=${parsed.errorCode}, payloadSize=${parsed.payloadSize}`);
                 
+                // 🔍 调试：对于音频类型消息，打印更详细的解析信息
+                if (parsed.messageType === MESSAGE_TYPE_AUDIO_ONLY_SERVER) {
+                  console.log(`[DoubaoRelay] AudioPacket detail: flags=0x${parsed.flags.toString(16)}, hasSession=${parsed.sessionId ? 'yes' : 'no'}, payloadLen=${parsed.payload.length}`);
+                }
+                
                 // ⚠️ 优先处理 TTS 音频响应 (event=352) - 豆包实际发送音频的事件码
                 // 这必须在 JSON 解析之前处理，因为 payload 是二进制 PCM 数据
                 if (parsed.event === EVENT_TTS_RESPONSE) {
                   if (parsed.payload.length > 0) {
-                    console.log(`[DoubaoRelay] TTS audio: ${parsed.payload.length} bytes`);
+                    // 🔍 详细日志：确认音频大小 (正常应该是几 KB，不是 36 字节)
+                    console.log(`[DoubaoRelay] TTS audio forwarding: ${parsed.payload.length} bytes (expected: several KB, NOT 36)`);
                     clientSocket.send(JSON.stringify({
                       type: 'response.audio.delta',
                       delta: uint8ArrayToBase64(parsed.payload)
                     }));
+                  } else {
+                    console.warn(`[DoubaoRelay] TTS audio payload is empty!`);
                   }
                   continue; // 跳过后续处理，防止 JSON 解析失败
                 }
