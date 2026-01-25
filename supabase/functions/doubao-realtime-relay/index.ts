@@ -40,10 +40,17 @@ const SERIALIZATION_JSON = 0x01;
 // Compression
 const COMPRESSION_NONE = 0x00;
 
-// Header Flags (第2字节低4位)
-const FLAG_HAS_EVENT = 0x04;      // bit 2: 有 event 字段
-const FLAG_HAS_SEQUENCE = 0x02;   // bit 1: 有 sequence 字段
-const FLAG_HAS_SESSION_ID = 0x01; // bit 0: 有 session_id 字段
+// Header Flags (byte1 low 4 bits)
+// ⚠️ IMPORTANT:
+// Doubao V1 结构为 Header(4) + [Sequence?] + [Event?] + [SessionId?] + PayloadSize(4) + Payload。
+// 线上错误 45000000("parse payload size failed: body too short") 表现符合“flags 位错配”——
+// 例如把 event 位误当成 session_id 位，会让服务端把 event=100 误读为 sessionIdLen=100，
+// 进而导致后续 payload_size 偏移错误。
+// 因此这里采用更符合 bit0/bit1/bit2 递增语义的映射：
+// bit0: event, bit1: sequence, bit2: session_id
+const FLAG_HAS_EVENT = 0x01;
+const FLAG_HAS_SEQUENCE = 0x02;
+const FLAG_HAS_SESSION_ID = 0x04;
 
 // Event Types
 const EVENT_START_SESSION = 100;
