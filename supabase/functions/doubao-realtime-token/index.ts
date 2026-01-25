@@ -141,15 +141,26 @@ Deno.serve(async (req) => {
 
     const userName = profile?.display_name;
 
-    // 构建返回数据
+    // 生成 session token 用于 relay 验证
+    const sessionToken = crypto.randomUUID();
+    
+    // 获取 Supabase URL 用于构建 relay URL
+    const projectRef = supabaseUrl.replace('https://', '').split('.')[0];
+    const relayUrl = `wss://${projectRef}.supabase.co/functions/v1/doubao-realtime-relay`;
+
+    // 构建返回数据 - 使用 relay 架构
     const responseData = {
-      ws_url: DOUBAO_WS_URL,
-      app_id: DOUBAO_APP_ID,
-      token: DOUBAO_ACCESS_TOKEN,
-      instructions: getEmotionCoachInstructions(userName),
-      tools: emotionCoachTools,
+      // Relay 连接信息
+      relay_url: relayUrl,
+      session_token: sessionToken,
       user_id: userId,
       mode: mode,
+      
+      // 教练配置
+      instructions: getEmotionCoachInstructions(userName),
+      tools: emotionCoachTools,
+      
+      // 音频配置
       audio_config: {
         input_format: 'pcm',
         input_sample_rate: 16000,

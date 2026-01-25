@@ -371,3 +371,6 @@ verify_jwt = true
 
 [functions.doubao-realtime-token]
 verify_jwt = false
+
+[functions.doubao-realtime-relay]
+verify_jwt = false
