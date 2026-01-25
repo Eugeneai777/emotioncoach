@@ -817,21 +817,28 @@ Deno.serve(async (req) => {
                       const payload = JSON.parse(jsonStr);
                       console.log(`[DoubaoRelay] Event ${parsed.event} payload:`, JSON.stringify(payload).substring(0, 200));
                       
-                      // ASR 识别结果
-                      if (parsed.event === EVENT_ASR_RESPONSE && payload.result?.text) {
-                        clientSocket.send(JSON.stringify({
-                          type: 'response.audio_transcript.delta',
-                          delta: payload.result.text
-                        }));
-                      }
+                       // ASR 识别结果（用户说话的转写）
+                       // 前端 DoubaoRealtimeAudio.ts 期望使用 OpenAI 风格事件：conversation.item.input_audio_transcription.completed
+                       // 否则用户会出现“能听到但说不了/没反应”的感知。
+                       if (parsed.event === EVENT_ASR_RESPONSE && payload.result?.text) {
+                         const transcript = String(payload.result.text);
+                         clientSocket.send(JSON.stringify({
+                           type: 'conversation.item.input_audio_transcription.completed',
+                           transcript,
+                         }));
+                       }
                       
-                      // Chat 回复文本
-                      if (parsed.event === EVENT_CHAT_RESPONSE && payload.text) {
-                        clientSocket.send(JSON.stringify({
-                          type: 'response.audio_transcript.delta',
-                          delta: payload.text
-                        }));
-                      }
+                       // Chat 回复文本（模型文本）
+                       // 有些 payload 结构为 { text: "..." }，有些为 { result: { text: "..." } }
+                       if (parsed.event === EVENT_CHAT_RESPONSE) {
+                         const text = payload.text ?? payload.result?.text;
+                         if (text) {
+                           clientSocket.send(JSON.stringify({
+                             type: 'response.audio_transcript.delta',
+                             delta: String(text),
+                           }));
+                         }
+                       }
                     }
                   } catch {
                     // 非 JSON payload，静默跳过
