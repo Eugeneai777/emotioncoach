@@ -502,7 +502,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
           </TabsList>
 
           <TabsContent value="value" className="mt-3">
-            <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
+            <div className="flex justify-center overflow-hidden" style={{ height: '340px' }}>
               <div className="transform scale-[0.55] sm:scale-[0.62] origin-top">
                 {isLoadingUser ? (
                   <ShareCardSkeleton />
@@ -637,7 +637,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
             </div>
             
             {/* Card Preview */}
-            <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
+            <div className="flex justify-center overflow-hidden" style={{ height: '380px' }}>
               <div className="origin-top scale-[0.55] sm:scale-[0.62]">
                 <AchievementShareCard 
                   ref={achievementCardRef}
