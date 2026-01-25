@@ -368,3 +368,6 @@ verify_jwt = true
 
 [functions.send-life-briefing-email]
 verify_jwt = true
+
+[functions.doubao-realtime-token]
+verify_jwt = false
