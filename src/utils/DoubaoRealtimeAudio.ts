@@ -54,6 +54,7 @@ export class DoubaoRealtimeChat {
   private config: DoubaoConfig | null = null;
   private heartbeatInterval: number | null = null;
   private hasSessionClosed = false;
+  private inputSampleRate: number = 16000;
   
   private onStatusChange: (status: DoubaoConnectionStatus) => void;
   private onSpeakingChange: (status: DoubaoSpeakingStatus) => void;
@@ -88,6 +89,7 @@ export class DoubaoRealtimeChat {
       }
 
       this.config = data as DoubaoConfig;
+      this.inputSampleRate = this.config.audio_config?.input_sample_rate || 16000;
       console.log('[DoubaoChat] Relay config received:', { 
         relay_url: this.config.relay_url, 
         user_id: this.config.user_id 
@@ -107,8 +109,10 @@ export class DoubaoRealtimeChat {
 
       // 3. 初始化音频上下文
       this.audioContext = new AudioContext({
-        sampleRate: this.config.audio_config.input_sample_rate
+        // 注意：浏览器不一定会严格按该值创建；需要在采集时做重采样兜底
+        sampleRate: this.inputSampleRate
       });
+      console.log('[DoubaoChat] AudioContext sampleRate:', this.audioContext.sampleRate, 'target:', this.inputSampleRate);
 
       // 4. 建立 WebSocket 连接到 Relay
       const wsUrl = `${this.config.relay_url}?session_token=${this.config.session_token}&user_id=${this.config.user_id}&mode=${this.config.mode}`;
@@ -210,7 +214,14 @@ export class DoubaoRealtimeChat {
       if (this.isDisconnected || !this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
       const inputData = e.inputBuffer.getChannelData(0);
-      const audioBase64 = this.encodeAudioForAPI(inputData);
+      const actualRate = this.audioContext?.sampleRate || this.inputSampleRate;
+
+      // ✅ 关键修复：如果实际采样率不是 16kHz，先重采样到 16kHz
+      const data16k = actualRate === this.inputSampleRate
+        ? inputData
+        : this.resampleFloat32(inputData, actualRate, this.inputSampleRate);
+
+      const audioBase64 = this.encodeAudioForAPI(data16k);
 
       // 发送音频数据到 Relay
       this.ws.send(JSON.stringify({
@@ -224,6 +235,27 @@ export class DoubaoRealtimeChat {
     this.source.connect(this.processor);
     this.processor.connect(this.audioContext.destination);
     console.log('[DoubaoChat] Recording started');
+  }
+
+  /**
+   * 将 Float32 PCM 从 sourceRate 重采样到 targetRate（简单抽样/插值，足够用于语音 ASR）
+   */
+  private resampleFloat32(input: Float32Array, sourceRate: number, targetRate: number): Float32Array {
+    if (sourceRate === targetRate) return input;
+    if (!sourceRate || !targetRate || sourceRate < 8000 || targetRate < 8000) return input;
+
+    const ratio = sourceRate / targetRate;
+    const newLength = Math.max(1, Math.round(input.length / ratio));
+    const output = new Float32Array(newLength);
+
+    for (let i = 0; i < newLength; i++) {
+      const pos = i * ratio;
+      const left = Math.floor(pos);
+      const right = Math.min(left + 1, input.length - 1);
+      const frac = pos - left;
+      output[i] = input[left] * (1 - frac) + input[right] * frac;
+    }
+    return output;
   }
 
   private encodeAudioForAPI(float32Array: Float32Array): string {
