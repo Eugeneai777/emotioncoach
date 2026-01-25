@@ -191,6 +191,18 @@ function parsePacket(data: Uint8Array): {
     return (((buf[off] << 24) >>> 0) + (buf[off + 1] << 16) + (buf[off + 2] << 8) + buf[off + 3]) >>> 0;
   };
 
+  // Validate protocol/version/header_size early to avoid mis-parsing non-protocol binary frames
+  const protocolVersion = (data[0] >> 4) & 0x0F;
+  const headerSize = data[0] & 0x0F;
+  if (protocolVersion !== PROTOCOL_VERSION || headerSize !== HEADER_SIZE) {
+    console.warn('[Protocol] Invalid Doubao packet header, skipping', {
+      protocolVersion,
+      headerSize,
+      firstBytes: toHexPreview(data, 16),
+    });
+    return null;
+  }
+
   const messageType = (data[1] >> 4) & 0x0F;
   const flags = data[1] & 0x0F;
   const serialization = (data[2] >> 4) & 0x0F;
@@ -353,58 +365,111 @@ function generateWebSocketKey(): string {
 
 class WebSocketFrameParser {
   private buffer: Uint8Array = new Uint8Array(0);
-  
+  private fragmentedOpcode: number | null = null;
+  private fragmentedPayload: Uint8Array[] = [];
+
   append(data: Uint8Array): void {
     const newBuffer = new Uint8Array(this.buffer.length + data.length);
     newBuffer.set(this.buffer, 0);
     newBuffer.set(data, this.buffer.length);
     this.buffer = newBuffer;
   }
-  
+
   getFrames(): { opcode: number; payload: Uint8Array }[] {
     const frames: { opcode: number; payload: Uint8Array }[] = [];
-    
+
     while (this.buffer.length >= 2) {
       const firstByte = this.buffer[0];
       const secondByte = this.buffer[1];
-      
+
+      const fin = (firstByte & 0x80) !== 0;
       const opcode = firstByte & 0x0F;
       const masked = (secondByte & 0x80) !== 0;
       let payloadLength = secondByte & 0x7F;
       let offset = 2;
-      
+
       if (payloadLength === 126) {
         if (this.buffer.length < 4) break;
         payloadLength = (this.buffer[2] << 8) | this.buffer[3];
         offset = 4;
       } else if (payloadLength === 127) {
         if (this.buffer.length < 10) break;
-        payloadLength = (this.buffer[6] << 24) | (this.buffer[7] << 16) | (this.buffer[8] << 8) | this.buffer[9];
+        // 64-bit length in network byte order. Most frames are <2^32; read low 32 bits.
+        const high =
+          ((this.buffer[2] << 24) | (this.buffer[3] << 16) | (this.buffer[4] << 8) | this.buffer[5]) >>> 0;
+        const low =
+          ((this.buffer[6] << 24) | (this.buffer[7] << 16) | (this.buffer[8] << 8) | this.buffer[9]) >>> 0;
+        if (high !== 0) {
+          console.warn('[Protocol] WebSocket frame payload length too large (high!=0), dropping parser buffer', { high, low });
+          this.buffer = new Uint8Array(0);
+          break;
+        }
+        payloadLength = low;
         offset = 10;
       }
-      
+
       if (masked) offset += 4;
-      
       if (this.buffer.length < offset + payloadLength) break;
-      
+
       let payload = this.buffer.slice(offset, offset + payloadLength);
-      
       if (masked) {
         const mask = this.buffer.slice(offset - 4, offset);
         payload = payload.map((b, i) => b ^ mask[i % 4]);
       }
-      
-      frames.push({ opcode, payload });
+
+      // Fragmentation support: opcode 0x00 continuation
+      if (opcode === 0x00) {
+        if (this.fragmentedOpcode !== null) {
+          this.fragmentedPayload.push(payload);
+          if (fin) {
+            frames.push({ opcode: this.fragmentedOpcode, payload: mergeUint8Arrays(this.fragmentedPayload) });
+            this.fragmentedOpcode = null;
+            this.fragmentedPayload = [];
+          }
+        }
+      } else if (fin) {
+        frames.push({ opcode, payload });
+      } else {
+        this.fragmentedOpcode = opcode;
+        this.fragmentedPayload = [payload];
+      }
+
       this.buffer = this.buffer.slice(offset + payloadLength);
     }
-    
+
     return frames;
   }
-  
+
   // 获取握手后剩余的数据（用于处理紧跟在握手响应后的 WebSocket 帧）
   getRemainingData(): Uint8Array {
     return this.buffer;
   }
+}
+
+function mergeUint8Arrays(chunks: Uint8Array[]): Uint8Array {
+  const total = chunks.reduce((sum, c) => sum + c.length, 0);
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) {
+    merged.set(c, offset);
+    offset += c.length;
+  }
+  return merged;
+}
+
+function findHeaderEnd(data: Uint8Array): number {
+  // Find \r\n\r\n in bytes
+  for (let i = 0; i <= data.length - 4; i++) {
+    if (data[i] === 13 && data[i + 1] === 10 && data[i + 2] === 13 && data[i + 3] === 10) return i + 4;
+  }
+  return -1;
+}
+
+function toHexPreview(bytes: Uint8Array, max = 32): string {
+  const n = Math.min(max, bytes.length);
+  const parts: string[] = [];
+  for (let i = 0; i < n; i++) parts.push(bytes[i].toString(16).padStart(2, '0'));
+  return parts.join(' ');
 }
 
 function buildWebSocketFrame(data: Uint8Array, opcode: number = 0x02): Uint8Array {
@@ -428,6 +493,11 @@ function buildWebSocketFrame(data: Uint8Array, opcode: number = 0x02): Uint8Arra
     header = new Uint8Array(14);
     header[0] = 0x80 | opcode;
     header[1] = 0x80 | 127;
+    // 8 bytes length (network byte order). We only use low 32 bits.
+    header[2] = 0x00;
+    header[3] = 0x00;
+    header[4] = 0x00;
+    header[5] = 0x00;
     header[6] = (data.length >> 24) & 0xFF;
     header[7] = (data.length >> 16) & 0xFF;
     header[8] = (data.length >> 8) & 0xFF;
@@ -528,7 +598,10 @@ Deno.serve(async (req) => {
       }
       
       const responseData = responseBuffer.slice(0, bytesRead);
-      const responseText = new TextDecoder().decode(responseData);
+      const headerEnd = findHeaderEnd(responseData);
+      const responseText = new TextDecoder().decode(
+        headerEnd === -1 ? responseData : responseData.slice(0, headerEnd)
+      );
       console.log(`[DoubaoRelay] Handshake response: ${responseText.substring(0, 300)}`);
       
       if (!responseText.includes('101')) {
@@ -543,14 +616,10 @@ Deno.serve(async (req) => {
       
       // 解析握手后可能紧跟的 WebSocket 帧数据
       const parser = new WebSocketFrameParser();
-      const headerEndIndex = responseText.indexOf('\r\n\r\n');
-      if (headerEndIndex !== -1) {
-        const headerEndByteIndex = new TextEncoder().encode(responseText.substring(0, headerEndIndex + 4)).length;
-        if (headerEndByteIndex < bytesRead) {
-          const remainingData = responseData.slice(headerEndByteIndex);
-          console.log(`[DoubaoRelay] Found ${remainingData.length} bytes after handshake`);
-          parser.append(remainingData);
-        }
+      if (headerEnd !== -1 && headerEnd < bytesRead) {
+        const remainingData = responseData.slice(headerEnd);
+        console.log(`[DoubaoRelay] Found ${remainingData.length} bytes after handshake`);
+        parser.append(remainingData);
       }
       
       // 发送 StartSession 请求
@@ -578,11 +647,24 @@ Deno.serve(async (req) => {
             const frames = parser.getFrames();
             
             for (const frame of frames) {
+              if (frame.opcode === 0x01) { // Text frame
+                const text = new TextDecoder().decode(frame.payload);
+                console.log('[DoubaoRelay] Received text frame:', text.substring(0, 300));
+                clientSocket.send(JSON.stringify({
+                  type: 'response.text_frame',
+                  text,
+                }));
+                continue;
+              }
+
               if (frame.opcode === 0x02) { // Binary frame
                 const parsed = parsePacket(frame.payload);
                 
                 if (!parsed) {
-                  console.error('[DoubaoRelay] Failed to parse Doubao packet');
+                  console.error('[DoubaoRelay] Failed to parse Doubao packet', {
+                    frameLen: frame.payload.length,
+                    firstBytes: toHexPreview(frame.payload, 24),
+                  });
                   continue;
                 }
                 
