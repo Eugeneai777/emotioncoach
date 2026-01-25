@@ -69,12 +69,29 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
   const { cardRef, cardName = '邀请卡片', cardType, onProgress, onShowPreview, onSuccess, onError } = config;
   const env = getShareEnvironment();
 
+  console.log('[oneClickShare] Starting share flow:', { 
+    cardType, 
+    isWeChat: env.isWeChat, 
+    isIOS: env.isIOS, 
+    isMiniProgram: env.isMiniProgram,
+    isAndroid: env.isAndroid 
+  });
+
   try {
     onProgress?.('generating');
+
+    // Check cardRef
+    if (!cardRef.current) {
+      console.error('[oneClickShare] cardRef.current is null');
+      onProgress?.('error');
+      onError?.('卡片未加载完成，请稍后重试');
+      return false;
+    }
 
     // Generate canvas with appropriate background color
     const canvas = await generateCanvas(cardRef, cardType);
     if (!canvas) {
+      console.error('[oneClickShare] Canvas generation failed');
       onProgress?.('error');
       onError?.('卡片生成失败，请重试');
       return false;
@@ -83,25 +100,97 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
     // Convert to blob
     const blob = await canvasToBlob(canvas);
     if (!blob) {
+      console.error('[oneClickShare] Blob conversion failed');
       onProgress?.('error');
       onError?.('图片转换失败，请重试');
       return false;
     }
 
-    const blobUrl = URL.createObjectURL(blob);
+    console.log('[oneClickShare] Image generated successfully, blob size:', blob.size);
 
-    // WeChat/iOS/MiniProgram: Show preview for long-press save
-    if (env.isWeChat || env.isIOS || env.isMiniProgram) {
+    const blobUrl = URL.createObjectURL(blob);
+    const file = new File([blob], `${cardName}.png`, { type: 'image/png' });
+
+    // 1. Mini Program: Only image preview is supported
+    if (env.isMiniProgram) {
+      console.log('[oneClickShare] Mini Program - showing preview');
       onProgress?.('preview');
       onShowPreview?.(blobUrl);
       onSuccess?.();
       return true;
     }
 
-    // Android/Desktop: Try Web Share API first
-    const file = new File([blob], `${cardName}.png`, { type: 'image/png' });
-    
-    if (navigator.canShare?.({ files: [file] })) {
+    // 2. iOS (including WeChat H5): Prioritize native share
+    if (env.isIOS && navigator.share && navigator.canShare?.({ files: [file] })) {
+      console.log('[oneClickShare] iOS - trying navigator.share');
+      try {
+        onProgress?.('sharing');
+        await navigator.share({
+          files: [file],
+          title: cardName,
+          text: '邀请你一起突破财富卡点',
+        });
+        console.log('[oneClickShare] iOS share successful');
+        onProgress?.('done');
+        onSuccess?.();
+        URL.revokeObjectURL(blobUrl);
+        return true;
+      } catch (shareError) {
+        console.log('[oneClickShare] iOS share failed:', (shareError as Error).name);
+        if ((shareError as Error).name === 'AbortError') {
+          URL.revokeObjectURL(blobUrl);
+          return false;
+        }
+        // Fall back to image preview
+        console.log('[oneClickShare] Falling back to preview');
+        onProgress?.('preview');
+        onShowPreview?.(blobUrl);
+        onSuccess?.();
+        return true;
+      }
+    }
+
+    // 3. Android (including WeChat H5): Try native share
+    if (env.isAndroid && navigator.share && navigator.canShare?.({ files: [file] })) {
+      console.log('[oneClickShare] Android - trying navigator.share');
+      try {
+        onProgress?.('sharing');
+        await navigator.share({
+          files: [file],
+          title: cardName,
+          text: '邀请你一起突破财富卡点',
+        });
+        console.log('[oneClickShare] Android share successful');
+        onProgress?.('done');
+        onSuccess?.();
+        URL.revokeObjectURL(blobUrl);
+        return true;
+      } catch (shareError) {
+        console.log('[oneClickShare] Android share failed:', (shareError as Error).name);
+        if ((shareError as Error).name === 'AbortError') {
+          URL.revokeObjectURL(blobUrl);
+          return false;
+        }
+        // Fall back to image preview
+        console.log('[oneClickShare] Falling back to preview');
+        onProgress?.('preview');
+        onShowPreview?.(blobUrl);
+        onSuccess?.();
+        return true;
+      }
+    }
+
+    // 4. WeChat H5 without navigator.share support: Show image preview
+    if (env.isWeChat) {
+      console.log('[oneClickShare] WeChat H5 without share support - showing preview');
+      onProgress?.('preview');
+      onShowPreview?.(blobUrl);
+      onSuccess?.();
+      return true;
+    }
+
+    // 5. Desktop: Try Web Share, fallback to download
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
       try {
         onProgress?.('sharing');
         await navigator.share({
@@ -115,15 +204,14 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
         return true;
       } catch (shareError) {
         if ((shareError as Error).name === 'AbortError') {
-          // User cancelled - not an error
           URL.revokeObjectURL(blobUrl);
           return false;
         }
-        // Fall through to download
       }
     }
 
-    // Fallback: Download
+    // 6. Final fallback: Download
+    console.log('[oneClickShare] Falling back to download');
     const link = document.createElement('a');
     link.download = `${cardName}.png`;
     link.href = blobUrl;
@@ -138,7 +226,7 @@ export const executeOneClickShare = async (config: OneClickShareConfig): Promise
     return true;
 
   } catch (error) {
-    console.error('[oneClickShare] Error:', error);
+    console.error('[oneClickShare] Unexpected error:', error);
     onProgress?.('error');
     onError?.(error instanceof Error ? error.message : '分享失败，请重试');
     return false;

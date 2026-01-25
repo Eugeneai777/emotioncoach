@@ -145,17 +145,23 @@ export function useOneClickShare(options: UseOneClickShareOptions = {}): UseOneC
   const triggerShare = useCallback(async () => {
     if (isSharing) return;
     
+    console.log('[useOneClickShare] triggerShare called');
+    
     // Ensure user data is loaded
     if (!userInfo.displayName) {
+      console.log('[useOneClickShare] Preloading user data...');
       await preloadUserData();
       // Give DOM time to render with new data
       await new Promise(resolve => setTimeout(resolve, 300));
     }
 
     if (!cardRef.current) {
+      console.error('[useOneClickShare] cardRef.current is null after preload');
       toast.error('卡片未加载完成，请稍后重试');
       return;
     }
+    
+    console.log('[useOneClickShare] Card ref ready, starting share...');
 
     setIsSharing(true);
     const toastId = toast.loading('正在生成卡片...');
