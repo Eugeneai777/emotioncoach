@@ -100,7 +100,7 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isLoadin
             <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 bg-clip-text text-transparent mb-1">
               财富卡点测评
             </h1>
-            <p className="text-[10px] text-slate-500">Powered by 有劲AI · 财富教练</p>
+            <p className="text-[10px] text-slate-500">Powered by 有劲AI</p>
           </motion.div>
           
           {/* 社交证明置顶 */}
@@ -590,7 +590,7 @@ export function AssessmentIntroCard({ isLoggedIn, hasPurchased = false, isLoadin
           
           
           <p className="text-xs text-slate-400 pt-2 border-t border-amber-200 text-center">
-            💎 财富卡点测评 · Powered by 有劲AI · 财富教练
+            💎 财富卡点测评 · Powered by 有劲AI
           </p>
         </div>
       </Card>

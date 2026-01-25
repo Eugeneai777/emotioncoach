@@ -88,7 +88,7 @@ const AssessmentValueShareCard = forwardRef<HTMLDivElement, AssessmentValueShare
               财富卡点测评
             </h2>
             <p className="text-violet-200/70 text-xs">
-              Powered by 有劲AI · 财富教练
+              Powered by 有劲AI
             </p>
           </div>
 
