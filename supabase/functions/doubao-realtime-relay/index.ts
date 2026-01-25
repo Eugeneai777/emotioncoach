@@ -202,6 +202,14 @@ function buildPacket(options: {
 
 /**
  * 解析豆包协议 Header 和可选字段
+ * 
+ * ⚠️ 关键发现 (2026-01-25):
+ * 豆包服务端对于 TTS/ASR 响应 (event=350/351/352/450/451/550/559 等)，
+ * 即使 flags=0x04 (只标记 HAS_EVENT)，实际布局仍然是：
+ *   Header(4) + Event(4) + SessionIdLen(4) + SessionId(36) + PayloadSize(4) + Payload
+ * 
+ * 即 **SessionID 总是紧跟在 Event 后面发送**，不论 FLAG_HAS_SESSION_ID 是否设置。
+ * 这与发送端（客户端）的行为不同，发送端必须设置 FLAG_HAS_SESSION_ID 才会写入 SessionID。
  */
 function parsePacket(data: Uint8Array): {
   messageType: number;
@@ -219,16 +227,12 @@ function parsePacket(data: Uint8Array): {
     console.error('[Protocol] Packet too short:', data.length);
     return null;
   }
-  
-  // 🔍 DEBUG: 打印原始 header 以便调试
-  console.log(`[Protocol] Parsing packet: len=${data.length}, header=[${data[0].toString(16)},${data[1].toString(16)},${data[2].toString(16)},${data[3].toString(16)}]`);
 
   const readUint32BE = (buf: Uint8Array, off: number): number => {
-    // Ensure unsigned 32-bit
     return (((buf[off] << 24) >>> 0) + (buf[off + 1] << 16) + (buf[off + 2] << 8) + buf[off + 3]) >>> 0;
   };
 
-  // Validate protocol/version/header_size early to avoid mis-parsing non-protocol binary frames
+  // Validate protocol/version/header_size early
   const protocolVersion = (data[0] >> 4) & 0x0F;
   const headerSize = data[0] & 0x0F;
   if (protocolVersion !== PROTOCOL_VERSION || headerSize !== HEADER_SIZE) {
@@ -247,10 +251,7 @@ function parsePacket(data: Uint8Array): {
 
   const hasSequence = (flags & FLAG_HAS_SEQUENCE) !== 0;
   const hasEvent = (flags & FLAG_HAS_EVENT) !== 0;
-  const hasSessionId = (flags & FLAG_HAS_SESSION_ID) !== 0;
-  
-  // 🔍 DEBUG: 打印解析后的 flags 信息
-  console.log(`[Protocol] Flags: 0x${flags.toString(16)}, hasSeq=${hasSequence}, hasEvent=${hasEvent}, hasSession=${hasSessionId}`);
+  const hasSessionIdFlag = (flags & FLAG_HAS_SESSION_ID) !== 0;
 
   let offset = 4;
   let sequence: number | undefined;
@@ -272,19 +273,41 @@ function parsePacket(data: Uint8Array): {
     offset += 4;
   }
 
-  // Parse session ID
-  if (hasSessionId) {
+  // ============================================================================
+  // ⚠️ 关键修复：豆包服务端响应中，SessionID 总是紧跟在 Event 后面
+  // ============================================================================
+  // 
+  // 豆包的"端到端对话"服务端响应 (msgType=9/11, event=150/350/351/352/450/451/550/559 等)
+  // 即使 flags 中没有设置 FLAG_HAS_SESSION_ID (0x08)，
+  // 服务端仍然会在 Event 后面写入 SessionIdLen(4) + SessionId(36)。
+  // 
+  // 判断条件：如果是服务端消息 (msgType=9 或 11) 且有 event，则总是尝试读取 sessionId
+  // ============================================================================
+  
+  const isServerMessage = messageType === MESSAGE_TYPE_FULL_SERVER || messageType === MESSAGE_TYPE_AUDIO_ONLY_SERVER;
+  const shouldReadSessionId = hasSessionIdFlag || (isServerMessage && hasEvent);
+  
+  if (shouldReadSessionId) {
     if (data.length < offset + 4) return null;
     const sessionIdLen = readUint32BE(data, offset);
     offset += 4;
-    if (data.length < offset + sessionIdLen) return null;
-    sessionId = new TextDecoder().decode(data.slice(offset, offset + sessionIdLen));
-    offset += sessionIdLen;
+    
+    // 验证 sessionIdLen 是否合理 (UUID 是 36 字节)
+    if (sessionIdLen > 0 && sessionIdLen <= 128) {
+      if (data.length < offset + sessionIdLen) return null;
+      sessionId = new TextDecoder().decode(data.slice(offset, offset + sessionIdLen));
+      offset += sessionIdLen;
+    } else if (sessionIdLen > 128) {
+      // sessionIdLen 异常大，说明前 4 字节可能不是 sessionIdLen 而是 payloadSize
+      // 回退 offset，让后续代码把它当作 payloadSize 处理
+      console.warn(`[Protocol] sessionIdLen=${sessionIdLen} looks like payloadSize, rolling back`);
+      offset -= 4;
+    }
+    // sessionIdLen === 0 的情况：跳过，继续读 payloadSize
   }
 
   // Special-case: MESSAGE_TYPE_ERROR format is:
   // header(4) + error_code(4) + payload_size(4) + payload(JSON)
-  // (flags are typically 0x0)
   if (messageType === MESSAGE_TYPE_ERROR) {
     if (data.length < offset + 8) return null;
     errorCode = readUint32BE(data, offset);
@@ -302,6 +325,9 @@ function parsePacket(data: Uint8Array): {
     return null;
   }
   const payload = data.slice(offset, offset + payloadSize);
+
+  // 🔍 DEBUG: 打印解析结果
+  console.log(`[Protocol] Parsed: msgType=${messageType}, flags=0x${flags.toString(16)}, event=${event}, sessionId=${sessionId ? sessionId.substring(0,8) + '...' : 'none'}, payloadSize=${payloadSize}`);
 
   return {
     messageType,
