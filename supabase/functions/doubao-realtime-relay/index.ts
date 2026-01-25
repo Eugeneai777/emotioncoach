@@ -178,6 +178,7 @@ function parsePacket(data: Uint8Array): {
   sequence?: number;
   event?: number;
   sessionId?: string;
+  errorCode?: number;
   payloadSize: number;
   payload: Uint8Array;
 } | null {
@@ -216,6 +217,7 @@ function parsePacket(data: Uint8Array): {
   let sequence: number | undefined;
   let event: number | undefined;
   let sessionId: string | undefined;
+  let errorCode: number | undefined;
 
   // Parse sequence
   if (hasSequence) {
@@ -241,6 +243,15 @@ function parsePacket(data: Uint8Array): {
     offset += sessionIdLen;
   }
 
+  // Special-case: MESSAGE_TYPE_ERROR format is:
+  // header(4) + error_code(4) + payload_size(4) + payload(JSON)
+  // (flags are typically 0x0)
+  if (messageType === MESSAGE_TYPE_ERROR) {
+    if (data.length < offset + 8) return null;
+    errorCode = readUint32BE(data, offset);
+    offset += 4;
+  }
+
   // Parse payload size
   if (data.length < offset + 4) return null;
   const payloadSize = readUint32BE(data, offset);
@@ -261,6 +272,7 @@ function parsePacket(data: Uint8Array): {
     sequence,
     event,
     sessionId,
+    errorCode,
     payloadSize,
     payload
   };
@@ -668,7 +680,7 @@ Deno.serve(async (req) => {
                   continue;
                 }
                 
-                console.log(`[DoubaoRelay] Received: msgType=${parsed.messageType}, event=${parsed.event}, seq=${parsed.sequence}, payloadSize=${parsed.payloadSize}`);
+                console.log(`[DoubaoRelay] Received: msgType=${parsed.messageType}, event=${parsed.event}, seq=${parsed.sequence}, errCode=${parsed.errorCode}, payloadSize=${parsed.payloadSize}`);
                 
                 // 处理 SessionStarted 事件 (event=101)
                 if (parsed.event === EVENT_SESSION_STARTED) {
@@ -730,11 +742,11 @@ Deno.serve(async (req) => {
                 if (parsed.messageType === MESSAGE_TYPE_ERROR) {
                   try {
                     const errorJson = JSON.parse(new TextDecoder().decode(parsed.payload));
-                    console.error('[DoubaoRelay] Error from Doubao:', errorJson);
+                    console.error('[DoubaoRelay] Error from Doubao:', { errorCode: parsed.errorCode, errorJson });
                     clientSocket.send(JSON.stringify({
                       type: 'error',
                       error: errorJson.message || errorJson.error || 'Unknown error from Doubao',
-                      details: errorJson
+                      details: { error_code: parsed.errorCode, ...errorJson }
                     }));
                   } catch {
                     console.error('[DoubaoRelay] Unknown error from server');
