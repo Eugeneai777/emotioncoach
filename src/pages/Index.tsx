@@ -393,14 +393,12 @@ const Index = () => {
         .update({ last_reminder_shown: new Date().toISOString() })
         .eq("id", user.id);
     }
-    if (selectedIntensity === null) {
-      setShowIntensitySelector(true);
-    }
+    // 不再显示强度选择器，让 AI 自行判断
   };
 
   const handleStartFromReminder = () => {
     setShowReminder(false);
-    setShowIntensitySelector(true);
+    // 不再显示强度选择器，直接开始对话
   };
 
   const handleIntensityReminderRecord = () => {
@@ -579,15 +577,8 @@ const Index = () => {
     </div>
   ) : null;
 
-  // Build intensity selector content
-  const intensitySelectorContent = showIntensitySelector ? (
-    <div className="mb-2 animate-in slide-in-from-bottom-2 duration-300">
-      <EmotionIntensitySelector
-        onSelect={handleIntensitySelect}
-        onSkip={handleSkipIntensity}
-      />
-    </div>
-  ) : null;
+  // 强度选择器已移除，不再显示
+  const intensitySelectorContent = null;
 
   return (
     <>
