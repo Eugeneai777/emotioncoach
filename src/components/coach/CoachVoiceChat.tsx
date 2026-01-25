@@ -838,14 +838,38 @@ export const CoachVoiceChat = ({
       setIsEnding(false);
       setTranscript('');
       setUserTranscript('');
-      const { error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError) {
+
+      // 🔐 确保登录态可用：没有 session 或 refresh 失败时，直接引导重新登录
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
         toast({ title: "登录已过期", description: "请重新登录后再试", variant: "destructive" });
         setStatus('error');
         isInitializingRef.current = false;
         stopConnectionTimer();
         releaseLock();
-        setTimeout(onClose, 1500);
+        const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+        navigate(`/auth?redirect=${redirect}`);
+        setTimeout(onClose, 300);
+        return;
+      }
+
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.warn('[VoiceChat] refreshSession failed, forcing re-login:', refreshError);
+        try {
+          await supabase.auth.signOut();
+        } catch (e) {
+          console.warn('[VoiceChat] signOut after refreshSession failure:', e);
+        }
+
+        toast({ title: "登录已过期", description: "请重新登录后再试", variant: "destructive" });
+        setStatus('error');
+        isInitializingRef.current = false;
+        stopConnectionTimer();
+        releaseLock();
+        const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+        navigate(`/auth?redirect=${redirect}`);
+        setTimeout(onClose, 300);
         return;
       }
       
