@@ -171,7 +171,7 @@ const generateCanvas = async (cardRef: React.RefObject<HTMLDivElement>): Promise
         scale: 3,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: null,
         logging: false,
         imageTimeout: 8000,
         removeContainer: false,
