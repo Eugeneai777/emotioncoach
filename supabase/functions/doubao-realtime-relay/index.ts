@@ -41,14 +41,20 @@ const SERIALIZATION_JSON = 0x01;
 const COMPRESSION_NONE = 0x00;
 
 // Header Flags (byte1 low 4 bits)
-// ⚠️ CRITICAL FIX:
-// 错误日志 "autoAssignedSequence (1) mismatch sequence in request (100)" 表明：
-// 豆包服务端把我们的 event=100 误读成了 sequence=100。
-// 这说明豆包 V1 协议中 bit 0 代表 HAS_SEQUENCE，bit 1 代表 HAS_EVENT。
-// 修正映射如下：
-const FLAG_HAS_SEQUENCE = 0x01;   // bit 0: 有 sequence 字段
-const FLAG_HAS_EVENT = 0x02;      // bit 1: 有 event 字段
-const FLAG_HAS_SESSION_ID = 0x04; // bit 2: 有 session_id 字段
+// ⚠️ CRITICAL FIX based on official ByteDance documentation example:
+// StartSession 二进制帧: [17 20 16 0 0 0 0 100 0 0 0 36 ...]
+//   - Byte 1 = 0x14 = (MessageType=1 << 4) | Flags=0x04
+//   - Flags=0x04 表示 HAS_EVENT (bit 2)
+//   - StartSession 必须包含 Event + SessionID
+// 
+// 官方协议映射:
+//   - bit 0 (0x01): HAS_SEQUENCE (用于 Audio Upload)
+//   - bit 1 (0x02): (保留/未使用)
+//   - bit 2 (0x04): HAS_EVENT (用于 StartSession/EndSession/Audio Upload)
+//   - bit 3 (0x08): HAS_SESSION_ID (StartSession 中隐含包含)
+const FLAG_HAS_SEQUENCE = 0x01;      // bit 0: 有 sequence 字段
+const FLAG_HAS_EVENT = 0x04;         // bit 2: 有 event 字段 (官方示例 0x14 & 0x0F = 0x04)
+const FLAG_HAS_SESSION_ID = 0x08;    // bit 3: 有 session_id 字段
 
 // Event Types
 const EVENT_START_SESSION = 100;
@@ -287,8 +293,10 @@ function parsePacket(data: Uint8Array): {
 
 /**
  * 构建 StartSession 请求 (event=100)
+ * 根据官方文档，StartSession 必须包含 Event + SessionID
+ * 二进制帧格式: Header(4) + Event(4) + SessionIdLen(4) + SessionId + PayloadSize(4) + Payload
  */
-function buildStartSessionRequest(userId: string, instructions: string): Uint8Array {
+function buildStartSessionRequest(userId: string, instructions: string, sessionId: string): Uint8Array {
   const payload = {
     user: { uid: userId },
     audio: {
@@ -315,12 +323,16 @@ function buildStartSessionRequest(userId: string, instructions: string): Uint8Ar
 
   const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
   console.log('[Protocol] StartSession payload:', JSON.stringify(payload).substring(0, 200) + '...');
+  console.log('[Protocol] StartSession sessionId:', sessionId);
 
-  // StartSession: Full Client Request with event=100
+  // StartSession: Full Client Request with event=100 and sessionId
+  // 根据官方示例 Byte1=0x14，flags=0x04 (HAS_EVENT)
+  // SessionID 在 StartSession 中是必需的，但是它跟随 Event 字段，不是由单独的 flag 控制
   return buildPacket({
     messageType: MESSAGE_TYPE_FULL_CLIENT,
-    flags: FLAG_HAS_EVENT,
+    flags: FLAG_HAS_EVENT | FLAG_HAS_SESSION_ID,
     event: EVENT_START_SESSION,
+    sessionId: sessionId,
     payload: payloadBytes,
     serialization: SERIALIZATION_JSON
   });
@@ -641,7 +653,11 @@ Deno.serve(async (req) => {
       
       // 发送 StartSession 请求
       if (sessionConfig) {
-        const startSessionPacket = buildStartSessionRequest(userId, sessionConfig.instructions);
+        // 生成客户端 SessionID (UUID)
+        const doubaoSessionId = crypto.randomUUID();
+        console.log(`[DoubaoRelay] Generated SessionID: ${doubaoSessionId}`);
+        
+        const startSessionPacket = buildStartSessionRequest(userId, sessionConfig.instructions, doubaoSessionId);
         const frame = buildWebSocketFrame(startSessionPacket);
         await doubaoConn.write(frame);
         console.log(`[DoubaoRelay] Sent StartSession request (${startSessionPacket.length} bytes)`);
