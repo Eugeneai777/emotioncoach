@@ -1,22 +1,24 @@
 /**
  * 豆包语音大模型 WebSocket Relay
  * 
- * 功能：
- * 1. 接收客户端 WebSocket 连接
- * 2. 使用 fetch + headers 连接豆包 API（携带认证 Headers）
- * 3. 在客户端 JSON 协议和豆包二进制协议之间进行转换
- * 4. 管理心跳和超时
+ * 由于豆包 API 要求 HTTP Headers 认证，而浏览器 WebSocket 无法发送自定义 Headers，
+ * 本 Relay 使用原生 TCP 连接手动完成 WebSocket 握手。
  * 
- * 豆包 API：wss://openspeech.bytedance.com/api/v3/sauc/bigmodel
+ * 认证方式：HTTP Headers（必需）
+ * - X-Api-App-Key: APP ID
+ * - X-Api-Access-Key: Access Token  
+ * - X-Api-Resource-Id: 资源 ID
+ * - X-Api-Connect-Id: 连接追踪 ID
  */
 
 import { corsHeaders } from '../_shared/cors.ts';
 
-const DOUBAO_WS_URL = 'wss://openspeech.bytedance.com/api/v3/sauc/bigmodel';
+const DOUBAO_HOST = 'openspeech.bytedance.com';
+const DOUBAO_PATH = '/api/v3/sauc/bigmodel';
 
 // 豆包协议常量
 const PROTOCOL_VERSION = 0x01;
-const HEADER_SIZE = 0x01; // 4 bytes
+const HEADER_SIZE = 0x01;
 const MESSAGE_TYPE_FULL_CLIENT = 0x01;
 const MESSAGE_TYPE_AUDIO_ONLY = 0x02;
 const MESSAGE_TYPE_FULL_SERVER = 0x09;
@@ -24,15 +26,14 @@ const MESSAGE_TYPE_AUDIO_ONLY_SERVER = 0x0B;
 const MESSAGE_TYPE_ERROR = 0x0F;
 const SERIALIZATION_JSON = 0x01;
 const COMPRESSION_NONE = 0x00;
-const COMPRESSION_GZIP = 0x01;
 
 // 构建豆包协议 Header
 function buildHeader(messageType: number, serialization: number = SERIALIZATION_JSON, compression: number = COMPRESSION_NONE): Uint8Array {
   const header = new Uint8Array(4);
   header[0] = (PROTOCOL_VERSION << 4) | HEADER_SIZE;
-  header[1] = (messageType << 4) | 0x00; // flags = 0
+  header[1] = (messageType << 4) | 0x00;
   header[2] = (serialization << 4) | compression;
-  header[3] = 0x00; // reserved
+  header[3] = 0x00;
   return header;
 }
 
@@ -41,24 +42,14 @@ function parseHeader(data: Uint8Array): { messageType: number; serialization: nu
   const messageType = (data[1] >> 4) & 0x0F;
   const serialization = (data[2] >> 4) & 0x0F;
   const compression = data[2] & 0x0F;
-  
-  // Payload size is in bytes 4-7 (big-endian)
   const payloadSize = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | data[7];
-  
   return { messageType, serialization, compression, payloadSize };
 }
 
 // 构建 Full Client Request
-function buildFullClientRequest(config: {
-  appId: string;
-  token: string;
-  userId: string;
-  instructions: string;
-}): Uint8Array {
+function buildFullClientRequest(userId: string, instructions: string): Uint8Array {
   const payload = {
-    user: {
-      uid: config.userId
-    },
+    user: { uid: userId },
     audio: {
       format: 'pcm',
       sample_rate: 16000,
@@ -69,40 +60,32 @@ function buildFullClientRequest(config: {
       model_name: 'doubao-speech-vision-pro-250515',
       enable_vad: true,
       vad_stop_time: 800,
-      text: config.instructions
+      text: instructions
     }
   };
   
   const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
   const header = buildHeader(MESSAGE_TYPE_FULL_CLIENT);
-  
-  // 4 bytes header + 4 bytes payload size + payload
   const message = new Uint8Array(8 + payloadBytes.length);
   message.set(header, 0);
-  // Payload size (big-endian)
   message[4] = (payloadBytes.length >> 24) & 0xFF;
   message[5] = (payloadBytes.length >> 16) & 0xFF;
   message[6] = (payloadBytes.length >> 8) & 0xFF;
   message[7] = payloadBytes.length & 0xFF;
   message.set(payloadBytes, 8);
-  
   return message;
 }
 
 // 构建 Audio Only Request
 function buildAudioOnlyRequest(audioData: Uint8Array): Uint8Array {
-  const header = buildHeader(MESSAGE_TYPE_AUDIO_ONLY, 0x00, COMPRESSION_NONE); // No serialization for audio
-  
-  // 4 bytes header + 4 bytes payload size + audio data
+  const header = buildHeader(MESSAGE_TYPE_AUDIO_ONLY, 0x00, COMPRESSION_NONE);
   const message = new Uint8Array(8 + audioData.length);
   message.set(header, 0);
-  // Payload size (big-endian)
   message[4] = (audioData.length >> 24) & 0xFF;
   message[5] = (audioData.length >> 16) & 0xFF;
   message[6] = (audioData.length >> 8) & 0xFF;
   message[7] = audioData.length & 0xFF;
   message.set(audioData, 8);
-  
   return message;
 }
 
@@ -112,27 +95,18 @@ function parseServerResponse(data: Uint8Array): { type: string; payload?: unknow
     return { type: 'error', error: 'Invalid response: too short' };
   }
   
-  const { messageType, serialization, compression, payloadSize } = parseHeader(data);
+  const { messageType, payloadSize } = parseHeader(data);
   const payloadData = data.slice(8, 8 + payloadSize);
   
   if (messageType === MESSAGE_TYPE_FULL_SERVER) {
-    // JSON response
     try {
-      let jsonStr: string;
-      if (compression === COMPRESSION_GZIP) {
-        // Decompress gzip - use pako or similar
-        // For now, assume no compression
-        jsonStr = new TextDecoder().decode(payloadData);
-      } else {
-        jsonStr = new TextDecoder().decode(payloadData);
-      }
+      const jsonStr = new TextDecoder().decode(payloadData);
       const payload = JSON.parse(jsonStr);
       return { type: 'text', payload };
     } catch (e) {
       return { type: 'error', error: `Failed to parse JSON: ${e}` };
     }
   } else if (messageType === MESSAGE_TYPE_AUDIO_ONLY_SERVER) {
-    // Audio response
     return { type: 'audio', audio: payloadData };
   } else if (messageType === MESSAGE_TYPE_ERROR) {
     try {
@@ -165,13 +139,112 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
+// 生成 WebSocket Key
+function generateWebSocketKey(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes));
+}
+
+// WebSocket Frame 解析器
+class WebSocketFrameParser {
+  private buffer: Uint8Array = new Uint8Array(0);
+  
+  append(data: Uint8Array): void {
+    const newBuffer = new Uint8Array(this.buffer.length + data.length);
+    newBuffer.set(this.buffer, 0);
+    newBuffer.set(data, this.buffer.length);
+    this.buffer = newBuffer;
+  }
+  
+  getFrames(): { opcode: number; payload: Uint8Array }[] {
+    const frames: { opcode: number; payload: Uint8Array }[] = [];
+    
+    while (this.buffer.length >= 2) {
+      const firstByte = this.buffer[0];
+      const secondByte = this.buffer[1];
+      
+      const opcode = firstByte & 0x0F;
+      const masked = (secondByte & 0x80) !== 0;
+      let payloadLength = secondByte & 0x7F;
+      let offset = 2;
+      
+      if (payloadLength === 126) {
+        if (this.buffer.length < 4) break;
+        payloadLength = (this.buffer[2] << 8) | this.buffer[3];
+        offset = 4;
+      } else if (payloadLength === 127) {
+        if (this.buffer.length < 10) break;
+        // For simplicity, we only handle up to 32-bit lengths
+        payloadLength = (this.buffer[6] << 24) | (this.buffer[7] << 16) | (this.buffer[8] << 8) | this.buffer[9];
+        offset = 10;
+      }
+      
+      if (masked) offset += 4;
+      
+      if (this.buffer.length < offset + payloadLength) break;
+      
+      let payload = this.buffer.slice(offset, offset + payloadLength);
+      
+      if (masked) {
+        const mask = this.buffer.slice(offset - 4, offset);
+        payload = payload.map((b, i) => b ^ mask[i % 4]);
+      }
+      
+      frames.push({ opcode, payload });
+      this.buffer = this.buffer.slice(offset + payloadLength);
+    }
+    
+    return frames;
+  }
+}
+
+// 构建 WebSocket Frame
+function buildWebSocketFrame(data: Uint8Array, opcode: number = 0x02): Uint8Array {
+  const mask = new Uint8Array(4);
+  crypto.getRandomValues(mask);
+  
+  let header: Uint8Array;
+  if (data.length < 126) {
+    header = new Uint8Array(6);
+    header[0] = 0x80 | opcode; // FIN + opcode
+    header[1] = 0x80 | data.length; // MASK + length
+    header.set(mask, 2);
+  } else if (data.length < 65536) {
+    header = new Uint8Array(8);
+    header[0] = 0x80 | opcode;
+    header[1] = 0x80 | 126;
+    header[2] = (data.length >> 8) & 0xFF;
+    header[3] = data.length & 0xFF;
+    header.set(mask, 4);
+  } else {
+    header = new Uint8Array(14);
+    header[0] = 0x80 | opcode;
+    header[1] = 0x80 | 127;
+    // 64-bit length (simplified to 32-bit)
+    header[6] = (data.length >> 24) & 0xFF;
+    header[7] = (data.length >> 16) & 0xFF;
+    header[8] = (data.length >> 8) & 0xFF;
+    header[9] = data.length & 0xFF;
+    header.set(mask, 10);
+  }
+  
+  // Apply mask to payload
+  const maskedPayload = data.map((b, i) => b ^ mask[i % 4]);
+  
+  const frame = new Uint8Array(header.length + maskedPayload.length);
+  frame.set(header, 0);
+  frame.set(maskedPayload, header.length);
+  
+  return frame;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Check for WebSocket upgrade
   const upgrade = req.headers.get('upgrade') || '';
   if (upgrade.toLowerCase() !== 'websocket') {
     return new Response(
@@ -191,139 +264,178 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Parse URL parameters
   const url = new URL(req.url);
   const userId = url.searchParams.get('user_id') || 'anonymous';
   const mode = url.searchParams.get('mode') || 'emotion';
 
   console.log(`[DoubaoRelay] New connection: userId=${userId}, mode=${mode}`);
 
-  // Upgrade to WebSocket
   const { socket: clientSocket, response } = Deno.upgradeWebSocket(req);
 
-  let doubaoSocket: WebSocket | null = null;
+  let doubaoConn: Deno.TlsConn | null = null;
   let isConnected = false;
   let sessionConfig: { instructions: string } | null = null;
   let heartbeatInterval: number | null = null;
 
-  // Connect to Doubao API
   const connectToDoubao = async () => {
     try {
       const connectId = crypto.randomUUID();
+      console.log(`[DoubaoRelay] Connecting to ${DOUBAO_HOST} with connectId=${connectId}`);
       
-      // 构建带认证参数的 URL（豆包支持 URL 参数和 Headers 两种认证方式）
-      const doubaoUrl = new URL(DOUBAO_WS_URL);
-      doubaoUrl.searchParams.set('appid', DOUBAO_APP_ID!);
-      doubaoUrl.searchParams.set('token', DOUBAO_ACCESS_TOKEN!);
-      doubaoUrl.searchParams.set('cluster', 'volcano_bigasr');
+      // 建立 TLS 连接
+      doubaoConn = await Deno.connectTls({
+        hostname: DOUBAO_HOST,
+        port: 443,
+      });
       
-      console.log(`[DoubaoRelay] Connecting to Doubao with connectId=${connectId}`);
-      console.log(`[DoubaoRelay] URL: ${doubaoUrl.toString().replace(DOUBAO_ACCESS_TOKEN!, '***')}`);
+      console.log('[DoubaoRelay] TLS connection established');
       
-      // 创建 WebSocket 连接
-      doubaoSocket = new WebSocket(doubaoUrl.toString());
-      doubaoSocket.binaryType = 'arraybuffer';
+      // 发送 WebSocket 握手请求
+      const wsKey = generateWebSocketKey();
+      const handshakeRequest = [
+        `GET ${DOUBAO_PATH} HTTP/1.1`,
+        `Host: ${DOUBAO_HOST}`,
+        'Upgrade: websocket',
+        'Connection: Upgrade',
+        'Sec-WebSocket-Version: 13',
+        `Sec-WebSocket-Key: ${wsKey}`,
+        `X-Api-App-Key: ${DOUBAO_APP_ID}`,
+        `X-Api-Access-Key: ${DOUBAO_ACCESS_TOKEN}`,
+        'X-Api-Resource-Id: volc.bigasr.sauc.duration',
+        `X-Api-Connect-Id: ${connectId}`,
+        '',
+        ''
+      ].join('\r\n');
       
-      doubaoSocket.onopen = () => {
-        console.log('[DoubaoRelay] Connected to Doubao');
-        isConnected = true;
+      console.log('[DoubaoRelay] Sending WebSocket handshake...');
+      await doubaoConn.write(new TextEncoder().encode(handshakeRequest));
+      
+      // 读取握手响应
+      const responseBuffer = new Uint8Array(4096);
+      const bytesRead = await doubaoConn.read(responseBuffer);
+      
+      if (bytesRead === null || bytesRead === 0) {
+        throw new Error('No response from server');
+      }
+      
+      const responseText = new TextDecoder().decode(responseBuffer.slice(0, bytesRead));
+      console.log(`[DoubaoRelay] Handshake response: ${responseText.substring(0, 200)}`);
+      
+      if (!responseText.includes('101')) {
+        throw new Error(`WebSocket handshake failed: ${responseText.substring(0, 100)}`);
+      }
+      
+      console.log('[DoubaoRelay] WebSocket handshake successful');
+      isConnected = true;
+      
+      // 发送初始化请求
+      if (sessionConfig) {
+        const initRequest = buildFullClientRequest(userId, sessionConfig.instructions);
+        const frame = buildWebSocketFrame(initRequest);
+        await doubaoConn.write(frame);
+        console.log('[DoubaoRelay] Sent init request to Doubao');
+      }
+      
+      // 通知客户端连接成功
+      clientSocket.send(JSON.stringify({ 
+        type: 'session.connected',
+        message: 'Connected to Doubao API'
+      }));
+      
+      // 开始读取响应
+      const parser = new WebSocketFrameParser();
+      const readLoop = async () => {
+        const buffer = new Uint8Array(65536);
         
-        // Send Full Client Request to initialize session
-        if (sessionConfig) {
-          const initRequest = buildFullClientRequest({
-            appId: DOUBAO_APP_ID!,
-            token: DOUBAO_ACCESS_TOKEN!,
-            userId: userId,
-            instructions: sessionConfig.instructions
-          });
-          doubaoSocket!.send(initRequest);
-          console.log('[DoubaoRelay] Sent init request to Doubao');
-        }
-        
-        // Notify client
-        clientSocket.send(JSON.stringify({ 
-          type: 'session.connected',
-          message: 'Connected to Doubao API'
-        }));
-      };
-
-      doubaoSocket.onmessage = (event: MessageEvent) => {
-        try {
-          if (event.data instanceof ArrayBuffer) {
-            // Handle binary response from Doubao
-            const bytes = new Uint8Array(event.data);
-            const parsed = parseServerResponse(bytes);
-            
-            console.log(`[DoubaoRelay] Received from Doubao: type=${parsed.type}`);
-            
-            if (parsed.type === 'audio' && parsed.audio) {
-              // Send audio to client as base64
-              clientSocket.send(JSON.stringify({
-                type: 'response.audio.delta',
-                delta: uint8ArrayToBase64(parsed.audio)
-              }));
-            } else if (parsed.type === 'text' && parsed.payload) {
-              // Forward text response
-              clientSocket.send(JSON.stringify({
-                type: 'response.text',
-                payload: parsed.payload
-              }));
-              
-              // Check for transcript
-              const payloadObj = parsed.payload as Record<string, unknown>;
-              const result = payloadObj.result as Record<string, unknown> | undefined;
-              if (result?.text) {
-                clientSocket.send(JSON.stringify({
-                  type: 'response.audio_transcript.delta',
-                  delta: result.text
-                }));
-              }
-            } else if (parsed.type === 'error') {
-              clientSocket.send(JSON.stringify({
-                type: 'error',
-                error: parsed.error
-              }));
+        while (isConnected && doubaoConn) {
+          try {
+            const n = await doubaoConn.read(buffer);
+            if (n === null || n === 0) {
+              console.log('[DoubaoRelay] Connection closed by Doubao');
+              break;
             }
+            
+            parser.append(buffer.slice(0, n));
+            const frames = parser.getFrames();
+            
+            for (const frame of frames) {
+              if (frame.opcode === 0x02) { // Binary frame
+                const parsed = parseServerResponse(frame.payload);
+                console.log(`[DoubaoRelay] Received from Doubao: type=${parsed.type}`);
+                
+                if (parsed.type === 'audio' && parsed.audio) {
+                  clientSocket.send(JSON.stringify({
+                    type: 'response.audio.delta',
+                    delta: uint8ArrayToBase64(parsed.audio)
+                  }));
+                } else if (parsed.type === 'text' && parsed.payload) {
+                  clientSocket.send(JSON.stringify({
+                    type: 'response.text',
+                    payload: parsed.payload
+                  }));
+                  
+                  const payloadObj = parsed.payload as Record<string, unknown>;
+                  const result = payloadObj.result as Record<string, unknown> | undefined;
+                  if (result?.text) {
+                    clientSocket.send(JSON.stringify({
+                      type: 'response.audio_transcript.delta',
+                      delta: result.text
+                    }));
+                  }
+                } else if (parsed.type === 'error') {
+                  clientSocket.send(JSON.stringify({
+                    type: 'error',
+                    error: parsed.error
+                  }));
+                }
+              } else if (frame.opcode === 0x08) { // Close frame
+                console.log('[DoubaoRelay] Received close frame from Doubao');
+                isConnected = false;
+              } else if (frame.opcode === 0x09) { // Ping
+                // Send pong
+                const pong = buildWebSocketFrame(frame.payload, 0x0A);
+                await doubaoConn.write(pong);
+              }
+            }
+          } catch (err) {
+            console.error('[DoubaoRelay] Read error:', err);
+            break;
           }
-        } catch (err) {
-          console.error('[DoubaoRelay] Error processing Doubao message:', err);
         }
-      };
-
-      doubaoSocket.onerror = (event: Event) => {
-        console.error('[DoubaoRelay] Doubao WebSocket error:', event);
-        clientSocket.send(JSON.stringify({
-          type: 'error',
-          error: 'Doubao connection error'
-        }));
-      };
-
-      doubaoSocket.onclose = (event: CloseEvent) => {
-        console.log(`[DoubaoRelay] Doubao connection closed: code=${event.code}, reason=${event.reason}`);
-        isConnected = false;
         
         if (clientSocket.readyState === WebSocket.OPEN) {
           clientSocket.send(JSON.stringify({
             type: 'session.closed',
-            code: event.code,
-            reason: event.reason
+            code: 1000,
+            reason: 'Connection closed'
           }));
         }
       };
+      
+      // Start read loop without blocking
+      readLoop().catch(err => {
+        console.error('[DoubaoRelay] Read loop error:', err);
+      });
+      
     } catch (err) {
       console.error('[DoubaoRelay] Failed to connect to Doubao:', err);
+      
       clientSocket.send(JSON.stringify({
         type: 'error',
         error: `Failed to connect to Doubao: ${err}`
       }));
+      
+      clientSocket.send(JSON.stringify({
+        type: 'session.closed',
+        code: 1011,
+        reason: 'Doubao connection failed'
+      }));
     }
   };
 
-  // Client WebSocket handlers
   clientSocket.onopen = () => {
     console.log('[DoubaoRelay] Client connected');
     
-    // Start heartbeat
     heartbeatInterval = setInterval(() => {
       if (clientSocket.readyState === WebSocket.OPEN) {
         clientSocket.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }));
@@ -338,31 +450,30 @@ Deno.serve(async (req) => {
 
       switch (message.type) {
         case 'session.init':
-          // Initialize session with instructions
           sessionConfig = {
             instructions: message.instructions || ''
           };
-          
-          // Connect to Doubao
           await connectToDoubao();
           break;
 
         case 'input_audio_buffer.append':
-          // Forward audio to Doubao
-          if (doubaoSocket && isConnected && doubaoSocket.readyState === WebSocket.OPEN) {
-            const audioBytes = base64ToUint8Array(message.audio);
-            const audioRequest = buildAudioOnlyRequest(audioBytes);
-            doubaoSocket.send(audioRequest);
+          if (doubaoConn && isConnected) {
+            try {
+              const audioBytes = base64ToUint8Array(message.audio);
+              const audioRequest = buildAudioOnlyRequest(audioBytes);
+              const frame = buildWebSocketFrame(audioRequest);
+              await doubaoConn.write(frame);
+            } catch (err) {
+              console.error('[DoubaoRelay] Error sending audio:', err);
+            }
           }
           break;
 
         case 'input_audio_buffer.commit':
-          // Send end-of-audio signal if needed
           console.log('[DoubaoRelay] Audio buffer committed');
           break;
 
         case 'response.cancel':
-          // Cancel ongoing response
           console.log('[DoubaoRelay] Response cancelled');
           break;
 
@@ -371,9 +482,14 @@ Deno.serve(async (req) => {
           break;
 
         case 'session.close':
-          // Clean close
-          if (doubaoSocket && doubaoSocket.readyState === WebSocket.OPEN) {
-            doubaoSocket.close();
+          if (doubaoConn) {
+            try {
+              const closeFrame = buildWebSocketFrame(new Uint8Array(0), 0x08);
+              await doubaoConn.write(closeFrame);
+              doubaoConn.close();
+            } catch {
+              // Ignore close errors
+            }
           }
           break;
 
@@ -392,13 +508,17 @@ Deno.serve(async (req) => {
   clientSocket.onclose = () => {
     console.log('[DoubaoRelay] Client disconnected');
     
-    // Cleanup
     if (heartbeatInterval) {
       clearInterval(heartbeatInterval);
     }
     
-    if (doubaoSocket && doubaoSocket.readyState === WebSocket.OPEN) {
-      doubaoSocket.close();
+    isConnected = false;
+    if (doubaoConn) {
+      try {
+        doubaoConn.close();
+      } catch {
+        // Ignore close errors
+      }
     }
   };
 
