@@ -5,6 +5,7 @@ import { Phone, PhoneOff, Mic, Volume2, Loader2, Coins, MapPin, Search, X, Heart
 import { AudioWaveform } from './AudioWaveform';
 import { RealtimeChat } from '@/utils/RealtimeAudio';
 import { MiniProgramAudioClient, ConnectionStatus as MiniProgramStatus } from '@/utils/MiniProgramAudio';
+import { DoubaoRealtimeChat } from '@/utils/DoubaoRealtimeAudio';
 import { isWeChatMiniProgram, supportsWebRTC, getPlatformInfo } from '@/utils/platform';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -865,7 +866,59 @@ export const CoachVoiceChat = ({
       const platformInfo = getPlatformInfo();
       console.log('[VoiceChat] Platform info:', platformInfo);
 
-      if (platformInfo.recommendedVoiceMethod === 'websocket') {
+      // 🎯 豆包语音：情绪教练专用
+      const useDoubaoVoice = mode === 'emotion';
+      
+      if (useDoubaoVoice && platformInfo.supportsWebRTC) {
+        console.log('[VoiceChat] Using Doubao Realtime for emotion coach');
+        updateConnectionPhase('establishing');
+        setUseMiniProgramMode(false);
+        
+        const doubaoClient = new DoubaoRealtimeChat({
+          onStatusChange: (status) => handleStatusChange(status as any),
+          onSpeakingChange: (speakingStatus) => {
+            if (speakingStatus === 'user-speaking') setSpeakingStatus('user-speaking');
+            else if (speakingStatus === 'assistant-speaking') setSpeakingStatus('assistant-speaking');
+            else setSpeakingStatus('idle');
+          },
+          onTranscript: (text, isFinal, role) => handleTranscript(text, isFinal, role),
+          onToolCall: (toolName, args) => {
+            console.log('[VoiceChat] Doubao tool call:', toolName, args);
+            handleVoiceMessage({ type: 'tool_call', tool: toolName, args });
+          },
+          onMessage: handleVoiceMessage,
+          tokenEndpoint: 'doubao-realtime-token',
+          mode
+        });
+        
+        chatRef.current = doubaoClient;
+        
+        try {
+          await doubaoClient.init();
+          updateConnectionPhase('connected');
+          stopConnectionTimer();
+          startMonitoring();
+        } catch (doubaoError: any) {
+          console.error('[VoiceChat] Doubao connection failed:', doubaoError);
+          // 豆包连接失败，降级到 OpenAI WebRTC
+          console.log('[VoiceChat] Falling back to OpenAI WebRTC...');
+          doubaoClient.disconnect();
+          chatRef.current = null;
+          
+          toast({
+            title: "正在切换通道",
+            description: "豆包语音连接失败，正在使用备用通道...",
+          });
+          
+          // 使用 OpenAI WebRTC 作为回退
+          const chat = new RealtimeChat(handleVoiceMessage, handleStatusChange, handleTranscript, tokenEndpoint, mode, scenario);
+          chatRef.current = chat;
+          await chat.init();
+          updateConnectionPhase('connected');
+          stopConnectionTimer();
+          startMonitoring();
+        }
+      } else if (platformInfo.recommendedVoiceMethod === 'websocket') {
         console.log('[VoiceChat] Using MiniProgram WebSocket relay mode');
         updateConnectionPhase('establishing');
         setUseMiniProgramMode(true);
