@@ -211,7 +211,8 @@ export const ChatMessage = ({ role, content, onOptionClick, onOptionSelect, vide
                     key={index}
                     onClick={() => {
                       if (isShareButton) {
-                        // 分享按钮直接跳转到社区
+                        // 分享按钮跳转到社区，用户可以在社区分享
+                        console.log('[ChatMessage] Share button clicked, navigating to community');
                         navigate("/community");
                       } else if (isBriefingButton) {
                         // 简报按钮：禁用其他按钮，立即发送

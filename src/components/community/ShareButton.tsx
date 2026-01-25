@@ -58,6 +58,7 @@ const ShareButton = ({ post }: ShareButtonProps) => {
   const shareUrl = `${getPromotionDomain()}/community?post=${post.id}${isPartner && partner?.id ? `&ref=${partner.id}` : ''}`;
 
   const handleShare = async () => {
+    console.log('[ShareButton] Share button clicked, opening dialog');
     setShowShareDialog(true);
   };
 
@@ -81,15 +82,29 @@ const ShareButton = ({ post }: ShareButtonProps) => {
   };
 
   const handleGenerateImage = async () => {
-    if (!cardRef.current) return;
+    console.log('[ShareButton] Generate image clicked');
+    
+    if (!cardRef.current) {
+      console.error('[ShareButton] cardRef.current is null');
+      toast({
+        title: "卡片未加载",
+        description: "请稍后重试",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       setSharing(true);
+      console.log('[ShareButton] Starting card generation...');
 
       const blob = await generateCardBlob(cardRef, { isWeChat });
       if (!blob) {
+        console.error('[ShareButton] Blob generation failed');
         throw new Error('Failed to generate image');
       }
+
+      console.log('[ShareButton] Blob generated, size:', blob.size);
 
       // Use unified share handler with proper WeChat/iOS fallback
       const result = await handleShareWithFallback(
@@ -99,11 +114,13 @@ const ShareButton = ({ post }: ShareButtonProps) => {
           title: post.title || "我的分享",
           text: post.content?.slice(0, 100) || "",
           onShowPreview: (blobUrl) => {
+            console.log('[ShareButton] Showing preview');
             setPreviewImageUrl(blobUrl);
             setShowImagePreview(true);
             setShowShareDialog(false);
           },
           onDownload: () => {
+            console.log('[ShareButton] Download triggered');
             toast({
               title: "图片已保存",
               description: "请打开微信手动分享",
@@ -113,6 +130,8 @@ const ShareButton = ({ post }: ShareButtonProps) => {
         }
       );
 
+      console.log('[ShareButton] Share result:', result);
+
       // Only show success and close for Web Share API
       if (result.method === 'webshare' && result.success && !result.cancelled) {
         toast({ title: "分享成功" });
@@ -120,10 +139,10 @@ const ShareButton = ({ post }: ShareButtonProps) => {
       }
 
     } catch (error) {
-      console.error("分享失败:", error);
+      console.error("[ShareButton] Share failed:", error);
       toast({
         title: "分享失败",
-        description: "请稍后重试",
+        description: error instanceof Error ? error.message : "请稍后重试",
         variant: "destructive",
       });
     } finally {
@@ -141,6 +160,11 @@ const ShareButton = ({ post }: ShareButtonProps) => {
         <span className="text-sm">分享</span>
       </button>
 
+      {/* 导出用卡片 - 始终挂载，隐藏在屏幕外 */}
+      <div className="fixed -left-[9999px] top-0 pointer-events-none" style={{ opacity: 0.01 }} aria-hidden="true">
+        <ShareCardExport ref={cardRef} post={post} partnerInfo={partnerInfo} />
+      </div>
+
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent className="max-w-sm sm:max-w-md">
           <DialogHeader>
@@ -154,11 +178,6 @@ const ShareButton = ({ post }: ShareButtonProps) => {
               <div className="transform scale-[0.45] sm:scale-[0.5] origin-top pt-4">
                 <ShareCard post={post} partnerInfo={partnerInfo} isPreview />
               </div>
-            </div>
-
-            {/* 导出用卡片 - 使用纯内联样式版本 */}
-            <div className="fixed -left-[9999px] top-0 opacity-0 pointer-events-none">
-              <ShareCardExport ref={cardRef} post={post} partnerInfo={partnerInfo} />
             </div>
 
             {/* 统一的操作按钮 */}
