@@ -14,7 +14,10 @@
 import { corsHeaders } from '../_shared/cors.ts';
 
 const DOUBAO_HOST = 'openspeech.bytedance.com';
-const DOUBAO_PATH = '/api/v3/sauc/bigmodel';
+const DOUBAO_PATH = '/api/v3/realtime/dialogue';  // 使用对话模式端点
+
+// 固定的 App Key (豆包文档要求)
+const FIXED_APP_KEY = 'PlgvMymc7f3tQnJ6';
 
 // 豆包协议常量
 const PROTOCOL_VERSION = 0x01;
@@ -299,9 +302,10 @@ Deno.serve(async (req) => {
         'Connection: Upgrade',
         'Sec-WebSocket-Version: 13',
         `Sec-WebSocket-Key: ${wsKey}`,
-        `X-Api-App-Key: ${DOUBAO_APP_ID}`,
-        `X-Api-Access-Key: ${DOUBAO_ACCESS_TOKEN}`,
-        'X-Api-Resource-Id: volc.bigasr.sauc.duration',
+        `X-Api-App-Key: ${FIXED_APP_KEY}`,          // 固定值
+        `X-Api-App-ID: ${DOUBAO_APP_ID}`,           // APP ID  
+        `X-Api-Access-Key: ${DOUBAO_ACCESS_TOKEN}`, // Access Token
+        'X-Api-Resource-Id: volc.speech.dialog',    // 对话模式资源 ID
         `X-Api-Connect-Id: ${connectId}`,
         '',
         ''
