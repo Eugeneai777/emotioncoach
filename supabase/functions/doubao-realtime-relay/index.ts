@@ -42,32 +42,28 @@ const COMPRESSION_NONE = 0x00;
 
 // Header Flags (byte1 low 4 bits)
 // ============================================================================
-// ⚠️ CRITICAL: 发送 vs 接收的 Flags 布局不同！
+// 豆包二进制协议 V1 Flags 定义
 // ============================================================================
 // 
-// 【发送到服务端】(StartSession/Audio Upload):
-//   官方示例 byte1 = 0x14 => MessageType=1, Flags=0x04
-//   发送时我们使用 FLAG_SEND_HAS_EVENT = 0x04
+// 官方文档和实际观察的 Flags 布局：
+//   - bit 0 (0x01): HAS_SEQUENCE
+//   - bit 1 (0x02): (保留/未使用)
+//   - bit 2 (0x04): HAS_EVENT
+//   - bit 3 (0x08): HAS_SESSION_ID (作为独立字段)
 //
-// 【接收服务端响应】(TTS Audio/ASR/Chat):
-//   实际观察 byte1 = 0x96/0xB6 => MessageType=9/B, Flags=0x06
-//   服务端响应使用不同的位布局:
-//     - bit 0 (0x01): HAS_SEQUENCE
-//     - bit 1 (0x02): HAS_EVENT      ← 服务端响应用 bit 1
-//     - bit 2 (0x04): HAS_SESSION_ID ← 服务端响应用 bit 2
+// 但实际服务端响应 (event=150/352 等) 中，SessionID 是**作为 payload 的一部分**发送的，
+// 而不是通过 FLAG_HAS_SESSION_ID 标记的独立字段！
 //
-// 这就是为什么之前把 36 字节 SessionID 当成了音频 payload！
+// 关键发现 (2026-01-25):
+//   服务端响应 byte1=0x94 → msgType=9, flags=0x04 (HAS_EVENT)
+//   后续是: Event(4) + PayloadSize(4) + Payload(可能包含 SessionID 或音频)
+//
+// 因此，对于服务端响应，我们不应该期望 FLAG_HAS_SESSION_ID 被设置。
 // ============================================================================
 
-// === 用于【发送】请求的 Flags ===
-const FLAG_SEND_HAS_SEQUENCE = 0x01;       // bit 0
-const FLAG_SEND_HAS_EVENT = 0x04;          // bit 2 (官方示例)
-const FLAG_SEND_HAS_SESSION_ID = 0x08;     // bit 3 (发送时 SessionID 位置)
-
-// === 用于【接收/解析】服务端响应的 Flags ===
-const FLAG_HAS_SEQUENCE = 0x01;            // bit 0: 有 sequence 字段
-const FLAG_HAS_EVENT = 0x02;               // bit 1: 有 event 字段 (服务端响应实际布局)
-const FLAG_HAS_SESSION_ID = 0x04;          // bit 2: 有 session_id 字段 (服务端响应实际布局)
+const FLAG_HAS_SEQUENCE = 0x01;        // bit 0: 有 sequence 字段
+const FLAG_HAS_EVENT = 0x04;           // bit 2: 有 event 字段
+const FLAG_HAS_SESSION_ID = 0x08;      // bit 3: 有 session_id 字段 (作为独立字段，服务端响应中通常不使用)
 
 // Event Types
 const EVENT_START_SESSION = 100;
@@ -136,10 +132,10 @@ function buildPacket(options: {
     serialization = SERIALIZATION_JSON
   } = options;
 
-  // 计算各部分大小 - 发送时使用发送专用的 Flags 常量
-  const hasSequence = (flags & FLAG_SEND_HAS_SEQUENCE) !== 0;
-  const hasEvent = (flags & FLAG_SEND_HAS_EVENT) !== 0;
-  const hasSessionId = (flags & FLAG_SEND_HAS_SESSION_ID) !== 0; // 发送时 SessionID 用 0x08
+  // 计算各部分大小
+  const hasSequence = (flags & FLAG_HAS_SEQUENCE) !== 0;
+  const hasEvent = (flags & FLAG_HAS_EVENT) !== 0;
+  const hasSessionId = (flags & FLAG_HAS_SESSION_ID) !== 0;
 
   let optionalFieldsSize = 0;
   if (hasSequence) optionalFieldsSize += 4;  // sequence: 4 bytes
@@ -223,6 +219,9 @@ function parsePacket(data: Uint8Array): {
     console.error('[Protocol] Packet too short:', data.length);
     return null;
   }
+  
+  // 🔍 DEBUG: 打印原始 header 以便调试
+  console.log(`[Protocol] Parsing packet: len=${data.length}, header=[${data[0].toString(16)},${data[1].toString(16)},${data[2].toString(16)},${data[3].toString(16)}]`);
 
   const readUint32BE = (buf: Uint8Array, off: number): number => {
     // Ensure unsigned 32-bit
@@ -249,6 +248,9 @@ function parsePacket(data: Uint8Array): {
   const hasSequence = (flags & FLAG_HAS_SEQUENCE) !== 0;
   const hasEvent = (flags & FLAG_HAS_EVENT) !== 0;
   const hasSessionId = (flags & FLAG_HAS_SESSION_ID) !== 0;
+  
+  // 🔍 DEBUG: 打印解析后的 flags 信息
+  console.log(`[Protocol] Flags: 0x${flags.toString(16)}, hasSeq=${hasSequence}, hasEvent=${hasEvent}, hasSession=${hasSessionId}`);
 
   let offset = 4;
   let sequence: number | undefined;
@@ -357,7 +359,7 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
    * 若我们错误地依赖 FLAG_HAS_SESSION_ID / FLAG_HAS_SEQUENCE，会导致服务端按官方格式解码时字段错位，
    * 继而出现 autoAssignedSequence mismatch 等“连接后无反应”的问题。
    */
-  const flags = FLAG_SEND_HAS_EVENT; // StartSession 发送时使用发送专用的 Flags
+  const flags = FLAG_HAS_EVENT; // StartSession 只标记 HAS_EVENT
   const header = buildHeader(MESSAGE_TYPE_FULL_CLIENT, flags, SERIALIZATION_JSON);
 
   const sessionIdBytes = new TextEncoder().encode(sessionId);
@@ -405,9 +407,8 @@ function buildStartSessionRequest(userId: string, instructions: string, sessionI
 function buildAudioUploadRequest(audioData: Uint8Array, sequence: number, sessionId: string): Uint8Array {
   return buildPacket({
     messageType: MESSAGE_TYPE_AUDIO_ONLY,
-    // ⚠️ Critical: Audio Upload 使用发送专用的 Flags
-    // 必须携带 sessionId，否则服务端可能无法将音频归属到会话，导致 DialogAudioIdleTimeout
-    flags: FLAG_SEND_HAS_SEQUENCE | FLAG_SEND_HAS_EVENT | FLAG_SEND_HAS_SESSION_ID,
+    // ⚠️ Critical: Audio Upload 必须携带 sessionId，否则服务端可能无法将音频归属到会话
+    flags: FLAG_HAS_SEQUENCE | FLAG_HAS_EVENT | FLAG_HAS_SESSION_ID,
     sequence: sequence,
     event: EVENT_AUDIO_UPLOAD,
     sessionId,
@@ -422,7 +423,7 @@ function buildAudioUploadRequest(audioData: Uint8Array, sequence: number, sessio
 function buildEndSessionRequest(): Uint8Array {
   return buildPacket({
     messageType: MESSAGE_TYPE_FULL_CLIENT,
-    flags: FLAG_SEND_HAS_EVENT, // 发送时使用发送专用的 Flags
+    flags: FLAG_HAS_EVENT,
     event: EVENT_END_SESSION,
     payload: new Uint8Array(0),
     serialization: SERIALIZATION_NONE
