@@ -256,8 +256,8 @@ const WealthJournalShareDialog: React.FC<WealthJournalShareDialogProps> = ({
           <DialogTitle>分享日记卡片</DialogTitle>
         </DialogHeader>
 
-        <div className="flex justify-center overflow-hidden">
-          <div className="transform scale-[0.55] sm:scale-[0.62] origin-top" style={{ marginBottom: '-42%' }}>
+        <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
+          <div className="transform scale-[0.55] sm:scale-[0.62] origin-top">
             {isLoading ? (
               <ShareCardSkeleton />
             ) : (

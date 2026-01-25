@@ -114,7 +114,7 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
 
       // 关键：使用显式尺寸约束，确保捕获完整卡片
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
@@ -245,11 +245,8 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
           </div>
 
           {/* Card Preview - 缩放显示 */}
-          <div className="flex justify-center overflow-hidden">
-            <div 
-              className="transform origin-top scale-[0.55] sm:scale-[0.62]"
-              style={{ marginBottom: '-42%' }}
-            >
+          <div className="flex justify-center overflow-hidden" style={{ height: '320px' }}>
+            <div className="transform origin-top scale-[0.55] sm:scale-[0.62]">
               {isContentLoading ? (
                 <ShareCardSkeleton variant="compact" />
               ) : (

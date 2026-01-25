@@ -52,7 +52,7 @@ const AliveCheckShareDialog: React.FC<AliveCheckShareDialogProps> = ({
       await new Promise(resolve => setTimeout(resolve, 500));
 
       const canvas = await html2canvas(exportRef.current, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
