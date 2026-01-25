@@ -124,25 +124,23 @@ const generateCanvas = async (cardRef: React.RefObject<HTMLDivElement>): Promise
     originalElement.offsetWidth, 'x', originalElement.offsetHeight);
   
   // Create a wrapper for proper rendering with reliable hiding
+  // IMPORTANT: Use transparent background to support rounded corners
   const wrapper = document.createElement('div');
   wrapper.id = 'html2canvas-clone-wrapper';
   wrapper.style.cssText = `
     position: fixed !important;
     left: -99999px !important;
     top: -99999px !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
     pointer-events: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
     z-index: -99999 !important;
+    background: transparent !important;
   `;
   
   // Clone the element
   const clonedElement = originalElement.cloneNode(true) as HTMLElement;
   
   // Reset transform and ensure proper sizing for WeChat
+  // IMPORTANT: Set transparent background on cloned element for rounded corners
   clonedElement.style.transform = 'none';
   clonedElement.style.transformOrigin = 'top left';
   clonedElement.style.margin = '0';
@@ -151,6 +149,7 @@ const generateCanvas = async (cardRef: React.RefObject<HTMLDivElement>): Promise
   clonedElement.style.minWidth = originalElement.offsetWidth + 'px';
   clonedElement.style.visibility = 'visible';
   clonedElement.style.opacity = '1';
+  clonedElement.style.background = 'transparent';
   
   wrapper.appendChild(clonedElement);
   document.body.appendChild(wrapper);
