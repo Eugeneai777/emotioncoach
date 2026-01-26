@@ -8,9 +8,10 @@ import { motion } from "framer-motion";
 interface SCL90StartScreenProps {
   onStart: () => void;
   onBack?: () => void;
+  onViewHistory?: () => void;
 }
 
-export function SCL90StartScreen({ onStart, onBack }: SCL90StartScreenProps) {
+export function SCL90StartScreen({ onStart, onBack, onViewHistory }: SCL90StartScreenProps) {
   return (
     <motion.div 
       className="space-y-4"
@@ -133,13 +134,25 @@ export function SCL90StartScreen({ onStart, onBack }: SCL90StartScreenProps) {
       </p>
 
       {/* 开始按钮 */}
-      <Button 
-        onClick={onStart} 
-        className="w-full h-12 text-base font-medium bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-      >
-        <Brain className="w-5 h-5 mr-2" />
-        开始测评
-      </Button>
+      <div className="space-y-2">
+        <Button 
+          onClick={onStart} 
+          className="w-full h-12 text-base font-medium bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+        >
+          <Brain className="w-5 h-5 mr-2" />
+          开始测评
+        </Button>
+        
+        {onViewHistory && (
+          <Button 
+            variant="outline"
+            onClick={onViewHistory} 
+            className="w-full h-10"
+          >
+            查看历史记录
+          </Button>
+        )}
+      </div>
     </motion.div>
   );
 }
