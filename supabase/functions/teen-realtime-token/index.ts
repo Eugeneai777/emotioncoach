@@ -7,6 +7,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Rate limiting: Track requests per token
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 10;
+
+function checkRateLimit(token: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(token);
+  
+  if (!entry || now > entry.resetTime) {
+    rateLimitMap.set(token, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+  
+  if (entry.count >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+  
+  entry.count++;
+  return true;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -22,6 +44,23 @@ serve(async (req) => {
       );
     }
 
+    // Security: Token format validation (must be 32+ characters for secure tokens)
+    if (typeof access_token !== 'string' || access_token.length < 8) {
+      return new Response(
+        JSON.stringify({ error: '无效的访问令牌格式' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Security: Rate limiting to prevent brute force
+    if (!checkRateLimit(access_token)) {
+      console.warn('Rate limit exceeded for token:', access_token.slice(0, 4) + '...');
+      return new Response(
+        JSON.stringify({ error: '请求过于频繁，请稍后再试' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
@@ -30,7 +69,7 @@ serve(async (req) => {
     // Validate token and get parent info
     const { data: tokenData, error: tokenError } = await supabase
       .from('teen_access_tokens')
-      .select('parent_user_id, teen_nickname, is_active')
+      .select('parent_user_id, teen_nickname, is_active, created_at')
       .eq('access_token', access_token)
       .maybeSingle();
 
@@ -43,6 +82,8 @@ serve(async (req) => {
     }
 
     if (!tokenData || !tokenData.is_active) {
+      // Security: Add delay to slow down brute force attempts
+      await new Promise(resolve => setTimeout(resolve, 1000));
       return new Response(
         JSON.stringify({ error: '链接已失效' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

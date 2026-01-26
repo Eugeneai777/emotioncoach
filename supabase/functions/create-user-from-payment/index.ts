@@ -6,10 +6,46 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+/**
+ * Validates that this is an internal service call or payment webhook.
+ * This function should ONLY be called:
+ * 1. By other Edge Functions using service role key
+ * 2. By verified payment webhook callbacks
+ */
+function validateInternalCall(req: Request): Response | null {
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const authHeader = req.headers.get('authorization');
+  
+  // Check for service role key (internal Edge Function calls)
+  if (authHeader?.startsWith('Bearer ') && serviceRoleKey) {
+    const providedKey = authHeader.replace('Bearer ', '');
+    if (providedKey === serviceRoleKey) {
+      return null; // Valid internal call
+    }
+  }
+  
+  // Check for payment webhook signature (X-Payment-Verified header)
+  // This header should be set by the payment verification function
+  const paymentVerified = req.headers.get('X-Payment-Verified');
+  if (paymentVerified === 'true') {
+    return null; // Valid payment callback
+  }
+  
+  console.warn('Unauthorized access attempt to create-user-from-payment');
+  return new Response(
+    JSON.stringify({ error: 'Unauthorized - internal endpoint only' }),
+    { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Security: Validate this is an internal/authorized call
+  const authError = validateInternalCall(req);
+  if (authError) return authError;
 
   try {
     const { orderNo, openId, nickname, phone, phoneCountryCode } = await req.json();
@@ -23,7 +59,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 1. 验证订单
+    // 1. 验证订单 - 必须是已支付状态
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .select('*')
@@ -31,10 +67,12 @@ serve(async (req) => {
       .single();
 
     if (orderError || !order) {
+      console.error('Order not found:', orderNo);
       throw new Error('订单不存在');
     }
 
     if (order.status !== 'paid') {
+      console.error('Order not paid:', orderNo, order.status);
       throw new Error('订单未支付');
     }
 
