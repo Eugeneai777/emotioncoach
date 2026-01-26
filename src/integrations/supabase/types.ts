@@ -3234,6 +3234,83 @@ export type Database = {
           },
         ]
       }
+      emotion_health_assessments: {
+        Row: {
+          ai_analysis: Json | null
+          answers: Json
+          anxiety_index: number
+          avoidance_score: number
+          blocked_dimension: string
+          created_at: string | null
+          energy_index: number
+          exhaustion_score: number
+          id: string
+          is_paid: boolean | null
+          order_id: string | null
+          paid_at: string | null
+          primary_pattern: string
+          recommended_path: string
+          secondary_pattern: string | null
+          stress_index: number
+          suppression_score: number
+          tension_score: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          answers: Json
+          anxiety_index: number
+          avoidance_score: number
+          blocked_dimension: string
+          created_at?: string | null
+          energy_index: number
+          exhaustion_score: number
+          id?: string
+          is_paid?: boolean | null
+          order_id?: string | null
+          paid_at?: string | null
+          primary_pattern: string
+          recommended_path: string
+          secondary_pattern?: string | null
+          stress_index: number
+          suppression_score: number
+          tension_score: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_analysis?: Json | null
+          answers?: Json
+          anxiety_index?: number
+          avoidance_score?: number
+          blocked_dimension?: string
+          created_at?: string | null
+          energy_index?: number
+          exhaustion_score?: number
+          id?: string
+          is_paid?: boolean | null
+          order_id?: string | null
+          paid_at?: string | null
+          primary_pattern?: string
+          recommended_path?: string
+          secondary_pattern?: string | null
+          stress_index?: number
+          suppression_score?: number
+          tension_score?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emotion_health_assessments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emotion_quick_logs: {
         Row: {
           created_at: string
