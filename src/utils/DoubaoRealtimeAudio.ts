@@ -492,7 +492,7 @@ export class DoubaoRealtimeChat {
 
   /**
    * 触发 AI 开场白
-   * 发送 response.create 请求，让 AI 根据 instructions 中配置的开场白主动发言
+   * 发送一个静默的文本消息作为对话触发，让 AI 按照 instructions 中的开场白回应
    */
   private triggerGreeting(): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
@@ -500,13 +500,19 @@ export class DoubaoRealtimeChat {
       return;
     }
 
-    console.log('[DoubaoChat] Triggering AI greeting...');
+    console.log('[DoubaoChat] Triggering AI greeting with text...');
     
-    // 发送 response.create 事件触发 AI 响应
+    // 发送一个简单的问候触发 AI 开场
+    // 豆包 API 收到用户输入后会根据 instructions 中的开场白配置回应
     this.ws.send(JSON.stringify({ 
-      type: 'response.create',
-      response: {
-        modalities: ['text', 'audio']
+      type: 'conversation.item.create',
+      item: {
+        type: 'message',
+        role: 'user',
+        content: [{
+          type: 'input_text',
+          text: '你好'
+        }]
       }
     }));
   }

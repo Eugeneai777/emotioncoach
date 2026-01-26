@@ -1113,6 +1113,84 @@ Deno.serve(async (req) => {
           isConnected = false;
           break;
 
+        // 处理文本消息触发（用于开场白）
+        case 'conversation.item.create':
+          if (doubaoConn && isConnected && sessionStarted && doubaoSessionId) {
+            try {
+              // 提取用户文本
+              const userText = message.item?.content?.[0]?.text || message.text || '';
+              
+              if (!userText) {
+                console.warn('[DoubaoRelay] Empty text message, skipping');
+                break;
+              }
+              
+              console.log(`[DoubaoRelay] Sending text trigger: "${userText}"`);
+              
+              // 构建文本消息的 payload（豆包对话协议要求特定格式）
+              const textPayload = JSON.stringify({
+                text: userText
+              });
+              
+              const payloadBytes = new TextEncoder().encode(textPayload);
+              const sessionIdBytes = new TextEncoder().encode(doubaoSessionId);
+              
+              // 构建完整数据包
+              // Header(4) + Event(4) + SessionIdLen(4) + SessionId + PayloadSize(4) + Payload
+              const EVENT_TEXT_INPUT = 200; // 使用音频事件码（豆包对话模式下文本和音频共用）
+              const flags = FLAG_HAS_EVENT;
+              const header = buildHeader(MESSAGE_TYPE_FULL_CLIENT, flags, SERIALIZATION_JSON);
+              
+              const totalSize = 4 + 4 + 4 + sessionIdBytes.length + 4 + payloadBytes.length;
+              const packet = new Uint8Array(totalSize);
+              let offset = 0;
+              
+              // Header
+              packet.set(header, offset);
+              offset += 4;
+              
+              // Event
+              packet[offset] = (EVENT_TEXT_INPUT >> 24) & 0xff;
+              packet[offset + 1] = (EVENT_TEXT_INPUT >> 16) & 0xff;
+              packet[offset + 2] = (EVENT_TEXT_INPUT >> 8) & 0xff;
+              packet[offset + 3] = EVENT_TEXT_INPUT & 0xff;
+              offset += 4;
+              
+              // SessionIdLen + SessionId
+              const sidLen = sessionIdBytes.length;
+              packet[offset] = (sidLen >> 24) & 0xff;
+              packet[offset + 1] = (sidLen >> 16) & 0xff;
+              packet[offset + 2] = (sidLen >> 8) & 0xff;
+              packet[offset + 3] = sidLen & 0xff;
+              offset += 4;
+              packet.set(sessionIdBytes, offset);
+              offset += sidLen;
+              
+              // PayloadSize + Payload
+              packet[offset] = (payloadBytes.length >> 24) & 0xff;
+              packet[offset + 1] = (payloadBytes.length >> 16) & 0xff;
+              packet[offset + 2] = (payloadBytes.length >> 8) & 0xff;
+              packet[offset + 3] = payloadBytes.length & 0xff;
+              offset += 4;
+              packet.set(payloadBytes, offset);
+              
+              const frame = buildWebSocketFrame(packet);
+              await doubaoConn.write(frame);
+              
+              console.log(`[DoubaoRelay] Sent text message (${payloadBytes.length} bytes)`);
+            } catch (err) {
+              console.error('[DoubaoRelay] Error sending text message:', err);
+            }
+          } else {
+            console.warn('[DoubaoRelay] Cannot send text: session not ready', {
+              hasConn: !!doubaoConn,
+              isConnected,
+              sessionStarted,
+              hasSessionId: !!doubaoSessionId
+            });
+          }
+          break;
+
         default:
           console.log(`[DoubaoRelay] Unknown message type: ${message.type}`);
       }
