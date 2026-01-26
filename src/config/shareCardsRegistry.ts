@@ -93,6 +93,15 @@ const resultCards: ShareCardRegistryItem[] = [
     componentName: 'ShareCard',
     description: '社区内容分享卡',
   },
+  {
+    id: 'emotion-health-result',
+    title: '情绪健康测评结果',
+    category: 'result',
+    emoji: '❤️‍🩹',
+    type: 'result',
+    componentName: 'EmotionHealthShareCard',
+    description: '三层诊断情绪卡点分享',
+  },
 ];
 
 // 合并 introShareConfigs + 结果卡片为统一注册表

@@ -49,3 +49,5 @@ export { AssessmentCoachChat } from './AssessmentCoachChat';
 export { ThreeLayerDiagram } from './ThreeLayerDiagram';
 export { LayerTransitionCard } from './LayerTransitionCard';
 export { LayerProgressIndicator, LayerLabel } from './LayerProgressIndicator';
+export { EmotionHealthShareCard } from './EmotionHealthShareCard';
+export { EmotionHealthShareDialog } from './EmotionHealthShareDialog';
