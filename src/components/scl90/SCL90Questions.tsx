@@ -159,40 +159,43 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
             <div
               key={question.id}
               className={cn(
-                "p-4 rounded-xl border bg-card",
+                "p-3 sm:p-4 rounded-xl border bg-card",
                 answers[question.id] !== undefined 
                   ? "border-primary/30 bg-primary/5" 
                   : "border-border"
               )}
             >
-              {/* 题目文本 */}
-              <div className="flex items-start gap-3 mb-3">
+              {/* 题目文本 - 题号内联 */}
+              <div className="flex items-start gap-2 mb-3">
                 <span className={cn(
-                  "flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium",
+                  "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
                   answers[question.id] !== undefined
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground"
                 )}>
                   {question.id}
                 </span>
-                <p className="text-sm font-medium pt-1">{question.text}</p>
+                <p className="text-sm font-medium leading-relaxed pt-0.5">{question.text}</p>
               </div>
 
-              {/* 评分选项 */}
-              <div className="flex flex-wrap gap-1.5 ml-10">
+              {/* 评分选项 - 优化为5列等宽网格 */}
+              <div className="grid grid-cols-5 gap-1.5 mt-3">
                 {scl90ScoreLabels.map(option => (
                   <button
                     key={option.value}
                     onClick={() => handleAnswer(question.id, option.value)}
                     className={cn(
-                      "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
+                      "flex flex-col items-center justify-center",
+                      "min-h-[52px] rounded-lg border-2 transition-all duration-200",
+                      "touch-manipulation active:scale-95",
                       answers[question.id] === option.value
-                        ? "ring-2 ring-primary ring-offset-1 scale-105"
-                        : "hover:scale-105",
+                        ? "ring-2 ring-offset-1 ring-primary border-primary bg-primary/10 scale-[1.02]"
+                        : "border-muted-foreground/20 hover:border-primary/40",
                       option.color
                     )}
                   >
-                    {option.value} {option.label}
+                    <span className="text-sm font-bold">{option.value}</span>
+                    <span className="text-[10px] font-medium opacity-80">{option.label}</span>
                   </button>
                 ))}
               </div>
@@ -202,7 +205,7 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
       </AnimatePresence>
 
       {/* 底部导航按钮 */}
-      <div className="flex gap-3 pt-2 sticky bottom-0 bg-background pb-4">
+      <div className="flex gap-3 pt-2 sticky bottom-0 bg-background/95 backdrop-blur-sm pb-[calc(16px+env(safe-area-inset-bottom))]">
         <Button
           variant="outline"
           onClick={handlePrevPage}
