@@ -1,306 +1,106 @@
 
-# SCL-90 移动端排版优化方案
+# SCL-90 开始页分享入口实施方案
 
-## 一、当前移动端问题分析
+## 一、需求分析
 
-通过审查所有 SCL-90 组件，发现以下移动端排版问题：
+在 SCL-90 开始页添加分享入口，让用户可以邀请好友来测评。这需要：
+1. 在 `introShareConfig.ts` 中添加 SCL-90 的分享配置
+2. 在 `SCL90StartScreen.tsx` 中集成 `IntroShareDialog` 组件
 
-### 1. 开始页 (SCL90StartScreen.tsx)
-| 问题 | 现状 | 影响 |
-|-----|-----|-----|
-| 10因子网格在小屏幕拥挤 | `grid-cols-5` 固定列数 | iPhone SE (<375px) 文字溢出 |
-| 评分说明5列太窄 | 固定 `flex-1` 等分 | 小屏幕数字和文字重叠 |
-| 核心卖点2x2网格间距不足 | `gap-2` | 视觉拥挤 |
+## 二、实施方案
 
-### 2. 答题页 (SCL90Questions.tsx)
-| 问题 | 现状 | 影响 |
-|-----|-----|-----|
-| 选项5列在极窄屏幕压缩 | `grid-cols-5 gap-1.5` | 按钮太小难点击 |
-| 底部按钮区域遮挡内容 | `sticky bottom-0` 无背景渐变 | 最后一题被遮挡 |
-| 圆点导航在10页时太密 | 固定 `gap-1` | 难以精确点击 |
+### 2.1 添加 SCL-90 分享配置
 
-### 3. 结果页 (SCL90Result.tsx)
-| 问题 | 现状 | 影响 |
-|-----|-----|-----|
-| 主要因子卡片内容过密 | 固定内边距 `p-4` | 小屏阅读困难 |
-| 高分因子标签换行混乱 | `flex-wrap gap-2` | 视觉不整齐 |
-| 训练营卡片按钮区域拥挤 | 双按钮 `flex gap-2` | 按钮太窄 |
+**文件**: `src/config/introShareConfig.ts`
 
-### 4. 仪表盘 (SCL90SeverityGauge.tsx)
-| 问题 | 现状 | 影响 |
-|-----|-----|-----|
-| 指标3列网格在小屏拥挤 | `grid-cols-3` | iPhone SE 文字溢出 |
-| 严重程度图例换行后不居中 | `flex-wrap` | 视觉不平衡 |
+在 `introShareConfigs` 对象中添加 SCL-90 配置：
 
-### 5. 因子雷达图 (SCL90FactorRadar.tsx)
-| 问题 | 现状 | 影响 |
-|-----|-----|-----|
-| 雷达图在小屏幕标签重叠 | 固定 `fontSize: 10` | 标签难以阅读 |
-| Accordion内容区内边距过大 | `px-3` | 内容区域浪费空间 |
-
-### 6. AI分析 (SCL90AIAnalysis.tsx)
-| 问题 | 现状 | 影响 |
-|-----|-----|-----|
-| 策略列表序号与文字间距过大 | `gap-3` | 浪费垂直空间 |
-| 各模块内边距统一偏大 | 全部使用 `p-4` | 滚动距离过长 |
-
-### 7. 付费墙 (SCL90PaymentGate.tsx)
-| 问题 | 现状 | 影响 |
-|-----|-----|-----|
-| 功能特性2x2网格在小屏挤 | 固定 `grid-cols-2` | 文字换行 |
-| 底部粘性区域无毛玻璃效果 | 无 `backdrop-blur` | 层次感不足 |
-
----
-
-## 二、优化方案
-
-### 策略：渐进增强 + 断点适配
-
-采用移动优先策略，在以下三个断点做适配：
-- **xs**: <375px (iPhone SE, 小型Android)
-- **sm**: ≥640px (大屏手机、小平板)  
-- **md**: ≥768px (平板)
-
----
-
-### 2.1 开始页优化 (SCL90StartScreen.tsx)
-
-**修改1：10因子网格响应式**
-
-```text
-当前: grid-cols-5 (固定5列)
-         ┌──┐┌──┐┌──┐┌──┐┌──┐
-         │躯││强││人││抑││焦│  ← 在xs屏文字溢出
-         └──┘└──┘└──┘└──┘└──┘
-
-优化后: grid-cols-5 + 更小字体/间距
-         ┌──┐┌──┐┌──┐┌──┐┌──┐
-         │🫀││🔄││👥││😢││😰│  ← 保持emoji
-         │躯│|强│|人│|抑│|焦│  ← 文字缩小到text-[9px]
-         └──┘└──┘└──┘└──┘└──┘
+```typescript
+scl90: {
+  pageKey: 'scl90',
+  title: 'SCL-90 心理健康自评',
+  subtitle: '专业测评，清楚了解自己的情绪状态',
+  targetUrl: '/scl90',
+  emoji: '🧠',
+  highlights: [
+    '90题专业量表·10大心理因子',
+    '全球权威抑郁焦虑自测工具',
+    'AI个性化解读与建议',
+  ],
+  gradient: 'linear-gradient(135deg, #7c3aed, #6366f1)',  // 紫色渐变，与页面主题一致
+  category: 'tool'
+},
 ```
 
-**代码修改（第144-154行）：**
-- `gap-1.5` → `gap-1 sm:gap-1.5`
-- `p-1.5` → `p-1 sm:p-1.5`
-- `text-[10px]` → `text-[9px] sm:text-[10px]`
+### 2.2 在开始页添加分享按钮
 
-**修改2：评分说明在极窄屏幕堆叠**
+**文件**: `src/components/scl90/SCL90StartScreen.tsx`
 
-```text
-当前 (xs屏幕问题):
-┌─┐┌─┐┌─┐┌─┐┌─┐
-│1││2││3││4││5│  ← 太窄
-│没││很││中││偏││严│
-│有││轻││等││重││重│  ← 文字溢出
-└─┘└─┘└─┘└─┘└─┘
+**修改点1**: 添加必要的 import
 
-优化后 (保持5列但优化):
-┌───┐┌───┐┌───┐┌───┐┌───┐
-│ 1 ││ 2 ││ 3 ││ 4 ││ 5 │
-│没有││很轻││中等││偏重││严重│
-└───┘└───┘└───┘└───┘└───┘
+```typescript
+import { Share2 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 ```
 
-**代码修改（第234-247行）：**
-- 数字：`text-sm` → `text-xs sm:text-sm`
-- 文字：`text-[10px]` → `text-[8px] sm:text-[10px]`
-- 容器：`gap-1` → `gap-0.5 sm:gap-1`
-- 内边距：`py-1.5` → `py-1 sm:py-1.5`
+**修改点2**: 在标题区域右侧添加分享按钮
 
----
+在标题区域（第79-89行附近），将现有的居中布局改为 flex 布局，在右侧添加分享入口：
 
-### 2.2 答题页优化 (SCL90Questions.tsx)
-
-**修改1：选项按钮在xs屏幕自适应**
-
-```text
-当前问题：
-┌──┐┌──┐┌──┐┌──┐┌──┐
-│1 ││2 ││3 ││4 ││5 │  ← 按钮52px高，但宽度太窄
-│没││很││中││偏││严│
-└──┘└──┘└──┘└──┘└──┘
-
-优化后：
-┌────┐┌────┐┌────┐┌────┐┌────┐
-│ 1  ││ 2  ││ 3  ││ 4  ││ 5  │
-│没有││很轻││中等││偏重││严重│
-└────┘└────┘└────┘└────┘└────┘
-```
-
-**代码修改（第227-246行）：**
-- 网格间距：`gap-1.5` → `gap-1 sm:gap-1.5`
-- 按钮高度：`min-h-[52px]` → `min-h-[48px] sm:min-h-[52px]`
-- 数字：`text-sm` → `text-xs sm:text-sm`
-- 标签：`text-[10px]` → `text-[9px] sm:text-[10px]`
-
-**修改2：圆点导航优化触摸区域**
-
-```text
-当前问题：
-[●○○○○○○○○○]  ← 10个点挤在一起
-
-优化后：
-[●─○─○─○─○─○─○─○─○─○]  ← 增加触摸区域
-```
-
-**代码修改（第154-170行）：**
-- 给每个圆点添加 `min-w-[24px] min-h-[24px] flex items-center justify-center`
-- 使实际圆点保持 `w-2 h-2`，但触摸区域扩大
-
-**修改3：底部导航增加毛玻璃和上渐变**
-
-**代码修改（第253行）：**
 ```tsx
-// 添加上边缘渐变遮罩
-<div className="sticky bottom-0">
-  <div className="absolute -top-8 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-  <div className="flex gap-3 pt-2 bg-background/95 backdrop-blur-sm pb-[calc(16px+env(safe-area-inset-bottom))]">
-    ...
+{/* 标题区域 - 带分享按钮 */}
+<div className="flex items-start justify-between">
+  <div className="flex-1" /> {/* 左侧占位 */}
+  
+  <div className="text-center space-y-2 flex-1">
+    <div className="inline-flex items-center gap-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-1.5 rounded-full text-sm font-medium">
+      <Brain className="w-4 h-4" />
+      <span>SCL-90 心理健康自评</span>
+    </div>
+    <h2 className="text-lg font-bold">怎么判断是焦虑还是心情烦？</h2>
+    <p className="text-sm text-muted-foreground">
+      专业自测，清楚了解自己的情绪状态
+    </p>
+  </div>
+  
+  {/* 分享按钮 */}
+  <div className="flex-1 flex justify-end">
+    <IntroShareDialog 
+      config={introShareConfigs.scl90}
+      trigger={
+        <Button variant="ghost" size="icon" className="text-purple-600">
+          <Share2 className="w-5 h-5" />
+        </Button>
+      }
+    />
   </div>
 </div>
 ```
 
----
-
-### 2.3 结果页优化 (SCL90Result.tsx)
-
-**修改1：训练营卡片按钮在小屏幕堆叠**
-
-```text
-当前问题 (xs屏幕):
-┌────────────┐┌────────────┐
-│  了解详情  ││  立即加入  │  ← 按钮太窄
-└────────────┘└────────────┘
-
-优化后：
-┌──────────────────────────┐
-│        了解详情          │
-├──────────────────────────┤
-│        立即加入          │
-└──────────────────────────┘
-```
-
-**代码修改（第325-340行）：**
-- `flex gap-2` → `flex flex-col sm:flex-row gap-2`
-- 按钮改为 `w-full sm:flex-1`
-
-**修改2：高分因子标签优化**
-
-**代码修改（第228-244行）：**
-- 标签间距：`gap-2` → `gap-1.5`
-- 标签内边距：`px-2.5 py-1` → `px-2 py-0.5 sm:px-2.5 sm:py-1`
-- 字体：`text-sm` → `text-xs sm:text-sm`
-
----
-
-### 2.4 仪表盘优化 (SCL90SeverityGauge.tsx)
-
-**修改1：指标网格在xs屏幕优化**
-
-**代码修改（第168-184行）：**
-- 内边距：`p-3` → `p-2 sm:p-3`
-- 数字：`text-lg` → `text-base sm:text-lg`
-- 标签：`text-[10px]` → `text-[9px] sm:text-[10px]`
-- emoji：`text-lg` → `text-base sm:text-lg`
-
-**修改2：严重程度图例居中优化**
-
-**代码修改（第188-205行）：**
-- 容器：`flex justify-center gap-2 flex-wrap` → `grid grid-cols-4 gap-1 sm:flex sm:justify-center sm:gap-2`
-
----
-
-### 2.5 因子雷达图优化 (SCL90FactorRadar.tsx)
-
-**修改1：雷达图高度响应式**
-
-**代码修改（第69行）：**
-- `h-[280px] sm:h-[320px]` → `h-[240px] sm:h-[280px] md:h-[320px]`
-
-**修改2：因子列表紧凑化**
-
-**代码修改（第116-169行）：**
-- 外层内边距：`p-2` → `p-1.5 sm:p-2`
-- 图标容器：`w-8 h-8` → `w-7 h-7 sm:w-8 sm:h-8`
-- 因子名称：`text-sm` → `text-xs sm:text-sm`
-- 标签徽章：`text-[10px]` → `text-[9px] sm:text-[10px]`
-
----
-
-### 2.6 AI分析优化 (SCL90AIAnalysis.tsx)
-
-**修改1：整体内边距紧凑化**
-
-**代码修改（第115行）：**
-- CardContent：`p-5 space-y-5` → `p-4 sm:p-5 space-y-4 sm:space-y-5`
-
-**修改2：策略列表紧凑化**
-
-**代码修改（第185行）：**
-- 容器：`space-y-2` → `space-y-1.5 sm:space-y-2`
-- 序号：`w-6 h-6` → `w-5 h-5 sm:w-6 sm:h-6`
-- 间距：`gap-3` → `gap-2 sm:gap-3`
-
-**修改3：各模块内边距统一优化**
-
-所有 `p-4` 改为 `p-3 sm:p-4`：
-- 第121行（总体评估）
-- 第134行（状态解读）
-- 第209行（立即行动）
-- 第218行（专业建议）
-- 第243行（警告）
-- 第259行（鼓励）
-
----
-
-### 2.7 付费墙优化 (SCL90PaymentGate.tsx)
-
-**修改1：功能特性适配小屏**
-
-**代码修改（第160-169行）：**
-- 网格间距：`gap-2` → `gap-1.5 sm:gap-2`
-- 项目内边距：`p-2.5` → `p-2 sm:p-2.5`
-- 图标：`w-4 h-4` → `w-3.5 h-3.5 sm:w-4 sm:h-4`
-- 文字：`text-xs` → `text-[11px] sm:text-xs`
-
-**修改2：底部粘性区域增强**
-
-**代码修改（第180行）：**
-- 添加 `backdrop-blur-sm` 和上边缘渐变
-
----
-
 ## 三、文件修改清单
 
-| 文件 | 修改内容 | 优先级 |
-|-----|---------|-------|
-| `SCL90StartScreen.tsx` | 10因子网格响应式、评分说明紧凑化 | 高 |
-| `SCL90Questions.tsx` | 选项按钮优化、圆点导航触摸区、底部渐变 | 高 |
-| `SCL90Result.tsx` | 训练营按钮堆叠、高分因子标签紧凑化 | 中 |
-| `SCL90SeverityGauge.tsx` | 指标网格紧凑化、图例网格布局 | 中 |
-| `SCL90FactorRadar.tsx` | 雷达图高度、因子列表紧凑化 | 中 |
-| `SCL90AIAnalysis.tsx` | 整体内边距优化、策略列表紧凑化 | 低 |
-| `SCL90PaymentGate.tsx` | 功能特性紧凑化、底部毛玻璃效果 | 中 |
+| 文件路径 | 修改类型 | 修改内容 |
+|---------|---------|---------|
+| `src/config/introShareConfig.ts` | 新增配置 | 添加 `scl90` 分享配置对象 |
+| `src/components/scl90/SCL90StartScreen.tsx` | 集成组件 | 导入并添加 `IntroShareDialog` |
 
----
+## 四、分享卡片效果预览
 
-## 四、预期效果
+分享卡片将包含以下元素：
+- **标题**: SCL-90 心理健康自评
+- **副标题**: 专业测评，清楚了解自己的情绪状态
+- **核心卖点**:
+  - 90题专业量表·10大心理因子
+  - 全球权威抑郁焦虑自测工具
+  - AI个性化解读与建议
+- **二维码**: 指向 `/scl90` 页面
+- **品牌标识**: Powered by 有劲AI
+- **三种模板可选**: 简洁版 / 价值版 / 场景版
 
-| 优化指标 | 优化前 | 优化后 |
-|---------|-------|-------|
-| iPhone SE (375px) 适配 | 文字溢出/按钮太窄 | 完美适配 |
-| 触摸目标 | 部分 <44px | 全部 ≥44px |
-| 页面滚动长度 | 较长 | 减少约 15-20% |
-| 视觉密度 | 大屏偏松散 | 响应式适配 |
-| 底部遮挡 | 内容被遮挡 | 渐变过渡清晰可见 |
+## 五、技术要点
 
----
-
-## 五、技术注意事项
-
-1. **保持 GPU 加速**：所有动画继续使用 `transform: translateZ(0)` 和 `opacity: 0.01`
-2. **深色模式兼容**：所有新增的颜色类包含 `dark:` 变体
-3. **触摸优化**：所有可交互元素保持 `touch-manipulation` 属性
-4. **安全区域**：底部固定元素继续使用 `env(safe-area-inset-bottom)`
-5. **断点一致性**：统一使用 Tailwind 默认断点 `sm:640px`
+1. **复用现有系统**: 使用项目已有的 `IntroShareDialog` 组件，无需额外开发
+2. **合伙人追踪**: 分享链接自动带上用户的 `ref` 参数，支持推广归因
+3. **多平台适配**: 自动检测微信/iOS/Android 环境，使用最佳分享方式
+4. **深色模式**: 分享按钮颜色自动适配主题
