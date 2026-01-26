@@ -96,7 +96,7 @@ const SCL90Page = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="scl90" />
       
       {pageState !== "questions" && pageState !== "payment" && (

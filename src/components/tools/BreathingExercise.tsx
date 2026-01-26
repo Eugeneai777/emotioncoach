@@ -158,13 +158,13 @@ export const BreathingExercise = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card>
-        <CardHeader>
-          <CardTitle>选择呼吸模式</CardTitle>
-          <CardDescription>不同的呼吸模式有不同的效果</CardDescription>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">选择呼吸模式</CardTitle>
+          <CardDescription className="text-xs">不同的呼吸模式有不同的效果</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <Select
             value={selectedPattern.id}
             onValueChange={(value) => {
@@ -191,47 +191,47 @@ export const BreathingExercise = () => {
       </Card>
 
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center space-y-8">
-            {/* 呼吸圆圈 */}
-            <div className="relative w-64 h-64 flex items-center justify-center">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex flex-col items-center space-y-4">
+            {/* 呼吸圆圈 - 响应式尺寸 */}
+            <div className="relative w-48 h-48 sm:w-64 sm:h-64 flex items-center justify-center">
               <div
-                className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 transition-transform duration-1000 ease-in-out"
+                className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 transition-transform duration-1000 ease-in-out origin-center"
                 style={{
                   transform: `scale(${scale})`,
                 }}
               />
               <div className="relative z-10 text-center">
-                <div className="text-6xl font-bold text-primary">{timeLeft}</div>
-                <div className="text-xl text-muted-foreground mt-2">{getPhaseText()}</div>
+                <div className="text-5xl sm:text-6xl font-bold text-primary">{timeLeft}</div>
+                <div className="text-lg sm:text-xl text-muted-foreground mt-1">{getPhaseText()}</div>
               </div>
             </div>
 
             {/* 进度信息 */}
             <div className="text-center">
-              <div className="text-lg font-medium">
+              <div className="text-base font-medium">
                 第 {currentCycle} / {selectedPattern.cycles} 个循环
               </div>
-              <div className="text-sm text-muted-foreground mt-1">
+              <div className="text-xs text-muted-foreground mt-0.5">
                 {selectedPattern.name}
               </div>
             </div>
 
             {/* 控制按钮 */}
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               {!isActive ? (
-                <Button onClick={handleStart} size="lg" className="gap-2">
-                  <Play className="w-5 h-5" />
+                <Button onClick={handleStart} size="default" className="gap-2">
+                  <Play className="w-4 h-4" />
                   开始
                 </Button>
               ) : (
-                <Button onClick={handlePause} size="lg" variant="outline" className="gap-2">
-                  <Pause className="w-5 h-5" />
+                <Button onClick={handlePause} size="default" variant="outline" className="gap-2">
+                  <Pause className="w-4 h-4" />
                   暂停
                 </Button>
               )}
-              <Button onClick={handleReset} size="lg" variant="outline" className="gap-2">
-                <RotateCcw className="w-5 h-5" />
+              <Button onClick={handleReset} size="default" variant="outline" className="gap-2">
+                <RotateCcw className="w-4 h-4" />
                 重置
               </Button>
             </div>
