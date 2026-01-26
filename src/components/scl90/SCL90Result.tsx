@@ -225,13 +225,13 @@ export function SCL90Result({
                   需要关注的维度（≥2.0分）
                 </h4>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {highFactors.map(([key, score]) => {
                   const info = scl90FactorInfo[key as SCL90Factor];
                   return (
                     <span
                       key={key}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-800 rounded-full text-sm border border-orange-200 dark:border-orange-700"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 bg-white dark:bg-slate-800 rounded-full text-xs sm:text-sm border border-orange-200 dark:border-orange-700"
                     >
                       <span>{info.emoji}</span>
                       <span className="font-medium">{info.name}</span>
@@ -321,17 +321,17 @@ export function SCL90Result({
                 <p className="text-white/70 text-xs mt-1">21天系统训练 · 每天10分钟</p>
               </div>
               
-              {/* Dual buttons: Learn more / Join now */}
-              <div className="flex gap-2">
+              {/* Dual buttons: Learn more / Join now - 小屏幕垂直堆叠 */}
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button 
                   variant="outline" 
-                  className="flex-1 h-11 border-white/30 text-white hover:bg-white/10 hover:text-white"
+                  className="w-full sm:flex-1 h-11 border-white/30 text-white hover:bg-white/10 hover:text-white"
                   onClick={() => navigate('/camp-intro/emotion_journal_21')}
                 >
                   了解详情
                 </Button>
                 <Button 
-                  className="flex-1 h-11 bg-white text-purple-600 hover:bg-white/90 font-medium"
+                  className="w-full sm:flex-1 h-11 bg-white text-purple-600 hover:bg-white/90 font-medium"
                   onClick={handleJoinCamp}
                 >
                   立即加入

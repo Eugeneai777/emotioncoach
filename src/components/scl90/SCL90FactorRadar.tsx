@@ -64,9 +64,9 @@ export function SCL90FactorRadar({
             10因子雷达图
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-4 space-y-4">
-          {/* Radar Chart */}
-          <div className="h-[280px] sm:h-[320px]">
+        <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+          {/* Radar Chart - 响应式高度 */}
+          <div className="h-[240px] sm:h-[280px] md:h-[320px]">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
                 <PolarGrid stroke="hsl(var(--border))" />
@@ -115,30 +115,30 @@ export function SCL90FactorRadar({
                 >
                   <AccordionTrigger 
                     className={cn(
-                      "flex items-center gap-3 p-2 rounded-lg transition-colors hover:no-underline [&[data-state=open]]:rounded-b-none",
+                      "flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-lg transition-colors hover:no-underline [&[data-state=open]]:rounded-b-none",
                       factor.isPrimary && "bg-red-50 dark:bg-red-950/30 ring-1 ring-red-200 dark:ring-red-800",
                       factor.isSecondary && "bg-orange-50 dark:bg-orange-950/30 ring-1 ring-orange-200 dark:ring-orange-800",
                       !factor.isPrimary && !factor.isSecondary && "bg-muted/30"
                     )}
                   >
-                    <div className="flex items-center gap-3 flex-1">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1">
                       {/* Icon */}
                       <div className={cn(
-                        "w-8 h-8 rounded-lg flex items-center justify-center text-white bg-gradient-to-br",
+                        "w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-white bg-gradient-to-br flex-shrink-0",
                         factor.info.color
                       )}>
-                        <span className="text-sm">{factor.info.emoji}</span>
+                        <span className="text-xs sm:text-sm">{factor.info.emoji}</span>
                       </div>
                       
                       {/* Name + Tags */}
                       <div className="flex-1 min-w-0 text-left">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-medium">{factor.info.name}</span>
+                        <div className="flex items-center gap-1 sm:gap-1.5">
+                          <span className="text-xs sm:text-sm font-medium">{factor.info.name}</span>
                           {factor.isPrimary && (
-                            <span className="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded-full">主要</span>
+                            <span className="text-[9px] sm:text-[10px] bg-red-500 text-white px-1 sm:px-1.5 py-0.5 rounded-full">主要</span>
                           )}
                           {factor.isSecondary && (
-                            <span className="text-[10px] bg-orange-500 text-white px-1.5 py-0.5 rounded-full">次要</span>
+                            <span className="text-[9px] sm:text-[10px] bg-orange-500 text-white px-1 sm:px-1.5 py-0.5 rounded-full">次要</span>
                           )}
                         </div>
                         {/* Progress bar */}
@@ -159,11 +159,11 @@ export function SCL90FactorRadar({
                       </div>
                       
                       {/* Score */}
-                      <div className="text-right">
-                        <span className={cn("text-sm font-bold tabular-nums", factor.level.color)}>
+                      <div className="text-right flex-shrink-0">
+                        <span className={cn("text-xs sm:text-sm font-bold tabular-nums", factor.level.color)}>
                           {factor.score.toFixed(2)}
                         </span>
-                        <p className="text-[10px] text-muted-foreground">{factor.level.level}</p>
+                        <p className="text-[9px] sm:text-[10px] text-muted-foreground">{factor.level.level}</p>
                       </div>
                     </div>
                   </AccordionTrigger>

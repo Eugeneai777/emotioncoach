@@ -164,37 +164,37 @@ export function SCL90SeverityGauge({
             <p className="text-slate-400 text-sm mt-2">{severity.description}</p>
           </motion.div>
 
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-3 gap-2">
+          {/* Metrics Grid - 小屏优化 */}
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
             {metrics.map((metric, idx) => (
               <motion.div
                 key={metric.label}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 + idx * 0.1 }}
-                className="bg-slate-800/80 rounded-xl p-3 text-center border border-slate-700/50"
+                className="bg-slate-800/80 rounded-xl p-2 sm:p-3 text-center border border-slate-700/50"
               >
-                <span className="text-lg">{metric.emoji}</span>
-                <div className="text-lg font-bold text-white mt-1">
+                <span className="text-base sm:text-lg">{metric.emoji}</span>
+                <div className="text-base sm:text-lg font-bold text-white mt-1">
                   {metric.value}
-                  {metric.max && <span className="text-slate-500 text-xs font-normal">/{metric.max}</span>}
+                  {metric.max && <span className="text-slate-500 text-[10px] sm:text-xs font-normal">/{metric.max}</span>}
                 </div>
-                <div className="text-[10px] text-slate-400">{metric.label}</div>
+                <div className="text-[9px] sm:text-[10px] text-slate-400">{metric.label}</div>
               </motion.div>
             ))}
           </div>
 
-          {/* Zone Legend */}
-          <div className="flex justify-center gap-2 flex-wrap text-[10px] mt-3">
+          {/* Zone Legend - 小屏幕网格布局 */}
+          <div className="grid grid-cols-4 gap-1 sm:flex sm:justify-center sm:gap-2 text-[9px] sm:text-[10px] mt-3">
             {(["normal", "mild", "moderate", "severe"] as SeverityLevel[]).map((level) => (
               <div 
                 key={level} 
                 className={cn(
-                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full",
+                  "flex items-center justify-center gap-0.5 px-1 sm:px-1.5 py-0.5 rounded-full",
                   severityLevel === level ? "bg-slate-700" : "bg-transparent"
                 )}
               >
-                <span>
+                <span className="text-xs sm:text-sm">
                   {level === "normal" ? "🟢" : 
                    level === "mild" ? "🟡" : 
                    level === "moderate" ? "🟠" : "🔴"}

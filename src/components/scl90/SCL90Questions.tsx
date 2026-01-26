@@ -150,22 +150,24 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
             退出
           </Button>
           
-          {/* 圆点页码指示器 */}
-          <div className="flex items-center gap-1">
+          {/* 圆点页码指示器 - 增大触摸区域 */}
+          <div className="flex items-center">
             {Array.from({ length: totalPages }).map((_, i) => (
               <button
                 key={i}
                 onClick={() => handleGoToPage(i)}
-                className={cn(
+                className="min-w-[24px] min-h-[24px] flex items-center justify-center"
+                aria-label={`跳转到第 ${i + 1} 页`}
+              >
+                <span className={cn(
                   "h-2 rounded-full transition-all duration-200",
                   i === currentPage 
                     ? "bg-primary w-4" 
                     : isPageCompleted(i)
                       ? "bg-primary/50 w-2"
                       : "bg-muted w-2"
-                )}
-                aria-label={`跳转到第 ${i + 1} 页`}
-              />
+                )} />
+              </button>
             ))}
           </div>
           
@@ -224,14 +226,14 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
               </div>
 
               {/* 评分选项 - 优化为5列等宽网格 */}
-              <div className="grid grid-cols-5 gap-1.5 mt-3">
+              <div className="grid grid-cols-5 gap-1 sm:gap-1.5 mt-3">
                 {scl90ScoreLabels.map(option => (
                   <button
                     key={option.value}
                     onClick={() => handleAnswer(question.id, option.value)}
                     className={cn(
                       "flex flex-col items-center justify-center",
-                      "min-h-[52px] rounded-lg border-2 transition-all duration-200",
+                      "min-h-[48px] sm:min-h-[52px] rounded-lg border-2 transition-all duration-200",
                       "touch-manipulation active:scale-95",
                       answers[question.id] === option.value
                         ? "ring-2 ring-offset-1 ring-primary border-primary bg-primary/10 scale-[1.02]"
@@ -239,8 +241,8 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
                       option.color
                     )}
                   >
-                    <span className="text-sm font-bold">{option.value}</span>
-                    <span className="text-[10px] font-medium opacity-80">{option.label}</span>
+                    <span className="text-xs sm:text-sm font-bold">{option.value}</span>
+                    <span className="text-[9px] sm:text-[10px] font-medium opacity-80">{option.label}</span>
                   </button>
                 ))}
               </div>
@@ -249,8 +251,10 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
         </motion.div>
       </AnimatePresence>
 
-      {/* 底部导航按钮 */}
-      <div className="flex gap-3 pt-2 sticky bottom-0 bg-background/95 backdrop-blur-sm pb-[calc(16px+env(safe-area-inset-bottom))]">
+      {/* 底部导航按钮 - 带上渐变遮罩 */}
+      <div className="sticky bottom-0">
+        <div className="absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+        <div className="flex gap-3 pt-2 bg-background/95 backdrop-blur-sm pb-[calc(16px+env(safe-area-inset-bottom))]">
         <Button
           variant="outline"
           onClick={handlePrevPage}
@@ -283,6 +287,7 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         )}
+        </div>
       </div>
 
       {/* 退出确认对话框 */}

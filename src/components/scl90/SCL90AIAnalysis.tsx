@@ -112,13 +112,13 @@ export function SCL90AIAnalysis({
           </div>
         </div>
 
-        <CardContent className="p-5 space-y-5">
+        <CardContent className="p-4 sm:p-5 space-y-4 sm:space-y-5">
           {/* Overall Assessment */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="p-4 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-2xl border border-purple-200 dark:border-purple-800 relative overflow-hidden"
+            className="p-3 sm:p-4 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-2xl border border-purple-200 dark:border-purple-800 relative overflow-hidden"
           >
             <div className="absolute top-2 left-2 opacity-20">
               <Quote className="w-8 h-8 text-purple-600" />
@@ -176,23 +176,23 @@ export function SCL90AIAnalysis({
             </div>
           )}
 
-          {/* Coping Strategies */}
+          {/* Coping Strategies - 紧凑化 */}
           <div>
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-2 sm:mb-3">
               <Lightbulb className="w-4 h-4 text-emerald-600" />
               <h4 className="font-semibold text-emerald-700 dark:text-emerald-400">💡 应对策略</h4>
             </div>
-            <div className="space-y-2 pl-2">
+            <div className="space-y-1.5 sm:space-y-2 pl-1 sm:pl-2">
               {insight.copingStrategies.map((strategy, index) => (
                 <motion.div 
                   key={index}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
-                  className="flex items-start gap-3"
+                  className="flex items-start gap-2 sm:gap-3"
                 >
                   <span className={cn(
-                    "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white",
+                    "flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold text-white",
                     index === 0 ? "bg-emerald-500" :
                     index === 1 ? "bg-teal-500" : 
                     index === 2 ? "bg-cyan-500" : "bg-blue-500"
@@ -206,7 +206,7 @@ export function SCL90AIAnalysis({
           </div>
 
           {/* Immediate Action */}
-          <div className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 rounded-xl border border-amber-200 dark:border-amber-800">
+          <div className="p-3 sm:p-4 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 rounded-xl border border-amber-200 dark:border-amber-800">
             <div className="flex items-center gap-2 mb-2">
               <Footprints className="w-4 h-4 text-amber-600" />
               <h4 className="font-semibold text-amber-700 dark:text-amber-400">✨ 立即可执行的第一步</h4>
@@ -216,7 +216,7 @@ export function SCL90AIAnalysis({
 
           {/* Professional Advice */}
           <div className={cn(
-            "p-4 rounded-xl border",
+            "p-3 sm:p-4 rounded-xl border",
             severityLevel === "severe" 
               ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800"
               : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700"
@@ -240,7 +240,7 @@ export function SCL90AIAnalysis({
 
           {/* Warning Note for Severe */}
           {insight.warningNote && (
-            <div className="p-4 bg-red-100 dark:bg-red-950/50 rounded-xl border-2 border-red-300 dark:border-red-700">
+            <div className="p-3 sm:p-4 bg-red-100 dark:bg-red-950/50 rounded-xl border-2 border-red-300 dark:border-red-700">
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                 <div>
@@ -256,7 +256,7 @@ export function SCL90AIAnalysis({
           )}
 
           {/* Encouragement */}
-          <div className="p-4 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/30 rounded-xl border border-pink-200 dark:border-pink-800">
+          <div className="p-3 sm:p-4 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/30 rounded-xl border border-pink-200 dark:border-pink-800">
             <div className="flex items-start gap-3">
               <Heart className="w-5 h-5 text-pink-500 flex-shrink-0 mt-0.5" />
               <p className="text-pink-800 dark:text-pink-200 text-sm leading-relaxed italic">

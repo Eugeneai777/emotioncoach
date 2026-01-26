@@ -141,14 +141,14 @@ export function SCL90StartScreen({ onStart, onContinue, onViewHistory }: SCL90St
           {/* 10因子 - 2行5列网格 */}
           <div>
             <p className="text-xs text-muted-foreground text-center mb-2">覆盖10大心理因子</p>
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-5 gap-1 sm:gap-1.5">
               {dimensions.map(f => (
                 <div 
                   key={f.name}
-                  className="flex flex-col items-center justify-center p-1.5 bg-muted/30 rounded-lg"
+                  className="flex flex-col items-center justify-center p-1 sm:p-1.5 bg-muted/30 rounded-lg"
                 >
-                  <span className="text-base">{f.emoji}</span>
-                  <span className="text-[10px] text-muted-foreground mt-0.5">{f.name}</span>
+                  <span className="text-sm sm:text-base">{f.emoji}</span>
+                  <span className="text-[9px] sm:text-[10px] text-muted-foreground mt-0.5">{f.name}</span>
                 </div>
               ))}
             </div>
@@ -227,21 +227,21 @@ export function SCL90StartScreen({ onStart, onContinue, onViewHistory }: SCL90St
       </Accordion>
 
       {/* 评分说明 - 带渐变背景 */}
-      <div className="space-y-2 p-3 rounded-xl bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/50">
+      <div className="space-y-2 p-2 sm:p-3 rounded-xl bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/50">
         <p className="text-xs text-muted-foreground text-center">
           根据<strong className="text-foreground">最近一周</strong>感受选择：
         </p>
-        <div className="flex justify-between gap-1">
+        <div className="flex justify-between gap-0.5 sm:gap-1">
           {scl90ScoreLabels.map(s => (
             <div 
               key={s.value} 
               className={cn(
-                "flex-1 flex flex-col items-center py-1.5 rounded-lg text-center border",
+                "flex-1 flex flex-col items-center py-1 sm:py-1.5 rounded-lg text-center border",
                 s.color
               )}
             >
-              <span className="text-sm font-bold">{s.value}</span>
-              <span className="text-[10px]">{s.label}</span>
+              <span className="text-xs sm:text-sm font-bold">{s.value}</span>
+              <span className="text-[8px] sm:text-[10px]">{s.label}</span>
             </div>
           ))}
         </div>
