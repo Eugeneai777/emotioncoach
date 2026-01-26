@@ -239,6 +239,20 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
     gradient: 'linear-gradient(135deg, #7c3aed, #6366f1)',
     category: 'tool'
   },
+  emotionHealth: {
+    pageKey: 'emotionHealth',
+    title: '情绪健康测评',
+    subtitle: '32题三层诊断，找到你的情绪卡点',
+    targetUrl: '/emotion-health',
+    emoji: '❤️‍🩹',
+    highlights: [
+      '三层诊断·状态/模式/阻滞点',
+      '对标PHQ-9/GAD-7/PSS-10权威量表',
+      'AI教练个性化陪伴修复',
+    ],
+    gradient: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+    category: 'tool'
+  },
 };
 
 /**

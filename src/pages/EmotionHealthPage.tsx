@@ -9,6 +9,7 @@ import {
   EmotionHealthStartScreen,
   EmotionHealthQuestions,
   EmotionHealthResult,
+  EmotionHealthShareDialog,
   calculateEmotionHealthResult,
   type EmotionHealthResultType
 } from "@/components/emotion-health";
@@ -24,6 +25,11 @@ export default function EmotionHealthPage() {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [result, setResult] = useState<EmotionHealthResultType | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+
+  const handleShare = () => {
+    setShareDialogOpen(true);
+  };
 
   // 恢复进度
   useEffect(() => {
@@ -149,10 +155,18 @@ export default function EmotionHealthPage() {
         )}
         
         {step === 'result' && result && (
-          <EmotionHealthResult
-            result={result}
-            onRetake={handleRetake}
-          />
+          <>
+            <EmotionHealthResult
+              result={result}
+              onShare={handleShare}
+              onRetake={handleRetake}
+            />
+            <EmotionHealthShareDialog
+              open={shareDialogOpen}
+              onOpenChange={setShareDialogOpen}
+              result={result}
+            />
+          </>
         )}
 
         {isSaving && (

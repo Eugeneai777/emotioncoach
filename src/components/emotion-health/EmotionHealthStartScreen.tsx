@@ -7,8 +7,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { 
   Heart, Brain, TrendingUp, Clock, Shield, Sparkles, ChevronRight, 
   Zap, Bot, ChevronDown, Activity, Target, Check, ArrowRight,
-  Flame, CheckCircle2, Users
+  Flame, CheckCircle2, Users, Share2
 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 import { ThreeLayerDiagram } from "./ThreeLayerDiagram";
 import { 
   introStatistics, 
@@ -182,7 +184,17 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
               <Heart className="w-5 h-5" />
               <h1 className="text-lg font-bold">情绪健康测评</h1>
             </div>
-            <p className="text-[10px] text-white/70">Powered by 有劲AI</p>
+            <div className="flex items-center gap-2">
+              <IntroShareDialog 
+                config={introShareConfigs.emotionHealth}
+                trigger={
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10">
+                    <Share2 className="w-4 h-4" />
+                  </Button>
+                }
+              />
+              <p className="text-[10px] text-white/70">Powered by 有劲AI</p>
+            </div>
           </div>
           
           {/* 社交证明 */}
