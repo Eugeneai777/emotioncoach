@@ -1,191 +1,121 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Heart, Brain, TrendingUp, Clock, Shield, Sparkles, ChevronRight, Zap, FlaskConical, Bot, Star, ChevronDown, Compass, Search, Target, MessageCircle } from "lucide-react";
+import { 
+  Heart, Brain, TrendingUp, Clock, Shield, Sparkles, ChevronRight, 
+  Zap, Bot, ChevronDown, Activity, Target, Check, ArrowRight,
+  Flame
+} from "lucide-react";
 import { ThreeLayerDiagram } from "./ThreeLayerDiagram";
-import { scientificStats, painPoints, scoringMechanismConfig, aiCoachOpeningExamples, comparisonWithTraditional, patternConfig, PatternType } from "./emotionHealthData";
+import { 
+  introStatistics, 
+  authorityData,
+  upgradedPainPoints, 
+  comparisonWithTraditional, 
+  patternConfig, 
+  assessmentOutcomes,
+  pricingIncludes,
+  PatternType 
+} from "./emotionHealthData";
 
 interface EmotionHealthStartScreenProps {
   onStart: () => void;
   isLoading?: boolean;
 }
 
-// 技术与评分机制卡片组件
-function TechnicalScoringCard() {
+// Icon mapping for outcomes
+const outcomeIcons = {
+  Activity: Activity,
+  Brain: Brain,
+  Target: Target,
+  Bot: Bot,
+};
+
+const outcomeColors = {
+  cyan: { text: "text-cyan-600", bg: "bg-cyan-50", border: "border-cyan-200" },
+  purple: { text: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200" },
+  rose: { text: "text-rose-600", bg: "bg-rose-50", border: "border-rose-200" },
+  emerald: { text: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200" },
+};
+
+// 四大人格类型预览卡片（简化版）
+function PatternPreviewGrid() {
+  const patterns = Object.keys(patternConfig) as PatternType[];
+  
+  return (
+    <div className="grid grid-cols-2 gap-2.5">
+      {patterns.map((key, index) => {
+        const pattern = patternConfig[key];
+        return (
+          <motion.div
+            key={key}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + index * 0.08 }}
+            className={`p-3 rounded-xl ${pattern.bgColor} border border-black/5`}
+          >
+            <div className="text-2xl mb-2">{pattern.emoji}</div>
+            <div className="text-sm font-medium text-foreground mb-0.5">{pattern.name}</div>
+            <div className="text-[10px] text-muted-foreground mb-2">{pattern.tagline}</div>
+            <Badge variant="outline" className="text-[10px] h-5 bg-white/50">
+              {pattern.targetAudience}
+            </Badge>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+}
+
+// 四大模式详情可折叠卡片
+function PatternDetailCard({ pattern }: { pattern: typeof patternConfig[PatternType] }) {
   const [isOpen, setIsOpen] = useState(false);
   
   return (
-    <Card className="overflow-hidden">
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div className={`rounded-lg border ${pattern.bgColor} overflow-hidden`}>
         <CollapsibleTrigger asChild>
-          <CardContent className="p-4 cursor-pointer hover:bg-muted/30 transition-colors">
+          <div className="p-3 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FlaskConical className="w-4 h-4 text-indigo-500" />
-                <h3 className="text-sm font-semibold">技术与评分机制</h3>
+                <span className="text-lg">{pattern.emoji}</span>
+                <div>
+                  <div className="text-xs font-medium">{pattern.name}</div>
+                  <div className="text-[10px] text-muted-foreground">{pattern.tagline} · {pattern.targetAudience}</div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300">
-                  核心技术
-                </Badge>
-                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-              </div>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              三组分数 → 一个主类型 + 两个副标签
-            </p>
-          </CardContent>
+          </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="px-4 pb-4 space-y-3">
-            {/* 第一层 */}
-            <div className="p-3 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm">{scoringMechanismConfig.layer1.icon}</span>
-                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">
-                  第一层：{scoringMechanismConfig.layer1.name}
-                </span>
-                <Badge variant="outline" className="text-[10px] h-4">{scoringMechanismConfig.layer1.type}</Badge>
-              </div>
-              <div className="space-y-1">
-                <div className="flex flex-wrap gap-1.5">
-                  {scoringMechanismConfig.layer1.dimensions.map((d, i) => (
-                    <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-300">
-                      {d}：0-100
-                    </span>
-                  ))}
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  用于：{scoringMechanismConfig.layer1.usage.join(' + ')}
-                </p>
-              </div>
-            </div>
-
-            {/* 第二层 */}
-            <div className="p-3 rounded-lg bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 border border-purple-200 dark:border-purple-800">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm">{scoringMechanismConfig.layer2.icon}</span>
-                <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">
-                  第二层：{scoringMechanismConfig.layer2.name}
-                </span>
-                <Badge variant="outline" className="text-[10px] h-4">{scoringMechanismConfig.layer2.type}</Badge>
-              </div>
-              <div className="space-y-1 text-[10px]">
-                <p className="text-muted-foreground">{scoringMechanismConfig.layer2.description}</p>
-                <div className="flex items-center gap-1">
-                  <span className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-800/50 text-purple-700 dark:text-purple-300 font-medium">
-                    输出：{scoringMechanismConfig.layer2.output}
-                  </span>
-                </div>
-                <p className="text-muted-foreground">
-                  用于：{scoringMechanismConfig.layer2.usage.join(' + ')}
-                </p>
-              </div>
-            </div>
-
-            {/* 第三层 */}
-            <div className="p-3 rounded-lg bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 border border-rose-200 dark:border-rose-800">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm">{scoringMechanismConfig.layer3.icon}</span>
-                <span className="text-xs font-semibold text-rose-700 dark:text-rose-300">
-                  第三层：{scoringMechanismConfig.layer3.name}
-                </span>
-                <Badge variant="outline" className="text-[10px] h-4">{scoringMechanismConfig.layer3.type}</Badge>
-              </div>
-              <div className="space-y-1 text-[10px]">
-                <p className="text-muted-foreground">
-                  根据：{scoringMechanismConfig.layer3.logic}
-                </p>
-                <div className="flex items-center gap-1">
-                  <span className="px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300 font-medium">
-                    {scoringMechanismConfig.layer3.output}
-                  </span>
-                </div>
-                <p className="text-muted-foreground">
-                  用于：{scoringMechanismConfig.layer3.usage.join(' + ')}
-                </p>
-              </div>
+          <div className="px-3 pb-3 space-y-3 border-t border-black/10 dark:border-white/10 pt-3">
+            <p className="text-xs leading-relaxed text-foreground font-medium">
+              "{pattern.headline}"
+            </p>
+            <ul className="space-y-1 pl-4">
+              {pattern.symptoms.slice(0, 3).map((symptom, i) => (
+                <li key={i} className="text-[10px] text-muted-foreground leading-relaxed list-disc">
+                  {symptom}
+                </li>
+              ))}
+            </ul>
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <ChevronRight className="w-3 h-3 text-primary" />
+              <span className="text-muted-foreground">推荐：</span>
+              <span className="text-foreground font-medium">{pattern.recommendedCoachLabel}</span>
             </div>
           </div>
         </CollapsibleContent>
-      </Collapsible>
-    </Card>
+      </div>
+    </Collapsible>
   );
 }
 
-// AI教练联动卡片组件
-function AICoachLinkageCard() {
-  const [currentExample, setCurrentExample] = useState(0);
-  
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Bot className="w-4 h-4 text-emerald-500" />
-          <h3 className="text-sm font-semibold">测评 × AI教练 深度联动</h3>
-        </div>
-        
-        <p className="text-xs text-muted-foreground mb-3">
-          测评不是终点，而是<span className="text-foreground font-medium">AI教练的第一句输入</span>
-        </p>
-
-        {/* AI对话示例 */}
-        <div className="relative p-3 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800">
-          <div className="flex items-start gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0">
-              <Brain className="w-3 h-3 text-white" />
-            </div>
-            <div className="text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
-              AI教练开场
-            </div>
-          </div>
-          <div className="pl-8">
-            <div className="text-xs leading-relaxed text-foreground whitespace-pre-line">
-              {aiCoachOpeningExamples[currentExample].message}
-            </div>
-          </div>
-        </div>
-
-        {/* 示例切换 */}
-        <div className="flex justify-center gap-1.5 mt-3">
-          {aiCoachOpeningExamples.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentExample(i)}
-              className={`w-2 h-2 rounded-full transition-colors ${
-                i === currentExample 
-                  ? 'bg-emerald-500' 
-                  : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* 流程说明 */}
-        <div className="mt-3 pt-3 border-t">
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-            <span className="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">后续对话自动走</span>
-            <span>情绪教练路径</span>
-            <ChevronRight className="w-3 h-3" />
-            <span>训练营推荐</span>
-          </div>
-        </div>
-
-        {/* 差异化强调 */}
-        <div className="mt-3 flex items-center gap-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-          <Star className="w-4 h-4 text-amber-500 flex-shrink-0" />
-          <p className="text-[10px] text-amber-700 dark:text-amber-300 font-medium">
-            这是传统量表完全做不到的
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// 与传统量表对比卡片组件
+// 与传统量表对比卡片
 function ComparisonCard() {
   return (
     <Card>
@@ -219,155 +149,72 @@ function ComparisonCard() {
   );
 }
 
-// 四大反应模式预览卡片组件
-function PatternPreviewCard({ pattern }: { pattern: typeof patternConfig[PatternType] }) {
-  const [isOpen, setIsOpen] = useState(false);
-  
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className={`rounded-lg border ${pattern.bgColor} overflow-hidden`}>
-        <CollapsibleTrigger asChild>
-          <div className="p-3 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{pattern.emoji}</span>
-                <div>
-                  <div className="text-xs font-medium">{pattern.name}</div>
-                  <div className="text-[10px] text-muted-foreground">{pattern.tagline}</div>
-                </div>
-              </div>
-              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-            </div>
-          </div>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="px-3 pb-3 space-y-3 border-t border-black/10 dark:border-white/10 pt-3">
-            {/* 戳心总结 */}
-            <div className="flex items-start gap-2">
-              <Compass className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-              <p className="text-xs leading-relaxed text-foreground font-medium">
-                "{pattern.headline}"
-              </p>
-            </div>
-            
-            {/* 典型表现 */}
-            <div>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <Search className="w-3 h-3 text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground font-medium">你可能正在经历</span>
-              </div>
-              <ul className="space-y-1 pl-4">
-                {pattern.symptoms.map((symptom, i) => (
-                  <li key={i} className="text-[10px] text-muted-foreground leading-relaxed list-disc">
-                    {symptom}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* 内在机制 */}
-            <div>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <Brain className="w-3 h-3 text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground font-medium">这背后的真实原因</span>
-              </div>
-              <p className="text-[10px] text-muted-foreground leading-relaxed pl-4">
-                {pattern.mechanism}
-              </p>
-            </div>
-
-            {/* AI陪伴说明 */}
-            <div className="p-2 rounded-lg bg-white/50 dark:bg-black/20">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <Bot className="w-3 h-3 text-emerald-500" />
-                <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-300">AI教练下一步会这样陪你</span>
-              </div>
-              <p className="text-[10px] text-muted-foreground leading-relaxed pl-4">
-                {pattern.aiNextStep}
-              </p>
-            </div>
-
-            {/* 推荐路径 */}
-            <div className="flex items-center gap-1.5 text-[10px]">
-              <ChevronRight className="w-3 h-3 text-primary" />
-              <span className="text-muted-foreground">推荐路径：</span>
-              <span className="text-foreground font-medium">{pattern.recommendedCoachLabel} + {pattern.recommendedCampLabel}</span>
-            </div>
-          </div>
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
-  );
-}
-
 export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthStartScreenProps) {
   return (
     <div className="space-y-4">
-      {/* 头部介绍卡片 */}
+      {/* ===== 模块1：品牌 + 痛点开场 ===== */}
       <Card className="overflow-hidden">
         <div className="bg-gradient-to-br from-rose-500 via-pink-500 to-purple-500 p-6 text-white">
-          <div className="flex items-center gap-2 mb-3">
-            <Heart className="w-6 h-6" />
-            <h1 className="text-xl font-bold">情绪健康组合测评</h1>
-          </div>
-          <p className="text-white/90 text-sm leading-relaxed">
-            基于心理学专业量表设计，通过三层诊断系统帮助你深入了解当前的情绪状态与反应模式，找到最适合你的成长路径。
-          </p>
-        </div>
-        <CardContent className="p-4 space-y-4">
-          {/* 三层诊断系统可视化 */}
-          <div className="flex flex-col items-center py-4">
-            <ThreeLayerDiagram size={180} />
-          </div>
-
-          {/* 三层诊断系统说明 */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              三层诊断系统
-            </h3>
-            <div className="grid gap-2">
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium flex items-center gap-2">
-                    第一层：状态筛查
-                    <Badge variant="outline" className="text-[10px] h-4 bg-blue-50 dark:bg-blue-900/30">12题</Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground">情绪能量 · 焦虑张力 · 压力负载</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-violet-500 flex items-center justify-center flex-shrink-0">
-                  <Brain className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium flex items-center gap-2">
-                    第二层：反应模式
-                    <Badge variant="outline" className="text-[10px] h-4 bg-purple-50 dark:bg-purple-900/30">16题</Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground">识别你的情绪自动反应模式</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                  <Heart className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium flex items-center gap-2">
-                    第三层：行动路径
-                    <Badge variant="outline" className="text-[10px] h-4 bg-rose-50 dark:bg-rose-900/30">4题</Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground">匹配最适合你的成长支持</div>
-                </div>
-              </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Heart className="w-5 h-5" />
+              <h1 className="text-lg font-bold">情绪健康测评</h1>
             </div>
+            <p className="text-[10px] text-white/70">Powered by 有劲AI</p>
           </div>
           
-          {/* 测评信息 */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+          {/* 社交证明 */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-center mb-4"
+          >
+            <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+              <Flame className="w-3 h-3 mr-1" />
+              {introStatistics.totalAssessments.toLocaleString()} 人已找到答案
+            </Badge>
+          </motion.div>
+
+          {/* 共鸣式提问 */}
+          <div className="text-center space-y-2 mb-4">
+            <p className="text-white/80 text-sm">你有没有这种感觉？</p>
+            <motion.div 
+              className="space-y-1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <p className="text-lg">明明没什么大事</p>
+              <p className="text-xl font-bold">
+                就是 <span className="text-amber-200 animate-pulse">「怎么都提不起劲」</span>
+              </p>
+            </motion.div>
+          </div>
+
+          {/* 接纳式副文案 */}
+          <motion.div 
+            className="text-center text-white/90 text-sm space-y-1"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <p>不是你不够努力</p>
+            <p>是有个东西一直在 <span className="text-amber-200 font-medium">暗中消耗你的能量</span></p>
+          </motion.div>
+        </div>
+
+        {/* 首屏CTA */}
+        <CardContent className="p-4">
+          <Button 
+            size="lg" 
+            className="w-full h-12 text-base bg-gradient-to-r from-rose-500 via-pink-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
+            onClick={onStart}
+            disabled={isLoading}
+          >
+            {isLoading ? "加载中..." : "¥9.9 开始测评"}
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground mt-3">
             <div className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
               <span>约5-8分钟</span>
@@ -380,112 +227,208 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
         </CardContent>
       </Card>
 
-      {/* 为什么需要三层诊断 */}
+      {/* ===== 模块2：痛点共鸣区 ===== */}
       <Card>
         <CardContent className="p-4">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
             <Zap className="w-4 h-4 text-amber-500" />
-            为什么需要三层诊断？
+            这些感受是不是很熟悉？
           </h3>
-          <div className="space-y-3 text-sm">
-            <p className="text-muted-foreground leading-relaxed">
-              改变的关键不在于知道，而在于<span className="text-foreground font-medium">找到卡住的那一层</span>。
-            </p>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">表面症状</span>
-              <ChevronRight className="w-3 h-3" />
-              <span className="px-2 py-1 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">反应模式</span>
-              <ChevronRight className="w-3 h-3" />
-              <span className="px-2 py-1 rounded bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300">根本阻滞</span>
-            </div>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              只看表面症状，容易头痛医头。只有层层深入，才能找到真正卡住你的那个点，给出对症的成长路径。
-            </p>
+          <div className="space-y-2">
+            {upgradedPainPoints.map((item, index) => (
+              <motion.div 
+                key={index}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 * index }}
+                className="flex items-start gap-3 p-2.5 rounded-lg bg-muted/50"
+              >
+                <span className="text-lg flex-shrink-0">{item.emoji}</span>
+                <p className="text-xs text-muted-foreground leading-relaxed pt-0.5">{item.text}</p>
+              </motion.div>
+            ))}
           </div>
+
+          {/* 损失警告 */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="mt-4 p-3 rounded-lg bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border border-red-200 dark:border-red-800"
+          >
+            <p className="text-xs text-red-600 dark:text-red-400 text-center leading-relaxed">
+              如果不解决这些卡点，你可能会继续这样 <span className="font-bold">3-5年</span><br />
+              反复陷入「内耗→自责→更内耗」的死循环
+            </p>
+          </motion.div>
         </CardContent>
       </Card>
 
-      {/* 科学数据背书 */}
+      {/* ===== 模块3：权威背书区 ===== */}
       <Card>
         <CardContent className="p-4">
-          <h3 className="text-sm font-semibold mb-3">科学研究支持</h3>
+          <h3 className="text-sm font-semibold mb-3">研究数据显示</h3>
           <div className="grid gap-3">
-            {scientificStats.map((item, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <span className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
-                  {item.stat}
-                </span>
-                <div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
-                  <p className="text-[10px] text-muted-foreground/70 mt-0.5">{item.source}</p>
+            {authorityData.map((item, index) => (
+              <motion.div 
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * index }}
+                className="flex items-start gap-3"
+              >
+                <span className="text-xl flex-shrink-0">{item.icon}</span>
+                <div className="flex-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+                      {item.stat}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">{item.source}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* 痛点共鸣 */}
+      {/* ===== 模块4：AI对比传统 ===== */}
+      <ComparisonCard />
+
+      {/* ===== 模块5：四大人格类型预览 ===== */}
       <Card>
         <CardContent className="p-4">
-          <h3 className="text-sm font-semibold mb-3">你是否也有这样的感受？</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {painPoints.map((item, index) => (
-              <div key={index} className="p-3 rounded-lg bg-muted/50 text-center">
-                <span className="text-xl mb-1 block">{item.emoji}</span>
-                <p className="text-xs text-muted-foreground leading-relaxed">{item.text}</p>
-              </div>
+          <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
+            <Brain className="w-4 h-4 text-purple-500" />
+            找到你的情绪反应模式
+          </h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            点击了解更多，看看哪个最像你
+          </p>
+          <div className="space-y-2">
+            {(Object.keys(patternConfig) as PatternType[]).map((key) => (
+              <PatternDetailCard key={key} pattern={patternConfig[key]} />
             ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* 四大反应模式预览 - 可折叠详情卡片 */}
+      {/* ===== 模块6：三层洋葱模型 ===== */}
       <Card>
         <CardContent className="p-4">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-            <Brain className="w-4 h-4 text-purple-500" />
-            将帮你识别的四大反应模式
+            <Target className="w-4 h-4 text-rose-500" />
+            三层诊断 · 层层深入
           </h3>
-          <div className="space-y-2">
-            {(Object.keys(patternConfig) as PatternType[]).map((key) => {
-              const pattern = patternConfig[key];
+          <div className="flex flex-col items-center py-2">
+            <ThreeLayerDiagram size={160} />
+            <p className="text-xs text-muted-foreground text-center mt-3">
+              由外向内 · 层层剥离 · 直达情绪卡点
+            </p>
+          </div>
+          
+          {/* 简化的三层说明 */}
+          <div className="grid gap-2 mt-4">
+            <div className="flex items-center gap-3 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-3 h-3 text-white" />
+              </div>
+              <div className="text-xs">
+                <span className="font-medium">第一层</span>
+                <span className="text-muted-foreground ml-2">状态筛查（12题）</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-violet-500 flex items-center justify-center flex-shrink-0">
+                <Brain className="w-3 h-3 text-white" />
+              </div>
+              <div className="text-xs">
+                <span className="font-medium">第二层</span>
+                <span className="text-muted-foreground ml-2">反应模式（16题）</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-2 rounded-lg bg-rose-50 dark:bg-rose-900/20">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                <Heart className="w-3 h-3 text-white" />
+              </div>
+              <div className="text-xs">
+                <span className="font-medium">第三层</span>
+                <span className="text-muted-foreground ml-2">行动路径（4题）</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ===== 模块7：价值交付区 ===== */}
+      <Card className="bg-gradient-to-br from-indigo-50 via-violet-50 to-white dark:from-indigo-900/20 dark:via-violet-900/20 dark:to-background border-indigo-200 dark:border-indigo-800">
+        <CardContent className="p-4">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-indigo-500" />
+            测评完成后，你将获得
+          </h3>
+          <div className="grid grid-cols-2 gap-2.5">
+            {assessmentOutcomes.map((item, idx) => {
+              const IconComponent = outcomeIcons[item.icon as keyof typeof outcomeIcons];
+              const colors = outcomeColors[item.color as keyof typeof outcomeColors];
               return (
-                <PatternPreviewCard key={key} pattern={pattern} />
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + idx * 0.08 }}
+                  className={`p-3 rounded-xl ${colors.bg} border ${colors.border}`}
+                >
+                  <IconComponent className={`w-5 h-5 ${colors.text} mb-2`} />
+                  <p className="text-xs font-medium text-slate-700 dark:text-slate-200 mb-1">{item.title}</p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed">{item.desc}</p>
+                </motion.div>
               );
             })}
           </div>
         </CardContent>
       </Card>
 
-      {/* 技术与评分机制卡片 */}
-      <TechnicalScoringCard />
+      {/* ===== 模块8：定价模块 ===== */}
+      <Card className="bg-gradient-to-br from-rose-50 via-pink-50 to-white dark:from-rose-900/20 dark:via-pink-900/20 dark:to-background border-rose-300 dark:border-rose-800">
+        <CardContent className="p-5">
+          <h3 className="text-sm font-semibold text-center mb-4">开启你的情绪修复之旅</h3>
+          
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <span className="text-4xl font-bold text-rose-600">¥9.9</span>
+            <span className="px-2 py-0.5 bg-red-500 rounded text-xs text-white font-medium animate-pulse">限时</span>
+          </div>
 
-      {/* AI教练联动卡片 */}
-      <AICoachLinkageCard />
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {pricingIncludes.map((item, index) => (
+              <div key={index} className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+                <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
 
-      {/* 与传统量表对比卡片 */}
-      <ComparisonCard />
+          <Button 
+            size="lg" 
+            className="w-full h-14 text-base bg-gradient-to-r from-rose-500 via-pink-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
+            onClick={onStart}
+            disabled={isLoading}
+          >
+            {isLoading ? "加载中..." : "¥9.9 开始测评"}
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
 
-      {/* 开始按钮 */}
-      <div className="pb-[calc(20px+env(safe-area-inset-bottom))]">
-        <Button 
-          size="lg" 
-          className="w-full h-12 text-base bg-gradient-to-r from-rose-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
-          onClick={onStart}
-          disabled={isLoading}
-        >
-          {isLoading ? "加载中..." : "开始三层诊断"}
-        </Button>
-        <p className="text-xs text-center text-muted-foreground mt-3">
-          共32道题目，请根据最近两周的真实感受作答
-        </p>
-      </div>
+          <p className="text-xs text-center text-muted-foreground mt-3">
+            共32道题目，请根据最近两周的真实感受作答
+          </p>
+        </CardContent>
+      </Card>
 
-      {/* 合规声明 */}
-      <p className="text-[10px] text-muted-foreground text-center px-4">
-        本测评为情绪状态与成长觉察工具，不构成任何医学诊断或治疗建议。
-        若你感到持续严重不适，请及时联系专业心理支持机构。
+      {/* ===== 模块9：合规声明 ===== */}
+      <p className="text-[10px] text-muted-foreground text-center px-4 pb-[calc(20px+env(safe-area-inset-bottom))]">
+        本测评为情绪状态与成长卡点觉察工具，不用于任何医学诊断或治疗判断。
+        如你感到持续严重不适，建议联系专业心理机构。
       </p>
     </div>
   );
