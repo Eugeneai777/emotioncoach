@@ -12,6 +12,8 @@ export {
   comparisonWithTraditional,
   resultPageFooterConfig,
   resultPageSectionTitles,
+  coachDialogueScripts,
+  universalConversionRounds,
   calculateEmotionHealthResult,
   getQuestionLayer,
   getLayerProgress,
@@ -24,11 +26,15 @@ export {
   type PatternType,
   type BlockedDimension,
   type EmotionHealthQuestion,
-  type EmotionHealthResult as EmotionHealthResultType
+  type EmotionHealthResult as EmotionHealthResultType,
+  type DialogueRound,
+  type PatternDialogueScript,
+  type ConversionRound
 } from './emotionHealthData';
 export { EmotionHealthStartScreen } from './EmotionHealthStartScreen';
 export { EmotionHealthQuestions } from './EmotionHealthQuestions';
 export { EmotionHealthResult } from './EmotionHealthResult';
+export { AssessmentCoachChat } from './AssessmentCoachChat';
 export { ThreeLayerDiagram } from './ThreeLayerDiagram';
 export { LayerTransitionCard } from './LayerTransitionCard';
 export { LayerProgressIndicator, LayerLabel } from './LayerProgressIndicator';

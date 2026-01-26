@@ -40,10 +40,11 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
   const overallRisk = overallLevel === 'high' ? '需要关注' : overallLevel === 'medium' ? '适度留意' : '状态良好';
 
   const handleStartCoach = () => {
-    navigate('/coach-space', { 
+    navigate('/assessment-coach', { 
       state: { 
-        fromAssessment: 'emotion_health',
-        pattern: result.primaryPattern 
+        pattern: result.primaryPattern,
+        blockedDimension: result.blockedDimension,
+        fromAssessment: 'emotion_health'
       } 
     });
   };
