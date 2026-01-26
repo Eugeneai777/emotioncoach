@@ -161,8 +161,8 @@ export const SCL90ShareCard = React.forwardRef<HTMLDivElement, SCL90ShareCardPro
         {/* Footer */}
         <div className="flex items-center justify-between pt-3 border-t border-white/10">
           <div className="flex-1">
-            <p className="text-xs text-white/60 mb-0.5">扫码了解你的心理状态</p>
-            <p className="text-sm font-medium text-purple-300">SCL-90 心理健康自评</p>
+          <p className="text-xs text-white/60 mb-0.5">扫码测测你的心理状态</p>
+            <p className="text-sm font-medium text-purple-300">全球著名权威抑郁焦虑自测量表</p>
             <p className="text-xs text-white/40 mt-1">Powered by 有劲AI</p>
           </div>
           {qrCodeUrl && (
