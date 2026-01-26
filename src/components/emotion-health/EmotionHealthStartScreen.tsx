@@ -1,13 +1,222 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Brain, TrendingUp, Clock, Shield, Sparkles, ChevronRight, Zap } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Heart, Brain, TrendingUp, Clock, Shield, Sparkles, ChevronRight, Zap, FlaskConical, Bot, Star, ChevronDown } from "lucide-react";
 import { ThreeLayerDiagram } from "./ThreeLayerDiagram";
-import { scientificStats, painPoints } from "./emotionHealthData";
+import { scientificStats, painPoints, scoringMechanismConfig, aiCoachOpeningExamples, comparisonWithTraditional } from "./emotionHealthData";
 
 interface EmotionHealthStartScreenProps {
   onStart: () => void;
   isLoading?: boolean;
+}
+
+// 技术与评分机制卡片组件
+function TechnicalScoringCard() {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <Card className="overflow-hidden">
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <CardContent className="p-4 cursor-pointer hover:bg-muted/30 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FlaskConical className="w-4 h-4 text-indigo-500" />
+                <h3 className="text-sm font-semibold">技术与评分机制</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300">
+                  核心技术
+                </Badge>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              三组分数 → 一个主类型 + 两个副标签
+            </p>
+          </CardContent>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-4 pb-4 space-y-3">
+            {/* 第一层 */}
+            <div className="p-3 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm">{scoringMechanismConfig.layer1.icon}</span>
+                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                  第一层：{scoringMechanismConfig.layer1.name}
+                </span>
+                <Badge variant="outline" className="text-[10px] h-4">{scoringMechanismConfig.layer1.type}</Badge>
+              </div>
+              <div className="space-y-1">
+                <div className="flex flex-wrap gap-1.5">
+                  {scoringMechanismConfig.layer1.dimensions.map((d, i) => (
+                    <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-300">
+                      {d}：0-100
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  用于：{scoringMechanismConfig.layer1.usage.join(' + ')}
+                </p>
+              </div>
+            </div>
+
+            {/* 第二层 */}
+            <div className="p-3 rounded-lg bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 border border-purple-200 dark:border-purple-800">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm">{scoringMechanismConfig.layer2.icon}</span>
+                <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">
+                  第二层：{scoringMechanismConfig.layer2.name}
+                </span>
+                <Badge variant="outline" className="text-[10px] h-4">{scoringMechanismConfig.layer2.type}</Badge>
+              </div>
+              <div className="space-y-1 text-[10px]">
+                <p className="text-muted-foreground">{scoringMechanismConfig.layer2.description}</p>
+                <div className="flex items-center gap-1">
+                  <span className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-800/50 text-purple-700 dark:text-purple-300 font-medium">
+                    输出：{scoringMechanismConfig.layer2.output}
+                  </span>
+                </div>
+                <p className="text-muted-foreground">
+                  用于：{scoringMechanismConfig.layer2.usage.join(' + ')}
+                </p>
+              </div>
+            </div>
+
+            {/* 第三层 */}
+            <div className="p-3 rounded-lg bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 border border-rose-200 dark:border-rose-800">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm">{scoringMechanismConfig.layer3.icon}</span>
+                <span className="text-xs font-semibold text-rose-700 dark:text-rose-300">
+                  第三层：{scoringMechanismConfig.layer3.name}
+                </span>
+                <Badge variant="outline" className="text-[10px] h-4">{scoringMechanismConfig.layer3.type}</Badge>
+              </div>
+              <div className="space-y-1 text-[10px]">
+                <p className="text-muted-foreground">
+                  根据：{scoringMechanismConfig.layer3.logic}
+                </p>
+                <div className="flex items-center gap-1">
+                  <span className="px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-800/50 text-rose-700 dark:text-rose-300 font-medium">
+                    {scoringMechanismConfig.layer3.output}
+                  </span>
+                </div>
+                <p className="text-muted-foreground">
+                  用于：{scoringMechanismConfig.layer3.usage.join(' + ')}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
+  );
+}
+
+// AI教练联动卡片组件
+function AICoachLinkageCard() {
+  const [currentExample, setCurrentExample] = useState(0);
+  
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Bot className="w-4 h-4 text-emerald-500" />
+          <h3 className="text-sm font-semibold">测评 × AI教练 深度联动</h3>
+        </div>
+        
+        <p className="text-xs text-muted-foreground mb-3">
+          测评不是终点，而是<span className="text-foreground font-medium">AI教练的第一句输入</span>
+        </p>
+
+        {/* AI对话示例 */}
+        <div className="relative p-3 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800">
+          <div className="flex items-start gap-2 mb-2">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0">
+              <Brain className="w-3 h-3 text-white" />
+            </div>
+            <div className="text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
+              AI教练开场
+            </div>
+          </div>
+          <div className="pl-8">
+            <div className="text-xs leading-relaxed text-foreground whitespace-pre-line">
+              {aiCoachOpeningExamples[currentExample].message}
+            </div>
+          </div>
+        </div>
+
+        {/* 示例切换 */}
+        <div className="flex justify-center gap-1.5 mt-3">
+          {aiCoachOpeningExamples.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentExample(i)}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                i === currentExample 
+                  ? 'bg-emerald-500' 
+                  : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* 流程说明 */}
+        <div className="mt-3 pt-3 border-t">
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <span className="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">后续对话自动走</span>
+            <span>情绪教练路径</span>
+            <ChevronRight className="w-3 h-3" />
+            <span>训练营推荐</span>
+          </div>
+        </div>
+
+        {/* 差异化强调 */}
+        <div className="mt-3 flex items-center gap-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+          <Star className="w-4 h-4 text-amber-500 flex-shrink-0" />
+          <p className="text-[10px] text-amber-700 dark:text-amber-300 font-medium">
+            这是传统量表完全做不到的
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// 与传统量表对比卡片组件
+function ComparisonCard() {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold">与传统量表的本质区别</h3>
+        </div>
+        
+        <div className="space-y-2">
+          {comparisonWithTraditional.map((item, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <div className="flex-1 text-right">
+                <span className="text-xs text-muted-foreground line-through decoration-muted-foreground/50">
+                  {item.traditional}
+                </span>
+              </div>
+              <div className="w-6 flex justify-center">
+                <ChevronRight className="w-3 h-3 text-primary" />
+              </div>
+              <div className="flex-1">
+                <span className="text-xs font-medium text-primary">
+                  {item.ours}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthStartScreenProps) {
@@ -178,6 +387,15 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
           </div>
         </CardContent>
       </Card>
+
+      {/* 技术与评分机制卡片 */}
+      <TechnicalScoringCard />
+
+      {/* AI教练联动卡片 */}
+      <AICoachLinkageCard />
+
+      {/* 与传统量表对比卡片 */}
+      <ComparisonCard />
 
       {/* 开始按钮 */}
       <div className="pb-[calc(20px+env(safe-area-inset-bottom))]">
