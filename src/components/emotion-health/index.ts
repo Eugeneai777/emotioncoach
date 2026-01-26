@@ -22,6 +22,9 @@ export {
   pricingIncludes,
   loginBenefits,
   scientificScalesMapping,
+  // Three-layer diagnosis table mappings
+  patternTableMapping,
+  blockageDimensionMapping,
   calculateEmotionHealthResult,
   getQuestionLayer,
   getLayerProgress,
