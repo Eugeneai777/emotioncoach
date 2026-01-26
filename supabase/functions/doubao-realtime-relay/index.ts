@@ -835,14 +835,38 @@ Deno.serve(async (req) => {
                   continue;
                 }
 
-                // 兼容：部分豆包环境会先回 event=150，payload 为 sessionId(36字节 UUID)
-                // 若不处理，sessionStarted 将永远为 false，导致音频一直被丢弃，最终触发 DialogAudioIdleTimeout。
+                // 兼容：豆包 API 的 event=150 (SESSION_ACK) 可能有两种 payload 格式：
+                // 1. 新格式：JSON 对象 {"dialog_id":"..."}
+                // 2. 旧格式：裸 UUID 字符串（与 doubaoSessionId 匹配）
                 if (parsed.event === EVENT_SESSION_ACK && parsed.payloadSize > 0) {
-                  const maybeSessionId = new TextDecoder().decode(parsed.payload).trim();
-                  // If payload matches our generated sessionId, treat as ready.
-                  if (doubaoSessionId && maybeSessionId === doubaoSessionId) {
+                  const payloadStr = new TextDecoder().decode(parsed.payload).trim();
+                  console.log(`[DoubaoRelay] SESSION_ACK payload: "${payloadStr.substring(0, 100)}"`);
+                  
+                  let isValidSessionAck = false;
+                  
+                  // 尝试解析为 JSON（新格式）
+                  try {
+                    if (payloadStr.startsWith('{')) {
+                      const ackPayload = JSON.parse(payloadStr);
+                      // 只要收到 dialog_id 就认为会话已就绪
+                      if (ackPayload.dialog_id) {
+                        console.log(`[DoubaoRelay] Session ACK with dialog_id: ${ackPayload.dialog_id}`);
+                        isValidSessionAck = true;
+                      }
+                    }
+                  } catch {
+                    // 不是有效 JSON，尝试旧格式
+                  }
+                  
+                  // 旧格式兼容：payload 是 sessionId 本身
+                  if (!isValidSessionAck && doubaoSessionId && payloadStr === doubaoSessionId) {
+                    console.log(`[DoubaoRelay] Session ACK with matching sessionId`);
+                    isValidSessionAck = true;
+                  }
+                  
+                  if (isValidSessionAck) {
                     sessionStarted = true;
-                    console.log('[DoubaoRelay] Session ACK received (event=150), session is ready');
+                    console.log('[DoubaoRelay] ✅ Session started - ACK received (event=150)');
                     clientSocket.send(JSON.stringify({
                       type: 'session.connected',
                       message: 'Connected to Doubao API - Session ACK'
@@ -1115,6 +1139,13 @@ Deno.serve(async (req) => {
 
         // 处理文本消息触发（用于开场白）
         case 'conversation.item.create':
+          console.log('[DoubaoRelay] Received conversation.item.create, session state:', {
+            hasConn: !!doubaoConn,
+            isConnected,
+            sessionStarted,
+            hasSessionId: !!doubaoSessionId
+          });
+          
           if (doubaoConn && isConnected && sessionStarted && doubaoSessionId) {
             try {
               // 提取用户文本
@@ -1126,7 +1157,7 @@ Deno.serve(async (req) => {
               }
               
               console.log(`[DoubaoRelay] Sending text trigger: "${userText}"`);
-              
+
               // 构建文本消息的 payload（豆包对话协议要求特定格式）
               const textPayload = JSON.stringify({
                 text: userText
