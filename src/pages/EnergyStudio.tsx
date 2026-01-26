@@ -101,6 +101,10 @@ const EnergyStudio = () => {
       navigate('/scl90');
       return;
     }
+    if (toolId === 'emotion-health') {
+      navigate('/emotion-health');
+      return;
+    }
     setActiveTool(toolId);
   };
 
