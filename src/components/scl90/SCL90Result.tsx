@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { RotateCcw, Share2, Sparkles } from "lucide-react";
+import { RotateCcw, Share2, Sparkles, ArrowRight, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,11 +33,39 @@ export function SCL90Result({
   isSaved,
 }: SCL90ResultProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [aiInsight, setAiInsight] = useState<SCL90AIInsight | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [hasSaved, setHasSaved] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+
+  // Handle join camp action
+  const handleJoinCamp = async () => {
+    if (!user) {
+      toast.info("请先登录后再加入训练营");
+      navigate('/camp-intro/emotion_journal_21');
+      return;
+    }
+    
+    // Check if user already has an active emotion journal camp
+    const { data: existingCamp } = await supabase
+      .from('training_camps')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('camp_type', 'emotion_journal_21')
+      .eq('status', 'active')
+      .maybeSingle();
+    
+    if (existingCamp) {
+      toast.info("你已经在参加情绪日记训练营了！");
+      navigate(`/camp-checkin/${existingCamp.id}`);
+      return;
+    }
+    
+    // Navigate to camp intro page to start enrollment
+    navigate('/camp-intro/emotion_journal_21');
+  };
 
   // Auto-save and fetch AI analysis
   useEffect(() => {
@@ -233,7 +262,7 @@ export function SCL90Result({
         severityLevel={result.severityLevel}
       />
 
-      {/* Training Camp Invite (from AI) */}
+      {/* Enhanced Emotion Journal Camp Conversion Card */}
       {aiInsight?.campInvite && (
         <motion.div
           initial={{ opacity: 0.01, y: 20 }}
@@ -241,15 +270,20 @@ export function SCL90Result({
           transition={{ delay: 0.3 }}
           style={{ transform: "translateZ(0)" }}
         >
-          <Card className="border-0 shadow-lg overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+          <Card className="border-0 shadow-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 text-white">
             <CardContent className="p-5">
+              {/* Personalized headline */}
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-2xl">🎯</span>
                 <h3 className="font-bold text-lg">{aiInsight.campInvite.headline}</h3>
               </div>
+              
+              {/* AI-generated recommendation reason */}
               <p className="text-white/90 text-sm mb-4 leading-relaxed">
                 {aiInsight.campInvite.reason}
               </p>
+              
+              {/* Expected benefits list */}
               <div className="space-y-1.5 mb-4">
                 {aiInsight.campInvite.expectedBenefits.map((benefit, idx) => (
                   <div key={idx} className="flex items-center gap-2 text-sm">
@@ -258,13 +292,37 @@ export function SCL90Result({
                   </div>
                 ))}
               </div>
-              <Button 
-                variant="secondary" 
-                className="w-full h-11 font-medium"
-                onClick={() => window.location.href = '/camps'}
-              >
-                {aiInsight.campInvite.urgency}
-              </Button>
+              
+              {/* Price display */}
+              <div className="bg-white/10 rounded-lg p-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold">免费</span>
+                  <span className="text-white/70 text-sm line-through">¥199</span>
+                  <span className="inline-flex items-center gap-1 text-xs bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full ml-auto">
+                    <Clock className="w-3 h-3" />
+                    限时开放
+                  </span>
+                </div>
+                <p className="text-white/70 text-xs mt-1">21天系统训练 · 每天10分钟</p>
+              </div>
+              
+              {/* Dual buttons: Learn more / Join now */}
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 h-11 border-white/30 text-white hover:bg-white/10 hover:text-white"
+                  onClick={() => navigate('/camp-intro/emotion_journal_21')}
+                >
+                  了解详情
+                </Button>
+                <Button 
+                  className="flex-1 h-11 bg-white text-purple-600 hover:bg-white/90 font-medium"
+                  onClick={handleJoinCamp}
+                >
+                  立即加入
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
