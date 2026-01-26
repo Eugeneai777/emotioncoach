@@ -123,7 +123,7 @@ export default function EmotionHealthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
       <Helmet>
         <title>情绪健康测评 - 有劲AI</title>
         <meta name="description" content="基于心理学专业量表，帮助你深入了解当前的情绪状态与反应模式" />
