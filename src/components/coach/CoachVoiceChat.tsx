@@ -859,26 +859,38 @@ export const CoachVoiceChat = ({
         return;
       }
 
+      // 尝试刷新 session，但失败时不立即强制登出
+      // 因为在某些环境下 refresh_token 可能无效，但 access_token 仍可用
       const { error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
-        console.error('[VoiceChat] ❌ Session refresh failed:', refreshError.message);
-        try {
-          await supabase.auth.signOut();
-        } catch (e) {
-          console.warn('[VoiceChat] signOut after refreshSession failure:', e);
-        }
+        console.warn('[VoiceChat] ⚠️ Session refresh failed:', refreshError.message);
+        
+        // 验证当前 access token 是否仍然有效
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError || !userData?.user) {
+          console.error('[VoiceChat] ❌ Token validation failed after refresh error:', userError?.message);
+          try {
+            await supabase.auth.signOut();
+          } catch (e) {
+            console.warn('[VoiceChat] signOut after token validation failure:', e);
+          }
 
-        toast({ title: "登录已过期", description: "请重新登录后再试", variant: "destructive" });
-        setStatus('error');
-        isInitializingRef.current = false;
-        stopConnectionTimer();
-        releaseLock();
-        const redirect = encodeURIComponent(window.location.pathname + window.location.search);
-        navigate(`/auth?redirect=${redirect}`);
-        setTimeout(onClose, 300);
-        return;
+          toast({ title: "登录已过期", description: "请重新登录后再试", variant: "destructive" });
+          setStatus('error');
+          isInitializingRef.current = false;
+          stopConnectionTimer();
+          releaseLock();
+          const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+          navigate(`/auth?redirect=${redirect}`);
+          setTimeout(onClose, 300);
+          return;
+        }
+        
+        // Token 仍然有效，继续执行
+        console.log('[VoiceChat] ✅ Token still valid despite refresh failure, continuing...');
+      } else {
+        console.log('[VoiceChat] ✅ Session refreshed successfully');
       }
-      console.log('[VoiceChat] ✅ Session validated successfully');
       
       // 🔧 预扣第一分钟点数
       updateConnectionPhase('requesting_mic');
