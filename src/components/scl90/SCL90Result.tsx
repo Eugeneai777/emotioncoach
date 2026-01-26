@@ -296,11 +296,11 @@ export function SCL90Result({
               {/* Price display */}
               <div className="bg-white/10 rounded-lg p-3 mb-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold">免费</span>
-                  <span className="text-white/70 text-sm line-through">¥199</span>
+                  <span className="text-2xl font-bold">¥299</span>
+                  <span className="text-white/70 text-sm line-through">¥399</span>
                   <span className="inline-flex items-center gap-1 text-xs bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full ml-auto">
                     <Clock className="w-3 h-3" />
-                    限时开放
+                    限时优惠
                   </span>
                 </div>
                 <p className="text-white/70 text-xs mt-1">21天系统训练 · 每天10分钟</p>

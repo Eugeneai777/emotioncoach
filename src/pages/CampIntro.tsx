@@ -28,6 +28,9 @@ import {
 import type { CampTemplate } from "@/types/trainingCamp";
 import { StartCampDialog } from "@/components/camp/StartCampDialog";
 import { CampDualTrackSection } from "@/components/camp/CampDualTrackSection";
+import { WechatPayDialog } from "@/components/WechatPayDialog";
+import { useCampPurchase } from "@/hooks/useCampPurchase";
+import { toast } from "sonner";
 
 const iconMap: Record<string, any> = {
   TrendingDown, Brain, Moon, Zap, Heart, MessageCircle, Shield, Award, Users, Video, BarChart3
@@ -37,7 +40,12 @@ const CampIntro = () => {
   const navigate = useNavigate();
   const { campType } = useParams<{ campType: string }>();
   const [showStartDialog, setShowStartDialog] = useState(false);
+  const [showPayDialog, setShowPayDialog] = useState(false);
   const { user } = useAuth();
+
+  // 检查用户是否已购买该付费训练营
+  const { data: purchaseRecord, refetch: refetchPurchase } = useCampPurchase(campType || '');
+  const hasPurchased = !!purchaseRecord;
 
   const { data: campTemplate, isLoading } = useQuery({
     queryKey: ['camp-template', campType],
@@ -136,6 +144,25 @@ const CampIntro = () => {
               {campTemplate.description}
             </p>
           </div>
+          
+          {/* 价格展示 - 仅付费训练营显示 */}
+          {campTemplate.price && campTemplate.price > 0 && (
+            <div className="flex items-center justify-center gap-3 mt-4">
+              {campTemplate.original_price && campTemplate.original_price > campTemplate.price && (
+                <span className="text-lg text-muted-foreground line-through">
+                  ¥{campTemplate.original_price}
+                </span>
+              )}
+              <span className="text-3xl font-bold text-purple-600">
+                ¥{campTemplate.price}
+              </span>
+              {campTemplate.price_note && (
+                <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                  {campTemplate.price_note}
+                </Badge>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Stages */}
@@ -296,13 +323,22 @@ const CampIntro = () => {
             onClick={() => {
               if (hasJoinedCamp && existingCamp) {
                 navigate(`/camp-checkin/${existingCamp.id}`);
+              } else if (campTemplate.price && campTemplate.price > 0 && !hasPurchased) {
+                // 付费训练营且未购买，打开支付弹窗
+                setShowPayDialog(true);
               } else {
                 setShowStartDialog(true);
               }
             }}
             className={`w-full gap-2 bg-gradient-to-r ${campTemplate.gradient} hover:opacity-90 text-white shadow-lg text-lg py-6`}
           >
-            {hasJoinedCamp ? '继续训练' : '立即加入训练营'}
+            {hasJoinedCamp 
+              ? '继续训练' 
+              : hasPurchased 
+              ? '已购买，立即开始' 
+              : (campTemplate.price && campTemplate.price > 0)
+              ? `立即购买 ¥${campTemplate.price}` 
+              : '立即加入训练营'}
             <ArrowRight className="w-5 h-5" />
           </Button>
         </div>
@@ -313,6 +349,33 @@ const CampIntro = () => {
         onOpenChange={setShowStartDialog}
         campTemplate={campTemplate}
         onSuccess={(campId) => navigate(`/camp-checkin/${campId}`)}
+      />
+
+      {/* 付费弹窗 */}
+      <WechatPayDialog
+        open={showPayDialog}
+        onOpenChange={setShowPayDialog}
+        packageInfo={{
+          key: `camp-${campType}`,
+          name: campTemplate.camp_name,
+          price: campTemplate.price || 0
+        }}
+        onSuccess={async () => {
+          // 记录购买到 user_camp_purchases
+          if (user) {
+            await supabase.from('user_camp_purchases').insert({
+              user_id: user.id,
+              camp_type: campType,
+              camp_name: campTemplate.camp_name,
+              purchase_price: campTemplate.price || 0,
+              payment_status: 'completed'
+            });
+          }
+          setShowPayDialog(false);
+          refetchPurchase();
+          toast.success("购买成功！请选择开始日期");
+          setShowStartDialog(true);
+        }}
       />
     </div>
   );
