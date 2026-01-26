@@ -1,8 +1,7 @@
 import { forwardRef } from "react";
-import QRCode from "qrcode";
-import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { getPartnerShareUrl, getDefaultShareUrl } from "@/utils/partnerQRUtils";
+import { useQRCode } from "@/utils/qrCodeUtils";
 interface ShareCardProps {
   post: {
     post_type: string;
@@ -192,18 +191,11 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
   isPreview = false,
   partnerInfo
 }, ref) => {
-  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const qrUrl = getQRCodeUrl(partnerInfo, post);
+  const { qrCodeUrl } = useQRCode(qrUrl);
   const phaseInfo = getPhaseInfo(post.camp_day);
   const emotionEmoji = getEmotionEmoji(post.emotion_theme);
-  
   const sourceLabel = getSourceLabel(post.post_type, post.camp_name, post.badges);
-  useEffect(() => {
-    const qrUrl = getQRCodeUrl(partnerInfo, post);
-    QRCode.toDataURL(qrUrl, {
-      width: 120,
-      margin: 1
-    }).then(setQrCodeUrl);
-  }, [partnerInfo, post]);
   return <div ref={ref} data-share-card className={cn("relative overflow-hidden rounded-2xl", isPreview ? "w-full p-4 pb-6" : "w-[600px] p-8 pb-10")} style={{
     minHeight: "auto",
     background: "linear-gradient(135deg, hsl(330, 80%, 95%), hsl(270, 70%, 95%), hsl(200, 80%, 95%))",
@@ -307,7 +299,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
           {/* 价值清单 */}
           <div className="flex-1 space-y-2">
             <p className={cn("font-bold mb-2", isPreview ? "text-sm" : "text-base")} style={{ color: '#be185d' }}>
-              有劲AI · 情绪日记
+              Powered by 有劲AI
             </p>
             <div className={cn("flex items-start gap-2", isPreview ? "text-xs" : "text-sm")}>
               <span className="mt-0.5" style={{ color: '#be185d' }}>✅</span>

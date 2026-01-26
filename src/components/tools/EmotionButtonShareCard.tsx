@@ -1,5 +1,5 @@
-import React, { forwardRef, useState, useEffect } from 'react';
-import QRCode from 'qrcode';
+import React, { forwardRef, useEffect } from 'react';
+import { useQRCode } from '@/utils/qrCodeUtils';
 import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
 interface EmotionButtonShareCardProps {
@@ -9,28 +9,14 @@ interface EmotionButtonShareCardProps {
 
 const EmotionButtonShareCard = forwardRef<HTMLDivElement, EmotionButtonShareCardProps>(
   ({ partnerCode, onReady }, ref) => {
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+    const shareUrl = partnerCode 
+      ? `${getPromotionDomain()}/energy-studio?ref=${partnerCode}`
+      : `${getPromotionDomain()}/energy-studio`;
+    const { qrCodeUrl, isLoading } = useQRCode(shareUrl);
 
     useEffect(() => {
-      const generateQR = async () => {
-        try {
-          const targetUrl = partnerCode 
-            ? `${getPromotionDomain()}/energy-studio?ref=${partnerCode}`
-            : `${getPromotionDomain()}/energy-studio`;
-          const url = await QRCode.toDataURL(targetUrl, {
-            width: 120,
-            margin: 1,
-            color: { dark: '#0D9488', light: '#FFFFFF' }
-          });
-          setQrCodeUrl(url);
-          onReady?.();
-        } catch (err) {
-          console.error('QR code generation failed:', err);
-          onReady?.();
-        }
-      };
-      generateQR();
-    }, [partnerCode, onReady]);
+      if (!isLoading) onReady?.();
+    }, [isLoading, onReady]);
 
     // 9种情绪 emoji
     const emotions = [
@@ -351,7 +337,7 @@ const EmotionButtonShareCard = forwardRef<HTMLDivElement, EmotionButtonShareCard
           fontSize: '11px',
           color: '#94A3B8'
         }}>
-          有劲生活 · 情绪梳理教练
+          Powered by 有劲AI
         </div>
       </div>
     );

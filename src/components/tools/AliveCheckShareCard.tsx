@@ -1,5 +1,6 @@
-import React, { forwardRef, useEffect, useState } from 'react';
-import QRCode from 'qrcode';
+import React, { forwardRef, useEffect } from 'react';
+import { useQRCode } from '@/utils/qrCodeUtils';
+import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
 interface AliveCheckShareCardProps {
   partnerCode?: string;
@@ -8,31 +9,14 @@ interface AliveCheckShareCardProps {
 
 const AliveCheckShareCard = forwardRef<HTMLDivElement, AliveCheckShareCardProps>(
   ({ partnerCode, onReady }, ref) => {
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+    const shareUrl = partnerCode 
+      ? `${getPromotionDomain()}/energy-studio?tool=alive-check&ref=${partnerCode}`
+      : `${getPromotionDomain()}/energy-studio?tool=alive-check`;
+    const { qrCodeUrl, isLoading } = useQRCode(shareUrl);
 
     useEffect(() => {
-      const generateQRCode = async () => {
-        try {
-          const targetUrl = partnerCode
-            ? `https://wechat.eugenewe.net/energy-studio?tool=alive-check&ref=${partnerCode}`
-            : 'https://wechat.eugenewe.net/energy-studio?tool=alive-check';
-          const url = await QRCode.toDataURL(targetUrl, {
-            width: 120,
-            margin: 1,
-            color: {
-              dark: '#000000',
-              light: '#ffffff',
-            },
-          });
-          setQrCodeUrl(url);
-          onReady?.();
-        } catch (error) {
-          console.error('Failed to generate QR code:', error);
-          onReady?.();
-        }
-      };
-      generateQRCode();
-    }, [partnerCode, onReady]);
+      if (!isLoading) onReady?.();
+    }, [isLoading, onReady]);
 
     const features = [
       { icon: '🛡️', title: '每日安全确认', desc: '一键打卡，确认平安' },
@@ -224,7 +208,7 @@ const AliveCheckShareCard = forwardRef<HTMLDivElement, AliveCheckShareCardProps>
               color: '#be185d',
               opacity: 0.7,
             }}>
-              有劲生活 · 生活管理
+              Powered by 有劲AI
             </div>
           </div>
         </div>

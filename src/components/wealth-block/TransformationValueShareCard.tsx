@@ -260,7 +260,7 @@ const TransformationValueShareCard = forwardRef<HTMLDivElement, TransformationVa
           gap: '6px',
         }}>
           <span>💎</span>
-          <span>有劲AI · 财富教练</span>
+          <span>Powered by 有劲AI</span>
         </div>
       </div>
     );
