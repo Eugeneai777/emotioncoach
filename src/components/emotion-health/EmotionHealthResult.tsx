@@ -8,7 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { MessageCircle, Sparkles, ChevronRight, Share2, RotateCcw } from "lucide-react";
+import { MessageCircle, Sparkles, ChevronRight, Share2, RotateCcw, AlertTriangle, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -33,6 +33,11 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
   const secondaryPattern = result.secondaryPattern ? patternConfig[result.secondaryPattern] : null;
   const blockedDim = blockedDimensionConfig[result.blockedDimension];
 
+  // 计算整体风险等级
+  const avgIndex = Math.round((result.energyIndex + result.anxietyIndex + result.stressIndex) / 3);
+  const overallLevel = getIndexLevel(avgIndex);
+  const overallRisk = overallLevel === 'high' ? '需要关注' : overallLevel === 'medium' ? '适度留意' : '状态良好';
+
   const handleStartCoach = () => {
     navigate('/coach-space', { 
       state: { 
@@ -44,16 +49,24 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
 
   return (
     <div className="space-y-4">
-      {/* 模块1：状态概览 */}
+      {/* 模块1：状态概览仪表盘 */}
       <Card className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">你的情绪状态概览</CardTitle>
-          <CardDescription className="text-xs">基于你刚完成的测评结果生成</CardDescription>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">第一层：状态筛查结果</CardTitle>
+            <Badge 
+              variant={overallLevel === 'high' ? 'destructive' : overallLevel === 'medium' ? 'secondary' : 'outline'}
+              className="text-xs"
+            >
+              {overallRisk}
+            </Badge>
+          </div>
+          <CardDescription className="text-xs">基于你的作答生成的三大指数</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <IndexBar label="情绪能量" value={result.energyIndex} />
-          <IndexBar label="焦虑张力" value={result.anxietyIndex} />
-          <IndexBar label="压力负载" value={result.stressIndex} />
+          <IndexBar label="情绪能量" value={result.energyIndex} description="对标PHQ-9简化" />
+          <IndexBar label="焦虑张力" value={result.anxietyIndex} description="对标GAD-7简化" />
+          <IndexBar label="压力负载" value={result.stressIndex} description="对标PSS-10简化" />
           <p className="text-[10px] text-muted-foreground mt-2">
             指数反映的是你最近的主观感受强度，不是诊断结果，只用于帮助你更好了解自己。
           </p>
@@ -63,11 +76,16 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
       {/* 模块2：反应模式 */}
       <Card className={cn("border-2", primaryPattern.bgColor)}>
         <CardHeader className="pb-3">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+            <Target className="w-3.5 h-3.5" />
+            第二层：反应模式识别
+          </div>
           <div className="flex items-center gap-3">
             <span className="text-4xl">{primaryPattern.emoji}</span>
             <div>
-              <Badge variant="secondary" className="text-xs">主要模式</Badge>
-              <h3 className="text-xl font-bold mt-1">{primaryPattern.name}</h3>
+              <Badge variant="secondary" className="text-xs mb-1">主要模式</Badge>
+              <h3 className="text-xl font-bold">{primaryPattern.name}</h3>
+              <p className="text-xs text-muted-foreground">{primaryPattern.targetAudience}</p>
             </div>
           </div>
           <p className="text-sm text-muted-foreground mt-2">{primaryPattern.description}</p>
@@ -107,17 +125,31 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
         </CardContent>
       </Card>
 
-      {/* 模块3：卡住维度 */}
-      <Card>
+      {/* 模块3：行动阻滞点 */}
+      <Card className="border-rose-200 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-900/10">
         <CardHeader className="pb-2">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+            第三层：行动阻滞点
+          </div>
           <CardTitle className="text-sm">你目前最需要优先修复的是</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5">
-            <h4 className="text-lg font-bold text-foreground">{blockedDim.name}</h4>
+          <div className="p-4 rounded-xl bg-gradient-to-r from-rose-500/10 to-purple-500/10">
+            <h4 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-gradient-to-r from-rose-500 to-purple-500 flex items-center justify-center text-white text-sm">
+                !
+              </span>
+              {blockedDim.name}
+            </h4>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
               {blockedDim.description}
             </p>
+            <div className="mt-3 pt-3 border-t border-rose-200/50 dark:border-rose-700/50">
+              <p className="text-xs text-muted-foreground">
+                推荐路径：<span className="text-foreground font-medium">{blockedDim.recommendedCoach} + {blockedDim.recommendedCamp}</span>
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -191,9 +223,10 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
 interface IndexBarProps {
   label: string;
   value: number;
+  description?: string;
 }
 
-function IndexBar({ label, value }: IndexBarProps) {
+function IndexBar({ label, value, description }: IndexBarProps) {
   const level = getIndexLevel(value);
   const levelLabel = getIndexLevelLabel(level);
   const levelColor = getIndexLevelColor(level);
@@ -202,7 +235,12 @@ function IndexBar({ label, value }: IndexBarProps) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">{label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground">{label}</span>
+          {description && (
+            <span className="text-[10px] text-muted-foreground/60">({description})</span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <span className="font-medium">{value}</span>
           <span className={cn("text-xs", levelColor)}>({levelLabel})</span>

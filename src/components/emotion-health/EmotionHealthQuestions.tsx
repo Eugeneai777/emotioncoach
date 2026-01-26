@@ -4,11 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AnimatePresence } from "framer-motion";
 import { 
   emotionHealthQuestions, 
   emotionHealthScoreLabels,
+  getLayerProgress,
+  layerConfig,
   type EmotionHealthQuestion
 } from "./emotionHealthData";
+import { LayerProgressIndicator, LayerLabel } from "./LayerProgressIndicator";
+import { LayerTransitionCard } from "./LayerTransitionCard";
 
 interface EmotionHealthQuestionsProps {
   answers: Record<number, number>;
@@ -17,7 +22,7 @@ interface EmotionHealthQuestionsProps {
   onBack: () => void;
 }
 
-const QUESTIONS_PER_PAGE = 5;
+const QUESTIONS_PER_PAGE = 4;
 
 export function EmotionHealthQuestions({
   answers,
@@ -26,6 +31,9 @@ export function EmotionHealthQuestions({
   onBack
 }: EmotionHealthQuestionsProps) {
   const [currentPage, setCurrentPage] = useState(0);
+  const [showTransition, setShowTransition] = useState(false);
+  const [pendingTransitionKey, setPendingTransitionKey] = useState<'screening-pattern' | 'pattern-blockage' | null>(null);
+  
   const totalPages = Math.ceil(emotionHealthQuestions.length / QUESTIONS_PER_PAGE);
   
   const startIndex = currentPage * QUESTIONS_PER_PAGE;
@@ -38,6 +46,11 @@ export function EmotionHealthQuestions({
   const isCurrentPageComplete = currentQuestions.every(q => answers[q.id] !== undefined);
   const isAllComplete = answeredCount === emotionHealthQuestions.length;
 
+  // 获取当前层级信息
+  const firstQuestionId = currentQuestions[0]?.id ?? 1;
+  const { currentLayer, isLayerTransition, transitionKey } = getLayerProgress(firstQuestionId);
+  const currentLayerConfig = layerConfig[currentLayer];
+
   // 自动滚动到顶部
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -45,10 +58,25 @@ export function EmotionHealthQuestions({
 
   const handleNext = () => {
     if (currentPage < totalPages - 1) {
-      setCurrentPage(prev => prev + 1);
+      // 检查下一页的第一题是否是层间过渡点
+      const nextPageFirstId = (currentPage + 1) * QUESTIONS_PER_PAGE + 1;
+      const nextLayerInfo = getLayerProgress(nextPageFirstId);
+      
+      if (nextLayerInfo.isLayerTransition && nextLayerInfo.transitionKey) {
+        setPendingTransitionKey(nextLayerInfo.transitionKey);
+        setShowTransition(true);
+      } else {
+        setCurrentPage(prev => prev + 1);
+      }
     } else if (isAllComplete) {
       onComplete();
     }
+  };
+
+  const handleTransitionContinue = () => {
+    setShowTransition(false);
+    setPendingTransitionKey(null);
+    setCurrentPage(prev => prev + 1);
   };
 
   const handlePrev = () => {
@@ -61,7 +89,15 @@ export function EmotionHealthQuestions({
 
   return (
     <div className="space-y-4">
-      {/* 进度条 */}
+      {/* 层级进度指示器 */}
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <LayerProgressIndicator currentLayer={currentLayer} />
+          <LayerLabel currentLayer={currentLayer} />
+        </CardContent>
+      </Card>
+
+      {/* 总体进度条 */}
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between text-sm mb-2">
@@ -85,6 +121,7 @@ export function EmotionHealthQuestions({
             questionNumber={startIndex + index + 1}
             selectedValue={answers[question.id]}
             onSelect={(value) => onAnswerChange(question.id, value)}
+            layerColor={currentLayerConfig.color}
           />
         ))}
       </div>
@@ -114,6 +151,16 @@ export function EmotionHealthQuestions({
           )}
         </Button>
       </div>
+
+      {/* 层间过渡卡片 */}
+      <AnimatePresence>
+        {showTransition && pendingTransitionKey && (
+          <LayerTransitionCard
+            transitionKey={pendingTransitionKey}
+            onContinue={handleTransitionContinue}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -123,9 +170,10 @@ interface QuestionCardProps {
   questionNumber: number;
   selectedValue?: number;
   onSelect: (value: number) => void;
+  layerColor: string;
 }
 
-function QuestionCard({ question, questionNumber, selectedValue, onSelect }: QuestionCardProps) {
+function QuestionCard({ question, questionNumber, selectedValue, onSelect, layerColor }: QuestionCardProps) {
   return (
     <Card className={cn(
       "transition-all duration-200",
@@ -133,7 +181,10 @@ function QuestionCard({ question, questionNumber, selectedValue, onSelect }: Que
     )}>
       <CardContent className="p-4">
         <div className="mb-3">
-          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium mr-2">
+          <span className={cn(
+            "inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-xs font-medium mr-2 bg-gradient-to-r",
+            layerColor
+          )}>
             {questionNumber}
           </span>
           <span className="text-sm font-medium">{question.text}</span>
