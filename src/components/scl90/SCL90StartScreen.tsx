@@ -6,7 +6,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Brain, Clock, Shield, Sparkles, Target, Lightbulb, Users, GraduationCap, Heart, Moon, HelpCircle, PlayCircle, ChevronRight } from "lucide-react";
+import { Brain, Clock, Shield, Sparkles, Target, Lightbulb, Users, GraduationCap, Heart, Moon, HelpCircle, PlayCircle, ChevronRight, Share2 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 import { scl90ScoreLabels } from "./scl90Data";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -76,16 +78,32 @@ export function SCL90StartScreen({ onStart, onContinue, onViewHistory }: SCL90St
       animate={{ opacity: 1, y: 0 }}
       style={{ transform: "translateZ(0)", willChange: "transform, opacity" }}
     >
-      {/* 标题区域 - 精简 */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-1.5 rounded-full text-sm font-medium">
-          <Brain className="w-4 h-4" />
-          <span>SCL-90 心理健康自评</span>
+      {/* 标题区域 - 带分享按钮 */}
+      <div className="flex items-start justify-between">
+        <div className="flex-1" /> {/* 左侧占位 */}
+        
+        <div className="text-center space-y-2 flex-1">
+          <div className="inline-flex items-center gap-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-1.5 rounded-full text-sm font-medium">
+            <Brain className="w-4 h-4" />
+            <span>SCL-90 心理健康自评</span>
+          </div>
+          <h2 className="text-lg font-bold">怎么判断是焦虑还是心情烦？</h2>
+          <p className="text-sm text-muted-foreground">
+            专业自测，清楚了解自己的情绪状态
+          </p>
         </div>
-        <h2 className="text-lg font-bold">怎么判断是焦虑还是心情烦？</h2>
-        <p className="text-sm text-muted-foreground">
-          专业自测，清楚了解自己的情绪状态
-        </p>
+        
+        {/* 分享按钮 */}
+        <div className="flex-1 flex justify-end">
+          <IntroShareDialog 
+            config={introShareConfigs.scl90}
+            trigger={
+              <Button variant="ghost" size="icon" className="text-purple-600 dark:text-purple-400">
+                <Share2 className="w-5 h-5" />
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       {/* 继续答题提示（如果有未完成的进度） */}
