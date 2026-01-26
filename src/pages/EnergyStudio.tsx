@@ -141,7 +141,7 @@ const EnergyStudio = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-y-auto">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-background" style={{ WebkitOverflowScrolling: 'touch' }}>
       <DynamicOGMeta pageKey="energyStudio" />
 
       <PageHeader title="有劲生活馆" />
