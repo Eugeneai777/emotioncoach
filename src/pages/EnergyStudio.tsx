@@ -141,7 +141,7 @@ const EnergyStudio = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-y-auto">
       <DynamicOGMeta pageKey="energyStudio" />
 
       <PageHeader title="有劲生活馆" />
