@@ -51,8 +51,8 @@ const EmotionButtonShareCard = forwardRef<HTMLDivElement, EmotionButtonShareCard
       <div
         ref={ref}
         style={{
-          width: '600px',
-          padding: '32px',
+          width: '420px',
+          padding: '24px',
           background: 'linear-gradient(135deg, #E6FFFA 0%, #CFFAFE 50%, #DBEAFE 100%)',
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           borderRadius: '24px',
