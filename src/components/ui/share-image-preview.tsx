@@ -222,37 +222,6 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
                 }}
               />
               
-              {/* Floating save indicator for WeChat/iOS - Always visible */}
-              {(isWeChat || isIOS) && imageLoaded && (
-                <motion.div
-                  initial={{ opacity: 0.01, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="absolute -bottom-14 left-1/2 -translate-x-1/2 whitespace-nowrap"
-                  style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
-                >
-                  <motion.div 
-                    animate={{ 
-                      scale: [1, 1.03, 1],
-                      boxShadow: [
-                        '0 0 0 0 rgba(255,255,255,0.2)',
-                        '0 0 0 8px rgba(255,255,255,0)',
-                        '0 0 0 0 rgba(255,255,255,0)'
-                      ]
-                    }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="bg-gradient-to-r from-emerald-500/80 to-blue-500/80 backdrop-blur-md rounded-full px-5 py-2.5 flex items-center gap-2 border border-white/20"
-                  >
-                    <motion.span
-                      animate={{ scale: [1, 1.3, 1] }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                      className="text-xl"
-                    >
-                      👆
-                    </motion.span>
-                    <span className="text-white text-sm font-semibold">长按图片保存到相册</span>
-                  </motion.div>
-                </motion.div>
-              )}
             </motion.div>
           </div>
 
@@ -274,7 +243,19 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
                   {/* WeChat/iOS-specific guidance - More prominent */}
                   <motion.div 
                     initial={{ scale: 0.95 }}
-                    animate={{ scale: 1 }}
+                    animate={{ 
+                      scale: [1, 1.02, 1],
+                      boxShadow: [
+                        '0 0 0 0 rgba(16,185,129,0.3)',
+                        '0 0 0 8px rgba(16,185,129,0)',
+                        '0 0 0 0 rgba(16,185,129,0)'
+                      ]
+                    }}
+                    transition={{ 
+                      duration: 2, 
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
                     className="flex items-center justify-center gap-4 bg-gradient-to-r from-emerald-500/30 to-blue-500/30 backdrop-blur-sm rounded-2xl px-6 py-4 border border-white/20 w-full max-w-sm"
                   >
                     <motion.div

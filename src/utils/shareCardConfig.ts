@@ -213,6 +213,11 @@ export const generateCanvas = async (
         element.style.transform = 'none';
         element.style.visibility = 'visible';
         element.style.opacity = '1';
+        
+        // Force background color on cloned element to prevent transparency
+        if (bgColor) {
+          element.style.backgroundColor = bgColor;
+        }
       },
     };
 
