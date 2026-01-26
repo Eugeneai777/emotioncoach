@@ -97,6 +97,10 @@ const EnergyStudio = () => {
       navigate('/wealth-block');
       return;
     }
+    if (toolId === 'scl90') {
+      navigate('/scl90');
+      return;
+    }
     setActiveTool(toolId);
   };
 
