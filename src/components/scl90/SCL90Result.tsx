@@ -171,6 +171,13 @@ export function SCL90Result({
         severityLevel={result.severityLevel}
       />
 
+      {/* Section Divider */}
+      <div className="flex items-center gap-3 py-1">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        <span className="text-xs text-muted-foreground">📌 关注要点</span>
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      </div>
+
       {/* Primary Symptom Highlight */}
       {primaryInfo && (
         <motion.div
@@ -240,6 +247,13 @@ export function SCL90Result({
         </motion.div>
       )}
 
+      {/* Section Divider */}
+      <div className="flex items-center gap-3 py-1">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        <span className="text-xs text-muted-foreground">📊 因子分析</span>
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      </div>
+
       {/* Factor Radar Chart */}
       <SCL90FactorRadar
         factorScores={result.factorScores}
@@ -247,10 +261,11 @@ export function SCL90Result({
         secondarySymptom={result.secondarySymptom}
       />
 
-      {/* Divider */}
-      <div className="flex items-center gap-3 py-2">
+      {/* Section Divider */}
+      <div className="flex items-center gap-3 py-1">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         <Sparkles className="w-4 h-4 text-muted-foreground" />
+        <span className="text-xs text-muted-foreground">AI 解读</span>
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       </div>
 

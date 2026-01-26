@@ -133,7 +133,7 @@ export function SCL90SeverityGauge({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="text-center mb-6"
+            className="text-center mb-4"
           >
             {/* GSI Score */}
             <div className="mb-3">
@@ -165,7 +165,7 @@ export function SCL90SeverityGauge({
           </motion.div>
 
           {/* Metrics Grid */}
-          <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="grid grid-cols-3 gap-2">
             {metrics.map((metric, idx) => (
               <motion.div
                 key={metric.label}
@@ -185,7 +185,7 @@ export function SCL90SeverityGauge({
           </div>
 
           {/* Zone Legend */}
-          <div className="flex justify-center gap-2 flex-wrap text-[10px]">
+          <div className="flex justify-center gap-2 flex-wrap text-[10px] mt-3">
             {(["normal", "mild", "moderate", "severe"] as SeverityLevel[]).map((level) => (
               <div 
                 key={level} 
