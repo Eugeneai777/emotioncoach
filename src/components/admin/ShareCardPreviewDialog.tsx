@@ -3,10 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download, Loader2, Check, X, Copy } from 'lucide-react';
+import { Download, Loader2, Check, X, Copy, Zap } from 'lucide-react';
 import { IntroShareCard, CardTemplate, TEMPLATE_LABELS } from '@/components/common/IntroShareCard';
 import { type ShareCardRegistryItem, CATEGORY_LABELS } from '@/config/shareCardsRegistry';
-import html2canvas from 'html2canvas';
+import { generateCanvas, canvasToBlob, getPerformanceConfig } from '@/utils/shareCardConfig';
 import { toast } from 'sonner';
 
 interface ShareCardPreviewDialogProps {
@@ -21,6 +21,8 @@ export function ShareCardPreviewDialog({ open, onOpenChange, item }: ShareCardPr
   const [generating, setGenerating] = useState(false);
   const [generateStatus, setGenerateStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [generateTime, setGenerateTime] = useState<number | null>(null);
+  const [cardReady, setCardReady] = useState(false);
+  const perfConfig = getPerformanceConfig();
 
   if (!item) return null;
 
@@ -32,17 +34,15 @@ export function ShareCardPreviewDialog({ open, onOpenChange, item }: ShareCardPr
     const startTime = Date.now();
     
     try {
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: null,
-        logging: false,
+      // 使用优化后的 generateCanvas
+      const canvas = await generateCanvas(cardRef, {
+        debug: true,
+        skipImageWait: cardReady,
       });
       
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, 'image/png', 1.0);
-      });
+      if (!canvas) throw new Error('Canvas generation failed');
+      
+      const blob = await canvasToBlob(canvas);
       
       if (blob) {
         const url = URL.createObjectURL(blob);
@@ -52,9 +52,10 @@ export function ShareCardPreviewDialog({ open, onOpenChange, item }: ShareCardPr
         a.click();
         URL.revokeObjectURL(url);
         
+        const elapsed = Date.now() - startTime;
         setGenerateStatus('success');
-        setGenerateTime(Date.now() - startTime);
-        toast.success(`图片已下载 (${Date.now() - startTime}ms)`);
+        setGenerateTime(elapsed);
+        toast.success(`图片已下载 (${elapsed}ms)`);
       } else {
         throw new Error('Failed to generate blob');
       }
@@ -109,6 +110,7 @@ export function ShareCardPreviewDialog({ open, onOpenChange, item }: ShareCardPr
                     config={item.introConfig}
                     template={template}
                     displayName="测试用户"
+                    onReady={() => setCardReady(true)}
                   />
                 </div>
 
@@ -138,6 +140,22 @@ export function ShareCardPreviewDialog({ open, onOpenChange, item }: ShareCardPr
                       {generateTime}ms
                     </div>
                   )}
+                </div>
+
+                {/* 性能信息 */}
+                <div className="bg-muted/30 rounded-lg p-3 text-xs">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Zap className="w-3 h-3" />
+                    <span>性能配置</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 mt-2 text-muted-foreground">
+                    <span>分辨率倍数:</span>
+                    <span>{perfConfig.optimalScale}x</span>
+                    <span>微信环境:</span>
+                    <span>{perfConfig.isWeChat ? '是' : '否'}</span>
+                    <span>低端设备:</span>
+                    <span>{perfConfig.isLowEnd ? '是' : '否'}</span>
+                  </div>
                 </div>
               </>
             ) : (
