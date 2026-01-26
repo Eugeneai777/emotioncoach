@@ -1158,6 +1158,10 @@ Deno.serve(async (req) => {
               
               console.log(`[DoubaoRelay] Sending text trigger: "${userText}"`);
 
+              // ✅ 获取并递增序列号（与音频包共用计数器）
+              const currentSequence = audioSequence++;
+              console.log(`[DoubaoRelay] Text message sequence: ${currentSequence}`);
+
               // 构建文本消息的 payload（豆包对话协议要求特定格式）
               const textPayload = JSON.stringify({
                 text: userText
@@ -1167,17 +1171,24 @@ Deno.serve(async (req) => {
               const sessionIdBytes = new TextEncoder().encode(doubaoSessionId);
               
               // 构建完整数据包
-              // Header(4) + Event(4) + SessionIdLen(4) + SessionId + PayloadSize(4) + Payload
+              // ✅ Header(4) + Sequence(4) + Event(4) + SessionIdLen(4) + SessionId + PayloadSize(4) + Payload
               const EVENT_TEXT_INPUT = 200; // 使用音频事件码（豆包对话模式下文本和音频共用）
-              const flags = FLAG_HAS_EVENT;
+              const flags = FLAG_HAS_SEQUENCE | FLAG_HAS_EVENT;  // ✅ 添加 FLAG_HAS_SEQUENCE
               const header = buildHeader(MESSAGE_TYPE_FULL_CLIENT, flags, SERIALIZATION_JSON);
               
-              const totalSize = 4 + 4 + 4 + sessionIdBytes.length + 4 + payloadBytes.length;
+              const totalSize = 4 + 4 + 4 + 4 + sessionIdBytes.length + 4 + payloadBytes.length;
               const packet = new Uint8Array(totalSize);
               let offset = 0;
               
               // Header
               packet.set(header, offset);
+              offset += 4;
+              
+              // ✅ Sequence (4 bytes, big-endian)
+              packet[offset] = (currentSequence >> 24) & 0xff;
+              packet[offset + 1] = (currentSequence >> 16) & 0xff;
+              packet[offset + 2] = (currentSequence >> 8) & 0xff;
+              packet[offset + 3] = currentSequence & 0xff;
               offset += 4;
               
               // Event
@@ -1208,7 +1219,7 @@ Deno.serve(async (req) => {
               const frame = buildWebSocketFrame(packet);
               await doubaoConn.write(frame);
               
-              console.log(`[DoubaoRelay] Sent text message (${payloadBytes.length} bytes)`);
+              console.log(`[DoubaoRelay] ✅ Sent text message with seq=${currentSequence} (${payloadBytes.length} bytes)`);
             } catch (err) {
               console.error('[DoubaoRelay] Error sending text message:', err);
             }
