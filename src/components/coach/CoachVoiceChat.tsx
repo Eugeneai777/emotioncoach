@@ -909,8 +909,8 @@ export const CoachVoiceChat = ({
       const platformInfo = getPlatformInfo();
       console.log('[VoiceChat] Platform info:', platformInfo);
 
-      // 🎯 豆包语音：情绪教练专用
-      const useDoubaoVoice = mode === 'emotion';
+      // 🎯 豆包语音：暂时禁用，使用 OpenAI Realtime
+      const useDoubaoVoice = false; // mode === 'emotion';  // 临时禁用豆包，改用 OpenAI
       
       if (useDoubaoVoice && platformInfo.supportsWebRTC) {
         console.log('[VoiceChat] Using Doubao Realtime for emotion coach');
