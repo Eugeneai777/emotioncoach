@@ -438,7 +438,7 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
             onClick={onStart}
             disabled={isLoading}
           >
-            {isLoading ? "加载中..." : "¥9.9 开始测评"}
+            {isLoading ? "加载中..." : "开始测评"}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
 
