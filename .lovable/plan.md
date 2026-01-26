@@ -1,277 +1,240 @@
 
-# 分享卡片管理面板设计方案
+# 情绪健康测评分享卡片实施方案
 
-## 一、全部分享卡片清单
+## 一、需求分析
 
-经过深入代码探索，项目共有 **26 张分享卡片**，分为两大类系统：
+为情绪健康测评添加两类分享功能：
+1. **开始页分享** - 邀请好友来测评（复用 IntroShareDialog）
+2. **结果页分享** - 分享测评结果（新建专属分享卡片）
 
-### 1.1 介绍页分享系统 (18 张) - `IntroShareDialog`
+## 二、实施方案
 
-| # | pageKey | 标题 | 类别 | 目标页面 |
-|---|---------|------|------|---------|
-| 1 | vibrantLife | AI生活教练 | coach | /vibrant-life-intro |
-| 2 | parentCoach | 亲子情绪教练 | coach | /parent-coach-intro |
-| 3 | parentTeen | 亲子双轨模式 | coach | /parent-teen-intro |
-| 4 | wealthCoach | 财富觉醒教练 | coach | /wealth-coach-intro |
-| 5 | coachSpace | AI教练空间 | coach | /coach-space-intro |
-| 6 | energyStudio | 有劲生活馆 | tool | /energy-studio-intro |
-| 7 | awakening | 觉察系统 | tool | /awakening-intro |
-| 8 | storyCoach | 故事教练 | coach | /story-coach-intro |
-| 9 | communicationCoach | 沟通教练 | coach | /communication-intro |
-| 10 | introduction | 有劲AI | tool | /introduction |
-| 11 | partnerIntro | 有劲合伙人 | partner | /partner-intro |
-| 12 | youjinPartner | 合伙人计划 | partner | /partner/youjin-intro |
-| 13 | promoGuide | 推广指南 | partner | /partner/promo-guide |
-| 14 | aliveCheck | 安全打卡 | tool | /alive-check-intro |
-| 15 | platformIntro | 平台介绍 | tool | /platform-intro |
-| 16 | scl90 | SCL-90心理健康自评 | tool | /scl90 |
+### 2.1 开始页分享入口
 
-### 1.2 专属结果分享卡片 (8 张) - 独立组件
+**文件**: `src/config/introShareConfig.ts`
 
-| # | 组件名 | 用途 | 位置 |
-|---|--------|------|------|
-| 1 | SCL90ShareCard | SCL-90测评结果 | src/components/scl90/ |
-| 2 | BlockRevealShareCard | 财富盲点揭示 | src/components/wealth-block/ |
-| 3 | AchievementShareCard | 成就墙展示 | src/components/wealth-camp/ |
-| 4 | GraduationShareCard | 训练营毕业 | src/components/wealth-camp/ |
-| 5 | WealthJournalShareCard | 财富日记分享 | src/components/wealth-camp/ |
-| 6 | EmotionButtonShareCard | 情绪按钮急救 | src/components/tools/ |
-| 7 | AliveCheckShareCard | 安全打卡状态 | src/components/tools/ |
-| 8 | ShareCard (Community) | 社区帖子分享 | src/components/community/ |
-
----
-
-## 二、管理面板设计
-
-### 2.1 页面路由
-
-```
-/admin/share-cards  (仅管理员可访问)
-```
-
-### 2.2 页面结构
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  📋 分享卡片管理面板                              [返回管理]  │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       │
-│  │ 全部(26) │ │ 教练(8)  │ │ 工具(6)  │ │ 合伙人(3)│ ...   │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘       │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │ 🔍 搜索卡片...                                          ││
-│  └─────────────────────────────────────────────────────────┘│
-│                                                             │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐│
-│  │ ┌─────────────┐ │  │ ┌─────────────┐ │  │ ┌──────────┐ ││
-│  │ │   🌟        │ │  │ │   💜        │ │  │ │   💰     │ ││
-│  │ │  AI生活教练  │ │  │ │ 亲子情绪教练 │ │  │ │财富觉醒  │ ││
-│  │ │             │ │  │ │             │ │  │ │          │ ││
-│  │ └─────────────┘ │  │ └─────────────┘ │  │ └──────────┘ ││
-│  │ [预览] [测试生成]│  │ [预览] [测试生成]│  │[预览][测试] ││
-│  └─────────────────┘  └─────────────────┘  └──────────────┘│
-│                                                             │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐│
-│  │   ...更多卡片   │  │                 │  │              ││
-│  └─────────────────┘  └─────────────────┘  └──────────────┘│
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 2.3 核心功能
-
-| 功能 | 说明 |
-|-----|------|
-| **分类筛选** | 按类别 (coach/tool/partner/result) 快速筛选 |
-| **搜索** | 按标题或 pageKey 模糊搜索 |
-| **缩略预览** | 每张卡片显示 0.3x 缩略图预览 |
-| **全屏预览** | 点击预览按钮打开 Dialog 查看原尺寸效果 |
-| **模板切换** | IntroShareCard 支持切换 简洁/价值/场景 三种模板 |
-| **测试生成** | 一键生成 PNG 图片并下载，验证 html2canvas 效果 |
-| **生成状态** | 显示生成耗时、成功/失败状态 |
-
----
-
-## 三、技术实现
-
-### 3.1 新建文件
-
-| 文件路径 | 说明 |
-|---------|------|
-| `src/pages/admin/ShareCardsAdmin.tsx` | 管理面板主页面 |
-| `src/components/admin/ShareCardPreviewItem.tsx` | 单个卡片预览组件 |
-| `src/components/admin/ResultCardPreviewItem.tsx` | 结果类卡片预览组件 |
-| `src/config/shareCardsRegistry.ts` | 所有分享卡片注册表 |
-
-### 3.2 卡片注册表设计
+在 `introShareConfigs` 中添加情绪健康测评配置：
 
 ```typescript
-// src/config/shareCardsRegistry.ts
-
-import { introShareConfigs, IntroShareConfig } from './introShareConfig';
-
-export type ShareCardCategory = 'coach' | 'tool' | 'partner' | 'result';
-
-export interface ShareCardRegistryItem {
-  id: string;
-  title: string;
-  category: ShareCardCategory;
-  emoji: string;
-  type: 'intro' | 'result';
-  // For intro cards
-  introConfig?: IntroShareConfig;
-  // For result cards
-  componentName?: string;
-  componentPath?: string;
-  mockProps?: Record<string, any>;
-}
-
-// 合并 introShareConfigs + 结果卡片为统一注册表
-export const shareCardsRegistry: ShareCardRegistryItem[] = [
-  // Intro cards from config
-  ...Object.values(introShareConfigs).map(config => ({
-    id: config.pageKey,
-    title: config.title,
-    category: config.category,
-    emoji: config.emoji,
-    type: 'intro' as const,
-    introConfig: config,
-  })),
-  
-  // Result cards with mock props
-  {
-    id: 'scl90-result',
-    title: 'SCL-90 测评结果',
-    category: 'result',
-    emoji: '🧠',
-    type: 'result',
-    componentName: 'SCL90ShareCard',
-    componentPath: 'scl90/SCL90ShareCard',
-    mockProps: {
-      result: {
-        gsi: 1.85,
-        severityLevel: 'mild',
-        totalScore: 168,
-        positiveCount: 42,
-        positiveScoreAvg: 2.3,
-        primarySymptom: 'anxiety',
-        factorScores: { /* mock data */ }
-      }
-    }
-  },
-  // ... 其他结果卡片
-];
+emotionHealth: {
+  pageKey: 'emotionHealth',
+  title: '情绪健康测评',
+  subtitle: '32题三层诊断，找到你的情绪卡点',
+  targetUrl: '/emotion-health',
+  emoji: '❤️‍🩹',
+  highlights: [
+    '三层诊断·状态/模式/阻滞点',
+    '对标PHQ-9/GAD-7/PSS-10权威量表',
+    'AI教练个性化陪伴修复',
+  ],
+  gradient: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+  category: 'tool'
+},
 ```
 
-### 3.3 预览组件设计
+**文件**: `src/components/emotion-health/EmotionHealthStartScreen.tsx`
+
+在标题区域添加分享按钮：
 
 ```tsx
-// src/components/admin/ShareCardPreviewItem.tsx
+import { Share2 } from "lucide-react";
+import { IntroShareDialog } from "@/components/common/IntroShareDialog";
+import { introShareConfigs } from "@/config/introShareConfig";
 
-interface ShareCardPreviewItemProps {
-  item: ShareCardRegistryItem;
-  onPreview: () => void;
-  onTestGenerate: () => void;
-}
+// 在 Hero 区域右上角添加分享按钮
+<IntroShareDialog 
+  config={introShareConfigs.emotionHealth}
+  trigger={
+    <Button variant="ghost" size="icon" className="text-white/80 hover:text-white">
+      <Share2 className="w-5 h-5" />
+    </Button>
+  }
+/>
+```
 
-export function ShareCardPreviewItem({ item, onPreview, onTestGenerate }) {
-  return (
-    <Card className="overflow-hidden">
-      {/* 缩略图预览区 */}
-      <div className="h-[180px] bg-muted/30 overflow-hidden p-2">
-        <div className="transform scale-[0.3] origin-top-left">
-          {item.type === 'intro' ? (
-            <IntroShareCard config={item.introConfig} template="concise" />
-          ) : (
-            <DynamicResultCard componentName={item.componentName} props={item.mockProps} />
-          )}
+### 2.2 结果页分享卡片
+
+**新建文件**: `src/components/emotion-health/EmotionHealthShareCard.tsx`
+
+分享卡片设计：
+- 宽度：340px（标准尺寸）
+- 主题：紫粉渐变（from-violet-900 via-purple-900 to-rose-900）
+- 内容模块：
+  1. 头部：标题 + 日期 + 用户头像
+  2. 整体状态：三维指数仪表盘（能量/焦虑/压力）
+  3. 主要模式：emoji + 模式名 + 一句话洞察
+  4. 阻滞点：简要描述
+  5. 底部：二维码 + 品牌标识
+
+```tsx
+export const EmotionHealthShareCard = React.forwardRef<HTMLDivElement, Props>(
+  ({ result, userName, avatarUrl }, ref) => {
+    // 卡片渲染逻辑
+    return (
+      <div ref={ref} className="w-[340px] bg-gradient-to-br from-violet-900 via-purple-900 to-rose-900 text-white p-5 rounded-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Heart className="w-5 h-5 text-pink-300" />
+            <div>
+              <p className="text-xs text-pink-200">情绪健康测评</p>
+              <p className="text-sm font-semibold">{dateStr}</p>
+            </div>
+          </div>
+          {avatarUrl && <img src={avatarUrl} className="w-10 h-10 rounded-full" />}
         </div>
-      </div>
-      
-      {/* 卡片信息 */}
-      <CardContent className="p-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">{item.emoji}</span>
-          <div>
-            <p className="font-medium text-sm">{item.title}</p>
-            <Badge variant="outline" className="text-xs">{item.category}</Badge>
+
+        {/* 三维指数 */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <IndexCard label="能量" value={result.energyIndex} />
+          <IndexCard label="焦虑" value={result.anxietyIndex} />
+          <IndexCard label="压力" value={result.stressIndex} />
+        </div>
+
+        {/* 主要模式 */}
+        <div className="bg-white/10 rounded-xl p-3 mb-4">
+          <p className="text-xs text-white/60 mb-2">我的情绪反应模式</p>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{patternConfig[result.primaryPattern].emoji}</span>
+            <div>
+              <p className="font-bold">{patternConfig[result.primaryPattern].name}</p>
+              <p className="text-xs text-white/70">{patternConfig[result.primaryPattern].tagline}</p>
+            </div>
           </div>
         </div>
-      </CardContent>
-      
-      {/* 操作按钮 */}
-      <CardFooter className="p-3 pt-0 gap-2">
-        <Button size="sm" variant="outline" onClick={onPreview}>
-          <Eye className="w-3 h-3 mr-1" /> 预览
-        </Button>
-        <Button size="sm" onClick={onTestGenerate}>
-          <Download className="w-3 h-3 mr-1" /> 测试生成
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-}
+
+        {/* 阻滞点 */}
+        <div className="bg-rose-500/20 rounded-lg p-2.5 mb-4">
+          <p className="text-xs text-rose-200">
+            🎯 行动阻滞点：{blockedDimensionConfig[result.blockedDimension].blockPointName}
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-3 border-t border-white/10">
+          <div>
+            <p className="text-xs text-white/60">扫码测测你的情绪健康状态</p>
+            <p className="text-sm font-medium text-pink-300">32题找到情绪卡点</p>
+            <p className="text-xs text-white/40 mt-1">Powered by 有劲AI</p>
+          </div>
+          {qrCodeUrl && <img src={qrCodeUrl} className="w-16 h-16 rounded-lg" />}
+        </div>
+      </div>
+    );
+  }
+);
 ```
 
-### 3.4 路由配置
+**新建文件**: `src/components/emotion-health/EmotionHealthShareDialog.tsx`
+
+复用 SCL-90 的 Dialog 模式：
+- 预览卡片（0.85x 缩放）
+- 隐藏的全尺寸导出卡片
+- 生成按钮（紫粉渐变）
+- 全屏图片预览
+
+### 2.3 主页面集成
+
+**文件**: `src/pages/EmotionHealthPage.tsx`
+
+添加分享状态和处理函数：
 
 ```tsx
-// 添加到 App.tsx 路由
-<Route path="/admin/share-cards" element={<ShareCardsAdmin />} />
+const [shareDialogOpen, setShareDialogOpen] = useState(false);
+
+const handleShare = () => {
+  setShareDialogOpen(true);
+};
+
+// 在 EmotionHealthResult 组件传入 onShare
+<EmotionHealthResult
+  result={result}
+  onShare={handleShare}
+  onRetake={handleRetake}
+/>
+
+// 添加分享 Dialog
+{result && (
+  <EmotionHealthShareDialog
+    open={shareDialogOpen}
+    onOpenChange={setShareDialogOpen}
+    result={result}
+  />
+)}
 ```
 
-### 3.5 访问控制
+### 2.4 注册表更新
 
-- 仅允许管理员 (admin/super_admin) 访问
-- 使用现有的 `useAuth` + `AdminGuard` 逻辑
+**文件**: `src/config/shareCardsRegistry.ts`
 
----
+在 `resultCards` 数组添加：
 
-## 四、Mock 数据设计
+```typescript
+{
+  id: 'emotion-health-result',
+  title: '情绪健康测评结果',
+  category: 'result',
+  emoji: '❤️‍🩹',
+  type: 'result',
+  componentName: 'EmotionHealthShareCard',
+  description: '三层诊断情绪卡点分享',
+},
+```
 
-为结果类卡片提供测试用 Mock 数据：
+### 2.5 导出更新
 
-| 卡片 | Mock 数据内容 |
-|-----|-------------|
-| SCL90ShareCard | GSI=1.85, 轻度症状, 焦虑为主 |
-| BlockRevealShareCard | 心穷, 逃避型, 示例洞察语录 |
-| AchievementShareCard | 3个成就已解锁, 进度50% |
-| GraduationShareCard | 第7天毕业, 完成5次打卡 |
-| EmotionButtonShareCard | 累计使用18次, 最近情绪:焦虑 |
-| AliveCheckShareCard | 已打卡30天, 5位联系人 |
+**文件**: `src/components/emotion-health/index.ts`
 
----
+添加新组件导出：
 
-## 五、文件修改清单
+```typescript
+export { EmotionHealthShareCard } from './EmotionHealthShareCard';
+export { EmotionHealthShareDialog } from './EmotionHealthShareDialog';
+```
+
+## 三、文件修改清单
 
 | 文件路径 | 操作 | 说明 |
 |---------|------|------|
-| `src/config/shareCardsRegistry.ts` | 新建 | 统一注册表 |
-| `src/pages/admin/ShareCardsAdmin.tsx` | 新建 | 管理面板主页 |
-| `src/components/admin/ShareCardPreviewItem.tsx` | 新建 | 单卡片预览 |
-| `src/components/admin/ResultCardPreviewItem.tsx` | 新建 | 结果卡片预览 |
-| `src/components/admin/ShareCardPreviewDialog.tsx` | 新建 | 全屏预览弹窗 |
-| `src/App.tsx` | 修改 | 添加路由 |
+| `src/config/introShareConfig.ts` | 修改 | 添加 emotionHealth 配置 |
+| `src/components/emotion-health/EmotionHealthStartScreen.tsx` | 修改 | 添加分享按钮 |
+| `src/components/emotion-health/EmotionHealthShareCard.tsx` | 新建 | 结果分享卡片组件 |
+| `src/components/emotion-health/EmotionHealthShareDialog.tsx` | 新建 | 结果分享 Dialog |
+| `src/pages/EmotionHealthPage.tsx` | 修改 | 集成分享功能 |
+| `src/config/shareCardsRegistry.ts` | 修改 | 注册新卡片 |
+| `src/components/emotion-health/index.ts` | 修改 | 导出新组件 |
 
----
+## 四、分享卡片视觉效果
 
-## 六、用户体验亮点
+### 开始页分享卡片（IntroShareCard）
+- **标题**: 情绪健康测评
+- **副标题**: 32题三层诊断，找到你的情绪卡点
+- **核心卖点**:
+  - 三层诊断·状态/模式/阻滞点
+  - 对标PHQ-9/GAD-7/PSS-10权威量表
+  - AI教练个性化陪伴修复
+- **主题色**: 紫粉渐变
 
-1. **一目了然** - 26张卡片按类别分组，带缩略图预览
-2. **快速搜索** - 支持按标题/关键词模糊搜索
-3. **模板切换** - IntroShareCard 支持 3 种模板实时预览
-4. **生成测试** - 一键验证 html2canvas 输出效果
-5. **状态反馈** - 显示生成耗时，便于性能监控
+### 结果页分享卡片（EmotionHealthShareCard）
+- **三维指数仪表盘**: 能量/焦虑/压力 0-100
+- **主要模式**: 🔋能量耗竭型 / 🎯高度紧绷型 / 🤐情绪压抑型 / 🐢逃避延迟型
+- **阻滞点**: 行动/情绪/信念/给予
+- **品牌标识**: Powered by 有劲AI
 
----
+## 五、技术要点
 
-## 七、预期效果
+1. **复用现有系统**: 开始页使用 IntroShareDialog，结果页参考 SCL90ShareDialog
+2. **合伙人追踪**: 二维码自动带上用户的 ref 参数
+3. **性能优化**: 使用优化后的 shareCardConfig.ts 配置
+4. **深色模式**: 卡片背景固定深色，无需适配
+5. **微信兼容**: 使用标准的分享流程和图片预览
+
+## 六、预期效果
 
 | 指标 | 说明 |
 |-----|------|
-| 覆盖率 | 26/26 卡片全部可预览 |
-| 加载时间 | 首屏 <2s (骨架屏优化) |
-| 测试效率 | 单卡片生成测试 <3s |
-| 可维护性 | 新增卡片只需更新注册表 |
+| 开始页入口 | 右上角分享按钮，紫粉渐变主题 |
+| 结果页入口 | 底部"分享结果"按钮 |
+| 卡片尺寸 | 340x~480px 标准尺寸 |
+| 生成时间 | <3s（优化后） |
+| 兼容性 | 微信/iOS/Android 全平台 |
