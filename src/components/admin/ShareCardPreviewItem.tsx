@@ -1,11 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Download, Loader2, Check, X } from 'lucide-react';
+import { Eye, Download, Loader2, Check, X, Clock } from 'lucide-react';
 import { IntroShareCard, CardTemplate } from '@/components/common/IntroShareCard';
 import { type ShareCardRegistryItem, CATEGORY_LABELS } from '@/config/shareCardsRegistry';
-import html2canvas from 'html2canvas';
+import { generateCanvas, canvasToBlob, getPerformanceConfig } from '@/utils/shareCardConfig';
 
 interface ShareCardPreviewItemProps {
   item: ShareCardRegistryItem;
@@ -17,6 +17,7 @@ export function ShareCardPreviewItem({ item, onPreview }: ShareCardPreviewItemPr
   const [generating, setGenerating] = useState(false);
   const [generateStatus, setGenerateStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [generateTime, setGenerateTime] = useState<number | null>(null);
+  const [cardReady, setCardReady] = useState(false);
 
   const handleTestGenerate = async () => {
     if (!cardRef.current || item.type !== 'intro') return;
@@ -26,17 +27,15 @@ export function ShareCardPreviewItem({ item, onPreview }: ShareCardPreviewItemPr
     const startTime = Date.now();
     
     try {
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: null,
-        logging: false,
+      // 使用优化后的 generateCanvas
+      const canvas = await generateCanvas(cardRef, {
+        debug: true,
+        skipImageWait: cardReady,
       });
       
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, 'image/png', 1.0);
-      });
+      if (!canvas) throw new Error('Canvas generation failed');
+      
+      const blob = await canvasToBlob(canvas);
       
       if (blob) {
         const url = URL.createObjectURL(blob);
@@ -48,6 +47,9 @@ export function ShareCardPreviewItem({ item, onPreview }: ShareCardPreviewItemPr
         
         setGenerateStatus('success');
         setGenerateTime(Date.now() - startTime);
+        
+        // 日志性能配置
+        console.log('[ShareCardPreviewItem] Performance:', getPerformanceConfig());
       } else {
         throw new Error('Failed to generate blob');
       }
@@ -81,6 +83,7 @@ export function ShareCardPreviewItem({ item, onPreview }: ShareCardPreviewItemPr
               config={item.introConfig} 
               template="concise"
               displayName="测试用户"
+              onReady={() => setCardReady(true)}
             />
           </div>
         ) : (

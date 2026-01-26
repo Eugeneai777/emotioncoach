@@ -79,9 +79,10 @@ export const IntroShareDialog = ({ config, trigger, partnerCode }: IntroShareDia
       const dataUrl = await generateCardDataUrl(exportRef, { 
         isWeChat: shareEnv.isWeChat,
         debug: DEBUG_SHARE_CARD,
+        skipImageWait: cardReady, // 如果卡片已就绪，跳过图片等待
       });
       
-      if (!dataUrl || !dataUrl.startsWith('data:image/png')) {
+      if (!dataUrl || (!dataUrl.startsWith('data:image/png') && !dataUrl.startsWith('data:image/jpeg'))) {
         throw new Error('Invalid image data generated');
       }
       
