@@ -138,6 +138,31 @@ export const introStatistics = {
   breakthroughUsers: 2341,
 };
 
+// ===== 科学量表对照配置 =====
+export const scientificScalesMapping = [
+  {
+    indexName: '情绪能量',
+    scale: 'PHQ-9',
+    scaleFullName: 'Patient Health Questionnaire-9',
+    displayName: '情绪能量指数',
+    description: '抑郁症状筛查国际标准量表',
+  },
+  {
+    indexName: '紧张预期',
+    scale: 'GAD-7',
+    scaleFullName: 'Generalized Anxiety Disorder-7',
+    displayName: '焦虑张力指数',
+    description: '广泛性焦虑评估国际标准量表',
+  },
+  {
+    indexName: '压力承载',
+    scale: 'PSS-10',
+    scaleFullName: 'Perceived Stress Scale-10',
+    displayName: '压力负载指数',
+    description: '压力感知评估国际标准量表',
+  }
+];
+
 // ===== 科学背书数据 =====
 export const scientificStats = [
   { stat: '60%', description: '全球约60%人存在未被识别的情绪健康问题', source: 'WHO 2023' },

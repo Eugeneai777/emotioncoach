@@ -21,6 +21,7 @@ export {
   assessmentOutcomes,
   pricingIncludes,
   loginBenefits,
+  scientificScalesMapping,
   calculateEmotionHealthResult,
   getQuestionLayer,
   getLayerProgress,
