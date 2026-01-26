@@ -195,31 +195,19 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
             </Badge>
           </motion.div>
 
-          {/* 共鸣式提问 */}
-          <div className="text-center space-y-2 mb-4">
-            <p className="text-white/80 text-sm">你有没有这种感觉？</p>
-            <motion.div 
-              className="space-y-1"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <p className="text-lg">明明没什么大事</p>
-              <p className="text-xl font-bold">
-                就是 <span className="text-amber-200 animate-pulse">「怎么都提不起劲」</span>
-              </p>
-            </motion.div>
-          </div>
-
-          {/* 接纳式副文案 */}
+          {/* 共鸣式提问 - 精简版 */}
           <motion.div 
-            className="text-center text-white/90 text-sm space-y-1"
-            initial={{ opacity: 0 }}
+            className="text-center space-y-1.5 mb-4"
+            initial={{ opacity: 0.01 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.3 }}
+            style={{ transform: "translateZ(0)", willChange: "transform, opacity" }}
           >
-            <p>不是你不够努力</p>
-            <p>是有个东西一直在 <span className="text-amber-200 font-medium">暗中消耗你的能量</span></p>
+            <p className="text-lg">明明没什么大事</p>
+            <p className="text-xl font-bold">
+              就是 <span className="text-amber-200 animate-pulse">「怎么都提不起劲」</span>
+            </p>
+            <p className="text-sm text-white/90 mt-2">是什么在暗中消耗你？</p>
           </motion.div>
         </div>
       </Card>
