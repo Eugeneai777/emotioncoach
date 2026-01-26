@@ -840,9 +840,15 @@ export const CoachVoiceChat = ({
       setUserTranscript('');
 
       // 🔐 确保登录态可用：没有 session 或 refresh 失败时，直接引导重新登录
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      console.log('[VoiceChat] Session check:', { 
+        hasSession: !!sessionData?.session, 
+        error: sessionError?.message 
+      });
+      
       if (!sessionData?.session) {
-        toast({ title: "登录已过期", description: "请重新登录后再试", variant: "destructive" });
+        console.error('[VoiceChat] ❌ No session found, redirecting to auth');
+        toast({ title: "请先登录", description: "语音对话需要登录后使用", variant: "destructive" });
         setStatus('error');
         isInitializingRef.current = false;
         stopConnectionTimer();
@@ -855,7 +861,7 @@ export const CoachVoiceChat = ({
 
       const { error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
-        console.warn('[VoiceChat] refreshSession failed, forcing re-login:', refreshError);
+        console.error('[VoiceChat] ❌ Session refresh failed:', refreshError.message);
         try {
           await supabase.auth.signOut();
         } catch (e) {
@@ -872,6 +878,7 @@ export const CoachVoiceChat = ({
         setTimeout(onClose, 300);
         return;
       }
+      console.log('[VoiceChat] ✅ Session validated successfully');
       
       // 🔧 预扣第一分钟点数
       updateConnectionPhase('requesting_mic');
@@ -923,7 +930,32 @@ export const CoachVoiceChat = ({
           stopConnectionTimer();
           startMonitoring();
         } catch (doubaoError: any) {
-          console.error('[VoiceChat] Doubao connection failed:', doubaoError);
+          console.error('[VoiceChat] ❌ Doubao connection failed:', doubaoError);
+          
+          // 检查是否是认证错误
+          const errorMsg = doubaoError.message || '';
+          const errorCode = doubaoError.code || '';
+          
+          if (errorCode === 'TOKEN_EXPIRED' || errorCode === 'MISSING_AUTH_HEADER' || 
+              errorMsg.includes('Unauthorized') || errorMsg.includes('401')) {
+            console.error('[VoiceChat] ❌ Auth error detected, redirecting to login');
+            toast({
+              title: "登录已过期",
+              description: "请重新登录后再试",
+              variant: "destructive"
+            });
+            doubaoClient.disconnect();
+            chatRef.current = null;
+            setStatus('error');
+            isInitializingRef.current = false;
+            stopConnectionTimer();
+            releaseLock();
+            const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+            navigate(`/auth?redirect=${redirect}`);
+            setTimeout(onClose, 300);
+            return;
+          }
+          
           // 豆包连接失败，降级到 OpenAI WebRTC
           console.log('[VoiceChat] Falling back to OpenAI WebRTC...');
           doubaoClient.disconnect();

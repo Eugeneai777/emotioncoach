@@ -106,8 +106,9 @@ Deno.serve(async (req) => {
     // 验证用户身份
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
+      console.error('[DoubaoToken] ❌ Missing or invalid Authorization header');
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized', code: 'MISSING_AUTH_HEADER', message: '缺少认证信息' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -122,9 +123,14 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
-      console.error('Auth error:', userError);
+      console.error('[DoubaoToken] ❌ Auth error:', userError?.message, userError?.status);
+      const errorCode = userError?.status === 401 ? 'TOKEN_EXPIRED' : 'AUTH_ERROR';
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ 
+          error: 'Unauthorized', 
+          code: errorCode,
+          message: userError?.message || '认证失败' 
+        }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
