@@ -6,3 +6,8 @@ export { SCL90SeverityGauge } from './SCL90SeverityGauge';
 export { SCL90FactorRadar } from './SCL90FactorRadar';
 export { SCL90AIAnalysis } from './SCL90AIAnalysis';
 export type { SCL90AIInsight } from './SCL90AIAnalysis';
+export { SCL90History } from './SCL90History';
+export type { SCL90HistoryRecord } from './SCL90History';
+export { SCL90Trend } from './SCL90Trend';
+export { SCL90Comparison } from './SCL90Comparison';
+export { SCL90HistoryPage } from './SCL90HistoryPage';
