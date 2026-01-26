@@ -154,7 +154,7 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
     <div className="space-y-4">
       {/* ===== 模块1：品牌 + 痛点开场 ===== */}
       <Card className="overflow-hidden">
-        <div className="bg-gradient-to-br from-rose-500 via-pink-500 to-purple-500 p-6 text-white">
+        <div className="bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600 p-6 text-white">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Heart className="w-5 h-5" />
@@ -202,29 +202,6 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
             <p>是有个东西一直在 <span className="text-amber-200 font-medium">暗中消耗你的能量</span></p>
           </motion.div>
         </div>
-
-        {/* 首屏CTA */}
-        <CardContent className="p-4">
-          <Button 
-            size="lg" 
-            className="w-full h-12 text-base bg-gradient-to-r from-rose-500 via-pink-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
-            onClick={onStart}
-            disabled={isLoading}
-          >
-            {isLoading ? "加载中..." : "¥9.9 开始测评"}
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground mt-3">
-            <div className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
-              <span>约5-8分钟</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Shield className="w-3.5 h-3.5" />
-              <span>结果仅自己可见</span>
-            </div>
-          </div>
-        </CardContent>
       </Card>
 
       {/* ===== 模块2：痛点共鸣区 ===== */}
@@ -254,9 +231,9 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="mt-4 p-3 rounded-lg bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border border-red-200 dark:border-red-800"
+            className="mt-4 p-3 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800"
           >
-            <p className="text-xs text-red-600 dark:text-red-400 text-center leading-relaxed">
+            <p className="text-xs text-amber-700 dark:text-amber-400 text-center leading-relaxed">
               如果不解决这些卡点，你可能会继续这样 <span className="font-bold">3-5年</span><br />
               反复陷入「内耗→自责→更内耗」的死循环
             </p>
@@ -391,13 +368,13 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
       </Card>
 
       {/* ===== 模块8：定价模块 ===== */}
-      <Card className="bg-gradient-to-br from-rose-50 via-pink-50 to-white dark:from-rose-900/20 dark:via-pink-900/20 dark:to-background border-rose-300 dark:border-rose-800">
+      <Card className="bg-gradient-to-br from-violet-50 via-indigo-50 to-white dark:from-violet-900/20 dark:via-indigo-900/20 dark:to-background border-violet-300 dark:border-violet-800">
         <CardContent className="p-5">
           <h3 className="text-sm font-semibold text-center mb-4">开启你的情绪修复之旅</h3>
           
           <div className="flex items-center justify-center gap-3 mb-4">
-            <span className="text-4xl font-bold text-rose-600">¥9.9</span>
-            <span className="px-2 py-0.5 bg-red-500 rounded text-xs text-white font-medium animate-pulse">限时</span>
+            <span className="text-4xl font-bold text-violet-600 dark:text-violet-400">¥9.9</span>
+            <span className="px-2 py-0.5 bg-amber-500 rounded text-xs text-white font-medium animate-pulse">限时</span>
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-4">
@@ -411,7 +388,7 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
 
           <Button 
             size="lg" 
-            className="w-full h-14 text-base bg-gradient-to-r from-rose-500 via-pink-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
+            className="w-full h-14 text-base bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
             onClick={onStart}
             disabled={isLoading}
           >
