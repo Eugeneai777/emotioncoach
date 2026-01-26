@@ -14,6 +14,13 @@ export {
   resultPageSectionTitles,
   coachDialogueScripts,
   universalConversionRounds,
+  // New intro page data exports
+  introStatistics,
+  authorityData,
+  upgradedPainPoints,
+  assessmentOutcomes,
+  pricingIncludes,
+  loginBenefits,
   calculateEmotionHealthResult,
   getQuestionLayer,
   getLayerProgress,

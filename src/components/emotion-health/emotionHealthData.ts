@@ -132,11 +132,24 @@ export const emotionHealthQuestions: EmotionHealthQuestion[] = [
   { id: 32, layer: 'blockage', text: "你是否长期只在消耗能量，很少被滋养？", blockageType: 'giving' },
 ];
 
+// ===== 介绍页统计数据 =====
+export const introStatistics = {
+  totalAssessments: 8567,
+  breakthroughUsers: 2341,
+};
+
 // ===== 科学背书数据 =====
 export const scientificStats = [
   { stat: '60%', description: '全球约60%人存在未被识别的情绪健康问题', source: 'WHO 2023' },
   { stat: '80%', description: '80%情绪困扰源于自动化反应模式', source: '心理学研究' },
   { stat: '3层', description: '表面症状→反应模式→根本阻滞', source: '行为科学' },
+];
+
+// ===== 权威背书数据 =====
+export const authorityData = [
+  { source: "世界卫生组织", stat: "60%", desc: "全球约60%人存在未被识别的情绪健康问题", icon: "🏥" },
+  { source: "心理学研究", stat: "80%", desc: "80%情绪困扰源于自动化反应模式", icon: "🔬" },
+  { source: "2024情绪健康调研", stat: "92%", desc: "的人不知道自己卡在哪个情绪阶段", icon: "📊" },
 ];
 
 // ===== 核心痛点共鸣 =====
@@ -145,6 +158,38 @@ export const painPoints = [
   { emoji: '🤯', text: '道理都懂，但就是做不到' },
   { emoji: '🌊', text: '情绪一来就被淹没，事后又后悔' },
   { emoji: '😮‍💨', text: '总觉得很累，但又说不清哪里累' },
+];
+
+// ===== 升级版痛点（具体场景）=====
+export const upgradedPainPoints = [
+  { emoji: "😴", text: "明明睡了很久，醒来还是觉得累，没恢复过来" },
+  { emoji: "🌊", text: "情绪一来就被淹没，事后又后悔自己为什么控制不住" },
+  { emoji: "🔄", text: "道理都懂，行动就是跟不上，然后开始自责" },
+  { emoji: "😶", text: "心里委屈很多，但从不知道该怎么说出来" },
+  { emoji: "⏰", text: "重要的事一拖再拖，越拖越焦虑越不想动" },
+];
+
+// ===== 价值产出配置 =====
+export const assessmentOutcomes = [
+  { icon: 'Activity', title: "三维情绪仪表盘", desc: "能量/焦虑/压力三大指数可视化", color: "cyan" },
+  { icon: 'Brain', title: "反应模式识别", desc: "识别你的情绪自动反应模式", color: "purple" },
+  { icon: 'Target', title: "阻滞点定位", desc: "精准找到你当前最卡的那一层", color: "rose" },
+  { icon: 'Bot', title: "AI教练陪伴", desc: "根据结果进入专属对话修复路径", color: "emerald" },
+];
+
+// ===== 定价包含项目 =====
+export const pricingIncludes = [
+  "32道专业场景测评",
+  "三维情绪仪表盘",
+  "反应模式诊断",
+  "AI教练陪伴对话",
+];
+
+// ===== 登录权益 =====
+export const loginBenefits = [
+  "查看历史趋势变化",
+  "解锁情绪日记训练营",
+  "获得AI教练个性化陪伴",
 ];
 
 // ===== 四大反应模式配置 =====
