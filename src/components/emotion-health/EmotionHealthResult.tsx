@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { 
   Accordion,
   AccordionContent,
@@ -19,7 +18,8 @@ import {
   getIndexLevelLabel,
   getIndexLevelColor,
   getIndexBarColor,
-  resultPageFooterConfig
+  resultPageFooterConfig,
+  resultPageSectionTitles
 } from "./emotionHealthData";
 
 interface EmotionHealthResultProps {
@@ -54,7 +54,7 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
       <Card className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">第一层：状态筛查结果</CardTitle>
+            <CardTitle className="text-base">{resultPageSectionTitles.statusOverview.title}</CardTitle>
             <Badge 
               variant={overallLevel === 'high' ? 'destructive' : overallLevel === 'medium' ? 'secondary' : 'outline'}
               className="text-xs"
@@ -62,14 +62,14 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
               {overallRisk}
             </Badge>
           </div>
-          <CardDescription className="text-xs">基于你的作答生成的三大指数</CardDescription>
+          <CardDescription className="text-xs">{resultPageSectionTitles.statusOverview.subtitle}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <IndexBar label="情绪能量" value={result.energyIndex} description="对标PHQ-9简化" />
-          <IndexBar label="焦虑张力" value={result.anxietyIndex} description="对标GAD-7简化" />
-          <IndexBar label="压力负载" value={result.stressIndex} description="对标PSS-10简化" />
+          <IndexBar label="情绪能量" value={result.energyIndex} />
+          <IndexBar label="焦虑张力" value={result.anxietyIndex} />
+          <IndexBar label="压力负载" value={result.stressIndex} />
           <p className="text-[10px] text-muted-foreground mt-2">
-            指数反映的是你最近的主观感受强度，不是诊断结果，只用于帮助你更好了解自己。
+            {resultPageSectionTitles.statusOverview.footnote}
           </p>
         </CardContent>
       </Card>
@@ -77,10 +77,9 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
       {/* 模块2：反应模式 - 增强版 */}
       <Card className={cn("border-2", primaryPattern.bgColor)}>
         <CardHeader className="pb-3">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
-            <Target className="w-3.5 h-3.5" />
-            第二层：反应模式识别
-          </div>
+          <p className="text-xs text-muted-foreground mb-2">
+            {resultPageSectionTitles.reactionPattern.title}
+          </p>
           <div className="flex items-center gap-3">
             <span className="text-4xl">{primaryPattern.emoji}</span>
             <div>
@@ -185,11 +184,11 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
       {/* 模块3：行动阻滞点 */}
       <Card className="border-rose-200 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-900/10">
         <CardHeader className="pb-2">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-            <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
-            第三层：行动阻滞点
-          </div>
-          <CardTitle className="text-sm">你目前最需要优先修复的是</CardTitle>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-500" />
+            {resultPageSectionTitles.blockPoint.title}
+          </CardTitle>
+          <CardDescription className="text-xs">{resultPageSectionTitles.blockPoint.subtitle}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="p-4 rounded-xl bg-gradient-to-r from-rose-500/10 to-purple-500/10">
@@ -197,7 +196,7 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
               <span className="w-8 h-8 rounded-full bg-gradient-to-r from-rose-500 to-purple-500 flex items-center justify-center text-white text-sm">
                 !
               </span>
-              {blockedDim.name}
+              {blockedDim.blockPointName}
             </h4>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
               {blockedDim.description}
@@ -216,7 +215,7 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
         <CardHeader className="pb-2">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <CardTitle className="text-sm">今天你可以先从这一步开始</CardTitle>
+            <CardTitle className="text-sm">{resultPageSectionTitles.firstStep.title}</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -240,14 +239,19 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
               {resultPageFooterConfig.subMessage}
             </p>
           </div>
-          <Button 
-            size="lg" 
-            className="w-full h-12 text-base bg-gradient-to-r from-rose-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
-            onClick={handleStartCoach}
-          >
-            <MessageCircle className="w-5 h-5 mr-2" />
-            {resultPageFooterConfig.ctaText}
-          </Button>
+          <div className="space-y-2">
+            <Button 
+              size="lg" 
+              className="w-full h-12 text-base bg-gradient-to-r from-rose-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
+              onClick={handleStartCoach}
+            >
+              <MessageCircle className="w-5 h-5 mr-2" />
+              {resultPageFooterConfig.ctaText}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              {resultPageSectionTitles.cta.primarySubtext}
+            </p>
+          </div>
         </CardContent>
       </Card>
 
@@ -258,7 +262,7 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
           className="w-full"
           onClick={() => navigate('/camps')}
         >
-          查看完整成长支持路径
+          {resultPageSectionTitles.cta.secondaryText}
           <ChevronRight className="w-4 h-4 ml-1" />
         </Button>
 
@@ -280,8 +284,7 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
 
       {/* 合规声明 */}
       <p className="text-[10px] text-muted-foreground text-center px-4 py-3 border-t">
-        本测评为情绪状态与成长觉察工具，不构成任何医学诊断或治疗建议。
-        若你感到持续严重不适，请及时联系专业心理支持机构。
+        {resultPageSectionTitles.compliance}
       </p>
     </div>
   );
@@ -290,10 +293,9 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
 interface IndexBarProps {
   label: string;
   value: number;
-  description?: string;
 }
 
-function IndexBar({ label, value, description }: IndexBarProps) {
+function IndexBar({ label, value }: IndexBarProps) {
   const level = getIndexLevel(value);
   const levelLabel = getIndexLevelLabel(level);
   const levelColor = getIndexLevelColor(level);
@@ -302,14 +304,9 @@ function IndexBar({ label, value, description }: IndexBarProps) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">{label}</span>
         <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">{label}</span>
-          {description && (
-            <span className="text-[10px] text-muted-foreground/60">({description})</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{value}</span>
+          <span className="font-medium">{value}/100</span>
           <span className={cn("text-xs", levelColor)}>({levelLabel})</span>
         </div>
       </div>

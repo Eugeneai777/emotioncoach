@@ -283,30 +283,35 @@ export const patternConfig: Record<PatternType, {
 // ===== 卡住维度配置 =====
 export const blockedDimensionConfig: Record<BlockedDimension, {
   name: string;
+  blockPointName: string;
   description: string;
   recommendedCoach: string;
   recommendedCamp: string;
 }> = {
   action: {
     name: '行动启动',
-    description: '你的系统还在等待一个"绝对安全"的信号才敢开始，但这个信号可能永远不会来。我们需要帮你的大脑重新学会：不完美地开始，也是可以的。',
+    blockPointName: '大脑持续警戒状态',
+    description: '你的系统还在不断扫描风险，即使环境已经相对安全，也难以真正放松。如果不先降低警戒，很难靠意志力走得更远。',
     recommendedCoach: '行动教练AI',
     recommendedCamp: '执行力训练营'
   },
   emotion: {
     name: '情绪稳定',
+    blockPointName: '情绪系统超载',
     description: '你的情绪系统已经超载了，但你可能还在硬撑。在做任何改变之前，先让情绪有个出口，才能真正轻装上阵。',
     recommendedCoach: '情绪教练AI',
     recommendedCamp: '情绪日记训练营'
   },
   belief: {
     name: '自我价值',
+    blockPointName: '自我价值感缺失',
     description: '你对自己的要求太高，却很少真正肯定自己。这种"永远不够好"的感觉，会持续消耗你的能量和动力。',
     recommendedCoach: '自我价值重建AI',
     recommendedCamp: '信念重塑训练营'
   },
   giving: {
     name: '能量补给',
+    blockPointName: '长期能量透支',
     description: '你一直在付出，却很少给自己真正的滋养。如果不先修复能量系统，任何改变都会很快耗尽。',
     recommendedCoach: '能量恢复AI',
     recommendedCamp: '能量滋养训练营'
@@ -515,4 +520,28 @@ export const resultPageFooterConfig = {
   message: '你的情绪并不是问题，它只是提醒你：你正在用一种很辛苦的方式生活。',
   subMessage: '有劲AI会根据你的状态，陪你一步一步走回更有力量的位置。',
   ctaText: '开始我的AI陪伴对话'
+};
+
+// ===== 结果页各模块标题配置 =====
+export const resultPageSectionTitles = {
+  statusOverview: {
+    title: '你的情绪状态概览',
+    subtitle: '基于你刚完成的测评结果生成',
+    footnote: '指数反映的是你最近的主观感受强度，不是诊断结果，只用于帮助你更好了解自己。'
+  },
+  reactionPattern: {
+    title: '你现在最主要的情绪反应模式'
+  },
+  blockPoint: {
+    title: '你现在最卡的地方',
+    subtitle: '你目前最需要优先修复的是'
+  },
+  firstStep: {
+    title: '今天你可以先从这一步开始'
+  },
+  cta: {
+    primarySubtext: '根据你的状态，我会陪你一步步调整节奏',
+    secondaryText: '查看完整成长支持路径'
+  },
+  compliance: '本测评为情绪状态与成长觉察工具，不构成任何医疗诊断。如你感到持续严重不适，请及时寻求专业心理支持。'
 };
