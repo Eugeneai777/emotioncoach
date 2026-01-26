@@ -142,11 +142,11 @@ export const scl90FactorInfo: Record<SCL90Factor, {
 
 // 评分选项
 export const scl90ScoreLabels = [
-  { value: 1, label: '没有', color: 'bg-green-100 text-green-700 border-green-300' },
-  { value: 2, label: '很轻', color: 'bg-blue-100 text-blue-700 border-blue-300' },
-  { value: 3, label: '中等', color: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
-  { value: 4, label: '偏重', color: 'bg-orange-100 text-orange-700 border-orange-300' },
-  { value: 5, label: '严重', color: 'bg-red-100 text-red-700 border-red-300' },
+  { value: 1, label: '没有', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
+  { value: 2, label: '很轻', color: 'bg-sky-50 text-sky-600 border-sky-200' },
+  { value: 3, label: '中等', color: 'bg-amber-50 text-amber-600 border-amber-200' },
+  { value: 4, label: '偏重', color: 'bg-orange-50 text-orange-600 border-orange-200' },
+  { value: 5, label: '严重', color: 'bg-rose-50 text-rose-600 border-rose-200' },
 ];
 
 // 严重程度配置
