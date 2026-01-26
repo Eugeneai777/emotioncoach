@@ -44,13 +44,16 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
     }
   }, [open]);
 
-  // Keep tip visible longer for WeChat/iOS (don't auto-hide)
+  // Auto-hide tip after delay on all platforms
   useEffect(() => {
-    if (open && showTip && !isWeChat && !isIOS) {
-      const timer = setTimeout(() => setShowTip(false), 8000);
+    if (open && showTip && imageLoaded) {
+      // WeChat/iOS users may need more time, show for 5 seconds
+      // Other environments hide after 3 seconds
+      const delay = (isWeChat || isIOS) ? 5000 : 3000;
+      const timer = setTimeout(() => setShowTip(false), delay);
       return () => clearTimeout(timer);
     }
-  }, [open, showTip, isWeChat, isIOS]);
+  }, [open, showTip, isWeChat, isIOS, imageLoaded]);
 
   // Handle download for non-WeChat environments
   const handleDownload = useCallback(async () => {
@@ -216,12 +219,12 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
                 }}
                 onLoad={handleImageLoad}
                 onError={handleImageError}
+                onTouchStart={() => setShowTip(false)} // Hide tip when user starts interacting
                 onContextMenu={(e) => {
                   // Allow context menu for saving
                   e.stopPropagation();
                 }}
               />
-              
             </motion.div>
           </div>
 
@@ -238,24 +241,30 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
             }}
           >
             <div className="flex flex-col items-center gap-3 px-4">
-              {(isWeChat || isIOS) ? (
-                <>
-                  {/* WeChat/iOS-specific guidance - More prominent */}
+              <AnimatePresence>
+                {showTip && (isWeChat || isIOS) && (
                   <motion.div 
-                    initial={{ scale: 0.95 }}
+                    initial={{ scale: 0.95, opacity: 0.01 }}
                     animate={{ 
                       scale: [1, 1.02, 1],
+                      opacity: 1,
                       boxShadow: [
                         '0 0 0 0 rgba(16,185,129,0.3)',
                         '0 0 0 8px rgba(16,185,129,0)',
                         '0 0 0 0 rgba(16,185,129,0)'
                       ]
                     }}
+                    exit={{ 
+                      opacity: 0, 
+                      y: 20,
+                      transition: { duration: 0.3 }
+                    }}
                     transition={{ 
                       duration: 2, 
                       repeat: Infinity,
                       ease: "easeInOut"
                     }}
+                    style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
                     className="flex items-center justify-center gap-4 bg-gradient-to-r from-emerald-500/30 to-blue-500/30 backdrop-blur-sm rounded-2xl px-6 py-4 border border-white/20 w-full max-w-sm"
                   >
                     <motion.div
@@ -277,26 +286,17 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
                       <p className="text-white/70 text-sm mt-0.5">保存后可分享给好友或发朋友圈</p>
                     </div>
                   </motion.div>
-                  
-                  {/* Secondary hint */}
-                  <p className="text-white/40 text-xs text-center">
-                    💡 保存后打开微信，发送给好友或分享朋友圈
-                  </p>
-                </>
-              ) : (
-                <>
-                  {/* Non-WeChat guidance */}
-                  <Button
-                    onClick={handleDownload}
-                    className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white rounded-full px-8 py-3 h-auto gap-2 text-base font-medium"
-                  >
-                    <Download className="h-5 w-5" />
-                    保存图片
-                  </Button>
-                  <p className="text-white/50 text-xs text-center">
-                    保存后可分享给好友
-                  </p>
-                </>
+                )}
+              </AnimatePresence>
+              
+              {!(isWeChat || isIOS) && (
+                <Button
+                  onClick={handleDownload}
+                  className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white rounded-full px-8 py-3 h-auto gap-2 text-base font-medium"
+                >
+                  <Download className="h-5 w-5" />
+                  保存图片
+                </Button>
               )}
             </div>
           </motion.div>
