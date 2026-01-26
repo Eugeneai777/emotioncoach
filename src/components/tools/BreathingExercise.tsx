@@ -190,11 +190,11 @@ export const BreathingExercise = () => {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="overflow-hidden">
         <CardContent className="pt-4 pb-4">
           <div className="flex flex-col items-center space-y-4">
-            {/* 呼吸圆圈 - 响应式尺寸 */}
-            <div className="relative w-48 h-48 sm:w-64 sm:h-64 flex items-center justify-center">
+            {/* 呼吸圆圈 - 响应式尺寸，限制溢出 */}
+            <div className="relative w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center">
               <div
                 className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 transition-transform duration-1000 ease-in-out origin-center"
                 style={{
@@ -202,8 +202,8 @@ export const BreathingExercise = () => {
                 }}
               />
               <div className="relative z-10 text-center">
-                <div className="text-5xl sm:text-6xl font-bold text-primary">{timeLeft}</div>
-                <div className="text-lg sm:text-xl text-muted-foreground mt-1">{getPhaseText()}</div>
+                <div className="text-4xl sm:text-5xl font-bold text-primary">{timeLeft}</div>
+                <div className="text-base sm:text-lg text-muted-foreground mt-1">{getPhaseText()}</div>
               </div>
             </div>
 
