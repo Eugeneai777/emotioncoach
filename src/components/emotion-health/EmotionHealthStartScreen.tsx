@@ -19,6 +19,8 @@ import {
   assessmentOutcomes,
   pricingIncludes,
   scientificScalesMapping,
+  patternTableMapping,
+  blockageDimensionMapping,
   PatternType 
 } from "./emotionHealthData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -380,6 +382,75 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
             <p className="text-[10px] text-muted-foreground mt-2 text-center">
               💡 以上量表均为国际权威心理健康筛查工具
             </p>
+          </div>
+
+          {/* 第二层：反应模式对照表 */}
+          <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 border border-purple-200 dark:border-purple-800">
+            <div className="flex items-center gap-2 mb-2">
+              <Brain className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              <span className="text-xs font-semibold text-purple-700 dark:text-purple-400">
+                第二层：反应模式（卡点诊断层）
+              </span>
+            </div>
+            
+            <p className="text-[10px] text-muted-foreground mb-3">
+              目的：识别你的情绪自动反应模式
+            </p>
+
+            <Table className="text-xs">
+              <TableHeader>
+                <TableRow className="bg-white/50 dark:bg-white/5 border-0">
+                  <TableHead className="py-2 px-2 font-semibold h-auto text-foreground">模式</TableHead>
+                  <TableHead className="py-2 px-2 font-semibold h-auto text-foreground">本质</TableHead>
+                  <TableHead className="py-2 px-2 font-semibold h-auto text-foreground">对应人群</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {patternTableMapping.map((item, index) => (
+                  <TableRow key={index} className="border-0">
+                    <TableCell className="py-1.5 px-2 font-medium">{item.pattern}</TableCell>
+                    <TableCell className="py-1.5 px-2 text-muted-foreground">{item.essence}</TableCell>
+                    <TableCell className="py-1.5 px-2 text-muted-foreground">{item.audience}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* 第三层：行动阻滞维度对照表 */}
+          <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20 border border-rose-200 dark:border-rose-800">
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+              <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">
+                第三层：行动路径（转化承接层）
+              </span>
+            </div>
+            
+            <p className="text-[10px] text-muted-foreground mb-3">
+              目的：精准定位你当前最需要突破的阻滞点
+            </p>
+
+            <Table className="text-xs">
+              <TableHeader>
+                <TableRow className="bg-white/50 dark:bg-white/5 border-0">
+                  <TableHead className="py-2 px-2 font-semibold h-auto text-foreground">维度</TableHead>
+                  <TableHead className="py-2 px-2 font-semibold h-auto text-foreground">问什么</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {blockageDimensionMapping.map((item, index) => (
+                  <TableRow key={index} className="border-0">
+                    <TableCell className="py-1.5 px-2">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span>{item.emoji}</span>
+                        <span className="font-medium">{item.dimension}</span>
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-1.5 px-2 text-muted-foreground">{item.question}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>

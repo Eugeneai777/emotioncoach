@@ -202,6 +202,22 @@ export const assessmentOutcomes = [
   { icon: 'Bot', title: "AI教练陪伴", desc: "根据结果进入专属对话修复路径", color: "emerald" },
 ];
 
+// ===== 第二层：反应模式对照配置 =====
+export const patternTableMapping = [
+  { pattern: '能量耗竭型', essence: '长期付出无恢复', audience: '宝妈/护理者/管理者', color: 'orange' },
+  { pattern: '高度紧绷型', essence: '完美主义+控制', audience: '职场骨干', color: 'blue' },
+  { pattern: '情绪压抑型', essence: '不敢表达真实需要', audience: '关系型人格', color: 'purple' },
+  { pattern: '逃避延迟型', essence: '情绪一来就拖延', audience: '自由职业/学生', color: 'teal' },
+];
+
+// ===== 第三层：行动阻滞维度配置 =====
+export const blockageDimensionMapping = [
+  { dimension: '行动', question: '知道该做但做不动吗', emoji: '🎯' },
+  { dimension: '情绪', question: '情绪是否常淹没你', emoji: '🌊' },
+  { dimension: '信念', question: '是否觉得自己不够好', emoji: '💭' },
+  { dimension: '给予', question: '是否长期只消耗不滋养', emoji: '🔋' },
+];
+
 // ===== 定价包含项目 =====
 export const pricingIncludes = [
   "32道专业场景测评",
