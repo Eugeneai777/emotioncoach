@@ -18,8 +18,11 @@ import {
   patternConfig, 
   assessmentOutcomes,
   pricingIncludes,
+  scientificScalesMapping,
   PatternType 
 } from "./emotionHealthData";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CheckCircle2 } from "lucide-react";
 
 interface EmotionHealthStartScreenProps {
   onStart: () => void;
@@ -334,6 +337,49 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
                 <span className="text-muted-foreground ml-2">行动路径（4题）</span>
               </div>
             </div>
+          </div>
+
+          {/* 科学量表对照表 */}
+          <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-cyan-50 dark:from-emerald-900/20 dark:to-cyan-900/20 border border-emerald-200 dark:border-emerald-800">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                第一层：状态筛查（科学背书层）
+              </span>
+            </div>
+            
+            <p className="text-[10px] text-muted-foreground mb-3">
+              目的：建立专业信任 + 判断情绪风险等级
+            </p>
+
+            <Table className="text-xs">
+              <TableHeader>
+                <TableRow className="bg-white/50 dark:bg-white/5 border-0">
+                  <TableHead className="py-2 px-2 font-semibold h-auto text-foreground">指数</TableHead>
+                  <TableHead className="py-2 px-2 font-semibold h-auto text-foreground">对标量表</TableHead>
+                  <TableHead className="py-2 px-2 font-semibold h-auto text-foreground">本测评命名</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {scientificScalesMapping.map((item, index) => (
+                  <TableRow key={index} className="border-0">
+                    <TableCell className="py-1.5 px-2">{item.indexName}</TableCell>
+                    <TableCell className="py-1.5 px-2">
+                      <Badge variant="outline" className="font-mono text-[10px] h-5">
+                        {item.scale}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-1.5 px-2 text-primary font-medium">
+                      {item.displayName}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            
+            <p className="text-[10px] text-muted-foreground mt-2 text-center">
+              💡 以上量表均为国际权威心理健康筛查工具
+            </p>
           </div>
         </CardContent>
       </Card>
