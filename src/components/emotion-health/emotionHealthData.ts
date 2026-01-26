@@ -1,15 +1,19 @@
-// 情绪健康测评 - 题库、评分逻辑和类型定义
+// 情绪健康测评 - 三层诊断系统
+// 第一层：状态筛查（12题）  第二层：反应模式（16题）  第三层：行动阻滞（4题）
 
 // ===== 类型定义 =====
+export type QuestionLayer = 'screening' | 'pattern' | 'blockage';
 export type IndexType = 'energy' | 'anxiety' | 'stress';
 export type PatternType = 'exhaustion' | 'tension' | 'suppression' | 'avoidance';
 export type BlockedDimension = 'action' | 'emotion' | 'belief' | 'giving';
 
 export interface EmotionHealthQuestion {
   id: number;
+  layer: QuestionLayer;
   text: string;
-  indexType: IndexType;
-  patternType: PatternType;
+  indexType?: IndexType;      // 第一层用
+  patternType?: PatternType;  // 第二层用
+  blockageType?: BlockedDimension; // 第三层用
 }
 
 export interface EmotionHealthResult {
@@ -26,6 +30,47 @@ export interface EmotionHealthResult {
   recommendedPath: string;
 }
 
+// ===== 层级配置 =====
+export const layerConfig = {
+  screening: {
+    name: '状态筛查',
+    description: '科学背书层',
+    color: 'from-blue-500 to-cyan-500',
+    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    questions: { start: 1, end: 12 }
+  },
+  pattern: {
+    name: '反应模式',
+    description: '卡点诊断层',
+    color: 'from-purple-500 to-violet-500',
+    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+    questions: { start: 13, end: 28 }
+  },
+  blockage: {
+    name: '行动阻滞',
+    description: '转化承接层',
+    color: 'from-rose-500 to-pink-500',
+    bgColor: 'bg-rose-100 dark:bg-rose-900/30',
+    questions: { start: 29, end: 32 }
+  }
+};
+
+// ===== 层间过渡配置 =====
+export const layerTransitionConfig = {
+  'screening-pattern': {
+    emoji: '✅',
+    text: '状态扫描完成',
+    subtext: '接下来，我们来识别你的情绪自动反应模式',
+    color: 'from-blue-500 to-purple-500'
+  },
+  'pattern-blockage': {
+    emoji: '🎯',
+    text: '反应模式已识别',
+    subtext: '最后，让我们找到你当前最需要突破的阻滞点',
+    color: 'from-purple-500 to-rose-500'
+  }
+};
+
 // ===== 评分选项 =====
 export const emotionHealthScoreLabels = [
   { value: 0, label: '几乎没有', color: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700' },
@@ -34,46 +79,72 @@ export const emotionHealthScoreLabels = [
   { value: 3, label: '几乎每天', color: 'bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700' },
 ];
 
-// ===== 25题题库 =====
+// ===== 32题题库 =====
 export const emotionHealthQuestions: EmotionHealthQuestion[] = [
-  // ===== 情绪能量指数 E（对标 PHQ-9 简化）=====
-  { id: 1, text: "最近两周，我对很多事提不起兴趣", indexType: 'energy', patternType: 'exhaustion' },
-  { id: 2, text: "即使休息了，也很难感觉恢复", indexType: 'energy', patternType: 'exhaustion' },
-  { id: 3, text: "常觉得自己没什么动力开始新事", indexType: 'energy', patternType: 'avoidance' },
-  { id: 4, text: "对未来常有无力或悲观感", indexType: 'energy', patternType: 'suppression' },
+  // ========== 第一层：状态筛查（12题）==========
+  // === 情绪能量指数 E（对标 PHQ-9 简化）4题 ===
+  { id: 1, layer: 'screening', text: "最近两周，我对很多事情提不起兴趣", indexType: 'energy' },
+  { id: 2, layer: 'screening', text: "即使休息了，也很难感觉真正恢复过来", indexType: 'energy' },
+  { id: 3, layer: 'screening', text: "常常觉得自己没什么动力开始新的事情", indexType: 'energy' },
+  { id: 4, layer: 'screening', text: "对未来常有一种无力感或淡淡的悲观", indexType: 'energy' },
+  
+  // === 焦虑张力指数 A（对标 GAD-7 简化）4题 ===
+  { id: 5, layer: 'screening', text: "我常提前担心可能出问题的情况", indexType: 'anxiety' },
+  { id: 6, layer: 'screening', text: "即使什么事都没发生，也很难真正放松", indexType: 'anxiety' },
+  { id: 7, layer: 'screening', text: "脑子经常停不下来，一直在想各种事情", indexType: 'anxiety' },
+  { id: 8, layer: 'screening', text: "因为担心失败或做不好，迟迟不敢开始", indexType: 'anxiety' },
+  
+  // === 压力负载指数 S（对标 PSS-10 简化）4题 ===
+  { id: 9, layer: 'screening', text: "最近的责任或任务让我感觉被压着走", indexType: 'stress' },
+  { id: 10, layer: 'screening', text: "常觉得事情太多，自己顾不过来", indexType: 'stress' },
+  { id: 11, layer: 'screening', text: "即使很努力了，也觉得自己做得不够好", indexType: 'stress' },
+  { id: 12, layer: 'screening', text: "感觉自己必须撑住，绝对不能倒下", indexType: 'stress' },
 
-  // ===== 焦虑张力指数 A（对标 GAD-7 简化）=====
-  { id: 5, text: "我常提前担心可能出问题的情况", indexType: 'anxiety', patternType: 'tension' },
-  { id: 6, text: "即使没事发生，也很难真正放松", indexType: 'anxiety', patternType: 'tension' },
-  { id: 7, text: "脑子经常停不下来在想事情", indexType: 'anxiety', patternType: 'tension' },
-  { id: 8, text: "因为担心失败而迟迟不开始", indexType: 'anxiety', patternType: 'avoidance' },
+  // ========== 第二层：反应模式（16题，每类4题）==========
+  // === 能量耗竭型 C（宝妈/护理者/管理者画像）===
+  { id: 13, layer: 'pattern', text: "遇到压力我通常会继续硬撑，很少主动休息", patternType: 'exhaustion' },
+  { id: 14, layer: 'pattern', text: "我习惯先满足别人的需要，再顾自己", patternType: 'exhaustion' },
+  { id: 15, layer: 'pattern', text: "即使身体已经发出不适信号，我也会选择忽略", patternType: 'exhaustion' },
+  { id: 16, layer: 'pattern', text: "我很久没有真正为自己做一件放松的事了", patternType: 'exhaustion' },
+  
+  // === 高度紧绷型 T（职场骨干/完美主义画像）===
+  { id: 17, layer: 'pattern', text: "我对结果和细节有很强的控制欲", patternType: 'tension' },
+  { id: 18, layer: 'pattern', text: "出现问题时，我会先怪自己没做好", patternType: 'tension' },
+  { id: 19, layer: 'pattern', text: "即使没人在催，我也会给自己很大压力", patternType: 'tension' },
+  { id: 20, layer: 'pattern', text: "我很难真正放松，即使在休息也在想事情", patternType: 'tension' },
+  
+  // === 情绪压抑型 R（关系型人格画像）===
+  { id: 21, layer: 'pattern', text: "不开心时，我更倾向自己消化，不说出来", patternType: 'suppression' },
+  { id: 22, layer: 'pattern', text: "为了关系和谐，我常压下自己真实的感受", patternType: 'suppression' },
+  { id: 23, layer: 'pattern', text: "我不太习惯表达真实的不满或需要", patternType: 'suppression' },
+  { id: 24, layer: 'pattern', text: "偶尔会突然情绪爆发，或者出现身体不适", patternType: 'suppression' },
+  
+  // === 逃避延迟型 P（自由职业/学生画像）===
+  { id: 25, layer: 'pattern', text: "事情越重要，我越容易拖延不去做", patternType: 'avoidance' },
+  { id: 26, layer: 'pattern', text: "面对压力，我会转去做别的事情来逃离", patternType: 'avoidance' },
+  { id: 27, layer: 'pattern', text: "我常因为没有行动而自责，却还是动不起来", patternType: 'avoidance' },
+  { id: 28, layer: 'pattern', text: "一想到要开始，就觉得心理负担很重", patternType: 'avoidance' },
 
-  // ===== 压力负载指数 S（对标 PSS 简化）=====
-  { id: 9, text: "最近责任或任务让我感觉被压着走", indexType: 'stress', patternType: 'exhaustion' },
-  { id: 10, text: "常觉得事情太多，顾不过来", indexType: 'stress', patternType: 'exhaustion' },
-  { id: 11, text: "即使很努力，也觉得不够好", indexType: 'stress', patternType: 'suppression' },
-  { id: 12, text: "感觉自己必须撑住，不能倒", indexType: 'stress', patternType: 'tension' },
+  // ========== 第三层：行动阻滞点（4题）==========
+  { id: 29, layer: 'blockage', text: "你是否知道该做什么，但就是启动不了？", blockageType: 'action' },
+  { id: 30, layer: 'blockage', text: "你的情绪是否经常会淹没你，让你难以思考？", blockageType: 'emotion' },
+  { id: 31, layer: 'blockage', text: "你是否经常觉得自己不够好，或不值得？", blockageType: 'belief' },
+  { id: 32, layer: 'blockage', text: "你是否长期只在消耗能量，很少被滋养？", blockageType: 'giving' },
+];
 
-  // ===== 能量耗竭型 C =====
-  { id: 13, text: "我习惯先满足别人的需要再顾自己", indexType: 'stress', patternType: 'exhaustion' },
-  { id: 14, text: "即使很累，也很难真正停下来休息", indexType: 'energy', patternType: 'exhaustion' },
-  { id: 15, text: "我常忽略身体发出的不适信号", indexType: 'stress', patternType: 'exhaustion' },
+// ===== 科学背书数据 =====
+export const scientificStats = [
+  { stat: '60%', description: '全球约60%人存在未被识别的情绪健康问题', source: 'WHO 2023' },
+  { stat: '80%', description: '80%情绪困扰源于自动化反应模式', source: '心理学研究' },
+  { stat: '3层', description: '表面症状→反应模式→根本阻滞', source: '行为科学' },
+];
 
-  // ===== 高度紧绷型 T =====
-  { id: 16, text: "我对结果和细节有很强控制欲", indexType: 'anxiety', patternType: 'tension' },
-  { id: 17, text: "出现问题时，我会先怪自己没做好", indexType: 'anxiety', patternType: 'tension' },
-  { id: 18, text: "即使没人在催，我也会给自己很大压力", indexType: 'stress', patternType: 'tension' },
-
-  // ===== 情绪压抑型 R =====
-  { id: 19, text: "不开心时，我更倾向自己消化", indexType: 'energy', patternType: 'suppression' },
-  { id: 20, text: "我不太习惯表达真实不满", indexType: 'stress', patternType: 'suppression' },
-  { id: 21, text: "为了关系和谐，我常压下真实感受", indexType: 'anxiety', patternType: 'suppression' },
-
-  // ===== 逃避延迟型 P =====
-  { id: 22, text: "事情越重要，我越容易拖延", indexType: 'anxiety', patternType: 'avoidance' },
-  { id: 23, text: "面对压力，我会转去做别的事逃离", indexType: 'stress', patternType: 'avoidance' },
-  { id: 24, text: "常因为没行动而自责，却还是动不起来", indexType: 'energy', patternType: 'avoidance' },
-  { id: 25, text: "一想到开始就觉得心理负担很重", indexType: 'anxiety', patternType: 'avoidance' },
+// ===== 核心痛点共鸣 =====
+export const painPoints = [
+  { emoji: '😔', text: '明明没什么大事，就是提不起劲' },
+  { emoji: '🤯', text: '道理都懂，但就是做不到' },
+  { emoji: '🌊', text: '情绪一来就被淹没，事后又后悔' },
+  { emoji: '😮‍💨', text: '总觉得很累，但又说不清哪里累' },
 ];
 
 // ===== 四大反应模式配置 =====
@@ -84,6 +155,7 @@ export const patternConfig: Record<PatternType, {
   bgColor: string;
   tagline: string;
   description: string;
+  targetAudience: string;
   symptoms: string[];
   mechanism: string;
   need: string;
@@ -100,6 +172,7 @@ export const patternConfig: Record<PatternType, {
     bgColor: 'bg-orange-100 dark:bg-orange-900/30',
     tagline: '长期在撑，已经很久没有真正被补充过能量',
     description: '你不是不努力，而是已经很久没有真正被补充过能量了。',
+    targetAudience: '宝妈 / 护理者 / 管理者',
     symptoms: [
       '每天都在应付事情，很少有"恢复感"',
       '对原本在乎的事提不起劲',
@@ -121,6 +194,7 @@ export const patternConfig: Record<PatternType, {
     bgColor: 'bg-blue-100 dark:bg-blue-900/30',
     tagline: '一直在顶，几乎不给自己犯错的空间',
     description: '你对自己要求很高，但也几乎不给自己犯错的空间。',
+    targetAudience: '职场骨干 / 完美主义者',
     symptoms: [
       '做事前反复预演最坏结果',
       '很难真正放松，即使在休息也在想事',
@@ -142,6 +216,7 @@ export const patternConfig: Record<PatternType, {
     bgColor: 'bg-purple-100 dark:bg-purple-900/30',
     tagline: '习惯忍，很少给自己添麻烦',
     description: '你很少给自己添麻烦，却常常在心里一个人消化所有情绪。',
+    targetAudience: '关系型人格 / 照顾者',
     symptoms: [
       '不太习惯表达真实不满',
       '更容易照顾别人感受',
@@ -163,6 +238,7 @@ export const patternConfig: Record<PatternType, {
     bgColor: 'bg-teal-100 dark:bg-teal-900/30',
     tagline: '卡在开始，每次一想到要开始就先被情绪拖住',
     description: '你不是没能力，而是每次一想到要开始就先被情绪拖住了。',
+    targetAudience: '自由职业者 / 学生',
     symptoms: [
       '事情越重要越容易拖延',
       '常用刷手机、忙别的事逃离压力',
@@ -183,32 +259,42 @@ export const patternConfig: Record<PatternType, {
 export const blockedDimensionConfig: Record<BlockedDimension, {
   name: string;
   description: string;
+  recommendedCoach: string;
+  recommendedCamp: string;
 }> = {
   action: {
     name: '行动启动',
-    description: '你的系统还在等待一个"绝对安全"的信号才敢开始，但这个信号可能永远不会来。我们需要帮你的大脑重新学会：不完美地开始，也是可以的。'
+    description: '你的系统还在等待一个"绝对安全"的信号才敢开始，但这个信号可能永远不会来。我们需要帮你的大脑重新学会：不完美地开始，也是可以的。',
+    recommendedCoach: '行动教练AI',
+    recommendedCamp: '执行力训练营'
   },
   emotion: {
     name: '情绪稳定',
-    description: '你的情绪系统已经超载了，但你可能还在硬撑。在做任何改变之前，先让情绪有个出口，才能真正轻装上阵。'
+    description: '你的情绪系统已经超载了，但你可能还在硬撑。在做任何改变之前，先让情绪有个出口，才能真正轻装上阵。',
+    recommendedCoach: '情绪教练AI',
+    recommendedCamp: '情绪日记训练营'
   },
   belief: {
     name: '自我价值',
-    description: '你对自己的要求太高，却很少真正肯定自己。这种"永远不够好"的感觉，会持续消耗你的能量和动力。'
+    description: '你对自己的要求太高，却很少真正肯定自己。这种"永远不够好"的感觉，会持续消耗你的能量和动力。',
+    recommendedCoach: '自我价值重建AI',
+    recommendedCamp: '信念重塑训练营'
   },
   giving: {
     name: '能量补给',
-    description: '你一直在付出，却很少给自己真正的滋养。如果不先修复能量系统，任何改变都会很快耗尽。'
+    description: '你一直在付出，却很少给自己真正的滋养。如果不先修复能量系统，任何改变都会很快耗尽。',
+    recommendedCoach: '能量恢复AI',
+    recommendedCamp: '能量滋养训练营'
   }
 };
 
 // ===== 评分计算逻辑 =====
 export function calculateEmotionHealthResult(answers: Record<number, number>): EmotionHealthResult {
-  // 1. 计算三大指数（0-100标准化）
+  // 1. 计算三大指数（0-100标准化）- 第一层 12 题
   const indexQuestions = {
-    energy: [1, 2, 3, 4, 14, 19, 24],
-    anxiety: [5, 6, 7, 8, 16, 17, 21, 22, 25],
-    stress: [9, 10, 11, 12, 13, 15, 18, 20, 23]
+    energy: [1, 2, 3, 4],
+    anxiety: [5, 6, 7, 8],
+    stress: [9, 10, 11, 12]
   };
   
   const calcIndex = (ids: number[]) => {
@@ -220,12 +306,12 @@ export function calculateEmotionHealthResult(answers: Record<number, number>): E
   const anxietyIndex = calcIndex(indexQuestions.anxiety);
   const stressIndex = calcIndex(indexQuestions.stress);
   
-  // 2. 计算四大模式得分
+  // 2. 计算四大模式得分 - 第二层 16 题
   const patternQuestions = {
-    exhaustion: [1, 2, 9, 10, 13, 14, 15],
-    tension: [5, 6, 7, 12, 16, 17, 18],
-    suppression: [4, 11, 19, 20, 21],
-    avoidance: [3, 8, 22, 23, 24, 25]
+    exhaustion: [13, 14, 15, 16],
+    tension: [17, 18, 19, 20],
+    suppression: [21, 22, 23, 24],
+    avoidance: [25, 26, 27, 28]
   };
   
   const calcPattern = (ids: number[]) => 
@@ -247,13 +333,26 @@ export function calculateEmotionHealthResult(answers: Record<number, number>): E
   const primaryPattern = scores[0].type;
   const secondaryPattern = scores[1].score > 0 ? scores[1].type : null;
   
-  // 4. 推荐路径（决策树）
-  const { blockedDimension, recommendedPath } = getRecommendedPath(
-    primaryPattern, 
-    energyIndex, 
-    anxietyIndex, 
-    stressIndex
-  );
+  // 4. 第三层：直接投票机制 - 4 题分别对应 4 个维度
+  const blockageQuestions = {
+    action: 29,
+    emotion: 30,
+    belief: 31,
+    giving: 32
+  };
+  
+  const blockageScores: Array<{ type: BlockedDimension; score: number }> = [
+    { type: 'action' as BlockedDimension, score: answers[blockageQuestions.action] ?? 0 },
+    { type: 'emotion' as BlockedDimension, score: answers[blockageQuestions.emotion] ?? 0 },
+    { type: 'belief' as BlockedDimension, score: answers[blockageQuestions.belief] ?? 0 },
+    { type: 'giving' as BlockedDimension, score: answers[blockageQuestions.giving] ?? 0 }
+  ].sort((a, b) => b.score - a.score);
+  
+  const blockedDimension = blockageScores[0].type;
+  
+  // 5. 生成推荐路径
+  const config = blockedDimensionConfig[blockedDimension];
+  const recommendedPath = `${config.recommendedCoach} + ${config.recommendedCamp}`;
   
   return {
     energyIndex,
@@ -270,35 +369,35 @@ export function calculateEmotionHealthResult(answers: Record<number, number>): E
   };
 }
 
-function getRecommendedPath(
-  pattern: PatternType, 
-  energy: number, 
-  anxiety: number, 
-  stress: number
-): { blockedDimension: BlockedDimension; recommendedPath: string } {
-  if (pattern === 'exhaustion') {
-    if (stress >= 70 || energy >= 70) {
-      return { blockedDimension: 'giving', recommendedPath: '情绪修复AI + 能量恢复营' };
-    }
-  }
-  if (pattern === 'tension') {
-    if (anxiety >= 70) {
-      return { blockedDimension: 'action', recommendedPath: '焦虑释放AI + 行动启动营' };
-    }
-  }
-  if (pattern === 'suppression') {
-    if (stress >= 60 || energy >= 60) {
-      return { blockedDimension: 'emotion', recommendedPath: '情绪表达AI + 关系修复营' };
-    }
-  }
-  if (pattern === 'avoidance') {
-    if (anxiety >= 60 || energy >= 60) {
-      return { blockedDimension: 'action', recommendedPath: '行动教练AI + 执行力营' };
-    }
+// ===== 工具函数 =====
+export function getQuestionLayer(questionId: number): QuestionLayer {
+  if (questionId >= 1 && questionId <= 12) return 'screening';
+  if (questionId >= 13 && questionId <= 28) return 'pattern';
+  return 'blockage';
+}
+
+export function getLayerProgress(currentQuestionId: number): {
+  currentLayer: QuestionLayer;
+  layerIndex: number;
+  isLayerTransition: boolean;
+  transitionKey?: 'screening-pattern' | 'pattern-blockage';
+} {
+  const layer = getQuestionLayer(currentQuestionId);
+  const layerIndex = layer === 'screening' ? 1 : layer === 'pattern' ? 2 : 3;
+  
+  // 检查是否是层间过渡点
+  let isLayerTransition = false;
+  let transitionKey: 'screening-pattern' | 'pattern-blockage' | undefined;
+  
+  if (currentQuestionId === 13) {
+    isLayerTransition = true;
+    transitionKey = 'screening-pattern';
+  } else if (currentQuestionId === 29) {
+    isLayerTransition = true;
+    transitionKey = 'pattern-blockage';
   }
   
-  // 默认
-  return { blockedDimension: 'emotion', recommendedPath: '情绪教练AI + 情绪日记营' };
+  return { currentLayer: layer, layerIndex, isLayerTransition, transitionKey };
 }
 
 // ===== 指数等级判断 =====
