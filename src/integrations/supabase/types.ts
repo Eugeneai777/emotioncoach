@@ -5612,6 +5612,104 @@ export type Database = {
         }
         Relationships: []
       }
+      scl90_assessments: {
+        Row: {
+          ai_analysis: Json | null
+          answers: Json
+          anxiety_score: number
+          camp_conversion_clicked_at: string | null
+          camp_conversion_joined_at: string | null
+          created_at: string | null
+          depression_score: number
+          gsi: number
+          hostility_score: number
+          id: string
+          interpersonal_score: number
+          obsessive_score: number
+          other_score: number
+          paranoid_score: number
+          phobic_score: number
+          positive_count: number
+          positive_score_avg: number
+          previous_assessment_id: string | null
+          primary_symptom: string | null
+          psychoticism_score: number
+          secondary_symptom: string | null
+          severity_level: string
+          somatization_score: number
+          total_score: number
+          updated_at: string | null
+          user_id: string
+          version: number | null
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          answers: Json
+          anxiety_score: number
+          camp_conversion_clicked_at?: string | null
+          camp_conversion_joined_at?: string | null
+          created_at?: string | null
+          depression_score: number
+          gsi: number
+          hostility_score: number
+          id?: string
+          interpersonal_score: number
+          obsessive_score: number
+          other_score: number
+          paranoid_score: number
+          phobic_score: number
+          positive_count: number
+          positive_score_avg: number
+          previous_assessment_id?: string | null
+          primary_symptom?: string | null
+          psychoticism_score: number
+          secondary_symptom?: string | null
+          severity_level: string
+          somatization_score: number
+          total_score: number
+          updated_at?: string | null
+          user_id: string
+          version?: number | null
+        }
+        Update: {
+          ai_analysis?: Json | null
+          answers?: Json
+          anxiety_score?: number
+          camp_conversion_clicked_at?: string | null
+          camp_conversion_joined_at?: string | null
+          created_at?: string | null
+          depression_score?: number
+          gsi?: number
+          hostility_score?: number
+          id?: string
+          interpersonal_score?: number
+          obsessive_score?: number
+          other_score?: number
+          paranoid_score?: number
+          phobic_score?: number
+          positive_count?: number
+          positive_score_avg?: number
+          previous_assessment_id?: string | null
+          primary_symptom?: string | null
+          psychoticism_score?: number
+          secondary_symptom?: string | null
+          severity_level?: string
+          somatization_score?: number
+          total_score?: number
+          updated_at?: string | null
+          user_id?: string
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scl90_assessments_previous_assessment_id_fkey"
+            columns: ["previous_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "scl90_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sleep_logs: {
         Row: {
           created_at: string | null
