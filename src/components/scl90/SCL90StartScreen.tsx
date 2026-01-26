@@ -54,10 +54,10 @@ const dimensions = [
 ];
 
 const features = [
-  { icon: Sparkles, text: "90题 · 10维度全面评估", color: "text-purple-500" },
-  { icon: Clock, text: "全球使用超40年经典量表", color: "text-blue-500" },
-  { icon: Target, text: "比十几题测试更专业可靠", color: "text-green-500" },
-  { icon: Shield, text: "每个维度独立评分分析", color: "text-amber-500" },
+  { icon: Sparkles, text: "90题 · 10维度", color: "text-purple-500" },
+  { icon: Clock, text: "经典40年量表", color: "text-blue-500" },
+  { icon: Target, text: "专业可靠", color: "text-green-500" },
+  { icon: Shield, text: "独立评分", color: "text-amber-500" },
 ];
 
 export function SCL90StartScreen({ onStart, onContinue, onViewHistory }: SCL90StartScreenProps) {
@@ -122,9 +122,10 @@ export function SCL90StartScreen({ onStart, onContinue, onViewHistory }: SCL90St
         </motion.div>
       )}
 
-      {/* 核心卖点 - 合并为紧凑列表 */}
+      {/* 核心卖点 + 10因子维度 - 合并卡片 */}
       <Card className="border-purple-200/50 dark:border-purple-800/50 shadow-sm">
-        <CardContent className="p-3">
+        <CardContent className="p-4 space-y-3">
+          {/* 4个核心卖点 - 2x2网格 */}
           <div className="grid grid-cols-2 gap-2">
             {features.map((item, index) => (
               <div key={index} className="flex items-center gap-2 text-sm">
@@ -133,24 +134,30 @@ export function SCL90StartScreen({ onStart, onContinue, onViewHistory }: SCL90St
               </div>
             ))}
           </div>
+          
+          {/* 分隔线 */}
+          <div className="border-t border-dashed border-purple-200/50 dark:border-purple-700/50" />
+          
+          {/* 10因子 - 2行5列网格 */}
+          <div>
+            <p className="text-xs text-muted-foreground text-center mb-2">覆盖10大心理因子</p>
+            <div className="grid grid-cols-5 gap-1.5">
+              {dimensions.map(f => (
+                <div 
+                  key={f.name}
+                  className="flex flex-col items-center justify-center p-1.5 bg-muted/30 rounded-lg"
+                >
+                  <span className="text-base">{f.emoji}</span>
+                  <span className="text-[10px] text-muted-foreground mt-0.5">{f.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* 10因子维度 - 紧凑展示 */}
-      <div className="flex flex-wrap justify-center gap-1.5 px-2">
-        {dimensions.map(f => (
-          <span 
-            key={f.name}
-            className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-muted/50 rounded-full text-xs"
-          >
-            <span>{f.emoji}</span>
-            <span className="text-muted-foreground">{f.name}</span>
-          </span>
-        ))}
-      </div>
-
-      {/* 折叠详情区域 */}
-      <Accordion type="single" collapsible className="w-full">
+      {/* 折叠详情区域 - 更紧凑间距 */}
+      <Accordion type="single" collapsible className="w-full space-y-1.5">
         {/* 痛点共鸣 */}
         <AccordionItem value="pain-points" className="border-b-0">
           <AccordionTrigger className="py-2 px-3 rounded-lg bg-purple-50/50 dark:bg-purple-950/20 hover:no-underline">
@@ -178,7 +185,7 @@ export function SCL90StartScreen({ onStart, onContinue, onViewHistory }: SCL90St
         </AccordionItem>
 
         {/* 适合人群 */}
-        <AccordionItem value="audience" className="border-b-0 mt-2">
+        <AccordionItem value="audience" className="border-b-0">
           <AccordionTrigger className="py-2 px-3 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 hover:no-underline">
             <div className="flex items-center gap-2 text-sm">
               <span>🎯</span>
@@ -199,7 +206,7 @@ export function SCL90StartScreen({ onStart, onContinue, onViewHistory }: SCL90St
         </AccordionItem>
 
         {/* 自测提示 */}
-        <AccordionItem value="tips" className="border-b-0 mt-2">
+        <AccordionItem value="tips" className="border-b-0">
           <AccordionTrigger className="py-2 px-3 rounded-lg bg-green-50/50 dark:bg-green-950/20 hover:no-underline">
             <div className="flex items-center gap-2 text-sm">
               <span>📝</span>
@@ -219,30 +226,26 @@ export function SCL90StartScreen({ onStart, onContinue, onViewHistory }: SCL90St
         </AccordionItem>
       </Accordion>
 
-      {/* 评分说明 - 精简 */}
-      <div className="space-y-2">
+      {/* 评分说明 - 带渐变背景 */}
+      <div className="space-y-2 p-3 rounded-xl bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900/50 dark:to-slate-800/50">
         <p className="text-xs text-muted-foreground text-center">
           根据<strong className="text-foreground">最近一周</strong>感受选择：
         </p>
-        <div className="flex justify-center gap-1">
+        <div className="flex justify-between gap-1">
           {scl90ScoreLabels.map(s => (
-            <span 
+            <div 
               key={s.value} 
               className={cn(
-                "px-1.5 py-0.5 rounded text-[10px] font-medium border",
+                "flex-1 flex flex-col items-center py-1.5 rounded-lg text-center border",
                 s.color
               )}
             >
-              {s.value}={s.label}
-            </span>
+              <span className="text-sm font-bold">{s.value}</span>
+              <span className="text-[10px]">{s.label}</span>
+            </div>
           ))}
         </div>
       </div>
-
-      {/* 免责声明 */}
-      <p className="text-[10px] text-muted-foreground text-center px-4">
-        ⚠️ 本量表仅供自我筛查参考，不能替代专业心理诊断
-      </p>
 
       {/* 开始按钮 */}
       <div className="space-y-2 pt-1">
@@ -275,6 +278,11 @@ export function SCL90StartScreen({ onStart, onContinue, onViewHistory }: SCL90St
           </Button>
         )}
       </div>
+
+      {/* 免责声明 - 移至最底部 */}
+      <p className="text-[10px] text-muted-foreground text-center px-4">
+        ⚠️ 本量表仅供自我筛查参考，不能替代专业心理诊断
+      </p>
     </motion.div>
   );
 }

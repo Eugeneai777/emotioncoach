@@ -1,6 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, CheckCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -69,6 +68,7 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
   // 已答题数
   const answeredCount = Object.keys(answers).length;
   const progressPercent = (answeredCount / 90) * 100;
+  const remainingCount = 90 - answeredCount;
 
   // 当前页是否全部答完
   const isCurrentPageComplete = currentQuestions.every(q => answers[q.id] !== undefined);
@@ -79,16 +79,34 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
   // 是否全部答完
   const isAllComplete = answeredCount === 90;
 
+  // 判断某页是否已完成
+  const isPageCompleted = useCallback((pageIndex: number) => {
+    const startIdx = pageIndex * QUESTIONS_PER_PAGE;
+    const endIdx = Math.min((pageIndex + 1) * QUESTIONS_PER_PAGE, 90);
+    for (let i = startIdx; i < endIdx; i++) {
+      const questionId = scl90Questions[i]?.id;
+      if (questionId && answers[questionId] === undefined) {
+        return false;
+      }
+    }
+    return true;
+  }, [answers]);
+
   // 处理答案选择
   const handleAnswer = useCallback((questionId: number, score: number) => {
     setAnswers(prev => ({ ...prev, [questionId]: score }));
+  }, []);
+
+  // 跳转到指定页
+  const handleGoToPage = useCallback((pageIndex: number) => {
+    setCurrentPage(pageIndex);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   // 下一页
   const handleNextPage = useCallback(() => {
     if (currentPage < totalPages - 1) {
       setCurrentPage(prev => prev + 1);
-      // 滚动到顶部
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [currentPage, totalPages]);
@@ -104,7 +122,6 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
   // 提交测评
   const handleSubmit = useCallback(() => {
     const result = calculateSCL90Result(answers);
-    // 清除保存的进度
     clearProgress();
     onComplete(result, answers);
   }, [answers, onComplete, clearProgress]);
@@ -120,27 +137,55 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
 
   return (
     <div className="space-y-4">
-      {/* 顶部导航 */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleExitClick}
-          className="gap-1.5 text-sm -ml-2"
-        >
-          <X className="w-4 h-4" />
-          退出
-        </Button>
-        <span className="text-sm text-muted-foreground">
-          第 {currentPage + 1} 页 / {totalPages} 页
-        </span>
-      </div>
-
-      {/* 进度条 */}
-      <div className="space-y-1.5">
-        <Progress value={progressPercent} className="h-2" />
+      {/* 顶部导航 + 进度 */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleExitClick}
+            className="gap-1.5 text-sm -ml-2"
+          >
+            <X className="w-4 h-4" />
+            退出
+          </Button>
+          
+          {/* 圆点页码指示器 */}
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => handleGoToPage(i)}
+                className={cn(
+                  "h-2 rounded-full transition-all duration-200",
+                  i === currentPage 
+                    ? "bg-primary w-4" 
+                    : isPageCompleted(i)
+                      ? "bg-primary/50 w-2"
+                      : "bg-muted w-2"
+                )}
+                aria-label={`跳转到第 ${i + 1} 页`}
+              />
+            ))}
+          </div>
+          
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {currentPage + 1}/{totalPages}
+          </span>
+        </div>
+        
+        {/* 渐变进度条 */}
+        <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+          <motion.div
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-emerald-500 via-amber-500 to-primary"
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPercent}%` }}
+            transition={{ duration: 0.3 }}
+          />
+        </div>
+        
         <p className="text-xs text-muted-foreground text-center">
-          已完成 {answeredCount} / 90 题
+          还剩 <strong className="text-foreground">{remainingCount}</strong> 题
         </p>
       </div>
 
@@ -226,7 +271,7 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
             )}
           >
             <CheckCircle className="w-4 h-4 mr-1" />
-            {isAllComplete ? "提交测评" : `还剩 ${90 - answeredCount} 题`}
+            {isAllComplete ? "提交测评" : `还剩 ${remainingCount} 题`}
           </Button>
         ) : (
           <Button
@@ -246,7 +291,7 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>确定要退出吗？</AlertDialogTitle>
             <AlertDialogDescription>
-              您已完成 {answeredCount} 道题目，退出后答题进度将丢失。
+              您已完成 {answeredCount} 道题目，进度将自动保存，下次可继续答题。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

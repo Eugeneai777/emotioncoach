@@ -44,12 +44,12 @@ export function SCL90PaymentGate({
 
   const severityInfo = severityConfig[result.severityLevel];
 
-  // 解锁后包含的内容
+  // 解锁后包含的内容 - 简化文案
   const features = [
-    { icon: Brain, text: "10维度详细分析", desc: "躯体化、抑郁、焦虑等全面解读" },
-    { icon: Sparkles, text: "AI智能解读", desc: "基于您的独特情况生成个性化建议" },
-    { icon: Target, text: "专业应对建议", desc: "针对突出症状的科学调适方法" },
-    { icon: Share2, text: "精美分享卡片", desc: "一键生成可分享的测评结果" },
+    { icon: Brain, text: "10维度详细分析" },
+    { icon: Sparkles, text: "AI智能解读" },
+    { icon: Target, text: "专业应对建议" },
+    { icon: Share2, text: "精美分享卡片" },
   ];
 
   const handlePaymentSuccess = (userId: string) => {
@@ -144,7 +144,7 @@ export function SCL90PaymentGate({
         </Card>
       </motion.div>
 
-      {/* 完整报告包含 */}
+      {/* 完整报告包含 - 2x2网格 */}
       <motion.div
         initial={{ opacity: 0.01, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -155,21 +155,16 @@ export function SCL90PaymentGate({
           <CardContent className="p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
-              完整报告包含
+              解锁后获得
             </h3>
-            <div className="grid gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {features.map((feature, index) => (
                 <div 
                   key={index}
-                  className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                  className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50"
                 >
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <feature.icon className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{feature.text}</p>
-                    <p className="text-xs text-muted-foreground">{feature.desc}</p>
-                  </div>
+                  <feature.icon className="w-4 h-4 text-primary flex-shrink-0" />
+                  <span className="text-xs font-medium">{feature.text}</span>
                 </div>
               ))}
             </div>
@@ -177,7 +172,7 @@ export function SCL90PaymentGate({
         </Card>
       </motion.div>
 
-      {/* 价格和购买按钮 */}
+      {/* 价格和购买按钮 - 增强紧迫感 */}
       <motion.div
         initial={{ opacity: 0.01, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -185,28 +180,24 @@ export function SCL90PaymentGate({
         className="sticky bottom-0 bg-background pt-4 pb-safe"
         style={{ transform: "translateZ(0)" }}
       >
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 overflow-hidden relative">
+          {/* 限时标签 */}
+          <div className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg">
+            限时67%OFF
+          </div>
+          
           <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-xs text-muted-foreground">专业测评报告</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-primary">¥{reportPrice.toFixed(1)}</span>
-                  <span className="text-xs text-muted-foreground line-through">¥29.9</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">限时优惠</p>
-                <p className="text-sm font-medium text-primary">67% OFF</p>
-              </div>
+            <div className="flex items-end gap-2 mb-3">
+              <span className="text-3xl font-bold text-primary">¥{reportPrice.toFixed(1)}</span>
+              <span className="text-sm text-muted-foreground line-through pb-1">¥29.9</span>
             </div>
             
             <Button 
-              className="w-full h-12 text-base font-semibold"
+              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
               onClick={() => setShowPayDialog(true)}
             >
               <Lock className="w-4 h-4 mr-2" />
-              解锁完整报告
+              立即解锁完整报告
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
 
