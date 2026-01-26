@@ -1,441 +1,397 @@
 
 
-# 测评后 AI 教练首轮对话脚本实现方案
+# 情绪健康测评介绍页优化方案
 
-## 一、需求分析
+## 一、当前对比分析
 
-用户希望创建一套完整的**测评后 AI 教练对话脚本系统**，具有以下特点：
-
-| 需求项 | 说明 |
-|--------|------|
-| **4种模式脚本** | 能量耗竭型、高度紧绷型、情绪压抑型、逃避延迟型 |
-| **5-7轮结构** | 共情→觉察→聚焦→微行动→持续陪伴→转训练营 |
-| **统一流程** | Round 6-7 为通用转化轮次 |
-| **应用场景** | 小程序自动对话 / 训练营入口 / 客服缓冲层 |
-| **转化目标** | 最终导入 ¥299 情绪日记训练营 |
+| 维度 | 财富卡点测评（优秀范例） | 情绪健康测评（当前） | 差距 |
+|------|------------------------|---------------------|------|
+| **开场钩子** | "赚钱被隐形刹车卡住了" - 强共鸣痛点 | "基于心理学专业量表" - 理性描述 | 缺少情感冲击力 |
+| **社交证明** | 12,847人已找到答案 - 置顶显示 | 无社交证明 | 缺少信任锚点 |
+| **痛点共鸣** | 5个具体场景 + 损失警告 | 4个泛化描述 | 不够具体扎心 |
+| **权威背书** | 中科院/哈佛/专业调研 | 一般性科学数据 | 缺少机构权威 |
+| **价值展示** | 四穷雷达图/觉醒指数/故事解读 | 三层诊断系统（技术性） | 技术感>价值感 |
+| **人群定位** | 明确财富卡点人群 | 未明确对应人群 | 未做人群映射 |
+| **紧迫感** | ¥9.9 + 限时标签 | 开始三层诊断（无价格） | 缺少行动驱动 |
+| **页面结构** | 痛点→权威→对比→价值→价格 | 介绍→图表→技术→模式 | 转化逻辑弱 |
 
 ---
 
-## 二、当前系统架构
+## 二、优化目标
 
-当前系统已有的结构：
+**核心转化逻辑**：30秒内完成「被戳中 → 被理解 → 有希望 → 点按钮」
+
+### 优化后页面结构（从上到下）
 
 ```text
-用户完成测评
-     ↓
-点击「开始我的AI陪伴对话」
-     ↓
-navigate('/coach-space', { state: { pattern: 'exhaustion' } })
-     ↓
-DynamicCoach.tsx 接收 pattern
-     ↓
-调用 emotion-coach Edge Function
-     ↓
-Edge Function 从数据库读取 stage_prompts 构建对话
+┌─────────────────────────────────────────┐
+│  1. 品牌 + 痛点开场（情感钩子）          │
+│     社交证明 + 共鸣式提问 + 核心痛点     │
+│     首屏CTA                            │
+├─────────────────────────────────────────┤
+│  2. 痛点共鸣区（扎心场景）              │
+│     5个具体情绪困扰场景                 │
+│     损失警告（不解决会怎样）            │
+├─────────────────────────────────────────┤
+│  3. 权威背书区（建立信任）              │
+│     来自权威机构的研究数据               │
+├─────────────────────────────────────────┤
+│  4. 解决方案区（AI对比传统）            │
+│     与传统心理量表的本质区别             │
+├─────────────────────────────────────────┤
+│  5. 四大人格类型预览（匹配用户）         │
+│     模式→典型人群→核心诉求              │
+├─────────────────────────────────────────┤
+│  6. 测评结构（三层洋葱模型）            │
+│     可视化展示诊断深度                   │
+├─────────────────────────────────────────┤
+│  7. 价值交付区（你将获得什么）          │
+│     四大产出物清单                      │
+├─────────────────────────────────────────┤
+│  8. 定价模块 + 最终CTA                  │
+│     ¥9.9 + 限时 + 包含内容              │
+├─────────────────────────────────────────┤
+│  9. 合规声明                            │
+└─────────────────────────────────────────┘
 ```
-
-**关键发现**：
-- `emotion-coach` Edge Function 已支持从数据库读取 `stage_prompts`
-- 但当前 `aiOpening` 字段只有单轮开场白
-- 缺少完整的 5-7 轮脚本结构
 
 ---
 
-## 三、数据层增强
+## 三、详细内容设计
 
-### 3.1 新增 AI 教练对话脚本配置
+### 3.1 模块1：品牌 + 痛点开场
 
-在 `emotionHealthData.ts` 中新增完整的脚本结构：
+**当前**：
+```text
+标题：情绪健康组合测评
+副标题：基于心理学专业量表设计...
+```
+
+**优化为**：
 
 ```typescript
-// AI教练首轮对话脚本（4型 × 5-7轮）
-export const coachDialogueScripts: Record<PatternType, {
-  patternName: string;
-  ctaButton: string;
-  ctaLabel: string;
-  rounds: Array<{
-    round: number;
-    phase: string;       // 共情/觉察/聚焦/微行动/持续陪伴
-    content: string;     // 对话内容
-    waitForUser: boolean; // 是否需要等待用户回复
-    options?: string[];  // 可选的引导选项
-  }>;
-}> = {
-  exhaustion: {
-    patternName: '能量耗竭型',
-    ctaButton: '开始情绪修复陪伴',
-    ctaLabel: '情绪修复AI + 能量恢复营',
-    rounds: [
-      {
-        round: 1,
-        phase: '共情开场',
-        content: '我看到你的结果显示你现在处在比较明显的"能量透支"状态。\n这通常不是因为你不努力，而是因为你已经撑了很久。\n在继续往前之前，我想先确认一件事：\n最近让你最累的，是哪一件事或哪一种角色？',
-        waitForUser: true
-      },
-      {
-        round: 2,
-        phase: '引导觉察',
-        content: '当你想到这件事时，身体更明显的感受是什么？\n比如：疲惫、紧绷、心烦，还是无力？',
-        waitForUser: true,
-        options: ['疲惫', '紧绷', '心烦', '无力', '说不清']
-      },
-      {
-        round: 3,
-        phase: '正常化体验',
-        content: '你现在的反应其实很合理。\n当一个人长期处在"责任优先"的状态，大脑会自动进入节能模式。\n这不是懒，而是系统在自我保护。',
-        waitForUser: false
-      },
-      {
-        round: 4,
-        phase: '轻量修复行动',
-        content: '我们先不谈改变，只做一个很小的恢复动作。\n接下来2分钟，你只需要做一件事：\n把注意力放在呼吸上，慢慢数10次。\n做完告诉我，你现在的状态有没有哪怕一点点变化。',
-        waitForUser: true
-      },
-      {
-        round: 5,
-        phase: '连接长期路径',
-        content: '如果你愿意，我们可以在接下来几天里，\n一起帮你慢慢找回能量，而不是继续硬撑。\n我会每天给你一个不费力的小练习，\n让恢复变成可执行的事。\n\n你想现在开始这个陪伴吗？',
-        waitForUser: true
-      }
-    ]
-  },
-  tension: { ... },  // 高度紧绷型脚本
-  suppression: { ... },  // 情绪压抑型脚本
-  avoidance: { ... }  // 逃避延迟型脚本
+// 社交证明数据
+const statistics = {
+  totalAssessments: 8567,
+  breakthroughUsers: 2341,
 };
 
-// 通用第6-7轮（转训练营）
-export const universalConversionRounds = [
-  {
-    round: 6,
-    phase: '承认改变需要时间',
-    content: '情绪和习惯不是一天形成的，也不会一天改变。\n有系统的陪伴，会比你一个人硬扛轻松很多。',
-    waitForUser: false
-  },
-  {
-    round: 7,
-    phase: '转入系统支持',
-    content: '接下来我可以把你接入一个更系统的陪伴路径，\n包括每天的引导练习和阶段性回顾。\n\n你想继续跟我一起走下去吗？',
-    waitForUser: true,
-    cta: {
-      primary: '进入21天情绪修复训练营',
-      secondary: '升级365陪伴'
-    }
-  }
+// 品牌区
+<h1>情绪健康测评</h1>
+<p className="text-[10px]">Powered by 有劲AI</p>
+
+// 社交证明置顶
+<Badge>🔥 {statistics.totalAssessments.toLocaleString()} 人已找到答案</Badge>
+
+// 共鸣式提问
+<h2>你有没有这种感觉？</h2>
+
+// 核心痛点（大字动效）
+<motion.p>明明没什么大事</motion.p>
+<motion.p>就是 <span className="text-red-500">「怎么都提不起劲」</span></motion.p>
+
+// 接纳式副文案
+<p>不是你不够努力</p>
+<p>是有个东西一直在 <span className="text-red-500">暗中消耗你的能量</span></p>
+
+// 首屏CTA
+<Button>¥9.9 开始测评</Button>
+```
+
+**设计理念**：
+- 不说"心理学专业"（冷/远），说"提不起劲"（暖/近）
+- 用动画让"怎么都提不起劲"产生呼吸效果
+- 社交证明数字建立从众信任
+
+---
+
+### 3.2 模块2：痛点共鸣区（升级版）
+
+**当前**：4个泛化痛点
+**优化为**：5个具体场景 + 损失警告
+
+```typescript
+const upgradedPainPoints = [
+  { emoji: "😴", text: "明明睡了很久，醒来还是觉得累，没恢复过来" },
+  { emoji: "🌊", text: "情绪一来就被淹没，事后又后悔自己为什么控制不住" },
+  { emoji: "🔄", text: "道理都懂，行动就是跟不上，然后开始自责" },
+  { emoji: "😶", text: "心里委屈很多，但从不知道该怎么说出来" },
+  { emoji: "⏰", text: "重要的事一拖再拖，越拖越焦虑越不想动" },
+];
+
+// 损失警告
+<div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-red-50 to-orange-50 border border-red-200">
+  <p className="text-xs text-red-600 text-center leading-relaxed">
+    如果不解决这些卡点，你可能会继续这样 <span className="font-bold text-red-500">3-5年</span><br />
+    反复陷入「内耗→自责→更内耗」的死循环
+  </p>
+</div>
+```
+
+---
+
+### 3.3 模块3：权威背书区（新增）
+
+```typescript
+const authorityData = [
+  { source: "世界卫生组织", stat: "60%", desc: "全球约60%人存在未被识别的情绪健康问题", icon: "🏥" },
+  { source: "心理学研究", stat: "80%", desc: "80%情绪困扰源于自动化反应模式", icon: "🔬" },
+  { source: "2024情绪健康调研", stat: "92%", desc: "的人不知道自己卡在哪个情绪阶段", icon: "📊" },
 ];
 ```
 
-### 3.2 四大模式完整脚本内容
-
-按照用户提供的文案，为每种模式创建完整的5轮脚本：
-
-| 模式 | Round 1 | Round 2 | Round 3 | Round 4 | Round 5 |
-|------|---------|---------|---------|---------|---------|
-| 能量耗竭型 | 共情开场 | 引导觉察 | 正常化体验 | 轻量修复 | 连接长期路径 |
-| 高度紧绷型 | 共情开场 | 识别担忧源头 | 指出机制 | 松动控制练习 | 连接长期路径 |
-| 情绪压抑型 | 共情开场 | 命名情绪 | 安全感建立 | 表达练习 | 连接长期路径 |
-| 逃避延迟型 | 共情开场 | 拆解恐惧 | 机制解释 | 微启动行动 | 连接长期路径 |
+**UI结构**：与财富卡点测评保持一致的权威卡片样式
 
 ---
 
-## 四、技术实现方案
+### 3.4 模块4：AI对比传统（复用）
 
-### 方案选择：Edge Function + 数据配置
-
-考虑到现有架构，推荐 **前端配置 + Edge Function 协同** 方案：
-
-```text
-┌─────────────────────────────────────────┐
-│  1. 前端 emotionHealthData.ts          │
-│     存储完整脚本配置                     │
-│     用于介绍页展示 + 对话 UI            │
-└─────────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────────┐
-│  2. 新增 AssessmentCoachChat 组件       │
-│     专门用于测评后的脚本式对话           │
-│     支持轮次推进 + 选项点击              │
-└─────────────────────────────────────────┘
-              ↓
-┌─────────────────────────────────────────┐
-│  3. emotion-coach Edge Function         │
-│     根据 pattern 参数选择对应脚本        │
-│     在 Round 5 后切换到通用转化轮次      │
-└─────────────────────────────────────────┘
-```
-
-### 4.1 数据层文件更新
-
-**文件**: `src/components/emotion-health/emotionHealthData.ts`
-
-新增内容：
-- `coachDialogueScripts` - 四大模式的5轮脚本
-- `universalConversionRounds` - 通用6-7轮转化脚本
-- 每轮脚本包含：`round`、`phase`、`content`、`waitForUser`、`options`
-
-### 4.2 新增组件：AssessmentCoachChat
-
-**文件**: `src/components/emotion-health/AssessmentCoachChat.tsx`
-
-专门用于测评后的脚本式对话组件：
-
-```text
-┌─────────────────────────────────────────┐
-│  AssessmentCoachChat                    │
-├─────────────────────────────────────────┤
-│  Props:                                 │
-│  - pattern: PatternType                 │
-│  - onComplete: (action: string) => void │
-├─────────────────────────────────────────┤
-│  State:                                 │
-│  - currentRound: number                 │
-│  - messages: Message[]                  │
-│  - isWaiting: boolean                   │
-├─────────────────────────────────────────┤
-│  Features:                              │
-│  - 自动播放脚本对话                      │
-│  - 支持用户输入或选项点击                │
-│  - Round 5 显示 CTA 按钮                │
-│  - Round 6-7 连续对话转化                │
-└─────────────────────────────────────────┘
-```
-
-### 4.3 结果页集成
-
-**文件**: `src/components/emotion-health/EmotionHealthResult.tsx`
-
-更新 `handleStartCoach` 函数，携带 pattern 信息：
+保留当前 `ComparisonCard` 组件，内容微调：
 
 ```typescript
-const handleStartCoach = () => {
-  navigate('/assessment-coach', { 
-    state: { 
-      pattern: result.primaryPattern,
-      blockedDimension: result.blockedDimension,
-      fromAssessment: 'emotion_health'
-    } 
-  });
-};
+const comparisonWithTraditional = [
+  { traditional: '固定题目，机械作答', ours: 'AI智能追问，深挖情绪盲点' },
+  { traditional: '一次性PDF报告', ours: '三层诊断 + 可视化图表' },
+  { traditional: '泛泛建议，不针对个人', ours: '个性化情绪修复路径' },
+  { traditional: '冷冰冰的分数标签', ours: '人格故事化解读 + AI陪伴' },
+];
 ```
 
-### 4.4 新增路由页面
+---
 
-**文件**: `src/pages/AssessmentCoachPage.tsx`
+### 3.5 模块5：四大人格类型预览（重构）
 
-测评后专用的教练对话页面：
+**当前**：可折叠卡片，技术感强
+**优化为**：突出人群定位 + 核心诉求
 
 ```typescript
-export default function AssessmentCoachPage() {
-  const location = useLocation();
-  const { pattern, blockedDimension } = location.state || {};
-  
-  return (
-    <div className="h-screen flex flex-col">
-      <PageHeader title="AI陪伴对话" />
-      <AssessmentCoachChat 
-        pattern={pattern || 'exhaustion'} 
-        blockedDimension={blockedDimension}
-        onComplete={(action) => {
-          if (action === 'camp') {
-            navigate('/camps/emotion');
-          }
-        }}
-      />
-    </div>
-  );
+// 四大模式卡片结构
+interface PatternCard {
+  emoji: string;
+  name: string;
+  tagline: string;      // 长期在撑 / 一直在顶 / 习惯忍 / 卡在开始
+  targetAudience: string; // 宝妈/护理者 / 职场骨干 / 关系型人格 / 自由职业
+  coreNeed: string;     // 需要恢复 / 需要放松 / 需要表达 / 需要启动
 }
+
+// UI结构：2x2网格，每个卡片突出
+<Card className={pattern.bgColor}>
+  <div className="text-2xl">{pattern.emoji}</div>
+  <div className="text-sm font-medium">{pattern.name}</div>
+  <div className="text-[10px] text-muted-foreground">{pattern.tagline}</div>
+  <Badge variant="outline" className="text-[10px]">{pattern.targetAudience}</Badge>
+</Card>
+```
+
+**目标**：让用户快速对号入座，产生"这说的就是我"的感觉
+
+---
+
+### 3.6 模块6：三层洋葱模型（精简）
+
+保留当前 `ThreeLayerDiagram` 组件，但：
+
+1. **精简说明文字**：移除技术性描述
+2. **突出价值**：「由外向内 · 层层剥离 · 直达情绪卡点」
+3. **移除技术卡片**：`TechnicalScoringCard` 移入折叠区或删除
+
+---
+
+### 3.7 模块7：价值交付区（新增）
+
+```typescript
+const outcomes = [
+  {
+    icon: Activity,
+    title: "三维情绪仪表盘",
+    desc: "能量/焦虑/压力三大指数可视化",
+    color: "text-cyan-600",
+    bg: "bg-cyan-50",
+  },
+  {
+    icon: Brain,
+    title: "反应模式识别",
+    desc: "识别你的情绪自动反应模式",
+    color: "text-purple-600",
+    bg: "bg-purple-50",
+  },
+  {
+    icon: Target,
+    title: "阻滞点定位",
+    desc: "精准找到你当前最卡的那一层",
+    color: "text-rose-600",
+    bg: "bg-rose-50",
+  },
+  {
+    icon: Bot,
+    title: "AI教练陪伴",
+    desc: "根据结果进入专属对话修复路径",
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+  },
+];
 ```
 
 ---
 
-## 五、UI 设计规范
+### 3.8 模块8：定价模块
 
-### 5.1 对话界面布局
-
-```text
-┌─────────────────────────────────────────┐
-│  [AI头像] 劲老师 🌿                     │
-│  ┌─────────────────────────────────┐   │
-│  │ 我看到你的结果显示...           │   │
-│  │ 最近让你最累的，是哪一件事？     │   │
-│  └─────────────────────────────────┘   │
-│                                         │
-│  ┌─────────────────────────────────┐   │
-│  │ [疲惫] [紧绷] [心烦] [无力]      │   │
-│  └─────────────────────────────────┘   │
-│                                         │
-│  ─────────────────────────────────────  │
-│  [输入框]                    [发送]     │
-└─────────────────────────────────────────┘
-```
-
-### 5.2 CTA 按钮区（Round 5 后显示）
-
-```text
-┌─────────────────────────────────────────┐
-│                                         │
-│  你想现在开始这个陪伴吗？               │
-│                                         │
-│  ┌─────────────────────────────────┐   │
-│  │  🟠 开始情绪修复陪伴              │   │
-│  └─────────────────────────────────┘   │
-│                                         │
-│  或者继续聊聊 →                         │
-│                                         │
-└─────────────────────────────────────────┘
-```
-
-### 5.3 转化区（Round 7）
-
-```text
-┌─────────────────────────────────────────┐
-│                                         │
-│  你想继续跟我一起走下去吗？              │
-│                                         │
-│  ┌─────────────────────────────────┐   │
-│  │  进入21天情绪修复训练营           │   │
-│  │  ¥299                            │   │
-│  └─────────────────────────────────┘   │
-│                                         │
-│  ┌─────────────────────────────────┐   │
-│  │  升级365陪伴 →                    │   │
-│  └─────────────────────────────────┘   │
-│                                         │
-└─────────────────────────────────────────┘
+```typescript
+<Card className="p-5 bg-gradient-to-br from-rose-50 via-pink-50 to-white border-rose-300">
+  <h3>开启你的情绪修复之旅</h3>
+  
+  <div className="flex items-center justify-center gap-3">
+    <span className="text-4xl font-bold text-rose-600">¥9.9</span>
+    <span className="px-2 py-0.5 bg-red-500 rounded text-xs text-white font-medium animate-pulse">限时</span>
+  </div>
+  
+  <div className="grid grid-cols-2 gap-2">
+    {pricingIncludes.map((item) => (
+      <div className="flex items-center gap-1.5 text-xs text-slate-600">
+        <Check className="w-3.5 h-3.5 text-emerald-500" />
+        <span>{item}</span>
+      </div>
+    ))}
+  </div>
+  
+  <Button className="w-full h-14 bg-gradient-to-r from-rose-500 via-pink-500 to-purple-500">
+    ¥9.9 开始测评
+    <ArrowRight className="w-4 h-4 ml-2" />
+  </Button>
+</Card>
 ```
 
 ---
 
-## 六、实施步骤
+## 四、数据层更新
+
+### 4.1 新增介绍页配置
+
+在 `emotionHealthData.ts` 中新增：
+
+```typescript
+// 介绍页统计数据
+export const introStatistics = {
+  totalAssessments: 8567,
+  breakthroughUsers: 2341,
+};
+
+// 升级版痛点
+export const upgradedPainPoints = [
+  { emoji: "😴", text: "明明睡了很久，醒来还是觉得累，没恢复过来" },
+  { emoji: "🌊", text: "情绪一来就被淹没，事后又后悔自己为什么控制不住" },
+  { emoji: "🔄", text: "道理都懂，行动就是跟不上，然后开始自责" },
+  { emoji: "😶", text: "心里委屈很多，但从不知道该怎么说出来" },
+  { emoji: "⏰", text: "重要的事一拖再拖，越拖越焦虑越不想动" },
+];
+
+// 权威数据
+export const authorityData = [
+  { source: "世界卫生组织", stat: "60%", desc: "全球约60%人存在未被识别的情绪健康问题", icon: "🏥" },
+  { source: "心理学研究", stat: "80%", desc: "80%情绪困扰源于自动化反应模式", icon: "🔬" },
+  { source: "2024情绪健康调研", stat: "92%", desc: "的人不知道自己卡在哪个情绪阶段", icon: "📊" },
+];
+
+// 价值产出
+export const assessmentOutcomes = [
+  { icon: 'Activity', title: "三维情绪仪表盘", desc: "能量/焦虑/压力三大指数可视化", color: "cyan" },
+  { icon: 'Brain', title: "反应模式识别", desc: "识别你的情绪自动反应模式", color: "purple" },
+  { icon: 'Target', title: "阻滞点定位", desc: "精准找到你当前最卡的那一层", color: "rose" },
+  { icon: 'Bot', title: "AI教练陪伴", desc: "根据结果进入专属对话修复路径", color: "emerald" },
+];
+
+// 定价包含
+export const pricingIncludes = [
+  "32道专业场景测评",
+  "三维情绪仪表盘",
+  "反应模式诊断",
+  "AI教练陪伴对话",
+];
+
+// 登录权益
+export const loginBenefits = [
+  "查看历史趋势变化",
+  "解锁情绪日记训练营",
+  "获得AI教练个性化陪伴",
+];
+```
+
+### 4.2 更新对比数据
+
+```typescript
+// 与传统量表对比（优化版）
+export const comparisonWithTraditional = [
+  { traditional: '固定题目，机械作答', ours: 'AI智能追问，深挖情绪盲点' },
+  { traditional: '一次性PDF报告', ours: '三层诊断 + 可视化图表' },
+  { traditional: '泛泛建议，不针对个人', ours: '个性化情绪修复路径' },
+  { traditional: '冷冰冰的分数标签', ours: '人格故事化解读 + AI陪伴' },
+];
+```
+
+---
+
+## 五、实施步骤
 
 | 步骤 | 内容 | 文件 |
 |------|------|------|
-| 1 | 添加 `coachDialogueScripts` 完整脚本配置 | emotionHealthData.ts |
-| 2 | 添加 `universalConversionRounds` 通用转化轮次 | emotionHealthData.ts |
-| 3 | 创建 `AssessmentCoachChat` 脚本对话组件 | AssessmentCoachChat.tsx |
-| 4 | 创建 `AssessmentCoachPage` 页面 | AssessmentCoachPage.tsx |
-| 5 | 更新路由配置添加新页面 | App.tsx |
-| 6 | 更新结果页导航逻辑 | EmotionHealthResult.tsx |
-| 7 | 更新 `index.ts` 导出新配置 | index.ts |
+| 1 | 新增介绍页配置数据 | emotionHealthData.ts |
+| 2 | 重构开场区（痛点钩子+社交证明） | EmotionHealthStartScreen.tsx |
+| 3 | 新增痛点共鸣区（5场景+损失警告） | EmotionHealthStartScreen.tsx |
+| 4 | 新增权威背书区 | EmotionHealthStartScreen.tsx |
+| 5 | 重构四大模式预览区（人群定位） | EmotionHealthStartScreen.tsx |
+| 6 | 新增价值交付区（产出物） | EmotionHealthStartScreen.tsx |
+| 7 | 新增定价模块 | EmotionHealthStartScreen.tsx |
+| 8 | 精简技术性卡片 | EmotionHealthStartScreen.tsx |
+| 9 | 更新 index.ts 导出 | index.ts |
 
 ---
 
-## 七、脚本内容详情
+## 六、视觉设计规范
 
-### 能量耗竭型完整脚本
+### 颜色系统
 
-| 轮次 | 阶段 | 内容 |
+| 模块 | 主色 | 渐变 |
 |------|------|------|
-| R1 | 共情开场 | 我看到你的结果显示你现在处在比较明显的"能量透支"状态。这通常不是因为你不努力，而是因为你已经撑了很久。在继续往前之前，我想先确认一件事：最近让你最累的，是哪一件事或哪一种角色？ |
-| R2 | 引导觉察 | 当你想到这件事时，身体更明显的感受是什么？比如：疲惫、紧绷、心烦，还是无力？ |
-| R3 | 正常化 | 你现在的反应其实很合理。当一个人长期处在"责任优先"的状态，大脑会自动进入节能模式。这不是懒，而是系统在自我保护。 |
-| R4 | 微行动 | 我们先不谈改变，只做一个很小的恢复动作。接下来2分钟，你只需要做一件事：把注意力放在呼吸上，慢慢数10次。做完告诉我，你现在的状态有没有哪怕一点点变化。 |
-| R5 | 长期路径 | 如果你愿意，我们可以在接下来几天里，一起帮你慢慢找回能量，而不是继续硬撑。我会每天给你一个不费力的小练习，让恢复变成可执行的事。你想现在开始这个陪伴吗？ |
+| 品牌开场 | rose/pink | from-rose-500 via-pink-500 to-purple-500 |
+| 痛点区 | slate | bg-slate-50 |
+| 权威区 | indigo/violet | from-indigo-50 via-violet-50 |
+| 模式预览 | 各模式对应色 | orange/blue/purple/teal |
+| 定价区 | rose | from-rose-50 via-pink-50 |
 
-### 高度紧绷型完整脚本
+### 动效规范
 
-| 轮次 | 阶段 | 内容 |
-|------|------|------|
-| R1 | 共情开场 | 你的测评显示，你现在很可能一直处在"必须撑住"的状态。很多人会以为这是责任感强，其实这对大脑是极大的负担。最近有没有一件事，让你特别不敢出错？ |
-| R2 | 识别担忧 | 当你想到这件事时，脑子里最常出现的担心是什么？是怕失败？怕被否定？还是怕影响别人？ |
-| R3 | 指出机制 | 长期紧绷时，大脑会把很多普通情况都当成威胁，于是你会本能地想提前控制一切。问题是，这样会让你一直停在高压状态。 |
-| R4 | 松动练习 | 我们可以先试一个小小的"放松实验"。今天选一件不那么重要的小事，允许它只做到70分，而不是完美。做完后告诉我，你的焦虑有没有变化。 |
-| R5 | 长期路径 | 接下来我可以每天陪你做一些降低大脑警戒状态的小练习，帮你慢慢找回安全感，而不是靠控制硬撑。你想让我这样陪你几天试试看吗？ |
+| 元素 | 动效 |
+|------|------|
+| 核心痛点文字 | 逐字显示 + 关键词呼吸闪烁 |
+| 痛点卡片 | 渐入 + 微动 |
+| 权威数据 | 数字滚动 |
+| CTA按钮 | 脉动呼吸 |
 
-### 情绪压抑型完整脚本
+### 交互规范
 
-| 轮次 | 阶段 | 内容 |
-|------|------|------|
-| R1 | 共情开场 | 从你的结果来看，你很习惯把情绪留给自己消化。你可能不想给别人添麻烦，但这其实会让你很辛苦。最近有没有一件事，让你其实挺委屈，却没说出口？ |
-| R2 | 命名情绪 | 如果要给那种感觉一个名字，你觉得更像是：失望、难过、愤怒，还是被忽视？ |
-| R3 | 安全感建立 | 情绪被说出来，并不会让你变成麻烦的人。它只是告诉你：你也有需要被看见的部分。你愿意让我先听你说说这件事吗？ |
-| R4 | 表达练习 | 我们可以试一个安全的表达方式。用这句话补全："当___发生时，我其实很___。"你可以先只对我说。 |
-| R5 | 长期路径 | 如果你愿意，我可以陪你练习如何表达真实需要而不伤害关系。这不是一蹴而就的事，但可以慢慢变得容易。你想开始这个练习吗？ |
-
-### 逃避延迟型完整脚本
-
-| 轮次 | 阶段 | 内容 |
-|------|------|------|
-| R1 | 共情开场 | 你的结果显示，你并不是不想行动，而是每次一想到要开始，情绪就先卡住你。最近有没有一件你一直拖着却又很在意的事？ |
-| R2 | 拆解恐惧 | 当你想到要做这件事时，最强烈的感受是什么？是压力、害怕失败，还是不知道从哪开始？ |
-| R3 | 机制解释 | 拖延很多时候不是意志力问题，而是大脑把"开始"误判成危险信号。所以它会让你先去做更轻松的事来保护你。 |
-| R4 | 微启动 | 我们不需要一下子解决整件事。现在只选一个5分钟内能完成的最小步骤。比如：打开文件、写一句话、发一条信息。你愿意现在试一个吗？ |
-| R5 | 长期路径 | 如果你愿意，我可以每天陪你做一个很小但可完成的行动，帮大脑重新建立"我可以开始"的信号。要不要从今天就开始？ |
-
-### 通用转化轮次（Round 6-7）
-
-| 轮次 | 阶段 | 内容 |
-|------|------|------|
-| R6 | 承认改变需要时间 | 情绪和习惯不是一天形成的，也不会一天改变。有系统的陪伴，会比你一个人硬扛轻松很多。 |
-| R7 | 转入系统支持 | 接下来我可以把你接入一个更系统的陪伴路径，包括每天的引导练习和阶段性回顾。你想继续跟我一起走下去吗？ |
+| 元素 | 行为 |
+|------|------|
+| 模式卡片 | 点击展开详情 |
+| 首屏CTA | 固定 + 吸底 |
+| 登录入口 | 弱化显示 |
 
 ---
 
-## 八、技术细节
+## 七、预期效果
 
-### 对话流程控制逻辑
+### 转化率提升点
 
-```typescript
-// 对话状态机
-type DialogueState = 'waiting_user' | 'ai_speaking' | 'show_cta' | 'completed';
+| 优化项 | 预期效果 |
+|--------|----------|
+| 痛点开场 | 首屏跳出率降低 20% |
+| 社交证明 | 信任度提升 |
+| 损失警告 | 紧迫感增强 |
+| 人群定位 | 用户自我匹配度提升 |
+| 定价模块 | 付费转化率提升 15% |
 
-interface DialogueController {
-  currentRound: number;
-  state: DialogueState;
-  
-  // 推进到下一轮
-  advanceRound: () => void;
-  
-  // 处理用户输入
-  handleUserInput: (input: string) => void;
-  
-  // 处理选项点击
-  handleOptionClick: (option: string) => void;
-  
-  // 检查是否显示CTA
-  shouldShowCTA: () => boolean;
-}
-```
+### A/B测试建议
 
-### CTA 按钮配置
-
-```typescript
-const ctaButtonConfig: Record<PatternType, {
-  label: string;
-  campId: string;
-  coachType: string;
-}> = {
-  exhaustion: {
-    label: '开始情绪修复陪伴',
-    campId: 'emotion_journal_21',
-    coachType: 'emotion_recovery'
-  },
-  tension: {
-    label: '开始焦虑释放陪伴',
-    campId: 'emotion_journal_21',
-    coachType: 'anxiety_release'
-  },
-  suppression: {
-    label: '开始情绪表达陪伴',
-    campId: 'emotion_journal_21',
-    coachType: 'emotion_expression'
-  },
-  avoidance: {
-    label: '开始行动启动陪伴',
-    campId: 'emotion_journal_21',
-    coachType: 'action_coach'
-  }
-};
-```
-
----
-
-## 九、预期效果
-
-1. **用户完成测评后** → 点击CTA进入专属对话页面
-2. **AI自动开始Round 1** → 共情开场，等待用户回复
-3. **用户回复后** → AI推进到Round 2，逐轮进行
-4. **Round 5 结束** → 显示专属CTA按钮（开始XX陪伴）
-5. **用户继续对话** → 进入Round 6-7，强转化
-6. **点击CTA** → 导航到情绪日记训练营购买页（¥299）
+1. **测试A**：当前版本（技术导向）
+2. **测试B**：优化版本（情感导向）
+3. **核心指标**：首屏点击率、完成率、付费率
 
