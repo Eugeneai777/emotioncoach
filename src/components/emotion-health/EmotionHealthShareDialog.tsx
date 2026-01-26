@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, X, Loader2 } from "lucide-react";
+import { Download, X, Loader2, Copy, Check } from "lucide-react";
 import { EmotionHealthShareCard } from "./EmotionHealthShareCard";
 import { generateCardDataUrl } from "@/utils/shareCardConfig";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { getProxiedAvatarUrl } from "@/utils/avatarUtils";
+import { getPromotionDomain } from "@/utils/partnerQRUtils";
+import { useToast } from "@/hooks/use-toast";
 import type { EmotionHealthResult } from "./emotionHealthData";
 
 interface EmotionHealthShareDialogProps {
@@ -18,22 +20,39 @@ interface EmotionHealthShareDialogProps {
 export function EmotionHealthShareDialog({ open, onOpenChange, result }: EmotionHealthShareDialogProps) {
   const { user } = useAuth();
   const { profile } = useProfileCompletion();
+  const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showFullPreview, setShowFullPreview] = useState(false);
+  const [copied, setCopied] = useState(false);
   const exportCardRef = useRef<HTMLDivElement>(null);
 
   // Get user display info
   const userName = profile?.display_name || user?.user_metadata?.name || '用户';
   const avatarUrl = getProxiedAvatarUrl(profile?.avatar_url || user?.user_metadata?.avatar_url);
 
+  // Share URL
+  const shareUrl = `${getPromotionDomain()}/emotion-health`;
+
   // Reset state when dialog opens
   useEffect(() => {
     if (open) {
       setPreviewUrl(null);
       setShowFullPreview(false);
+      setCopied(false);
     }
   }, [open]);
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast({ title: "链接已复制" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "复制失败", variant: "destructive" });
+    }
+  };
 
   const handleGenerate = async () => {
     if (!exportCardRef.current) return;
@@ -94,23 +113,32 @@ export function EmotionHealthShareDialog({ open, onOpenChange, result }: Emotion
           </div>
 
           <div className="p-4 border-t">
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="w-full bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-700 hover:to-pink-700"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  生成中...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4 mr-2" />
-                  生成分享图片
-                </>
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="flex-1 bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-700 hover:to-pink-700"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    生成中...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    生成分享图片
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleCopyLink}
+                className="px-4"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </Button>
+            </div>
             <p className="text-[10px] text-muted-foreground text-center mt-2">
               点击生成图片后长按保存到相册
             </p>
