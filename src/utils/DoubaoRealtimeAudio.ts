@@ -45,6 +45,7 @@ interface DoubaoRealtimeChatOptions {
 export class DoubaoRealtimeChat {
   private ws: WebSocket | null = null;
   private audioContext: AudioContext | null = null;
+  private playbackAudioContext: AudioContext | null = null;  // ✅ 播放专用 AudioContext
   private mediaStream: MediaStream | null = null;
   private processor: ScriptProcessorNode | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
@@ -122,6 +123,10 @@ export class DoubaoRealtimeChat {
         sampleRate: this.inputSampleRate
       });
       console.log('[DoubaoChat] AudioContext sampleRate:', this.audioContext.sampleRate, 'target:', this.inputSampleRate);
+
+      // ✅ 为播放创建独立的 AudioContext（24kHz 输出采样率）
+      this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
+      console.log('[DoubaoChat] Playback AudioContext initialized at 24kHz');
 
       // 4. 建立 WebSocket 连接到 Relay
       const wsUrl = `${this.config.relay_url}?session_token=${this.config.session_token}&user_id=${this.config.user_id}&mode=${this.config.mode}`;
@@ -401,18 +406,34 @@ export class DoubaoRealtimeChat {
   private async playNextAudio(): Promise<void> {
     if (this.isPlaying || this.audioQueue.length === 0) return;
     
+    // ✅ 检查播放 AudioContext 是否可用
+    if (!this.playbackAudioContext) {
+      console.warn('[DoubaoChat] No playback AudioContext, creating one...');
+      this.playbackAudioContext = new AudioContext({ sampleRate: 24000 });
+    }
+    
+    // ✅ 如果 AudioContext 被挂起（浏览器策略），尝试恢复
+    if (this.playbackAudioContext.state === 'suspended') {
+      try {
+        await this.playbackAudioContext.resume();
+        console.log('[DoubaoChat] Playback AudioContext resumed');
+      } catch (e) {
+        console.warn('[DoubaoChat] Failed to resume AudioContext:', e);
+      }
+    }
+    
     this.isPlaying = true;
     const audioData = this.audioQueue.shift()!;
 
     try {
       const wavData = this.createWavFromPCM(audioData);
-      const audioContext = new AudioContext({ sampleRate: 24000 });
+      // ✅ 复用 playbackAudioContext
       const arrayBuffer = wavData.buffer.slice(wavData.byteOffset, wavData.byteOffset + wavData.byteLength) as ArrayBuffer;
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      const audioBuffer = await this.playbackAudioContext.decodeAudioData(arrayBuffer);
       
-      const source = audioContext.createBufferSource();
+      const source = this.playbackAudioContext.createBufferSource();
       source.buffer = audioBuffer;
-      source.connect(audioContext.destination);
+      source.connect(this.playbackAudioContext.destination);
       
       source.onended = () => {
         this.isPlaying = false;
@@ -553,6 +574,16 @@ export class DoubaoRealtimeChat {
     if (this.audioContext) {
       this.audioContext.close();
       this.audioContext = null;
+    }
+
+    // ✅ 清理播放 AudioContext
+    if (this.playbackAudioContext) {
+      try {
+        this.playbackAudioContext.close();
+      } catch (e) {
+        console.warn('[DoubaoChat] Failed to close playback AudioContext:', e);
+      }
+      this.playbackAudioContext = null;
     }
 
     if (this.ws) {
