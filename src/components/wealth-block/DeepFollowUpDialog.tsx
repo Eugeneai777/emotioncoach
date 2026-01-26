@@ -110,6 +110,16 @@ export function DeepFollowUpDialog({
                 </p>
               </div>
             </div>
+            
+            {/* Loading 状态下的跳过按钮 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSkip}
+              className="mt-6 text-sm text-muted-foreground hover:text-foreground"
+            >
+              跳过，直接查看结果 →
+            </Button>
           </CardContent>
         </Card>
       </motion.div>
