@@ -340,49 +340,6 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
               </p>
             </div>
             
-            {/* 简化的三层说明 - 添加交互动画 */}
-            <div className="grid gap-2 mt-4">
-              <motion.div 
-                className="flex items-center gap-3 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 cursor-pointer"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-3 h-3 text-white" />
-                </div>
-                <div className="text-xs">
-                  <span className="font-medium">第一层</span>
-                  <span className="text-muted-foreground ml-2">状态筛查（12题）</span>
-                </div>
-              </motion.div>
-              <motion.div 
-                className="flex items-center gap-3 p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20 cursor-pointer"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-violet-500 flex items-center justify-center flex-shrink-0">
-                  <Brain className="w-3 h-3 text-white" />
-                </div>
-                <div className="text-xs">
-                  <span className="font-medium">第二层</span>
-                  <span className="text-muted-foreground ml-2">反应模式（16题）</span>
-                </div>
-              </motion.div>
-              <motion.div 
-                className="flex items-center gap-3 p-2 rounded-lg bg-rose-50 dark:bg-rose-900/20 cursor-pointer"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="w-6 h-6 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                  <Heart className="w-3 h-3 text-white" />
-                </div>
-                <div className="text-xs">
-                  <span className="font-medium">第三层</span>
-                  <span className="text-muted-foreground ml-2">行动路径（4题）</span>
-                </div>
-              </motion.div>
-            </div>
-
             {/* 三层诊断表格 - 使用 Accordion 折叠 */}
             <Accordion type="single" collapsible defaultValue="layer1" className="mt-4 space-y-3">
               {/* 第一层：科学量表对照表 */}
