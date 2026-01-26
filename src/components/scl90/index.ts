@@ -11,3 +11,5 @@ export type { SCL90HistoryRecord } from './SCL90History';
 export { SCL90Trend } from './SCL90Trend';
 export { SCL90Comparison } from './SCL90Comparison';
 export { SCL90HistoryPage } from './SCL90HistoryPage';
+export { useSCL90Progress } from './useSCL90Progress';
+export type { SCL90Progress } from './useSCL90Progress';

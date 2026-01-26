@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, Clock, Shield, ArrowLeft, Sparkles, Target, Lightbulb, Users, GraduationCap, Heart, Moon, HelpCircle } from "lucide-react";
+import { Brain, Clock, Shield, ArrowLeft, Sparkles, Target, Lightbulb, Users, GraduationCap, Heart, Moon, HelpCircle, PlayCircle } from "lucide-react";
 import { scl90ScoreLabels } from "./scl90Data";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { useSCL90Progress } from "./useSCL90Progress";
 
 interface SCL90StartScreenProps {
   onStart: () => void;
+  onContinue?: () => void;
   onBack?: () => void;
   onViewHistory?: () => void;
 }
@@ -46,7 +48,15 @@ const dimensions = [
   { emoji: '💤', name: '其他' },
 ];
 
-export function SCL90StartScreen({ onStart, onBack, onViewHistory }: SCL90StartScreenProps) {
+export function SCL90StartScreen({ onStart, onContinue, onBack, onViewHistory }: SCL90StartScreenProps) {
+  const { savedProgress, hasUnfinishedProgress, clearProgress, isLoaded } = useSCL90Progress();
+  const answeredCount = savedProgress ? Object.keys(savedProgress.answers).length : 0;
+
+  const handleStartNew = () => {
+    clearProgress();
+    onStart();
+  };
+
   return (
     <motion.div 
       className="space-y-4 pb-6"
@@ -268,16 +278,54 @@ export function SCL90StartScreen({ onStart, onBack, onViewHistory }: SCL90StartS
         transition={{ delay: 0.4, duration: 0.3 }}
         style={{ transform: "translateZ(0)", willChange: "transform, opacity" }}
       >
+        {/* 继续答题按钮（如果有未完成的进度） */}
+        {isLoaded && hasUnfinishedProgress && (
+          <motion.div
+            initial={{ opacity: 0.01, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 mb-3">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <PlayCircle className="w-5 h-5 text-amber-600" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                        有未完成的测评
+                      </p>
+                      <p className="text-xs text-amber-600 dark:text-amber-400">
+                        已完成 {answeredCount}/90 题
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm"
+                    onClick={onContinue || onStart}
+                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                  >
+                    继续答题
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         <motion.div
           animate={{ scale: [1, 1.02, 1] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         >
           <Button 
-            onClick={onStart} 
-            className="w-full h-12 text-base font-medium bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+            onClick={hasUnfinishedProgress ? handleStartNew : onStart} 
+            variant={hasUnfinishedProgress ? "outline" : "default"}
+            className={cn(
+              "w-full h-12 text-base font-medium",
+              !hasUnfinishedProgress && "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+            )}
           >
             <Brain className="w-5 h-5 mr-2" />
-            开始测评
+            {hasUnfinishedProgress ? "重新开始测评" : "开始测评"}
           </Button>
         </motion.div>
         

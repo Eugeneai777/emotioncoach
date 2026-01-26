@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, CheckCircle, X } from "lucide-react";
@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useSCL90Progress } from "./useSCL90Progress";
 
 interface SCL90QuestionsProps {
   onComplete: (result: SCL90Result, answers: Record<number, number>) => void;
@@ -29,9 +30,31 @@ interface SCL90QuestionsProps {
 const QUESTIONS_PER_PAGE = 9;
 
 export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
-  const [currentPage, setCurrentPage] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const { savedProgress, saveProgress, clearProgress } = useSCL90Progress();
+  
+  // 从保存的进度初始化状态
+  const [currentPage, setCurrentPage] = useState(() => savedProgress?.currentPage || 0);
+  const [answers, setAnswers] = useState<Record<number, number>>(() => savedProgress?.answers || {});
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // 初始化时从savedProgress恢复
+  useEffect(() => {
+    if (!isInitialized && savedProgress) {
+      setCurrentPage(savedProgress.currentPage);
+      setAnswers(savedProgress.answers);
+      setIsInitialized(true);
+    } else if (!savedProgress) {
+      setIsInitialized(true);
+    }
+  }, [savedProgress, isInitialized]);
+
+  // 自动保存进度（每次answers或currentPage变化时）
+  useEffect(() => {
+    if (isInitialized && Object.keys(answers).length > 0) {
+      saveProgress(answers, currentPage);
+    }
+  }, [answers, currentPage, saveProgress, isInitialized]);
 
   const totalPages = Math.ceil(scl90Questions.length / QUESTIONS_PER_PAGE);
 
@@ -81,8 +104,10 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
   // 提交测评
   const handleSubmit = useCallback(() => {
     const result = calculateSCL90Result(answers);
+    // 清除保存的进度
+    clearProgress();
     onComplete(result, answers);
-  }, [answers, onComplete]);
+  }, [answers, onComplete, clearProgress]);
 
   // 退出确认
   const handleExitClick = useCallback(() => {
