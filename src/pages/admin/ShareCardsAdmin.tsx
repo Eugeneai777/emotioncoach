@@ -4,6 +4,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search } from 'lucide-react';
 import { ShareCardPreviewItem } from '@/components/admin/ShareCardPreviewItem';
 import { ShareCardPreviewDialog } from '@/components/admin/ShareCardPreviewDialog';
+import { ShareCardConsistencyPanel } from '@/components/admin/ShareCardConsistencyPanel';
 import {
   shareCardsRegistry,
   getCategoryStats,
@@ -46,11 +47,18 @@ export default function ShareCardsAdmin() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">分享卡片管理</h1>
-        <p className="text-muted-foreground mt-1">
-          查看和测试所有 {totalCount} 张分享卡片
-        </p>
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">分享卡片管理</h1>
+          <p className="text-muted-foreground mt-1">
+            查看和测试所有 {totalCount} 张分享卡片
+          </p>
+        </div>
+        
+        {/* Consistency Panel - 右侧 */}
+        <div className="lg:w-[360px] flex-shrink-0">
+          <ShareCardConsistencyPanel />
+        </div>
       </div>
 
       {/* Filters */}
