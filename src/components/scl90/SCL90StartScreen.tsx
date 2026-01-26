@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, Clock, Shield, ArrowLeft, Sparkles, Target, Lightbulb, Users, GraduationCap, Heart, Moon, HelpCircle, PlayCircle } from "lucide-react";
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Brain, Clock, Shield, Sparkles, Target, Lightbulb, Users, GraduationCap, Heart, Moon, HelpCircle, PlayCircle, ChevronRight } from "lucide-react";
 import { scl90ScoreLabels } from "./scl90Data";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -14,25 +20,24 @@ interface SCL90StartScreenProps {
 }
 
 const targetAudience = [
-  { icon: Users, label: "职场人群", desc: "焦虑、倦怠、人际困扰" },
-  { icon: GraduationCap, label: "在校学生", desc: "学业压力、考试焦虑" },
-  { icon: Heart, label: "情感困扰", desc: "关系问题、情绪波动" },
-  { icon: Moon, label: "睡眠问题", desc: "失眠、多梦、睡眠差" },
-  { icon: HelpCircle, label: "自我探索", desc: "想了解自己心理状态" },
+  { icon: Users, label: "职场人群", desc: "焦虑、倦怠" },
+  { icon: GraduationCap, label: "在校学生", desc: "学业压力" },
+  { icon: Heart, label: "情感困扰", desc: "关系问题" },
+  { icon: Moon, label: "睡眠问题", desc: "失眠多梦" },
+  { icon: HelpCircle, label: "自我探索", desc: "了解自己" },
 ];
 
 const painPoints = [
   "怀疑自己是不是焦虑，又不太确定",
   "总纠结自己是否有情绪问题",
   "不知道是焦虑抑郁还是只是心情不好",
-  "网上十几题的测试感觉不够专业",
 ];
 
 const selfTestTips = [
-  { emoji: "🔇", text: "找一个安静、不被打扰的环境" },
-  { emoji: "⏱️", text: "预留10-15分钟完整作答" },
-  { emoji: "✍️", text: "遇到纠结的题目，选择第一直觉" },
-  { emoji: "📋", text: "按最近7天的真实感受作答" },
+  { emoji: "🔇", text: "安静环境" },
+  { emoji: "⏱️", text: "10-15分钟" },
+  { emoji: "✍️", text: "第一直觉" },
+  { emoji: "📋", text: "最近7天" },
 ];
 
 const dimensions = [
@@ -48,7 +53,14 @@ const dimensions = [
   { emoji: '💤', name: '其他' },
 ];
 
-export function SCL90StartScreen({ onStart, onContinue, onBack, onViewHistory }: SCL90StartScreenProps) {
+const features = [
+  { icon: Sparkles, text: "90题 · 10维度全面评估", color: "text-purple-500" },
+  { icon: Clock, text: "全球使用超40年经典量表", color: "text-blue-500" },
+  { icon: Target, text: "比十几题测试更专业可靠", color: "text-green-500" },
+  { icon: Shield, text: "每个维度独立评分分析", color: "text-amber-500" },
+];
+
+export function SCL90StartScreen({ onStart, onContinue, onViewHistory }: SCL90StartScreenProps) {
   const { savedProgress, hasUnfinishedProgress, clearProgress, isLoaded } = useSCL90Progress();
   const answeredCount = savedProgress ? Object.keys(savedProgress.answers).length : 0;
 
@@ -64,198 +76,160 @@ export function SCL90StartScreen({ onStart, onContinue, onBack, onViewHistory }:
       animate={{ opacity: 1, y: 0 }}
       style={{ transform: "translateZ(0)", willChange: "transform, opacity" }}
     >
-      {/* 返回按钮 */}
-      {onBack && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBack}
-          className="gap-1.5 text-sm -ml-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          返回
-        </Button>
-      )}
-
-      {/* 标题区域 - 整合附件内容 */}
-      <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-4 py-2 rounded-full text-sm font-medium">
+      {/* 标题区域 - 精简 */}
+      <div className="text-center space-y-2">
+        <div className="inline-flex items-center gap-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-1.5 rounded-full text-sm font-medium">
           <Brain className="w-4 h-4" />
           <span>SCL-90 心理健康自评</span>
         </div>
-        <h2 className="text-xl font-bold">怎么判断是焦虑还是心情烦？</h2>
+        <h2 className="text-lg font-bold">怎么判断是焦虑还是心情烦？</h2>
         <p className="text-sm text-muted-foreground">
           专业自测，清楚了解自己的情绪状态
         </p>
       </div>
 
-      {/* 痛点共鸣卡片 */}
-      <motion.div
-        initial={{ opacity: 0.01, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.1, duration: 0.3 }}
-        style={{ transform: "translateZ(0)", willChange: "transform, opacity" }}
-      >
-        <Card className="border-0 shadow-sm bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">☀️</span>
-              <span className="font-medium text-purple-800 dark:text-purple-200">你是否也有这样的困惑？</span>
+      {/* 继续答题提示（如果有未完成的进度） */}
+      {isLoaded && hasUnfinishedProgress && (
+        <motion.div
+          initial={{ opacity: 0.01, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <PlayCircle className="w-5 h-5 text-amber-600" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                      有未完成的测评
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      已完成 {answeredCount}/90 题
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  size="sm"
+                  onClick={onContinue || onStart}
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                  继续答题
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* 核心卖点 - 合并为紧凑列表 */}
+      <Card className="border-purple-200/50 dark:border-purple-800/50 shadow-sm">
+        <CardContent className="p-3">
+          <div className="grid grid-cols-2 gap-2">
+            {features.map((item, index) => (
+              <div key={index} className="flex items-center gap-2 text-sm">
+                <item.icon className={cn("w-4 h-4 flex-shrink-0", item.color)} />
+                <span className="text-xs text-muted-foreground">{item.text}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 10因子维度 - 紧凑展示 */}
+      <div className="flex flex-wrap justify-center gap-1.5 px-2">
+        {dimensions.map(f => (
+          <span 
+            key={f.name}
+            className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-muted/50 rounded-full text-xs"
+          >
+            <span>{f.emoji}</span>
+            <span className="text-muted-foreground">{f.name}</span>
+          </span>
+        ))}
+      </div>
+
+      {/* 折叠详情区域 */}
+      <Accordion type="single" collapsible className="w-full">
+        {/* 痛点共鸣 */}
+        <AccordionItem value="pain-points" className="border-b-0">
+          <AccordionTrigger className="py-2 px-3 rounded-lg bg-purple-50/50 dark:bg-purple-950/20 hover:no-underline">
+            <div className="flex items-center gap-2 text-sm">
+              <span>☀️</span>
+              <span className="font-medium">你是否也有这样的困惑？</span>
             </div>
-            <ul className="space-y-2 mb-3">
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-0">
+            <ul className="space-y-1.5 px-3">
               {painPoints.map((point, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <li key={index} className="flex items-start gap-2 text-xs text-muted-foreground">
                   <span className="text-purple-400 mt-0.5">•</span>
                   <span>{point}</span>
                 </li>
               ))}
             </ul>
-            <div className="flex items-center gap-2 pt-2 border-t border-purple-100 dark:border-purple-800">
-              <Lightbulb className="w-4 h-4 text-amber-500" />
-              <p className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                通过专业的自我评估，就可以清楚知道自己的情绪状态！
+            <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-amber-50/50 dark:bg-amber-950/20 rounded-lg">
+              <Lightbulb className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                通过专业自评，清楚知道自己的情绪状态！
               </p>
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* 权威性说明卡片 */}
-      <motion.div
-        initial={{ opacity: 0.01, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.15, duration: 0.3 }}
-        style={{ transform: "translateZ(0)", willChange: "transform, opacity" }}
-      >
-        <Card className="border-purple-200 dark:border-purple-800 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">🔥</span>
-              <span className="font-medium text-foreground">全球著名的权威量表</span>
+        {/* 适合人群 */}
+        <AccordionItem value="audience" className="border-b-0 mt-2">
+          <AccordionTrigger className="py-2 px-3 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 hover:no-underline">
+            <div className="flex items-center gap-2 text-sm">
+              <span>🎯</span>
+              <span className="font-medium">适合哪些人群？</span>
             </div>
-            <ul className="space-y-2">
-              <li className="flex items-start gap-2 text-sm">
-                <Sparkles className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                <span className="text-muted-foreground">90道题、10大维度，全面扫描心理状态</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Clock className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                <span className="text-muted-foreground">全球使用超40年的经典量表</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Target className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span className="text-muted-foreground">比网上十几题的测试更专业可靠</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Shield className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                <span className="text-muted-foreground">得分越高情绪问题可能性越明显（需结合各因子评估）</span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* 10因子维度展示 */}
-      <motion.div
-        initial={{ opacity: 0.01, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.2, duration: 0.3 }}
-        style={{ transform: "translateZ(0)", willChange: "transform, opacity" }}
-      >
-        <Card className="border-0 shadow-sm bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-lg">📊</span>
-              <span className="font-medium text-foreground">从10个维度精准评估</span>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {dimensions.map(f => (
-                <span 
-                  key={f.name}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-white/80 dark:bg-white/10 rounded-full text-xs"
-                >
-                  <span>{f.emoji}</span>
-                  <span>{f.name}</span>
-                </span>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground mt-3 pt-2 border-t border-purple-100 dark:border-purple-800">
-              每个维度独立评分，具有很好的鉴别能力
-            </p>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* 适合人群 */}
-      <motion.div
-        initial={{ opacity: 0.01, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.25, duration: 0.3 }}
-        style={{ transform: "translateZ(0)", willChange: "transform, opacity" }}
-      >
-        <Card className="border-0 shadow-sm bg-card/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-lg">🎯</span>
-              <span className="font-medium text-foreground">适合这些人群</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-0">
+            <div className="flex flex-wrap gap-1.5 px-3">
               {targetAudience.map((item, index) => (
-                <div key={index} className="flex items-start gap-2 p-2 rounded-lg bg-muted/30">
-                  <item.icon className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium truncate">{item.label}</p>
-                    <p className="text-xs text-muted-foreground truncate">{item.desc}</p>
-                  </div>
+                <div key={index} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-muted/50 text-xs">
+                  <item.icon className="w-3 h-3 text-purple-500" />
+                  <span className="font-medium">{item.label}</span>
+                  <span className="text-muted-foreground">· {item.desc}</span>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* 自测小提示 */}
-      <motion.div
-        initial={{ opacity: 0.01, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.3, duration: 0.3 }}
-        style={{ transform: "translateZ(0)", willChange: "transform, opacity" }}
-      >
-        <Card className="border-blue-200 dark:border-blue-800 shadow-sm bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-lg">📝</span>
-              <span className="font-medium text-blue-800 dark:text-blue-200">自测小提示</span>
+        {/* 自测提示 */}
+        <AccordionItem value="tips" className="border-b-0 mt-2">
+          <AccordionTrigger className="py-2 px-3 rounded-lg bg-green-50/50 dark:bg-green-950/20 hover:no-underline">
+            <div className="flex items-center gap-2 text-sm">
+              <span>📝</span>
+              <span className="font-medium">自测小提示</span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-0">
+            <div className="flex flex-wrap gap-2 px-3">
               {selfTestTips.map((tip, index) => (
-                <div key={index} className="flex items-start gap-2 text-sm">
-                  <span className="text-base flex-shrink-0">{tip.emoji}</span>
-                  <span className="text-xs text-muted-foreground">{tip.text}</span>
+                <div key={index} className="flex items-center gap-1.5 px-2 py-1 bg-muted/50 rounded-lg text-xs">
+                  <span>{tip.emoji}</span>
+                  <span className="text-muted-foreground">{tip.text}</span>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
-      {/* 评分说明 */}
-      <motion.div
-        initial={{ opacity: 0.01 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.35, duration: 0.3 }}
-        style={{ transform: "translateZ(0)", willChange: "transform, opacity" }}
-        className="space-y-2"
-      >
+      {/* 评分说明 - 精简 */}
+      <div className="space-y-2">
         <p className="text-xs text-muted-foreground text-center">
-          请根据<strong className="text-foreground">最近一周</strong>的感受，选择符合程度：
+          根据<strong className="text-foreground">最近一周</strong>感受选择：
         </p>
-        <div className="flex flex-wrap justify-center gap-1.5">
+        <div className="flex justify-center gap-1">
           {scl90ScoreLabels.map(s => (
             <span 
               key={s.value} 
               className={cn(
-                "px-2 py-1 rounded text-xs font-medium border",
+                "px-1.5 py-0.5 rounded text-[10px] font-medium border",
                 s.color
               )}
             >
@@ -263,57 +237,17 @@ export function SCL90StartScreen({ onStart, onContinue, onBack, onViewHistory }:
             </span>
           ))}
         </div>
-      </motion.div>
+      </div>
 
       {/* 免责声明 */}
-      <p className="text-xs text-muted-foreground text-center px-4">
+      <p className="text-[10px] text-muted-foreground text-center px-4">
         ⚠️ 本量表仅供自我筛查参考，不能替代专业心理诊断
       </p>
 
       {/* 开始按钮 */}
-      <motion.div 
-        className="space-y-2 pt-2"
-        initial={{ opacity: 0.01, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.3 }}
-        style={{ transform: "translateZ(0)", willChange: "transform, opacity" }}
-      >
-        {/* 继续答题按钮（如果有未完成的进度） */}
-        {isLoaded && hasUnfinishedProgress && (
-          <motion.div
-            initial={{ opacity: 0.01, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 mb-3">
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <PlayCircle className="w-5 h-5 text-amber-600" />
-                    <div>
-                      <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                        有未完成的测评
-                      </p>
-                      <p className="text-xs text-amber-600 dark:text-amber-400">
-                        已完成 {answeredCount}/90 题
-                      </p>
-                    </div>
-                  </div>
-                  <Button 
-                    size="sm"
-                    onClick={onContinue || onStart}
-                    className="bg-amber-600 hover:bg-amber-700 text-white"
-                  >
-                    继续答题
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-
+      <div className="space-y-2 pt-1">
         <motion.div
-          animate={{ scale: [1, 1.02, 1] }}
+          animate={{ scale: [1, 1.01, 1] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         >
           <Button 
@@ -331,14 +265,16 @@ export function SCL90StartScreen({ onStart, onContinue, onBack, onViewHistory }:
         
         {onViewHistory && (
           <Button 
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={onViewHistory} 
-            className="w-full h-10"
+            className="w-full text-muted-foreground"
           >
             查看历史记录
+            <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         )}
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
