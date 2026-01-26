@@ -11,6 +11,7 @@ export {
   aiCoachOpeningExamples,
   comparisonWithTraditional,
   resultPageFooterConfig,
+  resultPageSectionTitles,
   calculateEmotionHealthResult,
   getQuestionLayer,
   getLayerProgress,
