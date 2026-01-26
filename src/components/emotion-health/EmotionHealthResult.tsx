@@ -8,7 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { MessageCircle, Sparkles, ChevronRight, Share2, RotateCcw, AlertTriangle, Target } from "lucide-react";
+import { MessageCircle, Sparkles, ChevronRight, Share2, RotateCcw, AlertTriangle, Target, Compass, Search, Brain, Bot } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -18,7 +18,8 @@ import {
   getIndexLevel,
   getIndexLevelLabel,
   getIndexLevelColor,
-  getIndexBarColor
+  getIndexBarColor,
+  resultPageFooterConfig
 } from "./emotionHealthData";
 
 interface EmotionHealthResultProps {
@@ -73,7 +74,7 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
         </CardContent>
       </Card>
 
-      {/* 模块2：反应模式 */}
+      {/* 模块2：反应模式 - 增强版 */}
       <Card className={cn("border-2", primaryPattern.bgColor)}>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
@@ -88,13 +89,29 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
               <p className="text-xs text-muted-foreground">{primaryPattern.targetAudience}</p>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground mt-2">{primaryPattern.description}</p>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 space-y-4">
+          {/* 戳心总结 */}
+          <div className="p-3 rounded-lg bg-gradient-to-r from-primary/5 to-purple-500/5 border border-primary/20">
+            <div className="flex items-start gap-2">
+              <Compass className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">🧭 一句话看懂你现在的状态</p>
+                <p className="text-sm font-medium text-foreground leading-relaxed">
+                  "{primaryPattern.headline}"
+                </p>
+              </div>
+            </div>
+          </div>
+
           <Accordion type="single" collapsible className="w-full">
+            {/* 典型表现 */}
             <AccordionItem value="symptoms" className="border-b-0">
               <AccordionTrigger className="text-sm py-2 hover:no-underline">
-                你可能正在经历
+                <span className="flex items-center gap-2">
+                  <Search className="w-3.5 h-3.5" />
+                  🔍 你可能正在经历
+                </span>
               </AccordionTrigger>
               <AccordionContent>
                 <ul className="space-y-2">
@@ -107,15 +124,55 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
                 </ul>
               </AccordionContent>
             </AccordionItem>
+
+            {/* 内在机制 */}
             <AccordionItem value="mechanism" className="border-b-0">
               <AccordionTrigger className="text-sm py-2 hover:no-underline">
-                这背后的真实原因
+                <span className="flex items-center gap-2">
+                  <Brain className="w-3.5 h-3.5" />
+                  🧠 这背后的真实原因
+                </span>
               </AccordionTrigger>
               <AccordionContent>
-                <p className="text-sm text-muted-foreground">{primaryPattern.mechanism}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{primaryPattern.mechanism}</p>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+
+          {/* 当下需要 */}
+          <div className="p-3 rounded-lg bg-muted/50">
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="w-4 h-4 text-emerald-500" />
+              <p className="text-xs font-medium">🎯 {primaryPattern.needsContext}</p>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {primaryPattern.currentNeeds.map((need, i) => (
+                <span key={i} className="text-xs px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
+                  {need}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* AI陪伴说明 */}
+          <div className="p-3 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800">
+            <div className="flex items-center gap-2 mb-2">
+              <Bot className="w-4 h-4 text-emerald-500" />
+              <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">🤖 AI教练下一步会这样陪你</p>
+            </div>
+            <div className="pl-6">
+              <p className="text-sm text-muted-foreground leading-relaxed italic">
+                "{primaryPattern.aiNextStep}"
+              </p>
+            </div>
+          </div>
+
+          {/* 推荐路径 */}
+          <div className="flex items-center gap-2 text-xs p-2 rounded bg-primary/5">
+            <ChevronRight className="w-3.5 h-3.5 text-primary" />
+            <span className="text-muted-foreground">推荐路径：</span>
+            <span className="font-medium text-foreground">{primaryPattern.recommendedCoachLabel} + {primaryPattern.recommendedCampLabel}</span>
+          </div>
           
           {secondaryPattern && (
             <Badge variant="outline" className="mt-3">
@@ -172,20 +229,30 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
         </CardContent>
       </Card>
 
-      {/* 模块5：行动按钮 */}
+      {/* 模块5：统一承接区 */}
+      <Card className="bg-gradient-to-br from-primary/5 via-purple-500/5 to-rose-500/5 border-primary/20">
+        <CardContent className="p-5 text-center space-y-4">
+          <div className="space-y-2">
+            <p className="text-sm text-foreground leading-relaxed">
+              {resultPageFooterConfig.message}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {resultPageFooterConfig.subMessage}
+            </p>
+          </div>
+          <Button 
+            size="lg" 
+            className="w-full h-12 text-base bg-gradient-to-r from-rose-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
+            onClick={handleStartCoach}
+          >
+            <MessageCircle className="w-5 h-5 mr-2" />
+            {resultPageFooterConfig.ctaText}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* 其他操作按钮 */}
       <div className="space-y-3 pb-[calc(20px+env(safe-area-inset-bottom))]">
-        <Button 
-          size="lg" 
-          className="w-full h-12 text-base bg-gradient-to-r from-rose-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
-          onClick={handleStartCoach}
-        >
-          <MessageCircle className="w-5 h-5 mr-2" />
-          开始我的 AI 陪伴对话
-        </Button>
-        <p className="text-xs text-center text-muted-foreground">
-          根据你的状态，我会陪你一步步调整节奏
-        </p>
-        
         <Button 
           variant="outline" 
           className="w-full"

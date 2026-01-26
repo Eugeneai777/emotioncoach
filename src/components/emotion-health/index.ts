@@ -10,6 +10,7 @@ export {
   scoringMechanismConfig,
   aiCoachOpeningExamples,
   comparisonWithTraditional,
+  resultPageFooterConfig,
   calculateEmotionHealthResult,
   getQuestionLayer,
   getLayerProgress,

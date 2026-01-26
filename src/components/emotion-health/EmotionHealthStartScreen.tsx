@@ -3,9 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Heart, Brain, TrendingUp, Clock, Shield, Sparkles, ChevronRight, Zap, FlaskConical, Bot, Star, ChevronDown } from "lucide-react";
+import { Heart, Brain, TrendingUp, Clock, Shield, Sparkles, ChevronRight, Zap, FlaskConical, Bot, Star, ChevronDown, Compass, Search, Target, MessageCircle } from "lucide-react";
 import { ThreeLayerDiagram } from "./ThreeLayerDiagram";
-import { scientificStats, painPoints, scoringMechanismConfig, aiCoachOpeningExamples, comparisonWithTraditional } from "./emotionHealthData";
+import { scientificStats, painPoints, scoringMechanismConfig, aiCoachOpeningExamples, comparisonWithTraditional, patternConfig, PatternType } from "./emotionHealthData";
 
 interface EmotionHealthStartScreenProps {
   onStart: () => void;
@@ -219,6 +219,87 @@ function ComparisonCard() {
   );
 }
 
+// 四大反应模式预览卡片组件
+function PatternPreviewCard({ pattern }: { pattern: typeof patternConfig[PatternType] }) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div className={`rounded-lg border ${pattern.bgColor} overflow-hidden`}>
+        <CollapsibleTrigger asChild>
+          <div className="p-3 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{pattern.emoji}</span>
+                <div>
+                  <div className="text-xs font-medium">{pattern.name}</div>
+                  <div className="text-[10px] text-muted-foreground">{pattern.tagline}</div>
+                </div>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </div>
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-3 pb-3 space-y-3 border-t border-black/10 dark:border-white/10 pt-3">
+            {/* 戳心总结 */}
+            <div className="flex items-start gap-2">
+              <Compass className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+              <p className="text-xs leading-relaxed text-foreground font-medium">
+                "{pattern.headline}"
+              </p>
+            </div>
+            
+            {/* 典型表现 */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Search className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground font-medium">你可能正在经历</span>
+              </div>
+              <ul className="space-y-1 pl-4">
+                {pattern.symptoms.map((symptom, i) => (
+                  <li key={i} className="text-[10px] text-muted-foreground leading-relaxed list-disc">
+                    {symptom}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* 内在机制 */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Brain className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground font-medium">这背后的真实原因</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground leading-relaxed pl-4">
+                {pattern.mechanism}
+              </p>
+            </div>
+
+            {/* AI陪伴说明 */}
+            <div className="p-2 rounded-lg bg-white/50 dark:bg-black/20">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Bot className="w-3 h-3 text-emerald-500" />
+                <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-300">AI教练下一步会这样陪你</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground leading-relaxed pl-4">
+                {pattern.aiNextStep}
+              </p>
+            </div>
+
+            {/* 推荐路径 */}
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <ChevronRight className="w-3 h-3 text-primary" />
+              <span className="text-muted-foreground">推荐路径：</span>
+              <span className="text-foreground font-medium">{pattern.recommendedCoachLabel} + {pattern.recommendedCampLabel}</span>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
 export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthStartScreenProps) {
   return (
     <div className="space-y-4">
@@ -359,31 +440,20 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
         </CardContent>
       </Card>
 
-      {/* 四大反应模式预览 */}
+      {/* 四大反应模式预览 - 可折叠详情卡片 */}
       <Card>
         <CardContent className="p-4">
-          <h3 className="text-sm font-semibold mb-3">将帮你识别的四大反应模式</h3>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
-              <span className="text-lg">🔋</span>
-              <div className="text-xs font-medium mt-1">能量耗竭型</div>
-              <div className="text-[10px] text-muted-foreground">长期付出无恢复</div>
-            </div>
-            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-              <span className="text-lg">🎯</span>
-              <div className="text-xs font-medium mt-1">高度紧绷型</div>
-              <div className="text-[10px] text-muted-foreground">完美主义+控制</div>
-            </div>
-            <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
-              <span className="text-lg">🤐</span>
-              <div className="text-xs font-medium mt-1">情绪压抑型</div>
-              <div className="text-[10px] text-muted-foreground">不敢表达需要</div>
-            </div>
-            <div className="p-3 rounded-lg bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800">
-              <span className="text-lg">🐢</span>
-              <div className="text-xs font-medium mt-1">逃避延迟型</div>
-              <div className="text-[10px] text-muted-foreground">一来就拖延</div>
-            </div>
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <Brain className="w-4 h-4 text-purple-500" />
+            将帮你识别的四大反应模式
+          </h3>
+          <div className="space-y-2">
+            {(Object.keys(patternConfig) as PatternType[]).map((key) => {
+              const pattern = patternConfig[key];
+              return (
+                <PatternPreviewCard key={key} pattern={pattern} />
+              );
+            })}
           </div>
         </CardContent>
       </Card>
