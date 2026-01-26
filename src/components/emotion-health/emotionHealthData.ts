@@ -545,3 +545,215 @@ export const resultPageSectionTitles = {
   },
   compliance: '本测评为情绪状态与成长觉察工具，不构成任何医疗诊断。如你感到持续严重不适，请及时寻求专业心理支持。'
 };
+
+// ===== AI教练首轮对话脚本（4型 × 5-7轮）=====
+export interface DialogueRound {
+  round: number;
+  phase: string;
+  content: string;
+  waitForUser: boolean;
+  options?: string[];
+}
+
+export interface PatternDialogueScript {
+  patternName: string;
+  ctaButton: string;
+  ctaLabel: string;
+  campId: string;
+  coachType: string;
+  rounds: DialogueRound[];
+}
+
+export const coachDialogueScripts: Record<PatternType, PatternDialogueScript> = {
+  exhaustion: {
+    patternName: '能量耗竭型',
+    ctaButton: '开始情绪修复陪伴',
+    ctaLabel: '情绪修复AI + 能量恢复营',
+    campId: 'emotion_journal_21',
+    coachType: 'emotion_recovery',
+    rounds: [
+      {
+        round: 1,
+        phase: '共情开场',
+        content: '我看到你的结果显示你现在处在比较明显的"能量透支"状态。\n这通常不是因为你不努力，而是因为你已经撑了很久。\n在继续往前之前，我想先确认一件事：\n最近让你最累的，是哪一件事或哪一种角色？',
+        waitForUser: true
+      },
+      {
+        round: 2,
+        phase: '引导觉察',
+        content: '当你想到这件事时，身体更明显的感受是什么？\n比如：疲惫、紧绷、心烦，还是无力？',
+        waitForUser: true,
+        options: ['疲惫', '紧绷', '心烦', '无力', '说不清']
+      },
+      {
+        round: 3,
+        phase: '正常化体验',
+        content: '你现在的反应其实很合理。\n当一个人长期处在"责任优先"的状态，大脑会自动进入节能模式。\n这不是懒，而是系统在自我保护。',
+        waitForUser: false
+      },
+      {
+        round: 4,
+        phase: '轻量修复行动',
+        content: '我们先不谈改变，只做一个很小的恢复动作。\n接下来2分钟，你只需要做一件事：\n把注意力放在呼吸上，慢慢数10次。\n做完告诉我，你现在的状态有没有哪怕一点点变化。',
+        waitForUser: true
+      },
+      {
+        round: 5,
+        phase: '连接长期路径',
+        content: '如果你愿意，我们可以在接下来几天里，\n一起帮你慢慢找回能量，而不是继续硬撑。\n我会每天给你一个不费力的小练习，\n让恢复变成可执行的事。\n\n你想现在开始这个陪伴吗？',
+        waitForUser: true
+      }
+    ]
+  },
+  tension: {
+    patternName: '高度紧绷型',
+    ctaButton: '开始焦虑释放陪伴',
+    ctaLabel: '焦虑释放AI + 行动启动营',
+    campId: 'emotion_journal_21',
+    coachType: 'anxiety_release',
+    rounds: [
+      {
+        round: 1,
+        phase: '共情开场',
+        content: '你的测评显示，你现在很可能一直处在"必须撑住"的状态。\n很多人会以为这是责任感强，其实这对大脑是极大的负担。\n最近有没有一件事，让你特别不敢出错？',
+        waitForUser: true
+      },
+      {
+        round: 2,
+        phase: '识别担忧源头',
+        content: '当你想到这件事时，脑子里最常出现的担心是什么？\n是怕失败？怕被否定？还是怕影响别人？',
+        waitForUser: true,
+        options: ['怕失败', '怕被否定', '怕影响别人', '说不清']
+      },
+      {
+        round: 3,
+        phase: '指出机制',
+        content: '长期紧绷时，大脑会把很多普通情况都当成威胁，\n于是你会本能地想提前控制一切。\n问题是，这样会让你一直停在高压状态。',
+        waitForUser: false
+      },
+      {
+        round: 4,
+        phase: '松动控制练习',
+        content: '我们可以先试一个小小的"放松实验"。\n今天选一件不那么重要的小事，\n允许它只做到70分，而不是完美。\n做完后告诉我，你的焦虑有没有变化。',
+        waitForUser: true
+      },
+      {
+        round: 5,
+        phase: '连接长期路径',
+        content: '接下来我可以每天陪你做一些\n降低大脑警戒状态的小练习，\n帮你慢慢找回安全感，而不是靠控制硬撑。\n\n你想让我这样陪你几天试试看吗？',
+        waitForUser: true
+      }
+    ]
+  },
+  suppression: {
+    patternName: '情绪压抑型',
+    ctaButton: '开始情绪表达陪伴',
+    ctaLabel: '情绪表达AI + 关系修复营',
+    campId: 'emotion_journal_21',
+    coachType: 'emotion_expression',
+    rounds: [
+      {
+        round: 1,
+        phase: '共情开场',
+        content: '从你的结果来看，你很习惯把情绪留给自己消化。\n你可能不想给别人添麻烦，但这其实会让你很辛苦。\n最近有没有一件事，让你其实挺委屈，却没说出口？',
+        waitForUser: true
+      },
+      {
+        round: 2,
+        phase: '命名情绪',
+        content: '如果要给那种感觉一个名字，你觉得更像是：\n失望、难过、愤怒，还是被忽视？',
+        waitForUser: true,
+        options: ['失望', '难过', '愤怒', '被忽视', '说不清']
+      },
+      {
+        round: 3,
+        phase: '安全感建立',
+        content: '情绪被说出来，并不会让你变成麻烦的人。\n它只是告诉你：你也有需要被看见的部分。\n你愿意让我先听你说说这件事吗？',
+        waitForUser: true
+      },
+      {
+        round: 4,
+        phase: '表达练习',
+        content: '我们可以试一个安全的表达方式。\n用这句话补全：\n"当___发生时，我其实很___。"\n你可以先只对我说。',
+        waitForUser: true
+      },
+      {
+        round: 5,
+        phase: '连接长期路径',
+        content: '如果你愿意，我可以陪你练习\n如何表达真实需要而不伤害关系。\n这不是一蹴而就的事，但可以慢慢变得容易。\n\n你想开始这个练习吗？',
+        waitForUser: true
+      }
+    ]
+  },
+  avoidance: {
+    patternName: '逃避延迟型',
+    ctaButton: '开始行动启动陪伴',
+    ctaLabel: '行动教练AI + 执行力训练营',
+    campId: 'emotion_journal_21',
+    coachType: 'action_coach',
+    rounds: [
+      {
+        round: 1,
+        phase: '共情开场',
+        content: '你的结果显示，你并不是不想行动，\n而是每次一想到要开始，情绪就先卡住你。\n最近有没有一件你一直拖着却又很在意的事？',
+        waitForUser: true
+      },
+      {
+        round: 2,
+        phase: '拆解恐惧',
+        content: '当你想到要做这件事时，\n最强烈的感受是什么？\n是压力、害怕失败，还是不知道从哪开始？',
+        waitForUser: true,
+        options: ['压力太大', '害怕失败', '不知道从哪开始', '说不清']
+      },
+      {
+        round: 3,
+        phase: '机制解释',
+        content: '拖延很多时候不是意志力问题，\n而是大脑把"开始"误判成危险信号。\n所以它会让你先去做更轻松的事来保护你。',
+        waitForUser: false
+      },
+      {
+        round: 4,
+        phase: '微启动行动',
+        content: '我们不需要一下子解决整件事。\n现在只选一个5分钟内能完成的最小步骤。\n比如：打开文件、写一句话、发一条信息。\n你愿意现在试一个吗？',
+        waitForUser: true
+      },
+      {
+        round: 5,
+        phase: '连接长期路径',
+        content: '如果你愿意，我可以每天陪你做一个\n很小但可完成的行动，\n帮大脑重新建立"我可以开始"的信号。\n\n要不要从今天就开始？',
+        waitForUser: true
+      }
+    ]
+  }
+};
+
+// ===== 通用第6-7轮（转训练营）=====
+export interface ConversionRound extends DialogueRound {
+  cta?: {
+    primary: string;
+    secondary: string;
+    primaryCampId: string;
+    secondaryCampId: string;
+  };
+}
+
+export const universalConversionRounds: ConversionRound[] = [
+  {
+    round: 6,
+    phase: '承认改变需要时间',
+    content: '情绪和习惯不是一天形成的，也不会一天改变。\n有系统的陪伴，会比你一个人硬扛轻松很多。',
+    waitForUser: false
+  },
+  {
+    round: 7,
+    phase: '转入系统支持',
+    content: '接下来我可以把你接入一个更系统的陪伴路径，\n包括每天的引导练习和阶段性回顾。\n\n你想继续跟我一起走下去吗？',
+    waitForUser: true,
+    cta: {
+      primary: '进入21天情绪修复训练营',
+      secondary: '升级365陪伴',
+      primaryCampId: 'emotion_journal_21',
+      secondaryCampId: 'yearly_membership'
+    }
+  }
+];
