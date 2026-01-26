@@ -137,10 +137,25 @@ export function WealthBlockQuestions({ onComplete, onExit }: WealthBlockQuestion
     }
   }, [answers]);
 
-  // 生成深度追问 - MUST be defined before any early returns (React Rules of Hooks)
-  const generateDeepFollowUp = useCallback(async (result: AssessmentResult) => {
+  // 生成深度追问 - 修复闭包陷阱：传递参数而非依赖 state
+  const generateDeepFollowUp = useCallback(async (
+    result: AssessmentResult,
+    pendingData: {
+      result: AssessmentResult;
+      answers: Record<number, number>;
+      followUpInsights?: FollowUpAnswer[];
+    }
+  ) => {
     setIsLoadingDeepFollowUp(true);
     setShowDeepFollowUp(true);
+
+    // 15秒超时保护
+    const timeoutId = setTimeout(() => {
+      console.warn('[WealthBlockQuestions] Deep follow-up generation timeout');
+      setShowDeepFollowUp(false);
+      setIsLoadingDeepFollowUp(false);
+      onComplete(pendingData.result, pendingData.answers, pendingData.followUpInsights, undefined);
+    }, 15000);
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-deep-followup', {
@@ -162,6 +177,8 @@ export function WealthBlockQuestions({ onComplete, onExit }: WealthBlockQuestion
         }
       });
 
+      clearTimeout(timeoutId);
+
       if (error) throw error;
 
       if (data?.deepFollowUps && data.deepFollowUps.length > 0) {
@@ -169,21 +186,18 @@ export function WealthBlockQuestions({ onComplete, onExit }: WealthBlockQuestion
       } else {
         // 如果没有生成追问，直接显示结果
         setShowDeepFollowUp(false);
-        if (pendingResult) {
-          onComplete(pendingResult.result, pendingResult.answers, pendingResult.followUpInsights, undefined);
-        }
+        onComplete(pendingData.result, pendingData.answers, pendingData.followUpInsights, undefined);
       }
     } catch (err) {
+      clearTimeout(timeoutId);
       console.error('Failed to generate deep follow-up:', err);
       // 出错时直接显示结果
       setShowDeepFollowUp(false);
-      if (pendingResult) {
-        onComplete(pendingResult.result, pendingResult.answers, pendingResult.followUpInsights, undefined);
-      }
+      onComplete(pendingData.result, pendingData.answers, pendingData.followUpInsights, undefined);
     } finally {
       setIsLoadingDeepFollowUp(false);
     }
-  }, [pendingResult, onComplete]);
+  }, [onComplete]);
 
   // 如果显示开始介绍页，先渲染它 (all hooks must be called above this line)
   if (showStartScreen) {
@@ -265,15 +279,18 @@ export function WealthBlockQuestions({ onComplete, onExit }: WealthBlockQuestion
     // 显示过渡提示
     toast.success("🎉 恭喜完成测评！正在生成深度问题...", { duration: 2000 });
     
-    // 保存待提交的结果
-    setPendingResult({
+    // 构建待提交的数据（直接传递，避免闭包陷阱）
+    const pendingData = {
       result,
       answers,
       followUpInsights: followUpAnswers.length > 0 ? followUpAnswers : undefined
-    });
+    };
     
-    // 触发深度追问
-    await generateDeepFollowUp(result);
+    // 仍然设置状态（供其他回调使用）
+    setPendingResult(pendingData);
+    
+    // 将 pendingData 作为参数传入，而非依赖 state
+    await generateDeepFollowUp(result, pendingData);
   };
 
   // 深度追问完成
