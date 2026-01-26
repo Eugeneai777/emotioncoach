@@ -29,7 +29,7 @@ import { RelationshipTracker } from "@/components/tools/RelationshipTracker";
 import { EnergyDeclaration } from "@/components/tools/EnergyDeclaration";
 import { AliveCheck } from "@/components/tools/AliveCheck";
 
-import SafetyButtonsGrid from "@/components/tools/SafetyButtonsGrid";
+import EmotionSOSPreviewCard from "@/components/tools/EmotionSOSPreviewCard";
 import { MobileCard } from "@/components/ui/mobile-card";
 
 interface ToolCard {
@@ -204,18 +204,9 @@ const EnergyStudio = () => {
               {getCategoryDescription(activeCategory)}
             </p>
 
-            {/* 情绪按钮 - 核心工具 */}
+            {/* 情绪🆘按钮预览卡片 */}
             {activeCategory === "emotion" && (
-              <SafetyButtonsGrid />
-            )}
-
-            {/* 更多工具分隔 */}
-            {activeCategory === "emotion" && filteredTools.length > 0 && (
-              <div className="flex items-center gap-3 pt-2">
-                <div className="h-px flex-1 bg-border" />
-                <span className="text-xs text-muted-foreground">更多工具</span>
-                <div className="h-px flex-1 bg-border" />
-              </div>
+              <EmotionSOSPreviewCard />
             )}
 
             {/* 工具列表 - 紧凑卡片 */}
