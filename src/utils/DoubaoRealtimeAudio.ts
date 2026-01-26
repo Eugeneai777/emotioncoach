@@ -85,12 +85,21 @@ export class DoubaoRealtimeChat {
       });
 
       if (error || !data) {
-        throw new Error(error?.message || 'Failed to get Doubao relay config');
+        // 解析错误详情
+        const errorCode = data?.code || error?.message || 'UNKNOWN_ERROR';
+        const errorMessage = data?.message || data?.error || error?.message || 'Failed to get Doubao relay config';
+        
+        console.error('[DoubaoChat] ❌ Token error:', { errorCode, errorMessage });
+        
+        // 抛出带有错误类型的错误，供上层判断是否需要重新登录
+        const err = new Error(errorMessage) as Error & { code?: string };
+        err.code = errorCode;
+        throw err;
       }
 
       this.config = data as DoubaoConfig;
       this.inputSampleRate = this.config.audio_config?.input_sample_rate || 16000;
-      console.log('[DoubaoChat] Relay config received:', { 
+      console.log('[DoubaoChat] ✅ Relay config received:', { 
         relay_url: this.config.relay_url, 
         user_id: this.config.user_id 
       });
