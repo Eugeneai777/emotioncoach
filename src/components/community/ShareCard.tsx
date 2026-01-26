@@ -196,7 +196,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
   const phaseInfo = getPhaseInfo(post.camp_day);
   const emotionEmoji = getEmotionEmoji(post.emotion_theme);
   const sourceLabel = getSourceLabel(post.post_type, post.camp_name, post.badges);
-  return <div ref={ref} data-share-card className={cn("relative overflow-hidden rounded-2xl", isPreview ? "w-full p-4 pb-6" : "w-[600px] p-8 pb-10")} style={{
+  return <div ref={ref} data-share-card className={cn("relative overflow-hidden rounded-2xl", isPreview ? "w-full p-4 pb-6" : "w-[420px] p-6 pb-8")} style={{
     minHeight: "auto",
     background: "linear-gradient(135deg, hsl(330, 80%, 95%), hsl(270, 70%, 95%), hsl(200, 80%, 95%))",
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif'
