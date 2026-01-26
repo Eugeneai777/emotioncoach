@@ -299,8 +299,10 @@ export class DoubaoRealtimeChat {
             return;
           }
           console.log('[DoubaoChat] Relay connected to Doubao');
-          // 现在开始录音
+          // 1. 启动录音
           this.startRecording();
+          // 2. 触发 AI 开场白
+          this.triggerGreeting();
           this.onStatusChange('connected');
           break;
 
@@ -486,6 +488,27 @@ export class DoubaoRealtimeChat {
     }));
 
     this.ws.send(JSON.stringify({ type: 'response.create' }));
+  }
+
+  /**
+   * 触发 AI 开场白
+   * 发送 response.create 请求，让 AI 根据 instructions 中配置的开场白主动发言
+   */
+  private triggerGreeting(): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      console.warn('[DoubaoChat] Cannot trigger greeting: WebSocket not ready');
+      return;
+    }
+
+    console.log('[DoubaoChat] Triggering AI greeting...');
+    
+    // 发送 response.create 事件触发 AI 响应
+    this.ws.send(JSON.stringify({ 
+      type: 'response.create',
+      response: {
+        modalities: ['text', 'audio']
+      }
+    }));
   }
 
   // 停止录音方法（用于符合 AudioClient 接口）
