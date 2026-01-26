@@ -13,3 +13,5 @@ export { SCL90Comparison } from './SCL90Comparison';
 export { SCL90HistoryPage } from './SCL90HistoryPage';
 export { useSCL90Progress } from './useSCL90Progress';
 export type { SCL90Progress } from './useSCL90Progress';
+export { SCL90ShareCard } from './SCL90ShareCard';
+export { SCL90ShareDialog } from './SCL90ShareDialog';
