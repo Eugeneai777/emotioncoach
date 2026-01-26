@@ -1,240 +1,237 @@
 
-# 情绪健康测评分享卡片实施方案
+# 分享卡片统一性修复方案
 
-## 一、需求分析
+## 一、审计结果汇总
 
-为情绪健康测评添加两类分享功能：
-1. **开始页分享** - 邀请好友来测评（复用 IntroShareDialog）
-2. **结果页分享** - 分享测评结果（新建专属分享卡片）
+经过对所有分享卡片的详细审计，发现以下不一致问题：
 
-## 二、实施方案
+### 1.1 品牌标识不一致
 
-### 2.1 开始页分享入口
+| 卡片 | 当前品牌文案 | 问题 |
+|------|-------------|------|
+| AliveCheckShareCard | "有劲生活 · 生活管理" | 过时品牌 |
+| EmotionButtonShareCard | "有劲生活 · 情绪梳理教练" | 过时品牌 |
+| ShareCard (社区) | "有劲AI · 情绪日记" | 带后缀 |
+| TransformationValueShareCard | "有劲AI · 财富教练" | 带后缀 |
+| SCL90ShareCard | "Powered by 有劲AI" | **正确** |
+| EmotionHealthShareCard | "Powered by 有劲AI" | **正确** |
 
-**文件**: `src/config/introShareConfig.ts`
+**统一标准**: `Powered by 有劲AI`
 
-在 `introShareConfigs` 中添加情绪健康测评配置：
+### 1.2 QR码生成方式不一致
 
-```typescript
-emotionHealth: {
-  pageKey: 'emotionHealth',
-  title: '情绪健康测评',
-  subtitle: '32题三层诊断，找到你的情绪卡点',
-  targetUrl: '/emotion-health',
-  emoji: '❤️‍🩹',
-  highlights: [
-    '三层诊断·状态/模式/阻滞点',
-    '对标PHQ-9/GAD-7/PSS-10权威量表',
-    'AI教练个性化陪伴修复',
-  ],
-  gradient: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-  category: 'tool'
-},
-```
+| 卡片 | QR实现方式 | 问题 |
+|------|-----------|------|
+| AliveCheckShareCard | 直接 `QRCode.toDataURL` | 未复用标准hook |
+| EmotionButtonShareCard | 直接 `QRCode.toDataURL` | 未复用标准hook |
+| ShareCard (社区) | 直接 `QRCode.toDataURL` | 未复用标准hook |
+| TransformationValueShareCard | `useQRCode` hook | **正确** |
+| SCL90ShareCard | `useQRCode` hook | **正确** |
+| EmotionHealthShareCard | `useQRCode` hook | **正确** |
 
-**文件**: `src/components/emotion-health/EmotionHealthStartScreen.tsx`
+**统一标准**: 使用 `useQRCode` hook
 
-在标题区域添加分享按钮：
+### 1.3 卡片宽度不一致
 
-```tsx
-import { Share2 } from "lucide-react";
-import { IntroShareDialog } from "@/components/common/IntroShareDialog";
-import { introShareConfigs } from "@/config/introShareConfig";
+| 卡片 | 宽度 | 问题 |
+|------|------|------|
+| EmotionButtonShareCard | 600px | 过宽 |
+| ShareCard (社区) | 600px | 过宽 |
+| AliveCheckShareCard | 420px | 略宽 |
+| 其他卡片 | 320-340px | **标准** |
 
-// 在 Hero 区域右上角添加分享按钮
-<IntroShareDialog 
-  config={introShareConfigs.emotionHealth}
-  trigger={
-    <Button variant="ghost" size="icon" className="text-white/80 hover:text-white">
-      <Share2 className="w-5 h-5" />
-    </Button>
-  }
-/>
-```
+**建议标准**: 
+- 结果类/测评类: 340px
+- 工具介绍类: 380-420px (内容较多)
+- 社区帖子类: 保持600px (图文混排需要)
 
-### 2.2 结果页分享卡片
+## 二、修复计划
 
-**新建文件**: `src/components/emotion-health/EmotionHealthShareCard.tsx`
+### 2.1 AliveCheckShareCard.tsx 修复
 
-分享卡片设计：
-- 宽度：340px（标准尺寸）
-- 主题：紫粉渐变（from-violet-900 via-purple-900 to-rose-900）
-- 内容模块：
-  1. 头部：标题 + 日期 + 用户头像
-  2. 整体状态：三维指数仪表盘（能量/焦虑/压力）
-  3. 主要模式：emoji + 模式名 + 一句话洞察
-  4. 阻滞点：简要描述
-  5. 底部：二维码 + 品牌标识
-
-```tsx
-export const EmotionHealthShareCard = React.forwardRef<HTMLDivElement, Props>(
-  ({ result, userName, avatarUrl }, ref) => {
-    // 卡片渲染逻辑
-    return (
-      <div ref={ref} className="w-[340px] bg-gradient-to-br from-violet-900 via-purple-900 to-rose-900 text-white p-5 rounded-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Heart className="w-5 h-5 text-pink-300" />
-            <div>
-              <p className="text-xs text-pink-200">情绪健康测评</p>
-              <p className="text-sm font-semibold">{dateStr}</p>
-            </div>
-          </div>
-          {avatarUrl && <img src={avatarUrl} className="w-10 h-10 rounded-full" />}
-        </div>
-
-        {/* 三维指数 */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <IndexCard label="能量" value={result.energyIndex} />
-          <IndexCard label="焦虑" value={result.anxietyIndex} />
-          <IndexCard label="压力" value={result.stressIndex} />
-        </div>
-
-        {/* 主要模式 */}
-        <div className="bg-white/10 rounded-xl p-3 mb-4">
-          <p className="text-xs text-white/60 mb-2">我的情绪反应模式</p>
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{patternConfig[result.primaryPattern].emoji}</span>
-            <div>
-              <p className="font-bold">{patternConfig[result.primaryPattern].name}</p>
-              <p className="text-xs text-white/70">{patternConfig[result.primaryPattern].tagline}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* 阻滞点 */}
-        <div className="bg-rose-500/20 rounded-lg p-2.5 mb-4">
-          <p className="text-xs text-rose-200">
-            🎯 行动阻滞点：{blockedDimensionConfig[result.blockedDimension].blockPointName}
-          </p>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-white/10">
-          <div>
-            <p className="text-xs text-white/60">扫码测测你的情绪健康状态</p>
-            <p className="text-sm font-medium text-pink-300">32题找到情绪卡点</p>
-            <p className="text-xs text-white/40 mt-1">Powered by 有劲AI</p>
-          </div>
-          {qrCodeUrl && <img src={qrCodeUrl} className="w-16 h-16 rounded-lg" />}
-        </div>
-      </div>
-    );
-  }
-);
-```
-
-**新建文件**: `src/components/emotion-health/EmotionHealthShareDialog.tsx`
-
-复用 SCL-90 的 Dialog 模式：
-- 预览卡片（0.85x 缩放）
-- 隐藏的全尺寸导出卡片
-- 生成按钮（紫粉渐变）
-- 全屏图片预览
-
-### 2.3 主页面集成
-
-**文件**: `src/pages/EmotionHealthPage.tsx`
-
-添加分享状态和处理函数：
-
-```tsx
-const [shareDialogOpen, setShareDialogOpen] = useState(false);
-
-const handleShare = () => {
-  setShareDialogOpen(true);
-};
-
-// 在 EmotionHealthResult 组件传入 onShare
-<EmotionHealthResult
-  result={result}
-  onShare={handleShare}
-  onRetake={handleRetake}
-/>
-
-// 添加分享 Dialog
-{result && (
-  <EmotionHealthShareDialog
-    open={shareDialogOpen}
-    onOpenChange={setShareDialogOpen}
-    result={result}
-  />
-)}
-```
-
-### 2.4 注册表更新
-
-**文件**: `src/config/shareCardsRegistry.ts`
-
-在 `resultCards` 数组添加：
+**修改内容**:
+1. 品牌文案: `有劲生活 · 生活管理` → `Powered by 有劲AI`
+2. QR码生成: 直接调用 → `useQRCode` hook
+3. 移除 `onReady` 回调 (hook自带loading状态)
 
 ```typescript
-{
-  id: 'emotion-health-result',
-  title: '情绪健康测评结果',
-  category: 'result',
-  emoji: '❤️‍🩹',
-  type: 'result',
-  componentName: 'EmotionHealthShareCard',
-  description: '三层诊断情绪卡点分享',
-},
+// Before
+import QRCode from 'qrcode';
+const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+useEffect(() => { QRCode.toDataURL(...) }, []);
+
+// After
+import { useQRCode } from '@/utils/qrCodeUtils';
+const shareUrl = partnerCode 
+  ? `${getPromotionDomain()}/energy-studio?tool=alive-check&ref=${partnerCode}`
+  : `${getPromotionDomain()}/energy-studio?tool=alive-check`;
+const { qrCodeUrl, isLoading } = useQRCode(shareUrl);
 ```
 
-### 2.5 导出更新
+### 2.2 EmotionButtonShareCard.tsx 修复
 
-**文件**: `src/components/emotion-health/index.ts`
+**修改内容**:
+1. 品牌文案: `有劲生活 · 情绪梳理教练` → `Powered by 有劲AI`
+2. QR码生成: 直接调用 → `useQRCode` hook
+3. 移除 `onReady` 回调
 
-添加新组件导出：
+### 2.3 ShareCard.tsx (社区) 修复
 
-```typescript
-export { EmotionHealthShareCard } from './EmotionHealthShareCard';
-export { EmotionHealthShareDialog } from './EmotionHealthShareDialog';
-```
+**修改内容**:
+1. 品牌文案: `有劲AI · 情绪日记` → `Powered by 有劲AI`
+2. QR码生成: 直接调用 → `useQRCode` hook
+
+### 2.4 TransformationValueShareCard.tsx 修复
+
+**修改内容**:
+1. 品牌文案: `有劲AI · 财富教练` → `Powered by 有劲AI`
 
 ## 三、文件修改清单
 
-| 文件路径 | 操作 | 说明 |
-|---------|------|------|
-| `src/config/introShareConfig.ts` | 修改 | 添加 emotionHealth 配置 |
-| `src/components/emotion-health/EmotionHealthStartScreen.tsx` | 修改 | 添加分享按钮 |
-| `src/components/emotion-health/EmotionHealthShareCard.tsx` | 新建 | 结果分享卡片组件 |
-| `src/components/emotion-health/EmotionHealthShareDialog.tsx` | 新建 | 结果分享 Dialog |
-| `src/pages/EmotionHealthPage.tsx` | 修改 | 集成分享功能 |
-| `src/config/shareCardsRegistry.ts` | 修改 | 注册新卡片 |
-| `src/components/emotion-health/index.ts` | 修改 | 导出新组件 |
+| 文件路径 | 操作 | 修改内容 |
+|---------|------|---------|
+| `src/components/tools/AliveCheckShareCard.tsx` | 修改 | QR hook + 品牌统一 |
+| `src/components/tools/EmotionButtonShareCard.tsx` | 修改 | QR hook + 品牌统一 |
+| `src/components/community/ShareCard.tsx` | 修改 | QR hook + 品牌统一 |
+| `src/components/wealth-block/TransformationValueShareCard.tsx` | 修改 | 品牌统一 |
 
-## 四、分享卡片视觉效果
+## 四、代码变更详情
 
-### 开始页分享卡片（IntroShareCard）
-- **标题**: 情绪健康测评
-- **副标题**: 32题三层诊断，找到你的情绪卡点
-- **核心卖点**:
-  - 三层诊断·状态/模式/阻滞点
-  - 对标PHQ-9/GAD-7/PSS-10权威量表
-  - AI教练个性化陪伴修复
-- **主题色**: 紫粉渐变
+### 4.1 AliveCheckShareCard.tsx
 
-### 结果页分享卡片（EmotionHealthShareCard）
-- **三维指数仪表盘**: 能量/焦虑/压力 0-100
-- **主要模式**: 🔋能量耗竭型 / 🎯高度紧绷型 / 🤐情绪压抑型 / 🐢逃避延迟型
-- **阻滞点**: 行动/情绪/信念/给予
-- **品牌标识**: Powered by 有劲AI
+```typescript
+// 1. 替换 import
+- import QRCode from 'qrcode';
++ import { useQRCode } from '@/utils/qrCodeUtils';
++ import { getPromotionDomain } from '@/utils/partnerQRUtils';
 
-## 五、技术要点
+// 2. 替换 QR 生成逻辑
+- const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+- useEffect(() => { ... }, [partnerCode, onReady]);
++ const shareUrl = partnerCode 
++   ? `${getPromotionDomain()}/energy-studio?tool=alive-check&ref=${partnerCode}`
++   : `${getPromotionDomain()}/energy-studio?tool=alive-check`;
++ const { qrCodeUrl, isLoading } = useQRCode(shareUrl);
++ 
++ useEffect(() => {
++   if (!isLoading) onReady?.();
++ }, [isLoading, onReady]);
 
-1. **复用现有系统**: 开始页使用 IntroShareDialog，结果页参考 SCL90ShareDialog
-2. **合伙人追踪**: 二维码自动带上用户的 ref 参数
-3. **性能优化**: 使用优化后的 shareCardConfig.ts 配置
-4. **深色模式**: 卡片背景固定深色，无需适配
-5. **微信兼容**: 使用标准的分享流程和图片预览
+// 3. 修改品牌文案
+- <div style={{ fontSize: '10px', color: '#be185d', opacity: 0.7 }}>
+-   有劲生活 · 生活管理
+- </div>
++ <div style={{ fontSize: '10px', color: '#be185d', opacity: 0.7 }}>
++   Powered by 有劲AI
++ </div>
+```
+
+### 4.2 EmotionButtonShareCard.tsx
+
+```typescript
+// 1. 替换 import
+- import QRCode from 'qrcode';
++ import { useQRCode } from '@/utils/qrCodeUtils';
+
+// 2. 替换 QR 生成逻辑
+- const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+- useEffect(() => { ... }, [partnerCode, onReady]);
++ const shareUrl = partnerCode 
++   ? `${getPromotionDomain()}/energy-studio?ref=${partnerCode}`
++   : `${getPromotionDomain()}/energy-studio`;
++ const { qrCodeUrl, isLoading } = useQRCode(shareUrl);
++ 
++ useEffect(() => {
++   if (!isLoading) onReady?.();
++ }, [isLoading, onReady]);
+
+// 3. 修改品牌水印
+- 有劲生活 · 情绪梳理教练
++ Powered by 有劲AI
+```
+
+### 4.3 ShareCard.tsx (社区)
+
+```typescript
+// 1. 替换 import
+- import QRCode from "qrcode";
++ import { useQRCode } from "@/utils/qrCodeUtils";
+
+// 2. 替换 QR 生成逻辑
+- const [qrCodeUrl, setQrCodeUrl] = useState("");
+- useEffect(() => {
+-   const qrUrl = getQRCodeUrl(partnerInfo, post);
+-   QRCode.toDataURL(qrUrl, { width: 120, margin: 1 }).then(setQrCodeUrl);
+- }, [partnerInfo, post]);
++ const qrUrl = getQRCodeUrl(partnerInfo, post);
++ const { qrCodeUrl } = useQRCode(qrUrl);
+
+// 3. 修改品牌文案
+- <p className={cn("font-bold mb-2", ...)}>
+-   有劲AI · 情绪日记
+- </p>
++ <p className={cn("font-bold mb-2", ...)}>
++   Powered by 有劲AI
++ </p>
+```
+
+### 4.4 TransformationValueShareCard.tsx
+
+```typescript
+// 修改品牌文案
+- <span>有劲AI · 财富教练</span>
++ <span>Powered by 有劲AI</span>
+```
+
+## 五、统一后的标准规范
+
+### 5.1 品牌标识规范
+
+所有分享卡片底部统一使用：
+```
+Powered by 有劲AI
+```
+
+样式规范：
+- 字号: 10-11px
+- 颜色: 根据卡片主题选择 (深色卡片用 white/40, 浅色卡片用对应主题色/70)
+- 位置: 卡片最底部居中
+
+### 5.2 QR码生成规范
+
+统一使用 `useQRCode` hook：
+```typescript
+import { useQRCode } from '@/utils/qrCodeUtils';
+
+const { qrCodeUrl, isLoading } = useQRCode(shareUrl, 'SHARE_CARD');
+```
+
+配置标准：
+- 预设: `SHARE_CARD` (width: 120, margin: 1)
+- 颜色: 黑底白底 (#000000 / #ffffff)
+
+### 5.3 域名使用规范
+
+所有外部分享链接使用 `getPromotionDomain()`:
+```typescript
+import { getPromotionDomain } from '@/utils/partnerQRUtils';
+
+const shareUrl = `${getPromotionDomain()}/target-page`;
+```
 
 ## 六、预期效果
 
-| 指标 | 说明 |
-|-----|------|
-| 开始页入口 | 右上角分享按钮，紫粉渐变主题 |
-| 结果页入口 | 底部"分享结果"按钮 |
-| 卡片尺寸 | 340x~480px 标准尺寸 |
-| 生成时间 | <3s（优化后） |
-| 兼容性 | 微信/iOS/Android 全平台 |
+| 指标 | 修复前 | 修复后 |
+|-----|--------|--------|
+| 品牌一致性 | 4种不同文案 | 统一 "Powered by 有劲AI" |
+| QR码实现 | 3种不同方式 | 统一 useQRCode hook |
+| 代码复用率 | ~60% | ~95% |
+| 维护成本 | 高 | 低 |
+
+## 七、验证方案
+
+修改完成后，在分享卡片管理面板 `/admin/share-cards` 中：
+1. 逐一预览所有卡片
+2. 检查品牌标识是否统一
+3. 测试图片生成功能
+4. 确认QR码正常显示
