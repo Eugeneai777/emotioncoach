@@ -15,3 +15,5 @@ export { useSCL90Progress } from './useSCL90Progress';
 export type { SCL90Progress } from './useSCL90Progress';
 export { SCL90ShareCard } from './SCL90ShareCard';
 export { SCL90ShareDialog } from './SCL90ShareDialog';
+export { SCL90PaymentGate } from './SCL90PaymentGate';
+export { SCL90PayDialog } from './SCL90PayDialog';

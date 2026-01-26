@@ -5625,8 +5625,11 @@ export type Database = {
           hostility_score: number
           id: string
           interpersonal_score: number
+          is_paid: boolean | null
           obsessive_score: number
+          order_id: string | null
           other_score: number
+          paid_at: string | null
           paranoid_score: number
           phobic_score: number
           positive_count: number
@@ -5654,8 +5657,11 @@ export type Database = {
           hostility_score: number
           id?: string
           interpersonal_score: number
+          is_paid?: boolean | null
           obsessive_score: number
+          order_id?: string | null
           other_score: number
+          paid_at?: string | null
           paranoid_score: number
           phobic_score: number
           positive_count: number
@@ -5683,8 +5689,11 @@ export type Database = {
           hostility_score?: number
           id?: string
           interpersonal_score?: number
+          is_paid?: boolean | null
           obsessive_score?: number
+          order_id?: string | null
           other_score?: number
+          paid_at?: string | null
           paranoid_score?: number
           phobic_score?: number
           positive_count?: number
@@ -5701,6 +5710,13 @@ export type Database = {
           version?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "scl90_assessments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "scl90_assessments_previous_assessment_id_fkey"
             columns: ["previous_assessment_id"]
