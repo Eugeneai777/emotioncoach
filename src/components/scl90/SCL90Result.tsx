@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { RotateCcw, Share2, Download, Sparkles } from "lucide-react";
+import { RotateCcw, Share2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import { SCL90Result as SCL90ResultType, scl90FactorInfo, SCL90Factor } from "./
 import { SCL90SeverityGauge } from "./SCL90SeverityGauge";
 import { SCL90FactorRadar } from "./SCL90FactorRadar";
 import { SCL90AIAnalysis, SCL90AIInsight } from "./SCL90AIAnalysis";
+import { SCL90ShareDialog } from "./SCL90ShareDialog";
 
 interface SCL90ResultProps {
   result: SCL90ResultType;
@@ -35,6 +36,7 @@ export function SCL90Result({
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [hasSaved, setHasSaved] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   // Auto-save and fetch AI analysis
   useEffect(() => {
@@ -281,13 +283,18 @@ export function SCL90Result({
         <Button
           variant="outline"
           className="h-11 px-4"
-          onClick={() => {
-            toast.info("分享功能开发中");
-          }}
+          onClick={() => setShowShareDialog(true)}
         >
           <Share2 className="w-4 h-4" />
         </Button>
       </div>
+
+      {/* Share Dialog */}
+      <SCL90ShareDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        result={result}
+      />
 
       {/* Disclaimer */}
       <p className="text-xs text-muted-foreground text-center pt-2">
