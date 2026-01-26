@@ -47,9 +47,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
   // Auto-hide tip after delay on all platforms
   useEffect(() => {
     if (open && showTip && imageLoaded) {
-      // WeChat/iOS users may need more time, show for 5 seconds
-      // Other environments hide after 3 seconds
-      const delay = (isWeChat || isIOS) ? 5000 : 3000;
+      const delay = (isWeChat || isIOS) ? 2000 : 2000;
       const timer = setTimeout(() => setShowTip(false), delay);
       return () => clearTimeout(timer);
     }
