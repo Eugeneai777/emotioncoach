@@ -158,13 +158,10 @@ export const BreathingExercise = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      {/* 模式选择 */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">选择呼吸模式</CardTitle>
-          <CardDescription className="text-xs">不同的呼吸模式有不同的效果</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="py-3">
           <Select
             value={selectedPattern.id}
             onValueChange={(value) => {
@@ -176,13 +173,16 @@ export const BreathingExercise = () => {
             }}
             disabled={isActive}
           >
-            <SelectTrigger>
+            <SelectTrigger className="h-10">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {patterns.map((pattern) => (
                 <SelectItem key={pattern.id} value={pattern.id}>
-                  {pattern.name} - {pattern.description}
+                  <div>
+                    <div className="font-medium">{pattern.name}</div>
+                    <div className="text-xs text-muted-foreground">{pattern.description}</div>
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -190,47 +190,52 @@ export const BreathingExercise = () => {
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden">
-        <CardContent className="pt-4 pb-4">
-          <div className="flex flex-col items-center space-y-4">
-            {/* 呼吸圆圈 - 响应式尺寸，限制溢出 */}
-            <div className="relative w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center">
+      {/* 呼吸练习主区域 */}
+      <Card>
+        <CardContent className="py-6">
+          <div className="flex flex-col items-center space-y-5">
+            {/* 呼吸圆圈容器 - 固定尺寸防止溢出 */}
+            <div className="relative w-36 h-36 flex items-center justify-center">
+              {/* 外圈动画 */}
               <div
-                className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 transition-transform duration-1000 ease-in-out origin-center"
+                className="absolute rounded-full bg-gradient-to-br from-primary/15 to-primary/30 transition-transform duration-1000 ease-in-out"
                 style={{
+                  width: '100%',
+                  height: '100%',
                   transform: `scale(${scale})`,
                 }}
               />
+              {/* 内容 */}
               <div className="relative z-10 text-center">
-                <div className="text-4xl sm:text-5xl font-bold text-primary">{timeLeft}</div>
-                <div className="text-base sm:text-lg text-muted-foreground mt-1">{getPhaseText()}</div>
+                <div className="text-4xl font-bold text-primary">{timeLeft}</div>
+                <div className="text-sm text-muted-foreground mt-0.5">{getPhaseText()}</div>
               </div>
             </div>
 
             {/* 进度信息 */}
-            <div className="text-center">
-              <div className="text-base font-medium">
+            <div className="text-center space-y-0.5">
+              <div className="text-sm font-medium">
                 第 {currentCycle} / {selectedPattern.cycles} 个循环
               </div>
-              <div className="text-xs text-muted-foreground mt-0.5">
-                {selectedPattern.name}
+              <div className="text-xs text-muted-foreground">
+                {selectedPattern.inhale}s 吸气 · {selectedPattern.hold}s 屏息 · {selectedPattern.exhale}s 呼气
               </div>
             </div>
 
             {/* 控制按钮 */}
             <div className="flex gap-3">
               {!isActive ? (
-                <Button onClick={handleStart} size="default" className="gap-2">
+                <Button onClick={handleStart} className="gap-2 h-10 px-6">
                   <Play className="w-4 h-4" />
                   开始
                 </Button>
               ) : (
-                <Button onClick={handlePause} size="default" variant="outline" className="gap-2">
+                <Button onClick={handlePause} variant="outline" className="gap-2 h-10 px-6">
                   <Pause className="w-4 h-4" />
                   暂停
                 </Button>
               )}
-              <Button onClick={handleReset} size="default" variant="outline" className="gap-2">
+              <Button onClick={handleReset} variant="outline" className="gap-2 h-10">
                 <RotateCcw className="w-4 h-4" />
                 重置
               </Button>
