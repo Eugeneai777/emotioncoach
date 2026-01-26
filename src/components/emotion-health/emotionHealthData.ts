@@ -430,3 +430,57 @@ export function getIndexBarColor(level: 'low' | 'medium' | 'high'): string {
     case 'high': return 'bg-rose-500';
   }
 }
+
+// ===== 评分机制说明配置 =====
+export const scoringMechanismConfig = {
+  layer1: {
+    name: '指数型评分',
+    type: '连续值 0-100',
+    icon: '📊',
+    dimensions: ['情绪能量', '焦虑张力', '压力负载'],
+    usage: ['报告可视化', '趋势追踪']
+  },
+  layer2: {
+    name: '模式型评分',
+    type: '分类',
+    icon: '🧩',
+    output: '主模式 + 副模式',
+    description: '每题绑定一个反应模式，统计后得分最高为主模式，第二高为副模式',
+    usage: ['人格化报告', '故事型文案']
+  },
+  layer3: {
+    name: '路径推荐',
+    type: '决策树',
+    icon: '🎯',
+    logic: '模式类型 + 最弱维度',
+    output: '自动匹配AI教练 + 训练营',
+    usage: ['商业转化发动机']
+  }
+};
+
+// ===== AI教练联动示例 =====
+export const aiCoachOpeningExamples = [
+  {
+    pattern: '高度紧绷 + 行动卡住',
+    state: '【高度紧绷 + 行动卡住】',
+    message: '我看到你现在处在【高度紧绷 + 行动卡住】的状态，这通常意味着你对自己要求很高，但身体和情绪已经在发出求救信号。\n\n我想先陪你看看：\n最近一周，哪件事让你最累？'
+  },
+  {
+    pattern: '能量耗竭 + 情绪阻滞',
+    state: '【能量耗竭 + 情绪阻滞】',
+    message: '我看到你现在处在【能量耗竭 + 情绪阻滞】的状态，这意味着你已经付出了很多，但很少有机会真正被滋养和照顾。\n\n在继续往前之前，我想先问你：\n最近什么时候真正为自己做过一件事？'
+  },
+  {
+    pattern: '情绪压抑 + 信念阻滞',
+    state: '【情绪压抑 + 信念阻滞】',
+    message: '我看到你现在处在【情绪压抑 + 信念阻滞】的状态，这通常意味着你习惯把感受留给自己消化，也很少觉得自己足够好。\n\n最近有没有一件事，让你其实挺委屈，却没说出口？'
+  }
+];
+
+// ===== 与传统量表对比 =====
+export const comparisonWithTraditional = [
+  { traditional: '只输出分数', ours: '输出人格化故事', oursHighlight: true },
+  { traditional: '结果孤立', ours: '连接AI教练对话', oursHighlight: true },
+  { traditional: '静态诊断', ours: '动态路径推荐', oursHighlight: true },
+  { traditional: '看完就完', ours: '开启持续陪伴', oursHighlight: true }
+];
