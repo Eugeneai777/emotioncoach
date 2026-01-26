@@ -1,246 +1,167 @@
 
+# SCL-90 答题页面移动端体验优化计划
 
-# 情绪健康测评页面 - 设计优化建议
+## 当前问题分析
 
-## 一、当前页面结构分析
+通过代码审查，发现当前 SCL-90 答题页面存在以下移动端体验问题：
 
-页面共9个模块，从上到下：
-1. **Hero 区**：品牌 + 痛点开场（已优化为3行文案）
-2. **痛点共鸣区**：4个痛点 + 损失警告
-3. **权威背书区**：3个研究数据
-4. **AI对比传统**：4行对比
-5. **四大人格类型**：4个折叠卡片
-6. **三层洋葱模型**：洋葱图 + 3个 Accordion 表格
-7. **价值交付区**：4个价值卡片
-8. **定价模块**：¥9.9 + CTA按钮
-9. **合规声明**
+1. **选项按钮太小**
+   - 当前使用 `px-3 py-1.5 text-xs`，按钮高度约 28-32px
+   - 未达到移动端推荐的 44px 最小触摸目标
+   - 在小屏幕手机上容易误触
 
-**主要问题**：
-- 页面过长（约 7-8 屏），用户需要滚动很多才能到达 CTA
-- 信息密度高，模块之间缺少视觉节奏变化
-- 部分模块可合并或简化
+2. **按钮布局不够紧凑**
+   - 使用 `flex-wrap gap-1.5` 横向排列
+   - 在窄屏幕上（<375px）5个按钮可能换行导致视觉混乱
+   - `ml-10` 的左边距在小屏幕上浪费空间
 
----
+3. **选中状态反馈不够明显**
+   - 仅使用 `ring-2 ring-primary` 和 `scale-105`
+   - 在户外光线下可能不够醒目
 
-## 二、优化建议
+## 优化方案
 
-### 2.1 模块合并：减少页面长度
+### 1. 重新设计选项按钮布局
 
-| 合并策略 | 当前 | 优化后 |
-|----------|------|--------|
-| 模块2+3 | 痛点 + 权威背书分开 | 合并为「问题+数据」一体化卡片 |
-| 模块5+6 | 四大模式 + 三层诊断分开 | 保留三层诊断，简化四大模式为预览 |
-| 模块7 | 4个价值卡片 | 改为2×2紧凑布局或简化为列表 |
+将 5 个选项改为更适合移动端的布局：
 
-**优化后模块结构**：
-```
-1. Hero 区（品牌+痛点）
-2. 问题诊断区（痛点 + 权威数据合并）
-3. 方案对比区（AI vs 传统）
-4. 三层诊断模型（洋葱图 + Accordion）
-5. 价值交付 + 定价（合并为一个转化模块）
-6. 合规声明
+**方案：横向滑动 + 大触摸区域**
+
+```text
+┌───────────────────────────────────────┐
+│  ① 头痛                               │
+│                                       │
+│  ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐  │
+│  │ 1  │ │ 2  │ │ 3  │ │ 4  │ │ 5  │  │
+│  │没有│ │很轻│ │中等│ │偏重│ │严重│  │
+│  └────┘ └────┘ └────┘ └────┘ └────┘  │
+└───────────────────────────────────────┘
 ```
 
-**预计节省**：2-3 屏高度
+- 使用 `grid grid-cols-5` 确保按钮等宽分布
+- 按钮高度增加到 `min-h-[44px]` 达到触摸标准
+- 数字和文字分两行显示，更易阅读
 
----
+### 2. 优化题目卡片结构
 
-### 2.2 Hero 区优化：增强视觉冲击
+**改进布局**
+- 移除 `ml-10` 的左边距，利用全部宽度
+- 题号改为内联显示，节省垂直空间
+- 增加卡片内边距在大屏幕上的响应式调整
 
-**当前问题**：
-- 社交证明 Badge 不够醒目
-- 文案间距略显拥挤
+### 3. 增强选中状态反馈
 
-**优化方案**：
-```tsx
-// 增加动画数字滚动效果
-<motion.span
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  transition={{ delay: 0.5 }}
->
-  <CountUp end={8567} duration={1.5} /> 人已找到答案
-</motion.span>
+- 选中时使用更明显的颜色填充（不只是边框）
+- 添加 `touch-manipulation` 禁用双击缩放
+- 选中按钮增加图标或勾选标记
 
-// 增加背景装饰元素
-<div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent)]" />
-```
+### 4. 底部导航栏安全区域
 
----
+- 添加 `pb-[env(safe-area-inset-bottom)]` 适配全面屏
+- 使用 `backdrop-blur` 增加层次感
 
-### 2.3 痛点区优化：卡片式分组
+## 具体代码修改
 
-**当前**：4个痛点平铺 + 损失警告
+### 文件：`src/components/scl90/SCL90Questions.tsx`
 
-**优化**：
-```
-┌─────────────────────────────────────┐
-│  😫 这些感受熟悉吗？                │
-├─────────────────────────────────────┤
-│ ┌─────────┐  ┌─────────┐           │
-│ │ 痛点1   │  │ 痛点2   │           │
-│ └─────────┘  └─────────┘           │
-│ ┌─────────┐  ┌─────────┐           │
-│ │ 痛点3   │  │ 痛点4   │           │
-│ └─────────┘  └─────────┘           │
-├─────────────────────────────────────┤
-│ ⚠️ 如果不解决...（损失警告）       │
-└─────────────────────────────────────┘
-```
+**修改点 1：选项按钮区域（第 181-198 行）**
 
-改为 2×2 网格布局，更紧凑。
-
----
-
-### 2.4 三层诊断区优化：交互式洋葱图
-
-**当前**：静态洋葱图 + 下方 Accordion 表格
-
-**优化方案**：
-- 点击洋葱图的某一层，自动展开对应的 Accordion
-- 添加层级高亮动画
+将当前的 `flex-wrap` 布局改为 `grid` 布局：
 
 ```tsx
-const [activeLayer, setActiveLayer] = useState<'layer1' | 'layer2' | 'layer3'>('layer1');
-
-// 洋葱图层级可点击
-<motion.circle
-  onClick={() => setActiveLayer('layer1')}
-  whileHover={{ scale: 1.05, opacity: 0.4 }}
-  className="cursor-pointer"
-  ...
-/>
-
-// Accordion 受控展开
-<Accordion type="single" value={activeLayer} onValueChange={setActiveLayer}>
-  ...
-</Accordion>
-```
-
-**视觉效果**：用户点击蓝色外圈 → 第一层表格自动展开并高亮
-
----
-
-### 2.5 价值交付区优化：简化为列表
-
-**当前**：4个独立卡片，占用空间大
-
-**优化**：
-```
-┌─────────────────────────────────────┐
-│  ✨ 测评完成后，你将获得            │
-├─────────────────────────────────────┤
-│  ✓ 三维情绪仪表盘                   │
-│  ✓ 反应模式识别                     │
-│  ✓ 阻滞点定位                       │
-│  ✓ AI教练陪伴                       │
-└─────────────────────────────────────┘
-```
-
-从 2×2 网格改为垂直列表，节省 40% 高度。
-
----
-
-### 2.6 定价模块优化：增强紧迫感
-
-**当前**：
-- 价格展示清晰
-- CTA 有呼吸动画
-
-**优化**：
-1. 添加「限时倒计时」组件
-2. 添加「已有 X 人正在测评」实时提示
-3. CTA 按钮添加箭头指引动画
-
-```tsx
-// 限时倒计时
-<div className="flex items-center justify-center gap-2 mb-3">
-  <Clock className="w-4 h-4 text-amber-500" />
-  <span className="text-sm text-amber-600">限时优惠还剩 23:59:42</span>
+{/* 评分选项 - 优化为5列等宽网格 */}
+<div className="grid grid-cols-5 gap-1.5 mt-3">
+  {scl90ScoreLabels.map(option => (
+    <button
+      key={option.value}
+      onClick={() => handleAnswer(question.id, option.value)}
+      className={cn(
+        "flex flex-col items-center justify-center",
+        "min-h-[52px] rounded-lg border-2 transition-all duration-200",
+        "touch-manipulation active:scale-95",
+        answers[question.id] === option.value
+          ? "ring-2 ring-offset-1 ring-primary border-primary bg-primary/10 scale-[1.02]"
+          : "border-muted-foreground/20 hover:border-primary/40",
+        option.color
+      )}
+    >
+      <span className="text-sm font-bold">{option.value}</span>
+      <span className="text-[10px] font-medium opacity-80">{option.label}</span>
+    </button>
+  ))}
 </div>
-
-// 实时人数
-<motion.p
-  animate={{ opacity: [0.5, 1, 0.5] }}
-  transition={{ duration: 2, repeat: Infinity }}
-  className="text-xs text-muted-foreground"
->
-  🔥 此刻有 23 人正在测评
-</motion.p>
 ```
 
----
+**修改点 2：题目卡片布局（第 159-179 行）**
 
-### 2.7 四大模式区优化建议
-
-**当前**：4个可折叠卡片，展开后信息丰富
-
-**两个方案**：
-
-**方案A - 移除此模块**：
-- 三层诊断已经涵盖反应模式
-- 移除后页面减少 1 屏
-
-**方案B - 改为精简预览**：
-- 只显示 4 个 emoji + 名称 + 标语
-- 不可展开，仅作为视觉预览
-
-```
-┌─────────────────────────────────────┐
-│  🧠 找到你的情绪反应模式            │
-├─────────────────────────────────────┤
-│  🔋 能量耗竭  🎯 高度紧绷          │
-│  🤐 情绪压抑  🐢 逃避延迟          │
-└─────────────────────────────────────┘
-```
-
----
-
-## 三、技术实现要点
-
-### 3.1 文件修改清单
-
-| 文件 | 修改内容 |
-|------|----------|
-| `EmotionHealthStartScreen.tsx` | 模块合并、布局调整、交互增强 |
-| `ThreeLayerDiagram.tsx` | 添加点击事件回调 |
-
-### 3.2 新增状态管理
+优化题目显示区域，移除多余边距：
 
 ```tsx
-// 洋葱图与 Accordion 联动
-const [activeLayer, setActiveLayer] = useState<string>('layer1');
-
-// 传递给 ThreeLayerDiagram
-<ThreeLayerDiagram 
-  size={160} 
-  onLayerClick={(layer) => setActiveLayer(layer)} 
-  activeLayer={activeLayer}
-/>
+<div
+  key={question.id}
+  className={cn(
+    "p-3 sm:p-4 rounded-xl border bg-card",
+    answers[question.id] !== undefined 
+      ? "border-primary/30 bg-primary/5" 
+      : "border-border"
+  )}
+>
+  {/* 题目文本 - 题号内联 */}
+  <div className="flex items-start gap-2 mb-3">
+    <span className={cn(
+      "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+      answers[question.id] !== undefined
+        ? "bg-primary text-primary-foreground"
+        : "bg-muted text-muted-foreground"
+    )}>
+      {question.id}
+    </span>
+    <p className="text-sm font-medium leading-relaxed pt-0.5">{question.text}</p>
+  </div>
+  
+  {/* 选项区域 */}
+  ...
+</div>
 ```
 
----
+**修改点 3：底部导航按钮（第 204-238 行）**
 
-## 四、优化效果预估
+添加安全区域和视觉优化：
 
-| 维度 | 优化前 | 优化后 |
-|------|--------|--------|
-| **页面高度** | 7-8 屏 | 5-6 屏 |
-| **到达 CTA 所需滚动** | 6-7 屏 | 4-5 屏 |
-| **信息密度** | 分散 | 集中 |
-| **交互性** | 基础折叠 | 洋葱图联动 |
-| **转化紧迫感** | 弱 | 强（倒计时+实时人数） |
+```tsx
+<div className="flex gap-3 pt-2 sticky bottom-0 bg-background/95 backdrop-blur-sm pb-[calc(16px+env(safe-area-inset-bottom))]">
+  ...
+</div>
+```
 
----
+### 文件：`src/components/scl90/scl90Data.ts`
 
-## 五、推荐实施优先级
+**修改点 4：更新选项颜色配置（第 144-150 行）**
 
-| 优先级 | 优化项 | 效果 |
-|--------|--------|------|
-| ⭐⭐⭐ | 2.5 价值交付区简化为列表 | 减少 1 屏高度 |
-| ⭐⭐⭐ | 2.7 四大模式区简化或移除 | 减少 1 屏高度 |
-| ⭐⭐ | 2.4 洋葱图交互联动 | 提升用户参与感 |
-| ⭐⭐ | 2.6 定价模块增加紧迫感 | 提升转化率 |
-| ⭐ | 2.1 痛点+权威数据合并 | 信息更集中 |
+增强选中态的视觉区分度：
 
+```tsx
+export const scl90ScoreLabels = [
+  { value: 1, label: '没有', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
+  { value: 2, label: '很轻', color: 'bg-sky-50 text-sky-600 border-sky-200' },
+  { value: 3, label: '中等', color: 'bg-amber-50 text-amber-600 border-amber-200' },
+  { value: 4, label: '偏重', color: 'bg-orange-50 text-orange-600 border-orange-200' },
+  { value: 5, label: '严重', color: 'bg-rose-50 text-rose-600 border-rose-200' },
+];
+```
+
+## 预期效果
+
+| 优化项 | 优化前 | 优化后 |
+|-------|-------|-------|
+| 按钮高度 | ~28px | ≥52px |
+| 触摸区域 | 不规则 | 等宽方形 |
+| 布局 | flex-wrap 可能换行 | 固定5列网格 |
+| 选中反馈 | 仅边框高亮 | 背景+边框+缩放 |
+| 安全区域 | 未适配 | 适配全面屏 |
+
+## 注意事项
+
+- 保持与现有答题进度保存功能的兼容性
+- 确保 framer-motion 动画使用 `opacity: 0.01` 避免微信小程序白屏
+- 保持深色模式的兼容性
