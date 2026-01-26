@@ -225,6 +225,20 @@ export const introShareConfigs: Record<string, IntroShareConfig> = {
     gradient: 'linear-gradient(135deg, #6366f1, #ec4899)',
     category: 'tool'
   },
+  scl90: {
+    pageKey: 'scl90',
+    title: 'SCL-90 心理健康自评',
+    subtitle: '专业测评，清楚了解自己的情绪状态',
+    targetUrl: '/scl90',
+    emoji: '🧠',
+    highlights: [
+      '90题专业量表·10大心理因子',
+      '全球权威抑郁焦虑自测工具',
+      'AI个性化解读与建议',
+    ],
+    gradient: 'linear-gradient(135deg, #7c3aed, #6366f1)',
+    category: 'tool'
+  },
 };
 
 /**
