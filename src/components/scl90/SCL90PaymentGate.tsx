@@ -157,14 +157,14 @@ export function SCL90PaymentGate({
               <Sparkles className="w-4 h-4 text-primary" />
               解锁后获得
             </h3>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
               {features.map((feature, index) => (
                 <div 
                   key={index}
-                  className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50"
+                  className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50"
                 >
-                  <feature.icon className="w-4 h-4 text-primary flex-shrink-0" />
-                  <span className="text-xs font-medium">{feature.text}</span>
+                  <feature.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+                  <span className="text-[11px] sm:text-xs font-medium">{feature.text}</span>
                 </div>
               ))}
             </div>
@@ -172,14 +172,16 @@ export function SCL90PaymentGate({
         </Card>
       </motion.div>
 
-      {/* 价格和购买按钮 - 增强紧迫感 */}
+      {/* 价格和购买按钮 - 增强紧迫感 + 毛玻璃效果 */}
       <motion.div
         initial={{ opacity: 0.01, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="sticky bottom-0 bg-background pt-4 pb-safe"
+        className="sticky bottom-0"
         style={{ transform: "translateZ(0)" }}
       >
+        <div className="absolute -top-6 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+        <div className="bg-background/95 backdrop-blur-sm pt-4 pb-safe">
         <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 overflow-hidden relative">
           {/* 限时标签 */}
           <div className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg">
@@ -206,6 +208,7 @@ export function SCL90PaymentGate({
             </p>
           </CardContent>
         </Card>
+        </div>
       </motion.div>
 
       {/* 支付对话框 */}
