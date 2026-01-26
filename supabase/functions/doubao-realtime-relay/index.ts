@@ -1173,7 +1173,7 @@ Deno.serve(async (req) => {
               // 构建完整数据包
               // ✅ Header(4) + Sequence(4) + Event(4) + SessionIdLen(4) + SessionId + PayloadSize(4) + Payload
               const EVENT_TEXT_INPUT = 200; // 使用音频事件码（豆包对话模式下文本和音频共用）
-              const flags = FLAG_HAS_SEQUENCE | FLAG_HAS_EVENT;  // ✅ 添加 FLAG_HAS_SEQUENCE
+              const flags = FLAG_HAS_SEQUENCE | FLAG_HAS_EVENT | FLAG_HAS_SESSION_ID;  // ✅ 修复：添加 FLAG_HAS_SESSION_ID 确保会话关联
               const header = buildHeader(MESSAGE_TYPE_FULL_CLIENT, flags, SERIALIZATION_JSON);
               
               const totalSize = 4 + 4 + 4 + 4 + sessionIdBytes.length + 4 + payloadBytes.length;
