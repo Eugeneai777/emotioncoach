@@ -23,7 +23,7 @@ import { supabase } from '@/integrations/supabase/client';
 import useWechatShare from '@/hooks/useWechatShare';
 import { ShareCardSkeleton } from '@/components/ui/ShareCardSkeleton';
 import { getShareEnvironment } from '@/utils/shareUtils';
-import { generateCanvas, canvasToBlob } from '@/utils/shareCardConfig';
+import { generateCanvas, canvasToBlob, CardBackgroundType } from '@/utils/shareCardConfig';
 
 interface UserInfo {
   avatarUrl?: string;
@@ -279,6 +279,19 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     }
   };
 
+  // Get background type for canvas generation based on active tab
+  const getBackgroundType = (): CardBackgroundType => {
+    switch (activeTab) {
+      case 'camp': return 'camp';
+      case 'value': return 'value';
+      case 'fear': return 'fear';
+      case 'blindspot': return 'blindspot';
+      case 'transform': return 'transform';
+      case 'achievement': return 'achievement';
+      default: return 'value';
+    }
+  };
+
   const getCardName = () => {
     switch (activeTab) {
       case 'camp': return '7天财富训练营邀请卡';
@@ -310,8 +323,8 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
       // Show loading toast for better UX
       const toastId = toast.loading('正在生成图片...');
       
-      console.log('[handleDownload] Generating canvas...');
-      const canvas = await generateCanvas(cardRef);
+      console.log('[handleDownload] Generating canvas with backgroundType:', getBackgroundType());
+      const canvas = await generateCanvas(cardRef, { backgroundType: getBackgroundType() });
       if (!canvas) {
         toast.dismiss(toastId);
         console.error('[handleDownload] Canvas generation failed');
@@ -339,7 +352,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
         console.log('[handleDownload] WeChat/iOS detected, showing preview');
         setPreviewImageUrl(blobUrl);
         setShowImagePreview(true);
-        // Don't show toast here - preview component will guide user
+        setOpen(false); // Close dialog to avoid layering issues
       } else {
         // Desktop/Android: Try download
         try {
@@ -385,7 +398,7 @@ const WealthInviteCardDialog: React.FC<WealthInviteCardDialogProps> = ({
     try {
       const toastId = toast.loading('正在生成图片...');
       
-      const canvas = await generateCanvas(cardRef);
+      const canvas = await generateCanvas(cardRef, { backgroundType: getBackgroundType() });
       if (!canvas) {
         toast.dismiss(toastId);
         toast.error('生成失败，请重试或截图分享');

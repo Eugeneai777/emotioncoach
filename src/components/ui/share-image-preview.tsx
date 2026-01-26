@@ -100,7 +100,7 @@ const ShareImagePreview: React.FC<ShareImagePreviewProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0.01 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[100] bg-black/95 flex flex-col"
+          className="fixed inset-0 z-[9999] bg-black/95 flex flex-col"
           style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
         >
           {/* Header */}
