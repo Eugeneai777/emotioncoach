@@ -24,6 +24,7 @@ import AdminBloomSingleDelivery from "./AdminBloomSingleDelivery";
 import AdminBloomMonthlyCashflow from "./AdminBloomMonthlyCashflow";
 import { ConversionFunnelDashboard } from "@/components/analytics/ConversionFunnelDashboard";
 import OGPreviewManagement from "./OGPreviewManagement";
+import ShareCardsAdmin from "@/pages/admin/ShareCardsAdmin";
 
 export function AdminLayout() {
   return (
@@ -59,6 +60,7 @@ export function AdminLayout() {
               <Route path="sync" element={<SyncStatusDashboard />} />
               <Route path="service" element={<CustomerServiceManagement />} />
               <Route path="og-preview" element={<OGPreviewManagement />} />
+              <Route path="share-cards" element={<ShareCardsAdmin />} />
             </Routes>
           </main>
         </SidebarInset>
