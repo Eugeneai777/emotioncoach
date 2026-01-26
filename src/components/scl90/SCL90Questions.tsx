@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useSCL90Progress } from "./useSCL90Progress";
+import { SCL90ProgressHeatmap } from "./SCL90ProgressHeatmap";
 
 interface SCL90QuestionsProps {
   onComplete: (result: SCL90Result, answers: Record<number, number>) => void;
@@ -143,6 +144,17 @@ export function SCL90Questions({ onComplete, onExit }: SCL90QuestionsProps) {
           已完成 {answeredCount} / 90 题
         </p>
       </div>
+
+      {/* 热力图进度 */}
+      <SCL90ProgressHeatmap
+        answers={answers}
+        currentPage={currentPage}
+        questionsPerPage={QUESTIONS_PER_PAGE}
+        onPageClick={(page) => {
+          setCurrentPage(page);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
 
       {/* 题目列表 */}
       <AnimatePresence mode="wait">
