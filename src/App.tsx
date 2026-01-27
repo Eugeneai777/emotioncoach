@@ -146,6 +146,9 @@ const WealthCampIntro = lazy(() => import("./pages/WealthCampIntro"));
 const WealthAwakeningProgress = lazy(() => import("./pages/WealthAwakeningProgress"));
 const WealthAwakeningArchive = lazy(() => import("./pages/WealthAwakeningArchive"));
 
+// 成长路径
+const GrowthSupportPath = lazy(() => import("./pages/GrowthSupportPath"));
+
 // 法律条款
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
@@ -274,6 +277,7 @@ const App = () => (
               <Route path="/terms/youjin-partner" element={<YoujinPartnerTerms />} />
               <Route path="/terms/bloom-partner" element={<BloomPartnerTerms />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/growth-path" element={<GrowthSupportPath />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
