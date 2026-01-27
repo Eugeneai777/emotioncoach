@@ -109,7 +109,7 @@ const CampIntro = () => {
   const isParentCamp = campType?.includes('parent') || campType?.includes('teen');
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white pb-24 overflow-y-auto overscroll-y-contain">
       <DynamicOGMeta pageKey="campIntro" />
       {/* Header */}
       <header className="border-b border-purple-200/50 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
