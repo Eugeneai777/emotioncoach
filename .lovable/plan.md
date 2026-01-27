@@ -1,193 +1,105 @@
 
-# 情绪健康测评支付门槛与历史记录实现计划
 
-## 问题分析
+# 修复情绪健康测评支付逻辑错误
 
-当前情绪健康测评存在三个核心问题：
+## 问题根因
 
-1. **无支付门槛** - 用户无需付费即可开始测评
-2. **无历史记录** - 完成后无法再次查看报告
-3. **硬编码状态** - `is_paid` 被硬编码为 `true`
+`AssessmentPayDialog` 组件设计时假设只用于财富卡点测评，内部硬编码了多处 `wealth_block_assessment`，导致情绪健康测评调用时：
+- 错误检测财富测评的购买状态
+- 创建的订单属于财富测评产品
+- 显示的产品名称是"财富卡点测评"
 
-## 目标
+## 解决方案
 
-使情绪健康测评与财富卡点测评保持一致的用户体验：
-- 需要支付 ¥9.90 才能开始测评
-- 支持微信静默授权 + JSAPI支付
-- 已购买用户自动跳过介绍页
-- 完成后可查看历史测评记录
+将 `AssessmentPayDialog` 改造为通用组件，通过 props 传入产品信息。
 
-## 实现方案
+## 具体修改
 
-### 第一步：创建购买状态检查 Hook
+### 第一步：扩展 AssessmentPayDialog Props
 
-创建 `useEmotionHealthPurchase.ts`，复用财富测评的查询模式：
-
-```text
-src/hooks/useEmotionHealthPurchase.ts
-- 查询 orders 表，检查 package_key = 'emotion_health_assessment'
-- 返回购买记录和加载状态
-```
-
-### 第二步：重构页面状态机
-
-将页面状态从 `start | questions | result` 扩展为：
-
-```text
-'intro' | 'questions' | 'result' | 'history'
-
-状态流转：
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│  未购买用户:  intro ──(支付)──> questions ──> result        │
-│                                                             │
-│  已购买用户:  intro(自动跳过) ──> questions ──> result      │
-│               ↓                                              │
-│            history ←────────────────────┘                   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 第三步：集成支付弹窗
-
-在 `EmotionHealthPage.tsx` 中集成 `AssessmentPayDialog`：
-
-```text
-新增状态:
-- showPayDialog: boolean
-- isRedirectingForAuth: boolean
-
-新增逻辑:
-- handlePayClick(): 微信环境触发静默授权，其他直接打开弹窗
-- triggerWeChatSilentAuth(): 调用 wechat-pay-auth 函数
-- usePaymentCallback(): 监听支付回调
-
-修改 handleStart():
-- 未登录 → 跳转登录
-- 未购买 → 打开支付弹窗
-- 已购买 → 进入测评
-```
-
-### 第四步：修改开始页组件
-
-更新 `EmotionHealthStartScreen.tsx`：
-
-```text
-新增 props:
-- hasPurchased: boolean
-- onPayClick: () => void
-- isLoading: boolean
-
-按钮逻辑:
-- 未购买: 显示 "¥9.90 开始测评" 并调用 onPayClick
-- 已购买: 显示 "开始测评" 并调用 onStart
-```
-
-### 第五步：修复数据保存逻辑
-
-更新 `handleComplete` 函数：
-
-```text
-修改前:
-  is_paid: true  // 硬编码
-
-修改后:
-  order_id: purchaseRecord?.orderId  // 关联订单
-  is_paid: true
-  paid_at: purchaseRecord?.paidAt
-```
-
-### 第六步：添加历史记录功能
-
-创建历史记录组件和查询：
-
-```text
-src/components/emotion-health/EmotionHealthHistory.tsx
-- 列表展示历史测评
-- 点击可查看详细报告
-- 支持删除（可选）
-
-src/hooks/useEmotionHealthHistory.ts
-- 查询 emotion_health_assessments 表
-- 按 created_at 降序排列
-```
-
-### 第七步：更新页面布局
-
-添加 Tab 切换支持历史查看：
-
-```text
-<Tabs value={activeTab}>
-  <TabsList>
-    <TabsTrigger value="assessment">测评</TabsTrigger>
-    <TabsTrigger value="history">历史记录</TabsTrigger>
-  </TabsList>
+```typescript
+interface AssessmentPayDialogProps {
+  // 现有 props...
   
-  <TabsContent value="assessment">
-    {/* 现有测评流程 */}
-  </TabsContent>
-  
-  <TabsContent value="history">
-    <EmotionHealthHistory />
-  </TabsContent>
-</Tabs>
+  // 🆕 新增产品配置 props
+  packageKey: string;      // 如 'emotion_health_assessment'
+  packageName: string;     // 如 '情绪健康测评'
+  price?: number;          // 可选，不传则从数据库获取
+}
 ```
 
----
+### 第二步：替换所有硬编码
+
+| 位置 | 原代码 | 修改后 |
+|------|--------|--------|
+| 第 83 行 | `'wealth_block_assessment'` | `packageKey` prop |
+| 第 426 行 | `.eq('package_key', 'wealth_block_assessment')` | `.eq('package_key', packageKey)` |
+| 第 491 行 | `packageKey: "wealth_block_assessment"` | `packageKey: packageKey` |
+| 第 492 行 | `packageName: "财富卡点测评"` | `packageName: packageName` |
+| 第 559-561 行 | 同上 | 同上 |
+
+### 第三步：更新 EmotionHealthPage 调用
+
+```typescript
+<AssessmentPayDialog
+  open={showPayDialog}
+  onOpenChange={setShowPayDialog}
+  onSuccess={handlePaymentSuccess}
+  userId={user?.id}
+  hasPurchased={hasPurchased}
+  packageKey="emotion_health_assessment"     // 🆕 指定产品
+  packageName="情绪健康测评"                  // 🆕 指定名称
+/>
+```
+
+### 第四步：更新 WealthBlockAssessment 调用
+
+保持向后兼容，同时显式传入参数：
+
+```typescript
+<AssessmentPayDialog
+  // ...existing props
+  packageKey="wealth_block_assessment"
+  packageName="财富卡点测评"
+/>
+```
 
 ## 文件变更清单
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `src/hooks/useEmotionHealthPurchase.ts` | 新建 | 购买状态检查 Hook |
-| `src/hooks/useEmotionHealthHistory.ts` | 新建 | 历史记录查询 Hook |
-| `src/components/emotion-health/EmotionHealthHistory.tsx` | 新建 | 历史记录列表组件 |
-| `src/pages/EmotionHealthPage.tsx` | 修改 | 集成支付、历史、状态管理 |
-| `src/components/emotion-health/EmotionHealthStartScreen.tsx` | 修改 | 添加价格显示和支付入口 |
-| `src/components/emotion-health/index.ts` | 修改 | 导出新组件 |
-
----
+| `src/components/wealth-block/AssessmentPayDialog.tsx` | 修改 | 添加 packageKey/packageName props，替换硬编码 |
+| `src/pages/EmotionHealthPage.tsx` | 修改 | 传入正确的产品参数 |
+| `src/pages/WealthBlockAssessment.tsx` | 修改 | 显式传入产品参数（向后兼容） |
 
 ## 技术细节
 
-### 微信支付流程
+### 价格获取逻辑
 
-```text
-用户点击"开始测评"
-      │
-      ▼
-  检查是否登录? ──否──> 跳转 /auth
-      │是
-      ▼
-  检查是否已购买? ──是──> 直接开始测评
-      │否
-      ▼
-  是否微信环境? ──否──> 打开支付弹窗 (扫码)
-      │是
-      ▼
-  是否有 OpenID? ──是──> 打开支付弹窗 (JSAPI)
-      │否
-      ▼
-  触发静默授权 → 回调页面 → 重新打开弹窗
+```typescript
+// 优先使用 props 传入的价格，否则从数据库查询
+const { data: packages } = usePackages();
+const assessmentPrice = price ?? getPackagePrice(packages, packageKey, 9.9);
 ```
 
-### 数据库关联
+### 购买检查逻辑
 
-```text
-orders 表
-├── package_key: 'emotion_health_assessment'
-├── status: 'paid'
-└── user_id: uuid
-
-emotion_health_assessments 表
-├── order_id: FK → orders.id
-├── is_paid: boolean
-└── paid_at: timestamp
+```typescript
+const { data: existingOrder } = await supabase
+  .from('orders')
+  .select('id')
+  .eq('user_id', userId)
+  .eq('package_key', packageKey)  // 使用动态 packageKey
+  .eq('status', 'paid')
+  .limit(1)
+  .maybeSingle();
 ```
 
-### 复用组件
+## 预期效果
 
-直接复用以下现有组件，无需修改：
-- `AssessmentPayDialog` - 支付弹窗
-- `usePaymentCallback` - 支付回调处理
-- `QuickRegisterStep` - 游客注册流程
+修复后：
+- 情绪健康测评将正确检查 `emotion_health_assessment` 的购买状态
+- 创建的订单 `package_key` 为 `emotion_health_assessment`
+- 支付弹窗显示"情绪健康测评"产品名称
+- 财富卡点测评功能不受影响
+
