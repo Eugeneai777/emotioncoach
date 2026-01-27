@@ -1,199 +1,304 @@
 
-# 预约状态推送通知完善计划
+# 教练咨询预付卡系统实现计划
 
-## 当前系统状态
+## 概述
 
-| 通知场景 | 触发点 | 状态 |
-|:---------|:-------|:-----|
-| 预约确认 | 支付成功回调 | 已实现 |
-| 开始前提醒 | Cron 每小时检查 | 已实现（但时间精度不够） |
-| 评价邀请 | 完成后1-2小时 | 已实现 |
-| 预约取消 | 取消 API | 已实现 |
-| 预约改期 | - | 仅定义，未实现 |
-| 咨询完成 | - | 未实现 |
-| 教练端通知 | - | 未实现 |
+为真人教练服务添加预付卡功能，允许用户预先充值一定金额，预约教练服务时可选择从预付卡余额扣款，而非每次都通过微信支付。
 
 ---
 
-## 改进计划
+## 当前系统分析
 
-### 1. 提升提醒时间精度
-
-**问题**: Cron 每小时执行，可能错过精确的 15 分钟提醒窗口
-
-**方案**: 增加提醒触发频率 + 添加前一天提醒
-
-```text
-修改: supabase/functions/trigger-appointment-reminders/index.ts
-- 添加前一天晚上 8 点提醒场景
-- 添加防重复发送逻辑（记录已发送的提醒）
-
-修改: 数据库 Cron Job
-- 将 trigger-appointment-reminders 从每小时改为每 15 分钟执行
-- Schedule: */15 * * * *
-```
-
----
-
-### 2. 添加"咨询完成"通知
-
-**场景**: 教练标记会话完成后，立即通知用户
-
-**修改文件**:
-
-| 文件 | 改动 |
+| 组件 | 现状 |
 |:-----|:-----|
-| `supabase/functions/send-appointment-notification/index.ts` | 添加 `appointment_completed` 场景处理 |
-| `src/hooks/useAppointmentNotification.ts` | 添加 `sendCompletionNotification` 方法 |
-| `src/components/human-coach/AppointmentCard.tsx` | 教练完成预约时调用通知 |
-
-**通知内容示例**:
-```text
-标题: {用户名}，咨询已结束
-内容: 与{教练名}的{服务名}咨询已完成
-备注: 感谢您的信任，期待下次相见 ✨
-```
+| `user_accounts` 表 | 仅用于 AI 对话次数配额（total_quota, used_quota） |
+| `create-appointment-order` | 每次预约都创建微信支付订单 |
+| `AppointmentPayDialog` | 仅支持微信支付流程 |
+| 教练服务价格 | `coach_services.price` 以人民币计价（如 ¥99/次） |
 
 ---
 
-### 3. 添加教练端通知
+## 设计方案
 
-**场景**: 教练需要收到新预约、取消、即将开始的通知
+### 核心思路
 
-**修改文件**:
+创建独立的**教练咨询预付卡余额**系统，与现有的 AI 对话次数配额分离：
+- **AI 配额**：按"次数"计算（现有 `user_accounts.total_quota`）
+- **教练预付卡**：按"金额"计算（新增 `coaching_balance` 字段或独立表）
 
-| 文件 | 改动 |
-|:-----|:-----|
-| `supabase/functions/send-appointment-notification/index.ts` | 支持向教练发送通知 |
-| `supabase/functions/wechat-pay-callback/index.ts` | 支付成功后通知教练有新预约 |
-| `supabase/functions/cancel-appointment/index.ts` | 取消时通知教练 |
-| `supabase/functions/trigger-appointment-reminders/index.ts` | 提醒时同时通知教练 |
+### 方案选择：扩展现有表 vs 新建表
 
-**新增场景**:
-- `coach_new_appointment` - 教练收到新预约
-- `coach_appointment_reminder` - 教练即将开始提醒
-- `coach_appointment_cancelled` - 用户取消通知
+推荐**新建独立表** `coaching_prepaid_cards`，原因：
+1. 业务逻辑完全独立，避免与 AI 配额混淆
+2. 支持多张预付卡、不同有效期
+3. 便于追踪充值和消费记录
+4. 支持未来的退款、转赠等功能扩展
 
 ---
 
-### 4. 实现改期功能和通知
+## 数据库设计
 
-**新建/修改文件**:
-
-| 文件 | 改动 |
-|:-----|:-----|
-| `supabase/functions/reschedule-appointment/index.ts` | 新建：改期逻辑 |
-| 前端改期 UI | 在预约详情添加改期按钮 |
-
----
-
-### 5. 添加已发送提醒记录表（防重复）
-
-**数据库变更**:
+### 新建表 1: coaching_prepaid_balance（用户教练余额）
 
 ```sql
-CREATE TABLE IF NOT EXISTS appointment_notification_logs (
+CREATE TABLE public.coaching_prepaid_balance (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  appointment_id UUID REFERENCES coaching_appointments(id),
-  scenario TEXT NOT NULL,
-  recipient_type TEXT NOT NULL, -- 'user' | 'coach'
-  recipient_id UUID NOT NULL,
-  sent_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(appointment_id, scenario, recipient_id)
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  balance DECIMAL(10,2) NOT NULL DEFAULT 0,
+  total_recharged DECIMAL(10,2) NOT NULL DEFAULT 0,
+  total_spent DECIMAL(10,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id)
 );
 ```
+
+### 新建表 2: coaching_prepaid_transactions（充值/消费记录）
+
+```sql
+CREATE TABLE public.coaching_prepaid_transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('recharge', 'consume', 'refund', 'admin_adjust')),
+  amount DECIMAL(10,2) NOT NULL,
+  balance_after DECIMAL(10,2) NOT NULL,
+  related_order_no TEXT,
+  related_appointment_id UUID,
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### 新建表 3: coaching_prepaid_packages（预付卡套餐配置）
+
+```sql
+CREATE TABLE public.coaching_prepaid_packages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  package_name TEXT NOT NULL,
+  package_key TEXT UNIQUE NOT NULL,
+  price DECIMAL(10,2) NOT NULL,
+  bonus_amount DECIMAL(10,2) DEFAULT 0,
+  total_value DECIMAL(10,2) NOT NULL,
+  description TEXT,
+  is_active BOOLEAN DEFAULT true,
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+示例数据：
+| 套餐名称 | 售价 | 赠送 | 实际到账 |
+|:---------|:-----|:-----|:---------|
+| 入门充值卡 | ¥100 | ¥0 | ¥100 |
+| 畅享充值卡 | ¥500 | ¥50 | ¥550 |
+| 尊享充值卡 | ¥1000 | ¥150 | ¥1150 |
+
+---
+
+## 业务流程设计
+
+### 流程 1: 购买预付卡
+
+```text
+用户选择预付卡套餐
+       ↓
+创建充值订单（orders表，order_type='prepaid_recharge'）
+       ↓
+微信支付
+       ↓
+支付成功回调
+       ↓
+更新 coaching_prepaid_balance（增加余额）
+       ↓
+记录 coaching_prepaid_transactions
+```
+
+### 流程 2: 使用预付卡预约教练
+
+```text
+用户完成预约流程（选服务 → 选时间 → 填留言）
+       ↓
+显示支付方式选择：
+  - 预付卡余额（显示当前余额）
+  - 微信支付（原有流程）
+       ↓
+若选择预付卡且余额充足：
+  → 直接扣款，创建已支付的预约
+  → 记录消费流水
+       ↓
+若余额不足：
+  → 提示充值或切换微信支付
+```
+
+---
+
+## 文件修改清单
+
+### 数据库迁移
+| 操作 | 说明 |
+|:-----|:-----|
+| 创建表 | `coaching_prepaid_balance` |
+| 创建表 | `coaching_prepaid_transactions` |
+| 创建表 | `coaching_prepaid_packages` |
+| RLS 策略 | 用户只能查看/操作自己的余额和记录 |
+| 数据库函数 | `deduct_coaching_balance` - 原子性扣款 |
+| 数据库函数 | `add_coaching_balance` - 原子性充值 |
+| 插入数据 | 预付卡套餐初始数据 |
+
+### Edge Functions
+
+| 文件 | 类型 | 说明 |
+|:-----|:-----|:-----|
+| `supabase/functions/create-prepaid-recharge-order/index.ts` | 新建 | 创建预付卡充值订单 |
+| `supabase/functions/pay-with-prepaid/index.ts` | 新建 | 预付卡扣款预约教练 |
+| `supabase/functions/wechat-pay-callback/index.ts` | 修改 | 处理预付卡充值成功回调 |
+
+### 前端组件
+
+| 文件 | 类型 | 说明 |
+|:-----|:-----|:-----|
+| `src/hooks/useCoachingPrepaid.ts` | 新建 | 查询余额、充值、消费记录 |
+| `src/components/coaching/PrepaidBalanceCard.tsx` | 新建 | 显示预付卡余额卡片 |
+| `src/components/coaching/PrepaidRechargeDialog.tsx` | 新建 | 预付卡充值弹窗 |
+| `src/components/coaching/PrepaidPackageList.tsx` | 新建 | 预付卡套餐列表 |
+| `src/components/human-coach/booking/PaymentMethodSelector.tsx` | 新建 | 支付方式选择器 |
+| `src/components/human-coach/booking/BookingDialog.tsx` | 修改 | 集成支付方式选择 |
+| `src/components/human-coach/booking/AppointmentPayDialog.tsx` | 修改 | 支持预付卡支付路径 |
+| `src/pages/Packages.tsx` | 修改 | 添加教练预付卡入口 |
 
 ---
 
 ## 技术实现细节
 
-### send-appointment-notification 改动
+### 数据库函数：原子性扣款
+
+```sql
+CREATE OR REPLACE FUNCTION public.deduct_coaching_balance(
+  p_user_id UUID,
+  p_amount DECIMAL,
+  p_appointment_id UUID DEFAULT NULL,
+  p_description TEXT DEFAULT NULL
+)
+RETURNS TABLE(success BOOLEAN, new_balance DECIMAL, message TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_current_balance DECIMAL;
+  v_new_balance DECIMAL;
+BEGIN
+  -- 锁定行防止并发问题
+  SELECT balance INTO v_current_balance
+  FROM public.coaching_prepaid_balance
+  WHERE user_id = p_user_id
+  FOR UPDATE;
+
+  IF v_current_balance IS NULL THEN
+    RETURN QUERY SELECT FALSE, 0::DECIMAL, '账户不存在'::TEXT;
+    RETURN;
+  END IF;
+
+  IF v_current_balance < p_amount THEN
+    RETURN QUERY SELECT FALSE, v_current_balance, '余额不足'::TEXT;
+    RETURN;
+  END IF;
+
+  v_new_balance := v_current_balance - p_amount;
+
+  -- 更新余额
+  UPDATE public.coaching_prepaid_balance
+  SET balance = v_new_balance,
+      total_spent = total_spent + p_amount,
+      updated_at = NOW()
+  WHERE user_id = p_user_id;
+
+  -- 记录流水
+  INSERT INTO public.coaching_prepaid_transactions
+    (user_id, type, amount, balance_after, related_appointment_id, description)
+  VALUES
+    (p_user_id, 'consume', -p_amount, v_new_balance, p_appointment_id, p_description);
+
+  RETURN QUERY SELECT TRUE, v_new_balance, '扣款成功'::TEXT;
+END;
+$$;
+```
+
+### 前端支付方式选择器
 
 ```typescript
-// 新增场景类型
-type NotificationScenario = 
-  | 'appointment_confirmed'
-  | 'appointment_reminder'
-  | 'review_invitation'
-  | 'appointment_cancelled'
-  | 'appointment_rescheduled'
-  | 'appointment_completed'       // 新增
-  | 'coach_new_appointment'       // 新增
-  | 'coach_appointment_reminder'  // 新增
-  | 'coach_appointment_cancelled'; // 新增
-
-// 新增参数
-interface AppointmentNotificationRequest {
-  userId?: string;
-  coachId?: string;  // 新增：支持向教练发送
-  scenario: NotificationScenario;
-  appointmentId: string;
-  minutesBefore?: number;
+// PaymentMethodSelector.tsx
+interface PaymentMethodSelectorProps {
+  price: number;
+  prepaidBalance: number;
+  selectedMethod: 'prepaid' | 'wechat';
+  onMethodChange: (method: 'prepaid' | 'wechat') => void;
 }
+
+// 显示两个选项：
+// 1. 预付卡余额 ¥{balance} [选中时显示√]
+//    - 余额不足时显示"余额不足，去充值"
+// 2. 微信支付 [选中时显示√]
 ```
 
-### useAppointmentNotification 改动
+### Edge Function: pay-with-prepaid
 
 ```typescript
-export const useAppointmentNotification = () => {
-  // ... 现有方法 ...
-
-  // 新增：发送完成通知
-  const sendCompletionNotification = async (userId: string, appointmentId: string) => {
-    return sendNotification({
-      userId,
-      scenario: 'appointment_completed',
-      appointmentId,
-    });
-  };
-
-  // 新增：通知教练有新预约
-  const sendCoachNewAppointmentNotification = async (coachId: string, appointmentId: string) => {
-    return sendNotification({
-      coachId,
-      scenario: 'coach_new_appointment',
-      appointmentId,
-    });
-  };
-
-  return {
-    // ...
-    sendCompletionNotification,
-    sendCoachNewAppointmentNotification,
-  };
-};
+// 核心逻辑
+1. 验证用户身份
+2. 获取服务价格和时间槽信息
+3. 调用 deduct_coaching_balance 扣款
+4. 创建 coaching_appointments 记录（状态直接为 confirmed）
+5. 创建 orders 记录（状态直接为 paid，pay_type='prepaid'）
+6. 发送预约确认通知
 ```
 
 ---
 
-## 修改文件清单
+## UI 设计要点
 
-| 文件 | 类型 | 改动说明 |
-|:-----|:-----|:---------|
-| `supabase/functions/send-appointment-notification/index.ts` | 修改 | 添加新场景、支持教练端通知 |
-| `supabase/functions/trigger-appointment-reminders/index.ts` | 修改 | 添加前一天提醒、教练提醒、防重复逻辑 |
-| `supabase/functions/wechat-pay-callback/index.ts` | 修改 | 新预约通知教练 |
-| `supabase/functions/cancel-appointment/index.ts` | 修改 | 取消时通知教练 |
-| `src/hooks/useAppointmentNotification.ts` | 修改 | 添加新方法 |
-| `src/components/human-coach/AppointmentCard.tsx` | 修改 | 完成预约时发送通知 |
-| 数据库迁移 | 新建 | 创建通知日志表 |
-| Cron Job | 修改 | 调整执行频率为每15分钟 |
+### 预付卡余额卡片
+
+```text
+┌─────────────────────────────────┐
+│  💳 教练咨询预付卡              │
+│                                 │
+│  余额: ¥ 550.00                 │
+│                                 │
+│  [充值]  [消费记录]              │
+└─────────────────────────────────┘
+```
+
+### 支付方式选择
+
+```text
+┌─────────────────────────────────┐
+│  选择支付方式                    │
+│                                 │
+│  ○ 预付卡余额  ¥550.00          │
+│    本次消费 ¥99.00，剩余 ¥451   │
+│                                 │
+│  ○ 微信支付                     │
+│                                 │
+│        [确认预约]               │
+└─────────────────────────────────┘
+```
 
 ---
 
-## 预期效果
+## 安全考虑
 
-完成后，用户和教练将在以下节点收到微信模板消息推送：
+1. **RLS 策略**：用户只能查看和操作自己的余额
+2. **原子性扣款**：使用 `FOR UPDATE` 锁防止并发超扣
+3. **双重验证**：Edge Function 验证用户身份 + 数据库 RLS
+4. **流水完整**：所有充值/消费都有记录可追溯
+5. **退款保护**：取消预约时记录退款流水
 
-### 用户端
-1. 预约确认（支付成功后立即）
-2. 前一天晚上提醒
-3. 开始前 1 小时/15 分钟提醒
-4. 咨询完成通知
-5. 完成后评价邀请
-6. 预约取消/改期通知
+---
 
-### 教练端
-1. 收到新预约通知
-2. 开始前提醒
-3. 用户取消通知
+## 实现顺序
+
+1. **数据库层**：创建表、函数、RLS 策略、初始数据
+2. **Edge Functions**：充值订单、预付卡扣款、回调处理
+3. **前端 Hooks**：余额查询、充值、消费
+4. **UI 组件**：余额卡片、充值弹窗、支付选择器
+5. **集成测试**：完整流程验证
