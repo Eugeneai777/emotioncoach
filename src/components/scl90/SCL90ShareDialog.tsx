@@ -7,8 +7,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Share2, Loader2 } from "lucide-react";
+import { Share2, Loader2, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
+import { getPromotionDomain } from "@/utils/partnerQRUtils";
 import html2canvas from "html2canvas";
 import { SCL90Result as SCL90ResultType } from "./scl90Data";
 import { SCL90ShareCard } from "./SCL90ShareCard";
@@ -39,6 +40,7 @@ export function SCL90ShareDialog({
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [copied, setCopied] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const exportCardRef = useRef<HTMLDivElement>(null);
 
@@ -46,6 +48,20 @@ export function SCL90ShareDialog({
   const userProfile = user?.user_metadata;
   const userName = userProfile?.display_name || userProfile?.name || "用户";
   const avatarUrl = userProfile?.avatar_url;
+
+  // Share URL
+  const shareUrl = `${getPromotionDomain()}/scl90`;
+
+  const handleCopyLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast.success("链接已复制");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("复制失败");
+    }
+  }, [shareUrl]);
 
   const handleGenerate = useCallback(async () => {
     if (!exportCardRef.current) {
@@ -188,23 +204,32 @@ export function SCL90ShareDialog({
           </div>
 
           {/* Generate Button */}
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="w-full h-11 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                生成中...
-              </>
-            ) : (
-              <>
-                <Share2 className="w-4 h-4 mr-2" />
-                生成分享图片
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="flex-1 h-11 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4 mr-2" />
+                  生成分享图片
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleCopyLink}
+              className="h-11 px-4"
+            >
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
