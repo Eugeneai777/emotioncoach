@@ -341,6 +341,38 @@ serve(async (req) => {
       }
     }
 
+    // 如果是预付卡充值订单，增加用户教练预付卡余额
+    if (order.order_type === 'prepaid_recharge') {
+      // 获取预付卡套餐信息
+      const { data: prepaidPkg } = await supabase
+        .from('coaching_prepaid_packages')
+        .select('total_value, package_name')
+        .eq('package_key', order.package_key)
+        .single();
+
+      const rechargeAmount = prepaidPkg?.total_value || order.amount;
+
+      // 调用原子性充值函数
+      const { data: addResult, error: addError } = await supabase
+        .rpc('add_coaching_balance', {
+          p_user_id: order.user_id,
+          p_amount: rechargeAmount,
+          p_order_no: orderNo,
+          p_description: `充值: ${prepaidPkg?.package_name || order.package_key}`,
+        });
+
+      if (addError) {
+        console.error('Error adding coaching balance:', addError);
+      } else {
+        const resultRow = addResult?.[0];
+        if (resultRow?.success) {
+          console.log('Coaching prepaid balance added:', order.user_id, '+', rechargeAmount);
+        } else {
+          console.error('Add coaching balance failed:', resultRow?.message);
+        }
+      }
+    }
+
     console.log('Payment callback processed successfully:', orderNo);
 
     return new Response(JSON.stringify({ code: 'SUCCESS', message: '成功' }), {

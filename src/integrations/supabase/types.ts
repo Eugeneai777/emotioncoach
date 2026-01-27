@@ -2288,6 +2288,119 @@ export type Database = {
           },
         ]
       }
+      coaching_prepaid_balance: {
+        Row: {
+          balance: number
+          created_at: string | null
+          id: string
+          total_recharged: number
+          total_spent: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          total_recharged?: number
+          total_spent?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          total_recharged?: number
+          total_spent?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      coaching_prepaid_packages: {
+        Row: {
+          bonus_amount: number | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          package_key: string
+          package_name: string
+          price: number
+          total_value: number
+        }
+        Insert: {
+          bonus_amount?: number | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          package_key: string
+          package_name: string
+          price: number
+          total_value: number
+        }
+        Update: {
+          bonus_amount?: number | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          package_key?: string
+          package_name?: string
+          price?: number
+          total_value?: number
+        }
+        Relationships: []
+      }
+      coaching_prepaid_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string | null
+          description: string | null
+          id: string
+          related_appointment_id: string | null
+          related_order_no: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          related_appointment_id?: string | null
+          related_order_no?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          related_appointment_id?: string | null
+          related_order_no?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_prepaid_transactions_related_appointment_id_fkey"
+            columns: ["related_appointment_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       communication_briefing_tags: {
         Row: {
           communication_briefing_id: string
@@ -8012,6 +8125,19 @@ export type Database = {
         Args: { p_amount: number; p_coach_id: string }
         Returns: undefined
       }
+      add_coaching_balance: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_order_no?: string
+          p_user_id: string
+        }
+        Returns: {
+          message: string
+          new_balance: number
+          success: boolean
+        }[]
+      }
       add_partner_pending_balance: {
         Args: { p_amount: number; p_partner_id: string }
         Returns: undefined
@@ -8032,6 +8158,19 @@ export type Database = {
       confirm_partner_commission: {
         Args: { p_amount: number; p_partner_id: string }
         Returns: undefined
+      }
+      deduct_coaching_balance: {
+        Args: {
+          p_amount: number
+          p_appointment_id?: string
+          p_description?: string
+          p_user_id: string
+        }
+        Returns: {
+          message: string
+          new_balance: number
+          success: boolean
+        }[]
       }
       deduct_user_quota: {
         Args: { p_amount?: number; p_user_id: string }
@@ -8056,6 +8195,19 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      refund_coaching_balance: {
+        Args: {
+          p_amount: number
+          p_appointment_id?: string
+          p_description?: string
+          p_user_id: string
+        }
+        Returns: {
+          message: string
+          new_balance: number
+          success: boolean
+        }[]
       }
     }
     Enums: {
