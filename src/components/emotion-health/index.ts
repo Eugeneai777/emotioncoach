@@ -51,3 +51,4 @@ export { LayerTransitionCard } from './LayerTransitionCard';
 export { LayerProgressIndicator, LayerLabel } from './LayerProgressIndicator';
 export { EmotionHealthShareCard } from './EmotionHealthShareCard';
 export { EmotionHealthShareDialog } from './EmotionHealthShareDialog';
+export { EmotionHealthHistory } from './EmotionHealthHistory';
