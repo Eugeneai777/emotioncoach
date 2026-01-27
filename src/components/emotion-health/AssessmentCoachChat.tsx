@@ -37,10 +37,14 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete }: A
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const patternInfo = patternConfig[pattern];
-  const userMessageCount = messages.filter(m => m.role === 'user').length;
   
-  // 判断是否进入转化阶段（用户发了4条以上消息）
-  const isConversionStage = userMessageCount >= 4;
+  // 只计算真正的用户消息（排除以[系统：开头的初始化消息）
+  const realUserMessages = messages.filter(m => 
+    m.role === 'user' && !m.content.startsWith('[系统：')
+  ).length;
+  
+  // 至少6轮真实对话后才考虑转化
+  const isConversionStage = realUserMessages >= 6;
 
   // 自动滚动到底部
   useEffect(() => {
@@ -282,27 +286,40 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete }: A
             </div>
           ))}
 
-          {/* 转化阶段 CTA */}
+          {/* 转化阶段 CTA - 柔和设计 */}
           {isConversionStage && messages.length > 0 && !isLoading && (
-            <div className="mt-6 space-y-3 px-2">
-              <Button
-                className="w-full bg-gradient-to-r from-rose-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
-                onClick={() => handleCTAClick('camp')}
-              >
-                进入21天情绪日记训练营
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                ¥299 · 每日AI陪伴 · 情绪日记打卡
+            <div className="mt-6 px-4">
+              {/* 分隔线 */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs text-muted-foreground">💡 下一步建议</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+              
+              {/* 柔和的推荐卡片 */}
+              <Card className="p-4 bg-gradient-to-br from-rose-50 to-purple-50 dark:from-rose-900/10 dark:to-purple-900/10 border-rose-200 dark:border-rose-800">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">📔</span>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm mb-1">21天情绪日记训练营</h4>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      每天记录 + AI陪伴，帮你建立稳定的情绪觉察习惯
+                    </p>
+                    <Button
+                      size="sm"
+                      className="w-full bg-gradient-to-r from-rose-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
+                      onClick={() => handleCTAClick('camp')}
+                    >
+                      了解详情
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+              
+              {/* 继续对话选项 */}
+              <p className="text-xs text-center text-muted-foreground mt-3">
+                或继续和我聊聊 ↓
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => handleCTAClick('membership')}
-              >
-                了解365陪伴会员
-              </Button>
             </div>
           )}
 

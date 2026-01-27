@@ -13,12 +13,12 @@ interface Message {
   content: string;
 }
 
-// 阶段判断逻辑
+// 阶段判断逻辑 - 延长对话深度，让用户先感受价值
 function determineStage(messageCount: number): Stage {
-  if (messageCount <= 2) return 'empathy';
-  if (messageCount <= 4) return 'awareness';
-  if (messageCount <= 6) return 'action';
-  return 'conversion';
+  if (messageCount <= 3) return 'empathy';      // 前3轮：深度共情倾听
+  if (messageCount <= 5) return 'awareness';    // 4-5轮：引导觉察
+  if (messageCount <= 7) return 'action';       // 6-7轮：微行动体验
+  return 'conversion';                          // 8轮+：自然转化
 }
 
 // 阶段性系统提示词
