@@ -1,105 +1,209 @@
 
 
-# 修复情绪健康测评支付逻辑错误
+# 情绪健康测评问题优化计划 - 一题一页设计
 
-## 问题根因
+## 当前问题
 
-`AssessmentPayDialog` 组件设计时假设只用于财富卡点测评，内部硬编码了多处 `wealth_block_assessment`，导致情绪健康测评调用时：
-- 错误检测财富测评的购买状态
-- 创建的订单属于财富测评产品
-- 显示的产品名称是"财富卡点测评"
+现有 `EmotionHealthQuestions.tsx` 每页显示 **4 题**（`QUESTIONS_PER_PAGE = 4`），存在以下体验问题：
 
-## 解决方案
+1. **注意力分散** - 多题并存降低用户专注度
+2. **滚动干扰** - 移动端需要频繁滚动
+3. **动效缺失** - 缺少题目切换的流畅过渡
+4. **交互延迟** - 需手动点击"下一页"按钮
 
-将 `AssessmentPayDialog` 改造为通用组件，通过 props 传入产品信息。
+## 目标
 
-## 具体修改
+参照 `WealthBlockQuestions.tsx` 的"一题一页"模式重构：
 
-### 第一步：扩展 AssessmentPayDialog Props
+```text
+用户体验流程：
+选择答案 → 0.3s 动画过渡 → 自动显示下一题
+                ↓
+          层级过渡时显示过渡卡片
+```
 
-```typescript
-interface AssessmentPayDialogProps {
-  // 现有 props...
+---
+
+## 实现方案
+
+### 第一步：核心状态重构
+
+将分页逻辑改为单题索引：
+
+```text
+// 移除
+const QUESTIONS_PER_PAGE = 4;
+const currentPage, setCurrentPage
+const currentQuestions = slice(...)
+
+// 新增
+const [currentIndex, setCurrentIndex] = useState(0);
+const currentQuestion = emotionHealthQuestions[currentIndex];
+const isLastQuestion = currentIndex === emotionHealthQuestions.length - 1;
+```
+
+### 第二步：答题自动推进
+
+选择答案后自动跳转下一题：
+
+```text
+const handleAnswer = (value: number) => {
+  onAnswerChange(currentQuestion.id, value);
   
-  // 🆕 新增产品配置 props
-  packageKey: string;      // 如 'emotion_health_assessment'
-  packageName: string;     // 如 '情绪健康测评'
-  price?: number;          // 可选，不传则从数据库获取
-}
+  // 非最后一题时自动推进
+  if (!isLastQuestion) {
+    setTimeout(() => {
+      // 检查层级过渡
+      const nextLayerInfo = getLayerProgress(currentIndex + 2);
+      if (nextLayerInfo.isLayerTransition && nextLayerInfo.transitionKey) {
+        setPendingTransitionKey(nextLayerInfo.transitionKey);
+        setShowTransition(true);
+      } else {
+        setCurrentIndex(prev => prev + 1);
+      }
+    }, 300);
+  }
+};
 ```
 
-### 第二步：替换所有硬编码
+### 第三步：添加流畅过渡动画
 
-| 位置 | 原代码 | 修改后 |
-|------|--------|--------|
-| 第 83 行 | `'wealth_block_assessment'` | `packageKey` prop |
-| 第 426 行 | `.eq('package_key', 'wealth_block_assessment')` | `.eq('package_key', packageKey)` |
-| 第 491 行 | `packageKey: "wealth_block_assessment"` | `packageKey: packageKey` |
-| 第 492 行 | `packageName: "财富卡点测评"` | `packageName: packageName` |
-| 第 559-561 行 | 同上 | 同上 |
+使用 Framer Motion 实现题目切换动效：
 
-### 第三步：更新 EmotionHealthPage 调用
-
-```typescript
-<AssessmentPayDialog
-  open={showPayDialog}
-  onOpenChange={setShowPayDialog}
-  onSuccess={handlePaymentSuccess}
-  userId={user?.id}
-  hasPurchased={hasPurchased}
-  packageKey="emotion_health_assessment"     // 🆕 指定产品
-  packageName="情绪健康测评"                  // 🆕 指定名称
-/>
+```text
+<AnimatePresence mode="wait">
+  <motion.div
+    key={currentQuestion.id}
+    initial={{ opacity: 0.01, x: 50 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0.01, x: -50 }}
+    transition={{ duration: 0.2 }}
+    style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+  >
+    {/* 单题卡片内容 */}
+  </motion.div>
+</AnimatePresence>
 ```
 
-### 第四步：更新 WealthBlockAssessment 调用
+### 第四步：优化单题卡片设计
 
-保持向后兼容，同时显式传入参数：
+采用全屏居中的沉浸式设计：
 
-```typescript
-<AssessmentPayDialog
-  // ...existing props
-  packageKey="wealth_block_assessment"
-  packageName="财富卡点测评"
-/>
+```text
+全屏布局结构：
+┌────────────────────────────────────────┐
+│  [层级标签]     情绪能量 · 状态筛查     │  顶部固定
+│  ━━━━━━━━━━━━━━━━━━━━ 75%               │  进度条
+├────────────────────────────────────────┤
+│                                        │
+│              ① 第1题/32题              │  题号徽章
+│                                        │
+│    最近两周，我对很多事情提不起兴趣      │  题目文本 (居中)
+│                                        │
+│   ┌──────────┬──────────┐              │
+│   │ 几乎没有  │ 有时如此  │              │  2x2 选项网格
+│   ├──────────┼──────────┤              │  (触摸优化 56px)
+│   │ 经常如此  │ 几乎每天  │              │
+│   └──────────┴──────────┘              │
+│                                        │
+├────────────────────────────────────────┤
+│  [← 上一题]            [下一题 / 查看结果] │  底部固定导航
+└────────────────────────────────────────┘
 ```
 
-## 文件变更清单
+### 第五步：选项按钮优化
+
+增大触摸区域，添加选中动效：
+
+```text
+选项按钮规格：
+- 高度: 56px (移动端触摸友好)
+- 圆角: 12px
+- 选中态: 渐变边框 + 轻微缩放动画
+- 颜色语义:
+  · 几乎没有 → 绿色系 (积极)
+  · 有时如此 → 蓝色系 (中性偏好)
+  · 经常如此 → 琥珀色系 (中性偏差)
+  · 几乎每天 → 玫瑰色系 (需关注)
+```
+
+### 第六步：进度与层级指示器优化
+
+简化顶部信息，突出当前进度：
+
+```text
+顶部布局:
+┌─────────────────────────────────────┐
+│ [层级图标]  状态筛查        5 / 32  │
+│ ━━━━━━━━━━━━━━━○━━━━━━━━━━━━━━━━━━━ │  渐变进度条
+│ 情绪能量                            │  当前维度标签
+└─────────────────────────────────────┘
+```
+
+---
+
+## 完整文件变更
 
 | 文件 | 操作 | 说明 |
 |------|------|------|
-| `src/components/wealth-block/AssessmentPayDialog.tsx` | 修改 | 添加 packageKey/packageName props，替换硬编码 |
-| `src/pages/EmotionHealthPage.tsx` | 修改 | 传入正确的产品参数 |
-| `src/pages/WealthBlockAssessment.tsx` | 修改 | 显式传入产品参数（向后兼容） |
+| `src/components/emotion-health/EmotionHealthQuestions.tsx` | 重构 | 单题显示 + 动画过渡 |
+
+---
 
 ## 技术细节
 
-### 价格获取逻辑
+### 层级过渡逻辑
 
-```typescript
-// 优先使用 props 传入的价格，否则从数据库查询
-const { data: packages } = usePackages();
-const assessmentPrice = price ?? getPackagePrice(packages, packageKey, 9.9);
+```text
+题目分布:
+- 状态筛查: 1-12 题 (共12题)
+- 反应模式: 13-28 题 (共16题)  
+- 行动阻滞: 29-32 题 (共4题)
+
+过渡触发点:
+- 第12题答完 → 显示 "screening-pattern" 过渡卡片
+- 第28题答完 → 显示 "pattern-blockage" 过渡卡片
 ```
 
-### 购买检查逻辑
+### 进度计算
 
-```typescript
-const { data: existingOrder } = await supabase
-  .from('orders')
-  .select('id')
-  .eq('user_id', userId)
-  .eq('package_key', packageKey)  // 使用动态 packageKey
-  .eq('status', 'paid')
-  .limit(1)
-  .maybeSingle();
+```text
+// 全局进度
+const progress = ((currentIndex + 1) / emotionHealthQuestions.length) * 100;
+
+// 层级内进度
+const layerStart = layerConfig[currentLayer].questions.start;
+const layerEnd = layerConfig[currentLayer].questions.end;
+const layerTotal = layerEnd - layerStart + 1;
+const layerCurrent = currentQuestion.id - layerStart + 1;
+const layerProgress = (layerCurrent / layerTotal) * 100;
 ```
+
+### 动画配置
+
+```text
+// GPU 加速配置 (防止安卓掉帧)
+style={{ 
+  transform: 'translateZ(0)', 
+  willChange: 'transform, opacity' 
+}}
+
+// 入场/出场动画
+initial: { opacity: 0.01, x: 50 }    // 从右侧淡入
+animate: { opacity: 1, x: 0 }
+exit: { opacity: 0.01, x: -50 }      // 向左侧淡出
+transition: { duration: 0.2 }
+```
+
+---
 
 ## 预期效果
 
-修复后：
-- 情绪健康测评将正确检查 `emotion_health_assessment` 的购买状态
-- 创建的订单 `package_key` 为 `emotion_health_assessment`
-- 支付弹窗显示"情绪健康测评"产品名称
-- 财富卡点测评功能不受影响
+| 优化项 | 改进前 | 改进后 |
+|--------|--------|--------|
+| 每页题数 | 4题 | 1题 |
+| 切换动画 | 无 | 滑动过渡 |
+| 答题推进 | 手动翻页 | 自动推进 |
+| 选项高度 | 40px | 56px |
+| 专注度 | 分散 | 沉浸式 |
 
