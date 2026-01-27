@@ -222,7 +222,8 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete }: A
   const handleCTAClick = (type: 'camp' | 'membership') => {
     if (type === 'camp') {
       onComplete?.('camp');
-      navigate('/camps/emotion');
+      // 直接跳转到21天情绪日记训练营介绍&购买页
+      navigate('/camp-intro/emotion_journal_21');
     } else if (type === 'membership') {
       onComplete?.('membership');
       navigate('/packages');
