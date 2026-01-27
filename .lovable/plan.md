@@ -1,142 +1,164 @@
 
-# AI情绪教练转化体验优化方案
 
-## 问题诊断
+# AI情绪教练对话精简优化方案
 
-### 根本原因
+## 核心问题
 
-| 问题 | 原因分析 |
-|------|----------|
-| CTA过早出现 | `isConversionStage = userMessageCount >= 4`，但计数包含了初始化的系统消息 |
-| 转化生硬 | 固定显示CTA卡片，不管对话内容是否铺垫好 |
-| 用户未感受价值 | 还没体验到AI教练的洞察力就被推销 |
+当前对话设计是"拖延式共情"：
 
-### 截图分析
+```text
+当前：
+Round 1-3: 你感觉怎样？→ 具体说说？→ 还有呢？（无意义打转）
+Round 4-5: 这很正常...（模糊觉察）
+Round 6-7: 做个呼吸练习...（与问题无关）
+Round 8+: 要不要加入训练营？（硬推销）
+```
 
-用户只发了2条消息：
-1. "我需要马上让我的产品可以赚钱"
-2. "就是在自媒体上可以变现，可是我确什么都不懂"
+用户根本没有得到任何帮助或洞见。
 
-此时AI还在共情倾听阶段，但CTA已经出现 → 非常突兀
+## 目标体验
+
+```text
+优化后：
+Round 1: 共情 + 精准定位问题核心
+Round 2: 揭示模式 → 产生"原来如此"的觉醒时刻
+Round 3: 给出即时可用的微洞察/微行动
+Round 4+: 自然过渡：要持续改变，可以加入训练营
+```
 
 ## 优化方案
 
-### 核心理念：先给价值，再温柔转化
+### 1. 重新设计阶段和提示词
 
-```text
-当前体验：
-用户发2-3条 → 直接显示CTA卡片 → 用户感到被推销
+**压缩阶段，每轮都有明确目标**：
 
-优化后体验：
-用户发6+条 → AI在对话中自然引出建议 → 轻量CTA辅助 → 用户感到被理解后愿意尝试
+| 阶段 | 轮次 | 目标 | AI行为 |
+|------|------|------|--------|
+| **精准共情** | 1 | 快速锁定核心痛点 | 共情+问"最让你困扰的一点" |
+| **觉醒洞察** | 2 | 产生觉醒时刻 | 揭示行为模式背后的心理机制，让用户"原来如此" |
+| **即时价值** | 3 | 给用户带走的东西 | 给一个针对性的微建议/微洞察 |
+| **自然转化** | 4+ | 引导下一步 | 说明持续改变需要陪伴，引出训练营 |
+
+### 2. 更新 Edge Function 提示词
+
+**文件：`supabase/functions/assessment-coach-chat/index.ts`**
+
+```typescript
+// 压缩阶段判断
+function determineStage(messageCount: number): Stage {
+  if (messageCount <= 1) return 'empathy';       // 第1轮：精准共情
+  if (messageCount <= 2) return 'awareness';     // 第2轮：觉醒洞察
+  if (messageCount <= 3) return 'action';        // 第3轮：即时价值
+  return 'conversion';                           // 第4轮+：自然转化
+}
+
+// 更新提示词 - 目标导向
+const stagePrompts = {
+  empathy: `你是"劲老师"，专业的AI情绪教练。用户处于"${patternName}"模式。
+
+【目标】快速锁定用户最核心的情绪痛点
+
+做法：
+1. 用一句话精准共情他们的处境
+2. 问一个聚焦问题："在这些困扰中，最消耗你的是哪一点？"
+
+回复控制在60字以内。`,
+
+  awareness: `你是"劲老师"。用户处于"${patternName}"模式，刚分享了困扰。
+
+【目标】创造"觉醒时刻" - 让用户看见自己的模式
+
+做法：
+1. 基于用户分享，揭示一个他们可能没意识到的心理模式
+2. 用"你有没有发现..."或"其实这背后是..."开头
+3. 正常化这个模式："这不是你的问题，是大脑的保护机制"
+4. 结尾问："这个说法有没有让你有什么感触？"
+
+这是关键环节！要让用户产生"原来如此"的感觉。
+回复控制在80字以内。`,
+
+  action: `你是"劲老师"。用户刚经历了一个觉察。
+
+【目标】给用户一个可以带走的即时价值
+
+做法：
+1. 肯定他们的觉察
+2. 给一个针对他们具体问题的微建议（不是通用的呼吸练习）
+3. 这个建议要具体、可操作、马上能用
+4. 结尾："这个方法你觉得可以试试吗？"
+
+回复控制在80字以内。`,
+
+  conversion: `你是"劲老师"。用户已经获得了洞察和建议。
+
+【目标】自然过渡到训练营
+
+做法：
+1. 肯定今天对话的收获
+2. 点明一个事实："但情绪模式是长期形成的，需要持续练习才能改变"
+3. 自然引出："如果你想要持续陪伴，可以考虑21天情绪日记训练营"
+4. 简要说明价值：每天我陪你做一次情绪觉察
+5. 不强推："你可以先了解一下"
+
+回复控制在80字以内。`
+};
 ```
 
-### 1. 延长对话深度，提高转化阈值
+### 3. 更新前端转化阈值
 
 **文件：`src/components/emotion-health/AssessmentCoachChat.tsx`**
 
 ```typescript
-// 修改前（第43行）：
-const isConversionStage = userMessageCount >= 4;
-
-// 修改后：
-// 只计算真正的用户消息（排除以[系统：开头的初始化消息）
-const realUserMessages = messages.filter(m => 
-  m.role === 'user' && !m.content.startsWith('[系统：')
-).length;
-
-// 至少6轮真实对话后才考虑转化
-const isConversionStage = realUserMessages >= 6;
+// 4轮真实对话后进入转化
+const isConversionStage = realUserMessages >= 4;
 ```
 
-### 2. 让AI在对话中自然引出训练营
+### 4. CTA显示优化
 
-**文件：`supabase/functions/assessment-coach-chat/index.ts`**
-
-调整阶段逻辑，确保用户经历完整的觉察过程：
+当进入转化阶段后，CTA卡片应该在AI自然提及训练营**之后**显示，作为辅助，而不是突然弹出：
 
 ```typescript
-// 修改阶段判断逻辑
-function determineStage(messageCount: number): Stage {
-  // 排除系统初始化消息后的真实用户消息数
-  if (messageCount <= 3) return 'empathy';      // 前3轮：深度共情倾听
-  if (messageCount <= 5) return 'awareness';    // 4-5轮：引导觉察
-  if (messageCount <= 7) return 'action';       // 6-7轮：微行动体验
-  return 'conversion';                          // 8轮+：自然转化
-}
+// 只有在AI回复中提到了"训练营"关键词后才显示CTA
+const lastAssistantMessage = messages.filter(m => m.role === 'assistant').pop();
+const aiMentionedCamp = lastAssistantMessage?.content.includes('训练营') || 
+                        lastAssistantMessage?.content.includes('21天');
+
+const showCTA = isConversionStage && aiMentionedCamp && !isLoading;
 ```
 
-### 3. 让CTA更柔和，融入对话
+## 对话示例（优化后）
 
-**修改CTA渲染逻辑**：
+```text
+【Round 1 - 精准共情】
+用户：工作压力很大，自媒体产品需要变现，不知道怎么办
+AI：被夹在创作和变现之间，确实让人很焦虑。在这些压力中，最让你感到消耗的是哪一点？
 
-```typescript
-// 不再使用固定卡片，而是在对话足够深入后显示轻量引导
-{isConversionStage && messages.length > 0 && !isLoading && (
-  <div className="mt-6 px-4">
-    {/* 分隔线，表示对话阶段转换 */}
-    <div className="flex items-center gap-3 mb-4">
-      <div className="h-px flex-1 bg-border" />
-      <span className="text-xs text-muted-foreground">💡 下一步建议</span>
-      <div className="h-px flex-1 bg-border" />
-    </div>
-    
-    {/* 柔和的推荐卡片 */}
-    <Card className="p-4 bg-gradient-to-br from-rose-50 to-purple-50 dark:from-rose-900/10 dark:to-purple-900/10 border-rose-200 dark:border-rose-800">
-      <div className="flex items-start gap-3">
-        <span className="text-2xl">📔</span>
-        <div className="flex-1">
-          <h4 className="font-medium text-sm mb-1">21天情绪日记训练营</h4>
-          <p className="text-xs text-muted-foreground mb-3">
-            每天记录 + AI陪伴，帮你建立稳定的情绪觉察习惯
-          </p>
-          <Button
-            size="sm"
-            className="w-full bg-gradient-to-r from-rose-500 to-purple-500"
-            onClick={() => handleCTAClick('camp')}
-          >
-            了解详情
-          </Button>
-        </div>
-      </div>
-    </Card>
-    
-    {/* 继续对话选项 */}
-    <p className="text-xs text-center text-muted-foreground mt-3">
-      或继续和我聊聊 ↓
-    </p>
-  </div>
-)}
+【Round 2 - 觉醒洞察】
+用户：就是不知道从哪开始，什么都想做但什么都没做好
+AI：你有没有发现，当选项太多时，大脑会进入"瘫痪模式"——不是你懒或能力不够，而是决策负担太重了。这种"什么都想做"的想法，其实是焦虑在驱动，不是真正的计划。这个说法有没有让你有什么感触？
+
+【Round 3 - 即时价值】
+用户：确实是这样，感觉自己一直在空转
+AI：既然是选择太多导致的瘫痪，试试这个：今天只选一件最小的事去做，比如"写一条朋友圈"。不求完美，只求完成。完成后的成就感会打破瘫痪循环。你觉得可以试试吗？
+
+【Round 4 - 自然转化】
+用户：好的，我试试
+AI：很好！今天你已经看见了自己的模式，这是改变的开始。但说实话，情绪模式是长期形成的，一次对话很难根本解决。如果你想持续改变，可以考虑21天情绪日记训练营——每天我陪你做一次觉察，帮你慢慢建立新习惯。你可以先了解一下。
+
+[此时显示训练营CTA]
 ```
-
-### 4. 移除价格显示
-
-根据之前的反馈，CTA区域不应显示价格：
-
-```typescript
-// 移除这行：
-// ¥299 · 每日AI陪伴 · 情绪日记打卡
-```
-
-## 对话阶段重新设计
-
-| 阶段 | 用户消息数 | AI行为 | 目标 |
-|------|-----------|--------|------|
-| **共情倾听** | 1-3 | 真诚倾听、确认感受、邀请分享更多 | 建立信任 |
-| **引导觉察** | 4-5 | 帮用户看到模式、正常化体验 | 产生洞察 |
-| **微行动** | 6-7 | 给一个当下可做的小练习 | 体验价值 |
-| **自然转化** | 8+ | AI在对话中提及训练营 + 显示轻量CTA | 自然引导 |
 
 ## 修改清单
 
 | 文件 | 修改内容 |
 |------|----------|
-| `src/components/emotion-health/AssessmentCoachChat.tsx` | 1. 修复用户消息计数逻辑<br>2. 提高转化阈值至6轮<br>3. 重新设计柔和的CTA样式<br>4. 移除价格显示 |
-| `supabase/functions/assessment-coach-chat/index.ts` | 1. 调整阶段判断阈值<br>2. 优化转化阶段提示词，让AI自然引出建议 |
+| `supabase/functions/assessment-coach-chat/index.ts` | 1. 压缩阶段判断：4轮完成转化<br>2. 重写所有阶段提示词，每轮有明确目标<br>3. 强调"觉醒时刻"的设计 |
+| `src/components/emotion-health/AssessmentCoachChat.tsx` | 1. 降低转化阈值到4轮<br>2. 添加逻辑：只有AI提到训练营后才显示CTA |
 
 ## 预期效果
 
-- 用户至少经历6轮深度对话后才看到推荐
-- AI在对话中自然提及训练营，而不是突然弹出卡片
-- CTA设计更柔和，给用户"继续对话"的选择
-- 不显示价格，降低销售压力
+- 用户4轮对话内就能获得价值（洞察+建议）
+- 第2轮就产生"原来如此"的觉醒时刻
+- AI主动提及训练营后，CTA作为辅助出现
+- 整体体验：快速→有价值→自然转化
+
