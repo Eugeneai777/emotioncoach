@@ -114,11 +114,6 @@ export function GrowthNodeCard({ node, status, index, onNavigate }: GrowthNodeCa
                   )}>
                     {node.title}
                   </h3>
-                  {node.price && (
-                    <Badge variant="outline" className="text-xs">
-                      {node.price}
-                    </Badge>
-                  )}
                   {isCompleted && (
                     <Badge className="text-xs bg-accent text-accent-foreground border-0">
                       已完成
