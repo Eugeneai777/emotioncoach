@@ -9,7 +9,7 @@ export default function GrowthSupportPath() {
   const { stage, loading } = useUserGrowthStage();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-violet-50/50 to-background dark:from-violet-950/20">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-violet-50/50 to-background dark:from-violet-950/20">
       <Helmet>
         <title>成长支持路径 - 有劲AI</title>
         <meta name="description" content="一目了然的成长支持路径，从测评到训练营到长期陪伴" />
