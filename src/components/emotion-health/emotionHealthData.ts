@@ -627,7 +627,7 @@ export const resultPageSectionTitles = {
   },
   cta: {
     primarySubtext: '根据你的状态，我会陪你一步步调整节奏',
-    secondaryText: '查看完整成长支持路径'
+    secondaryText: '了解21天训练营'
   },
   compliance: '本测评为情绪状态与成长觉察工具，不构成任何医疗诊断。如你感到持续严重不适，请及时寻求专业心理支持。'
 };
