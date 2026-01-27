@@ -1,14 +1,15 @@
 import React, { useCallback } from "react";
 import { Heart, Zap, Brain, Activity } from "lucide-react";
-import { useQRCode } from "@/utils/qrCodeUtils";
-import { getShareUrl } from "@/config/introShareConfig";
 import { useAuth } from "@/hooks/useAuth";
-import { patternConfig, blockedDimensionConfig, type EmotionHealthResult, type PatternType, type BlockedDimension } from "./emotionHealthData";
+import { patternConfig, blockedDimensionConfig, type EmotionHealthResult } from "./emotionHealthData";
+import ShareCardBase from "@/components/sharing/ShareCardBase";
 
 interface EmotionHealthShareCardProps {
   result: EmotionHealthResult;
   userName?: string;
   avatarUrl?: string;
+  partnerCode?: string;
+  onReady?: () => void;
 }
 
 // Index level thresholds and colors
@@ -19,26 +20,40 @@ const getIndexLevel = (value: number): { label: string; color: string } => {
   return { label: '严重', color: 'bg-rose-500' };
 };
 
-// Index card component
+const getIndexColorHex = (value: number): string => {
+  if (value <= 25) return '#10b981';
+  if (value <= 50) return '#eab308';
+  if (value <= 75) return '#f97316';
+  return '#f43f5e';
+};
+
+// Index card component (inline styles for html2canvas compatibility)
 function IndexCard({ label, value, icon: Icon }: { label: string; value: number; icon: React.ElementType }) {
-  const level = getIndexLevel(value);
+  const levelColor = getIndexColorHex(value);
+  const levelLabel = getIndexLevel(value).label;
+  
   return (
-    <div className="bg-white/10 rounded-xl p-2.5 text-center">
-      <div className="flex items-center justify-center gap-1 mb-1">
-        <Icon className="w-3.5 h-3.5 text-white/70" />
-        <p className="text-[10px] text-white/70">{label}</p>
+    <div style={{ 
+      background: "rgba(255,255,255,0.1)", 
+      borderRadius: "12px", 
+      padding: "10px", 
+      textAlign: "center" 
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", marginBottom: "4px" }}>
+        <Icon style={{ width: "14px", height: "14px", color: "rgba(255,255,255,0.7)" }} />
+        <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.7)", margin: 0 }}>{label}</p>
       </div>
-      <p className="text-xl font-bold">{value}</p>
-      <div className="flex items-center justify-center gap-1 mt-1">
-        <div className={`w-1.5 h-1.5 rounded-full ${level.color}`} />
-        <span className="text-[10px] text-white/60">{level.label}</span>
+      <p style={{ fontSize: "20px", fontWeight: "700", color: "#fff", margin: 0 }}>{value}</p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", marginTop: "4px" }}>
+        <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: levelColor }} />
+        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.6)" }}>{levelLabel}</span>
       </div>
     </div>
   );
 }
 
 export const EmotionHealthShareCard = React.forwardRef<HTMLDivElement, EmotionHealthShareCardProps>(
-  ({ result, userName, avatarUrl }, ref) => {
+  ({ result, userName, avatarUrl, partnerCode, onReady }, ref) => {
     const { user } = useAuth();
     
     const dateStr = new Date().toLocaleDateString('zh-CN', {
@@ -49,101 +64,117 @@ export const EmotionHealthShareCard = React.forwardRef<HTMLDivElement, EmotionHe
 
     // Get partner code for QR
     const getPartnerCodeValue = useCallback(() => {
+      if (partnerCode) return partnerCode;
       const storedRef = localStorage.getItem('share_ref_code');
       if (storedRef) return storedRef;
       return user?.id;
-    }, [user]);
-
-    // Generate QR code with partner tracking
-    const shareUrl = getShareUrl('/emotion-health', getPartnerCodeValue());
-    const { qrCodeUrl } = useQRCode(shareUrl, 'SHARE_CARD');
+    }, [user, partnerCode]);
 
     const pattern = patternConfig[result.primaryPattern];
     const blocked = blockedDimensionConfig[result.blockedDimension];
 
     return (
-      <div
+      <ShareCardBase
         ref={ref}
-        className="w-[340px] bg-gradient-to-br from-violet-900 via-purple-900 to-rose-900 text-white p-5 rounded-2xl"
-        style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+        sharePath="/emotion-health"
+        partnerCode={getPartnerCodeValue()}
+        width={340}
+        padding={20}
+        background="linear-gradient(135deg, #5b21b6 0%, #7e22ce 50%, #be185d 100%)"
+        onReady={onReady}
+        footerConfig={{
+          ctaTitle: "扫码测测你的情绪健康",
+          ctaSubtitle: "32题找到情绪卡点",
+          primaryColor: "#ec4899",
+          secondaryColor: "#f9a8d4",
+          brandingColor: "rgba(255,255,255,0.4)",
+        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-pink-500/30 flex items-center justify-center">
-              <Heart className="w-4 h-4 text-pink-300" />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{
+              width: "32px",
+              height: "32px",
+              borderRadius: "50%",
+              background: "rgba(236, 72, 153, 0.3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}>
+              <Heart style={{ width: "16px", height: "16px", color: "#fbcfe8" }} />
             </div>
             <div>
-              <p className="text-[10px] text-pink-200">情绪健康测评</p>
-              <p className="text-sm font-semibold">{dateStr}</p>
+              <p style={{ fontSize: "10px", color: "#fbcfe8", margin: 0 }}>情绪健康测评</p>
+              <p style={{ fontSize: "14px", fontWeight: "600", color: "#fff", margin: 0 }}>{dateStr}</p>
             </div>
           </div>
           {avatarUrl ? (
             <img 
               src={avatarUrl} 
               alt="avatar" 
-              className="w-10 h-10 rounded-full border-2 border-white/20"
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                border: "2px solid rgba(255,255,255,0.2)",
+              }}
               crossOrigin="anonymous"
             />
           ) : userName ? (
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold">
+            <div style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "14px",
+              fontWeight: "700",
+              color: "#fff",
+            }}>
               {userName.slice(0, 1)}
             </div>
           ) : null}
         </div>
 
         {/* Three dimensional indices */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "16px" }}>
           <IndexCard label="能量" value={result.energyIndex} icon={Zap} />
           <IndexCard label="焦虑" value={result.anxietyIndex} icon={Brain} />
           <IndexCard label="压力" value={result.stressIndex} icon={Activity} />
         </div>
 
         {/* Primary pattern */}
-        <div className="bg-white/10 rounded-xl p-3 mb-3">
-          <p className="text-[10px] text-white/60 mb-2">我的情绪反应模式</p>
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{pattern.emoji}</span>
+        <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: "12px", padding: "12px", marginBottom: "12px" }}>
+          <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.6)", marginBottom: "8px", margin: "0 0 8px 0" }}>我的情绪反应模式</p>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <span style={{ fontSize: "30px" }}>{pattern.emoji}</span>
             <div>
-              <p className="font-bold text-base">{pattern.name}</p>
-              <p className="text-xs text-white/70">{pattern.tagline}</p>
+              <p style={{ fontWeight: "700", fontSize: "16px", color: "#fff", margin: 0 }}>{pattern.name}</p>
+              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)", margin: "2px 0 0 0" }}>{pattern.tagline}</p>
             </div>
           </div>
         </div>
 
         {/* Secondary pattern (if exists) */}
         {result.secondaryPattern && (
-          <div className="bg-white/5 rounded-lg p-2 mb-3 flex items-center gap-2">
-            <span className="text-lg">{patternConfig[result.secondaryPattern].emoji}</span>
-            <p className="text-xs text-white/60">
+          <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "8px", padding: "8px", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "18px" }}>{patternConfig[result.secondaryPattern].emoji}</span>
+            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", margin: 0 }}>
               次要模式：{patternConfig[result.secondaryPattern].name}
             </p>
           </div>
         )}
 
         {/* Blocked dimension */}
-        <div className="bg-rose-500/20 rounded-lg p-2.5 mb-4">
-          <p className="text-xs text-rose-200">
+        <div style={{ background: "rgba(244, 63, 94, 0.2)", borderRadius: "8px", padding: "10px", marginBottom: "0" }}>
+          <p style={{ fontSize: "12px", color: "#fda4af", margin: 0 }}>
             🎯 行动阻滞点：{blocked.blockPointName}
           </p>
         </div>
-
-        {/* Footer with QR code */}
-        <div className="flex items-center justify-between pt-3 border-t border-white/10">
-          <div className="flex-1 pr-3">
-            <p className="text-[10px] text-white/60">扫码测测你的情绪健康状态</p>
-            <p className="text-sm font-medium text-pink-300">32题找到情绪卡点</p>
-            <p className="text-[10px] text-white/40 mt-1">Powered by 有劲AI</p>
-          </div>
-          {qrCodeUrl && (
-            <img 
-              src={qrCodeUrl} 
-              alt="QR Code" 
-              className="w-16 h-16 rounded-lg bg-white p-1"
-            />
-          )}
-        </div>
-      </div>
+      </ShareCardBase>
     );
   }
 );

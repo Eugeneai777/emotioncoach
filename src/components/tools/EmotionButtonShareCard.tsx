@@ -1,6 +1,5 @@
-import React, { forwardRef, useEffect } from 'react';
-import { useQRCode } from '@/utils/qrCodeUtils';
-import { getPromotionDomain } from '@/utils/partnerQRUtils';
+import React, { forwardRef } from 'react';
+import ShareCardBase from '@/components/sharing/ShareCardBase';
 
 interface EmotionButtonShareCardProps {
   partnerCode?: string;
@@ -9,15 +8,6 @@ interface EmotionButtonShareCardProps {
 
 const EmotionButtonShareCard = forwardRef<HTMLDivElement, EmotionButtonShareCardProps>(
   ({ partnerCode, onReady }, ref) => {
-    const shareUrl = partnerCode 
-      ? `${getPromotionDomain()}/energy-studio?ref=${partnerCode}`
-      : `${getPromotionDomain()}/energy-studio`;
-    const { qrCodeUrl, isLoading } = useQRCode(shareUrl);
-
-    useEffect(() => {
-      if (!isLoading) onReady?.();
-    }, [isLoading, onReady]);
-
     // 9种情绪 emoji
     const emotions = [
       { emoji: '😰', title: '恐慌' },
@@ -48,15 +38,24 @@ const EmotionButtonShareCard = forwardRef<HTMLDivElement, EmotionButtonShareCard
     ];
 
     return (
-      <div
+      <ShareCardBase
         ref={ref}
-        style={{
-          width: '420px',
-          padding: '24px',
-          background: 'linear-gradient(135deg, #E6FFFA 0%, #CFFAFE 50%, #DBEAFE 100%)',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          borderRadius: '24px',
-          boxSizing: 'border-box',
+        sharePath="/energy-studio"
+        partnerCode={partnerCode}
+        width={420}
+        padding={24}
+        background="linear-gradient(135deg, #E6FFFA 0%, #CFFAFE 50%, #DBEAFE 100%)"
+        onReady={onReady}
+        footerConfig={{
+          ctaTitle: "扫码立即使用",
+          ctaSubtitle: "免费 · 即时 · 专业",
+          primaryColor: "#0D9488",
+          secondaryColor: "#64748B",
+          brandingColor: "#94A3B8",
+          brandingOpacity: 1,
+          tags: ["30秒情绪急救", "随时可用", "无需注册"],
+          tagColor: "#0D9488",
+          tagBgColor: "linear-gradient(135deg, #CCFBF1, #CFFAFE)",
         }}
       >
         {/* 标题区 */}
@@ -225,7 +224,7 @@ const EmotionButtonShareCard = forwardRef<HTMLDivElement, EmotionButtonShareCard
           background: 'rgba(255,255,255,0.7)',
           borderRadius: '16px',
           padding: '16px',
-          marginBottom: '24px'
+          marginBottom: '0'
         }}>
           <div style={{
             fontSize: '13px',
@@ -266,80 +265,7 @@ const EmotionButtonShareCard = forwardRef<HTMLDivElement, EmotionButtonShareCard
             ))}
           </div>
         </div>
-
-        {/* 底部 CTA + 二维码 */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: 'rgba(255,255,255,0.9)',
-          borderRadius: '16px',
-          padding: '16px 20px'
-        }}>
-          <div>
-            <div style={{
-              fontSize: '16px',
-              fontWeight: '700',
-              color: '#0D9488',
-              marginBottom: '4px'
-            }}>
-              扫码立即使用
-            </div>
-            <div style={{
-              fontSize: '12px',
-              color: '#64748B',
-              marginBottom: '8px'
-            }}>
-              免费 · 即时 · 专业
-            </div>
-            <div style={{
-              display: 'flex',
-              gap: '6px',
-              flexWrap: 'wrap'
-            }}>
-              {['30秒情绪急救', '随时可用', '无需注册'].map((tag, i) => (
-                <span key={i} style={{
-                  fontSize: '10px',
-                  padding: '3px 8px',
-                  background: 'linear-gradient(135deg, #CCFBF1, #CFFAFE)',
-                  borderRadius: '10px',
-                  color: '#0D9488'
-                }}>
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-          {qrCodeUrl && (
-            <div style={{
-              padding: '8px',
-              background: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-            }}>
-              <img 
-                src={qrCodeUrl} 
-                alt="QR Code" 
-                style={{ 
-                  width: '100px', 
-                  height: '100px',
-                  display: 'block'
-                }} 
-              />
-            </div>
-          )}
-        </div>
-
-        {/* 品牌水印 */}
-        <div style={{
-          textAlign: 'center',
-          marginTop: '16px',
-          fontSize: '11px',
-          color: '#94A3B8'
-        }}>
-          Powered by 有劲AI
-        </div>
-      </div>
+      </ShareCardBase>
     );
   }
 );

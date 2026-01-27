@@ -1,13 +1,14 @@
 import React from "react";
 import { Brain } from "lucide-react";
 import { SCL90Result as SCL90ResultType, scl90FactorInfo, SCL90Factor } from "./scl90Data";
-import { useQRCode } from "@/utils/qrCodeUtils";
-import { SHARE_DOMAIN } from "@/config/introShareConfig";
+import ShareCardBase from "@/components/sharing/ShareCardBase";
 
 interface SCL90ShareCardProps {
   result: SCL90ResultType;
   userName?: string;
   avatarUrl?: string;
+  partnerCode?: string;
+  onReady?: () => void;
 }
 
 const getSeverityInfo = (level: string) => {
@@ -21,8 +22,7 @@ const getSeverityInfo = (level: string) => {
 };
 
 export const SCL90ShareCard = React.forwardRef<HTMLDivElement, SCL90ShareCardProps>(
-  ({ result, userName, avatarUrl }, ref) => {
-    const { qrCodeUrl } = useQRCode(`${SHARE_DOMAIN}/scl90`, "SHARE_CARD");
+  ({ result, userName, avatarUrl, partnerCode, onReady }, ref) => {
     const severityInfo = getSeverityInfo(result.severityLevel);
     const primaryInfo = result.primarySymptom 
       ? scl90FactorInfo[result.primarySymptom] 
@@ -40,27 +40,51 @@ export const SCL90ShareCard = React.forwardRef<HTMLDivElement, SCL90ShareCardPro
     });
 
     return (
-      <div
+      <ShareCardBase
         ref={ref}
-        className="w-[340px] bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 text-white p-5 rounded-2xl"
-        style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+        sharePath="/scl90"
+        partnerCode={partnerCode}
+        width={340}
+        padding={20}
+        background="linear-gradient(135deg, #581c87 0%, #312e81 50%, #1e293b 100%)"
+        onReady={onReady}
+        footerConfig={{
+          ctaTitle: "扫码测测你的心理状态",
+          ctaSubtitle: "全球著名权威抑郁焦虑自测量表",
+          primaryColor: "#a855f7",
+          secondaryColor: "#c4b5fd",
+          brandingColor: "rgba(255,255,255,0.4)",
+        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-purple-500/30 flex items-center justify-center">
-              <Brain className="w-5 h-5 text-purple-300" />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              background: "rgba(168, 85, 247, 0.3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}>
+              <Brain style={{ width: "20px", height: "20px", color: "#d8b4fe" }} />
             </div>
             <div>
-              <p className="text-xs text-purple-300">SCL-90 心理健康自评</p>
-              <p className="text-sm font-semibold">{dateStr}</p>
+              <p style={{ fontSize: "12px", color: "#d8b4fe", margin: 0 }}>SCL-90 心理健康自评</p>
+              <p style={{ fontSize: "14px", fontWeight: "600", color: "#fff", margin: 0 }}>{dateStr}</p>
             </div>
           </div>
           {avatarUrl && (
             <img
               src={avatarUrl}
               alt=""
-              className="w-10 h-10 rounded-full border-2 border-white/20"
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                border: "2px solid rgba(255,255,255,0.2)",
+              }}
               crossOrigin="anonymous"
             />
           )}
@@ -68,60 +92,58 @@ export const SCL90ShareCard = React.forwardRef<HTMLDivElement, SCL90ShareCardPro
 
         {/* Severity Badge */}
         <div 
-          className="rounded-xl p-4 mb-4"
-          style={{ backgroundColor: severityInfo.bgColor }}
+          style={{ 
+            borderRadius: "12px", 
+            padding: "16px", 
+            marginBottom: "16px",
+            backgroundColor: severityInfo.bgColor,
+          }}
         >
-          <div className="flex items-center justify-between">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
-              <p 
-                className="text-2xl font-bold"
-                style={{ color: severityInfo.color }}
-              >
+              <p style={{ fontSize: "24px", fontWeight: "700", color: severityInfo.color, margin: 0 }}>
                 {severityInfo.label}
               </p>
-              <p className="text-xs mt-1" style={{ color: severityInfo.color + "cc" }}>
+              <p style={{ fontSize: "12px", marginTop: "4px", color: severityInfo.color + "cc", margin: "4px 0 0 0" }}>
                 总体症状指数 (GSI)
               </p>
             </div>
-            <div 
-              className="text-4xl font-bold"
-              style={{ color: severityInfo.color }}
-            >
+            <div style={{ fontSize: "36px", fontWeight: "700", color: severityInfo.color }}>
               {result.gsi.toFixed(2)}
             </div>
           </div>
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <div className="bg-white/10 rounded-lg p-2.5 text-center">
-            <p className="text-lg font-bold text-white">{result.totalScore}</p>
-            <p className="text-xs text-white/60">总分</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "16px" }}>
+          <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+            <p style={{ fontSize: "18px", fontWeight: "700", color: "#fff", margin: 0 }}>{result.totalScore}</p>
+            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", margin: 0 }}>总分</p>
           </div>
-          <div className="bg-white/10 rounded-lg p-2.5 text-center">
-            <p className="text-lg font-bold text-white">{result.positiveCount}</p>
-            <p className="text-xs text-white/60">阳性项数</p>
+          <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+            <p style={{ fontSize: "18px", fontWeight: "700", color: "#fff", margin: 0 }}>{result.positiveCount}</p>
+            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", margin: 0 }}>阳性项数</p>
           </div>
-          <div className="bg-white/10 rounded-lg p-2.5 text-center">
-            <p className="text-lg font-bold text-white">{result.positiveScoreAvg.toFixed(2)}</p>
-            <p className="text-xs text-white/60">阳性均分</p>
+          <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+            <p style={{ fontSize: "18px", fontWeight: "700", color: "#fff", margin: 0 }}>{result.positiveScoreAvg.toFixed(2)}</p>
+            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", margin: 0 }}>阳性均分</p>
           </div>
         </div>
 
         {/* Primary Symptom */}
         {primaryInfo && (
-          <div className="bg-white/10 rounded-xl p-3 mb-4">
-            <p className="text-xs text-white/60 mb-2">主要关注维度</p>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{primaryInfo.emoji}</span>
-              <div className="flex-1">
-                <p className="font-semibold">{primaryInfo.name}</p>
-                <p className="text-xs text-white/70 line-clamp-2">
+          <div style={{ background: "rgba(255,255,255,0.1)", borderRadius: "12px", padding: "12px", marginBottom: "16px" }}>
+            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "8px", margin: "0 0 8px 0" }}>主要关注维度</p>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "24px" }}>{primaryInfo.emoji}</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: "600", color: "#fff", margin: 0 }}>{primaryInfo.name}</p>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)", margin: "2px 0 0 0", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                   {primaryInfo.description}
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold text-amber-400">
+              <div style={{ textAlign: "right" }}>
+                <p style={{ fontSize: "20px", fontWeight: "700", color: "#fbbf24", margin: 0 }}>
                   {result.factorScores[result.primarySymptom!].toFixed(2)}
                 </p>
               </div>
@@ -130,26 +152,28 @@ export const SCL90ShareCard = React.forwardRef<HTMLDivElement, SCL90ShareCardPro
         )}
 
         {/* Top 3 Factors */}
-        <div className="mb-4">
-          <p className="text-xs text-white/60 mb-2">10维度得分 TOP3</p>
-          <div className="space-y-1.5">
+        <div style={{ marginBottom: "0" }}>
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "8px", margin: "0 0 8px 0" }}>10维度得分 TOP3</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             {topFactors.map(([key, score], index) => {
               const info = scl90FactorInfo[key as SCL90Factor];
               const percentage = Math.min((score / 5) * 100, 100);
+              const colors = ["#f59e0b", "#a855f7", "#6366f1"];
               return (
-                <div key={key} className="flex items-center gap-2">
-                  <span className="text-sm w-5">{info.emoji}</span>
-                  <span className="text-xs text-white/80 w-16 truncate">{info.name}</span>
-                  <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                <div key={key} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "14px", width: "20px" }}>{info.emoji}</span>
+                  <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.8)", width: "60px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{info.name}</span>
+                  <div style={{ flex: 1, height: "8px", background: "rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden" }}>
                     <div 
-                      className="h-full rounded-full transition-all"
                       style={{ 
+                        height: "100%", 
+                        borderRadius: "4px",
                         width: `${percentage}%`,
-                        backgroundColor: index === 0 ? "#f59e0b" : index === 1 ? "#a855f7" : "#6366f1"
+                        backgroundColor: colors[index],
                       }}
                     />
                   </div>
-                  <span className="text-xs font-medium w-10 text-right">
+                  <span style={{ fontSize: "12px", fontWeight: "500", width: "40px", textAlign: "right", color: "#fff" }}>
                     {(score as number).toFixed(2)}
                   </span>
                 </div>
@@ -157,21 +181,7 @@ export const SCL90ShareCard = React.forwardRef<HTMLDivElement, SCL90ShareCardPro
             })}
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-white/10">
-          <div className="flex-1">
-          <p className="text-xs text-white/60 mb-0.5">扫码测测你的心理状态</p>
-            <p className="text-sm font-medium text-purple-300">全球著名权威抑郁焦虑自测量表</p>
-            <p className="text-xs text-white/40 mt-1">Powered by 有劲AI</p>
-          </div>
-          {qrCodeUrl && (
-            <div className="w-16 h-16 bg-white rounded-lg p-1 flex-shrink-0">
-              <img src={qrCodeUrl} alt="QR Code" className="w-full h-full" />
-            </div>
-          )}
-        </div>
-      </div>
+      </ShareCardBase>
     );
   }
 );
