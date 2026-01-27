@@ -60,7 +60,7 @@ export const growthNodes: GrowthNode[] = [
     title: '365会员',
     subtitle: '长期陪伴',
     emoji: '👑',
-    price: '¥999',
+    price: '¥365',
     description: '全年AI教练主题+月度成长回顾',
     route: '/packages',
     ctaText: '了解会员',
