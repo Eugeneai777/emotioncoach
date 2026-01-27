@@ -380,3 +380,6 @@ verify_jwt = true
 
 [functions.assessment-coach-chat]
 verify_jwt = false
+
+[functions.assessment-emotion-coach]
+verify_jwt = false
