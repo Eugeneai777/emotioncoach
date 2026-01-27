@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Download, X, Loader2, Copy, Check } from "lucide-react";
 import { EmotionHealthShareCard } from "./EmotionHealthShareCard";
@@ -84,15 +85,18 @@ export function EmotionHealthShareDialog({ open, onOpenChange, result }: Emotion
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden">
-          <DialogHeader className="px-4 py-3 border-b">
+        <DialogContent className="max-w-sm p-0 gap-0 max-h-[85vh] flex flex-col">
+          <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
             <DialogTitle className="text-base">分享测评结果</DialogTitle>
+            <VisuallyHidden>
+              <DialogDescription>生成情绪健康测评分享图片或复制分享链接</DialogDescription>
+            </VisuallyHidden>
           </DialogHeader>
 
-          <div className="p-4 bg-muted/30">
+          <div className="p-4 bg-muted/30 overflow-y-auto flex-1 min-h-0">
             {/* Preview card (scaled) */}
             <div className="flex justify-center">
-              <div className="transform scale-[0.85] origin-top">
+              <div className="transform scale-[0.75] origin-top">
                 <EmotionHealthShareCard
                   result={result}
                   userName={userName}
@@ -112,7 +116,7 @@ export function EmotionHealthShareDialog({ open, onOpenChange, result }: Emotion
             </div>
           </div>
 
-          <div className="p-4 border-t">
+          <div className="p-4 border-t flex-shrink-0">
             <div className="flex gap-2">
               <Button
                 onClick={handleGenerate}
