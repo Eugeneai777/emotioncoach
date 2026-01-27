@@ -43,8 +43,14 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete }: A
     m.role === 'user' && !m.content.startsWith('[系统：')
   ).length;
   
-  // 至少6轮真实对话后才考虑转化
-  const isConversionStage = realUserMessages >= 6;
+  // 4轮真实对话后进入转化阶段
+  const isConversionStage = realUserMessages >= 4;
+  
+  // 只有AI提到训练营后才显示CTA，让转化更自然
+  const lastAssistantMessage = messages.filter(m => m.role === 'assistant').pop();
+  const aiMentionedCamp = lastAssistantMessage?.content.includes('训练营') || 
+                          lastAssistantMessage?.content.includes('21天');
+  const showCTA = isConversionStage && aiMentionedCamp && !isLoading;
 
   // 自动滚动到底部
   useEffect(() => {
@@ -286,8 +292,8 @@ export function AssessmentCoachChat({ pattern, blockedDimension, onComplete }: A
             </div>
           ))}
 
-          {/* 转化阶段 CTA - 柔和设计 */}
-          {isConversionStage && messages.length > 0 && !isLoading && (
+          {/* 转化阶段 CTA - 只有AI提到训练营后才显示 */}
+          {showCTA && messages.length > 0 && (
             <div className="mt-6 px-4">
               {/* 分隔线 */}
               <div className="flex items-center gap-3 mb-4">
