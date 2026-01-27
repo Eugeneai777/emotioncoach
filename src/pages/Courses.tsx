@@ -197,7 +197,10 @@ const Courses = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center">
+      <div 
+        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <div className="text-center">
           <Video className="w-8 h-8 animate-pulse mx-auto mb-4 text-primary" />
           <p className="text-muted-foreground">加载课程中...</p>
@@ -216,7 +219,10 @@ const Courses = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-background via-background to-accent/5"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       <DynamicOGMeta pageKey="courses" />
       {/* Header */}
       <header className="bg-gradient-to-r from-primary/10 via-accent/10 to-warm/10 border-b sticky top-0 z-10 backdrop-blur-sm">
