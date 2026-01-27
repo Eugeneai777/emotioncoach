@@ -1,6 +1,5 @@
 import React, { forwardRef } from 'react';
-import { getPromotionDomain } from '@/utils/partnerQRUtils';
-import { useQRCode } from '@/utils/qrCodeUtils';
+import ShareCardBase from '@/components/sharing/ShareCardBase';
 
 interface PartnerInfo {
   partnerId: string;
@@ -15,6 +14,7 @@ interface BlockRevealShareCardProps {
   dominantPoor?: string;
   reactionPattern?: string;
   insightQuote?: string;
+  onReady?: () => void;
 }
 
 const poorTypeConfig: Record<string, { emoji: string; label: string }> = {
@@ -32,33 +32,28 @@ const BlockRevealShareCard = forwardRef<HTMLDivElement, BlockRevealShareCardProp
     partnerInfo, 
     dominantPoor = '心穷',
     reactionPattern = '逃避型',
-    insightQuote
+    insightQuote,
+    onReady,
   }, ref) => {
-    const getShareUrl = (): string => {
-      const baseUrl = `${getPromotionDomain()}/wealth-block`;
-      if (partnerInfo?.partnerCode) {
-        return `${baseUrl}?ref=${partnerInfo.partnerCode}`;
-      }
-      return baseUrl;
-    };
-    
-    const shareUrl = getShareUrl();
     const poorConfig = poorTypeConfig[dominantPoor] || poorTypeConfig['心穷'];
-    const { qrCodeUrl } = useQRCode(shareUrl);
 
     return (
-      <div
+      <ShareCardBase
         ref={ref}
         className={className}
-        style={{
-          width: '340px',
-          padding: '28px 24px',
-          background: 'linear-gradient(135deg, #1e1b4b 0%, #4c1d95 60%, #7c3aed 100%)',
-          borderRadius: '24px',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          color: '#ffffff',
-          position: 'relative',
-          overflow: 'hidden',
+        sharePath="/wealth-block"
+        partnerCode={partnerInfo?.partnerCode}
+        width={340}
+        padding={28}
+        background="linear-gradient(135deg, #1e1b4b 0%, #4c1d95 60%, #7c3aed 100%)"
+        onReady={onReady}
+        footerConfig={{
+          ctaTitle: "扫码测测你的财富盲区",
+          ctaSubtitle: "🎁 免费精准诊断",
+          primaryColor: "#4c1d95",
+          secondaryColor: "rgba(76, 29, 149, 0.7)",
+          brandingColor: "rgba(255,255,255,0.8)",
+          brandingOpacity: 1,
         }}
       >
         {/* Background stars decoration */}
@@ -114,7 +109,7 @@ const BlockRevealShareCard = forwardRef<HTMLDivElement, BlockRevealShareCardProp
               <span style={{ fontSize: '18px' }}>👤</span>
             )}
           </div>
-          <div>
+          <div style={{ color: '#fff' }}>
             <p style={{ fontSize: '13px', fontWeight: '600', margin: 0 }}>
               {displayName}
             </p>
@@ -142,6 +137,7 @@ const BlockRevealShareCard = forwardRef<HTMLDivElement, BlockRevealShareCardProp
             fontWeight: '700',
             margin: '0 0 8px 0',
             letterSpacing: '0.5px',
+            color: '#fff',
           }}>
             财富盲区测评
           </h2>
@@ -151,6 +147,7 @@ const BlockRevealShareCard = forwardRef<HTMLDivElement, BlockRevealShareCardProp
             margin: 0,
             opacity: 0.95,
             lineHeight: 1.5,
+            color: '#fff',
           }}>
             「90%的人看不见自己的卡点<br/>你是那10%吗？」
           </p>
@@ -168,6 +165,7 @@ const BlockRevealShareCard = forwardRef<HTMLDivElement, BlockRevealShareCardProp
             opacity: 0.8, 
             marginBottom: '12px',
             textAlign: 'center',
+            color: '#fff',
           }}>
             👁️ 已揭示的盲区
           </div>
@@ -192,8 +190,8 @@ const BlockRevealShareCard = forwardRef<HTMLDivElement, BlockRevealShareCardProp
               }}>
                 <span style={{ fontSize: '28px' }}>{poorConfig.emoji}</span>
               </div>
-              <div style={{ fontSize: '12px', fontWeight: '600' }}>{poorConfig.label}</div>
-              <div style={{ fontSize: '10px', opacity: 0.7 }}>主导卡点</div>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: '#fff' }}>{poorConfig.label}</div>
+              <div style={{ fontSize: '10px', opacity: 0.7, color: '#fff' }}>主导卡点</div>
             </div>
             
             {/* Reaction Pattern */}
@@ -211,8 +209,8 @@ const BlockRevealShareCard = forwardRef<HTMLDivElement, BlockRevealShareCardProp
               }}>
                 <span style={{ fontSize: '28px' }}>🔄</span>
               </div>
-              <div style={{ fontSize: '12px', fontWeight: '600' }}>{reactionPattern}</div>
-              <div style={{ fontSize: '10px', opacity: 0.7 }}>反应模式</div>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: '#fff' }}>{reactionPattern}</div>
+              <div style={{ fontSize: '10px', opacity: 0.7, color: '#fff' }}>反应模式</div>
             </div>
           </div>
         </div>
@@ -223,59 +221,18 @@ const BlockRevealShareCard = forwardRef<HTMLDivElement, BlockRevealShareCardProp
             background: 'rgba(255,255,255,0.1)',
             borderRadius: '12px',
             padding: '12px 14px',
-            marginBottom: '16px',
+            marginBottom: '0',
             fontStyle: 'italic',
             fontSize: '12px',
             lineHeight: 1.5,
             textAlign: 'center',
             borderLeft: '3px solid rgba(255,255,255,0.4)',
+            color: '#fff',
           }}>
             "{insightQuote}"
           </div>
         )}
-
-        {/* QR Code Section */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '14px',
-          background: 'rgba(255,255,255,0.95)',
-          borderRadius: '14px',
-          padding: '14px',
-          marginBottom: '16px',
-        }}>
-          {qrCodeUrl && (
-            <img
-              src={qrCodeUrl}
-              alt="扫码测评"
-              style={{ width: '70px', height: '70px', borderRadius: '8px' }}
-            />
-          )}
-          <div style={{ color: '#4c1d95' }}>
-            <p style={{ fontSize: '13px', fontWeight: '600', margin: '0 0 4px 0' }}>
-              扫码测测你的财富盲区
-            </p>
-            <p style={{ fontSize: '11px', opacity: 0.7, margin: 0 }}>
-              🎁 免费精准诊断
-            </p>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div style={{
-          textAlign: 'center',
-          fontSize: '11px',
-          opacity: 0.8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '6px',
-        }}>
-          <span>💎</span>
-          <span>有劲AI · 财富教练</span>
-        </div>
-      </div>
+      </ShareCardBase>
     );
   }
 );

@@ -27,6 +27,10 @@ export interface ShareCardBaseProps {
   showFooter?: boolean;
   /** 底部配置 */
   footerConfig?: FooterConfig;
+  /** 自定义 footer 渲染 - 如果提供则完全覆盖默认 footer */
+  renderFooter?: (qrCodeUrl: string | null, shareUrl: string) => ReactNode;
+  /** 加载完成回调 */
+  onReady?: () => void;
 }
 
 export interface FooterConfig {
@@ -48,6 +52,14 @@ export interface FooterConfig {
   brandingColor?: string;
   /** 品牌标识透明度 */
   brandingOpacity?: number;
+  /** Footer 布局: 'horizontal' | 'vertical' */
+  layout?: 'horizontal' | 'vertical';
+  /** 额外的 CTA 标签 */
+  tags?: string[];
+  /** 标签主题色 */
+  tagColor?: string;
+  /** 标签背景色 */
+  tagBgColor?: string;
 }
 
 // ============= Default Config =============
@@ -62,6 +74,10 @@ const defaultFooterConfig: Required<FooterConfig> = {
   showBranding: true,
   brandingColor: '#9ca3af',
   brandingOpacity: 0.85,
+  layout: 'horizontal',
+  tags: [],
+  tagColor: '#0D9488',
+  tagBgColor: 'rgba(204, 251, 241, 0.5)',
 };
 
 // ============= Sub Components =============
@@ -73,6 +89,55 @@ interface QRCodeSectionProps {
 
 const QRCodeSection: React.FC<QRCodeSectionProps> = ({ qrCodeUrl, config }) => {
   if (!config.showQR || !qrCodeUrl) return null;
+
+  if (config.layout === 'vertical') {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '12px',
+          background: 'rgba(255,255,255,0.95)',
+          borderRadius: '14px',
+          padding: '16px',
+          marginBottom: config.showBranding ? '14px' : '0',
+        }}
+      >
+        <img
+          src={qrCodeUrl}
+          alt="扫码"
+          style={{ width: '80px', height: '80px', borderRadius: '8px' }}
+        />
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 4px 0', color: config.primaryColor }}>
+            {config.ctaTitle}
+          </p>
+          <p style={{ fontSize: '11px', color: config.secondaryColor, margin: 0 }}>
+            {config.ctaSubtitle}
+          </p>
+          {config.tags.length > 0 && (
+            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginTop: '8px', flexWrap: 'wrap' }}>
+              {config.tags.map((tag, i) => (
+                <span
+                  key={i}
+                  style={{
+                    fontSize: '10px',
+                    padding: '3px 8px',
+                    background: config.tagBgColor,
+                    borderRadius: '10px',
+                    color: config.tagColor,
+                  }}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div
@@ -99,6 +164,24 @@ const QRCodeSection: React.FC<QRCodeSectionProps> = ({ qrCodeUrl, config }) => {
         <p style={{ fontSize: '11px', color: config.secondaryColor, margin: 0 }}>
           {config.ctaSubtitle}
         </p>
+        {config.tags.length > 0 && (
+          <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
+            {config.tags.map((tag, i) => (
+              <span
+                key={i}
+                style={{
+                  fontSize: '10px',
+                  padding: '3px 8px',
+                  background: config.tagBgColor,
+                  borderRadius: '10px',
+                  color: config.tagColor,
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -134,6 +217,7 @@ const Branding: React.FC<BrandingProps> = ({ config }) => {
  * 
  * @example
  * ```tsx
+ * // 基础用法
  * <ShareCardBase
  *   sharePath="/wealth-block"
  *   partnerCode="ABC123"
@@ -144,6 +228,17 @@ const Branding: React.FC<BrandingProps> = ({ config }) => {
  *     ctaSubtitle: '🎁 免费体验',
  *     primaryColor: '#4f46e5',
  *   }}
+ * >
+ *   <YourCardContent />
+ * </ShareCardBase>
+ * 
+ * // 自定义 footer
+ * <ShareCardBase
+ *   sharePath="/scl90"
+ *   showFooter={false}
+ *   renderFooter={(qrCodeUrl, shareUrl) => (
+ *     <CustomFooter qrCodeUrl={qrCodeUrl} />
+ *   )}
  * >
  *   <YourCardContent />
  * </ShareCardBase>
@@ -163,6 +258,8 @@ const ShareCardBase = forwardRef<HTMLDivElement, ShareCardBaseProps>(
       className,
       showFooter = true,
       footerConfig = {},
+      renderFooter,
+      onReady,
     },
     ref
   ) => {
@@ -172,13 +269,20 @@ const ShareCardBase = forwardRef<HTMLDivElement, ShareCardBaseProps>(
       : `${getPromotionDomain()}${sharePath}`;
     
     // 使用统一的 QR 码 hook
-    const { qrCodeUrl } = useQRCode(shareUrl);
+    const { qrCodeUrl, isLoading } = useQRCode(shareUrl);
     
     // 合并配置
     const mergedConfig: Required<FooterConfig> = {
       ...defaultFooterConfig,
       ...footerConfig,
     };
+
+    // 通知加载完成
+    React.useEffect(() => {
+      if (!isLoading && onReady) {
+        onReady();
+      }
+    }, [isLoading, onReady]);
 
     return (
       <div
@@ -199,8 +303,10 @@ const ShareCardBase = forwardRef<HTMLDivElement, ShareCardBaseProps>(
         {/* 卡片内容 */}
         {children}
         
-        {/* 底部区域 */}
-        {showFooter && (
+        {/* 自定义 footer 或默认 footer */}
+        {renderFooter ? (
+          renderFooter(qrCodeUrl, shareUrl)
+        ) : showFooter && (
           <div style={{ marginTop: '16px' }}>
             <QRCodeSection qrCodeUrl={qrCodeUrl} config={mergedConfig} />
             <Branding config={mergedConfig} />
@@ -222,3 +328,6 @@ export { QRCodeSection, Branding };
 
 // 导出类型
 export type { QRCodeSectionProps, BrandingProps };
+
+// 导出默认配置供外部使用
+export { defaultFooterConfig };

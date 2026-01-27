@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 import { Sparkles, Brain, Heart } from 'lucide-react';
-import { useQRCode } from '@/utils/qrCodeUtils';
+import ShareCardBase from '@/components/sharing/ShareCardBase';
 
 interface WealthJournalShareCardProps {
   dayNumber: number;
@@ -14,6 +14,8 @@ interface WealthJournalShareCardProps {
   shareUrl: string;
   avatarUrl?: string;
   displayName?: string;
+  partnerCode?: string;
+  onReady?: () => void;
 }
 
 const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCardProps>(
@@ -28,10 +30,10 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
     beliefAwakening,
     shareUrl,
     avatarUrl,
-    displayName = '财富觉醒者'
+    displayName = '财富觉醒者',
+    partnerCode,
+    onReady,
   }, ref) => {
-    const { qrCodeUrl } = useQRCode(shareUrl);
-
     // Pick the best content to display (avoid duplication)
     const primaryAwakening = beliefAwakening || emotionAwakening || behaviorAwakening;
     
@@ -45,50 +47,119 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
     };
 
     return (
-      <div
+      <ShareCardBase
         ref={ref}
-        className="w-[320px] rounded-2xl overflow-hidden shadow-2xl"
-        style={{
-          background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 30%, #f59e0b 100%)',
-        }}
+        sharePath="/wealth-camp-intro"
+        partnerCode={partnerCode}
+        width={320}
+        padding={0}
+        borderRadius={16}
+        background="linear-gradient(135deg, #fef3c7 0%, #fde68a 30%, #f59e0b 100%)"
+        onReady={onReady}
+        showFooter={false}
+        renderFooter={(qrCodeUrl) => (
+          <>
+            {/* Footer with QR */}
+            <div style={{ 
+              padding: '16px 20px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between' 
+            }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: '12px', fontWeight: '500', color: '#78350f', margin: 0 }}>扫码加入</p>
+                <p style={{ fontSize: '14px', fontWeight: '700', color: '#78350f', margin: 0 }}>财富觉醒训练营</p>
+              </div>
+              {qrCodeUrl && (
+                <div style={{ 
+                  background: 'white', 
+                  padding: '6px', 
+                  borderRadius: '8px', 
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)' 
+                }}>
+                  <img src={qrCodeUrl} alt="QR Code" style={{ width: '64px', height: '64px', display: 'block' }} />
+                </div>
+              )}
+            </div>
+
+            {/* Brand */}
+            <div style={{ 
+              background: 'rgba(180, 83, 9, 0.2)', 
+              padding: '8px 20px', 
+              textAlign: 'center' 
+            }}>
+              <p style={{ fontSize: '11px', fontWeight: '500', color: '#78350f', margin: 0 }}>
+                Powered by 有劲AI
+              </p>
+            </div>
+          </>
+        )}
       >
         {/* Header */}
-        <div className="px-5 pt-5 pb-3">
-          <div className="flex items-center gap-3 mb-3">
+        <div style={{ padding: '20px 20px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             {avatarUrl ? (
               <img 
                 src={avatarUrl} 
                 alt="avatar" 
-                className="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover"
+                style={{ 
+                  width: '40px', 
+                  height: '40px', 
+                  borderRadius: '50%', 
+                  border: '2px solid white',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  objectFit: 'cover',
+                }}
                 crossOrigin="anonymous"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-amber-600/30 flex items-center justify-center border-2 border-white shadow-md">
-                <Sparkles className="w-5 h-5 text-amber-800" />
+              <div style={{ 
+                width: '40px', 
+                height: '40px', 
+                borderRadius: '50%', 
+                background: 'rgba(180, 83, 9, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '2px solid white',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              }}>
+                <Sparkles style={{ width: '20px', height: '20px', color: '#78350f' }} />
               </div>
             )}
             <div>
-              <p className="text-amber-900 font-semibold text-sm">{displayName}</p>
-              <p className="text-amber-700 text-xs">第{dayNumber}天打卡</p>
+              <p style={{ fontSize: '14px', fontWeight: '600', color: '#78350f', margin: 0 }}>{displayName}</p>
+              <p style={{ fontSize: '12px', color: '#92400e', margin: 0 }}>第{dayNumber}天打卡</p>
             </div>
           </div>
           
           {/* Title */}
-          <div className="text-center mb-3">
-            <h2 className="text-amber-900 font-bold text-lg">📖 今日觉醒</h2>
+          <div style={{ textAlign: 'center', marginBottom: '12px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#78350f', margin: 0 }}>📖 今日觉醒</h2>
           </div>
         </div>
 
         {/* Content */}
-        <div className="bg-white/90 mx-3 rounded-xl p-4 space-y-3">
+        <div style={{ 
+          background: 'rgba(255,255,255,0.9)', 
+          margin: '0 12px', 
+          borderRadius: '12px', 
+          padding: '16px',
+        }}>
           {/* Primary Awakening Moment */}
           {primaryAwakening && (
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-200">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                <span className="text-xs font-medium text-amber-700">觉醒时刻</span>
+            <div style={{ 
+              background: 'linear-gradient(to right, #fef3c7, #ffedd5)',
+              borderRadius: '8px',
+              padding: '12px',
+              border: '1px solid #fde68a',
+              marginBottom: '12px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                <Sparkles style={{ width: '14px', height: '14px', color: '#d97706' }} />
+                <span style={{ fontSize: '12px', fontWeight: '500', color: '#b45309' }}>觉醒时刻</span>
               </div>
-              <p className="text-sm text-amber-900 font-medium leading-relaxed">
+              <p style={{ fontSize: '14px', color: '#78350f', fontWeight: '500', lineHeight: 1.6, margin: 0 }}>
                 {truncate(primaryAwakening, 80)}
               </p>
             </div>
@@ -96,45 +167,27 @@ const WealthJournalShareCard = forwardRef<HTMLDivElement, WealthJournalShareCard
 
           {/* New Belief - only show if different from awakening */}
           {showNewBelief && (
-            <div className="flex items-start gap-2">
-              <Brain className="w-4 h-4 text-violet-500 shrink-0 mt-0.5" />
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '12px' }}>
+              <Brain style={{ width: '16px', height: '16px', color: '#8b5cf6', flexShrink: 0, marginTop: '2px' }} />
               <div>
-                <span className="text-xs text-violet-600 font-medium">新信念</span>
-                <p className="text-sm text-gray-800">{truncate(newBelief, 50)}</p>
+                <span style={{ fontSize: '12px', color: '#7c3aed', fontWeight: '500' }}>新信念</span>
+                <p style={{ fontSize: '14px', color: '#1f2937', margin: 0 }}>{truncate(newBelief, 50)}</p>
               </div>
             </div>
           )}
 
           {/* Emotion Need - only show if no awakening and no belief */}
           {emotionNeed && !primaryAwakening && !newBelief && (
-            <div className="flex items-start gap-2">
-              <Heart className="w-4 h-4 text-pink-500 shrink-0 mt-0.5" />
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+              <Heart style={{ width: '16px', height: '16px', color: '#ec4899', flexShrink: 0, marginTop: '2px' }} />
               <div>
-                <span className="text-xs text-pink-600 font-medium">情绪信号</span>
-                <p className="text-sm text-gray-800">{truncate(emotionNeed, 50)}</p>
+                <span style={{ fontSize: '12px', color: '#db2777', fontWeight: '500' }}>情绪信号</span>
+                <p style={{ fontSize: '14px', color: '#1f2937', margin: 0 }}>{truncate(emotionNeed, 50)}</p>
               </div>
             </div>
           )}
         </div>
-
-        {/* Footer with QR */}
-        <div className="px-5 py-4 flex items-center justify-between">
-          <div className="flex-1">
-            <p className="text-amber-900 text-xs font-medium">扫码加入</p>
-            <p className="text-amber-800 text-sm font-bold">财富觉醒训练营</p>
-          </div>
-          {qrCodeUrl && (
-            <div className="bg-white p-1.5 rounded-lg shadow-md">
-              <img src={qrCodeUrl} alt="QR Code" className="w-16 h-16" />
-            </div>
-          )}
-        </div>
-
-        {/* Brand */}
-        <div className="bg-amber-700/20 px-5 py-2 text-center">
-          <p className="text-amber-900 text-xs font-medium">有劲AI · 财富觉醒训练营</p>
-        </div>
-      </div>
+      </ShareCardBase>
     );
   }
 );

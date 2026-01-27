@@ -1,6 +1,5 @@
-import React, { forwardRef, useEffect } from 'react';
-import { useQRCode } from '@/utils/qrCodeUtils';
-import { getPromotionDomain } from '@/utils/partnerQRUtils';
+import React, { forwardRef } from 'react';
+import ShareCardBase from '@/components/sharing/ShareCardBase';
 
 interface AliveCheckShareCardProps {
   partnerCode?: string;
@@ -9,15 +8,6 @@ interface AliveCheckShareCardProps {
 
 const AliveCheckShareCard = forwardRef<HTMLDivElement, AliveCheckShareCardProps>(
   ({ partnerCode, onReady }, ref) => {
-    const shareUrl = partnerCode 
-      ? `${getPromotionDomain()}/energy-studio?tool=alive-check&ref=${partnerCode}`
-      : `${getPromotionDomain()}/energy-studio?tool=alive-check`;
-    const { qrCodeUrl, isLoading } = useQRCode(shareUrl);
-
-    useEffect(() => {
-      if (!isLoading) onReady?.();
-    }, [isLoading, onReady]);
-
     const features = [
       { icon: '🛡️', title: '每日安全确认', desc: '一键打卡，确认平安' },
       { icon: '📧', title: '自动通知', desc: '超时未打卡，自动邮件提醒' },
@@ -33,14 +23,21 @@ const AliveCheckShareCard = forwardRef<HTMLDivElement, AliveCheckShareCardProps>
     ];
 
     return (
-      <div
+      <ShareCardBase
         ref={ref}
-        style={{
-          width: '420px',
-          padding: '32px',
-          background: 'linear-gradient(135deg, #fdf2f8 0%, #fff1f2 50%, #fce7f3 100%)',
-          borderRadius: '24px',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        sharePath="/energy-studio?tool=alive-check"
+        partnerCode={partnerCode}
+        width={420}
+        padding={32}
+        background="linear-gradient(135deg, #fdf2f8 0%, #fff1f2 50%, #fce7f3 100%)"
+        onReady={onReady}
+        footerConfig={{
+          ctaTitle: "扫码体验",
+          ctaSubtitle: "让关心你的人安心",
+          primaryColor: "#881337",
+          secondaryColor: "#9f1239",
+          brandingColor: "#be185d",
+          brandingOpacity: 0.7,
         }}
       >
         {/* Header */}
@@ -133,7 +130,7 @@ const AliveCheckShareCard = forwardRef<HTMLDivElement, AliveCheckShareCardProps>
           background: 'rgba(255, 255, 255, 0.6)',
           borderRadius: '16px',
           padding: '16px',
-          marginBottom: '20px',
+          marginBottom: '0',
         }}>
           <div style={{
             fontSize: '13px',
@@ -165,54 +162,7 @@ const AliveCheckShareCard = forwardRef<HTMLDivElement, AliveCheckShareCardProps>
             </div>
           </div>
         </div>
-
-        {/* QR Code Footer */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '16px',
-          background: 'rgba(255, 255, 255, 0.8)',
-          borderRadius: '16px',
-          padding: '16px',
-        }}>
-          {qrCodeUrl && (
-            <img
-              src={qrCodeUrl}
-              alt="QR Code"
-              style={{
-                width: '80px',
-                height: '80px',
-                borderRadius: '8px',
-              }}
-            />
-          )}
-          <div>
-            <div style={{
-              fontSize: '14px',
-              fontWeight: '600',
-              color: '#881337',
-              marginBottom: '4px',
-            }}>
-              扫码体验
-            </div>
-            <div style={{
-              fontSize: '11px',
-              color: '#9f1239',
-              marginBottom: '8px',
-            }}>
-              让关心你的人安心
-            </div>
-            <div style={{
-              fontSize: '10px',
-              color: '#be185d',
-              opacity: 0.7,
-            }}>
-              Powered by 有劲AI
-            </div>
-          </div>
-        </div>
-      </div>
+      </ShareCardBase>
     );
   }
 );
