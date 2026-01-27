@@ -199,7 +199,7 @@ export const assessmentOutcomes = [
   { icon: 'Activity', title: "三维情绪仪表盘", desc: "能量/焦虑/压力三大指数可视化", color: "cyan" },
   { icon: 'Brain', title: "反应模式识别", desc: "识别你的情绪自动反应模式", color: "purple" },
   { icon: 'Target', title: "阻滞点定位", desc: "精准找到你当前最卡的那一层", color: "rose" },
-  { icon: 'Bot', title: "AI情绪健康教练", desc: "根据结果进入专属对话修复路径", color: "emerald" },
+  { icon: 'Bot', title: "AI情绪教练", desc: "根据结果进入专属对话修复路径", color: "emerald" },
 ];
 
 // ===== 第二层：反应模式对照配置 =====
@@ -223,14 +223,14 @@ export const pricingIncludes = [
   "32道专业场景测评",
   "三维情绪仪表盘",
   "反应模式诊断",
-  "AI情绪健康教练",
+  "AI情绪教练",
 ];
 
 // ===== 登录权益 =====
 export const loginBenefits = [
   "查看历史趋势变化",
   "解锁情绪日记训练营",
-  "获得AI情绪健康教练对话",
+  "获得AI情绪教练对话",
 ];
 
 // ===== 四大反应模式配置 =====

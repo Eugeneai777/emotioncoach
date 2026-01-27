@@ -35,7 +35,7 @@ export const growthNodes: GrowthNode[] = [
     title: 'AI教练',
     subtitle: '即时陪伴',
     emoji: '🤖',
-    description: '基于测评结果的AI情绪健康教练',
+    description: '基于测评结果的AI情绪教练',
     route: '/assessment-coach',
     ctaText: '继续对话',
     gradient: 'from-emerald-500/10 to-teal-500/10',
