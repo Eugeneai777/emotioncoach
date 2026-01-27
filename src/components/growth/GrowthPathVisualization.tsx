@@ -162,12 +162,6 @@ export function GrowthPathVisualization({ currentStage, loading }: GrowthPathVis
                   分享你的成长故事，帮助更多人开启觉醒之旅
                 </p>
               </div>
-              <div className="text-right flex-shrink-0">
-                <Badge className="bg-background/80 text-foreground hover:bg-background">
-                  ¥999起
-                </Badge>
-                <p className="text-xs text-muted-foreground mt-1">佣金20%-50%</p>
-              </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </div>
           </CardContent>
