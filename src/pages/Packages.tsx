@@ -13,6 +13,7 @@ import { pageTourConfig } from "@/config/pageTourConfig";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { HorizontalScrollHint } from "@/components/ui/horizontal-scroll-hint";
 import { usePaymentCallback } from "@/hooks/usePaymentCallback";
+import { PrepaidBalanceCard } from "@/components/coaching/PrepaidBalanceCard";
 
 interface PackageInfo {
   key: string;
@@ -99,6 +100,8 @@ export default function Packages() {
         <PageHeader title="产品中心" />
 
         <div className="container max-w-2xl mx-auto px-3 py-3 space-y-3">
+          {/* 教练预付卡入口 */}
+          {user && <PrepaidBalanceCard />}
           {/* 产品分类 Tabs - 简化版 + 横滑提示 */}
           <Tabs value={activeTab} onValueChange={v => setActiveTab(v as typeof activeTab)} className="w-full">
             <HorizontalScrollHint className="w-full">
