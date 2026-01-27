@@ -87,7 +87,6 @@ export function useUserGrowthStage(): UserGrowthData {
 
   // 计算用户阶段（按优先级排序）
   const getStage = (): GrowthStage => {
-    if (data.isPartner) return 'partner';
     if (data.has365Membership) return 'member365';
     if (data.hasActiveCamp) return 'in_camp';
     if (data.hasCompletedAssessment) return 'assessed';

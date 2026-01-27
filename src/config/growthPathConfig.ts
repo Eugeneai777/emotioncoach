@@ -1,5 +1,5 @@
 // 成长支持路径配置
-export type GrowthStage = 'new_user' | 'assessed' | 'in_camp' | 'member365' | 'partner';
+export type GrowthStage = 'new_user' | 'assessed' | 'in_camp' | 'member365';
 
 export interface GrowthNode {
   id: string;
@@ -66,18 +66,6 @@ export const growthNodes: GrowthNode[] = [
     ctaText: '了解会员',
     gradient: 'from-rose-500/10 to-pink-500/10',
     borderColor: 'border-rose-200 dark:border-rose-800'
-  },
-  {
-    id: 'partner',
-    stage: 'partner',
-    title: '合伙人',
-    subtitle: '共创事业',
-    emoji: '💎',
-    description: '分享见证故事，开启裂变增长',
-    route: '/partner-intro',
-    ctaText: '成为合伙人',
-    gradient: 'from-indigo-500/10 to-purple-500/10',
-    borderColor: 'border-indigo-200 dark:border-indigo-800'
   }
 ];
 
@@ -85,14 +73,12 @@ export const stageLabels: Record<GrowthStage, string> = {
   new_user: '🌱 刚刚起步',
   assessed: '✅ 已完成测评',
   in_camp: '🏕️ 训练营进行中',
-  member365: '👑 365会员',
-  partner: '💎 合伙人'
+  member365: '👑 365会员'
 };
 
 export const stageCtas: Record<GrowthStage, { text: string; route: string }> = {
   new_user: { text: '开始测评，了解自己', route: '/emotion-health' },
   assessed: { text: '与AI教练对话', route: '/assessment-coach' },
   in_camp: { text: '继续今日打卡', route: '/camps' },
-  member365: { text: '探索本周主题', route: '/coach-space' },
-  partner: { text: '查看推广中心', route: '/partner' }
+  member365: { text: '探索本周主题', route: '/coach-space' }
 };
