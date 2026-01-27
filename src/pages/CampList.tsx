@@ -156,8 +156,10 @@ const CampList = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50/80 via-cyan-50/50 to-blue-50/30
-        dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10">
+      <div
+        className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-br from-teal-50/80 via-cyan-50/50 to-blue-50/30 dark:from-teal-950/20 dark:via-cyan-950/10 dark:to-blue-950/10"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-teal-200/30">
           <div className="container max-w-6xl mx-auto px-4 py-4">
             <Button variant="ghost" size="sm" onClick={() => navigate("/energy-studio")} className="gap-2 text-teal-700 hover:text-teal-800 hover:bg-teal-100/50">
