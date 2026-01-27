@@ -1,14 +1,21 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export type AppointmentNotificationScenario = 
+  // 用户端场景
   | 'appointment_confirmed'      // 预约确认
   | 'appointment_reminder'       // 预约开始提醒
   | 'review_invitation'          // 评价邀请
   | 'appointment_cancelled'      // 预约取消
-  | 'appointment_rescheduled';   // 预约改期
+  | 'appointment_rescheduled'    // 预约改期
+  | 'appointment_completed'      // 咨询完成
+  // 教练端场景
+  | 'coach_new_appointment'      // 教练收到新预约
+  | 'coach_appointment_reminder' // 教练即将开始提醒
+  | 'coach_appointment_cancelled'; // 教练收到取消通知
 
 interface SendNotificationParams {
-  userId: string;
+  userId?: string;
+  coachId?: string;
   scenario: AppointmentNotificationScenario;
   appointmentId: string;
   minutesBefore?: number;
@@ -38,6 +45,8 @@ export const useAppointmentNotification = () => {
       return { success: false, error: String(error) };
     }
   };
+
+  // ===== 用户端通知 =====
 
   // 发送预约确认通知
   const sendConfirmationNotification = async (userId: string, appointmentId: string) => {
@@ -76,11 +85,66 @@ export const useAppointmentNotification = () => {
     });
   };
 
+  // 发送咨询完成通知
+  const sendCompletionNotification = async (userId: string, appointmentId: string) => {
+    return sendNotification({
+      userId,
+      scenario: 'appointment_completed',
+      appointmentId,
+    });
+  };
+
+  // 发送改期通知
+  const sendRescheduleNotification = async (userId: string, appointmentId: string) => {
+    return sendNotification({
+      userId,
+      scenario: 'appointment_rescheduled',
+      appointmentId,
+    });
+  };
+
+  // ===== 教练端通知 =====
+
+  // 通知教练有新预约
+  const sendCoachNewAppointmentNotification = async (coachId: string, appointmentId: string) => {
+    return sendNotification({
+      coachId,
+      scenario: 'coach_new_appointment',
+      appointmentId,
+    });
+  };
+
+  // 通知教练预约即将开始
+  const sendCoachReminderNotification = async (coachId: string, appointmentId: string, minutesBefore: number) => {
+    return sendNotification({
+      coachId,
+      scenario: 'coach_appointment_reminder',
+      appointmentId,
+      minutesBefore,
+    });
+  };
+
+  // 通知教练预约已取消
+  const sendCoachCancellationNotification = async (coachId: string, appointmentId: string) => {
+    return sendNotification({
+      coachId,
+      scenario: 'coach_appointment_cancelled',
+      appointmentId,
+    });
+  };
+
   return {
     sendNotification,
+    // 用户端
     sendConfirmationNotification,
     sendReminderNotification,
     sendReviewInvitation,
     sendCancellationNotification,
+    sendCompletionNotification,
+    sendRescheduleNotification,
+    // 教练端
+    sendCoachNewAppointmentNotification,
+    sendCoachReminderNotification,
+    sendCoachCancellationNotification,
   };
 };
