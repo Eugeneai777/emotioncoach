@@ -1,40 +1,71 @@
 
+# 修复分享对话框按钮不可见问题
 
-# 修复"查看完整成长支持路径"按钮重复问题
+## 问题诊断
 
-## 问题分析
+在 `EmotionHealthShareDialog.tsx` 中，分享对话框在移动端可能出现以下问题：
 
-在 `EmotionHealthResult.tsx` 底部按钮组中，存在两个按钮显示相同的文本：
-
-| 位置 | 类型 | 内容 |
-|------|------|------|
-| 第262-270行 | 硬编码 | "查看完整成长支持路径" + Map图标 + 紫色渐变 |
-| 第272-279行 | 配置驱动 | `secondaryText` = "查看完整成长支持路径" |
-
-两个按钮都导航到不同路由（`/growth-path` vs `/camps`），但文案完全相同，造成用户困惑。
+| 问题 | 原因 |
+|------|------|
+| 按钮区域不可见 | 预览卡片高度过大，底部按钮被截断 |
+| 内容溢出 | `overflow-hidden` 阻止滚动 |
+| 移动端布局 | 底部弹出模式下高度受限 |
 
 ## 修复方案
 
-保留第一个带有渐变样式的"查看完整成长支持路径"按钮（导航到 `/growth-path`），修改第二个按钮为训练营入口：
+### 1. 调整对话框布局
 
-### 文件修改
-
-**文件：`src/components/emotion-health/emotionHealthData.ts`**
+**文件：`src/components/emotion-health/EmotionHealthShareDialog.tsx`**
 
 ```typescript
-// 第630行
 // 修改前：
-secondaryText: '查看完整成长支持路径'
+<DialogContent className="max-w-sm p-0 gap-0 overflow-hidden">
 
 // 修改后：
-secondaryText: '了解21天训练营'
+<DialogContent className="max-w-sm p-0 gap-0 max-h-[85vh] flex flex-col">
 ```
 
-这样两个按钮的功能区分就清晰了：
-- 按钮1："查看完整成长支持路径" → 导航到 `/growth-path`
-- 按钮2："了解21天训练营" → 导航到 `/camps`
+### 2. 使预览区域可滚动，按钮区域固定
 
-## 修改影响
+```typescript
+// 预览区域改为可滚动
+<div className="p-4 bg-muted/30 overflow-y-auto flex-1 min-h-0">
+  <div className="flex justify-center">
+    <div className="transform scale-[0.75] origin-top"> {/* 缩小缩放比例 */}
+      <EmotionHealthShareCard ... />
+    </div>
+  </div>
+</div>
 
-仅影响测评结果页底部的 CTA 按钮文案，不会影响其他页面。
+// 按钮区域固定在底部
+<div className="p-4 border-t flex-shrink-0">
+  ...
+</div>
+```
 
+### 3. 添加 DialogDescription 消除控制台警告
+
+```typescript
+import { DialogDescription } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+
+// 在 DialogHeader 内添加：
+<DialogHeader className="px-4 py-3 border-b">
+  <DialogTitle className="text-base">分享测评结果</DialogTitle>
+  <VisuallyHidden>
+    <DialogDescription>生成情绪健康测评分享图片或复制分享链接</DialogDescription>
+  </VisuallyHidden>
+</DialogHeader>
+```
+
+## 完整修改清单
+
+| 文件 | 修改内容 |
+|------|----------|
+| `src/components/emotion-health/EmotionHealthShareDialog.tsx` | 调整布局使按钮始终可见、缩小预览比例、添加无障碍描述 |
+
+## 预期效果
+
+- 对话框打开后，预览卡片和底部按钮都清晰可见
+- 如果预览卡片很长，预览区域可以滚动，但按钮始终固定在底部
+- 消除控制台的 `Missing Description` 警告
