@@ -22,7 +22,7 @@ export function GrowthPathVisualization({ currentStage, loading }: GrowthPathVis
   const navigate = useNavigate();
   
   const getNodeStatus = (node: GrowthNode): 'completed' | 'current' | 'upcoming' => {
-    const stageOrder: GrowthStage[] = ['new_user', 'assessed', 'in_camp', 'member365', 'partner'];
+    const stageOrder: GrowthStage[] = ['new_user', 'assessed', 'in_camp', 'member365'];
     const currentIndex = stageOrder.indexOf(currentStage);
     const nodeIndex = stageOrder.indexOf(node.stage);
     
