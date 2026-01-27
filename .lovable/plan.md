@@ -1,69 +1,181 @@
 
+# 成长支持路径设计优化方案
 
-# 将"AI陪伴对话"改为"AI情绪健康教练"
+## 现状分析
 
-## 分析结果
+当前实现存在以下问题：
+1. **视觉层次不清晰** - 所有节点使用相似的卡片样式，难以区分已完成/当前/待解锁
+2. **进度感知弱** - 缺少连续的进度线，箭头连接器显得碎片化
+3. **动画效果单一** - 仅有基础的 fade-in 入场动画，缺少交互反馈
+4. **状态区分度低** - 已完成节点仅用 opacity:0.8 和绿色勾标识，不够醒目
 
-根据搜索结果，需要修改以下文件中的相关术语：
+## 优化目标
 
-| 文件 | 当前文案 | 修改为 |
-|------|----------|--------|
-| `src/pages/AssessmentCoachPage.tsx` | "AI陪伴对话" (标题/meta) | "AI情绪健康教练" |
-| `src/components/emotion-health/emotionHealthData.ts` | "AI教练陪伴对话"、"开始我的AI陪伴对话" | "AI情绪健康教练" |
-| `src/config/growthPathConfig.ts` | "AI对话陪伴" (description) | "AI情绪健康教练" |
+| 目标 | 描述 |
+|------|------|
+| 清晰的进度可视化 | 用连续进度线 + 节点状态 清晰展示完成情况 |
+| 突出当前任务 | 让"下一步要做什么"一目了然 |
+| 丰富的动画体验 | 入场动画、悬停反馈、进度线动画 |
+| 移动端友好 | 符合 48px 触控标准，流畅的滚动体验 |
 
-以下文件使用的是更通用的"AI陪伴"术语（非本次修改目标，但可选择性统一）：
-- 分享卡片中的"温暖AI陪伴"
-- 训练营描述中的"AI陪伴"标签
-- 其他产品对比表格中的标签
+## 设计方案
 
-## 修改方案
-
-### 文件1: `src/pages/AssessmentCoachPage.tsx`
+### 1. 重构布局：垂直时间轴 + 进度线
 
 ```text
-修改点：
-- Line 38: <title>AI陪伴对话 - 有劲AI</title>
-  → <title>AI情绪健康教练 - 有劲AI</title>
+┌────────────────────────────────────┐
+│  📍 当前位置：已完成测评            │
+└────────────────────────────────────┘
 
-- Line 39: <meta name="description" content="根据你的情绪状态，开始个性化的AI陪伴对话" />
-  → <meta name="description" content="根据你的情绪状态，开启专属的AI情绪健康教练对话" />
-
-- Line 42: <PageHeader title="AI陪伴对话" showBack />
-  → <PageHeader title="AI情绪健康教练" showBack />
+  ●━━━━━━━━━━━━━━  组合测评 ✓         <- 已完成（绿色实心圆 + 实线）
+  │                 觉察入口
+  │                 ¥9.9
+  │
+  ●━━━━━━━━━━━━━━  AI教练 ←          <- 当前（脉冲圆 + 高亮卡片）
+  │                 即时陪伴
+  │                 【立即开始】
+  │
+  ○─ ─ ─ ─ ─ ─ ─   21天训练营          <- 待解锁（空心圆 + 虚线）
+  │                 系统转化
+  │                 ¥299
+  │
+  ○─ ─ ─ ─ ─ ─ ─   365会员             <- 待解锁
+  │                 长期陪伴
+  │                 ¥365
+  │
+  ◇              成为合伙人             <- 终极目标（钻石图标）
 ```
 
-### 文件2: `src/components/emotion-health/emotionHealthData.ts`
+### 2. 节点状态视觉设计
+
+| 状态 | 节点圆 | 连接线 | 卡片样式 | 动画 |
+|------|--------|--------|----------|------|
+| completed | 实心绿圆 + ✓ | 实线渐变（绿色） | 柔和背景 + 已完成标签 | 入场时从左滑入 |
+| current | 脉冲紫圆 | 渐变过渡 | 高亮边框 + glow效果 | 呼吸动画 + 入场放大 |
+| upcoming | 空心灰圆 | 虚线灰色 | 半透明 + 锁定图标 | 延迟入场 |
+
+### 3. 动画系统
 
 ```text
-修改点：
-- Line 202: { icon: 'Bot', title: "AI教练陪伴", desc: "根据结果进入专属对话修复路径", color: "emerald" }
-  → { icon: 'Bot', title: "AI情绪健康教练", desc: "根据结果进入专属对话修复路径", color: "emerald" }
+入场动画序列：
+┌─────────────────────────────────────────────────┐
+│ 0ms    100ms   200ms   300ms   400ms   500ms    │
+│  │       │       │       │       │       │      │
+│  ├── 头部卡片淡入                               │
+│          ├── 进度线从上往下绘制（stagger）      │
+│                  ├── 节点1 弹入                 │
+│                          ├── 节点2 弹入         │
+│                                  ├── 节点3      │
+│                                          └─ CTA │
+└─────────────────────────────────────────────────┘
 
-- Line 226: "AI教练陪伴对话"
-  → "AI情绪健康教练"
-
-- Line 233: "获得AI教练个性化陪伴"
-  → "获得AI情绪健康教练对话"
-
-- Line 608: ctaText: '开始我的AI陪伴对话'
-  → ctaText: '开始AI情绪健康教练'
+交互动画：
+- 卡片 hover: scale(1.02) + shadow 加深
+- 卡片 tap: scale(0.98) 按压反馈
+- 当前节点: 边框呼吸 + 图标脉冲
+- 进度线: 渐变色流动效果（可选）
 ```
 
-### 文件3: `src/config/growthPathConfig.ts`
+### 4. 内容优化
+
+| 模块 | 优化项 |
+|------|--------|
+| 顶部状态 | 显示完成进度百分比 (如 "25% · 已完成1/4步") |
+| 已完成节点 | 显示完成时间 + 查看详情入口 |
+| 当前节点 | 突出 CTA 按钮 + 预估时间/难度提示 |
+| 待解锁节点 | 锁定图标 + "完成上一步后解锁" 提示 |
+| 合伙人入口 | 改为横向 banner 样式，更突出 |
+
+## 技术实现
+
+### 文件修改清单
+
+| 文件 | 修改内容 |
+|------|----------|
+| `src/components/growth/GrowthPathVisualization.tsx` | 重构为时间轴布局，添加进度线、节点状态动画 |
+| `src/components/growth/GrowthNodeCard.tsx` | 新建组件，封装单个节点的渲染和动画逻辑 |
+| `src/components/growth/GrowthProgressLine.tsx` | 新建组件，渲染连接线及其动画 |
+| `src/config/growthPathConfig.ts` | 添加 completedText 等辅助文案配置 |
+| `src/pages/GrowthSupportPath.tsx` | 调整容器样式适配新布局 |
+
+### 核心代码结构
 
 ```text
-修改点：
-- Line 38: description: '基于测评结果的个性化AI对话陪伴'
-  → description: '基于测评结果的AI情绪健康教练'
+GrowthPathVisualization
+├── ProgressHeader (当前阶段 + 完成百分比)
+├── TimelineContainer
+│   ├── GrowthProgressLine (SVG 进度线 + 动画)
+│   └── NodeList
+│       ├── GrowthNodeCard (completed)
+│       ├── GrowthNodeCard (current) ← 高亮
+│       ├── GrowthNodeCard (upcoming)
+│       └── GrowthNodeCard (upcoming)
+├── PartnerBanner (合伙人入口)
+└── MainCTA (主按钮)
+```
+
+### 动画配置（Framer Motion）
+
+```typescript
+// 入场动画变体
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12 }
+  }
+};
+
+const nodeVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { 
+    opacity: 1, 
+    x: 0,
+    transition: { type: "spring", stiffness: 300, damping: 24 }
+  }
+};
+
+// 当前节点脉冲动画
+const pulseVariants = {
+  pulse: {
+    scale: [1, 1.05, 1],
+    boxShadow: [
+      "0 0 0 0 rgba(139, 92, 246, 0.4)",
+      "0 0 0 8px rgba(139, 92, 246, 0)",
+      "0 0 0 0 rgba(139, 92, 246, 0)"
+    ],
+    transition: { duration: 2, repeat: Infinity }
+  }
+};
+```
+
+### 进度线实现（SVG Path）
+
+```typescript
+// 进度线动画 - 从顶部绘制到当前位置
+<motion.path
+  d={linePath}
+  stroke="url(#progressGradient)"
+  strokeWidth={3}
+  fill="none"
+  initial={{ pathLength: 0 }}
+  animate={{ pathLength: progressRatio }}
+  transition={{ duration: 1.2, ease: "easeOut" }}
+/>
 ```
 
 ## 预期效果
 
-| 位置 | 修改前 | 修改后 |
+| 指标 | 优化前 | 优化后 |
 |------|--------|--------|
-| 测评后AI对话页标题 | AI陪伴对话 | AI情绪健康教练 |
-| 测评结果页CTA | 开始我的AI陪伴对话 | 开始AI情绪健康教练 |
-| 成长路径页描述 | AI对话陪伴 | AI情绪健康教练 |
-| 测评介绍页功能列表 | AI教练陪伴/AI教练陪伴对话 | AI情绪健康教练 |
+| 进度可视化 | 依赖 badge 文字 | 进度线 + 百分比 + 节点状态 |
+| 当前任务突出度 | 仅 ring 边框 | 脉冲动画 + glow + 内嵌 CTA |
+| 动画丰富度 | 基础 fade-in | 时序入场 + 交互反馈 + 进度线动画 |
+| 信息密度 | 重复显示价格/描述 | 根据状态差异化显示关键信息 |
 
+## 移动端适配
+
+- 节点卡片高度 >= 72px，满足触控需求
+- 时间轴偏左布局，为内容留出更多空间
+- 进度线宽度 3px，在小屏幕上清晰可见
+- 动画使用 `opacity: 0.01` 和 `translateZ(0)` 确保微信 WebView 兼容
