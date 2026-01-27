@@ -1,237 +1,193 @@
 
-# 分享卡片统一性修复方案
+# 情绪健康测评支付门槛与历史记录实现计划
 
-## 一、审计结果汇总
+## 问题分析
 
-经过对所有分享卡片的详细审计，发现以下不一致问题：
+当前情绪健康测评存在三个核心问题：
 
-### 1.1 品牌标识不一致
+1. **无支付门槛** - 用户无需付费即可开始测评
+2. **无历史记录** - 完成后无法再次查看报告
+3. **硬编码状态** - `is_paid` 被硬编码为 `true`
 
-| 卡片 | 当前品牌文案 | 问题 |
-|------|-------------|------|
-| AliveCheckShareCard | "有劲生活 · 生活管理" | 过时品牌 |
-| EmotionButtonShareCard | "有劲生活 · 情绪梳理教练" | 过时品牌 |
-| ShareCard (社区) | "有劲AI · 情绪日记" | 带后缀 |
-| TransformationValueShareCard | "有劲AI · 财富教练" | 带后缀 |
-| SCL90ShareCard | "Powered by 有劲AI" | **正确** |
-| EmotionHealthShareCard | "Powered by 有劲AI" | **正确** |
+## 目标
 
-**统一标准**: `Powered by 有劲AI`
+使情绪健康测评与财富卡点测评保持一致的用户体验：
+- 需要支付 ¥9.90 才能开始测评
+- 支持微信静默授权 + JSAPI支付
+- 已购买用户自动跳过介绍页
+- 完成后可查看历史测评记录
 
-### 1.2 QR码生成方式不一致
+## 实现方案
 
-| 卡片 | QR实现方式 | 问题 |
-|------|-----------|------|
-| AliveCheckShareCard | 直接 `QRCode.toDataURL` | 未复用标准hook |
-| EmotionButtonShareCard | 直接 `QRCode.toDataURL` | 未复用标准hook |
-| ShareCard (社区) | 直接 `QRCode.toDataURL` | 未复用标准hook |
-| TransformationValueShareCard | `useQRCode` hook | **正确** |
-| SCL90ShareCard | `useQRCode` hook | **正确** |
-| EmotionHealthShareCard | `useQRCode` hook | **正确** |
+### 第一步：创建购买状态检查 Hook
 
-**统一标准**: 使用 `useQRCode` hook
+创建 `useEmotionHealthPurchase.ts`，复用财富测评的查询模式：
 
-### 1.3 卡片宽度不一致
+```text
+src/hooks/useEmotionHealthPurchase.ts
+- 查询 orders 表，检查 package_key = 'emotion_health_assessment'
+- 返回购买记录和加载状态
+```
 
-| 卡片 | 宽度 | 问题 |
+### 第二步：重构页面状态机
+
+将页面状态从 `start | questions | result` 扩展为：
+
+```text
+'intro' | 'questions' | 'result' | 'history'
+
+状态流转：
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│  未购买用户:  intro ──(支付)──> questions ──> result        │
+│                                                             │
+│  已购买用户:  intro(自动跳过) ──> questions ──> result      │
+│               ↓                                              │
+│            history ←────────────────────┘                   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 第三步：集成支付弹窗
+
+在 `EmotionHealthPage.tsx` 中集成 `AssessmentPayDialog`：
+
+```text
+新增状态:
+- showPayDialog: boolean
+- isRedirectingForAuth: boolean
+
+新增逻辑:
+- handlePayClick(): 微信环境触发静默授权，其他直接打开弹窗
+- triggerWeChatSilentAuth(): 调用 wechat-pay-auth 函数
+- usePaymentCallback(): 监听支付回调
+
+修改 handleStart():
+- 未登录 → 跳转登录
+- 未购买 → 打开支付弹窗
+- 已购买 → 进入测评
+```
+
+### 第四步：修改开始页组件
+
+更新 `EmotionHealthStartScreen.tsx`：
+
+```text
+新增 props:
+- hasPurchased: boolean
+- onPayClick: () => void
+- isLoading: boolean
+
+按钮逻辑:
+- 未购买: 显示 "¥9.90 开始测评" 并调用 onPayClick
+- 已购买: 显示 "开始测评" 并调用 onStart
+```
+
+### 第五步：修复数据保存逻辑
+
+更新 `handleComplete` 函数：
+
+```text
+修改前:
+  is_paid: true  // 硬编码
+
+修改后:
+  order_id: purchaseRecord?.orderId  // 关联订单
+  is_paid: true
+  paid_at: purchaseRecord?.paidAt
+```
+
+### 第六步：添加历史记录功能
+
+创建历史记录组件和查询：
+
+```text
+src/components/emotion-health/EmotionHealthHistory.tsx
+- 列表展示历史测评
+- 点击可查看详细报告
+- 支持删除（可选）
+
+src/hooks/useEmotionHealthHistory.ts
+- 查询 emotion_health_assessments 表
+- 按 created_at 降序排列
+```
+
+### 第七步：更新页面布局
+
+添加 Tab 切换支持历史查看：
+
+```text
+<Tabs value={activeTab}>
+  <TabsList>
+    <TabsTrigger value="assessment">测评</TabsTrigger>
+    <TabsTrigger value="history">历史记录</TabsTrigger>
+  </TabsList>
+  
+  <TabsContent value="assessment">
+    {/* 现有测评流程 */}
+  </TabsContent>
+  
+  <TabsContent value="history">
+    <EmotionHealthHistory />
+  </TabsContent>
+</Tabs>
+```
+
+---
+
+## 文件变更清单
+
+| 文件 | 操作 | 说明 |
 |------|------|------|
-| EmotionButtonShareCard | 600px | 过宽 |
-| ShareCard (社区) | 600px | 过宽 |
-| AliveCheckShareCard | 420px | 略宽 |
-| 其他卡片 | 320-340px | **标准** |
+| `src/hooks/useEmotionHealthPurchase.ts` | 新建 | 购买状态检查 Hook |
+| `src/hooks/useEmotionHealthHistory.ts` | 新建 | 历史记录查询 Hook |
+| `src/components/emotion-health/EmotionHealthHistory.tsx` | 新建 | 历史记录列表组件 |
+| `src/pages/EmotionHealthPage.tsx` | 修改 | 集成支付、历史、状态管理 |
+| `src/components/emotion-health/EmotionHealthStartScreen.tsx` | 修改 | 添加价格显示和支付入口 |
+| `src/components/emotion-health/index.ts` | 修改 | 导出新组件 |
 
-**建议标准**: 
-- 结果类/测评类: 340px
-- 工具介绍类: 380-420px (内容较多)
-- 社区帖子类: 保持600px (图文混排需要)
+---
 
-## 二、修复计划
+## 技术细节
 
-### 2.1 AliveCheckShareCard.tsx 修复
+### 微信支付流程
 
-**修改内容**:
-1. 品牌文案: `有劲生活 · 生活管理` → `Powered by 有劲AI`
-2. QR码生成: 直接调用 → `useQRCode` hook
-3. 移除 `onReady` 回调 (hook自带loading状态)
-
-```typescript
-// Before
-import QRCode from 'qrcode';
-const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-useEffect(() => { QRCode.toDataURL(...) }, []);
-
-// After
-import { useQRCode } from '@/utils/qrCodeUtils';
-const shareUrl = partnerCode 
-  ? `${getPromotionDomain()}/energy-studio?tool=alive-check&ref=${partnerCode}`
-  : `${getPromotionDomain()}/energy-studio?tool=alive-check`;
-const { qrCodeUrl, isLoading } = useQRCode(shareUrl);
+```text
+用户点击"开始测评"
+      │
+      ▼
+  检查是否登录? ──否──> 跳转 /auth
+      │是
+      ▼
+  检查是否已购买? ──是──> 直接开始测评
+      │否
+      ▼
+  是否微信环境? ──否──> 打开支付弹窗 (扫码)
+      │是
+      ▼
+  是否有 OpenID? ──是──> 打开支付弹窗 (JSAPI)
+      │否
+      ▼
+  触发静默授权 → 回调页面 → 重新打开弹窗
 ```
 
-### 2.2 EmotionButtonShareCard.tsx 修复
+### 数据库关联
 
-**修改内容**:
-1. 品牌文案: `有劲生活 · 情绪梳理教练` → `Powered by 有劲AI`
-2. QR码生成: 直接调用 → `useQRCode` hook
-3. 移除 `onReady` 回调
+```text
+orders 表
+├── package_key: 'emotion_health_assessment'
+├── status: 'paid'
+└── user_id: uuid
 
-### 2.3 ShareCard.tsx (社区) 修复
-
-**修改内容**:
-1. 品牌文案: `有劲AI · 情绪日记` → `Powered by 有劲AI`
-2. QR码生成: 直接调用 → `useQRCode` hook
-
-### 2.4 TransformationValueShareCard.tsx 修复
-
-**修改内容**:
-1. 品牌文案: `有劲AI · 财富教练` → `Powered by 有劲AI`
-
-## 三、文件修改清单
-
-| 文件路径 | 操作 | 修改内容 |
-|---------|------|---------|
-| `src/components/tools/AliveCheckShareCard.tsx` | 修改 | QR hook + 品牌统一 |
-| `src/components/tools/EmotionButtonShareCard.tsx` | 修改 | QR hook + 品牌统一 |
-| `src/components/community/ShareCard.tsx` | 修改 | QR hook + 品牌统一 |
-| `src/components/wealth-block/TransformationValueShareCard.tsx` | 修改 | 品牌统一 |
-
-## 四、代码变更详情
-
-### 4.1 AliveCheckShareCard.tsx
-
-```typescript
-// 1. 替换 import
-- import QRCode from 'qrcode';
-+ import { useQRCode } from '@/utils/qrCodeUtils';
-+ import { getPromotionDomain } from '@/utils/partnerQRUtils';
-
-// 2. 替换 QR 生成逻辑
-- const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-- useEffect(() => { ... }, [partnerCode, onReady]);
-+ const shareUrl = partnerCode 
-+   ? `${getPromotionDomain()}/energy-studio?tool=alive-check&ref=${partnerCode}`
-+   : `${getPromotionDomain()}/energy-studio?tool=alive-check`;
-+ const { qrCodeUrl, isLoading } = useQRCode(shareUrl);
-+ 
-+ useEffect(() => {
-+   if (!isLoading) onReady?.();
-+ }, [isLoading, onReady]);
-
-// 3. 修改品牌文案
-- <div style={{ fontSize: '10px', color: '#be185d', opacity: 0.7 }}>
--   有劲生活 · 生活管理
-- </div>
-+ <div style={{ fontSize: '10px', color: '#be185d', opacity: 0.7 }}>
-+   Powered by 有劲AI
-+ </div>
+emotion_health_assessments 表
+├── order_id: FK → orders.id
+├── is_paid: boolean
+└── paid_at: timestamp
 ```
 
-### 4.2 EmotionButtonShareCard.tsx
+### 复用组件
 
-```typescript
-// 1. 替换 import
-- import QRCode from 'qrcode';
-+ import { useQRCode } from '@/utils/qrCodeUtils';
-
-// 2. 替换 QR 生成逻辑
-- const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-- useEffect(() => { ... }, [partnerCode, onReady]);
-+ const shareUrl = partnerCode 
-+   ? `${getPromotionDomain()}/energy-studio?ref=${partnerCode}`
-+   : `${getPromotionDomain()}/energy-studio`;
-+ const { qrCodeUrl, isLoading } = useQRCode(shareUrl);
-+ 
-+ useEffect(() => {
-+   if (!isLoading) onReady?.();
-+ }, [isLoading, onReady]);
-
-// 3. 修改品牌水印
-- 有劲生活 · 情绪梳理教练
-+ Powered by 有劲AI
-```
-
-### 4.3 ShareCard.tsx (社区)
-
-```typescript
-// 1. 替换 import
-- import QRCode from "qrcode";
-+ import { useQRCode } from "@/utils/qrCodeUtils";
-
-// 2. 替换 QR 生成逻辑
-- const [qrCodeUrl, setQrCodeUrl] = useState("");
-- useEffect(() => {
--   const qrUrl = getQRCodeUrl(partnerInfo, post);
--   QRCode.toDataURL(qrUrl, { width: 120, margin: 1 }).then(setQrCodeUrl);
-- }, [partnerInfo, post]);
-+ const qrUrl = getQRCodeUrl(partnerInfo, post);
-+ const { qrCodeUrl } = useQRCode(qrUrl);
-
-// 3. 修改品牌文案
-- <p className={cn("font-bold mb-2", ...)}>
--   有劲AI · 情绪日记
-- </p>
-+ <p className={cn("font-bold mb-2", ...)}>
-+   Powered by 有劲AI
-+ </p>
-```
-
-### 4.4 TransformationValueShareCard.tsx
-
-```typescript
-// 修改品牌文案
-- <span>有劲AI · 财富教练</span>
-+ <span>Powered by 有劲AI</span>
-```
-
-## 五、统一后的标准规范
-
-### 5.1 品牌标识规范
-
-所有分享卡片底部统一使用：
-```
-Powered by 有劲AI
-```
-
-样式规范：
-- 字号: 10-11px
-- 颜色: 根据卡片主题选择 (深色卡片用 white/40, 浅色卡片用对应主题色/70)
-- 位置: 卡片最底部居中
-
-### 5.2 QR码生成规范
-
-统一使用 `useQRCode` hook：
-```typescript
-import { useQRCode } from '@/utils/qrCodeUtils';
-
-const { qrCodeUrl, isLoading } = useQRCode(shareUrl, 'SHARE_CARD');
-```
-
-配置标准：
-- 预设: `SHARE_CARD` (width: 120, margin: 1)
-- 颜色: 黑底白底 (#000000 / #ffffff)
-
-### 5.3 域名使用规范
-
-所有外部分享链接使用 `getPromotionDomain()`:
-```typescript
-import { getPromotionDomain } from '@/utils/partnerQRUtils';
-
-const shareUrl = `${getPromotionDomain()}/target-page`;
-```
-
-## 六、预期效果
-
-| 指标 | 修复前 | 修复后 |
-|-----|--------|--------|
-| 品牌一致性 | 4种不同文案 | 统一 "Powered by 有劲AI" |
-| QR码实现 | 3种不同方式 | 统一 useQRCode hook |
-| 代码复用率 | ~60% | ~95% |
-| 维护成本 | 高 | 低 |
-
-## 七、验证方案
-
-修改完成后，在分享卡片管理面板 `/admin/share-cards` 中：
-1. 逐一预览所有卡片
-2. 检查品牌标识是否统一
-3. 测试图片生成功能
-4. 确认QR码正常显示
+直接复用以下现有组件，无需修改：
+- `AssessmentPayDialog` - 支付弹窗
+- `usePaymentCallback` - 支付回调处理
+- `QuickRegisterStep` - 游客注册流程
