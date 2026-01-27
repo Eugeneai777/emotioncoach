@@ -7,7 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { MessageCircle, Sparkles, ChevronRight, Share2, RotateCcw, AlertTriangle, Target, Compass, Search, Brain, Bot } from "lucide-react";
+import { MessageCircle, Sparkles, ChevronRight, Share2, RotateCcw, AlertTriangle, Target, Compass, Search, Brain, Bot, Map } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
@@ -258,6 +258,17 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
 
       {/* 其他操作按钮 */}
       <div className="space-y-3 pb-[calc(20px+env(safe-area-inset-bottom))]">
+        {/* 成长支持路径入口 */}
+        <Button 
+          variant="outline" 
+          className="w-full bg-gradient-to-r from-violet-500/5 to-purple-500/5 border-violet-200 dark:border-violet-800 hover:from-violet-500/10 hover:to-purple-500/10"
+          onClick={() => navigate('/growth-path')}
+        >
+          <Map className="w-4 h-4 mr-2 text-violet-600 dark:text-violet-400" />
+          查看完整成长支持路径
+          <ChevronRight className="w-4 h-4 ml-1" />
+        </Button>
+
         <Button 
           variant="outline" 
           className="w-full"
