@@ -14,7 +14,10 @@ const CoachSpace = () => {
   const { data: templates, isLoading } = useActiveCoachTemplates();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white pb-[env(safe-area-inset-bottom)]">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-slate-50 to-white pb-[env(safe-area-inset-bottom)]"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       <DynamicOGMeta pageKey="coachSpace" />
       {/* 通用顶部 Header */}
       <PageHeader
