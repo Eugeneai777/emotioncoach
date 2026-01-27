@@ -35,11 +35,11 @@ export default function AssessmentCoachPage() {
   return (
     <div className="h-screen flex flex-col bg-background">
       <Helmet>
-        <title>AI情绪健康教练 - 有劲AI</title>
-        <meta name="description" content="根据你的情绪状态，开启专属的AI情绪健康教练对话" />
+        <title>AI情绪教练 - 有劲AI</title>
+        <meta name="description" content="根据你的情绪状态，开启专属的AI情绪教练对话" />
       </Helmet>
       
-      <PageHeader title="AI情绪健康教练" showBack />
+      <PageHeader title="AI情绪教练" showBack />
 
       <main className="flex-1 overflow-hidden">
         <AssessmentCoachChat

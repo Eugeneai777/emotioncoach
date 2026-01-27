@@ -377,3 +377,6 @@ verify_jwt = false
 
 [functions.analyze-scl90]
 verify_jwt = true
+
+[functions.assessment-coach-chat]
+verify_jwt = false
