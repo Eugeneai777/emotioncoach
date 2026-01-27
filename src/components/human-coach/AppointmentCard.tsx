@@ -32,6 +32,7 @@ interface AppointmentCardProps {
   onJoinMeeting?: (link: string) => void;
   onReview?: (appointmentId: string, coachId: string, coachName: string) => void;
   onCall?: (coachUserId: string, coachName: string, appointmentId: string) => void;
+  onComplete?: (appointmentId: string, userId: string) => void;
 }
 
 export function AppointmentCard({ 
@@ -39,7 +40,8 @@ export function AppointmentCard({
   onCancel, 
   onJoinMeeting,
   onReview,
-  onCall
+  onCall,
+  onComplete
 }: AppointmentCardProps) {
   const coach = appointment.human_coaches;
   

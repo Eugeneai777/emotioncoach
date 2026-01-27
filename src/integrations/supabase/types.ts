@@ -179,6 +179,44 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_notification_logs: {
+        Row: {
+          appointment_id: string | null
+          created_at: string | null
+          id: string
+          recipient_id: string
+          recipient_type: string
+          scenario: string
+          sent_at: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string | null
+          id?: string
+          recipient_id: string
+          recipient_type: string
+          scenario: string
+          sent_at?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string | null
+          id?: string
+          recipient_id?: string
+          recipient_type?: string
+          scenario?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_notification_logs_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_reviews: {
         Row: {
           appointment_id: string

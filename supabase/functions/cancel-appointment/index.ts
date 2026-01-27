@@ -103,22 +103,34 @@ serve(async (req) => {
 
     // TODO: Process refund if payment was made
 
-    // Send cancellation notification
+    // Send user cancellation notification
     try {
-      await fetch(`${supabaseUrl}/functions/v1/send-appointment-notification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseServiceKey}`,
-        },
-        body: JSON.stringify({
+      await supabase.functions.invoke('send-appointment-notification', {
+        body: {
           userId: user.id,
           scenario: 'appointment_cancelled',
           appointmentId,
-        }),
+        },
       });
+      console.log('User cancellation notification sent');
     } catch (notifyError) {
-      console.error('Failed to send cancellation notification:', notifyError);
+      console.error('Failed to send user cancellation notification:', notifyError);
+    }
+
+    // Send coach cancellation notification
+    if (appointment.coach_id) {
+      try {
+        await supabase.functions.invoke('send-appointment-notification', {
+          body: {
+            coachId: appointment.coach_id,
+            scenario: 'coach_appointment_cancelled',
+            appointmentId,
+          },
+        });
+        console.log('Coach cancellation notification sent');
+      } catch (notifyError) {
+        console.error('Failed to send coach cancellation notification:', notifyError);
+      }
     }
 
     console.log('Appointment cancelled successfully:', appointmentId);

@@ -301,23 +301,41 @@ serve(async (req) => {
         } else {
           console.log('Appointment confirmed:', appointment.id);
 
-          // 发送预约确认通知
+          // 获取预约详情（包含教练信息）
+          const { data: appointmentDetail } = await supabase
+            .from('coaching_appointments')
+            .select('coach_id')
+            .eq('id', appointment.id)
+            .single();
+
+          // 发送用户预约确认通知
           try {
-            await fetch(`${supabaseUrl}/functions/v1/send-appointment-notification`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${supabaseServiceKey}`,
-              },
-              body: JSON.stringify({
+            await supabase.functions.invoke('send-appointment-notification', {
+              body: {
                 userId: order.user_id,
                 scenario: 'appointment_confirmed',
                 appointmentId: appointment.id,
-              }),
+              },
             });
-            console.log('Appointment confirmation notification sent');
+            console.log('User appointment confirmation notification sent');
           } catch (notifyError) {
-            console.error('Failed to send appointment confirmation:', notifyError);
+            console.error('Failed to send user appointment confirmation:', notifyError);
+          }
+
+          // 发送教练新预约通知
+          if (appointmentDetail?.coach_id) {
+            try {
+              await supabase.functions.invoke('send-appointment-notification', {
+                body: {
+                  coachId: appointmentDetail.coach_id,
+                  scenario: 'coach_new_appointment',
+                  appointmentId: appointment.id,
+                },
+              });
+              console.log('Coach new appointment notification sent');
+            } catch (notifyError) {
+              console.error('Failed to send coach new appointment notification:', notifyError);
+            }
           }
         }
       }
