@@ -107,7 +107,7 @@ export function GrowthPathVisualization({ currentStage, loading }: GrowthPathVis
         />
       </motion.div>
 
-      {/* 见证故事飞轮 */}
+      {/* 成为合伙人 */}
       <div className="flex justify-center py-2">
         <ArrowDown className="w-5 h-5 text-muted-foreground/50" />
       </div>
@@ -116,13 +116,19 @@ export function GrowthPathVisualization({ currentStage, loading }: GrowthPathVis
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
-        <Card className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-200 dark:border-indigo-800">
+        <Card 
+          className="bg-gradient-to-br from-orange-500/10 to-amber-500/10 border-orange-200 dark:border-orange-800 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate('/partner/youjin-intro')}
+        >
           <CardContent className="p-4 text-center">
-            <div className="text-3xl mb-2">🦋</div>
-            <h3 className="font-semibold">故事见证 & 分享裂变</h3>
+            <div className="text-3xl mb-2">💪</div>
+            <h3 className="font-semibold">成为有劲合伙人</h3>
             <p className="text-sm text-muted-foreground mt-1">
               分享你的成长故事，帮助更多人开启觉醒之旅
             </p>
+            <div className="mt-2 text-xs text-orange-600 dark:text-orange-400 font-medium">
+              ¥999起 · 佣金20%-50%
+            </div>
           </CardContent>
         </Card>
       </motion.div>
