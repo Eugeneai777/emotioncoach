@@ -272,7 +272,7 @@ export function EmotionHealthResult({ result, onShare, onRetake }: EmotionHealth
         <Button 
           variant="outline" 
           className="w-full"
-          onClick={() => navigate('/camps')}
+          onClick={() => navigate('/camp-intro/emotion_journal_21')}
         >
           {resultPageSectionTitles.cta.secondaryText}
           <ChevronRight className="w-4 h-4 ml-1" />
