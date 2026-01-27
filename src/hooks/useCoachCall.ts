@@ -72,32 +72,94 @@ export function useCoachCall(options?: UseCoachCallOptions) {
 
   // 初始化 WebRTC 连接
   const initPeerConnection = useCallback(() => {
+    // 优化的 ICE 服务器配置，包含多个可靠的 STUN 服务器
+    // 优先使用国内可访问的服务器，提升连接成功率
     const config: RTCConfiguration = {
       iceServers: [
+        // Cloudflare STUN - 全球 CDN，国内访问较快
+        { urls: 'stun:stun.cloudflare.com:3478' },
+        // Twilio STUN - 企业级稳定性
+        { urls: 'stun:global.stun.twilio.com:3478' },
+        // Google STUN - 备用
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
-      ]
+        { urls: 'stun:stun2.l.google.com:19302' },
+        // Mozilla STUN
+        { urls: 'stun:stun.services.mozilla.com:3478' },
+        // Nextcloud STUN
+        { urls: 'stun:stun.nextcloud.com:443' },
+      ],
+      // 优化 ICE 传输策略
+      iceCandidatePoolSize: 10, // 预先收集候选者，加快连接
+      bundlePolicy: 'max-bundle', // 复用传输通道
+      rtcpMuxPolicy: 'require', // 复用 RTCP
     };
     
     const pc = new RTCPeerConnection(config);
     
+    // ICE 收集状态监控
+    pc.onicegatheringstatechange = () => {
+      console.log('[P2P] ICE gathering state:', pc.iceGatheringState);
+    };
+    
     pc.ontrack = (event) => {
-      console.log('Remote track received:', event.streams[0]);
+      console.log('[P2P] Remote track received:', event.streams[0]);
       if (remoteAudioRef.current && event.streams[0]) {
         remoteAudioRef.current.srcObject = event.streams[0];
       }
     };
     
     pc.oniceconnectionstatechange = () => {
-      console.log('ICE connection state:', pc.iceConnectionState);
-      if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+      console.log('[P2P] ICE connection state:', pc.iceConnectionState);
+      
+      // 连接成功时开始计时
+      if (pc.iceConnectionState === 'connected') {
+        console.log('[P2P] Connection established successfully');
+        setCallState(prev => {
+          if (prev.status === 'calling') {
+            // 开始计时
+            if (!durationIntervalRef.current) {
+              durationIntervalRef.current = setInterval(() => {
+                setCallState(p => ({ ...p, duration: p.duration + 1 }));
+              }, 1000);
+            }
+            return { ...prev, status: 'connected' };
+          }
+          return prev;
+        });
+      }
+      
+      // 连接失败处理
+      if (pc.iceConnectionState === 'disconnected') {
+        console.warn('[P2P] Connection disconnected, waiting for recovery...');
+        // 给予短暂恢复时间
+        setTimeout(() => {
+          if (pcRef.current?.iceConnectionState === 'disconnected') {
+            console.error('[P2P] Connection failed to recover');
+            endCall('connection_failed');
+          }
+        }, 5000);
+      }
+      
+      if (pc.iceConnectionState === 'failed') {
+        console.error('[P2P] ICE connection failed');
+        toast({
+          title: "连接失败",
+          description: "网络不稳定，请检查网络后重试",
+          variant: "destructive"
+        });
         endCall('connection_failed');
       }
     };
     
+    // 连接状态变化
+    pc.onconnectionstatechange = () => {
+      console.log('[P2P] Connection state:', pc.connectionState);
+    };
+    
     pcRef.current = pc;
     return pc;
-  }, []);
+  }, [toast]);
 
   // 发送信令
   const sendSignal = useCallback(async (callId: string, toUserId: string, type: string, data: any) => {
