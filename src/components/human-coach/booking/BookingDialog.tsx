@@ -7,14 +7,17 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ServiceSelector } from "./ServiceSelector";
 import { DateTimeSelector } from "./DateTimeSelector";
 import { BookingForm } from "./BookingForm";
 import { BookingConfirmation } from "./BookingConfirmation";
 import { AppointmentPayDialog } from "./AppointmentPayDialog";
+import { PaymentMethodSelector, PaymentMethod } from "./PaymentMethodSelector";
+import { PrepaidRechargeDialog } from "@/components/coaching/PrepaidRechargeDialog";
 import { HumanCoach, CoachService, CoachTimeSlot } from "@/hooks/useHumanCoaches";
 import { useAuth } from "@/hooks/useAuth";
+import { useCoachingPrepaid } from "@/hooks/useCoachingPrepaid";
 import { toast } from "sonner";
 
 interface BookingDialogProps {
@@ -40,11 +43,15 @@ export function BookingDialog({
   initialService 
 }: BookingDialogProps) {
   const { user } = useAuth();
+  const { currentBalance, payWithPrepaid, refreshBalance } = useCoachingPrepaid();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedService, setSelectedService] = useState<CoachService | null>(initialService || null);
   const [selectedSlot, setSelectedSlot] = useState<CoachTimeSlot | null>(null);
   const [userNotes, setUserNotes] = useState("");
   const [showPayDialog, setShowPayDialog] = useState(false);
+  const [showRechargeDialog, setShowRechargeDialog] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('wechat');
+  const [isPrepaidLoading, setIsPrepaidLoading] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
 
@@ -54,6 +61,9 @@ export function BookingDialog({
     setSelectedSlot(null);
     setUserNotes("");
     setShowPayDialog(false);
+    setShowRechargeDialog(false);
+    setPaymentMethod('wechat');
+    setIsPrepaidLoading(false);
     setCreatedOrderId(null);
     setAppointmentId(null);
   };
@@ -82,14 +92,44 @@ export function BookingDialog({
     if (!canProceed()) return;
 
     if (currentStep === 4) {
-      // Create order and show payment dialog
+      // 最后一步：根据支付方式处理
       if (!user) {
         toast.error("请先登录");
         return;
       }
-      setShowPayDialog(true);
+      
+      if (paymentMethod === 'prepaid') {
+        // 预付卡支付
+        await handlePrepaidPayment();
+      } else {
+        // 微信支付
+        setShowPayDialog(true);
+      }
     } else {
       setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrepaidPayment = async () => {
+    if (!selectedService || !selectedSlot) return;
+    
+    setIsPrepaidLoading(true);
+    try {
+      const result = await payWithPrepaid(
+        coach.id,
+        selectedService.id,
+        selectedSlot.id,
+        userNotes
+      );
+      
+      if (result.success) {
+        toast.success("预约成功！已从预付卡余额扣款");
+        handleClose();
+      }
+    } catch (error: any) {
+      // Error already handled in hook
+    } finally {
+      setIsPrepaidLoading(false);
     }
   };
 
@@ -103,6 +143,11 @@ export function BookingDialog({
     setShowPayDialog(false);
     toast.success("预约成功！我们会发送确认通知给您");
     handleClose();
+  };
+
+  const handleRechargeSuccess = async () => {
+    setShowRechargeDialog(false);
+    await refreshBalance();
   };
 
   const progress = (currentStep / STEPS.length) * 100;
@@ -156,12 +201,23 @@ export function BookingDialog({
               />
             )}
             {currentStep === 4 && selectedService && selectedSlot && (
-              <BookingConfirmation
-                coach={coach}
-                service={selectedService}
-                slot={selectedSlot}
-                userNotes={userNotes}
-              />
+              <div className="space-y-4">
+                <BookingConfirmation
+                  coach={coach}
+                  service={selectedService}
+                  slot={selectedSlot}
+                  userNotes={userNotes}
+                />
+                
+                {/* 支付方式选择 */}
+                <PaymentMethodSelector
+                  price={selectedService.price}
+                  prepaidBalance={currentBalance}
+                  selectedMethod={paymentMethod}
+                  onMethodChange={setPaymentMethod}
+                  onRechargeClick={() => setShowRechargeDialog(true)}
+                />
+              </div>
             )}
           </div>
 
@@ -177,9 +233,15 @@ export function BookingDialog({
             </Button>
             <Button
               onClick={handleNext}
-              disabled={!canProceed()}
+              disabled={!canProceed() || isPrepaidLoading}
             >
-              {currentStep === 4 ? "确认支付" : "下一步"}
+              {isPrepaidLoading ? (
+                "支付中..."
+              ) : currentStep === 4 ? (
+                paymentMethod === 'prepaid' ? "确认扣款" : "确认支付"
+              ) : (
+                "下一步"
+              )}
               {currentStep !== 4 && <ChevronRight className="w-4 h-4 ml-1" />}
             </Button>
           </div>
@@ -197,6 +259,12 @@ export function BookingDialog({
           onSuccess={handlePaymentSuccess}
         />
       )}
+
+      <PrepaidRechargeDialog
+        open={showRechargeDialog}
+        onOpenChange={setShowRechargeDialog}
+        onSuccess={handleRechargeSuccess}
+      />
     </>
   );
 }

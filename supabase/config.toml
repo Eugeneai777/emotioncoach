@@ -383,3 +383,9 @@ verify_jwt = false
 
 [functions.assessment-emotion-coach]
 verify_jwt = false
+
+[functions.create-prepaid-recharge-order]
+verify_jwt = true
+
+[functions.pay-with-prepaid]
+verify_jwt = true
