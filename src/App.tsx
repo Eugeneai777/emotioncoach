@@ -1,9 +1,9 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { CoachCallProvider } from "@/components/coach-call";
 import { GlobalRefTracker } from "./hooks/useGlobalRefTracking";
 import { GlobalPaymentCallback } from "./components/GlobalPaymentCallback";
@@ -162,6 +162,28 @@ const FollowWechatReminder = lazy(() => import("./components/FollowWechatReminde
 
 const queryClient = new QueryClient();
 
+// 防止 Dialog/预览层等残留的 scroll-lock 导致页面无法上下滚动
+const ScrollUnlocker = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    try {
+      // Radix/react-remove-scroll 可能会留下该属性并锁住 body 滚动
+      document.body.removeAttribute('data-scroll-locked');
+      // 清理可能残留的滚动锁
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.paddingRight = '';
+    } catch {
+      // noop
+    }
+  }, [pathname]);
+
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -171,6 +193,7 @@ const App = () => (
         <BrowserRouter>
           <GlobalRefTracker />
           <GlobalPaymentCallback />
+          <ScrollUnlocker />
           {/* 全局浮动组件延迟加载 */}
           <Suspense fallback={null}>
             <FloatingVoiceButton />
