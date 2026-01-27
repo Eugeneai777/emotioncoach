@@ -28,6 +28,10 @@ interface AssessmentPayDialogProps {
   userId?: string;
   /** 用户是否已购买过测评（用于跳过支付） */
   hasPurchased?: boolean;
+  /** 产品唯一标识，用于区分不同测评产品 */
+  packageKey: string;
+  /** 产品显示名称，如"财富卡点测评"或"情绪健康测评" */
+  packageName: string;
 }
 
 type PaymentStatus = "idle" | "creating" | "pending" | "polling" | "paid" | "registering" | "error";
@@ -54,7 +58,7 @@ const isPayAuthInProgress = (): boolean => {
   return sessionStorage.getItem("pay_auth_in_progress") === "1";
 };
 
-export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, userId, hasPurchased }: AssessmentPayDialogProps) {
+export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, userId, hasPurchased, packageKey, packageName }: AssessmentPayDialogProps) {
   const [status, setStatus] = useState<PaymentStatus>("idle");
   const [orderNo, setOrderNo] = useState<string>("");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
@@ -78,9 +82,9 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
   const openIdFetchedRef = useRef<boolean>(false);
   const silentAuthTriggeredRef = useRef<boolean>(false);
 
-  // 🆕 从数据库获取套餐价格
+  // 🆕 从数据库获取套餐价格（使用传入的 packageKey）
   const { data: packages } = usePackages();
-  const assessmentPrice = getPackagePrice(packages, 'wealth_block_assessment', 9.9);
+  const assessmentPrice = getPackagePrice(packages, packageKey, 9.9);
 
   // 检测环境
   const isWechat = isWeChatBrowser();
@@ -422,7 +426,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
           .from('orders')
           .select('id')
           .eq('user_id', userId)
-          .eq('package_key', 'wealth_block_assessment')
+          .eq('package_key', packageKey)
           .eq('status', 'paid')
           .limit(1)
           .maybeSingle();
@@ -488,8 +492,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
 
       const { data, error } = await supabase.functions.invoke("create-wechat-order", {
         body: {
-          packageKey: "wealth_block_assessment",
-          packageName: "财富卡点测评",
+          packageKey: packageKey,
+          packageName: packageName,
           amount: assessmentPrice,
           userId: userId || "guest",
           payType: selectedPayType,
@@ -552,20 +556,20 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
               toast.info("支付弹窗调起失败，已切换为扫码支付");
 
               // 使用已有的订单号，生成二维码供用户扫码
-              try {
-                const { data: nativeData, error: nativeError } = await supabase.functions.invoke(
-                  "create-wechat-order",
-                  {
-                    body: {
-                      packageKey: "wealth_block_assessment",
-                      packageName: "财富卡点测评",
-                      amount: assessmentPrice,
-                      userId: userId || "guest",
-                      payType: "native",
-                      existingOrderNo: data.orderNo,
+                try {
+                  const { data: nativeData, error: nativeError } = await supabase.functions.invoke(
+                    "create-wechat-order",
+                    {
+                      body: {
+                        packageKey: packageKey,
+                        packageName: packageName,
+                        amount: assessmentPrice,
+                        userId: userId || "guest",
+                        payType: "native",
+                        existingOrderNo: data.orderNo,
+                      },
                     },
-                  },
-                );
+                  );
 
                 if (nativeError || !nativeData?.success) {
                   throw new Error(nativeData?.error || "降级失败");
@@ -608,8 +612,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
                     "create-wechat-order",
                     {
                       body: {
-                        packageKey: "wealth_block_assessment",
-                        packageName: "财富卡点测评",
+                        packageKey: packageKey,
+                        packageName: packageName,
                         amount: assessmentPrice,
                         userId: userId || "guest",
                         payType: "native",
@@ -644,8 +648,8 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
             try {
               const { data: nativeData, error: nativeError } = await supabase.functions.invoke("create-wechat-order", {
                 body: {
-                  packageKey: "wealth_block_assessment",
-                  packageName: "财富卡点测评",
+                  packageKey: packageKey,
+                  packageName: packageName,
                   amount: assessmentPrice,
                   userId: userId || "guest",
                   payType: "native",
@@ -912,7 +916,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
               .from('orders')
               .select('id')
               .eq('user_id', session.user.id)
-              .eq('package_key', 'wealth_block_assessment')
+              .eq('package_key', packageKey)
               .eq('status', 'paid')
               .limit(1)
               .maybeSingle();
@@ -962,7 +966,7 @@ export function AssessmentPayDialog({ open, onOpenChange, onSuccess, returnUrl, 
       <DialogContent className="w-[calc(100vw-2rem)] max-w-sm !inset-auto !left-1/2 !top-1/2 !-translate-x-1/2 !-translate-y-1/2 !bottom-auto !rounded-2xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader className="pb-2">
           <DialogTitle className="text-center text-base">
-            {status === "registering" ? "完成注册" : "财富卡点测评"}
+            {status === "registering" ? "完成注册" : packageName}
           </DialogTitle>
         </DialogHeader>
 
