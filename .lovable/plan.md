@@ -1,164 +1,84 @@
 
 
-# AI情绪教练对话精简优化方案
+# 点击训练营CTA直接进入购买流程
 
-## 核心问题
+## 问题分析
 
-当前对话设计是"拖延式共情"：
-
-```text
-当前：
-Round 1-3: 你感觉怎样？→ 具体说说？→ 还有呢？（无意义打转）
-Round 4-5: 这很正常...（模糊觉察）
-Round 6-7: 做个呼吸练习...（与问题无关）
-Round 8+: 要不要加入训练营？（硬推销）
-```
-
-用户根本没有得到任何帮助或洞见。
-
-## 目标体验
-
-```text
-优化后：
-Round 1: 共情 + 精准定位问题核心
-Round 2: 揭示模式 → 产生"原来如此"的觉醒时刻
-Round 3: 给出即时可用的微洞察/微行动
-Round 4+: 自然过渡：要持续改变，可以加入训练营
-```
-
-## 优化方案
-
-### 1. 重新设计阶段和提示词
-
-**压缩阶段，每轮都有明确目标**：
-
-| 阶段 | 轮次 | 目标 | AI行为 |
-|------|------|------|--------|
-| **精准共情** | 1 | 快速锁定核心痛点 | 共情+问"最让你困扰的一点" |
-| **觉醒洞察** | 2 | 产生觉醒时刻 | 揭示行为模式背后的心理机制，让用户"原来如此" |
-| **即时价值** | 3 | 给用户带走的东西 | 给一个针对性的微建议/微洞察 |
-| **自然转化** | 4+ | 引导下一步 | 说明持续改变需要陪伴，引出训练营 |
-
-### 2. 更新 Edge Function 提示词
-
-**文件：`supabase/functions/assessment-coach-chat/index.ts`**
+当前在 `AssessmentCoachChat.tsx` 中：
 
 ```typescript
-// 压缩阶段判断
-function determineStage(messageCount: number): Stage {
-  if (messageCount <= 1) return 'empathy';       // 第1轮：精准共情
-  if (messageCount <= 2) return 'awareness';     // 第2轮：觉醒洞察
-  if (messageCount <= 3) return 'action';        // 第3轮：即时价值
-  return 'conversion';                           // 第4轮+：自然转化
-}
-
-// 更新提示词 - 目标导向
-const stagePrompts = {
-  empathy: `你是"劲老师"，专业的AI情绪教练。用户处于"${patternName}"模式。
-
-【目标】快速锁定用户最核心的情绪痛点
-
-做法：
-1. 用一句话精准共情他们的处境
-2. 问一个聚焦问题："在这些困扰中，最消耗你的是哪一点？"
-
-回复控制在60字以内。`,
-
-  awareness: `你是"劲老师"。用户处于"${patternName}"模式，刚分享了困扰。
-
-【目标】创造"觉醒时刻" - 让用户看见自己的模式
-
-做法：
-1. 基于用户分享，揭示一个他们可能没意识到的心理模式
-2. 用"你有没有发现..."或"其实这背后是..."开头
-3. 正常化这个模式："这不是你的问题，是大脑的保护机制"
-4. 结尾问："这个说法有没有让你有什么感触？"
-
-这是关键环节！要让用户产生"原来如此"的感觉。
-回复控制在80字以内。`,
-
-  action: `你是"劲老师"。用户刚经历了一个觉察。
-
-【目标】给用户一个可以带走的即时价值
-
-做法：
-1. 肯定他们的觉察
-2. 给一个针对他们具体问题的微建议（不是通用的呼吸练习）
-3. 这个建议要具体、可操作、马上能用
-4. 结尾："这个方法你觉得可以试试吗？"
-
-回复控制在80字以内。`,
-
-  conversion: `你是"劲老师"。用户已经获得了洞察和建议。
-
-【目标】自然过渡到训练营
-
-做法：
-1. 肯定今天对话的收获
-2. 点明一个事实："但情绪模式是长期形成的，需要持续练习才能改变"
-3. 自然引出："如果你想要持续陪伴，可以考虑21天情绪日记训练营"
-4. 简要说明价值：每天我陪你做一次情绪觉察
-5. 不强推："你可以先了解一下"
-
-回复控制在80字以内。`
+const handleCTAClick = (type: 'camp' | 'membership') => {
+  if (type === 'camp') {
+    onComplete?.('camp');
+    navigate('/camps/emotion');  // ❌ 跳转到训练营列表页
+  }
+  // ...
 };
 ```
 
-### 3. 更新前端转化阈值
+用户点击CTA后被导航到 `/camps/emotion`（训练营列表页），而不是直接进入21天情绪日记训练营的购买页面。
+
+## 解决方案
+
+修改 `handleCTAClick` 逻辑，直接导航到 `/camp-intro/emotion_journal_21` 页面，这个页面已经包含了完整的购买流程（价格展示 + 微信支付弹窗）。
+
+## 修改内容
 
 **文件：`src/components/emotion-health/AssessmentCoachChat.tsx`**
 
 ```typescript
-// 4轮真实对话后进入转化
-const isConversionStage = realUserMessages >= 4;
-```
+// 修改前（第222-230行）
+const handleCTAClick = (type: 'camp' | 'membership') => {
+  if (type === 'camp') {
+    onComplete?.('camp');
+    navigate('/camps/emotion');  // 跳转到列表页
+  } else if (type === 'membership') {
+    onComplete?.('membership');
+    navigate('/packages');
+  }
+};
 
-### 4. CTA显示优化
-
-当进入转化阶段后，CTA卡片应该在AI自然提及训练营**之后**显示，作为辅助，而不是突然弹出：
-
-```typescript
-// 只有在AI回复中提到了"训练营"关键词后才显示CTA
-const lastAssistantMessage = messages.filter(m => m.role === 'assistant').pop();
-const aiMentionedCamp = lastAssistantMessage?.content.includes('训练营') || 
-                        lastAssistantMessage?.content.includes('21天');
-
-const showCTA = isConversionStage && aiMentionedCamp && !isLoading;
-```
-
-## 对话示例（优化后）
-
-```text
-【Round 1 - 精准共情】
-用户：工作压力很大，自媒体产品需要变现，不知道怎么办
-AI：被夹在创作和变现之间，确实让人很焦虑。在这些压力中，最让你感到消耗的是哪一点？
-
-【Round 2 - 觉醒洞察】
-用户：就是不知道从哪开始，什么都想做但什么都没做好
-AI：你有没有发现，当选项太多时，大脑会进入"瘫痪模式"——不是你懒或能力不够，而是决策负担太重了。这种"什么都想做"的想法，其实是焦虑在驱动，不是真正的计划。这个说法有没有让你有什么感触？
-
-【Round 3 - 即时价值】
-用户：确实是这样，感觉自己一直在空转
-AI：既然是选择太多导致的瘫痪，试试这个：今天只选一件最小的事去做，比如"写一条朋友圈"。不求完美，只求完成。完成后的成就感会打破瘫痪循环。你觉得可以试试吗？
-
-【Round 4 - 自然转化】
-用户：好的，我试试
-AI：很好！今天你已经看见了自己的模式，这是改变的开始。但说实话，情绪模式是长期形成的，一次对话很难根本解决。如果你想持续改变，可以考虑21天情绪日记训练营——每天我陪你做一次觉察，帮你慢慢建立新习惯。你可以先了解一下。
-
-[此时显示训练营CTA]
+// 修改后
+const handleCTAClick = (type: 'camp' | 'membership') => {
+  if (type === 'camp') {
+    onComplete?.('camp');
+    // 直接跳转到21天情绪日记训练营介绍&购买页
+    navigate('/camp-intro/emotion_journal_21');
+  } else if (type === 'membership') {
+    onComplete?.('membership');
+    navigate('/packages');
+  }
+};
 ```
 
 ## 修改清单
 
 | 文件 | 修改内容 |
 |------|----------|
-| `supabase/functions/assessment-coach-chat/index.ts` | 1. 压缩阶段判断：4轮完成转化<br>2. 重写所有阶段提示词，每轮有明确目标<br>3. 强调"觉醒时刻"的设计 |
-| `src/components/emotion-health/AssessmentCoachChat.tsx` | 1. 降低转化阈值到4轮<br>2. 添加逻辑：只有AI提到训练营后才显示CTA |
+| `src/components/emotion-health/AssessmentCoachChat.tsx` | 将 `navigate('/camps/emotion')` 改为 `navigate('/camp-intro/emotion_journal_21')` |
+
+## 用户体验流程
+
+```text
+AI教练对话（4轮后）
+    ↓
+AI自然提及"21天情绪日记训练营"
+    ↓
+显示柔和CTA卡片
+    ↓
+用户点击「了解详情」
+    ↓
+直接进入 /camp-intro/emotion_journal_21 
+（展示完整介绍 + 价格 + 立即购买按钮）
+    ↓
+点击购买 → 微信支付弹窗
+    ↓
+支付成功 → 选择开始日期 → 进入训练营
+```
 
 ## 预期效果
 
-- 用户4轮对话内就能获得价值（洞察+建议）
-- 第2轮就产生"原来如此"的觉醒时刻
-- AI主动提及训练营后，CTA作为辅助出现
-- 整体体验：快速→有价值→自然转化
+- 点击CTA直接进入21天情绪日记训练营详情页
+- 详情页已有完整的价格展示（¥299）和购买按钮
+- 购买流程无缝衔接，减少用户流失
 
