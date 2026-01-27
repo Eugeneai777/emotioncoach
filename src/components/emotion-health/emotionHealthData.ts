@@ -605,7 +605,7 @@ export const comparisonWithTraditional = [
 export const resultPageFooterConfig = {
   message: '你的情绪并不是问题，它只是提醒你：你正在用一种很辛苦的方式生活。',
   subMessage: '有劲AI会根据你的状态，陪你一步一步走回更有力量的位置。',
-  ctaText: '开始AI情绪健康教练'
+  ctaText: '与AI情绪教练开始对话'
 };
 
 // ===== 结果页各模块标题配置 =====
