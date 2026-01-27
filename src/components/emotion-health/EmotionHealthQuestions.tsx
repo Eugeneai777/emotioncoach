@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { 
   emotionHealthQuestions, 
   emotionHealthScoreLabels,
@@ -22,73 +22,110 @@ interface EmotionHealthQuestionsProps {
   onBack: () => void;
 }
 
-const QUESTIONS_PER_PAGE = 4;
-
 export function EmotionHealthQuestions({
   answers,
   onAnswerChange,
   onComplete,
   onBack
 }: EmotionHealthQuestionsProps) {
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [showTransition, setShowTransition] = useState(false);
   const [pendingTransitionKey, setPendingTransitionKey] = useState<'screening-pattern' | 'pattern-blockage' | null>(null);
+  const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
   
-  const totalPages = Math.ceil(emotionHealthQuestions.length / QUESTIONS_PER_PAGE);
-  
-  const startIndex = currentPage * QUESTIONS_PER_PAGE;
-  const endIndex = Math.min(startIndex + QUESTIONS_PER_PAGE, emotionHealthQuestions.length);
-  const currentQuestions = emotionHealthQuestions.slice(startIndex, endIndex);
+  const totalQuestions = emotionHealthQuestions.length;
+  const currentQuestion = emotionHealthQuestions[currentIndex];
+  const isLastQuestion = currentIndex === totalQuestions - 1;
+  const isFirstQuestion = currentIndex === 0;
   
   const answeredCount = Object.keys(answers).length;
-  const progress = (answeredCount / emotionHealthQuestions.length) * 100;
+  const progress = ((currentIndex + 1) / totalQuestions) * 100;
   
-  const isCurrentPageComplete = currentQuestions.every(q => answers[q.id] !== undefined);
-  const isAllComplete = answeredCount === emotionHealthQuestions.length;
+  const hasCurrentAnswer = answers[currentQuestion.id] !== undefined;
+  const isAllComplete = answeredCount === totalQuestions;
 
   // 获取当前层级信息
-  const firstQuestionId = currentQuestions[0]?.id ?? 1;
-  const { currentLayer, isLayerTransition, transitionKey } = getLayerProgress(firstQuestionId);
+  const { currentLayer } = getLayerProgress(currentQuestion.id);
   const currentLayerConfig = layerConfig[currentLayer];
 
   // 自动滚动到顶部
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentPage]);
+  }, [currentIndex]);
 
-  const handleNext = () => {
-    if (currentPage < totalPages - 1) {
-      // 检查下一页的第一题是否是层间过渡点
-      const nextPageFirstId = (currentPage + 1) * QUESTIONS_PER_PAGE + 1;
-      const nextLayerInfo = getLayerProgress(nextPageFirstId);
-      
-      if (nextLayerInfo.isLayerTransition && nextLayerInfo.transitionKey) {
-        setPendingTransitionKey(nextLayerInfo.transitionKey);
-        setShowTransition(true);
-      } else {
-        setCurrentPage(prev => prev + 1);
-      }
-    } else if (isAllComplete) {
-      onComplete();
+  const handleAnswer = (value: number) => {
+    onAnswerChange(currentQuestion.id, value);
+    
+    // 非最后一题时自动推进
+    if (!isLastQuestion) {
+      setTimeout(() => {
+        // 检查下一题是否是层间过渡点
+        const nextQuestionId = emotionHealthQuestions[currentIndex + 1].id;
+        const nextLayerInfo = getLayerProgress(nextQuestionId);
+        
+        if (nextLayerInfo.isLayerTransition && nextLayerInfo.transitionKey) {
+          setPendingTransitionKey(nextLayerInfo.transitionKey);
+          setShowTransition(true);
+        } else {
+          setDirection('forward');
+          setCurrentIndex(prev => prev + 1);
+        }
+      }, 300);
     }
   };
 
   const handleTransitionContinue = () => {
     setShowTransition(false);
     setPendingTransitionKey(null);
-    setCurrentPage(prev => prev + 1);
+    setDirection('forward');
+    setCurrentIndex(prev => prev + 1);
   };
 
   const handlePrev = () => {
-    if (currentPage > 0) {
-      setCurrentPage(prev => prev - 1);
+    if (!isFirstQuestion) {
+      setDirection('backward');
+      setCurrentIndex(prev => prev - 1);
     } else {
       onBack();
     }
   };
 
+  const handleNext = () => {
+    if (isLastQuestion && isAllComplete) {
+      onComplete();
+    } else if (hasCurrentAnswer && !isLastQuestion) {
+      // 检查下一题是否是层间过渡点
+      const nextQuestionId = emotionHealthQuestions[currentIndex + 1].id;
+      const nextLayerInfo = getLayerProgress(nextQuestionId);
+      
+      if (nextLayerInfo.isLayerTransition && nextLayerInfo.transitionKey) {
+        setPendingTransitionKey(nextLayerInfo.transitionKey);
+        setShowTransition(true);
+      } else {
+        setDirection('forward');
+        setCurrentIndex(prev => prev + 1);
+      }
+    }
+  };
+
+  // 动画变体
+  const slideVariants = {
+    enter: (dir: 'forward' | 'backward') => ({
+      x: dir === 'forward' ? 50 : -50,
+      opacity: 0.01,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (dir: 'forward' | 'backward') => ({
+      x: dir === 'forward' ? -50 : 50,
+      opacity: 0.01,
+    }),
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 min-h-[calc(100dvh-120px)] flex flex-col">
       {/* 层级进度指示器 */}
       <Card>
         <CardContent className="p-4 space-y-3">
@@ -102,28 +139,40 @@ export function EmotionHealthQuestions({
         <CardContent className="p-4">
           <div className="flex items-center justify-between text-sm mb-2">
             <span className="text-muted-foreground">
-              已完成 {answeredCount} / {emotionHealthQuestions.length} 题
+              第 {currentIndex + 1} / {totalQuestions} 题
             </span>
             <span className="font-medium text-primary">
-              第 {currentPage + 1} / {totalPages} 页
+              已完成 {answeredCount} 题
             </span>
           </div>
           <Progress value={progress} className="h-2" />
         </CardContent>
       </Card>
 
-      {/* 题目列表 */}
-      <div className="space-y-3">
-        {currentQuestions.map((question, index) => (
-          <QuestionCard
-            key={question.id}
-            question={question}
-            questionNumber={startIndex + index + 1}
-            selectedValue={answers[question.id]}
-            onSelect={(value) => onAnswerChange(question.id, value)}
-            layerColor={currentLayerConfig.color}
-          />
-        ))}
+      {/* 单题卡片 - 使用动画 */}
+      <div className="flex-1 flex items-center justify-center py-4">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={currentQuestion.id}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            style={{ transform: 'translateZ(0)', willChange: 'transform, opacity' }}
+            className="w-full"
+          >
+            <SingleQuestionCard
+              question={currentQuestion}
+              questionNumber={currentIndex + 1}
+              totalQuestions={totalQuestions}
+              selectedValue={answers[currentQuestion.id]}
+              onSelect={handleAnswer}
+              layerColor={currentLayerConfig.color}
+            />
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* 导航按钮 */}
@@ -131,21 +180,21 @@ export function EmotionHealthQuestions({
         <Button
           variant="outline"
           onClick={handlePrev}
-          className="flex-1 h-11"
+          className="flex-1 h-12"
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
-          {currentPage === 0 ? "返回" : "上一页"}
+          {isFirstQuestion ? "返回" : "上一题"}
         </Button>
         <Button
           onClick={handleNext}
-          disabled={!isCurrentPageComplete}
-          className="flex-1 h-11 bg-gradient-to-r from-rose-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
+          disabled={!hasCurrentAnswer}
+          className="flex-1 h-12 bg-gradient-to-r from-rose-500 to-purple-500 hover:from-rose-600 hover:to-purple-600"
         >
-          {currentPage === totalPages - 1 ? (
+          {isLastQuestion ? (
             isAllComplete ? "查看结果" : "请完成所有题目"
           ) : (
             <>
-              下一页
+              下一题
               <ChevronRight className="w-4 h-4 ml-1" />
             </>
           )}
@@ -165,44 +214,60 @@ export function EmotionHealthQuestions({
   );
 }
 
-interface QuestionCardProps {
+interface SingleQuestionCardProps {
   question: EmotionHealthQuestion;
   questionNumber: number;
+  totalQuestions: number;
   selectedValue?: number;
   onSelect: (value: number) => void;
   layerColor: string;
 }
 
-function QuestionCard({ question, questionNumber, selectedValue, onSelect, layerColor }: QuestionCardProps) {
+function SingleQuestionCard({ 
+  question, 
+  questionNumber, 
+  totalQuestions,
+  selectedValue, 
+  onSelect, 
+  layerColor 
+}: SingleQuestionCardProps) {
   return (
     <Card className={cn(
       "transition-all duration-200",
-      selectedValue !== undefined && "ring-1 ring-primary/30"
+      selectedValue !== undefined && "ring-2 ring-primary/30"
     )}>
-      <CardContent className="p-4">
-        <div className="mb-3">
+      <CardContent className="p-6">
+        {/* 题号徽章 */}
+        <div className="text-center mb-6">
           <span className={cn(
-            "inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-xs font-medium mr-2 bg-gradient-to-r",
+            "inline-flex items-center justify-center px-4 py-2 rounded-full text-white text-sm font-semibold bg-gradient-to-r",
             layerColor
           )}>
-            {questionNumber}
+            ① 第 {questionNumber} / {totalQuestions} 题
           </span>
-          <span className="text-sm font-medium">{question.text}</span>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        
+        {/* 题目文本 */}
+        <div className="text-center mb-8">
+          <p className="text-lg font-medium leading-relaxed">{question.text}</p>
+        </div>
+        
+        {/* 2x2 选项网格 */}
+        <div className="grid grid-cols-2 gap-3">
           {emotionHealthScoreLabels.map((option) => (
-            <button
+            <motion.button
               key={option.value}
               onClick={() => onSelect(option.value)}
+              whileTap={{ scale: 0.98 }}
               className={cn(
-                "p-2.5 rounded-lg border text-sm font-medium transition-all duration-200",
+                "h-14 rounded-xl border-2 text-sm font-medium transition-all duration-200 flex items-center justify-center",
                 selectedValue === option.value
-                  ? option.color + " border-2"
-                  : "bg-muted/30 border-transparent hover:bg-muted/50"
+                  ? option.color + " border-2 shadow-md scale-[1.02]"
+                  : "bg-muted/30 border-transparent hover:bg-muted/50 hover:border-muted-foreground/20"
               )}
             >
               {option.label}
-            </button>
+            </motion.button>
           ))}
         </div>
       </CardContent>
