@@ -46,7 +46,10 @@ function AnimatedSection({ children, delay = 0 }: { children: React.ReactNode; d
 
 interface EmotionHealthStartScreenProps {
   onStart: () => void;
+  onPayClick?: () => void;
+  hasPurchased?: boolean;
   isLoading?: boolean;
+  price?: number;
 }
 
 // Icon mapping for outcomes
@@ -169,10 +172,25 @@ function useLiveCount() {
   return count;
 }
 
-export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthStartScreenProps) {
+export function EmotionHealthStartScreen({ 
+  onStart, 
+  onPayClick,
+  hasPurchased = false,
+  isLoading,
+  price = 9.9
+}: EmotionHealthStartScreenProps) {
   const [activeLayer, setActiveLayer] = useState<LayerType>('layer1');
   const countdown = useCountdown();
   const liveCount = useLiveCount();
+
+  // 按钮点击处理
+  const handleButtonClick = () => {
+    if (hasPurchased) {
+      onStart();
+    } else {
+      onPayClick?.();
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -509,18 +527,28 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
           <CardContent className="p-5">
             <h3 className="text-sm font-semibold text-center mb-3">开启你的情绪修复之旅</h3>
             
-            {/* 倒计时 */}
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <Clock className="w-3.5 h-3.5 text-amber-500" />
-              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                限时优惠还剩 {String(countdown.hours).padStart(2, '0')}:{String(countdown.minutes).padStart(2, '0')}:{String(countdown.seconds).padStart(2, '0')}
-              </span>
-            </div>
+            {/* 倒计时 - 仅未购买用户显示 */}
+            {!hasPurchased && (
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Clock className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                  限时优惠还剩 {String(countdown.hours).padStart(2, '0')}:{String(countdown.minutes).padStart(2, '0')}:{String(countdown.seconds).padStart(2, '0')}
+                </span>
+              </div>
+            )}
             
-            <div className="flex items-center justify-center gap-3 mb-3">
-              <span className="text-4xl font-bold text-violet-600 dark:text-violet-400">¥9.9</span>
-              <span className="px-2 py-0.5 bg-amber-500 rounded text-xs text-white font-medium animate-pulse">限时</span>
-            </div>
+            {/* 价格显示 */}
+            {!hasPurchased ? (
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <span className="text-4xl font-bold text-violet-600 dark:text-violet-400">¥{price}</span>
+                <span className="px-2 py-0.5 bg-amber-500 rounded text-xs text-white font-medium animate-pulse">限时</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Check className="w-5 h-5 text-emerald-500" />
+                <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">已购买，可直接开始</span>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-2 mb-4">
               {pricingIncludes.map((item, index) => (
@@ -539,10 +567,10 @@ export function EmotionHealthStartScreen({ onStart, isLoading }: EmotionHealthSt
               <Button 
                 size="lg" 
                 className="w-full h-14 text-base bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
-                onClick={onStart}
+                onClick={handleButtonClick}
                 disabled={isLoading}
               >
-                {isLoading ? "加载中..." : "开始测评"}
+                {isLoading ? "加载中..." : hasPurchased ? "开始测评" : `¥${price} 开始测评`}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </motion.div>
