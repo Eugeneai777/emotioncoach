@@ -1,10 +1,9 @@
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, Check, ArrowDown } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
 import { 
   growthNodes, 
   stageLabels, 
@@ -12,16 +11,35 @@ import {
   type GrowthStage,
   type GrowthNode 
 } from '@/config/growthPathConfig';
+import { GrowthNodeCard, type NodeStatus } from './GrowthNodeCard';
+import { GrowthProgressLine } from './GrowthProgressLine';
 
 interface GrowthPathVisualizationProps {
   currentStage: GrowthStage;
   loading?: boolean;
 }
 
+const containerVariants: Variants = {
+  hidden: { opacity: 0.01 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12, delayChildren: 0.2 }
+  }
+};
+
+const headerVariants: Variants = {
+  hidden: { opacity: 0.01, y: -10 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4, ease: "easeOut" }
+  }
+};
+
 export function GrowthPathVisualization({ currentStage, loading }: GrowthPathVisualizationProps) {
   const navigate = useNavigate();
   
-  const getNodeStatus = (node: GrowthNode): 'completed' | 'current' | 'upcoming' => {
+  const getNodeStatus = (node: GrowthNode): NodeStatus => {
     const stageOrder: GrowthStage[] = ['new_user', 'assessed', 'in_camp', 'member365'];
     const currentIndex = stageOrder.indexOf(currentStage);
     const nodeIndex = stageOrder.indexOf(node.stage);
@@ -43,91 +61,114 @@ export function GrowthPathVisualization({ currentStage, loading }: GrowthPathVis
     return 'upcoming';
   };
 
+  // 计算完成进度
+  const completedCount = growthNodes.filter(node => getNodeStatus(node) === 'completed').length;
+  const progressPercent = Math.round((completedCount / growthNodes.length) * 100);
+
   const currentCta = stageCtas[currentStage];
 
   if (loading) {
     return (
       <div className="space-y-4">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="h-24 bg-muted/50 rounded-xl animate-pulse" />
+        <div className="h-16 bg-muted/50 rounded-xl animate-pulse" />
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="h-20 bg-muted/50 rounded-xl animate-pulse ml-8" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* 当前位置指示 */}
-      <div className="text-center space-y-2">
-        <Badge variant="secondary" className="px-4 py-1.5 text-sm">
-          📍 {stageLabels[currentStage]}
-        </Badge>
-      </div>
-
-      {/* 路径节点 */}
-      <div className="space-y-3">
-        {growthNodes.slice(0, 3).map((node, index) => {
-          const status = getNodeStatus(node);
-          return (
-            <motion.div
-              key={node.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <GrowthNodeCard 
-                node={node} 
-                status={status}
-                onNavigate={() => navigate(node.route)}
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6"
+      style={{ transform: "translateZ(0)" }}
+    >
+      {/* 进度头部 */}
+      <motion.div variants={headerVariants}>
+        <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Badge variant="secondary" className="px-3 py-1">
+                  📍 {stageLabels[currentStage]}
+                </Badge>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold text-primary">{progressPercent}%</span>
+                <p className="text-xs text-muted-foreground">
+                  已完成 {completedCount}/{growthNodes.length} 步
+                </p>
+              </div>
+            </div>
+            {/* 进度条 */}
+            <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPercent}%` }}
+                transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
               />
-              {index < 2 && (
-                <div className="flex justify-center py-2">
-                  <ArrowDown className="w-5 h-5 text-muted-foreground/50" />
-                </div>
-              )}
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* 365会员节点 - 居中突出 */}
-      <div className="flex justify-center py-2">
-        <ArrowDown className="w-5 h-5 text-muted-foreground/50" />
-      </div>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.3 }}
-      >
-        <GrowthNodeCard 
-          node={growthNodes[3]} 
-          status={getNodeStatus(growthNodes[3])}
-          onNavigate={() => navigate(growthNodes[3].route)}
-          featured
-        />
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
-      {/* 成为合伙人 */}
-      <div className="flex justify-center py-2">
-        <ArrowDown className="w-5 h-5 text-muted-foreground/50" />
+      {/* 时间轴容器 */}
+      <div className="relative">
+        {/* 进度线 */}
+        <GrowthProgressLine 
+          totalNodes={growthNodes.length}
+          completedCount={completedCount}
+          nodeHeight={100}
+        />
+
+        {/* 节点列表 */}
+        <motion.div 
+          variants={containerVariants}
+          className="space-y-4"
+        >
+          {growthNodes.map((node, index) => (
+            <GrowthNodeCard
+              key={node.id}
+              node={node}
+              status={getNodeStatus(node)}
+              index={index}
+              onNavigate={() => navigate(node.route)}
+            />
+          ))}
+        </motion.div>
       </div>
+
+      {/* 合伙人横幅 */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
+        variants={headerVariants}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        style={{ transform: "translateZ(0)" }}
       >
         <Card 
-          className="bg-gradient-to-br from-orange-500/10 to-amber-500/10 border-orange-200 dark:border-orange-800 cursor-pointer hover:shadow-md transition-shadow"
+          className="bg-gradient-to-r from-accent to-accent/80 border-accent cursor-pointer overflow-hidden"
           onClick={() => navigate('/partner/youjin-intro')}
         >
-          <CardContent className="p-4 text-center">
-            <div className="text-3xl mb-2">💪</div>
-            <h3 className="font-semibold">成为有劲合伙人</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              分享你的成长故事，帮助更多人开启觉醒之旅
-            </p>
-            <div className="mt-2 text-xs text-orange-600 dark:text-orange-400 font-medium">
-              ¥999起 · 佣金20%-50%
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="text-4xl">💪</div>
+              <div className="flex-1">
+                <h3 className="font-bold text-foreground">成为有劲合伙人</h3>
+                <p className="text-sm text-muted-foreground">
+                  分享你的成长故事，帮助更多人开启觉醒之旅
+                </p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <Badge className="bg-background/80 text-foreground hover:bg-background">
+                  ¥999起
+                </Badge>
+                <p className="text-xs text-muted-foreground mt-1">佣金20%-50%</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>
@@ -135,95 +176,18 @@ export function GrowthPathVisualization({ currentStage, loading }: GrowthPathVis
 
       {/* 主CTA按钮 */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="pt-4"
+        variants={headerVariants}
+        className="pt-2"
       >
         <Button 
           size="lg" 
-          className="w-full h-14 text-base bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700"
+          className="w-full h-14 text-base"
           onClick={() => navigate(currentCta.route)}
         >
           {currentCta.text}
           <ChevronRight className="w-5 h-5 ml-1" />
         </Button>
       </motion.div>
-    </div>
-  );
-}
-
-interface GrowthNodeCardProps {
-  node: GrowthNode;
-  status: 'completed' | 'current' | 'upcoming';
-  onNavigate: () => void;
-  featured?: boolean;
-}
-
-function GrowthNodeCard({ node, status, onNavigate, featured }: GrowthNodeCardProps) {
-  const isCompleted = status === 'completed';
-  const isCurrent = status === 'current';
-  
-  return (
-    <Card 
-      className={cn(
-        "relative transition-all duration-300 cursor-pointer",
-        `bg-gradient-to-br ${node.gradient}`,
-        node.borderColor,
-        isCurrent && "ring-2 ring-primary ring-offset-2 ring-offset-background",
-        isCompleted && "opacity-80",
-        featured && "border-2"
-      )}
-      onClick={onNavigate}
-    >
-      <CardContent className={cn("p-4", featured && "py-5")}>
-        <div className="flex items-center gap-4">
-          {/* 状态指示器 */}
-          <div className={cn(
-            "w-12 h-12 rounded-full flex items-center justify-center text-2xl",
-            isCompleted && "bg-emerald-100 dark:bg-emerald-900/30",
-            isCurrent && "bg-primary/10 animate-pulse",
-            !isCompleted && !isCurrent && "bg-muted"
-          )}>
-            {isCompleted ? (
-              <Check className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-            ) : (
-              node.emoji
-            )}
-          </div>
-          
-          {/* 内容 */}
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className={cn(
-                "font-semibold",
-                featured ? "text-lg" : "text-base"
-              )}>
-                {node.title}
-              </h3>
-              {node.price && (
-                <Badge variant="outline" className="text-xs">
-                  {node.price}
-                </Badge>
-              )}
-              {isCurrent && (
-                <Badge className="text-xs bg-primary/20 text-primary border-0">
-                  当前阶段
-                </Badge>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {node.subtitle}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2">
-              {node.description}
-            </p>
-          </div>
-
-          {/* 箭头 */}
-          <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-        </div>
-      </CardContent>
-    </Card>
+    </motion.div>
   );
 }

@@ -9,7 +9,7 @@ export default function GrowthSupportPath() {
   const { stage, loading } = useUserGrowthStage();
 
   return (
-    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-violet-50/50 to-background dark:from-violet-950/20">
+    <div className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-primary/5 to-background dark:from-primary/10">
       <Helmet>
         <title>成长支持路径 - 有劲AI</title>
         <meta name="description" content="一目了然的成长支持路径，从测评到训练营到长期陪伴" />
@@ -23,9 +23,9 @@ export default function GrowthSupportPath() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <Card className="bg-gradient-to-br from-violet-500/5 to-purple-500/5 border-violet-200/50 dark:border-violet-800/50">
+          <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
             <CardContent className="p-4 text-center">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold text-primary">
                 🌱 你的成长支持路径
               </h1>
               <p className="text-sm text-muted-foreground mt-2">
