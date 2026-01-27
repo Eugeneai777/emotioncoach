@@ -145,8 +145,12 @@ export const preloadCommonAssets = async (): Promise<void> => {
 // 应用启动时预加载
 if (typeof window !== 'undefined') {
   // 延迟预加载，避免阻塞初始渲染
-  requestIdleCallback?.(() => preloadCommonAssets()) ?? 
+  // 使用 typeof 检查避免 ReferenceError（Safari/微信不支持 requestIdleCallback）
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(() => preloadCommonAssets());
+  } else {
     setTimeout(preloadCommonAssets, 2000);
+  }
 }
 
 // ============= 辅助函数 =============
