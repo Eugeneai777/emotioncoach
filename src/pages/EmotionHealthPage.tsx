@@ -350,6 +350,8 @@ export default function EmotionHealthPage() {
         onSuccess={handlePaymentSuccess}
         userId={user?.id}
         hasPurchased={hasPurchased}
+        packageKey="emotion_health_assessment"
+        packageName="情绪健康测评"
       />
     </div>
   );

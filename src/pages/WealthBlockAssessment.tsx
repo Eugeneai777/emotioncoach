@@ -865,6 +865,8 @@ export default function WealthBlockAssessmentPage() {
         }}
         userId={user?.id}
         hasPurchased={hasPurchased}
+        packageKey="wealth_block_assessment"
+        packageName="财富卡点测评"
         onSuccess={(returnedUserId) => {
           // 支付+注册成功，开始测评
           console.log('[WealthBlock] PayDialog onSuccess, userId:', returnedUserId);
