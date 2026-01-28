@@ -1,131 +1,132 @@
 
-## 绽放合伙人权益介绍完善方案
+
+## 优化 /partner-intro 页面设计排版
 
 ### 问题分析
 
-当前绽放合伙人的权益介绍页面（`PartnerIntro.tsx`、`PartnerBenefits.tsx`）和服务条款（`BloomPartnerTerms.tsx`）均未包含有劲初级合伙人权益的说明。需要在以下位置补充：
+根据截图参考，当前"专属权益"区块需要优化为更清晰的双列网格布局：
+- 每个权益卡片包含：图标、名称、价格徽章、描述
+- 视觉层次更清晰：图标居左、名称和价格同行、描述在下方
+- 卡片圆角更大，间距更合适
 
-| 位置 | 需更新内容 |
-|:-----|:----------|
-| 绽放合伙人介绍页 | 新增"有劲产品推广权益"说明区块 |
-| 绽放合伙人权益列表 | 数据库新增有劲推广权益记录 |
-| 绽放合伙人条款 | 第三节补充有劲产品佣金条款 |
-| 合伙人对比卡片 | 绽放卡片补充有劲产品分成说明 |
+### 当前数据库权益（10项）
+
+| 序号 | 权益名称 | 价值 | 图标 |
+|:-----|:---------|:-----|:-----|
+| 1 | 身份绽放特训营 | ¥2,980 | 🌟 |
+| 2 | 情感绽放特训营 | ¥3,980 | 💝 |
+| 3 | 生命绽放特训营 | ¥12,800 | 🔥 |
+| 4 | 英雄之旅线下课 | ¥10,000 | 🏆 |
+| 5 | 绽放教练认证 | ¥16,800 | 📜 |
+| 6 | 专属推广分成 | - | 💰 |
+| 7 | 推广物料支持 | - | 🎨 |
+| 8 | 合伙人专属社群 | - | 👥 |
+| 9 | 优先参与权 | - | ⭐ |
+| 10 | 有劲产品推广权益 | - | 💪 |
 
 ---
 
 ### 实施方案
 
-#### 1. 数据库：新增有劲推广权益
+#### 1. 优化权益卡片布局
 
-向 `partner_benefits` 表插入新记录：
+**当前样式问题**：
+- 卡片布局为单列（`grid-cols-1 md:grid-cols-2`）
+- 图标和内容水平排列，不够清晰
+- 价格徽章位置不突出
 
-```sql
-INSERT INTO partner_benefits (benefit_name, benefit_description, benefit_value, benefit_icon, display_order, is_active)
-VALUES (
-  '有劲产品推广权益',
-  '自动获得有劲初级合伙人身份，有劲全产品18%一级佣金',
-  0.00,
-  '💪',
-  10,
-  true
-);
-```
-
-#### 2. 绽放合伙人介绍页 (`PartnerIntro.tsx`)
-
-在"收益机制"区块后新增"有劲产品权益"说明：
+**优化后样式**（参考截图）：
+- 始终使用双列布局（`grid-cols-2`）
+- 每个卡片内部：
+  - 左侧大图标
+  - 右侧：名称 + 价格徽章（同一行）
+  - 下方：描述文字
+- 卡片圆角加大（`rounded-xl`）
+- 卡片背景使用浅色渐变
 
 ```tsx
-{/* 有劲产品权益 */}
-<Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50">
-  <CardHeader className="pb-2 pt-4 px-4">
-    <CardTitle className="flex items-center gap-2 text-base">
-      <Sparkles className="w-5 h-5 text-orange-500" />
-      额外权益：有劲产品推广
-    </CardTitle>
-    <Badge className="w-fit bg-orange-100 text-orange-700 border-orange-200">
-      💪 自动获得初级合伙人身份
-    </Badge>
-  </CardHeader>
-  <CardContent className="px-4 pb-4 space-y-3">
-    <p className="text-sm text-muted-foreground">
-      成为绽放合伙人后，您将自动拥有有劲初级合伙人身份，可以推广有劲全系列产品：
-    </p>
-    <div className="grid grid-cols-2 gap-3">
-      <div className="p-3 bg-white/80 rounded-lg border border-orange-100">
-        <div className="text-lg font-bold text-orange-600">18%</div>
-        <div className="text-xs text-muted-foreground">有劲产品一级佣金</div>
-      </div>
-      <div className="p-3 bg-white/80 rounded-lg border border-orange-100">
-        <div className="text-lg font-bold text-orange-600">11款</div>
-        <div className="text-xs text-muted-foreground">可推广产品</div>
-      </div>
-    </div>
-    <Button 
-      variant="outline" 
-      className="w-full gap-2 border-orange-200 text-orange-700"
-      onClick={() => navigate("/partner/youjin-plan")}
-    >
-      了解有劲产品详情
-    </Button>
-  </CardContent>
-</Card>
-```
-
-#### 3. 合伙人对比卡片 (`Partner.tsx`)
-
-更新非合伙人视图中的绽放合伙人卡片说明：
-
-```tsx
-{/* 绽放合伙人卡片 - 新增有劲权益说明 */}
-<div className="flex items-center gap-2">
-  <TrendingUp className="w-4 h-4 text-purple-500" />
-  <span className="text-sm">直推30% + 二级10%</span>
-</div>
-<div className="flex items-center gap-2">
-  <Sparkles className="w-4 h-4 text-orange-500" />
-  <span className="text-sm">含有劲初级合伙人权益</span>
+<div className="grid grid-cols-2 gap-3">
+  {benefits.map(benefit => (
+    <Card key={benefit.id} className="border border-accent/20 bg-gradient-to-br from-background to-accent/5 rounded-xl overflow-hidden">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          {/* 大图标 */}
+          <div className="text-3xl">{benefit.benefit_icon}</div>
+          <div className="flex-1 min-w-0">
+            {/* 名称 + 价格徽章 */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="font-semibold text-sm leading-tight">{benefit.benefit_name}</div>
+              {Number(benefit.benefit_value) > 0 && (
+                <Badge variant="outline" className="text-xs whitespace-nowrap">
+                  ¥{Number(benefit.benefit_value).toLocaleString()}
+                </Badge>
+              )}
+            </div>
+            {/* 描述 */}
+            {benefit.benefit_description && (
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                {benefit.benefit_description}
+              </p>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  ))}
 </div>
 ```
 
-同时更新对比表格：
+#### 2. 调整权益区块标题
 
-| 对比项 | 💪 有劲合伙人 | 🦋 绽放合伙人 |
-|:-------|:-------------|:-------------|
-| 可分成产品 | 所有有劲产品 | 绽放产品 + **有劲产品** |
+将"有劲产品推广权益"从单独卡片整合到权益列表中（数据库已包含），删除独立的有劲权益卡片：
 
-#### 4. 绽放合伙人条款 (`BloomPartnerTerms.tsx`)
+**优化前**：
+- 收益机制卡片
+- 有劲产品推广卡片（单独）
+- 10大专属权益卡片
 
-在第三节"绽放合伙人专属权益"后新增有劲产品权益条款：
+**优化后**：
+- 收益机制卡片
+- 10大专属权益卡片（已包含有劲推广权益）
+
+#### 3. 整合有劲权益入口
+
+在权益列表末尾的"有劲产品推广权益"卡片添加点击交互，跳转至有劲计划页面：
 
 ```tsx
-<p>3.5 <strong>有劲产品推广权益</strong></p>
-<p>成为绽放合伙人后，您将自动获得有劲初级合伙人身份，享有以下额外权益：</p>
-<ul className="list-disc pl-6 space-y-1">
-  <li>有劲全系列产品（11款）推广资格</li>
-  <li>有劲产品一级佣金：<strong>18%</strong></li>
-  <li>有劲体验包分发权限</li>
-</ul>
-<p>注：有劲产品佣金独立于绽放产品佣金计算，两者可同时获得。</p>
+// 为有劲权益卡片添加 onClick
+const isYoujinBenefit = benefit.benefit_name === '有劲产品推广权益';
+<Card 
+  className={cn(
+    "border border-accent/20 bg-gradient-to-br from-background to-accent/5 rounded-xl",
+    isYoujinBenefit && "border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 cursor-pointer hover:shadow-md transition-shadow"
+  )}
+  onClick={isYoujinBenefit ? () => navigate("/partner/youjin-plan") : undefined}
+>
 ```
 
 ---
 
-### 涉及文件清单
+### 涉及文件
 
-| 操作 | 文件 | 修改内容 |
-|:-----|:-----|:---------|
-| 新增 | 数据库 `partner_benefits` | 插入有劲推广权益记录 |
-| 修改 | `src/pages/PartnerIntro.tsx` | 新增有劲产品权益区块 |
-| 修改 | `src/pages/Partner.tsx` | 更新对比卡片和对比表格 |
-| 修改 | `src/pages/BloomPartnerTerms.tsx` | 新增第3.5条有劲权益条款 |
+| 文件 | 修改内容 |
+|:-----|:---------|
+| `src/pages/PartnerIntro.tsx` | 优化权益卡片布局，移除独立有劲权益卡片，整合入权益列表 |
 
 ---
 
 ### 预期效果
 
-1. **介绍页**：用户在考虑购买绽放合伙人时，能清楚看到还包含有劲产品推广权益
-2. **权益页**：权益列表中展示有劲推广权益
-3. **对比表**：非合伙人用户能对比看到绽放合伙人同时覆盖两条产品线
-4. **条款页**：正式法律条款中明确有劲产品佣金规则
+1. **视觉效果**：
+   - 双列网格布局，信息密度更高
+   - 卡片样式与截图一致（图标 + 标题/价格 + 描述）
+   - 有劲权益卡片有橙色主题区分
+
+2. **交互优化**：
+   - 点击有劲权益卡片可跳转了解详情
+   - 整体页面更紧凑，减少滚动距离
+
+3. **内容整合**：
+   - 10项权益统一展示
+   - 无冗余卡片
+
