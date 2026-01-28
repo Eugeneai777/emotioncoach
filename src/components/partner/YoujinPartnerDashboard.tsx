@@ -155,6 +155,7 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
             currentEntryType={partner.default_entry_type || 'free'}
             currentProductType={(partner.default_product_type as 'trial_member' | 'wealth_assessment') || 'trial_member'}
             prepurchaseCount={partner.prepurchase_count || 0}
+            currentSelectedPackages={partner.selected_experience_packages as string[] | null}
           />
           
           {/* 推广链接 */}

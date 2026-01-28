@@ -5322,6 +5322,7 @@ export type Database = {
           pending_balance: number
           prepurchase_count: number | null
           prepurchase_expires_at: string | null
+          selected_experience_packages: string[] | null
           source: string
           source_admin_id: string | null
           source_note: string | null
@@ -5352,6 +5353,7 @@ export type Database = {
           pending_balance?: number
           prepurchase_count?: number | null
           prepurchase_expires_at?: string | null
+          selected_experience_packages?: string[] | null
           source?: string
           source_admin_id?: string | null
           source_note?: string | null
@@ -5382,6 +5384,7 @@ export type Database = {
           pending_balance?: number
           prepurchase_count?: number | null
           prepurchase_expires_at?: string | null
+          selected_experience_packages?: string[] | null
           source?: string
           source_admin_id?: string | null
           source_note?: string | null

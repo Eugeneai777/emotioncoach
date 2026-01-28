@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     // Check if partner exists and get entry config
     const { data: partner, error: partnerError } = await supabase
       .from('partners')
-      .select('id, user_id, prepurchase_count, total_referrals')
+      .select('id, user_id, prepurchase_count, total_referrals, selected_experience_packages')
       .eq('id', partner_id)
       .single();
 
@@ -91,69 +91,82 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get basic package info
-    const { data: basicPackage } = await supabase
-      .from('packages')
-      .select('id, package_name, ai_quota, duration_days')
-      .eq('package_key', 'basic')
-      .single();
+    // Get selected packages from partner config, default to all
+    const selectedPackages: string[] = partner.selected_experience_packages 
+      || ['basic', 'emotion_health_assessment', 'scl90_report'];
 
-    const quotaAmount = basicPackage?.ai_quota || 50;
-    const durationDays = basicPackage?.duration_days || 365;
+    console.log(`Partner ${partner_id} selected packages:`, selectedPackages);
 
-    // Calculate dates
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + durationDays);
+    let quotaAmount = 0;
+    let durationDays = 365;
+    const grantedItems: string[] = [];
 
-    // Create subscription record for experience package
-    const { error: subscriptionError } = await supabase
-      .from('subscriptions')
-      .insert({
-        user_id: user.id,
-        package_id: basicPackage?.id,
-        subscription_type: 'basic',
-        status: 'active',
-        total_quota: quotaAmount,
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString(),
-        combo_name: '体验套餐'
-      });
+    // Only grant AI quota if 'basic' is selected
+    if (selectedPackages.includes('basic')) {
+      // Get basic package info
+      const { data: basicPackage } = await supabase
+        .from('packages')
+        .select('id, package_name, ai_quota, duration_days')
+        .eq('package_key', 'basic')
+        .single();
 
-    if (subscriptionError) {
-      console.error('Subscription creation error:', subscriptionError);
-      // Continue even if subscription fails, still add quota
-    }
+      quotaAmount = basicPackage?.ai_quota || 50;
+      durationDays = basicPackage?.duration_days || 365;
 
-    // Add quota to user account
-    const { data: userAccount, error: accountError } = await supabase
-      .from('user_accounts')
-      .select('id, total_quota')
-      .eq('user_id', user.id)
-      .single();
+      // Calculate dates
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + durationDays);
 
-    if (accountError && accountError.code !== 'PGRST116') {
-      throw accountError;
-    }
-
-    if (userAccount) {
-      // Update existing account
-      await supabase
-        .from('user_accounts')
-        .update({ 
-          total_quota: userAccount.total_quota + quotaAmount,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id);
-    } else {
-      // Create new account
-      await supabase
-        .from('user_accounts')
+      // Create subscription record for experience package
+      const { error: subscriptionError } = await supabase
+        .from('subscriptions')
         .insert({
           user_id: user.id,
+          package_id: basicPackage?.id,
+          subscription_type: 'basic',
+          status: 'active',
           total_quota: quotaAmount,
-          used_quota: 0
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+          combo_name: '体验套餐'
         });
+
+      if (subscriptionError) {
+        console.error('Subscription creation error:', subscriptionError);
+      }
+
+      // Add quota to user account
+      const { data: userAccount, error: accountError } = await supabase
+        .from('user_accounts')
+        .select('id, total_quota')
+        .eq('user_id', user.id)
+        .single();
+
+      if (accountError && accountError.code !== 'PGRST116') {
+        throw accountError;
+      }
+
+      if (userAccount) {
+        await supabase
+          .from('user_accounts')
+          .update({ 
+            total_quota: userAccount.total_quota + quotaAmount,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id);
+      } else {
+        await supabase
+          .from('user_accounts')
+          .insert({
+            user_id: user.id,
+            total_quota: quotaAmount,
+            used_quota: 0
+          });
+      }
+
+      grantedItems.push(`AI点数${quotaAmount}点`);
+      console.log(`Granted ${quotaAmount} AI quota to user ${user.id}`);
     }
 
     // Deduct from partner's prepurchase_count
@@ -184,15 +197,21 @@ Deno.serve(async (req) => {
       })
       .eq('id', partner_id);
 
-    // Grant free assessments (Emotion Health + SCL-90)
+    // Grant assessments based on selected packages
     const assessmentPackages = [
-      { package_key: 'emotion_health_assessment', package_name: '情绪健康测评' },
-      { package_key: 'scl90_report', package_name: 'SCL-90心理测评报告' }
+      { key: 'emotion_health_assessment', package_key: 'emotion_health_assessment', package_name: '情绪健康测评' },
+      { key: 'scl90_report', package_key: 'scl90_report', package_name: 'SCL-90心理测评报告' }
     ];
 
     const grantedAssessments: string[] = [];
 
     for (const pkg of assessmentPackages) {
+      // Only grant if this package is selected by partner
+      if (!selectedPackages.includes(pkg.key)) {
+        console.log(`Skipping ${pkg.key} - not selected by partner`);
+        continue;
+      }
+
       // Check if user already has this assessment
       const { data: existingOrder } = await supabase
         .from('orders')
@@ -220,6 +239,7 @@ Deno.serve(async (req) => {
 
         if (!orderError) {
           grantedAssessments.push(pkg.package_key);
+          grantedItems.push(pkg.package_name);
           console.log(`Granted ${pkg.package_key} to user ${user.id}`);
         } else {
           console.error(`Failed to grant ${pkg.package_key}:`, orderError);
@@ -227,12 +247,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Successfully claimed experience package (${quotaAmount} quota, ${durationDays} days, assessments: ${grantedAssessments.join(', ')}) for user ${user.id}, deducted 1 from partner ${partner_id}`);
+    console.log(`Successfully claimed experience package (items: ${grantedItems.join(', ')}) for user ${user.id}, deducted 1 from partner ${partner_id}`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: `成功领取体验套餐！`,
+        granted_items: grantedItems,
         quota_amount: quotaAmount,
         duration_days: durationDays,
         included_assessments: grantedAssessments

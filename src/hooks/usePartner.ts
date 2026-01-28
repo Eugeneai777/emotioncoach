@@ -27,6 +27,7 @@ export interface Partner {
   default_entry_price?: number | null;
   default_quota_amount?: number | null;
   default_product_type?: string | null;
+  selected_experience_packages?: string[] | null;
 }
 
 export function usePartner() {
