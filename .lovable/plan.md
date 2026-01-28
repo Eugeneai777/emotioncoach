@@ -1,75 +1,90 @@
 
+# 充值套餐调整计划
 
-# 产品中心页面滚动问题修复计划
+## 当前套餐
 
-## 问题分析
+| 套餐名称 | 价格 | 赠送 | 到账 |
+|:---------|:-----|:-----|:-----|
+| 入门充值卡 | ¥100 | ¥0 | ¥100 |
+| 畅享充值卡 | ¥500 | ¥50 | ¥550 |
+| 尊享充值卡 | ¥1000 | ¥150 | ¥1150 |
 
-经过排查，发现产品中心 (`Packages.tsx`) 页面无法上下滚动的原因是：
+---
 
-| 当前状态 | 问题 |
-|:---------|:-----|
-| 使用 `min-h-screen` 容器 | 没有显式启用垂直滚动 |
-| 没有 `overflow-y-auto` | 内容溢出时无法滚动 |
-| 缺少 `overscroll-contain` | 移动端滚动行为不一致 |
+## 新套餐设计
 
-## 项目滚动标准
+按比例赠送规则：
+- ¥1000 → 送 10% = ¥100
+- ¥5000 → 送 15% = ¥750
+- ¥10000 → 送 20% = ¥2000
 
-根据项目的移动端优化规范（memory: `unified-scrolling-container-standard`），所有主要页面应使用统一的滚动容器：
+| 套餐名称 | 价格 | 赠送 | 到账 | 赠送比例 |
+|:---------|:-----|:-----|:-----|:---------|
+| 标准充值卡 | ¥1000 | ¥100 | ¥1100 | 10% |
+| 畅享充值卡 | ¥5000 | ¥750 | ¥5750 | 15% |
+| 尊享充值卡 | ¥10000 | ¥2000 | ¥12000 | 20% |
 
-```tsx
-<div 
-  className="h-screen overflow-y-auto overscroll-contain bg-background"
-  style={{ WebkitOverflowScrolling: 'touch' }}
->
+---
+
+## 数据库操作
+
+### 方案：更新现有记录 + 停用旧套餐
+
+```sql
+-- 1. 停用旧的入门充值卡 (¥100)
+UPDATE coaching_prepaid_packages 
+SET is_active = false 
+WHERE package_key = 'prepaid_100';
+
+-- 2. 停用旧的畅享充值卡 (¥500)
+UPDATE coaching_prepaid_packages 
+SET is_active = false 
+WHERE package_key = 'prepaid_500';
+
+-- 3. 更新现有 ¥1000 套餐
+UPDATE coaching_prepaid_packages 
+SET 
+  package_name = '标准充值卡',
+  bonus_amount = 100.00,
+  total_value = 1100.00,
+  description = '充1000送100，到账¥1100',
+  display_order = 1
+WHERE package_key = 'prepaid_1000';
+
+-- 4. 新增 ¥5000 套餐
+INSERT INTO coaching_prepaid_packages 
+  (package_key, package_name, price, bonus_amount, total_value, description, display_order)
+VALUES 
+  ('prepaid_5000', '畅享充值卡', 5000.00, 750.00, 5750.00, '充5000送750，到账¥5750', 2);
+
+-- 5. 新增 ¥10000 套餐
+INSERT INTO coaching_prepaid_packages 
+  (package_key, package_name, price, bonus_amount, total_value, description, display_order)
+VALUES 
+  ('prepaid_10000', '尊享充值卡', 10000.00, 2000.00, 12000.00, '充10000送2000，到账¥12000', 3);
 ```
 
-正常工作的页面示例：
-- `CoachSpace.tsx`: 使用此模式
-- `Courses.tsx`: 使用此模式  
-- `CampList.tsx`: 使用此模式
+---
+
+## 技术细节
+
+| 操作 | 说明 |
+|:-----|:-----|
+| 停用旧套餐 | `is_active = false`，不删除以保留历史订单关联 |
+| 复用 prepaid_1000 | 更新为新的标准套餐 |
+| 新增两个套餐 | prepaid_5000 和 prepaid_10000 |
 
 ---
 
-## 修复方案
+## 修改后效果
 
-### 修改文件: `src/pages/Packages.tsx`
+用户在"绽放教练"Tab 看到的充值选项：
 
-**当前代码（第99行）:**
-```tsx
-<div className="min-h-screen bg-background">
 ```
-
-**修改为:**
-```tsx
-<div 
-  className="h-screen overflow-y-auto overscroll-contain bg-background"
-  style={{ WebkitOverflowScrolling: 'touch' }}
->
+┌────────────────┐ ┌────────────────┐ ┌────────────────┐
+│   标准充值卡    │ │   畅享充值卡    │ │   尊享充值卡    │
+│    ¥1000       │ │    ¥5000       │ │   ¥10000      │
+│   送 ¥100      │ │   送 ¥750      │ │   送 ¥2000    │
+│  到账 ¥1100    │ │  到账 ¥5750    │ │  到账 ¥12000   │
+└────────────────┘ └────────────────┘ └────────────────┘
 ```
-
----
-
-## 修复原理
-
-1. **`h-screen`**: 固定容器高度为视口高度，与 `overflow-y-auto` 配合使滚动生效
-2. **`overflow-y-auto`**: 内容超出时显示垂直滚动条
-3. **`overscroll-contain`**: 防止滚动到边界时触发浏览器默认行为（如下拉刷新）
-4. **`WebkitOverflowScrolling: touch`**: iOS Safari 平滑滚动优化
-
----
-
-## 文件修改清单
-
-| 文件 | 操作 | 说明 |
-|:-----|:-----|:-----|
-| `src/pages/Packages.tsx` | 修改 | 更新根容器为统一滚动标准 |
-
----
-
-## 验证步骤
-
-修复后验证：
-1. 在所有 Tab 页（有劲会员、有劲训练营、绽放教练等）都可以上下滚动
-2. 移动端滚动流畅无卡顿
-3. 滚动到边界时不会触发浏览器下拉刷新
-
