@@ -14,6 +14,8 @@ import { PrepaidBalanceCard } from "@/components/coaching/PrepaidBalanceCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { experiencePackageItems } from "@/config/youjinPartnerProducts";
 
 // 统一金额格式化函数
 function formatMoney(value: number | null | undefined): string {
@@ -593,33 +595,72 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {/* 尝鲜会员 */}
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-lg p-3 border border-blue-200 dark:border-blue-800 text-center">
-                <span className="text-2xl">🎫</span>
-                <p className="font-medium text-sm mt-1">尝鲜会员</p>
-                <p className="text-xs text-blue-600 dark:text-blue-400">50点</p>
-              </div>
-              
-              {/* 情绪健康测评 */}
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg p-3 border border-green-200 dark:border-green-800 text-center">
-                <span className="text-2xl">💚</span>
-                <p className="font-medium text-sm mt-1">情绪健康测评</p>
-                <p className="text-xs text-green-600 dark:text-green-400">1次</p>
-              </div>
-              
-              {/* SCL-90测评 */}
-              <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 rounded-lg p-3 border border-amber-200 dark:border-amber-800 text-center">
-                <span className="text-2xl">📋</span>
-                <p className="font-medium text-sm mt-1">SCL-90测评</p>
-                <p className="text-xs text-amber-600 dark:text-amber-400">1次</p>
-              </div>
-              
-              {/* 财富卡点测评 */}
-              <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30 rounded-lg p-3 border border-purple-200 dark:border-purple-800 text-center">
-                <span className="text-2xl">💰</span>
-                <p className="font-medium text-sm mt-1">财富卡点测评</p>
-                <p className="text-xs text-purple-600 dark:text-purple-400">1次</p>
-              </div>
+              {experiencePackageItems.map((pkg) => {
+                const colorMap: Record<string, { bg: string; border: string; text: string }> = {
+                  ai_points: { 
+                    bg: 'from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30', 
+                    border: 'border-blue-200 dark:border-blue-800',
+                    text: 'text-blue-600 dark:text-blue-400'
+                  },
+                  emotion_health: { 
+                    bg: 'from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30', 
+                    border: 'border-green-200 dark:border-green-800',
+                    text: 'text-green-600 dark:text-green-400'
+                  },
+                  scl90: { 
+                    bg: 'from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30', 
+                    border: 'border-amber-200 dark:border-amber-800',
+                    text: 'text-amber-600 dark:text-amber-400'
+                  },
+                  wealth_block: { 
+                    bg: 'from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30', 
+                    border: 'border-purple-200 dark:border-purple-800',
+                    text: 'text-purple-600 dark:text-purple-400'
+                  },
+                };
+                const colors = colorMap[pkg.key] || colorMap.ai_points;
+
+                return (
+                  <Dialog key={pkg.key}>
+                    <DialogTrigger asChild>
+                      <div 
+                        className={`bg-gradient-to-br ${colors.bg} rounded-lg p-3 ${colors.border} border text-center cursor-pointer hover:scale-105 transition-transform`}
+                      >
+                        <span className="text-2xl">{pkg.icon}</span>
+                        <p className="font-medium text-sm mt-1">{pkg.name}</p>
+                        <p className={`text-xs ${colors.text}`}>{pkg.value}</p>
+                      </div>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-sm">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-lg">
+                          <span>{pkg.icon}</span>
+                          {pkg.name}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <p className="text-sm text-muted-foreground">{pkg.description}</p>
+                        
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">✨ 包含内容</p>
+                          <ul className="space-y-1.5">
+                            {pkg.features.map((feature, idx) => (
+                              <li key={idx} className="flex items-center gap-2 text-sm">
+                                <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        <div className={`inline-block px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r ${colors.bg} ${colors.text}`}>
+                          免费领取 · {pkg.value}
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                );
+              })}
             </div>
             
             <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
