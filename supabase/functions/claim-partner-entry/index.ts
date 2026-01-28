@@ -91,9 +91,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get selected packages from partner config, default to all
+    // Get selected packages from partner config, default to all 4 packages
     const selectedPackages: string[] = partner.selected_experience_packages 
-      || ['basic', 'emotion_health_assessment', 'scl90_report'];
+      || ['basic', 'emotion_health_assessment', 'scl90_report', 'wealth_block_assessment'];
 
     console.log(`Partner ${partner_id} selected packages:`, selectedPackages);
 
@@ -197,10 +197,11 @@ Deno.serve(async (req) => {
       })
       .eq('id', partner_id);
 
-    // Grant assessments based on selected packages
+    // Grant assessments based on selected packages (all 4 assessment types)
     const assessmentPackages = [
       { key: 'emotion_health_assessment', package_key: 'emotion_health_assessment', package_name: '情绪健康测评' },
-      { key: 'scl90_report', package_key: 'scl90_report', package_name: 'SCL-90心理测评报告' }
+      { key: 'scl90_report', package_key: 'scl90_report', package_name: 'SCL-90心理测评报告' },
+      { key: 'wealth_block_assessment', package_key: 'wealth_block_assessment', package_name: '财富卡点测评' }
     ];
 
     const grantedAssessments: string[] = [];

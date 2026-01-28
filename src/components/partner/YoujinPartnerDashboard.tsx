@@ -36,6 +36,7 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
   const [activeTab, setActiveTab] = useState('promote');
   const [groupExpanded, setGroupExpanded] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUploadQR = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,10 +157,12 @@ export function YoujinPartnerDashboard({ partner }: YoujinPartnerDashboardProps)
             currentProductType={(partner.default_product_type as 'trial_member' | 'wealth_assessment') || 'trial_member'}
             prepurchaseCount={partner.prepurchase_count || 0}
             currentSelectedPackages={partner.selected_experience_packages as string[] | null}
+            onUpdate={() => setRefreshKey(k => k + 1)}
           />
           
           {/* 推广链接 */}
           <FixedPromoLinkCard 
+            key={refreshKey}
             partnerId={partner.id}
             entryType={(partner.default_entry_type || 'free') as 'free' | 'paid'}
             productType={(partner.default_product_type as 'trial_member' | 'wealth_assessment') || 'trial_member'}
