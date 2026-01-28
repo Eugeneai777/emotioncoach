@@ -44,6 +44,13 @@ const COMPLIANT_CARDS = [
   'PosterGenerator',          // 海报生成器
   'EnergyDeclaration',        // 能量宣言
   'WeeklyTagReport',          // 周报导出
+  // 训练营/日记/打卡类分享
+  'CampShareDialog',          // 训练营打卡
+  'BriefingShareDialog',      // 教练简报
+  'GratitudeJournalShareDialog', // 感恩日记
+  'EmotionButtonShareDialog', // 情绪急救弹窗
+  'AliveCheckShareDialog',    // 安全打卡弹窗
+  'WealthJournalShareDialog', // 财富日记弹窗
 ];
 
 // 使用旧版 QRCode 直接调用的卡片 (需要关注)

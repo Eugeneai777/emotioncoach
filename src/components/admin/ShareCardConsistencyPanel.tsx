@@ -39,6 +39,18 @@ const COMPONENT_PATHS: Record<string, string> = {
   AchievementShareCard: 'src/components/camp/AchievementShareCard.tsx',
   GraduationShareCard: 'src/components/camp/GraduationShareCard.tsx',
   WealthJournalShareCard: 'src/components/wealth-block/WealthJournalShareCard.tsx',
+  // 新增路径映射
+  PartnerPlanShareCard: 'src/components/partner/PartnerPlanShareCard.tsx',
+  TeenInviteShareDialog: 'src/components/teen/TeenInviteShareDialog.tsx',
+  PosterGenerator: 'src/pages/PosterCenter.tsx',
+  EnergyDeclaration: 'src/components/energy/EnergyDeclaration.tsx',
+  WeeklyTagReport: 'src/components/journal/WeeklyTagReport.tsx',
+  CampShareDialog: 'src/components/camp/CampShareDialog.tsx',
+  BriefingShareDialog: 'src/components/briefing/BriefingShareDialog.tsx',
+  GratitudeJournalShareDialog: 'src/components/gratitude/GratitudeJournalShareDialog.tsx',
+  EmotionButtonShareDialog: 'src/components/tools/EmotionButtonShareDialog.tsx',
+  AliveCheckShareDialog: 'src/components/tools/AliveCheckShareDialog.tsx',
+  WealthJournalShareDialog: 'src/components/wealth-camp/WealthJournalShareDialog.tsx',
 };
 
 export function ShareCardConsistencyPanel() {

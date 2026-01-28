@@ -1,15 +1,15 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Share2, Copy, Check, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import QRCode from "qrcode";
 import { usePartner } from "@/hooks/usePartner";
 import { getPartnerShareUrl, getPromotionDomain } from "@/utils/partnerQRUtils";
 import { handleShareWithFallback, shouldUseImagePreview, getShareEnvironment } from '@/utils/shareUtils';
 import ShareImagePreview from '@/components/ui/share-image-preview';
 import { generateCardBlob } from '@/utils/shareCardConfig';
+import { useQRCode } from '@/utils/qrCodeUtils';
 
 interface GratitudeJournalShareDialogProps {
   trigger?: React.ReactNode;
@@ -19,7 +19,6 @@ export const GratitudeJournalShareDialog = ({ trigger }: GratitudeJournalShareDi
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const posterRef = useRef<HTMLDivElement>(null);
   
@@ -32,24 +31,8 @@ export const GratitudeJournalShareDialog = ({ trigger }: GratitudeJournalShareDi
     ? getPartnerShareUrl(partner.id, (partner.default_entry_type as 'free' | 'paid') || 'free')
     : `${getPromotionDomain()}/gratitude-journal-intro`;
 
-  // 生成二维码
-  useEffect(() => {
-    const generateQR = async () => {
-      try {
-        const url = await QRCode.toDataURL(shareUrl, {
-          width: 120,
-          margin: 1,
-          color: { dark: '#0d9488', light: '#ffffff' }
-        });
-        setQrCodeUrl(url);
-      } catch (error) {
-        console.error('Error generating QR code:', error);
-      }
-    };
-    if (open) {
-      generateQR();
-    }
-  }, [open, shareUrl]);
+  // 使用统一 QR 码 hook
+  const { qrCodeUrl, isLoading: qrLoading } = useQRCode(open ? shareUrl : null, 'SHARE_CARD');
 
   const handleCopyLink = async () => {
     try {
