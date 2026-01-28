@@ -16,7 +16,7 @@ import { executeOneClickShare, generateCanvas, canvasToBlob } from "@/utils/oneC
 import ShareImagePreview from "@/components/ui/share-image-preview";
 import PartnerPlanShareCard from "@/components/partner/PartnerPlanShareCard";
 import { PartnerCardTemplateSelector } from "@/components/partner/PartnerCardTemplateSelector";
-import { PartnerCardTemplate } from "@/config/partnerShareCardStyles";
+import { PartnerCardContentTemplate } from "@/config/partnerShareCardStyles";
 
 const YoujinPartnerPlan = () => {
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ const YoujinPartnerPlan = () => {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   
   // Template selection state
-  const [selectedTemplate, setSelectedTemplate] = useState<PartnerCardTemplate>('classic');
+  const [selectedTemplate, setSelectedTemplate] = useState<PartnerCardContentTemplate>('income');
   
   const posterRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -1169,7 +1169,7 @@ const YoujinPartnerPlan = () => {
         }}
         aria-hidden="true"
       >
-        <PartnerPlanShareCard ref={posterRef} template={selectedTemplate} />
+        <PartnerPlanShareCard ref={posterRef} contentTemplate={selectedTemplate} />
       </div>
 
       {/* Share Image Preview (for WeChat/iOS long-press save) */}
@@ -1197,7 +1197,7 @@ const YoujinPartnerPlan = () => {
             {/* Preview */}
             <div className="flex justify-center">
               <div className="transform scale-[0.55] origin-top -my-16">
-                <PartnerPlanShareCard template={selectedTemplate} />
+                <PartnerPlanShareCard contentTemplate={selectedTemplate} />
               </div>
             </div>
 
