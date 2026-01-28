@@ -1,78 +1,108 @@
 
-目标：把后台“训练营管理 /admin/camps”里显示成“¥2990”的问题彻底修正为期望的“¥299”，同时避免类似“299.0 视觉像 2990”的显示歧义，并统一前台/后台价格展示规则。
+# 让产品中心显示全部训练营
 
----
+## 问题
+产品中心 (`/packages`) 页面的"有劲训练营"和"绽放训练营"tab 都是硬编码的静态内容，没有从数据库动态获取全部训练营。
 
-## 我已确认的事实（基于你当前页面的网络请求）
-1. 页面实际拉取到的 camp_templates 数据里，`parent_emotion_21` 这一条的 `price` 是 **299**（网络返回 JSON 里明确是 `"price":299`）。
-2. 保存请求（PATCH）里你提交的也是 `"price":299`。
-3. 也就是说：数据层看起来是对的，但 UI 仍出现 “¥2990”。
+### 当前状态
+- `/packages` 的"有劲训练营"只显示一个固定的"财富觉醒训练营"
+- 数据库中"有劲训练营"有3个：情绪日记、青少年困境突破、财富觉醒
+- 数据库中"绽放训练营"有2个：身份绽放、情感绽放
 
-因此，最可能的原因是 **显示层格式化问题**（例如把 `299.0` 渲染成视觉上像 `2990`、或字符串/小数点渲染/字体导致小数点几乎不可见），而不是数据库真的在返回 2990。
+### 对比
+- `/camp-list` 页面正确地从数据库获取并展示所有训练营
+- `/packages` 页面使用硬编码内容
 
----
+## 解决方案
 
-## 解决方案（核心思路）
-### A. 统一“金额显示格式化”
-新增一个小的格式化函数（不引入新依赖）：
-- 把 `price/original_price` 强制转成 `number`
-- 用 `Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 })` 来渲染
-- 这样即使数据库返回 `299.0`、`"299.0"`、或其它浮点形式，也会稳定显示为 `299`（不会出现“2990”的视觉错觉）
+将"有劲训练营"和"绽放训练营"tab 改为动态从 `camp_templates` 表获取训练营列表。
 
-### B. 只在“原价有意义”时展示划线价
-把原本的：
-- `camp.original_price && (...)`
-改为更严格的：
-- `Number(original_price) > Number(price)` 且 `> 0`
+## 技术实现
 
-这样避免原价为 0、或不合理值时混入显示，造成视觉混乱。
+### 修改文件：`src/components/ProductComparisonTable.tsx`
 
-### C. 增加短期诊断信息（仅开发期，用于一次性定位）
-为了在你这边立即确认 UI 拿到的值到底是什么（例如 `299`, `299.0`, `"299.0"`），我会在 `/admin/camps` 这一张卡片里临时加一个“调试小字”（只显示给管理员/开发环境）：
-- 显示 `price`、`typeof price`、`original_price`、`typeof original_price`
-- 一旦确认问题已消失，就可以删除这段调试显示（我可以在后续一步帮你移除）
+#### 1. 添加训练营数据查询
 
----
+```typescript
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-## 具体改动点（代码层）
-### 1) 修改文件：`src/components/admin/CampTemplatesManagement.tsx`
-- 新增 `formatMoney(value)` 工具函数（文件内即可）
-- 渲染时使用：
-  - `¥{formatMoney(camp.price)}`
-  - 划线价：仅当 `original_price > price` 时显示：`¥{formatMoney(camp.original_price)}`
-- 临时调试信息：在价格区域下方加一行小字（例如灰色、很小）
+// 在组件内添加查询
+const { data: campTemplates } = useQuery({
+  queryKey: ['camp-templates-for-packages'],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('camp_templates')
+      .select('*')
+      .eq('is_active', true)
+      .order('display_order');
+    if (error) throw error;
+    return data;
+  },
+  enabled: category === 'youjin-camp' || category === 'bloom-camp',
+});
+```
 
-### 2)（可选但推荐）同步修正用户端卡片展示：`src/components/camp/CampTemplateCard.tsx`
-- 同样用统一的 `formatMoney`
-- 避免用户端也出现小数点不明显导致的误读
+#### 2. 修改"有劲训练营"渲染逻辑（第350-400行）
 
----
+**改为：**
+- 筛选 `category === 'youjin'` 的训练营
+- 循环渲染每个训练营卡片
+- 使用数据库中的 `camp_name`、`price`、`benefits` 等字段
 
-## 验收方式（你怎么确认修好了）
-1. 进入 `/admin/camps`
-2. 找到 “21天青少年困境突破营”
-3. 价格应显示为 “¥299”
-4. 若开启调试小字：
-   - 你会看到类似：`debug price=299 (number)`，确认 UI 真实值
-5. 你确认 OK 后，我再提交一个小改动把调试小字移除（保持界面干净）
+```typescript
+if (category === 'youjin-camp') {
+  const youjinCamps = campTemplates?.filter(c => (c.category || 'youjin') === 'youjin') || [];
+  
+  return (
+    <div className="space-y-3">
+      {youjinCamps.length === 0 ? (
+        <p className="text-center text-muted-foreground py-8">暂无训练营</p>
+      ) : (
+        youjinCamps.map(camp => (
+          <MobileCard key={camp.id} className="...">
+            <span>{camp.icon}</span>
+            <h3>{camp.camp_name}</h3>
+            <p>{camp.camp_subtitle}</p>
+            <div>¥{camp.price}</div>
+            <Button onClick={() => handlePurchase({...})}>立即报名</Button>
+          </MobileCard>
+        ))
+      )}
+    </div>
+  );
+}
+```
 
----
+#### 3. 同样修改"绽放训练营"渲染逻辑
 
-## 风险与兼容性
-- 不改数据库结构，不影响支付逻辑，只是展示层更稳健
-- `Intl.NumberFormat` 浏览器原生支持，且无需新增依赖
-- 若某些训练营真的需要显示小数（例如 9.9），仍能正常显示（最多 2 位小数）
+筛选 `category === 'bloom'` 的训练营，使用相同的动态渲染模式。
 
----
+### 格式化价格
 
-## 需要我确认的一点（非技术）
-你期望的最终显示是：
-- 训练营价格显示 “¥299” （不带小数点）
-- 原价只有在比现价高时才显示划线价
-我会按这个规则统一。
+复用已有的 `formatMoney` 函数确保价格显示一致：
+```typescript
+function formatMoney(value: number | null | undefined): string {
+  const num = Number(value) || 0;
+  return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 }).format(num);
+}
+```
 
----
+## 预期效果
 
-## 实施后可顺手优化（可选）
-- 把 `formatMoney` 抽到一个公共 utils（例如 `src/lib/money.ts`），让全站所有价格显示完全一致。
+| 页面 | 当前显示 | 修改后 |
+|:-----|:---------|:-------|
+| /packages 有劲训练营 | 仅"财富觉醒训练营" | 情绪日记 + 青少年困境突破 + 财富觉醒 (3个) |
+| /packages 绽放训练营 | 可能也是硬编码 | 身份绽放 + 情感绽放 (2个) |
 
+## 文件清单
+
+| 文件 | 操作 |
+|:-----|:-----|
+| src/components/ProductComparisonTable.tsx | 修改：添加训练营数据查询，动态渲染训练营列表 |
+
+## 可选优化
+
+1. 添加加载状态（骨架屏）
+2. 添加"了解更多"按钮跳转到详情页
+3. 显示报名人数等统计信息
