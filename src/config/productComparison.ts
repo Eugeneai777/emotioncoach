@@ -1,6 +1,6 @@
 export interface ComparisonFeature {
   name: string;
-  category: '基础信息' | '教练空间' | '成长工具' | '学习课程' | '训练营' | '佣金权益' | '专属权益';
+  category: '基础信息' | '教练空间' | '成长工具' | '学习课程' | '训练营' | '佣金权益' | '专属权益' | '体验包内容' | '可分成产品';
   tooltip?: string;
 }
 
@@ -86,9 +86,28 @@ export const youjinPartnerFeatures: YoujinPartnerFeature[] = [
   { name: "价格", category: "基础信息", l1: "¥792", l2: "¥3,217", l3: "¥4,950" },
   { name: "体验包分发权", category: "基础信息", l1: "100份", l2: "500份", l3: "1000份" },
   
+  // 体验包内容（新类别）
+  { name: "AI对话点数", category: "体验包内容", l1: "50点", l2: "50点", l3: "50点" },
+  { name: "情绪健康测评", category: "体验包内容", l1: "1次", l2: "1次", l3: "1次" },
+  { name: "SCL-90心理测评", category: "体验包内容", l1: "1次", l2: "1次", l3: "1次" },
+  { name: "财富卡点测评", category: "体验包内容", l1: "1次", l2: "1次", l3: "1次" },
+  
   // 佣金权益
   { name: "一级佣金", category: "佣金权益", l1: "20%", l2: "35%", l3: "50%" },
   { name: "二级佣金", category: "佣金权益", l1: false, l2: false, l3: "10%" },
+  
+  // 可分成产品（新类别）
+  { name: "尝鲜会员 ¥9.9", category: "可分成产品", l1: true, l2: true, l3: true },
+  { name: "情绪健康测评 ¥9.9", category: "可分成产品", l1: true, l2: true, l3: true },
+  { name: "SCL-90测评 ¥9.9", category: "可分成产品", l1: true, l2: true, l3: true },
+  { name: "财富卡点测评 ¥9.9", category: "可分成产品", l1: true, l2: true, l3: true },
+  { name: "365会员 ¥365", category: "可分成产品", l1: true, l2: true, l3: true },
+  { name: "情绪日记训练营 ¥299", category: "可分成产品", l1: true, l2: true, l3: true },
+  { name: "财富觉醒训练营 ¥299", category: "可分成产品", l1: true, l2: true, l3: true },
+  { name: "青少年困境突破营 ¥299", category: "可分成产品", l1: true, l2: true, l3: true },
+  { name: "初级合伙人 ¥792", category: "可分成产品", l1: true, l2: true, l3: true },
+  { name: "高级合伙人 ¥3,217", category: "可分成产品", l1: true, l2: true, l3: true },
+  { name: "钻石合伙人 ¥4,950", category: "可分成产品", l1: true, l2: true, l3: true },
   
   // 专属权益
   { name: "专属推广二维码", category: "专属权益", l1: true, l2: true, l3: true },
