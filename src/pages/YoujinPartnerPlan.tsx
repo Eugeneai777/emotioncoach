@@ -85,15 +85,15 @@ const YoujinPartnerPlan = () => {
   // 净利润对比数据（基于新佣金：L1=18%, L2=30%+5%, L3=50%+12%）
   const profitData = [{
     name: '初级合伙人',
-    净利润: 1959,  // 990 + 30*(365*0.18) - 792 = 990 + 1971 - 792
+    净利润: 2169,  // 990 + 1971 - 792
     fill: '#f97316'
   }, {
     name: '高级合伙人',
-    净利润: 18158,  // 4950 + 150*(365*0.30) + 二级收益 - 3217
+    净利润: 18158,  // 4950 + 16425 - 3217
     fill: '#ea580c'
   }, {
     name: '钻石合伙人',
-    净利润: 68394,  // 9900 + 300*(365*0.50) + 二级12% - 4950
+    净利润: 66544,  // 9900 + 54750 + 6844 - 4950
     fill: '#c2410c'
   }];
 
@@ -1032,15 +1032,15 @@ const YoujinPartnerPlan = () => {
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <span style={{ fontSize: '13px', color: '#57534e' }}>💪 初级合伙人</span>
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#16a34a' }}>净利润 ¥2,388</span>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#16a34a' }}>净利润 ¥2,169</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <span style={{ fontSize: '13px', color: '#57534e' }}>🔥 高级合伙人</span>
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#16a34a' }}>净利润 ¥20,895</span>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#16a34a' }}>净利润 ¥18,158</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '13px', color: '#57534e' }}>💎 钻石合伙人</span>
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#16a34a' }}>净利润 ¥66,543</span>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#16a34a' }}>净利润 ¥66,544</span>
                 </div>
               </div>
 
