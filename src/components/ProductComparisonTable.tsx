@@ -401,7 +401,7 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           const gradientMap: Record<string, string> = {
             'emotion_journal_21': 'from-purple-500 via-pink-500 to-purple-600',
             'teen_breakthrough_14': 'from-indigo-500 via-purple-500 to-violet-600',
-            'wealth_awakening_7': 'from-amber-500 via-orange-500 to-yellow-500',
+            'wealth_awakening_7': 'from-emerald-500 via-teal-500 to-cyan-500',
           };
           const gradient = gradientMap[camp.camp_type] || 'from-teal-500 via-cyan-500 to-teal-600';
           
