@@ -215,7 +215,7 @@ const PartnerIntro = () => {
           </CardContent>
         </Card>
 
-        {/* Benefits - 优化为双列网格布局 */}
+        {/* Benefits - 单列布局 */}
         {benefits.length > 0 && <Card>
             <CardHeader className="pb-2 pt-4 px-4">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -225,13 +225,13 @@ const PartnerIntro = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-3">
                 {benefits.map(benefit => {
                   const isYoujinBenefit = benefit.benefit_name === '有劲产品推广权益';
                   return (
                     <Card 
                       key={benefit.id} 
-                      className={`border border-accent/20 bg-gradient-to-br from-background to-accent/5 rounded-xl overflow-hidden ${
+                      className={`border border-accent/20 rounded-xl overflow-hidden ${
                         isYoujinBenefit 
                           ? "border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 cursor-pointer hover:shadow-md transition-shadow" 
                           : ""
@@ -239,31 +239,31 @@ const PartnerIntro = () => {
                       onClick={isYoujinBenefit ? () => navigate("/partner/youjin-plan") : undefined}
                     >
                       <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-center gap-4">
                           {/* 大图标 */}
                           <div className="text-3xl flex-shrink-0">{benefit.benefit_icon}</div>
                           <div className="flex-1 min-w-0">
                             {/* 名称 + 价格徽章 */}
                             <div className="flex items-center gap-2 flex-wrap">
-                              <div className="font-semibold text-sm leading-tight">{benefit.benefit_name}</div>
+                              <div className="font-semibold text-sm">{benefit.benefit_name}</div>
                               {Number(benefit.benefit_value) > 0 && (
                                 <Badge variant="outline" className="text-xs whitespace-nowrap">
                                   ¥{Number(benefit.benefit_value).toLocaleString()}
                                 </Badge>
                               )}
+                              {/* 有劲权益额外提示 */}
+                              {isYoujinBenefit && (
+                                <span className="text-xs text-orange-600 font-medium flex items-center gap-1">
+                                  <Sparkles className="w-3 h-3" />
+                                  了解详情
+                                </span>
+                              )}
                             </div>
                             {/* 描述 */}
                             {benefit.benefit_description && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              <p className="text-xs text-muted-foreground mt-1">
                                 {benefit.benefit_description}
                               </p>
-                            )}
-                            {/* 有劲权益额外提示 */}
-                            {isYoujinBenefit && (
-                              <div className="mt-2 text-xs text-orange-600 font-medium flex items-center gap-1">
-                                <Sparkles className="w-3 h-3" />
-                                点击了解详情
-                              </div>
                             )}
                           </div>
                         </div>
