@@ -9,7 +9,7 @@ import { getPartnerShareUrl } from "@/utils/partnerQRUtils";
 
 // 体验包选项定义 - 包含全部4个体验包（默认全选，不可更改）
 const EXPERIENCE_PACKAGES = [
-  { key: 'basic', label: 'AI对话点数', description: '50点', icon: '🤖' },
+  { key: 'basic', label: '尝鲜会员', description: '50点', icon: '🎫' },
   { key: 'emotion_health_assessment', label: '情绪健康测评', description: '专业测评', icon: '💚' },
   { key: 'scl90_report', label: 'SCL-90心理测评', description: '心理健康筛查', icon: '📋' },
   { key: 'wealth_block_assessment', label: '财富卡点测评', description: '财富诊断', icon: '💰' },

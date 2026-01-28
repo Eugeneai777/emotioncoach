@@ -87,7 +87,7 @@ export const youjinPartnerFeatures: YoujinPartnerFeature[] = [
   { name: "体验包分发权", category: "基础信息", l1: "100份", l2: "500份", l3: "1000份" },
   
   // 体验包内容（新类别）
-  { name: "AI对话点数", category: "体验包内容", l1: "50点", l2: "50点", l3: "50点" },
+  { name: "尝鲜会员", category: "体验包内容", l1: "50点", l2: "50点", l3: "50点" },
   { name: "情绪健康测评", category: "体验包内容", l1: "1次", l2: "1次", l3: "1次" },
   { name: "SCL-90心理测评", category: "体验包内容", l1: "1次", l2: "1次", l3: "1次" },
   { name: "财富卡点测评", category: "体验包内容", l1: "1次", l2: "1次", l3: "1次" },
