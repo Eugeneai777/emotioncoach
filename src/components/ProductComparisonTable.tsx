@@ -397,13 +397,13 @@ export function ProductComparisonTable({ category, onPurchase }: ProductComparis
           const isPaid = camp.price && camp.price > 0;
           const hasOriginalPrice = Number(camp.original_price) > Number(camp.price) && Number(camp.original_price) > 0;
           
-          // 根据训练营类型选择渐变色
+          // 根据训练营类型选择渐变色 - 使用色相差距大的颜色确保区分度
           const gradientMap: Record<string, string> = {
-            'emotion_journal_21': 'from-purple-500 via-pink-500 to-purple-600',
-            'teen_breakthrough_14': 'from-indigo-500 via-purple-500 to-violet-600',
-            'wealth_awakening_7': 'from-emerald-500 via-teal-500 to-cyan-500',
+            'emotion_journal_21': 'from-purple-500 via-pink-500 to-rose-500',      // 紫粉色 - 情绪/内心
+            'teen_breakthrough_14': 'from-blue-500 via-sky-500 to-cyan-500',       // 蓝色 - 成长/教育
+            'wealth_awakening_7': 'from-amber-500 via-orange-500 to-yellow-400',   // 金橙色 - 财富/能量
           };
-          const gradient = gradientMap[camp.camp_type] || 'from-teal-500 via-cyan-500 to-teal-600';
+          const gradient = gradientMap[camp.camp_type] || 'from-slate-500 via-gray-500 to-slate-600';
           
           return (
             <MobileCard 
