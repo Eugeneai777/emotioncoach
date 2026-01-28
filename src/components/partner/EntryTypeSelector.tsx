@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Gift, CreditCard, Check, Loader2, AlertCircle, Copy, Save } from "lucide-react";
 import { getPartnerShareUrl } from "@/utils/partnerQRUtils";
 
-// 体验包选项定义 - 包含全部4个体验包
+// 体验包选项定义 - 包含全部4个体验包（默认全选，不可更改）
 const EXPERIENCE_PACKAGES = [
   { key: 'basic', label: 'AI对话点数', description: '50点', icon: '🤖' },
   { key: 'emotion_health_assessment', label: '情绪健康测评', description: '专业测评', icon: '💚' },
@@ -22,7 +21,6 @@ interface EntryTypeSelectorProps {
   partnerId: string;
   currentEntryType?: string;
   prepurchaseCount?: number;
-  currentSelectedPackages?: string[] | null;
   onUpdate?: () => void;
 }
 
@@ -30,53 +28,21 @@ export function EntryTypeSelector({
   partnerId, 
   currentEntryType = 'free',
   prepurchaseCount = 0,
-  currentSelectedPackages,
   onUpdate 
 }: EntryTypeSelectorProps) {
   const [entryType, setEntryType] = useState<'free' | 'paid'>(currentEntryType as 'free' | 'paid');
-  const [selectedPackages, setSelectedPackages] = useState<string[]>(
-    currentSelectedPackages || DEFAULT_PACKAGES
-  );
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     setEntryType(currentEntryType as 'free' | 'paid');
-    setSelectedPackages(currentSelectedPackages || DEFAULT_PACKAGES);
     setHasChanges(false);
-  }, [currentEntryType, currentSelectedPackages]);
-
-  const checkHasChanges = (
-    newEntryType: string, 
-    newSelectedPackages: string[]
-  ) => {
-    const currentPkgs = currentSelectedPackages || DEFAULT_PACKAGES;
-    const pkgsChanged = 
-      newSelectedPackages.length !== currentPkgs.length ||
-      !newSelectedPackages.every(p => currentPkgs.includes(p));
-    return newEntryType !== currentEntryType || pkgsChanged;
-  };
+  }, [currentEntryType]);
 
   const handleSelectEntryType = (type: 'free' | 'paid') => {
     setEntryType(type);
-    setHasChanges(checkHasChanges(type, selectedPackages));
+    setHasChanges(type !== currentEntryType);
   };
-
-  const handleTogglePackage = (packageKey: string) => {
-    const newPackages = selectedPackages.includes(packageKey)
-      ? selectedPackages.filter(p => p !== packageKey)
-      : [...selectedPackages, packageKey];
-    setSelectedPackages(newPackages);
-    setHasChanges(checkHasChanges(entryType, newPackages));
-  };
-
-  const handleSelectAllPackages = (selectAll: boolean) => {
-    const newPackages = selectAll ? [...DEFAULT_PACKAGES] : [];
-    setSelectedPackages(newPackages);
-    setHasChanges(checkHasChanges(entryType, newPackages));
-  };
-
-  const isAllSelected = selectedPackages.length === EXPERIENCE_PACKAGES.length;
 
   // 实时预览链接 - 固定使用 trial_member 产品类型
   const previewUrl = getPartnerShareUrl(partnerId, entryType, 'trial_member');
@@ -91,11 +57,6 @@ export function EntryTypeSelector({
   };
 
   const handleSave = async () => {
-    if (selectedPackages.length === 0) {
-      toast.error("请至少选择一项体验包内容");
-      return;
-    }
-
     setSaving(true);
     try {
       const { error } = await supabase
@@ -105,7 +66,7 @@ export function EntryTypeSelector({
           default_product_type: 'trial_member',
           default_entry_price: entryType === 'paid' ? 9.9 : 0,
           default_quota_amount: 50,
-          selected_experience_packages: selectedPackages,
+          selected_experience_packages: DEFAULT_PACKAGES,
           updated_at: new Date().toISOString()
         } as Record<string, unknown>)
         .eq('id', partnerId);
@@ -204,39 +165,18 @@ export function EntryTypeSelector({
           </div>
         </div>
 
-        {/* 体验包内容选择 - 4个选项 */}
+        {/* 体验包内容展示 - 默认全选不可更改 */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm text-muted-foreground">包含内容</Label>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="select-all"
-                checked={isAllSelected}
-                onCheckedChange={(checked) => handleSelectAllPackages(checked === true)}
-              />
-              <label htmlFor="select-all" className="text-xs text-muted-foreground cursor-pointer">
-                全选
-              </label>
-            </div>
-          </div>
+          <Label className="text-sm text-muted-foreground">包含内容</Label>
           <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 space-y-2">
             {EXPERIENCE_PACKAGES.map((pkg) => (
               <div key={pkg.key} className="flex items-center gap-2">
-                <Checkbox
-                  id={pkg.key}
-                  checked={selectedPackages.includes(pkg.key)}
-                  onCheckedChange={() => handleTogglePackage(pkg.key)}
-                />
-                <label htmlFor={pkg.key} className="flex-1 cursor-pointer flex items-center gap-1.5">
-                  <span className="text-sm">{pkg.icon}</span>
-                  <span className="text-sm font-medium">{pkg.label}</span>
-                  <span className="text-xs text-muted-foreground">({pkg.description})</span>
-                </label>
+                <Check className="w-4 h-4 text-teal-500" />
+                <span className="text-sm">{pkg.icon}</span>
+                <span className="text-sm font-medium">{pkg.label}</span>
+                <span className="text-xs text-muted-foreground">({pkg.description})</span>
               </div>
             ))}
-            {selectedPackages.length === 0 && (
-              <p className="text-xs text-red-500 mt-1">⚠️ 请至少选择一项</p>
-            )}
           </div>
         </div>
 
@@ -260,7 +200,7 @@ export function EntryTypeSelector({
         {/* 保存按钮 */}
         <Button
           onClick={handleSave}
-          disabled={saving || !hasChanges || selectedPackages.length === 0}
+          disabled={saving || !hasChanges}
           className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50"
         >
           {saving ? (
