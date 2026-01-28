@@ -5150,6 +5150,47 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_product_commissions: {
+        Row: {
+          commission_rate_l1: number
+          commission_rate_l2: number
+          created_at: string | null
+          id: string
+          is_enabled: boolean
+          package_key: string
+          partner_level_rule_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          commission_rate_l1?: number
+          commission_rate_l2?: number
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean
+          package_key: string
+          partner_level_rule_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          commission_rate_l1?: number
+          commission_rate_l2?: number
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean
+          package_key?: string
+          partner_level_rule_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_product_commissions_partner_level_rule_id_fkey"
+            columns: ["partner_level_rule_id"]
+            isOneToOne: false
+            referencedRelation: "partner_level_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_referrals: {
         Row: {
           conversion_status: string | null
