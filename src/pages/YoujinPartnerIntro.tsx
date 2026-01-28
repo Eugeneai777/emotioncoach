@@ -152,9 +152,9 @@ export default function YoujinPartnerIntro() {
           <CardHeader>
             <CardTitle className="text-xl flex items-center gap-2">
               <Gift className="w-5 h-5 text-teal-500" />
-              体验包内容（共4项）
+              可分发的体验包（共4种）
             </CardTitle>
-            <CardDescription>用户扫码后将获得以下全部权益</CardDescription>
+            <CardDescription>合伙人可使用以下体验包转化用户，每次扫码兑换1种</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveComparison
