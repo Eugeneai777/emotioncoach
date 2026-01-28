@@ -73,7 +73,7 @@ export default function WealthJournalDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
       </div>
     );
@@ -81,7 +81,7 @@ export default function WealthJournalDetail() {
 
   if (!entry) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="h-screen flex flex-col items-center justify-center p-4">
         <p className="text-muted-foreground mb-4">日记不存在</p>
         <Button onClick={() => navigate('/wealth-journal')}>返回日记列表</Button>
       </div>
@@ -118,7 +118,10 @@ export default function WealthJournalDetail() {
   const hasTransformLayer = (responsibilityItems && responsibilityItems.length > 0) || entry.giving_action || entry.smallest_progress;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20 pb-[env(safe-area-inset-bottom)]"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       <DynamicOGMeta pageKey="wealthJournalDetail" />
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">

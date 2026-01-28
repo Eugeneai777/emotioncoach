@@ -490,7 +490,7 @@ ${reflection}`;
     return (
       <>
         <DynamicOGMeta pageKey="wealthCampCheckIn" />
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
         </div>
       </>
@@ -499,7 +499,7 @@ ${reflection}`;
 
   if (!camp) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="h-screen flex flex-col items-center justify-center p-4">
         <p className="text-muted-foreground mb-4">训练营不存在</p>
         <Button onClick={() => navigate('/training-camps')}>返回训练营列表</Button>
       </div>
@@ -507,7 +507,10 @@ ${reflection}`;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/20 pb-[env(safe-area-inset-bottom)]"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       {/* Header - 使用统一的PageHeader，在此页面Home键会自动隐藏 */}
       <PageHeader 
         title={`💰 我的财富日记 Day ${currentDay}/${camp.duration_days}`}

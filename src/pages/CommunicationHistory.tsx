@@ -171,7 +171,7 @@ export default function CommunicationHistory() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -179,7 +179,11 @@ export default function CommunicationHistory() {
 
   if (selectedBriefing) {
     return (
-      <div className="container mx-auto p-6 max-w-4xl">
+      <div 
+        className="h-screen overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        <div className="container mx-auto p-6 max-w-4xl">
         <Button
           variant="ghost"
           onClick={() => {
@@ -363,12 +367,16 @@ export default function CommunicationHistory() {
           insight={selectedBriefing.growth_insight || undefined}
           action={selectedBriefing.micro_action || undefined}
         />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-background pb-[env(safe-area-inset-bottom)]"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       <DynamicOGMeta pageKey="communicationHistory" />
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4 space-y-2 md:space-y-3">

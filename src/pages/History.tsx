@@ -224,7 +224,7 @@ const History = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -232,7 +232,10 @@ const History = () => {
 
   if (selectedBriefing) {
     return (
-      <div className="min-h-screen bg-background">
+      <div 
+        className="h-screen overflow-y-auto overscroll-contain bg-background pb-[env(safe-area-inset-bottom)]"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
           <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4">
             <Button
@@ -416,7 +419,10 @@ const History = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div 
+      className="h-screen overflow-y-auto overscroll-contain bg-background pb-[env(safe-area-inset-bottom)]"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
       <DynamicOGMeta pageKey="emotionHistory" />
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-2xl mx-auto px-3 md:px-4 py-3 md:py-4 space-y-2 md:space-y-3">
