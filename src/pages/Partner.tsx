@@ -15,6 +15,7 @@ import { ReferralList } from "@/components/partner/ReferralList";
 import { CommissionHistory } from "@/components/partner/CommissionHistory";
 import { WithdrawalForm } from "@/components/partner/WithdrawalForm";
 import { YoujinPartnerDashboard } from "@/components/partner/YoujinPartnerDashboard";
+import { BloomYoujinBenefitsCard } from "@/components/partner/BloomYoujinBenefitsCard";
 import { DynamicOGMeta } from "@/components/common/DynamicOGMeta";
 import { ResponsiveComparison } from "@/components/ui/responsive-comparison";
 import { getPromotionDomain } from "@/utils/partnerQRUtils";
@@ -186,6 +187,9 @@ export default function Partner() {
               <>
                 {/* 绽放合伙人面板（原有内容） */}
                 <PartnerStats partner={partner} />
+                
+                {/* 绽放合伙人的有劲推广权益 */}
+                <BloomYoujinBenefitsCard partner={partner} />
 
             {/* 推广码区域 */}
             <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
