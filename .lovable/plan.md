@@ -1,68 +1,78 @@
 
-# 优化价格输入框体验
+目标：把后台“训练营管理 /admin/camps”里显示成“¥2990”的问题彻底修正为期望的“¥299”，同时避免类似“299.0 视觉像 2990”的显示歧义，并统一前台/后台价格展示规则。
 
-## 问题
-当前"现价"输入框使用 `type="number"` 且初始值为 `0`，导致：
-- 用户无法直接清空输入框
-- 必须先输入数字（如 "0299"），再删除前面的 "0"
+---
 
-## 解决方案
-将价格输入框改为文本类型，允许输入框为空，同时保持数字验证逻辑。
+## 我已确认的事实（基于你当前页面的网络请求）
+1. 页面实际拉取到的 camp_templates 数据里，`parent_emotion_21` 这一条的 `price` 是 **299**（网络返回 JSON 里明确是 `"price":299`）。
+2. 保存请求（PATCH）里你提交的也是 `"price":299`。
+3. 也就是说：数据层看起来是对的，但 UI 仍出现 “¥2990”。
 
-## 技术实现
+因此，最可能的原因是 **显示层格式化问题**（例如把 `299.0` 渲染成视觉上像 `2990`、或字符串/小数点渲染/字体导致小数点几乎不可见），而不是数据库真的在返回 2990。
 
-### 修改文件
-`src/components/admin/camps/PricingTab.tsx`
+---
 
-### 改动内容
+## 解决方案（核心思路）
+### A. 统一“金额显示格式化”
+新增一个小的格式化函数（不引入新依赖）：
+- 把 `price/original_price` 强制转成 `number`
+- 用 `Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 })` 来渲染
+- 这样即使数据库返回 `299.0`、`"299.0"`、或其它浮点形式，也会稳定显示为 `299`（不会出现“2990”的视觉错觉）
 
-1. **现价输入框改为文本类型，允许为空**
+### B. 只在“原价有意义”时展示划线价
+把原本的：
+- `camp.original_price && (...)`
+改为更严格的：
+- `Number(original_price) > Number(price)` 且 `> 0`
 
-```tsx
-<Input
-  id="price"
-  type="text"
-  inputMode="decimal"
-  value={formData.price === 0 ? '' : formData.price.toString()}
-  onChange={(e) => {
-    const val = e.target.value;
-    // 允许空值或有效数字
-    if (val === '' || /^\d*\.?\d*$/.test(val)) {
-      updateFormData({ price: val === '' ? 0 : parseFloat(val) || 0 });
-    }
-  }}
-  placeholder="0"
-/>
-```
+这样避免原价为 0、或不合理值时混入显示，造成视觉混乱。
 
-2. **原价输入框同样优化**
+### C. 增加短期诊断信息（仅开发期，用于一次性定位）
+为了在你这边立即确认 UI 拿到的值到底是什么（例如 `299`, `299.0`, `"299.0"`），我会在 `/admin/camps` 这一张卡片里临时加一个“调试小字”（只显示给管理员/开发环境）：
+- 显示 `price`、`typeof price`、`original_price`、`typeof original_price`
+- 一旦确认问题已消失，就可以删除这段调试显示（我可以在后续一步帮你移除）
 
-```tsx
-<Input
-  id="original_price"
-  type="text"
-  inputMode="decimal"
-  value={formData.original_price === 0 ? '' : formData.original_price.toString()}
-  onChange={(e) => {
-    const val = e.target.value;
-    if (val === '' || /^\d*\.?\d*$/.test(val)) {
-      updateFormData({ original_price: val === '' ? 0 : parseFloat(val) || 0 });
-    }
-  }}
-  placeholder="0"
-/>
-```
+---
 
-## 预期效果
+## 具体改动点（代码层）
+### 1) 修改文件：`src/components/admin/CampTemplatesManagement.tsx`
+- 新增 `formatMoney(value)` 工具函数（文件内即可）
+- 渲染时使用：
+  - `¥{formatMoney(camp.price)}`
+  - 划线价：仅当 `original_price > price` 时显示：`¥{formatMoney(camp.original_price)}`
+- 临时调试信息：在价格区域下方加一行小字（例如灰色、很小）
 
-| 操作 | 当前行为 | 优化后 |
-|:-----|:---------|:-------|
-| 清空输入框 | 无法清空，始终显示0 | 可以清空，显示placeholder |
-| 输入新价格 | 需要输入后再删0 | 直接输入即可 |
-| 保存空值 | - | 自动转为0保存 |
+### 2)（可选但推荐）同步修正用户端卡片展示：`src/components/camp/CampTemplateCard.tsx`
+- 同样用统一的 `formatMoney`
+- 避免用户端也出现小数点不明显导致的误读
 
-## 文件清单
+---
 
-| 文件 | 操作 |
-|:-----|:-----|
-| src/components/admin/camps/PricingTab.tsx | 修改：优化价格输入框为文本类型，允许为空 |
+## 验收方式（你怎么确认修好了）
+1. 进入 `/admin/camps`
+2. 找到 “21天青少年困境突破营”
+3. 价格应显示为 “¥299”
+4. 若开启调试小字：
+   - 你会看到类似：`debug price=299 (number)`，确认 UI 真实值
+5. 你确认 OK 后，我再提交一个小改动把调试小字移除（保持界面干净）
+
+---
+
+## 风险与兼容性
+- 不改数据库结构，不影响支付逻辑，只是展示层更稳健
+- `Intl.NumberFormat` 浏览器原生支持，且无需新增依赖
+- 若某些训练营真的需要显示小数（例如 9.9），仍能正常显示（最多 2 位小数）
+
+---
+
+## 需要我确认的一点（非技术）
+你期望的最终显示是：
+- 训练营价格显示 “¥299” （不带小数点）
+- 原价只有在比现价高时才显示划线价
+我会按这个规则统一。
+
+---
+
+## 实施后可顺手优化（可选）
+- 把 `formatMoney` 抽到一个公共 utils（例如 `src/lib/money.ts`），让全站所有价格显示完全一致。
+
